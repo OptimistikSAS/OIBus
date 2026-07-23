@@ -24,7 +24,7 @@ const existingGroup: SouthItemGroupDTO = {
     name: 'GroupA',
     scanMode: scanModes[0]
   },
-  historySettings: { overlap: null, maxReadInterval: null, readDelay: null }
+  historySettings: { startTimeOffset: null, endTimeOffset: null, maxReadInterval: null, readDelay: null, recoveryStrategy: null }
 };
 
 describe('EditSouthItemGroupModalComponent', () => {
@@ -61,5 +61,31 @@ describe('EditSouthItemGroupModalComponent', () => {
 
     const root = page.elementLocator(fixture.nativeElement);
     await expect.element(root.getByCss('#group-name')).toBeInTheDocument();
+  });
+
+  test('create mode should default historian fields to sensible values', () => {
+    const fixture = TestBed.createComponent(EditSouthItemGroupModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest);
+    fixture.detectChanges();
+
+    const controls = fixture.componentInstance.form!.controls;
+    expect(controls.maxReadInterval.value).toBe(3600);
+    expect(controls.readDelay.value).toBe(200);
+    expect(controls.startTimeOffset.value).toBe(0);
+    expect(controls.endTimeOffset.value).toBe(0);
+    expect(controls.recoveryStrategy.value).toBe('oldest');
+  });
+
+  test('edit mode should fall back to the same historian defaults when the group field is null', () => {
+    const fixture = TestBed.createComponent(EditSouthItemGroupModalComponent);
+    fixture.componentInstance.prepareForEdition(scanModes, [existingGroup], manifest, existingGroup);
+    fixture.detectChanges();
+
+    const controls = fixture.componentInstance.form!.controls;
+    expect(controls.maxReadInterval.value).toBe(3600);
+    expect(controls.readDelay.value).toBe(200);
+    expect(controls.startTimeOffset.value).toBe(0);
+    expect(controls.endTimeOffset.value).toBe(0);
+    expect(controls.recoveryStrategy.value).toBe('oldest');
   });
 });

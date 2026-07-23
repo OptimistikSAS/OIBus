@@ -100,7 +100,8 @@ const baseConfiguration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIA
       syncWithGroup: false,
       maxReadInterval: 3600,
       readDelay: 0,
-      overlap: 0,
+      startTimeOffset: 0,
+      endTimeOffset: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -130,6 +131,11 @@ describe('SouthOIAnalytics', () => {
         return southCacheService;
       }
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     SouthOIAnalytics = reloadModule<{ default: typeof SouthOIAnalyticsClass }>(nodeRequire, './south-oianalytics').default;
   });
 
@@ -160,7 +166,6 @@ describe('SouthOIAnalytics', () => {
       baseConfiguration,
       addContentCallback,
       southCacheRepository,
-      logger,
       'cacheFolder',
       certificateRepository,
       oIAnalyticsRegistrationRepository

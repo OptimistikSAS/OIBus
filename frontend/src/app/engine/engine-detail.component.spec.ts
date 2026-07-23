@@ -17,11 +17,12 @@ import { TransformerService } from '../services/transformer.service';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { EngineSettingsDTO } from '../../../../backend/shared/model/engine.model';
+import testData from '../../../../backend/src/tests/utils/test-data';
 
 class EngineDetailComponentTester {
   readonly fixture = TestBed.createComponent(EngineDetailComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly generalSettings = this.root.getByCss('tbody.general-settings tr');
+  readonly generalSettings = this.root.getByCss('table tr');
   readonly restartButton = this.root.getByCss('#restart');
 }
 
@@ -61,6 +62,7 @@ describe('EngineDetailComponent', () => {
     transformerService = createMock(TransformerService);
 
     engineService.getEngineSettings.mockReturnValue(of(engineSettings));
+    engineService.getInfo.mockReturnValue(of(testData.engine.oIBusInfo));
     scanModeService.list.mockReturnValue(of([]));
     ipFilterService.list.mockReturnValue(of([]));
     certificateService.list.mockReturnValue(of([]));
@@ -100,8 +102,8 @@ describe('EngineDetailComponent', () => {
 
     await expect.element(tester.generalSettings.nth(0)).toHaveTextContent('OIBus Test');
     await expect.element(tester.generalSettings.nth(1)).toHaveTextContent('2223');
-    await expect.element(tester.generalSettings.nth(2)).toHaveTextContent('silent');
-    await expect.element(tester.generalSettings.nth(3)).toHaveTextContent('8888');
+    await expect.element(tester.generalSettings.nth(2)).toHaveTextContent('8888');
+    await expect.element(tester.generalSettings.nth(3)).toHaveTextContent('silent');
   });
 
   test('should restart', () => {

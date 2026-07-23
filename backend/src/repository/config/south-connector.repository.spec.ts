@@ -74,7 +74,9 @@ describe('SouthConnectorRepository', () => {
       syncWithGroup: false,
       maxReadInterval: null,
       readDelay: null,
-      overlap: null
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null
     };
     newSouthConnector.items = [...testData.south.list[1].items, newItem];
     repository.saveSouth(newSouthConnector);
@@ -86,7 +88,9 @@ describe('SouthConnectorRepository', () => {
   it('should update a south connector item with non-null historian fields', () => {
     const connector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
     connector.items = connector.items.map((item, index) =>
-      index === 0 ? { ...item, maxReadInterval: 3600, readDelay: 200, overlap: 100 } : item
+      index === 0
+        ? { ...item, maxReadInterval: 3600, readDelay: 200, startTimeOffset: 100, endTimeOffset: null, recoveryStrategy: null }
+        : item
     );
     repository.saveSouth(connector);
 
@@ -94,7 +98,7 @@ describe('SouthConnectorRepository', () => {
     const updatedItem = updatedConnector.items.find(item => item.id === connector.items[0].id)!;
     assert.strictEqual(updatedItem.maxReadInterval, 3600);
     assert.strictEqual(updatedItem.readDelay, 200);
-    assert.strictEqual(updatedItem.overlap, 100);
+    assert.strictEqual(updatedItem.startTimeOffset, 100);
   });
 
   it('should delete a south connector', () => {
@@ -198,7 +202,9 @@ describe('SouthConnectorRepository', () => {
       syncWithGroup: false,
       maxReadInterval: null,
       readDelay: null,
-      overlap: null
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null
     };
     const itemsToSave: Array<SouthConnectorItemEntity<SouthItemSettings>> = JSON.parse(JSON.stringify(testData.south.list[0].items));
     itemsToSave.push(newItem);
@@ -233,7 +239,9 @@ describe('SouthConnectorRepository', () => {
       syncWithGroup: false,
       maxReadInterval: null,
       readDelay: null,
-      overlap: null
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null
     };
     itemsToSave.push(newItem);
 
@@ -256,7 +264,9 @@ describe('SouthConnectorRepository', () => {
         name: 'Test Group For South',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -274,7 +284,9 @@ describe('SouthConnectorRepository', () => {
       syncWithGroup: false,
       maxReadInterval: null,
       readDelay: null,
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -300,7 +312,9 @@ describe('SouthConnectorRepository', () => {
         name: 'Test Group 2 For South',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: 10,
+        startTimeOffset: 10,
+        endTimeOffset: null,
+        recoveryStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -317,7 +331,9 @@ describe('SouthConnectorRepository', () => {
       syncWithGroup: false,
       maxReadInterval: null,
       readDelay: null,
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -344,7 +360,9 @@ describe('SouthConnectorRepository', () => {
       syncWithGroup: false,
       maxReadInterval: 3600,
       readDelay: 200,
-      overlap: 100,
+      startTimeOffset: 100,
+      endTimeOffset: null,
+      recoveryStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -358,7 +376,7 @@ describe('SouthConnectorRepository', () => {
     assert.ok(savedItem);
     assert.strictEqual(savedItem.maxReadInterval, 3600);
     assert.strictEqual(savedItem.readDelay, 200);
-    assert.strictEqual(savedItem.overlap, 100);
+    assert.strictEqual(savedItem.startTimeOffset, 100);
   });
 
   it('should save item with empty groups array', () => {
@@ -372,7 +390,9 @@ describe('SouthConnectorRepository', () => {
       syncWithGroup: false,
       maxReadInterval: null,
       readDelay: null,
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -395,7 +415,9 @@ describe('SouthConnectorRepository', () => {
         name: 'Move Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -423,7 +445,9 @@ describe('SouthConnectorRepository', () => {
         name: 'Remove Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -459,7 +483,9 @@ describe('SouthConnectorRepository', () => {
       id: 'temp_newgroup',
       name: 'Temp Created Group',
       scanMode: testData.scanMode.list[0],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null,
       maxReadInterval: null,
       readDelay: 0,
       createdBy: '',
@@ -478,7 +504,9 @@ describe('SouthConnectorRepository', () => {
       syncWithGroup: true,
       maxReadInterval: null,
       readDelay: null,
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -515,7 +543,9 @@ describe('SouthConnectorRepository', () => {
         name: 'Test Group For Find',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -539,7 +569,9 @@ describe('SouthConnectorRepository', () => {
         name: 'Group To Update',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -554,7 +586,9 @@ describe('SouthConnectorRepository', () => {
       ...group,
       name: 'Updated Group Name',
       scanMode: testData.scanMode.list[1],
-      overlap: 500,
+      startTimeOffset: 500,
+      endTimeOffset: null,
+      recoveryStrategy: null,
       maxReadInterval: 3600,
       readDelay: 200
     };
@@ -567,7 +601,7 @@ describe('SouthConnectorRepository', () => {
     assert.ok(savedGroup, 'Group should still exist after saveSouth');
     assert.strictEqual(savedGroup.name, 'Updated Group Name');
     assert.strictEqual(savedGroup.scanMode.id, testData.scanMode.list[1].id);
-    assert.strictEqual(savedGroup.overlap, 500);
+    assert.strictEqual(savedGroup.startTimeOffset, 500);
     assert.strictEqual(savedGroup.maxReadInterval, 3600);
     assert.strictEqual(savedGroup.readDelay, 200);
   });
@@ -579,9 +613,11 @@ describe('SouthConnectorRepository', () => {
         name: 'Group To Delete With Fallback',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: 100,
+        startTimeOffset: 100,
+        endTimeOffset: 50,
         maxReadInterval: 3600,
-        readDelay: 200
+        readDelay: 200,
+        recoveryStrategy: 'oldest'
       },
       'userTest'
     );
@@ -596,7 +632,9 @@ describe('SouthConnectorRepository', () => {
       syncWithGroup: true,
       maxReadInterval: null,
       readDelay: null,
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -611,9 +649,11 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(savedItem.group, null);
     assert.strictEqual(savedItem.syncWithGroup, false);
     assert.strictEqual(savedItem.scanMode!.id, group.scanMode.id);
-    assert.strictEqual(savedItem.overlap, 100);
+    assert.strictEqual(savedItem.startTimeOffset, 100);
+    assert.strictEqual(savedItem.endTimeOffset, 50);
     assert.strictEqual(savedItem.maxReadInterval, 3600);
     assert.strictEqual(savedItem.readDelay, 200);
+    assert.strictEqual(savedItem.recoveryStrategy, 'oldest');
   });
 
   it('should not overwrite an item own scan mode and history fields when deleting its group', () => {
@@ -623,9 +663,11 @@ describe('SouthConnectorRepository', () => {
         name: 'Group To Delete Without Fallback',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: 100,
+        startTimeOffset: 100,
+        endTimeOffset: 50,
         maxReadInterval: 3600,
-        readDelay: 200
+        readDelay: 200,
+        recoveryStrategy: 'oldest'
       },
       'userTest'
     );
@@ -640,7 +682,9 @@ describe('SouthConnectorRepository', () => {
       syncWithGroup: false,
       maxReadInterval: 60,
       readDelay: 50,
-      overlap: 10,
+      startTimeOffset: 10,
+      endTimeOffset: 20,
+      recoveryStrategy: 'newest',
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -655,7 +699,9 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(savedItem.scanMode!.id, testData.scanMode.list[1].id);
     assert.strictEqual(savedItem.maxReadInterval, 60);
     assert.strictEqual(savedItem.readDelay, 50);
-    assert.strictEqual(savedItem.overlap, 10);
+    assert.strictEqual(savedItem.startTimeOffset, 10);
+    assert.strictEqual(savedItem.endTimeOffset, 20);
+    assert.strictEqual(savedItem.recoveryStrategy, 'newest');
   });
 
   it('should not fill history fields when the connector does not support history', () => {
@@ -665,9 +711,11 @@ describe('SouthConnectorRepository', () => {
         name: 'Group To Delete No History',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: 100,
+        startTimeOffset: 100,
+        endTimeOffset: 50,
         maxReadInterval: 3600,
-        readDelay: 200
+        readDelay: 200,
+        recoveryStrategy: 'oldest'
       },
       'userTest'
     );
@@ -682,7 +730,9 @@ describe('SouthConnectorRepository', () => {
       syncWithGroup: true,
       maxReadInterval: null,
       readDelay: null,
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -696,7 +746,9 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(savedItem.scanMode!.id, group.scanMode.id);
     assert.strictEqual(savedItem.maxReadInterval, null);
     assert.strictEqual(savedItem.readDelay, null);
-    assert.strictEqual(savedItem.overlap, null);
+    assert.strictEqual(savedItem.startTimeOffset, null);
+    assert.strictEqual(savedItem.endTimeOffset, null);
+    assert.strictEqual(savedItem.recoveryStrategy, null);
   });
 
   it('should not bump updated_at when saving a south connector with an item that has not changed', () => {
@@ -714,7 +766,9 @@ describe('SouthConnectorRepository', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -748,7 +802,9 @@ describe('SouthConnectorRepository', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',

@@ -82,7 +82,7 @@
         <div class="row">
           <!-- Sync with group toggle (only when item is in a group) -->
           @if (form.controls.groupId.value !== null) {
-            <div class="col-3">
+            <div class="col-2">
               <div class="form-group">
                 <div class="form-check form-switch padded">
                   <input
@@ -98,7 +98,7 @@
             </div>
           }
           <!-- Max Read Interval -->
-          <div [class]="form.controls.groupId.value !== null ? 'col-3' : 'col-4'">
+          <div class="col-2">
             <div class="form-group">
               <label class="form-label" for="max-read-interval" translate="south.items.max-read-interval"></label>
               <div class="input-group">
@@ -109,7 +109,7 @@
             </div>
           </div>
           <!-- Read Delay -->
-          <div [class]="form.controls.groupId.value !== null ? 'col-3' : 'col-4'">
+          <div class="col-2">
             <div class="form-group">
               <label class="form-label" for="read-delay" translate="south.items.read-delay"></label>
               <div class="input-group">
@@ -119,15 +119,51 @@
               <val-errors controlName="readDelay" />
             </div>
           </div>
-          <!-- Overlap -->
-          <div [class]="form.controls.groupId.value !== null ? 'col-3' : 'col-4'">
+          <!-- Start Time Offset -->
+          <div class="col-2">
             <div class="form-group">
-              <label class="form-label" for="overlap" translate="south.items.overlap"></label>
+              <label class="form-label" for="start-time-offset" translate="south.items.start-time-offset"></label>
               <div class="input-group">
-                <input formControlName="overlap" id="overlap" type="number" class="form-control" min="0" />
+                <input
+                  formControlName="startTimeOffset"
+                  id="start-time-offset"
+                  type="number"
+                  class="form-control"
+                  min="-2147483648"
+                  max="2147483647"
+                />
                 <span class="input-group-text" translate="common.unit.ms"></span>
               </div>
-              <val-errors controlName="overlap" />
+              <val-errors controlName="startTimeOffset" />
+            </div>
+          </div>
+          <!-- End Time Offset -->
+          <div class="col-2">
+            <div class="form-group">
+              <label class="form-label" for="end-time-offset" translate="south.items.end-time-offset"></label>
+              <div class="input-group">
+                <input
+                  formControlName="endTimeOffset"
+                  id="end-time-offset"
+                  type="number"
+                  class="form-control"
+                  min="-2147483648"
+                  max="2147483647"
+                />
+                <span class="input-group-text" translate="common.unit.ms"></span>
+              </div>
+              <val-errors controlName="endTimeOffset" />
+            </div>
+          </div>
+          <!-- Recovery Strategy -->
+          <div [class]="form.controls.groupId.value !== null ? 'col-2' : 'col-4'">
+            <div class="form-group">
+              <label class="form-label" for="recovery-strategy" translate="south.items.recovery-strategy"></label>
+              <select class="form-select" id="recovery-strategy" formControlName="recoveryStrategy">
+                @for (strategy of recoveryStrategies; track strategy.value) {
+                  <option [value]="strategy.value" [translate]="strategy.labelKey"></option>
+                }
+              </select>
             </div>
           </div>
         </div>

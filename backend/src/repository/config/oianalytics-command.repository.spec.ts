@@ -157,6 +157,12 @@ describe('OIAnalyticsCommandRepository', () => {
     assert.strictEqual(repository.findById('badId'), null);
   });
 
+  it('should properly find the first command to execute', () => {
+    const firstToExecute = repository.findFirstToExecute();
+    assert.ok(firstToExecute !== null);
+    assert.ok(['RETRIEVED', 'RUNNING'].includes(firstToExecute!.status));
+  });
+
   it('should create an update version command', () => {
     const command: OIAnalyticsFetchUpdateVersionCommandDTO = testData.oIAnalytics.commands
       .oIAnalyticsList[0] as OIAnalyticsFetchUpdateVersionCommandDTO;

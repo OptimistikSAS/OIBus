@@ -1,0 +1,72 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="engine.proxy-settings.title"></h4>
+</div>
+<div class="modal-body">
+  <form id="engine-proxy-form" [formGroup]="form" (ngSubmit)="save()">
+    <!-- Row 1: toggle (always visible) -->
+    <div class="row">
+      <div class="col-auto">
+        <div class="form-group">
+          <div class="form-check form-switch padded">
+            <input formControlName="proxyEnabled" id="proxy-enabled" type="checkbox" class="form-check-input" />
+            <label class="form-check-label" for="proxy-enabled" translate="engine.proxy-settings.proxy-enabled"></label>
+          </div>
+        </div>
+      </div>
+    </div>
+    @if (form.controls.proxyEnabled.value) {
+      <!-- Row 2: port + server auth -->
+      <div class="row mt-2">
+        <div class="col-3">
+          <div class="form-group">
+            <label class="form-label" for="proxy-port" translate="engine.proxy-settings.proxy-port"></label>
+            <input formControlName="proxyPort" type="number" id="proxy-port" class="form-control" />
+            <val-errors controlName="proxyPort" />
+          </div>
+        </div>
+        <div class="col-3">
+          <div class="form-group">
+            <label class="form-label" for="proxy-username" translate="engine.proxy-settings.proxy-username"></label>
+            <input formControlName="proxyUsername" id="proxy-username" class="form-control" />
+            <val-errors controlName="proxyUsername" />
+          </div>
+        </div>
+        <div class="col-3">
+          <div class="form-group">
+            <label class="form-label" for="proxy-password" translate="engine.proxy-settings.proxy-password"></label>
+            <input formControlName="proxyPassword" type="password" id="proxy-password" class="form-control" />
+            <val-errors controlName="proxyPassword" />
+          </div>
+        </div>
+      </div>
+      <!-- Row 3: forward proxy toggle -->
+      <div class="row mt-2">
+        <div class="col-auto">
+          <div class="form-group">
+            <div class="form-check form-switch padded">
+              <input formControlName="forwardProxyEnabled" id="forward-proxy-enabled" type="checkbox" class="form-check-input" />
+              <label class="form-check-label" for="forward-proxy-enabled" translate="engine.proxy-settings.forward-proxy-enabled"></label>
+            </div>
+          </div>
+        </div>
+      </div>
+      @if (form.controls.forwardProxyEnabled.value) {
+        <div class="row">
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label" for="forward-proxy-url" translate="engine.proxy-settings.forward-proxy-url"></label>
+              <input formControlName="forwardProxyUrl" id="forward-proxy-url" class="form-control" />
+              <val-errors controlName="forwardProxyUrl" />
+            </div>
+          </div>
+        </div>
+      }
+    }
+  </form>
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button type="submit" form="engine-proxy-form" class="btn btn-primary" translate="common.save" id="save-proxy-button"></button>
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-proxy-button"></button>
+  </div>
+</div>

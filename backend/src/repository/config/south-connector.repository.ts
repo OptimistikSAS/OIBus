@@ -8,7 +8,7 @@ import {
   SouthItemGroupEntityLight
 } from '../../model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { OIBusSouthType, SouthConnectorItemSearchParam } from '../../../shared/model/south-connector.model';
+import { OIBusSouthType, SouthConnectorItemSearchParam, SouthHistoryRecoveryStrategy } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
 import { ScanMode } from '../../model/scan-mode.model';
 import { toScanMode } from './scan-mode.repository';
@@ -29,12 +29,12 @@ const PAGE_SIZE = 50;
  */
 const ITEM_JOIN_SELECT =
   `SELECT si.id, si.name, si.enabled, si.scan_mode_id, si.settings, si.sync_with_group, ` +
-  `si.max_read_interval, si.read_delay, si.overlap, si.created_by, si.updated_by, si.created_at, si.updated_at, ` +
+  `si.max_read_interval, si.read_delay, si.start_time_offset, si.end_time_offset, si.recovery_strategy, si.created_by, si.updated_by, si.created_at, si.updated_at, ` +
   `sm.id AS sm_id, sm.name AS sm_name, sm.description AS sm_description, sm.cron AS sm_cron, ` +
   `sm.created_by AS sm_created_by, sm.updated_by AS sm_updated_by, ` +
   `sm.created_at AS sm_created_at, sm.updated_at AS sm_updated_at, ` +
-  `g.id AS g_id, g.name AS g_name, g.overlap AS g_overlap, g.max_read_interval AS g_max_read_interval, ` +
-  `g.read_delay AS g_read_delay, g.created_by AS g_created_by, g.updated_by AS g_updated_by, ` +
+  `g.id AS g_id, g.name AS g_name, g.start_time_offset AS g_start_time_offset, g.end_time_offset AS g_end_time_offset, g.max_read_interval AS g_max_read_interval, ` +
+  `g.read_delay AS g_read_delay, g.recovery_strategy AS g_recovery_strategy, g.created_by AS g_created_by, g.updated_by AS g_updated_by, ` +
   `g.created_at AS g_created_at, g.updated_at AS g_updated_at, ` +
   `gsm.id AS gsm_id, gsm.name AS gsm_name, gsm.description AS gsm_description, gsm.cron AS gsm_cron, ` +
   `gsm.created_by AS gsm_created_by, gsm.updated_by AS gsm_updated_by, ` +
@@ -106,9 +106,11 @@ export default class SouthConnectorRepository {
             name: groupToCreate.name,
             southId: south.id,
             scanMode: groupToCreate.scanMode,
-            overlap: groupToCreate.overlap,
+            startTimeOffset: groupToCreate.startTimeOffset,
+            endTimeOffset: groupToCreate.endTimeOffset,
             maxReadInterval: groupToCreate.maxReadInterval,
-            readDelay: groupToCreate.readDelay
+            readDelay: groupToCreate.readDelay,
+            recoveryStrategy: groupToCreate.recoveryStrategy
           },
           south.updatedBy
         );
@@ -122,15 +124,17 @@ export default class SouthConnectorRepository {
 
       // Update existing groups (name, scan mode, history settings may have changed via the connector edit form)
       const updateGroupStmt = this.database.prepare(
-        `UPDATE ${SOUTH_ITEM_GROUPS_TABLE} SET name = ?, scan_mode_id = ?, overlap = ?, max_read_interval = ?, read_delay = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
+        `UPDATE ${SOUTH_ITEM_GROUPS_TABLE} SET name = ?, scan_mode_id = ?, start_time_offset = ?, end_time_offset = ?, max_read_interval = ?, read_delay = ?, recovery_strategy = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
       );
       for (const group of south.groups.filter(g => g.id && !g.id.startsWith('temp_'))) {
         updateGroupStmt.run(
           group.name,
           group.scanMode?.id ?? null,
-          group.overlap ?? null,
+          group.startTimeOffset ?? null,
+          group.endTimeOffset ?? null,
           group.maxReadInterval ?? null,
           group.readDelay ?? null,
+          group.recoveryStrategy ?? null,
           south.updatedBy,
           group.id
         );
@@ -164,10 +168,10 @@ export default class SouthConnectorRepository {
             south.items.filter(item => item.id).map(item => item.id)
           );
         const insert = this.database.prepare(
-          `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`
+          `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, start_time_offset, end_time_offset, recovery_strategy, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`
         );
         const update = this.database.prepare(
-          `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, overlap = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
+          `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, start_time_offset = ?, end_time_offset = ?, recovery_strategy = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
         );
         const insertGroup = this.database.prepare(`INSERT INTO ${GROUP_ITEMS_TABLE} (group_id, item_id) VALUES (?, ?);`);
         const deleteGroups = this.database.prepare(`DELETE FROM ${GROUP_ITEMS_TABLE} WHERE item_id = ?;`);
@@ -184,10 +188,12 @@ export default class SouthConnectorRepository {
                 sync_with_group: number;
                 max_read_interval: number | null;
                 read_delay: number | null;
-                overlap: number | null;
+                start_time_offset: number | null;
+                end_time_offset: number | null;
+                recovery_strategy: string | null;
               }
             >(
-              `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`
+              `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, start_time_offset, end_time_offset, recovery_strategy FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`
             )
             .all(south.id)
             .map(row => [row.id, row])
@@ -206,7 +212,9 @@ export default class SouthConnectorRepository {
               +item.syncWithGroup,
               item.maxReadInterval ?? null,
               item.readDelay ?? null,
-              item.overlap ?? null,
+              item.startTimeOffset ?? null,
+              item.endTimeOffset ?? null,
+              item.recoveryStrategy ?? null,
               item.createdBy,
               item.updatedBy
             );
@@ -221,7 +229,9 @@ export default class SouthConnectorRepository {
               existing.sync_with_group !== +item.syncWithGroup ||
               existing.max_read_interval !== (item.maxReadInterval ?? null) ||
               existing.read_delay !== (item.readDelay ?? null) ||
-              existing.overlap !== (item.overlap ?? null);
+              existing.start_time_offset !== (item.startTimeOffset ?? null) ||
+              existing.end_time_offset !== (item.endTimeOffset ?? null) ||
+              existing.recovery_strategy !== (item.recoveryStrategy ?? null);
             if (hasChanged) {
               update.run(
                 item.name,
@@ -231,7 +241,9 @@ export default class SouthConnectorRepository {
                 +item.syncWithGroup,
                 item.maxReadInterval ?? null,
                 item.readDelay ?? null,
-                item.overlap ?? null,
+                item.startTimeOffset ?? null,
+                item.endTimeOffset ?? null,
+                item.recoveryStrategy ?? null,
                 item.updatedBy,
                 item.id
               );
@@ -305,14 +317,20 @@ export default class SouthConnectorRepository {
           item.scanMode = group.scanMode;
         }
         if (applyHistorySettings) {
-          if (item.overlap == null) {
-            item.overlap = group.overlap;
+          if (item.startTimeOffset == null) {
+            item.startTimeOffset = group.startTimeOffset;
+          }
+          if (item.endTimeOffset == null) {
+            item.endTimeOffset = group.endTimeOffset;
           }
           if (item.maxReadInterval == null) {
             item.maxReadInterval = group.maxReadInterval;
           }
           if (item.readDelay == null) {
             item.readDelay = group.readDelay;
+          }
+          if (item.recoveryStrategy == null) {
+            item.recoveryStrategy = group.recoveryStrategy;
           }
         }
         item.syncWithGroup = false;
@@ -413,8 +431,8 @@ export default class SouthConnectorRepository {
     if (!southItem.id) {
       southItem.id = generateRandomId(6);
       const insertQuery =
-        `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by, created_at, updated_at) ` +
-        `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+        `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, start_time_offset, end_time_offset, recovery_strategy, created_by, updated_by, created_at, updated_at) ` +
+        `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
       this.database
         .prepare(insertQuery)
         .run(
@@ -427,12 +445,14 @@ export default class SouthConnectorRepository {
           +southItem.syncWithGroup,
           southItem.maxReadInterval ?? null,
           southItem.readDelay ?? null,
-          southItem.overlap ?? null,
+          southItem.startTimeOffset ?? null,
+          southItem.endTimeOffset ?? null,
+          southItem.recoveryStrategy ?? null,
           southItem.createdBy,
           southItem.updatedBy
         );
     } else {
-      const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, overlap = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
+      const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, start_time_offset = ?, end_time_offset = ?, recovery_strategy = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
       this.database
         .prepare(query)
         .run(
@@ -443,7 +463,9 @@ export default class SouthConnectorRepository {
           +southItem.syncWithGroup,
           southItem.maxReadInterval ?? null,
           southItem.readDelay ?? null,
-          southItem.overlap ?? null,
+          southItem.startTimeOffset ?? null,
+          southItem.endTimeOffset ?? null,
+          southItem.recoveryStrategy ?? null,
           southItem.updatedBy,
           southItem.id
         );
@@ -542,7 +564,7 @@ export default class SouthConnectorRepository {
   findGroupBySouthId(southId: string): Array<SouthItemGroupEntityLight> {
     const query =
       `SELECT g.id, g.created_at, g.updated_at, g.created_by, g.updated_by, g.name, ` +
-      `g.scan_mode_id, g.overlap, g.max_read_interval, g.read_delay, s.id as scan_mode_id_full, ` +
+      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, g.recovery_strategy, s.id as scan_mode_id_full, ` +
       `s.name as scan_mode_name, s.description as scan_mode_description, s.cron as scan_mode_cron, ` +
       `s.created_at as scan_mode_created_at, s.updated_at as scan_mode_updated_at, s.created_by as scan_mode_created_by, s.updated_by as scan_mode_updated_by ` +
       `FROM ${SOUTH_ITEM_GROUPS_TABLE} g JOIN ${SCAN_MODE_TABLE} s ON g.scan_mode_id = s.id WHERE g.south_id = ? ORDER BY g.name;`;
@@ -602,9 +624,11 @@ export function toItemEntityFromJoinedRow(row: Record<string, string | number | 
           createdAt: row.gsm_created_at as string,
           updatedAt: row.gsm_updated_at as string
         },
-        overlap: row.g_overlap !== null && row.g_overlap !== undefined ? Number(row.g_overlap) : null,
+        startTimeOffset: row.g_start_time_offset !== null && row.g_start_time_offset !== undefined ? Number(row.g_start_time_offset) : null,
+        endTimeOffset: row.g_end_time_offset !== null && row.g_end_time_offset !== undefined ? Number(row.g_end_time_offset) : null,
         maxReadInterval: row.g_max_read_interval !== null && row.g_max_read_interval !== undefined ? Number(row.g_max_read_interval) : null,
         readDelay: row.g_read_delay !== null && row.g_read_delay !== undefined ? Number(row.g_read_delay) : null,
+        recoveryStrategy: (row.g_recovery_strategy as SouthHistoryRecoveryStrategy) || null,
         createdBy: row.g_created_by as string,
         updatedBy: row.g_updated_by as string,
         createdAt: row.g_created_at as string,
@@ -622,7 +646,9 @@ export function toItemEntityFromJoinedRow(row: Record<string, string | number | 
     syncWithGroup: Boolean(row.sync_with_group),
     maxReadInterval: row.max_read_interval !== null && row.max_read_interval !== undefined ? Number(row.max_read_interval) : null,
     readDelay: row.read_delay !== null && row.read_delay !== undefined ? Number(row.read_delay) : null,
-    overlap: row.overlap !== null && row.overlap !== undefined ? Number(row.overlap) : null,
+    startTimeOffset: row.start_time_offset !== null && row.start_time_offset !== undefined ? Number(row.start_time_offset) : null,
+    endTimeOffset: row.end_time_offset !== null && row.end_time_offset !== undefined ? Number(row.end_time_offset) : null,
+    recoveryStrategy: (row.recovery_strategy as SouthHistoryRecoveryStrategy) || null,
     createdBy: row.created_by as string,
     updatedBy: row.updated_by as string,
     createdAt: row.created_at as string,
@@ -659,10 +685,13 @@ export const toSouthItemGroupLight = (result: Record<string, string | number>): 
     id: result.id as string,
     name: result.name as string,
     scanMode,
-    overlap: result.overlap !== null && result.overlap !== undefined ? (result.overlap as number) : null,
+    startTimeOffset:
+      result.start_time_offset !== null && result.start_time_offset !== undefined ? (result.start_time_offset as number) : null,
+    endTimeOffset: result.end_time_offset !== null && result.end_time_offset !== undefined ? (result.end_time_offset as number) : null,
     maxReadInterval:
       result.max_read_interval !== null && result.max_read_interval !== undefined ? (result.max_read_interval as number) : null,
     readDelay: (result.read_delay as number) || 0,
+    recoveryStrategy: (result.recovery_strategy as SouthHistoryRecoveryStrategy) || null,
     createdBy: result.created_by as string,
     updatedBy: result.updated_by as string,
     createdAt: result.created_at as string,

@@ -1,4 +1,4 @@
-import { delay } from '../service/utils';
+import { delay, generateIntervals } from '../service/utils';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
@@ -18,6 +18,8 @@ import { Instant } from '../model/types';
 import { CacheSize } from '../model/engine.model';
 import TypedEventEmitter from '../service/typed-event-emitter';
 import type { ILogger } from '../model/logger.model';
+import { loggerService } from '../service/logger/logger.service';
+import { Interval } from '../../shared/model/types';
 
 const FINISH_INTERVAL = 5000;
 
@@ -31,7 +33,7 @@ export interface HistoryMetricsEvents {
   'south-connect': { lastConnection: Instant };
   'south-run-start': { lastRunStart: Instant };
   'south-run-end': { lastRunDuration: number };
-  'south-history-query-start': { running: boolean; intervalProgress: number };
+  'south-history-query-start': { running: boolean };
   'south-history-query-interval': {
     running: boolean;
     intervalProgress: number;
@@ -48,6 +50,8 @@ export interface HistoryMetricsEvents {
 export default class HistoryQuery {
   private finishInterval: NodeJS.Timeout | null = null;
   private stopping = false;
+  private logger!: ILogger;
+  private intervals: Array<Interval> = [];
 
   public metricsEvent: TypedEventEmitter<HistoryMetricsEvents> = new TypedEventEmitter<HistoryMetricsEvents>();
   public finishEvent: EventEmitter = new EventEmitter();
@@ -55,9 +59,15 @@ export default class HistoryQuery {
   constructor(
     private historyConfiguration: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
     private north: NorthConnector<NorthSettings>,
-    private south: SouthConnector<SouthSettings, SouthItemSettings>,
-    private logger: ILogger
-  ) {}
+    private south: SouthConnector<SouthSettings, SouthItemSettings>
+  ) {
+    this.logger = loggerService.createChildLogger('history-query', this.historyConfiguration.id, this.historyConfiguration.name);
+    this.intervals = generateIntervals(
+      historyConfiguration.queryTimeRange.startTime,
+      historyConfiguration.queryTimeRange.endTime,
+      historyConfiguration.queryTimeRange.maxReadInterval
+    );
+  }
 
   /** Live north cache/error/archive folder sizes, read from the cache service (the authoritative source). */
   getNorthCacheSizes(): CacheSize {
@@ -88,6 +98,7 @@ export default class HistoryQuery {
     this.south.connectedEvent.on('connected', () => {
       this.south!.createDeferredPromise();
 
+      this.metricsEvent.emit('south-history-query-start', { running: true });
       this.south!.historyQueryHandler(
         this.historyConfiguration.items
           .filter(item => item.enabled)
@@ -107,12 +118,15 @@ export default class HistoryQuery {
             },
             maxReadInterval: this.historyConfiguration.queryTimeRange.maxReadInterval,
             readDelay: this.historyConfiguration.queryTimeRange.readDelay,
-            overlap: null
+            startTimeOffset: null,
+            endTimeOffset: null,
+            recoveryStrategy: null
           })),
         this.historyConfiguration.queryTimeRange.startTime,
         this.historyConfiguration.queryTimeRange.endTime
       )
         .then(() => {
+          this.metricsEvent.emit('south-history-query-stop', { running: false });
           this.south!.resolveDeferredPromise();
         })
         .catch(async error => {
@@ -138,24 +152,8 @@ export default class HistoryQuery {
     this.south.metricsEvent.on('run-end', (data: { lastRunDuration: number }) => {
       this.metricsEvent.emit('south-run-end', data);
     });
-    this.south.metricsEvent.on('history-query-start', (data: { running: boolean; intervalProgress: number }) => {
-      this.metricsEvent.emit('south-history-query-start', data);
-    });
-    this.south.metricsEvent.on(
-      'history-query-interval',
-      (data: {
-        running: boolean;
-        intervalProgress: number;
-        currentIntervalStart: Instant;
-        currentIntervalEnd: Instant;
-        currentIntervalNumber: number;
-        numberOfIntervals: number;
-      }) => {
-        this.metricsEvent.emit('south-history-query-interval', data);
-      }
-    );
-    this.south.metricsEvent.on('history-query-stop', (data: { running: boolean }) => {
-      this.metricsEvent.emit('south-history-query-stop', data);
+    this.south.metricsEvent.on('history-query-interval', (data: { currentIntervalStart: Instant; currentIntervalEnd: Instant }) => {
+      this.metricsEvent.emit('south-history-query-interval', this.computeCurrentProgress(data));
     });
     this.south.metricsEvent.on('add-values', (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue | null }) => {
       this.metricsEvent.emit('south-add-values', data);
@@ -197,8 +195,8 @@ export default class HistoryQuery {
     }
   }
 
-  setLogger(value: ILogger) {
-    this.logger = value;
+  refreshLogger(): void {
+    this.logger = loggerService.createChildLogger('history-query', this.historyConfiguration.id, this.historyConfiguration.name);
   }
 
   get historyQueryConfiguration() {
@@ -268,5 +266,30 @@ export default class HistoryQuery {
 
   async updateCacheContent(updateCommand: CacheContentUpdateCommand): Promise<void> {
     await this.north.updateCacheContent(updateCommand);
+  }
+
+  private computeCurrentProgress(data: { currentIntervalStart: Instant; currentIntervalEnd: Instant }): {
+    running: boolean;
+    intervalProgress: number;
+    currentIntervalStart: Instant;
+    currentIntervalEnd: Instant;
+    currentIntervalNumber: number;
+    numberOfIntervals: number;
+  } {
+    // this.intervals is the full, fixed breakdown of the history query's configured time range
+    // (oldest to newest), computed once in the constructor. It's independent of the south
+    // connector's own per-run sub-intervals (which vary with recovery strategy and cache state),
+    // so counting how many of its slots are fully covered by currentIntervalEnd gives a stable
+    // overall progress measure across restarts.
+    const numberOfIntervals = this.intervals.length || 1;
+    const currentIntervalNumber = this.intervals.filter(interval => interval.end <= data.currentIntervalEnd).length;
+    return {
+      running: true,
+      intervalProgress: currentIntervalNumber / numberOfIntervals,
+      currentIntervalStart: data.currentIntervalStart,
+      currentIntervalEnd: data.currentIntervalEnd,
+      currentIntervalNumber,
+      numberOfIntervals
+    };
   }
 }

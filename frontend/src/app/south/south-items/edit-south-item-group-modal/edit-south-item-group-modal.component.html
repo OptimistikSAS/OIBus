@@ -23,39 +23,81 @@
         <val-errors controlName="scanModeId" />
       </div>
 
-      <!-- Overlap (only for historian connectors) -->
+      <!-- Max Read Interval / Read Delay (only for historian connectors) -->
       @if (hasHistorianCapabilities) {
-        <div class="form-group">
-          <label class="form-label" for="group-overlap" translate="south.groups.overlap"></label>
-          <div class="input-group">
-            <input formControlName="overlap" id="group-overlap" type="number" class="form-control" min="0" />
-            <span class="input-group-text" translate="common.unit.ms"></span>
+        <div class="row">
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label" for="group-max-read-interval" translate="south.groups.max-read-interval"></label>
+              <div class="input-group">
+                <input formControlName="maxReadInterval" id="group-max-read-interval" type="number" class="form-control" min="0" />
+                <span class="input-group-text" translate="common.unit.s"></span>
+              </div>
+              <val-errors controlName="maxReadInterval" />
+            </div>
           </div>
-          <val-errors controlName="overlap" />
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label" for="group-read-delay" translate="south.groups.read-delay"></label>
+              <div class="input-group">
+                <input formControlName="readDelay" id="group-read-delay" type="number" class="form-control" min="0" />
+                <span class="input-group-text" translate="common.unit.ms"></span>
+              </div>
+              <val-errors controlName="readDelay" />
+            </div>
+          </div>
         </div>
       }
 
-      <!-- Max Read Interval (only for historian connectors) -->
+      <!-- Start Time Offset / End Time Offset (only for historian connectors) -->
       @if (hasHistorianCapabilities) {
-        <div class="form-group">
-          <label class="form-label" for="group-max-read-interval" translate="south.groups.max-read-interval"></label>
-          <div class="input-group">
-            <input formControlName="maxReadInterval" id="group-max-read-interval" type="number" class="form-control" min="0" />
-            <span class="input-group-text" translate="common.unit.s"></span>
+        <div class="row">
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label" for="group-start-time-offset" translate="south.groups.start-time-offset"></label>
+              <div class="input-group">
+                <input
+                  formControlName="startTimeOffset"
+                  id="group-start-time-offset"
+                  type="number"
+                  class="form-control"
+                  min="-2147483648"
+                  max="2147483647"
+                />
+                <span class="input-group-text" translate="common.unit.ms"></span>
+              </div>
+              <val-errors controlName="startTimeOffset" />
+            </div>
           </div>
-          <val-errors controlName="maxReadInterval" />
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label" for="group-end-time-offset" translate="south.groups.end-time-offset"></label>
+              <div class="input-group">
+                <input
+                  formControlName="endTimeOffset"
+                  id="group-end-time-offset"
+                  type="number"
+                  class="form-control"
+                  min="-2147483648"
+                  max="2147483647"
+                />
+                <span class="input-group-text" translate="common.unit.ms"></span>
+              </div>
+              <val-errors controlName="endTimeOffset" />
+            </div>
+          </div>
         </div>
       }
 
-      <!-- Read Delay (only for historian connectors) -->
+      <!-- Recovery Strategy (only for historian connectors) -->
       @if (hasHistorianCapabilities) {
         <div class="form-group">
-          <label class="form-label" for="group-read-delay" translate="south.groups.read-delay"></label>
-          <div class="input-group">
-            <input formControlName="readDelay" id="group-read-delay" type="number" class="form-control" min="0" />
-            <span class="input-group-text" translate="common.unit.ms"></span>
-          </div>
-          <val-errors controlName="readDelay" />
+          <label class="form-label" for="group-recovery-strategy" translate="south.groups.recovery-strategy"></label>
+          <select class="form-select" id="group-recovery-strategy" formControlName="recoveryStrategy">
+            @for (strategy of recoveryStrategies; track strategy.value) {
+              <option [value]="strategy.value" [translate]="strategy.labelKey"></option>
+            }
+          </select>
         </div>
       }
     </form>

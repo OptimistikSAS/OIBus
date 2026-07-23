@@ -32,6 +32,8 @@ let mockEncryptionService: Record<string, unknown>;
 
 // Captured mock proxy instance — set by MockProxyServer constructor in before()
 let lastProxyRefreshIpFilters: ReturnType<typeof mock.fn>;
+let lastProxyStart: ReturnType<typeof mock.fn>;
+let lastProxyStop: ReturnType<typeof mock.fn>;
 
 let OIBusService: new (...args: Array<unknown>) => InstanceType<typeof OIBusServiceType>;
 let toEngineSettingsDTO: typeof toEngineSettingsDTOType;
@@ -47,9 +49,10 @@ before(() => {
     start = mock.fn(async () => undefined);
     stop = mock.fn(async () => undefined);
     refreshIpFilters = mock.fn();
-    setLogger = mock.fn();
     constructor() {
       lastProxyRefreshIpFilters = this.refreshIpFilters;
+      lastProxyStart = this.start;
+      lastProxyStop = this.stop;
     }
   }
   mockProxyServer = { __esModule: true, default: MockProxyServer };
@@ -60,6 +63,10 @@ before(() => {
   mockModule(nodeRequire, './utils', mockUtils);
   mockModule(nodeRequire, '../web-server/proxy-server', mockProxyServer);
   mockModule(nodeRequire, './encryption.service', mockEncryptionService);
+  mockModule(nodeRequire, 'argon2', {
+    __esModule: true,
+    default: { hash: mock.fn(async (pass: string) => `argon2hash:${pass}`) }
+  });
 
   const mod = reloadModule<{
     default: new (...args: Array<unknown>) => InstanceType<typeof OIBusServiceType>;
@@ -113,6 +120,7 @@ describe('OIBus Service', () => {
     // Reset encryptionService mock in-place
     const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
     encryptionMock.encryptText.mock.resetCalls();
+    encryptionMock.decryptText.mock.resetCalls();
 
     engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
     engineMetricsRepository.getMetrics.mock.mockImplementation(() => testData.engine.metrics);
@@ -158,6 +166,7 @@ describe('OIBus Service', () => {
       historyQueryService,
       userService,
       engine,
+      false,
       false
     );
   });
@@ -250,13 +259,6 @@ describe('OIBus Service', () => {
     ]);
   });
 
-  it('should set logger', () => {
-    service.setLogger(logger);
-    // engine.setLogger is also called once in the constructor; verify the last call used our logger
-    assert.ok(engine.setLogger.mock.calls.some(c => c.arguments[0] === logger));
-    assert.ok(oIAnalyticsMessageService.setLogger.mock.calls.some(c => c.arguments[0] === logger));
-  });
-
   it('should correctly update settings and call callback methods', async () => {
     const newEngineSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
     newEngineSettings.name = 'updated oibus';
@@ -291,7 +293,7 @@ describe('OIBus Service', () => {
     assert.strictEqual(engineRepository.update.mock.calls.length, 1);
     assert.strictEqual(loggerService.stop.mock.calls.length, 1);
     assert.strictEqual(loggerService.start.mock.calls.length, 1);
-    assert.strictEqual(loggerService.createChildLogger.mock.calls.length, 3); // in constructor and 2x at update
+    assert.strictEqual(loggerService.createChildLogger.mock.calls.length, 2); // in constructor and 1x at update (resetLogger)
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
 
     // Wait for setImmediate callback to execute
@@ -351,6 +353,132 @@ describe('OIBus Service', () => {
     assert.strictEqual(loggerService.stop.mock.calls.length, 0);
     assert.strictEqual(loggerService.start.mock.calls.length, 0);
     assert.strictEqual(loggerService.createChildLogger.mock.calls.length, 1); // in constructor only
+  });
+
+  it('should update engine name', async () => {
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+
+    await service.updateEngineName(testData.engine.nameCommand, testData.users.list[0].id);
+
+    assert.strictEqual(engineRepository.updateName.mock.calls.length, 1);
+    assert.deepStrictEqual(engineRepository.updateName.mock.calls[0].arguments, [
+      testData.engine.nameCommand.name,
+      testData.users.list[0].id
+    ]);
+    assert.strictEqual(loggerService.stop.mock.calls.length, 1);
+    assert.strictEqual(loggerService.start.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+  });
+
+  it('should update engine web server port without redirect when port unchanged', async () => {
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+
+    const result = await service.updateEngineWebServer({ port: testData.engine.settings.port }, testData.users.list[0].id);
+
+    assert.deepStrictEqual(result, { needsRedirect: false, newPort: null });
+    assert.strictEqual(engineRepository.updateWebServer.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+  });
+
+  it('should update engine web server port with redirect when port changed', async () => {
+    const newSettings = { ...testData.engine.settings, port: 3333 };
+    let getCallCount = 0;
+    engineRepository.get.mock.mockImplementation(() => {
+      getCallCount++;
+      if (getCallCount === 1) return testData.engine.settings;
+      return newSettings;
+    });
+
+    mock.timers.reset();
+    const result = await service.updateEngineWebServer(testData.engine.webServerCommand, testData.users.list[0].id);
+    await new Promise(resolve => setImmediate(resolve));
+    mock.timers.enable({
+      apis: ['Date', 'setInterval', 'setImmediate', 'setTimeout'],
+      now: new Date(testData.constants.dates.FAKE_NOW).getTime()
+    });
+
+    assert.deepStrictEqual(result, { needsRedirect: true, newPort: 3333 });
+  });
+
+  it('should throw error when web server port equals proxy port', async () => {
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+
+    await assert.rejects(
+      () => service.updateEngineWebServer({ port: testData.engine.settings.proxyPort! }, testData.users.list[0].id),
+      new Error('Web server port and proxy port can not be the same')
+    );
+    assert.strictEqual(engineRepository.updateWebServer.mock.calls.length, 0);
+  });
+
+  it('should update engine proxy settings', async () => {
+    engineRepository.get.mock.mockImplementation(() => ({ ...testData.engine.settings, proxyEnabled: false }));
+
+    await service.updateEngineProxy({ proxyEnabled: false, proxyPort: null }, testData.users.list[0].id);
+
+    assert.strictEqual(engineRepository.updateProxy.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+  });
+
+  it('should throw error when proxy port equals web server port', async () => {
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+
+    await assert.rejects(
+      () => service.updateEngineProxy({ proxyEnabled: true, proxyPort: testData.engine.settings.port }, testData.users.list[0].id),
+      new Error('Web server port and proxy port can not be the same')
+    );
+    assert.strictEqual(engineRepository.updateProxy.mock.calls.length, 0);
+  });
+
+  it('should start proxy server when proxy is enabled', async () => {
+    const settingsWithProxy = { ...testData.engine.settings, proxyEnabled: true, proxyPort: 9000 };
+    engineRepository.get.mock.mockImplementation(() => settingsWithProxy);
+
+    await service.updateEngineProxy({ proxyEnabled: true, proxyPort: 9000 }, testData.users.list[0].id);
+
+    assert.strictEqual(engineRepository.updateProxy.mock.calls.length, 1);
+    assert.strictEqual(lastProxyStop.mock.calls.length, 1);
+    assert.strictEqual(lastProxyStart.mock.calls.length, 1);
+    assert.deepStrictEqual(lastProxyStart.mock.calls[0].arguments, [
+      9000,
+      {
+        url: settingsWithProxy.forwardProxyUrl,
+        username: settingsWithProxy.forwardProxyUsername,
+        password: settingsWithProxy.forwardProxyPassword
+      },
+      {
+        username: settingsWithProxy.proxyUsername,
+        password: settingsWithProxy.proxyPassword
+      }
+    ]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+  });
+
+  it('should update engine logger settings and encrypt loki password', async () => {
+    const command = JSON.parse(JSON.stringify(testData.engine.loggerCommand));
+    command.loki.password = 'new password';
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+
+    await service.updateEngineLogger(command, testData.users.list[0].id);
+
+    const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
+    assert.strictEqual(encryptionMock.encryptText.mock.calls.length, 1);
+    assert.strictEqual(engineRepository.updateLogger.mock.calls.length, 1);
+    assert.strictEqual(loggerService.stop.mock.calls.length, 1);
+    assert.strictEqual(loggerService.start.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+  });
+
+  it('should update engine logger settings and preserve loki password when empty', async () => {
+    const command = JSON.parse(JSON.stringify(testData.engine.loggerCommand));
+    command.loki.password = '';
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+
+    await service.updateEngineLogger(command, testData.users.list[0].id);
+
+    const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
+    assert.strictEqual(encryptionMock.encryptText.mock.calls.length, 0);
+    assert.strictEqual(command.loki.password, testData.engine.settings.logParameters.loki.password);
+    assert.strictEqual(engineRepository.updateLogger.mock.calls.length, 1);
   });
 
   it('should correctly restart OIBus', async () => {
@@ -553,6 +681,11 @@ describe('OIBus Service', () => {
         launcherVersion: engineSettings.launcherVersion,
         proxyEnabled: engineSettings.proxyEnabled,
         proxyPort: engineSettings.proxyPort,
+        forwardProxyUrl: engineSettings.forwardProxyUrl,
+        forwardProxyUsername: engineSettings.forwardProxyUsername,
+        forwardProxyPassword: '',
+        proxyUsername: engineSettings.proxyUsername,
+        proxyPassword: '',
         logParameters: {
           console: {
             level: engineSettings.logParameters.console.level
@@ -577,6 +710,12 @@ describe('OIBus Service', () => {
           oia: {
             level: engineSettings.logParameters.oia.level,
             interval: engineSettings.logParameters.oia.interval
+          },
+          syslog: {
+            level: engineSettings.logParameters.syslog.level,
+            host: engineSettings.logParameters.syslog.host,
+            port: engineSettings.logParameters.syslog.port,
+            protocol: engineSettings.logParameters.syslog.protocol
           }
         }
       }

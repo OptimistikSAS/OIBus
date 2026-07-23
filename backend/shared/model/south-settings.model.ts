@@ -13,6 +13,12 @@ export type SouthADSSettingsBoolAsText = (typeof SOUTH_A_D_S_SETTINGS_BOOL_AS_TE
 export const SOUTH_F_T_P_SETTINGS_AUTHENTICATIONS = ['none', 'password'] as const;
 export type SouthFTPSettingsAuthentication = (typeof SOUTH_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
 
+export const SOUTH_INFLUX_D_B_SETTINGS_VERSIONS = ['1', '2', '3'] as const;
+export type SouthInfluxDBSettingsVersion = (typeof SOUTH_INFLUX_D_B_SETTINGS_VERSIONS)[number];
+
+export const SOUTH_INFLUX_D_B_SETTINGS_PROTOCOLS = ['http', 'https'] as const;
+export type SouthInfluxDBSettingsProtocol = (typeof SOUTH_INFLUX_D_B_SETTINGS_PROTOCOLS)[number];
+
 export const SOUTH_MODBUS_SETTINGS_ADDRESS_OFFSETS = ['modbus', 'jbus'] as const;
 export type SouthModbusSettingsAddressOffset = (typeof SOUTH_MODBUS_SETTINGS_ADDRESS_OFFSETS)[number];
 
@@ -404,6 +410,9 @@ export interface SouthADSSettings {
 export interface SouthFolderScannerSettings {
   inputFolder: string;
   compression: boolean;
+  username?: string | null;
+  password?: string | null;
+  domain?: string | null;
 }
 
 export interface SouthFTPSettings {
@@ -413,6 +422,20 @@ export interface SouthFTPSettings {
   username?: string | null;
   password?: string | null;
   compression: boolean;
+}
+
+export interface SouthInfluxDBSettings {
+  version: SouthInfluxDBSettingsVersion;
+  host?: string;
+  port?: number;
+  protocol?: SouthInfluxDBSettingsProtocol;
+  database?: string;
+  username?: string | null;
+  password?: string | null;
+  url?: string;
+  token?: string | null;
+  organisation?: string;
+  bucket?: string;
 }
 
 export interface SouthModbusSettings {
@@ -564,6 +587,7 @@ export type SouthSettings =
   | SouthADSSettings
   | SouthFolderScannerSettings
   | SouthFTPSettings
+  | SouthInfluxDBSettings
   | SouthModbusSettings
   | SouthMQTTSettings
   | SouthMSSQLSettings
@@ -804,6 +828,11 @@ export interface SouthFTPItemSettings {
   recursive: boolean;
 }
 
+export interface SouthInfluxDBItemSettings {
+  query: string;
+  requestTimeout: number;
+}
+
 export interface SouthModbusItemSettings {
   address: string;
   modbusType: SouthModbusItemSettingsModbusType;
@@ -908,6 +937,7 @@ export type SouthItemSettings =
   | SouthADSItemSettings
   | SouthFolderScannerItemSettings
   | SouthFTPItemSettings
+  | SouthInfluxDBItemSettings
   | SouthModbusItemSettings
   | SouthMQTTItemSettings
   | SouthMSSQLItemSettings

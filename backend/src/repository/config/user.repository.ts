@@ -20,8 +20,12 @@ const DEFAULT_USER: Omit<User, 'id' | 'createdBy' | 'updatedBy' | 'createdAt' | 
 const DEFAULT_PASSWORD = 'pass';
 
 export default class UserRepository {
-  constructor(private readonly database: Database) {
-    this.createDefault();
+  constructor(
+    private readonly database: Database,
+    defaultLogin = DEFAULT_USER.login,
+    defaultPassword = DEFAULT_PASSWORD
+  ) {
+    this.createDefault(defaultLogin, defaultPassword);
   }
 
   list(): Array<User> {
@@ -133,14 +137,14 @@ export default class UserRepository {
     this.database.prepare(query).run(id);
   }
 
-  protected createDefault(): void {
+  protected createDefault(login: string, password: string): void {
     const query = `SELECT id FROM ${USERS_TABLE} WHERE login = ?;`;
-    const result = this.database.prepare(query).get(DEFAULT_USER.login);
+    const result = this.database.prepare(query).get(login);
     if (result) {
       return;
     }
 
-    this.create(DEFAULT_USER, DEFAULT_PASSWORD, 'system').catch(err => {
+    this.create({ ...DEFAULT_USER, login }, password, 'system').catch(err => {
       console.error(err.message);
     });
   }

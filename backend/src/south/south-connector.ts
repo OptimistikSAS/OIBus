@@ -2,7 +2,12 @@ import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
 import { delay, generateIntervals, groupItemsByGroup, validateCronExpression } from '../service/utils';
 
-import { SOUTH_SINGLE_ITEMS, SouthConnectorItemTestingSettings, SouthItemLastValue } from '../../shared/model/south-connector.model';
+import {
+  SOUTH_SINGLE_ITEMS,
+  SouthConnectorItemTestingSettings,
+  SouthHistoryRecoveryStrategy,
+  SouthItemLastValue
+} from '../../shared/model/south-connector.model';
 import { Instant, Interval } from '../../shared/model/types';
 import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
@@ -25,16 +30,10 @@ export interface SouthMetricsEvents {
   connect: { lastConnection: Instant };
   'run-start': { lastRunStart: Instant };
   'run-end': { lastRunDuration: number };
-  'history-query-start': { running: boolean; intervalProgress: number };
   'history-query-interval': {
-    running: boolean;
-    intervalProgress: number;
     currentIntervalStart: Instant;
     currentIntervalEnd: Instant;
-    currentIntervalNumber: number;
-    numberOfIntervals: number;
   };
-  'history-query-stop': { running: boolean };
   // `any-content` (opaque payloads) has no time value, hence the `| null`.
   'add-values': { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue | null };
   'add-file': { lastFileRetrieved: string };
@@ -43,6 +42,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-c
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import { ScanMode } from '../model/scan-mode.model';
 import type { ILogger } from '../model/logger.model';
+import { loggerService } from '../service/logger/logger.service';
 
 /**
  * Base class for every South connector.
@@ -80,6 +80,7 @@ import type { ILogger } from '../model/logger.model';
  *    deferred so the engine can shut down cleanly mid-scan.
  */
 export default abstract class SouthConnector<T extends SouthSettings, I extends SouthItemSettings> {
+  protected logger!: ILogger;
   private taskJobQueue: Array<ScanMode> = [];
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
   // Last time a "previous cron still running" warning was emitted per scan mode. Used to throttle
@@ -106,9 +107,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     private readonly southCacheRepository: SouthCacheRepository,
-    protected logger: ILogger,
     protected cacheFolderPath: string
   ) {
+    this.logger = loggerService.createChildLogger('south', this.connector.id, this.connector.name);
     this.cacheService = new SouthCacheService(this.southCacheRepository);
     this.tmpFolder = path.resolve(cacheFolderPath, 'tmp');
     this.taskRunner.on('next', () => {
@@ -408,7 +409,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
           try {
             await this.directQueryHandler(groupedElements);
           } catch (error: unknown) {
-            this.logger.error(`Error when querying items with direct access: ${(error as Error).message}`);
+            const logCtx =
+              groupedElements.length === 1
+                ? { itemId: groupedElements[0].id, itemName: groupedElements[0].name }
+                : groupedElements[0].group
+                  ? { groupId: groupedElements[0].group.id, groupName: groupedElements[0].group.name }
+                  : {};
+            this.logger.error(logCtx, `Error when querying items with direct access: ${(error as Error).message}`);
           }
         }
         if (this.hasHistoryQuery()) {
@@ -428,7 +435,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
             );
           } catch (error: unknown) {
             this.historyIsRunning = false;
-            this.logger.error(`Error when querying items with history capabilities: ${(error as Error).message}`);
+            const logCtx =
+              groupedElements.length === 1
+                ? { itemId: groupedElements[0].id, itemName: groupedElements[0].name }
+                : groupedElements[0].group
+                  ? { groupId: groupedElements[0].group.id, groupName: groupedElements[0].group.name }
+                  : {};
+            this.logger.error(logCtx, `Error when querying items with history capabilities: ${(error as Error).message}`);
           }
         }
 
@@ -516,9 +529,10 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * timestamp seen so the next call resumes where this one left off.
    *
    * Window construction:
-   *  - The effective start is `max(startTime, cache.trackedInstant - overlap)`
-   *    so we never re-query data we've already cached (and the `overlap` lets
-   *    operators backfill a small slack window for late-arriving samples).
+   *  - The effective start is `max(startTime, cache.trackedInstant + startTimeOffset)`.
+   *    A negative startTimeOffset extends the window backwards for late-arriving samples.
+   *  - The effective end is `endTime + endTimeOffset`; if it is not after the effective
+   *    start, the query is skipped until time advances enough.
    *  - The window is then split into sub-intervals of at most
    *    `maxReadInterval` seconds (via `generateIntervals`) so very wide
    *    catch-up reads don't try to fetch hours of data in one round-trip.
@@ -551,56 +565,35 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       // Each item is queried independently so that each has its own cache entry and trackedInstant.
       // This mirrors how groupItemsByGroup() sends singleton arrays during normal scan flow.
       for (const item of itemsToRead) {
-        await this.querySingleItemHistory(item, startTime, endTime);
+        await this.runHistoryQueryForLead(item, [item], null, startTime, endTime);
         if (this.stopping) break;
       }
     } else {
       const lead = itemsToRead[0];
       const groupId = lead.group && lead.syncWithGroup ? lead.group.id : null;
-      let southCache = this.cacheService!.getItemLastValue(this.connector.id, lead.id);
-      if (!southCache) {
-        southCache = {
-          itemId: lead.id,
-          groupId,
-          trackedInstant: null,
-          queryTime: null,
-          value: null
-        };
-      }
-      if (!southCache.trackedInstant) {
-        southCache.trackedInstant = startTime;
-      }
-
-      let maxReadInterval: number;
-      let readDelay: number;
-      let overlap: number;
-      if (lead.group && lead.syncWithGroup) {
-        maxReadInterval = lead.group.maxReadInterval!;
-        readDelay = lead.group.readDelay!;
-        overlap = lead.group.overlap!;
-      } else {
-        maxReadInterval = lead.maxReadInterval!;
-        readDelay = lead.readDelay!;
-        overlap = lead.overlap || 0;
-      }
-      const startTimeFromCache = DateTime.fromISO(southCache.trackedInstant).minus({ milliseconds: overlap }).toUTC().toISO()!;
-      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, maxReadInterval);
-      this.logIntervals(intervals);
-      await this.queryIntervals(intervals, itemsToRead, southCache!, readDelay, numberOfIntervalsDone);
+      await this.runHistoryQueryForLead(lead, itemsToRead, groupId, startTime, endTime);
     }
-
-    this.metricsEvent.emit('history-query-stop', {
-      running: false
-    });
     this.historyIsRunning = false;
   }
 
-  private async querySingleItemHistory(item: SouthConnectorItemEntity<I>, startTime: Instant, endTime: Instant): Promise<void> {
-    let southCache = this.cacheService!.getItemLastValue(this.connector.id, item.id);
+  /**
+   * Query one interval-bounded window of history for `items`, using `lead`'s (item- or
+   * group-level, whichever applies) throttling/offset/recovery settings and `lead`'s cache entry.
+   * Shared by the single-item and grouped code paths of `historyQueryHandler`, which only differ
+   * in which item leads the cache lookup and whether other items ride along in the same query.
+   */
+  private async runHistoryQueryForLead(
+    lead: SouthConnectorItemEntity<I>,
+    items: Array<SouthConnectorItemEntity<I>>,
+    groupId: string | null,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<void> {
+    let southCache = this.cacheService!.getItemLastValue(this.connector.id, lead.id);
     if (!southCache) {
       southCache = {
-        itemId: item.id,
-        groupId: null,
+        itemId: lead.id,
+        groupId,
         trackedInstant: null,
         queryTime: null,
         value: null
@@ -609,11 +602,22 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     if (!southCache.trackedInstant) {
       southCache.trackedInstant = startTime;
     }
-    const overlap = item.overlap || 0;
-    const startTimeFromCache = DateTime.fromISO(southCache.trackedInstant).minus({ milliseconds: overlap }).toUTC().toISO()!;
-    const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, item.maxReadInterval!);
+
+    // Group settings apply only when the lead item is synced with its group; otherwise the lead's
+    // own settings apply. Groups and items share the same field names/types for all of these.
+    const settingsSource = lead.group && lead.syncWithGroup ? lead.group : lead;
+    const maxReadInterval = settingsSource.maxReadInterval ?? 0;
+    const readDelay = settingsSource.readDelay ?? 0;
+    const startTimeOffset = settingsSource.startTimeOffset ?? 0;
+    const endTimeOffset = settingsSource.endTimeOffset ?? 0;
+    const recoveryStrategy = settingsSource.recoveryStrategy ?? 'oldest';
+
+    const queryWindow = this.computeQueryWindow(southCache.trackedInstant, endTime, startTimeOffset, endTimeOffset);
+    if (!queryWindow) return;
+    const { effectiveStartTime, effectiveEndTime } = queryWindow;
+    const intervals = generateIntervals(effectiveStartTime, effectiveEndTime, maxReadInterval, recoveryStrategy);
     this.logIntervals(intervals);
-    await this.queryIntervals(intervals, [item], southCache, item.readDelay!, numberOfIntervalsDone);
+    await this.queryIntervals(intervals, items, southCache, readDelay, recoveryStrategy);
   }
 
   private async queryIntervals(
@@ -621,41 +625,38 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     items: Array<SouthConnectorItemEntity<I>>,
     southCache: Omit<SouthItemLastValue, 'itemName' | 'groupName'>,
     readDelay: number,
-    numberOfIntervalsDone: number
+    strategy: SouthHistoryRecoveryStrategy
   ) {
-    this.metricsEvent.emit('history-query-start', {
-      running: true,
-      intervalProgress: this.calculateIntervalProgress(intervals.length, numberOfIntervalsDone)
-    });
+    // For 'newest' strategy, track the max trackedInstant seen across all intervals. Intervals are
+    // queried newest-first (see generateIntervals), so this is expected to resolve on the first
+    // interval that has data — the comparison is a safety net, not a substitute for that ordering.
+    let latestValue: { trackedInstant: Instant; value: unknown } | null = null;
 
-    for (let index = numberOfIntervalsDone; index < intervals.length; index++) {
-      const startTime = DateTime.now().toUTC().toISO()!;
+    for (let index = 0; index < intervals.length; index++) {
+      const queryTime = DateTime.now().toUTC().toISO()!;
       const interval = intervals[index];
 
+      this.metricsEvent.emit('history-query-interval', { currentIntervalStart: interval.start, currentIntervalEnd: interval.end });
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
       const lastValue: { trackedInstant: Instant; value: unknown } | null = await this.historyQuery(items, interval.start, interval.end);
 
-      // We update the max instant only if the start interval is lower than the lastInstantRetrieved (i.e., we found data)
-      // With overlap, it may return a lastInstantRetrieved inferior to the max instant, so we also check this condition
-      if (lastValue && (!southCache.trackedInstant || lastValue.trackedInstant > southCache.trackedInstant)) {
-        this.cacheService!.saveItemLastValue(this.connector.id, {
-          groupId: southCache.groupId,
-          itemId: southCache.itemId,
-          queryTime: startTime,
-          value: lastValue.value,
-          trackedInstant: lastValue.trackedInstant
-        });
+      if (strategy === 'oldest') {
+        // We update the max instant only if the start interval is lower than the lastInstantRetrieved (i.e., we found data)
+        // With a negative startTimeOffset the window extends backwards, so lastInstantRetrieved may be below trackedInstant — check both conditions
+        if (lastValue && (!southCache.trackedInstant || lastValue.trackedInstant > southCache.trackedInstant)) {
+          this.logger.debug(`Saving last value ${JSON.stringify(lastValue.value)}, trackedInstant ${lastValue.trackedInstant}`);
+          this.cacheService!.saveItemLastValue(this.connector.id, {
+            groupId: southCache.groupId,
+            itemId: southCache.itemId,
+            queryTime,
+            value: lastValue.value,
+            trackedInstant: lastValue.trackedInstant
+          });
+        }
+      } else if (lastValue && (!latestValue || lastValue.trackedInstant > latestValue.trackedInstant)) {
+        latestValue = lastValue;
       }
-
-      this.metricsEvent.emit('history-query-interval', {
-        running: true,
-        intervalProgress: this.calculateIntervalProgress(intervals.length, index + 1), // this index has been done, so we increment
-        currentIntervalStart: interval.start,
-        currentIntervalEnd: interval.end,
-        currentIntervalNumber: index + 1,
-        numberOfIntervals: intervals.length
-      });
 
       if (this.stopping) {
         this.logger.debug(`Connector is stopping. Exiting history query at interval ${index}: [${interval.start}, ${interval.end}]`);
@@ -666,6 +667,39 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         await delay(readDelay);
       }
     }
+
+    // For 'newest' strategy: only advance trackedInstant once all intervals have been queried.
+    // This prevents a mid-run restart from skipping the not-yet-queried older intervals.
+    // Only save if data was actually found — otherwise leave the cache untouched.
+    if (strategy === 'newest' && !this.stopping && latestValue) {
+      this.logger.debug(`Saving last value ${JSON.stringify(latestValue.value)}, trackedInstant ${latestValue.trackedInstant}`);
+      this.cacheService!.saveItemLastValue(this.connector.id, {
+        groupId: southCache.groupId,
+        itemId: southCache.itemId,
+        queryTime: DateTime.now().toUTC().toISO()!,
+        value: latestValue.value,
+        trackedInstant: latestValue.trackedInstant
+      });
+    }
+  }
+
+  private computeQueryWindow(
+    startTime: Instant,
+    endTime: Instant,
+    startTimeOffset: number,
+    endTimeOffset: number
+  ): { effectiveStartTime: Instant; effectiveEndTime: Instant } | null {
+    const effectiveStartTime = DateTime.fromISO(startTime).plus({ milliseconds: startTimeOffset }).toUTC().toISO()!;
+    const effectiveEndTime = DateTime.fromISO(endTime).plus({ milliseconds: endTimeOffset }).toUTC().toISO()!;
+
+    if (effectiveEndTime <= effectiveStartTime) {
+      this.logger.warn(
+        `Skipping history query: effective window [${effectiveStartTime}, ${effectiveEndTime}] does not extend past ` +
+          `the tracked instant or the query start ${startTime} (startTimeOffset: ${startTimeOffset} ms, endTimeOffset: ${endTimeOffset} ms)`
+      );
+      return null;
+    }
+    return { effectiveStartTime, effectiveEndTime };
   }
 
   private logIntervals(intervals: Array<Interval>) {
@@ -795,8 +829,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.logger.info(`South connector "${this.connector.name}" stopped`);
   }
 
-  setLogger(value: ILogger) {
-    this.logger = value;
+  refreshLogger(): void {
+    this.logger = loggerService.createChildLogger('south', this.connector.id, this.connector.name);
   }
 
   /**

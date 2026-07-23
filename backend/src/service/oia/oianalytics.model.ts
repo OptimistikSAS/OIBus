@@ -96,6 +96,10 @@ export interface OIAnalyticsEngineCommandDTO extends BaseAuditFields {
   launcherVersion: string;
   architecture: string;
   operatingSystem: string;
+  dataFolder: string;
+  binaryFolder: string;
+  ignoreIpFilters: boolean;
+  ignoreRemoteUpdate: boolean;
   settings: EngineSettingsCommandDTO;
 }
 

@@ -16,6 +16,7 @@ import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianal
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
 import SouthItemGroupRepositoryMock from '../tests/__mocks__/repository/config/south-item-group-repository.mock';
+import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import type SouthServiceType from './south.service';
 import type {
@@ -36,6 +37,7 @@ import { SouthItemGroupCommandDTO, SouthConnectorItemCommandDTO } from '../../sh
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { toScanModeDTO } from './scan-mode.service';
+import { OIBusContent } from '../../shared/model/engine.model';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -107,6 +109,7 @@ describe('South Service', () => {
   let oIAnalyticsMessageService: OIAnalyticsMessageServiceMock;
   let engine: DataStreamEngineMock;
   let southItemGroupRepository: SouthItemGroupRepositoryMock;
+  let transformerService: TransformerServiceMock;
   let mockedSouth1: SouthConnectorMock;
   let logger: PinoLogger;
   let validator: { validateSettings: ReturnType<typeof mock.fn>; validate: ReturnType<typeof mock.fn> };
@@ -123,6 +126,7 @@ describe('South Service', () => {
     oIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
     engine = new DataStreamEngineMock(logger);
     southItemGroupRepository = new SouthItemGroupRepositoryMock();
+    transformerService = new TransformerServiceMock();
 
     validator = {
       validateSettings: mock.fn(async () => undefined),
@@ -153,7 +157,8 @@ describe('South Service', () => {
       certificateRepository,
       oIAnalyticsMessageService,
       engine,
-      southItemGroupRepository
+      southItemGroupRepository,
+      transformerService
     );
   });
 
@@ -215,8 +220,10 @@ describe('South Service', () => {
       southId: 'newSouthId',
       scanMode: testData.scanMode.list[0],
       items: [],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
+      recoveryStrategy: null,
       readDelay: 0,
       createdBy: '',
       updatedBy: '',
@@ -259,8 +266,10 @@ describe('South Service', () => {
       southId: 'newSouthId',
       scanMode: testData.scanMode.list[0],
       items: [],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
+      recoveryStrategy: null,
       readDelay: 0,
       createdBy: '',
       updatedBy: '',
@@ -457,6 +466,44 @@ describe('South Service', () => {
     assert.strictEqual(mockedSouth1.testItem.mock.calls.length, 1);
   });
 
+  it('should delegate to the transformer service when a transformer is provided', async () => {
+    const rawContent = { type: 'any-content', content: 'raw' } as OIBusContent;
+    const transformedContent = { type: 'time-values', content: [] } as OIBusContent;
+    mockedSouth1.testItem.mock.mockImplementationOnce(async () => rawContent);
+    transformerService.runTransformer.mock.mockImplementationOnce(async () => transformedContent);
+
+    const result = await service.testItem(
+      testData.south.list[0].id,
+      testData.south.command.type,
+      testData.south.itemCommand.name,
+      testData.south.command.settings,
+      testData.south.itemCommand.settings,
+      { history: undefined, transformer: { transformerId: 'transformer-id', options: { foo: 'bar' } } }
+    );
+
+    assert.strictEqual(mockedSouth1.testItem.mock.calls.length, 1);
+    assert.deepStrictEqual(transformerService.runTransformer.mock.calls[0].arguments, ['transformer-id', { foo: 'bar' }, rawContent]);
+    assert.deepStrictEqual(result.raw, rawContent);
+    assert.deepStrictEqual(result.transformed, transformedContent);
+  });
+
+  it('should return the raw result with transformed null when no transformer is provided', async () => {
+    const rawContent = { type: 'any-content', content: 'raw' } as OIBusContent;
+    mockedSouth1.testItem.mock.mockImplementationOnce(async () => rawContent);
+
+    const result = await service.testItem(
+      testData.south.list[0].id,
+      testData.south.command.type,
+      testData.south.itemCommand.name,
+      testData.south.command.settings,
+      testData.south.itemCommand.settings,
+      { history: undefined }
+    );
+
+    assert.deepStrictEqual(result, { raw: rawContent, transformed: null });
+    assert.strictEqual(transformerService.runTransformer.mock.calls.length, 0);
+  });
+
   it('should list items', () => {
     service.listItems(testData.south.list[0].id);
     assert.deepStrictEqual(southConnectorRepository.findAllItemsForSouth.mock.calls[0].arguments, [testData.south.list[0].id]);
@@ -541,7 +588,24 @@ describe('South Service', () => {
   it('should get item last value from group cache when item is synced with group', () => {
     const southId = testData.south.list[0].id;
     const groupId = 'group-123';
-    const groupedItem = { ...testData.south.list[0].items[0], syncWithGroup: true, group: { id: groupId, name: 'My Group' } };
+    const groupedItem = {
+      ...testData.south.list[0].items[0],
+      syncWithGroup: true,
+      group: {
+        id: groupId,
+        name: 'My Group',
+        scanMode: testData.scanMode.list[0],
+        startTimeOffset: null,
+        endTimeOffset: null,
+        maxReadInterval: null,
+        readDelay: null,
+        recoveryStrategy: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    };
     southConnectorRepository.findItemById.mock.mockImplementationOnce(() => groupedItem);
     const cached = {
       itemId: 'some-lead-item-id',
@@ -595,8 +659,10 @@ describe('South Service', () => {
       name: 'Test Group',
       southId: testData.south.list[0].id,
       scanMode: testData.scanMode.list[0],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
+      recoveryStrategy: null,
       items: [],
       readDelay: 0,
       createdBy: '',
@@ -663,8 +729,10 @@ describe('South Service', () => {
       name: 'Update Group',
       southId: testData.south.list[0].id,
       scanMode: testData.scanMode.list[0],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
+      recoveryStrategy: null,
       items: [],
       readDelay: 0,
       createdBy: '',
@@ -899,8 +967,10 @@ describe('South Service', () => {
           },
           group: null,
           maxReadInterval: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           readDelay: 0,
+          recoveryStrategy: null,
           syncWithGroup: true
         }
       ],
@@ -1013,8 +1083,10 @@ describe('South Service', () => {
           },
           group: null,
           maxReadInterval: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           readDelay: 0,
+          recoveryStrategy: null,
           syncWithGroup: true
         }
       ],
@@ -1066,8 +1138,10 @@ describe('South Service', () => {
           },
           group: { id: '', standardSettings: { name: 'Test Group' } },
           maxReadInterval: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           readDelay: 0,
+          recoveryStrategy: null,
           syncWithGroup: true
         }
       ],
@@ -1117,8 +1191,10 @@ describe('South Service', () => {
           },
           group: { id: '', standardSettings: { name: 'Test Group' } },
           maxReadInterval: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           readDelay: 0,
+          recoveryStrategy: null,
           syncWithGroup: true
         }
       ],
@@ -1192,8 +1268,10 @@ describe('South Service', () => {
       name: 'New Import Group',
       southId: testData.south.list[0].id,
       scanMode: testData.scanMode.list[0],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
+      recoveryStrategy: null,
       items: [],
       readDelay: 0,
       createdBy: '',
@@ -1225,16 +1303,18 @@ describe('South Service', () => {
     assert.deepStrictEqual(savedItems[0].group, newGroup);
   });
 
-  it('should create a new group using the overlap, maxReadInterval and readDelay of the first item where the group is noticed', async () => {
+  it('should create a new group using the startTimeOffset, endTimeOffset, maxReadInterval, readDelay and recoveryStrategy of the first item where the group is noticed', async () => {
     const newGroup: SouthItemGroupEntity = {
       id: 'newGroupId',
       name: 'New Import Group',
       southId: testData.south.list[0].id,
       scanMode: testData.scanMode.list[0],
-      overlap: 10,
+      startTimeOffset: 10,
+      endTimeOffset: 20,
       maxReadInterval: 3600,
       items: [],
       readDelay: 200,
+      recoveryStrategy: 'oldest',
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -1250,18 +1330,22 @@ describe('South Service', () => {
       ...testData.south.itemCommand,
       groupName: 'New Import Group',
       groupId: null,
-      overlap: 10,
+      startTimeOffset: 10,
+      endTimeOffset: 20,
       maxReadInterval: 3600,
-      readDelay: 200
+      readDelay: 200,
+      recoveryStrategy: 'oldest'
     };
     const secondItemWithGroupName: SouthConnectorItemCommandDTO = {
       ...testData.south.itemCommand,
       id: 'anotherNewSouthItemId',
       groupName: 'New Import Group',
       groupId: null,
-      overlap: 999,
+      startTimeOffset: 999,
+      endTimeOffset: 999,
       maxReadInterval: 999,
-      readDelay: 999
+      readDelay: 999,
+      recoveryStrategy: 'newest'
     };
 
     await service.importItems(testData.south.list[0].id, [firstItemWithGroupName, secondItemWithGroupName], 'userTest');
@@ -1271,9 +1355,11 @@ describe('South Service', () => {
       name: 'New Import Group',
       southId: testData.south.list[0].id,
       scanMode: testData.scanMode.list[0],
-      overlap: 10,
+      startTimeOffset: 10,
+      endTimeOffset: 20,
       maxReadInterval: 3600,
-      readDelay: 200
+      readDelay: 200,
+      recoveryStrategy: 'oldest'
     });
   });
 
@@ -1283,10 +1369,12 @@ describe('South Service', () => {
       name: 'Group1',
       southId: testData.south.list[0].id,
       scanMode: testData.scanMode.list[0],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
       items: [],
       readDelay: 0,
+      recoveryStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -1324,8 +1412,10 @@ describe('South Service', () => {
       name: 'Existing Import Group',
       southId: testData.south.list[0].id,
       scanMode: testData.scanMode.list[0],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
+      recoveryStrategy: null,
       items: [],
       readDelay: 0,
       createdBy: '',
@@ -1418,9 +1508,11 @@ describe('South Service', () => {
       name: 'Group 1',
       southId: testData.south.list[0].id,
       scanMode: testData.scanMode.list[0],
-      overlap: 5,
+      startTimeOffset: 5,
+      endTimeOffset: null,
       maxReadInterval: 3600,
       readDelay: 200,
+      recoveryStrategy: null,
       items: [],
       createdBy: 'user1',
       updatedBy: 'user1',
@@ -1439,9 +1531,11 @@ describe('South Service', () => {
         scanMode: toScanModeDTO(group.scanMode, getUserInfo)
       },
       historySettings: {
+        startTimeOffset: group.startTimeOffset,
+        endTimeOffset: group.endTimeOffset,
         maxReadInterval: group.maxReadInterval,
         readDelay: group.readDelay,
-        overlap: group.overlap
+        recoveryStrategy: group.recoveryStrategy
       },
       createdBy: getUserInfo(group.createdBy),
       updatedBy: getUserInfo(group.updatedBy),
@@ -1458,8 +1552,10 @@ describe('South Service', () => {
           name: 'Group 1',
           southId: testData.south.list[0].id,
           scanMode: testData.scanMode.list[0],
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0,
           items: [],
           createdBy: '',
@@ -1472,8 +1568,10 @@ describe('South Service', () => {
           name: 'Group 2',
           southId: testData.south.list[0].id,
           scanMode: testData.scanMode.list[1],
-          overlap: 10,
+          startTimeOffset: 10,
+          endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0,
           items: [],
           createdBy: '',
@@ -1498,8 +1596,10 @@ describe('South Service', () => {
         name: 'Group 1',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1532,8 +1632,10 @@ describe('South Service', () => {
         name: 'Group 1',
         southId: 'differentSouthId',
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1558,8 +1660,10 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: 5,
+          startTimeOffset: 5,
+          endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0
         }
       };
@@ -1569,8 +1673,10 @@ describe('South Service', () => {
         name: 'New Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: 5,
+        startTimeOffset: 5,
+        endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1588,7 +1694,7 @@ describe('South Service', () => {
       assert.strictEqual(southItemGroupRepository.create.mock.calls.length, 1);
     });
 
-    it('should create a group with null overlap', () => {
+    it('should create a group with null start/end time offset', () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
         standardSettings: {
@@ -1596,8 +1702,10 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0
         }
       };
@@ -1607,8 +1715,10 @@ describe('South Service', () => {
         name: 'Group With Null Overlap',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1621,9 +1731,9 @@ describe('South Service', () => {
       southItemGroupRepository.create.mock.mockImplementation(() => createdGroup);
 
       const result = service.createGroup(testData.south.list[0].id, command, 'testUser');
-      assert.strictEqual(result.overlap, null);
+      assert.strictEqual(result.startTimeOffset, null);
       const createCall = southItemGroupRepository.create.mock.calls[0];
-      assert.strictEqual((createCall.arguments[0] as { overlap: unknown }).overlap, null);
+      assert.strictEqual((createCall.arguments[0] as { startTimeOffset: unknown }).startTimeOffset, null);
       assert.strictEqual(createCall.arguments[1], 'testUser');
     });
 
@@ -1635,8 +1745,10 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: 5,
+          startTimeOffset: 5,
+          endTimeOffset: null,
           maxReadInterval: 3600,
+          recoveryStrategy: null,
           readDelay: 200
         }
       };
@@ -1646,8 +1758,10 @@ describe('South Service', () => {
         name: 'Group With Throttling',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: 5,
+        startTimeOffset: 5,
+        endTimeOffset: null,
         maxReadInterval: 3600,
+        recoveryStrategy: null,
         readDelay: 200,
         items: [],
         createdBy: '',
@@ -1678,8 +1792,10 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0
         }
       };
@@ -1689,8 +1805,10 @@ describe('South Service', () => {
         name: 'Existing Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1715,8 +1833,10 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[1].id
         },
         historySettings: {
-          overlap: 15,
+          startTimeOffset: 15,
+          endTimeOffset: null,
           maxReadInterval: 3600,
+          recoveryStrategy: null,
           readDelay: 200
         }
       };
@@ -1726,8 +1846,10 @@ describe('South Service', () => {
         name: 'Original Name',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1740,7 +1862,8 @@ describe('South Service', () => {
         ...existingGroup,
         name: 'Updated Group',
         scanMode: testData.scanMode.list[1],
-        overlap: 15,
+        startTimeOffset: 15,
+        endTimeOffset: null,
         maxReadInterval: 3600,
         readDelay: 200
       };
@@ -1771,8 +1894,10 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0
         }
       };
@@ -1782,8 +1907,10 @@ describe('South Service', () => {
         name: 'Original Name',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1796,7 +1923,8 @@ describe('South Service', () => {
         ...existingGroup,
         name: 'Updated Name Only',
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       };
@@ -1832,8 +1960,10 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0
         }
       };
@@ -1854,8 +1984,10 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0
         }
       };
@@ -1865,8 +1997,10 @@ describe('South Service', () => {
         name: 'Group From Other South',
         southId: 'differentSouthId',
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1891,8 +2025,10 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0
         }
       };
@@ -1902,8 +2038,10 @@ describe('South Service', () => {
         name: 'Original Name',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1934,8 +2072,10 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0
         }
       };
@@ -1945,8 +2085,10 @@ describe('South Service', () => {
         name: 'Original Name',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1960,8 +2102,10 @@ describe('South Service', () => {
         name: 'Existing Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1985,8 +2129,10 @@ describe('South Service', () => {
         name: 'Group To Delete',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2022,8 +2168,10 @@ describe('South Service', () => {
         name: 'Group From Other South',
         southId: 'differentSouthId',
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2046,8 +2194,10 @@ describe('South Service', () => {
         name: 'Target Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2075,8 +2225,10 @@ describe('South Service', () => {
         name: 'Group From Other South',
         southId: 'differentSouthId',
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2132,8 +2284,10 @@ describe('South Service', () => {
           name: 'Test Group',
           southId: testData.south.list[0].id,
           scanMode: testData.scanMode.list[0],
-          overlap: 10,
+          startTimeOffset: 10,
+          endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0,
           items: [],
           createdBy: '',
@@ -2146,17 +2300,19 @@ describe('South Service', () => {
         assert.strictEqual(dto.id, 'group1');
         assert.strictEqual(dto.standardSettings.name, 'Test Group');
         assert.strictEqual(dto.standardSettings.scanMode.id, testData.scanMode.list[0].id);
-        assert.strictEqual(dto.historySettings.overlap, 10);
+        assert.strictEqual(dto.historySettings.startTimeOffset, 10);
       });
 
-      it('should convert SouthItemGroupEntity with null overlap to DTO', () => {
+      it('should convert SouthItemGroupEntity with null start/end time offset to DTO', () => {
         const entity: SouthItemGroupEntity = {
           id: 'group2',
           name: 'Test Group 2',
           southId: testData.south.list[0].id,
           scanMode: testData.scanMode.list[0],
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0,
           items: [],
           createdBy: '',
@@ -2166,7 +2322,7 @@ describe('South Service', () => {
         };
 
         const dto = toSouthItemGroupDTO(entity, id => ({ id, friendlyName: id }));
-        assert.strictEqual(dto.historySettings.overlap, null);
+        assert.strictEqual(dto.historySettings.startTimeOffset, null);
       });
 
       it('should convert item with group to DTO using toSouthConnectorItemCommandDTO', () => {
@@ -2175,8 +2331,10 @@ describe('South Service', () => {
           name: 'Test Group',
           southId: testData.south.list[0].id,
           scanMode: testData.scanMode.list[0],
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0,
           items: [],
           createdBy: '',
@@ -2196,8 +2354,10 @@ describe('South Service', () => {
           group,
           syncWithGroup: false,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: null,
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -2220,8 +2380,10 @@ describe('South Service', () => {
           group: null,
           syncWithGroup: false,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: null,
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -2263,7 +2425,8 @@ describe('South Service', () => {
             syncWithGroup: true,
             maxReadInterval: 3600,
             readDelay: 200,
-            overlap: 100
+            startTimeOffset: 100,
+            endTimeOffset: null
           };
 
           await copySouthItemCommandToSouthItemEntity(
@@ -2279,7 +2442,7 @@ describe('South Service', () => {
           assert.strictEqual(southItemEntity.syncWithGroup, true);
           assert.strictEqual(southItemEntity.maxReadInterval, 3600);
           assert.strictEqual(southItemEntity.readDelay, 200);
-          assert.strictEqual(southItemEntity.overlap, 100);
+          assert.strictEqual(southItemEntity.startTimeOffset, 100);
         });
 
         it('should set syncWithGroup to false when command.syncWithGroup is explicitly false', async () => {

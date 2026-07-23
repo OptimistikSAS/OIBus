@@ -1,77 +1,172 @@
-<div>
+<div class="testing-item-panel">
   <div class="d-flex justify-content-between oib-box-title">
     <span translate="south.test-item.title"></span>
-
-    <div class="align-items-center d-flex gap-2">
-      <!-- Change display mode -->
-      @if (currentDisplayMode) {
-        <div ngbDropdown class="d-inline-block">
-          <button type="button" class="btn btn-link oib-box-btn m-0" id="view-dropdown" ngbDropdownToggle>
-            <span class="fa {{ testResultView().currentDisplayModeIcon }}"></span>
-            <span style="margin-left: 5px">{{ 'south.test-item.view.' + currentDisplayMode | translate }}</span>
-          </button>
-          <div ngbDropdownMenu aria-labelledby="view-dropdown">
-            @for (displayMode of availableDisplayModes; track $index) {
-              <button
-                ngbDropdownItem
-                class="{{ currentDisplayMode === displayMode ? 'active' : '' }}"
-                (click)="changeDisplayMode(displayMode)"
-              >
-                <span class="fa {{ testResultView().displayModeIcons[displayMode] }}"></span>
-                <span style="margin-left: 5px">{{ 'south.test-item.view.' + displayMode | translate }}</span>
-              </button>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- Test run buttons -->
-      <div>
-        <button
-          #testButton
-          translate="south.test-item.test-button"
-          id="test-item"
-          class="btn btn-secondary btn-sm oib-box-btn m-0"
-          [disabled]="isTestRunning"
-          (click)="testItem()"
-        >
-          @if (isTestRunning) {
-            <span class="fa fa-spinner fa-spin ms-2"></span>
-          } @else {
-            <span class="fa fa-check ms-2"></span>
-          }
-        </button>
-        <button
-          translate="south.test-item.cancel-button"
-          id="cancel-test-item"
-          class="btn btn-danger btn-sm oib-box-btn ms-2"
-          [disabled]="!isTestRunning"
-          (click)="cancelTesting()"
-        ></button>
-      </div>
+    <div>
+      <button
+        translate="south.test-item.test-button"
+        id="test-item"
+        class="btn btn-secondary btn-sm oib-box-btn m-0"
+        [disabled]="isTestRunning"
+        (click)="testItem()"
+      >
+        @if (isTestRunning) {
+          <span class="fa fa-spinner fa-spin ms-2"></span>
+        } @else {
+          <span class="fa fa-check ms-2"></span>
+        }
+      </button>
+      <button
+        translate="south.test-item.cancel-button"
+        id="cancel-test-item"
+        class="btn btn-danger btn-sm oib-box-btn ms-2"
+        [disabled]="!isTestRunning"
+        (click)="cancelTesting()"
+      ></button>
     </div>
   </div>
 
-  <!-- history related settings -->
-  @if (testingSettingsForm) {
-    <form [formGroup]="testingSettingsForm" id="testing-settings-form">
-      @if (supportsHistorySettings) {
-        <div class="form-group mx-2" formGroupName="history" id="history">
-          <oib-date-range-selector
-            #dateRangeSelector
-            formControlName="dateRange"
-            [startLabel]="'south.test-item.query-start'"
-            [endLabel]="'south.test-item.query-end'"
-            [defaultRange]="'last-10-minutes'"
-          />
-          <val-errors controlName="dateRange" />
+  <div class="testing-item-body">
+    @if (form) {
+      <form [formGroup]="form" id="testing-settings-form">
+        @if (settingsCollapsed) {
+          <button
+            type="button"
+            id="expand-settings"
+            class="btn btn-link btn-sm p-0 settings-summary-chip"
+            (click)="settingsCollapsed = false"
+          >
+            <span class="fa fa-sliders me-1"></span>
+            <span>{{ settingsSummary }}</span>
+            <span class="fa fa-chevron-down ms-2"></span>
+          </button>
+        }
+
+        <div [class.d-none]="settingsCollapsed">
+          @if (supportsHistorySettings) {
+            <div class="form-group" formGroupName="history" id="history">
+              <oib-date-range-selector
+                #dateRangeSelector
+                formControlName="dateRange"
+                [startLabel]="'south.test-item.query-start'"
+                [endLabel]="'south.test-item.query-end'"
+                [defaultRange]="'last-10-minutes'"
+              />
+              <val-errors controlName="dateRange" />
+            </div>
+          }
+
+          @if (supportsHistorySettings) {
+            <hr class="my-2" />
+          }
+
+          <div class="row">
+            <!-- North selection (south context only) -->
+            @if (!isHistory) {
+              <div class="col-6 form-group">
+                <label class="form-label" for="north-select" translate="south.test-item.north"></label>
+                <select id="north-select" class="form-select" formControlName="northId">
+                  <option [ngValue]="null" translate="south.test-item.transformer-raw"></option>
+                  @for (north of norths; track north.id) {
+                    <option [ngValue]="north.id">{{ north.name }}</option>
+                  }
+                </select>
+              </div>
+            }
+
+            <!-- Transformer selection -->
+            @if (isHistory || form.controls.northId.value) {
+              <div class="col-6 form-group">
+                <label class="form-label" for="transformer-select" translate="south.test-item.transformer"></label>
+                <select id="transformer-select" class="form-select" formControlName="transformerId">
+                  <option [ngValue]="null" translate="south.test-item.transformer-raw"></option>
+                  @for (choice of transformerChoices; track choice.transformerId) {
+                    <option [ngValue]="choice.transformerId">
+                      @if (choice.transformer.type === 'standard') {
+                        {{ 'configuration.oibus.manifest.transformers.standard.' + choice.transformer.functionName | translate }}
+                      } @else {
+                        {{ choice.transformer.name }}
+                      }
+                    </option>
+                  }
+                </select>
+              </div>
+            }
+          </div>
+
+          @if (testResult) {
+            <div class="text-end mt-1">
+              <button type="button" id="hide-settings" class="btn btn-link btn-sm p-0" (click)="settingsCollapsed = true">
+                <span translate="south.test-item.hide-settings"></span>
+                <span class="fa fa-chevron-up ms-1"></span>
+              </button>
+            </div>
+          }
         </div>
-      }
-    </form>
-  }
+
+        <!-- Selected transformer + its options: shown as soon as a transformer is picked, independent of
+             whether the settings above are collapsed or a test has even run yet. -->
+        @if (selectedTransformer; as selected) {
+          <div class="pipeline-transformer mt-2">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="fw-bold">
+                <span class="fa fa-shuffle me-1"></span>
+                @if (selectedNorthName; as north) {
+                  <span>{{ north }} · </span>
+                }
+                @if (selected.type === 'standard') {
+                  {{ 'configuration.oibus.manifest.transformers.standard.' + selected.functionName | translate }}
+                } @else {
+                  {{ selected.name }}
+                }
+              </div>
+              @if (!optionsEditMode) {
+                <button
+                  type="button"
+                  id="edit-transformer-options"
+                  class="btn btn-link btn-sm p-0 ms-2"
+                  [attr.aria-label]="'south.test-item.edit-options' | translate"
+                  [title]="'south.test-item.edit-options' | translate"
+                  (click)="optionsEditMode = true"
+                >
+                  <span class="fa fa-pencil"></span>
+                </button>
+              }
+            </div>
+
+            @if (optionsEditMode) {
+              <div class="mt-2" formGroupName="options">
+                <oib-oibus-object-form-control
+                  [scanModes]="[]"
+                  [certificates]="[]"
+                  [group]="form.controls.options"
+                  [objectAttribute]="selected.manifest"
+                />
+              </div>
+            } @else if (currentOptionEntries.length > 0) {
+              <div class="pipeline-options small text-muted">
+                @for (entry of currentOptionEntries; track entry.key) {
+                  <span class="me-3"
+                    ><span class="fw-semibold">{{ entry.key }}:</span> {{ entry.value }}</span
+                  >
+                }
+              </div>
+            }
+          </div>
+        }
+      </form>
+    }
+
+    @if (infoMessage) {
+      <div class="alert alert-primary mt-2 mb-0">{{ infoMessage }}</div>
+    } @else if (errorMessage) {
+      <div class="alert alert-danger mt-2 mb-0">{{ errorMessage }}</div>
+    } @else if (testResult) {
+      <oib-transformer-test-result
+        class="d-block mt-2"
+        [raw]="testResult.raw"
+        [hasTransformer]="!!selectedTransformer"
+        [output]="testResult.transformed"
+      />
+    }
+  </div>
 </div>
-<oib-item-test-result
-  #testResultViewComponent
-  (availableDisplayModes)="onAvailableDisplayModesChange($event)"
-  (currentDisplayMode)="onCurrentDisplayModeChange($event)"
-/>

@@ -1,9 +1,10 @@
 import path from 'node:path';
+import { rmSync } from 'node:fs';
 import WebServer from './web-server/web-server';
-import LoggerService from './service/logger/logger.service';
+import { loggerService } from './service/logger/logger.service';
 import { encryptionService } from './service/encryption.service';
 
-import { createFolder, getCommandLineArguments, getOIBusInfo } from './service/utils';
+import { createFolder, getCommandLineArguments, getOIBusInfo, readInitConfig, INIT_CONFIG_FILENAME } from './service/utils';
 import RepositoryService from './service/repository.service';
 import NorthService from './service/north.service';
 import SouthService from './service/south.service';
@@ -41,7 +42,7 @@ const LOG_DB_NAME = 'logs.db';
 const METRICS_DB_NAME = 'metrics.db';
 const CERT_FOLDER = 'certs';
 
-(async () => {
+export async function bootstrap(): Promise<void> {
   const { configFile, version, ignoreIpFilters, ignoreRemoteUpdate, launcherVersion } = getCommandLineArguments();
 
   const binaryFolder = process.cwd();
@@ -64,13 +65,16 @@ const CERT_FOLDER = 'certs';
   await migrateCrypto(path.resolve(CRYPTO_DATABASE));
   await migrateSouthCache(path.resolve(CACHE_FOLDER, CACHE_DATABASE));
 
+  const initConfig = readInitConfig();
+
   const repositoryService = new RepositoryService(
     path.resolve(CONFIG_DATABASE),
     path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME),
     path.resolve(LOG_FOLDER_NAME, METRICS_DB_NAME),
     path.resolve(CRYPTO_DATABASE),
     path.resolve(CACHE_FOLDER, CACHE_DATABASE),
-    launcherVersion
+    launcherVersion,
+    initConfig
   );
 
   const oibusSettings = repositoryService.engineRepository.get();
@@ -97,7 +101,7 @@ const CERT_FOLDER = 'certs';
   }
 
   await createFolder(LOG_FOLDER_NAME);
-  const loggerService = new LoggerService(path.resolve(LOG_FOLDER_NAME));
+  loggerService.init(path.resolve(LOG_FOLDER_NAME));
   await loggerService.start(oibusSettings, repositoryService.oianalyticsRegistrationRepository.get()!);
 
   const oIAnalyticsClient = new OIAnalyticsClient();
@@ -107,7 +111,7 @@ const CERT_FOLDER = 'certs';
     oIAnalyticsClient,
     repositoryService.oianalyticsRegistrationRepository,
     repositoryService.engineRepository,
-    loggerService.logger!
+    loggerService.createChildLogger('internal')
   );
   oIAnalyticsRegistrationService.start();
 
@@ -124,7 +128,8 @@ const CERT_FOLDER = 'certs';
     repositoryService.historyQueryRepository,
     repositoryService.transformerRepository,
     oIAnalyticsClient,
-    loggerService.logger!
+    ignoreIpFilters,
+    ignoreRemoteUpdate
   );
 
   const dataStreamEngine = new DataStreamEngine(
@@ -137,8 +142,7 @@ const CERT_FOLDER = 'certs';
     repositoryService.southCacheRepository,
     repositoryService.certificateRepository,
     repositoryService.oianalyticsRegistrationRepository,
-    oIAnalyticsMessageService,
-    loggerService.logger!
+    oIAnalyticsMessageService
   );
 
   const transformerService = new TransformerService(
@@ -173,7 +177,8 @@ const CERT_FOLDER = 'certs';
     repositoryService.certificateRepository,
     oIAnalyticsMessageService,
     dataStreamEngine,
-    repositoryService.southItemGroupRepository
+    repositoryService.southItemGroupRepository,
+    transformerService
   );
   const historyQueryService = new HistoryQueryService(
     new JoiValidator(),
@@ -206,7 +211,8 @@ const CERT_FOLDER = 'certs';
     historyQueryService,
     userService,
     dataStreamEngine,
-    ignoreIpFilters
+    ignoreIpFilters,
+    ignoreRemoteUpdate
   );
   await oIBusService.start();
 
@@ -240,7 +246,7 @@ const CERT_FOLDER = 'certs';
     northService,
     historyQueryService,
     transformerService,
-    loggerService.logger!,
+    loggerService.createChildLogger('internal'),
     binaryFolder,
     ignoreRemoteUpdate,
     launcherVersion
@@ -249,7 +255,7 @@ const CERT_FOLDER = 'certs';
   oIAnalyticsMessageService.start(); // Start after command to send the full config with a new version after an update
 
   const cleanupService = new CleanupService(
-    loggerService.logger!,
+    loggerService.createChildLogger('internal'),
     './',
     repositoryService.historyQueryRepository,
     repositoryService.northConnectorRepository,
@@ -277,7 +283,7 @@ const CERT_FOLDER = 'certs';
     historyQueryService,
     homeMetricsService,
     ignoreIpFilters,
-    loggerService.createChildLogger('web-server')
+    loggerService.createChildLogger('internal', 'web-server')
   );
   await server.init();
 
@@ -293,13 +299,28 @@ const CERT_FOLDER = 'certs';
     await server.stop();
     await cleanupService.stop();
     oIAnalyticsRegistrationService.stop();
-    loggerService.stop();
+    await loggerService.stop();
     console.info('OIBus stopped');
     stopping = false;
     process.exit();
   });
 
+  rmSync(INIT_CONFIG_FILENAME, { force: true });
+
   const updatedOIBusSettings = repositoryService.engineRepository.get()!;
-  loggerService.logger!.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings))}`);
-  console.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings))}`);
-})();
+  loggerService.logger.info(
+    `OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings, ignoreIpFilters, ignoreRemoteUpdate))}`
+  );
+  console.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings, ignoreIpFilters, ignoreRemoteUpdate))}`);
+}
+
+// Only auto-run when invoked as the application entry point, not when imported in tests.
+export function runAsMain(): boolean {
+  const isMain = process.argv[1] != null && (process.argv[1].endsWith('index.ts') || process.argv[1].endsWith('index.js'));
+  if (isMain) {
+    bootstrap().catch(console.error);
+  }
+  return isMain;
+}
+
+runAsMain();

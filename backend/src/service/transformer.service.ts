@@ -30,8 +30,12 @@ import OIBusTimeValuesToOIAnalyticsTransformer from '../transformers/time-values
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import OIBusCustomTransformer from '../transformers/oibus-custom-transformer';
 import { Readable } from 'node:stream';
+import { createReadStream } from 'node:fs';
+import path from 'node:path';
 import { DateTime } from 'luxon';
-import { OIBusSetpoint, OIBusTimeValue } from '../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource, OIBusContent, OIBusSetpoint, OIBusTimeValue } from '../../shared/model/engine.model';
+import { SouthConnectorItemTestResult } from '../../shared/model/south-connector.model';
+import { generateRandomId } from './utils';
 import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
 import JSONToOIAnalyticsTransformer from '../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
 import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
@@ -76,6 +80,39 @@ export const transformerManifestList: Array<TransformerManifest> = [
   setpointToMqttManifest,
   setpointToOpcuaManifest
 ];
+
+/**
+ * Wrap a copy-pasted input string into the OIBusContent shape matching a transformer input type.
+ * `time-values` / `setpoint` inputs are JSON arrays; everything else is treated as raw file content.
+ */
+const buildContentFromInput = (inputType: string, inputData: string): OIBusContent => {
+  switch (inputType) {
+    case 'time-values':
+      return { type: 'time-values', content: JSON.parse(inputData) };
+    case 'setpoint':
+      return { type: 'setpoint', content: JSON.parse(inputData) };
+    default:
+      return { type: 'any-content', content: inputData };
+  }
+};
+
+/**
+ * Wrap a transformer's raw output string into an OIBusContent using the content type it produced,
+ * so the UI renders time-values as a table, file/CSV output as a table, and anything else as text.
+ */
+export const toTransformedContent = (output: string, contentType: string | undefined, contentFile: string | undefined): OIBusContent => {
+  if (contentType === 'time-values') {
+    try {
+      return { type: 'time-values', content: JSON.parse(output) };
+    } catch {
+      return { type: 'any-content', content: output };
+    }
+  }
+  if (contentType === 'any') {
+    return { type: 'any', filePath: contentFile || 'output', content: output };
+  }
+  return { type: 'any-content', content: output };
+};
 
 export default class TransformerService {
   constructor(
@@ -191,6 +228,38 @@ export default class TransformerService {
       'test-input.json'
     );
     return { ...result, output: result.output.toString('utf-8') };
+  }
+
+  /**
+   * Run an existing transformer (custom or standard, resolved by catalog id) with the given options
+   * over an OIBusContent payload, returning the transformed output wrapped as OIBusContent so the UI
+   * can render it (time-values → table, file/CSV → table, otherwise raw text). Shared by the
+   * south/history item test (#4773) and the transformer test-with-input feature (#4774).
+   */
+  async runTransformer(transformerId: string, options: Record<string, unknown>, content: OIBusContent): Promise<OIBusContent> {
+    const transformerToRun: NorthTransformerWithOptions = {
+      id: 'test',
+      transformer: this.findById(transformerId),
+      options,
+      // `source` drives north-side routing only; it is unused when the transformer is run directly.
+      source: { type: 'oianalytics-setpoint' }
+    };
+    const transformer = createTransformer(transformerToRun, null, this.engine.logger);
+    const results = await runTransformerOnContent(transformer, content, { source: 'test' });
+    const output = Buffer.concat(results.map(result => result.output)).toString('utf-8');
+    const metadata = results[0]?.metadata;
+    return toTransformedContent(output, metadata?.contentType, metadata?.contentFile);
+  }
+
+  /**
+   * Test a configured transformer with copy-pasted input. The pasted string is wrapped into the
+   * OIBusContent shape matching the transformer's input type, then run through {@link runTransformer}.
+   * Returns both the wrapped input (`raw`) and the produced output (`transformed`) so the UI can show
+   * the same Raw → transformer → output pipeline as the south/history item test.
+   */
+  async testTransformer(transformerId: string, options: Record<string, unknown>, inputData: string): Promise<SouthConnectorItemTestResult> {
+    const raw = buildContentFromInput(this.findById(transformerId).inputType, inputData);
+    return { raw, transformed: await this.runTransformer(transformerId, options, raw) };
   }
 
   generateTemplate(inputType: InputType): InputTemplate {
@@ -349,7 +418,7 @@ export const toTransformerDTO = (transformer: Transformer, getUserInfo: GetUserI
 
 export const createTransformer = (
   transformerWithOptions: NorthTransformerWithOptions,
-  northConnector: NorthConnectorEntity<NorthSettings>,
+  _northConnector: NorthConnectorEntity<NorthSettings> | null,
   logger: ILogger
 ): OibusTransformer => {
   if (transformerWithOptions.transformer.type === 'standard') {
@@ -402,6 +471,52 @@ export const createTransformer = (
   } else {
     return new OIBusCustomTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
   }
+};
+
+/**
+ * Run a transformer instance over an OIBusContent payload and return the produced output(s).
+ * In-memory payloads (time-values / setpoint / any-content) go through `transformInMemory`;
+ * true file-on-disk payloads (`any`) stay on the stream API to avoid slurping the file.
+ * When `maxElements > 0`, time-value batches larger than that are split into several outputs.
+ */
+export const runTransformerOnContent = async (
+  transformer: OibusTransformer,
+  data: OIBusContent,
+  source: CacheMetadataSource,
+  maxElements = 0
+): Promise<Array<{ output: Buffer; metadata: CacheMetadata }>> => {
+  const results: Array<{ output: Buffer; metadata: CacheMetadata }> = [];
+  switch (data.type) {
+    case 'time-values': {
+      const content = data.content;
+      if (maxElements > 0 && content.length > maxElements) {
+        for (let i = 0; i < content.length; i += maxElements) {
+          results.push(await transformer.transformInMemory(content.slice(i, i + maxElements), source, null));
+        }
+      } else {
+        results.push(await transformer.transformInMemory(content, source, null));
+      }
+      break;
+    }
+    case 'setpoint':
+      results.push(await transformer.transformInMemory(data.content, source, null));
+      break;
+    case 'any-content':
+      // any-content is already a serialised string; pass it through as-is.
+      results.push(await transformer.transformInMemory(data.content, source, null));
+      break;
+    case 'any': {
+      // True file-on-disk path stays on the stream API.
+      const randomId = generateRandomId(10);
+      // Use the logical filename when provided, otherwise fall back to the basename of the disk path.
+      const logicalName = data.filename ?? path.basename(data.filePath);
+      const { name, ext } = path.parse(logicalName);
+      const cacheFilename = `${name}-${randomId}${ext}`;
+      results.push(await transformer.transform(createReadStream(data.filePath), source, cacheFilename));
+      break;
+    }
+  }
+  return results;
 };
 
 export const getStandardManifest = (functionName: string): OIBusObjectAttribute => {

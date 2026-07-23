@@ -8,6 +8,11 @@ export interface EngineSettings extends BaseEntity {
   launcherVersion: string;
   proxyEnabled: boolean;
   proxyPort: number | null;
+  forwardProxyUrl: string | null;
+  forwardProxyUsername: string | null;
+  forwardProxyPassword: string | null;
+  proxyUsername: string | null;
+  proxyPassword: string | null;
   logParameters: {
     console: {
       level: LogLevel;
@@ -31,6 +36,12 @@ export interface EngineSettings extends BaseEntity {
     oia: {
       level: LogLevel;
       interval: number;
+    };
+    syslog: {
+      level: LogLevel;
+      host: string;
+      port: number;
+      protocol: 'udp4' | 'tcp';
     };
   };
 }

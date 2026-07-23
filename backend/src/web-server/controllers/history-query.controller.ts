@@ -23,7 +23,11 @@ import {
   HistoryQueryLightDTO
 } from '../../../shared/model/history-query.model';
 import { CustomExpressRequest } from '../express';
-import { OIBusSouthType } from '../../../shared/model/south-connector.model';
+import {
+  OIBusSouthType,
+  SouthConnectorItemTestingSettings,
+  SouthConnectorItemTestResult
+} from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import HistoryQueryService, { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistoryQueryLightDTO } from '../../service/history-query.service';
@@ -36,8 +40,7 @@ import {
   CacheSearchResult,
   DataFolderType,
   FileCacheContent,
-  OIBusConnectionTestResult,
-  OIBusContent
+  OIBusConnectionTestResult
 } from '../../../shared/model/engine.model';
 import { HistoryTransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
@@ -54,15 +57,8 @@ interface HistorySouthItemTestRequest {
   southSettings: SouthSettings;
   /** Item-specific settings */
   itemSettings: SouthItemSettings;
-  /** Testing settings including time range */
-  testingSettings: {
-    history: {
-      /** Start time for the test */
-      startTime: string;
-      /** End time for the test */
-      endTime: string;
-    };
-  };
+  /** Testing settings including time range and optional transformer */
+  testingSettings: SouthConnectorItemTestingSettings;
 }
 
 /**
@@ -239,7 +235,7 @@ export class HistoryQueryController extends Controller {
     @Query() fromSouth: string | undefined,
     @Body() command: HistorySouthItemTestRequest,
     @Request() request: CustomExpressRequest
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemTestResult> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     try {
       return await historyQueryService.testItem(

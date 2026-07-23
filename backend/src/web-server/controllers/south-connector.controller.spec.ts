@@ -263,12 +263,11 @@ describe('SouthConnectorController', () => {
       testingSettings: testData.south.itemTestingSettings
     };
 
-    const mockContent: OIBusContent = {
-      type: 'any',
-      filePath: '/path/to/file.json',
-      content: '{"key": "value"}'
+    const mockResult = {
+      raw: { type: 'any', filePath: '/path/to/file.json', content: '{"key": "value"}' } as OIBusContent,
+      transformed: null
     };
-    southService.testItem = mock.fn(async () => mockContent);
+    southService.testItem = mock.fn(async () => mockResult);
 
     const result = await controller.testItem(southId, southType, itemName, requestBody, mockRequest as CustomExpressRequest);
 
@@ -281,7 +280,7 @@ describe('SouthConnectorController', () => {
       requestBody.itemSettings,
       requestBody.testingSettings
     ]);
-    assert.deepStrictEqual(result, mockContent);
+    assert.deepStrictEqual(result, mockResult);
   });
 
   it('should wrap errors when testing a south connector item', async () => {
@@ -718,7 +717,8 @@ describe('SouthConnectorController', () => {
         name: 'Group 1',
         southId,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
         items: []
@@ -745,7 +745,8 @@ describe('SouthConnectorController', () => {
       name: 'Group 1',
       southId,
       scanMode: testData.scanMode.list[0],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
       readDelay: 0,
       items: []
@@ -768,7 +769,8 @@ describe('SouthConnectorController', () => {
         scanModeId: testData.scanMode.list[0].id
       },
       historySettings: {
-        overlap: 5,
+        startTimeOffset: 5,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       }
@@ -782,7 +784,8 @@ describe('SouthConnectorController', () => {
       name: 'New Group',
       southId,
       scanMode: testData.scanMode.list[0],
-      overlap: 5,
+      startTimeOffset: 5,
+      endTimeOffset: null,
       maxReadInterval: null,
       readDelay: 0,
       items: []
@@ -806,7 +809,8 @@ describe('SouthConnectorController', () => {
         scanModeId: testData.scanMode.list[1].id
       },
       historySettings: {
-        overlap: 10,
+        startTimeOffset: 10,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       }

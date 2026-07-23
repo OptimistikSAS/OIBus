@@ -229,8 +229,15 @@
                             @if (group.historySettings.readDelay !== null) {
                               <div><strong translate="south.items.read-delay"></strong>: {{ group.historySettings.readDelay }}ms</div>
                             }
-                            @if (group.historySettings.overlap !== null) {
-                              <div><strong translate="south.items.overlap"></strong>: {{ group.historySettings.overlap }}ms</div>
+                            @if (group.historySettings.startTimeOffset !== null) {
+                              <div>
+                                <strong translate="south.items.start-time-offset"></strong>: {{ group.historySettings.startTimeOffset }}ms
+                              </div>
+                            }
+                            @if (group.historySettings.endTimeOffset !== null) {
+                              <div>
+                                <strong translate="south.items.end-time-offset"></strong>: {{ group.historySettings.endTimeOffset }}ms
+                              </div>
                             }
                           }
                         } @else {
@@ -242,8 +249,11 @@
                             @if (tooltipItem.readDelay !== null) {
                               <div><strong translate="south.items.read-delay"></strong>: {{ tooltipItem.readDelay }}ms</div>
                             }
-                            @if (tooltipItem.overlap !== null) {
-                              <div><strong translate="south.items.overlap"></strong>: {{ tooltipItem.overlap }}ms</div>
+                            @if (tooltipItem.startTimeOffset !== null) {
+                              <div><strong translate="south.items.start-time-offset"></strong>: {{ tooltipItem.startTimeOffset }}ms</div>
+                            }
+                            @if (tooltipItem.endTimeOffset !== null) {
+                              <div><strong translate="south.items.end-time-offset"></strong>: {{ tooltipItem.endTimeOffset }}ms</div>
                             }
                           }
                           <div class="text-warning mt-1">⚠ {{ 'south.items.not-synced-notice' | translate }}</div>
@@ -264,8 +274,11 @@
                           @if (tooltipItem.readDelay !== null) {
                             <div><strong translate="south.items.read-delay"></strong>: {{ tooltipItem.readDelay }}ms</div>
                           }
-                          @if (tooltipItem.overlap !== null) {
-                            <div><strong translate="south.items.overlap"></strong>: {{ tooltipItem.overlap }}ms</div>
+                          @if (tooltipItem.startTimeOffset !== null) {
+                            <div><strong translate="south.items.start-time-offset"></strong>: {{ tooltipItem.startTimeOffset }}ms</div>
+                          }
+                          @if (tooltipItem.endTimeOffset !== null) {
+                            <div><strong translate="south.items.end-time-offset"></strong>: {{ tooltipItem.endTimeOffset }}ms</div>
                           }
                         }
                       }

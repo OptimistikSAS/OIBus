@@ -94,6 +94,11 @@ describe('SouthOracle', () => {
         return southCacheService;
       }
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     SouthOracle = reloadModule<{ default: typeof SouthOracleClass }>(nodeRequire, './south-oracle').default;
   });
 
@@ -180,7 +185,8 @@ describe('SouthOracle', () => {
           syncWithGroup: false,
           maxReadInterval: 3600,
           readDelay: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -208,7 +214,8 @@ describe('SouthOracle', () => {
           syncWithGroup: false,
           maxReadInterval: 3600,
           readDelay: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -253,7 +260,8 @@ describe('SouthOracle', () => {
           syncWithGroup: false,
           maxReadInterval: 3600,
           readDelay: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -267,7 +275,7 @@ describe('SouthOracle', () => {
     };
 
     beforeEach(() => {
-      south = new SouthOracle(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthOracle(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('should properly run historyQuery', async () => {
@@ -546,7 +554,8 @@ describe('SouthOracle', () => {
           syncWithGroup: false,
           maxReadInterval: 3600,
           readDelay: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -574,7 +583,8 @@ describe('SouthOracle', () => {
           syncWithGroup: false,
           maxReadInterval: 3600,
           readDelay: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -588,7 +598,7 @@ describe('SouthOracle', () => {
     };
 
     beforeEach(() => {
-      south = new SouthOracle(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthOracle(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('should call initOracleClient when thick mode is enabled and oracleClientVersion is not set', () => {
@@ -623,6 +633,47 @@ describe('SouthOracle', () => {
     });
   });
 
+  describe('SouthOracle thick mode initialization failure', () => {
+    const configuration: SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings> = {
+      id: 'southId',
+      name: 'south',
+      type: 'oracle',
+      description: 'my test connector',
+      enabled: true,
+      settings: {
+        host: 'localhost',
+        port: 1521,
+        database: 'db',
+        username: null,
+        password: null,
+        connectionTimeout: 0,
+        thickMode: true,
+        oracleClient: 'path'
+      },
+      groups: [],
+      items: [],
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+
+    it('should log an error and fall back to thin mode when initOracleClient throws', () => {
+      oracledbExports.initOracleClient = mock.fn(() => {
+        throw new Error('thick mode init error');
+      });
+      const south = new SouthOracle(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      assert.ok(south);
+      assert.ok(
+        logger.error.mock.calls.some(
+          c =>
+            (c.arguments[0] as string).includes('FATAL: Failed to initialize Oracle Thick mode') &&
+            (c.arguments[0] as string).includes('thick mode init error')
+        )
+      );
+    });
+  });
+
   describe('SouthOracle test connection', () => {
     let south: SouthOracleClass;
     const configuration: SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings> = {
@@ -649,7 +700,7 @@ describe('SouthOracle', () => {
     };
 
     beforeEach(() => {
-      south = new SouthOracle(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthOracle(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('Database is reachable and has tables', async () => {

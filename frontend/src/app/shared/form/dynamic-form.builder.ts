@@ -1,10 +1,12 @@
 import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidatorFn, Validators } from '@angular/forms';
 import {
+  isEnabledOnPlatform,
   OIBusAttribute,
   OIBusAttributeValidator,
   OIBusControlAttribute,
   OIBusDisplayableAttribute,
-  OIBusEnablingCondition
+  OIBusEnablingCondition,
+  OIBusObjectAttribute
 } from '../../../../../backend/shared/model/form.model';
 import { Instant } from '../../../../../backend/shared/model/types';
 import { mqttTopicOverlapValidator, singleTrueValidator, uniqueFieldNamesValidator } from './validators';
@@ -58,7 +60,17 @@ export function createControl(fb: NonNullableFormBuilder, attribute: OIBusContro
   }
 }
 
-export function addEnablingConditions(form: FormGroup, enablingConditions: Array<OIBusEnablingCondition>) {
+/**
+ * Wires enabling conditions on a form group.
+ * `canEnableTarget` is an optional lazy guard (read at evaluation time, not setup time): when it returns false for a
+ * target, the target is kept disabled even if its condition is met. Used to let platform restrictions win over
+ * enabling conditions without re-subscribing when the platform loads.
+ */
+export function addEnablingConditions(
+  form: FormGroup,
+  enablingConditions: Array<OIBusEnablingCondition>,
+  canEnableTarget?: (targetPathFromRoot: string) => boolean
+) {
   enablingConditions.forEach(condition => {
     const referenceControl = form.get(condition.referralPathFromRoot);
     const targetControl = form.get(condition.targetPathFromRoot);
@@ -67,18 +79,28 @@ export function addEnablingConditions(form: FormGroup, enablingConditions: Array
       throw new Error('wrong configuration in manifest');
     }
 
-    if (checkCondition(referenceControl.value, condition)) {
-      targetControl.enable();
-    } else {
-      targetControl.disable();
-    }
-    referenceControl.valueChanges.subscribe(newValue => {
-      if (checkCondition(newValue, condition)) {
+    const applyCondition = (value: any) => {
+      if (checkCondition(value, condition) && (!canEnableTarget || canEnableTarget(condition.targetPathFromRoot))) {
         targetControl.enable();
       } else {
         targetControl.disable();
       }
-    });
+    };
+
+    applyCondition(referenceControl.value);
+    referenceControl.valueChanges.subscribe(applyCondition);
+  });
+}
+
+/**
+ * Disables the controls of attributes that are not enabled on the given platform.
+ * Disabling hides the control (via the `@if (...enabled)` template gate) and strips its value from the payload.
+ */
+export function applyPlatformConditions(group: FormGroup, objectAttribute: OIBusObjectAttribute, platform: string): void {
+  objectAttribute.attributes.forEach(attribute => {
+    if (!isEnabledOnPlatform(attribute, platform)) {
+      group.get(attribute.key)?.disable();
+    }
   });
 }
 
@@ -117,6 +139,9 @@ function buildValidators(validators: Array<OIBusAttributeValidator>): Array<Vali
       case 'SINGLE_TRUE':
       case 'MQTT_TOPIC_OVERLAP':
         // Note: These are handled at the array level, not individual field level
+        return Validators.nullValidator;
+      case 'PLATFORM':
+        // Handled via isEnabledOnPlatform (enable/disable), not as a value validator
         return Validators.nullValidator;
     }
   });

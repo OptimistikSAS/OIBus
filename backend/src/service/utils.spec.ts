@@ -19,6 +19,7 @@ import type { OIBusError as OIBusErrorType } from '../model/engine.model';
 import cronstrue from 'cronstrue';
 import testData from '../tests/utils/test-data';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
+import type { SouthItemGroupEntity } from '../model/south-connector.model';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -114,48 +115,60 @@ describe('Service utils', () => {
   describe('generateIntervals', () => {
     it('should return only one interval', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
-      const startTimeFromCache = '2020-01-01T00:00:00.000Z';
       const endTime = '2020-01-01T01:00:00.000Z';
       const expectedIntervals = [{ start: startTime, end: endTime }];
-      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime, startTimeFromCache, endTime, 3600);
+      const intervals = utils.generateIntervals(startTime, endTime, 3600);
       assert.deepStrictEqual(intervals, expectedIntervals);
-      assert.deepStrictEqual(numberOfIntervalsDone, 0);
     });
 
     it('should return only one interval when max number of seconds is 0', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
-      const startTimeFromCache = '2020-01-01T00:00:00.000Z';
       const endTime = '2020-01-01T01:00:00.000Z';
       const expectedIntervals = [{ start: startTime, end: endTime }];
-      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime, startTimeFromCache, endTime, 0);
+      const intervals = utils.generateIntervals(startTime, endTime, 0);
       assert.deepStrictEqual(intervals, expectedIntervals);
-      assert.deepStrictEqual(numberOfIntervalsDone, 0);
     });
 
-    it('should return two intervals', () => {
-      const startTime1 = '2020-01-01T00:00:00.000Z';
-      const startTimeFromCache = '2020-01-01T01:30:00.000Z';
-      const endTime1 = '2020-01-01T01:00:00.000Z';
-      const endTime2 = '2020-01-01T02:00:00.000Z';
-      const startTime3 = '2020-01-01T02:00:00.000Z';
-      const endTime3 = '2020-01-01T02:50:00.000Z';
+    it('should return three intervals', () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const chunk1End = '2020-01-01T01:00:00.000Z';
+      const chunk2End = '2020-01-01T02:00:00.000Z';
+      const endTime = '2020-01-01T02:50:00.000Z';
       const expectedIntervals = [
-        { start: startTime1, end: endTime1 },
-        { start: startTimeFromCache, end: endTime2 },
-        { start: startTime3, end: endTime3 }
+        { start: startTime, end: chunk1End },
+        { start: chunk1End, end: chunk2End },
+        { start: chunk2End, end: endTime }
       ];
-      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime1, startTimeFromCache, endTime3, 3600);
+      const intervals = utils.generateIntervals(startTime, endTime, 3600);
       assert.deepStrictEqual(intervals, expectedIntervals);
-      assert.deepStrictEqual(numberOfIntervalsDone, 1);
     });
 
     it('should return single interval when maxNumberOfSecondsInInterval is 0', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
-      const startTimeFromCache = '2020-01-01T00:00:00.000Z';
       const endTime = '2020-01-02T00:00:00.000Z';
-      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime, startTimeFromCache, endTime, 0);
-      assert.deepStrictEqual(intervals, [{ start: startTimeFromCache, end: endTime }]);
-      assert.deepStrictEqual(numberOfIntervalsDone, 0);
+      const intervals = utils.generateIntervals(startTime, endTime, 0);
+      assert.deepStrictEqual(intervals, [{ start: startTime, end: endTime }]);
+    });
+
+    it('should reverse intervals for newest strategy', () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const chunk1End = '2020-01-01T01:00:00.000Z';
+      const chunk2End = '2020-01-01T02:00:00.000Z';
+      const endTime = '2020-01-01T02:50:00.000Z';
+      const expectedIntervals = [
+        { start: chunk2End, end: endTime },
+        { start: chunk1End, end: chunk2End },
+        { start: startTime, end: chunk1End }
+      ];
+      const intervals = utils.generateIntervals(startTime, endTime, 3600, 'newest');
+      assert.deepStrictEqual(intervals, expectedIntervals);
+    });
+
+    it('should return the single interval unchanged for newest strategy', () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2020-01-01T01:00:00.000Z';
+      const intervals = utils.generateIntervals(startTime, endTime, 3600, 'newest');
+      assert.deepStrictEqual(intervals, [{ start: startTime, end: endTime }]);
     });
   });
 
@@ -1248,10 +1261,22 @@ describe('Service utils', () => {
       launcherVersion: '3.5.0',
       oibusId: 'id',
       oibusName: 'name',
-      platform: utils.getPlatformFromOsType(os.type())
+      platform: utils.getPlatformFromOsType(os.type()),
+      ignoreIpFilters: false,
+      ignoreRemoteUpdate: false
     };
     const result = utils.getOIBusInfo({ id: 'id', name: 'name', version: '3.3.3', launcherVersion: '3.5.0' } as EngineSettingsDTO);
     assert.deepStrictEqual(result, expectedResult);
+  });
+
+  it('should get OIBus info with ignore flags set', () => {
+    const info = utils.getOIBusInfo(
+      { id: 'id', name: 'name', version: '3.3.3', launcherVersion: '3.5.0' } as EngineSettingsDTO,
+      true,
+      true
+    );
+    assert.strictEqual(info.ignoreIpFilters, true);
+    assert.strictEqual(info.ignoreRemoteUpdate, true);
   });
 
   it('should return OIBus info including architecture and os', () => {
@@ -1268,6 +1293,13 @@ describe('Service utils', () => {
     assert.deepStrictEqual(utils.getPlatformFromOsType('Darwin'), 'macos');
     assert.deepStrictEqual(utils.getPlatformFromOsType('Windows_NT'), 'windows');
     assert.deepStrictEqual(utils.getPlatformFromOsType('unknown'), 'unknown');
+  });
+
+  it('should return the current platform from os type', () => {
+    mock.method(os, 'type', () => 'Windows_NT');
+    assert.strictEqual(utils.getCurrentPlatform(), 'windows');
+    mock.method(os, 'type', () => 'Linux');
+    assert.strictEqual(utils.getCurrentPlatform(), 'linux');
   });
 
   describe('validateCronExpression', () => {
@@ -1402,6 +1434,37 @@ describe('Service utils', () => {
     });
   });
 
+  describe('checkGroups', () => {
+    const groups = [
+      { id: 'group1', name: 'Group 1' },
+      { id: 'group2', name: 'Group 2' }
+    ] as unknown as Array<SouthItemGroupEntity>;
+
+    it('should throw an error when neither groupId nor groupName are specified', () => {
+      assert.throws(() => utils.checkGroups(groups, null, null), /Group not specified/);
+    });
+
+    it('should return a light entity with only the id when groupId starts with "temp_"', () => {
+      assert.deepStrictEqual(utils.checkGroups(groups, 'temp_new-group', null), { id: 'temp_new-group' });
+    });
+
+    it('should find and return the group by id', () => {
+      assert.deepStrictEqual(utils.checkGroups(groups, 'group1', null), groups[0]);
+    });
+
+    it('should find and return the group by name', () => {
+      assert.deepStrictEqual(utils.checkGroups(groups, null, 'Group 2'), groups[1]);
+    });
+
+    it('should throw a not found error when the group id cannot be found', () => {
+      assert.throws(() => utils.checkGroups(groups, 'unknown-id', null), /Group "null" not found/);
+    });
+
+    it('should throw a not found error when the group name cannot be found', () => {
+      assert.throws(() => utils.checkGroups(groups, null, 'unknown-name'), /Group "unknown-name" not found/);
+    });
+  });
+
   describe('itemToFlattenedCSV', () => {
     beforeEach(() => {
       csvExports.unparse.mock.resetCalls();
@@ -1440,7 +1503,9 @@ describe('Service utils', () => {
         historySettings: {
           maxReadInterval: 3600,
           readDelay: 200,
-          overlap: 5
+          startTimeOffset: 5,
+          endTimeOffset: 6,
+          recoveryStrategy: 'oldest'
         },
         createdBy: { id: '', friendlyName: '' },
         updatedBy: { id: '', friendlyName: '' },
@@ -1456,7 +1521,9 @@ describe('Service utils', () => {
         scanMode: testData.scanMode.list[1],
         maxReadInterval: 1,
         readDelay: 1,
-        overlap: 1
+        startTimeOffset: 1,
+        endTimeOffset: 1,
+        recoveryStrategy: 'newest'
       } as unknown as SouthConnectorItemDTO;
 
       utils.itemToFlattenedCSV([item] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>, ',', {
@@ -1469,7 +1536,9 @@ describe('Service utils', () => {
       assert.strictEqual(capturedData[0].group, mockGroup.standardSettings.name);
       assert.strictEqual(capturedData[0].maxReadInterval, mockGroup.historySettings.maxReadInterval);
       assert.strictEqual(capturedData[0].readDelay, mockGroup.historySettings.readDelay);
-      assert.strictEqual(capturedData[0].overlap, mockGroup.historySettings.overlap);
+      assert.strictEqual(capturedData[0].startTimeOffset, mockGroup.historySettings.startTimeOffset);
+      assert.strictEqual(capturedData[0].endTimeOffset, mockGroup.historySettings.endTimeOffset);
+      assert.strictEqual(capturedData[0].recoveryStrategy, mockGroup.historySettings.recoveryStrategy);
     });
 
     it('should use the group scan mode but keep the item historian settings when the item is not synced with its group', () => {
@@ -1482,7 +1551,9 @@ describe('Service utils', () => {
         historySettings: {
           maxReadInterval: 3600,
           readDelay: 200,
-          overlap: 5
+          startTimeOffset: 5,
+          endTimeOffset: 6,
+          recoveryStrategy: 'oldest'
         },
         createdBy: { id: '', friendlyName: '' },
         updatedBy: { id: '', friendlyName: '' },
@@ -1496,7 +1567,9 @@ describe('Service utils', () => {
         scanMode: testData.scanMode.list[1],
         maxReadInterval: 42,
         readDelay: 43,
-        overlap: 44
+        startTimeOffset: 44,
+        endTimeOffset: 45,
+        recoveryStrategy: 'newest'
       } as unknown as SouthConnectorItemDTO;
 
       utils.itemToFlattenedCSV([item] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>, ',', {
@@ -1507,7 +1580,9 @@ describe('Service utils', () => {
       assert.strictEqual(capturedData[0].scanMode, mockGroup.standardSettings.scanMode.name);
       assert.strictEqual(capturedData[0].maxReadInterval, 42);
       assert.strictEqual(capturedData[0].readDelay, 43);
-      assert.strictEqual(capturedData[0].overlap, 44);
+      assert.strictEqual(capturedData[0].startTimeOffset, 44);
+      assert.strictEqual(capturedData[0].endTimeOffset, 45);
+      assert.strictEqual(capturedData[0].recoveryStrategy, 'newest');
     });
 
     it('should flatten items with scanModes', () => {
@@ -1522,7 +1597,8 @@ describe('Service utils', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 0,
+        startTimeOffset: 0,
+        endTimeOffset: null,
         settings: { address: '40001' }
       } as unknown as SouthConnectorItemDTO;
       const result = utils.itemToFlattenedCSV([baseItem], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
@@ -1542,7 +1618,8 @@ describe('Service utils', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 0,
+        startTimeOffset: 0,
+        endTimeOffset: null,
         settings: { address: '40001' }
       } as unknown as SouthConnectorItemDTO;
       const result = utils.itemToFlattenedCSV([baseItem], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
@@ -1574,12 +1651,20 @@ describe('Service utils', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
+        startTimeOffset: 0,
+        endTimeOffset: null,
+        recoveryStrategy: null,
         settings: { address: '40001' },
         group: {
           id: 'g1',
           standardSettings: { name: 'Group A', scanMode: { id: 'sm2', name: 'Group Scan Mode', cron: '' } },
-          historySettings: { maxReadInterval: 9999, readDelay: 500, overlap: 10 }
+          historySettings: {
+            maxReadInterval: 9999,
+            readDelay: 500,
+            startTimeOffset: 10,
+            endTimeOffset: null,
+            recoveryStrategy: 'oldest'
+          }
         }
       } as unknown as SouthConnectorItemDTO;
       utils.itemToFlattenedCSV([itemWithNulls], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
@@ -1589,7 +1674,44 @@ describe('Service utils', () => {
       assert.strictEqual(capturedData[0].scanMode, 'Group Scan Mode');
       assert.strictEqual(capturedData[0].maxReadInterval, null);
       assert.strictEqual(capturedData[0].readDelay, null);
-      assert.strictEqual(capturedData[0].overlap, null);
+      assert.strictEqual(capturedData[0].startTimeOffset, 0);
+      assert.strictEqual(capturedData[0].endTimeOffset, null);
+      assert.strictEqual(capturedData[0].recoveryStrategy, null);
+    });
+
+    it('should flatten settings declared in the schema, stringifying object values', () => {
+      const baseItem = {
+        id: 'item1',
+        connectorId: 'conn1',
+        name: 'Item 1',
+        enabled: true,
+        settings: {
+          address: '40001',
+          objectSetting: { nested: 'value' }
+        }
+      } as unknown as HistoryQueryItemDTO;
+      const schema = {
+        attributes: [
+          {
+            key: 'settings',
+            type: 'object',
+            attributes: [
+              { key: 'address', type: 'string' },
+              { key: 'objectSetting', type: 'object' }
+            ]
+          }
+        ]
+      } as unknown as OIBusObjectAttribute;
+
+      utils.itemToFlattenedCSV([baseItem], ',', schema, true);
+
+      assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
+      const capturedData = csvExports.unparse.mock.calls[0].arguments[0] as Array<Record<string, unknown>>;
+      assert.strictEqual(capturedData[0].settings_address, '40001');
+      assert.strictEqual(capturedData[0].settings_objectSetting, JSON.stringify({ nested: 'value' }));
+      const capturedColumns = (csvExports.unparse.mock.calls[0].arguments[1] as { columns: Array<string> }).columns;
+      assert.ok(capturedColumns.includes('settings_address'));
+      assert.ok(capturedColumns.includes('settings_objectSetting'));
     });
   });
 
@@ -1958,7 +2080,8 @@ describe('Service utils', () => {
       name: 'Group 1',
       southId: 'south1',
       scanMode: testData.scanMode.list[0],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
       readDelay: 0,
       createdBy: '',
@@ -2010,6 +2133,80 @@ describe('Service utils', () => {
       const result = utils.groupItemsByGroup('opcua', [grouped1, ungrouped, grouped2]);
       // grouped1 and grouped2 share group g1; ungrouped is always a singleton
       assert.deepStrictEqual(result, [[grouped1, grouped2], [ungrouped]]);
+    });
+  });
+
+  describe('readInitConfig', () => {
+    const envVarsToClean = [
+      'ENGINE_NAME',
+      'ADMIN_USERNAME',
+      'ADMIN_PASSWORD',
+      'DEFAULT_PORT',
+      'ADMIN_USERNAME_FILE',
+      'ADMIN_PASSWORD_FILE'
+    ];
+
+    afterEach(() => {
+      mock.restoreAll();
+      for (const key of envVarsToClean) {
+        delete process.env[key];
+      }
+    });
+
+    it('should read credentials and port from a valid init file', () => {
+      mock.method(fsSync, 'existsSync', () => true);
+      mock.method(fsSync, 'readFileSync', () => '{"engineName":"MyOIBus","adminUsername":"alice","adminPassword":"s3cr3t","port":3000}');
+
+      const result = utils.readInitConfig();
+      assert.deepStrictEqual(result, { engineName: 'MyOIBus', adminUsername: 'alice', adminPassword: 's3cr3t', port: 3000 });
+    });
+
+    it('should fall back to env vars when init file does not exist', () => {
+      mock.method(fsSync, 'existsSync', () => false);
+      process.env.ENGINE_NAME = 'MyOIBus';
+      process.env.ADMIN_USERNAME = 'bob';
+      process.env.ADMIN_PASSWORD = 'secret';
+      process.env.DEFAULT_PORT = '4000';
+
+      const result = utils.readInitConfig();
+      assert.deepStrictEqual(result, { engineName: 'MyOIBus', adminUsername: 'bob', adminPassword: 'secret', port: 4000 });
+    });
+
+    it('should fall back to env vars when init file is malformed JSON', () => {
+      mock.method(fsSync, 'existsSync', () => true);
+      mock.method(fsSync, 'readFileSync', () => '{invalid json}');
+      process.env.ADMIN_USERNAME = 'charlie';
+
+      const result = utils.readInitConfig();
+      assert.strictEqual(result.adminUsername, 'charlie');
+    });
+
+    it('should return undefined port when DEFAULT_PORT is not a valid number', () => {
+      mock.method(fsSync, 'existsSync', () => false);
+      process.env.DEFAULT_PORT = 'abc';
+
+      const result = utils.readInitConfig();
+      assert.strictEqual(result.port, undefined);
+    });
+
+    it('should read credentials from Docker secret files when _FILE env vars are set', () => {
+      mock.method(fsSync, 'existsSync', () => false);
+      mock.method(fsSync, 'readFileSync', (filePath: string) => {
+        if (filePath === '/run/secrets/admin_pass') return 'dockersecret\n';
+        throw new Error(`unexpected path: ${filePath}`);
+      });
+      process.env.ADMIN_PASSWORD_FILE = '/run/secrets/admin_pass';
+
+      const result = utils.readInitConfig();
+      assert.strictEqual(result.adminPassword, 'dockersecret');
+    });
+
+    it('should ignore fields with wrong types in the init file', () => {
+      mock.method(fsSync, 'existsSync', () => true);
+      mock.method(fsSync, 'readFileSync', () => '{"engineName":99,"adminUsername":123,"adminPassword":null,"port":"not-a-number"}');
+
+      const result = utils.readInitConfig();
+      assert.deepStrictEqual(result, { engineName: undefined, adminUsername: undefined, adminPassword: undefined, port: undefined });
     });
   });
 });

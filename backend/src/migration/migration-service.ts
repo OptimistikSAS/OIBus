@@ -38,7 +38,7 @@ interface MigrationFile {
  * keeping knex's exact naming (filename) and ordering (lexicographic by filename),
  * so the set/order/recorded names of real migrations are unchanged — no re-runs.
  */
-function specFilteredMigrationSource(base: string): Knex.MigrationSource<MigrationFile> {
+export function specFilteredMigrationSource(base: string): Knex.MigrationSource<MigrationFile> {
   const dirs = getMigrationDirs(base);
   return {
     getMigrations(loadExtensions?: ReadonlyArray<string>): Promise<Array<MigrationFile>> {
@@ -157,4 +157,5 @@ export async function migrateDataFolder(dbPath: string): Promise<void> {
   });
 
   await knexConfig.migrate.latest();
+  await knexConfig.destroy();
 }

@@ -1,5 +1,5 @@
 import { Page } from '../../../shared/model/types';
-import { LogLevel, LogSearchParam, Scope, ScopeType } from '../../../shared/model/logs.model';
+import { Group, Item, LogLevel, LogSearchParam, Scope, ScopeType } from '../../../shared/model/logs.model';
 import { Database } from 'better-sqlite3';
 import { DateTime } from 'luxon';
 import { OIBusLog, PinoLog } from '../../model/logs.model';
@@ -41,13 +41,21 @@ export default class LogRepository {
       whereClause += ` AND scope_type IN (${searchParams.scopeTypes.map(() => '?')})`;
       queryParams.push(...searchParams.scopeTypes);
     }
+    if (searchParams.itemIds.length > 0) {
+      whereClause += ` AND item_id IN (${searchParams.itemIds.map(() => '?')})`;
+      queryParams.push(...searchParams.itemIds);
+    }
+    if (searchParams.groupIds.length > 0) {
+      whereClause += ` AND group_id IN (${searchParams.groupIds.map(() => '?')})`;
+      queryParams.push(...searchParams.groupIds);
+    }
     if (searchParams.messageContent) {
       whereClause += ` AND message LIKE '%' || ? || '%'`;
       queryParams.push(searchParams.messageContent);
     }
 
     const query =
-      `SELECT timestamp, level, scope_id, scope_type, scope_name, message FROM ${LOG_TABLE} ${whereClause}` +
+      `SELECT timestamp, level, scope_id, scope_type, scope_name, item_id, item_name, group_id, group_name, message FROM ${LOG_TABLE} ${whereClause}` +
       ` ORDER BY timestamp DESC LIMIT ${PAGE_SIZE}` +
       ` OFFSET ?;`;
     const results = this.database
@@ -69,8 +77,10 @@ export default class LogRepository {
   }
 
   suggestScopes(name: string): Array<Scope> {
-    const query = `SELECT DISTINCT scope_id AS scopeId, scope_name as scopeName FROM ${LOG_TABLE} WHERE scope_name LIKE '%' || ? || '%';`;
-    return this.database.prepare(query).all(name) as Array<Scope>;
+    const query =
+      `SELECT DISTINCT scope_id AS scopeId, scope_name as scopeName FROM ${LOG_TABLE}` +
+      ` WHERE scope_name LIKE '%' || ? || '%' OR (scope_type = 'internal' AND scope_id LIKE '%' || ? || '%');`;
+    return this.database.prepare(query).all(name, name) as Array<Scope>;
   }
 
   getScopeById(id: string): Scope | null {
@@ -80,15 +90,50 @@ export default class LogRepository {
     return { scopeId: (result as Record<string, string>).scope_id, scopeName: (result as Record<string, string>).scope_name };
   }
 
+  suggestItems(name: string): Array<Item> {
+    const query = `SELECT DISTINCT item_id AS itemId, item_name AS itemName FROM ${LOG_TABLE} WHERE item_id IS NOT NULL AND item_name LIKE '%' || ? || '%';`;
+    return this.database.prepare(query).all(name) as Array<Item>;
+  }
+
+  getItemById(id: string): Item | null {
+    const query = `SELECT item_id, item_name FROM ${LOG_TABLE} WHERE item_id = ? LIMIT 1;`;
+    const result = this.database.prepare(query).get(id);
+    if (!result) return null;
+    return { itemId: (result as Record<string, string>).item_id, itemName: (result as Record<string, string>).item_name };
+  }
+
+  suggestGroups(name: string): Array<Group> {
+    const query = `SELECT DISTINCT group_id AS groupId, group_name AS groupName FROM ${LOG_TABLE} WHERE group_id IS NOT NULL AND group_name LIKE '%' || ? || '%';`;
+    return this.database.prepare(query).all(name) as Array<Group>;
+  }
+
+  getGroupById(id: string): Group | null {
+    const query = `SELECT group_id, group_name FROM ${LOG_TABLE} WHERE group_id = ? LIMIT 1;`;
+    const result = this.database.prepare(query).get(id);
+    if (!result) return null;
+    return { groupId: (result as Record<string, string>).group_id, groupName: (result as Record<string, string>).group_name };
+  }
+
   saveAll = (logsToStore: Array<PinoLog>): void => {
     if (logsToStore.length === 0) return;
 
     const stmt = this.database.prepare(
-      `INSERT INTO ${LOG_TABLE} (timestamp, level, scope_type, scope_id, scope_name, message) VALUES (?, ?, ?, ?, ?, ?)`
+      `INSERT INTO ${LOG_TABLE} (timestamp, level, scope_type, scope_id, scope_name, item_id, item_name, group_id, group_name, message) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     );
     const insertMany = this.database.transaction((logs: Array<PinoLog>) => {
       for (const log of logs) {
-        stmt.run(log.time, LEVEL_FORMAT[log.level], log.scopeType, log.scopeId, log.scopeName, log.msg);
+        stmt.run(
+          log.time,
+          LEVEL_FORMAT[log.level],
+          log.scopeType,
+          log.scopeId,
+          log.scopeName,
+          log.itemId ?? null,
+          log.itemName ?? null,
+          log.groupId ?? null,
+          log.groupName ?? null,
+          log.msg
+        );
       }
     });
 
@@ -129,6 +174,10 @@ export default class LogRepository {
       scopeType: result.scope_type as ScopeType,
       scopeId: result.scope_id || null,
       scopeName: result.scope_name || null,
+      itemId: result.item_id || null,
+      itemName: result.item_name || null,
+      groupId: result.group_id || null,
+      groupName: result.group_name || null,
       message: result.message
     };
   }

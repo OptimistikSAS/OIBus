@@ -8,6 +8,7 @@ import {
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
   SouthConnectorItemTestingSettings,
+  SouthConnectorItemTestResult,
   SouthConnectorLightDTO,
   SouthConnectorManifest,
   SouthConnectorTypedDTO,
@@ -50,6 +51,12 @@ import { toSouthConnectorItemDTO } from './south-connector-dto.utils';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { buildSouth } from '../south/south-connector-factory';
 import { NotFoundError, OIBusValidationError } from '../model/types';
+import { Transformer } from '../model/transformer.model';
+
+interface ITransformerService {
+  findById(transformerId: string): Transformer;
+  runTransformer(transformerId: string, options: Record<string, unknown>, content: OIBusContent): Promise<OIBusContent>;
+}
 
 export default class SouthService {
   constructor(
@@ -63,7 +70,8 @@ export default class SouthService {
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsMessageService: IOIAnalyticsMessageService,
     private readonly engine: DataStreamEngine,
-    private readonly southItemGroupRepository: SouthItemGroupRepository
+    private readonly southItemGroupRepository: SouthItemGroupRepository,
+    private readonly transformerService: ITransformerService
   ) {}
 
   listManifest(): Array<SouthConnectorManifest> {
@@ -239,14 +247,6 @@ export default class SouthService {
     const south = buildSouth(
       testToRun,
       mockedAddContent,
-      this.engine.logger.child(
-        {
-          scopeType: 'south',
-          scopeId: 'test',
-          scopeName: `${southType}:test-connection`
-        },
-        { level: 'silent' }
-      ),
       '',
       this.southCacheRepository,
       this.certificateRepository,
@@ -262,7 +262,7 @@ export default class SouthService {
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemTestResult> {
     let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
     if (southId !== 'create' && southId !== 'history') {
       southConnector = this.findById(southId);
@@ -293,7 +293,9 @@ export default class SouthService {
       settings: await encryptionService.encryptConnectorSecrets(itemSettings, null, itemSettingsManifest),
       maxReadInterval: null,
       readDelay: 0,
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -319,20 +321,21 @@ export default class SouthService {
     const south = buildSouth(
       testConnectorToRun,
       mockedAddContent,
-      this.engine.logger.child(
-        {
-          scopeType: 'south',
-          scopeId: 'test',
-          scopeName: `${southType}:test-connection`
-        },
-        { level: 'silent' }
-      ),
       '',
       this.southCacheRepository,
       this.certificateRepository,
       this.oIAnalyticsRegistrationRepository
     );
-    return await south.testItem(testItemToRun, testingSettings);
+    const raw = await south.testItem(testItemToRun, testingSettings);
+
+    // Delegate the transform to the shared runner so the south/history item test and the
+    // north/history transformer test (#4774) apply transformers identically.
+    return {
+      raw,
+      transformed: testingSettings.transformer
+        ? await this.transformerService.runTransformer(testingSettings.transformer.transformerId, testingSettings.transformer.options, raw)
+        : null
+    };
   }
 
   listItems(southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> {
@@ -544,7 +547,9 @@ export default class SouthService {
         syncWithGroup: stringToBoolean(data.syncWithGroup),
         maxReadInterval: Number(data.maxReadInterval || '0'),
         readDelay: Number(data.readDelay || '0'),
-        overlap: Number(data.overlap || '0')
+        startTimeOffset: Number(data.startTimeOffset || '0'),
+        endTimeOffset: data.endTimeOffset !== undefined && data.endTimeOffset !== '' ? Number(data.endTimeOffset) : null,
+        recoveryStrategy: null
       } as SouthConnectorItemDTO;
 
       if (existingItems.find(existingItem => existingItem.name === item.name)) {
@@ -632,9 +637,11 @@ export default class SouthService {
           name: groupName,
           southId: southConnector.id,
           scanMode,
-          overlap: itemWithGroup.overlap,
+          startTimeOffset: itemWithGroup.startTimeOffset,
+          endTimeOffset: itemWithGroup.endTimeOffset,
           maxReadInterval: itemWithGroup.maxReadInterval,
-          readDelay: itemWithGroup.readDelay
+          readDelay: itemWithGroup.readDelay,
+          recoveryStrategy: itemWithGroup.recoveryStrategy
         };
         group = this.southItemGroupRepository.create(groupEntity, user);
       }
@@ -701,9 +708,11 @@ export default class SouthService {
       name: command.standardSettings.name,
       southId: southConnector.id,
       scanMode,
-      overlap: command.historySettings.overlap,
+      startTimeOffset: command.historySettings.startTimeOffset,
+      endTimeOffset: command.historySettings.endTimeOffset,
       maxReadInterval: command.historySettings.maxReadInterval,
-      readDelay: command.historySettings.readDelay
+      readDelay: command.historySettings.readDelay,
+      recoveryStrategy: command.historySettings.recoveryStrategy ?? null
     };
     return this.southItemGroupRepository.create(groupEntity, user);
   }
@@ -727,15 +736,19 @@ export default class SouthService {
       throw new OIBusValidationError(`A group with name "${command.standardSettings.name}" already exists for this south connector`);
     }
 
-    const overlap = command.historySettings.overlap != null ? command.historySettings.overlap : null;
+    const startTimeOffset = command.historySettings.startTimeOffset != null ? command.historySettings.startTimeOffset : null;
+    const endTimeOffset = command.historySettings.endTimeOffset != null ? command.historySettings.endTimeOffset : null;
     const maxReadInterval = command.historySettings.maxReadInterval != null ? command.historySettings.maxReadInterval : null;
     const readDelay = command.historySettings.readDelay != null ? command.historySettings.readDelay : 0;
+    const recoveryStrategy = command.historySettings.recoveryStrategy ?? null;
     const groupEntity: Omit<SouthItemGroupCommand, 'southId'> = {
       name: command.standardSettings.name,
       scanMode,
-      overlap,
+      startTimeOffset,
+      endTimeOffset,
       maxReadInterval,
-      readDelay
+      readDelay,
+      recoveryStrategy
     };
     this.southItemGroupRepository.update(groupId, groupEntity, user);
     const updated = this.southItemGroupRepository.findById(groupId);
@@ -852,9 +865,11 @@ const copyGroupCommandToGroupEntity = (
 ) => {
   groupEntity.id = command.id!;
   groupEntity.name = command.standardSettings.name;
-  groupEntity.overlap = command.historySettings.overlap;
+  groupEntity.startTimeOffset = command.historySettings.startTimeOffset;
+  groupEntity.endTimeOffset = command.historySettings.endTimeOffset;
   groupEntity.maxReadInterval = command.historySettings.maxReadInterval;
   groupEntity.readDelay = command.historySettings.readDelay;
+  groupEntity.recoveryStrategy = command.historySettings.recoveryStrategy ?? null;
   groupEntity.scanMode = checkScanMode(scanModes, command.standardSettings.scanModeId, null)!;
 };
 
@@ -882,7 +897,9 @@ export const copySouthItemCommandToSouthItemEntity = async (
   southItemEntity.syncWithGroup = command.syncWithGroup ?? false;
   southItemEntity.maxReadInterval = command.maxReadInterval != null ? command.maxReadInterval : null;
   southItemEntity.readDelay = command.readDelay != null ? command.readDelay : null;
-  southItemEntity.overlap = command.overlap != null ? command.overlap : null;
+  southItemEntity.startTimeOffset = command.startTimeOffset != null ? command.startTimeOffset : null;
+  southItemEntity.endTimeOffset = command.endTimeOffset != null ? command.endTimeOffset : null;
+  southItemEntity.recoveryStrategy = command.recoveryStrategy ?? null;
   southItemEntity.scanMode =
     command.scanModeId || command.scanModeName ? checkScanMode(scanModes, command.scanModeId, command.scanModeName) : null;
   southItemEntity.group = command.groupId || command.groupName ? checkGroups(groups, command.groupId, command.groupName) : null;
@@ -927,9 +944,11 @@ export const toSouthConnectorDTO = (
         scanMode: toScanModeDTO(group.scanMode, getUserInfo)
       },
       historySettings: {
+        startTimeOffset: group.startTimeOffset,
+        endTimeOffset: group.endTimeOffset,
         maxReadInterval: group.maxReadInterval,
         readDelay: group.readDelay,
-        overlap: group.overlap
+        recoveryStrategy: group.recoveryStrategy
       }
     })),
     createdBy: getUserInfo(southEntity.createdBy),

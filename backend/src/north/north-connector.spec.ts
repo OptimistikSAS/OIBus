@@ -72,8 +72,52 @@ describe('NorthConnector', () => {
     validateCronExpression: mock.fn(() => ({ expression: '' }))
   };
 
+  // Faithful re-implementation of the real `runTransformerOnContent` helper (kept in-sync with
+  // transformer.service.ts) so that mocking the transformer.service module here does not drop it.
   const transformerServiceExports = {
-    createTransformer: mock.fn(() => oiBusTransformer)
+    createTransformer: mock.fn(() => oiBusTransformer),
+    runTransformerOnContent: mock.fn(
+      async (
+        transformer: {
+          transformInMemory: (data: unknown, source: CacheMetadataSource, filename: string | null) => Promise<unknown>;
+          transform: (stream: unknown, source: CacheMetadataSource, filename: string | null) => Promise<unknown>;
+        },
+        data: OIBusContent,
+        source: CacheMetadataSource,
+        maxElements = 0
+      ) => {
+        const results: Array<unknown> = [];
+        switch (data.type) {
+          case 'time-values': {
+            const content = data.content;
+            if (maxElements > 0 && content.length > maxElements) {
+              for (let i = 0; i < content.length; i += maxElements) {
+                results.push(await transformer.transformInMemory(content.slice(i, i + maxElements), source, null));
+              }
+            } else {
+              results.push(await transformer.transformInMemory(content, source, null));
+            }
+            break;
+          }
+          case 'setpoint':
+            results.push(await transformer.transformInMemory(data.content, source, null));
+            break;
+          case 'any-content':
+            results.push(await transformer.transformInMemory(data.content, source, null));
+            break;
+          case 'any': {
+            const randomId = (utilsExports.generateRandomId as () => string)();
+            const logicalName = data.filename ?? path.basename(data.filePath);
+            const { name, ext } = path.parse(logicalName);
+            const cacheFilename = `${name}-${randomId}${ext}`;
+            const stream = (realFs['createReadStream'] as (p: string) => unknown)(data.filePath);
+            results.push(await transformer.transform(stream, source, cacheFilename));
+            break;
+          }
+        }
+        return results;
+      }
+    )
   };
 
   before(() => {
@@ -91,6 +135,10 @@ describe('NorthConnector', () => {
       default: function () {
         return cacheService;
       }
+    });
+    mockModule(nodeRequire, '../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
     });
 
     NorthFileWriter = reloadModule<{ default: typeof NorthFileWriterClass }>(nodeRequire, './north-file-writer/north-file-writer').default;
@@ -143,7 +191,7 @@ describe('NorthConnector', () => {
 
     mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    north = new NorthFileWriter(testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>, logger, cacheService);
+    north = new NorthFileWriter(testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>, cacheService);
   });
 
   afterEach(() => {
@@ -483,12 +531,11 @@ describe('NorthConnector', () => {
     assert.deepStrictEqual(cacheService.updateCacheContent.mock.calls[0].arguments[0], updateCommand);
   });
 
-  it('should use another logger', async () => {
-    north.setLogger(anotherLogger);
+  it('should refresh logger on refreshLogger()', async () => {
+    north.refreshLogger();
     logger.debug.mock.resetCalls();
     await north.stop();
-    assert.strictEqual(anotherLogger.debug.mock.calls.length, 1);
-    assert.strictEqual(logger.debug.mock.calls.length, 0);
+    assert.strictEqual(logger.debug.mock.calls.length, 1);
   });
 
   it('should trigger run if necessary because of retry', async () => {

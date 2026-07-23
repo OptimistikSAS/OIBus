@@ -82,9 +82,11 @@
               </button>
             </th>
             @if (hasHistorianCapabilities) {
-              <th translate="south.groups.overlap"></th>
+              <th translate="south.groups.start-time-offset"></th>
+              <th translate="south.groups.end-time-offset"></th>
               <th translate="south.groups.max-read-interval"></th>
               <th translate="south.groups.read-delay"></th>
+              <th translate="south.groups.recovery-strategy"></th>
             }
             <th>
               <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('itemCount')">
@@ -101,9 +103,15 @@
               <td>{{ group.standardSettings.name }}</td>
               <td>{{ getScanModeName(group) }}</td>
               @if (hasHistorianCapabilities) {
-                <td>{{ group.historySettings.overlap }}ms</td>
+                <td>{{ group.historySettings.startTimeOffset }}ms</td>
+                <td>{{ group.historySettings.endTimeOffset }}ms</td>
                 <td>{{ group.historySettings.maxReadInterval }}s</td>
                 <td>{{ group.historySettings.readDelay }}ms</td>
+                <td>
+                  @if (group.historySettings.recoveryStrategy) {
+                    {{ 'south.groups.recovery-strategy-' + group.historySettings.recoveryStrategy | translate }}
+                  }
+                </td>
               }
               <td>{{ getItemCount(group.id!) }}</td>
               <td class="text-nowrap action-buttons">

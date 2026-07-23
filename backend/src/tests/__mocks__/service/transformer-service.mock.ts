@@ -9,6 +9,8 @@ import {
 import { Page } from '../../../../shared/model/types';
 import type { TransformerManifest } from '../../../../shared/model/transformer.model';
 import { InputType } from '../../../../shared/model/transformer.model';
+import { OIBusContent } from '../../../../shared/model/engine.model';
+import { SouthConnectorItemTestResult } from '../../../../shared/model/south-connector.model';
 
 /**
  * Create a mock object for Transformer service
@@ -33,6 +35,15 @@ export default class TransformerServiceMock {
   test = mock.fn(
     async (_command: CustomTransformerCommandDTO, _testRequest: TransformerTestRequest): Promise<TransformerTestResponse> =>
       ({}) as TransformerTestResponse
+  );
+  runTransformer = mock.fn(
+    async (_transformerId: string, _options: Record<string, unknown>, content: OIBusContent): Promise<OIBusContent> => content
+  );
+  testTransformer = mock.fn(
+    async (_transformerId: string, _options: Record<string, unknown>, _inputData: string): Promise<SouthConnectorItemTestResult> => ({
+      raw: { type: 'any-content', content: '' } as OIBusContent,
+      transformed: { type: 'any-content', content: '' } as OIBusContent
+    })
   );
   generateTemplate = mock.fn((_inputType: InputType): unknown => ({}));
 }

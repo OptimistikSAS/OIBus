@@ -86,6 +86,7 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemTestingSettings,
+  SouthConnectorItemTestResult,
   SouthConnectorManifest
 } from '../../../shared/model/south-connector.model';
 import type { SouthConnectorEntity } from '../../model/south-connector.model';
@@ -146,7 +147,7 @@ interface ICommandSouthService {
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent>;
+  ): Promise<SouthConnectorItemTestResult>;
 }
 
 interface ICommandNorthService {
@@ -200,7 +201,7 @@ interface ICommandHistoryQueryService {
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent>;
+  ): Promise<SouthConnectorItemTestResult>;
   start(historyId: string): Promise<void>;
   pause(historyId: string): Promise<void>;
 }
@@ -1023,7 +1024,8 @@ export default class OIAnalyticsCommandService {
         syncWithGroup: item.syncWithGroup,
         maxReadInterval: item.maxReadInterval,
         readDelay: item.readDelay,
-        overlap: item.overlap
+        startTimeOffset: item.startTimeOffset,
+        endTimeOffset: item.endTimeOffset
       }))
     )) as typeof command.commandContent.items;
   }
@@ -1126,7 +1128,7 @@ export default class OIAnalyticsCommandService {
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings
     );
-    this.completeTestItemCommand(command, result);
+    this.completeTestItemCommand(command, result.transformed ?? result.raw);
   }
 
   private async decryptNorthSettings(
@@ -1299,7 +1301,7 @@ export default class OIAnalyticsCommandService {
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings
     );
-    this.completeTestItemCommand(command, result);
+    this.completeTestItemCommand(command, result.transformed ?? result.raw);
   }
 
   private async executeUpdateHistoryQueryStatusCommand(command: OIBusUpdateHistoryQueryStatusCommand) {

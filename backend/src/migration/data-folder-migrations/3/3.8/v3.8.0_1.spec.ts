@@ -116,4 +116,9 @@ describe('Data folder migration v3.8.0_1 (drop legacy opcua/ subfolders)', () =>
     await migration.up({} as Knex);
     // No assertion needed — the test passes if no exception was thrown.
   });
+
+  it('down() is a no-op (migration is not reversible)', async () => {
+    const result = await migration.down();
+    assert.strictEqual(result, undefined);
+  });
 });
