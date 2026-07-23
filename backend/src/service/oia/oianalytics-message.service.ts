@@ -349,7 +349,7 @@ export default class OIAnalyticsMessageService {
   private createEngineCommand(): OIAnalyticsEngineCommandDTO {
     // TODO: split engine command and add data folders, ignoreIpFilters and ignoreRemoteUpdate flags
     const engine = this.engineRepository.get()!;
-    const info = getOIBusInfo(engine);
+    const info = getOIBusInfo(engine, this.ignoreIpFilters, this.ignoreRemoteUpdate);
     return {
       oIBusInternalId: engine.id,
       oIBusCreatedBy: engine.createdBy,
@@ -361,6 +361,10 @@ export default class OIAnalyticsMessageService {
       launcherVersion: engine.launcherVersion,
       architecture: info.architecture,
       operatingSystem: info.operatingSystem,
+      dataFolder: info.dataDirectory,
+      binaryFolder: info.binaryDirectory,
+      ignoreIpFilters: info.ignoreIpFilters,
+      ignoreRemoteUpdate: info.ignoreRemoteUpdate,
       settings: {
         name: engine.name,
         port: engine.port,
