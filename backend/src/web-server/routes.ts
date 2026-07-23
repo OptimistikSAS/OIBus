@@ -558,6 +558,7 @@ const models: TsoaRoute.Models = {
             "id": {"ref":"OIBusSouthType","required":true},
             "category": {"ref":"OIBusSouthCategory","required":true},
             "modes": {"dataType":"nestedObjectLiteral","nestedProperties":{"history":{"dataType":"boolean","required":true},"lastFile":{"dataType":"boolean","required":true},"lastPoint":{"dataType":"boolean","required":true},"subscription":{"dataType":"boolean","required":true}},"required":true},
+            "explore": {"dataType":"boolean"},
             "settings": {"ref":"OIBusObjectAttribute","required":true},
             "items": {"ref":"OIBusArrayAttribute","required":true},
         },
@@ -4117,6 +4118,42 @@ const models: TsoaRoute.Models = {
             "southSettings": {"ref":"SouthSettings","required":true},
             "itemSettings": {"ref":"SouthItemSettings","required":true},
             "testingSettings": {"ref":"SouthConnectorItemTestingSettings","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthConnectorExploreEntry": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "name": {"dataType":"string","required":true},
+            "type": {"dataType":"string","required":true},
+            "hasChildren": {"dataType":"boolean","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthExploreStartResult": {
+        "dataType": "refObject",
+        "properties": {
+            "sessionId": {"dataType":"string","required":true},
+            "entries": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorExploreEntry"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthExploreBrowseResult": {
+        "dataType": "refObject",
+        "properties": {
+            "entries": {"dataType":"array","array":{"dataType":"refObject","ref":"SouthConnectorExploreEntry"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthExploreBrowseCommand": {
+        "dataType": "refObject",
+        "properties": {
+            "parentId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -8723,6 +8760,104 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'testItem',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSouthConnectorController_startExplore: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                southType: {"in":"query","name":"southType","required":true,"ref":"OIBusSouthType"},
+                command: {"in":"body","name":"command","required":true,"ref":"SouthSettings"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/south/:southId/explore',
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController.prototype.startExplore)),
+
+            async function SouthConnectorController_startExplore(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSouthConnectorController_startExplore, request, response });
+
+                const controller = new SouthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'startExplore',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSouthConnectorController_browseExplore: Record<string, TsoaRoute.ParameterSchema> = {
+                _southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                sessionId: {"in":"path","name":"sessionId","required":true,"dataType":"string"},
+                command: {"in":"body","name":"command","required":true,"ref":"SouthExploreBrowseCommand"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.put('/api/south/:southId/explore/:sessionId',
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController.prototype.browseExplore)),
+
+            async function SouthConnectorController_browseExplore(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSouthConnectorController_browseExplore, request, response });
+
+                const controller = new SouthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'browseExplore',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSouthConnectorController_closeExplore: Record<string, TsoaRoute.ParameterSchema> = {
+                _southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                sessionId: {"in":"path","name":"sessionId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.delete('/api/south/:southId/explore/:sessionId',
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController.prototype.closeExplore)),
+
+            async function SouthConnectorController_closeExplore(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSouthConnectorController_closeExplore, request, response });
+
+                const controller = new SouthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'closeExplore',
                 controller,
                 response,
                 next,

@@ -314,6 +314,78 @@ describe('SouthConnectorController', () => {
     ]);
   });
 
+  it('should start a south explore session', async () => {
+    const southId = testData.south.list[0].id;
+    const southType = testData.south.command.type;
+    const settings = testData.south.command.settings;
+    const startResult = { sessionId: 'sessionId', entries: [{ id: 'n1', name: 'N1', type: 'Object', hasChildren: true }] };
+    southService.startExplore = mock.fn(async () => startResult);
+
+    const result = await controller.startExplore(southId, southType, settings, mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(southService.startExplore.mock.calls.length, 1);
+    assert.deepStrictEqual(southService.startExplore.mock.calls[0].arguments, [southId, southType, settings]);
+    assert.deepStrictEqual(result, startResult);
+  });
+
+  it('should wrap errors when starting a south explore session', async () => {
+    southService.startExplore = mock.fn(async () => {
+      throw new Error('Explore start failure');
+    });
+
+    try {
+      await controller.startExplore(
+        testData.south.list[0].id,
+        testData.south.command.type,
+        testData.south.command.settings,
+        mockRequest as CustomExpressRequest
+      );
+      assert.fail('Expected error to be thrown');
+    } catch (error) {
+      assert.ok(error instanceof OIBusTestingError);
+      assert.strictEqual((error as OIBusTestingError).message, 'Explore start failure');
+    }
+  });
+
+  it('should browse a south explore session', async () => {
+    const browseResult = { entries: [{ id: 'child', name: 'Child', type: 'file', hasChildren: false }] };
+    southService.browseExplore = mock.fn(async () => browseResult);
+
+    const result = await controller.browseExplore(
+      testData.south.list[0].id,
+      'sessionId',
+      { parentId: 'parent' },
+      mockRequest as CustomExpressRequest
+    );
+
+    assert.strictEqual(southService.browseExplore.mock.calls.length, 1);
+    assert.deepStrictEqual(southService.browseExplore.mock.calls[0].arguments, ['sessionId', 'parent']);
+    assert.deepStrictEqual(result, browseResult);
+  });
+
+  it('should wrap errors when browsing a south explore session', async () => {
+    southService.browseExplore = mock.fn(async () => {
+      throw new Error('Explore browse failure');
+    });
+
+    try {
+      await controller.browseExplore(testData.south.list[0].id, 'sessionId', { parentId: null }, mockRequest as CustomExpressRequest);
+      assert.fail('Expected error to be thrown');
+    } catch (error) {
+      assert.ok(error instanceof OIBusTestingError);
+      assert.strictEqual((error as OIBusTestingError).message, 'Explore browse failure');
+    }
+  });
+
+  it('should close a south explore session', async () => {
+    southService.closeExplore = mock.fn(async () => undefined);
+
+    await controller.closeExplore(testData.south.list[0].id, 'sessionId', mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(southService.closeExplore.mock.calls.length, 1);
+    assert.deepStrictEqual(southService.closeExplore.mock.calls[0].arguments, ['sessionId']);
+  });
+
   it('should return a list of south connector items', async () => {
     const southId = testData.south.list[0].id;
     const mockItems = testData.south.list[0].items;

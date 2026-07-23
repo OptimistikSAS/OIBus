@@ -1126,6 +1126,15 @@ export interface SouthConnectorManifest {
   };
 
   /**
+   * Whether this connector type supports the interactive "explore/discovery" feature
+   * (browsing the data source, e.g. expanding OPC-UA nodes or walking a folder tree).
+   * UI capability flag — mirrors the connector's structural `hasExplore()`.
+   *
+   * @example true
+   */
+  explore?: boolean;
+
+  /**
    * The configuration schema for the connector settings.
    */
   settings: OIBusObjectAttribute;
@@ -1134,6 +1143,70 @@ export interface SouthConnectorManifest {
    * The configuration schema for items (data points).
    */
   items: OIBusArrayAttribute;
+}
+
+/**
+ * A single entry returned while exploring/discovering a South connector's data source.
+ * Represents an OPC-UA node or a file-system entry. Kept intentionally generic and
+ * extensible so item creation and item synchronisation can build on it later.
+ */
+export interface SouthConnectorExploreEntry {
+  /**
+   * Stable identifier of the entry, passed back to expand it.
+   * OPC-UA node id (e.g. "ns=1;s=Temperature") or a folder-relative path.
+   */
+  id: string;
+
+  /**
+   * Human-readable label (OPC-UA display name or file/folder name).
+   */
+  name: string;
+
+  /**
+   * Nature of the entry. For OPC-UA the node class ('Object', 'Variable', ...);
+   * for the folder scanner 'folder' or 'file'.
+   */
+  type: string;
+
+  /**
+   * Whether the entry can be expanded to reveal children in the explore tree.
+   */
+  hasChildren: boolean;
+}
+
+/**
+ * Result of starting an explore session.
+ */
+export interface SouthExploreStartResult {
+  /**
+   * Identifier of the stateful explore session, used for subsequent browse/close calls.
+   */
+  sessionId: string;
+
+  /**
+   * The root-level entries of the data source.
+   */
+  entries: Array<SouthConnectorExploreEntry>;
+}
+
+/**
+ * Result of browsing (expanding) an entry within an explore session.
+ */
+export interface SouthExploreBrowseResult {
+  /**
+   * The children of the browsed entry.
+   */
+  entries: Array<SouthConnectorExploreEntry>;
+}
+
+/**
+ * Command body to browse (expand) an entry within an explore session.
+ */
+export interface SouthExploreBrowseCommand {
+  /**
+   * The id of the entry to expand, or null to (re)load the root level.
+   */
+  parentId: string | null;
 }
 
 /**

@@ -288,11 +288,11 @@ export async function bootstrap(): Promise<void> {
   await server.init();
 
   let stopping = false;
-  // Catch Ctrl+C and properly stop the Engine
-  process.on('SIGINT', async () => {
+  const stopEverything = async (signal: string) => {
     if (stopping) return;
-    console.info('SIGINT (Ctrl+C) received. Stopping everything.');
+    console.info(`${signal} received. Stopping everything.`);
     stopping = true;
+    await southService.closeAllExploreSessions();
     await oIBusService.stop();
     await oIAnalyticsCommandService.stop();
     await oIAnalyticsMessageService.stop();
@@ -303,7 +303,10 @@ export async function bootstrap(): Promise<void> {
     console.info('OIBus stopped');
     stopping = false;
     process.exit();
-  });
+  };
+  // Catch Ctrl+C and termination signals to properly stop the Engine
+  process.on('SIGINT', () => stopEverything('SIGINT (Ctrl+C)'));
+  process.on('SIGTERM', () => stopEverything('SIGTERM'));
 
   rmSync(INIT_CONFIG_FILENAME, { force: true });
 

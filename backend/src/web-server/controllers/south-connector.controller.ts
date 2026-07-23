@@ -25,6 +25,9 @@ import {
   SouthConnectorItemTestResult,
   SouthConnectorLightDTO,
   SouthConnectorManifest,
+  SouthExploreBrowseCommand,
+  SouthExploreBrowseResult,
+  SouthExploreStartResult,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO,
   SouthItemLastValue,
@@ -255,6 +258,58 @@ export class SouthConnectorController extends Controller {
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }
+  }
+
+  /**
+   * Start an interactive explore session for a south connector
+   * @summary Start south explore session
+   */
+  @Post('/{southId}/explore')
+  async startExplore(
+    @Path() southId: string,
+    @Query() southType: OIBusSouthType,
+    @Body() command: SouthSettings,
+    @Request() request: CustomExpressRequest
+  ): Promise<SouthExploreStartResult> {
+    const southService = request.services.southService as SouthService;
+    try {
+      return await southService.startExplore(southId, southType, command);
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
+  }
+
+  /**
+   * Browse (expand) an entry within an explore session
+   * @summary Browse south explore session
+   */
+  @Put('/{southId}/explore/{sessionId}')
+  async browseExplore(
+    @Path('southId') _southId: string,
+    @Path() sessionId: string,
+    @Body() command: SouthExploreBrowseCommand,
+    @Request() request: CustomExpressRequest
+  ): Promise<SouthExploreBrowseResult> {
+    const southService = request.services.southService as SouthService;
+    try {
+      return await southService.browseExplore(sessionId, command.parentId);
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
+  }
+
+  /**
+   * Close an explore session
+   * @summary Close south explore session
+   */
+  @Delete('/{southId}/explore/{sessionId}')
+  async closeExplore(
+    @Path('southId') _southId: string,
+    @Path() sessionId: string,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const southService = request.services.southService as SouthService;
+    await southService.closeExplore(sessionId);
   }
 
   /**

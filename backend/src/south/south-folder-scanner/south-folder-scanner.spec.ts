@@ -539,4 +539,45 @@ describe('SouthFolderScanner', () => {
       });
     });
   });
+
+  describe('explore', () => {
+    it('should list folders and files at the root', async () => {
+      const mockDirents = [
+        { name: 'subfolder', isDirectory: () => true, isFile: () => false },
+        { name: 'file1.csv', isDirectory: () => false, isFile: () => true },
+        { name: 'socket', isDirectory: () => false, isFile: () => false }
+      ];
+      const readdirMock = mock.method(
+        fs,
+        'readdir',
+        mock.fn(async () => mockDirents)
+      );
+
+      const entries = await south.explore(null);
+
+      assert.strictEqual(String(readdirMock.mock.calls[0].arguments[0]), path.resolve('inputFolder'));
+      assert.deepStrictEqual(entries, [
+        { id: 'subfolder', name: 'subfolder', type: 'folder', hasChildren: true },
+        { id: 'file1.csv', name: 'file1.csv', type: 'file', hasChildren: false }
+      ]);
+    });
+
+    it('should browse a sub-folder relative to the input folder', async () => {
+      const mockDirents = [{ name: 'nested.csv', isDirectory: () => false, isFile: () => true }];
+      const readdirMock = mock.method(
+        fs,
+        'readdir',
+        mock.fn(async () => mockDirents)
+      );
+
+      const entries = await south.explore('subfolder');
+
+      assert.strictEqual(String(readdirMock.mock.calls[0].arguments[0]), path.resolve('inputFolder', 'subfolder'));
+      assert.deepStrictEqual(entries, [{ id: path.join('subfolder', 'nested.csv'), name: 'nested.csv', type: 'file', hasChildren: false }]);
+    });
+
+    it('should reject a path outside of the input folder', async () => {
+      await assert.rejects(() => south.explore('../../etc'), /path is outside of the input folder/);
+    });
+  });
 });

@@ -8,7 +8,7 @@ import type { OIBusConnectionTestResult, OIBusContent } from '../../../shared/mo
 import type { ScanMode } from '../../model/scan-mode.model';
 import type { Instant } from '../../../shared/model/types';
 import type { SouthConnectorItemEntity } from '../../model/south-connector.model';
-import type { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import type { SouthConnectorExploreEntry, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Create a mock object for South Connector
@@ -52,4 +52,6 @@ export default class SouthConnectorMock extends SouthConnector<SouthSettings, So
   hasHistoryQuery = mock.fn((): boolean => false);
   hasDirectQuery = mock.fn((): boolean => false);
   hasSubscription = mock.fn((): boolean => false);
+  hasExplore = mock.fn((): boolean => false);
+  explore = mock.fn(async (_parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> => []);
 }

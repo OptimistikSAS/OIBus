@@ -2366,6 +2366,12 @@
       "success": "Connection successfully tested",
       "error": "Error when testing settings"
     },
+    "explore": {
+      "title": "Explore data source",
+      "button": "Explore",
+      "empty": "Nothing to explore",
+      "error": "Error while exploring the data source"
+    },
     "test-item": {
       "title": "Testing item",
       "test-button": "Run test",

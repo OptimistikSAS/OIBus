@@ -12,7 +12,7 @@ import { Instant, Interval } from '../../shared/model/types';
 import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
 import SouthCacheService from '../service/south-cache.service';
-import { SouthDirectQuery, SouthHistoryQuery, SouthSubscription } from './south-interface';
+import { SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from './south-interface';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import {
   OIBusAnyContent,
@@ -878,6 +878,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   /** Capability check — true iff the subclass implements both `subscribe()` and `unsubscribe()` from `SouthSubscription`. */
   hasSubscription(): this is SouthSubscription {
     return 'subscribe' in this && 'unsubscribe' in this;
+  }
+
+  /** Capability check — true iff the subclass implements `SouthExplore.explore()`. */
+  hasExplore(): this is SouthExplore {
+    return 'explore' in this;
   }
 
   set connectorConfiguration(connectorConfiguration: SouthConnectorEntity<T, I>) {

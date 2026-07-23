@@ -52,6 +52,13 @@ export default class SouthServiceMock {
     raw: { type: 'any-content', content: '' } as OIBusAnyContent,
     transformed: null
   }));
+  startExplore = mock.fn(async (_southId: string, _southType: OIBusSouthType, _settingsToTest: SouthSettings) => ({
+    sessionId: 'sessionId',
+    entries: []
+  }));
+  browseExplore = mock.fn(async (_sessionId: string, _parentId: string | null) => ({ entries: [] }));
+  closeExplore = mock.fn(async (_sessionId: string): Promise<void> => undefined);
+  closeAllExploreSessions = mock.fn(async (): Promise<void> => undefined);
   listItems = mock.fn((_southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> => []);
   searchItems = mock.fn(
     (_southId: string, _searchParams: SouthConnectorItemSearchParam): Page<SouthConnectorItemEntity<SouthItemSettings>> => ({
