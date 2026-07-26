@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.8.8](https://github.com/OptimistikSAS/OIBus/compare/v3.8.7...v3.8.8) (2026-07-26)
+
+
+### Bug Fixes
+
+* **north:** catch unhandled error from handleContentWrapper ([b1c6c4e](https://github.com/OptimistikSAS/OIBus/commit/b1c6c4e17ecd3e2e96ad3f7007c9420677a212c6))
+* **oianalytics:** allow null values for proxy username and proxy password ([2e404f4](https://github.com/OptimistikSAS/OIBus/commit/2e404f46feaefbcde55af33e5f9d0ed5a445a890))
+* **oianalytics:** default command refresh interval fix to 60s ([95f3d72](https://github.com/OptimistikSAS/OIBus/commit/95f3d7272f528b7b8697cbf365c8535d5729a4b0))
+* **south:** manage groups in dedicated modal and fix group removal ([379c371](https://github.com/OptimistikSAS/OIBus/commit/379c371a582bae941c07046bb9e43f15a54dd3ed))
+* **south:** set sync with when changing group ([1beedca](https://github.com/OptimistikSAS/OIBus/commit/1beedca109c75527752f388692d1fdaa8838bd15))
+* **south:** update date only when item changes ([54eba0f](https://github.com/OptimistikSAS/OIBus/commit/54eba0f5a83c1bf31ff6a1ed4a84ea50a67797d7))
+
 ## [3.8.7](https://github.com/OptimistikSAS/OIBus/compare/v3.8.6...v3.8.7) (2026-07-16)
 
 
