@@ -1,5 +1,6 @@
 import Joi from 'joi';
 import { validateCronExpression } from '../../../service/utils';
+import { AUTH_TOKEN_DURATIONS } from '../../../../shared/model/engine.model';
 
 const scanModeSchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required(),
@@ -26,7 +27,7 @@ const certificateSchema: Joi.ObjectSchema = Joi.object({
   })
 });
 
-const logParametersSchema = Joi.object({
+const engineLoggerSchema = Joi.object({
   console: Joi.object({
     level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace')
   }),
@@ -58,38 +59,36 @@ const logParametersSchema = Joi.object({
   })
 });
 
-const engineSchema: Joi.ObjectSchema = Joi.object({
-  name: Joi.string().required(),
-  port: Joi.number().required().port(),
-  proxyEnabled: Joi.boolean().required(),
-  proxyPort: Joi.number().port().optional().allow(null),
-  forwardProxyUrl: Joi.string().uri().optional().allow(null, ''),
-  forwardProxyUsername: Joi.string().optional().allow(null, ''),
-  forwardProxyPassword: Joi.string().optional().allow(null, ''),
-  proxyUsername: Joi.string().optional().allow(null, ''),
-  proxyPassword: Joi.string().optional().allow(null, ''),
-  logParameters: logParametersSchema
-});
-
 const engineNameSchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required()
 });
 
 const engineWebServerSchema: Joi.ObjectSchema = Joi.object({
-  port: Joi.number().required().port()
+  port: Joi.number().required().port(),
+  authTokenDuration: Joi.string()
+    .required()
+    .valid(...AUTH_TOKEN_DURATIONS)
 });
 
 const engineProxySchema: Joi.ObjectSchema = Joi.object({
-  proxyEnabled: Joi.boolean().required(),
-  proxyPort: Joi.number().port().optional().allow(null),
-  forwardProxyUrl: Joi.string().uri().optional().allow(null, ''),
-  forwardProxyUsername: Joi.string().optional().allow(null, ''),
-  forwardProxyPassword: Joi.string().optional().allow(null, ''),
-  proxyUsername: Joi.string().optional().allow(null, ''),
-  proxyPassword: Joi.string().optional().allow(null, '')
+  enabled: Joi.boolean().required(),
+  port: Joi.number().port().optional().allow(null),
+  username: Joi.string().optional().allow(null, ''),
+  password: Joi.string().optional().allow(null, ''),
+  forward: Joi.object({
+    enabled: Joi.boolean().required(),
+    url: Joi.string().uri().optional().allow(null, ''),
+    username: Joi.string().optional().allow(null, ''),
+    password: Joi.string().optional().allow(null, '')
+  }).optional()
 });
 
-const engineLoggerSchema = logParametersSchema;
+const engineSchema: Joi.ObjectSchema = Joi.object({
+  general: engineNameSchema.required(),
+  webServer: engineWebServerSchema.required(),
+  proxyServer: engineProxySchema.required(),
+  logger: engineLoggerSchema.required()
+});
 
 const registrationSchema: Joi.ObjectSchema = Joi.object({
   host: Joi.string().required(),

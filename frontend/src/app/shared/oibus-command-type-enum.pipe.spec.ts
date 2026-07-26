@@ -10,7 +10,10 @@ describe('OibusCommandTypeEnumPipe', () => {
     expect(pipe.transform('update-version')).toBe('Upgrade version');
     expect(pipe.transform('restart-engine')).toBe('Restart');
     expect(pipe.transform('regenerate-cipher-keys')).toBe('Regenerate cipher keys');
-    expect(pipe.transform('update-engine-settings')).toBe('Update engine settings');
+    expect(pipe.transform('update-engine-general')).toBe('Update engine general settings');
+    expect(pipe.transform('update-engine-web-server')).toBe('Update engine web server settings');
+    expect(pipe.transform('update-engine-proxy')).toBe('Update engine proxy settings');
+    expect(pipe.transform('update-engine-logger')).toBe('Update engine logger settings');
     expect(pipe.transform('create-scan-mode')).toBe('Create scan mode');
     expect(pipe.transform('update-scan-mode')).toBe('Update scan mode');
     expect(pipe.transform('delete-scan-mode')).toBe('Delete scan mode');

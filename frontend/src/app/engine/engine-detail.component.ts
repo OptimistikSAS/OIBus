@@ -22,6 +22,7 @@ import { EditEngineNameModalComponent } from './edit-engine-name-modal/edit-engi
 import { EditEngineWebServerModalComponent } from './edit-engine-web-server-modal/edit-engine-web-server-modal.component';
 import { EditEngineProxyModalComponent } from './edit-engine-proxy-modal/edit-engine-proxy-modal.component';
 import { EditEngineLoggerModalComponent } from './edit-engine-logger-modal/edit-engine-logger-modal.component';
+import { AuthTokenDuration } from '../../../../backend/shared/model/engine.model';
 
 @Component({
   selector: 'oib-engine-detail',
@@ -72,6 +73,10 @@ export class EngineDetailComponent {
     const modal = this.modalService.open(EditEngineNameModalComponent);
     modal.componentInstance.initialize(this.engineSettings()!);
     modal.result.subscribe(() => this.refresh$.next());
+  }
+
+  authTokenDurationLabelKey(duration: AuthTokenDuration): string {
+    return `engine.web-server-settings.auth-token-duration-options.${duration}`;
   }
 
   openWebServerModal() {

@@ -5,17 +5,8 @@ import httpProxy from 'http-proxy';
 import argon2 from 'argon2';
 import { testIPOnFilter } from '../service/utils';
 import { loggerService } from '../service/logger/logger.service';
-
-interface ForwardProxy {
-  url: string | null;
-  username: string | null;
-  password: string | null;
-}
-
-interface ProxyAuth {
-  username: string | null;
-  password: string | null;
-}
+import { EngineSettings } from '../model/engine.model';
+import { encryptionService } from '../service/encryption.service';
 
 /**
  * Class Server - Provides the web client and establish socket connections.
@@ -25,10 +16,7 @@ export default class ProxyServer {
   private webServer: http.Server | null = null;
   private httpProxy: httpProxy | null = null;
   private ipFilters: Array<string> = [];
-  private forwardProxyUrl: string | null = null;
-  private forwardProxyUsername: string | null = null;
-  private forwardProxyPassword: string | null = null;
-  private proxyAuth: ProxyAuth = { username: null, password: null };
+  private settings: EngineSettings['proxyServer'] | null = null;
 
   constructor(private readonly ignoreIpFilters: boolean) {
     this.refreshIpFilters([]);
@@ -38,13 +26,12 @@ export default class ProxyServer {
     this.ipFilters = ipFilters;
   }
 
-  start(port: number, forwardProxy?: ForwardProxy, proxyAuth?: ProxyAuth): void {
-    this.forwardProxyUrl = forwardProxy?.url ?? null;
-    this.forwardProxyUsername = forwardProxy?.username ?? null;
-    this.forwardProxyPassword = forwardProxy?.password ?? null;
-    this.proxyAuth = proxyAuth ?? { username: null, password: null };
-    this.initHttpProxy();
-    this.initWebServer(port);
+  start(settings: EngineSettings['proxyServer']): void {
+    this.settings = settings;
+    if (this.settings.enabled) {
+      this.initHttpProxy();
+      this.initWebServer(this.settings.port!);
+    }
   }
 
   /**
@@ -101,7 +88,7 @@ export default class ProxyServer {
 
     this._logger.trace(`Forward ${req.method} request to ${req.url} from IP ${req.socket.remoteAddress}`);
 
-    if (this.forwardProxyUrl) {
+    if (this.settings?.forward?.enabled) {
       this.handleHttpRequestViaUpstreamProxy(req, res);
       return;
     }
@@ -113,10 +100,12 @@ export default class ProxyServer {
 
   private handleHttpRequestViaUpstreamProxy(req: http.IncomingMessage, res: http.ServerResponse) {
     try {
-      const proxyUrl = new URL(this.forwardProxyUrl!);
+      const proxyUrl = new URL(this.settings!.forward!.url!);
       const headers: http.OutgoingHttpHeaders = { ...req.headers };
-      if (this.forwardProxyUsername) {
-        const cred = Buffer.from(`${this.forwardProxyUsername}:${this.forwardProxyPassword ?? ''}`).toString('base64');
+      if (this.settings!.forward!.username) {
+        const cred = Buffer.from(
+          `${this.settings!.forward!.username}:${encryptionService.decryptText(this.settings!.forward.password)}`
+        ).toString('base64');
         headers['Proxy-Authorization'] = `Basic ${cred}`;
       }
       const options: http.RequestOptions = {
@@ -159,7 +148,7 @@ export default class ProxyServer {
       return;
     }
 
-    if (this.forwardProxyUrl) {
+    if (this.settings?.forward?.enabled) {
       this.handleHttpsRequestViaUpstreamProxy(req, clientSocket, head);
       return;
     }
@@ -194,13 +183,15 @@ export default class ProxyServer {
 
   private handleHttpsRequestViaUpstreamProxy(req: http.IncomingMessage, clientSocket: stream.Duplex, head: Buffer) {
     try {
-      const proxyUrl = new URL(this.forwardProxyUrl!);
-      this._logger.trace(`Forward ${req.method} request to ${req.url} via upstream proxy ${this.forwardProxyUrl}`);
+      const proxyUrl = new URL(this.settings!.forward.url!);
+      this._logger.trace(`Forward ${req.method} request to ${req.url} via upstream proxy ${this.settings!.forward.url!}`);
 
       const upstreamSocket = net.createConnection({ host: proxyUrl.hostname, port: Number(proxyUrl.port || 80) }, () => {
         let authHeader = '';
-        if (this.forwardProxyUsername) {
-          const cred = Buffer.from(`${this.forwardProxyUsername}:${this.forwardProxyPassword ?? ''}`).toString('base64');
+        if (this.settings?.forward?.username) {
+          const cred = Buffer.from(
+            `${this.settings!.forward!.username}:${encryptionService.decryptText(this.settings!.forward.password)}`
+          ).toString('base64');
           authHeader = `Proxy-Authorization: Basic ${cred}\r\n`;
         }
         upstreamSocket.write(`CONNECT ${req.url} HTTP/1.1\r\nHost: ${req.url}\r\n${authHeader}\r\n`);
@@ -241,7 +232,7 @@ export default class ProxyServer {
   }
 
   private async isClientAuthenticated(req: http.IncomingMessage): Promise<boolean> {
-    if (!this.proxyAuth.username) {
+    if (!this.settings!.username) {
       return true;
     }
     const authHeader = req.headers['proxy-authorization'];
@@ -255,11 +246,11 @@ export default class ProxyServer {
     }
     const username = decoded.slice(0, colonIndex);
     const password = decoded.slice(colonIndex + 1);
-    if (username !== this.proxyAuth.username) {
+    if (username !== this.settings!.username) {
       return false;
     }
     try {
-      return await argon2.verify(this.proxyAuth.password!, password);
+      return await argon2.verify(this.settings!.password!, password);
     } catch {
       return false;
     }

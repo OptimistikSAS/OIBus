@@ -50,7 +50,7 @@
             <tbody>
               <tr>
                 <td class="first-column-body" translate="engine.general-settings.name"></td>
-                <td class="last-column-body">{{ settings.name }}</td>
+                <td class="last-column-body">{{ settings.general.name }}</td>
               </tr>
             </tbody>
           </table>
@@ -76,7 +76,11 @@
             <tbody>
               <tr>
                 <td class="first-column-body" translate="engine.general-settings.port"></td>
-                <td class="last-column-body">{{ settings.port }}</td>
+                <td class="last-column-body">{{ settings.webServer.port }}</td>
+              </tr>
+              <tr>
+                <td class="first-column-body" translate="engine.web-server-settings.auth-token-duration"></td>
+                <td class="last-column-body" [translate]="authTokenDurationLabelKey(settings.webServer.authTokenDuration)"></td>
               </tr>
             </tbody>
           </table>
@@ -102,11 +106,11 @@
             <tbody>
               <tr>
                 <td class="first-column-body" translate="engine.proxy-settings.title"></td>
-                @if (settings.proxyEnabled) {
+                @if (settings.proxyServer.enabled) {
                   <td
                     class="last-column-body"
                     translate="engine.proxy-settings.enabled-details"
-                    [translateParams]="{ port: settings.proxyPort }"
+                    [translateParams]="{ port: settings.proxyServer.port }"
                   ></td>
                 } @else {
                   <td class="last-column-body" translate="engine.proxy-settings.disabled-details"></td>
@@ -137,21 +141,15 @@
               <tr>
                 <td class="first-column-body" translate="engine.general-settings.log-levels"></td>
                 <td class="last-column-body">
-                  <span
-                    translate="engine.general-settings.console"
-                    [translateParams]="{ level: settings.logParameters.console.level }"
-                  ></span>
+                  <span translate="engine.general-settings.console" [translateParams]="{ level: settings.logger.console.level }"></span>
                   <span class="mx-1">|</span>
-                  <span translate="engine.general-settings.file" [translateParams]="{ level: settings.logParameters.file.level }"></span>
+                  <span translate="engine.general-settings.file" [translateParams]="{ level: settings.logger.file.level }"></span>
                   <span class="mx-1">|</span>
-                  <span
-                    translate="engine.general-settings.database"
-                    [translateParams]="{ level: settings.logParameters.database.level }"
-                  ></span>
+                  <span translate="engine.general-settings.database" [translateParams]="{ level: settings.logger.database.level }"></span>
                   <span class="mx-1">|</span>
-                  <span translate="engine.general-settings.loki" [translateParams]="{ level: settings.logParameters.loki.level }"></span>
+                  <span translate="engine.general-settings.loki" [translateParams]="{ level: settings.logger.loki.level }"></span>
                   <span class="mx-1">|</span>
-                  <span translate="engine.general-settings.oia" [translateParams]="{ level: settings.logParameters.oia.level }"></span>
+                  <span translate="engine.general-settings.oia" [translateParams]="{ level: settings.logger.oia.level }"></span>
                 </td>
               </tr>
             </tbody>

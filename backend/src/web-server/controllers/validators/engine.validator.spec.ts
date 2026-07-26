@@ -12,23 +12,33 @@ interface DataProvider {
 const dataProviders: Array<DataProvider> = [
   {
     dto: {
-      name: null,
-      port: null,
-      proxyEnabled: null,
-      proxyPort: null,
-      logParameters: null
+      general: { name: null },
+      webServer: { port: null, authTokenDuration: null },
+      proxyServer: {
+        enabled: null,
+        port: null,
+        forward: { enabled: null, url: null, username: null, password: null },
+        username: null,
+        password: null
+      },
+      logger: null
     },
     isValid: false,
     errorMessage:
-      '"name" must be a string. "port" must be a number. "proxyEnabled" must be a boolean. "logParameters" must be of type object'
+      '"general.name" must be a string. "webServer.port" must be a number. "webServer.authTokenDuration" must be one of [1h, 6h, 1d, 3d, 7d, 14d, 30d]. "webServer.authTokenDuration" must be a string. "proxyServer.enabled" must be a boolean. "proxyServer.forward.enabled" must be a boolean. "logger" must be of type object'
   },
   {
     dto: {
-      name: 'OIBus',
-      port: 2223,
-      proxyEnabled: false,
-      proxyPort: 9000,
-      logParameters: {
+      general: { name: 'OIBus' },
+      webServer: { port: 2223, authTokenDuration: '7d' },
+      proxyServer: {
+        enabled: false,
+        port: 9000,
+        forward: { enabled: false, url: null, username: null, password: null },
+        username: null,
+        password: null
+      },
+      logger: {
         console: null,
         file: null,
         database: null,
@@ -38,15 +48,20 @@ const dataProviders: Array<DataProvider> = [
     },
     isValid: false,
     errorMessage:
-      '"logParameters.console" must be of type object. "logParameters.file" must be of type object. "logParameters.database" must be of type object. "logParameters.loki" must be of type object. "logParameters.oia" must be of type object'
+      '"logger.console" must be of type object. "logger.file" must be of type object. "logger.database" must be of type object. "logger.loki" must be of type object. "logger.oia" must be of type object'
   },
   {
     dto: {
-      name: null,
-      port: null,
-      proxyEnabled: null,
-      proxyPort: null,
-      logParameters: {
+      general: { name: null },
+      webServer: { port: null, authTokenDuration: null },
+      proxyServer: {
+        enabled: null,
+        port: null,
+        forward: { enabled: null, url: null, username: null, password: null },
+        username: null,
+        password: null
+      },
+      logger: {
         console: {
           level: null
         },
@@ -74,15 +89,20 @@ const dataProviders: Array<DataProvider> = [
     },
     isValid: false,
     errorMessage:
-      '"name" must be a string. "port" must be a number. "proxyEnabled" must be a boolean. "logParameters.console.level" must be a string. "logParameters.file.level" must be a string. "logParameters.file.maxFileSize" must be a number. "logParameters.file.numberOfFiles" must be a number. "logParameters.database.level" must be a string. "logParameters.database.maxNumberOfLogs" must be a number. "logParameters.loki.level" must be a string. "logParameters.loki.interval" must be a number. "logParameters.oia.level" must be a string. "logParameters.oia.interval" must be a number'
+      '"general.name" must be a string. "webServer.port" must be a number. "webServer.authTokenDuration" must be one of [1h, 6h, 1d, 3d, 7d, 14d, 30d]. "webServer.authTokenDuration" must be a string. "proxyServer.enabled" must be a boolean. "proxyServer.forward.enabled" must be a boolean. "logger.console.level" must be a string. "logger.file.level" must be a string. "logger.file.maxFileSize" must be a number. "logger.file.numberOfFiles" must be a number. "logger.database.level" must be a string. "logger.database.maxNumberOfLogs" must be a number. "logger.loki.level" must be a string. "logger.loki.interval" must be a number. "logger.oia.level" must be a string. "logger.oia.interval" must be a number'
   },
   {
     dto: {
-      name: '',
-      port: '',
-      proxyEnabled: '',
-      proxyPort: '',
-      logParameters: {
+      general: { name: '' },
+      webServer: { port: '', authTokenDuration: '' },
+      proxyServer: {
+        enabled: '',
+        port: '',
+        forward: { enabled: '', url: '', username: '', password: '' },
+        username: '',
+        password: ''
+      },
+      logger: {
         console: {
           level: ''
         },
@@ -110,15 +130,20 @@ const dataProviders: Array<DataProvider> = [
     },
     isValid: false,
     errorMessage:
-      '"name" is not allowed to be empty. "port" must be a number. "proxyEnabled" must be a boolean. "proxyPort" must be a number. "logParameters.console.level" is not allowed to be empty. "logParameters.file.level" is not allowed to be empty. "logParameters.file.maxFileSize" must be a number. "logParameters.file.numberOfFiles" must be a number. "logParameters.database.level" is not allowed to be empty. "logParameters.database.maxNumberOfLogs" must be a number. "logParameters.loki.level" is not allowed to be empty. "logParameters.loki.interval" must be a number. "logParameters.oia.level" is not allowed to be empty. "logParameters.oia.interval" must be a number'
+      '"general.name" is not allowed to be empty. "webServer.port" must be a number. "webServer.authTokenDuration" must be one of [1h, 6h, 1d, 3d, 7d, 14d, 30d]. "webServer.authTokenDuration" is not allowed to be empty. "proxyServer.enabled" must be a boolean. "proxyServer.port" must be a number. "proxyServer.forward.enabled" must be a boolean. "logger.console.level" is not allowed to be empty. "logger.file.level" is not allowed to be empty. "logger.file.maxFileSize" must be a number. "logger.file.numberOfFiles" must be a number. "logger.database.level" is not allowed to be empty. "logger.database.maxNumberOfLogs" must be a number. "logger.loki.level" is not allowed to be empty. "logger.loki.interval" must be a number. "logger.oia.level" is not allowed to be empty. "logger.oia.interval" must be a number'
   },
   {
     dto: {
-      name: 'OIBus',
-      port: 2223,
-      proxyEnabled: false,
-      proxyPort: 9000,
-      logParameters: {
+      general: { name: 'OIBus' },
+      webServer: { port: 2223, authTokenDuration: '7d' },
+      proxyServer: {
+        enabled: false,
+        port: 9000,
+        forward: { enabled: false, url: null, username: null, password: null },
+        username: null,
+        password: null
+      },
+      logger: {
         console: {
           level: 'silent'
         },
@@ -188,19 +213,31 @@ describe('Engine name validator', () => {
 describe('Engine web server validator', () => {
   const validator: JoiValidator = new JoiValidator();
 
-  it('should accept valid port', async () => {
-    await assert.doesNotReject(validator.validate(engineWebServerSchema, { port: 2223 }));
+  it('should accept valid port and auth token duration', async () => {
+    await assert.doesNotReject(validator.validate(engineWebServerSchema, { port: 2223, authTokenDuration: '7d' }));
   });
 
   it('should reject null port', async () => {
-    await assert.rejects(validator.validate(engineWebServerSchema, { port: null }), {
+    await assert.rejects(validator.validate(engineWebServerSchema, { port: null, authTokenDuration: '7d' }), {
       message: '"port" must be a number'
     });
   });
 
   it('should reject invalid port number', async () => {
-    await assert.rejects(validator.validate(engineWebServerSchema, { port: 99999 }), {
+    await assert.rejects(validator.validate(engineWebServerSchema, { port: 99999, authTokenDuration: '7d' }), {
       message: '"port" must be a valid port'
+    });
+  });
+
+  it('should reject missing auth token duration', async () => {
+    await assert.rejects(validator.validate(engineWebServerSchema, { port: 2223 }), {
+      message: '"authTokenDuration" is required'
+    });
+  });
+
+  it('should reject an auth token duration outside the allowed set', async () => {
+    await assert.rejects(validator.validate(engineWebServerSchema, { port: 2223, authTokenDuration: '5h' }), {
+      message: '"authTokenDuration" must be one of [1h, 6h, 1d, 3d, 7d, 14d, 30d]'
     });
   });
 });
@@ -208,24 +245,54 @@ describe('Engine web server validator', () => {
 describe('Engine proxy validator', () => {
   const validator: JoiValidator = new JoiValidator();
 
-  it('should accept proxyEnabled false with null proxyPort', async () => {
-    await assert.doesNotReject(validator.validate(engineProxySchema, { proxyEnabled: false, proxyPort: null }));
+  const disabledForward = { enabled: false, url: null, username: null, password: null };
+
+  it('should accept enabled false with null port', async () => {
+    await assert.doesNotReject(validator.validate(engineProxySchema, { enabled: false, port: null, forward: disabledForward }));
   });
 
-  it('should accept proxyEnabled true with valid proxyPort', async () => {
-    await assert.doesNotReject(validator.validate(engineProxySchema, { proxyEnabled: true, proxyPort: 9000 }));
+  it('should accept enabled true with valid port', async () => {
+    await assert.doesNotReject(validator.validate(engineProxySchema, { enabled: true, port: 9000, forward: disabledForward }));
   });
 
-  it('should reject null proxyEnabled', async () => {
-    await assert.rejects(validator.validate(engineProxySchema, { proxyEnabled: null, proxyPort: null }), {
-      message: '"proxyEnabled" must be a boolean'
+  it('should reject null enabled', async () => {
+    await assert.rejects(validator.validate(engineProxySchema, { enabled: null, port: null, forward: disabledForward }), {
+      message: '"enabled" must be a boolean'
     });
   });
 
-  it('should reject invalid proxyPort', async () => {
-    await assert.rejects(validator.validate(engineProxySchema, { proxyEnabled: true, proxyPort: 99999 }), {
-      message: '"proxyPort" must be a valid port'
+  it('should reject invalid port', async () => {
+    await assert.rejects(validator.validate(engineProxySchema, { enabled: true, port: 99999, forward: disabledForward }), {
+      message: '"port" must be a valid port'
     });
+  });
+
+  it('should accept missing forward when proxy is disabled', async () => {
+    await assert.doesNotReject(validator.validate(engineProxySchema, { enabled: false, port: null }));
+  });
+
+  it('should accept forward enabled with a valid url', async () => {
+    await assert.doesNotReject(
+      validator.validate(engineProxySchema, {
+        enabled: false,
+        port: null,
+        forward: { enabled: true, url: 'http://forward-proxy:3128', username: null, password: null }
+      })
+    );
+  });
+
+  it('should reject null forward enabled', async () => {
+    await assert.rejects(
+      validator.validate(engineProxySchema, { enabled: false, port: null, forward: { ...disabledForward, enabled: null } }),
+      { message: '"forward.enabled" must be a boolean' }
+    );
+  });
+
+  it('should reject an invalid forward url', async () => {
+    await assert.rejects(
+      validator.validate(engineProxySchema, { enabled: false, port: null, forward: { ...disabledForward, url: 'not-a-url' } }),
+      { message: '"forward.url" must be a valid uri' }
+    );
   });
 });
 

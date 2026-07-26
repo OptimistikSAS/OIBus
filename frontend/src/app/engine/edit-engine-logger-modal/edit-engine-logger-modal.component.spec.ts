@@ -12,7 +12,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
 
 const engineSettings = {
-  logParameters: {
+  logger: {
     console: { level: 'silent' },
     file: { level: 'info', maxFileSize: 50, numberOfFiles: 5 },
     database: { level: 'info', maxNumberOfLogs: 100_000 },

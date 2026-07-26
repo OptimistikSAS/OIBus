@@ -90,14 +90,14 @@ export default class OIBusService {
 
     this.oIAnalyticsRegistrationService.registrationEvent.on('updated', async () => {
       const engineSettings = this.getEngineSettings();
-      if (engineSettings.logParameters.oia.level !== 'silent') {
+      if (engineSettings.logger.oia.level !== 'silent') {
         await this.resetLogger(engineSettings);
       }
     });
 
     this.ipFilterService.whiteListEvent.on('update-white-list', (newWhiteList: Array<string>) => {
       const engineSettings = this.getEngineSettings();
-      if (engineSettings.proxyEnabled) {
+      if (engineSettings.proxyServer.enabled) {
         this.proxyServer.refreshIpFilters(newWhiteList);
       }
     });
@@ -120,25 +120,14 @@ export default class OIBusService {
     this.healthSignalInterval = setInterval(this.logHealthSignal.bind(this), HEALTH_SIGNAL_INTERVAL);
     this.logHealthSignal();
 
-    if (settings.proxyEnabled) {
+    if (settings.proxyServer.enabled) {
       this.proxyServer.refreshIpFilters([
         '127.0.0.1',
         '::1',
         '::ffff:127.0.0.1',
         ...this.ipFilterService.list().map(filter => filter.address)
       ]);
-      await this.proxyServer.start(
-        settings.proxyPort!,
-        {
-          url: settings.forwardProxyUrl,
-          username: settings.forwardProxyUsername,
-          password: settings.forwardProxyPassword ? await encryptionService.decryptText(settings.forwardProxyPassword) : null
-        },
-        {
-          username: settings.proxyUsername,
-          password: settings.proxyPassword
-        }
-      );
+      this.proxyServer.start(settings.proxyServer);
     }
     const startDuration = DateTime.now().toMillis() - start;
     this.logger.info(`OIBus started in ${startDuration} ms`);
@@ -163,64 +152,53 @@ export default class OIBusService {
   async updateEngineSettings(command: EngineSettingsCommandDTO, updatedBy: string): Promise<EngineSettingsUpdateResultDTO> {
     await this.validator.validate(engineSchema, command);
 
-    if (command.port === command.proxyPort) {
+    if (command.webServer.port === command.proxyServer.port) {
       throw new Error('Web server port and proxy port can not be the same');
     }
 
     const oldEngineSettings = this.getEngineSettings();
 
-    if (!command.logParameters.loki.password) {
-      command.logParameters.loki.password = oldEngineSettings.logParameters.loki.password;
+    if (!command.logger.loki.password) {
+      command.logger.loki.password = oldEngineSettings.logger.loki.password;
     } else {
-      command.logParameters.loki.password = await encryptionService.encryptText(command.logParameters.loki.password);
+      command.logger.loki.password = encryptionService.encryptText(command.logger.loki.password);
     }
-    if (!command.forwardProxyPassword) {
-      command.forwardProxyPassword = oldEngineSettings.forwardProxyPassword;
-    } else {
-      command.forwardProxyPassword = await encryptionService.encryptText(command.forwardProxyPassword);
+    if (command.proxyServer.forward) {
+      if (!command.proxyServer.forward.password) {
+        command.proxyServer.forward.password = oldEngineSettings.proxyServer.forward.password;
+      } else {
+        command.proxyServer.forward.password = await encryptionService.encryptText(command.proxyServer.forward.password);
+      }
     }
-    if (!command.proxyPassword) {
-      command.proxyPassword = oldEngineSettings.proxyPassword;
+    if (!command.proxyServer.password) {
+      command.proxyServer.password = oldEngineSettings.proxyServer.password;
     } else {
-      command.proxyPassword = await argon2.hash(command.proxyPassword);
+      command.proxyServer.password = await argon2.hash(command.proxyServer.password);
     }
     this.engineRepository.update(command, updatedBy);
     const settings = this.getEngineSettings();
 
     if (
-      JSON.stringify(oldEngineSettings.logParameters) !== JSON.stringify(settings.logParameters) ||
-      oldEngineSettings.name !== settings.name
+      JSON.stringify(oldEngineSettings.logger) !== JSON.stringify(settings.logger) ||
+      oldEngineSettings.general.name !== settings.general.name
     ) {
       await this.resetLogger(settings);
     }
 
-    const portChanged = command.port !== oldEngineSettings.port;
+    const portChanged = command.webServer.port !== oldEngineSettings.webServer.port;
     if (portChanged) {
       // Emit the port change event asynchronously to ensure the HTTP response is sent first
       setImmediate(() => {
-        this.portChangeEvent.emit('updated', settings.port);
+        this.portChangeEvent.emit('updated', settings.webServer.port);
       });
     }
-    await this.proxyServer.stop();
-    if (settings.proxyEnabled) {
-      await this.proxyServer.start(
-        settings.proxyPort!,
-        {
-          url: settings.forwardProxyUrl,
-          username: settings.forwardProxyUsername,
-          password: settings.forwardProxyPassword ? await encryptionService.decryptText(settings.forwardProxyPassword) : null
-        },
-        {
-          username: settings.proxyUsername,
-          password: settings.proxyPassword
-        }
-      );
-    }
+    this.proxyServer.stop();
+    this.proxyServer.start(settings.proxyServer);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
     return {
       needsRedirect: portChanged,
-      newPort: portChanged ? settings.port : null
+      newPort: portChanged ? settings.webServer.port : null
     };
   }
 
@@ -235,57 +213,46 @@ export default class OIBusService {
   async updateEngineWebServer(command: EngineWebServerCommandDTO, updatedBy: string): Promise<EngineSettingsUpdateResultDTO> {
     await this.validator.validate(engineWebServerSchema, command);
     const oldEngineSettings = this.getEngineSettings();
-    if (command.port === oldEngineSettings.proxyPort) {
+    if (command.port === oldEngineSettings.proxyServer.port) {
       throw new Error('Web server port and proxy port can not be the same');
     }
     this.engineRepository.updateWebServer(command, updatedBy);
     const settings = this.getEngineSettings();
-    const portChanged = command.port !== oldEngineSettings.port;
+    const portChanged = command.port !== oldEngineSettings.webServer.port;
     if (portChanged) {
       setImmediate(() => {
-        this.portChangeEvent.emit('updated', settings.port);
+        this.portChangeEvent.emit('updated', settings.webServer.port);
       });
     }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     return {
       needsRedirect: portChanged,
-      newPort: portChanged ? settings.port : null
+      newPort: portChanged ? settings.webServer.port : null
     };
   }
 
   async updateEngineProxy(command: EngineProxyCommandDTO, updatedBy: string): Promise<void> {
     await this.validator.validate(engineProxySchema, command);
     const oldEngineSettings = this.getEngineSettings();
-    if (command.proxyEnabled && command.proxyPort === oldEngineSettings.port) {
+    if (command.enabled && command.port === oldEngineSettings.webServer.port) {
       throw new Error('Web server port and proxy port can not be the same');
     }
-    if (!command.forwardProxyPassword) {
-      command.forwardProxyPassword = oldEngineSettings.forwardProxyPassword;
-    } else {
-      command.forwardProxyPassword = await encryptionService.encryptText(command.forwardProxyPassword);
+    if (command.forward) {
+      if (!command.forward.password) {
+        command.forward.password = oldEngineSettings.proxyServer.forward.password;
+      } else {
+        command.forward.password = encryptionService.encryptText(command.forward.password);
+      }
     }
-    if (!command.proxyPassword) {
-      command.proxyPassword = oldEngineSettings.proxyPassword;
+    if (!command.password) {
+      command.password = oldEngineSettings.proxyServer.password;
     } else {
-      command.proxyPassword = await argon2.hash(command.proxyPassword);
+      command.password = await argon2.hash(command.password);
     }
     this.engineRepository.updateProxy(command, updatedBy);
     const settings = this.getEngineSettings();
-    await this.proxyServer.stop();
-    if (settings.proxyEnabled) {
-      await this.proxyServer.start(
-        settings.proxyPort!,
-        {
-          url: settings.forwardProxyUrl,
-          username: settings.forwardProxyUsername,
-          password: settings.forwardProxyPassword ? await encryptionService.decryptText(settings.forwardProxyPassword) : null
-        },
-        {
-          username: settings.proxyUsername,
-          password: settings.proxyPassword
-        }
-      );
-    }
+    this.proxyServer.stop();
+    this.proxyServer.start(settings.proxyServer);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
@@ -293,9 +260,9 @@ export default class OIBusService {
     await this.validator.validate(engineLoggerSchema, command);
     const oldEngineSettings = this.getEngineSettings();
     if (!command.loki.password) {
-      command.loki.password = oldEngineSettings.logParameters.loki.password;
+      command.loki.password = oldEngineSettings.logger.loki.password;
     } else {
-      command.loki.password = await encryptionService.encryptText(command.loki.password);
+      command.loki.password = encryptionService.encryptText(command.loki.password);
     }
     this.engineRepository.updateLogger(command, updatedBy);
     const settings = this.getEngineSettings();
@@ -447,47 +414,57 @@ export const toEngineSettingsDTO = (engineSettings: EngineSettings, getUserInfo:
     updatedBy: getUserInfo(engineSettings.updatedBy),
     createdAt: engineSettings.createdAt,
     updatedAt: engineSettings.updatedAt,
-    name: engineSettings.name,
-    port: engineSettings.port,
     version: engineSettings.version,
     launcherVersion: engineSettings.launcherVersion,
-    proxyEnabled: engineSettings.proxyEnabled,
-    proxyPort: engineSettings.proxyPort,
-    forwardProxyUrl: engineSettings.forwardProxyUrl,
-    forwardProxyUsername: engineSettings.forwardProxyUsername,
-    forwardProxyPassword: '',
-    proxyUsername: engineSettings.proxyUsername,
-    proxyPassword: '',
-    logParameters: {
+    general: {
+      name: engineSettings.general.name
+    },
+    webServer: {
+      port: engineSettings.webServer.port,
+      authTokenDuration: engineSettings.webServer.authTokenDuration
+    },
+    proxyServer: {
+      enabled: engineSettings.proxyServer.enabled,
+      port: engineSettings.proxyServer.port,
+      forward: {
+        enabled: engineSettings.proxyServer.forward.enabled,
+        url: engineSettings.proxyServer.forward.url,
+        username: engineSettings.proxyServer.forward.username,
+        password: ''
+      },
+      username: engineSettings.proxyServer.username,
+      password: ''
+    },
+    logger: {
       console: {
-        level: engineSettings.logParameters.console.level
+        level: engineSettings.logger.console.level
       },
       file: {
-        level: engineSettings.logParameters.file.level,
-        maxFileSize: engineSettings.logParameters.file.maxFileSize,
-        numberOfFiles: engineSettings.logParameters.file.numberOfFiles
+        level: engineSettings.logger.file.level,
+        maxFileSize: engineSettings.logger.file.maxFileSize,
+        numberOfFiles: engineSettings.logger.file.numberOfFiles
       },
       database: {
-        level: engineSettings.logParameters.database.level,
-        maxNumberOfLogs: engineSettings.logParameters.database.maxNumberOfLogs
+        level: engineSettings.logger.database.level,
+        maxNumberOfLogs: engineSettings.logger.database.maxNumberOfLogs
       },
 
       loki: {
-        level: engineSettings.logParameters.loki.level,
-        interval: engineSettings.logParameters.loki.interval,
-        address: engineSettings.logParameters.loki.address,
-        username: engineSettings.logParameters.loki.username,
+        level: engineSettings.logger.loki.level,
+        interval: engineSettings.logger.loki.interval,
+        address: engineSettings.logger.loki.address,
+        username: engineSettings.logger.loki.username,
         password: ''
       },
       oia: {
-        level: engineSettings.logParameters.oia.level,
-        interval: engineSettings.logParameters.oia.interval
+        level: engineSettings.logger.oia.level,
+        interval: engineSettings.logger.oia.interval
       },
       syslog: {
-        level: engineSettings.logParameters.syslog.level,
-        host: engineSettings.logParameters.syslog.host,
-        port: engineSettings.logParameters.syslog.port,
-        protocol: engineSettings.logParameters.syslog.protocol
+        level: engineSettings.logger.syslog.level,
+        host: engineSettings.logger.syslog.host,
+        port: engineSettings.logger.syslog.port,
+        protocol: engineSettings.logger.syslog.protocol
       }
     }
   };

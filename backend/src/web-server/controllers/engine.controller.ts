@@ -54,7 +54,7 @@ export class EngineController extends Controller {
    * @summary Update engine name
    * @param {EngineNameCommandDTO} command.body.required - Engine name to update
    */
-  @Put('/name')
+  @Put('/engine/name')
   @SuccessResponse(200, 'Engine name updated successfully')
   async updateEngineName(@Body() command: EngineNameCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
     return await request.services.oIBusService.updateEngineName(command, request.user.id);
@@ -66,7 +66,7 @@ export class EngineController extends Controller {
    * @param {EngineWebServerCommandDTO} command.body.required - Web server settings to update
    * @returns {EngineSettingsUpdateResultDTO} Information about whether a redirect is needed
    */
-  @Put('/web-server')
+  @Put('/engine/web-server')
   @SuccessResponse(200, 'Engine web server settings updated successfully')
   async updateEngineWebServer(
     @Body() command: EngineWebServerCommandDTO,
@@ -80,7 +80,7 @@ export class EngineController extends Controller {
    * @summary Update proxy settings
    * @param {EngineProxyCommandDTO} command.body.required - Proxy settings to update
    */
-  @Put('/proxy')
+  @Put('/engine/proxy')
   @SuccessResponse(200, 'Engine proxy settings updated successfully')
   async updateEngineProxy(@Body() command: EngineProxyCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
     return await request.services.oIBusService.updateEngineProxy(command, request.user.id);
@@ -91,7 +91,7 @@ export class EngineController extends Controller {
    * @summary Update logger settings
    * @param {EngineLoggerCommandDTO} command.body.required - Logger settings to update
    */
-  @Put('/logger')
+  @Put('/engine/logger')
   @SuccessResponse(200, 'Engine logger settings updated successfully')
   async updateEngineLogger(@Body() command: EngineLoggerCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
     return await request.services.oIBusService.updateEngineLogger(command, request.user.id);

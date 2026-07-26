@@ -12,8 +12,11 @@ import type {
   CacheSearchParam,
   CacheSearchResult,
   DataFolderType,
-  EngineSettingsCommandDTO,
+  EngineLoggerCommandDTO,
+  EngineNameCommandDTO,
+  EngineProxyCommandDTO,
   EngineSettingsUpdateResultDTO,
+  EngineWebServerCommandDTO,
   FileCacheContent
 } from '../../../shared/model/engine.model';
 import type { EngineSettings } from '../../model/engine.model';
@@ -51,7 +54,10 @@ import {
   OIBusTestSouthConnectorItemCommand,
   OIBusUpdateCertificateCommand,
   OIBusUpdateCustomTransformerCommand,
-  OIBusUpdateEngineSettingsCommand,
+  OIBusUpdateEngineGeneralCommand,
+  OIBusUpdateEngineLoggerCommand,
+  OIBusUpdateEngineProxyCommand,
+  OIBusUpdateEngineWebServerCommand,
   OIBusUpdateHistoryCacheContentCommand,
   OIBusUpdateHistoryQueryCommand,
   OIBusUpdateHistoryQueryStatusCommand,
@@ -120,7 +126,10 @@ interface IOIBusService {
   getEngineSettings(): EngineSettings;
   updateOIBusVersion(version: string, launcherVersion: string): void;
   loggerEvent: EventEmitter;
-  updateEngineSettings(command: EngineSettingsCommandDTO, updatedBy: string): Promise<EngineSettingsUpdateResultDTO>;
+  updateEngineName(command: EngineNameCommandDTO, updatedBy: string): Promise<void>;
+  updateEngineWebServer(command: EngineWebServerCommandDTO, updatedBy: string): Promise<EngineSettingsUpdateResultDTO>;
+  updateEngineProxy(command: EngineProxyCommandDTO, updatedBy: string): Promise<void>;
+  updateEngineLogger(command: EngineLoggerCommandDTO, updatedBy: string): Promise<void>;
   searchCacheContent(type: 'north' | 'history', id: string, searchParams: CacheSearchParam): Promise<CacheSearchResult>;
   getFileFromCache(type: 'north' | 'history', id: string, folder: DataFolderType, filename: string): Promise<FileCacheContent>;
   updateCacheContent(type: 'north' | 'history', id: string, updateCommand: CacheContentUpdateCommand): Promise<void>;
@@ -500,10 +509,19 @@ export default class OIAnalyticsCommandService {
         case 'regenerate-cipher-keys':
           await this.executeRegenerateCipherKeysCommand(command);
           break;
-        case 'update-engine-settings':
+        case 'update-engine-general':
+          await this.executeUpdateEngineGeneralCommand(command);
+          break;
+        case 'update-engine-web-server':
+          await this.executeUpdateEngineWebServerCommand(command);
+          break;
+        case 'update-engine-proxy':
+          await this.executeUpdateEngineProxyCommand(command);
+          break;
+        case 'update-engine-logger':
           {
             const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
-            await this.executeUpdateEngineSettingsCommand(command, privateKey);
+            await this.executeUpdateEngineLoggerCommand(command, privateKey);
           }
           break;
         case 'update-registration-settings':
@@ -787,12 +805,39 @@ export default class OIAnalyticsCommandService {
     process.exit();
   }
 
-  private async executeUpdateEngineSettingsCommand(command: OIBusUpdateEngineSettingsCommand, privateKey: string) {
-    command.commandContent.logParameters.loki.password = command.commandContent.logParameters.loki.password
-      ? await encryptionService.decryptTextWithPrivateKey(command.commandContent.logParameters.loki.password, privateKey)
+  private async executeUpdateEngineGeneralCommand(command: OIBusUpdateEngineGeneralCommand) {
+    await this.oIBusService.updateEngineName(command.commandContent, 'oianalytics');
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Engine name updated successfully');
+  }
+
+  private async executeUpdateEngineWebServerCommand(command: OIBusUpdateEngineWebServerCommand) {
+    await this.oIBusService.updateEngineWebServer(command.commandContent, 'oianalytics');
+    this.oIAnalyticsCommandRepository.markAsCompleted(
+      command.id,
+      DateTime.now().toUTC().toISO(),
+      'Engine web server settings updated successfully'
+    );
+  }
+
+  private async executeUpdateEngineProxyCommand(command: OIBusUpdateEngineProxyCommand) {
+    await this.oIBusService.updateEngineProxy(command.commandContent, 'oianalytics');
+    this.oIAnalyticsCommandRepository.markAsCompleted(
+      command.id,
+      DateTime.now().toUTC().toISO(),
+      'Engine proxy settings updated successfully'
+    );
+  }
+
+  private async executeUpdateEngineLoggerCommand(command: OIBusUpdateEngineLoggerCommand, privateKey: string) {
+    command.commandContent.loki.password = command.commandContent.loki.password
+      ? await encryptionService.decryptTextWithPrivateKey(command.commandContent.loki.password, privateKey)
       : '';
-    await this.oIBusService.updateEngineSettings(command.commandContent, 'oianalytics');
-    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Engine settings updated successfully');
+    await this.oIBusService.updateEngineLogger(command.commandContent, 'oianalytics');
+    this.oIAnalyticsCommandRepository.markAsCompleted(
+      command.id,
+      DateTime.now().toUTC().toISO(),
+      'Engine logger settings updated successfully'
+    );
   }
 
   private async executeUpdateRegistrationSettingsCommand(
@@ -1518,7 +1563,10 @@ export default class OIAnalyticsCommandService {
         return registration.commandPermissions.restartEngine;
       case 'regenerate-cipher-keys':
         return registration.commandPermissions.regenerateCipherKeys;
-      case 'update-engine-settings':
+      case 'update-engine-general':
+      case 'update-engine-web-server':
+      case 'update-engine-proxy':
+      case 'update-engine-logger':
         return registration.commandPermissions.updateEngineSettings;
       case 'update-registration-settings':
         return registration.commandPermissions.updateRegistrationSettings;
@@ -1607,7 +1655,10 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
     case 'update-version':
     case 'restart-engine':
     case 'regenerate-cipher-keys':
-    case 'update-engine-settings':
+    case 'update-engine-general':
+    case 'update-engine-web-server':
+    case 'update-engine-proxy':
+    case 'update-engine-logger':
     case 'update-registration-settings':
     case 'create-south':
     case 'update-south':

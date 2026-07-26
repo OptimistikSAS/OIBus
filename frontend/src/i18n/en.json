@@ -198,7 +198,10 @@
       "update-version": "Upgrade version",
       "restart-engine": "Restart",
       "regenerate-cipher-keys": "Regenerate cipher keys",
-      "update-engine-settings": "Update engine settings",
+      "update-engine-general": "Update engine general settings",
+      "update-engine-web-server": "Update engine web server settings",
+      "update-engine-proxy": "Update engine proxy settings",
+      "update-engine-logger": "Update engine logger settings",
       "update-registration-settings": "Update registration settings",
       "create-scan-mode": "Create scan mode",
       "update-scan-mode": "Update scan mode",
@@ -446,6 +449,7 @@
       "command-retry-interval": "Command (from OIAnalytics) retry interval",
       "message-retry-interval": "Message (to OIAnalytics) retry interval",
       "permissions": "OIAnalytics commands permissions",
+      "update-engine-settings-permission": "Update engine settings (name, web server, proxy, logger)",
       "engine": "Engine",
       "registration": "Registration",
       "scan-mode": "Scan mode",
@@ -543,7 +547,17 @@
       "oia": "OIAnalytics: {{ level }}"
     },
     "web-server-settings": {
-      "title": "Web server"
+      "title": "Web server",
+      "auth-token-duration": "Authentication duration",
+      "auth-token-duration-options": {
+        "1h": "1 hour",
+        "6h": "6 hours",
+        "1d": "1 day",
+        "3d": "3 days",
+        "7d": "7 days",
+        "14d": "14 days",
+        "30d": "30 days"
+      }
     },
     "proxy-settings": {
       "title": "Proxy server",
@@ -554,7 +568,9 @@
       "proxy-username": "Username",
       "proxy-password": "Password",
       "forward-proxy-enabled": "Forward to upstream proxy",
-      "forward-proxy-url": "Forward proxy URL"
+      "forward-proxy-url": "URL",
+      "forward-proxy-username": "Username",
+      "forward-proxy-password": "Password"
     },
     "logger": {
       "title": "Logger",

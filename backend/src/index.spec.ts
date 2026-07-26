@@ -30,8 +30,8 @@ const makeLoggerServiceMock = () => ({
 
 const fakeEngineSettings = {
   id: 'oibus-id-1',
-  name: 'OIBus',
-  port: 2223,
+  general: { name: 'OIBus' },
+  webServer: { port: 2223, authTokenDuration: '7d' },
   version: '3.0.0',
   launcherVersion: '3.0.0'
 };

@@ -34,43 +34,59 @@ describe('EngineRepository with populated database', () => {
     });
 
     it('should update engine settings', () => {
-      repository.update({ ...testData.engine.command, name: 'updated engine' }, testData.users.list[0].id);
+      const command = { ...testData.engine.command, general: { name: 'updated engine' } };
+      repository.update(command, testData.users.list[0].id);
       assert.deepStrictEqual(stripAuditFields(repository.get()), {
-        ...testData.engine.command,
         id: testData.engine.settings.id,
         version: testData.engine.settings.version,
         launcherVersion: testData.engine.settings.launcherVersion,
-        name: 'updated engine'
+        general: { name: 'updated engine' },
+        webServer: { port: command.webServer.port, authTokenDuration: command.webServer.authTokenDuration },
+        proxyServer: {
+          enabled: command.proxyServer.enabled,
+          port: command.proxyServer.port,
+          forward: {
+            enabled: command.proxyServer.forward.enabled,
+            url: command.proxyServer.forward.url,
+            username: command.proxyServer.forward.username,
+            password: command.proxyServer.forward.password
+          },
+          username: command.proxyServer.username,
+          password: command.proxyServer.password
+        },
+        logger: command.logger
       });
     });
 
     it('should update name only', () => {
       repository.updateName('my new name', testData.users.list[0].id);
-      assert.strictEqual(repository.get()!.name, 'my new name');
+      assert.strictEqual(repository.get()!.general.name, 'my new name');
     });
 
     it('should update web server port only', () => {
       repository.updateWebServer(testData.engine.webServerCommand, testData.users.list[0].id);
-      assert.strictEqual(repository.get()!.port, testData.engine.webServerCommand.port);
+      assert.strictEqual(repository.get()!.webServer.port, testData.engine.webServerCommand.port);
     });
 
     it('should update proxy settings with proxy disabled', () => {
-      repository.updateProxy({ proxyEnabled: false, proxyPort: null }, testData.users.list[0].id);
+      const disabledForward = { enabled: false, url: null, username: null, password: null };
+      repository.updateProxy({ enabled: false, port: null, forward: disabledForward }, testData.users.list[0].id);
       const result = repository.get()!;
-      assert.strictEqual(result.proxyEnabled, false);
-      assert.strictEqual(result.proxyPort, null);
+      assert.strictEqual(result.proxyServer.enabled, false);
+      assert.strictEqual(result.proxyServer.port, null);
     });
 
     it('should update proxy settings with proxy enabled', () => {
-      repository.updateProxy({ proxyEnabled: true, proxyPort: 8080 }, testData.users.list[0].id);
+      const disabledForward = { enabled: false, url: null, username: null, password: null };
+      repository.updateProxy({ enabled: true, port: 8080, forward: disabledForward }, testData.users.list[0].id);
       const result = repository.get()!;
-      assert.strictEqual(result.proxyEnabled, true);
-      assert.strictEqual(result.proxyPort, 8080);
+      assert.strictEqual(result.proxyServer.enabled, true);
+      assert.strictEqual(result.proxyServer.port, 8080);
     });
 
     it('should update logger settings only', () => {
       repository.updateLogger(testData.engine.loggerCommand, testData.users.list[0].id);
-      assert.deepStrictEqual(repository.get()!.logParameters, testData.engine.loggerCommand);
+      assert.deepStrictEqual(repository.get()!.logger, testData.engine.loggerCommand);
     });
 
     it('should update version', () => {
@@ -99,16 +115,17 @@ describe('EngineRepository with empty database', () => {
       assert.ok(result.id);
       assert.strictEqual(result.version, version);
       assert.strictEqual(result.launcherVersion, '3.5.0');
-      assert.strictEqual(result.name, 'OIBus');
-      assert.strictEqual(result.port, 2223);
-      assert.strictEqual(result.proxyEnabled, false);
-      assert.strictEqual(result.proxyPort, 9000);
-      assert.strictEqual(result.proxyUsername, null);
-      assert.strictEqual(result.proxyPassword, null);
-      assert.strictEqual(result.forwardProxyUrl, null);
-      assert.strictEqual(result.forwardProxyUsername, null);
-      assert.strictEqual(result.forwardProxyPassword, null);
-      assert.deepStrictEqual(result.logParameters, {
+      assert.strictEqual(result.general.name, 'OIBus');
+      assert.strictEqual(result.webServer.port, 2223);
+      assert.strictEqual(result.proxyServer.enabled, false);
+      assert.strictEqual(result.proxyServer.port, 9000);
+      assert.strictEqual(result.proxyServer.username, null);
+      assert.strictEqual(result.proxyServer.password, null);
+      assert.strictEqual(result.proxyServer.forward.enabled, false);
+      assert.strictEqual(result.proxyServer.forward.url, null);
+      assert.strictEqual(result.proxyServer.forward.username, null);
+      assert.strictEqual(result.proxyServer.forward.password, null);
+      assert.deepStrictEqual(result.logger, {
         console: { level: 'silent' },
         file: { level: 'info', maxFileSize: 50, numberOfFiles: 5 },
         database: { level: 'info', maxNumberOfLogs: 100_000 },
@@ -121,7 +138,7 @@ describe('EngineRepository with empty database', () => {
     it('should use a custom port when provided', () => {
       const repository = new EngineRepository(database, '3.5.0', 3000);
       // createDefault is a no-op because the record already exists from the previous test
-      assert.strictEqual(repository.get()!.port, 2223);
+      assert.strictEqual(repository.get()!.webServer.port, 2223);
     });
   });
 
@@ -176,6 +193,6 @@ describe('EngineRepository with custom default port', () => {
 
   it('should seed engine settings with a custom port', () => {
     const repository = new EngineRepository(db, '3.5.0', 3000);
-    assert.strictEqual(repository.get()!.port, 3000);
+    assert.strictEqual(repository.get()!.webServer.port, 3000);
   });
 });

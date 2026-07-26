@@ -347,7 +347,6 @@ export default class OIAnalyticsMessageService {
   }
 
   private createEngineCommand(): OIAnalyticsEngineCommandDTO {
-    // TODO: split engine command and add data folders, ignoreIpFilters and ignoreRemoteUpdate flags
     const engine = this.engineRepository.get()!;
     const info = getOIBusInfo(engine, this.ignoreIpFilters, this.ignoreRemoteUpdate);
     return {
@@ -356,7 +355,7 @@ export default class OIAnalyticsMessageService {
       oIBusUpdatedBy: engine.updatedBy,
       oIBusCreatedAt: engine.createdAt,
       oIBusUpdatedAt: engine.updatedAt,
-      name: engine.name,
+      name: engine.general.name,
       softwareVersion: engine.version,
       launcherVersion: engine.launcherVersion,
       architecture: info.architecture,
@@ -366,44 +365,54 @@ export default class OIAnalyticsMessageService {
       ignoreIpFilters: info.ignoreIpFilters,
       ignoreRemoteUpdate: info.ignoreRemoteUpdate,
       settings: {
-        name: engine.name,
-        port: engine.port,
-        proxyEnabled: engine.proxyEnabled,
-        proxyPort: engine.proxyPort,
-        forwardProxyUrl: engine.forwardProxyUrl,
-        forwardProxyUsername: engine.forwardProxyUsername,
-        forwardProxyPassword: null,
-        proxyUsername: engine.proxyUsername,
-        proxyPassword: null,
-        logParameters: {
+        general: {
+          name: engine.general.name
+        },
+        webServer: {
+          port: engine.webServer.port,
+          authTokenDuration: engine.webServer.authTokenDuration
+        },
+        proxyServer: {
+          enabled: engine.proxyServer.enabled,
+          port: engine.proxyServer.port,
+          username: engine.proxyServer.username,
+          password: null,
+          forward: {
+            enabled: engine.proxyServer.forward.enabled,
+            url: engine.proxyServer.forward.url,
+            username: engine.proxyServer.forward.username,
+            password: null
+          }
+        },
+        logger: {
           console: {
-            level: engine.logParameters.console.level
+            level: engine.logger.console.level
           },
           file: {
-            level: engine.logParameters.file.level,
-            maxFileSize: engine.logParameters.file.maxFileSize,
-            numberOfFiles: engine.logParameters.file.numberOfFiles
+            level: engine.logger.file.level,
+            maxFileSize: engine.logger.file.maxFileSize,
+            numberOfFiles: engine.logger.file.numberOfFiles
           },
           database: {
-            level: engine.logParameters.database.level,
-            maxNumberOfLogs: engine.logParameters.database.maxNumberOfLogs
+            level: engine.logger.database.level,
+            maxNumberOfLogs: engine.logger.database.maxNumberOfLogs
           },
           loki: {
-            level: engine.logParameters.loki.level,
-            interval: engine.logParameters.loki.interval,
-            address: engine.logParameters.loki.address,
-            username: engine.logParameters.loki.username,
+            level: engine.logger.loki.level,
+            interval: engine.logger.loki.interval,
+            address: engine.logger.loki.address,
+            username: engine.logger.loki.username,
             password: ''
           },
           oia: {
-            level: engine.logParameters.oia.level,
-            interval: engine.logParameters.oia.interval
+            level: engine.logger.oia.level,
+            interval: engine.logger.oia.interval
           },
           syslog: {
-            level: engine.logParameters.syslog.level,
-            host: engine.logParameters.syslog.host,
-            port: engine.logParameters.syslog.port,
-            protocol: engine.logParameters.syslog.protocol
+            level: engine.logger.syslog.level,
+            host: engine.logger.syslog.host,
+            port: engine.logger.syslog.port,
+            protocol: engine.logger.syslog.protocol
           }
         }
       }

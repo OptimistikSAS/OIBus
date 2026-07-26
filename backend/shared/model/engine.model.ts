@@ -15,22 +15,21 @@ export const OIBUS_DATA_TYPES = ['any', 'time-values', 'setpoint'] as const;
 export type OIBusDataType = (typeof OIBUS_DATA_TYPES)[number];
 
 /**
+ * List of allowed durations for the authentication token lifetime, in the same
+ * format accepted by jsonwebtoken's `expiresIn` (via the `ms` package).
+ */
+export const AUTH_TOKEN_DURATIONS = ['1h', '6h', '1d', '3d', '7d', '14d', '30d'] as const;
+/**
+ * Type representing an allowed authentication token duration.
+ * @example "7d"
+ */
+export type AuthTokenDuration = (typeof AUTH_TOKEN_DURATIONS)[number];
+
+/**
  * Engine settings Data Transfer Object.
  * Represents the configuration settings for the engine.
  */
 export interface EngineSettingsDTO extends BaseEntity {
-  /**
-   * The name of the engine.
-   * @example "OIBus OT"
-   */
-  name: string;
-
-  /**
-   * The port on which the engine listens.
-   * @example 2223
-   */
-  port: number;
-
   /**
    * The version of the engine.
    * @example "3.7.0"
@@ -44,51 +43,95 @@ export interface EngineSettingsDTO extends BaseEntity {
   launcherVersion: string;
 
   /**
-   * Whether the proxy is enabled.
-   * @example false
+   * General engine settings.
    */
-  proxyEnabled: boolean;
+  general: {
+    /**
+     * The name of the engine.
+     * @example "OIBus OT"
+     */
+    name: string;
+  };
 
   /**
-   * The port for the proxy, if enabled.
-   * @example null
+   * Web server settings.
    */
-  proxyPort: number | null;
+  webServer: {
+    /**
+     * The port on which the engine listens.
+     * @example 2223
+     */
+    port: number;
+
+    /**
+     * The lifetime of an authentication token. One of AUTH_TOKEN_DURATIONS (jsonwebtoken `ms`-style duration string).
+     * @example "7d"
+     */
+    authTokenDuration: AuthTokenDuration;
+  };
 
   /**
-   * The URL of the upstream proxy to forward requests through.
-   * @example null
+   * Proxy server settings.
    */
-  forwardProxyUrl: string | null;
+  proxyServer: {
+    /**
+     * Whether the proxy is enabled.
+     * @example false
+     */
+    enabled: boolean;
 
-  /**
-   * The username for upstream proxy authentication.
-   * @example null
-   */
-  forwardProxyUsername: string | null;
+    /**
+     * The port for the proxy, if enabled.
+     * @example null
+     */
+    port: number | null;
 
-  /**
-   * The password for upstream proxy authentication.
-   * @example null
-   */
-  forwardProxyPassword: string | null;
+    /**
+     * Upstream forward proxy settings.
+     */
+    forward: {
+      /**
+       * Whether forwarding to an upstream proxy is enabled.
+       * @example false
+       */
+      enabled: boolean;
 
-  /**
-   * The username clients must use to authenticate with this proxy server. Null means no authentication required.
-   * @example null
-   */
-  proxyUsername: string | null;
+      /**
+       * The URL of the upstream proxy to forward requests through.
+       * @example null
+       */
+      url: string | null;
 
-  /**
-   * The password clients must use to authenticate with this proxy server.
-   * @example null
-   */
-  proxyPassword: string | null;
+      /**
+       * The username for upstream proxy authentication.
+       * @example null
+       */
+      username: string | null;
+
+      /**
+       * The password for upstream proxy authentication.
+       * @example null
+       */
+      password: string | null;
+    };
+
+    /**
+     * The username clients must use to authenticate with this proxy server. Null means no authentication required.
+     * @example null
+     */
+    username: string | null;
+
+    /**
+     * The password clients must use to authenticate with this proxy server.
+     * @example null
+     */
+    password: string | null;
+  };
 
   /**
    * Logging parameters for different outputs.
    */
-  logParameters: {
+  logger: {
     /**
      * Console logging configuration.
      */
@@ -895,196 +938,13 @@ export interface CryptoSettings {
  * Used as the request body for updating engine settings.
  */
 export interface EngineSettingsCommandDTO {
-  /**
-   * The name of the engine.
-   * @example "OIBus OT"
-   */
-  name: string;
+  general: EngineNameCommandDTO;
 
-  /**
-   * The port on which the engine listens.
-   * @example 8080
-   */
-  port: number;
+  webServer: EngineWebServerCommandDTO;
 
-  /**
-   * Whether the proxy is enabled.
-   * @example false
-   */
-  proxyEnabled: boolean;
+  proxyServer: EngineProxyCommandDTO;
 
-  /**
-   * The port for the proxy, if enabled.
-   * @example null
-   */
-  proxyPort: number | null;
-
-  /**
-   * The URL of the upstream proxy to forward requests through.
-   * @example null
-   */
-  forwardProxyUrl: string | null;
-
-  /**
-   * The username for upstream proxy authentication.
-   * @example null
-   */
-  forwardProxyUsername: string | null;
-
-  /**
-   * The password for upstream proxy authentication.
-   * @example null
-   */
-  forwardProxyPassword: string | null;
-
-  /**
-   * The username clients must use to authenticate with this proxy server. Null means no authentication required.
-   * @example null
-   */
-  proxyUsername: string | null;
-
-  /**
-   * The password clients must use to authenticate with this proxy server.
-   * @example null
-   */
-  proxyPassword: string | null;
-
-  /**
-   * Logging parameters for different outputs.
-   */
-  logParameters: {
-    /**
-     * Console logging configuration.
-     */
-    console: {
-      /**
-       * The log level for console output.
-       * @example "info"
-       */
-      level: LogLevel;
-    };
-
-    /**
-     * File logging configuration.
-     */
-    file: {
-      /**
-       * The log level for file output.
-       * @example "debug"
-       */
-      level: LogLevel;
-
-      /**
-       * The maximum size of a log file in bytes.
-       * @example 10485760
-       */
-      maxFileSize: number;
-
-      /**
-       * The number of log files to keep.
-       * @example 5
-       */
-      numberOfFiles: number;
-    };
-
-    /**
-     * Database logging configuration.
-     */
-    database: {
-      /**
-       * The log level for database output.
-       * @example "warn"
-       */
-      level: LogLevel;
-
-      /**
-       * The maximum number of logs to keep in the database.
-       * @example 10000
-       */
-      maxNumberOfLogs: number;
-    };
-
-    /**
-     * Loki logging configuration.
-     */
-    loki: {
-      /**
-       * The log level for Loki output.
-       * @example "error"
-       */
-      level: LogLevel;
-
-      /**
-       * The interval in seconds for sending logs to Loki.
-       * @example 60
-       */
-      interval: number;
-
-      /**
-       * The address of the Loki server.
-       * @example "http://loki:3100"
-       */
-      address: string;
-
-      /**
-       * The username for Loki authentication.
-       * @example "user"
-       */
-      username: string;
-
-      /**
-       * The password for Loki authentication.
-       * @example "pass"
-       */
-      password: string;
-    };
-
-    /**
-     * OIA logging configuration.
-     */
-    oia: {
-      /**
-       * The log level for OIA output.
-       * @example "info"
-       */
-      level: LogLevel;
-
-      /**
-       * The interval in seconds for sending logs to OIA.
-       * @example 60
-       */
-      interval: number;
-    };
-
-    /**
-     * Syslog logging configuration.
-     */
-    syslog: {
-      /**
-       * The log level for syslog output.
-       * @example "info"
-       */
-      level: LogLevel;
-
-      /**
-       * The hostname or IP of the syslog server. Empty string disables the transport.
-       * @example "syslog.example.com"
-       */
-      host: string;
-
-      /**
-       * The port of the syslog server.
-       * @example 514
-       */
-      port: number;
-
-      /**
-       * The transport protocol.
-       * @example "udp4"
-       */
-      protocol: 'udp4' | 'tcp';
-    };
-  };
+  logger: EngineLoggerCommandDTO;
 }
 
 /**
@@ -1101,7 +961,7 @@ export interface EngineNameCommandDTO {
 
 /**
  * Engine web server command Data Transfer Object.
- * Used as the request body for updating only the web server port.
+ * Used as the request body for updating only the web server port and authentication token duration.
  */
 export interface EngineWebServerCommandDTO {
   /**
@@ -1109,6 +969,12 @@ export interface EngineWebServerCommandDTO {
    * @example 8080
    */
   port: number;
+
+  /**
+   * The lifetime of an authentication token. One of AUTH_TOKEN_DURATIONS (jsonwebtoken `ms`-style duration string).
+   * @example "7d"
+   */
+  authTokenDuration: AuthTokenDuration;
 }
 
 /**
@@ -1120,43 +986,54 @@ export interface EngineProxyCommandDTO {
    * Whether the proxy is enabled.
    * @example false
    */
-  proxyEnabled: boolean;
+  enabled: boolean;
 
   /**
    * The port for the proxy, if enabled.
    * @example null
    */
-  proxyPort: number | null;
-
-  /**
-   * The URL of the upstream proxy to forward requests through.
-   * @example null
-   */
-  forwardProxyUrl: string | null;
-
-  /**
-   * The username for upstream proxy authentication.
-   * @example null
-   */
-  forwardProxyUsername: string | null;
-
-  /**
-   * The password for upstream proxy authentication.
-   * @example null
-   */
-  forwardProxyPassword: string | null;
+  port?: number | null;
 
   /**
    * The username for proxy server authentication.
    * @example null
    */
-  proxyUsername: string | null;
+  username?: string | null;
 
   /**
    * The password for proxy server authentication.
    * @example null
    */
-  proxyPassword: string | null;
+  password?: string | null;
+
+  /**
+   * Upstream forward proxy settings.
+   */
+  forward?: {
+    /**
+     * Whether forwarding to an upstream proxy is enabled.
+     * @example false
+     */
+    enabled: boolean;
+
+    /**
+     * The URL of the upstream proxy to forward requests through.
+     * @example null
+     */
+    url?: string | null;
+
+    /**
+     * The username for upstream proxy authentication.
+     * @example null
+     */
+    username?: string | null;
+
+    /**
+     * The password for upstream proxy authentication.
+     * @example null
+     */
+    password?: string | null;
+  };
 }
 
 /**
@@ -1164,7 +1041,139 @@ export interface EngineProxyCommandDTO {
  * Used as the request body for updating only the logging parameters.
  * The log category objects are top-level (no wrapper key).
  */
-export type EngineLoggerCommandDTO = EngineSettingsCommandDTO['logParameters'];
+export interface EngineLoggerCommandDTO {
+  /**
+   * Console logging configuration.
+   */
+  console: {
+    /**
+     * The log level for console output.
+     * @example "info"
+     */
+    level: LogLevel;
+  };
+
+  /**
+   * File logging configuration.
+   */
+  file: {
+    /**
+     * The log level for file output.
+     * @example "debug"
+     */
+    level: LogLevel;
+
+    /**
+     * The maximum size of a log file in bytes.
+     * @example 10485760
+     */
+    maxFileSize?: number;
+
+    /**
+     * The number of log files to keep.
+     * @example 5
+     */
+    numberOfFiles?: number;
+  };
+
+  /**
+   * Database logging configuration.
+   */
+  database: {
+    /**
+     * The log level for database output.
+     * @example "warn"
+     */
+    level: LogLevel;
+
+    /**
+     * The maximum number of logs to keep in the database.
+     * @example 10000
+     */
+    maxNumberOfLogs?: number;
+  };
+
+  /**
+   * Loki logging configuration.
+   */
+  loki: {
+    /**
+     * The log level for Loki output.
+     * @example "error"
+     */
+    level: LogLevel;
+
+    /**
+     * The interval in seconds for sending logs to Loki.
+     * @example 60
+     */
+    interval?: number;
+
+    /**
+     * The address of the Loki server.
+     * @example "http://loki:3100"
+     */
+    address?: string;
+
+    /**
+     * The username for Loki authentication.
+     * @example "user"
+     */
+    username?: string;
+
+    /**
+     * The password for Loki authentication.
+     * @example "pass"
+     */
+    password?: string;
+  };
+
+  /**
+   * OIA logging configuration.
+   */
+  oia: {
+    /**
+     * The log level for OIA output.
+     * @example "info"
+     */
+    level: LogLevel;
+
+    /**
+     * The interval in seconds for sending logs to OIA.
+     * @example 60
+     */
+    interval?: number;
+  };
+
+  /**
+   * Syslog logging configuration.
+   */
+  syslog: {
+    /**
+     * The log level for syslog output.
+     * @example "info"
+     */
+    level: LogLevel;
+
+    /**
+     * The hostname or IP of the syslog server. Empty string disables the transport.
+     * @example "syslog.example.com"
+     */
+    host?: string;
+
+    /**
+     * The port of the syslog server.
+     * @example 514
+     */
+    port?: number;
+
+    /**
+     * The transport protocol.
+     * @example "udp4"
+     */
+    protocol?: 'udp4' | 'tcp';
+  };
+}
 
 /**
  * Engine settings update result Data Transfer Object.
