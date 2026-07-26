@@ -5,9 +5,12 @@ import jwt from 'jsonwebtoken';
 import { authMiddleware } from './auth.middleware';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import type UserService from '../../service/user.service';
 import type EncryptionService from '../../service/encryption.service';
+import type OIBusService from '../../service/oibus.service';
 import type { User } from '../../model/user.model';
+import type { EngineSettings } from '../../model/engine.model';
 
 const basicAuthHeader = (user: string, pass: string) => 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');
 const bearerHeader = (token: string) => `Bearer ${token}`;
@@ -36,11 +39,14 @@ const HASHED = '$argon2id$hashed';
 describe('authMiddleware', () => {
   let userService: UserServiceMock;
   let encryptionService: EncryptionServiceMock;
+  let oIBusService: OibusServiceMock;
   let mockNext: ReturnType<typeof mock.fn>;
 
   beforeEach(() => {
     userService = new UserServiceMock();
     encryptionService = new EncryptionServiceMock();
+    oIBusService = new OibusServiceMock();
+    oIBusService.getEngineSettings = mock.fn(() => ({ webServer: { authTokenDuration: '7d' } }) as EngineSettings);
     mockNext = mock.fn();
   });
 
@@ -50,7 +56,11 @@ describe('authMiddleware', () => {
 
   type LooseMiddleware = (req: unknown, res: unknown, next: unknown) => Promise<void>;
   const buildMiddleware = () =>
-    authMiddleware(userService as unknown as UserService, encryptionService as unknown as EncryptionService) as LooseMiddleware;
+    authMiddleware(
+      userService as unknown as UserService,
+      encryptionService as unknown as EncryptionService,
+      oIBusService as unknown as OIBusService
+    ) as LooseMiddleware;
 
   describe('Basic Auth', () => {
     it('should call next() and set req.user on valid credentials', async () => {
@@ -99,7 +109,7 @@ describe('authMiddleware', () => {
     it('should return JWT token for valid credentials on /api/users/authentication', async () => {
       userService.getHashedPasswordByLogin = mock.fn(() => HASHED);
       mock.method(argon2, 'verify', async () => true);
-      mock.method(jwt, 'sign', () => 'fake-jwt-token');
+      const signMock = mock.method(jwt, 'sign', () => 'fake-jwt-token');
       encryptionService.getPrivateKey = mock.fn(async () => 'privateKey');
 
       const req = makeReq('/api/users/authentication', { authorization: basicAuthHeader('alice', 'secret') });
@@ -109,6 +119,21 @@ describe('authMiddleware', () => {
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 200);
       assert.deepStrictEqual(res.json.mock.calls[0].arguments[0], { access_token: 'fake-jwt-token' });
       assert.strictEqual(mockNext.mock.calls.length, 0);
+      assert.strictEqual((signMock.mock.calls[0].arguments[2] as { expiresIn: string }).expiresIn, '7d');
+    });
+
+    it('should sign the token with a lifetime derived from the configured authTokenDuration', async () => {
+      userService.getHashedPasswordByLogin = mock.fn(() => HASHED);
+      mock.method(argon2, 'verify', async () => true);
+      const signMock = mock.method(jwt, 'sign', () => 'fake-jwt-token');
+      encryptionService.getPrivateKey = mock.fn(async () => 'privateKey');
+      oIBusService.getEngineSettings = mock.fn(() => ({ webServer: { authTokenDuration: '1h' } }) as EngineSettings);
+
+      const req = makeReq('/api/users/authentication', { authorization: basicAuthHeader('alice', 'secret') });
+      const res = makeRes();
+      await buildMiddleware()(req, res, mockNext);
+
+      assert.strictEqual((signMock.mock.calls[0].arguments[2] as { expiresIn: string }).expiresIn, '1h');
     });
 
     it('should return user for valid credentials on /api/users/current-user', async () => {

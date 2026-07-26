@@ -1,6 +1,6 @@
 {
   "name": "oibus",
-  "version": "3.8.7",
+  "version": "3.9.0",
   "main": "index.js",
   "author": "Optimistik SAS",
   "homepage": "https://oibus.optimistik.com/",
@@ -23,7 +23,7 @@
     "build:linux-arm64": "npm run internal:build:lib-linux-arm64 && rimraf ../build/bin/linux-arm64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-arm64/binaries/oibus --target node26-linux-arm64 && ncp ../build/deps/linux-arm64 ../build/bin/linux-arm64",
     "start": "rimraf ./dist/backend/src/migration && tsc --sourceMap --project tsconfig.app.json && npm run start:backend",
     "start:backend": "node ./dist/backend/src/index.js --config ../data-folder",
-    "generate:openapi": "tsoa spec-and-routes && npm run lint:fix",
+    "generate:openapi": "tsoa spec-and-routes && eslint shared/model/ src/web-server/routes.ts --cache --fix",
     "generate:settings-interface": "tsc -p tsconfig.generator.json && node dist/interface-generator/src/settings-interface.generator.js && npm run generate:openapi",
     "migrate": "tsc -p tsconfig.generator.json && node dist/backend/src/settings-interface.generator.js",
     "test": "node --experimental-config-file=test.config.json --test 'src/**/*.spec.ts'",

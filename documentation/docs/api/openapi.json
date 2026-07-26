@@ -17857,7 +17857,10 @@
 					"update-version",
 					"restart-engine",
 					"regenerate-cipher-keys",
-					"update-engine-settings",
+					"update-engine-general",
+					"update-engine-web-server",
+					"update-engine-proxy",
+					"update-engine-logger",
 					"update-registration-settings",
 					"create-scan-mode",
 					"update-scan-mode",
@@ -18147,266 +18150,23 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"LogLevel": {
-				"type": "string",
-				"enum": [
-					"silent",
-					"error",
-					"warn",
-					"info",
-					"debug",
-					"trace"
-				],
-				"description": "Type representing a log level."
-			},
-			"EngineSettingsCommandDTO": {
-				"description": "Engine settings command Data Transfer Object.\nUsed as the request body for updating engine settings.",
+			"EngineNameCommandDTO": {
+				"description": "Engine name command Data Transfer Object.\nUsed as the request body for updating only the engine name.",
 				"properties": {
 					"name": {
 						"type": "string",
 						"description": "The name of the engine.",
 						"example": "OIBus OT"
-					},
-					"port": {
-						"type": "number",
-						"format": "double",
-						"description": "The port on which the engine listens.",
-						"example": 8080
-					},
-					"proxyEnabled": {
-						"type": "boolean",
-						"description": "Whether the proxy is enabled.",
-						"example": false
-					},
-					"proxyPort": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "The port for the proxy, if enabled.",
-						"example": null
-					},
-					"forwardProxyUrl": {
-						"type": "string",
-						"nullable": true,
-						"description": "The URL of the upstream proxy to forward requests through.",
-						"example": null
-					},
-					"forwardProxyUsername": {
-						"type": "string",
-						"nullable": true,
-						"description": "The username for upstream proxy authentication.",
-						"example": null
-					},
-					"forwardProxyPassword": {
-						"type": "string",
-						"nullable": true,
-						"description": "The password for upstream proxy authentication.",
-						"example": null
-					},
-					"proxyUsername": {
-						"type": "string",
-						"nullable": true,
-						"description": "The username clients must use to authenticate with this proxy server. Null means no authentication required.",
-						"example": null
-					},
-					"proxyPassword": {
-						"type": "string",
-						"nullable": true,
-						"description": "The password clients must use to authenticate with this proxy server.",
-						"example": null
-					},
-					"logParameters": {
-						"properties": {
-							"syslog": {
-								"properties": {
-									"protocol": {
-										"type": "string",
-										"enum": [
-											"udp4",
-											"tcp"
-										],
-										"description": "The transport protocol.",
-										"example": "udp4"
-									},
-									"port": {
-										"type": "number",
-										"format": "double",
-										"description": "The port of the syslog server.",
-										"example": 514
-									},
-									"host": {
-										"type": "string",
-										"description": "The hostname or IP of the syslog server. Empty string disables the transport.",
-										"example": "syslog.example.com"
-									},
-									"level": {
-										"$ref": "#/components/schemas/LogLevel",
-										"description": "The log level for syslog output.",
-										"example": "info"
-									}
-								},
-								"required": [
-									"protocol",
-									"port",
-									"host",
-									"level"
-								],
-								"type": "object",
-								"description": "Syslog logging configuration."
-							},
-							"oia": {
-								"properties": {
-									"interval": {
-										"type": "number",
-										"format": "double",
-										"description": "The interval in seconds for sending logs to OIA.",
-										"example": 60
-									},
-									"level": {
-										"$ref": "#/components/schemas/LogLevel",
-										"description": "The log level for OIA output.",
-										"example": "info"
-									}
-								},
-								"required": [
-									"interval",
-									"level"
-								],
-								"type": "object",
-								"description": "OIA logging configuration."
-							},
-							"loki": {
-								"properties": {
-									"password": {
-										"type": "string",
-										"description": "The password for Loki authentication.",
-										"example": "pass"
-									},
-									"username": {
-										"type": "string",
-										"description": "The username for Loki authentication.",
-										"example": "user"
-									},
-									"address": {
-										"type": "string",
-										"description": "The address of the Loki server.",
-										"example": "http://loki:3100"
-									},
-									"interval": {
-										"type": "number",
-										"format": "double",
-										"description": "The interval in seconds for sending logs to Loki.",
-										"example": 60
-									},
-									"level": {
-										"$ref": "#/components/schemas/LogLevel",
-										"description": "The log level for Loki output.",
-										"example": "error"
-									}
-								},
-								"required": [
-									"password",
-									"username",
-									"address",
-									"interval",
-									"level"
-								],
-								"type": "object",
-								"description": "Loki logging configuration."
-							},
-							"database": {
-								"properties": {
-									"maxNumberOfLogs": {
-										"type": "number",
-										"format": "double",
-										"description": "The maximum number of logs to keep in the database.",
-										"example": 10000
-									},
-									"level": {
-										"$ref": "#/components/schemas/LogLevel",
-										"description": "The log level for database output.",
-										"example": "warn"
-									}
-								},
-								"required": [
-									"maxNumberOfLogs",
-									"level"
-								],
-								"type": "object",
-								"description": "Database logging configuration."
-							},
-							"file": {
-								"properties": {
-									"numberOfFiles": {
-										"type": "number",
-										"format": "double",
-										"description": "The number of log files to keep.",
-										"example": 5
-									},
-									"maxFileSize": {
-										"type": "number",
-										"format": "double",
-										"description": "The maximum size of a log file in bytes.",
-										"example": 10485760
-									},
-									"level": {
-										"$ref": "#/components/schemas/LogLevel",
-										"description": "The log level for file output.",
-										"example": "debug"
-									}
-								},
-								"required": [
-									"numberOfFiles",
-									"maxFileSize",
-									"level"
-								],
-								"type": "object",
-								"description": "File logging configuration."
-							},
-							"console": {
-								"properties": {
-									"level": {
-										"$ref": "#/components/schemas/LogLevel",
-										"description": "The log level for console output.",
-										"example": "info"
-									}
-								},
-								"required": [
-									"level"
-								],
-								"type": "object",
-								"description": "Console logging configuration."
-							}
-						},
-						"required": [
-							"syslog",
-							"oia",
-							"loki",
-							"database",
-							"file",
-							"console"
-						],
-						"type": "object",
-						"description": "Logging parameters for different outputs."
 					}
 				},
 				"required": [
-					"name",
-					"port",
-					"proxyEnabled",
-					"proxyPort",
-					"forwardProxyUrl",
-					"forwardProxyUsername",
-					"forwardProxyPassword",
-					"proxyUsername",
-					"proxyPassword",
-					"logParameters"
+					"name"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"OIBusUpdateEngineSettingsCommandDTO": {
-				"description": "Command DTO for updating engine settings.",
+			"OIBusUpdateEngineGeneralCommandDTO": {
+				"description": "Command DTO for updating only the engine's general settings (name).",
 				"properties": {
 					"id": {
 						"type": "string",
@@ -18416,7 +18176,7 @@
 					"type": {
 						"type": "string",
 						"enum": [
-							"update-engine-settings"
+							"update-engine-general"
 						],
 						"nullable": false,
 						"description": "The type of the command."
@@ -18462,8 +18222,511 @@
 						"example": "3.7.0"
 					},
 					"commandContent": {
-						"$ref": "#/components/schemas/EngineSettingsCommandDTO",
-						"description": "The content of the command, including engine settings."
+						"$ref": "#/components/schemas/EngineNameCommandDTO",
+						"description": "The content of the command, including the engine name."
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"targetVersion",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AuthTokenDuration": {
+				"type": "string",
+				"enum": [
+					"1h",
+					"1d",
+					"6h",
+					"3d",
+					"7d",
+					"14d",
+					"30d"
+				],
+				"example": "7d",
+				"description": "Type representing an allowed authentication token duration."
+			},
+			"EngineWebServerCommandDTO": {
+				"description": "Engine web server command Data Transfer Object.\nUsed as the request body for updating only the web server port and authentication token duration.",
+				"properties": {
+					"port": {
+						"type": "number",
+						"format": "double",
+						"description": "The port on which the engine listens.",
+						"example": 8080
+					},
+					"authTokenDuration": {
+						"$ref": "#/components/schemas/AuthTokenDuration",
+						"description": "The lifetime of an authentication token. One of AUTH_TOKEN_DURATIONS (jsonwebtoken `ms`-style duration string).",
+						"example": "7d"
+					}
+				},
+				"required": [
+					"port",
+					"authTokenDuration"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusUpdateEngineWebServerCommandDTO": {
+				"description": "Command DTO for updating only the web server settings.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"update-engine-web-server"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The target version for the command.",
+						"example": "3.7.0"
+					},
+					"commandContent": {
+						"$ref": "#/components/schemas/EngineWebServerCommandDTO",
+						"description": "The content of the command, including the web server settings."
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"targetVersion",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"EngineProxyCommandDTO": {
+				"description": "Engine proxy command Data Transfer Object.\nUsed as the request body for updating only the proxy settings.",
+				"properties": {
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the proxy is enabled.",
+						"example": false
+					},
+					"port": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "The port for the proxy, if enabled.",
+						"example": null
+					},
+					"username": {
+						"type": "string",
+						"nullable": true,
+						"description": "The username for proxy server authentication.",
+						"example": null
+					},
+					"password": {
+						"type": "string",
+						"nullable": true,
+						"description": "The password for proxy server authentication.",
+						"example": null
+					},
+					"forward": {
+						"properties": {
+							"password": {
+								"type": "string",
+								"nullable": true,
+								"description": "The password for upstream proxy authentication.",
+								"example": null
+							},
+							"username": {
+								"type": "string",
+								"nullable": true,
+								"description": "The username for upstream proxy authentication.",
+								"example": null
+							},
+							"url": {
+								"type": "string",
+								"nullable": true,
+								"description": "The URL of the upstream proxy to forward requests through.",
+								"example": null
+							},
+							"enabled": {
+								"type": "boolean",
+								"description": "Whether forwarding to an upstream proxy is enabled.",
+								"example": false
+							}
+						},
+						"required": [
+							"enabled"
+						],
+						"type": "object",
+						"description": "Upstream forward proxy settings."
+					}
+				},
+				"required": [
+					"enabled"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusUpdateEngineProxyCommandDTO": {
+				"description": "Command DTO for updating only the proxy settings.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"update-engine-proxy"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The target version for the command.",
+						"example": "3.7.0"
+					},
+					"commandContent": {
+						"$ref": "#/components/schemas/EngineProxyCommandDTO",
+						"description": "The content of the command, including the proxy settings."
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"targetVersion",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"LogLevel": {
+				"type": "string",
+				"enum": [
+					"silent",
+					"error",
+					"warn",
+					"info",
+					"debug",
+					"trace"
+				],
+				"description": "Type representing a log level."
+			},
+			"EngineLoggerCommandDTO": {
+				"description": "Engine logger command Data Transfer Object.\nUsed as the request body for updating only the logging parameters.\nThe log category objects are top-level (no wrapper key).",
+				"properties": {
+					"console": {
+						"properties": {
+							"level": {
+								"$ref": "#/components/schemas/LogLevel",
+								"description": "The log level for console output.",
+								"example": "info"
+							}
+						},
+						"required": [
+							"level"
+						],
+						"type": "object",
+						"description": "Console logging configuration."
+					},
+					"file": {
+						"properties": {
+							"numberOfFiles": {
+								"type": "number",
+								"format": "double",
+								"description": "The number of log files to keep.",
+								"example": 5
+							},
+							"maxFileSize": {
+								"type": "number",
+								"format": "double",
+								"description": "The maximum size of a log file in bytes.",
+								"example": 10485760
+							},
+							"level": {
+								"$ref": "#/components/schemas/LogLevel",
+								"description": "The log level for file output.",
+								"example": "debug"
+							}
+						},
+						"required": [
+							"level"
+						],
+						"type": "object",
+						"description": "File logging configuration."
+					},
+					"database": {
+						"properties": {
+							"maxNumberOfLogs": {
+								"type": "number",
+								"format": "double",
+								"description": "The maximum number of logs to keep in the database.",
+								"example": 10000
+							},
+							"level": {
+								"$ref": "#/components/schemas/LogLevel",
+								"description": "The log level for database output.",
+								"example": "warn"
+							}
+						},
+						"required": [
+							"level"
+						],
+						"type": "object",
+						"description": "Database logging configuration."
+					},
+					"loki": {
+						"properties": {
+							"password": {
+								"type": "string",
+								"description": "The password for Loki authentication.",
+								"example": "pass"
+							},
+							"username": {
+								"type": "string",
+								"description": "The username for Loki authentication.",
+								"example": "user"
+							},
+							"address": {
+								"type": "string",
+								"description": "The address of the Loki server.",
+								"example": "http://loki:3100"
+							},
+							"interval": {
+								"type": "number",
+								"format": "double",
+								"description": "The interval in seconds for sending logs to Loki.",
+								"example": 60
+							},
+							"level": {
+								"$ref": "#/components/schemas/LogLevel",
+								"description": "The log level for Loki output.",
+								"example": "error"
+							}
+						},
+						"required": [
+							"level"
+						],
+						"type": "object",
+						"description": "Loki logging configuration."
+					},
+					"oia": {
+						"properties": {
+							"interval": {
+								"type": "number",
+								"format": "double",
+								"description": "The interval in seconds for sending logs to OIA.",
+								"example": 60
+							},
+							"level": {
+								"$ref": "#/components/schemas/LogLevel",
+								"description": "The log level for OIA output.",
+								"example": "info"
+							}
+						},
+						"required": [
+							"level"
+						],
+						"type": "object",
+						"description": "OIA logging configuration."
+					},
+					"syslog": {
+						"properties": {
+							"protocol": {
+								"type": "string",
+								"enum": [
+									"udp4",
+									"tcp"
+								],
+								"description": "The transport protocol.",
+								"example": "udp4"
+							},
+							"port": {
+								"type": "number",
+								"format": "double",
+								"description": "The port of the syslog server.",
+								"example": 514
+							},
+							"host": {
+								"type": "string",
+								"description": "The hostname or IP of the syslog server. Empty string disables the transport.",
+								"example": "syslog.example.com"
+							},
+							"level": {
+								"$ref": "#/components/schemas/LogLevel",
+								"description": "The log level for syslog output.",
+								"example": "info"
+							}
+						},
+						"required": [
+							"level"
+						],
+						"type": "object",
+						"description": "Syslog logging configuration."
+					}
+				},
+				"required": [
+					"console",
+					"file",
+					"database",
+					"loki",
+					"oia",
+					"syslog"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusUpdateEngineLoggerCommandDTO": {
+				"description": "Command DTO for updating only the logging parameters.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"update-engine-logger"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The target version for the command.",
+						"example": "3.7.0"
+					},
+					"commandContent": {
+						"$ref": "#/components/schemas/EngineLoggerCommandDTO",
+						"description": "The content of the command, including the logging parameters."
 					}
 				},
 				"required": [
@@ -26742,7 +27005,16 @@
 						"$ref": "#/components/schemas/OIBusRestartEngineCommandDTO"
 					},
 					{
-						"$ref": "#/components/schemas/OIBusUpdateEngineSettingsCommandDTO"
+						"$ref": "#/components/schemas/OIBusUpdateEngineGeneralCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusUpdateEngineWebServerCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusUpdateEngineProxyCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusUpdateEngineLoggerCommandDTO"
 					},
 					{
 						"$ref": "#/components/schemas/OIBusUpdateRegistrationSettingsCommandDTO"
@@ -32963,17 +33235,6 @@
 						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
-					"name": {
-						"type": "string",
-						"description": "The name of the engine.",
-						"example": "OIBus OT"
-					},
-					"port": {
-						"type": "number",
-						"format": "double",
-						"description": "The port on which the engine listens.",
-						"example": 2223
-					},
 					"version": {
 						"type": "string",
 						"description": "The version of the engine.",
@@ -32984,49 +33245,114 @@
 						"description": "The version of the launcher.",
 						"example": "3.7.0"
 					},
-					"proxyEnabled": {
-						"type": "boolean",
-						"description": "Whether the proxy is enabled.",
-						"example": false
+					"general": {
+						"properties": {
+							"name": {
+								"type": "string",
+								"description": "The name of the engine.",
+								"example": "OIBus OT"
+							}
+						},
+						"required": [
+							"name"
+						],
+						"type": "object",
+						"description": "General engine settings."
 					},
-					"proxyPort": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "The port for the proxy, if enabled.",
-						"example": null
+					"webServer": {
+						"properties": {
+							"authTokenDuration": {
+								"$ref": "#/components/schemas/AuthTokenDuration",
+								"description": "The lifetime of an authentication token. One of AUTH_TOKEN_DURATIONS (jsonwebtoken `ms`-style duration string).",
+								"example": "7d"
+							},
+							"port": {
+								"type": "number",
+								"format": "double",
+								"description": "The port on which the engine listens.",
+								"example": 2223
+							}
+						},
+						"required": [
+							"authTokenDuration",
+							"port"
+						],
+						"type": "object",
+						"description": "Web server settings."
 					},
-					"forwardProxyUrl": {
-						"type": "string",
-						"nullable": true,
-						"description": "The URL of the upstream proxy to forward requests through.",
-						"example": null
+					"proxyServer": {
+						"properties": {
+							"password": {
+								"type": "string",
+								"nullable": true,
+								"description": "The password clients must use to authenticate with this proxy server.",
+								"example": null
+							},
+							"username": {
+								"type": "string",
+								"nullable": true,
+								"description": "The username clients must use to authenticate with this proxy server. Null means no authentication required.",
+								"example": null
+							},
+							"forward": {
+								"properties": {
+									"password": {
+										"type": "string",
+										"nullable": true,
+										"description": "The password for upstream proxy authentication.",
+										"example": null
+									},
+									"username": {
+										"type": "string",
+										"nullable": true,
+										"description": "The username for upstream proxy authentication.",
+										"example": null
+									},
+									"url": {
+										"type": "string",
+										"nullable": true,
+										"description": "The URL of the upstream proxy to forward requests through.",
+										"example": null
+									},
+									"enabled": {
+										"type": "boolean",
+										"description": "Whether forwarding to an upstream proxy is enabled.",
+										"example": false
+									}
+								},
+								"required": [
+									"password",
+									"username",
+									"url",
+									"enabled"
+								],
+								"type": "object",
+								"description": "Upstream forward proxy settings."
+							},
+							"port": {
+								"type": "number",
+								"format": "double",
+								"nullable": true,
+								"description": "The port for the proxy, if enabled.",
+								"example": null
+							},
+							"enabled": {
+								"type": "boolean",
+								"description": "Whether the proxy is enabled.",
+								"example": false
+							}
+						},
+						"required": [
+							"password",
+							"username",
+							"forward",
+							"port",
+							"enabled"
+						],
+						"type": "object",
+						"description": "Proxy server settings."
 					},
-					"forwardProxyUsername": {
-						"type": "string",
-						"nullable": true,
-						"description": "The username for upstream proxy authentication.",
-						"example": null
-					},
-					"forwardProxyPassword": {
-						"type": "string",
-						"nullable": true,
-						"description": "The password for upstream proxy authentication.",
-						"example": null
-					},
-					"proxyUsername": {
-						"type": "string",
-						"nullable": true,
-						"description": "The username clients must use to authenticate with this proxy server. Null means no authentication required.",
-						"example": null
-					},
-					"proxyPassword": {
-						"type": "string",
-						"nullable": true,
-						"description": "The password clients must use to authenticate with this proxy server.",
-						"example": null
-					},
-					"logParameters": {
+					"logger": {
 						"properties": {
 							"syslog": {
 								"properties": {
@@ -33201,18 +33527,12 @@
 					"updatedBy",
 					"createdAt",
 					"updatedAt",
-					"name",
-					"port",
 					"version",
 					"launcherVersion",
-					"proxyEnabled",
-					"proxyPort",
-					"forwardProxyUrl",
-					"forwardProxyUsername",
-					"forwardProxyPassword",
-					"proxyUsername",
-					"proxyPassword",
-					"logParameters"
+					"general",
+					"webServer",
+					"proxyServer",
+					"logger"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -33240,268 +33560,30 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"EngineNameCommandDTO": {
-				"description": "Engine name command Data Transfer Object.\nUsed as the request body for updating only the engine name.",
+			"EngineSettingsCommandDTO": {
+				"description": "Engine settings command Data Transfer Object.\nUsed as the request body for updating engine settings.",
 				"properties": {
-					"name": {
-						"type": "string",
-						"description": "The name of the engine.",
-						"example": "OIBus OT"
+					"general": {
+						"$ref": "#/components/schemas/EngineNameCommandDTO"
+					},
+					"webServer": {
+						"$ref": "#/components/schemas/EngineWebServerCommandDTO"
+					},
+					"proxyServer": {
+						"$ref": "#/components/schemas/EngineProxyCommandDTO"
+					},
+					"logger": {
+						"$ref": "#/components/schemas/EngineLoggerCommandDTO"
 					}
 				},
 				"required": [
-					"name"
+					"general",
+					"webServer",
+					"proxyServer",
+					"logger"
 				],
 				"type": "object",
 				"additionalProperties": false
-			},
-			"EngineWebServerCommandDTO": {
-				"description": "Engine web server command Data Transfer Object.\nUsed as the request body for updating only the web server port.",
-				"properties": {
-					"port": {
-						"type": "number",
-						"format": "double",
-						"description": "The port on which the engine listens.",
-						"example": 8080
-					}
-				},
-				"required": [
-					"port"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"EngineProxyCommandDTO": {
-				"description": "Engine proxy command Data Transfer Object.\nUsed as the request body for updating only the proxy settings.",
-				"properties": {
-					"proxyEnabled": {
-						"type": "boolean",
-						"description": "Whether the proxy is enabled.",
-						"example": false
-					},
-					"proxyPort": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "The port for the proxy, if enabled.",
-						"example": null
-					},
-					"forwardProxyUrl": {
-						"type": "string",
-						"nullable": true,
-						"description": "The URL of the upstream proxy to forward requests through.",
-						"example": null
-					},
-					"forwardProxyUsername": {
-						"type": "string",
-						"nullable": true,
-						"description": "The username for upstream proxy authentication.",
-						"example": null
-					},
-					"forwardProxyPassword": {
-						"type": "string",
-						"nullable": true,
-						"description": "The password for upstream proxy authentication.",
-						"example": null
-					},
-					"proxyUsername": {
-						"type": "string",
-						"nullable": true,
-						"description": "The username for proxy server authentication.",
-						"example": null
-					},
-					"proxyPassword": {
-						"type": "string",
-						"nullable": true,
-						"description": "The password for proxy server authentication.",
-						"example": null
-					}
-				},
-				"required": [
-					"proxyEnabled",
-					"proxyPort",
-					"forwardProxyUrl",
-					"forwardProxyUsername",
-					"forwardProxyPassword",
-					"proxyUsername",
-					"proxyPassword"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"EngineLoggerCommandDTO": {
-				"properties": {
-					"syslog": {
-						"properties": {
-							"protocol": {
-								"type": "string",
-								"enum": [
-									"udp4",
-									"tcp"
-								],
-								"description": "The transport protocol.",
-								"example": "udp4"
-							},
-							"port": {
-								"type": "number",
-								"format": "double",
-								"description": "The port of the syslog server.",
-								"example": 514
-							},
-							"host": {
-								"type": "string",
-								"description": "The hostname or IP of the syslog server. Empty string disables the transport.",
-								"example": "syslog.example.com"
-							},
-							"level": {
-								"$ref": "#/components/schemas/LogLevel",
-								"description": "The log level for syslog output.",
-								"example": "info"
-							}
-						},
-						"required": [
-							"protocol",
-							"port",
-							"host",
-							"level"
-						],
-						"type": "object",
-						"description": "Syslog logging configuration."
-					},
-					"oia": {
-						"properties": {
-							"interval": {
-								"type": "number",
-								"format": "double",
-								"description": "The interval in seconds for sending logs to OIA.",
-								"example": 60
-							},
-							"level": {
-								"$ref": "#/components/schemas/LogLevel",
-								"description": "The log level for OIA output.",
-								"example": "info"
-							}
-						},
-						"required": [
-							"interval",
-							"level"
-						],
-						"type": "object",
-						"description": "OIA logging configuration."
-					},
-					"loki": {
-						"properties": {
-							"password": {
-								"type": "string",
-								"description": "The password for Loki authentication.",
-								"example": "pass"
-							},
-							"username": {
-								"type": "string",
-								"description": "The username for Loki authentication.",
-								"example": "user"
-							},
-							"address": {
-								"type": "string",
-								"description": "The address of the Loki server.",
-								"example": "http://loki:3100"
-							},
-							"interval": {
-								"type": "number",
-								"format": "double",
-								"description": "The interval in seconds for sending logs to Loki.",
-								"example": 60
-							},
-							"level": {
-								"$ref": "#/components/schemas/LogLevel",
-								"description": "The log level for Loki output.",
-								"example": "error"
-							}
-						},
-						"required": [
-							"password",
-							"username",
-							"address",
-							"interval",
-							"level"
-						],
-						"type": "object",
-						"description": "Loki logging configuration."
-					},
-					"database": {
-						"properties": {
-							"maxNumberOfLogs": {
-								"type": "number",
-								"format": "double",
-								"description": "The maximum number of logs to keep in the database.",
-								"example": 10000
-							},
-							"level": {
-								"$ref": "#/components/schemas/LogLevel",
-								"description": "The log level for database output.",
-								"example": "warn"
-							}
-						},
-						"required": [
-							"maxNumberOfLogs",
-							"level"
-						],
-						"type": "object",
-						"description": "Database logging configuration."
-					},
-					"file": {
-						"properties": {
-							"numberOfFiles": {
-								"type": "number",
-								"format": "double",
-								"description": "The number of log files to keep.",
-								"example": 5
-							},
-							"maxFileSize": {
-								"type": "number",
-								"format": "double",
-								"description": "The maximum size of a log file in bytes.",
-								"example": 10485760
-							},
-							"level": {
-								"$ref": "#/components/schemas/LogLevel",
-								"description": "The log level for file output.",
-								"example": "debug"
-							}
-						},
-						"required": [
-							"numberOfFiles",
-							"maxFileSize",
-							"level"
-						],
-						"type": "object",
-						"description": "File logging configuration."
-					},
-					"console": {
-						"properties": {
-							"level": {
-								"$ref": "#/components/schemas/LogLevel",
-								"description": "The log level for console output.",
-								"example": "info"
-							}
-						},
-						"required": [
-							"level"
-						],
-						"type": "object",
-						"description": "Console logging configuration."
-					}
-				},
-				"required": [
-					"syslog",
-					"oia",
-					"loki",
-					"database",
-					"file",
-					"console"
-				],
-				"type": "object",
-				"description": "Engine logger command Data Transfer Object.\nUsed as the request body for updating only the logging parameters.\nThe log category objects are top-level (no wrapper key)."
 			},
 			"OIBusInfo": {
 				"description": "Information about the OIBus instance.",
@@ -33660,7 +33742,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "3.8.7",
+		"version": "3.9.0",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"
@@ -38507,7 +38589,7 @@
 				}
 			}
 		},
-		"/api/name": {
+		"/api/engine/name": {
 			"put": {
 				"operationId": "UpdateEngineName",
 				"responses": {
@@ -38534,7 +38616,7 @@
 				}
 			}
 		},
-		"/api/web-server": {
+		"/api/engine/web-server": {
 			"put": {
 				"operationId": "UpdateEngineWebServer",
 				"responses": {
@@ -38568,7 +38650,7 @@
 				}
 			}
 		},
-		"/api/proxy": {
+		"/api/engine/proxy": {
 			"put": {
 				"operationId": "UpdateEngineProxy",
 				"responses": {
@@ -38595,7 +38677,7 @@
 				}
 			}
 		},
-		"/api/logger": {
+		"/api/engine/logger": {
 			"put": {
 				"operationId": "UpdateEngineLogger",
 				"responses": {

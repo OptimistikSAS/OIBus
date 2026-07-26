@@ -86,52 +86,52 @@ describe('Logger', () => {
 
   it('should be properly initialized', async () => {
     const expectedTargets = [
-      { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: engineSettings.logParameters.console.level },
+      { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: engineSettings.logger.console.level },
       {
         target: 'pino-roll',
         options: {
           file: path.resolve('folder', 'journal.log'),
-          size: engineSettings.logParameters.file.maxFileSize
+          size: engineSettings.logger.file.maxFileSize
         },
-        level: engineSettings.logParameters.file.level
+        level: engineSettings.logger.file.level
       },
       {
         target: path.join(__dirname, 'sqlite-transport.js'),
         options: {
           filename: path.resolve('folder', 'logs.db'),
-          maxNumberOfLogs: engineSettings.logParameters.database.maxNumberOfLogs
+          maxNumberOfLogs: engineSettings.logger.database.maxNumberOfLogs
         },
-        level: engineSettings.logParameters.database.level
+        level: engineSettings.logger.database.level
       },
       {
         target: path.join(__dirname, 'oianalytics-transport.js'),
         options: {
-          interval: engineSettings.logParameters.oia.interval,
+          interval: engineSettings.logger.oia.interval,
           registrationSettings: registration,
           certsFolder: '',
           cryptoSettings: {}
         },
-        level: engineSettings.logParameters.oia.level
+        level: engineSettings.logger.oia.level
       },
       {
         target: path.join(__dirname, 'syslog-transport.js'),
         options: {
-          host: engineSettings.logParameters.syslog.host,
-          port: engineSettings.logParameters.syslog.port,
-          protocol: engineSettings.logParameters.syslog.protocol,
-          appName: engineSettings.name
+          host: engineSettings.logger.syslog.host,
+          port: engineSettings.logger.syslog.port,
+          protocol: engineSettings.logger.syslog.protocol,
+          appName: engineSettings.general.name
         },
-        level: engineSettings.logParameters.syslog.level
+        level: engineSettings.logger.syslog.level
       },
       {
         target: 'pino-loki',
         options: {
-          batching: { interval: engineSettings.logParameters.loki.interval, maxBufferSize: 50000 },
-          host: engineSettings.logParameters.loki.address,
-          basicAuth: { username: engineSettings.logParameters.loki.username, password: engineSettings.logParameters.loki.password },
-          labels: { name: engineSettings.name }
+          batching: { interval: engineSettings.logger.loki.interval, maxBufferSize: 50000 },
+          host: engineSettings.logger.loki.address,
+          basicAuth: { username: engineSettings.logger.loki.username, password: engineSettings.logger.loki.password },
+          labels: { name: engineSettings.general.name }
         },
-        level: engineSettings.logParameters.loki.level
+        level: engineSettings.logger.loki.level
       }
     ];
 
@@ -167,54 +167,54 @@ describe('Logger', () => {
     specificRegistration.proxyPassword = 'proxyPassword';
     specificRegistration.token = '';
     const specificSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
-    specificSettings.logParameters.loki.password = '';
-    specificSettings.logParameters.database.maxNumberOfLogs = 0;
+    specificSettings.logger.loki.password = '';
+    specificSettings.logger.database.maxNumberOfLogs = 0;
 
     const expectedTargets = [
-      { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: specificSettings.logParameters.console.level },
+      { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: specificSettings.logger.console.level },
       {
         target: 'pino-roll',
         options: {
           file: path.resolve('folder', 'journal.log'),
-          size: engineSettings.logParameters.file.maxFileSize
+          size: engineSettings.logger.file.maxFileSize
         },
-        level: specificSettings.logParameters.file.level
+        level: specificSettings.logger.file.level
       },
       {
         target: path.join(__dirname, 'oianalytics-transport.js'),
         options: {
-          interval: specificSettings.logParameters.oia.interval,
+          interval: specificSettings.logger.oia.interval,
           registrationSettings: specificRegistration,
           certsFolder: '',
           cryptoSettings: {}
         },
-        level: specificSettings.logParameters.oia.level
+        level: specificSettings.logger.oia.level
       },
       {
         target: path.join(__dirname, 'syslog-transport.js'),
         options: {
-          host: specificSettings.logParameters.syslog.host,
-          port: specificSettings.logParameters.syslog.port,
-          protocol: specificSettings.logParameters.syslog.protocol,
-          appName: specificSettings.name
+          host: specificSettings.logger.syslog.host,
+          port: specificSettings.logger.syslog.port,
+          protocol: specificSettings.logger.syslog.protocol,
+          appName: specificSettings.general.name
         },
-        level: specificSettings.logParameters.syslog.level
+        level: specificSettings.logger.syslog.level
       },
       {
         target: 'pino-loki',
         options: {
           batching: {
-            interval: specificSettings.logParameters.loki.interval,
+            interval: specificSettings.logger.loki.interval,
             maxBufferSize: 50000
           },
-          host: specificSettings.logParameters.loki.address,
+          host: specificSettings.logger.loki.address,
           basicAuth: {
-            username: specificSettings.logParameters.loki.username,
-            password: specificSettings.logParameters.loki.password
+            username: specificSettings.logger.loki.username,
+            password: specificSettings.logger.loki.password
           },
-          labels: { name: specificSettings.name }
+          labels: { name: specificSettings.general.name }
         },
-        level: specificSettings.logParameters.loki.level
+        level: specificSettings.logger.loki.level
       }
     ];
 
@@ -236,19 +236,19 @@ describe('Logger', () => {
     const specificRegistration: OIAnalyticsRegistration = JSON.parse(JSON.stringify(testData.engine.settings));
     specificRegistration.status = 'NOT_REGISTERED';
     const specificSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
-    specificSettings.logParameters.database.maxNumberOfLogs = 0;
-    specificSettings.logParameters.loki.address = '';
-    specificSettings.logParameters.syslog.host = '';
+    specificSettings.logger.database.maxNumberOfLogs = 0;
+    specificSettings.logger.loki.address = '';
+    specificSettings.logger.syslog.host = '';
 
     const expectedTargets = [
-      { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: specificSettings.logParameters.console.level },
+      { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: specificSettings.logger.console.level },
       {
         target: 'pino-roll',
         options: {
           file: path.resolve('folder', 'journal.log'),
-          size: engineSettings.logParameters.file.maxFileSize
+          size: engineSettings.logger.file.maxFileSize
         },
-        level: specificSettings.logParameters.file.level
+        level: specificSettings.logger.file.level
       }
     ];
 
@@ -331,10 +331,10 @@ describe('Logger', () => {
 
   it('should add syslog transport when host is set and level is not silent', async () => {
     const specificSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
-    specificSettings.logParameters.database.maxNumberOfLogs = 0;
-    specificSettings.logParameters.loki.address = '';
-    specificSettings.logParameters.syslog.host = 'syslog.example.com';
-    specificSettings.logParameters.syslog.level = 'info';
+    specificSettings.logger.database.maxNumberOfLogs = 0;
+    specificSettings.logger.loki.address = '';
+    specificSettings.logger.syslog.host = 'syslog.example.com';
+    specificSettings.logger.syslog.level = 'info';
 
     await service.start(specificSettings, null);
 
@@ -345,9 +345,9 @@ describe('Logger', () => {
 
   it('should not add syslog transport when host is empty', async () => {
     const specificSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
-    specificSettings.logParameters.database.maxNumberOfLogs = 0;
-    specificSettings.logParameters.loki.address = '';
-    specificSettings.logParameters.syslog.host = '';
+    specificSettings.logger.database.maxNumberOfLogs = 0;
+    specificSettings.logger.loki.address = '';
+    specificSettings.logger.syslog.host = '';
 
     await service.start(specificSettings, null);
 
@@ -358,10 +358,10 @@ describe('Logger', () => {
 
   it('should not add syslog transport when level is silent', async () => {
     const specificSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
-    specificSettings.logParameters.database.maxNumberOfLogs = 0;
-    specificSettings.logParameters.loki.address = '';
-    specificSettings.logParameters.syslog.host = 'syslog.example.com';
-    specificSettings.logParameters.syslog.level = 'silent';
+    specificSettings.logger.database.maxNumberOfLogs = 0;
+    specificSettings.logger.loki.address = '';
+    specificSettings.logger.syslog.host = 'syslog.example.com';
+    specificSettings.logger.syslog.level = 'silent';
 
     await service.start(specificSettings, null);
 

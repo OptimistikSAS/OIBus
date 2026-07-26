@@ -1,7 +1,16 @@
 //
 // DTO to send to OIAnalytics
 //
-import { CacheContentUpdateCommand, CacheSearchParam, DataFolderType, EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
+import {
+  CacheContentUpdateCommand,
+  CacheSearchParam,
+  DataFolderType,
+  EngineLoggerCommandDTO,
+  EngineNameCommandDTO,
+  EngineProxyCommandDTO,
+  EngineSettingsCommandDTO,
+  EngineWebServerCommandDTO
+} from '../../../shared/model/engine.model';
 import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
 import {
   SouthConnectorCommandDTO,
@@ -143,7 +152,10 @@ export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'update-version',
   'restart-engine',
   'regenerate-cipher-keys',
-  'update-engine-settings',
+  'update-engine-general',
+  'update-engine-web-server',
+  'update-engine-proxy',
+  'update-engine-logger',
   'update-registration-settings',
   'create-scan-mode',
   'update-scan-mode',
@@ -208,9 +220,24 @@ export interface OIAnalyticsFetchRegenerateCipherKeysCommandDTO extends BaseOIAn
   type: 'regenerate-cipher-keys';
 }
 
-export interface OIAnalyticsFetchUpdateEngineSettingsCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
-  type: 'update-engine-settings';
-  commandContent: EngineSettingsCommandDTO;
+export interface OIAnalyticsFetchUpdateEngineGeneralCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'update-engine-general';
+  commandContent: EngineNameCommandDTO;
+}
+
+export interface OIAnalyticsFetchUpdateEngineWebServerCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'update-engine-web-server';
+  commandContent: EngineWebServerCommandDTO;
+}
+
+export interface OIAnalyticsFetchUpdateEngineProxyCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'update-engine-proxy';
+  commandContent: EngineProxyCommandDTO;
+}
+
+export interface OIAnalyticsFetchUpdateEngineLoggerCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'update-engine-logger';
+  commandContent: EngineLoggerCommandDTO;
 }
 
 export interface OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
@@ -479,7 +506,10 @@ export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchUpdateVersionCommandDTO
   | OIAnalyticsFetchRestartEngineCommandDTO
   | OIAnalyticsFetchRegenerateCipherKeysCommandDTO
-  | OIAnalyticsFetchUpdateEngineSettingsCommandDTO
+  | OIAnalyticsFetchUpdateEngineGeneralCommandDTO
+  | OIAnalyticsFetchUpdateEngineWebServerCommandDTO
+  | OIAnalyticsFetchUpdateEngineProxyCommandDTO
+  | OIAnalyticsFetchUpdateEngineLoggerCommandDTO
   | OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO
   | OIAnalyticsFetchCreateScanModeCommandDTO
   | OIAnalyticsFetchUpdateScanModeCommandDTO

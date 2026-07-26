@@ -126,7 +126,7 @@ export class EditEngineLoggerModalComponent {
   }
 
   initialize(settings: EngineSettingsDTO) {
-    this.form.patchValue({ logParameters: settings.logParameters });
+    this.form.patchValue({ logParameters: settings.logger });
     this.initializeValidators();
   }
 

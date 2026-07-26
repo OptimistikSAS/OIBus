@@ -1392,18 +1392,28 @@ const historyQueryItemCommand: HistoryQueryItemCommandDTO = {
 
 const engineSettings: EngineSettings = {
   id: 'oibusId1',
-  name: 'OIBus',
-  port: 2223,
   version: '3.4.9',
   launcherVersion: '3.4.9',
-  proxyEnabled: true,
-  proxyPort: 9000,
-  forwardProxyUrl: 'http://forward-proxy:3128',
-  forwardProxyUsername: 'proxy-user',
-  forwardProxyPassword: 'encrypted-proxy-password',
-  proxyUsername: 'proxy-server-user',
-  proxyPassword: 'encrypted-proxy-server-password',
-  logParameters: {
+  general: {
+    name: 'OIBus'
+  },
+  webServer: {
+    port: 2223,
+    authTokenDuration: '7d'
+  },
+  proxyServer: {
+    enabled: true,
+    port: 9000,
+    forward: {
+      enabled: true,
+      url: 'http://forward-proxy:3128',
+      username: 'proxy-user',
+      password: 'encrypted-proxy-password'
+    },
+    username: 'proxy-server-user',
+    password: 'encrypted-proxy-server-password'
+  },
+  logger: {
     console: {
       level: 'info'
     },
@@ -1439,64 +1449,73 @@ const engineSettings: EngineSettings = {
   createdAt: '',
   updatedAt: ''
 };
-const engineSettingsCommand: EngineSettingsCommandDTO = {
-  name: 'updated OIBus',
-  port: 2223,
-  proxyEnabled: true,
-  proxyPort: 9000,
-  forwardProxyUrl: null,
-  forwardProxyUsername: null,
-  forwardProxyPassword: null,
-  proxyUsername: null,
-  proxyPassword: null,
-  logParameters: {
-    console: {
-      level: 'silent'
-    },
-    file: {
-      level: 'info',
-      maxFileSize: 50,
-      numberOfFiles: 5
-    },
-    database: {
-      level: 'info',
-      maxNumberOfLogs: 100_000
-    },
-    loki: {
-      level: 'silent',
-      interval: 60,
-      address: '',
-      username: '',
-      password: ''
-    },
-    oia: {
-      level: 'silent',
-      interval: 10
-    },
-    syslog: {
-      level: 'silent',
-      host: '',
-      port: 514,
-      protocol: 'udp4'
-    }
-  }
-};
 const engineNameCommand: EngineNameCommandDTO = {
   name: 'updated OIBus'
 };
 const engineWebServerCommand: EngineWebServerCommandDTO = {
-  port: 3333
+  port: 3333,
+  authTokenDuration: '1d'
 };
 const engineProxyCommand: EngineProxyCommandDTO = {
-  proxyEnabled: true,
-  proxyPort: 9000,
-  forwardProxyUrl: null,
-  forwardProxyUsername: null,
-  forwardProxyPassword: null,
-  proxyUsername: null,
-  proxyPassword: null
+  enabled: true,
+  port: 9000,
+  forward: {
+    enabled: false,
+    url: null,
+    username: null,
+    password: null
+  },
+  username: null,
+  password: null
 };
-const engineLoggerCommand: EngineLoggerCommandDTO = engineSettingsCommand.logParameters;
+const engineLoggerCommand: EngineLoggerCommandDTO = {
+  console: {
+    level: 'silent'
+  },
+  file: {
+    level: 'info',
+    maxFileSize: 50,
+    numberOfFiles: 5
+  },
+  database: {
+    level: 'info',
+    maxNumberOfLogs: 100_000
+  },
+  loki: {
+    level: 'silent',
+    interval: 60,
+    address: '',
+    username: '',
+    password: ''
+  },
+  oia: {
+    level: 'silent',
+    interval: 10
+  },
+  syslog: {
+    level: 'silent',
+    host: '',
+    port: 514,
+    protocol: 'udp4'
+  }
+};
+const engineSettingsCommand: EngineSettingsCommandDTO = {
+  general: { name: 'updated OIBus' },
+  webServer: { port: 2223, authTokenDuration: '7d' },
+  proxyServer: {
+    enabled: true,
+    port: 9000,
+    forward: {
+      enabled: false,
+      url: null,
+      username: null,
+      password: null
+    },
+    username: null,
+    password: null
+  },
+  logger: engineLoggerCommand
+};
 const engineMetrics: EngineMetrics = {
   metricsStart: '2020-01-01T00:00:00.000',
   processCpuUsageInstant: 0,
@@ -1523,7 +1542,7 @@ const engineMetrics: EngineMetrics = {
 const oIBusInfo: OIBusInfo = {
   version: engineSettings.version,
   launcherVersion: engineSettings.launcherVersion,
-  oibusName: engineSettings.name,
+  oibusName: engineSettings.general.name,
   oibusId: engineSettings.id,
   dataDirectory: 'data-directory',
   binaryDirectory: 'binary-directory',
@@ -1872,14 +1891,14 @@ const oIBusCommands: Array<OIBusCommand> = [
   },
   {
     id: 'commandId2',
-    type: 'update-engine-settings',
+    type: 'update-engine-general',
     status: 'RETRIEVED',
     ack: false,
     retrievedDate: constants.dates.DATE_1,
     completedDate: '',
     result: 'ok',
     targetVersion: engineSettings.version,
-    commandContent: engineSettingsCommand,
+    commandContent: engineNameCommand,
     createdBy: '',
     updatedBy: '',
     createdAt: '',
@@ -2163,9 +2182,9 @@ const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
   },
   {
     id: 'newCommandId2',
-    type: 'update-engine-settings',
+    type: 'update-engine-general',
     targetVersion: engineSettings.version,
-    commandContent: engineSettingsCommand
+    commandContent: engineNameCommand
   },
   {
     id: 'newCommandId3',

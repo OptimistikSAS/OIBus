@@ -1,4 +1,12 @@
-import { CacheContentUpdateCommand, CacheSearchParam, DataFolderType, EngineSettingsCommandDTO } from './engine.model';
+import {
+  CacheContentUpdateCommand,
+  CacheSearchParam,
+  DataFolderType,
+  EngineLoggerCommandDTO,
+  EngineNameCommandDTO,
+  EngineProxyCommandDTO,
+  EngineWebServerCommandDTO
+} from './engine.model';
 import { Instant } from './types';
 import { ScanModeCommandDTO } from './scan-mode.model';
 import { SouthConnectorCommandDTO, SouthConnectorItemTestingSettings } from './south-connector.model';
@@ -15,7 +23,10 @@ export const OIBUS_COMMAND_TYPES = [
   'update-version',
   'restart-engine',
   'regenerate-cipher-keys',
-  'update-engine-settings',
+  'update-engine-general',
+  'update-engine-web-server',
+  'update-engine-proxy',
+  'update-engine-logger',
   'update-registration-settings',
   'create-scan-mode',
   'update-scan-mode',
@@ -192,13 +203,13 @@ export interface OIBusRegenerateCipherKeysCommandDTO extends BaseOIBusCommandDTO
 }
 
 /**
- * Command DTO for updating engine settings.
+ * Command DTO for updating only the engine's general settings (name).
  */
-export interface OIBusUpdateEngineSettingsCommandDTO extends BaseOIBusCommandDTO {
+export interface OIBusUpdateEngineGeneralCommandDTO extends BaseOIBusCommandDTO {
   /**
    * The type of the command.
    */
-  type: 'update-engine-settings';
+  type: 'update-engine-general';
 
   /**
    * The target version for the command.
@@ -207,9 +218,72 @@ export interface OIBusUpdateEngineSettingsCommandDTO extends BaseOIBusCommandDTO
   targetVersion: string;
 
   /**
-   * The content of the command, including engine settings.
+   * The content of the command, including the engine name.
    */
-  commandContent: EngineSettingsCommandDTO;
+  commandContent: EngineNameCommandDTO;
+}
+
+/**
+ * Command DTO for updating only the web server settings.
+ */
+export interface OIBusUpdateEngineWebServerCommandDTO extends BaseOIBusCommandDTO {
+  /**
+   * The type of the command.
+   */
+  type: 'update-engine-web-server';
+
+  /**
+   * The target version for the command.
+   * @example "3.7.0"
+   */
+  targetVersion: string;
+
+  /**
+   * The content of the command, including the web server settings.
+   */
+  commandContent: EngineWebServerCommandDTO;
+}
+
+/**
+ * Command DTO for updating only the proxy settings.
+ */
+export interface OIBusUpdateEngineProxyCommandDTO extends BaseOIBusCommandDTO {
+  /**
+   * The type of the command.
+   */
+  type: 'update-engine-proxy';
+
+  /**
+   * The target version for the command.
+   * @example "3.7.0"
+   */
+  targetVersion: string;
+
+  /**
+   * The content of the command, including the proxy settings.
+   */
+  commandContent: EngineProxyCommandDTO;
+}
+
+/**
+ * Command DTO for updating only the logging parameters.
+ */
+export interface OIBusUpdateEngineLoggerCommandDTO extends BaseOIBusCommandDTO {
+  /**
+   * The type of the command.
+   */
+  type: 'update-engine-logger';
+
+  /**
+   * The target version for the command.
+   * @example "3.7.0"
+   */
+  targetVersion: string;
+
+  /**
+   * The content of the command, including the logging parameters.
+   */
+  commandContent: EngineLoggerCommandDTO;
 }
 
 /**
@@ -1171,7 +1245,10 @@ export type OIBusCommandDTO =
   | OIBusUpdateVersionCommandDTO
   | OIBusRegenerateCipherKeysCommandDTO
   | OIBusRestartEngineCommandDTO
-  | OIBusUpdateEngineSettingsCommandDTO
+  | OIBusUpdateEngineGeneralCommandDTO
+  | OIBusUpdateEngineWebServerCommandDTO
+  | OIBusUpdateEngineProxyCommandDTO
+  | OIBusUpdateEngineLoggerCommandDTO
   | OIBusUpdateRegistrationSettingsCommandDTO
   | OIBusCreateScanModeCommandDTO
   | OIBusUpdateScanModeCommandDTO

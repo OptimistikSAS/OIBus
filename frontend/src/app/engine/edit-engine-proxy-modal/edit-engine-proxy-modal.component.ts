@@ -26,7 +26,9 @@ export class EditEngineProxyModalComponent {
     proxyUsername: [null as string | null],
     proxyPassword: [null as string | null],
     forwardProxyEnabled: [false as boolean],
-    forwardProxyUrl: [null as string | null]
+    forwardProxyUrl: [null as string | null, Validators.required],
+    forwardProxyUsername: [null as string | null],
+    forwardProxyPassword: [null as string | null]
   });
 
   constructor() {
@@ -47,37 +49,53 @@ export class EditEngineProxyModalComponent {
         this.form.controls.forwardProxyEnabled.setValue(false);
         this.form.controls.forwardProxyUrl.disable();
         this.form.controls.forwardProxyUrl.setValue(null);
+        this.form.controls.forwardProxyUsername.disable();
+        this.form.controls.forwardProxyUsername.setValue(null);
+        this.form.controls.forwardProxyPassword.disable();
+        this.form.controls.forwardProxyPassword.setValue(null);
       }
     });
 
     this.form.controls.forwardProxyEnabled.valueChanges.subscribe(next => {
       if (next) {
         this.form.controls.forwardProxyUrl.enable();
+        this.form.controls.forwardProxyUsername.enable();
+        this.form.controls.forwardProxyPassword.enable();
       } else {
         this.form.controls.forwardProxyUrl.disable();
         this.form.controls.forwardProxyUrl.setValue(null);
+        this.form.controls.forwardProxyUsername.disable();
+        this.form.controls.forwardProxyUsername.setValue(null);
+        this.form.controls.forwardProxyPassword.disable();
+        this.form.controls.forwardProxyPassword.setValue(null);
       }
     });
   }
 
   initialize(settings: EngineSettingsDTO) {
-    const forwardProxyEnabled = !!settings.forwardProxyUrl;
+    const forwardProxyEnabled = settings.proxyServer.forward.enabled;
     this.form.patchValue({
-      proxyEnabled: settings.proxyEnabled,
-      proxyPort: settings.proxyPort,
-      proxyUsername: settings.proxyUsername ?? null,
-      proxyPassword: settings.proxyPassword ?? null,
+      proxyEnabled: settings.proxyServer.enabled,
+      proxyPort: settings.proxyServer.port,
+      proxyUsername: settings.proxyServer.username ?? null,
+      proxyPassword: settings.proxyServer.password ?? null,
       forwardProxyEnabled,
-      forwardProxyUrl: settings.forwardProxyUrl ?? null
+      forwardProxyUrl: settings.proxyServer.forward.url ?? null,
+      forwardProxyUsername: settings.proxyServer.forward.username ?? null,
+      forwardProxyPassword: settings.proxyServer.forward.password ?? null
     });
-    if (!settings.proxyEnabled) {
+    if (!settings.proxyServer.enabled) {
       this.form.controls.proxyPort.disable();
       this.form.controls.proxyUsername.disable();
       this.form.controls.proxyPassword.disable();
       this.form.controls.forwardProxyEnabled.disable();
       this.form.controls.forwardProxyUrl.disable();
+      this.form.controls.forwardProxyUsername.disable();
+      this.form.controls.forwardProxyPassword.disable();
     } else if (!forwardProxyEnabled) {
       this.form.controls.forwardProxyUrl.disable();
+      this.form.controls.forwardProxyUsername.disable();
+      this.form.controls.forwardProxyPassword.disable();
     }
   }
 
@@ -89,13 +107,16 @@ export class EditEngineProxyModalComponent {
     const forwardActive = formValue.proxyEnabled && formValue.forwardProxyEnabled;
     this.engineService
       .updateEngineProxy({
-        proxyEnabled: formValue.proxyEnabled,
-        proxyPort: formValue.proxyEnabled ? formValue.proxyPort : null,
-        proxyUsername: formValue.proxyEnabled ? formValue.proxyUsername || null : null,
-        proxyPassword: formValue.proxyEnabled ? formValue.proxyPassword || null : null,
-        forwardProxyUrl: forwardActive ? formValue.forwardProxyUrl || null : null,
-        forwardProxyUsername: forwardActive ? formValue.proxyUsername || null : null,
-        forwardProxyPassword: forwardActive ? formValue.proxyPassword || null : null
+        enabled: formValue.proxyEnabled,
+        port: formValue.proxyEnabled ? formValue.proxyPort : null,
+        username: formValue.proxyEnabled ? formValue.proxyUsername || null : null,
+        password: formValue.proxyEnabled ? formValue.proxyPassword || null : null,
+        forward: {
+          enabled: forwardActive,
+          url: forwardActive ? formValue.forwardProxyUrl! : undefined,
+          username: forwardActive ? formValue.forwardProxyUsername || null : null,
+          password: forwardActive ? formValue.forwardProxyPassword || null : null
+        }
       })
       .subscribe(() => {
         this.notificationService.success('engine.updated');

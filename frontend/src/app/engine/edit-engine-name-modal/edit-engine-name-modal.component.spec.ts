@@ -11,7 +11,7 @@ import { EngineService } from '../../services/engine.service';
 import { NotificationService } from '../../shared/notification.service';
 import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
 
-const engineSettings = { name: 'OIBus' } as EngineSettingsDTO;
+const engineSettings = { general: { name: 'OIBus' } } as EngineSettingsDTO;
 
 class EditEngineNameModalTester {
   readonly fixture = TestBed.createComponent(EditEngineNameModalComponent);
@@ -47,7 +47,7 @@ describe('EditEngineNameModalComponent', () => {
     const tester = new EditEngineNameModalTester();
     tester.fixture.componentInstance.initialize(engineSettings);
     tester.fixture.detectChanges();
-    await expect.element(tester.nameInput).toHaveValue(engineSettings.name);
+    await expect.element(tester.nameInput).toHaveValue(engineSettings.general.name);
   });
 
   test('should not save when name is empty', async () => {

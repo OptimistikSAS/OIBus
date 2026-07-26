@@ -23,7 +23,7 @@ export class EditEngineNameModalComponent {
   });
 
   initialize(settings: EngineSettingsDTO) {
-    this.form.patchValue({ name: settings.name });
+    this.form.patchValue({ name: settings.general.name });
   }
 
   save() {

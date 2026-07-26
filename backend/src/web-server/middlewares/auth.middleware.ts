@@ -5,10 +5,12 @@ import argon2 from 'argon2';
 import UserService from '../../service/user.service';
 import EncryptionService from '../../service/encryption.service';
 import { CustomExpressRequest } from '../express';
+import type OIBusService from '../../service/oibus.service';
 
 interface AuthConfig {
   userService: UserService;
   encryptionService: EncryptionService;
+  oIBusService: OIBusService;
 }
 
 // Helper function for authentication errors
@@ -118,12 +120,13 @@ const createAuthMiddleware = (config: AuthConfig) => {
 
       // Handle authentication endpoint
       if (req.path === '/api/users/authentication') {
+        const authTokenDuration = config.oIBusService.getEngineSettings().webServer.authTokenDuration;
         const token = jwt.sign(
           { login: headerUser.name, password: headerUser.pass },
           { key: await config.encryptionService.getPrivateKey(), passphrase: '' },
           {
             algorithm: 'RS256',
-            expiresIn: '7d',
+            expiresIn: authTokenDuration,
             issuer: 'oibus'
           }
         );
@@ -141,8 +144,8 @@ const createAuthMiddleware = (config: AuthConfig) => {
 };
 
 // Factory function to create the middleware with dependencies
-export const authMiddleware = (userService: UserService, encryptionService: EncryptionService) => {
-  return createAuthMiddleware({ userService, encryptionService });
+export const authMiddleware = (userService: UserService, encryptionService: EncryptionService, oIBusService: OIBusService) => {
+  return createAuthMiddleware({ userService, encryptionService, oIBusService });
 };
 
 export default authMiddleware;
