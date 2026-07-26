@@ -30,11 +30,11 @@
     "lint": "eslint src/ shared/model/ --cache",
     "lint:fix": "npm run lint -- --fix",
     "build": "tsc --project tsconfig.app.json",
-    "internal:build:lib-win-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v26.3.0 --arch=x64 --target_platform=win && npm run --prefix node_modules/argon2 install -- --target_platform=win --target_arch=x64",
-    "internal:build:lib-macos-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v26.3.0 --arch=x64 --target_platform=darwin && npm run --prefix node_modules/argon2 install -- --target_platform=darwin --target_arch=x64 && npm run --prefix node_modules/isolated-vm install",
-    "internal:build:lib-macos-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v26.3.0 --arch=arm64 --target_platform=darwin && npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=darwin",
-    "internal:build:lib-linux-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v26.3.0 --arch=x64 --target_platform=linux && npm run --prefix node_modules/argon2 install -- --target_arch=x64 --target_platform=linux",
-    "internal:build:lib-linux-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v26.3.0 --arch=arm64 --target_platform=linux && npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=linux",
+    "internal:build:lib-win-x64": "npm run --prefix node_modules/argon2 install -- --target_platform=win --target_arch=x64",
+    "internal:build:lib-macos-x64": "npm run --prefix node_modules/argon2 install -- --target_platform=darwin --target_arch=x64 && npm run --prefix node_modules/isolated-vm install",
+    "internal:build:lib-macos-arm64": "npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=darwin",
+    "internal:build:lib-linux-x64": "npm run --prefix node_modules/argon2 install -- --target_arch=x64 --target_platform=linux",
+    "internal:build:lib-linux-arm64": "npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=linux",
     "docker:iot": "docker compose -f ../docker-compose.yml --profile iot up -d",
     "docker:simulator": "docker compose -f ../docker-compose.yml --profile iot --profile simulator up -d",
     "docker:database": "docker compose -f ../docker-compose.yml --profile database up -d",
@@ -150,14 +150,14 @@
     ]
   },
   "allowScripts": {
-    "argon2@0.44.0": true,
     "esbuild@0.27.7": true,
     "fsevents@2.3.3": true,
     "isolated-vm@7.0.0": true,
     "odbc@2.5.0": true,
-    "oracledb@7.0.0": true,
     "ssh2@1.17.0": true,
-    "better-sqlite3@12.11.1": true,
-    "esbuild@0.28.1": true
+    "esbuild@0.28.1": true,
+    "argon2@0.45.0": true,
+    "better-sqlite3@13.0.1": true,
+    "oracledb@7.0.1": true
   }
 }
