@@ -75,11 +75,13 @@ runs:
     # ── Install dependencies (skipped on cache hit) ─────────────────────────
     #
     # Native modules (better-sqlite3, argon2) ship prebuilt binaries; we never
-    # want npm to compile them from source. Using --ignore-scripts prevents
-    # prebuild-install / node-gyp from running automatically on any platform.
-    # The explicit rebuild steps below then download the correct prebuilt binary
-    # using the --target / --arch / --target_platform flags that the
-    # internal:build:lib-* scripts already carry for each platform.
+    # want npm to compile them from source implicitly. Using --ignore-scripts
+    # prevents prebuild-install / node-gyp from running automatically on any
+    # platform. The explicit rebuild steps below then run just the install
+    # script for those native modules, which resolves the prebuild (or builds
+    # from source) for the current host platform/arch. Backend additionally
+    # needs isolated-vm rebuilt on macOS x64, hence the platform-specific
+    # internal:build:lib-macos-x64 script there.
 
     - name: Install backend dependencies
       if: ${{ steps.cache-backend.outputs.cache-hit != 'true' }}
@@ -91,7 +93,7 @@ runs:
       if: ${{ steps.cache-backend.outputs.cache-hit != 'true' }}
       working-directory: backend
       shell: bash
-      run: npm run internal:build:lib-${{ inputs.platform_arch }}
+      run: npm run internal:build:lib${{ inputs.platform_arch == 'macos-x64' && '-macos-x64' || '' }}
 
     - name: Install frontend dependencies
       if: ${{ steps.cache-frontend.outputs.cache-hit != 'true' }}
@@ -109,7 +111,7 @@ runs:
       if: ${{ steps.cache-launcher.outputs.cache-hit != 'true' }}
       working-directory: launcher
       shell: bash
-      run: npm run internal:build:lib-${{ inputs.platform_arch }}
+      run: npm run internal:build:lib
 
     # ── Version bumping (pre-releases only) ────────────────────────────────
 
