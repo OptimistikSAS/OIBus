@@ -124,7 +124,7 @@ describe('OianalyticsRegistrationRepository with empty database', () => {
     assert.strictEqual(result.status, 'NOT_REGISTERED');
     assert.strictEqual(result.acceptUnauthorized, false);
     assert.strictEqual(result.useProxy, false);
-    assert.strictEqual(result.commandRefreshInterval, 10);
+    assert.strictEqual(result.commandRefreshInterval, 60);
     assert.strictEqual(result.commandRetryInterval, 5);
     assert.strictEqual(result.messageRetryInterval, 5);
     assert.deepStrictEqual(result.commandPermissions, {
