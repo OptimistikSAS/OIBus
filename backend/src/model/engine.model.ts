@@ -1,19 +1,30 @@
 import { BaseEntity } from './types';
 import { LogLevel } from '../../shared/model/logs.model';
+import { AuthTokenDuration } from '../../shared/model/engine.model';
 
 export interface EngineSettings extends BaseEntity {
-  name: string;
-  port: number;
   version: string;
   launcherVersion: string;
-  proxyEnabled: boolean;
-  proxyPort: number | null;
-  forwardProxyUrl: string | null;
-  forwardProxyUsername: string | null;
-  forwardProxyPassword: string | null;
-  proxyUsername: string | null;
-  proxyPassword: string | null;
-  logParameters: {
+  general: {
+    name: string;
+  };
+  webServer: {
+    port: number;
+    authTokenDuration: AuthTokenDuration;
+  };
+  proxyServer: {
+    enabled: boolean;
+    port: number | null;
+    username: string | null;
+    password: string | null;
+    forward: {
+      enabled: boolean;
+      url: string | null;
+      username: string | null;
+      password: string | null;
+    };
+  };
+  logger: {
     console: {
       level: LogLevel;
     };

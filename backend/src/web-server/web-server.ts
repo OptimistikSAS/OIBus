@@ -183,7 +183,7 @@ export default class WebServer {
     // Authentication middleware for API routes. Ignore public path routes
     this.app.use((req, res, next) => {
       if (isApiRoute(req.path) && !PUBLIC_PATHS.includes(req.path)) {
-        return authMiddleware(this.userService, this.encryptionService)(req, res, next);
+        return authMiddleware(this.userService, this.encryptionService, this.oIBusService)(req, res, next);
       }
       return next();
     });

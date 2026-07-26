@@ -33,7 +33,7 @@ import {
   OIAnalyticsFetchTestSouthConnectionCommandDTO,
   OIAnalyticsFetchTestSouthItemCommandDTO,
   OIAnalyticsFetchUpdateCertificateCommandDTO,
-  OIAnalyticsFetchUpdateEngineSettingsCommandDTO,
+  OIAnalyticsFetchUpdateEngineGeneralCommandDTO,
   OIAnalyticsFetchUpdateHistoryCacheContentCommandDTO,
   OIAnalyticsFetchUpdateHistoryQueryCommandDTO,
   OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO,
@@ -181,9 +181,9 @@ describe('OIAnalyticsCommandRepository', () => {
     });
   });
 
-  it('should create an update engine settings command', () => {
-    const command: OIAnalyticsFetchUpdateEngineSettingsCommandDTO = testData.oIAnalytics.commands
-      .oIAnalyticsList[1] as OIAnalyticsFetchUpdateEngineSettingsCommandDTO;
+  it('should create an update engine general command', () => {
+    const command: OIAnalyticsFetchUpdateEngineGeneralCommandDTO = testData.oIAnalytics.commands
+      .oIAnalyticsList[1] as OIAnalyticsFetchUpdateEngineGeneralCommandDTO;
     repository.create(command);
 
     assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {

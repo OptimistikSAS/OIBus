@@ -28,17 +28,16 @@ class EngineDetailComponentTester {
 
 const engineSettings: EngineSettingsDTO = {
   id: 'id',
-  name: 'OIBus Test',
-  port: 2223,
-  logParameters: {
+  general: { name: 'OIBus Test' },
+  webServer: { port: 2223, authTokenDuration: '7d' },
+  logger: {
     console: { level: 'silent' },
     file: { level: 'trace' },
     database: { level: 'silent' },
     loki: { level: 'error' },
     oia: { level: 'silent' }
   },
-  proxyEnabled: true,
-  proxyPort: 8888
+  proxyServer: { enabled: true, port: 8888 }
 } as EngineSettingsDTO;
 
 describe('EngineDetailComponent', () => {
@@ -102,8 +101,9 @@ describe('EngineDetailComponent', () => {
 
     await expect.element(tester.generalSettings.nth(0)).toHaveTextContent('OIBus Test');
     await expect.element(tester.generalSettings.nth(1)).toHaveTextContent('2223');
-    await expect.element(tester.generalSettings.nth(2)).toHaveTextContent('8888');
-    await expect.element(tester.generalSettings.nth(3)).toHaveTextContent('silent');
+    await expect.element(tester.generalSettings.nth(2)).toHaveTextContent('7 days');
+    await expect.element(tester.generalSettings.nth(3)).toHaveTextContent('8888');
+    await expect.element(tester.generalSettings.nth(4)).toHaveTextContent('silent');
   });
 
   test('should restart', () => {

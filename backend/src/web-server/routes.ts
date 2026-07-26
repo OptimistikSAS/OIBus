@@ -4257,7 +4257,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusCommandType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["setpoint"]},{"dataType":"enum","enums":["update-version"]},{"dataType":"enum","enums":["restart-engine"]},{"dataType":"enum","enums":["regenerate-cipher-keys"]},{"dataType":"enum","enums":["update-engine-settings"]},{"dataType":"enum","enums":["update-registration-settings"]},{"dataType":"enum","enums":["create-scan-mode"]},{"dataType":"enum","enums":["update-scan-mode"]},{"dataType":"enum","enums":["delete-scan-mode"]},{"dataType":"enum","enums":["create-ip-filter"]},{"dataType":"enum","enums":["update-ip-filter"]},{"dataType":"enum","enums":["delete-ip-filter"]},{"dataType":"enum","enums":["create-certificate"]},{"dataType":"enum","enums":["update-certificate"]},{"dataType":"enum","enums":["delete-certificate"]},{"dataType":"enum","enums":["create-south"]},{"dataType":"enum","enums":["update-south"]},{"dataType":"enum","enums":["delete-south"]},{"dataType":"enum","enums":["test-south-connection"]},{"dataType":"enum","enums":["test-south-item"]},{"dataType":"enum","enums":["create-north"]},{"dataType":"enum","enums":["update-north"]},{"dataType":"enum","enums":["delete-north"]},{"dataType":"enum","enums":["test-north-connection"]},{"dataType":"enum","enums":["create-or-update-south-items-from-csv"]},{"dataType":"enum","enums":["create-history-query"]},{"dataType":"enum","enums":["update-history-query"]},{"dataType":"enum","enums":["delete-history-query"]},{"dataType":"enum","enums":["test-history-query-north-connection"]},{"dataType":"enum","enums":["test-history-query-south-connection"]},{"dataType":"enum","enums":["test-history-query-south-item"]},{"dataType":"enum","enums":["create-or-update-history-query-south-items-from-csv"]},{"dataType":"enum","enums":["update-history-query-status"]},{"dataType":"enum","enums":["search-north-cache-content"]},{"dataType":"enum","enums":["search-history-cache-content"]},{"dataType":"enum","enums":["get-north-cache-file-content"]},{"dataType":"enum","enums":["get-history-cache-file-content"]},{"dataType":"enum","enums":["update-north-cache-content"]},{"dataType":"enum","enums":["update-history-cache-content"]},{"dataType":"enum","enums":["create-custom-transformer"]},{"dataType":"enum","enums":["update-custom-transformer"]},{"dataType":"enum","enums":["delete-custom-transformer"]},{"dataType":"enum","enums":["test-custom-transformer"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["setpoint"]},{"dataType":"enum","enums":["update-version"]},{"dataType":"enum","enums":["restart-engine"]},{"dataType":"enum","enums":["regenerate-cipher-keys"]},{"dataType":"enum","enums":["update-engine-general"]},{"dataType":"enum","enums":["update-engine-web-server"]},{"dataType":"enum","enums":["update-engine-proxy"]},{"dataType":"enum","enums":["update-engine-logger"]},{"dataType":"enum","enums":["update-registration-settings"]},{"dataType":"enum","enums":["create-scan-mode"]},{"dataType":"enum","enums":["update-scan-mode"]},{"dataType":"enum","enums":["delete-scan-mode"]},{"dataType":"enum","enums":["create-ip-filter"]},{"dataType":"enum","enums":["update-ip-filter"]},{"dataType":"enum","enums":["delete-ip-filter"]},{"dataType":"enum","enums":["create-certificate"]},{"dataType":"enum","enums":["update-certificate"]},{"dataType":"enum","enums":["delete-certificate"]},{"dataType":"enum","enums":["create-south"]},{"dataType":"enum","enums":["update-south"]},{"dataType":"enum","enums":["delete-south"]},{"dataType":"enum","enums":["test-south-connection"]},{"dataType":"enum","enums":["test-south-item"]},{"dataType":"enum","enums":["create-north"]},{"dataType":"enum","enums":["update-north"]},{"dataType":"enum","enums":["delete-north"]},{"dataType":"enum","enums":["test-north-connection"]},{"dataType":"enum","enums":["create-or-update-south-items-from-csv"]},{"dataType":"enum","enums":["create-history-query"]},{"dataType":"enum","enums":["update-history-query"]},{"dataType":"enum","enums":["delete-history-query"]},{"dataType":"enum","enums":["test-history-query-north-connection"]},{"dataType":"enum","enums":["test-history-query-south-connection"]},{"dataType":"enum","enums":["test-history-query-south-item"]},{"dataType":"enum","enums":["create-or-update-history-query-south-items-from-csv"]},{"dataType":"enum","enums":["update-history-query-status"]},{"dataType":"enum","enums":["search-north-cache-content"]},{"dataType":"enum","enums":["search-history-cache-content"]},{"dataType":"enum","enums":["get-north-cache-file-content"]},{"dataType":"enum","enums":["get-history-cache-file-content"]},{"dataType":"enum","enums":["update-north-cache-content"]},{"dataType":"enum","enums":["update-history-cache-content"]},{"dataType":"enum","enums":["create-custom-transformer"]},{"dataType":"enum","enums":["update-custom-transformer"]},{"dataType":"enum","enums":["delete-custom-transformer"]},{"dataType":"enum","enums":["test-custom-transformer"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusCommandStatus": {
@@ -4310,40 +4310,118 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "LogLevel": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["silent"]},{"dataType":"enum","enums":["error"]},{"dataType":"enum","enums":["warn"]},{"dataType":"enum","enums":["info"]},{"dataType":"enum","enums":["debug"]},{"dataType":"enum","enums":["trace"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "EngineSettingsCommandDTO": {
+    "EngineNameCommandDTO": {
         "dataType": "refObject",
         "properties": {
             "name": {"dataType":"string","required":true},
-            "port": {"dataType":"double","required":true},
-            "proxyEnabled": {"dataType":"boolean","required":true},
-            "proxyPort": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
-            "forwardProxyUrl": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "forwardProxyUsername": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "forwardProxyPassword": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "proxyUsername": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "proxyPassword": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "logParameters": {"dataType":"nestedObjectLiteral","nestedProperties":{"syslog":{"dataType":"nestedObjectLiteral","nestedProperties":{"protocol":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["udp4"]},{"dataType":"enum","enums":["tcp"]}],"required":true},"port":{"dataType":"double","required":true},"host":{"dataType":"string","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"oia":{"dataType":"nestedObjectLiteral","nestedProperties":{"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"loki":{"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"string","required":true},"username":{"dataType":"string","required":true},"address":{"dataType":"string","required":true},"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"database":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfLogs":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"file":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"maxFileSize":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"console":{"dataType":"nestedObjectLiteral","nestedProperties":{"level":{"ref":"LogLevel","required":true}},"required":true}},"required":true},
         },
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "OIBusUpdateEngineSettingsCommandDTO": {
+    "OIBusUpdateEngineGeneralCommandDTO": {
         "dataType": "refObject",
         "properties": {
             "id": {"dataType":"string","required":true},
-            "type": {"dataType":"enum","enums":["update-engine-settings"],"required":true},
+            "type": {"dataType":"enum","enums":["update-engine-general"],"required":true},
             "status": {"ref":"OIBusCommandStatus","required":true},
             "ack": {"dataType":"boolean","required":true},
             "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
             "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
             "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "targetVersion": {"dataType":"string","required":true},
-            "commandContent": {"ref":"EngineSettingsCommandDTO","required":true},
+            "commandContent": {"ref":"EngineNameCommandDTO","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AuthTokenDuration": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["1h"]},{"dataType":"enum","enums":["1d"]},{"dataType":"enum","enums":["6h"]},{"dataType":"enum","enums":["3d"]},{"dataType":"enum","enums":["7d"]},{"dataType":"enum","enums":["14d"]},{"dataType":"enum","enums":["30d"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "EngineWebServerCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "port": {"dataType":"double","required":true},
+            "authTokenDuration": {"ref":"AuthTokenDuration","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusUpdateEngineWebServerCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["update-engine-web-server"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "targetVersion": {"dataType":"string","required":true},
+            "commandContent": {"ref":"EngineWebServerCommandDTO","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "EngineProxyCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "enabled": {"dataType":"boolean","required":true},
+            "port": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}]},
+            "username": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "forward": {"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},"username":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},"url":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},"enabled":{"dataType":"boolean","required":true}}},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusUpdateEngineProxyCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["update-engine-proxy"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "targetVersion": {"dataType":"string","required":true},
+            "commandContent": {"ref":"EngineProxyCommandDTO","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "LogLevel": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["silent"]},{"dataType":"enum","enums":["error"]},{"dataType":"enum","enums":["warn"]},{"dataType":"enum","enums":["info"]},{"dataType":"enum","enums":["debug"]},{"dataType":"enum","enums":["trace"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "EngineLoggerCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "console": {"dataType":"nestedObjectLiteral","nestedProperties":{"level":{"ref":"LogLevel","required":true}},"required":true},
+            "file": {"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double"},"maxFileSize":{"dataType":"double"},"level":{"ref":"LogLevel","required":true}},"required":true},
+            "database": {"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfLogs":{"dataType":"double"},"level":{"ref":"LogLevel","required":true}},"required":true},
+            "loki": {"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"string"},"username":{"dataType":"string"},"address":{"dataType":"string"},"interval":{"dataType":"double"},"level":{"ref":"LogLevel","required":true}},"required":true},
+            "oia": {"dataType":"nestedObjectLiteral","nestedProperties":{"interval":{"dataType":"double"},"level":{"ref":"LogLevel","required":true}},"required":true},
+            "syslog": {"dataType":"nestedObjectLiteral","nestedProperties":{"protocol":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["udp4"]},{"dataType":"enum","enums":["tcp"]}]},"port":{"dataType":"double"},"host":{"dataType":"string"},"level":{"ref":"LogLevel","required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusUpdateEngineLoggerCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["update-engine-logger"],"required":true},
+            "status": {"ref":"OIBusCommandStatus","required":true},
+            "ack": {"dataType":"boolean","required":true},
+            "retrievedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "targetVersion": {"dataType":"string","required":true},
+            "commandContent": {"ref":"EngineLoggerCommandDTO","required":true},
         },
         "additionalProperties": false,
     },
@@ -6307,7 +6385,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusCommandDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"OIBusUpdateVersionCommandDTO"},{"ref":"OIBusRegenerateCipherKeysCommandDTO"},{"ref":"OIBusRestartEngineCommandDTO"},{"ref":"OIBusUpdateEngineSettingsCommandDTO"},{"ref":"OIBusUpdateRegistrationSettingsCommandDTO"},{"ref":"OIBusCreateScanModeCommandDTO"},{"ref":"OIBusUpdateScanModeCommandDTO"},{"ref":"OIBusDeleteScanModeCommandDTO"},{"ref":"OIBusCreateIPFilterCommandDTO"},{"ref":"OIBusUpdateIPFilterCommandDTO"},{"ref":"OIBusDeleteIPFilterCommandDTO"},{"ref":"OIBusCreateCertificateCommandDTO"},{"ref":"OIBusUpdateCertificateCommandDTO"},{"ref":"OIBusDeleteCertificateCommandDTO"},{"ref":"OIBusCreateSouthConnectorCommandDTO"},{"ref":"OIBusUpdateSouthConnectorCommandDTO"},{"ref":"OIBusDeleteSouthConnectorCommandDTO"},{"ref":"OIBusTestSouthConnectorCommandDTO"},{"ref":"OIBusTestSouthConnectorItemCommandDTO"},{"ref":"OIBusCreateNorthConnectorCommandDTO"},{"ref":"OIBusUpdateNorthConnectorCommandDTO"},{"ref":"OIBusDeleteNorthConnectorCommandDTO"},{"ref":"OIBusTestNorthConnectorCommandDTO"},{"ref":"OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO"},{"ref":"OIBusCreateHistoryQueryCommandDTO"},{"ref":"OIBusUpdateHistoryQueryCommandDTO"},{"ref":"OIBusDeleteHistoryQueryCommandDTO"},{"ref":"OIBusTestHistoryQueryNorthConnectionCommandDTO"},{"ref":"OIBusTestHistoryQuerySouthConnectionCommandDTO"},{"ref":"OIBusTestHistoryQuerySouthItemCommandDTO"},{"ref":"OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO"},{"ref":"OIBusUpdateHistoryQueryStatusCommandDTO"},{"ref":"OIBusSetpointCommandDTO"},{"ref":"OIBusSearchNorthCacheContentCommandDTO"},{"ref":"OIBusSearchHistoryCacheContentCommandDTO"},{"ref":"OIBusGetNorthCacheFileContentCommandDTO"},{"ref":"OIBusGetHistoryCacheFileContentCommandDTO"},{"ref":"OIBusUpdateNorthCacheContentCommandDTO"},{"ref":"OIBusUpdateHistoryCacheContentCommandDTO"},{"ref":"OIBusCreateCustomTransformerCommandDTO"},{"ref":"OIBusUpdateCustomTransformerCommandDTO"},{"ref":"OIBusDeleteCustomTransformerCommandDTO"},{"ref":"OIBusTestCustomTransformerCommandDTO"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"OIBusUpdateVersionCommandDTO"},{"ref":"OIBusRegenerateCipherKeysCommandDTO"},{"ref":"OIBusRestartEngineCommandDTO"},{"ref":"OIBusUpdateEngineGeneralCommandDTO"},{"ref":"OIBusUpdateEngineWebServerCommandDTO"},{"ref":"OIBusUpdateEngineProxyCommandDTO"},{"ref":"OIBusUpdateEngineLoggerCommandDTO"},{"ref":"OIBusUpdateRegistrationSettingsCommandDTO"},{"ref":"OIBusCreateScanModeCommandDTO"},{"ref":"OIBusUpdateScanModeCommandDTO"},{"ref":"OIBusDeleteScanModeCommandDTO"},{"ref":"OIBusCreateIPFilterCommandDTO"},{"ref":"OIBusUpdateIPFilterCommandDTO"},{"ref":"OIBusDeleteIPFilterCommandDTO"},{"ref":"OIBusCreateCertificateCommandDTO"},{"ref":"OIBusUpdateCertificateCommandDTO"},{"ref":"OIBusDeleteCertificateCommandDTO"},{"ref":"OIBusCreateSouthConnectorCommandDTO"},{"ref":"OIBusUpdateSouthConnectorCommandDTO"},{"ref":"OIBusDeleteSouthConnectorCommandDTO"},{"ref":"OIBusTestSouthConnectorCommandDTO"},{"ref":"OIBusTestSouthConnectorItemCommandDTO"},{"ref":"OIBusCreateNorthConnectorCommandDTO"},{"ref":"OIBusUpdateNorthConnectorCommandDTO"},{"ref":"OIBusDeleteNorthConnectorCommandDTO"},{"ref":"OIBusTestNorthConnectorCommandDTO"},{"ref":"OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO"},{"ref":"OIBusCreateHistoryQueryCommandDTO"},{"ref":"OIBusUpdateHistoryQueryCommandDTO"},{"ref":"OIBusDeleteHistoryQueryCommandDTO"},{"ref":"OIBusTestHistoryQueryNorthConnectionCommandDTO"},{"ref":"OIBusTestHistoryQuerySouthConnectionCommandDTO"},{"ref":"OIBusTestHistoryQuerySouthItemCommandDTO"},{"ref":"OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO"},{"ref":"OIBusUpdateHistoryQueryStatusCommandDTO"},{"ref":"OIBusSetpointCommandDTO"},{"ref":"OIBusSearchNorthCacheContentCommandDTO"},{"ref":"OIBusSearchHistoryCacheContentCommandDTO"},{"ref":"OIBusGetNorthCacheFileContentCommandDTO"},{"ref":"OIBusGetHistoryCacheFileContentCommandDTO"},{"ref":"OIBusUpdateNorthCacheContentCommandDTO"},{"ref":"OIBusUpdateHistoryCacheContentCommandDTO"},{"ref":"OIBusCreateCustomTransformerCommandDTO"},{"ref":"OIBusUpdateCustomTransformerCommandDTO"},{"ref":"OIBusDeleteCustomTransformerCommandDTO"},{"ref":"OIBusTestCustomTransformerCommandDTO"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Page_OIBusCommandDTO_": {
@@ -7709,18 +7787,12 @@ const models: TsoaRoute.Models = {
             "updatedBy": {"ref":"UserInfo","required":true},
             "createdAt": {"ref":"Instant","required":true},
             "updatedAt": {"ref":"Instant","required":true},
-            "name": {"dataType":"string","required":true},
-            "port": {"dataType":"double","required":true},
             "version": {"dataType":"string","required":true},
             "launcherVersion": {"dataType":"string","required":true},
-            "proxyEnabled": {"dataType":"boolean","required":true},
-            "proxyPort": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
-            "forwardProxyUrl": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "forwardProxyUsername": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "forwardProxyPassword": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "proxyUsername": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "proxyPassword": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "logParameters": {"dataType":"nestedObjectLiteral","nestedProperties":{"syslog":{"dataType":"nestedObjectLiteral","nestedProperties":{"protocol":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["udp4"]},{"dataType":"enum","enums":["tcp"]}],"required":true},"port":{"dataType":"double","required":true},"host":{"dataType":"string","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"oia":{"dataType":"nestedObjectLiteral","nestedProperties":{"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"loki":{"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"string","required":true},"username":{"dataType":"string","required":true},"address":{"dataType":"string","required":true},"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"database":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfLogs":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"file":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"maxFileSize":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"console":{"dataType":"nestedObjectLiteral","nestedProperties":{"level":{"ref":"LogLevel","required":true}},"required":true}},"required":true},
+            "general": {"dataType":"nestedObjectLiteral","nestedProperties":{"name":{"dataType":"string","required":true}},"required":true},
+            "webServer": {"dataType":"nestedObjectLiteral","nestedProperties":{"authTokenDuration":{"ref":"AuthTokenDuration","required":true},"port":{"dataType":"double","required":true}},"required":true},
+            "proxyServer": {"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"username":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"forward":{"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"username":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"url":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"port":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},
+            "logger": {"dataType":"nestedObjectLiteral","nestedProperties":{"syslog":{"dataType":"nestedObjectLiteral","nestedProperties":{"protocol":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["udp4"]},{"dataType":"enum","enums":["tcp"]}],"required":true},"port":{"dataType":"double","required":true},"host":{"dataType":"string","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"oia":{"dataType":"nestedObjectLiteral","nestedProperties":{"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"loki":{"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"string","required":true},"username":{"dataType":"string","required":true},"address":{"dataType":"string","required":true},"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"database":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfLogs":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"file":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"maxFileSize":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"console":{"dataType":"nestedObjectLiteral","nestedProperties":{"level":{"ref":"LogLevel","required":true}},"required":true}},"required":true},
         },
         "additionalProperties": false,
     },
@@ -7734,39 +7806,15 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "EngineNameCommandDTO": {
+    "EngineSettingsCommandDTO": {
         "dataType": "refObject",
         "properties": {
-            "name": {"dataType":"string","required":true},
+            "general": {"ref":"EngineNameCommandDTO","required":true},
+            "webServer": {"ref":"EngineWebServerCommandDTO","required":true},
+            "proxyServer": {"ref":"EngineProxyCommandDTO","required":true},
+            "logger": {"ref":"EngineLoggerCommandDTO","required":true},
         },
         "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "EngineWebServerCommandDTO": {
-        "dataType": "refObject",
-        "properties": {
-            "port": {"dataType":"double","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "EngineProxyCommandDTO": {
-        "dataType": "refObject",
-        "properties": {
-            "proxyEnabled": {"dataType":"boolean","required":true},
-            "proxyPort": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
-            "forwardProxyUrl": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "forwardProxyUsername": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "forwardProxyPassword": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "proxyUsername": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "proxyPassword": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "EngineLoggerCommandDTO": {
-        "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"syslog":{"dataType":"nestedObjectLiteral","nestedProperties":{"protocol":{"dataType":"union","subSchemas":[{"dataType":"enum","enums":["udp4"]},{"dataType":"enum","enums":["tcp"]}],"required":true},"port":{"dataType":"double","required":true},"host":{"dataType":"string","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"oia":{"dataType":"nestedObjectLiteral","nestedProperties":{"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"loki":{"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"string","required":true},"username":{"dataType":"string","required":true},"address":{"dataType":"string","required":true},"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"database":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfLogs":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"file":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"maxFileSize":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"console":{"dataType":"nestedObjectLiteral","nestedProperties":{"level":{"ref":"LogLevel","required":true}},"required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusInfo": {
@@ -11885,7 +11933,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 command: {"in":"body","name":"command","required":true,"ref":"EngineNameCommandDTO"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.put('/api/name',
+        app.put('/api/engine/name',
             ...(fetchMiddlewares<RequestHandler>(EngineController)),
             ...(fetchMiddlewares<RequestHandler>(EngineController.prototype.updateEngineName)),
 
@@ -11916,7 +11964,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 command: {"in":"body","name":"command","required":true,"ref":"EngineWebServerCommandDTO"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.put('/api/web-server',
+        app.put('/api/engine/web-server',
             ...(fetchMiddlewares<RequestHandler>(EngineController)),
             ...(fetchMiddlewares<RequestHandler>(EngineController.prototype.updateEngineWebServer)),
 
@@ -11947,7 +11995,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 command: {"in":"body","name":"command","required":true,"ref":"EngineProxyCommandDTO"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.put('/api/proxy',
+        app.put('/api/engine/proxy',
             ...(fetchMiddlewares<RequestHandler>(EngineController)),
             ...(fetchMiddlewares<RequestHandler>(EngineController.prototype.updateEngineProxy)),
 
@@ -11978,7 +12026,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 command: {"in":"body","name":"command","required":true,"ref":"EngineLoggerCommandDTO"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.put('/api/logger',
+        app.put('/api/engine/logger',
             ...(fetchMiddlewares<RequestHandler>(EngineController)),
             ...(fetchMiddlewares<RequestHandler>(EngineController.prototype.updateEngineLogger)),
 
