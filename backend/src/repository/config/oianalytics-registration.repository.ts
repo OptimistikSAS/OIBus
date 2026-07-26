@@ -19,7 +19,7 @@ export default class OIAnalyticsRegistrationRepository {
       apiGatewayHeaderKey: null,
       apiGatewayHeaderValue: null,
       apiGatewayBaseEndpoint: null,
-      commandRefreshInterval: 10,
+      commandRefreshInterval: 60,
       commandRetryInterval: 5,
       messageRetryInterval: 5,
       commandPermissions: {
