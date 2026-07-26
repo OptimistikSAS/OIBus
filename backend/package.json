@@ -55,7 +55,7 @@
     "argon2": "0.45.0",
     "basic-auth": "2.0.1",
     "basic-ftp": "6.0.1",
-    "better-sqlite3": "12.11.1",
+    "better-sqlite3": "13.0.1",
     "cors": "2.8.6",
     "cron": "4.4.0",
     "cron-parser": "5.6.2",
