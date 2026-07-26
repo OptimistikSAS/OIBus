@@ -280,6 +280,25 @@ describe('OIAnalytics Registration Service', () => {
     ]);
   });
 
+  it('should edit registration settings when no proxy nor api gateway is configured (null fields)', async () => {
+    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.completed);
+
+    const command: RegistrationSettingsCommandDTO = {
+      ...testData.oIAnalytics.registration.command,
+      useProxy: false,
+      proxyUrl: null,
+      proxyUsername: null,
+      proxyPassword: null,
+      useApiGateway: false,
+      apiGatewayHeaderKey: null,
+      apiGatewayHeaderValue: null,
+      apiGatewayBaseEndpoint: null
+    };
+
+    await assert.doesNotReject(service.editRegistrationSettings(command, testData.users.list[0].id));
+    assert.strictEqual(oIAnalyticsRegistrationRepository.update.mock.calls.length, 1);
+  });
+
   it('should update keys', async () => {
     await service.updateKeys('private key', 'public key');
 
