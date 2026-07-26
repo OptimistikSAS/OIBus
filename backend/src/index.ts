@@ -82,7 +82,7 @@ export async function bootstrap(): Promise<void> {
     console.error('Error while loading OIBus settings from database');
     return;
   }
-  console.info(`OIBus settings loaded. OIBus ID: ${oibusSettings.id} ; OIBus name : ${oibusSettings.name}.`);
+  console.info(`OIBus settings loaded. OIBus ID: ${oibusSettings.id} ; OIBus name : ${oibusSettings.general.name}.`);
 
   if (!repositoryService.cryptoRepository.getCryptoSettings(oibusSettings.id)) {
     repositoryService.cryptoRepository.createCryptoSettings(oibusSettings.id);
@@ -267,7 +267,7 @@ export async function bootstrap(): Promise<void> {
   await cleanupService.start();
 
   const server = new WebServer(
-    oibusSettings.port,
+    oibusSettings.webServer.port,
     encryptionService,
     scanModeService,
     ipFilterService,

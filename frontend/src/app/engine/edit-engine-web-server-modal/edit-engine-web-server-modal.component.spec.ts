@@ -12,7 +12,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { ModalService } from '../../shared/modal.service';
 import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
 
-const engineSettings = { port: 2223 } as EngineSettingsDTO;
+const engineSettings = { webServer: { port: 2223, authTokenDuration: '7d' } } as EngineSettingsDTO;
 
 class EditEngineWebServerModalTester {
   readonly fixture = TestBed.createComponent(EditEngineWebServerModalComponent);
@@ -52,7 +52,20 @@ describe('EditEngineWebServerModalComponent', () => {
     const tester = new EditEngineWebServerModalTester();
     tester.fixture.componentInstance.initialize(engineSettings);
     tester.fixture.detectChanges();
-    await expect.element(tester.portInput).toHaveValue(engineSettings.port);
+    await expect.element(tester.portInput).toHaveValue(engineSettings.webServer.port);
+  });
+
+  test('should initialize the form with the current auth token duration', () => {
+    const tester = new EditEngineWebServerModalTester();
+    tester.fixture.componentInstance.initialize(engineSettings);
+    tester.fixture.detectChanges();
+    expect(tester.fixture.componentInstance.form.controls.authTokenDuration.value).toBe('7d');
+  });
+
+  test('should default the auth token duration to 7 days on a fresh form', () => {
+    const tester = new EditEngineWebServerModalTester();
+    tester.fixture.detectChanges();
+    expect(tester.fixture.componentInstance.form.controls.authTokenDuration.value).toBe('7d');
   });
 
   test('should not save when form is invalid', async () => {
@@ -69,7 +82,10 @@ describe('EditEngineWebServerModalComponent', () => {
     tester.fixture.componentInstance.initialize(engineSettings);
     tester.fixture.detectChanges();
     await tester.saveButton.click();
-    expect(engineService.updateEngineWebServer).toHaveBeenCalledWith({ port: engineSettings.port });
+    expect(engineService.updateEngineWebServer).toHaveBeenCalledWith({
+      port: engineSettings.webServer.port,
+      authTokenDuration: engineSettings.webServer.authTokenDuration
+    });
     expect(notificationService.success).toHaveBeenCalledWith('engine.updated');
     expect(activeModal.close).toHaveBeenCalled();
   });

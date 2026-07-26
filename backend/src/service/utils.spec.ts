@@ -1265,13 +1265,18 @@ describe('Service utils', () => {
       ignoreIpFilters: false,
       ignoreRemoteUpdate: false
     };
-    const result = utils.getOIBusInfo({ id: 'id', name: 'name', version: '3.3.3', launcherVersion: '3.5.0' } as EngineSettingsDTO);
+    const result = utils.getOIBusInfo({
+      id: 'id',
+      general: { name: 'name' },
+      version: '3.3.3',
+      launcherVersion: '3.5.0'
+    } as EngineSettingsDTO);
     assert.deepStrictEqual(result, expectedResult);
   });
 
   it('should get OIBus info with ignore flags set', () => {
     const info = utils.getOIBusInfo(
-      { id: 'id', name: 'name', version: '3.3.3', launcherVersion: '3.5.0' } as EngineSettingsDTO,
+      { id: 'id', general: { name: 'name' }, version: '3.3.3', launcherVersion: '3.5.0' } as EngineSettingsDTO,
       true,
       true
     );
@@ -1280,7 +1285,7 @@ describe('Service utils', () => {
   });
 
   it('should return OIBus info including architecture and os', () => {
-    const settings = { id: 'id', name: 'test', version: '1.0.0', launcherVersion: '1.0.0' } as EngineSettingsDTO;
+    const settings = { id: 'id', general: { name: 'test' }, version: '1.0.0', launcherVersion: '1.0.0' } as EngineSettingsDTO;
     const info = utils.getOIBusInfo(settings);
     assert.strictEqual(info.oibusId, 'id');
     assert.strictEqual(info.oibusName, 'test');

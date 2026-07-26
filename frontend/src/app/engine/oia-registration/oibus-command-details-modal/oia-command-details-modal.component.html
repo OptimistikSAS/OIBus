@@ -48,7 +48,28 @@
                 [translateParams]="{ backupFoldersPattern: cmd.commandContent.backupFolders }"
               ></li>
             }
-            @case ('update-engine-settings') {
+            @case ('update-engine-general') {
+              <li translate="oia-module.commands.details-modal.command-content.update-engine-settings.command-content">
+                <div style="max-height: 300px; overflow-y: auto">
+                  <pre><code>{{ cmd.commandContent | json }}</code></pre>
+                </div>
+              </li>
+            }
+            @case ('update-engine-web-server') {
+              <li translate="oia-module.commands.details-modal.command-content.update-engine-settings.command-content">
+                <div style="max-height: 300px; overflow-y: auto">
+                  <pre><code>{{ cmd.commandContent | json }}</code></pre>
+                </div>
+              </li>
+            }
+            @case ('update-engine-proxy') {
+              <li translate="oia-module.commands.details-modal.command-content.update-engine-settings.command-content">
+                <div style="max-height: 300px; overflow-y: auto">
+                  <pre><code>{{ cmd.commandContent | json }}</code></pre>
+                </div>
+              </li>
+            }
+            @case ('update-engine-logger') {
               <li translate="oia-module.commands.details-modal.command-content.update-engine-settings.command-content">
                 <div style="max-height: 300px; overflow-y: auto">
                   <pre><code>{{ cmd.commandContent | json }}</code></pre>

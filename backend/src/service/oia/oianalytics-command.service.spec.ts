@@ -54,7 +54,10 @@ import {
   OIBusTestSouthConnectorCommand,
   OIBusTestSouthConnectorItemCommand,
   OIBusUpdateCertificateCommand,
-  OIBusUpdateEngineSettingsCommand,
+  OIBusUpdateEngineGeneralCommand,
+  OIBusUpdateEngineLoggerCommand,
+  OIBusUpdateEngineProxyCommand,
+  OIBusUpdateEngineWebServerCommand,
   OIBusUpdateHistoryQueryCommand,
   OIBusUpdateHistoryQueryStatusCommand,
   OIBusUpdateIPFilterCommand,
@@ -766,40 +769,97 @@ describe('OIAnalytics Command Service', () => {
     assert.ok((logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'No command to execute'));
   });
 
-  it('should execute update-engine-settings command', async () => {
+  it('should execute update-engine-general command', async () => {
     oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[1]);
 
     await service.processNextCommand();
 
     assert.strictEqual(encryptionService.decryptTextWithPrivateKey.mock.calls.length, 0);
-    assert.deepStrictEqual(oIBusService.updateEngineSettings.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[1] as OIBusUpdateEngineSettingsCommand).commandContent,
+    assert.deepStrictEqual(oIBusService.updateEngineName.mock.calls[0].arguments, [
+      (testData.oIAnalytics.commands.oIBusList[1] as OIBusUpdateEngineGeneralCommand).commandContent,
       'oianalytics'
     ]);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[1].id,
       testData.constants.dates.FAKE_NOW,
-      'Engine settings updated successfully'
+      'Engine name updated successfully'
     ]);
   });
 
-  it('should execute update-engine-settings command without loki password', async () => {
-    const command: OIBusUpdateEngineSettingsCommand = JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[1]));
-    command.commandContent.logParameters.loki.password = 'test';
+  it('should execute update-engine-web-server command', async () => {
+    const command: OIBusUpdateEngineWebServerCommand = {
+      ...(testData.oIAnalytics.commands.oIBusList[1] as OIBusUpdateEngineGeneralCommand),
+      type: 'update-engine-web-server',
+      commandContent: testData.engine.webServerCommand
+    };
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(oIBusService.updateEngineWebServer.mock.calls[0].arguments, [testData.engine.webServerCommand, 'oianalytics']);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Engine web server settings updated successfully'
+    ]);
+  });
+
+  it('should execute update-engine-proxy command', async () => {
+    const command: OIBusUpdateEngineProxyCommand = {
+      ...(testData.oIAnalytics.commands.oIBusList[1] as OIBusUpdateEngineGeneralCommand),
+      type: 'update-engine-proxy',
+      commandContent: testData.engine.proxyCommand
+    };
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+
+    await service.processNextCommand();
+
+    assert.strictEqual(encryptionService.decryptTextWithPrivateKey.mock.calls.length, 0);
+    assert.deepStrictEqual(oIBusService.updateEngineProxy.mock.calls[0].arguments, [testData.engine.proxyCommand, 'oianalytics']);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Engine proxy settings updated successfully'
+    ]);
+  });
+
+  it('should execute update-engine-logger command', async () => {
+    const command: OIBusUpdateEngineLoggerCommand = {
+      ...(testData.oIAnalytics.commands.oIBusList[1] as OIBusUpdateEngineGeneralCommand),
+      type: 'update-engine-logger',
+      commandContent: testData.engine.loggerCommand
+    };
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+
+    await service.processNextCommand();
+
+    assert.strictEqual(encryptionService.decryptTextWithPrivateKey.mock.calls.length, 0);
+    assert.deepStrictEqual(oIBusService.updateEngineLogger.mock.calls[0].arguments, [testData.engine.loggerCommand, 'oianalytics']);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Engine logger settings updated successfully'
+    ]);
+  });
+
+  it('should execute update-engine-logger command with loki password', async () => {
+    const command: OIBusUpdateEngineLoggerCommand = {
+      ...(testData.oIAnalytics.commands.oIBusList[1] as OIBusUpdateEngineGeneralCommand),
+      type: 'update-engine-logger',
+      commandContent: JSON.parse(JSON.stringify(testData.engine.loggerCommand))
+    };
+    command.commandContent.loki.password = 'test';
 
     oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
 
     await service.processNextCommand();
 
-    assert.deepStrictEqual(oIBusService.updateEngineSettings.mock.calls[0].arguments, [
-      (command as OIBusUpdateEngineSettingsCommand).commandContent,
-      'oianalytics'
-    ]);
+    assert.deepStrictEqual(oIBusService.updateEngineLogger.mock.calls[0].arguments, [command.commandContent, 'oianalytics']);
     assert.strictEqual(encryptionService.decryptTextWithPrivateKey.mock.calls.length, 1);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
-      testData.oIAnalytics.commands.oIBusList[1].id,
+      command.id,
       testData.constants.dates.FAKE_NOW,
-      'Engine settings updated successfully'
+      'Engine logger settings updated successfully'
     ]);
   });
 

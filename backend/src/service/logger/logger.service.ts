@@ -165,69 +165,69 @@ class LoggerService {
     targets.push({
       target: 'pino-pretty',
       options: { colorize: true, singleLine: true },
-      level: engineSettings.logParameters.console.level
+      level: engineSettings.logger.console.level
     });
 
     targets.push({
       target: 'pino-roll',
       options: {
         file: path.resolve(this._folder, LOG_FILE_NAME),
-        size: engineSettings.logParameters.file.maxFileSize
+        size: engineSettings.logger.file.maxFileSize
       },
-      level: engineSettings.logParameters.file.level
+      level: engineSettings.logger.file.level
     });
 
-    if (engineSettings.logParameters.database.maxNumberOfLogs > 0) {
+    if (engineSettings.logger.database.maxNumberOfLogs > 0) {
       targets.push({
         target: path.join(__dirname, 'sqlite-transport.js'),
         options: {
           filename: path.resolve(this._folder, LOG_DB_NAME),
-          maxNumberOfLogs: engineSettings.logParameters.database.maxNumberOfLogs
+          maxNumberOfLogs: engineSettings.logger.database.maxNumberOfLogs
         },
-        level: engineSettings.logParameters.database.level
+        level: engineSettings.logger.database.level
       });
     }
 
-    if (registration && registration.status === 'REGISTERED' && engineSettings.logParameters.oia.level !== 'silent') {
+    if (registration && registration.status === 'REGISTERED' && engineSettings.logger.oia.level !== 'silent') {
       targets.push({
         target: path.join(__dirname, './oianalytics-transport.js'),
         options: {
-          interval: engineSettings.logParameters.oia.interval,
+          interval: engineSettings.logger.oia.interval,
           registrationSettings: registration,
           cryptoSettings: encryptionService.cryptoSettings,
           certsFolder: encryptionService.certsFolder
         },
-        level: engineSettings.logParameters.oia.level
+        level: engineSettings.logger.oia.level
       });
     }
 
-    if (engineSettings.logParameters.syslog.host && engineSettings.logParameters.syslog.level !== 'silent') {
+    if (engineSettings.logger.syslog.host && engineSettings.logger.syslog.level !== 'silent') {
       targets.push({
         target: path.join(__dirname, 'syslog-transport.js'),
         options: {
-          host: engineSettings.logParameters.syslog.host,
-          port: engineSettings.logParameters.syslog.port,
-          protocol: engineSettings.logParameters.syslog.protocol,
-          appName: engineSettings.name
+          host: engineSettings.logger.syslog.host,
+          port: engineSettings.logger.syslog.port,
+          protocol: engineSettings.logger.syslog.protocol,
+          appName: engineSettings.general.name
         },
-        level: engineSettings.logParameters.syslog.level
+        level: engineSettings.logger.syslog.level
       });
     }
 
-    if (engineSettings.logParameters.loki.address && engineSettings.logParameters.loki.level !== 'silent') {
+    if (engineSettings.logger.loki.address && engineSettings.logger.loki.level !== 'silent') {
       try {
-        const lokiPassword = engineSettings.logParameters.loki.password
-          ? await encryptionService.decryptText(engineSettings.logParameters.loki.password)
+        const lokiPassword = engineSettings.logger.loki.password
+          ? await encryptionService.decryptText(engineSettings.logger.loki.password)
           : '';
         targets.push({
           target: 'pino-loki',
           options: {
-            batching: { interval: engineSettings.logParameters.loki.interval, maxBufferSize: 50000 },
-            host: engineSettings.logParameters.loki.address,
-            basicAuth: { username: engineSettings.logParameters.loki.username, password: lokiPassword },
-            labels: { name: engineSettings.name }
+            batching: { interval: engineSettings.logger.loki.interval, maxBufferSize: 50000 },
+            host: engineSettings.logger.loki.address,
+            basicAuth: { username: engineSettings.logger.loki.username, password: lokiPassword },
+            labels: { name: engineSettings.general.name }
           },
-          level: engineSettings.logParameters.loki.level
+          level: engineSettings.logger.loki.level
         });
       } catch (error) {
         // In case of bad decryption, an error is triggered, so instead of leaving the process, the error will just be
@@ -252,12 +252,7 @@ class LoggerService {
 
     this.redirectNodeOpcuaLogs();
 
-    this.fileCleanUpService = new FileCleanupService(
-      this._folder,
-      this.logger,
-      LOG_FILE_NAME,
-      engineSettings.logParameters.file.numberOfFiles
-    );
+    this.fileCleanUpService = new FileCleanupService(this._folder, this.logger, LOG_FILE_NAME, engineSettings.logger.file.numberOfFiles);
     await this.fileCleanUpService.start();
   }
 

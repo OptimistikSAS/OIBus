@@ -656,7 +656,7 @@ export const getOIBusInfo = (
     version: oibusSettings.version,
     launcherVersion: oibusSettings.launcherVersion,
     oibusId: oibusSettings.id,
-    oibusName: oibusSettings.name,
+    oibusName: oibusSettings.general.name,
     platform: getCurrentPlatform(),
     ignoreIpFilters,
     ignoreRemoteUpdate

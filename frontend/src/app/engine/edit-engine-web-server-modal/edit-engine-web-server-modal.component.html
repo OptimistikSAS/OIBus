@@ -8,6 +8,15 @@
       <input formControlName="port" type="number" id="port" class="form-control" />
       <val-errors controlName="port" />
     </div>
+    <div class="form-group">
+      <label class="form-label" for="auth-token-duration" translate="engine.web-server-settings.auth-token-duration"></label>
+      <select class="form-select" id="auth-token-duration" formControlName="authTokenDuration">
+        @for (option of authTokenDurationOptions; track option.value) {
+          <option [ngValue]="option.value" [translate]="option.labelKey"></option>
+        }
+      </select>
+      <val-errors controlName="authTokenDuration" />
+    </div>
   </form>
 </div>
 <div class="modal-footer">

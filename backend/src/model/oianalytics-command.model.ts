@@ -1,6 +1,13 @@
 import { BaseEntity, Instant } from './types';
 import { OIBusCommandStatus, OIBusCommandType } from '../../shared/model/command.model';
-import { CacheContentUpdateCommand, DataFolderType, EngineSettingsCommandDTO } from '../../shared/model/engine.model';
+import {
+  CacheContentUpdateCommand,
+  DataFolderType,
+  EngineLoggerCommandDTO,
+  EngineNameCommandDTO,
+  EngineProxyCommandDTO,
+  EngineWebServerCommandDTO
+} from '../../shared/model/engine.model';
 import { ScanModeCommandDTO } from '../../shared/model/scan-mode.model';
 import {
   SouthConnectorCommandDTO,
@@ -42,9 +49,24 @@ export interface OIBusRegenerateCipherKeysCommand extends BaseOIBusCommand {
   type: 'regenerate-cipher-keys';
 }
 
-export interface OIBusUpdateEngineSettingsCommand extends BaseOIBusCommand {
-  type: 'update-engine-settings';
-  commandContent: EngineSettingsCommandDTO;
+export interface OIBusUpdateEngineGeneralCommand extends BaseOIBusCommand {
+  type: 'update-engine-general';
+  commandContent: EngineNameCommandDTO;
+}
+
+export interface OIBusUpdateEngineWebServerCommand extends BaseOIBusCommand {
+  type: 'update-engine-web-server';
+  commandContent: EngineWebServerCommandDTO;
+}
+
+export interface OIBusUpdateEngineProxyCommand extends BaseOIBusCommand {
+  type: 'update-engine-proxy';
+  commandContent: EngineProxyCommandDTO;
+}
+
+export interface OIBusUpdateEngineLoggerCommand extends BaseOIBusCommand {
+  type: 'update-engine-logger';
+  commandContent: EngineLoggerCommandDTO;
 }
 
 export interface OIBusUpdateRegistrationSettingsCommand extends BaseOIBusCommand {
@@ -361,7 +383,10 @@ export type OIBusCommand =
   | OIBusUpdateVersionCommand
   | OIBusRestartEngineCommand
   | OIBusRegenerateCipherKeysCommand
-  | OIBusUpdateEngineSettingsCommand
+  | OIBusUpdateEngineGeneralCommand
+  | OIBusUpdateEngineWebServerCommand
+  | OIBusUpdateEngineProxyCommand
+  | OIBusUpdateEngineLoggerCommand
   | OIBusUpdateRegistrationSettingsCommand
   | OIBusCreateScanModeCommand
   | OIBusUpdateScanModeCommand

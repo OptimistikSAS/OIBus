@@ -135,7 +135,10 @@ export default class OIAnalyticsCommandRepository {
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
         break;
-      case 'update-engine-settings':
+      case 'update-engine-general':
+      case 'update-engine-web-server':
+      case 'update-engine-proxy':
+      case 'update-engine-logger':
       case 'create-scan-mode':
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
@@ -423,10 +426,28 @@ export default class OIAnalyticsCommandRepository {
           ...baseCommandFields(command),
           type: 'regenerate-cipher-keys'
         };
-      case 'update-engine-settings':
+      case 'update-engine-general':
         return {
           ...baseCommandFields(command),
-          type: 'update-engine-settings',
+          type: 'update-engine-general',
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'update-engine-web-server':
+        return {
+          ...baseCommandFields(command),
+          type: 'update-engine-web-server',
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'update-engine-proxy':
+        return {
+          ...baseCommandFields(command),
+          type: 'update-engine-proxy',
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'update-engine-logger':
+        return {
+          ...baseCommandFields(command),
+          type: 'update-engine-logger',
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'update-registration-settings':
