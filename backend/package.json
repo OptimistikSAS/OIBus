@@ -37,9 +37,10 @@
     "docker:database": "docker compose -f ../docker-compose.yml --profile database up -d",
     "docker:ftp": "docker compose -f ../docker-compose.yml --profile ftp up -d",
     "docker:logging": "docker compose -f ../docker-compose.yml --profile logging up -d",
+    "docker:proxy": "docker compose -f ../docker-compose.yml --profile proxy up -d",
     "docker:dev": "docker compose -f ../docker-compose.yml --profile iot --profile simulator --profile database up -d",
-    "docker:all": "docker compose -f ../docker-compose.yml --profile iot --profile simulator --profile database --profile ftp --profile logging --profile oibus up -d",
-    "docker:down": "docker compose -f ../docker-compose.yml --profile iot --profile simulator --profile database --profile ftp --profile logging --profile oibus down"
+    "docker:all": "docker compose -f ../docker-compose.yml --profile iot --profile simulator --profile database --profile ftp --profile logging --profile proxy --profile oibus up -d",
+    "docker:down": "docker compose -f ../docker-compose.yml --profile iot --profile simulator --profile database --profile ftp --profile logging --profile proxy --profile oibus down"
   },
   "keywords": [
     "Optimistik"
