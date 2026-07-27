@@ -1,3 +1,4 @@
+import os from 'node:os';
 import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
@@ -7,8 +8,11 @@ import type { SyslogTransportOptions } from './syslog-transport';
 const nodeRequire = createRequire(import.meta.url);
 
 type CreateTransport = (opts: SyslogTransportOptions) => Promise<unknown>;
+type ToSyslogField = (value: string | undefined | null) => string;
 
 let createTransport: CreateTransport;
+let toSyslogField: ToSyslogField;
+let expectedHostname: string;
 
 // Per-test mocks initialised in beforeEach
 let mockBuildOptions: ReturnType<typeof mock.fn>;
@@ -16,11 +20,14 @@ let mockMessageBuilderFactory: ReturnType<typeof mock.fn>;
 let mockFormatMessage: ReturnType<typeof mock.fn>;
 let mockSocketWrite: ReturnType<typeof mock.fn>;
 let mockSocketDestroy: ReturnType<typeof mock.fn>;
+let mockSocketOn: ReturnType<typeof mock.fn>;
 let mockSocketTransport: ReturnType<typeof mock.fn>;
 
 // Captured build() handlers
 let capturedSourceFn: ((source: AsyncIterable<unknown>) => Promise<void>) | null = null;
 let capturedCloseFn: (() => Promise<void>) | null = null;
+// Captured `socket.on('error', ...)` handler registered by SyslogTransport.connect()
+let capturedSocketErrorHandler: ((error: Error) => void) | null = null;
 
 before(() => {
   // Mock pino-syslog/lib/utils
@@ -52,13 +59,20 @@ before(() => {
   const pinoAbstractPath = nodeRequire.resolve('pino-abstract-transport');
   nodeRequire.cache[pinoAbstractPath]!.exports = { __esModule: true, default: buildMock };
 
-  createTransport = reloadModule<{ default: CreateTransport }>(nodeRequire, './syslog-transport').default;
+  const syslogTransportModule = reloadModule<{ default: CreateTransport; toSyslogField: ToSyslogField }>(nodeRequire, './syslog-transport');
+  createTransport = syslogTransportModule.default;
+  toSyslogField = syslogTransportModule.toSyslogField;
+  expectedHostname = toSyslogField(os.hostname());
 });
 
 beforeEach(() => {
   mockSocketWrite = mock.fn();
   mockSocketDestroy = mock.fn();
-  const mockSocket = { write: mockSocketWrite, destroy: mockSocketDestroy };
+  capturedSocketErrorHandler = null;
+  mockSocketOn = mock.fn((event: string, handler: (error: Error) => void) => {
+    if (event === 'error') capturedSocketErrorHandler = handler;
+  });
+  const mockSocket = { write: mockSocketWrite, destroy: mockSocketDestroy, on: mockSocketOn };
   mockSocketTransport = mock.fn(async () => mockSocket);
   mockFormatMessage = mock.fn((log: unknown) => `formatted:${JSON.stringify(log)}`);
   mockMessageBuilderFactory = mock.fn(() => mockFormatMessage);
@@ -101,6 +115,34 @@ describe('SyslogTransport (createTransport)', () => {
     assert.ok(capturedCloseFn !== null);
   });
 
+  it('should sanitize the appName before building syslog options', async () => {
+    await createTransport({ ...defaultOpts, appName: 'OIBus dev macOS ARM' });
+
+    assert.deepStrictEqual(mockBuildOptions.mock.calls[0].arguments[0], {
+      appname: 'OIBus-dev-macOS-ARM',
+      newline: true,
+      enablePipelining: false
+    });
+  });
+
+  it('should register an error listener on the socket, logging (not throwing) on socket errors', async () => {
+    await createTransport(defaultOpts);
+
+    assert.strictEqual(mockSocketOn.mock.calls.length, 1);
+    assert.strictEqual(mockSocketOn.mock.calls[0].arguments[0], 'error');
+    assert.ok(capturedSocketErrorHandler !== null);
+
+    const consoleSpy = mock.method(console, 'error', () => undefined);
+    // Simulates pino-socket's UDP mode forwarding a dgram send failure (e.g. ECONNREFUSED when the
+    // syslog server is down) as an 'error' event. Without this listener, Node would throw and crash
+    // the process — calling it here must not throw.
+    assert.doesNotThrow(() => capturedSocketErrorHandler!(new Error('send ECONNREFUSED')));
+
+    assert.strictEqual(consoleSpy.mock.calls.length, 1);
+    assert.match(consoleSpy.mock.calls[0].arguments[0] as string, /^Syslog socket error at syslog\.example\.com:514: send ECONNREFUSED/);
+    mock.restoreAll();
+  });
+
   it('should log an error and continue when socket connection fails', async () => {
     mockSocketTransport = mock.fn(async () => {
       throw new Error('connection refused');
@@ -114,19 +156,46 @@ describe('SyslogTransport (createTransport)', () => {
     mock.restoreAll();
   });
 
-  it('source handler should format and write each log to the socket', async () => {
+  it('source handler should format and write each log to the socket, mutating time/hostname/pid in place', async () => {
     await createTransport(defaultOpts);
 
-    const log = { level: 30, msg: 'hello', time: 1000 };
+    const isoTime = '2026-07-27T09:20:41.228Z';
+    const expectedTime = Date.parse(isoTime);
+    const log: Record<string, unknown> = { level: 30, msg: 'hello', time: isoTime };
     async function* makeSource() {
       yield log;
     }
     await capturedSourceFn!(makeSource());
 
+    // Mutated in place rather than replaced with a copy — same object reference throughout.
     assert.strictEqual(mockFormatMessage.mock.calls.length, 1);
-    assert.deepStrictEqual(mockFormatMessage.mock.calls[0].arguments[0], log);
+    assert.strictEqual(mockFormatMessage.mock.calls[0].arguments[0], log);
+    assert.strictEqual(log.level, 30);
+    assert.strictEqual(log.msg, 'hello');
+    assert.strictEqual(log.time, expectedTime);
+    assert.strictEqual(log.hostname, expectedHostname);
+    assert.strictEqual(log.pid, process.pid);
     assert.strictEqual(mockSocketWrite.mock.calls.length, 1);
     assert.strictEqual(mockSocketWrite.mock.calls[0].arguments[0], `formatted:${JSON.stringify(log)}`);
+  });
+
+  it('source handler should log an error and continue when formatting/writing throws', async () => {
+    await createTransport(defaultOpts);
+    mockFormatMessage.mock.mockImplementationOnce(() => {
+      throw new Error('bad message');
+    });
+    const consoleSpy = mock.method(console, 'error', () => undefined);
+
+    const log = { level: 30, msg: 'hello', time: '2026-07-27T09:20:41.228Z' };
+    async function* makeSource() {
+      yield log;
+    }
+    await capturedSourceFn!(makeSource());
+
+    assert.strictEqual(mockSocketWrite.mock.calls.length, 0);
+    assert.strictEqual(consoleSpy.mock.calls.length, 1);
+    assert.match(consoleSpy.mock.calls[0].arguments[0] as string, /^Failed to write message to syslog server at syslog\.example\.com:514/);
+    mock.restoreAll();
   });
 
   it('source handler should silently skip writes when socket is null (connect failed)', async () => {
@@ -175,5 +244,34 @@ describe('SyslogTransport (createTransport)', () => {
     await capturedCloseFn!(); // second call — socket is null, should not throw
 
     assert.strictEqual(mockSocketDestroy.mock.calls.length, 1);
+  });
+});
+
+describe('toSyslogField', () => {
+  it('should return the NILVALUE for undefined, null or empty input', () => {
+    assert.strictEqual(toSyslogField(undefined), '-');
+    assert.strictEqual(toSyslogField(null), '-');
+    assert.strictEqual(toSyslogField(''), '-');
+  });
+
+  it('should leave a valid single-token value unchanged', () => {
+    assert.strictEqual(toSyslogField('OIBus'), 'OIBus');
+  });
+
+  it('should collapse whitespace runs into a single dash', () => {
+    assert.strictEqual(toSyslogField('OIBus dev   macOS ARM'), 'OIBus-dev-macOS-ARM');
+  });
+
+  it('should strip non-printable-ASCII characters', () => {
+    assert.strictEqual(toSyslogField('café'), 'caf');
+  });
+
+  it('should truncate to 48 characters', () => {
+    const longValue = 'a'.repeat(60);
+    assert.strictEqual(toSyslogField(longValue), 'a'.repeat(48));
+  });
+
+  it('should return the NILVALUE when sanitization strips everything', () => {
+    assert.strictEqual(toSyslogField('   '), '-');
   });
 });
