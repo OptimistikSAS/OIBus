@@ -33,13 +33,38 @@ By configuring **OIBus1** as a proxy server, **OIBus2** can send data to the int
 
 1. Enable the **proxy server** option.
 2. Set the **listening port** (e.g., `2224`).
-3. Ensure the firewall allows inbound connections on this port.
-4. Authorize the IP address of **OIBus2** in the **IP Filter** section.
+3. Optionally, set a **Username** and **Password** to require clients to authenticate before using the proxy (see [Authentication](#authentication) below).
+4. Ensure the firewall allows inbound connections on this port.
+5. Authorize the IP address of **OIBus2** in the **IP Filter** section.
 
 #### On OIBus2 (Proxy Client)
 
 1. Configure the **North connector** or **OIAnalytics registration settings** to use the proxy server.
 2. Specify the address and port of **OIBus1**’s proxy server (e.g., `http://oibus1.fr:2224`).
+3. If **OIBus1**'s proxy server requires authentication, provide the same **Username** and **Password** in the North connector's or registration's proxy settings.
+
+### Authentication
+
+The proxy server can require clients to authenticate with a **Username** and **Password** (HTTP Basic authentication) before it will forward any request. Leave these fields empty to allow anonymous access.
+
+:::tip
+Authentication is checked before IP filtering restricts access. Both can be used together for defense in depth: the IP filter limits which hosts may reach the proxy, and authentication controls who may use it from those hosts.
+:::
+
+### Forward to an Upstream Proxy
+
+If **OIBus1** itself has no direct access to the internet (for example, it must go through a corporate proxy), it can be configured to forward every request it receives to an **upstream proxy** instead of contacting the target host directly:
+
+```
+OIBus2 → OIBus1 (proxy server) → Upstream proxy → Internet
+```
+
+To configure it, enable **Forward to upstream proxy** in **OIBus1**'s proxy server settings and provide:
+
+- **URL**: the address of the upstream proxy (e.g., `http://corporate-proxy.company.com:8080`).
+- **Username** / **Password**: credentials for the upstream proxy, if it requires authentication.
+
+This is independent from the [Authentication](#authentication) settings above: the upstream credentials are used by **OIBus1** to reach the upstream proxy, while the proxy server's own username/password (if set) still controls which clients (e.g., **OIBus2**) may use **OIBus1** as a proxy.
 
 ### Example
 
