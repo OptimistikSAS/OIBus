@@ -544,7 +544,8 @@
       "file": "File: {{ level }}",
       "database": "Database: {{ level }}",
       "loki": "Loki: {{ level }}",
-      "oia": "OIAnalytics: {{ level }}"
+      "oia": "OIAnalytics: {{ level }}",
+      "syslog": "Syslog: {{ level }}"
     },
     "web-server-settings": {
       "title": "Web server",
