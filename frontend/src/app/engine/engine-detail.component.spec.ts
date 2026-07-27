@@ -35,6 +35,7 @@ const engineSettings: EngineSettingsDTO = {
     file: { level: 'trace' },
     database: { level: 'silent' },
     loki: { level: 'error' },
+    syslog: { level: 'silent' },
     oia: { level: 'silent' }
   },
   proxyServer: { enabled: true, port: 8888 }

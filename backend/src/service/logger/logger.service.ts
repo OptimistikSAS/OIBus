@@ -179,7 +179,7 @@ class LoggerService {
 
     if (engineSettings.logger.database.maxNumberOfLogs > 0) {
       targets.push({
-        target: path.join(__dirname, 'sqlite-transport.js'),
+        target: path.join(__dirname, './sqlite-transport.js'),
         options: {
           filename: path.resolve(this._folder, LOG_DB_NAME),
           maxNumberOfLogs: engineSettings.logger.database.maxNumberOfLogs
@@ -203,7 +203,7 @@ class LoggerService {
 
     if (engineSettings.logger.syslog.host && engineSettings.logger.syslog.level !== 'silent') {
       targets.push({
-        target: path.join(__dirname, 'syslog-transport.js'),
+        target: path.join(__dirname, './syslog-transport.js'),
         options: {
           host: engineSettings.logger.syslog.host,
           port: engineSettings.logger.syslog.port,
