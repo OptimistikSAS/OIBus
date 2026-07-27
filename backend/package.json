@@ -153,8 +153,9 @@
     "odbc@2.5.0": true,
     "ssh2@1.17.0": true,
     "esbuild@0.28.1": true,
-    "argon2@0.45.0": true,
     "better-sqlite3@13.0.1": true,
-    "oracledb@7.0.1": true
+    "oracledb@7.0.1": true,
+    "argon2@0.45.1": true,
+    "cpu-features@0.0.10": true
   }
 }

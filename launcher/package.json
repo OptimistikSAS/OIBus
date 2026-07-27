@@ -62,6 +62,6 @@
     "fsevents@2.3.3": true,
     "esbuild@0.28.1": true,
     "better-sqlite3@13.0.1": true,
-    "argon2@0.45.0": true
+    "argon2@0.45.1": true
   }
 }
