@@ -1,0 +1,9 @@
+name,enabled,scanMode,group,maxReadInterval,readDelay,overlap,syncWithGroup,settings_topic
+Workshop 1 - Temperature,true,Subscription,,,,,false,workshop1/sensor1/temperature
+Workshop 1 - Humidity,true,Subscription,,,,,false,workshop1/sensor2/humidity
+Workshop 1 - Pressure,true,Subscription,,,,,false,workshop1/sensor3/pressure
+Workshop 1 - Vibration,true,Subscription,,,,,false,workshop1/sensor4/vibration
+Workshop 2 - Temperature,true,Subscription,,,,,false,workshop2/sensor1/temperature
+Workshop 2 - Humidity,true,Subscription,,,,,false,workshop2/sensor2/humidity
+Workshop 2 - Pressure,true,Subscription,,,,,false,workshop2/sensor3/pressure
+Workshop 2 - Vibration,true,Subscription,,,,,false,workshop2/sensor4/vibration

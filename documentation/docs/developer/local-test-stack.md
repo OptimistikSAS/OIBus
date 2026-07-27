@@ -3,6 +3,8 @@ displayed_sidebar: developerSidebar
 sidebar_position: 6
 ---
 
+import DownloadButton from '../../src/components/DownloadButton';
+
 # Local Test Stack
 
 The repository ships a `docker-compose.yml` at its root that spins up a complete set of protocol
@@ -92,8 +94,8 @@ nodes (boiler simulation, fast/slow changing variables, etc.).
 | `1029`  | Voltage (V)       | `Double`  | Random Walk | 210 – 230 V, step 0.5, every 2 s    |
 | `1030`  | Current (A)       | `Double`  | Sine Wave   | 15.2 ± 2 A, period 12 s             |
 
-Node IDs follow the OPC UA namespace `ns=2;i=<NodeId>`. The OPC UA address of temperature, for
-example, is `ns=2;i=1023`.
+Node IDs follow the OPC UA namespace `ns=3;i=<NodeId>`. The OPC UA address of temperature, for
+example, is `ns=3;i=1023`.
 
 **Historian support:** `Historizing: true` enables OPC UA Historical Data Access (HA) on every custom
 node. The server answers `HistoryRead` requests, making it suitable to test OIBus history-query mode.
@@ -107,6 +109,21 @@ simulator.
 **Authentication:** anonymous access is disabled. Use the credentials configured via the environment
 variables `OPCUA_DEFAULT_PASSWORD` (default `pass`) and `OPCUA_ADMIN_PASSWORD` (default `pass`), with
 the usernames `oibus` and `admin` respectively (set in `docker-compose.yml`).
+
+**Connecting from OIBus:** create a South OPC UA connector with the following settings:
+
+| Setting                      | Value                            |
+| ----------------------------- | --------------------------------- |
+| **URL**                       | `opc.tcp://localhost:50000`       |
+| **Security mode**              | `none`                            |
+| **Security policy**            | `none`                            |
+| **Authentication**             | `basic`                           |
+| **Username**                   | `oibus`                           |
+| **Password**                   | `pass` (or `$OPCUA_DEFAULT_PASSWORD`) |
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <DownloadButton link="/files/opcua-item-list.csv">Download item list (CSV)</DownloadButton>
+</div>
 
 ---
 
@@ -151,6 +168,19 @@ Input registers and discrete inputs are **read-only** from a Modbus client's per
 values are static and come from `server_config.json`. Holding registers and coils are updated every
 2 seconds by the simulator.
 
+**Connecting from OIBus:** create a South Modbus connector with the following settings:
+
+| Setting            | Value       |
+| ------------------- | ------------ |
+| **Host**             | `localhost`  |
+| **Port**             | `5020`       |
+| **Slave ID**         | `1`          |
+| **Address offset**   | `Modbus`     |
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <DownloadButton link="/files/modbus-item-list.csv">Download item list (CSV)</DownloadButton>
+</div>
+
 ---
 
 ### MQTT Broker — `mqtt-broker`
@@ -165,6 +195,23 @@ Eclipse Mosquitto with a custom entrypoint (`docker/mosquitto/entrypoint.sh`) th
 `MQTT_USER` / `MQTT_PASSWORD` credentials at startup. Anonymous access is disabled.
 
 The `9001` WebSocket port is available for browser-based MQTT clients if needed.
+
+**Connecting from OIBus:** create a South MQTT connector with the following settings:
+
+| Setting            | Value                   |
+| ------------------- | ------------------------ |
+| **URL**              | `mqtt://localhost:1883`  |
+| **QoS**              | `1`                      |
+| **Authentication**   | `basic`                  |
+| **Username**         | `oibus`                  |
+| **Password**         | `pass` (or `$MQTT_PASSWORD`) |
+
+Items subscribe to the [scalar topics](#scalar-topics) published by the simulator (the JSON topics
+are meant for `any-content` / custom-transformer testing, not point-value items):
+
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <DownloadButton link="/files/mqtt-item-list.csv">Download item list (CSV)</DownloadButton>
+</div>
 
 ---
 

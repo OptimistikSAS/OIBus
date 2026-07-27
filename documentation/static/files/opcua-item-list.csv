@@ -1,0 +1,9 @@
+name,enabled,scanMode,group,maxReadInterval,readDelay,overlap,syncWithGroup,settings_nodeId,settings_mode,settings_haMode,settings_timestampOrigin
+Temperature,true,Every 10 seconds,,3600,200,0,false,ns=3;i=1023,da,,oibus
+Pressure,true,Every 10 seconds,,3600,200,0,false,ns=3;i=1024,da,,oibus
+Flow rate,true,Every 10 seconds,,3600,200,0,false,ns=3;i=1025,da,,oibus
+Humidity,true,Every 10 seconds,,3600,200,0,false,ns=3;i=1026,da,,oibus
+RPM,true,Every 10 seconds,,3600,200,0,false,ns=3;i=1027,da,,oibus
+Pump status,true,Every 10 seconds,,3600,200,0,false,ns=3;i=1028,da,,oibus
+Voltage,true,Every 10 seconds,,3600,200,0,false,ns=3;i=1029,da,,oibus
+Current,true,Every 10 seconds,,3600,200,0,false,ns=3;i=1030,da,,oibus
