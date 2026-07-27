@@ -36,6 +36,21 @@ services:
     restart: unless-stopped
     profiles: [ "iot" ]
 
+  syslog-server:
+    image: python:3.14-slim
+    container_name: oibus_syslog-server
+    ports:
+      - "514:514/udp"
+      - "514:514/tcp"
+    volumes:
+      - ./docker/syslog/syslog_server.py:/app/syslog_server.py
+    working_dir: /app
+    command: python -u syslog_server.py
+    networks:
+      - oibus-network
+    restart: unless-stopped
+    profiles: [ "logging" ]
+
   mqtt-broker:
     image: eclipse-mosquitto
     container_name: oibus_mqtt-broker

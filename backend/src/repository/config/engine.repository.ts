@@ -214,6 +214,10 @@ export default class EngineRepository {
       'log_file_number_of_files = ?, ' +
       'log_database_level = ?, ' +
       'log_database_max_number_of_logs = ?, ' +
+      'log_syslog_level = ?, ' +
+      'log_syslog_host = ?, ' +
+      'log_syslog_port = ?, ' +
+      'log_syslog_protocol = ?, ' +
       'log_loki_level = ?, ' +
       'log_loki_interval = ?, ' +
       'log_loki_address = ?, ' +
@@ -232,6 +236,10 @@ export default class EngineRepository {
         command.file.numberOfFiles,
         command.database.level,
         command.database.maxNumberOfLogs,
+        command.syslog.level,
+        command.syslog.host,
+        command.syslog.port,
+        command.syslog.protocol,
         command.loki.level,
         command.loki.interval,
         command.loki.address,
