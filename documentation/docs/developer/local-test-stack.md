@@ -30,6 +30,12 @@ npm run docker:database
 # FTP / SFTP servers only
 npm run docker:ftp
 
+# Syslog test receiver only
+npm run docker:logging
+
+# Squid forward proxy (with auth) only
+npm run docker:proxy
+
 # Full development stack: IoT + simulator + database
 npm run docker:dev
 
@@ -54,6 +60,8 @@ Services are grouped into **Docker Compose profiles**:
 | `simulator` | `simulator`                                    |
 | `database`  | `postgres`, `influxdb`                         |
 | `ftp`       | `ftp-server`, `sftp-server`                    |
+| `logging`   | `syslog-server`                                |
+| `proxy`     | `squid-proxy`                                  |
 | `oibus`     | `oibus`, `nginx`                               |
 
 :::note Profile independence
@@ -212,6 +220,51 @@ are meant for `any-content` / custom-transformer testing, not point-value items)
 <div style={{ display: 'flex', justifyContent: 'center' }}>
   <DownloadButton link="/files/mqtt-item-list.csv">Download item list (CSV)</DownloadButton>
 </div>
+
+---
+
+### Syslog Server — `syslog-server` _(profile: `logging`)_
+
+| Property   | Value                                                 |
+| ---------- | ------------------------------------------------------ |
+| **Image**  | [`python:3.14-slim`](https://hub.docker.com/_/python) |
+| **Ports**  | `514` (UDP), `514` (TCP)                              |
+| **Script** | `docker/syslog/syslog_server.py`                      |
+
+A minimal syslog receiver used to test OIBus's Syslog logger (Engine settings → Logging → Syslog). It
+listens on both UDP and TCP on the same port and prints every received line to stdout — no parsing or
+authentication, it exists purely to let you see exactly what OIBus sends over the wire:
+
+```bash
+docker compose logs -f syslog-server
+```
+
+**Connecting from OIBus**: in Engine settings → Logging → Syslog, set **Host** `localhost`, **Port**
+`514`, **Protocol** `udp4` (or `tcp`), then enable the log level you want to test.
+
+---
+
+### Squid Proxy — `squid-proxy` _(profile: `proxy`)_
+
+| Property   | Value                                                          |
+| ---------- | ---------------------------------------------------------------- |
+| **Image**  | [`ubuntu/squid`](https://hub.docker.com/r/ubuntu/squid)          |
+| **Port**   | `3128` (HTTP/HTTPS forward proxy)                                |
+| **Config** | `docker/squid/conf.d/auth.conf`, `docker/squid/entrypoint.sh`    |
+
+A real Squid forward proxy requiring HTTP Basic authentication, used to test OIBus's
+[proxy server](../guide/engine/engine-settings.mdx#proxy-server) — specifically the
+["Forward to upstream proxy"](../guide/engine/engine-settings.mdx#forward-to-an-upstream-proxy)
+feature. `docker/squid/entrypoint.sh` generates `/etc/squid/passwords` at container startup from the
+`SQUID_USER` (default `oibus`) / `SQUID_PASSWORD` (default `pass`) environment variables using
+`openssl passwd -6`; `docker/squid/conf.d/auth.conf` is picked up by the default squid.conf's
+`include /etc/squid/conf.d/*.conf` and requires `proxy_auth` on every request.
+
+To test the forward-proxy feature: enable OIBus's own proxy server, then enable
+**Forward to upstream proxy** with **URL** `http://localhost:3128` and the credentials above.
+Requests through OIBus's proxy only succeed if it correctly attaches the upstream
+`Proxy-Authorization` header — watch `docker compose logs -f squid-proxy`, or try wrong credentials,
+to confirm.
 
 ---
 
@@ -589,6 +642,7 @@ FTP_PASSWORD=my_ftp_secret
 SFTP_PASSWORD=my_sftp_secret
 OPCUA_DEFAULT_PASSWORD=my_opcua_secret
 OPCUA_ADMIN_PASSWORD=my_admin_secret
+SQUID_PASSWORD=my_squid_secret
 DOMAIN=oibus.example.com
 ```
 

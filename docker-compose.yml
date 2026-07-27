@@ -51,6 +51,24 @@ services:
     restart: unless-stopped
     profiles: [ "logging" ]
 
+  squid-proxy:
+    image: ubuntu/squid:latest
+    container_name: oibus_squid-proxy
+    ports:
+      - "3128:3128"
+    volumes:
+      - ./docker/squid/conf.d/auth.conf:/etc/squid/conf.d/auth.conf
+      - ./docker/squid/entrypoint.sh:/docker-entrypoint-init.sh
+    environment:
+      SQUID_USER: oibus
+      SQUID_PASSWORD: ${SQUID_PASSWORD:-pass}
+    entrypoint: [ "/bin/bash", "/docker-entrypoint-init.sh" ]
+    command: [ "-f", "/etc/squid/squid.conf", "-NYC" ]
+    networks:
+      - oibus-network
+    restart: unless-stopped
+    profiles: [ "proxy" ]
+
   mqtt-broker:
     image: eclipse-mosquitto
     container_name: oibus_mqtt-broker
