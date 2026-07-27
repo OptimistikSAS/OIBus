@@ -1,4 +1,4 @@
-import { Component, inject, input, OnDestroy, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, HostListener, inject, input, OnDestroy, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PageLoader } from '../shared/page-loader.service';
@@ -24,10 +24,10 @@ import {
   distinctUntilChanged,
   EMPTY,
   exhaustMap,
+  filter,
   map,
   Observable,
   of,
-  startWith,
   Subscription,
   switchMap,
   tap,
@@ -36,19 +36,15 @@ import {
 import { emptyPage } from '../shared/test-utils';
 import { LogService } from '../services/log.service';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
-import { MultiSelectComponent } from '../shared/form/multi-select/multi-select.component';
-import { MultiSelectOptionDirective } from '../shared/form/multi-select/multi-select-option.directive';
 import { LogLevelsEnumPipe } from '../shared/log-levels-enum.pipe';
 import { DatetimepickerComponent } from '../shared/datetimepicker/datetimepicker.component';
 import { DatetimePipe } from '../shared/datetime.pipe';
 import { ScopeTypesEnumPipe } from '../shared/scope-types-enum.pipe';
 import { NgbAccordionModule, NgbTooltip, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
-import { PillComponent } from '../shared/pill/pill.component';
-import { LegendComponent } from '../shared/legend/legend.component';
 import { NgOptimizedImage } from '@angular/common';
 import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/form/typeahead';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
-import { toObservable } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'oib-logs',
@@ -57,18 +53,13 @@ import { toObservable } from '@angular/core/rxjs-interop';
     TranslateDirective,
     TranslatePipe,
     PaginationComponent,
-    MultiSelectComponent,
-    MultiSelectOptionDirective,
     LogLevelsEnumPipe,
     DatetimepickerComponent,
     DatetimePipe,
     ScopeTypesEnumPipe,
     NgbTypeahead,
-    PillComponent,
-    LegendComponent,
     NgbAccordionModule,
     OI_FORM_VALIDATION_DIRECTIVES,
-    NgbAccordionModule,
     NgbTooltip,
     NgOptimizedImage
   ],
@@ -102,12 +93,14 @@ export class LogsComponent implements OnInit, OnDestroy {
     { validators: [ascendingDates] }
   );
 
-  readonly LEGEND = [
-    { label: 'enums.log-levels.error', class: 'red-dot' },
-    { label: 'enums.log-levels.warn', class: 'yellow-dot' },
-    { label: 'enums.log-levels.info', class: 'green-dot' },
-    { label: 'enums.log-levels.debug', class: 'blue-dot' },
-    { label: 'enums.log-levels.trace', class: 'grey-dot' }
+  // Each level pairs a distinct icon shape with its color, so meaning does not rely on color alone
+  // (e.g. colorblind users can still tell ERROR from INFO even when red and green look the same).
+  readonly LEGEND: Array<{ label: LogLevel; class: string }> = [
+    { label: 'error', class: 'fa fa-times-circle level-red' },
+    { label: 'warn', class: 'fa fa-exclamation-triangle level-yellow' },
+    { label: 'info', class: 'fa fa-info-circle level-green' },
+    { label: 'debug', class: 'fa fa-bug level-blue' },
+    { label: 'trace', class: 'fa fa-search level-grey' }
   ];
 
   readonly levels = LOG_LEVELS.filter(level => level !== 'silent');
@@ -120,7 +113,19 @@ export class LogsComponent implements OnInit, OnDestroy {
   subscription = new Subscription();
   logs = signal<Page<LogDTO>>(emptyPage());
   noLogMatchingWarning = signal(false);
-  autoReloadPaused = signal(false);
+  paused = signal(false);
+
+  /** Windows offered in the log row context menu, as minutes before/after the clicked timestamp. */
+  readonly CONTEXT_MENU_WINDOWS: ReadonlyArray<{ minutes: number; labelKey: string }> = [
+    { minutes: 1, labelKey: 'logs.context-menu.1-minute' },
+    { minutes: 5, labelKey: 'logs.context-menu.5-minutes' },
+    { minutes: 15, labelKey: 'logs.context-menu.15-minutes' },
+    { minutes: 30, labelKey: 'logs.context-menu.30-minutes' },
+    { minutes: 60, labelKey: 'logs.context-menu.1-hour' }
+  ];
+
+  /** Position and target timestamp of the currently open log row context menu, or null when closed. */
+  readonly contextMenu = signal<{ x: number; y: number; timestamp: Instant } | null>(null);
 
   scopeTypeahead = (text$: Observable<string>) =>
     text$.pipe(
@@ -149,7 +154,21 @@ export class LogsComponent implements OnInit, OnDestroy {
     );
   groupFormatter = (group: Group) => group.groupName;
 
-  private autoReloadPaused$ = toObservable(this.autoReloadPaused);
+  /** Signal version of the current selected levels, kept in sync with the form control. */
+  readonly activeLevels = toSignal(this.searchForm.controls.levels.valueChanges, {
+    initialValue: this.searchForm.controls.levels.value
+  });
+
+  /** True when at least one level is selected (i.e. the filter is active). */
+  readonly hasActiveLevels = computed(() => this.activeLevels()!.length > 0);
+
+  /** Signal version of the current selected scope types, kept in sync with the form control. */
+  readonly activeScopeTypes = toSignal(this.searchForm.controls.scopeTypes.valueChanges, {
+    initialValue: this.searchForm.controls.scopeTypes.value
+  });
+
+  /** True when at least one scope type is selected (i.e. the filter is active). */
+  readonly hasActiveScopeTypes = computed(() => this.activeScopeTypes()!.length > 0);
 
   ngOnInit(): void {
     const searchParams = this.toSearchParams(this.route);
@@ -193,15 +212,15 @@ export class LogsComponent implements OnInit, OnDestroy {
       );
     }
     this.subscription.add(
-      combineLatest([this.pageLoader.pageLoads$, this.autoReloadPaused$.pipe(startWith(this.autoReloadPaused()))])
+      this.pageLoader.pageLoads$
         .pipe(
-          switchMap(([page, autoReloadPaused]) => {
-            // only reload the page if the page is 0, no end date is set and auto-reload is not paused
-            if (page === 0 && !this.searchForm.value.end && !autoReloadPaused) {
-              return timer(0, 10_000).pipe(map(() => page));
-            }
-            return [page];
-          }),
+          switchMap(page =>
+            timer(0, 10_000).pipe(
+              // Always fire the initial tick (0); subsequent ticks respect the paused state.
+              filter(tick => tick === 0 || !this.paused()),
+              map(() => page)
+            )
+          ),
           exhaustMap(page => {
             this.loading.set(true);
             const criteria: LogSearchParam = { ...this.toSearchParams(this.route), page };
@@ -268,52 +287,108 @@ export class LogsComponent implements OnInit, OnDestroy {
     this.selectedScopes.update(scopes => [...scopes, event.item]);
     this.searchForm.controls.scopeIds.setValue('');
     event.preventDefault();
+    this.triggerSearch();
   }
 
   removeScope(scopeToRemove: Scope) {
     this.selectedScopes.update(scopes => scopes.filter(scope => scope.scopeId !== scopeToRemove.scopeId));
+    this.triggerSearch();
   }
 
   selectItem(event: NgbTypeaheadSelectItemEvent<Item>) {
     this.selectedItems.update(items => [...items, event.item]);
     this.searchForm.controls.itemIds.setValue('');
     event.preventDefault();
+    this.triggerSearch();
   }
 
   removeItem(itemToRemove: Item) {
     this.selectedItems.update(items => items.filter(item => item.itemId !== itemToRemove.itemId));
+    this.triggerSearch();
   }
 
   selectGroup(event: NgbTypeaheadSelectItemEvent<Group>) {
     this.selectedGroups.update(groups => [...groups, event.item]);
     this.searchForm.controls.groupIds.setValue('');
     event.preventDefault();
+    this.triggerSearch();
   }
 
   removeGroup(groupToRemove: Group) {
     this.selectedGroups.update(groups => groups.filter(group => group.groupId !== groupToRemove.groupId));
+    this.triggerSearch();
   }
 
   getLevelClass(logLevel: LogLevel): string {
-    const foundElement = this.LEGEND.find(element => element.label === `enums.log-levels.${logLevel}`);
+    const foundElement = this.LEGEND.find(element => element.label === logLevel);
     if (foundElement) {
       return foundElement.class;
     }
-    return 'red-dot';
+    return 'fa fa-times-circle level-red';
   }
 
-  toggleAutoReload() {
-    const isPaused = this.autoReloadPaused();
+  /**
+   * Toggles a log level in/out of the active level filter and immediately applies the search.
+   * Clicking the same level twice clears the filter for that level.
+   */
+  toggleLevel(level: LogLevel) {
+    const current = this.searchForm.controls.levels.value;
+    const next = current.includes(level) ? current.filter(l => l !== level) : [...current, level];
+    this.searchForm.controls.levels.setValue(next);
+    this.triggerSearch();
+  }
 
-    if (!isPaused) {
-      if (!this.searchForm.value.end) {
-        this.searchForm.controls.end.setValue(DateTime.now().toISO());
-      }
-    } else {
-      this.searchForm.controls.end.setValue(null);
-      this.pageLoader.loadPage(this.logs(), 0);
-    }
+  /** Clears all active level filters and immediately applies the search. */
+  clearLevels() {
+    this.searchForm.controls.levels.setValue([]);
+    this.triggerSearch();
+  }
 
-    this.autoReloadPaused.set(!isPaused);
+  /** Toggles a scope type in/out of the active scope-type filter and immediately applies the search. */
+  toggleScopeType(scopeType: ScopeType) {
+    const current = this.searchForm.controls.scopeTypes.value;
+    const next = current.includes(scopeType) ? current.filter(t => t !== scopeType) : [...current, scopeType];
+    this.searchForm.controls.scopeTypes.setValue(next);
+    this.triggerSearch();
+  }
+
+  /** Clears all active scope-type filters and immediately applies the search. */
+  clearScopeTypes() {
+    this.searchForm.controls.scopeTypes.setValue([]);
+    this.triggerSearch();
+  }
+
+  /** Opens the context menu for a log row at the click position, targeting that row's timestamp. */
+  openContextMenu(event: MouseEvent, timestamp: Instant) {
+    event.preventDefault();
+    this.contextMenu.set({ x: event.clientX, y: event.clientY, timestamp });
+  }
+
+  @HostListener('document:keydown.escape')
+  closeContextMenu() {
+    this.contextMenu.set(null);
+  }
+
+  /**
+   * Clears every filter and searches the given number of minutes before and after the timestamp
+   * that was right-clicked, then closes the context menu.
+   */
+  searchAroundTimestamp(timestamp: Instant, minutes: number) {
+    const center = DateTime.fromISO(timestamp, { zone: 'utc' });
+    this.selectedScopes.set([]);
+    this.selectedItems.set([]);
+    this.selectedGroups.set([]);
+    this.searchForm.patchValue({
+      start: center.minus({ minutes }).toISO(),
+      end: center.plus({ minutes }).toISO(),
+      messageContent: null,
+      scopeTypes: [],
+      scopeIds: '',
+      itemIds: '',
+      groupIds: '',
+      levels: []
+    });
+    this.closeContextMenu();
+    this.triggerSearch();
   }
 }

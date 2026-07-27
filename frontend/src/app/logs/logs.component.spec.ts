@@ -15,6 +15,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { createMock, MockObject, stubRoute } from '../../test/vitest-create-mock';
+import { provideNgbConfigTesting } from '../shared/form/oi-ngb-testing';
 
 class LogsComponentTester {
   readonly fixture = TestBed.createComponent(LogsComponent);
@@ -26,7 +27,12 @@ class LogsComponentTester {
   readonly searchButton = this.root.getByCss('#search-button');
   readonly pauseIcon = this.root.getByCss('#auto-reload-toggle .fa-pause');
   readonly playIcon = this.root.getByCss('#auto-reload-toggle .fa-play');
-  readonly buttonContainer = this.root.getByCss('.d-flex.gap-2');
+  readonly buttonContainer = this.root.getByCss('.search-buttons');
+  readonly clearLevelsButton = this.root.getByCss('#clear-levels-button');
+  readonly clearScopeTypesButton = this.root.getByCss('#clear-scope-types-button');
+  readonly filterChips = this.root.getByCss('.filter-chip');
+  readonly contextMenuBackdrop = this.root.getByCss('.context-menu-backdrop');
+  readonly contextMenuItems = this.root.getByCss('.context-menu .dropdown-item');
 
   setEmbedded(embedded: boolean) {
     this.fixture.componentRef.setInput('embedded', embedded);
@@ -93,6 +99,7 @@ describe('LogsComponent', () => {
         provideI18nTesting(),
         provideRouter([]),
         provideHttpClientTesting(),
+        provideNgbConfigTesting(),
         { provide: LogService, useValue: logService },
         { provide: PageLoader, useValue: pageLoader },
         { provide: ActivatedRoute, useValue: route }
@@ -117,17 +124,20 @@ describe('LogsComponent', () => {
     logService.search.mockReturnValue(of(logPage));
     tester.fixture.detectChanges();
 
-    expect(logService.search).toHaveBeenCalledWith({
-      messageContent: undefined,
-      scopeTypes: [],
-      scopeIds: [],
-      itemIds: [],
-      groupIds: [],
-      start: '2022-12-31T23:00:00.000Z',
-      end: '2023-02-28T23:00:00.000Z',
-      levels: ['info', 'error'],
-      page: 2
+    await vi.waitFor(() => {
+      expect(logService.search).toHaveBeenCalledWith({
+        messageContent: undefined,
+        scopeTypes: [],
+        scopeIds: [],
+        itemIds: [],
+        groupIds: [],
+        start: '2022-12-31T23:00:00.000Z',
+        end: '2023-02-28T23:00:00.000Z',
+        levels: ['info', 'error'],
+        page: 2
+      });
     });
+    tester.fixture.detectChanges();
     await expect.element(tester.logs).toHaveLength(2);
 
     await expect.element(tester.cells(0)).toHaveLength(7);
@@ -154,6 +164,9 @@ describe('LogsComponent', () => {
       preventDefault: vi.fn()
     } as any;
 
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
+
     const form = tester.component.searchForm;
     form.controls.scopeIds.setValue('someValue');
 
@@ -171,6 +184,9 @@ describe('LogsComponent', () => {
     ];
     tester.component.selectedScopes.set(scopes);
 
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
+
     tester.component.removeScope(scopes[0]);
 
     expect(tester.component.selectedScopes()).toEqual([scopes[1]]);
@@ -178,12 +194,12 @@ describe('LogsComponent', () => {
 
   test('should return correct class for known log level', () => {
     const result = tester.component.getLevelClass('error');
-    expect(result).toBe('red-dot');
+    expect(result).toBe('fa fa-times-circle level-red');
   });
 
-  test('should fallback to red-dot for unknown log level', () => {
+  test('should fallback to red icon for unknown log level', () => {
     const result = tester.component.getLevelClass('unknown' as any);
-    expect(result).toBe('red-dot');
+    expect(result).toBe('fa fa-times-circle level-red');
   });
 
   test('should build search params from route', () => {
@@ -194,19 +210,35 @@ describe('LogsComponent', () => {
     expect(params.page).toBe(2);
   });
 
-  test('should fetch logs periodically if page is 0, no end date, and not paused', () => {
+  test('should refresh the logs every 10 seconds regardless of page or end date, but not when paused', async () => {
     vi.useFakeTimers();
-    pageLoader.pageLoads$ = new BehaviorSubject<number>(0);
-    tester.component.autoReloadPaused.set(false);
     logService.search.mockReturnValue(of(logPage));
 
-    vi.advanceTimersByTime(10_000);
+    tester.fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(0);
     tester.fixture.detectChanges();
 
+    expect(logService.search).toHaveBeenCalledTimes(1);
+
+    // Advance 10s → second refresh
+    await vi.advanceTimersByTimeAsync(10_000);
+    tester.fixture.detectChanges();
     expect(logService.search).toHaveBeenCalledTimes(2);
+
+    // Pause → next 10s tick should be suppressed
+    tester.component.paused.set(true);
+    await vi.advanceTimersByTimeAsync(10_000);
+    tester.fixture.detectChanges();
+    expect(logService.search).toHaveBeenCalledTimes(2);
+
+    // Unpause → next 10s tick fires again
+    tester.component.paused.set(false);
+    await vi.advanceTimersByTimeAsync(10_000);
+    tester.fixture.detectChanges();
+    expect(logService.search).toHaveBeenCalledTimes(3);
   });
 
-  describe('Auto-reload functionality', () => {
+  describe('Pause/resume functionality', () => {
     beforeEach(() => {
       logService.search.mockReturnValue(of(logPage));
     });
@@ -216,7 +248,7 @@ describe('LogsComponent', () => {
       tester.setEmbedded(false);
       vi.advanceTimersByTime(100);
 
-      expect(tester.component.autoReloadPaused()).toBe(false);
+      expect(tester.component.paused()).toBe(false);
       await expect.element(tester.pauseIcon).toBeInTheDocument();
       await expect.element(tester.playIcon).not.toBeInTheDocument();
     });
@@ -232,7 +264,7 @@ describe('LogsComponent', () => {
 
     test('should display play icon when auto-reload is paused', async () => {
       vi.useFakeTimers();
-      tester.component.autoReloadPaused.set(true);
+      tester.component.paused.set(true);
       tester.setEmbedded(false);
       vi.advanceTimersByTime(100);
 
@@ -246,14 +278,14 @@ describe('LogsComponent', () => {
       tester.setEmbedded(false);
       vi.advanceTimersByTime(100);
 
-      expect(tester.component.autoReloadPaused()).toBe(false);
+      expect(tester.component.paused()).toBe(false);
       await expect.element(tester.pauseIcon).toBeInTheDocument();
 
       await tester.autoReloadButton.click();
       vi.advanceTimersByTime(100);
       tester.fixture.detectChanges();
 
-      expect(tester.component.autoReloadPaused()).toBe(true);
+      expect(tester.component.paused()).toBe(true);
       await expect.element(tester.playIcon).toBeInTheDocument();
       await expect.element(tester.pauseIcon).not.toBeInTheDocument();
 
@@ -261,27 +293,9 @@ describe('LogsComponent', () => {
       vi.advanceTimersByTime(100);
       tester.fixture.detectChanges();
 
-      expect(tester.component.autoReloadPaused()).toBe(false);
+      expect(tester.component.paused()).toBe(false);
       await expect.element(tester.pauseIcon).toBeInTheDocument();
       await expect.element(tester.playIcon).not.toBeInTheDocument();
-    });
-
-    test('should not trigger immediate reload when resuming with end date', async () => {
-      vi.useFakeTimers();
-      tester.setEmbedded(false);
-      vi.advanceTimersByTime(100);
-
-      tester.component.searchForm.patchValue({ end: '2023-01-01T00:00:00.000Z' });
-
-      tester.component.autoReloadPaused.set(true);
-      vi.advanceTimersByTime(100);
-
-      await expect.element(tester.autoReloadButton).toBeInTheDocument();
-      await tester.autoReloadButton.click();
-      vi.advanceTimersByTime(100);
-
-      expect(tester.component.autoReloadPaused()).toBe(false);
-      expect(pageLoader.loadPage).not.toHaveBeenCalled();
     });
 
     test('should have both pause/resume and search buttons in the same container', async () => {
@@ -306,6 +320,156 @@ describe('LogsComponent', () => {
       await expect.element(tester.searchButton).toBeInTheDocument();
       expect(tester.searchButton.element().classList).toContain('btn');
       expect(tester.searchButton.element().classList).toContain('btn-primary');
+    });
+  });
+
+  describe('Clickable level and scope-type filter chips', () => {
+    beforeEach(() => {
+      logService.search.mockReturnValue(of(logPage));
+    });
+
+    test('should display a clickable chip for every level and scope type', async () => {
+      tester.fixture.detectChanges();
+
+      // 5 levels + 4 scope types
+      await expect.element(tester.filterChips).toHaveLength(9);
+    });
+
+    test('should toggle a level filter when clicking a chip and immediately search', () => {
+      const router = TestBed.inject(Router);
+      const navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
+      tester.fixture.detectChanges();
+
+      // Route already has levels: ['info', 'error'] — add 'warn' via the method
+      tester.component.toggleLevel('warn');
+
+      expect(navigateSpy).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ levels: ['info', 'error', 'warn'] }) })
+      );
+
+      // Remove 'info' (already active)
+      navigateSpy.mockClear();
+      tester.component.toggleLevel('info');
+
+      expect(navigateSpy).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ levels: ['error', 'warn'] }) })
+      );
+    });
+
+    test('should clear all level filters when clicking the level clear button', async () => {
+      const router = TestBed.inject(Router);
+      const navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
+      tester.fixture.detectChanges();
+
+      // The route has levels: ['info', 'error'], so the clear button should be visible
+      await expect.element(tester.clearLevelsButton).toBeInTheDocument();
+      await tester.clearLevelsButton.click();
+
+      expect(navigateSpy).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({ levels: [] }) }));
+    });
+
+    test('should toggle a scope-type filter when clicking a chip and immediately search', () => {
+      const router = TestBed.inject(Router);
+      const navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
+      tester.fixture.detectChanges();
+
+      tester.component.toggleScopeType('south');
+
+      expect(navigateSpy).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: expect.objectContaining({ scopeTypes: ['south'] }) })
+      );
+
+      navigateSpy.mockClear();
+      tester.component.toggleScopeType('south');
+
+      expect(navigateSpy).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({ scopeTypes: [] }) }));
+    });
+
+    test('should clear all scope-type filters when clicking the scope-type clear button', async () => {
+      const router = TestBed.inject(Router);
+      const navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
+      tester.fixture.detectChanges();
+      tester.component.searchForm.controls.scopeTypes.setValue(['south']);
+      tester.fixture.detectChanges();
+
+      await expect.element(tester.clearScopeTypesButton).toBeInTheDocument();
+      await tester.clearScopeTypesButton.click();
+
+      expect(navigateSpy).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({ scopeTypes: [] }) }));
+    });
+  });
+
+  describe('Contextual time search on row context menu', () => {
+    beforeEach(() => {
+      logService.search.mockReturnValue(of(logPage));
+    });
+
+    test('should open a context menu with 5 time-window options on right-click, suppressing the native menu', async () => {
+      tester.fixture.detectChanges();
+
+      const preventDefault = vi.fn();
+      tester.component.openContextMenu({ preventDefault, clientX: 120, clientY: 340 } as unknown as MouseEvent, '2023-01-01T00:00:00.000Z');
+      tester.fixture.detectChanges();
+
+      expect(preventDefault).toHaveBeenCalled();
+      expect(tester.component.contextMenu()).toEqual({ x: 120, y: 340, timestamp: '2023-01-01T00:00:00.000Z' });
+      await expect.element(tester.contextMenuBackdrop).toBeInTheDocument();
+      await expect.element(tester.contextMenuItems).toHaveLength(5);
+    });
+
+    test('should close the context menu on escape', () => {
+      tester.fixture.detectChanges();
+      tester.component.openContextMenu(
+        { preventDefault: vi.fn(), clientX: 0, clientY: 0 } as unknown as MouseEvent,
+        '2023-01-01T00:00:00.000Z'
+      );
+
+      expect(tester.component.contextMenu()).not.toBeNull();
+
+      tester.component.closeContextMenu();
+
+      expect(tester.component.contextMenu()).toBeNull();
+    });
+
+    test('should close the context menu when clicking the backdrop', async () => {
+      tester.fixture.detectChanges();
+      tester.component.openContextMenu(
+        { preventDefault: vi.fn(), clientX: 0, clientY: 0 } as unknown as MouseEvent,
+        '2023-01-01T00:00:00.000Z'
+      );
+      tester.fixture.detectChanges();
+
+      await tester.contextMenuBackdrop.click();
+
+      expect(tester.component.contextMenu()).toBeNull();
+    });
+
+    test('should search a window around the timestamp and clear every other filter', () => {
+      const router = TestBed.inject(Router);
+      const navigateSpy = vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
+      tester.fixture.detectChanges();
+      tester.component.selectedScopes.set([{ scopeId: '1', scopeName: 'A' }]);
+
+      tester.component.searchAroundTimestamp('2020-01-01T12:00:00.000Z', 5);
+
+      expect(navigateSpy).toHaveBeenCalledWith([], {
+        queryParams: {
+          start: '2020-01-01T11:55:00.000Z',
+          end: '2020-01-01T12:05:00.000Z',
+          messageContent: null,
+          levels: [],
+          scopeTypes: [],
+          scopeIds: [],
+          itemIds: [],
+          groupIds: [],
+          page: 0
+        }
+      });
+      expect(tester.component.contextMenu()).toBeNull();
+      expect(tester.component.selectedScopes()).toEqual([]);
     });
   });
 
@@ -372,6 +536,9 @@ describe('LogsComponent', () => {
     test('selectScope should add a scope, clear input and preventDefault', () => {
       const scope: Scope = { scopeId: '1', scopeName: 'N' };
       const ev: any = { item: scope, preventDefault: vi.fn() };
+      const router = TestBed.inject(Router);
+      vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
+
       tester.component.selectScope(ev);
       expect(tester.component.selectedScopes()).toEqual([scope]);
       expect(tester.component.searchForm.controls.scopeIds.value).toBe('');
@@ -381,6 +548,9 @@ describe('LogsComponent', () => {
     test('removeScope should remove the given scope', () => {
       const a: Scope = { scopeId: 'A', scopeName: 'A' };
       const b: Scope = { scopeId: 'B', scopeName: 'B' };
+      const router = TestBed.inject(Router);
+      vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
+
       tester.component.selectedScopes.set([a, b]);
       tester.component.removeScope(a);
       expect(tester.component.selectedScopes()).toEqual([b]);
@@ -388,12 +558,12 @@ describe('LogsComponent', () => {
 
     test('getLevelClass should return correct class or fallback', () => {
       const cmp = tester.component;
-      expect(cmp.getLevelClass('error')).toBe('red-dot');
-      expect(cmp.getLevelClass('warn')).toBe('yellow-dot');
-      expect(cmp.getLevelClass('info')).toBe('green-dot');
-      expect(cmp.getLevelClass('debug')).toBe('blue-dot');
-      expect(cmp.getLevelClass('trace')).toBe('grey-dot');
-      expect(cmp.getLevelClass('nonsense' as any)).toBe('red-dot');
+      expect(cmp.getLevelClass('error')).toBe('fa fa-times-circle level-red');
+      expect(cmp.getLevelClass('warn')).toBe('fa fa-exclamation-triangle level-yellow');
+      expect(cmp.getLevelClass('info')).toBe('fa fa-info-circle level-green');
+      expect(cmp.getLevelClass('debug')).toBe('fa fa-bug level-blue');
+      expect(cmp.getLevelClass('trace')).toBe('fa fa-search level-grey');
+      expect(cmp.getLevelClass('nonsense' as any)).toBe('fa fa-times-circle level-red');
     });
   });
 });
