@@ -9,6 +9,7 @@
     "delete": "Delete",
     "close": "Close",
     "search": "Search",
+    "clear": "Clear",
     "enabled": "Enabled",
     "disabled": "Disabled",
     "colon-separator": ": ",
@@ -2748,6 +2749,14 @@
     "tooltips": {
       "pause-auto-reload": "Pause auto-reload",
       "resume-auto-reload": "Resume auto-reload"
+    },
+    "context-menu": {
+      "title": "Search around this log",
+      "1-minute": "± 1 minute",
+      "5-minutes": "± 5 minutes",
+      "15-minutes": "± 15 minutes",
+      "30-minutes": "± 30 minutes",
+      "1-hour": "± 1 hour"
     }
   },
   "history-query": {
