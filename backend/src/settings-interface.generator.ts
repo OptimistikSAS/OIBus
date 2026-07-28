@@ -405,6 +405,8 @@ export function buildSouthInterfaceName(connectorId: string, itemInterface: bool
       return `SouthPostgreSQL${prefix}Settings`;
     case 'rest':
       return `SouthRest${prefix}Settings`;
+    case 's7':
+      return `SouthS7${prefix}Settings`;
     case 'sqlite':
       return `SouthSQLite${prefix}Settings`;
     case 'sftp':

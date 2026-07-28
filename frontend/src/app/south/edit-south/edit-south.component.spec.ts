@@ -7,6 +7,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { EditSouthComponent } from './edit-south.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
+import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { CertificateService } from '../../services/certificate.service';
@@ -222,5 +223,22 @@ describe('EditSouthComponent', () => {
     );
     const getItemCount = prepare.mock.calls[0][4];
     expect(getItemCount('group1')).toBe(1);
+  });
+
+  test('importItems should open the import modal with recoveryStrategy among the optional headers', () => {
+    southConnectorService.findById.mockReturnValue(of(southConnector as any));
+    TestBed.overrideProvider(ActivatedRoute, { useValue: editRouteStub });
+
+    const prepare = vi.fn();
+    modalService.open.mockReturnValue({ componentInstance: { prepare }, result: of(undefined) } as any);
+
+    const fixture = TestBed.createComponent(EditSouthComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.importItems();
+
+    expect(modalService.open).toHaveBeenCalledWith(ImportSouthItemsModalComponent, expect.anything());
+    const optionalHeaders = prepare.mock.calls[0][2];
+    expect(optionalHeaders).toContain('recoveryStrategy');
   });
 });
