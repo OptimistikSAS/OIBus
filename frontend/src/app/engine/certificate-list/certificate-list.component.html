@@ -10,15 +10,26 @@
         }
       </div>
       <div>
-        <button
-          type="button"
-          id="add-certificate"
-          class="btn btn-primary btn-sm oib-box-btn"
-          [ngbTooltip]="'engine.certificate.tooltips.add' | translate"
-          (click)="addCertificate()"
-        >
-          <span class="fa fa-plus"></span>
-        </button>
+        <div class="btn-group">
+          <button
+            type="button"
+            id="add-certificate"
+            class="btn btn-primary btn-sm oib-box-btn"
+            [ngbTooltip]="'engine.certificate.tooltips.add' | translate"
+            (click)="addCertificate()"
+          >
+            <span class="fa fa-plus"></span>
+          </button>
+          <button
+            type="button"
+            id="import-certificate"
+            class="btn btn-primary btn-sm oib-box-btn"
+            [ngbTooltip]="'engine.certificate.tooltips.import' | translate"
+            (click)="importCertificate()"
+          >
+            <span class="fa fa-upload"></span>
+          </button>
+        </div>
         <oib-help url="https://oibus.optimistik.com/docs/guide/engine/engine-settings" />
       </div>
     </div>
@@ -79,9 +90,9 @@
                   <span class="fa fa-copy"></span>
                 </button>
                 <button
-                  class="btn btn-link px-1 py-0"
-                  [ngbTooltip]="'engine.certificate.tooltips.download' | translate"
-                  (click)="downloadCertificate(certificate)"
+                  class="btn btn-link px-1 py-0 export-certificate"
+                  [ngbTooltip]="'engine.certificate.tooltips.export' | translate"
+                  (click)="exportCertificate(certificate)"
                 >
                   <span class="fa fa-download"></span>
                 </button>

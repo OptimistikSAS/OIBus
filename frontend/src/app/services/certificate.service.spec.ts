@@ -5,14 +5,18 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { CertificateService } from './certificate.service';
 import { CertificateDTO } from '../../../../backend/shared/model/certificate.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
+import { DownloadService } from './download.service';
+import { createMock, MockObject } from '../../test/vitest-create-mock';
 
 describe('CertificateService', () => {
   let http: HttpTestingController;
   let service: CertificateService;
+  let downloadService: MockObject<DownloadService>;
 
   beforeEach(() => {
+    downloadService = createMock(DownloadService);
     TestBed.configureTestingModule({
-      providers: [provideHttpClientTesting()]
+      providers: [provideHttpClientTesting(), { provide: DownloadService, useValue: downloadService }]
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(CertificateService);
@@ -66,6 +70,84 @@ describe('CertificateService', () => {
     service.delete('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/certificates/id1' });
     testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  test('should import a certificate', () => {
+    let importedCertificate: CertificateDTO | null = null;
+    const certificateFile = new File(['cert'], 'cert.pem');
+    const privateKeyFile = new File(['key'], 'key.pem');
+    const expectedCertificate = { id: 'id1' } as CertificateDTO;
+
+    service
+      .importCertificate(
+        { name: 'my cert', description: 'desc', privateKeyPassphrase: null },
+        { certificate: certificateFile, privateKey: privateKeyFile, caChain: null }
+      )
+      .subscribe(certificate => (importedCertificate = certificate));
+
+    const testRequest = http.expectOne({ url: '/api/certificates/import', method: 'POST' });
+    expect(testRequest.request.body).toBeInstanceOf(FormData);
+    const body = testRequest.request.body as FormData;
+    expect(body.get('certificate')).toBe(certificateFile);
+    expect(body.get('privateKey')).toBe(privateKeyFile);
+    expect(body.get('caChain')).toBeNull();
+    expect(body.get('name')).toBe('my cert');
+    expect(body.get('description')).toBe('desc');
+    expect(body.get('privateKeyPassphrase')).toBeNull();
+    expect(testRequest.request.headers.get('Content-Type')).toBeNull();
+
+    testRequest.flush(expectedCertificate);
+    expect(importedCertificate!).toEqual(expectedCertificate);
+  });
+
+  test('should import a certificate with a ca chain and passphrase', () => {
+    const certificateFile = new File(['cert'], 'cert.pem');
+    const privateKeyFile = new File(['key'], 'key.pem');
+    const caChainFile = new File(['chain'], 'chain.pem');
+
+    service
+      .importCertificate(
+        { name: 'my cert', description: 'desc', privateKeyPassphrase: 'secret' },
+        { certificate: certificateFile, privateKey: privateKeyFile, caChain: caChainFile }
+      )
+      .subscribe();
+
+    const testRequest = http.expectOne({ url: '/api/certificates/import', method: 'POST' });
+    const body = testRequest.request.body as FormData;
+    expect(body.get('caChain')).toBe(caChainFile);
+    expect(body.get('privateKeyPassphrase')).toBe('secret');
+
+    testRequest.flush({ id: 'id1' });
+  });
+
+  test('should export a certificate', () => {
+    let done = false;
+    service.exportCertificate('id1', 'PEM', true, 'cert.pem').subscribe(() => (done = true));
+
+    const testRequest = http.expectOne(
+      req => req.url === '/api/certificates/id1/export' && req.params.get('format') === 'PEM' && req.params.get('includeChain') === 'true'
+    );
+    expect(testRequest.request.method).toBe('GET');
+    expect(testRequest.request.responseType).toBe('blob');
+    const blob = new Blob(['content']);
+    testRequest.flush(blob);
+
+    expect(downloadService.download).toHaveBeenCalledWith(expect.anything(), 'cert.pem');
+    expect(done).toBe(true);
+  });
+
+  test('should export a private key', () => {
+    let done = false;
+    service.exportPrivateKey('id1', 'passphrase', 'key.pem').subscribe(() => (done = true));
+
+    const testRequest = http.expectOne({ url: '/api/certificates/id1/export/private-key', method: 'POST' });
+    expect(testRequest.request.body).toEqual({ passphrase: 'passphrase' });
+    expect(testRequest.request.responseType).toBe('blob');
+    const blob = new Blob(['content']);
+    testRequest.flush(blob);
+
+    expect(downloadService.download).toHaveBeenCalledWith(expect.anything(), 'key.pem');
     expect(done).toBe(true);
   });
 });
