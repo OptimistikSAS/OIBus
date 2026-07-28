@@ -72,6 +72,15 @@ const certificateSchema: Joi.ObjectSchema = Joi.object({
   })
 });
 
+const certificateImportSchema: Joi.ObjectSchema = Joi.object({
+  name: Joi.string().required(),
+  description: Joi.string().required().allow(null, '')
+});
+
+const certificatePrivateKeyExportSchema: Joi.ObjectSchema = Joi.object({
+  passphrase: Joi.string().min(8).max(1024).required()
+});
+
 const engineLoggerSchema = Joi.object({
   console: Joi.object({
     level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace')
@@ -249,6 +258,8 @@ function timezoneValidator(value: string, helper: Joi.CustomHelpers) {
 export {
   scanModeSchema,
   certificateSchema,
+  certificateImportSchema,
+  certificatePrivateKeyExportSchema,
   engineSchema,
   engineNameSchema,
   engineWebServerSchema,
