@@ -8244,6 +8244,20 @@ const models: TsoaRoute.Models = {
             "publicKey": {"dataType":"string","required":true},
             "certificate": {"dataType":"string","required":true},
             "expiry": {"ref":"Instant","required":true},
+            "certificateChain": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CertificateExportFormat": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["PEM"]},{"dataType":"enum","enums":["DER"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "CertificatePrivateKeyExportCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "passphrase": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
     },
@@ -12755,6 +12769,121 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 next,
                 validatedArgs,
                 successStatus: 201,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCertificateController_import: Record<string, TsoaRoute.ParameterSchema> = {
+                name: {"in":"formData","name":"name","required":true,"dataType":"string"},
+                description: {"in":"formData","name":"description","required":true,"dataType":"string"},
+                privateKeyPassphrase: {"in":"formData","name":"privateKeyPassphrase","dataType":"string"},
+                certificateFile: {"in":"formData","name":"certificate","required":true,"dataType":"file"},
+                privateKeyFile: {"in":"formData","name":"privateKey","required":true,"dataType":"file"},
+                certificateChainFile: {"in":"formData","name":"certificateChain","required":true,"dataType":"file"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/certificates/import',
+            upload.fields([
+                {
+                    name: "certificate",
+                    maxCount: 1
+                },
+                {
+                    name: "privateKey",
+                    maxCount: 1
+                },
+                {
+                    name: "certificateChain",
+                    maxCount: 1
+                }
+            ]),
+            ...(fetchMiddlewares<RequestHandler>(CertificateController)),
+            ...(fetchMiddlewares<RequestHandler>(CertificateController.prototype.import)),
+
+            async function CertificateController_import(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCertificateController_import, request, response });
+
+                const controller = new CertificateController();
+
+              await templateService.apiHandler({
+                methodName: 'import',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 201,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCertificateController_exportCertificate: Record<string, TsoaRoute.ParameterSchema> = {
+                certificateId: {"in":"path","name":"certificateId","required":true,"dataType":"string"},
+                format: {"default":"PEM","in":"query","name":"format","ref":"CertificateExportFormat"},
+                includeChain: {"default":false,"in":"query","name":"includeChain","dataType":"boolean"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/certificates/:certificateId/export',
+            ...(fetchMiddlewares<RequestHandler>(CertificateController)),
+            ...(fetchMiddlewares<RequestHandler>(CertificateController.prototype.exportCertificate)),
+
+            async function CertificateController_exportCertificate(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCertificateController_exportCertificate, request, response });
+
+                const controller = new CertificateController();
+
+              await templateService.apiHandler({
+                methodName: 'exportCertificate',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCertificateController_exportPrivateKey: Record<string, TsoaRoute.ParameterSchema> = {
+                certificateId: {"in":"path","name":"certificateId","required":true,"dataType":"string"},
+                command: {"in":"body","name":"command","required":true,"ref":"CertificatePrivateKeyExportCommandDTO"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/certificates/:certificateId/export/private-key',
+            ...(fetchMiddlewares<RequestHandler>(CertificateController)),
+            ...(fetchMiddlewares<RequestHandler>(CertificateController.prototype.exportPrivateKey)),
+
+            async function CertificateController_exportPrivateKey(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCertificateController_exportPrivateKey, request, response });
+
+                const controller = new CertificateController();
+
+              await templateService.apiHandler({
+                methodName: 'exportPrivateKey',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
               });
             } catch (err) {
                 return next(err);
