@@ -19,6 +19,13 @@
         >
           <span class="fa fa-plus"></span>
         </button>
+        <button
+          type="button"
+          id="import-certificate"
+          class="btn btn-secondary btn-sm oib-box-btn"
+          (click)="importCertificate()"
+          translate="engine.certificate.import.button"
+        ></button>
         <oib-help url="https://oibus.optimistik.com/docs/guide/engine/engine-settings" />
       </div>
     </div>
@@ -79,9 +86,9 @@
                   <span class="fa fa-copy"></span>
                 </button>
                 <button
-                  class="btn btn-link px-1 py-0"
-                  [ngbTooltip]="'engine.certificate.tooltips.download' | translate"
-                  (click)="downloadCertificate(certificate)"
+                  class="btn btn-link px-1 py-0 export-certificate"
+                  [ngbTooltip]="'engine.certificate.tooltips.export' | translate"
+                  (click)="exportCertificate(certificate)"
                 >
                   <span class="fa fa-download"></span>
                 </button>

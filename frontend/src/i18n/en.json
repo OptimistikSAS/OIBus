@@ -175,6 +175,10 @@
       "iot": "IoT",
       "oi": "OI"
     },
+    "certificate-export-format": {
+      "PEM": "PEM (.pem)",
+      "DER": "DER (.cer)"
+    },
     "csv-character": {
       "DOT": "Dot .",
       "SEMI_COLON": "Semi colon ;",
@@ -713,6 +717,7 @@
       "confirm-deletion": "Are you sure you want to delete the certificate {{ name }}? Beforehand, be sure it is not used.",
       "updated": "Certificate {{ name }} successfully updated",
       "created": "Certificate {{ name }} successfully created",
+      "imported": "Certificate {{ name }} successfully imported",
       "deleted": "Certificate {{ name }} deleted",
       "none": "No certificate",
       "name": "Name",
@@ -733,11 +738,32 @@
       "days-before-expiry": "Days before expiry",
       "tooltips": {
         "add": "Add a new certificate",
+        "export": "Export certificate",
         "edit": "Edit certificate",
         "delete": "Delete certificate",
         "copy-public-key": "Copy public key to clipboard",
-        "copy-certificate": "Copy certificate to clipboard",
-        "download": "Download certificate file"
+        "copy-certificate": "Copy certificate to clipboard"
+      },
+      "import": {
+        "button": "Import",
+        "title": "Import a certificate",
+        "certificate-file": "Certificate file",
+        "private-key-file": "Private key file",
+        "certificate-chain-file": "Certificate chain file (optional)",
+        "private-key-passphrase": "Private key passphrase",
+        "file-too-large": "The selected file is too large. Maximum size is 1 MB",
+        "hint": "Accepted formats: PEM, CRT, CER, DER. The passphrase is only needed if the uploaded private key file is encrypted."
+      },
+      "export": {
+        "title": "Export certificate",
+        "format": "Format",
+        "include-chain": "Include CA chain",
+        "include-chain-der-hint": "The CA chain cannot be included when exporting in DER format",
+        "include-private-key": "Include private key",
+        "private-key-warning": "The private key will be exported as an encrypted PKCS#8 file, using the passphrase below. This passphrase is not stored and cannot be recovered, so keep it safe.",
+        "passphrase": "Passphrase",
+        "passphrase-confirmation": "Confirm passphrase",
+        "passphrases-not-identical": "The passphrases are not identical"
       }
     },
     "ip-filter": {

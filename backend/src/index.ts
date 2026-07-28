@@ -231,7 +231,8 @@ export async function bootstrap(): Promise<void> {
     new JoiValidator(),
     repositoryService.certificateRepository,
     encryptionService,
-    oIAnalyticsMessageService
+    oIAnalyticsMessageService,
+    loggerService.createChildLogger('internal')
   );
 
   const oIAnalyticsCommandService = new OIAnalyticsCommandService(

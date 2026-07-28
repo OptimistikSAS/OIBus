@@ -7,10 +7,11 @@ import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { CertificateService } from '../../services/certificate.service';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { EditCertificateModalComponent } from './edit-certificate-modal/edit-certificate-modal.component';
+import { ImportCertificateModalComponent } from './import-certificate-modal/import-certificate-modal.component';
+import { ExportCertificateModalComponent } from './export-certificate-modal/export-certificate-modal.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { ClipboardCopyDirective } from '../../shared/clipboard-copy-directive';
-import { DownloadService } from '../../services/download.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -47,7 +48,6 @@ export class CertificateListComponent {
   private modalService = inject(ModalService);
   private notificationService = inject(NotificationService);
   private certificateService = inject(CertificateService);
-  private downloadService = inject(DownloadService);
 
   private refreshTrigger = new Subject<void>();
   readonly certificates = toSignal(
@@ -104,7 +104,38 @@ export class CertificateListComponent {
     this.refreshAfterEditCertificateModalClosed(modalRef, 'created');
   }
 
-  private refreshAfterEditCertificateModalClosed(modalRef: Modal<any>, mode: 'created' | 'updated') {
+  /**
+   * Open a modal to import a certificate
+   */
+  importCertificate() {
+    const modalRef = this.modalService.open(ImportCertificateModalComponent, {
+      size: 'lg',
+      beforeDismiss: () => {
+        const component: ImportCertificateModalComponent = modalRef.componentInstance;
+        const result = component.canDismiss();
+        return typeof result === 'boolean' ? result : firstValueFrom(result);
+      }
+    });
+    this.refreshAfterEditCertificateModalClosed(modalRef, 'imported');
+  }
+
+  /**
+   * Open a modal to export a certificate
+   */
+  exportCertificate(certificate: CertificateDTO) {
+    const modalRef = this.modalService.open(ExportCertificateModalComponent, {
+      size: 'lg',
+      beforeDismiss: () => {
+        const component: ExportCertificateModalComponent = modalRef.componentInstance;
+        const result = component.canDismiss();
+        return typeof result === 'boolean' ? result : firstValueFrom(result);
+      }
+    });
+    const component: ExportCertificateModalComponent = modalRef.componentInstance;
+    component.prepare(certificate);
+  }
+
+  private refreshAfterEditCertificateModalClosed(modalRef: Modal<any>, mode: 'created' | 'updated' | 'imported') {
     modalRef.result.subscribe((certificate: CertificateDTO) => {
       this.refreshTrigger.next();
       this.notificationService.success(`engine.certificate.${mode}`, {
@@ -126,10 +157,6 @@ export class CertificateListComponent {
           name: certificate.name
         });
       });
-  }
-
-  downloadCertificate(certificate: CertificateDTO) {
-    this.downloadService.downloadFile({ blob: new Blob([certificate.certificate]), name: certificate.name + '.pem' });
   }
 
   toggleSort(field: CertificateSortField) {
