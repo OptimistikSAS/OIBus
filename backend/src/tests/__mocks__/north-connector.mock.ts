@@ -28,7 +28,7 @@ export default class NorthConnectorMock extends NorthConnector<NorthSettings> {
   override start = mock.fn(async (): Promise<void> => undefined);
   override isEnabled = mock.fn((): boolean => false);
   override connect = mock.fn(async (): Promise<void> => undefined);
-  override createCronJob = mock.fn((_scanMode: ScanMode): void => undefined);
+  override triggerScanMode = mock.fn((_scanMode: ScanMode): void => undefined);
   override addTaskToQueue = mock.fn((): void => undefined);
   override run = mock.fn(async (): Promise<void> => undefined);
   override handleContentWrapper = mock.fn(async (): Promise<void> => undefined);
@@ -38,7 +38,6 @@ export default class NorthConnectorMock extends NorthConnector<NorthSettings> {
   override disconnect = mock.fn(async (): Promise<void> => undefined);
   override stop = mock.fn(async (): Promise<void> => undefined);
   override refreshLogger = mock.fn((): void => undefined);
-  override updateScanMode = mock.fn(async (): Promise<void> => undefined);
   override searchCacheContent = mock.fn(
     async (_searchParams: CacheSearchParam): Promise<Omit<CacheSearchResult, 'metrics'>> => ({}) as Omit<CacheSearchResult, 'metrics'>
   );

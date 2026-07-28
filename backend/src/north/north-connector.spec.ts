@@ -265,73 +265,38 @@ describe('NorthConnector', () => {
     assert.strictEqual(mockListener.mock.calls[0].arguments[0], 512);
   });
 
-  it('should properly create cron job and add to queue', async () => {
+  it('should add to queue when the triggered scan mode matches the configured trigger scan mode', async () => {
     const addTaskToQueueMock = mock.fn((_taskDescription: { id: string; name: string }) => undefined);
     north.addTaskToQueue = addTaskToQueueMock;
-    await north.connect();
-    assert.ok(
-      logger.debug.mock.calls.some(
-        (c: { arguments: Array<unknown> }) =>
-          c.arguments[0] === `Creating cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
-      )
-    );
+    north.isEnabled = mock.fn((): boolean => true);
 
-    await north.connect();
-    assert.ok(
-      logger.debug.mock.calls.some(
-        (c: { arguments: Array<unknown> }) =>
-          c.arguments[0] ===
-          `Removing existing cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
-      )
-    );
-
-    // Retrieve the CronJob callback and trigger it
-    const cronJobCalls = cronExports.CronJob.mock.calls;
-    assert.ok(cronJobCalls.length > 0);
-    const lastCallArgs = cronJobCalls[cronJobCalls.length - 1].arguments;
-    const cronCallback = lastCallArgs[1] as () => void;
-    cronCallback();
+    north.triggerScanMode(testData.scanMode.list[0]);
 
     assert.strictEqual(addTaskToQueueMock.mock.calls.length, 1);
     assert.deepStrictEqual(addTaskToQueueMock.mock.calls[0].arguments[0], {
       id: testData.scanMode.list[0].id,
       name: testData.scanMode.list[0].name
     });
-
-    await north.updateScanMode(testData.scanMode.list[0]);
-    await north.updateScanMode(testData.scanMode.list[1]);
-    assert.ok(
-      logger.debug.mock.calls.some(
-        (c: { arguments: Array<unknown> }) =>
-          c.arguments[0] === `Creating cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
-      )
-    );
-    assert.ok(
-      logger.debug.mock.calls.some(
-        (c: { arguments: Array<unknown> }) =>
-          c.arguments[0] ===
-          `Removing existing cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
-      )
-    );
-
-    await north.stop();
   });
 
-  it('should not create a cron job when the cron expression is invalid', () => {
-    const error = new Error('Invalid cron expression');
-    utilsExports.validateCronExpression = mock.fn(() => {
-      throw error;
-    });
+  it('should not add to queue when the triggered scan mode does not match the configured trigger scan mode', async () => {
+    const addTaskToQueueMock = mock.fn((_taskDescription: { id: string; name: string }) => undefined);
+    north.addTaskToQueue = addTaskToQueueMock;
+    north.isEnabled = mock.fn((): boolean => true);
 
-    north.createCronJob({ ...testData.scanMode.list[0], cron: '* * * * * *L' });
+    north.triggerScanMode(testData.scanMode.list[1]);
 
-    assert.ok(
-      logger.error.mock.calls.some(
-        (c: { arguments: Array<unknown> }) =>
-          c.arguments[0] ===
-          `Error when creating cron job for scan mode "${testData.scanMode.list[0].name}" (* * * * * *L): ${error.message}`
-      )
-    );
+    assert.strictEqual(addTaskToQueueMock.mock.calls.length, 0);
+  });
+
+  it('should not add to queue when disabled, even if the scan mode matches', async () => {
+    const addTaskToQueueMock = mock.fn((_taskDescription: { id: string; name: string }) => undefined);
+    north.addTaskToQueue = addTaskToQueueMock;
+    north.isEnabled = mock.fn((): boolean => false);
+
+    north.triggerScanMode(testData.scanMode.list[0]);
+
+    assert.strictEqual(addTaskToQueueMock.mock.calls.length, 0);
   });
 
   it('should properly add to queue a new task and trigger next run', async () => {

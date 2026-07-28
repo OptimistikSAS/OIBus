@@ -273,62 +273,23 @@ describe('SouthConnector', () => {
       assert.strictEqual(south['inFlightTasks'].size, 0);
     });
 
-    it('should update cron jobs', () => {
-      south.updateCronJobs();
-      south.updateCronJobs();
-      assert.strictEqual(south['cronByScanModeIds'].size, 2);
+    it('should not dispatch any task when the connector is disabled', () => {
+      // The engine calls addToQueue unconditionally for every south connector on every scan-mode
+      // tick (it no longer tracks per-connector interest) — a disabled connector must ignore it.
+      const runTaskMock = mock.fn(async () => undefined);
+      south['runTask'] = runTaskMock;
+      south.isEnabled = mock.fn((): boolean => false);
 
-      south.createOrUpdateCronJob = mock.fn((_scanMode: unknown) => undefined);
-      south.updateScanModeIfUsed({
-        id: 'bad id',
-        cron: '',
-        description: '',
-        name: '',
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      });
+      south.addToQueue(testData.scanMode.list[0]);
 
-      south['connector'].items = [];
-      south.updateCronJobs();
-      assert.strictEqual(south['cronByScanModeIds'].size, 0);
-    });
-
-    it('should not create a cron for the item scan mode when the item is synced to a group', () => {
-      const groupScanMode = testData.scanMode.list[0];
-      const itemScanMode = testData.scanMode.list[1]; // different from the group's scan mode
-      const group = {
-        id: 'groupId1',
-        name: 'group1',
-        scanMode: groupScanMode,
-        startTimeOffset: null,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: null,
-        recoveryStrategy: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
-
-      south['connector'].groups = [group];
-      south['connector'].items = [
-        {
-          ...testData.south.list[0].items[0],
-          scanMode: itemScanMode,
-          group,
-          syncWithGroup: true
-        } as unknown as SouthConnectorItemEntity<SouthFolderScannerItemSettings>
-      ];
-
-      south.updateCronJobs();
-
-      // Only the group's scan mode should have a cron — not the item's own scan mode
-      assert.strictEqual(south['cronByScanModeIds'].size, 1);
-      assert.ok(south['cronByScanModeIds'].has(groupScanMode.id!));
-      assert.ok(!south['cronByScanModeIds'].has(itemScanMode.id!));
+      assert.strictEqual(runTaskMock.mock.calls.length, 0);
+      assert.ok(
+        (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
+          (c: { arguments: Array<unknown> }) =>
+            c.arguments[0] ===
+            `Connector is disabled. Cron "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron}) not added`
+        )
+      );
     });
 
     it('should refresh logger on refreshLogger()', async () => {
@@ -343,69 +304,10 @@ describe('SouthConnector', () => {
       assert.strictEqual((southCacheService.deleteItemsBySouth as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
     });
 
-    it('should create a cron job', () => {
-      cronExports.CronJob = mock.fn(function (_cron: unknown, callback: () => void) {
-        setTimeout(() => callback(), 1000);
-        return cronMockInstance;
-      });
-      const addToQueueMock = mock.fn((_scanMode: unknown) => undefined);
-      south.addToQueue = addToQueueMock;
-      south.createOrUpdateCronJob(testData.scanMode.list[0]);
-      mock.timers.tick(1000);
-      assert.strictEqual(addToQueueMock.mock.calls.length, 1);
-
-      south.createOrUpdateCronJob(testData.scanMode.list[0]);
-      assert.ok(
-        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) =>
-            c.arguments[0] ===
-            `Removing existing South cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
-        )
-      );
-    });
-
-    it('should properly update cron', async () => {
-      south.createOrUpdateCronJob(testData.scanMode.list[0]);
-      await south.updateScanModeIfUsed(testData.scanMode.list[0]);
+    it('should properly connect and disconnect without touching any cron state', async () => {
       await south.connect();
       await south.disconnect();
-      south.createOrUpdateCronJob(testData.scanMode.list[0]);
       await south.stop();
-
-      assert.ok(
-        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) =>
-            c.arguments[0] ===
-            `Creating South cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
-        )
-      );
-      assert.ok(
-        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) =>
-            c.arguments[0] ===
-            `Removing existing South cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
-        )
-      );
-    });
-
-    it('should not create a cron job when the cron expression is invalid', () => {
-      const error = new Error('Invalid cron expression');
-      let validateCallCount = 0;
-      utilsExports.validateCronExpression = mock.fn(() => {
-        validateCallCount++;
-        if (validateCallCount === 1) throw error;
-        return { expression: '' };
-      });
-
-      south.createOrUpdateCronJob({ ...testData.scanMode.list[0], cron: '* * * * * *L' });
-
-      assert.ok(
-        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) =>
-            c.arguments[0] ===
-            `Error when creating South cron job for scan mode "${testData.scanMode.list[0].name}" (* * * * * *L): ${error.message}`
-        )
-      );
     });
 
     it('should query files', async () => {

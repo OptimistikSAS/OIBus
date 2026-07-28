@@ -43,6 +43,7 @@ export default class ScanModeService {
     }
 
     const scanMode = this.scanModeRepository.create(command, createdBy);
+    await this.dataStreamEngine.createScanMode(scanMode);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     return scanMode;
   }
@@ -70,6 +71,7 @@ export default class ScanModeService {
   delete(scanModeId: string): void {
     const scanMode = this.findById(scanModeId);
     this.scanModeRepository.delete(scanMode.id);
+    this.dataStreamEngine.deleteScanMode(scanMode.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
