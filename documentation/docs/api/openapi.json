@@ -1786,6 +1786,11 @@
 						"description": "The category of the South connector.",
 						"example": "file"
 					},
+					"beta": {
+						"type": "boolean",
+						"description": "Whether this connector type is in beta.",
+						"example": false
+					},
 					"modes": {
 						"properties": {
 							"history": {
@@ -1839,6 +1844,11 @@
 						"$ref": "#/components/schemas/OIBusSouthCategory",
 						"description": "The category of the South connector.",
 						"example": "file"
+					},
+					"beta": {
+						"type": "boolean",
+						"description": "Whether this connector type is in beta.",
+						"example": false
 					},
 					"modes": {
 						"properties": {
@@ -27995,6 +28005,10 @@
 						"$ref": "#/components/schemas/OIBusNorthCategory",
 						"description": "Category of the north connector"
 					},
+					"beta": {
+						"type": "boolean",
+						"description": "Whether this connector type is in beta"
+					},
 					"types": {
 						"items": {
 							"type": "string"
@@ -28023,6 +28037,11 @@
 						"$ref": "#/components/schemas/OIBusNorthCategory",
 						"description": "The category of the North connector.",
 						"example": "debug"
+					},
+					"beta": {
+						"type": "boolean",
+						"description": "Whether this connector type is in beta.",
+						"example": false
 					},
 					"types": {
 						"items": {

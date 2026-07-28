@@ -18,7 +18,12 @@
               />
             </div>
             <div class="ms-3 text-start">
-              <h6 class="mb-0">{{ southType.id | oIBusSouthTypeEnum }}</h6>
+              <h6 class="mb-0">
+                {{ southType.id | oIBusSouthTypeEnum }}
+                @if (southType.beta) {
+                  <span class="badge bg-warning text-dark ms-1" translate="common.beta"></span>
+                }
+              </h6>
               <p class="mb-0">{{ southType.id | oIBusSouthTypeDescriptionEnum }}</p>
             </div>
           </button>

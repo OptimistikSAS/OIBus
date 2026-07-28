@@ -1,3 +1,4 @@
+/* tslint:disable */
 /* eslint-disable */
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import type { TsoaRoute } from '@tsoa/runtime';
@@ -547,6 +548,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "id": {"ref":"OIBusSouthType","required":true},
             "category": {"ref":"OIBusSouthCategory","required":true},
+            "beta": {"dataType":"boolean"},
             "modes": {"dataType":"nestedObjectLiteral","nestedProperties":{"history":{"dataType":"boolean","required":true},"lastFile":{"dataType":"boolean","required":true},"lastPoint":{"dataType":"boolean","required":true},"subscription":{"dataType":"boolean","required":true}},"required":true},
         },
         "additionalProperties": false,
@@ -557,6 +559,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "id": {"ref":"OIBusSouthType","required":true},
             "category": {"ref":"OIBusSouthCategory","required":true},
+            "beta": {"dataType":"boolean"},
             "modes": {"dataType":"nestedObjectLiteral","nestedProperties":{"history":{"dataType":"boolean","required":true},"lastFile":{"dataType":"boolean","required":true},"lastPoint":{"dataType":"boolean","required":true},"subscription":{"dataType":"boolean","required":true}},"required":true},
             "settings": {"ref":"OIBusObjectAttribute","required":true},
             "items": {"ref":"OIBusArrayAttribute","required":true},
@@ -6596,6 +6599,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "id": {"ref":"OIBusNorthType","required":true},
             "category": {"ref":"OIBusNorthCategory","required":true},
+            "beta": {"dataType":"boolean"},
             "types": {"dataType":"array","array":{"dataType":"string"},"required":true},
         },
         "additionalProperties": false,
@@ -6606,6 +6610,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "id": {"ref":"OIBusNorthType","required":true},
             "category": {"ref":"OIBusNorthCategory","required":true},
+            "beta": {"dataType":"boolean"},
             "types": {"dataType":"array","array":{"dataType":"string"},"required":true},
             "settings": {"ref":"OIBusObjectAttribute","required":true},
         },
