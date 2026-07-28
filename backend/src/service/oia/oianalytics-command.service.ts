@@ -52,6 +52,8 @@ import {
   OIBusTestNorthConnectorCommand,
   OIBusTestSouthConnectorCommand,
   OIBusTestSouthConnectorItemCommand,
+  OIBusTestTransformerCommand,
+  OIBusTestTransformerItemCommandContent,
   OIBusUpdateCertificateCommand,
   OIBusUpdateCustomTransformerCommand,
   OIBusUpdateEngineGeneralCommand,
@@ -220,6 +222,7 @@ interface ICommandTransformerService {
   update(transformerId: string, command: CustomTransformerCommandDTO, updatedBy: string): Promise<void>;
   delete(transformerId: string): Promise<void>;
   test(command: CustomTransformerCommandDTO, testRequest: TransformerTestRequest): Promise<TransformerTestResponse>;
+  testTransformer(transformerId: string, options: Record<string, unknown>, inputData: string): Promise<SouthConnectorItemTestResult>;
 }
 
 const UPDATE_SETTINGS_FILE = 'update.json';
@@ -684,6 +687,12 @@ export default class OIAnalyticsCommandService {
           break;
         case 'test-custom-transformer':
           await withTimeout(this.executeTestCustomTransformerConnectionCommand(command), TEST_COMMAND_TIMEOUT_MS, command.type);
+          break;
+        case 'test-transformer':
+          {
+            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
+            await withTimeout(this.executeTestTransformerCommand(command, privateKey), TEST_COMMAND_TIMEOUT_MS, command.type);
+          }
           break;
       }
     } catch (error: unknown) {
@@ -1173,7 +1182,7 @@ export default class OIAnalyticsCommandService {
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings
     );
-    this.completeTestItemCommand(command, result.transformed ?? result.raw);
+    this.completeDualResultTestCommand(command, result);
   }
 
   private async decryptNorthSettings(
@@ -1394,10 +1403,46 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
 
-  private completeTestItemCommand(
-    command: OIBusTestSouthConnectorItemCommand | OIBusTestHistoryQuerySouthItemCommand,
-    result: OIBusContent
-  ) {
+  private async decryptTestTransformerItemSettings(content: OIBusTestTransformerItemCommandContent, privateKey: string) {
+    const manifest = this.southService.listManifest().find(element => element.id === content.southType)!;
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+    content.southSettings = await encryptionService.decryptSecretsWithPrivateKey(content.southSettings, manifest.settings, privateKey);
+    content.itemSettings = await encryptionService.decryptSecretsWithPrivateKey(content.itemSettings, itemSettingsManifest, privateKey);
+  }
+
+  private async executeTestTransformerCommand(command: OIBusTestTransformerCommand, privateKey: string) {
+    // Two ways to test a transformer, mirroring the UI: with pasted input data, or by running an
+    // actual south item read through it.
+    let result: SouthConnectorItemTestResult;
+    if ('inputData' in command.commandContent) {
+      result = await this.transformerService.testTransformer(
+        command.transformerId,
+        (command.commandContent.options as Record<string, unknown>) || {},
+        command.commandContent.inputData
+      );
+    } else {
+      await this.decryptTestTransformerItemSettings(command.commandContent, privateKey);
+      result = await this.southService.testItem(
+        command.commandContent.southId,
+        command.commandContent.southType,
+        command.commandContent.itemName,
+        command.commandContent.southSettings,
+        command.commandContent.itemSettings,
+        command.commandContent.testingSettings
+      );
+    }
+    this.completeDualResultTestCommand(command, result);
+  }
+
+  /**
+   * Caps content size before it goes into a command result (the OIAnalytics command payload has its
+   * own size limits): first 1000 elements for time-values/setpoint, first 500 KB for arbitrary file
+   * content. Returns the (possibly truncated) content plus `truncated`/`totalSize` so the UI can tell
+   * the user more was collected than shown.
+   */
+  private truncateContentForResult(result: OIBusContent): OIBusContent & { truncated: boolean; totalSize: number } {
     let truncated = false;
     let totalSize = 0;
     switch (result.type) {
@@ -1421,10 +1466,33 @@ export default class OIAnalyticsCommandService {
         }
         break;
     }
+    return { ...result, truncated, totalSize };
+  }
+
+  private completeTestItemCommand(command: OIBusTestHistoryQuerySouthItemCommand, result: OIBusContent) {
     this.oIAnalyticsCommandRepository.markAsCompleted(
       command.id,
       DateTime.now().toUTC().toISO(),
-      JSON.stringify({ ...result, truncated, totalSize })
+      JSON.stringify(this.truncateContentForResult(result))
+    );
+  }
+
+  /**
+   * Unlike completeTestItemCommand (which only cares about the final output), these results must
+   * show the full raw → transformer → output pipeline, so both raw and transformed (when there is
+   * one) are kept and truncated independently.
+   */
+  private completeDualResultTestCommand(
+    command: OIBusTestSouthConnectorItemCommand | OIBusTestTransformerCommand,
+    result: SouthConnectorItemTestResult
+  ) {
+    this.oIAnalyticsCommandRepository.markAsCompleted(
+      command.id,
+      DateTime.now().toUTC().toISO(),
+      JSON.stringify({
+        raw: this.truncateContentForResult(result.raw),
+        transformed: result.transformed ? this.truncateContentForResult(result.transformed) : null
+      })
     );
   }
 
@@ -1646,6 +1714,8 @@ export default class OIAnalyticsCommandService {
         return registration.commandPermissions.deleteCustomTransformer;
       case 'test-custom-transformer':
         return registration.commandPermissions.testCustomTransformer;
+      case 'test-transformer':
+        return registration.commandPermissions.testNorthConnection;
     }
   }
 }
@@ -1698,6 +1768,7 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
     case 'update-custom-transformer':
     case 'delete-custom-transformer':
     case 'test-custom-transformer':
+    case 'test-transformer':
       return command;
   }
 };
