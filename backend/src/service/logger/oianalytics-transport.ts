@@ -14,6 +14,10 @@ interface OIAnalyticsLog {
   scopeType: 'SOUTH' | 'NORTH' | 'HISTORY_QUERY' | 'INTERNAL';
   scopeId: string | null;
   scopeName: string | null;
+  itemId: string | null;
+  itemName: string | null;
+  groupId: string | null;
+  groupName: string | null;
   timestamp: Instant;
   level: 'TRACE' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
 }
@@ -111,6 +115,10 @@ class OianalyticsTransport {
       scopeType: SCOPE_TYPE_FORMAT[log.scopeType],
       scopeId: log.scopeId || null,
       scopeName: log.scopeName || null,
+      itemId: log.itemId || null,
+      itemName: log.itemName || null,
+      groupId: log.groupId || null,
+      groupName: log.groupName || null,
       message: log.msg
     });
     const batchLimit = this.options.batchLimit || MAX_BATCH_LOG;
