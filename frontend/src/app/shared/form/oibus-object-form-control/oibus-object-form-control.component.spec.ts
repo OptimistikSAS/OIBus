@@ -57,6 +57,7 @@ class TestHostComponent {
       description: 'Description',
       publicKey: 'public',
       certificate: 'certificate',
+      certificateChain: null,
       expiry: '2024-01-01T00:00:00Z',
       createdBy: { id: '', friendlyName: '' },
       updatedBy: { id: '', friendlyName: '' },

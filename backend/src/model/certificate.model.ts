@@ -17,5 +17,5 @@ export interface CertificateImportCommand {
   certificateContent: Buffer;
   privateKeyContent: Buffer;
   privateKeyPassphrase: string | null;
-  caChainContent: Buffer | null;
+  certificateChainContent: Buffer | null;
 }
