@@ -65,7 +65,15 @@ export default class SouthOPCUA
     value: number | string;
     quality: string;
   }> = [];
-  private client: ClientSession | null = null;
+  // Dedicated session for the subscription (DA push) path, kept separate from the query session
+  // pool below — OPC-UA subscriptions are stateful and session-scoped, not something that can be
+  // pooled per-call.
+  private subscriptionSession: ClientSession | null = null;
+  // Sessions used by directQuery()/historyQuery(), sized to getMaxParallelRun(). Each in-flight
+  // query acquires one (acquireQuerySession/releaseQuerySession below) and releases it when done,
+  // so a failure on one session only affects the query using it, not every concurrent query.
+  private querySessionPool: Array<ClientSession> = [];
+  private freeQuerySessions: Array<ClientSession> = [];
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(
@@ -93,7 +101,12 @@ export default class SouthOPCUA
       this.flushTimeout = null;
     }
     try {
-      this.client = await this.createSession();
+      // subscriptionSession is created lazily in subscribe() — only connectors with at least one
+      // subscription-mode item need it, so a pure DA/HA polling connector doesn't open an extra,
+      // unused OPC-UA session against the server.
+      const querySessions = await Promise.all(Array.from({ length: this.getMaxParallelRun() }, () => this.createSession()));
+      this.querySessionPool = querySessions;
+      this.freeQuerySessions = [...querySessions];
       this.logger.info(`OPCUA South connector "${this.connector.name}" connected`);
       await super.connect();
     } catch (error: unknown) {
@@ -132,13 +145,61 @@ export default class SouthOPCUA
       this.subscription = null;
     }
     this.monitoredItems.clear();
-    if (this.client) {
-      await this.client.close();
-      this.client = null;
+    if (this.subscriptionSession) {
+      await this.subscriptionSession.close();
+      this.subscriptionSession = null;
     }
+    for (const session of this.querySessionPool) {
+      try {
+        await session.close();
+      } catch (error: unknown) {
+        this.logger.error(`Error closing OPC-UA query session: ${(error as Error).message}`);
+      }
+    }
+    this.querySessionPool = [];
+    this.freeQuerySessions = [];
 
     await super.disconnect();
     this.disconnecting = false;
+  }
+
+  /** Concurrency ceiling for this connector — see SouthConnector.getMaxParallelRun(). Bounded so an
+   * operator can't open more OPC-UA sessions than a typical server's per-client session limit
+   * tolerates; the setting can only relax concurrency within this ceiling, never past it. */
+  protected override getMaxParallelRun(): number {
+    const CEILING = 10;
+    return Math.max(1, Math.min(this.connector.settings.maxParallelRun ?? 1, CEILING));
+  }
+
+  private acquireQuerySession(): ClientSession | null {
+    return this.freeQuerySessions.pop() ?? null;
+  }
+
+  private releaseQuerySession(session: ClientSession): void {
+    this.freeQuerySessions.push(session);
+  }
+
+  /**
+   * A query session failed with a non-device error. Discard just that one session and replace it
+   * so the rest of the pool keeps working at full capacity — other concurrently running queries on
+   * other sessions are unaffected. If a replacement session can't be created either (the
+   * connection itself is likely down), fall back to the existing full-connector reconnect path.
+   */
+  private async replaceQuerySession(failedSession: ClientSession): Promise<void> {
+    this.querySessionPool = this.querySessionPool.filter(session => session !== failedSession);
+    try {
+      await failedSession.close();
+    } catch {
+      // Best-effort close of a session that already failed; nothing more to do with it.
+    }
+    try {
+      const newSession = await this.createSession();
+      this.querySessionPool.push(newSession);
+      this.freeQuerySessions.push(newSession);
+    } catch (error: unknown) {
+      this.logger.error(`Could not replace OPC-UA query session, triggering full reconnect: ${(error as Error).message}`);
+      this.triggerReconnect();
+    }
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -325,16 +386,18 @@ export default class SouthOPCUA
     startTime: Instant,
     endTime: Instant
   ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
-    // Guard outside the try/catch for the same reason as directQuery: if a previous
-    // group in the same run() iteration already triggered a disconnect, client is
-    // null and a reconnect is already scheduled. Throwing here would call disconnect()
-    // a second time, cancelling and re-delaying the reconnect timer needlessly.
-    if (!this.client) {
-      this.logger.debug('OPCUA client not connected, skipping history query');
+    // Acquire a session from the pool rather than sharing one across every concurrent work-unit —
+    // a failure here only affects the session this one query is using (see replaceQuerySession),
+    // not any other query running concurrently on a different session.
+    const session = this.acquireQuerySession();
+    if (!session) {
+      this.logger.debug('No free OPCUA query session available, skipping history query');
       return { trackedInstant: null, value: null };
     }
     try {
-      return await this.getHAValues(items, startTime, endTime, this.client);
+      const result = await this.getHAValues(items, startTime, endTime, session);
+      this.releaseQuerySession(session);
+      return result;
     } catch (error: unknown) {
       if (isDeviceError(error)) {
         const preview = items
@@ -345,12 +408,10 @@ export default class SouthOPCUA
         this.logger.error(
           `HA read failed for ${items.length} item(s) [${preview}${suffix}] (device/PLC error, session kept): ${(error as Error).message}`
         );
+        this.releaseQuerySession(session);
         return { trackedInstant: null, value: null };
       }
-      await this.disconnect();
-      if (!this.disconnecting && this.connector.enabled) {
-        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
-      }
+      await this.replaceQuerySession(session);
       throw error;
     }
   }
@@ -595,12 +656,12 @@ export default class SouthOPCUA
     } else {
       this.logger.debug(`Read node ${nodesToRead[0].nodeId}`);
     }
-    // Guard outside the try/catch: if the session was dropped by a previous group
-    // in the same run() iteration, this.client is already null and a reconnect is
-    // already scheduled. Throwing here would trigger a second disconnect() call
-    // that cancels and re-delays the reconnect timer without any benefit.
-    if (!this.client) {
-      this.logger.debug('OPCUA client not connected, skipping direct query');
+    // Acquire a session from the pool rather than sharing one across every concurrent work-unit —
+    // a failure here only affects the session this one query is using (see replaceQuerySession),
+    // not any other query running concurrently on a different session.
+    const session = this.acquireQuerySession();
+    if (!session) {
+      this.logger.debug('No free OPCUA query session available, skipping direct query');
       return null;
     }
     // addContent is outside the try so that a cache/disk error never causes a
@@ -610,11 +671,10 @@ export default class SouthOPCUA
     // service-level error (e.g. Kepware reporting a device/PLC offline as
     // BadCommunicationError), that is a device error — log it and skip this group
     // without touching the session so other PLC groups keep working. Only genuine
-    // session/transport failures (BadSessionClosed, ECONNRESET, …) trigger a
-    // disconnect + reconnect.
+    // session/transport failures (BadSessionClosed, ECONNRESET, …) replace the session.
     const queryTime = DateTime.now().toUTC().toISO();
     try {
-      content = await this.getDAValues(nodesToRead, this.client);
+      content = await this.getDAValues(nodesToRead, session);
     } catch (error) {
       if (isDeviceError(error)) {
         const preview = nodesToRead
@@ -625,14 +685,13 @@ export default class SouthOPCUA
         this.logger.error(
           `DA read failed for ${nodesToRead.length} node(s) [${preview}${suffix}] (device/PLC error, session kept): ${(error as Error).message}`
         );
+        this.releaseQuerySession(session);
         return null;
       }
-      await this.disconnect();
-      if (!this.disconnecting && this.connector.enabled) {
-        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
-      }
+      await this.replaceQuerySession(session);
       throw error;
     }
+    this.releaseQuerySession(session);
     await this.addContent({ type: 'time-values', content }, queryTime, items);
     return content && content.length > 0 ? content[content.length - 1] : null;
   }
@@ -690,12 +749,12 @@ export default class SouthOPCUA
     if (!items.length) {
       return;
     }
-    if (!this.client) {
-      throw new Error('OPCUA client not set');
+    if (!this.subscriptionSession) {
+      this.subscriptionSession = await this.createSession();
     }
 
     if (!this.subscription) {
-      this.subscription = await this.client.createSubscription2({
+      this.subscription = await this.subscriptionSession.createSubscription2({
         requestedPublishingInterval: 150,
         requestedLifetimeCount: 100,
         requestedMaxKeepAliveCount: 10,

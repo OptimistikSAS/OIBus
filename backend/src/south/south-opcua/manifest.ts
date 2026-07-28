@@ -217,6 +217,32 @@ const manifest: SouthConnectorManifest = {
         }
       },
       {
+        type: 'number',
+        key: 'maxParallelRun',
+        translationKey: 'configuration.oibus.manifest.south.opcua.max-parallel-run',
+        unit: null,
+        defaultValue: 1,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['1']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['10']
+          }
+        ],
+        displayProperties: {
+          row: 4,
+          columns: 6,
+          displayInViewMode: true
+        }
+      },
+      {
         type: 'object',
         key: 'authentication',
         translationKey: 'configuration.oibus.manifest.south.opcua.authentication.title',

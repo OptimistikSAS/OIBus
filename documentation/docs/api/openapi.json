@@ -7851,6 +7851,10 @@
 						"type": "number",
 						"format": "double"
 					},
+					"maxParallelRun": {
+						"type": "number",
+						"format": "double"
+					},
 					"maxNumberOfMessages": {
 						"type": "number",
 						"format": "double"
@@ -7874,6 +7878,7 @@
 					"keepSessionAlive",
 					"readTimeout",
 					"retryInterval",
+					"maxParallelRun",
 					"maxNumberOfMessages",
 					"flushMessageTimeout",
 					"securityMode",
@@ -17898,7 +17903,8 @@
 					"create-custom-transformer",
 					"update-custom-transformer",
 					"delete-custom-transformer",
-					"test-custom-transformer"
+					"test-custom-transformer",
+					"test-transformer"
 				],
 				"description": "Type representing an OIBus command type."
 			},
@@ -26993,6 +26999,82 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"OIBusTestTransformerCommandDTO": {
+				"description": "Command DTO for testing an existing transformer with pasted input data or an item.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"test-transformer"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The target version for the command.",
+						"example": "3.7.0"
+					},
+					"transformerId": {
+						"type": "string",
+						"description": "The ID of the transformer to test.",
+						"example": "transformer123"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"targetVersion",
+					"transformerId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"OIBusCommandDTO": {
 				"anyOf": [
 					{
@@ -27132,6 +27214,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/OIBusTestCustomTransformerCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusTestTransformerCommandDTO"
 					}
 				],
 				"description": "Union type representing all possible OIBus command DTOs."
@@ -33742,7 +33827,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "3.8.8",
+		"version": "3.9.0",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"
