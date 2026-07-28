@@ -86,7 +86,9 @@ export default class DataStreamEngineMock {
   searchCacheContent = mock.fn(async (): Promise<CacheSearchResult> => ({}) as CacheSearchResult);
   getFileFromCache = mock.fn(async (): Promise<FileCacheContent> => ({}) as FileCacheContent);
   updateCacheContent = mock.fn(async (): Promise<void> => undefined);
+  createScanMode = mock.fn(async (): Promise<void> => undefined);
   updateScanMode = mock.fn(async (): Promise<void> => undefined);
+  deleteScanMode = mock.fn((_scanModeId: string): void => undefined);
   updateNorthTransformerBySouth = mock.fn((_southId: string): void => undefined);
   updateNorthConfiguration = mock.fn((_northId: string): void => undefined);
   reloadTransformer = mock.fn(async (_transformerId: string): Promise<void> => undefined);

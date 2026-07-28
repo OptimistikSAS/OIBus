@@ -142,7 +142,8 @@ export async function bootstrap(): Promise<void> {
     repositoryService.southCacheRepository,
     repositoryService.certificateRepository,
     repositoryService.oianalyticsRegistrationRepository,
-    oIAnalyticsMessageService
+    oIAnalyticsMessageService,
+    repositoryService.scanModeRepository
   );
 
   const transformerService = new TransformerService(

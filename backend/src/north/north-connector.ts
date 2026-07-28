@@ -1,4 +1,3 @@
-import { CronJob } from 'cron';
 import { EventEmitter } from 'node:events';
 import DeferredPromise from '../service/deferred-promise';
 import TypedEventEmitter from '../service/typed-event-emitter';
@@ -19,7 +18,7 @@ import { DateTime } from 'luxon';
 import { createReadStream, ReadStream } from 'node:fs';
 import path from 'node:path';
 import { NorthSettings } from '../../shared/model/north-settings.model';
-import { createOIBusError, delay, validateCronExpression } from '../service/utils';
+import { createOIBusError, delay } from '../service/utils';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { ScanMode } from '../model/scan-mode.model';
 import type { ICacheService } from '../model/cache.service.model';
@@ -49,8 +48,11 @@ export interface NorthMetricsEvents {
  * **Conceptual model**
  *  - North is **pull-based** from a local file cache. South connectors call
  *    `cacheContent(...)` to write payloads (optionally through a transformer);
- *    a separate cron-driven `run()` loop later pulls files out of the cache
- *    and hands them to the subclass's `handleContent()` for actual delivery.
+ *    a `run()` loop, driven by scan-mode ticks the engine forwards via
+ *    `triggerScanMode()` (cron ownership lives in `DataStreamEngine`, a single
+ *    shared cron per scan mode — see `triggerScanMode`'s doc), later pulls
+ *    files out of the cache and hands them to the subclass's `handleContent()`
+ *    for actual delivery.
  *  - This decoupling means a flaky destination doesn't block South ingestion:
  *    files just pile up in the cache and get retried on the next tick.
  *
@@ -62,7 +64,7 @@ export interface NorthMetricsEvents {
  *    the wrapper handles retry + error-folder routing.
  *  - `testConnection()`: probe for the UI's "test" button.
  *  - Optionally override `connect()` / `disconnect()` for protocol setup —
- *    call `super.*` to keep the cron / cache lifecycle correct.
+ *    call `super.*` to keep the cache lifecycle correct.
  *
  * **Transformer routing** (in `cacheContent` → `findTransformer`)
  *  - Resolution priority: items-level → group-level → south-level fallback.
@@ -83,7 +85,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   private contentBeingSent: { filename: string; metadata: CacheMetadata } | null = null;
   private errorCount = 0;
 
-  private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
   private runProgress$: DeferredPromise | null = null;
   // The queue is needed to store the task when one is already running. For example, if we have an "Every second" task added
   // while an "Every minute" task is running, the "Every second" task while be queued and executed next, from the run method
@@ -212,7 +213,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   /**
    * Wire up event listeners and start the cache. Always boots the cache (so
    * the UI can search cached/error/archive even when the connector is
-   * disabled); only calls `connect()` (which installs the cron) when enabled.
+   * disabled); only calls `connect()` when enabled.
    */
   async start(): Promise<void> {
     this.cacheService.cacheSizeEventEmitter.on('cache-size', this.onCacheSize);
@@ -232,18 +233,16 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   }
 
   /**
-   * Install the send-cron and check whether there's already content in the
-   * cache to flush.
+   * Check whether there's already content in the cache to flush.
    *
    * Subclasses MAY override to open a session / socket / HTTP client to the
-   * destination. Overrides should call `super.connect()` so the cron + initial
-   * trigger sweep run.
+   * destination. Overrides should call `super.connect()` so the initial
+   * trigger sweep runs.
    */
   async connect(): Promise<void> {
     this.metricsEvent.emit('connect', {
       lastConnection: DateTime.now().toUTC().toISO()!
     });
-    this.createCronJob(this.connector.caching.trigger.scanMode);
     // Check at startup if a run must be triggered
     await this.triggerRunIfNecessary(this.connector.caching.throttling.runMinDelay);
 
@@ -251,34 +250,15 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   }
 
   /**
-   * Create (or replace) the cron job that periodically enqueues a "send" tick.
-   * Each cron firing adds a task to the queue via `addTaskToQueue`, which the
-   * `'run'` event handler drains.
-   *
-   * Invalid cron expressions are logged and skipped — a misconfigured cron
-   * must not crash the North.
+   * Handle a scan-mode tick. Called by the engine (`DataStreamEngine`), which owns a single shared
+   * cron per scan mode and calls this on every north connector on each tick, regardless of whether
+   * that scan mode is the one this connector is configured to use — this method is the one place
+   * that decides whether there's anything to do, so the engine doesn't need to track per-connector
+   * interest.
    */
-  createCronJob(scanMode: ScanMode): void {
-    const existingCronJob = this.cronByScanModeIds.get(scanMode.id);
-    if (existingCronJob) {
-      this.logger.debug(`Removing existing cron job associated to scan mode "${scanMode.name}" (${scanMode.cron})`);
-      existingCronJob.stop();
-      this.cronByScanModeIds.delete(scanMode.id);
-    }
-    this.logger.debug(`Creating cron job for scan mode "${scanMode.name}" (${scanMode.cron})`);
-    try {
-      validateCronExpression(scanMode.cron);
-      const job = new CronJob(
-        scanMode.cron,
-        () => {
-          this.addTaskToQueue.bind(this).call(this, { id: scanMode.id, name: scanMode.name });
-        },
-        null,
-        true
-      );
-      this.cronByScanModeIds.set(scanMode.id, job);
-    } catch (error: unknown) {
-      this.logger.error(`Error when creating cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${(error as Error).message}`);
+  triggerScanMode(scanMode: ScanMode): void {
+    if (this.isEnabled() && this.connector.caching.trigger.scanMode.id === scanMode.id) {
+      this.addTaskToQueue({ id: scanMode.id, name: scanMode.name });
     }
   }
 
@@ -286,7 +266,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * Enqueue a "send" task. Same de-duplication contract as South's
    * `addToQueue`: identical task ids are coalesced, and an empty queue
    * triggers `'run'` immediately. Tasks come from three sources:
-   *   - the cron (scan-mode tick),
+   *   - the cron (scan-mode tick, via `triggerScanMode`),
    *   - `triggerRunIfNecessary` (file count / element count threshold reached),
    *   - retry after `errorCount > 0`.
    */
@@ -736,7 +716,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * Graceful shutdown. Symmetric to South's `stop()`:
    *  1. Flip `stopping` and detach the queue listener.
    *  2. Wait for any in-flight `run()` to finish.
-   *  3. Stop crons, clear the queue, disconnect.
+   *  3. Clear the queue, disconnect.
    */
   async stop(): Promise<void> {
     this.stopping = true;
@@ -748,10 +728,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       await this.runProgress$.promise;
     }
 
-    for (const cronJob of this.cronByScanModeIds.values()) {
-      cronJob.stop();
-    }
-    this.cronByScanModeIds.clear();
     this.taskJobQueue = [];
 
     await this.disconnect();
@@ -772,16 +748,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    */
   async resetCache(): Promise<void> {
     await this.cacheService.removeAllCacheContent();
-  }
-
-  /**
-   * Propagate a scan-mode cron change from the engine. Only rebuilds the
-   * cron if this North actually uses that scan mode (otherwise no-op).
-   */
-  updateScanMode(scanMode: ScanMode): void {
-    if (this.cronByScanModeIds.get(scanMode.id)) {
-      this.createCronJob(scanMode);
-    }
   }
 
   /**
