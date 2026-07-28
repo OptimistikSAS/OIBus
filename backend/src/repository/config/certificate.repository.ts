@@ -16,6 +16,7 @@ export default class CertificateRepository {
                               public_key,
                               private_key,
                               certificate,
+                              certificate_chain,
                               expiry,
                               created_by,
                               updated_by,
@@ -35,6 +36,7 @@ export default class CertificateRepository {
                               public_key,
                               private_key,
                               certificate,
+                              certificate_chain,
                               expiry,
                               created_by,
                               updated_by,
@@ -48,8 +50,8 @@ export default class CertificateRepository {
 
   create(certificate: Omit<Certificate, 'createdAt' | 'updatedAt'>): Certificate {
     const insertQuery =
-      `INSERT INTO ${CERTIFICATES_TABLE} (id, name, description, public_key, private_key, certificate, expiry, created_by, updated_by, created_at, updated_at) ` +
-      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+      `INSERT INTO ${CERTIFICATES_TABLE} (id, name, description, public_key, private_key, certificate, certificate_chain, expiry, created_by, updated_by, created_at, updated_at) ` +
+      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     const result = this.database
       .prepare(insertQuery)
       .run(
@@ -59,6 +61,7 @@ export default class CertificateRepository {
         certificate.publicKey,
         certificate.privateKey,
         certificate.certificate,
+        certificate.certificateChain,
         certificate.expiry,
         certificate.createdBy,
         certificate.updatedBy
@@ -70,6 +73,7 @@ export default class CertificateRepository {
                               public_key,
                               private_key,
                               certificate,
+                              certificate_chain,
                               expiry,
                               created_by,
                               updated_by,
@@ -82,7 +86,7 @@ export default class CertificateRepository {
 
   update(certificate: Omit<Certificate, 'createdBy' | 'createdAt' | 'updatedAt'>): void {
     const query =
-      `UPDATE ${CERTIFICATES_TABLE} SET name = ?, description = ?, public_key  = ?, private_key = ?, certificate = ?, ` +
+      `UPDATE ${CERTIFICATES_TABLE} SET name = ?, description = ?, public_key  = ?, private_key = ?, certificate = ?, certificate_chain = ?, ` +
       `expiry = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
     this.database
       .prepare(query)
@@ -92,6 +96,7 @@ export default class CertificateRepository {
         certificate.publicKey,
         certificate.privateKey,
         certificate.certificate,
+        certificate.certificateChain,
         certificate.expiry,
         certificate.updatedBy,
         certificate.id
@@ -123,6 +128,7 @@ export default class CertificateRepository {
       publicKey: result.public_key,
       privateKey: result.private_key,
       certificate: result.certificate,
+      certificateChain: result.certificate_chain ?? null,
       expiry: result.expiry,
       createdBy: result.created_by,
       updatedBy: result.updated_by,
