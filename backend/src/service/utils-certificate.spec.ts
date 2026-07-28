@@ -94,12 +94,12 @@ describe('utils-certificate', () => {
   });
 
   describe('privateKeyContentToPem', () => {
-    it('normalises a PKCS#1 private key', () => {
+    it('normalizes a PKCS#1 private key', () => {
       const result = privateKeyContentToPem(Buffer.from(privateKeyPkcs1Pem, 'utf8'), null);
       assert.strictEqual(forge.pki.privateKeyToPem(forge.pki.privateKeyFromPem(result)), privateKeyPkcs1Pem);
     });
 
-    it('normalises a PKCS#8 private key', () => {
+    it('normalizes a PKCS#8 private key', () => {
       const pkcs8Asn1 = forge.pki.wrapRsaPrivateKey(forge.pki.privateKeyToAsn1(keys.privateKey));
       const pkcs8Pem = forge.pki.privateKeyInfoToPem(pkcs8Asn1);
 
