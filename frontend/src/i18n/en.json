@@ -2,6 +2,7 @@
   "common": {
     "yes": "Yes",
     "no": "No",
+    "beta": "Beta",
     "ok": "OK",
     "save": "Save",
     "back": "Back",
@@ -321,6 +322,7 @@
       "osisoft-pi": "OSIsoft PI System™",
       "postgresql": "PostgreSQL",
       "rest": "REST API",
+      "s7": "Siemens S7",
       "sftp": "SFTP",
       "sqlite": "SQLite™"
     },
@@ -342,6 +344,7 @@
       "osisoft-pi": "Establish a connection with an OIBus Agent to access data from a PI System™",
       "postgresql": "Query PostgreSQL databases",
       "rest": "Collect data from REST API endpoints",
+      "s7": "Access Siemens S7 PLC data over ISO-on-TCP",
       "sftp": "Read files from a remote SFTP server",
       "sqlite": "Query  SQLite™ databases"
     }
@@ -1554,6 +1557,21 @@
             "grouping-gap": "Max grouping gap (addresses)",
             "batch-query": "Group batch queries?"
           },
+          "s7": {
+            "host": "Host",
+            "port": "Port",
+            "rack": "Rack",
+            "slot": "Slot",
+            "connection-type": {
+              "title": "Connection type",
+              "PG": "PG",
+              "OP": "OP",
+              "S7Basic": "S7 Basic"
+            },
+            "connect-timeout": "Connect timeout",
+            "request-timeout": "Request timeout",
+            "retry-interval": "Retry interval"
+          },
           "mqtt": {
             "url": "URL",
             "qos": {
@@ -1860,6 +1878,9 @@
                 "bit-index": "Bit index",
                 "multiplier-coefficient": "Multiplier coefficient"
               }
+            },
+            "s7": {
+              "address": "Address"
             },
             "mqtt": {
               "topic": "Topic"
