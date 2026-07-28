@@ -70,6 +70,12 @@ export interface NorthType {
    */
   category: OIBusNorthCategory;
   /**
+   * Whether this connector type is in beta.
+   *
+   * @example false
+   */
+  beta?: boolean;
+  /**
    * The data types supported by this North connector.
    *
    * @example ["time-values", "any", "setpoints"]
@@ -459,6 +465,12 @@ export interface NorthConnectorManifest {
    * @example "debug"
    */
   category: OIBusNorthCategory;
+  /**
+   * Whether this connector type is in beta.
+   *
+   * @example false
+   */
+  beta?: boolean;
   /**
    * The data types supported by this North connector.
    *
