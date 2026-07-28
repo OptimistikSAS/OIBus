@@ -98,12 +98,25 @@ afterEach(() => {
   mock.restoreAll();
 });
 
-const makeLog = (msg: string, level = '30', scopeId: string | null = 'scope-1', scopeName: string | null = 'MyScope'): PinoLog => ({
+const makeLog = (
+  msg: string,
+  level = '30',
+  scopeId: string | null = 'scope-1',
+  scopeName: string | null = 'MyScope',
+  itemId: string | null = null,
+  itemName: string | null = null,
+  groupId: string | null = null,
+  groupName: string | null = null
+): PinoLog => ({
   msg,
   level,
   scopeType: 'internal',
   scopeId,
   scopeName,
+  itemId,
+  itemName,
+  groupId,
+  groupName,
   time: '2020-01-01T00:00:00.000Z'
 });
 
@@ -229,6 +242,42 @@ describe('OianalyticsTransport (createTransport)', () => {
     }>;
     assert.strictEqual(payload[0].scopeId, null);
     assert.strictEqual(payload[0].scopeName, null);
+  });
+
+  it('addLogs should use null when itemId, itemName, groupId or groupName are falsy', async () => {
+    await createTransport(defaultOpts);
+    await capturedSourceFn!(makeSource([makeLog('no item/group')]));
+    await capturedCloseFn!();
+
+    assert.strictEqual(mockHTTPRequest.mock.calls.length, 1);
+    const payload = JSON.parse((mockHTTPRequest.mock.calls[0].arguments[1] as { body: string }).body) as Array<{
+      itemId: string | null;
+      itemName: string | null;
+      groupId: string | null;
+      groupName: string | null;
+    }>;
+    assert.strictEqual(payload[0].itemId, null);
+    assert.strictEqual(payload[0].itemName, null);
+    assert.strictEqual(payload[0].groupId, null);
+    assert.strictEqual(payload[0].groupName, null);
+  });
+
+  it('addLogs should forward itemId, itemName, groupId and groupName when present', async () => {
+    await createTransport(defaultOpts);
+    await capturedSourceFn!(makeSource([makeLog('with item/group', '30', 'scope-1', 'MyScope', 'item-1', 'MyItem', 'group-1', 'MyGroup')]));
+    await capturedCloseFn!();
+
+    assert.strictEqual(mockHTTPRequest.mock.calls.length, 1);
+    const payload = JSON.parse((mockHTTPRequest.mock.calls[0].arguments[1] as { body: string }).body) as Array<{
+      itemId: string | null;
+      itemName: string | null;
+      groupId: string | null;
+      groupName: string | null;
+    }>;
+    assert.strictEqual(payload[0].itemId, 'item-1');
+    assert.strictEqual(payload[0].itemName, 'MyItem');
+    assert.strictEqual(payload[0].groupId, 'group-1');
+    assert.strictEqual(payload[0].groupName, 'MyGroup');
   });
 
   it('addLogs should trigger an immediate send and reschedule the interval when batch reaches batchLimit', async () => {

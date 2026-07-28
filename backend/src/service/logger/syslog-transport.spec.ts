@@ -179,6 +179,58 @@ describe('SyslogTransport (createTransport)', () => {
     assert.strictEqual(mockSocketWrite.mock.calls[0].arguments[0], `formatted:${JSON.stringify(log)}`);
   });
 
+  it('source handler should forward itemId/itemName/groupId/groupName untouched, when present', async () => {
+    await createTransport(defaultOpts);
+
+    const log: Record<string, unknown> = {
+      level: 30,
+      msg: 'hello',
+      time: '2026-07-27T09:20:41.228Z',
+      scopeType: 'south',
+      scopeId: 'southId',
+      scopeName: 'South connector',
+      itemId: 'itemId',
+      itemName: 'Item name',
+      groupId: 'groupId',
+      groupName: 'Group name'
+    };
+    async function* makeSource() {
+      yield log;
+    }
+    await capturedSourceFn!(makeSource());
+
+    // Not filtered/allow-listed anywhere in this transport — passed through as-is to the formatter.
+    assert.strictEqual(mockFormatMessage.mock.calls[0].arguments[0], log);
+    assert.strictEqual(log.itemId, 'itemId');
+    assert.strictEqual(log.itemName, 'Item name');
+    assert.strictEqual(log.groupId, 'groupId');
+    assert.strictEqual(log.groupName, 'Group name');
+    assert.strictEqual(mockSocketWrite.mock.calls[0].arguments[0], `formatted:${JSON.stringify(log)}`);
+  });
+
+  it('source handler should forward null itemId/itemName/groupId/groupName, when absent', async () => {
+    await createTransport(defaultOpts);
+
+    const log: Record<string, unknown> = {
+      level: 30,
+      msg: 'hello',
+      time: '2026-07-27T09:20:41.228Z',
+      scopeType: 'internal',
+      scopeId: null,
+      scopeName: null,
+      itemId: null,
+      itemName: null,
+      groupId: null,
+      groupName: null
+    };
+    async function* makeSource() {
+      yield log;
+    }
+    await capturedSourceFn!(makeSource());
+
+    assert.strictEqual(mockSocketWrite.mock.calls[0].arguments[0], `formatted:${JSON.stringify(log)}`);
+  });
+
   it('source handler should log an error and continue when formatting/writing throws', async () => {
     await createTransport(defaultOpts);
     mockFormatMessage.mock.mockImplementationOnce(() => {
