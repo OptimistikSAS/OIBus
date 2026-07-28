@@ -8,7 +8,7 @@ const PEM_CERT_HEADER = '-----BEGIN CERTIFICATE-----';
 const toForgeBuffer = (content: Buffer) => forge.util.createBuffer(content.toString('binary'));
 
 /**
- * Accepts a PEM or DER certificate file content and normalises it to PEM.
+ * Accepts a PEM or DER certificate file content and normalizes it to PEM.
  */
 export const certificateContentToPem = (content: Buffer): string => {
   const text = content.toString('utf8');
@@ -58,7 +58,7 @@ export const readCertificate = (pem: string): ParsedCertificate => {
   }
 
   return {
-    // re-serialise so that a bundle uploaded as the leaf is reduced to its first certificate
+    // re-serialize so that a bundle uploaded as the leaf is reduced to its first certificate
     pem: forge.pki.certificateToPem(cert),
     publicKeyPem: forge.pki.publicKeyToPem(publicKey),
     expiry: DateTime.fromJSDate(cert.validity.notAfter).toUTC().toISO()!

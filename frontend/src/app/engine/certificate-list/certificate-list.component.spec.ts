@@ -6,6 +6,8 @@ import { beforeEach, describe, expect, test } from 'vitest';
 
 import { CertificateListComponent } from './certificate-list.component';
 import { EditCertificateModalComponent } from './edit-certificate-modal/edit-certificate-modal.component';
+import { ImportCertificateModalComponent } from './import-certificate-modal/import-certificate-modal.component';
+import { ExportCertificateModalComponent } from './export-certificate-modal/export-certificate-modal.component';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { CertificateService } from '../../services/certificate.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
@@ -20,8 +22,10 @@ class CertificateListComponentTester {
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly title = this.root.getByCss('#title');
   readonly addCertificate = this.root.getByCss('#add-certificate');
+  readonly importCertificate = this.root.getByCss('#import-certificate');
   readonly deleteButtons = this.root.getByCss('.delete-certificate');
   readonly editButtons = this.root.getByCss('.edit-certificate');
+  readonly exportButtons = this.root.getByCss('.export-certificate');
   readonly noCertificate = this.root.getByCss('#no-certificate');
   readonly certificates = this.root.getByCss('tbody tr');
 
@@ -35,7 +39,7 @@ describe('CertificateListComponent', () => {
   let certificateService: MockObject<CertificateService>;
   let confirmationService: MockObject<ConfirmationService>;
   let notificationService: MockObject<NotificationService>;
-  let modalService: MockModalService<EditCertificateModalComponent>;
+  let modalService: MockModalService<EditCertificateModalComponent | ImportCertificateModalComponent | ExportCertificateModalComponent>;
 
   beforeEach(() => {
     certificateService = createMock(CertificateService);
@@ -110,6 +114,25 @@ describe('CertificateListComponent', () => {
       expect(fakeEditComponent.prepareForCreation).toHaveBeenCalled();
       expect(certificateService.list).toHaveBeenCalledTimes(2);
       expect(notificationService.success).toHaveBeenCalledWith('engine.certificate.created', { name: 'new-name' });
+    });
+
+    test('should open import modal with beforeDismiss configuration', async () => {
+      const fakeImportComponent = createMock(ImportCertificateModalComponent);
+      modalService.mockClosedModal(fakeImportComponent, { name: 'new-name' });
+
+      await tester.importCertificate.click();
+
+      expect(certificateService.list).toHaveBeenCalledTimes(2);
+      expect(notificationService.success).toHaveBeenCalledWith('engine.certificate.imported', { name: 'new-name' });
+    });
+
+    test('should open export modal and prepare it with the certificate', async () => {
+      const fakeExportComponent = createMock(ExportCertificateModalComponent);
+      modalService.mockClosedModal(fakeExportComponent);
+
+      await tester.exportButtons.nth(0).click();
+
+      expect(fakeExportComponent.prepare).toHaveBeenCalledWith(testData.certificates.list[0]);
     });
   });
 

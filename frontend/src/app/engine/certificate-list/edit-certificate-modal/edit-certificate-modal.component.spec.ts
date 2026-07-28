@@ -125,6 +125,7 @@ describe('EditCertificateModalComponent', () => {
       description: 'My IP Filter 1',
       publicKey: 'pp',
       certificate: 'cert',
+      certificateChain: null,
       expiry: '2033-01-01T00:00:00Z',
       createdBy: { id: '', friendlyName: '' },
       updatedBy: { id: '', friendlyName: '' },
