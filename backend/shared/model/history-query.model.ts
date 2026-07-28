@@ -37,6 +37,8 @@ import {
   SouthPostgreSQLSettings,
   SouthRestItemSettings,
   SouthRestSettings,
+  SouthS7ItemSettings,
+  SouthS7Settings,
   SouthSFTPItemSettings,
   SouthSFTPSettings,
   SouthSQLiteItemSettings,
@@ -391,6 +393,10 @@ export interface HistoryQueryPostgreSQLSouthDTO extends HistoryQuerySouthTypedDT
 export interface HistoryQueryRESTSouthDTO extends HistoryQuerySouthTypedDTO<'rest', SouthRestSettings, SouthRestItemSettings> {
   items: Array<HistoryQueryRESTItemDTO>;
 }
+/** History query south DTO for Siemens S7. */
+export interface HistoryQueryS7SouthDTO extends HistoryQuerySouthTypedDTO<'s7', SouthS7Settings, SouthS7ItemSettings> {
+  items: Array<HistoryQueryS7ItemDTO>;
+}
 /** History query south DTO for SFTP file transfer. */
 export interface HistoryQuerySFTPSouthDTO extends HistoryQuerySouthTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings> {
   items: Array<HistoryQuerySFTPItemDTO>;
@@ -442,6 +448,7 @@ export type HistoryQueryDTO = BaseEntity &
     | HistoryQueryOsisoftPISouthDTO
     | HistoryQueryPostgreSQLSouthDTO
     | HistoryQueryRESTSouthDTO
+    | HistoryQueryS7SouthDTO
     | HistoryQuerySFTPSouthDTO
     | HistoryQuerySQLiteSouthDTO
   ) &
@@ -635,6 +642,10 @@ export interface HistoryQueryRESTSouthCommandDTO extends HistoryQuerySouthComman
 > {
   items: Array<HistoryQueryRESTItemCommandDTO>;
 }
+/** History query south command for Siemens S7. */
+export interface HistoryQueryS7SouthCommandDTO extends HistoryQuerySouthCommandTypedDTO<'s7', SouthS7Settings, SouthS7ItemSettings> {
+  items: Array<HistoryQueryS7ItemCommandDTO>;
+}
 /** History query south command for SFTP file transfer. */
 export interface HistoryQuerySFTPSouthCommandDTO extends HistoryQuerySouthCommandTypedDTO<
   'sftp',
@@ -697,6 +708,7 @@ export type HistoryQueryCommandDTO = HistoryQueryCommandCommonDTO &
     | HistoryQueryOsisoftPISouthCommandDTO
     | HistoryQueryPostgreSQLSouthCommandDTO
     | HistoryQueryRESTSouthCommandDTO
+    | HistoryQueryS7SouthCommandDTO
     | HistoryQuerySFTPSouthCommandDTO
     | HistoryQuerySQLiteSouthCommandDTO
   ) &
@@ -748,6 +760,8 @@ export interface HistoryQueryOsisoftPIItemDTO extends HistoryQueryItemTypedDTO<S
 export interface HistoryQueryPostgreSQLItemDTO extends HistoryQueryItemTypedDTO<SouthPostgreSQLItemSettings> {}
 /** History query item DTO for the REST API. */
 export interface HistoryQueryRESTItemDTO extends HistoryQueryItemTypedDTO<SouthRestItemSettings> {}
+/** History query item DTO for Siemens S7. */
+export interface HistoryQueryS7ItemDTO extends HistoryQueryItemTypedDTO<SouthS7ItemSettings> {}
 /** History query item DTO for SFTP file transfer. */
 export interface HistoryQuerySFTPItemDTO extends HistoryQueryItemTypedDTO<SouthSFTPItemSettings> {}
 /** History query item DTO for SQLite. */
@@ -775,6 +789,7 @@ export type HistoryQueryItemDTO =
   | HistoryQueryOsisoftPIItemDTO
   | HistoryQueryPostgreSQLItemDTO
   | HistoryQueryRESTItemDTO
+  | HistoryQueryS7ItemDTO
   | HistoryQuerySFTPItemDTO
   | HistoryQuerySQLiteItemDTO;
 
@@ -813,6 +828,8 @@ export interface HistoryQueryOsisoftPIItemCommandDTO extends HistoryQueryItemCom
 export interface HistoryQueryPostgreSQLItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthPostgreSQLItemSettings> {}
 /** History query item command for the REST API. */
 export interface HistoryQueryRESTItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthRestItemSettings> {}
+/** History query item command for Siemens S7. */
+export interface HistoryQueryS7ItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthS7ItemSettings> {}
 /** History query item command for SFTP file transfer. */
 export interface HistoryQuerySFTPItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthSFTPItemSettings> {}
 /** History query item command for SQLite. */
@@ -840,6 +857,7 @@ export type HistoryQueryItemCommandDTO =
   | HistoryQueryOsisoftPIItemCommandDTO
   | HistoryQueryPostgreSQLItemCommandDTO
   | HistoryQueryRESTItemCommandDTO
+  | HistoryQueryS7ItemCommandDTO
   | HistoryQuerySFTPItemCommandDTO
   | HistoryQuerySQLiteItemCommandDTO;
 

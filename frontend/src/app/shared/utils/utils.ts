@@ -9,6 +9,7 @@ export const getAssociatedInputType = (southType: OIBusSouthType): InputType => 
     case 'opc':
     case 'opcua':
     case 'osisoft-pi':
+    case 's7':
       return 'time-values';
     default:
       return 'any';

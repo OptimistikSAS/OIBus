@@ -18,6 +18,7 @@ import sftpManifest from '../south/south-sftp/manifest';
 import ftpManifest from '../south/south-ftp/manifest';
 import influxdbManifest from '../south/south-influxdb/manifest';
 import restManifest from '../south/south-rest/manifest';
+import s7Manifest from '../south/south-s7/manifest';
 
 export const southManifestList: Array<SouthConnectorManifest> = [
   folderScannerManifest,
@@ -36,6 +37,7 @@ export const southManifestList: Array<SouthConnectorManifest> = [
   oianalyticsManifest,
   piManifest,
   restManifest,
+  s7Manifest,
   sftpManifest,
   ftpManifest,
   influxdbManifest

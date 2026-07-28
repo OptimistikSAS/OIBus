@@ -5,6 +5,7 @@ describe('utils', () => {
   describe('getAssociatedInputType', () => {
     test('should get associated input type from south type', () => {
       expect(getAssociatedInputType('ads')).toBe('time-values');
+      expect(getAssociatedInputType('s7')).toBe('time-values');
       expect(getAssociatedInputType('sqlite')).toBe('any');
     });
   });
