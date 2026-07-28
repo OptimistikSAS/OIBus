@@ -69,25 +69,45 @@ import { loggerService } from '../service/logger/logger.service';
  *  - `testConnection()` and `testItem()` for the UI's "test" buttons.
  *
  * **Run-loop contract**
- *  - Each cron tick enqueues a `ScanMode` via `addToQueue`. If a job for the
- *    same scan mode is already queued or running, the new one is dropped (a
- *    cron firing while its previous tick is still in flight is normal).
- *  - `run()` consumes the queue head, groups the items via `groupItemsByGroup`
- *    (so multi-item connectors batch grouped items into a single request, and
- *    single-item connectors get one call per item), then re-emits `'next'` so
- *    the next queued scan-mode (if any) starts immediately.
- *  - `stop()` flips a `stopping` flag and awaits any in-flight `runProgress$`
- *    deferred so the engine can shut down cleanly mid-scan.
+ *  - Each cron tick calls `addToQueue` with the `ScanMode` that fired. Items
+ *    for that scan mode are grouped via `groupItemsByGroup` (so multi-item
+ *    connectors batch grouped items into a single request, and single-item
+ *    connectors get one call per item) into one or more work-units.
+ *  - Every enabled item tracks a status: `'pending'` (idle) → `'queued'`
+ *    (enqueued by a cron tick, waiting for a free execution slot) →
+ *    `'running'` (currently being queried) → back to `'pending'`. A work-unit
+ *    whose items are already `'queued'` or `'running'` is dropped when its
+ *    scan mode fires again (backpressure signal, throttled to one warning per
+ *    hour per work-unit) — the rest of that scan mode's work-units, and any
+ *    other scan mode's work-units, are unaffected.
+ *  - `dispatch()` drains `taskQueue` into `runTask()` while the number of
+ *    in-flight tasks is below `getMaxParallelRun()` (default 1, i.e. today's
+ *    fully-sequential behavior; connectors that can safely handle more
+ *    concurrent queries override it). It is called synchronously — with no
+ *    `await` between checking for a free slot and claiming it — every time
+ *    new work is queued or a task finishes, so a freed slot is picked up
+ *    immediately.
+ *  - `stop()` flips a `stopping` flag and awaits both any in-flight
+ *    `runProgress$` deferred (used by one-shot History Query runs that call
+ *    `historyQueryHandler` directly, bypassing this scheduler entirely) and
+ *    every in-flight task from `inFlightTasks`, so the engine can shut down
+ *    cleanly mid-scan regardless of how many queries are running at once.
  */
 export default abstract class SouthConnector<T extends SouthSettings, I extends SouthItemSettings> {
   protected logger!: ILogger;
-  private taskJobQueue: Array<ScanMode> = [];
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
-  // Last time a "previous cron still running" warning was emitted per scan mode. Used to throttle
-  // that warning to once an hour (logging the in-between occurrences as trace) to avoid flooding.
-  private lastBackpressureWarnByScanModeId: Map<string, DateTime> = new Map<string, DateTime>();
-  private taskRunner: EventEmitter = new EventEmitter();
+  // Last time a "previous cron still running" warning was emitted per work-unit (group id, or item
+  // id for connectors/items that don't group). Used to throttle that warning to once an hour
+  // (logging the in-between occurrences as trace) to avoid flooding.
+  private lastBackpressureWarnByUnitId: Map<string, DateTime> = new Map<string, DateTime>();
+  // Per-item scheduling status. Only enabled items are tracked; a missing entry is equivalent to 'pending'.
+  private itemStatus = new Map<string, 'pending' | 'queued' | 'running'>();
+  // FIFO queue of work-units (groups, or singleton arrays for connectors in SOUTH_SINGLE_ITEMS) waiting for a free slot.
+  private taskQueue: Array<{ scanModeId: string; items: Array<SouthConnectorItemEntity<I>> }> = [];
+  // Every currently-running task's promise. Its size is the current concurrency; stop() awaits all of them.
+  private inFlightTasks = new Set<Promise<void>>();
   private stopping = false;
+  // Used only by callers that drive historyQueryHandler() directly, bypassing this scheduler (see HistoryQuery).
   private runProgress$: DeferredPromise | null = null;
   private subscribedItems: Array<SouthConnectorItemEntity<I>> = [];
   protected cacheService: SouthCacheService | null = null;
@@ -96,6 +116,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   public connectedEvent: EventEmitter = new EventEmitter();
   public metricsEvent: TypedEventEmitter<SouthMetricsEvents> = new TypedEventEmitter<SouthMetricsEvents>();
 
+  // Counts concurrently in-flight historyQueryHandler() calls. historyIsRunning below is derived
+  // from this counter (rather than being set true/false directly) since more than one work-unit's
+  // history query can be running at once — a plain boolean would let one task's completion
+  // prematurely clear the flag while a sibling task is still running.
+  private historyRunningCount = 0;
   historyIsRunning = false;
 
   protected constructor(
@@ -112,29 +137,36 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.logger = loggerService.createChildLogger('south', this.connector.id, this.connector.name);
     this.cacheService = new SouthCacheService(this.southCacheRepository);
     this.tmpFolder = path.resolve(cacheFolderPath, 'tmp');
-    this.taskRunner.on('next', () => {
-      if (this.taskJobQueue.length > 0) {
-        if (this.runProgress$) {
-          this.logger.warn('A South task is already running');
-          return;
-        }
-        const scanMode = this.taskJobQueue[0];
-        const itemsToRun = this.connector.items.filter(
-          item =>
-            item.enabled &&
-            (((!item.syncWithGroup || !item.group) && item.scanMode!.id === scanMode.id) ||
-              (item.syncWithGroup && item.group && item.group.scanMode.id === scanMode.id))
-        );
-        if (itemsToRun.length > 0) {
-          this.logger.trace(`Running South with scan mode ${scanMode.name} for ${this.connector.items.length} items`);
-          this.run(scanMode.id, itemsToRun).catch((error: unknown) => {
-            this.logger.error(`Unhandled error in South task runner: ${(error as Error).message}`);
-          });
-        }
-      } else {
-        this.logger.trace('No more task to run');
-      }
-    });
+  }
+
+  /**
+   * Maximum number of work-units this connector may query concurrently. Defaults to 1 (today's
+   * fully-sequential behavior). Connectors whose session/connection model can safely support more
+   * concurrent queries override this, reading their own settings and applying their own hard
+   * ceiling (there's no common `maxParallelRun` field on the `SouthSettings` union, so this stays
+   * per-subclass rather than cast against it here).
+   */
+  protected getMaxParallelRun(): number {
+    return 1;
+  }
+
+  /**
+   * Stable key identifying a work-unit for backpressure dedup/warning purposes.
+   *
+   * Derived from the ACTUAL shape of `items` (as produced by `groupItemsByGroup`) rather than
+   * re-inferring from the lead item's own `group`/`syncWithGroup` flags: `groupItemsByGroup` only
+   * merges items into a multi-item array when every one of them has `syncWithGroup: true` and
+   * shares the same group — e.g. a configured group whose first item has `syncWithGroup: false`
+   * but whose other items have it `true` produces `[[first], [rest...]]`, not one array. Keying
+   * off `items.length` matches that reality directly: a length-1 array is never actually behaving
+   * as a merged group in this scheduling context, whether because the item isn't synced, its
+   * connector type doesn't support grouping (`SOUTH_SINGLE_ITEMS`), or it's simply the only
+   * currently-eligible item in its group — checking the lead item's own flags instead would wrongly
+   * collide two independent singleton items that happen to share a group id.
+   */
+  private getUnitKey(items: Array<SouthConnectorItemEntity<I>>): string {
+    const lead = items[0];
+    return items.length > 1 && lead.group ? `group:${lead.group.id}` : `item:${lead.id}`;
   }
 
   /**
@@ -322,154 +354,165 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   /**
-   * Enqueue a scan-mode tick. Called from the cron callback in
+   * Handle a scan-mode tick. Called from the cron callback in
    * `createOrUpdateCronJob`.
    *
-   * Dropped (logged but not re-enqueued) when:
-   *  - the connector is in the middle of `stop()`, or
-   *  - a tick for the same scan mode is already in the queue (i.e. the cron
-   *    fired again while the previous tick is still being processed). This is
-   *    a backpressure signal — usually it means the scan interval is too short
-   *    for the work being done. Surfaced as a warning so operators see it.
+   * Computes the enabled items for this scan mode and groups them via
+   * `groupItemsByGroup` (so multi-item connectors batch grouped items into a
+   * single request, single-item connectors get one call per item) into one or
+   * more work-units. A work-unit is dropped (logged but not re-enqueued) when
+   * any of its items is already `'queued'` or `'running'` — i.e. the previous
+   * tick's work for that same group/item hasn't finished yet. This is a
+   * backpressure signal — usually it means the scan interval is too short for
+   * the work being done — surfaced as a throttled warning (once per hour per
+   * work-unit) so operators see it without flooding the logs. Other
+   * work-units for the same scan mode, and any other scan mode, are
+   * unaffected.
    *
-   * If the queue was empty, also kicks the `'next'` event to start processing
-   * immediately. Otherwise, `run()` will drain the queue head when it finishes.
+   * Newly-queued work-units are handed to `dispatch()`, which starts them
+   * immediately if a concurrency slot is free.
    */
   addToQueue(scanMode: ScanMode): void {
     if (this.stopping) {
       this.logger.trace(`Connector is exiting. Cron "${scanMode.name}" (${scanMode.cron}) not added`);
       return;
     }
-    const foundJob = this.taskJobQueue.find(element => element.id === scanMode.id);
-    if (foundJob) {
-      // If a job is already scheduled in queue, it will not be added. This can happen on every tick
-      // when the scan interval is too short, so the warning is throttled to once per hour per scan
-      // mode and the in-between occurrences are logged as trace to avoid flooding the logs.
-      const now = DateTime.now();
-      const lastWarn = this.lastBackpressureWarnByScanModeId.get(scanMode.id);
-      const message = `Task job not added in South connector queue for cron "${scanMode.name}" (${scanMode.cron}). The previous cron was still running`;
-      if (!lastWarn || now.diff(lastWarn).as('hours') >= 1) {
-        this.lastBackpressureWarnByScanModeId.set(scanMode.id, now);
-        this.logger.warn(`${message}. The next occurrences will be logged as trace for the next hour`);
-      } else {
-        this.logger.trace(message);
-      }
+    const itemsToRun = this.connector.items.filter(
+      item =>
+        item.enabled &&
+        (((!item.syncWithGroup || !item.group) && item.scanMode!.id === scanMode.id) ||
+          (item.syncWithGroup && item.group && item.group.scanMode.id === scanMode.id))
+    );
+    if (itemsToRun.length === 0) {
+      this.logger.trace(`No items to run for scan mode ${scanMode.name}`);
       return;
     }
 
-    this.taskJobQueue.push(scanMode);
-    if (this.taskJobQueue.length === 1) {
-      this.taskRunner.emit('next');
+    const groupedItemsList = groupItemsByGroup<I>(this.connector.type, itemsToRun);
+    this.logger.trace(`Queuing ${itemsToRun.length} items for scan mode ${scanMode.name}, grouped in ${groupedItemsList.length} groups`);
+
+    for (const items of groupedItemsList) {
+      if (items.some(item => this.itemStatus.get(item.id) === 'queued' || this.itemStatus.get(item.id) === 'running')) {
+        this.warnBackpressure(scanMode, items);
+        continue;
+      }
+      for (const item of items) {
+        this.itemStatus.set(item.id, 'queued');
+      }
+      this.taskQueue.push({ scanModeId: scanMode.id, items });
+    }
+    this.dispatch();
+  }
+
+  /**
+   * Log (and throttle) the backpressure warning for a work-unit that was skipped because it was
+   * already queued or running. Throttled to once an hour per work-unit, with in-between
+   * occurrences logged as trace, to avoid flooding the logs when a scan interval is too short.
+   */
+  private warnBackpressure(scanMode: ScanMode, items: Array<SouthConnectorItemEntity<I>>): void {
+    const unitKey = this.getUnitKey(items);
+    const now = DateTime.now();
+    const lastWarn = this.lastBackpressureWarnByUnitId.get(unitKey);
+    const message = `Task job not added in South connector queue for cron "${scanMode.name}" (${scanMode.cron}). The previous cron was still running`;
+    if (!lastWarn || now.diff(lastWarn).as('hours') >= 1) {
+      this.lastBackpressureWarnByUnitId.set(unitKey, now);
+      this.logger.warn(`${message}. The next occurrences will be logged as trace for the next hour`);
+    } else {
+      this.logger.trace(message);
     }
   }
 
   /**
-   * Execute one scan-mode tick for the given items.
+   * Drain `taskQueue` into `runTask()` while under the concurrency limit. Synchronous — no `await`
+   * between checking for a free slot and claiming it — so this stays race-free under Node's
+   * single-threaded execution; this invariant must be preserved if this method is ever changed.
+   * Called whenever new work is queued (`addToQueue`) or a task finishes (below), so a freed slot
+   * is picked up immediately.
+   */
+  private dispatch(): void {
+    while (!this.stopping && this.inFlightTasks.size < this.getMaxParallelRun() && this.taskQueue.length > 0) {
+      const task = this.taskQueue.shift()!;
+      for (const item of task.items) {
+        this.itemStatus.set(item.id, 'running');
+      }
+      const taskPromise: Promise<void> = this.runTask(task)
+        .catch((error: unknown) => {
+          // Safety net for anything unexpected outside runTask's own per-branch try/catch (e.g. a
+          // metrics emit throwing synchronously). Logged rather than left as an unhandled
+          // rejection; this.taskQueue/itemStatus cleanup below still runs via finally() regardless.
+          this.logger.error(`Unhandled error in South task runner: ${(error as Error).message}`);
+        })
+        .finally(() => {
+          this.inFlightTasks.delete(taskPromise);
+          for (const item of task.items) {
+            this.itemStatus.set(item.id, 'pending');
+          }
+          if (!this.stopping) {
+            this.dispatch();
+          }
+        });
+      this.inFlightTasks.add(taskPromise);
+    }
+  }
+
+  /**
+   * Execute one work-unit (group, or single item).
    *
-   * Items are grouped via `groupItemsByGroup` so connectors that support
-   * batched reads (OPC UA, Modbus, etc.) issue one request per group;
-   * "single-item" connectors (see `SOUTH_SINGLE_ITEMS`) get one call per item.
-   *
-   * Within the group loop:
    *  1. If the connector implements `SouthDirectQuery`, run `directQueryHandler`.
    *  2. If the connector implements `SouthHistoryQuery`, run
    *     `historyQueryHandler` with a time window of "now − maxReadInterval"
    *     to "now". The `trackedInstant` cache then narrows this window on
    *     subsequent runs so we don't re-query already-fetched data.
-   *  3. Between groups, sleep `readDelay` (if configured) so the source isn't
-   *     overwhelmed by back-to-back batches.
    *
-   * The `stopping` flag is checked between groups so `stop()` can interrupt
-   * mid-scan without waiting for the whole item list to finish.
-   *
-   * Errors from `direct`/`history` are caught and logged per-iteration — a
-   * single bad batch must not abort the rest of the scan or hide errors from
-   * later batches.
+   * Errors from `direct`/`history` are caught and logged here — a single bad
+   * work-unit must not abort or hide errors from any other concurrently
+   * running work-unit.
    */
-  async run(scanModeId: string, items: Array<SouthConnectorItemEntity<I>>): Promise<void> {
-    this.createDeferredPromise();
+  private async runTask(task: { scanModeId: string; items: Array<SouthConnectorItemEntity<I>> }): Promise<void> {
+    const { items } = task;
+    const runStart = DateTime.now();
+    this.metricsEvent.emit('run-start', {
+      lastRunStart: runStart.toUTC().toISO()!
+    });
 
-    try {
-      const runStart = DateTime.now();
-      this.metricsEvent.emit('run-start', {
-        lastRunStart: runStart.toUTC().toISO()!
-      });
-
-      const groupedItemsList = groupItemsByGroup<I>(this.connector.type, items);
-      this.logger.debug(`Querying ${items.length} items grouped in ${groupedItemsList.length} groups`);
-
-      for (const [index, groupedElements] of groupedItemsList.entries()) {
-        if (this.stopping) {
-          this.logger.debug(`Connector is stopping. Exiting run`);
-          this.resolveDeferredPromise();
-          return;
-        }
-
-        if (this.hasDirectQuery()) {
-          try {
-            await this.directQueryHandler(groupedElements);
-          } catch (error: unknown) {
-            const logCtx =
-              groupedElements.length === 1
-                ? { itemId: groupedElements[0].id, itemName: groupedElements[0].name }
-                : groupedElements[0].group
-                  ? { groupId: groupedElements[0].group.id, groupName: groupedElements[0].group.name }
-                  : {};
-            this.logger.error(logCtx, `Error when querying items with direct access: ${(error as Error).message}`);
-          }
-        }
-        if (this.hasHistoryQuery()) {
-          try {
-            // By default, retrieve the last hour. If the scan mode has already run and retrieves data, the max instant will
-            // be retrieved from the South cache inside the history query handler
-            const maxReadInterval = groupedElements[0].group?.maxReadInterval ?? groupedElements[0].maxReadInterval!;
-            // Capture a single `now` so that endTime - startTime == maxReadInterval exactly.
-            // Two separate DateTime.now() calls can differ by 1 ms, making the interval
-            // fractionally larger than maxReadInterval and causing generateIntervals to
-            // produce a spurious 1 ms second sub-interval.
-            const now = DateTime.now().toUTC();
-            await this.historyQueryHandler(
-              groupedElements,
-              now.minus((maxReadInterval || 3600) * 1000).toISO() as Instant,
-              now.toISO() as Instant
-            );
-          } catch (error: unknown) {
-            this.historyIsRunning = false;
-            const logCtx =
-              groupedElements.length === 1
-                ? { itemId: groupedElements[0].id, itemName: groupedElements[0].name }
-                : groupedElements[0].group
-                  ? { groupId: groupedElements[0].group.id, groupName: groupedElements[0].group.name }
-                  : {};
-            this.logger.error(logCtx, `Error when querying items with history capabilities: ${(error as Error).message}`);
-          }
-        }
-
-        const readDelay = groupedElements[0].group?.readDelay ?? groupedElements[0].readDelay!;
-        if (!this.stopping && index !== groupedItemsList.length - 1 && readDelay) {
-          await delay(readDelay);
-        }
+    if (this.hasDirectQuery()) {
+      try {
+        await this.directQueryHandler(items);
+      } catch (error: unknown) {
+        const logCtx =
+          items.length === 1
+            ? { itemId: items[0].id, itemName: items[0].name }
+            : items[0].group
+              ? { groupId: items[0].group.id, groupName: items[0].group.name }
+              : {};
+        this.logger.error(logCtx, `Error when querying items with direct access: ${(error as Error).message}`);
       }
-
-      this.metricsEvent.emit('run-end', {
-        lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
-      });
-      this.taskJobQueue.shift();
-      this.resolveDeferredPromise();
-
-      if (!this.stopping) {
-        this.taskRunner.emit('next');
-      }
-    } catch (error: unknown) {
-      // Unexpected error outside the per-group handlers (e.g. metrics emit, groupItemsByGroup).
-      // Always clean up so stop() does not hang and the queue keeps draining.
-      this.taskJobQueue.shift();
-      this.resolveDeferredPromise();
-      if (!this.stopping) {
-        this.taskRunner.emit('next');
-      }
-      throw error;
     }
+    if (this.hasHistoryQuery()) {
+      try {
+        // By default, retrieve the last hour. If the scan mode has already run and retrieves data, the max instant will
+        // be retrieved from the South cache inside the history query handler
+        const maxReadInterval = items[0].group?.maxReadInterval ?? items[0].maxReadInterval!;
+        // Capture a single `now` so that endTime - startTime == maxReadInterval exactly.
+        // Two separate DateTime.now() calls can differ by 1 ms, making the interval
+        // fractionally larger than maxReadInterval and causing generateIntervals to
+        // produce a spurious 1 ms second sub-interval.
+        const now = DateTime.now().toUTC();
+        await this.historyQueryHandler(items, now.minus((maxReadInterval || 3600) * 1000).toISO() as Instant, now.toISO() as Instant);
+      } catch (error: unknown) {
+        const logCtx =
+          items.length === 1
+            ? { itemId: items[0].id, itemName: items[0].name }
+            : items[0].group
+              ? { groupId: items[0].group.id, groupName: items[0].group.name }
+              : {};
+        this.logger.error(logCtx, `Error when querying items with history capabilities: ${(error as Error).message}`);
+      }
+    }
+
+    this.metricsEvent.emit('run-end', {
+      lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
+    });
   }
 
   /**
@@ -559,21 +602,27 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       );
     }
     this.logger.trace(`History querying ${itemsToRead.length} items`);
+    this.historyRunningCount++;
     this.historyIsRunning = true;
-
-    if (SOUTH_SINGLE_ITEMS.includes(this.connector.type)) {
-      // Each item is queried independently so that each has its own cache entry and trackedInstant.
-      // This mirrors how groupItemsByGroup() sends singleton arrays during normal scan flow.
-      for (const item of itemsToRead) {
-        await this.runHistoryQueryForLead(item, [item], null, startTime, endTime);
-        if (this.stopping) break;
+    try {
+      if (SOUTH_SINGLE_ITEMS.includes(this.connector.type)) {
+        // Each item is queried independently so that each has its own cache entry and trackedInstant.
+        // This mirrors how groupItemsByGroup() sends singleton arrays during normal scan flow.
+        for (const item of itemsToRead) {
+          await this.runHistoryQueryForLead(item, [item], null, startTime, endTime);
+          if (this.stopping) break;
+        }
+      } else {
+        const lead = itemsToRead[0];
+        const groupId = lead.group && lead.syncWithGroup ? lead.group.id : null;
+        await this.runHistoryQueryForLead(lead, itemsToRead, groupId, startTime, endTime);
       }
-    } else {
-      const lead = itemsToRead[0];
-      const groupId = lead.group && lead.syncWithGroup ? lead.group.id : null;
-      await this.runHistoryQueryForLead(lead, itemsToRead, groupId, startTime, endTime);
+    } finally {
+      // Guaranteed even if runHistoryQueryForLead throws, so a failed history query can't leave
+      // historyIsRunning stuck true for other concurrently running work-units.
+      this.historyRunningCount--;
+      this.historyIsRunning = this.historyRunningCount > 0;
     }
-    this.historyIsRunning = false;
   }
 
   /**
@@ -804,16 +853,17 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       cronJob.stop();
     }
     this.cronByScanModeIds.clear();
-    this.taskJobQueue = [];
+    this.taskQueue = [];
+    this.itemStatus.clear();
 
     this.logger.debug(`South connector "${this.connector.name}" (${this.connector.id}) disconnected`);
     return Promise.resolve();
   }
 
   /**
-   * Graceful shutdown. Flips `stopping`, awaits any in-flight `run()` via
-   * `runProgress$`, then disconnects. Used by the engine on connector delete /
-   * config reload / OIBus shutdown.
+   * Graceful shutdown. Flips `stopping`, awaits any in-flight direct-call history query via
+   * `runProgress$` and every in-flight scheduled task via `inFlightTasks`, then disconnects. Used
+   * by the engine on connector delete / config reload / OIBus shutdown.
    */
   async stop(): Promise<void> {
     this.stopping = true;
@@ -822,6 +872,10 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     if (this.runProgress$) {
       this.logger.debug('Waiting for South task to finish');
       await this.runProgress$.promise;
+    }
+    if (this.inFlightTasks.size > 0) {
+      this.logger.debug(`Waiting for ${this.inFlightTasks.size} South task(s) to finish`);
+      await Promise.all(this.inFlightTasks);
     }
 
     await this.disconnect();

@@ -525,6 +525,7 @@ export interface SouthOPCUASettings {
   keepSessionAlive: boolean;
   readTimeout: number;
   retryInterval: number;
+  maxParallelRun: number;
   maxNumberOfMessages: number;
   flushMessageTimeout: number;
   securityMode: SouthOPCUASettingsSecurityMode;

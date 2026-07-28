@@ -154,16 +154,19 @@ describe('SouthConnector', () => {
       mock.restoreAll();
     });
 
-    it('should properly add to queue a new task and trigger next run', () => {
-      const runMock = mock.fn(async () => undefined);
-      south.run = runMock;
+    it('should properly add to queue a new task and dispatch it immediately', () => {
+      const runTaskMock = mock.fn(async () => undefined);
+      south['runTask'] = runTaskMock;
       south.addToQueue(testData.scanMode.list[0]);
-      assert.strictEqual(runMock.mock.calls.length, 1);
-      assert.deepStrictEqual(runMock.mock.calls[0].arguments, [
-        testData.scanMode.list[0].id,
-        testData.south.list[0].items.filter(element => element.scanMode?.id === testData.scanMode.list[0].id)
+      assert.strictEqual(runTaskMock.mock.calls.length, 1);
+      assert.deepStrictEqual(runTaskMock.mock.calls[0].arguments, [
+        {
+          scanModeId: testData.scanMode.list[0].id,
+          items: testData.south.list[0].items.filter(element => element.scanMode?.id === testData.scanMode.list[0].id)
+        }
       ]);
 
+      // Same scan mode again while the first task is still in flight (runTask hasn't resolved yet): backpressure
       south.addToQueue(testData.scanMode.list[0]);
       assert.strictEqual((logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
       assert.strictEqual(
@@ -171,13 +174,15 @@ describe('SouthConnector', () => {
         `Task job not added in South connector queue for cron "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron}). The previous cron was still running. The next occurrences will be logged as trace for the next hour`
       );
 
+      // A different scan mode's items are queued, but the single (default) concurrency slot is
+      // still held by the first task, so it isn't dispatched yet.
       south.addToQueue(testData.scanMode.list[1]);
-      assert.strictEqual(runMock.mock.calls.length, 1);
+      assert.strictEqual(runTaskMock.mock.calls.length, 1);
       assert.deepStrictEqual(south.connectorConfiguration, testData.south.list[0]);
     });
 
     it('should warn once per hour and log trace in between when the previous cron is still running', () => {
-      south.run = mock.fn(async () => undefined);
+      south['runTask'] = mock.fn(async () => undefined);
       const scanMode = testData.scanMode.list[0];
 
       // First tick enqueues the job and starts running it
@@ -204,11 +209,11 @@ describe('SouthConnector', () => {
     });
 
     it('should properly add to queue a new task and not trigger next run if no item', () => {
-      const runMock = mock.fn(async () => undefined);
-      south.run = runMock;
+      const runTaskMock = mock.fn(async () => undefined);
+      south['runTask'] = runTaskMock;
       south['connector'].items = [];
       south.addToQueue(testData.scanMode.list[0]);
-      assert.strictEqual(runMock.mock.calls.length, 0);
+      assert.strictEqual(runTaskMock.mock.calls.length, 0);
     });
 
     it('should not update subscriptions if not compatible', async () => {
@@ -230,31 +235,31 @@ describe('SouthConnector', () => {
         setTimeout(resolve, 1000);
       });
       south.disconnect = mock.fn(() => promise);
-      const runMock = mock.fn(async () => undefined);
-      south.run = runMock;
+      const runTaskMock = mock.fn(async () => undefined);
+      south['runTask'] = runTaskMock;
 
       south.stop();
       south.addToQueue(testData.scanMode.list[0]);
-      assert.strictEqual(runMock.mock.calls.length, 0);
+      assert.strictEqual(runTaskMock.mock.calls.length, 0);
       await flushPromises();
     });
 
-    it('should add to queue a new task and not trigger next run if run in progress', () => {
-      const runMock = mock.fn(async () => undefined);
-      south.run = runMock;
-      south.createDeferredPromise();
+    it('should not dispatch a new task while the concurrency limit is already reached', () => {
+      const runTaskMock = mock.fn(async () => undefined);
+      south['runTask'] = runTaskMock;
+      // Occupy the (default) single concurrency slot with an unresolved task
       south.addToQueue(testData.scanMode.list[0]);
-      assert.strictEqual(runMock.mock.calls.length, 0);
-      assert.ok(
-        (logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'A South task is already running'
-        )
-      );
+      assert.strictEqual(runTaskMock.mock.calls.length, 1);
+
+      // A different scan mode's items get queued but can't dispatch: the slot is still held
+      south.addToQueue(testData.scanMode.list[1]);
+      assert.strictEqual(runTaskMock.mock.calls.length, 1);
+      assert.strictEqual(south['taskQueue'].length, 1);
     });
 
-    it('should log an error and not crash when run() rejects', async () => {
+    it('should log an error and not crash when runTask() rejects', async () => {
       const runError = new Error('unexpected run failure');
-      south.run = mock.fn(() => Promise.reject(runError));
+      south['runTask'] = mock.fn(() => Promise.reject(runError));
       south.addToQueue(testData.scanMode.list[0]);
       await flushPromises();
       assert.ok(
@@ -264,6 +269,8 @@ describe('SouthConnector', () => {
             (c.arguments[0] as string).includes(runError.message)
         )
       );
+      // The task is still cleaned up (removed from in-flight, item status reset) despite the rejection
+      assert.strictEqual(south['inFlightTasks'].size, 0);
     });
 
     it('should update cron jobs', () => {
@@ -410,10 +417,8 @@ describe('SouthConnector', () => {
       });
       south.directQuery = directQueryMock;
 
-      await south.run(
-        testData.scanMode.list[0].id,
-        testData.south.list[0].items as Array<SouthConnectorItemEntity<SouthFolderScannerItemSettings>>
-      );
+      const items = testData.south.list[0].items as Array<SouthConnectorItemEntity<SouthFolderScannerItemSettings>>;
+      await south['runTask']({ scanModeId: testData.scanMode.list[0].id, items });
       assert.strictEqual(directQueryMock.mock.calls.length, 1);
       assert.deepStrictEqual(directQueryMock.mock.calls[0].arguments, [testData.south.list[0].items]);
       assert.ok(
@@ -422,10 +427,7 @@ describe('SouthConnector', () => {
         )
       );
 
-      await south.run(
-        testData.scanMode.list[0].id,
-        testData.south.list[0].items as Array<SouthConnectorItemEntity<SouthFolderScannerItemSettings>>
-      );
+      await south['runTask']({ scanModeId: testData.scanMode.list[0].id, items });
 
       assert.ok(
         (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
@@ -469,6 +471,59 @@ describe('SouthConnector', () => {
     afterEach(() => {
       mock.timers.reset();
       mock.restoreAll();
+    });
+
+    it('should key two unrelated singleton work-units by item id, not by a shared group id', () => {
+      // SouthMSSQL is a SOUTH_SINGLE_ITEMS connector: groupItemsByGroup() always hands it singleton
+      // arrays, even for two items that both declare the same group with syncWithGroup: true. The
+      // unit key must distinguish them (by item id) rather than colliding on the group id, since
+      // they are functionally independent work-units here.
+      const group = {
+        id: 'sharedGroupId',
+        name: 'shared group',
+        scanMode: testData.scanMode.list[0],
+        startTimeOffset: null,
+        endTimeOffset: null,
+        maxReadInterval: null,
+        readDelay: null,
+        recoveryStrategy: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      const itemA = { ...testData.south.list[1].items[0], group, syncWithGroup: true };
+      const itemB = { ...testData.south.list[1].items[1], group, syncWithGroup: true };
+
+      const keyA = south['getUnitKey']([itemA] as unknown as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>);
+      const keyB = south['getUnitKey']([itemB] as unknown as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>);
+
+      assert.notStrictEqual(keyA, keyB);
+      assert.strictEqual(keyA, `item:${itemA.id}`);
+      assert.strictEqual(keyB, `item:${itemB.id}`);
+    });
+
+    it('should key a real multi-item group by its group id', () => {
+      const group = {
+        id: 'sharedGroupId',
+        name: 'shared group',
+        scanMode: testData.scanMode.list[0],
+        startTimeOffset: null,
+        endTimeOffset: null,
+        maxReadInterval: null,
+        readDelay: null,
+        recoveryStrategy: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      const itemB = { ...testData.south.list[1].items[0], group, syncWithGroup: true };
+      const itemC = { ...testData.south.list[1].items[1], group, syncWithGroup: true };
+
+      const key = south['getUnitKey']([itemB, itemC] as unknown as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>);
+
+      assert.strictEqual(key, `group:${group.id}`);
     });
 
     it('should be properly initialized', () => {
@@ -607,7 +662,7 @@ describe('SouthConnector', () => {
       mock.restoreAll();
     });
 
-    it('should properly run task a task', async () => {
+    it('should properly run a task', async () => {
       let historyCallCount = 0;
       const historyQueryHandlerMock = mock.fn(async () => {
         historyCallCount++;
@@ -622,10 +677,8 @@ describe('SouthConnector', () => {
       });
       south.directQuery = directQueryMock;
 
-      await south.run(
-        testData.scanMode.list[0].id,
-        testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>
-      );
+      const items = testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>;
+      await south['runTask']({ scanModeId: testData.scanMode.list[0].id, items });
 
       assert.strictEqual(historyQueryHandlerMock.mock.calls.length, 1);
       assert.deepStrictEqual(historyQueryHandlerMock.mock.calls[0].arguments, [
@@ -649,10 +702,7 @@ describe('SouthConnector', () => {
         )
       );
 
-      await south.run(
-        testData.scanMode.list[0].id,
-        testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>
-      );
+      await south['runTask']({ scanModeId: testData.scanMode.list[0].id, items });
 
       assert.deepStrictEqual(historyQueryHandlerMock.mock.calls[1].arguments, [
         testData.south.list[2].items,
@@ -664,21 +714,64 @@ describe('SouthConnector', () => {
       ]);
       assert.strictEqual(historyQueryHandlerMock.mock.calls.length, 2);
       assert.strictEqual(directQueryMock.mock.calls.length, 2);
-
-      assert.ok(
-        (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'No more task to run'
-        )
-      );
-
-      south['stopping'] = true;
-      const emitSpy = mock.method(south['taskRunner'], 'emit');
-
-      await south.run('scanModeId', []);
-      assert.strictEqual(emitSpy.mock.calls.length, 0);
     });
 
-    it('should clean up queue and deferred promise when run() throws unexpectedly', async () => {
+    it('should run up to getMaxParallelRun() tasks concurrently and dispatch queued work as slots free up', async () => {
+      south['getMaxParallelRun'] = () => 2;
+      const resolvers: Array<() => void> = [];
+      const runTaskMock = mock.fn(
+        () =>
+          new Promise<void>(resolve => {
+            resolvers.push(resolve);
+          })
+      );
+      south['runTask'] = runTaskMock;
+
+      south.addToQueue(testData.scanMode.list[0]);
+      south.addToQueue(testData.scanMode.list[1]);
+      assert.strictEqual(runTaskMock.mock.calls.length, 2);
+      assert.strictEqual(south['inFlightTasks'].size, 2);
+
+      // A third scan mode's items queue up behind the two already in-flight tasks (both slots taken).
+      // `connector` is the same object reference shared via testData.south.list[2] across every test
+      // in this describe block, so the original items array is restored afterward to avoid leaking
+      // this extra item into later tests.
+      const originalItems = south['connector'].items;
+      const thirdScanMode = { ...testData.scanMode.list[0], id: 'thirdScanModeId' };
+      south['connector'].items = [
+        ...originalItems,
+        { ...testData.south.list[2].items[0], id: 'thirdItem', scanMode: thirdScanMode }
+      ] as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>;
+      south.addToQueue(thirdScanMode);
+      assert.strictEqual(runTaskMock.mock.calls.length, 2);
+      assert.strictEqual(south['taskQueue'].length, 1);
+
+      // Resolving one in-flight task frees its slot and the queued task starts immediately
+      resolvers[0]();
+      await flushPromises();
+      assert.strictEqual(runTaskMock.mock.calls.length, 3);
+      assert.strictEqual(south['taskQueue'].length, 0);
+
+      resolvers[1]();
+      resolvers[2]();
+      await flushPromises();
+      south['connector'].items = originalItems;
+    });
+
+    it('should not dispatch queued tasks while stopping', () => {
+      const runTaskMock = mock.fn(async () => undefined);
+      south['runTask'] = runTaskMock;
+      south['stopping'] = true;
+
+      south['taskQueue'].push({ scanModeId: 'scanModeId', items: [] });
+      south['dispatch']();
+
+      assert.strictEqual(runTaskMock.mock.calls.length, 0);
+      south['stopping'] = false;
+      south['taskQueue'] = [];
+    });
+
+    it('should clean up the queue and in-flight tasks when runTask() throws unexpectedly', async () => {
       const runError = new Error('unexpected metrics failure');
       mock.method(south.metricsEvent, 'emit', (event: string) => {
         if (event === 'run-start') throw runError;
@@ -687,8 +780,8 @@ describe('SouthConnector', () => {
       south.addToQueue(testData.scanMode.list[0]);
       await flushPromises();
 
-      assert.strictEqual(south['taskJobQueue'].length, 0);
-      assert.strictEqual(south['runProgress$'], null);
+      assert.strictEqual(south['taskQueue'].length, 0);
+      assert.strictEqual(south['inFlightTasks'].size, 0);
       assert.ok(
         (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) =>
@@ -722,7 +815,7 @@ describe('SouthConnector', () => {
       const disconnectMock = mock.fn(async (): Promise<void> => undefined);
       south.disconnect = disconnectMock;
 
-      south.run(testData.scanMode.list[0].id, testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>);
+      south.addToQueue(testData.scanMode.list[0]);
 
       south.stop();
       assert.ok(
@@ -733,7 +826,7 @@ describe('SouthConnector', () => {
       );
       assert.ok(
         (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Waiting for South task to finish'
+          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Waiting for 1 South task(s) to finish'
         )
       );
       assert.strictEqual(disconnectMock.mock.calls.length, 0);
