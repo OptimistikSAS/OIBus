@@ -35,6 +35,8 @@ import {
   SouthPostgreSQLSettings,
   SouthRestItemSettings,
   SouthRestSettings,
+  SouthS7ItemSettings,
+  SouthS7Settings,
   SouthSFTPItemSettings,
   SouthSFTPSettings,
   SouthSQLiteItemSettings,
@@ -84,6 +86,7 @@ export const OIBUS_SOUTH_TYPES = [
   'osisoft-pi', // OSIsoft PI System
   'postgresql', // PostgreSQL database
   'rest', // REST API connector
+  's7', // Siemens S7 industrial protocol
   'sftp', // SFTP file transfer protocol
   'sqlite' // SQLite database
 ] as const;
@@ -561,6 +564,10 @@ export interface SouthConnectorPostgreSQLDTO extends SouthConnectorTypedDTO<
 export interface SouthConnectorRESTDTO extends SouthConnectorTypedDTO<'rest', SouthRestSettings, SouthRestItemSettings> {
   items: Array<SouthConnectorRESTItemDTO>;
 }
+/** South connector configuration for Siemens S7. */
+export interface SouthConnectorS7DTO extends SouthConnectorTypedDTO<'s7', SouthS7Settings, SouthS7ItemSettings> {
+  items: Array<SouthConnectorS7ItemDTO>;
+}
 /** South connector configuration for SFTP file transfer. */
 export interface SouthConnectorSFTPDTO extends SouthConnectorTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings> {
   items: Array<SouthConnectorSFTPItemDTO>;
@@ -592,6 +599,7 @@ export type SouthConnectorDTO =
   | SouthConnectorOsisoftPIDTO
   | SouthConnectorPostgreSQLDTO
   | SouthConnectorRESTDTO
+  | SouthConnectorS7DTO
   | SouthConnectorSFTPDTO
   | SouthConnectorSQLiteDTO;
 
@@ -853,6 +861,10 @@ export interface SouthConnectorPostgreSQLCommandDTO extends SouthConnectorComman
 export interface SouthConnectorRESTCommandDTO extends SouthConnectorCommandTypedDTO<'rest', SouthRestSettings, SouthRestItemSettings> {
   items: Array<SouthConnectorRESTItemCommandDTO>;
 }
+/** South connector command for Siemens S7. */
+export interface SouthConnectorS7CommandDTO extends SouthConnectorCommandTypedDTO<'s7', SouthS7Settings, SouthS7ItemSettings> {
+  items: Array<SouthConnectorS7ItemCommandDTO>;
+}
 /** South connector command for SFTP file transfer. */
 export interface SouthConnectorSFTPCommandDTO extends SouthConnectorCommandTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings> {
   items: Array<SouthConnectorSFTPItemCommandDTO>;
@@ -888,6 +900,7 @@ export type SouthConnectorCommandDTO =
   | SouthConnectorOsisoftPICommandDTO
   | SouthConnectorPostgreSQLCommandDTO
   | SouthConnectorRESTCommandDTO
+  | SouthConnectorS7CommandDTO
   | SouthConnectorSFTPCommandDTO
   | SouthConnectorSQLiteCommandDTO;
 
@@ -928,6 +941,8 @@ export interface SouthConnectorPostgreSQLItemDTO extends SouthConnectorItemTyped
 export interface SouthConnectorRESTItemDTO extends SouthConnectorItemTypedDTO<SouthRestItemSettings> {}
 /** South connector item DTO for SFTP file transfer. */
 export interface SouthConnectorSFTPItemDTO extends SouthConnectorItemTypedDTO<SouthSFTPItemSettings> {}
+/** South connector item DTO for Siemens S7. */
+export interface SouthConnectorS7ItemDTO extends SouthConnectorItemTypedDTO<SouthS7ItemSettings> {}
 /** South connector item DTO for SQLite. */
 export interface SouthConnectorSQLiteItemDTO extends SouthConnectorItemTypedDTO<SouthSQLiteItemSettings> {}
 
@@ -953,6 +968,7 @@ export type SouthConnectorItemDTO =
   | SouthConnectorOsisoftPIItemDTO
   | SouthConnectorPostgreSQLItemDTO
   | SouthConnectorRESTItemDTO
+  | SouthConnectorS7ItemDTO
   | SouthConnectorSFTPItemDTO
   | SouthConnectorSQLiteItemDTO;
 
@@ -991,6 +1007,8 @@ export interface SouthConnectorOsisoftPIItemCommandDTO extends SouthConnectorIte
 export interface SouthConnectorPostgreSQLItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthPostgreSQLItemSettings> {}
 /** South connector item command for the REST API. */
 export interface SouthConnectorRESTItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthRestItemSettings> {}
+/** South connector item command for Siemens S7. */
+export interface SouthConnectorS7ItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthS7ItemSettings> {}
 /** South connector item command for SFTP file transfer. */
 export interface SouthConnectorSFTPItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthSFTPItemSettings> {}
 /** South connector item command for SQLite. */
@@ -1018,6 +1036,7 @@ export type SouthConnectorItemCommandDTO =
   | SouthConnectorOsisoftPIItemCommandDTO
   | SouthConnectorPostgreSQLItemCommandDTO
   | SouthConnectorRESTItemCommandDTO
+  | SouthConnectorS7ItemCommandDTO
   | SouthConnectorSFTPItemCommandDTO
   | SouthConnectorSQLiteItemCommandDTO;
 
