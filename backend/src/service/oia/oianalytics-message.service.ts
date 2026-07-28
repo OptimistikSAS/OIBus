@@ -483,6 +483,7 @@ export default class OIAnalyticsMessageService {
         description: certificate.description,
         publicKey: certificate.publicKey,
         certificate: certificate.certificate,
+        certificateChain: certificate.certificateChain,
         expiry: certificate.expiry
       }
     }));
