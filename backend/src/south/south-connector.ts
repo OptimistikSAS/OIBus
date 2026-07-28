@@ -1,6 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { CronJob } from 'cron';
-import { delay, generateIntervals, groupItemsByGroup, validateCronExpression } from '../service/utils';
+import { delay, generateIntervals, groupItemsByGroup } from '../service/utils';
 
 import {
   SOUTH_SINGLE_ITEMS,
@@ -69,8 +68,11 @@ import { loggerService } from '../service/logger/logger.service';
  *  - `testConnection()` and `testItem()` for the UI's "test" buttons.
  *
  * **Run-loop contract**
- *  - Each cron tick calls `addToQueue` with the `ScanMode` that fired. Items
- *    for that scan mode are grouped via `groupItemsByGroup` (so multi-item
+ *  - Cron ownership lives in the engine (`DataStreamEngine`), which runs a single shared cron per
+ *    scan mode and calls `addToQueue(scanMode)` on every south connector on each tick, regardless
+ *    of whether that connector actually uses it — `addToQueue` itself is the one place that decides
+ *    whether there's anything to do, so the engine doesn't need to track per-connector interest.
+ *    Items for that scan mode are grouped via `groupItemsByGroup` (so multi-item
  *    connectors batch grouped items into a single request, and single-item
  *    connectors get one call per item) into one or more work-units.
  *  - Every enabled item tracks a status: `'pending'` (idle) → `'queued'`
@@ -95,7 +97,6 @@ import { loggerService } from '../service/logger/logger.service';
  */
 export default abstract class SouthConnector<T extends SouthSettings, I extends SouthItemSettings> {
   protected logger!: ILogger;
-  private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
   // Last time a "previous cron still running" warning was emitted per work-unit (group id, or item
   // id for connectors/items that don't group). Used to throttle that warning to once an hour
   // (logging the in-between occurrences as trace) to avoid flooding.
@@ -182,20 +183,15 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   /**
-   * Reset cron state and signal the connector is ready to schedule work.
+   * Signal the connector is ready to schedule work.
    *
    * Subclasses MAY override to establish the underlying transport (TCP, OPC
    * UA session, MQTT client, etc.). Overrides should call `super.connect()` so
-   * cron jobs, subscription bookkeeping, and the `'connected'` event are kept
-   * in sync.
+   * subscription bookkeeping and the `'connected'` event are kept in sync.
    */
   connect(): Promise<void> {
     this.logger.info(`South connector "${this.connector.name}" of type ${this.connector.type} started`);
 
-    for (const cronJob of this.cronByScanModeIds.values()) {
-      cronJob.stop();
-    }
-    this.cronByScanModeIds.clear();
     this.subscribedItems = [];
     this.metricsEvent.emit('connect', {
       lastConnection: DateTime.now().toUTC().toISO()!
@@ -203,88 +199,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
     this.connectedEvent.emit('connected');
     return Promise.resolve();
-  }
-
-  /**
-   * Recompute the set of active cron jobs to match the current item / group
-   * configuration. Creates jobs for newly-referenced scan modes, stops jobs
-   * for scan modes no longer used. Idempotent — safe to call after any
-   * configuration change.
-   *
-   * The `'subscription'` scan mode is intentionally excluded: subscription
-   * items are pushed by the source, not polled, so they don't drive a cron.
-   * See `updateSubscriptions()` for that path.
-   */
-  updateCronJobs(): void {
-    // Collect all unique scan modes from enabled items (excluding 'subscription')
-    const scanModes = new Map<string, ScanMode>();
-    this.connector.items
-      .filter(
-        item =>
-          item.scanMode && item.scanMode.id && item.scanMode.id !== 'subscription' && item.enabled && !(item.syncWithGroup && item.group) // group items are covered by the groups pass below
-      )
-      .forEach(item => scanModes.set(item.scanMode!.id!, item.scanMode!));
-
-    this.connector.groups
-      .filter(
-        group =>
-          group.scanMode &&
-          group.scanMode.id &&
-          group.scanMode.id !== 'subscription' &&
-          this.connector.items.some(item => item.enabled && item.group?.id === group.id)
-      )
-      .forEach(group => scanModes.set(group.scanMode.id!, group.scanMode!));
-
-    // Create cron jobs for new scan modes
-    scanModes.forEach(scanMode => {
-      if (!this.cronByScanModeIds.has(scanMode.id!)) {
-        this.createOrUpdateCronJob(scanMode);
-      }
-    });
-
-    // Stop and remove cron jobs for scan modes no longer in use
-    this.cronByScanModeIds.forEach((cron, cronScanModeId) => {
-      if (!scanModes.has(cronScanModeId)) {
-        cron.stop();
-        this.cronByScanModeIds.delete(cronScanModeId);
-      }
-    });
-  }
-
-  /**
-   * Propagate a scan-mode cron-expression change from the engine. Only
-   * rebuilds the cron if this connector actually uses that scan mode —
-   * otherwise it's a no-op (we'd never have had a cron for it).
-   */
-  updateScanModeIfUsed(scanMode: ScanMode): void {
-    if (this.cronByScanModeIds.get(scanMode.id)) {
-      this.createOrUpdateCronJob(scanMode);
-    }
-  }
-
-  /**
-   * Replace or create the cron for a single scan mode. Invalid cron
-   * expressions are logged and skipped without throwing — a single bad
-   * expression must not prevent the rest of the connector from running.
-   */
-  createOrUpdateCronJob(scanMode: ScanMode): void {
-    const existingCronJob = this.cronByScanModeIds.get(scanMode.id);
-    if (existingCronJob) {
-      this.logger.debug(`Removing existing South cron job associated to scan mode "${scanMode.name}" (${scanMode.cron})`);
-      existingCronJob.stop();
-      this.cronByScanModeIds.delete(scanMode.id);
-    }
-
-    this.logger.debug(`Creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron})`);
-    try {
-      validateCronExpression(scanMode.cron);
-      const job = new CronJob(scanMode.cron, this.addToQueue.bind(this, scanMode), null, true);
-      this.cronByScanModeIds.set(scanMode.id, job);
-    } catch (error: unknown) {
-      this.logger.error(
-        `Error when creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${(error as Error).message}`
-      );
-    }
   }
 
   /**
@@ -296,7 +210,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * they don't run through the cron loop. The effective scan mode is the
    * item's own `scanMode`, unless the item is synced with a group
    * (`syncWithGroup` and a non-null `group`), in which case the group's
-   * `scanMode` takes over (same precedence as `updateCronJobs()`). Subclasses
+   * `scanMode` takes over (same precedence as `addToQueue()`). Subclasses
    * must implement `SouthSubscription` for this to do anything;
    * non-subscription connectors get a trace log and return.
    *
@@ -354,8 +268,10 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   /**
-   * Handle a scan-mode tick. Called from the cron callback in
-   * `createOrUpdateCronJob`.
+   * Handle a scan-mode tick. Called by the engine (`DataStreamEngine`), which owns a single shared
+   * cron per scan mode and fans out to every south connector on each tick — this method is a no-op
+   * for a disabled connector or one with no items on this scan mode, so the engine doesn't need to
+   * track which connectors currently care about which scan mode.
    *
    * Computes the enabled items for this scan mode and groups them via
    * `groupItemsByGroup` (so multi-item connectors batch grouped items into a
@@ -373,6 +289,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * immediately if a concurrency slot is free.
    */
   addToQueue(scanMode: ScanMode): void {
+    // The engine calls this unconditionally for every south connector on every scan-mode tick
+    // (it no longer tracks which connectors are enabled/interested), so a disabled connector must
+    // ignore the tick itself rather than relying on a cron that only used to exist while enabled.
+    if (!this.isEnabled()) {
+      this.logger.trace(`Connector is disabled. Cron "${scanMode.name}" (${scanMode.cron}) not added`);
+      return;
+    }
     if (this.stopping) {
       this.logger.trace(`Connector is exiting. Cron "${scanMode.name}" (${scanMode.cron}) not added`);
       return;
@@ -842,17 +765,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   /**
-   * Stop crons, drain the queue, release transport resources. Subclasses MAY
-   * override to close sessions / sockets; overrides should call
-   * `super.disconnect()` so cron + queue state is reset.
+   * Drain the queue, release transport resources. Subclasses MAY override to
+   * close sessions / sockets; overrides should call `super.disconnect()` so
+   * queue state is reset.
    *
    * Idempotent — safe to call when already disconnected.
    */
   disconnect(): Promise<void> {
-    for (const cronJob of this.cronByScanModeIds.values()) {
-      cronJob.stop();
-    }
-    this.cronByScanModeIds.clear();
     this.taskQueue = [];
     this.itemStatus.clear();
 

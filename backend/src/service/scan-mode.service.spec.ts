@@ -87,6 +87,8 @@ describe('Scan Mode Service', () => {
     assert.deepStrictEqual(validator.validate.mock.calls[0].arguments, [scanModeSchema, testData.scanMode.command]);
     assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
     assert.deepStrictEqual(result, testData.scanMode.list[0]);
+    // The engine installs a shared cron for the new scan mode
+    assert.deepStrictEqual(dataStreamEngine.createScanMode.mock.calls[0].arguments, [testData.scanMode.list[0]]);
   });
 
   it('create() should not create a scan mode with duplicate name', async () => {
@@ -206,6 +208,8 @@ describe('Scan Mode Service', () => {
     assert.deepStrictEqual(scanModeRepository.findById.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
     assert.deepStrictEqual(scanModeRepository.delete.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
     assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
+    // The engine tears down the scan mode's shared cron
+    assert.deepStrictEqual(dataStreamEngine.deleteScanMode.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
   });
 
   it('delete() should not delete if the scan mode is not found', () => {
@@ -219,6 +223,7 @@ describe('Scan Mode Service', () => {
     assert.strictEqual(scanModeRepository.delete.mock.calls.length, 0);
     assert.strictEqual(southCacheRepository.deleteItemsBySouth.mock.calls.length, 0);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 0);
+    assert.strictEqual(dataStreamEngine.deleteScanMode.mock.calls.length, 0);
   });
 
   it('verifyCron() should verify cron expression of a scan mode', async () => {

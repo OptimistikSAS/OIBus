@@ -1,5 +1,7 @@
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
+import { CronJob } from 'cron';
+import { validateCronExpression } from '../service/utils';
 import path from 'node:path';
 import { Instant, NotFoundError } from '../model/types';
 import {
@@ -25,6 +27,7 @@ import NorthConnectorMetricsService from '../service/metrics/north-connector-met
 import { PassThrough } from 'node:stream';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
+import ScanModeRepository from '../repository/config/scan-mode.repository';
 import { buildSouth, deleteSouthCache, initSouthCache } from '../south/south-connector-factory';
 import { buildNorth, createNorthOrchestrator, deleteNorthCache, initNorthCache } from '../north/north-connector-factory';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
@@ -48,6 +51,9 @@ export default class DataStreamEngine {
     { south: SouthConnector<SouthSettings, SouthItemSettings>; metrics: SouthConnectorMetricsService }
   >();
   private historyQueries = new Map<string, { historyQuery: HistoryQuery; metrics: HistoryQueryMetricsService }>();
+  // One shared cron per scan mode, regardless of whether any connector currently uses it — see
+  // initializeScanModeCrons()/onScanModeTriggered() for why this replaced per-connector cron ownership.
+  private cronByScanModeId = new Map<string, CronJob>();
 
   private readonly _logger = loggerService.createChildLogger('internal', 'engine');
   readonly baseFolder: string;
@@ -62,7 +68,8 @@ export default class DataStreamEngine {
     private southCacheRepository: SouthCacheRepository,
     private certificateRepository: CertificateRepository,
     private oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
-    private oianalyticsMessageService: IOIAnalyticsMessageService
+    private oianalyticsMessageService: IOIAnalyticsMessageService,
+    private scanModeRepository: ScanModeRepository
   ) {
     this.baseFolder = path.resolve('./');
   }
@@ -72,6 +79,8 @@ export default class DataStreamEngine {
     southConnectorList: Array<SouthConnectorEntityLight>,
     historyQueryList: Array<HistoryQueryEntityLight>
   ): Promise<void> {
+    this.initializeScanModeCrons();
+
     for (const northLight of northConnectorList) {
       try {
         const north = await this.createNorth(northLight.id);
@@ -131,8 +140,55 @@ export default class DataStreamEngine {
         this._logger.error(`Error while stopping History query "${id}": ${(error as Error).message}`);
       }
     }
+
+    for (const job of this.cronByScanModeId.values()) {
+      job.stop();
+    }
+    this.cronByScanModeId.clear();
+
     clearProxyAgentCache();
     clearOIAnalyticsCredentialCache();
+  }
+
+  /**
+   * Create one shared cron per scan mode present in the `scan_modes` table, regardless of whether
+   * any south/north connector currently uses it — connectors decide for themselves, on each tick,
+   * whether they have anything to do (see `SouthConnector.addToQueue` / `NorthConnector.triggerScanMode`).
+   * The `'subscription'` sentinel is excluded: it's a real seeded row with an empty cron string
+   * (subscription items are push-driven, never polled), which would otherwise fail cron validation
+   * on every startup.
+   */
+  private initializeScanModeCrons(): void {
+    for (const scanMode of this.scanModeRepository.findAll()) {
+      if (scanMode.id === 'subscription') continue;
+      this.createCronJob(scanMode);
+    }
+  }
+
+  /** Replace (or create) the shared cron for one scan mode. Invalid cron expressions are logged and skipped. */
+  private createCronJob(scanMode: ScanMode): void {
+    const existing = this.cronByScanModeId.get(scanMode.id);
+    if (existing) {
+      existing.stop();
+      this.cronByScanModeId.delete(scanMode.id);
+    }
+    try {
+      validateCronExpression(scanMode.cron);
+      const job = new CronJob(scanMode.cron, () => this.onScanModeTriggered(scanMode), null, true);
+      this.cronByScanModeId.set(scanMode.id, job);
+    } catch (error: unknown) {
+      this._logger.error(`Error when creating cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${(error as Error).message}`);
+    }
+  }
+
+  /** Fan out one scan-mode tick to every south and north connector; each decides for itself whether it applies. */
+  private onScanModeTriggered(scanMode: ScanMode): void {
+    for (const { south } of this.southConnectors.values()) {
+      south.addToQueue(scanMode);
+    }
+    for (const { north } of this.northConnectors.values()) {
+      north.triggerScanMode(scanMode);
+    }
   }
 
   async createNorth(northId: string): Promise<NorthConnector<NorthSettings>> {
@@ -241,9 +297,6 @@ export default class DataStreamEngine {
     south.connectorConfiguration = this.southConnectorRepository.findSouthById(southId)!;
     south.connectedEvent.removeAllListeners();
     south.connectedEvent.on('connected', async () => {
-      if (south.hasDirectQuery() || south.hasHistoryQuery()) {
-        south.updateCronJobs();
-      }
       if (south.hasSubscription()) {
         await south.updateSubscriptions();
       }
@@ -291,13 +344,8 @@ export default class DataStreamEngine {
     const south = this.getSouth(southConnector.id).south;
     // Only reload the items list — the connector's other settings (type, name, etc.) haven't changed.
     south.connectorConfiguration.items = this.southConnectorRepository.findAllItemsForSouth(southConnector.id);
-    if (south.isEnabled()) {
-      if (south.hasDirectQuery() || south.hasHistoryQuery()) {
-        south.updateCronJobs();
-      }
-      if (south.hasSubscription()) {
-        await south.updateSubscriptions();
-      }
+    if (south.isEnabled() && south.hasSubscription()) {
+      await south.updateSubscriptions();
     }
   }
 
@@ -475,13 +523,22 @@ export default class DataStreamEngine {
     await this.getHistoryQuery(id).historyQuery.updateCacheContent(updateCommand);
   }
 
-  async updateScanMode(scanMode: ScanMode): Promise<void> {
-    for (const south of this.southConnectors.values()) {
-      south.south.updateScanModeIfUsed(scanMode);
-    }
+  /** Called by ScanModeService.create() — install the new scan mode's shared cron. */
+  createScanMode(scanMode: ScanMode): void {
+    this.createCronJob(scanMode);
+  }
 
-    for (const north of this.northConnectors.values()) {
-      await north.north.updateScanMode(scanMode);
+  /** Called by ScanModeService.update() when the cron expression changed — replace the one affected cron. */
+  updateScanMode(scanMode: ScanMode): void {
+    this.createCronJob(scanMode);
+  }
+
+  /** Called by ScanModeService.delete() — stop and remove the scan mode's shared cron. */
+  deleteScanMode(scanModeId: string): void {
+    const job = this.cronByScanModeId.get(scanModeId);
+    if (job) {
+      job.stop();
+      this.cronByScanModeId.delete(scanModeId);
     }
   }
 

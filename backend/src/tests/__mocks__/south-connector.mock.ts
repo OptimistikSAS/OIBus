@@ -20,9 +20,7 @@ export default class SouthConnectorMock extends SouthConnector<SouthSettings, So
 
   override start = mock.fn(async (): Promise<void> => undefined);
   override connect = mock.fn(async (): Promise<void> => undefined);
-  override updateScanModeIfUsed = mock.fn((_scanMode: ScanMode): void => undefined);
   override isEnabled = mock.fn((): boolean => false);
-  override updateCronJobs = mock.fn((): void => undefined);
   override updateSubscriptions = mock.fn(async (): Promise<void> => undefined);
   override addToQueue = mock.fn((_scanMode: ScanMode): void => undefined);
   override createDeferredPromise = mock.fn((): void => undefined);

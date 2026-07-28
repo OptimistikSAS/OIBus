@@ -21,6 +21,8 @@ import HistoryQueryMetricsRepositoryMock from '../tests/__mocks__/repository/met
 import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
 import OIAnalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import type { ScanMode } from '../model/scan-mode.model';
 
 import type DataStreamEngineType from './data-stream-engine';
 import type { NorthConnectorEntityLight } from '../model/north-connector.model';
@@ -54,6 +56,14 @@ const historyFactoryExports: Record<string, unknown> = {
   createHistoryQueryOrchestrator: mock.fn(),
   deleteHistoryQueryCache: mock.fn(),
   initHistoryQueryCache: mock.fn()
+};
+
+// --- 'cron' module: stub CronJob so scan-mode crons in tests never start a real timer ---
+const cronMockInstance = { stop: mock.fn() };
+const cronExports = {
+  CronJob: mock.fn(function (_cron: unknown, _callback: () => void) {
+    return cronMockInstance;
+  })
 };
 
 // --- Metrics service constructor closures (reassigned in beforeEach) ---
@@ -106,6 +116,7 @@ const southCacheRepository = new SouthConnectorRepositoryMock();
 const certificateRepository = new CertificateRepositoryMock();
 const oIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
 const oianalyticsMessageService = new OIAnalyticsMessageServiceMock();
+const scanModeRepository = new ScanModeRepositoryMock();
 
 let DataStreamEngine: new (...args: Array<unknown>) => DataStreamEngineType;
 let engine: DataStreamEngineType;
@@ -114,8 +125,13 @@ const logger = new PinoLogger();
 before(() => {
   // south-mqtt: no-op default export class
   mockModule(nodeRequire, '../south/south-mqtt/south-mqtt', { default: class {} });
-  // service/utils: stub createFolder
-  mockModule(nodeRequire, '../service/utils', { createFolder: mock.fn() });
+  // service/utils: stub createFolder + validateCronExpression (used by initializeScanModeCrons/createCronJob)
+  mockModule(nodeRequire, '../service/utils', {
+    createFolder: mock.fn(),
+    validateCronExpression: mock.fn(() => ({ expression: '' }))
+  });
+  // cron: stub CronJob so scan-mode crons never start a real timer
+  mockModule(nodeRequire, 'cron', cronExports);
   // node:fs/promises: stub rm
   mockModule(nodeRequire, 'node:fs/promises', { rm: mock.fn(), ...nodeRequire('node:fs/promises') });
   // http-request utils: stub clearProxyAgentCache
@@ -185,6 +201,11 @@ describe('DataStreamEngine', () => {
     northConnectorRepository.removeTransformersByTransformerId.mock.resetCalls();
     historyQueryRepository.removeTransformersByTransformerId.mock.resetCalls();
     oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.resetCalls();
+    scanModeRepository.findAll = mock.fn((): Array<ScanMode> => []);
+    cronMockInstance.stop.mock.resetCalls();
+    cronExports.CronJob = mock.fn(function (_cron: unknown, _callback: () => void) {
+      return cronMockInstance;
+    });
 
     logger.trace.mock.resetCalls();
     logger.debug.mock.resetCalls();
@@ -251,7 +272,8 @@ describe('DataStreamEngine', () => {
       southCacheRepository, // structural mock — satisfies SouthCacheRepository interface
       certificateRepository,
       oIAnalyticsRegistrationRepository,
-      oianalyticsMessageService
+      oianalyticsMessageService,
+      scanModeRepository
     );
   });
 
@@ -560,12 +582,6 @@ describe('DataStreamEngine', () => {
     it('should manage south connect event', async () => {
       engine.getSouth = mock.fn((_southId: string) => ({ south: mockedSouth1, metrics: southConnectorMetricsService }));
 
-      let hasHistoryQueryCall = 0;
-      mockedSouth1.hasHistoryQuery = mock.fn(() => {
-        hasHistoryQueryCall++;
-        return hasHistoryQueryCall % 2 === 0; // false on 1st call, true on 2nd
-      });
-
       let hasSubscriptionCall = 0;
       mockedSouth1.hasSubscription = mock.fn(() => {
         hasSubscriptionCall++;
@@ -575,42 +591,33 @@ describe('DataStreamEngine', () => {
       await engine.startSouth(testData.south.list[0].id);
 
       mockedSouth1.connectedEvent.emit('connected');
-      assert.strictEqual(mockedSouth1.updateCronJobs.mock.calls.length, 0);
       assert.strictEqual(mockedSouth1.updateSubscriptions.mock.calls.length, 0);
 
       mockedSouth1.connectedEvent.emit('connected');
-      assert.strictEqual(mockedSouth1.updateCronJobs.mock.calls.length, 1);
       assert.strictEqual(mockedSouth1.updateSubscriptions.mock.calls.length, 1);
 
-      assert.strictEqual(mockedSouth1.hasHistoryQuery.mock.calls.length, 2);
       assert.strictEqual(mockedSouth1.hasSubscription.mock.calls.length, 2);
     });
 
     it('should reload south items', async () => {
       const southEntity = testData.south.list[0];
 
-      mockedSouth1.hasHistoryQuery = mock.fn(() => true);
-      mockedSouth1.hasDirectQuery = mock.fn(() => true);
       mockedSouth1.hasSubscription = mock.fn(() => true);
       mockedSouth1.isEnabled = mock.fn(() => true);
 
       await engine.reloadSouthItems(southEntity);
 
-      assert.strictEqual(mockedSouth1.updateCronJobs.mock.calls.length, 1);
       assert.strictEqual(mockedSouth1.updateSubscriptions.mock.calls.length, 1);
     });
 
     it('should reload south items and manage connector type', async () => {
       const southEntity = testData.south.list[0];
 
-      mockedSouth1.hasHistoryQuery = mock.fn(() => false);
-      mockedSouth1.hasDirectQuery = mock.fn(() => false);
       mockedSouth1.hasSubscription = mock.fn(() => false);
       mockedSouth1.isEnabled = mock.fn(() => true);
 
       await engine.reloadSouthItems(southEntity);
 
-      assert.strictEqual(mockedSouth1.updateCronJobs.mock.calls.length, 0);
       assert.strictEqual(mockedSouth1.updateSubscriptions.mock.calls.length, 0);
     });
 
@@ -621,7 +628,6 @@ describe('DataStreamEngine', () => {
 
       await engine.reloadSouthItems(southEntity);
 
-      assert.strictEqual(mockedSouth1.updateCronJobs.mock.calls.length, 0);
       assert.strictEqual(mockedSouth1.updateSubscriptions.mock.calls.length, 0);
     });
 
@@ -845,14 +851,21 @@ describe('DataStreamEngine', () => {
       await engine.start(northList, southList, historyList);
     });
 
-    it('should update scan mode for all connectors', async () => {
+    it('should replace only the affected scan-mode cron on update', async () => {
       const scanMode = testData.scanMode.list[0];
+      // No scan modes existed at startup (scanModeRepository.findAll() defaults to []), so this is
+      // a fresh cron, not a replace of a pre-existing one.
       await engine.updateScanMode(scanMode);
 
-      assert.strictEqual(mockedNorth1.updateScanMode.mock.calls.length, 1);
-      assert.deepStrictEqual(mockedNorth1.updateScanMode.mock.calls[0].arguments, [scanMode]);
-      assert.strictEqual(mockedSouth1.updateScanModeIfUsed.mock.calls.length, 1);
-      assert.deepStrictEqual(mockedSouth1.updateScanModeIfUsed.mock.calls[0].arguments, [scanMode]);
+      assert.strictEqual(cronExports.CronJob.mock.calls.length, 1);
+      assert.strictEqual(cronExports.CronJob.mock.calls[0].arguments[0], scanMode.cron);
+      assert.strictEqual(engine['cronByScanModeId'].size, 1);
+      assert.ok(engine['cronByScanModeId'].has(scanMode.id));
+
+      // Updating again replaces the same entry — the old job is stopped, exactly one job remains
+      await engine.updateScanMode(scanMode);
+      assert.strictEqual(cronMockInstance.stop.mock.calls.length, 1);
+      assert.strictEqual(engine['cronByScanModeId'].size, 1);
     });
 
     it('should search cache content (North)', async () => {
@@ -917,6 +930,77 @@ describe('DataStreamEngine', () => {
       await engine.updateCacheContent('history', testData.historyQueries.list[0].id, cmd);
       assert.strictEqual(mockedHistoryQuery1.updateCacheContent.mock.calls.length, 1);
       assert.deepStrictEqual(mockedHistoryQuery1.updateCacheContent.mock.calls[0].arguments, [cmd]);
+    });
+  });
+
+  describe('Scan mode crons', () => {
+    it('should create one shared cron per scan mode at startup, excluding the subscription sentinel', async () => {
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [
+        testData.scanMode.list[0],
+        testData.scanMode.list[1],
+        { ...testData.scanMode.list[0], id: 'subscription', name: 'Subscription', cron: '' }
+      ]);
+
+      await engine.start(northList, southList, historyList);
+
+      assert.strictEqual(cronExports.CronJob.mock.calls.length, 2);
+      assert.strictEqual(engine['cronByScanModeId'].size, 2);
+      assert.ok(engine['cronByScanModeId'].has(testData.scanMode.list[0].id));
+      assert.ok(engine['cronByScanModeId'].has(testData.scanMode.list[1].id));
+      assert.ok(!engine['cronByScanModeId'].has('subscription'));
+    });
+
+    it('should fan out a scan-mode tick to every south and north connector', async () => {
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [testData.scanMode.list[0]]);
+      await engine.start(northList, southList, historyList);
+
+      const cronCallback = cronExports.CronJob.mock.calls[0].arguments[1] as () => void;
+      cronCallback();
+
+      assert.strictEqual(mockedSouth1.addToQueue.mock.calls.length, 1);
+      assert.deepStrictEqual(mockedSouth1.addToQueue.mock.calls[0].arguments, [testData.scanMode.list[0]]);
+      assert.strictEqual(mockedSouth2.addToQueue.mock.calls.length, 1);
+      assert.strictEqual(mockedNorth1.triggerScanMode.mock.calls.length, 1);
+      assert.deepStrictEqual(mockedNorth1.triggerScanMode.mock.calls[0].arguments, [testData.scanMode.list[0]]);
+      assert.strictEqual(mockedNorth2.triggerScanMode.mock.calls.length, 1);
+    });
+
+    it('createScanMode should add a new cron', async () => {
+      await engine.start(northList, southList, historyList);
+      const scanMode = testData.scanMode.list[0];
+
+      await engine.createScanMode(scanMode);
+
+      assert.strictEqual(cronExports.CronJob.mock.calls.length, 1);
+      assert.ok(engine['cronByScanModeId'].has(scanMode.id));
+    });
+
+    it('deleteScanMode should stop and remove the cron', async () => {
+      const scanMode = testData.scanMode.list[0];
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+      await engine.start(northList, southList, historyList);
+      assert.ok(engine['cronByScanModeId'].has(scanMode.id));
+
+      engine.deleteScanMode(scanMode.id);
+
+      assert.strictEqual(cronMockInstance.stop.mock.calls.length, 1);
+      assert.ok(!engine['cronByScanModeId'].has(scanMode.id));
+    });
+
+    it('deleteScanMode should no-op for a scan mode with no cron', () => {
+      assert.doesNotThrow(() => engine.deleteScanMode('never-had-a-cron'));
+      assert.strictEqual(cronMockInstance.stop.mock.calls.length, 0);
+    });
+
+    it('should tear down every scan-mode cron on stop()', async () => {
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [testData.scanMode.list[0], testData.scanMode.list[1]]);
+      await engine.start(northList, southList, historyList);
+      assert.strictEqual(engine['cronByScanModeId'].size, 2);
+
+      await engine.stop();
+
+      assert.strictEqual(engine['cronByScanModeId'].size, 0);
+      assert.strictEqual(cronMockInstance.stop.mock.calls.length, 2);
     });
   });
 });
