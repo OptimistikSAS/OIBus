@@ -24,6 +24,7 @@ import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../../shared/model/history-query.model';
 import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../../shared/model/transformer.model';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
+import { OIBusTestTransformerItemCommandContent } from '../../model/oianalytics-command.model';
 
 interface BaseAuditFields {
   oIBusInternalId: string;
@@ -194,7 +195,8 @@ export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'create-custom-transformer',
   'update-custom-transformer',
   'delete-custom-transformer',
-  'test-custom-transformer'
+  'test-custom-transformer',
+  'test-transformer'
 ] as const;
 export type OIAnalyticsFetchCommandType = (typeof OIANALYTICS_FETCH_COMMAND_TYPES)[number];
 
@@ -502,6 +504,12 @@ export interface OIAnalyticsFetchTestCustomTransformerCommandDTO extends BaseOIA
   commandContent: TransformerTestRequest;
 }
 
+export interface OIAnalyticsFetchTestTransformerCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'test-transformer';
+  transformerId: string;
+  commandContent: TransformerTestRequest | OIBusTestTransformerItemCommandContent;
+}
+
 export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchUpdateVersionCommandDTO
   | OIAnalyticsFetchRestartEngineCommandDTO
@@ -548,4 +556,5 @@ export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchCreateCustomTransformerCommandDTO
   | OIAnalyticsFetchUpdateCustomTransformerCommandDTO
   | OIAnalyticsFetchDeleteCustomTransformerCommandDTO
-  | OIAnalyticsFetchTestCustomTransformerCommandDTO;
+  | OIAnalyticsFetchTestCustomTransformerCommandDTO
+  | OIAnalyticsFetchTestTransformerCommandDTO;

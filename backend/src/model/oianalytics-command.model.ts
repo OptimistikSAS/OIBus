@@ -10,10 +10,12 @@ import {
 } from '../../shared/model/engine.model';
 import { ScanModeCommandDTO } from '../../shared/model/scan-mode.model';
 import {
+  OIBusSouthType,
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemTestingSettings
 } from '../../shared/model/south-connector.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.model';
 import { IPFilterCommandDTO } from '../../shared/model/ip-filter.model';
 import { CertificateCommandDTO } from '../../shared/model/certificate.model';
@@ -379,6 +381,28 @@ export interface OIBusTestCustomTransformerCommand extends BaseOIBusCommand {
   commandContent: { command: CustomTransformerCommandDTO; testRequest: TransformerTestRequest };
 }
 
+/**
+ * Test content for testing a transformer against an existing (or not-yet-saved) south item read,
+ * mirroring the query params (southType, itemName) and body (southSettings, itemSettings,
+ * testingSettings) used by the south item test REST endpoint.
+ */
+export interface OIBusTestTransformerItemCommandContent {
+  southId: string;
+  southType: OIBusSouthType;
+  itemName: string;
+  southSettings: SouthSettings;
+  itemSettings: SouthItemSettings;
+  testingSettings: SouthConnectorItemTestingSettings;
+}
+
+export interface OIBusTestTransformerCommand extends BaseOIBusCommand {
+  type: 'test-transformer';
+  targetVersion: string;
+  transformerId: string;
+  // Either pasted input data (TransformerTestRequest) or an existing/unsaved south item to read from.
+  commandContent: TransformerTestRequest | OIBusTestTransformerItemCommandContent;
+}
+
 export type OIBusCommand =
   | OIBusUpdateVersionCommand
   | OIBusRestartEngineCommand
@@ -425,4 +449,5 @@ export type OIBusCommand =
   | OIBusCreateCustomTransformerCommand
   | OIBusUpdateCustomTransformerCommand
   | OIBusDeleteCustomTransformerCommand
-  | OIBusTestCustomTransformerCommand;
+  | OIBusTestCustomTransformerCommand
+  | OIBusTestTransformerCommand;

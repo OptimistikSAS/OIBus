@@ -65,7 +65,8 @@ export const OIBUS_COMMAND_TYPES = [
   'create-custom-transformer',
   'update-custom-transformer',
   'delete-custom-transformer',
-  'test-custom-transformer'
+  'test-custom-transformer',
+  'test-transformer'
 ] as const;
 
 /**
@@ -1239,6 +1240,28 @@ export interface OIBusTestCustomTransformerCommandDTO extends BaseOIBusCommandDT
 }
 
 /**
+ * Command DTO for testing an existing transformer with pasted input data or an item.
+ */
+export interface OIBusTestTransformerCommandDTO extends BaseOIBusCommandDTO {
+  /**
+   * The type of the command.
+   */
+  type: 'test-transformer';
+
+  /**
+   * The target version for the command.
+   * @example "3.7.0"
+   */
+  targetVersion: string;
+
+  /**
+   * The ID of the transformer to test.
+   * @example "transformer123"
+   */
+  transformerId: string;
+}
+
+/**
  * Union type representing all possible OIBus command DTOs.
  */
 export type OIBusCommandDTO =
@@ -1287,7 +1310,8 @@ export type OIBusCommandDTO =
   | OIBusCreateCustomTransformerCommandDTO
   | OIBusUpdateCustomTransformerCommandDTO
   | OIBusDeleteCustomTransformerCommandDTO
-  | OIBusTestCustomTransformerCommandDTO;
+  | OIBusTestCustomTransformerCommandDTO
+  | OIBusTestTransformerCommandDTO;
 
 /**
  * Parameters for searching commands.
