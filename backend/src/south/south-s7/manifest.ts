@@ -1,14 +1,14 @@
 import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
-  id: 'influxdb',
-  category: 'database',
+  id: 's7',
+  category: 'iot',
   beta: true,
   modes: {
     subscription: false,
-    lastPoint: false,
+    lastPoint: true,
     lastFile: false,
-    history: true
+    history: false
   },
   settings: {
     type: 'object',
@@ -18,66 +18,14 @@ const manifest: SouthConnectorManifest = {
       visible: true,
       wrapInBox: false
     },
-    enablingConditions: [
-      {
-        referralPathFromRoot: 'version',
-        targetPathFromRoot: 'host',
-        values: ['1']
-      },
-      {
-        referralPathFromRoot: 'version',
-        targetPathFromRoot: 'port',
-        values: ['1']
-      },
-      {
-        referralPathFromRoot: 'version',
-        targetPathFromRoot: 'protocol',
-        values: ['1']
-      },
-      {
-        referralPathFromRoot: 'version',
-        targetPathFromRoot: 'database',
-        values: ['1', '3']
-      },
-      {
-        referralPathFromRoot: 'version',
-        targetPathFromRoot: 'username',
-        values: ['1']
-      },
-      {
-        referralPathFromRoot: 'version',
-        targetPathFromRoot: 'password',
-        values: ['1']
-      },
-      {
-        referralPathFromRoot: 'version',
-        targetPathFromRoot: 'url',
-        values: ['2', '3']
-      },
-      {
-        referralPathFromRoot: 'version',
-        targetPathFromRoot: 'token',
-        values: ['2', '3']
-      },
-      {
-        referralPathFromRoot: 'version',
-        targetPathFromRoot: 'organisation',
-        values: ['2']
-      },
-      {
-        referralPathFromRoot: 'version',
-        targetPathFromRoot: 'bucket',
-        values: ['2']
-      }
-    ],
+    enablingConditions: [],
     validators: [],
     attributes: [
       {
-        type: 'string-select',
-        key: 'version',
-        translationKey: 'configuration.oibus.manifest.south.influxdb.version',
-        defaultValue: '1',
-        selectableValues: ['1', '2', '3'],
+        type: 'string',
+        key: 'host',
+        translationKey: 'configuration.oibus.manifest.south.s7.host',
+        defaultValue: '127.0.0.1',
         validators: [
           {
             type: 'REQUIRED',
@@ -86,32 +34,15 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 0,
-          columns: 4,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
-        key: 'host',
-        translationKey: 'configuration.oibus.manifest.south.influxdb.host',
-        defaultValue: 'localhost',
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 1,
-          columns: 5,
+          columns: 6,
           displayInViewMode: true
         }
       },
       {
         type: 'number',
         key: 'port',
-        translationKey: 'configuration.oibus.manifest.south.influxdb.port',
-        defaultValue: 8086,
+        translationKey: 'configuration.oibus.manifest.south.s7.port',
+        defaultValue: 102,
         unit: null,
         validators: [
           {
@@ -128,21 +59,43 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 1,
-          columns: 4,
+          row: 0,
+          columns: 3,
           displayInViewMode: true
         }
       },
       {
         type: 'string-select',
-        key: 'protocol',
-        translationKey: 'configuration.oibus.manifest.south.influxdb.protocol',
-        defaultValue: 'http',
-        selectableValues: ['http', 'https'],
+        key: 'connectionType',
+        translationKey: 'configuration.oibus.manifest.south.s7.connection-type',
+        defaultValue: 'PG',
+        selectableValues: ['PG', 'OP', 'S7Basic'],
         validators: [
           {
             type: 'REQUIRED',
             arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 0,
+          columns: 3,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'rack',
+        translationKey: 'configuration.oibus.manifest.south.s7.rack',
+        defaultValue: 0,
+        unit: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['0']
           }
         ],
         displayProperties: {
@@ -152,104 +105,102 @@ const manifest: SouthConnectorManifest = {
         }
       },
       {
-        type: 'string',
-        key: 'database',
-        translationKey: 'configuration.oibus.manifest.south.influxdb.database',
-        defaultValue: null,
+        type: 'number',
+        key: 'slot',
+        translationKey: 'configuration.oibus.manifest.south.s7.slot',
+        defaultValue: 1,
+        unit: null,
         validators: [
           {
             type: 'REQUIRED',
             arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 2,
-          columns: 6,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
-        key: 'username',
-        translationKey: 'configuration.oibus.manifest.south.influxdb.username',
-        defaultValue: null,
-        validators: [],
-        displayProperties: {
-          row: 3,
-          columns: 6,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'secret',
-        key: 'password',
-        translationKey: 'configuration.oibus.manifest.south.influxdb.password',
-        validators: [],
-        displayProperties: {
-          row: 3,
-          columns: 6,
-          displayInViewMode: false
-        }
-      },
-      {
-        type: 'string',
-        key: 'url',
-        translationKey: 'configuration.oibus.manifest.south.influxdb.url',
-        defaultValue: 'http://localhost:8086',
-        validators: [
+          },
           {
-            type: 'REQUIRED',
-            arguments: []
+            type: 'MINIMUM',
+            arguments: ['0']
           }
         ],
         displayProperties: {
           row: 1,
-          columns: 9,
+          columns: 3,
           displayInViewMode: true
         }
       },
       {
-        type: 'secret',
-        key: 'token',
-        translationKey: 'configuration.oibus.manifest.south.influxdb.token',
-        validators: [],
+        type: 'number',
+        key: 'connectTimeout',
+        translationKey: 'configuration.oibus.manifest.south.s7.connect-timeout',
+        unit: 'ms',
+        defaultValue: 10000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['60000']
+          }
+        ],
         displayProperties: {
           row: 2,
-          columns: 6,
-          displayInViewMode: false
-        }
-      },
-      {
-        type: 'string',
-        key: 'organisation',
-        translationKey: 'configuration.oibus.manifest.south.influxdb.organisation',
-        defaultValue: null,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 3,
-          columns: 6,
+          columns: 4,
           displayInViewMode: true
         }
       },
       {
-        type: 'string',
-        key: 'bucket',
-        translationKey: 'configuration.oibus.manifest.south.influxdb.bucket',
-        defaultValue: null,
+        type: 'number',
+        key: 'requestTimeout',
+        translationKey: 'configuration.oibus.manifest.south.s7.request-timeout',
+        unit: 'ms',
+        defaultValue: 15000,
         validators: [
           {
             type: 'REQUIRED',
             arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['60000']
           }
         ],
         displayProperties: {
-          row: 3,
-          columns: 6,
+          row: 2,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'retryInterval',
+        translationKey: 'configuration.oibus.manifest.south.s7.retry-interval',
+        unit: 'ms',
+        defaultValue: 10000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['60000']
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 4,
           displayInViewMode: true
         }
       }
@@ -336,11 +287,10 @@ const manifest: SouthConnectorManifest = {
           validators: [],
           attributes: [
             {
-              type: 'code',
-              key: 'query',
-              contentType: 'sql',
-              translationKey: 'configuration.oibus.manifest.south.items.influxdb.query',
-              defaultValue: "SELECT * FROM measurement WHERE time > '@StartTime' AND time <= '@EndTime'",
+              type: 'string',
+              key: 'address',
+              translationKey: 'configuration.oibus.manifest.south.items.s7.address',
+              defaultValue: 'DB1,REAL0',
               validators: [
                 {
                   type: 'REQUIRED',
@@ -349,26 +299,8 @@ const manifest: SouthConnectorManifest = {
               ],
               displayProperties: {
                 row: 0,
-                columns: 12,
+                columns: 6,
                 displayInViewMode: true
-              }
-            },
-            {
-              type: 'number',
-              key: 'requestTimeout',
-              translationKey: 'configuration.oibus.manifest.south.items.influxdb.request-timeout',
-              unit: 'ms',
-              defaultValue: 15000,
-              validators: [
-                {
-                  type: 'REQUIRED',
-                  arguments: []
-                }
-              ],
-              displayProperties: {
-                row: 1,
-                columns: 4,
-                displayInViewMode: false
               }
             }
           ]
@@ -377,5 +309,4 @@ const manifest: SouthConnectorManifest = {
     }
   }
 };
-
 export default manifest;
