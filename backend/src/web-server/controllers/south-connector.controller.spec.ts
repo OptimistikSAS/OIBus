@@ -121,6 +121,23 @@ describe('SouthConnectorController', () => {
       {
         id: testData.south.manifest.id,
         category: testData.south.manifest.category,
+        beta: testData.south.manifest.beta,
+        modes: testData.south.manifest.modes
+      }
+    ]);
+  });
+
+  it('should return south connector types with beta flag carried through', async () => {
+    const mockManifests = [{ ...testData.south.manifest, beta: true }];
+    southService.listManifest = mock.fn(() => mockManifests);
+
+    const result = await controller.listManifest(mockRequest as CustomExpressRequest);
+
+    assert.deepStrictEqual(result, [
+      {
+        id: testData.south.manifest.id,
+        category: testData.south.manifest.category,
+        beta: true,
         modes: testData.south.manifest.modes
       }
     ]);
