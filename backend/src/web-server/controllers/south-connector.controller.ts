@@ -95,6 +95,7 @@ export class SouthConnectorController extends Controller {
     return southService.listManifest().map(manifest => ({
       id: manifest.id,
       category: manifest.category,
+      beta: manifest.beta,
       modes: manifest.modes
     }));
   }
