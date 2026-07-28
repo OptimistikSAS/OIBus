@@ -104,8 +104,8 @@ const createTransport = async (opts: SyslogTransportOptions) => {
       }
     },
     {
-      close: () => {
-        transport.end();
+      close: async () => {
+        await transport.end();
       }
     }
   );
