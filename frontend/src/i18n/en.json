@@ -241,7 +241,8 @@
       "create-custom-transformer": "Create transformer",
       "update-custom-transformer": "Update transformer",
       "delete-custom-transformer": "Delete transformer",
-      "test-custom-transformer": "Test transformer"
+      "test-custom-transformer": "Test transformer",
+      "test-transformer": "Test transformer"
     },
     "oibus-data-source-type": {
       "oianalytics-setpoint": "OIAnalytics setpoints",

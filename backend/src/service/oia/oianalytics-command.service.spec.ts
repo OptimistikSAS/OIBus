@@ -53,6 +53,7 @@ import {
   OIBusTestNorthConnectorCommand,
   OIBusTestSouthConnectorCommand,
   OIBusTestSouthConnectorItemCommand,
+  OIBusTestTransformerCommand,
   OIBusUpdateCertificateCommand,
   OIBusUpdateEngineGeneralCommand,
   OIBusUpdateEngineLoggerCommand,
@@ -1535,8 +1536,9 @@ describe('OIAnalytics Command Service', () => {
       }
     } as OIBusTestSouthConnectorItemCommand;
 
-    const rawContent: OIBusContent = { type: 'any-content', content: '' };
-    const testItemResult = { raw: rawContent, transformed: null };
+    const rawContent: OIBusContent = { type: 'any-content', content: 'raw content' };
+    const transformedContent: OIBusContent = { type: 'any-content', content: 'transformed content' };
+    const testItemResult = { raw: rawContent, transformed: transformedContent };
     oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     southService.testItem.mock.mockImplementationOnce(async () => testItemResult);
     southService.listManifest.mock.mockImplementationOnce(() => [
@@ -1545,8 +1547,6 @@ describe('OIAnalytics Command Service', () => {
         id: command.commandContent.southCommand.type
       }
     ]);
-    const completeTestItemMock = mock.fn();
-    (service as unknown as { completeTestItemCommand: typeof completeTestItemMock }).completeTestItemCommand = completeTestItemMock;
 
     await service.processNextCommand();
 
@@ -1558,7 +1558,162 @@ describe('OIAnalytics Command Service', () => {
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings
     ]);
-    assert.deepStrictEqual(completeTestItemMock.mock.calls[0].arguments, [command, rawContent]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify({
+        raw: { ...rawContent, truncated: false, totalSize: 0 },
+        transformed: { ...transformedContent, truncated: false, totalSize: 0 }
+      })
+    ]);
+  });
+
+  it('should execute south-item-test command and store transformed: null when there is no transformer', async () => {
+    const command: OIBusTestSouthConnectorItemCommand = {
+      id: 'testSouthItemNoTransformId',
+      type: 'test-south-item',
+      targetVersion: testData.engine.settings.version,
+      itemId: 'itemId',
+      southConnectorId: 'southConnectorId',
+      commandContent: {
+        southCommand: testData.south.command,
+        itemCommand: testData.south.itemCommand,
+        testingSettings: {} as SouthConnectorItemTestingSettings
+      }
+    } as OIBusTestSouthConnectorItemCommand;
+
+    const rawContent: OIBusContent = { type: 'any-content', content: 'raw content' };
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+    southService.testItem.mock.mockImplementationOnce(async () => ({ raw: rawContent, transformed: null }));
+    southService.listManifest.mock.mockImplementationOnce(() => [
+      {
+        ...testData.south.manifest,
+        id: command.commandContent.southCommand.type
+      }
+    ]);
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify({
+        raw: { ...rawContent, truncated: false, totalSize: 0 },
+        transformed: null
+      })
+    ]);
+  });
+
+  it('should execute test-transformer command with pasted input data, keeping both raw and transformed', async () => {
+    const command: OIBusTestTransformerCommand = {
+      id: 'testTransformerPasteId',
+      type: 'test-transformer',
+      targetVersion: testData.engine.settings.version,
+      transformerId: 'transformerId',
+      commandContent: { inputData: 'pasted content', options: {} }
+    } as OIBusTestTransformerCommand;
+
+    const raw: OIBusContent = { type: 'any-content', content: 'raw content' };
+    const transformed: OIBusContent = { type: 'any-content', content: 'transformed content' };
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+    transformerService.testTransformer.mock.mockImplementationOnce(async () => ({ raw, transformed }));
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(transformerService.testTransformer.mock.calls[0].arguments, [command.transformerId, {}, 'pasted content']);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify({
+        raw: { ...raw, truncated: false, totalSize: 0 },
+        transformed: { ...transformed, truncated: false, totalSize: 0 }
+      })
+    ]);
+  });
+
+  it('should execute test-transformer command with a south item, keeping both raw and transformed', async () => {
+    const command: OIBusTestTransformerCommand = {
+      id: 'testTransformerItemId',
+      type: 'test-transformer',
+      targetVersion: testData.engine.settings.version,
+      transformerId: 'transformerId',
+      commandContent: {
+        southId: 'southConnectorId',
+        southType: testData.south.command.type,
+        itemName: 'Current',
+        southSettings: testData.south.command.settings,
+        itemSettings: testData.south.itemCommand.settings,
+        testingSettings: {} as SouthConnectorItemTestingSettings
+      }
+    } as OIBusTestTransformerCommand;
+
+    const raw: OIBusContent = { type: 'any-content', content: 'raw content' };
+    const transformed: OIBusContent = { type: 'any-content', content: 'transformed content' };
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+    southService.listManifest.mock.mockImplementationOnce(() => [
+      {
+        ...testData.south.manifest,
+        id: testData.south.command.type
+      }
+    ]);
+    southService.testItem.mock.mockImplementationOnce(async () => ({ raw, transformed }));
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(southService.testItem.mock.calls[0].arguments, [
+      'southConnectorId',
+      testData.south.command.type,
+      'Current',
+      testData.south.command.settings,
+      testData.south.itemCommand.settings,
+      {}
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify({
+        raw: { ...raw, truncated: false, totalSize: 0 },
+        transformed: { ...transformed, truncated: false, totalSize: 0 }
+      })
+    ]);
+  });
+
+  it('should execute test-transformer command with a south item that has no transformer configured, storing transformed: null', async () => {
+    const command: OIBusTestTransformerCommand = {
+      id: 'testTransformerItemNoTransformId',
+      type: 'test-transformer',
+      targetVersion: testData.engine.settings.version,
+      transformerId: 'transformerId',
+      commandContent: {
+        southId: 'southConnectorId',
+        southType: testData.south.command.type,
+        itemName: 'Current',
+        southSettings: testData.south.command.settings,
+        itemSettings: testData.south.itemCommand.settings,
+        testingSettings: {} as SouthConnectorItemTestingSettings
+      }
+    } as OIBusTestTransformerCommand;
+
+    const raw: OIBusContent = { type: 'any-content', content: 'raw content' };
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+    southService.listManifest.mock.mockImplementationOnce(() => [
+      {
+        ...testData.south.manifest,
+        id: testData.south.command.type
+      }
+    ]);
+    southService.testItem.mock.mockImplementationOnce(async () => ({ raw, transformed: null }));
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify({
+        raw: { ...raw, truncated: false, totalSize: 0 },
+        transformed: null
+      })
+    ]);
   });
 
   describe('withTimeout for test commands', () => {

@@ -47,7 +47,8 @@ import {
   OIAnalyticsFetchCreateCustomTransformerCommandDTO,
   OIAnalyticsFetchUpdateCustomTransformerCommandDTO,
   OIAnalyticsFetchDeleteCustomTransformerCommandDTO,
-  OIAnalyticsFetchTestCustomTransformerCommandDTO
+  OIAnalyticsFetchTestCustomTransformerCommandDTO,
+  OIAnalyticsFetchTestTransformerCommandDTO
 } from '../../service/oia/oianalytics.model';
 import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../../shared/model/transformer.model';
 import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
@@ -56,6 +57,7 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemTestingSettings
 } from '../../../shared/model/south-connector.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/history-query.model';
 import { CacheSearchParam } from '../../../shared/model/engine.model';
 
@@ -1238,6 +1240,68 @@ describe('OIAnalyticsCommandRepository', () => {
       completedDate: null,
       result: null,
       commandContent: { inputData: 'test-input' }
+    });
+  });
+
+  it('should create a test-transformer command with pasted input data', () => {
+    const command: OIAnalyticsFetchTestTransformerCommandDTO = {
+      id: 'testTransformerPasteId',
+      targetVersion: 'v3.9.0',
+      type: 'test-transformer',
+      transformerId: 'tr1',
+      commandContent: { inputData: 'test-input' } as TransformerTestRequest
+    };
+    repository.create(command);
+
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
+      id: command.id,
+      type: command.type,
+      status: 'RETRIEVED',
+      ack: false,
+      targetVersion: command.targetVersion,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      transformerId: 'tr1',
+      commandContent: { inputData: 'test-input' }
+    });
+  });
+
+  it('should create a test-transformer command with a south item', () => {
+    const command: OIAnalyticsFetchTestTransformerCommandDTO = {
+      id: 'testTransformerItemId',
+      targetVersion: 'v3.9.0',
+      type: 'test-transformer',
+      transformerId: 'tr1',
+      commandContent: {
+        southId: 'southId',
+        southType: 'opcua',
+        itemName: 'Current',
+        southSettings: {} as SouthSettings,
+        itemSettings: {} as SouthItemSettings,
+        testingSettings: {} as SouthConnectorItemTestingSettings
+      }
+    };
+    repository.create(command);
+
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
+      id: command.id,
+      type: command.type,
+      status: 'RETRIEVED',
+      ack: false,
+      targetVersion: command.targetVersion,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      transformerId: 'tr1',
+      commandContent: {
+        southId: 'southId',
+        southType: 'opcua',
+        itemName: 'Current',
+        southSettings: {},
+        itemSettings: {},
+        testingSettings: {}
+      }
     });
   });
 });
