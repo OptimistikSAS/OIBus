@@ -25,6 +25,7 @@ const southTypes: Array<SouthType> = [
   {
     id: 'mssql',
     category: 'database',
+    beta: true,
     modes: { subscription: false, lastPoint: false, lastFile: false, history: true }
   }
 ];
@@ -55,6 +56,17 @@ describe('ChooseSouthConnectorTypeModalComponent', () => {
 
     const root = page.elementLocator(fixture.nativeElement);
     await expect.element(root.getByCss('.category-button').nth(0)).toBeInTheDocument();
+  });
+
+  test('should display a beta badge only for beta south types', async () => {
+    const fixture = TestBed.createComponent(ChooseSouthConnectorTypeModalComponent);
+    fixture.detectChanges();
+
+    const root = page.elementLocator(fixture.nativeElement);
+    const buttons = root.getByCss('.category-button');
+    await expect.element(buttons.nth(0).getByCss('.badge')).not.toBeInTheDocument();
+    await expect.element(buttons.nth(1).getByCss('.badge')).toBeInTheDocument();
+    await expect.element(buttons.nth(1).getByCss('.badge')).toHaveTextContent('Beta');
   });
 
   test('should close modal on type selection', () => {

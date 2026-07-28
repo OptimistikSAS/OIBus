@@ -23,7 +23,7 @@ describe('ChooseNorthConnectorTypeModalComponent', () => {
     northConnectorService.getNorthTypes.mockReturnValue(
       of([
         { id: 'file-writer', category: 'file', name: 'File Writer', description: 'File Writer description', types: ['any'] },
-        { id: 'console', category: 'debug', name: 'Console', description: 'Console description', types: ['any'] }
+        { id: 'console', category: 'debug', name: 'Console', description: 'Console description', beta: true, types: ['any'] }
       ])
     );
 
@@ -46,6 +46,17 @@ describe('ChooseNorthConnectorTypeModalComponent', () => {
 
     expect(activeModal.close).toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/north', 'create'], { queryParams: { type: 'file-writer' } });
+  });
+
+  test('should display a beta badge only for beta north types', async () => {
+    const fixture = TestBed.createComponent(ChooseNorthConnectorTypeModalComponent);
+    fixture.detectChanges();
+
+    const root = page.elementLocator(fixture.nativeElement);
+    const buttons = root.getByCss('.category-button');
+    await expect.element(buttons.nth(0).getByCss('.badge')).not.toBeInTheDocument();
+    await expect.element(buttons.nth(1).getByCss('.badge')).toBeInTheDocument();
+    await expect.element(buttons.nth(1).getByCss('.badge')).toHaveTextContent('Beta');
   });
 
   test('should cancel', async () => {
