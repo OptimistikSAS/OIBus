@@ -9,7 +9,13 @@
       </div>
       @for (southType of group.types; track southType.id) {
         <div class="col-lg-4 col-md-4 oib-modal-container-list">
-          <button class="btn d-flex align-items-center category-button oib-modal-content-list" (click)="selectType(southType.id)">
+          <button
+            class="btn d-flex align-items-center category-button oib-modal-content-list position-relative"
+            (click)="selectType(southType.id)"
+          >
+            @if (southType.beta) {
+              <span class="badge bg-secondary beta-badge" translate="common.beta"></span>
+            }
             <div class="oib-modal-image-block col-2">
               <img
                 class="oib-modal-category-image"
@@ -18,12 +24,7 @@
               />
             </div>
             <div class="ms-3 text-start">
-              <h6 class="mb-0">
-                {{ southType.id | oIBusSouthTypeEnum }}
-                @if (southType.beta) {
-                  <span class="badge bg-warning text-dark ms-1" translate="common.beta"></span>
-                }
-              </h6>
+              <h6 class="mb-0">{{ southType.id | oIBusSouthTypeEnum }}</h6>
               <p class="mb-0">{{ southType.id | oIBusSouthTypeDescriptionEnum }}</p>
             </div>
           </button>

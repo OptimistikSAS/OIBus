@@ -64,9 +64,10 @@ describe('ChooseSouthConnectorTypeModalComponent', () => {
 
     const root = page.elementLocator(fixture.nativeElement);
     const buttons = root.getByCss('.category-button');
-    await expect.element(buttons.nth(0).getByCss('.badge')).not.toBeInTheDocument();
-    await expect.element(buttons.nth(1).getByCss('.badge')).toBeInTheDocument();
-    await expect.element(buttons.nth(1).getByCss('.badge')).toHaveTextContent('Beta');
+    await expect.element(buttons.nth(0).getByCss('.beta-badge')).not.toBeInTheDocument();
+    await expect.element(buttons.nth(1).getByCss('.beta-badge')).toBeInTheDocument();
+    await expect.element(buttons.nth(1).getByCss('.beta-badge')).toHaveTextContent('Beta');
+    await expect.element(buttons.nth(1).getByCss('.beta-badge')).toHaveClass('bg-secondary');
   });
 
   test('should close modal on type selection', () => {
