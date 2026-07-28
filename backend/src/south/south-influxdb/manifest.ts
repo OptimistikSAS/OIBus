@@ -3,6 +3,7 @@ import { SouthConnectorManifest } from '../../../shared/model/south-connector.mo
 const manifest: SouthConnectorManifest = {
   id: 'influxdb',
   category: 'database',
+  beta: true,
   modes: {
     subscription: false,
     lastPoint: false,

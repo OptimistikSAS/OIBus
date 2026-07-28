@@ -72,6 +72,23 @@ describe('NorthConnectorController', () => {
       {
         id: testData.north.manifest.id,
         category: testData.north.manifest.category,
+        beta: testData.north.manifest.beta,
+        types: testData.north.manifest.types
+      }
+    ]);
+  });
+
+  it('should return north connector types with beta flag carried through', async () => {
+    const mockManifests = [{ ...testData.north.manifest, beta: true }];
+    northService.listManifest = mock.fn(() => mockManifests);
+
+    const result = controller.listManifest(mockRequest as CustomExpressRequest);
+
+    assert.deepStrictEqual(result, [
+      {
+        id: testData.north.manifest.id,
+        category: testData.north.manifest.category,
+        beta: true,
         types: testData.north.manifest.types
       }
     ]);
