@@ -9,7 +9,13 @@
       </div>
       @for (northType of group.types; track northType.id) {
         <div class="col-lg-4 col-md-4 oib-modal-container-list">
-          <button class="btn d-flex align-items-center category-button oib-modal-content-list" (click)="selectType(northType.id)">
+          <button
+            class="btn d-flex align-items-center category-button oib-modal-content-list position-relative"
+            (click)="selectType(northType.id)"
+          >
+            @if (northType.beta) {
+              <span class="badge bg-secondary beta-badge" translate="common.beta"></span>
+            }
             <div class="oib-modal-image-block col-2">
               <img
                 class="oib-modal-category-image"
