@@ -1767,6 +1767,7 @@
 					"osisoft-pi",
 					"postgresql",
 					"rest",
+					"s7",
 					"sftp",
 					"sqlite"
 				],
@@ -1794,6 +1795,11 @@
 						"$ref": "#/components/schemas/OIBusSouthCategory",
 						"description": "The category of the South connector.",
 						"example": "file"
+					},
+					"beta": {
+						"type": "boolean",
+						"description": "Whether this connector type is in beta.",
+						"example": false
 					},
 					"modes": {
 						"properties": {
@@ -1848,6 +1854,11 @@
 						"$ref": "#/components/schemas/OIBusSouthCategory",
 						"description": "The category of the South connector.",
 						"example": "file"
+					},
+					"beta": {
+						"type": "boolean",
+						"description": "Whether this connector type is in beta.",
+						"example": false
 					},
 					"modes": {
 						"properties": {
@@ -10241,6 +10252,403 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthS7ItemSettings": {
+				"properties": {
+					"address": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"address"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorS7ItemDTO": {
+				"description": "South connector item DTO for Siemens S7.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item is enabled and should be collected.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7ItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanMode": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"startTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"enabled",
+					"settings",
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"startTimeOffset",
+					"endTimeOffset",
+					"recoveryStrategy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthS7SettingsConnectionType": {
+				"type": "string",
+				"enum": [
+					"PG",
+					"OP",
+					"S7Basic"
+				]
+			},
+			"SouthS7Settings": {
+				"properties": {
+					"host": {
+						"type": "string"
+					},
+					"port": {
+						"type": "number",
+						"format": "double"
+					},
+					"connectionType": {
+						"$ref": "#/components/schemas/SouthS7SettingsConnectionType"
+					},
+					"rack": {
+						"type": "number",
+						"format": "double"
+					},
+					"slot": {
+						"type": "number",
+						"format": "double"
+					},
+					"connectTimeout": {
+						"type": "number",
+						"format": "double"
+					},
+					"requestTimeout": {
+						"type": "number",
+						"format": "double"
+					},
+					"retryInterval": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"host",
+					"port",
+					"connectionType",
+					"rack",
+					"slot",
+					"connectTimeout",
+					"requestTimeout",
+					"retryInterval"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorItemTypedDTO_SouthS7ItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item is enabled and should be collected.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7ItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanMode": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"startTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"enabled",
+					"settings",
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"startTimeOffset",
+					"endTimeOffset",
+					"recoveryStrategy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorS7DTO": {
+				"description": "South connector configuration for Siemens S7.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the South connector.",
+						"example": "Production Data Files"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"s7"
+						],
+						"nullable": false,
+						"description": "The type of the South connector.",
+						"example": "folder-scanner"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the South connector's purpose.",
+						"example": "Scans production data CSV files"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the South connector is enabled and active.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7Settings",
+						"description": "Configuration settings specific to this South connector type."
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorS7ItemDTO"
+						},
+						"type": "array",
+						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"items",
+					"groups"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthSFTPItemSettings": {
 				"properties": {
 					"remoteFolder": {
@@ -11175,6 +11583,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorRESTDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorS7DTO"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorSFTPDTO"
@@ -15981,6 +16392,283 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthConnectorS7ItemCommandDTO": {
+				"description": "South connector item command for Siemens S7.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the item (null when creating a new item).",
+						"example": null
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item should be enabled.",
+						"example": true
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7ItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanModeId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the scan mode to use for this item.\nNull when the scan mode should be determined by the system.",
+						"example": "periodic-5min"
+					},
+					"scanModeName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
+						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"startTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
+					}
+				},
+				"required": [
+					"id",
+					"enabled",
+					"name",
+					"settings",
+					"scanModeId",
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"startTimeOffset",
+					"endTimeOffset",
+					"recoveryStrategy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorItemCommandTypedDTO_SouthS7ItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the item (null when creating a new item).",
+						"example": null
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item should be enabled.",
+						"example": true
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7ItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanModeId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the scan mode to use for this item.\nNull when the scan mode should be determined by the system.",
+						"example": "periodic-5min"
+					},
+					"scanModeName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
+						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"startTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
+					}
+				},
+				"required": [
+					"id",
+					"enabled",
+					"name",
+					"settings",
+					"scanModeId",
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"startTimeOffset",
+					"endTimeOffset",
+					"recoveryStrategy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorS7CommandDTO": {
+				"description": "South connector command for Siemens S7.",
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "The name of the South connector.",
+						"example": "Production Data Files"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"s7"
+						],
+						"nullable": false,
+						"description": "The type of the South connector.",
+						"example": "folder-scanner"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the South connector's purpose.",
+						"example": "Scans production data CSV files"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the South connector should be enabled.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7Settings",
+						"description": "Configuration settings specific to this South connector type."
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorS7ItemCommandDTO"
+						},
+						"type": "array",
+						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
+					}
+				},
+				"required": [
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"items",
+					"groups"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthConnectorSFTPItemCommandDTO": {
 				"description": "South connector item command for SFTP file transfer.",
 				"properties": {
@@ -16589,6 +17277,9 @@
 						"$ref": "#/components/schemas/SouthConnectorRESTCommandDTO"
 					},
 					{
+						"$ref": "#/components/schemas/SouthConnectorS7CommandDTO"
+					},
+					{
 						"$ref": "#/components/schemas/SouthConnectorSFTPCommandDTO"
 					},
 					{
@@ -16678,6 +17369,9 @@
 						"$ref": "#/components/schemas/SouthRestSettings"
 					},
 					{
+						"$ref": "#/components/schemas/SouthS7Settings"
+					},
+					{
 						"$ref": "#/components/schemas/SouthSFTPSettings"
 					},
 					{
@@ -16737,6 +17431,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthRestItemSettings"
+					},
+					{
+						"$ref": "#/components/schemas/SouthS7ItemSettings"
 					},
 					{
 						"$ref": "#/components/schemas/SouthSFTPItemSettings"
@@ -16868,6 +17565,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorRESTItemDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorS7ItemDTO"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorSFTPItemDTO"
@@ -17035,6 +17735,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorRESTItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorS7ItemCommandDTO"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorSFTPItemCommandDTO"
@@ -24751,6 +25454,85 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryQueryS7ItemCommandDTO": {
+				"description": "History query item command for Siemens S7.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7ItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQueryItemCommandTypedDTO_SouthS7ItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7ItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQueryS7SouthCommandDTO": {
+				"description": "History query south command for Siemens S7.",
+				"properties": {
+					"southType": {
+						"type": "string",
+						"enum": [
+							"s7"
+						],
+						"nullable": false
+					},
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthS7Settings"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/HistoryQueryS7ItemCommandDTO"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"southType",
+					"southSettings",
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQuerySFTPItemCommandDTO": {
 				"description": "History query item command for SFTP file transfer.",
 				"properties": {
@@ -25176,6 +25958,9 @@
 							},
 							{
 								"$ref": "#/components/schemas/HistoryQueryRESTSouthCommandDTO"
+							},
+							{
+								"$ref": "#/components/schemas/HistoryQueryS7SouthCommandDTO"
 							},
 							{
 								"$ref": "#/components/schemas/HistoryQuerySFTPSouthCommandDTO"
@@ -25693,6 +26478,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryRESTItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/HistoryQueryS7ItemCommandDTO"
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQuerySFTPItemCommandDTO"
@@ -27322,6 +28110,10 @@
 						"$ref": "#/components/schemas/OIBusNorthCategory",
 						"description": "Category of the north connector"
 					},
+					"beta": {
+						"type": "boolean",
+						"description": "Whether this connector type is in beta"
+					},
 					"types": {
 						"items": {
 							"type": "string"
@@ -27350,6 +28142,11 @@
 						"$ref": "#/components/schemas/OIBusNorthCategory",
 						"description": "The category of the North connector.",
 						"example": "debug"
+					},
+					"beta": {
+						"type": "boolean",
+						"description": "Whether this connector type is in beta.",
+						"example": false
 					},
 					"types": {
 						"items": {
@@ -32594,6 +33391,131 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryQueryS7ItemDTO": {
+				"description": "History query item DTO for Siemens S7.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7ItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQueryItemTypedDTO_SouthS7ItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7ItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQueryS7SouthDTO": {
+				"description": "History query south DTO for Siemens S7.",
+				"properties": {
+					"southType": {
+						"type": "string",
+						"enum": [
+							"s7"
+						],
+						"nullable": false
+					},
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthS7Settings"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/HistoryQueryS7ItemDTO"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"southType",
+					"southSettings",
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQuerySFTPItemDTO": {
 				"description": "History query item DTO for SFTP file transfer.",
 				"properties": {
@@ -33116,6 +34038,9 @@
 								"$ref": "#/components/schemas/HistoryQueryRESTSouthDTO"
 							},
 							{
+								"$ref": "#/components/schemas/HistoryQueryS7SouthDTO"
+							},
+							{
 								"$ref": "#/components/schemas/HistoryQuerySFTPSouthDTO"
 							},
 							{
@@ -33234,6 +34159,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryRESTItemDTO"
+					},
+					{
+						"$ref": "#/components/schemas/HistoryQueryS7ItemDTO"
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQuerySFTPItemDTO"
