@@ -39,6 +39,8 @@ import {
   SouthPostgreSQLSettings,
   SouthRestItemSettings,
   SouthRestSettings,
+  SouthS7ItemSettings,
+  SouthS7Settings,
   SouthSettings,
   SouthSFTPItemSettings,
   SouthSFTPSettings,
@@ -48,6 +50,7 @@ import {
 import SouthADS from '../south/south-ads/south-ads';
 import SouthFolderScanner from '../south/south-folder-scanner/south-folder-scanner';
 import SouthModbus from '../south/south-modbus/south-modbus';
+import SouthS7 from '../south/south-s7/south-s7';
 import SouthMQTT from '../south/south-mqtt/south-mqtt';
 import SouthMSSQL from '../south/south-mssql/south-mssql';
 import SouthMySQL from '../south/south-mysql/south-mysql';
@@ -187,6 +190,13 @@ export const buildSouth = (
     case 'rest':
       return new SouthRest(
         settings as SouthConnectorEntity<SouthRestSettings, SouthRestItemSettings>,
+        addContent,
+        southCacheRepository,
+        southCacheFolder
+      );
+    case 's7':
+      return new SouthS7(
+        settings as SouthConnectorEntity<SouthS7Settings, SouthS7ItemSettings>,
         addContent,
         southCacheRepository,
         southCacheFolder

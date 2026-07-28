@@ -32,6 +32,8 @@ interface NorthConnectorType {
   id: OIBusNorthType;
   /** Category of the north connector */
   category: OIBusNorthCategory;
+  /** Whether this connector type is in beta */
+  beta?: boolean;
   /** Supported types */
   types: Array<string>;
 }
@@ -54,6 +56,7 @@ export class NorthConnectorController extends Controller {
     return northService.listManifest().map(manifest => ({
       id: manifest.id,
       category: manifest.category,
+      beta: manifest.beta,
       types: manifest.types
     }));
   }
