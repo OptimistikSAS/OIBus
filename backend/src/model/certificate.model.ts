@@ -7,5 +7,15 @@ export interface Certificate extends BaseEntity {
   publicKey: string;
   privateKey: string;
   certificate: string;
+  certificateChain: string | null;
   expiry: Instant;
+}
+
+export interface CertificateImportCommand {
+  name: string;
+  description: string;
+  certificateContent: Buffer;
+  privateKeyContent: Buffer;
+  privateKeyPassphrase: string | null;
+  caChainContent: Buffer | null;
 }
