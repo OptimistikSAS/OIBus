@@ -125,6 +125,13 @@ export interface SouthType {
   category: OIBusSouthCategory;
 
   /**
+   * Whether this connector type is in beta.
+   *
+   * @example false
+   */
+  beta?: boolean;
+
+  /**
    * The operating modes supported by this connector type.
    */
   modes: {
@@ -1124,6 +1131,13 @@ export interface SouthConnectorManifest {
    * @example "file"
    */
   category: OIBusSouthCategory;
+
+  /**
+   * Whether this connector type is in beta.
+   *
+   * @example false
+   */
+  beta?: boolean;
 
   /**
    * The operating modes supported by this connector type.
