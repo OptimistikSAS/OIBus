@@ -71,6 +71,7 @@ describe('Service utils OPCUA', () => {
         keepSessionAlive: false,
         retryInterval: 10_000,
         readTimeout: 15_000,
+        maxParallelRun: 1,
         flushMessageTimeout: 1000,
         maxNumberOfMessages: 1000
       };
@@ -104,6 +105,7 @@ describe('Service utils OPCUA', () => {
         keepSessionAlive: false,
         retryInterval: 10_000,
         readTimeout: 15_000,
+        maxParallelRun: 1,
         flushMessageTimeout: 1000,
         maxNumberOfMessages: 1000
       };

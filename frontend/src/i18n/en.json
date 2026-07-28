@@ -1673,6 +1673,7 @@
             "keep-session-alive": "Keep session alive",
             "read-timeout": "Read timeout",
             "retry-interval": "Retry interval",
+            "max-parallel-run": "Max parallel queries",
             "flush-message-timeout": "Delay between flush",
             "max-number-of-messages": "Number of messages before flush",
             "security-mode": {
