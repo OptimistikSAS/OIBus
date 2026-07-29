@@ -284,9 +284,9 @@ describe('SouthInfluxDB', () => {
       const result = await south.testItem(baseItem, {
         history: { startTime: testData.constants.dates.DATE_1, endTime: testData.constants.dates.DATE_2 }
       });
-      assert.equal(result.type, 'any-content');
-      assert.ok(result.content?.startsWith('['));
-      assert.ok(JSON.parse(result.content!).length === 1);
+      assert.equal(result.result.type, 'any-content');
+      assert.ok(result.result.content?.startsWith('['));
+      assert.ok(JSON.parse(result.result.content!).length === 1);
     });
 
     it('should execute v1 query via queryData', async () => {

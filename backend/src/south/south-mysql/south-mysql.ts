@@ -18,7 +18,7 @@ import { SouthItemSettings, SouthMySQLItemSettings, SouthMySQLSettings } from '.
 import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthMySQL - Retrieve data from MySQL / MariaDB databases and send them to the cache as CSV files.
@@ -122,14 +122,10 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
   override async testItem(
     item: SouthConnectorItemEntity<SouthMySQLItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
-    const config = await this.createConnectionOptions();
-    const connection = await mysql.createConnection(config);
-
+  ): Promise<SouthConnectorItemQueryResult> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
     const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
-    await connection.end();
 
     const formattedResults = result.map(entry => {
       const formattedEntry: Record<string, string | number> = {};
@@ -164,7 +160,12 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
         break;
       }
     }
-    return oibusContent;
+    return {
+      result: oibusContent,
+      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+      connectionDuration: 0,
+      queryDuration: 0
+    };
   }
 
   /**

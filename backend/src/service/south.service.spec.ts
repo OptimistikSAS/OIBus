@@ -527,7 +527,7 @@ describe('South Service', () => {
   it('should delegate to the transformer service when a transformer is provided', async () => {
     const rawContent = { type: 'any-content', content: 'raw' } as OIBusContent;
     const transformedContent = { type: 'time-values', content: [] } as OIBusContent;
-    mockedSouth1.testItem.mock.mockImplementationOnce(async () => rawContent);
+    mockedSouth1.testItem.mock.mockImplementationOnce(async () => ({ result: rawContent, connectionDuration: 12, queryDuration: 34 }));
     transformerService.runTransformer.mock.mockImplementationOnce(async () => transformedContent);
 
     const result = await service.testItem(
@@ -543,11 +543,13 @@ describe('South Service', () => {
     assert.deepStrictEqual(transformerService.runTransformer.mock.calls[0].arguments, ['transformer-id', { foo: 'bar' }, rawContent]);
     assert.deepStrictEqual(result.raw, rawContent);
     assert.deepStrictEqual(result.transformed, transformedContent);
+    assert.strictEqual(result.connectionDuration, 12);
+    assert.strictEqual(result.queryDuration, 34);
   });
 
   it('should return the raw result with transformed null when no transformer is provided', async () => {
     const rawContent = { type: 'any-content', content: 'raw' } as OIBusContent;
-    mockedSouth1.testItem.mock.mockImplementationOnce(async () => rawContent);
+    mockedSouth1.testItem.mock.mockImplementationOnce(async () => ({ result: rawContent, connectionDuration: 12, queryDuration: 34 }));
 
     const result = await service.testItem(
       testData.south.list[0].id,
@@ -558,7 +560,7 @@ describe('South Service', () => {
       { history: undefined }
     );
 
-    assert.deepStrictEqual(result, { raw: rawContent, transformed: null });
+    assert.deepStrictEqual(result, { raw: rawContent, transformed: null, connectionDuration: 12, queryDuration: 34 });
     assert.strictEqual(transformerService.runTransformer.mock.calls.length, 0);
   });
 

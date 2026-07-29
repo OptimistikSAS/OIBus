@@ -266,8 +266,9 @@ describe('SouthFTP', () => {
       const item = configuration.items[0];
       const result = await south.testItem(item, { history: undefined });
 
-      assert.strictEqual(result.type, 'time-values');
-      const content = (result as { type: string; content: Array<{ pointId: string; timestamp: string; data: { value: string } }> }).content;
+      assert.strictEqual(result.result.type, 'time-values');
+      const content = (result.result as { type: string; content: Array<{ pointId: string; timestamp: string; data: { value: string } }> })
+        .content;
       assert.strictEqual(content.length, 1);
       assert.strictEqual(content[0].pointId, 'item1');
       assert.ok(typeof content[0].timestamp === 'string');
@@ -298,8 +299,8 @@ describe('SouthFTP', () => {
       const item = configuration.items[0];
       const result = await south.testItem(item, { history: undefined });
 
-      assert.strictEqual(result.type, 'time-values');
-      assert.strictEqual((result as { type: string; content: Array<unknown> }).content.length, 1);
+      assert.strictEqual(result.result.type, 'time-values');
+      assert.strictEqual((result.result as { type: string; content: Array<unknown> }).content.length, 1);
     });
 
     it('should list files', async () => {

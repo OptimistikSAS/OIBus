@@ -11,7 +11,7 @@ import { DateTime } from 'luxon';
 import sftpClient, { ConnectOptions, FileInfo } from 'ssh2-sftp-client';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { encryptionService } from '../../service/encryption.service';
 import { Instant } from '../../model/types';
 
@@ -54,7 +54,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
   override async testItem(
     item: SouthConnectorItemEntity<SouthSFTPItemSettings>,
     _testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemQueryResult> {
     const filesInFolder = await this.listFiles(item, []);
 
     const values: Array<OIBusTimeValue> = filesInFolder.map(file => ({
@@ -62,7 +62,12 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
       timestamp: DateTime.fromMillis(file.modifyTime).toUTC().toISO()!,
       data: { value: file.name }
     }));
-    return { type: 'time-values', content: values };
+    return {
+      result: { type: 'time-values', content: values },
+      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+      connectionDuration: 0,
+      queryDuration: 0
+    };
   }
 
   /**

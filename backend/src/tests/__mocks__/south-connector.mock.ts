@@ -8,7 +8,7 @@ import type { OIBusConnectionTestResult, OIBusContent } from '../../../shared/mo
 import type { ScanMode } from '../../model/scan-mode.model';
 import type { Instant } from '../../../shared/model/types';
 import type { SouthConnectorItemEntity } from '../../model/south-connector.model';
-import type { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import type { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Create a mock object for South Connector
@@ -41,7 +41,7 @@ export default class SouthConnectorMock extends SouthConnector<SouthSettings, So
     async (
       _item: SouthConnectorItemEntity<SouthItemSettings>,
       _testingSettings: SouthConnectorItemTestingSettings
-    ): Promise<OIBusContent> => ({}) as OIBusContent
+    ): Promise<SouthConnectorItemQueryResult> => ({ result: {} as OIBusContent, connectionDuration: 0, queryDuration: 0 })
   );
   override connectedEvent = new EventEmitter();
   override metricsEvent = new EventEmitter();

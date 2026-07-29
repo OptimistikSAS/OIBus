@@ -6,7 +6,7 @@ import { SouthItemSettings, SouthOPCUAItemSettings, SouthOPCUASettings } from '.
 import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import {
   AttributeIds,
   ClientMonitoredItem,
@@ -288,24 +288,36 @@ export default class SouthOPCUA
   override async testItem(
     item: SouthConnectorItemEntity<SouthOPCUAItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemQueryResult> {
     // Reuse the already-open shared session when this instance is live and connected, instead of
     // opening a second one — some OPC-UA servers cap concurrent sessions per client, and testing
     // an item while the connector is running shouldn't be able to exceed that cap.
     const reusingLiveSession = this.session !== null;
     let session: ClientSession | undefined = this.session ?? undefined;
+    let connectionDuration = 0;
     try {
       if (!session) {
+        const connectStart = DateTime.now().toMillis();
         session = await this.createSession();
+        connectionDuration = DateTime.now().toMillis() - connectStart;
       }
+      const queryStart = DateTime.now().toMillis();
+      let result: OIBusContent;
       if (item.settings.mode === 'da') {
         const nodeId = resolveNodeId(item.settings.nodeId);
-        const result = await this.getDAValues([{ nodeId, name: item.name, settings: item.settings }], session);
-        return { type: 'time-values', content: result };
+        const daValues = await this.getDAValues([{ nodeId, name: item.name, settings: item.settings }], session);
+        result = { type: 'time-values', content: daValues };
       } else {
-        const result = await this.getHAValues([item], testingSettings.history!.startTime, testingSettings.history!.endTime, session, true);
-        return { type: 'time-values', content: result.value ? [result.value] : [] };
+        const haResult = await this.getHAValues(
+          [item],
+          testingSettings.history!.startTime,
+          testingSettings.history!.endTime,
+          session,
+          true
+        );
+        result = { type: 'time-values', content: haResult.value ? [haResult.value] : [] };
       }
+      return { result, connectionDuration, queryDuration: DateTime.now().toMillis() - queryStart };
     } finally {
       if (session && !reusingLiveSession) {
         await session.close();

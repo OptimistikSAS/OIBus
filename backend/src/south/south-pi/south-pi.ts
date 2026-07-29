@@ -6,7 +6,7 @@ import { SouthItemSettings, SouthPIItemSettings, SouthPISettings } from '../../.
 import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest } from '../../service/http-request.utils';
 
 /**
@@ -80,7 +80,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
   override async testItem(
     item: SouthConnectorItemEntity<SouthPIItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemQueryResult> {
     await this.connect();
     const content: OIBusContent = { type: 'time-values', content: [] };
 
@@ -121,7 +121,12 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       await this.disconnect();
       throw new Error(`Error occurred when sending connect command to remote agent. ${response.statusCode}`);
     }
-    return content;
+    return {
+      result: content,
+      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+      connectionDuration: 0,
+      queryDuration: 0
+    };
   }
 
   /**

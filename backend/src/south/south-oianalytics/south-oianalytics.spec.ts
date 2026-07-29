@@ -232,7 +232,11 @@ describe('SouthOIAnalytics', () => {
       assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
       assert.strictEqual(utilsOianalyticsExports.parseData.mock.calls.length, 1);
       assert.deepStrictEqual(utilsOianalyticsExports.parseData.mock.calls[0].arguments, [mockRawData]);
-      assert.deepStrictEqual(result, { type: 'time-values', content: mockFormatted });
+      assert.deepStrictEqual(result, {
+        result: { type: 'time-values', content: mockFormatted },
+        connectionDuration: 0,
+        queryDuration: 0
+      });
     });
   });
 

@@ -15,7 +15,7 @@ import { DateTime } from 'luxon';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { Instant, OIBusTestingError } from '../../model/types';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { Stats } from 'node:fs';
 
 /**
@@ -121,7 +121,7 @@ export default class SouthFolderScanner
   override async testItem(
     item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>,
     _testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemQueryResult> {
     await this.testConnection();
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
     const filesInFolder = await fs.readdir(inputFolder);
@@ -138,7 +138,12 @@ export default class SouthFolderScanner
       timestamp: file.modifyTime,
       data: { value: file.name }
     }));
-    return { type: 'time-values', content: values };
+    return {
+      result: { type: 'time-values', content: values },
+      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+      connectionDuration: 0,
+      queryDuration: 0
+    };
   }
 
   /**

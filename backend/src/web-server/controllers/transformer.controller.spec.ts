@@ -222,7 +222,12 @@ describe('TransformerController', () => {
 
   it('should test a transformer with input data by id', async () => {
     const testRequest: TransformerTestRequest = { inputData: '[]', options: { foo: 'bar' } };
-    const testResult = { raw: { type: 'any-content', content: '[]' }, transformed: { type: 'any-content', content: 'out' } };
+    const testResult = {
+      raw: { type: 'any-content', content: '[]' },
+      transformed: { type: 'any-content', content: 'out' },
+      connectionDuration: 0,
+      queryDuration: 0
+    };
     transformerService.testTransformer = mock.fn(async () => testResult as never);
 
     const result = await controller.testTransformer('transformer-id', testRequest, mockRequest as CustomExpressRequest);

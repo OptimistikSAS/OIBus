@@ -721,7 +721,11 @@ describe('South ADS', () => {
     await south.start();
     const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
-    assert.deepStrictEqual(result, { type: 'time-values', content: [mockedResult] });
+    assert.deepStrictEqual(result, {
+      result: { type: 'time-values', content: [mockedResult] },
+      connectionDuration: 0,
+      queryDuration: 0
+    });
     assert.ok(connectMock.mock.calls.length >= 1);
   });
 

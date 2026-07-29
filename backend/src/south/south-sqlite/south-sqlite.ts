@@ -18,7 +18,7 @@ import { SouthItemSettings, SouthSQLiteItemSettings, SouthSQLiteSettings } from 
 import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthSQLite - Retrieve data from SQLite databases and send them to the cache as CSV files.
@@ -95,7 +95,7 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
   override async testItem(
     item: SouthConnectorItemEntity<SouthSQLiteItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemQueryResult> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
     const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
@@ -132,7 +132,12 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
         oibusContent = { type: 'any', filePath, content };
         break;
     }
-    return oibusContent;
+    return {
+      result: oibusContent,
+      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+      connectionDuration: 0,
+      queryDuration: 0
+    };
   }
 
   /**

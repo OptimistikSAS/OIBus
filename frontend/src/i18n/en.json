@@ -2392,6 +2392,8 @@
       "cancel-button": "Cancel",
       "query-start": "Query data from",
       "query-end": "Query data until",
+      "connection-duration": "Connection: {{duration}} ms",
+      "query-duration": "Query: {{duration}} ms",
       "transformer": "Transformer",
       "transformer-raw": "Raw (no transformer)",
       "transformer-options": "Transformer options",

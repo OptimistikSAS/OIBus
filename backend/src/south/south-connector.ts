@@ -3,6 +3,7 @@ import { delay, generateIntervals, groupItemsByGroup } from '../service/utils';
 
 import {
   SOUTH_SINGLE_ITEMS,
+  SouthConnectorItemQueryResult,
   SouthConnectorItemTestingSettings,
   SouthHistoryRecoveryStrategy,
   SouthItemLastValue
@@ -893,7 +894,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   /**
    * Run a single item through the connector with one-off `testingSettings`
    * (overrides such as history window, sample count, etc.) and return the
-   * raw content. Backs the UI's per-item test action.
+   * raw content alongside how long connecting to the source and running the
+   * query each took. Backs the UI's per-item test action.
    */
-  abstract testItem(item: SouthConnectorItemEntity<I>, testingSettings: SouthConnectorItemTestingSettings): Promise<OIBusContent>;
+  abstract testItem(
+    item: SouthConnectorItemEntity<I>,
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<SouthConnectorItemQueryResult>;
 }

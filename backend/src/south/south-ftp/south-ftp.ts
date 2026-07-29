@@ -12,7 +12,7 @@ import { DateTime } from 'luxon';
 import { AccessOptions, Client as FTPClient, FileInfo } from 'basic-ftp';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { Instant } from '../../model/types';
 
 /**
@@ -52,7 +52,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
   override async testItem(
     item: SouthConnectorItemEntity<SouthFTPItemSettings>,
     _testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemQueryResult> {
     const filesInFolder = await this.listFiles(item, []);
 
     const values: Array<OIBusTimeValue> = filesInFolder.map(file => ({
@@ -62,7 +62,12 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
         .toISO()!,
       data: { value: file.name }
     }));
-    return { type: 'time-values', content: values };
+    return {
+      result: { type: 'time-values', content: values },
+      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+      connectionDuration: 0,
+      queryDuration: 0
+    };
   }
 
   /**
