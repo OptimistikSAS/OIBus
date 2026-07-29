@@ -68,6 +68,7 @@ const influxV3Exports = { InfluxDBClient: MockInfluxDBv3 };
 
 // — utils mock —
 const utilsExports = {
+  groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
   generateRandomId: mock.fn(() => 'random-id'),
   sanitizeFilename: mock.fn((name: unknown) => name),
   logQuery: mock.fn()

@@ -119,6 +119,7 @@ describe('South Modbus', () => {
 
   // utils mock
   const utilsExports = {
+    groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
     generateIntervals: mock.fn(() => []),
     validateCronExpression: mock.fn(() => ({ expression: '' })),
     delay: mock.fn(async () => undefined)
