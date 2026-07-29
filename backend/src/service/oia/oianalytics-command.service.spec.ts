@@ -71,7 +71,11 @@ import {
 } from '../../model/oianalytics-command.model';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
-import { SouthConnectorItemDTO, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import {
+  SouthConnectorItemDTO,
+  SouthConnectorItemTestingSettings,
+  SouthConnectorItemTestResult
+} from '../../../shared/model/south-connector.model';
 import { HistoryQueryItemDTO } from '../../../shared/model/history-query.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { CacheSearchResult, FileCacheContent, OIBusContent } from '../../../shared/model/engine.model';
@@ -1538,7 +1542,7 @@ describe('OIAnalytics Command Service', () => {
 
     const rawContent: OIBusContent = { type: 'any-content', content: 'raw content' };
     const transformedContent: OIBusContent = { type: 'any-content', content: 'transformed content' };
-    const testItemResult = { raw: rawContent, transformed: transformedContent };
+    const testItemResult = { raw: rawContent, transformed: transformedContent, connectionDuration: 56, queryDuration: 78 };
     oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     southService.testItem.mock.mockImplementationOnce(async () => testItemResult);
     southService.listManifest.mock.mockImplementationOnce(() => [
@@ -1563,7 +1567,9 @@ describe('OIAnalytics Command Service', () => {
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({
         raw: { ...rawContent, truncated: false, totalSize: 0 },
-        transformed: { ...transformedContent, truncated: false, totalSize: 0 }
+        transformed: { ...transformedContent, truncated: false, totalSize: 0 },
+        connectionDuration: 56,
+        queryDuration: 78
       })
     ]);
   });
@@ -1584,7 +1590,12 @@ describe('OIAnalytics Command Service', () => {
 
     const rawContent: OIBusContent = { type: 'any-content', content: 'raw content' };
     oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    southService.testItem.mock.mockImplementationOnce(async () => ({ raw: rawContent, transformed: null }));
+    southService.testItem.mock.mockImplementationOnce(async () => ({
+      raw: rawContent,
+      transformed: null,
+      connectionDuration: 0,
+      queryDuration: 0
+    }));
     southService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
@@ -1599,7 +1610,9 @@ describe('OIAnalytics Command Service', () => {
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({
         raw: { ...rawContent, truncated: false, totalSize: 0 },
-        transformed: null
+        transformed: null,
+        connectionDuration: 0,
+        queryDuration: 0
       })
     ]);
   });
@@ -1616,7 +1629,12 @@ describe('OIAnalytics Command Service', () => {
     const raw: OIBusContent = { type: 'any-content', content: 'raw content' };
     const transformed: OIBusContent = { type: 'any-content', content: 'transformed content' };
     oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
-    transformerService.testTransformer.mock.mockImplementationOnce(async () => ({ raw, transformed }));
+    transformerService.testTransformer.mock.mockImplementationOnce(async () => ({
+      raw,
+      transformed,
+      connectionDuration: 0,
+      queryDuration: 0
+    }));
 
     await service.processNextCommand();
 
@@ -1626,7 +1644,9 @@ describe('OIAnalytics Command Service', () => {
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({
         raw: { ...raw, truncated: false, totalSize: 0 },
-        transformed: { ...transformed, truncated: false, totalSize: 0 }
+        transformed: { ...transformed, truncated: false, totalSize: 0 },
+        connectionDuration: 0,
+        queryDuration: 0
       })
     ]);
   });
@@ -1656,7 +1676,7 @@ describe('OIAnalytics Command Service', () => {
         id: testData.south.command.type
       }
     ]);
-    southService.testItem.mock.mockImplementationOnce(async () => ({ raw, transformed }));
+    southService.testItem.mock.mockImplementationOnce(async () => ({ raw, transformed, connectionDuration: 0, queryDuration: 0 }));
 
     await service.processNextCommand();
 
@@ -1673,7 +1693,9 @@ describe('OIAnalytics Command Service', () => {
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({
         raw: { ...raw, truncated: false, totalSize: 0 },
-        transformed: { ...transformed, truncated: false, totalSize: 0 }
+        transformed: { ...transformed, truncated: false, totalSize: 0 },
+        connectionDuration: 0,
+        queryDuration: 0
       })
     ]);
   });
@@ -1702,7 +1724,7 @@ describe('OIAnalytics Command Service', () => {
         id: testData.south.command.type
       }
     ]);
-    southService.testItem.mock.mockImplementationOnce(async () => ({ raw, transformed: null }));
+    southService.testItem.mock.mockImplementationOnce(async () => ({ raw, transformed: null, connectionDuration: 0, queryDuration: 0 }));
 
     await service.processNextCommand();
 
@@ -1711,7 +1733,9 @@ describe('OIAnalytics Command Service', () => {
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({
         raw: { ...raw, truncated: false, totalSize: 0 },
-        transformed: null
+        transformed: null,
+        connectionDuration: 0,
+        queryDuration: 0
       })
     ]);
   });
@@ -2115,7 +2139,7 @@ describe('OIAnalytics Command Service', () => {
     } as OIBusTestHistoryQuerySouthItemCommand;
 
     const rawContent: OIBusContent = { type: 'any-content', content: '' };
-    const testItemResult = { raw: rawContent, transformed: null };
+    const testItemResult = { raw: rawContent, transformed: null, connectionDuration: 0, queryDuration: 0 };
     oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     historyQueryService.testItem.mock.mockImplementationOnce(async () => testItemResult);
     southService.listManifest.mock.mockImplementationOnce(() => [
@@ -2138,7 +2162,7 @@ describe('OIAnalytics Command Service', () => {
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings
     ]);
-    assert.deepStrictEqual(completeTestItemMock.mock.calls[0].arguments, [command, rawContent]);
+    assert.deepStrictEqual(completeTestItemMock.mock.calls[0].arguments, [command, testItemResult]);
   });
 
   it('should execute update-history-query-status command', async () => {
@@ -2896,26 +2920,43 @@ describe('OIAnalytics Command service with no commands and without update', () =
     } as OIBusTestSouthConnectorItemCommand;
 
     const content = new Array(2000).fill(0);
-    const result: OIBusContent = { type: 'time-values', content };
+    const result: SouthConnectorItemTestResult = {
+      raw: { type: 'time-values', content },
+      transformed: null,
+      connectionDuration: 5,
+      queryDuration: 10
+    };
     (
-      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: OIBusContent): void }
+      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void }
     ).completeTestItemCommand(command, result);
 
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[0].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
-      JSON.stringify({ type: 'time-values', content: content.slice(0, 1000), truncated: true, totalSize: 2000 })
+      JSON.stringify({
+        type: 'time-values',
+        content: content.slice(0, 1000),
+        truncated: true,
+        totalSize: 2000,
+        connectionDuration: 5,
+        queryDuration: 10
+      })
     ]);
 
     const content2 = new Array(10).fill(0);
-    const result2: OIBusContent = { type: 'time-values', content: content2 };
+    const result2: SouthConnectorItemTestResult = {
+      raw: { type: 'time-values', content: content2 },
+      transformed: null,
+      connectionDuration: 5,
+      queryDuration: 10
+    };
     (
-      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: OIBusContent): void }
+      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void }
     ).completeTestItemCommand(command, result2);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
-      JSON.stringify({ type: 'time-values', content: content2, truncated: false, totalSize: 10 })
+      JSON.stringify({ type: 'time-values', content: content2, truncated: false, totalSize: 10, connectionDuration: 5, queryDuration: 10 })
     ]);
   });
 
@@ -2933,35 +2974,54 @@ describe('OIAnalytics Command service with no commands and without update', () =
       }
     } as OIBusTestSouthConnectorItemCommand;
 
-    const result: OIBusContent = { type: 'any', filePath: 'file.csv', content: 'content' };
+    const content: OIBusContent = { type: 'any', filePath: 'file.csv', content: 'content' };
+    const result: SouthConnectorItemTestResult = { raw: content, transformed: null, connectionDuration: 5, queryDuration: 10 };
     (
-      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: OIBusContent): void }
+      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void }
     ).completeTestItemCommand(command, result);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[0].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
-      JSON.stringify({ type: 'any', filePath: 'file.csv', content: result.content, truncated: false, totalSize: result.content!.length })
+      JSON.stringify({
+        type: 'any',
+        filePath: 'file.csv',
+        content: content.content,
+        truncated: false,
+        totalSize: content.content!.length,
+        connectionDuration: 5,
+        queryDuration: 10
+      })
     ]);
 
     const content2 = 'A'.repeat(500 * 1025);
-    const result2: OIBusContent = { type: 'any', filePath: 'file.csv', content: content2 };
+    const fileContent2: OIBusContent = { type: 'any', filePath: 'file.csv', content: content2 };
+    const result2: SouthConnectorItemTestResult = { raw: fileContent2, transformed: null, connectionDuration: 5, queryDuration: 10 };
     (
-      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: OIBusContent): void }
+      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void }
     ).completeTestItemCommand(command, result2);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
-      JSON.stringify({ type: 'any', filePath: 'file.csv', content: content2.slice(0, 1024 * 500), truncated: true, totalSize: 1025 * 500 })
+      JSON.stringify({
+        type: 'any',
+        filePath: 'file.csv',
+        content: content2.slice(0, 1024 * 500),
+        truncated: true,
+        totalSize: 1025 * 500,
+        connectionDuration: 5,
+        queryDuration: 10
+      })
     ]);
 
-    const result3: OIBusContent = { type: 'any', filePath: 'file.csv' };
+    const fileContent3: OIBusContent = { type: 'any', filePath: 'file.csv' };
+    const result3: SouthConnectorItemTestResult = { raw: fileContent3, transformed: null, connectionDuration: 5, queryDuration: 10 };
     (
-      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: OIBusContent): void }
+      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void }
     ).completeTestItemCommand(command, result3);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[2].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
-      JSON.stringify({ type: 'any', filePath: 'file.csv', truncated: false, totalSize: 0 })
+      JSON.stringify({ type: 'any', filePath: 'file.csv', truncated: false, totalSize: 0, connectionDuration: 5, queryDuration: 10 })
     ]);
   });
 

@@ -13,7 +13,7 @@ import {
 import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from '../../service/http-request.utils';
 import path from 'node:path';
 import fs from 'node:fs/promises';
@@ -72,11 +72,16 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
   override async testItem(
     item: SouthConnectorItemEntity<SouthRestItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemQueryResult> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
     const { filename, content } = await this.queryData(item, startTime, endTime);
-    return { type: 'any', filePath: filename, content };
+    return {
+      result: { type: 'any', filePath: filename, content },
+      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+      connectionDuration: 0,
+      queryDuration: 0
+    };
   }
 
   async historyQuery(

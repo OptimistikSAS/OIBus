@@ -1696,7 +1696,7 @@
 				"description": "Type representing OIBus content."
 			},
 			"SouthConnectorItemTestResult": {
-				"description": "Result of testing a South/History item. `raw` is always the value collected by the connector;\n`transformed` is the output of running `raw` through the selected transformer with its options,\nor null when no transformer was requested. This lets the UI show the Raw → transformer → Output pipeline.",
+				"description": "Result of testing a South/History item. `raw` is always the value collected by the connector;\n`transformed` is the output of running `raw` through the selected transformer with its options,\nor null when no transformer was requested. This lets the UI show the Raw → transformer → Output pipeline.\n`connectionDuration`/`queryDuration` are passed through from the connector's `SouthConnectorItemQueryResult`.",
 				"properties": {
 					"raw": {
 						"$ref": "#/components/schemas/OIBusContent"
@@ -1708,11 +1708,21 @@
 							}
 						],
 						"nullable": true
+					},
+					"connectionDuration": {
+						"type": "number",
+						"format": "double"
+					},
+					"queryDuration": {
+						"type": "number",
+						"format": "double"
 					}
 				},
 				"required": [
 					"raw",
-					"transformed"
+					"transformed",
+					"connectionDuration",
+					"queryDuration"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -33827,7 +33837,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "3.9.0",
+		"version": "3.8.8",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"

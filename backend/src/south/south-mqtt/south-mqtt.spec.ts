@@ -668,7 +668,7 @@ describe('SouthMQTT', () => {
     await flushPromises();
 
     const result = await testItemPromise;
-    const parsed = JSON.parse(result.content as string);
+    const parsed = JSON.parse(result.result.content as string);
     assert.strictEqual(parsed[0].message, 'hello from PLC');
   });
 

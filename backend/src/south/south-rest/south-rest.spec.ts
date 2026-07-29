@@ -625,9 +625,11 @@ describe('SouthRestAPI connector', () => {
 
     const result = await south.testItem(item, testingSettings);
 
-    assert.strictEqual(result.type, 'any');
-    assert.strictEqual((result as OIBusFileContent).content, JSON.stringify({ test: 'ok' }));
-    assert.notStrictEqual((result as OIBusFileContent).filePath, undefined);
+    assert.strictEqual(result.result.type, 'any');
+    assert.strictEqual((result.result as OIBusFileContent).content, JSON.stringify({ test: 'ok' }));
+    assert.notStrictEqual((result.result as OIBusFileContent).filePath, undefined);
+    assert.strictEqual(result.connectionDuration, 0);
+    assert.strictEqual(result.queryDuration, 0);
   });
 
   // --------------------------------------------------------------------------

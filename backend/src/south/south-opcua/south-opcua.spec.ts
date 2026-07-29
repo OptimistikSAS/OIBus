@@ -580,7 +580,7 @@ describe('SouthOPCUA', () => {
     south.getDAValues = getDAValuesMock;
     south.getHAValues = getHAValuesMock;
 
-    await south.testItem(configuration.items[0], {
+    const result = await south.testItem(configuration.items[0], {
       history: {
         startTime: testData.constants.dates.DATE_1,
         endTime: testData.constants.dates.DATE_2
@@ -597,6 +597,8 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(getDAValuesMock.mock.calls.length, 0);
     assert.strictEqual(createSessionMock.mock.calls.length, 1);
     assert.strictEqual(mockedClient.close.mock.calls.length, 1);
+    assert.strictEqual(typeof result.connectionDuration, 'number');
+    assert.strictEqual(typeof result.queryDuration, 'number');
   });
 
   it('should properly test da item', async () => {
@@ -606,10 +608,29 @@ describe('SouthOPCUA', () => {
     south.getDAValues = mock.fn(async () => []);
     south.getHAValues = mock.fn(async () => ({ value: null, trackedInstant: null }));
 
-    await south.testItem(configuration.items[3], { history: undefined });
+    const result = await south.testItem(configuration.items[3], { history: undefined });
     assert.deepStrictEqual(nodeOPCUAMock.resolveNodeId.mock.calls[0].arguments, [configuration.items[0].settings.nodeId]);
     assert.strictEqual(createSessionMock.mock.calls.length, 1);
     assert.strictEqual(mockedClient.close.mock.calls.length, 1);
+    assert.strictEqual(typeof result.connectionDuration, 'number');
+    assert.strictEqual(typeof result.queryDuration, 'number');
+  });
+
+  it('should measure connection and query durations separately for testItem', async () => {
+    const mockedClient = { close: mock.fn(async () => undefined) };
+    south.createSession = mock.fn(async () => {
+      mock.timers.tick(50);
+      return mockedClient as unknown as ClientSession;
+    });
+    south.getDAValues = mock.fn(async () => {
+      mock.timers.tick(20);
+      return [];
+    });
+
+    const result = await south.testItem(configuration.items[3], { history: undefined });
+
+    assert.strictEqual(result.connectionDuration, 50);
+    assert.strictEqual(result.queryDuration, 20);
   });
 
   it('should reuse the already-open shared session for testItem and not close it', async () => {
@@ -620,7 +641,7 @@ describe('SouthOPCUA', () => {
     const getDAValuesMock = mock.fn(async () => []);
     south.getDAValues = getDAValuesMock;
 
-    await south.testItem(configuration.items[3], { history: undefined });
+    const result = await south.testItem(configuration.items[3], { history: undefined });
 
     assert.deepStrictEqual(getDAValuesMock.mock.calls[0].arguments, [
       [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
@@ -630,6 +651,8 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(createSessionMock.mock.calls.length, 0);
     assert.strictEqual(mockedClient.close.mock.calls.length, 0);
     assert.strictEqual(south['session'], mockedClient);
+    // No session was created, so there's nothing to attribute connection time to.
+    assert.strictEqual(result.connectionDuration, 0);
   });
 
   it('should properly throw error if test item fails', async () => {

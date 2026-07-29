@@ -518,6 +518,8 @@ const models: TsoaRoute.Models = {
         "properties": {
             "raw": {"ref":"OIBusContent","required":true},
             "transformed": {"dataType":"union","subSchemas":[{"ref":"OIBusContent"},{"dataType":"enum","enums":[null]}],"required":true},
+            "connectionDuration": {"dataType":"double","required":true},
+            "queryDuration": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },

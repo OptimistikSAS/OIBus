@@ -259,7 +259,13 @@ export default class TransformerService {
    */
   async testTransformer(transformerId: string, options: Record<string, unknown>, inputData: string): Promise<SouthConnectorItemTestResult> {
     const raw = buildContentFromInput(this.findById(transformerId).inputType, inputData);
-    return { raw, transformed: await this.runTransformer(transformerId, options, raw) };
+    return {
+      raw,
+      transformed: await this.runTransformer(transformerId, options, raw),
+      // Pasted input, not a south connector query — there's no connection or query to time.
+      connectionDuration: 0,
+      queryDuration: 0
+    };
   }
 
   generateTemplate(inputType: InputType): InputTemplate {

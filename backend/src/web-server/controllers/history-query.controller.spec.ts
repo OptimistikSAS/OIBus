@@ -302,7 +302,9 @@ describe('HistoryQueryController', () => {
 
     const mockResult = {
       raw: { type: 'any', filePath: '/path/to/file.json', content: '{"key": "value"}' } as OIBusContent,
-      transformed: null
+      transformed: null,
+      connectionDuration: 12,
+      queryDuration: 34
     };
     historyQueryService.testItem = mock.fn(async () => mockResult);
 

@@ -9,7 +9,7 @@ import { SouthItemSettings, SouthMQTTItemSettings, SouthMQTTSettings } from '../
 import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { createConnectionOptions, getItem } from '../../service/utils-mqtt';
 
 /**
@@ -198,9 +198,9 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   override async testItem(
     item: SouthConnectorItemEntity<SouthMQTTItemSettings>,
     _testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemQueryResult> {
     const options = await createConnectionOptions(this.connector.id, this.connector.settings, this.logger);
-    return new Promise<OIBusContent>((resolve, reject) => {
+    return new Promise<SouthConnectorItemQueryResult>((resolve, reject) => {
       (async () => {
         try {
           const client = await mqtt.connectAsync(this.connector.settings.url, options);
@@ -210,14 +210,19 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
               await client.unsubscribeAsync(item.settings.topic);
               client.end(true);
               resolve({
-                type: 'any-content',
-                content: JSON.stringify([
-                  {
-                    message: message.toString(),
-                    timestamp: messageTimestamp,
-                    item: { id: item.id, name: item.name, topic: item.settings.topic }
-                  }
-                ])
+                result: {
+                  type: 'any-content',
+                  content: JSON.stringify([
+                    {
+                      message: message.toString(),
+                      timestamp: messageTimestamp,
+                      item: { id: item.id, name: item.name, topic: item.settings.topic }
+                    }
+                  ])
+                },
+                // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+                connectionDuration: 0,
+                queryDuration: 0
               });
             } catch (error: unknown) {
               reject(`Error when testing item ${item.settings.topic} (received message "${message}"): ${(error as Error).message}`);

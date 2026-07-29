@@ -161,6 +161,11 @@
     } @else if (errorMessage) {
       <div class="alert alert-danger mt-2 mb-0">{{ errorMessage }}</div>
     } @else if (testResult) {
+      <div class="small text-muted mt-2 mb-1">
+        {{ 'south.test-item.connection-duration' | translate: { duration: testResult.connectionDuration } }}
+        &middot;
+        {{ 'south.test-item.query-duration' | translate: { duration: testResult.queryDuration } }}
+      </div>
       <oib-transformer-test-result
         class="d-block mt-2"
         [raw]="testResult.raw"

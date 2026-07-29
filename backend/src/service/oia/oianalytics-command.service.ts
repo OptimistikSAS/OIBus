@@ -1355,7 +1355,7 @@ export default class OIAnalyticsCommandService {
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings
     );
-    this.completeTestItemCommand(command, result.transformed ?? result.raw);
+    this.completeTestItemCommand(command, result);
   }
 
   private async executeUpdateHistoryQueryStatusCommand(command: OIBusUpdateHistoryQueryStatusCommand) {
@@ -1469,11 +1469,15 @@ export default class OIAnalyticsCommandService {
     return { ...result, truncated, totalSize };
   }
 
-  private completeTestItemCommand(command: OIBusTestHistoryQuerySouthItemCommand, result: OIBusContent) {
+  private completeTestItemCommand(command: OIBusTestHistoryQuerySouthItemCommand, result: SouthConnectorItemTestResult) {
     this.oIAnalyticsCommandRepository.markAsCompleted(
       command.id,
       DateTime.now().toUTC().toISO(),
-      JSON.stringify(this.truncateContentForResult(result))
+      JSON.stringify({
+        ...this.truncateContentForResult(result.transformed ?? result.raw),
+        connectionDuration: result.connectionDuration,
+        queryDuration: result.queryDuration
+      })
     );
   }
 
@@ -1491,7 +1495,9 @@ export default class OIAnalyticsCommandService {
       DateTime.now().toUTC().toISO(),
       JSON.stringify({
         raw: this.truncateContentForResult(result.raw),
-        transformed: result.transformed ? this.truncateContentForResult(result.transformed) : null
+        transformed: result.transformed ? this.truncateContentForResult(result.transformed) : null,
+        connectionDuration: result.connectionDuration,
+        queryDuration: result.queryDuration
       })
     );
   }

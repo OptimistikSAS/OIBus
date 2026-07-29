@@ -1064,13 +1064,27 @@ export interface SouthConnectorItemTestingSettings {
 }
 
 /**
+ * What a South connector's `testItem()` returns: the collected content, plus how long it took to
+ * connect to the source (0 when an already-open connection was reused) and how long the query/read
+ * itself took. Lets the UI/OIAnalytics distinguish a slow connection from a slow query.
+ */
+export interface SouthConnectorItemQueryResult {
+  result: OIBusContent;
+  connectionDuration: number;
+  queryDuration: number;
+}
+
+/**
  * Result of testing a South/History item. `raw` is always the value collected by the connector;
  * `transformed` is the output of running `raw` through the selected transformer with its options,
  * or null when no transformer was requested. This lets the UI show the Raw → transformer → Output pipeline.
+ * `connectionDuration`/`queryDuration` are passed through from the connector's `SouthConnectorItemQueryResult`.
  */
 export interface SouthConnectorItemTestResult {
   raw: OIBusContent;
   transformed: OIBusContent | null;
+  connectionDuration: number;
+  queryDuration: number;
 }
 
 /**

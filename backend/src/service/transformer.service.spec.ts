@@ -649,7 +649,9 @@ describe('Transformer Service', () => {
       assert.deepStrictEqual(runSpy.mock.calls[0].arguments, ['t1', { foo: 'bar' }, { type: 'time-values', content: tv }]);
       assert.deepStrictEqual(result, {
         raw: { type: 'time-values', content: tv },
-        transformed: { type: 'any-content', content: 'done' }
+        transformed: { type: 'any-content', content: 'done' },
+        connectionDuration: 0,
+        queryDuration: 0
       });
     });
 
