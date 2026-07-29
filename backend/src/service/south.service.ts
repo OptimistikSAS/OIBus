@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util';
 import { encryptionService } from './encryption.service';
 
 // South imports
@@ -227,12 +228,26 @@ export default class SouthService {
     const manifest = this.getManifest(southType);
     await this.validator.validateSettings(manifest.settings, settingsToTest);
 
+    const testSettings = await encryptionService.encryptConnectorSecrets(
+      settingsToTest,
+      southConnector?.settings || null,
+      manifest.settings
+    );
+
+    // If the connector being tested is already running with these exact settings, test against
+    // that live instance instead of a throwaway one — this lets it reuse whatever connection it
+    // already has open, rather than opening a second one that could exceed a server-side limit
+    // on concurrent connections per client (e.g. OPC-UA session caps).
+    if (southConnector && this.engine.hasSouth(southConnector.id) && isDeepStrictEqual(testSettings, southConnector.settings)) {
+      return await this.engine.getSouth(southConnector.id).south.testConnection();
+    }
+
     const testToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
       id: 'test',
       type: southType,
       description: '',
       enabled: false,
-      settings: await encryptionService.encryptConnectorSecrets(settingsToTest, southConnector?.settings || null, manifest.settings),
+      settings: testSettings,
       name: southConnector ? southConnector.name : `${southType}:test-connection`,
       items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>>,
       groups: [] as Array<SouthItemGroupEntityLight>,
@@ -301,32 +316,46 @@ export default class SouthService {
       createdAt: '',
       updatedAt: ''
     };
-    const testConnectorToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
-      id: 'test',
-      type: southType,
-      enabled: false,
-      description: '',
-      settings: await encryptionService.encryptConnectorSecrets(southSettings, southConnector?.settings || null, manifest.settings),
-      name: `${southType}:test-connection`,
-      items: [testItemToRun],
-      groups: [] as Array<SouthItemGroupEntityLight>,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
-
-    /* istanbul ignore next */
-    const mockedAddContent = (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
-    const south = buildSouth(
-      testConnectorToRun,
-      mockedAddContent,
-      '',
-      this.southCacheRepository,
-      this.certificateRepository,
-      this.oIAnalyticsRegistrationRepository
+    const testConnectorSettings = await encryptionService.encryptConnectorSecrets(
+      southSettings,
+      southConnector?.settings || null,
+      manifest.settings
     );
-    const raw = await south.testItem(testItemToRun, testingSettings);
+
+    // Same rationale as testSouth(): if the connector is already running with these exact
+    // settings, test the item against that live instance instead of a throwaway one, so it
+    // reuses whatever connection is already open.
+    let raw: OIBusContent;
+    if (southConnector && this.engine.hasSouth(southConnector.id) && isDeepStrictEqual(testConnectorSettings, southConnector.settings)) {
+      raw = await this.engine.getSouth(southConnector.id).south.testItem(testItemToRun, testingSettings);
+    } else {
+      const testConnectorToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
+        id: 'test',
+        type: southType,
+        enabled: false,
+        description: '',
+        settings: testConnectorSettings,
+        name: `${southType}:test-connection`,
+        items: [testItemToRun],
+        groups: [] as Array<SouthItemGroupEntityLight>,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+
+      /* istanbul ignore next */
+      const mockedAddContent = (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
+      const south = buildSouth(
+        testConnectorToRun,
+        mockedAddContent,
+        '',
+        this.southCacheRepository,
+        this.certificateRepository,
+        this.oIAnalyticsRegistrationRepository
+      );
+      raw = await south.testItem(testItemToRun, testingSettings);
+    }
 
     // Delegate the transform to the shared runner so the south/history item test and the
     // north/history transformer test (#4774) apply transformers identically.

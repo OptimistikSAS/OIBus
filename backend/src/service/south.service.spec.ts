@@ -466,6 +466,64 @@ describe('South Service', () => {
     assert.strictEqual(mockedSouth1.testItem.mock.calls.length, 1);
   });
 
+  it('should test a south connector against the live instance when its settings already match', async () => {
+    engine.hasSouth.mock.mockImplementationOnce(() => true);
+    engine.getSouth.mock.mockImplementationOnce(() => ({ south: mockedSouth1, metrics: {} as never }));
+
+    await service.testSouth(testData.south.list[0].id, testData.south.command.type, testData.south.list[0].settings);
+
+    // Delegated straight to the live instance — no throwaway connector was built
+    assert.strictEqual(mockBuildSouth.mock.calls.length, 0);
+    assert.deepStrictEqual(engine.getSouth.mock.calls[0].arguments, [testData.south.list[0].id]);
+    assert.strictEqual(mockedSouth1.testConnection.mock.calls.length, 1);
+  });
+
+  it('should fall back to a throwaway connector when the live instance settings differ', async () => {
+    engine.hasSouth.mock.mockImplementationOnce(() => true);
+
+    await service.testSouth(testData.south.list[0].id, testData.south.command.type, {
+      ...testData.south.list[0].settings,
+      compression: false
+    });
+
+    assert.strictEqual(mockBuildSouth.mock.calls.length, 1);
+    assert.strictEqual(mockedSouth1.testConnection.mock.calls.length, 1);
+  });
+
+  it('should test an item against the live instance when connector settings already match', async () => {
+    engine.hasSouth.mock.mockImplementationOnce(() => true);
+    engine.getSouth.mock.mockImplementationOnce(() => ({ south: mockedSouth1, metrics: {} as never }));
+
+    await service.testItem(
+      testData.south.list[0].id,
+      testData.south.command.type,
+      testData.south.itemCommand.name,
+      testData.south.list[0].settings,
+      testData.south.itemCommand.settings,
+      testData.south.itemTestingSettings
+    );
+
+    assert.strictEqual(mockBuildSouth.mock.calls.length, 0);
+    assert.deepStrictEqual(engine.getSouth.mock.calls[0].arguments, [testData.south.list[0].id]);
+    assert.strictEqual(mockedSouth1.testItem.mock.calls.length, 1);
+  });
+
+  it('should fall back to a throwaway connector for item testing when connector settings differ', async () => {
+    engine.hasSouth.mock.mockImplementationOnce(() => true);
+
+    await service.testItem(
+      testData.south.list[0].id,
+      testData.south.command.type,
+      testData.south.itemCommand.name,
+      { ...testData.south.list[0].settings, compression: false },
+      testData.south.itemCommand.settings,
+      testData.south.itemTestingSettings
+    );
+
+    assert.strictEqual(mockBuildSouth.mock.calls.length, 1);
+    assert.strictEqual(mockedSouth1.testItem.mock.calls.length, 1);
+  });
+
   it('should delegate to the transformer service when a transformer is provided', async () => {
     const rawContent = { type: 'any-content', content: 'raw' } as OIBusContent;
     const transformedContent = { type: 'time-values', content: [] } as OIBusContent;
