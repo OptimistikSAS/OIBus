@@ -10,7 +10,7 @@ import { SouthItemSettings, SouthModbusItemSettings, SouthModbusSettings } from 
 import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import {
   connectSocket,
   getNumberOfWords,
@@ -124,7 +124,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   override async testItem(
     item: SouthConnectorItemEntity<SouthModbusItemSettings>,
     _testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemQueryResult> {
     try {
       const socket = new net.Socket();
       const modbusClient = new client.TCP(socket, this.connector.settings.slaveId);
@@ -132,8 +132,13 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       const dataValues: Array<OIBusTimeValue> = await this.modbusFunction(modbusClient, item);
       await this.disconnect();
       return {
-        type: 'time-values',
-        content: dataValues
+        result: {
+          type: 'time-values',
+          content: dataValues
+        },
+        // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+        connectionDuration: 0,
+        queryDuration: 0
       };
     } catch (error: unknown) {
       switch ((error as { code: string; message: string }).code) {

@@ -41,7 +41,9 @@ describe('SouthItemTestComponent', () => {
     northConnectorService = createMock(NorthConnectorService);
     historyQueryService = createMock(HistoryQueryService);
 
-    southConnectorService.testItem.mockReturnValue(of({ raw: { type: 'time-values', content: [] }, transformed: null }) as never);
+    southConnectorService.testItem.mockReturnValue(
+      of({ raw: { type: 'time-values', content: [] }, transformed: null, connectionDuration: 12, queryDuration: 34 }) as never
+    );
     northConnectorService.list.mockReturnValue(of([]));
     historyQueryService.findById.mockReturnValue(of(null) as never);
 
@@ -92,7 +94,12 @@ describe('SouthItemTestComponent', () => {
 
   test('runs the item and stores the raw + transformed result', () => {
     southConnectorService.testItem.mockReturnValue(
-      of({ raw: { type: 'time-values', content: [] }, transformed: { type: 'any-content', content: 'out' } }) as never
+      of({
+        raw: { type: 'time-values', content: [] },
+        transformed: { type: 'any-content', content: 'out' },
+        connectionDuration: 12,
+        queryDuration: 34
+      }) as never
     );
 
     const component = createComponent().componentInstance;

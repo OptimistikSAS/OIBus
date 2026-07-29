@@ -20,7 +20,7 @@ import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/e
 import oracledb, { ConnectionAttributes } from 'oracledb';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthOracle - Retrieve data from Oracle databases and send them to the cache as CSV files.
@@ -118,7 +118,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
   override async testItem(
     item: SouthConnectorItemEntity<SouthOracleItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemQueryResult> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
     const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
@@ -156,7 +156,12 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
         break;
       }
     }
-    return oibusContent;
+    return {
+      result: oibusContent,
+      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+      connectionDuration: 0,
+      queryDuration: 0
+    };
   }
 
   /**

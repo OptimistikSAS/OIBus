@@ -11,7 +11,7 @@ import { SouthInfluxDBItemSettings, SouthInfluxDBSettings, SouthItemSettings } f
 import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings, SouthInfluxDBItemSettings> implements SouthHistoryQuery {
   constructor(
@@ -126,12 +126,17 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
   override async testItem(
     item: SouthConnectorItemEntity<SouthInfluxDBItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemQueryResult> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
     const result = await this.queryData(item, startTime, endTime);
     const content = JSON.stringify(result);
-    return { type: 'any-content', content };
+    return {
+      result: { type: 'any-content', content },
+      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+      connectionDuration: 0,
+      queryDuration: 0
+    };
   }
 
   async historyQuery(

@@ -50,7 +50,9 @@ export default class SouthServiceMock {
   );
   testItem = mock.fn(async (): Promise<SouthConnectorItemTestResult> => ({
     raw: { type: 'any-content', content: '' } as OIBusAnyContent,
-    transformed: null
+    transformed: null,
+    connectionDuration: 0,
+    queryDuration: 0
   }));
   listItems = mock.fn((_southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> => []);
   searchItems = mock.fn(

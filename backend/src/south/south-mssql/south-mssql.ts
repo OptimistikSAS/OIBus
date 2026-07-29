@@ -17,7 +17,7 @@ import { SouthItemSettings, SouthMSSQLItemSettings, SouthMSSQLSettings } from '.
 import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { OIBusTestingError } from '../../model/types';
 
 /**
@@ -124,7 +124,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
   override async testItem(
     item: SouthConnectorItemEntity<SouthMSSQLItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemQueryResult> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
     const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
@@ -162,7 +162,12 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
         break;
       }
     }
-    return oibusContent;
+    return {
+      result: oibusContent,
+      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+      connectionDuration: 0,
+      queryDuration: 0
+    };
   }
 
   /**

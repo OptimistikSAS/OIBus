@@ -7,6 +7,7 @@ import {
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
+  SouthConnectorItemQueryResult,
   SouthConnectorItemSearchParam,
   SouthConnectorItemTestingSettings,
   SouthConnectorItemTestResult,
@@ -325,9 +326,9 @@ export default class SouthService {
     // Same rationale as testSouth(): if the connector is already running with these exact
     // settings, test the item against that live instance instead of a throwaway one, so it
     // reuses whatever connection is already open.
-    let raw: OIBusContent;
+    let queryResult: SouthConnectorItemQueryResult;
     if (southConnector && this.engine.hasSouth(southConnector.id) && isDeepStrictEqual(testConnectorSettings, southConnector.settings)) {
-      raw = await this.engine.getSouth(southConnector.id).south.testItem(testItemToRun, testingSettings);
+      queryResult = await this.engine.getSouth(southConnector.id).south.testItem(testItemToRun, testingSettings);
     } else {
       const testConnectorToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
         id: 'test',
@@ -354,16 +355,22 @@ export default class SouthService {
         this.certificateRepository,
         this.oIAnalyticsRegistrationRepository
       );
-      raw = await south.testItem(testItemToRun, testingSettings);
+      queryResult = await south.testItem(testItemToRun, testingSettings);
     }
 
     // Delegate the transform to the shared runner so the south/history item test and the
     // north/history transformer test (#4774) apply transformers identically.
     return {
-      raw,
+      raw: queryResult.result,
       transformed: testingSettings.transformer
-        ? await this.transformerService.runTransformer(testingSettings.transformer.transformerId, testingSettings.transformer.options, raw)
-        : null
+        ? await this.transformerService.runTransformer(
+            testingSettings.transformer.transformerId,
+            testingSettings.transformer.options,
+            queryResult.result
+          )
+        : null,
+      connectionDuration: queryResult.connectionDuration,
+      queryDuration: queryResult.queryDuration
     };
   }
 

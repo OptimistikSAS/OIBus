@@ -9,7 +9,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import CertificateRepository from '../../repository/config/certificate.repository';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest } from '../../service/http-request.utils';
 import { buildHttpOptions, getHost, getUrl, OIATimeValues, parseData, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
 
@@ -52,12 +52,17 @@ export default class SouthOIAnalytics
   override async testItem(
     item: SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemQueryResult> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
     const result: Array<OIATimeValues> = await this.queryData(item, startTime, endTime);
     const { formattedResult } = parseData(result);
-    return { type: 'time-values', content: formattedResult };
+    return {
+      result: { type: 'time-values', content: formattedResult },
+      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+      connectionDuration: 0,
+      queryDuration: 0
+    };
   }
 
   /**

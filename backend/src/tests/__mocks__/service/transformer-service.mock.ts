@@ -42,7 +42,9 @@ export default class TransformerServiceMock {
   testTransformer = mock.fn(
     async (_transformerId: string, _options: Record<string, unknown>, _inputData: string): Promise<SouthConnectorItemTestResult> => ({
       raw: { type: 'any-content', content: '' } as OIBusContent,
-      transformed: { type: 'any-content', content: '' } as OIBusContent
+      transformed: { type: 'any-content', content: '' } as OIBusContent,
+      connectionDuration: 0,
+      queryDuration: 0
     })
   );
   generateTemplate = mock.fn((_inputType: InputType): unknown => ({}));

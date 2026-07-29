@@ -185,8 +185,8 @@ describe('SouthFolderScanner', () => {
       utilsExports.checkAge = mock.fn(() => true);
 
       const result = await south.testItem(configuration.items[0], { history: undefined } satisfies SouthConnectorItemTestingSettings);
-      assert.strictEqual(result.type, 'time-values');
-      assert.strictEqual((result as { type: string; content: Array<unknown> }).content.length, 2);
+      assert.strictEqual(result.result.type, 'time-values');
+      assert.strictEqual((result.result as { type: string; content: Array<unknown> }).content.length, 2);
     });
 
     it('should return empty time values when no files match the regex', async () => {
@@ -208,8 +208,8 @@ describe('SouthFolderScanner', () => {
       utilsExports.checkAge = mock.fn(() => true);
 
       const result = await south.testItem(configuration.items[0], { history: undefined } satisfies SouthConnectorItemTestingSettings);
-      assert.strictEqual(result.type, 'time-values');
-      assert.strictEqual((result as { type: string; content: Array<unknown> }).content.length, 0);
+      assert.strictEqual(result.result.type, 'time-values');
+      assert.strictEqual((result.result as { type: string; content: Array<unknown> }).content.length, 0);
     });
   });
 

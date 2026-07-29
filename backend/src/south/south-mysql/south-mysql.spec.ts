@@ -419,15 +419,9 @@ describe('SouthMySQL', () => {
     });
 
     it('should test item', async () => {
-      const mockEnd = mock.fn();
-      mysqlExports.createConnection = mock.fn(async () => ({
-        end: mockEnd,
-        execute: mock.fn(async () => [
-          [{ timestamp: '2020-02-01T00:00:00.000Z', table_count: 2 }, { timestamp: '2020-03-01T00:00:00.000Z' }]
-        ]),
-        ping: mock.fn()
-      }));
-
+      // testItem() delegates the whole connect+query cycle to queryData() — it no longer opens
+      // its own separate connection first (that was dead code: a connection opened and closed
+      // without ever being used, since queryData() always opens its own).
       const queryDataMock = mock.method(
         south,
         'queryData',
@@ -441,24 +435,14 @@ describe('SouthMySQL', () => {
       utilsExports.formatInstant = mock.fn(() => formattedInstant);
       utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
 
-      const createConnectionOptionsMock = mock.method(south, 'createConnectionOptions', async () => undefined);
-
-      await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
-      assert.strictEqual(createConnectionOptionsMock.mock.calls.length, 1);
-      assert.strictEqual((mysqlExports.createConnection as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
       const { startTime, endTime } = testData.south.itemTestingSettings.history!;
       assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [configuration.items[0], startTime, endTime]);
+      assert.strictEqual(result.connectionDuration, 0);
+      assert.strictEqual(result.queryDuration, 0);
     });
 
     it('should test item without datetimeFields', async () => {
-      const mockEnd = mock.fn();
-      mysqlExports.createConnection = mock.fn(async () => ({
-        end: mockEnd,
-        execute: mock.fn(async () => [
-          [{ timestamp: '2020-02-01T00:00:00.000Z', table_count: 2 }, { timestamp: '2020-03-01T00:00:00.000Z' }]
-        ])
-      }));
-
       const queryDataMock = mock.method(
         south,
         'queryData',
@@ -472,11 +456,7 @@ describe('SouthMySQL', () => {
       utilsExports.formatInstant = mock.fn(() => formattedInstant);
       utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
 
-      const createConnectionOptionsMock2 = mock.method(south, 'createConnectionOptions', async () => undefined);
-
       await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
-      assert.strictEqual(createConnectionOptionsMock2.mock.calls.length, 1);
-      assert.strictEqual((mysqlExports.createConnection as ReturnType<typeof mock.fn>).mock.calls.length, 1);
       const { startTime, endTime } = testData.south.itemTestingSettings.history!;
       assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [configuration.items[1], startTime, endTime]);
     });

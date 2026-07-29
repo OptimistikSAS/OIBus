@@ -907,14 +907,18 @@ describe('SouthSFTP test connection with private key', () => {
     const listFilesMock = (south.listFiles as unknown as { mock: { calls: Array<unknown> } }).mock;
     assert.strictEqual(listFilesMock.calls.length, 1);
     assert.deepStrictEqual(result, {
-      type: 'time-values',
-      content: [
-        {
-          pointId: configuration.items[0].name,
-          timestamp: testData.constants.dates.FAKE_NOW,
-          data: { value: 'file.csv' }
-        }
-      ]
+      result: {
+        type: 'time-values',
+        content: [
+          {
+            pointId: configuration.items[0].name,
+            timestamp: testData.constants.dates.FAKE_NOW,
+            data: { value: 'file.csv' }
+          }
+        ]
+      },
+      connectionDuration: 0,
+      queryDuration: 0
     });
   });
 

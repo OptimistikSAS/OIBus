@@ -6,7 +6,7 @@ import { SouthADSItemSettings, SouthADSSettings, SouthItemSettings } from '../..
 import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { AdsEnumInfoEntry } from 'ads-client/dist/types/ads-protocol-types';
 import { SouthDirectQuery } from '../south-interface';
 
@@ -286,14 +286,19 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
   override async testItem(
     item: SouthConnectorItemEntity<SouthADSItemSettings>,
     _testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemQueryResult> {
     try {
       await this.connect();
       const dataValues: Array<OIBusTimeValue> = await this.readAdsSymbol(item, DateTime.now().toUTC().toISO()!);
       await this.disconnect();
       return {
-        type: 'time-values',
-        content: dataValues
+        result: {
+          type: 'time-values',
+          content: dataValues
+        },
+        // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+        connectionDuration: 0,
+        queryDuration: 0
       };
     } catch (error: unknown) {
       throw new Error(`Unable to connect. ${(error as Error).message}`);
