@@ -7,7 +7,6 @@ import { EventEmitter } from 'node:events';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule, flushPromises } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import nodeOPCUAMock from '../../tests/__mocks__/node-opcua.mock';
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
@@ -56,7 +55,6 @@ describe('SouthOPCUA', () => {
       undefined
   );
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-  let southCacheService: SouthCacheServiceMock;
 
   const opcuaOptions = {
     applicationName: 'OIBus',
@@ -287,12 +285,6 @@ describe('SouthOPCUA', () => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, '../../service/utils-opcua', utilsOpcuaExports);
     mockModule(nodeRequire, 'crypto', cryptoExports);
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}
@@ -302,7 +294,6 @@ describe('SouthOPCUA', () => {
   });
 
   beforeEach(() => {
-    southCacheService = new SouthCacheServiceMock();
     addContentCallback.mock.resetCalls();
     for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
       (fn as ReturnType<typeof mock.fn>).mock.resetCalls();

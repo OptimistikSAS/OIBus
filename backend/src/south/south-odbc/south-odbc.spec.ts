@@ -5,7 +5,6 @@ import path from 'node:path';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
@@ -29,7 +28,6 @@ describe('SouthODBC', () => {
   const logger = new PinoLogger();
   const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-  let southCacheService: SouthCacheServiceMock;
 
   const utilsExports = {
     convertDateTimeToInstant: mock.fn((instant: unknown) => instant),
@@ -62,12 +60,6 @@ describe('SouthODBC', () => {
       __esModule: true,
       encryptionService: new EncryptionServiceMock('', '')
     });
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}
@@ -77,7 +69,6 @@ describe('SouthODBC', () => {
   });
 
   beforeEach(() => {
-    southCacheService = new SouthCacheServiceMock();
     addContentCallback.mock.resetCalls();
 
     // Reset utils mocks

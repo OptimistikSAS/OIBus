@@ -6,7 +6,6 @@ import path from 'node:path';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../shared/model/south-settings.model';
 import type { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
@@ -23,8 +22,9 @@ describe('SouthFolderScanner', () => {
 
   const logger = new PinoLogger();
   const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
-  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-  let southCacheService: SouthCacheServiceMock;
+  // Recreated fresh in beforeEach (not a shared const) — some tests reassign its methods
+  // (e.g. getItemLastValue), which must not bleed into later tests.
+  let southCacheRepository: SouthCacheRepository;
 
   const utilsExports = {
     checkAge: mock.fn(() => true),
@@ -37,12 +37,6 @@ describe('SouthFolderScanner', () => {
 
   before(() => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}
@@ -54,7 +48,7 @@ describe('SouthFolderScanner', () => {
   let configuration: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings>;
 
   beforeEach(() => {
-    southCacheService = new SouthCacheServiceMock();
+    southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
     utilsExports.checkAge = mock.fn(() => true);
     utilsExports.compress = mock.fn(async () => undefined);
     addContentCallback.mock.resetCalls();
@@ -299,7 +293,7 @@ describe('SouthFolderScanner', () => {
 
     it('should preserve files and return their updated modify times if preserveFiles is true', async () => {
       configuration.items[0].settings.preserveFiles = true;
-      southCacheService.getItemLastValue = mock.fn(() => ({
+      southCacheRepository.getItemLastValue = mock.fn(() => ({
         itemId: 'id1',
         groupId: null,
         queryTime: null,

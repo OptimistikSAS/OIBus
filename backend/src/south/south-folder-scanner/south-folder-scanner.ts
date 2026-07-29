@@ -178,7 +178,7 @@ export default class SouthFolderScanner
     items: Array<SouthConnectorItemEntity<SouthFolderScannerItemSettings>>
   ): Promise<Array<{ filename: string; modifiedTime: number }>> {
     const item = items[0];
-    const itemValue = this.cacheService!.getItemLastValue(this.connector.id, item.id);
+    const itemValue = this.southCacheRepository.getItemLastValue(this.connector.id, item.id);
     let filesPreserved: Array<{ filename: string; modifiedTime: number }> = [];
     if (itemValue && Array.isArray(itemValue.value)) {
       filesPreserved = itemValue.value as Array<{ filename: string; modifiedTime: number }>;

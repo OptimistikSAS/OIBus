@@ -5,7 +5,6 @@ import { EventEmitter } from 'node:events';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule, flushPromises } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type SouthMQTTClass from './south-mqtt';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -44,7 +43,6 @@ describe('SouthMQTT', () => {
   const logger = new PinoLogger();
   const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-  let southCacheService: SouthCacheServiceMock;
 
   const configuration: SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings> = {
     id: 'southId',
@@ -232,12 +230,6 @@ describe('SouthMQTT', () => {
   before(() => {
     mockModule(nodeRequire, 'mqtt', mqttExports);
     mockModule(nodeRequire, '../../service/utils-mqtt', utilsMqttExports);
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}
@@ -247,7 +239,6 @@ describe('SouthMQTT', () => {
   });
 
   beforeEach(() => {
-    southCacheService = new SouthCacheServiceMock();
     mqttStream.removeAllListeners();
     mqttStream.subscribeAsync = mock.fn(async () => undefined);
     mqttStream.unsubscribeAsync = mock.fn(async () => undefined);

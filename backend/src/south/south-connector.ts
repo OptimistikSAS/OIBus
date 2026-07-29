@@ -10,7 +10,6 @@ import {
 import { Instant, Interval } from '../../shared/model/types';
 import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
-import SouthCacheService from '../service/south-cache.service';
 import { SouthDirectQuery, SouthHistoryQuery, SouthSubscription } from './south-interface';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import {
@@ -111,7 +110,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   // Used only by callers that drive historyQueryHandler() directly, bypassing this scheduler (see HistoryQuery).
   private runProgress$: DeferredPromise | null = null;
   private subscribedItems: Array<SouthConnectorItemEntity<I>> = [];
-  protected cacheService: SouthCacheService | null = null;
   protected readonly tmpFolder: string;
 
   public connectedEvent: EventEmitter = new EventEmitter();
@@ -132,11 +130,10 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       queryTime: Instant,
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
-    private readonly southCacheRepository: SouthCacheRepository,
+    protected readonly southCacheRepository: SouthCacheRepository,
     protected cacheFolderPath: string
   ) {
     this.logger = loggerService.createChildLogger('south', this.connector.id, this.connector.name);
-    this.cacheService = new SouthCacheService(this.southCacheRepository);
     this.tmpFolder = path.resolve(cacheFolderPath, 'tmp');
   }
 
@@ -481,7 +478,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     // @ts-expect-error
     const lastValue = await this.directQuery(items);
 
-    this.cacheService!.saveItemLastValue(this.connector.id, {
+    this.southCacheRepository.saveItemLastValue(this.connector.id, {
       groupId: items[0].group && items[0].syncWithGroup && !SOUTH_SINGLE_ITEMS.includes(this.connector.type) ? items[0].group.id : null,
       itemId: items[0].id,
       queryTime: startTime,
@@ -561,7 +558,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     startTime: Instant,
     endTime: Instant
   ): Promise<void> {
-    let southCache = this.cacheService!.getItemLastValue(this.connector.id, lead.id);
+    let southCache = this.southCacheRepository.getItemLastValue(this.connector.id, lead.id);
     if (!southCache) {
       southCache = {
         itemId: lead.id,
@@ -618,7 +615,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         // With a negative startTimeOffset the window extends backwards, so lastInstantRetrieved may be below trackedInstant — check both conditions
         if (lastValue && (!southCache.trackedInstant || lastValue.trackedInstant > southCache.trackedInstant)) {
           this.logger.debug(`Saving last value ${JSON.stringify(lastValue.value)}, trackedInstant ${lastValue.trackedInstant}`);
-          this.cacheService!.saveItemLastValue(this.connector.id, {
+          this.southCacheRepository.saveItemLastValue(this.connector.id, {
             groupId: southCache.groupId,
             itemId: southCache.itemId,
             queryTime,
@@ -645,7 +642,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     // Only save if data was actually found — otherwise leave the cache untouched.
     if (strategy === 'newest' && !this.stopping && latestValue) {
       this.logger.debug(`Saving last value ${JSON.stringify(latestValue.value)}, trackedInstant ${latestValue.trackedInstant}`);
-      this.cacheService!.saveItemLastValue(this.connector.id, {
+      this.southCacheRepository.saveItemLastValue(this.connector.id, {
         groupId: southCache.groupId,
         itemId: southCache.itemId,
         queryTime: DateTime.now().toUTC().toISO()!,
@@ -813,7 +810,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * start window.
    */
   resetCache(): Promise<void> {
-    this.cacheService!.deleteItemsBySouth(this.connector.id);
+    this.southCacheRepository.deleteItemsBySouth(this.connector.id);
     return Promise.resolve();
   }
 

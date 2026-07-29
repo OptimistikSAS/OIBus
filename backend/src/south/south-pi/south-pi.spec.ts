@@ -4,7 +4,6 @@ import { createRequire } from 'node:module';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule, assertContains } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -25,7 +24,6 @@ describe('South PI', () => {
       undefined
   );
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-  let southCacheService: SouthCacheServiceMock;
 
   const utilsExports = {
     delay: mock.fn(async () => undefined),
@@ -41,12 +39,6 @@ describe('South PI', () => {
   before(() => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}
@@ -109,7 +101,6 @@ describe('South PI', () => {
   };
 
   beforeEach(() => {
-    southCacheService = new SouthCacheServiceMock();
     httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
     addContentCallback.mock.resetCalls();
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
