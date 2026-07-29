@@ -4,7 +4,6 @@ import { createRequire } from 'node:module';
 import testData from '../tests/utils/test-data';
 import { flushPromises, mockModule, reloadModule } from '../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import nodeOpcuaMock from '../tests/__mocks__/node-opcua.mock';
@@ -32,7 +31,6 @@ describe('SouthConnector', () => {
   let SouthFolderScanner: typeof SouthFolderScannerClass;
   let SouthMSSQL: typeof SouthMSSQLClass;
   let SouthOPCUA: typeof SouthOPCUAClass;
-  let southCacheService: SouthCacheServiceMock;
 
   const logger = new PinoLogger();
   const addContentCallback = mock.fn(
@@ -91,12 +89,6 @@ describe('SouthConnector', () => {
       __esModule: true,
       encryptionService: new EncryptionServiceMock('', '')
     });
-    mockModule(nodeRequire, '../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     mockModule(nodeRequire, 'mssql', mssqlExports);
     mockModule(nodeRequire, 'node-opcua', {
       __esModule: true,
@@ -120,8 +112,18 @@ describe('SouthConnector', () => {
     let south: SouthFolderScannerClass;
 
     beforeEach(async () => {
-      southCacheService = new SouthCacheServiceMock();
       addContentCallback.mock.resetCalls();
+      // southCacheRepository is a single shared instance across every test in this file (unlike the
+      // old per-test southCacheService mock), so its call history must be reset explicitly here.
+      for (const fn of [
+        southCacheRepository.getItemLastValue,
+        southCacheRepository.getGroupLastValue,
+        southCacheRepository.saveItemLastValue,
+        southCacheRepository.deleteItemValue,
+        southCacheRepository.deleteItemsBySouth
+      ]) {
+        (fn as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
+      }
       for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
         (fn as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
       }
@@ -132,12 +134,6 @@ describe('SouthConnector', () => {
       utilsExports.groupItemsByGroup = mock.fn((_type: unknown, items: Array<unknown>) => [items]);
       utilsExports.validateCronExpression = mock.fn(() => ({ expression: '' }));
       utilsExports.generateIntervals = mock.fn(() => []);
-
-      southCacheService.getSouthCache = mock.fn(() => ({
-        southId: testData.south.list[0].id,
-        scanModeId: testData.scanMode.list[0].id,
-        maxInstant: testData.constants.dates.FAKE_NOW
-      }));
 
       mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
@@ -301,7 +297,7 @@ describe('SouthConnector', () => {
 
     it('should reset cache', async () => {
       await south.resetCache();
-      assert.strictEqual((southCacheService.deleteItemsBySouth as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
+      assert.strictEqual((southCacheRepository.deleteItemsBySouth as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
     });
 
     it('should properly connect and disconnect without touching any cron state', async () => {
@@ -343,8 +339,18 @@ describe('SouthConnector', () => {
     let south: SouthMSSQLClass;
 
     beforeEach(async () => {
-      southCacheService = new SouthCacheServiceMock();
       addContentCallback.mock.resetCalls();
+      // southCacheRepository is a single shared instance across every test in this file (unlike the
+      // old per-test southCacheService mock), so its call history must be reset explicitly here.
+      for (const fn of [
+        southCacheRepository.getItemLastValue,
+        southCacheRepository.getGroupLastValue,
+        southCacheRepository.saveItemLastValue,
+        southCacheRepository.deleteItemValue,
+        southCacheRepository.deleteItemsBySouth
+      ]) {
+        (fn as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
+      }
       for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
         (fn as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
       }
@@ -352,11 +358,6 @@ describe('SouthConnector', () => {
         return cronMockInstance;
       });
       utilsExports.groupItemsByGroup = mock.fn((_type: unknown, items: Array<unknown>) => [items]);
-      southCacheService.getSouthCache = mock.fn(() => ({
-        southId: testData.south.list[1].id,
-        scanModeId: testData.scanMode.list[0].id,
-        maxInstant: testData.constants.dates.FAKE_NOW
-      }));
 
       mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
@@ -472,13 +473,13 @@ describe('SouthConnector', () => {
       await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2021-02-02T02:02:02.222Z');
 
       // getItemLastValue must be called with each item's own id
-      const getCalls = (southCacheService.getItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      const getCalls = (southCacheRepository.getItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
       assert.strictEqual(getCalls.length, 2);
       assert.strictEqual(getCalls[0].arguments[1], items[0].id);
       assert.strictEqual(getCalls[1].arguments[1], items[1].id);
 
       // saveItemLastValue must be called with each item's own id
-      const saveCalls = (southCacheService.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      const saveCalls = (southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
       assert.strictEqual(saveCalls.length, 2);
       assert.strictEqual(saveCalls[0].arguments[1].itemId, items[0].id);
       assert.strictEqual(saveCalls[1].arguments[1].itemId, items[1].id);
@@ -496,7 +497,7 @@ describe('SouthConnector', () => {
       >;
       await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', endTime);
 
-      const saveCalls = (southCacheService.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      const saveCalls = (southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
       // Must be called exactly once (at end, not per interval)
       assert.strictEqual(saveCalls.length, 1);
       assert.strictEqual(saveCalls[0].arguments[1].trackedInstant, endTime);
@@ -517,7 +518,7 @@ describe('SouthConnector', () => {
       >;
       await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2021-02-02T02:02:02.222Z');
 
-      const saveCalls = (southCacheService.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      const saveCalls = (southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
       assert.strictEqual(saveCalls.length, 0);
       // Reset stopping flag for subsequent tests
       (south as unknown as { stopping: boolean }).stopping = false;
@@ -528,8 +529,18 @@ describe('SouthConnector', () => {
     let south: SouthOPCUAClass;
 
     beforeEach(async () => {
-      southCacheService = new SouthCacheServiceMock();
       addContentCallback.mock.resetCalls();
+      // southCacheRepository is a single shared instance across every test in this file (unlike the
+      // old per-test southCacheService mock), so its call history must be reset explicitly here.
+      for (const fn of [
+        southCacheRepository.getItemLastValue,
+        southCacheRepository.getGroupLastValue,
+        southCacheRepository.saveItemLastValue,
+        southCacheRepository.deleteItemValue,
+        southCacheRepository.deleteItemsBySouth
+      ]) {
+        (fn as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
+      }
       for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
         (fn as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
       }
@@ -538,11 +549,6 @@ describe('SouthConnector', () => {
       });
       utilsExports.groupItemsByGroup = mock.fn((_type: unknown, items: Array<unknown>) => [items]);
       utilsExports.generateIntervals = mock.fn(() => []);
-      southCacheService.getSouthCache = mock.fn(() => ({
-        scanModeId: testData.scanMode.list[0].id,
-        maxInstant: testData.constants.dates.FAKE_NOW,
-        southId: testData.south.list[2].id
-      }));
 
       mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
@@ -741,7 +747,7 @@ describe('SouthConnector', () => {
       await south.addContent({ type: 'time-values', content: [] }, testData.constants.dates.DATE_1, []);
       assert.strictEqual((logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
       assert.strictEqual(addContentCallback.mock.calls.length, 0);
-      assert.strictEqual((southCacheService.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
+      assert.strictEqual((southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
 
       const values = [{}, {}] as Array<OIBusTimeValue>;
       await south.addContent({ type: 'time-values', content: values }, testData.constants.dates.DATE_1, testData.south.list[2].items);

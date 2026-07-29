@@ -4,7 +4,6 @@ import { createRequire } from 'node:module';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
@@ -50,7 +49,6 @@ describe('SouthMSSQL', () => {
       undefined
   );
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-  let southCacheService: SouthCacheServiceMock;
 
   const query = mock.fn((_sql?: unknown): unknown => ({
     recordsets: [[{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]]
@@ -86,12 +84,6 @@ describe('SouthMSSQL', () => {
       __esModule: true,
       encryptionService: new EncryptionServiceMock('', '')
     });
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}
@@ -101,7 +93,6 @@ describe('SouthMSSQL', () => {
   });
 
   beforeEach(() => {
-    southCacheService = new SouthCacheServiceMock();
     query.mock.resetCalls();
     input.mock.resetCalls();
     close.mock.resetCalls();

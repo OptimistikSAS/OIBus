@@ -5,7 +5,6 @@ import fs from 'node:fs/promises';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
@@ -83,7 +82,6 @@ describe('SouthInfluxDB', () => {
       undefined
   );
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-  let southCacheService: SouthCacheServiceMock;
 
   let fsMock: { writeFile: ReturnType<typeof mock.fn> };
 
@@ -96,12 +94,6 @@ describe('SouthInfluxDB', () => {
       __esModule: true,
       encryptionService: new EncryptionServiceMock('', '')
     });
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}
@@ -110,7 +102,6 @@ describe('SouthInfluxDB', () => {
   });
 
   beforeEach(() => {
-    southCacheService = new SouthCacheServiceMock();
     addContentCallback.mock.resetCalls();
 
     influxV1QueryMock = mock.fn(async (_q: string) => [{ time: '2020-02-01T00:00:00Z', value: 1 }] as unknown);

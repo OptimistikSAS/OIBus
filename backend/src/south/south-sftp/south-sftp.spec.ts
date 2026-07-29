@@ -6,7 +6,6 @@ import path from 'node:path';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type { SouthSFTPItemSettings, SouthSFTPSettings } from '../../../shared/model/south-settings.model';
@@ -56,7 +55,6 @@ describe('SouthSFTP', () => {
   const logger = new PinoLogger();
   const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-  let southCacheService: SouthCacheServiceMock;
 
   const configuration: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
     id: 'southId',
@@ -166,12 +164,6 @@ describe('SouthSFTP', () => {
       __esModule: true,
       encryptionService: encryptionServiceMock
     });
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => activeSftpLogger) },
       default: class {}
@@ -182,7 +174,6 @@ describe('SouthSFTP', () => {
 
   beforeEach(() => {
     activeSftpLogger = logger;
-    southCacheService = new SouthCacheServiceMock();
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW).getTime() });
     mockSftpClient.connect.mock.resetCalls();
     mockSftpClient.list.mock.resetCalls();
@@ -488,7 +479,6 @@ describe('SouthFTP with preserve file and compression', () => {
   const logger = new PinoLogger();
   const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-  let southCacheService: SouthCacheServiceMock;
 
   const configuration: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
     id: 'southId',
@@ -598,18 +588,11 @@ describe('SouthFTP with preserve file and compression', () => {
       __esModule: true,
       encryptionService: encryptionServiceMock
     });
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     SouthSftp = reloadModule<{ default: typeof SouthSftpClass }>(nodeRequire, './south-sftp').default;
   });
 
   beforeEach(async () => {
     activeSftpLogger = logger;
-    southCacheService = new SouthCacheServiceMock();
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW).getTime() });
     mockSftpClient.connect.mock.resetCalls();
     mockSftpClient.list.mock.resetCalls();
@@ -727,7 +710,6 @@ describe('SouthSFTP test connection with private key', () => {
   const logger = new PinoLogger();
   const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-  let southCacheService: SouthCacheServiceMock;
 
   const configuration: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
     id: 'southId',
@@ -838,17 +820,10 @@ describe('SouthSFTP test connection with private key', () => {
       __esModule: true,
       encryptionService: encryptionServiceMock
     });
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     SouthSftp = reloadModule<{ default: typeof SouthSftpClass }>(nodeRequire, './south-sftp').default;
   });
 
   beforeEach(() => {
-    southCacheService = new SouthCacheServiceMock();
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW).getTime() });
     mockSftpClient.connect.mock.resetCalls();
     mockSftpClient.list.mock.resetCalls();

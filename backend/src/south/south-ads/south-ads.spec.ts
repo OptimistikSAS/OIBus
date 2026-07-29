@@ -4,7 +4,6 @@ import { createRequire } from 'node:module';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type { SouthADSItemSettings, SouthADSSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
@@ -30,7 +29,6 @@ describe('South ADS', () => {
     ): Promise<void> => undefined
   );
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-  let southCacheService: SouthCacheServiceMock;
 
   const connect = mock.fn(async () => ({ targetAmsNetId: 'targetAmsNetId', localAmsNetId: 'localAmsNetId', localAdsPort: 'localAdsPort' }));
   const disconnect = mock.fn(async () => undefined);
@@ -139,12 +137,6 @@ describe('South ADS', () => {
 
   before(() => {
     mockModule(nodeRequire, 'ads-client', adsExports);
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}
@@ -154,7 +146,6 @@ describe('South ADS', () => {
   });
 
   beforeEach(() => {
-    southCacheService = new SouthCacheServiceMock();
     connect.mock.resetCalls();
     disconnect.mock.resetCalls();
     readValue.mock.resetCalls();

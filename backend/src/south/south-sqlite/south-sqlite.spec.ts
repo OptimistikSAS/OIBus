@@ -6,7 +6,6 @@ import path from 'node:path';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule, buildSouthEntity } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import type SouthSQLiteClass from './south-sqlite';
@@ -27,7 +26,6 @@ const addContentCallback = mock.fn(
   async (_southId: string, _data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => undefined
 );
 const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-let southCacheService: SouthCacheServiceMock;
 
 const mockDatabase: {
   prepare: Mock<(_sql?: unknown) => unknown>;
@@ -143,12 +141,6 @@ describe('SouthSQLite', () => {
   before(() => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, 'better-sqlite3', () => mockDatabase);
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}
@@ -158,7 +150,6 @@ describe('SouthSQLite', () => {
   });
 
   beforeEach(() => {
-    southCacheService = new SouthCacheServiceMock();
     addContentCallback.mock.resetCalls();
 
     mockDatabase.prepare = mock.fn();
@@ -342,7 +333,6 @@ describe('SouthSQLite test connection', () => {
   });
 
   beforeEach(() => {
-    southCacheService = new SouthCacheServiceMock();
     addContentCallback.mock.resetCalls();
 
     mockDatabase.prepare = mock.fn();

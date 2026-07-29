@@ -5,7 +5,6 @@ import path from 'node:path';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
 import OIAnalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
@@ -23,7 +22,6 @@ const nodeRequire = createRequire(import.meta.url);
 
 const logger = new PinoLogger();
 const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-let southCacheService: SouthCacheServiceMock;
 const certificateRepository = new CertificateRepositoryMock() as unknown as CertificateRepository;
 const oIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock() as unknown as OIAnalyticsRegistrationRepository;
 
@@ -125,12 +123,6 @@ describe('SouthOIAnalytics', () => {
     mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
     mockModule(nodeRequire, '../../service/utils-oianalytics', utilsOianalyticsExports);
     mockModule(nodeRequire, '../../service/utils', utilsExports);
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}
@@ -140,7 +132,6 @@ describe('SouthOIAnalytics', () => {
   });
 
   beforeEach(() => {
-    southCacheService = new SouthCacheServiceMock();
     addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
 
     // Reset mutable exports
