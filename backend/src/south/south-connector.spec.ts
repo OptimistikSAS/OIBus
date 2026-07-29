@@ -157,7 +157,7 @@ describe('SouthConnector', () => {
     it('should properly add to queue a new task and dispatch it immediately', () => {
       const runTaskMock = mock.fn(async () => undefined);
       south['runTask'] = runTaskMock;
-      south.addToQueue(testData.scanMode.list[0]);
+      south.trigger(testData.scanMode.list[0]);
       assert.strictEqual(runTaskMock.mock.calls.length, 1);
       assert.deepStrictEqual(runTaskMock.mock.calls[0].arguments, [
         {
@@ -167,7 +167,7 @@ describe('SouthConnector', () => {
       ]);
 
       // Same scan mode again while the first task is still in flight (runTask hasn't resolved yet): backpressure
-      south.addToQueue(testData.scanMode.list[0]);
+      south.trigger(testData.scanMode.list[0]);
       assert.strictEqual((logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
       assert.strictEqual(
         (logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls[0].arguments[0],
@@ -176,7 +176,7 @@ describe('SouthConnector', () => {
 
       // A different scan mode's items are queued, but the single (default) concurrency slot is
       // still held by the first task, so it isn't dispatched yet.
-      south.addToQueue(testData.scanMode.list[1]);
+      south.trigger(testData.scanMode.list[1]);
       assert.strictEqual(runTaskMock.mock.calls.length, 1);
       assert.deepStrictEqual(south.connectorConfiguration, testData.south.list[0]);
     });
@@ -186,11 +186,11 @@ describe('SouthConnector', () => {
       const scanMode = testData.scanMode.list[0];
 
       // First tick enqueues the job and starts running it
-      south.addToQueue(scanMode);
+      south.trigger(scanMode);
       // Subsequent ticks while it is still queued: first warns, the rest are traced
-      south.addToQueue(scanMode);
-      south.addToQueue(scanMode);
-      south.addToQueue(scanMode);
+      south.trigger(scanMode);
+      south.trigger(scanMode);
+      south.trigger(scanMode);
 
       const warnMock = logger.warn as Mock<(...args: Array<unknown>) => unknown>;
       const traceMock = logger.trace as Mock<(...args: Array<unknown>) => unknown>;
@@ -204,7 +204,7 @@ describe('SouthConnector', () => {
 
       // After an hour, the warning is emitted again
       mock.timers.tick(60 * 60 * 1000);
-      south.addToQueue(scanMode);
+      south.trigger(scanMode);
       assert.strictEqual(warnMock.mock.calls.filter(call => (call.arguments[0] as string).startsWith(message)).length, 2);
     });
 
@@ -212,7 +212,7 @@ describe('SouthConnector', () => {
       const runTaskMock = mock.fn(async () => undefined);
       south['runTask'] = runTaskMock;
       south['connector'].items = [];
-      south.addToQueue(testData.scanMode.list[0]);
+      south.trigger(testData.scanMode.list[0]);
       assert.strictEqual(runTaskMock.mock.calls.length, 0);
     });
 
@@ -239,7 +239,7 @@ describe('SouthConnector', () => {
       south['runTask'] = runTaskMock;
 
       south.stop();
-      south.addToQueue(testData.scanMode.list[0]);
+      south.trigger(testData.scanMode.list[0]);
       assert.strictEqual(runTaskMock.mock.calls.length, 0);
       await flushPromises();
     });
@@ -248,11 +248,11 @@ describe('SouthConnector', () => {
       const runTaskMock = mock.fn(async () => undefined);
       south['runTask'] = runTaskMock;
       // Occupy the (default) single concurrency slot with an unresolved task
-      south.addToQueue(testData.scanMode.list[0]);
+      south.trigger(testData.scanMode.list[0]);
       assert.strictEqual(runTaskMock.mock.calls.length, 1);
 
       // A different scan mode's items get queued but can't dispatch: the slot is still held
-      south.addToQueue(testData.scanMode.list[1]);
+      south.trigger(testData.scanMode.list[1]);
       assert.strictEqual(runTaskMock.mock.calls.length, 1);
       assert.strictEqual(south['taskQueue'].length, 1);
     });
@@ -260,7 +260,7 @@ describe('SouthConnector', () => {
     it('should log an error and not crash when runTask() rejects', async () => {
       const runError = new Error('unexpected run failure');
       south['runTask'] = mock.fn(() => Promise.reject(runError));
-      south.addToQueue(testData.scanMode.list[0]);
+      south.trigger(testData.scanMode.list[0]);
       await flushPromises();
       assert.ok(
         (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
@@ -274,13 +274,13 @@ describe('SouthConnector', () => {
     });
 
     it('should not dispatch any task when the connector is disabled', () => {
-      // The engine calls addToQueue unconditionally for every south connector on every scan-mode
+      // The engine calls trigger unconditionally for every south connector on every scan-mode
       // tick (it no longer tracks per-connector interest) — a disabled connector must ignore it.
       const runTaskMock = mock.fn(async () => undefined);
       south['runTask'] = runTaskMock;
       south.isEnabled = mock.fn((): boolean => false);
 
-      south.addToQueue(testData.scanMode.list[0]);
+      south.trigger(testData.scanMode.list[0]);
 
       assert.strictEqual(runTaskMock.mock.calls.length, 0);
       assert.ok(
@@ -629,8 +629,8 @@ describe('SouthConnector', () => {
       );
       south['runTask'] = runTaskMock;
 
-      south.addToQueue(testData.scanMode.list[0]);
-      south.addToQueue(testData.scanMode.list[1]);
+      south.trigger(testData.scanMode.list[0]);
+      south.trigger(testData.scanMode.list[1]);
       assert.strictEqual(runTaskMock.mock.calls.length, 2);
       assert.strictEqual(south['inFlightTasks'].size, 2);
 
@@ -644,7 +644,7 @@ describe('SouthConnector', () => {
         ...originalItems,
         { ...testData.south.list[2].items[0], id: 'thirdItem', scanMode: thirdScanMode }
       ] as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>;
-      south.addToQueue(thirdScanMode);
+      south.trigger(thirdScanMode);
       assert.strictEqual(runTaskMock.mock.calls.length, 2);
       assert.strictEqual(south['taskQueue'].length, 1);
 
@@ -679,7 +679,7 @@ describe('SouthConnector', () => {
         if (event === 'run-start') throw runError;
       });
 
-      south.addToQueue(testData.scanMode.list[0]);
+      south.trigger(testData.scanMode.list[0]);
       await flushPromises();
 
       assert.strictEqual(south['taskQueue'].length, 0);
@@ -717,7 +717,7 @@ describe('SouthConnector', () => {
       const disconnectMock = mock.fn(async (): Promise<void> => undefined);
       south.disconnect = disconnectMock;
 
-      south.addToQueue(testData.scanMode.list[0]);
+      south.trigger(testData.scanMode.list[0]);
 
       south.stop();
       assert.ok(

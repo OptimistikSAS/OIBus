@@ -125,7 +125,7 @@ const logger = new PinoLogger();
 before(() => {
   // south-mqtt: no-op default export class
   mockModule(nodeRequire, '../south/south-mqtt/south-mqtt', { default: class {} });
-  // service/utils: stub createFolder + validateCronExpression (used by initializeScanModeCrons/createCronJob)
+  // service/utils: stub createFolder + validateCronExpression (used by start()/createCronJob)
   mockModule(nodeRequire, '../service/utils', {
     createFolder: mock.fn(),
     validateCronExpression: mock.fn(() => ({ expression: '' }))
@@ -957,12 +957,12 @@ describe('DataStreamEngine', () => {
       const cronCallback = cronExports.CronJob.mock.calls[0].arguments[1] as () => void;
       cronCallback();
 
-      assert.strictEqual(mockedSouth1.addToQueue.mock.calls.length, 1);
-      assert.deepStrictEqual(mockedSouth1.addToQueue.mock.calls[0].arguments, [testData.scanMode.list[0]]);
-      assert.strictEqual(mockedSouth2.addToQueue.mock.calls.length, 1);
-      assert.strictEqual(mockedNorth1.triggerScanMode.mock.calls.length, 1);
-      assert.deepStrictEqual(mockedNorth1.triggerScanMode.mock.calls[0].arguments, [testData.scanMode.list[0]]);
-      assert.strictEqual(mockedNorth2.triggerScanMode.mock.calls.length, 1);
+      assert.strictEqual(mockedSouth1.trigger.mock.calls.length, 1);
+      assert.deepStrictEqual(mockedSouth1.trigger.mock.calls[0].arguments, [testData.scanMode.list[0]]);
+      assert.strictEqual(mockedSouth2.trigger.mock.calls.length, 1);
+      assert.strictEqual(mockedNorth1.trigger.mock.calls.length, 1);
+      assert.deepStrictEqual(mockedNorth1.trigger.mock.calls[0].arguments, [testData.scanMode.list[0]]);
+      assert.strictEqual(mockedNorth2.trigger.mock.calls.length, 1);
     });
 
     it('createScanMode should add a new cron', async () => {

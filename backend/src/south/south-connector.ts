@@ -69,8 +69,8 @@ import { loggerService } from '../service/logger/logger.service';
  *
  * **Run-loop contract**
  *  - Cron ownership lives in the engine (`DataStreamEngine`), which runs a single shared cron per
- *    scan mode and calls `addToQueue(scanMode)` on every south connector on each tick, regardless
- *    of whether that connector actually uses it — `addToQueue` itself is the one place that decides
+ *    scan mode and calls `trigger(scanMode)` on every south connector on each tick, regardless
+ *    of whether that connector actually uses it — `trigger` itself is the one place that decides
  *    whether there's anything to do, so the engine doesn't need to track per-connector interest.
  *    Items for that scan mode are grouped via `groupItemsByGroup` (so multi-item
  *    connectors batch grouped items into a single request, and single-item
@@ -210,7 +210,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * they don't run through the cron loop. The effective scan mode is the
    * item's own `scanMode`, unless the item is synced with a group
    * (`syncWithGroup` and a non-null `group`), in which case the group's
-   * `scanMode` takes over (same precedence as `addToQueue()`). Subclasses
+   * `scanMode` takes over (same precedence as `trigger()`). Subclasses
    * must implement `SouthSubscription` for this to do anything;
    * non-subscription connectors get a trace log and return.
    *
@@ -288,7 +288,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * Newly-queued work-units are handed to `dispatch()`, which starts them
    * immediately if a concurrency slot is free.
    */
-  addToQueue(scanMode: ScanMode): void {
+  trigger(scanMode: ScanMode): void {
     // The engine calls this unconditionally for every south connector on every scan-mode tick
     // (it no longer tracks which connectors are enabled/interested), so a disabled connector must
     // ignore the tick itself rather than relying on a cron that only used to exist while enabled.
@@ -349,7 +349,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * Drain `taskQueue` into `runTask()` while under the concurrency limit. Synchronous — no `await`
    * between checking for a free slot and claiming it — so this stays race-free under Node's
    * single-threaded execution; this invariant must be preserved if this method is ever changed.
-   * Called whenever new work is queued (`addToQueue`) or a task finishes (below), so a freed slot
+   * Called whenever new work is queued (`trigger`) or a task finishes (below), so a freed slot
    * is picked up immediately.
    */
   private dispatch(): void {
