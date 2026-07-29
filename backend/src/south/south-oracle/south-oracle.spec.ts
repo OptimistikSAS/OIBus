@@ -5,7 +5,6 @@ import { createRequire } from 'node:module';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
@@ -52,7 +51,6 @@ describe('SouthOracle', () => {
       undefined
   );
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-  let southCacheService: SouthCacheServiceMock;
 
   const ping = mock.fn();
   const close = mock.fn();
@@ -88,12 +86,6 @@ describe('SouthOracle', () => {
       __esModule: true,
       encryptionService: new EncryptionServiceMock('', '')
     });
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}
@@ -103,7 +95,6 @@ describe('SouthOracle', () => {
   });
 
   beforeEach(() => {
-    southCacheService = new SouthCacheServiceMock();
     ping.mock.resetCalls();
     close.mock.resetCalls();
     execute.mock.resetCalls();

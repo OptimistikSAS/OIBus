@@ -6,7 +6,6 @@ import path from 'node:path';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import type { SouthConnectorEntity } from '../../model/south-connector.model';
@@ -23,8 +22,9 @@ describe('SouthFTP', () => {
 
   const logger = new PinoLogger();
   const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
-  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-  let southCacheService: SouthCacheServiceMock;
+  // Recreated fresh in beforeEach (not a shared const) — some tests override its methods
+  // (e.g. getItemLastValue), which must not bleed into later tests.
+  let southCacheRepository: SouthCacheRepository;
 
   const mockFtpClient = {
     access: mock.fn(async (_options?: AccessOptions) => undefined),
@@ -61,12 +61,6 @@ describe('SouthFTP', () => {
     mockModule(nodeRequire, 'basic-ftp', ftpExports);
     mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, '../../service/encryption.service', encryptionExports);
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}
@@ -191,7 +185,7 @@ describe('SouthFTP', () => {
     }) as FileInfo;
 
   beforeEach(() => {
-    southCacheService = new SouthCacheServiceMock();
+    southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
     addContentCallback.mock.resetCalls();
 
     ftpExports.Client.mock.resetCalls();
@@ -209,10 +203,6 @@ describe('SouthFTP', () => {
 
     encryptionExports.encryptionService.decryptText.mock.resetCalls();
     encryptionExports.encryptionService.decryptText.mock.mockImplementation(async (_text?: string | null) => 'decrypted-password');
-
-    southCacheService.createCustomTable.mock.mockImplementation(() => undefined);
-    southCacheService.getQueryOnCustomTable.mock.mockImplementation(() => null);
-    southCacheService.runQueryOnCustomTable.mock.mockImplementation(() => undefined);
 
     mock.method(fs, 'mkdir', async () => undefined);
     mock.method(fs, 'unlink', async () => undefined);
@@ -396,7 +386,7 @@ describe('SouthFTP', () => {
     it('should preserve files when configured', async () => {
       const fileInfo = createMockFileInfo('test.log', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      southCacheService.getItemLastValue.mock.mockImplementation(() => null);
+      (southCacheRepository as unknown as SouthCacheRepositoryMock).getItemLastValue.mock.mockImplementation(() => null);
 
       const item = configuration.items[1]; // preserveFiles: true
       await south.getFile(fileInfo, item, []);
@@ -906,7 +896,7 @@ describe('SouthFTP', () => {
     it('should handle file with modifiedAt date that is newer than cached version', () => {
       const fileInfo = createMockFileInfo('test.log', new Date(DateTime.now().minus({ minutes: 1 }).toMillis()));
 
-      southCacheService.getItemLastValue.mock.mockImplementation(() => ({
+      (southCacheRepository as unknown as SouthCacheRepositoryMock).getItemLastValue.mock.mockImplementation(() => ({
         itemId: 'id2',
         groupId: null,
         queryTime: null,

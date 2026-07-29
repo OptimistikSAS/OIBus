@@ -5,7 +5,6 @@ import fs from 'node:fs/promises';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule, assertContains } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
@@ -26,7 +25,6 @@ describe('SouthRestAPI connector', () => {
   const logger = new PinoLogger();
   const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-  let southCacheService: SouthCacheServiceMock;
 
   const utilsExports = {
     convertDateTimeToInstant: mock.fn((val: unknown) => {
@@ -58,12 +56,6 @@ describe('SouthRestAPI connector', () => {
   before(() => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     mockModule(nodeRequire, '../../service/encryption.service', {
       encryptionService: encryptionServiceInstance
     });
@@ -135,7 +127,6 @@ describe('SouthRestAPI connector', () => {
   const getRequestOptions = (index = 0): ReqOptions => httpRequestExports.HTTPRequest.mock.calls[index].arguments[1] as ReqOptions;
 
   beforeEach(() => {
-    southCacheService = new SouthCacheServiceMock();
     httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200));
     fsMock = {
       writeFile: mock.method(fs, 'writeFile', async () => undefined) as unknown as ReturnType<typeof mock.fn>,
@@ -150,7 +141,6 @@ describe('SouthRestAPI connector', () => {
     });
     utilsExports.generateRandomId = mock.fn(() => 'random-id');
     utilsExports.sanitizeFilename = mock.fn((name: unknown) => name);
-    southCacheService.getSouthCache = mock.fn(() => ({ southId: 'south-rest', scanModeId: 'mode-1', maxInstant: null }));
     addContentCallback.mock.resetCalls();
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
 

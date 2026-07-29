@@ -6,7 +6,6 @@ import net from 'node:net';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type {
@@ -74,7 +73,6 @@ describe('South Modbus', () => {
     ): Promise<void> => undefined
   );
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-  let southCacheService: SouthCacheServiceMock;
   let mockedEmitter: CustomStream;
 
   // Track the current Socket mock — updated in beforeEach via mock.method
@@ -130,12 +128,6 @@ describe('South Modbus', () => {
     mockModule(nodeRequire, 'jsmodbus', jsmdbExports);
     mockModule(nodeRequire, '../../service/utils-modbus', utilsModbusExports);
     mockModule(nodeRequire, '../../service/utils', utilsExports);
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}
@@ -311,7 +303,6 @@ describe('South Modbus', () => {
   };
 
   beforeEach(() => {
-    southCacheService = new SouthCacheServiceMock();
     mockedEmitter = new CustomStream();
     // Mock net.Socket on the real builtin — both test and SUT share the same module reference
     // Must use a regular function (not arrow) since Socket is called with `new`
