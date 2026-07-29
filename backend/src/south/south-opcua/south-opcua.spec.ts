@@ -341,20 +341,18 @@ describe('SouthOPCUA', () => {
   });
 
   it('should properly connect', async () => {
-    const createSessionMock = mock.fn(async () => ({}) as unknown as ClientSession);
+    const mockedSession = {} as unknown as ClientSession;
+    const createSessionMock = mock.fn(async () => mockedSession);
     const disconnectMock = mock.fn(async () => undefined);
     south.createSession = createSessionMock;
     south.disconnect = disconnectMock;
     south['reconnectTimeout'] = setTimeout(() => null);
     south['flushTimeout'] = setTimeout(() => null);
     await south.connect();
-    // One session per query pool slot (getMaxParallelRun() defaults to 1). The subscription session
-    // is created lazily by subscribe(), not eagerly here, so a pure DA/HA connector with no
-    // subscription items never opens it.
+    // A single shared session is created — reused by both queries and, if the connector has
+    // subscription-mode items, the subscription itself (see subscribe()).
     assert.strictEqual(createSessionMock.mock.calls.length, 1);
-    assert.strictEqual(south['subscriptionSession'], null);
-    assert.strictEqual(south['querySessionPool'].length, 1);
-    assert.strictEqual(south['freeQuerySessions'].length, 1);
+    assert.strictEqual(south['session'], mockedSession);
     assert.strictEqual(disconnectMock.mock.calls.length, 0);
   });
 
@@ -400,24 +398,15 @@ describe('SouthOPCUA', () => {
     south['reconnectTimeout'] = setTimeout(() => null);
     south['subscriptionWatchdog'] = setTimeout(() => null);
     const terminate = mock.fn(async () => undefined);
-    const closeSubscriptionSession = mock.fn(async () => undefined);
-    const closeQuerySession1 = mock.fn(async () => undefined);
-    const closeQuerySession2 = mock.fn(async () => undefined);
+    const closeSession = mock.fn(async () => undefined);
     south['subscription'] = { terminate } as unknown as ClientSubscription;
-    south['subscriptionSession'] = { close: closeSubscriptionSession } as unknown as ClientSession;
-    const querySession1 = { close: closeQuerySession1 } as unknown as ClientSession;
-    const querySession2 = { close: closeQuerySession2 } as unknown as ClientSession;
-    south['querySessionPool'] = [querySession1, querySession2];
-    south['freeQuerySessions'] = [querySession1, querySession2];
+    south['session'] = { close: closeSession } as unknown as ClientSession;
     south['monitoredItems'].set('someItem', {} as unknown as ClientMonitoredItem);
 
     await south.disconnect();
     assert.strictEqual(terminate.mock.calls.length, 1);
-    assert.strictEqual(closeSubscriptionSession.mock.calls.length, 1);
-    assert.strictEqual(closeQuerySession1.mock.calls.length, 1);
-    assert.strictEqual(closeQuerySession2.mock.calls.length, 1);
-    assert.strictEqual(south['querySessionPool'].length, 0);
-    assert.strictEqual(south['freeQuerySessions'].length, 0);
+    assert.strictEqual(closeSession.mock.calls.length, 1);
+    assert.strictEqual(south['session'], null);
     assert.strictEqual(south['subscriptionWatchdog'], null);
     assert.strictEqual(south['monitoredItems'].size, 0);
   });
@@ -617,8 +606,7 @@ describe('SouthOPCUA', () => {
     const getHAValuesMock = mock.fn(async () => ({ value: null, trackedInstant: null }));
     south.getHAValues = getHAValuesMock;
     const mockedSession = {} as unknown as ClientSession;
-    south['querySessionPool'] = [mockedSession];
-    south['freeQuerySessions'] = [mockedSession];
+    south['session'] = mockedSession;
     await south.historyQuery(
       [configuration.items[0], configuration.items[1], configuration.items[2]],
       testData.constants.dates.DATE_1,
@@ -631,21 +619,18 @@ describe('SouthOPCUA', () => {
       testData.constants.dates.DATE_2,
       mockedSession
     ]);
-    // Session is released back to the free list for the next query to reuse
-    assert.deepStrictEqual(south['freeQuerySessions'], [mockedSession]);
+    // The shared session is unaffected by a successful query
+    assert.strictEqual(south['session'], mockedSession);
   });
 
-  it('should replace the failed session without a full disconnect on non-device error', async () => {
+  it('should trigger a full reconnect on non-device error, without swallowing the error', async () => {
     const failedSession = {} as unknown as ClientSession;
-    south['querySessionPool'] = [failedSession];
-    south['freeQuerySessions'] = [failedSession];
+    south['session'] = failedSession;
     south.getHAValues = mock.fn(() => {
       throw new Error('history error');
     });
     const disconnectMock = mock.fn(async () => undefined);
     south.disconnect = disconnectMock;
-    const replacementSession = {} as unknown as ClientSession;
-    south.createSession = mock.fn(async () => replacementSession);
 
     await assert.rejects(
       async () =>
@@ -657,52 +642,20 @@ describe('SouthOPCUA', () => {
       /history error/
     );
 
-    // Only the one broken session is replaced — no connector-wide disconnect/reconnect
-    assert.strictEqual(disconnectMock.mock.calls.length, 0);
-    assert.deepStrictEqual(south['querySessionPool'], [replacementSession]);
-    assert.deepStrictEqual(south['freeQuerySessions'], [replacementSession]);
-  });
-
-  it('should trigger a full reconnect when a failed query session cannot be replaced', async () => {
-    const failedSession = {} as unknown as ClientSession;
-    south['querySessionPool'] = [failedSession];
-    south['freeQuerySessions'] = [failedSession];
-    south.getHAValues = mock.fn(() => {
-      throw new Error('history error');
-    });
-    const disconnectMock = mock.fn(async () => undefined);
-    south.disconnect = disconnectMock;
-    south.createSession = mock.fn(() => {
-      throw new Error('replacement session error');
-    });
-    south['disconnecting'] = false;
-
-    await assert.rejects(
-      async () =>
-        south.historyQuery(
-          [configuration.items[0], configuration.items[1], configuration.items[2]],
-          testData.constants.dates.DATE_1,
-          testData.constants.dates.DATE_2
-        ),
-      /history error/
-    );
-
+    // A non-device error means the session/channel itself is broken — the whole connector
+    // reconnects (same path a subscription failure already uses), rather than swapping just
+    // this one session.
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
-    assert.strictEqual(south['querySessionPool'].length, 0);
   });
 
-  it('should not trigger a reconnect when a failed query session cannot be replaced while already disconnecting', async () => {
+  it('should not trigger a reconnect on non-device error while already disconnecting', async () => {
     const failedSession = {} as unknown as ClientSession;
-    south['querySessionPool'] = [failedSession];
-    south['freeQuerySessions'] = [failedSession];
+    south['session'] = failedSession;
     south.getHAValues = mock.fn(() => {
       throw new Error('history error');
     });
     const disconnectMock = mock.fn(async () => undefined);
     south.disconnect = disconnectMock;
-    south.createSession = mock.fn(() => {
-      throw new Error('replacement session error');
-    });
     south['disconnecting'] = true;
 
     await assert.rejects(
@@ -718,10 +671,31 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(disconnectMock.mock.calls.length, 0);
   });
 
+  it('should reconnect only once when two concurrent queries hit the same non-device session failure', async () => {
+    // Use the real disconnect() (not mocked, unlike other tests here) so its synchronous
+    // `this.disconnecting = true` guard — the mechanism this test is verifying — actually runs.
+    const failedSession = { close: mock.fn(async () => undefined) } as unknown as ClientSession;
+    south['session'] = failedSession;
+    south.getHAValues = mock.fn(() => Promise.reject(new Error('history error')));
+    south.connect = mock.fn(async () => undefined);
+
+    const items = [configuration.items[0], configuration.items[1], configuration.items[2]];
+    const results = await Promise.allSettled([
+      south.historyQuery(items, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2),
+      south.historyQuery(items, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2)
+    ]);
+
+    assert.ok(results.every(r => r.status === 'rejected'));
+    // Both calls fail on the same shared session and each calls triggerReconnect(), but
+    // disconnect() sets `disconnecting = true` synchronously as its first statement, so
+    // triggerReconnect()'s guard means only the first call actually closes the session — the
+    // second call's triggerReconnect() is a synchronous no-op.
+    assert.strictEqual((failedSession.close as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+  });
+
   it('should skip HA group without reconnect on device/PLC error (e.g. BadNoCommunication)', async () => {
     const mockedSession = {} as unknown as ClientSession;
-    south['querySessionPool'] = [mockedSession];
-    south['freeQuerySessions'] = [mockedSession];
+    south['session'] = mockedSession;
     south.getHAValues = mock.fn(() => {
       throw new Error('BadNoCommunication: device unreachable');
     });
@@ -734,9 +708,8 @@ describe('SouthOPCUA', () => {
     );
     assert.deepStrictEqual(result, { trackedInstant: null, value: null });
     assert.strictEqual(disconnectMock.mock.calls.length, 0);
-    // Session is untouched and released back to the free list
-    assert.deepStrictEqual(south['querySessionPool'], [mockedSession]);
-    assert.deepStrictEqual(south['freeQuerySessions'], [mockedSession]);
+    // Session is untouched
+    assert.strictEqual(south['session'], mockedSession);
   });
 
   it('should return early and skip getHAValues when client not set', async () => {
@@ -1350,8 +1323,7 @@ describe('SouthOPCUA', () => {
   });
 
   it('should do nothing on query last point if no nodes to read', async () => {
-    south['querySessionPool'] = [{} as unknown as ClientSession];
-    south['freeQuerySessions'] = [...south['querySessionPool']];
+    south['session'] = {} as unknown as ClientSession;
     const getDAValuesMock = mock.fn(async () => []);
     const addContentMock = mock.fn(async () => undefined);
     south.getDAValues = getDAValuesMock;
@@ -1363,8 +1335,7 @@ describe('SouthOPCUA', () => {
 
   it('should query last point (only one)', async () => {
     const mockedSession = {} as unknown as ClientSession;
-    south['querySessionPool'] = [mockedSession];
-    south['freeQuerySessions'] = [mockedSession];
+    south['session'] = mockedSession;
     const getDAValuesMock = mock.fn(
       async () => testData.oibusContent[0].content as ReturnType<typeof south.getDAValues> extends Promise<infer T> ? T : never
     );
@@ -1377,64 +1348,36 @@ describe('SouthOPCUA', () => {
       mockedSession
     ]);
     assert.strictEqual(addContentMock.mock.calls.length, 1);
-    // Session is released back to the free list for the next query to reuse
-    assert.deepStrictEqual(south['freeQuerySessions'], [mockedSession]);
+    // The shared session is unaffected by a successful query
+    assert.strictEqual(south['session'], mockedSession);
   });
 
-  it('should replace the failed session without a full disconnect on non-device error', async () => {
+  it('should trigger a full reconnect on non-device error, without swallowing the error', async () => {
     const failedSession = {} as unknown as ClientSession;
-    south['querySessionPool'] = [failedSession];
-    south['freeQuerySessions'] = [failedSession];
+    south['session'] = failedSession;
     const getDAValuesMock = mock.fn(() => {
       throw new Error('opcua read error');
     });
     const addContentMock = mock.fn(async () => undefined);
     const disconnectMock = mock.fn(async () => undefined);
-    const replacementSession = {} as unknown as ClientSession;
     south.getDAValues = getDAValuesMock;
     south.addContent = addContentMock;
     south.disconnect = disconnectMock;
-    south.createSession = mock.fn(async () => replacementSession);
     await assert.rejects(async () => south.directQuery([configuration.items[0], configuration.items[3]]), /opcua read error/);
     assert.deepStrictEqual(getDAValuesMock.mock.calls[0].arguments, [
       [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
       failedSession
     ]);
     assert.strictEqual(addContentMock.mock.calls.length, 0);
-    // Only the one broken session is replaced — no connector-wide disconnect/reconnect
-    assert.strictEqual(disconnectMock.mock.calls.length, 0);
-    assert.deepStrictEqual(south['querySessionPool'], [replacementSession]);
-    assert.deepStrictEqual(south['freeQuerySessions'], [replacementSession]);
-  });
-
-  it('should trigger a full reconnect when a failed query session cannot be replaced', async () => {
-    const failedSession = {} as unknown as ClientSession;
-    south['querySessionPool'] = [failedSession];
-    south['freeQuerySessions'] = [failedSession];
-    const getDAValuesMock = mock.fn(() => {
-      throw new Error('opcua read error');
-    });
-    const addContentMock = mock.fn(async () => undefined);
-    const disconnectMock = mock.fn(async () => undefined);
-    const connectMock = mock.fn(async () => undefined);
-    south.getDAValues = getDAValuesMock;
-    south.addContent = addContentMock;
-    south.disconnect = disconnectMock;
-    south.connect = connectMock;
-    south.createSession = mock.fn(() => {
-      throw new Error('replacement session error');
-    });
-    south['disconnecting'] = false;
-    await assert.rejects(async () => south.directQuery([configuration.items[0], configuration.items[3]]), /opcua read error/);
-    assert.strictEqual(addContentMock.mock.calls.length, 0);
+    // A non-device error means the session/channel itself is broken — the whole connector
+    // reconnects (same path a subscription failure already uses), rather than swapping just
+    // this one session.
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
-    assert.strictEqual(south['querySessionPool'].length, 0);
   });
 
-  it('should not trigger a reconnect when a failed query session cannot be replaced while already disconnecting', async () => {
+  it('should not trigger a reconnect on non-device error while already disconnecting', async () => {
     const failedSession = {} as unknown as ClientSession;
-    south['querySessionPool'] = [failedSession];
-    south['freeQuerySessions'] = [failedSession];
+    south['session'] = failedSession;
     const getDAValuesMock = mock.fn(() => {
       throw new Error('opcua read error');
     });
@@ -1445,9 +1388,6 @@ describe('SouthOPCUA', () => {
     south.addContent = addContentMock;
     south.disconnect = disconnectMock;
     south.connect = connectMock;
-    south.createSession = mock.fn(() => {
-      throw new Error('replacement session error');
-    });
     south['disconnecting'] = true;
     await assert.rejects(async () => south.directQuery([configuration.items[0], configuration.items[3]]), /opcua read error/);
     assert.strictEqual(addContentMock.mock.calls.length, 0);
@@ -1457,8 +1397,7 @@ describe('SouthOPCUA', () => {
 
   it('should query last point and skip group without reconnect on device/PLC error (e.g. BadCommunicationError)', async () => {
     const mockedSession = {} as unknown as ClientSession;
-    south['querySessionPool'] = [mockedSession];
-    south['freeQuerySessions'] = [mockedSession];
+    south['session'] = mockedSession;
     const getDAValuesMock = mock.fn(() => {
       throw new Error('BadCommunicationError: PLC channel offline');
     });
@@ -1472,14 +1411,12 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(result, null);
     assert.strictEqual(addContentMock.mock.calls.length, 0);
     assert.strictEqual(disconnectMock.mock.calls.length, 0);
-    // Session is untouched and released back to the free list
-    assert.deepStrictEqual(south['querySessionPool'], [mockedSession]);
-    assert.deepStrictEqual(south['freeQuerySessions'], [mockedSession]);
+    // Session is untouched
+    assert.strictEqual(south['session'], mockedSession);
   });
 
   it('should not query items if bad node id', async () => {
-    south['querySessionPool'] = [{} as unknown as ClientSession];
-    south['freeQuerySessions'] = [...south['querySessionPool']];
+    south['session'] = {} as unknown as ClientSession;
     const getDAValuesMock = mock.fn(async () => []);
     south.getDAValues = getDAValuesMock;
     let resolveCallCount = 0;
@@ -1620,8 +1557,7 @@ describe('SouthOPCUA', () => {
   });
 
   it('should return null and not disconnect when DA read times out (treated as device error)', async () => {
-    south['querySessionPool'] = [{} as unknown as ClientSession];
-    south['freeQuerySessions'] = [...south['querySessionPool']];
+    south['session'] = {} as unknown as ClientSession;
     // Simulate a hanging read by returning a never-resolving Promise
     south.getDAValues = mock.fn(
       () =>
@@ -1647,20 +1583,21 @@ describe('SouthOPCUA', () => {
     );
   });
 
-  it('should lazily create the subscription session on first subscribe', async () => {
-    assert.strictEqual(south['subscriptionSession'], null);
+  it('should use the already-connected shared session when subscribing', async () => {
     const stream = new CustomStream();
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
     const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
     const createSubscription2Mock = mock.fn(async () => subscriptionEmitter);
-    const createSessionMock = mock.fn(async () => ({ createSubscription2: createSubscription2Mock }) as unknown as ClientSession);
+    south['session'] = { createSubscription2: createSubscription2Mock } as unknown as ClientSession;
+    const createSessionMock = mock.fn(async () => ({}) as unknown as ClientSession);
     south.createSession = createSessionMock;
 
     await south.subscribe(configuration.items);
 
-    assert.strictEqual(createSessionMock.mock.calls.length, 1);
-    assert.ok(south['subscriptionSession']);
+    // subscribe() reuses the shared session established by connect() — it never opens a session
+    // of its own, so a server capping concurrent sessions per client at 1 is never exceeded.
+    assert.strictEqual(createSessionMock.mock.calls.length, 0);
     assert.strictEqual(createSubscription2Mock.mock.calls.length, 1);
   });
 
@@ -1673,7 +1610,7 @@ describe('SouthOPCUA', () => {
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
     const createSubscription2Mock = mock.fn(async () => ({ terminate: mock.fn(), monitor: monitorFn }));
-    south['subscriptionSession'] = {
+    south['session'] = {
       createSubscription2: createSubscription2Mock
     } as unknown as ClientSession;
 
@@ -1689,7 +1626,7 @@ describe('SouthOPCUA', () => {
     const monitorFn = mock.fn(() => stream);
     const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
     const createSubscription2Mock = mock.fn(async () => subscriptionEmitter);
-    south['subscriptionSession'] = {
+    south['session'] = {
       createSubscription2: createSubscription2Mock
     } as unknown as ClientSession;
 
@@ -1759,7 +1696,7 @@ describe('SouthOPCUA', () => {
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
     const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
-    south['subscriptionSession'] = {
+    south['session'] = {
       createSubscription2: mock.fn(async () => subscriptionEmitter)
     } as unknown as ClientSession;
 
@@ -1770,13 +1707,13 @@ describe('SouthOPCUA', () => {
 
     // Simulate disconnect (as triggered by watchdog or terminated event)
     const closeMock = mock.fn(async () => undefined);
-    south['subscriptionSession'] = { close: closeMock } as unknown as ClientSession;
+    south['session'] = { close: closeMock } as unknown as ClientSession;
     await south.disconnect();
     assert.strictEqual(south['monitoredItems'].size, 0);
 
     // Simulate reconnect: new session + new subscription
     const subscriptionEmitter2 = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
-    south['subscriptionSession'] = {
+    south['session'] = {
       createSubscription2: mock.fn(async () => subscriptionEmitter2)
     } as unknown as ClientSession;
 
@@ -1918,8 +1855,7 @@ describe('SouthOPCUA', () => {
 
     for (const code of deviceErrorCodes) {
       const mockedSession = {} as unknown as ClientSession;
-      south['querySessionPool'] = [mockedSession];
-      south['freeQuerySessions'] = [mockedSession];
+      south['session'] = mockedSession;
       south.getHAValues = mock.fn(() => {
         throw new Error(`${code}: server reported device offline`);
       });
@@ -1929,7 +1865,7 @@ describe('SouthOPCUA', () => {
 
       assert.deepStrictEqual(result, { trackedInstant: null, value: null }, `Expected null for ${code}`);
       assert.strictEqual(disconnectMock.mock.calls.length, 0, `Expected no disconnect for ${code}`);
-      assert.deepStrictEqual(south['freeQuerySessions'], [mockedSession], `Expected session preserved for ${code}`);
+      assert.strictEqual(south['session'], mockedSession, `Expected session preserved for ${code}`);
     }
   });
 
@@ -1947,8 +1883,7 @@ describe('SouthOPCUA', () => {
 
     for (const code of deviceErrorCodes) {
       const mockedSession = {} as unknown as ClientSession;
-      south['querySessionPool'] = [mockedSession];
-      south['freeQuerySessions'] = [mockedSession];
+      south['session'] = mockedSession;
       south.getDAValues = mock.fn(() => {
         throw new Error(`${code}: server reported device offline`);
       });
@@ -1958,7 +1893,7 @@ describe('SouthOPCUA', () => {
 
       assert.strictEqual(result, null, `Expected null for ${code}`);
       assert.strictEqual(disconnectMock.mock.calls.length, 0, `Expected no disconnect for ${code}`);
-      assert.deepStrictEqual(south['freeQuerySessions'], [mockedSession], `Expected session preserved for ${code}`);
+      assert.strictEqual(south['session'], mockedSession, `Expected session preserved for ${code}`);
     }
   });
 
@@ -1968,8 +1903,7 @@ describe('SouthOPCUA', () => {
       id: `id${i}`,
       name: `item${i}`
     }));
-    south['querySessionPool'] = [{} as unknown as ClientSession];
-    south['freeQuerySessions'] = [...south['querySessionPool']];
+    south['session'] = {} as unknown as ClientSession;
     south.getHAValues = mock.fn(() => {
       throw new Error('BadTimeout: device timeout');
     });
@@ -1992,8 +1926,7 @@ describe('SouthOPCUA', () => {
       id: `id${i}`,
       name: `daItem${i}`
     }));
-    south['querySessionPool'] = [{} as unknown as ClientSession];
-    south['freeQuerySessions'] = [...south['querySessionPool']];
+    south['session'] = {} as unknown as ClientSession;
     south.getDAValues = mock.fn(() => {
       throw new Error('BadDeviceFailure: device failure');
     });
@@ -2016,7 +1949,7 @@ describe('SouthOPCUA', () => {
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
     const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
-    south['subscriptionSession'] = {
+    south['session'] = {
       createSubscription2: mock.fn(async () => subscriptionEmitter)
     } as unknown as ClientSession;
 
@@ -2051,7 +1984,7 @@ describe('SouthOPCUA', () => {
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
     const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
-    south['subscriptionSession'] = {
+    south['session'] = {
       createSubscription2: mock.fn(async () => subscriptionEmitter)
     } as unknown as ClientSession;
 
@@ -2076,7 +2009,7 @@ describe('SouthOPCUA', () => {
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
     const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
-    south['subscriptionSession'] = {
+    south['session'] = {
       createSubscription2: mock.fn(async () => subscriptionEmitter)
     } as unknown as ClientSession;
 
@@ -2097,7 +2030,7 @@ describe('SouthOPCUA', () => {
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
     const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
-    south['subscriptionSession'] = {
+    south['session'] = {
       createSubscription2: mock.fn(async () => subscriptionEmitter)
     } as unknown as ClientSession;
 
@@ -2118,7 +2051,7 @@ describe('SouthOPCUA', () => {
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
     const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
-    south['subscriptionSession'] = {
+    south['session'] = {
       createSubscription2: mock.fn(async () => subscriptionEmitter)
     } as unknown as ClientSession;
 
@@ -2138,7 +2071,7 @@ describe('SouthOPCUA', () => {
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
     const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
-    south['subscriptionSession'] = {
+    south['session'] = {
       createSubscription2: mock.fn(async () => subscriptionEmitter)
     } as unknown as ClientSession;
 
@@ -2161,7 +2094,7 @@ describe('SouthOPCUA', () => {
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
     const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
-    south['subscriptionSession'] = {
+    south['session'] = {
       createSubscription2: mock.fn(async () => subscriptionEmitter)
     } as unknown as ClientSession;
 
@@ -2194,7 +2127,7 @@ describe('SouthOPCUA', () => {
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
     const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
-    south['subscriptionSession'] = {
+    south['session'] = {
       createSubscription2: mock.fn(async () => subscriptionEmitter)
     } as unknown as ClientSession;
 
@@ -2219,7 +2152,7 @@ describe('SouthOPCUA', () => {
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
     const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
-    south['subscriptionSession'] = {
+    south['session'] = {
       createSubscription2: mock.fn(async () => subscriptionEmitter)
     } as unknown as ClientSession;
 
@@ -2242,7 +2175,7 @@ describe('SouthOPCUA', () => {
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
     const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
-    south['subscriptionSession'] = {
+    south['session'] = {
       createSubscription2: mock.fn(async () => subscriptionEmitter)
     } as unknown as ClientSession;
 
@@ -2263,7 +2196,7 @@ describe('SouthOPCUA', () => {
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
     const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
-    south['subscriptionSession'] = {
+    south['session'] = {
       createSubscription2: mock.fn(async () => subscriptionEmitter)
     } as unknown as ClientSession;
 
