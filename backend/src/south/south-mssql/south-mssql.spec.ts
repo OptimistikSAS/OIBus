@@ -67,6 +67,7 @@ describe('SouthMSSQL', () => {
   mssqlExports.default = mssqlExports;
 
   const utilsExports = {
+    groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
     convertDateTimeToInstant: mock.fn((instant: unknown) => instant),
     convertDelimiter: mock.fn((d: unknown) => d),
     formatInstant: mock.fn((instant: unknown) => instant),

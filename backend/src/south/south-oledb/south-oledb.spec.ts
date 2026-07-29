@@ -37,6 +37,7 @@ describe('SouthOLEDB', () => {
   };
 
   const utilsExports = {
+    groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
     convertDelimiter: mock.fn((value: unknown) => value),
     extractLastCsvRow: mock.fn((content: unknown) => (Array.isArray(content) && content.length > 0 ? content[content.length - 1] : null)),
     formatInstant: mock.fn((value: unknown) => value),

@@ -30,6 +30,7 @@ describe('SouthODBC', () => {
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
 
   const utilsExports = {
+    groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
     convertDateTimeToInstant: mock.fn((instant: unknown) => instant),
     convertDelimiter: mock.fn((d: unknown) => d),
     extractLastCsvRow: mock.fn((content: unknown) => (Array.isArray(content) && content.length > 0 ? content[content.length - 1] : null)),
