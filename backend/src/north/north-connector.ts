@@ -49,8 +49,8 @@ export interface NorthMetricsEvents {
  *  - North is **pull-based** from a local file cache. South connectors call
  *    `cacheContent(...)` to write payloads (optionally through a transformer);
  *    a `run()` loop, driven by scan-mode ticks the engine forwards via
- *    `triggerScanMode()` (cron ownership lives in `DataStreamEngine`, a single
- *    shared cron per scan mode — see `triggerScanMode`'s doc), later pulls
+ *    `trigger()` (cron ownership lives in `DataStreamEngine`, a single
+ *    shared cron per scan mode — see `trigger`'s doc), later pulls
  *    files out of the cache and hands them to the subclass's `handleContent()`
  *    for actual delivery.
  *  - This decoupling means a flaky destination doesn't block South ingestion:
@@ -256,7 +256,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * that decides whether there's anything to do, so the engine doesn't need to track per-connector
    * interest.
    */
-  triggerScanMode(scanMode: ScanMode): void {
+  trigger(scanMode: ScanMode): void {
     if (this.isEnabled() && this.connector.caching.trigger.scanMode.id === scanMode.id) {
       this.addTaskToQueue({ id: scanMode.id, name: scanMode.name });
     }
@@ -264,9 +264,9 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
   /**
    * Enqueue a "send" task. Same de-duplication contract as South's
-   * `addToQueue`: identical task ids are coalesced, and an empty queue
+   * `trigger`: identical task ids are coalesced, and an empty queue
    * triggers `'run'` immediately. Tasks come from three sources:
-   *   - the cron (scan-mode tick, via `triggerScanMode`),
+   *   - the cron (scan-mode tick, via `trigger`),
    *   - `triggerRunIfNecessary` (file count / element count threshold reached),
    *   - retry after `errorCount > 0`.
    */

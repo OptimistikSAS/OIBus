@@ -28,7 +28,7 @@ export default class NorthConnectorMock extends NorthConnector<NorthSettings> {
   override start = mock.fn(async (): Promise<void> => undefined);
   override isEnabled = mock.fn((): boolean => false);
   override connect = mock.fn(async (): Promise<void> => undefined);
-  override triggerScanMode = mock.fn((_scanMode: ScanMode): void => undefined);
+  override trigger = mock.fn((_scanMode: ScanMode): void => undefined);
   override addTaskToQueue = mock.fn((): void => undefined);
   override run = mock.fn(async (): Promise<void> => undefined);
   override handleContentWrapper = mock.fn(async (): Promise<void> => undefined);

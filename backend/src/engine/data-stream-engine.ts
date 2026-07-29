@@ -52,7 +52,7 @@ export default class DataStreamEngine {
   >();
   private historyQueries = new Map<string, { historyQuery: HistoryQuery; metrics: HistoryQueryMetricsService }>();
   // One shared cron per scan mode, regardless of whether any connector currently uses it — see
-  // initializeScanModeCrons()/onScanModeTriggered() for why this replaced per-connector cron ownership.
+  // start()/onScanModeTriggered() for why this replaced per-connector cron ownership.
   private cronByScanModeId = new Map<string, CronJob>();
 
   private readonly _logger = loggerService.createChildLogger('internal', 'engine');
@@ -79,12 +79,23 @@ export default class DataStreamEngine {
     southConnectorList: Array<SouthConnectorEntityLight>,
     historyQueryList: Array<HistoryQueryEntityLight>
   ): Promise<void> {
-    this.initializeScanModeCrons();
+    /**
+     * Create one shared cron per scan mode present in the `scan_modes` table, regardless of whether
+     * any south/north connector currently uses it — connectors decide for themselves, on each tick,
+     * whether they have anything to do (see `SouthConnector.trigger` / `NorthConnector.trigger`).
+     * The `'subscription'` sentinel is excluded: it's a real seeded row with an empty cron string
+     * (subscription items are push-driven, never polled), which would otherwise fail cron validation
+     * on every startup.
+     */
+    for (const scanMode of this.scanModeRepository.findAll()) {
+      if (scanMode.id === 'subscription') continue;
+      this.createCronJob(scanMode);
+    }
 
     for (const northLight of northConnectorList) {
       try {
         const north = await this.createNorth(northLight.id);
-        await this.startNorth(north.connectorConfiguration.id);
+        this.startNorth(north.connectorConfiguration.id);
       } catch (error: unknown) {
         this._logger.error(
           `Error while creating North connector "${northLight.name}" of type "${northLight.type}" (${northLight.id}): ${(error as Error).message}`
@@ -95,7 +106,7 @@ export default class DataStreamEngine {
     for (const southLight of southConnectorList) {
       try {
         const south = await this.createSouth(southLight.id);
-        await this.startSouth(south.connectorConfiguration.id);
+        this.startSouth(south.connectorConfiguration.id);
       } catch (error: unknown) {
         this._logger.error(
           `Error while creating South connector "${southLight.name}" of type "${southLight.type}" (${southLight.id}): ${(error as Error).message}`
@@ -106,7 +117,7 @@ export default class DataStreamEngine {
     for (const historyLight of historyQueryList) {
       try {
         const historyQuery = await this.createHistoryQuery(historyLight.id);
-        await this.startHistoryQuery(historyQuery.historyQueryConfiguration.id);
+        this.startHistoryQuery(historyQuery.historyQueryConfiguration.id);
       } catch (error: unknown) {
         this._logger.error(
           `Error while creating History query "${historyLight.name}" of South type "${historyLight.southType}" and North type "${historyLight.northType}" (${historyLight.id}): ${(error as Error).message}`
@@ -116,30 +127,38 @@ export default class DataStreamEngine {
     this._logger.info('OIBus engine started');
   }
 
+  /**
+   * Stop every South, North, and History query. The three groups run concurrently (nothing ties
+   * their shutdown order together), and within each group every connector stops concurrently too —
+   * same fan-out pattern as `addContent()`. Each individual stop is caught so one connector failing
+   * to stop cleanly never blocks or fails the others.
+   */
   async stop(): Promise<void> {
-    for (const id of this.southConnectors.keys()) {
-      try {
-        await this.stopSouth(id);
-      } catch (error: unknown) {
-        this._logger.error(`Error while stopping South "${id}": ${(error as Error).message}`);
-      }
-    }
+    const stopAllSouths = Promise.all(
+      Array.from(this.southConnectors.keys()).map(id =>
+        this.stopSouth(id).catch((error: unknown) => {
+          this._logger.error(`Error while stopping South "${id}": ${(error as Error).message}`);
+        })
+      )
+    );
 
-    for (const id of this.northConnectors.keys()) {
-      try {
-        await this.stopNorth(id);
-      } catch (error: unknown) {
-        this._logger.error(`Error while stopping North "${id}": ${(error as Error).message}`);
-      }
-    }
+    const stopAllNorths = Promise.all(
+      Array.from(this.northConnectors.keys()).map(id =>
+        this.stopNorth(id).catch((error: unknown) => {
+          this._logger.error(`Error while stopping North "${id}": ${(error as Error).message}`);
+        })
+      )
+    );
 
-    for (const id of this.historyQueries.keys()) {
-      try {
-        await this.stopHistoryQuery(id);
-      } catch (error: unknown) {
-        this._logger.error(`Error while stopping History query "${id}": ${(error as Error).message}`);
-      }
-    }
+    const stopAllHistoryQueries = Promise.all(
+      Array.from(this.historyQueries.keys()).map(id =>
+        this.stopHistoryQuery(id).catch((error: unknown) => {
+          this._logger.error(`Error while stopping History query "${id}": ${(error as Error).message}`);
+        })
+      )
+    );
+
+    await Promise.all([stopAllSouths, stopAllNorths, stopAllHistoryQueries]);
 
     for (const job of this.cronByScanModeId.values()) {
       job.stop();
@@ -150,32 +169,17 @@ export default class DataStreamEngine {
     clearOIAnalyticsCredentialCache();
   }
 
-  /**
-   * Create one shared cron per scan mode present in the `scan_modes` table, regardless of whether
-   * any south/north connector currently uses it — connectors decide for themselves, on each tick,
-   * whether they have anything to do (see `SouthConnector.addToQueue` / `NorthConnector.triggerScanMode`).
-   * The `'subscription'` sentinel is excluded: it's a real seeded row with an empty cron string
-   * (subscription items are push-driven, never polled), which would otherwise fail cron validation
-   * on every startup.
-   */
-  private initializeScanModeCrons(): void {
-    for (const scanMode of this.scanModeRepository.findAll()) {
-      if (scanMode.id === 'subscription') continue;
-      this.createCronJob(scanMode);
-    }
-  }
-
   /** Replace (or create) the shared cron for one scan mode. Invalid cron expressions are logged and skipped. */
   private createCronJob(scanMode: ScanMode): void {
-    const existing = this.cronByScanModeId.get(scanMode.id);
-    if (existing) {
-      existing.stop();
+    const existingCron = this.cronByScanModeId.get(scanMode.id);
+    if (existingCron) {
+      existingCron.stop();
       this.cronByScanModeId.delete(scanMode.id);
     }
     try {
       validateCronExpression(scanMode.cron);
-      const job = new CronJob(scanMode.cron, () => this.onScanModeTriggered(scanMode), null, true);
-      this.cronByScanModeId.set(scanMode.id, job);
+      const newCron = new CronJob(scanMode.cron, () => this.onScanModeTriggered(scanMode), null, true);
+      this.cronByScanModeId.set(scanMode.id, newCron);
     } catch (error: unknown) {
       this._logger.error(`Error when creating cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${(error as Error).message}`);
     }
@@ -184,10 +188,10 @@ export default class DataStreamEngine {
   /** Fan out one scan-mode tick to every south and north connector; each decides for itself whether it applies. */
   private onScanModeTriggered(scanMode: ScanMode): void {
     for (const { south } of this.southConnectors.values()) {
-      south.addToQueue(scanMode);
+      south.trigger(scanMode);
     }
     for (const { north } of this.northConnectors.values()) {
-      north.triggerScanMode(scanMode);
+      north.trigger(scanMode);
     }
   }
 
@@ -254,7 +258,7 @@ export default class DataStreamEngine {
     await this.stopNorth(northEntity.id);
     const north = this.getNorth(northEntity.id).north;
     north.refreshLogger();
-    await this.startNorth(northEntity.id);
+    this.startNorth(northEntity.id);
   }
 
   async stopNorth(northId: string): Promise<void> {
@@ -337,7 +341,7 @@ export default class DataStreamEngine {
     await this.stopSouth(southConnector.id);
     const south = this.getSouth(southConnector.id).south;
     south.refreshLogger();
-    await this.startSouth(southConnector.id);
+    this.startSouth(southConnector.id);
   }
 
   async reloadSouthItems(southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>): Promise<void> {
@@ -428,7 +432,7 @@ export default class DataStreamEngine {
     if (resetCache) {
       await this.resetHistoryQueryCache(historyQueryConfig.id);
     }
-    await this.startHistoryQuery(historyQueryConfig.id);
+    this.startHistoryQuery(historyQueryConfig.id);
   }
 
   async stopHistoryQuery(historyId: string): Promise<void> {

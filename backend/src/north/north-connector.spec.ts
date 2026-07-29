@@ -270,7 +270,7 @@ describe('NorthConnector', () => {
     north.addTaskToQueue = addTaskToQueueMock;
     north.isEnabled = mock.fn((): boolean => true);
 
-    north.triggerScanMode(testData.scanMode.list[0]);
+    north.trigger(testData.scanMode.list[0]);
 
     assert.strictEqual(addTaskToQueueMock.mock.calls.length, 1);
     assert.deepStrictEqual(addTaskToQueueMock.mock.calls[0].arguments[0], {
@@ -284,7 +284,7 @@ describe('NorthConnector', () => {
     north.addTaskToQueue = addTaskToQueueMock;
     north.isEnabled = mock.fn((): boolean => true);
 
-    north.triggerScanMode(testData.scanMode.list[1]);
+    north.trigger(testData.scanMode.list[1]);
 
     assert.strictEqual(addTaskToQueueMock.mock.calls.length, 0);
   });
@@ -294,7 +294,7 @@ describe('NorthConnector', () => {
     north.addTaskToQueue = addTaskToQueueMock;
     north.isEnabled = mock.fn((): boolean => false);
 
-    north.triggerScanMode(testData.scanMode.list[0]);
+    north.trigger(testData.scanMode.list[0]);
 
     assert.strictEqual(addTaskToQueueMock.mock.calls.length, 0);
   });
