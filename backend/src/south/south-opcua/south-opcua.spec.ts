@@ -432,6 +432,32 @@ describe('SouthOPCUA', () => {
     assert.deepStrictEqual(testResult.items[0], { key: 'State', value: 'Running' });
   });
 
+  it('should reuse the already-open shared session for testConnection and not close it', async () => {
+    const mockedClient = {
+      close: mock.fn(async () => undefined),
+      read: mock.fn(async () => [
+        { statusCode: { value: 0 }, value: { value: 0 } },
+        { statusCode: { value: 0 }, value: { value: 'Prosys OPC' } },
+        { statusCode: { value: 0 }, value: { value: 'OPC UA Server' } },
+        { statusCode: { value: 0 }, value: { value: '1.2.3' } },
+        { statusCode: { value: 0 }, value: { value: '1234' } }
+      ])
+    };
+    south['session'] = mockedClient as unknown as ClientSession;
+    const createSessionMock = mock.fn(async () => ({}) as unknown as ClientSession);
+    south.createSession = createSessionMock;
+
+    const testResult = await south.testConnection();
+
+    // The persistent session is reused, not replaced, and must not be closed by this call —
+    // it's still owned by connect()/disconnect(), not by testConnection().
+    assert.strictEqual(createSessionMock.mock.calls.length, 0);
+    assert.strictEqual(mockedClient.read.mock.calls.length, 1);
+    assert.strictEqual(mockedClient.close.mock.calls.length, 0);
+    assert.strictEqual(south['session'], mockedClient);
+    assert.strictEqual(testResult.items.length, 5);
+  });
+
   it('should properly test connection with graceful degradation when session.read throws', async () => {
     const mockedClient = {
       close: mock.fn(async () => undefined),
@@ -584,6 +610,26 @@ describe('SouthOPCUA', () => {
     assert.deepStrictEqual(nodeOPCUAMock.resolveNodeId.mock.calls[0].arguments, [configuration.items[0].settings.nodeId]);
     assert.strictEqual(createSessionMock.mock.calls.length, 1);
     assert.strictEqual(mockedClient.close.mock.calls.length, 1);
+  });
+
+  it('should reuse the already-open shared session for testItem and not close it', async () => {
+    const mockedClient = { close: mock.fn(async () => undefined) };
+    south['session'] = mockedClient as unknown as ClientSession;
+    const createSessionMock = mock.fn(async () => ({}) as unknown as ClientSession);
+    south.createSession = createSessionMock;
+    const getDAValuesMock = mock.fn(async () => []);
+    south.getDAValues = getDAValuesMock;
+
+    await south.testItem(configuration.items[3], { history: undefined });
+
+    assert.deepStrictEqual(getDAValuesMock.mock.calls[0].arguments, [
+      [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
+      mockedClient
+    ]);
+    // The persistent session is reused, not replaced, and must not be closed by this call.
+    assert.strictEqual(createSessionMock.mock.calls.length, 0);
+    assert.strictEqual(mockedClient.close.mock.calls.length, 0);
+    assert.strictEqual(south['session'], mockedClient);
   });
 
   it('should properly throw error if test item fails', async () => {

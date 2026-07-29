@@ -547,6 +547,11 @@ describe('DataStreamEngine', () => {
       assert.ok(sse !== undefined && sse !== null);
     });
 
+    it('should report whether a south connector is present in the engine', () => {
+      assert.strictEqual(engine.hasSouth(testData.south.list[0].id), true);
+      assert.strictEqual(engine.hasSouth('not-registered'), false);
+    });
+
     it('should reload south connector and update cache/cron/subs', async () => {
       const southEntity = testData.south.list[0];
 

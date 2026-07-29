@@ -321,6 +321,10 @@ export default class DataStreamEngine {
     return south;
   }
 
+  hasSouth(southId: string): boolean {
+    return this.southConnectors.has(southId);
+  }
+
   getSouthSSE(southId: string): PassThrough {
     return this.getSouth(southId).metrics.stream;
   }
