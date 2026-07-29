@@ -356,16 +356,6 @@ describe('South Connector Factory', () => {
       const calledPaths = utilsExports.createFolder.mock.calls.map(c => c.arguments[0] as string);
       assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', `south-${id}`)));
       assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', `south-${id}`, 'tmp')));
-      assert.ok(!calledPaths.includes(path.join(baseFolder, 'cache', `south-${id}`, 'opcua')));
-    });
-
-    it('should create additional folder for opcua connector', async () => {
-      await initSouthCache(id, 'opcua', baseFolder);
-
-      const calledPaths = utilsExports.createFolder.mock.calls.map(c => c.arguments[0] as string);
-      assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', `south-${id}`)));
-      assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', `south-${id}`, 'tmp')));
-      assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', `south-${id}`, 'opcua')));
     });
   });
 

@@ -227,9 +227,6 @@ export const buildSouth = (
 export const initSouthCache = async (id: string, type: OIBusSouthType, baseFolder: string) => {
   await createFolder(path.join(baseFolder, 'cache', `south-${id}`));
   await createFolder(path.join(baseFolder, 'cache', `south-${id}`, 'tmp'));
-  if (type === 'opcua') {
-    await createFolder(path.join(baseFolder, 'cache', `south-${id}`, 'opcua'));
-  }
 };
 
 export const deleteSouthCache = async (id: string, baseFolder: string) => {
