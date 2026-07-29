@@ -157,15 +157,21 @@ export default class SouthOPCUA
    * bounds how many requests get pipelined at once so a burst of triggers can't flood one
    * device/session. */
   protected override getMaxParallelRun(): number {
-    const CEILING = 10;
+    const CEILING = 32;
     return Math.max(1, Math.min(this.connector.settings.maxParallelRun ?? 1, CEILING));
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
     const items: Array<{ key: string; value: string }> = [];
-    let session: ClientSession | undefined;
+    // Reuse the already-open shared session when this instance is live and connected, instead of
+    // opening a second one — some OPC-UA servers cap concurrent sessions per client, and testing
+    // a connector while it's running shouldn't be able to exceed that cap.
+    const reusingLiveSession = this.session !== null;
+    let session: ClientSession | undefined = this.session ?? undefined;
     try {
-      session = await this.createSession();
+      if (!session) {
+        session = await this.createSession();
+      }
 
       // Attempt to read server state and BuildInfo — gracefully degraded if unavailable
       // Standard OPC UA node IDs per node-opcua-constants (VariableIds enum):
@@ -271,7 +277,7 @@ export default class SouthOPCUA
         // Server does not expose aggregate functions
       }
     } finally {
-      if (session) {
+      if (session && !reusingLiveSession) {
         await session.close();
       }
     }
@@ -283,9 +289,15 @@ export default class SouthOPCUA
     item: SouthConnectorItemEntity<SouthOPCUAItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
   ): Promise<OIBusContent> {
-    let session;
+    // Reuse the already-open shared session when this instance is live and connected, instead of
+    // opening a second one — some OPC-UA servers cap concurrent sessions per client, and testing
+    // an item while the connector is running shouldn't be able to exceed that cap.
+    const reusingLiveSession = this.session !== null;
+    let session: ClientSession | undefined = this.session ?? undefined;
     try {
-      session = await this.createSession();
+      if (!session) {
+        session = await this.createSession();
+      }
       if (item.settings.mode === 'da') {
         const nodeId = resolveNodeId(item.settings.nodeId);
         const result = await this.getDAValues([{ nodeId, name: item.name, settings: item.settings }], session);
@@ -295,9 +307,8 @@ export default class SouthOPCUA
         return { type: 'time-values', content: result.value ? [result.value] : [] };
       }
     } finally {
-      if (session) {
+      if (session && !reusingLiveSession) {
         await session.close();
-        session = null;
       }
     }
   }

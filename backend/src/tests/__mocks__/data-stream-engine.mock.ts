@@ -57,6 +57,7 @@ export default class DataStreamEngineMock {
     (_southId: string): { south: SouthConnector<SouthSettings, SouthItemSettings>; metrics: SouthConnectorMetricsService } =>
       ({}) as { south: SouthConnector<SouthSettings, SouthItemSettings>; metrics: SouthConnectorMetricsService }
   );
+  hasSouth = mock.fn((_southId: string): boolean => false);
   getSouthSSE = mock.fn((_southId: string): PassThrough => new PassThrough());
   getAllSouthMetrics = mock.fn((): Record<string, SouthConnectorMetrics> => ({}));
   resetSouthMetrics = mock.fn((_southId: string): void => undefined);
