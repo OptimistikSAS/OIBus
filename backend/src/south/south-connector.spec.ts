@@ -207,7 +207,9 @@ describe('SouthConnector', () => {
     it('should properly add to queue a new task and not trigger next run if no item', () => {
       const runTaskMock = mock.fn(async () => undefined);
       south['runTask'] = runTaskMock;
-      south['connector'].items = [];
+      // Routed through the setter (rather than mutating `.items` directly) so the scan-mode-grouped
+      // cache trigger() reads from is rebuilt to reflect the empty item list.
+      south.connectorConfiguration = { ...south.connectorConfiguration, items: [] };
       south.trigger(testData.scanMode.list[0]);
       assert.strictEqual(runTaskMock.mock.calls.length, 0);
     });
@@ -266,7 +268,7 @@ describe('SouthConnector', () => {
         )
       );
       // The task is still cleaned up (removed from in-flight, item status reset) despite the rejection
-      assert.strictEqual(south['inFlightTasks'].size, 0);
+      assert.strictEqual(south['runningTasks'].size, 0);
     });
 
     it('should not dispatch any task when the connector is disabled', () => {
@@ -638,18 +640,21 @@ describe('SouthConnector', () => {
       south.trigger(testData.scanMode.list[0]);
       south.trigger(testData.scanMode.list[1]);
       assert.strictEqual(runTaskMock.mock.calls.length, 2);
-      assert.strictEqual(south['inFlightTasks'].size, 2);
+      assert.strictEqual(south['runningTasks'].size, 2);
 
-      // A third scan mode's items queue up behind the two already in-flight tasks (both slots taken).
-      // `connector` is the same object reference shared via testData.south.list[2] across every test
-      // in this describe block, so the original items array is restored afterward to avoid leaking
-      // this extra item into later tests.
-      const originalItems = south['connector'].items;
+      // A third scan mode's items queue up behind the two already in-flight tasks (both slots
+      // taken). Routed through the connectorConfiguration setter (rather than mutating `.items`
+      // directly) so the scan-mode-grouped cache trigger() reads from is rebuilt to include the
+      // new item; restored the same way afterward since `testData.south.list[2]` is shared across
+      // every test in this describe block.
+      const originalConfig = south.connectorConfiguration;
       const thirdScanMode = { ...testData.scanMode.list[0], id: 'thirdScanModeId' };
-      south['connector'].items = [
-        ...originalItems,
-        { ...testData.south.list[2].items[0], id: 'thirdItem', scanMode: thirdScanMode }
-      ] as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>;
+      south.connectorConfiguration = {
+        ...originalConfig,
+        items: [...originalConfig.items, { ...testData.south.list[2].items[0], id: 'thirdItem', scanMode: thirdScanMode }] as Array<
+          SouthConnectorItemEntity<SouthOPCUAItemSettings>
+        >
+      };
       south.trigger(thirdScanMode);
       assert.strictEqual(runTaskMock.mock.calls.length, 2);
       assert.strictEqual(south['taskQueue'].length, 1);
@@ -663,7 +668,7 @@ describe('SouthConnector', () => {
       resolvers[1]();
       resolvers[2]();
       await flushPromises();
-      south['connector'].items = originalItems;
+      south.connectorConfiguration = originalConfig;
     });
 
     it('should not dispatch queued tasks while stopping', () => {
@@ -689,7 +694,7 @@ describe('SouthConnector', () => {
       await flushPromises();
 
       assert.strictEqual(south['taskQueue'].length, 0);
-      assert.strictEqual(south['inFlightTasks'].size, 0);
+      assert.strictEqual(south['runningTasks'].size, 0);
       assert.ok(
         (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) =>
@@ -883,11 +888,16 @@ describe('SouthConnector', () => {
     });
 
     it('should update subscriptions', async () => {
-      south['connector'].items = south['connector'].items.map(item => ({
-        ...item,
-        scanMode: { ...item.scanMode!, id: 'subscription' }
-      }));
-      south['subscribedItems'] = [south['connector'].items[0]];
+      // Routed through the setter (rather than mutating `.items` directly) so the scan-mode-grouped
+      // cache updateSubscriptions() reads from is rebuilt to reflect the new item list.
+      south.connectorConfiguration = {
+        ...south.connectorConfiguration,
+        items: south.connectorConfiguration.items.map(item => ({
+          ...item,
+          scanMode: { ...item.scanMode!, id: 'subscription' }
+        }))
+      };
+      south['subscribedItems'] = [south.connectorConfiguration.items[0]];
       south.unsubscribe = mock.fn(async (): Promise<void> => undefined);
       south.subscribe = mock.fn(async (): Promise<void> => undefined);
       await south.updateSubscriptions();
@@ -897,7 +907,7 @@ describe('SouthConnector', () => {
         )
       );
 
-      south['connector'].items = [];
+      south.connectorConfiguration = { ...south.connectorConfiguration, items: [] };
 
       await south.updateSubscriptions();
 
@@ -910,66 +920,71 @@ describe('SouthConnector', () => {
     });
 
     it('should update subscriptions and log error', async () => {
-      south['connector'].items = [
-        {
-          id: 'southItemId5',
-          name: 'opcua sub',
-          enabled: true,
-          settings: {
-            mode: 'da'
-          } as SouthOPCUAItemSettings,
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: null,
-          readDelay: null,
-          startTimeOffset: null,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          scanMode: {
-            id: 'subscription',
-            name: 'subscription',
-            description: '',
-            cron: '',
+      // Routed through the setter (rather than mutating `.items` directly) so the scan-mode-grouped
+      // cache updateSubscriptions() reads from is rebuilt to reflect the new item list.
+      south.connectorConfiguration = {
+        ...south.connectorConfiguration,
+        items: [
+          {
+            id: 'southItemId5',
+            name: 'opcua sub',
+            enabled: true,
+            settings: {
+              mode: 'da'
+            } as SouthOPCUAItemSettings,
+            group: null,
+            syncWithGroup: false,
+            maxReadInterval: null,
+            readDelay: null,
+            startTimeOffset: null,
+            endTimeOffset: null,
+            recoveryStrategy: null,
+            scanMode: {
+              id: 'subscription',
+              name: 'subscription',
+              description: '',
+              cron: '',
+              createdBy: '',
+              updatedBy: '',
+              createdAt: '',
+              updatedAt: ''
+            },
             createdBy: '',
             updatedBy: '',
             createdAt: '',
             updatedAt: ''
           },
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        {
-          id: 'southItemId5',
-          name: 'opcua sub',
-          enabled: true,
-          settings: {
-            mode: 'da'
-          } as SouthOPCUAItemSettings,
-          group: null,
-          syncWithGroup: false,
-          maxReadInterval: null,
-          readDelay: null,
-          startTimeOffset: null,
-          endTimeOffset: null,
-          recoveryStrategy: null,
-          scanMode: {
-            id: 'subscription',
-            name: 'subscription',
-            description: '',
-            cron: '',
+          {
+            id: 'southItemId5',
+            name: 'opcua sub',
+            enabled: true,
+            settings: {
+              mode: 'da'
+            } as SouthOPCUAItemSettings,
+            group: null,
+            syncWithGroup: false,
+            maxReadInterval: null,
+            readDelay: null,
+            startTimeOffset: null,
+            endTimeOffset: null,
+            recoveryStrategy: null,
+            scanMode: {
+              id: 'subscription',
+              name: 'subscription',
+              description: '',
+              cron: '',
+              createdBy: '',
+              updatedBy: '',
+              createdAt: '',
+              updatedAt: ''
+            },
             createdBy: '',
             updatedBy: '',
             createdAt: '',
             updatedAt: ''
-          },
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        }
-      ];
+          }
+        ]
+      };
       let unsubscribeCallCount = 0;
       south.unsubscribe = mock.fn(async (): Promise<void> => {
         unsubscribeCallCount++;
@@ -987,7 +1002,7 @@ describe('SouthConnector', () => {
         )
       );
       await south.updateSubscriptions();
-      south['connector'].items = [];
+      south.connectorConfiguration = { ...south.connectorConfiguration, items: [] };
 
       await south.updateSubscriptions();
       assert.ok(
@@ -999,36 +1014,41 @@ describe('SouthConnector', () => {
 
     it('should subscribe an item whose group scan mode is subscription', async () => {
       south['subscribedItems'] = [];
-      south['connector'].items = [
-        {
-          id: 'southItemGroupSub',
-          name: 'grouped item with subscription group',
-          enabled: true,
-          settings: { mode: 'da' } as SouthOPCUAItemSettings,
-          // The item's own scan mode is NOT subscription: the group must be what decides.
-          scanMode: testData.scanMode.list[0],
-          group: {
-            id: 'group1',
-            name: 'Group 1',
-            scanMode: testData.scanMode.list[2], // 'subscription'
-            overlap: null,
+      // Routed through the setter (rather than mutating `.items` directly) so the scan-mode-grouped
+      // cache updateSubscriptions() reads from is rebuilt to reflect the new item list.
+      south.connectorConfiguration = {
+        ...south.connectorConfiguration,
+        items: [
+          {
+            id: 'southItemGroupSub',
+            name: 'grouped item with subscription group',
+            enabled: true,
+            settings: { mode: 'da' } as SouthOPCUAItemSettings,
+            // The item's own scan mode is NOT subscription: the group must be what decides.
+            scanMode: testData.scanMode.list[0],
+            group: {
+              id: 'group1',
+              name: 'Group 1',
+              scanMode: testData.scanMode.list[2], // 'subscription'
+              overlap: null,
+              maxReadInterval: null,
+              readDelay: null,
+              createdBy: '',
+              updatedBy: '',
+              createdAt: '',
+              updatedAt: ''
+            },
+            syncWithGroup: true,
             maxReadInterval: null,
             readDelay: null,
+            overlap: null,
             createdBy: '',
             updatedBy: '',
             createdAt: '',
             updatedAt: ''
-          },
-          syncWithGroup: true,
-          maxReadInterval: null,
-          readDelay: null,
-          overlap: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        }
-      ];
+          }
+        ]
+      };
       south.subscribe = mock.fn(async (): Promise<void> => undefined);
       south.unsubscribe = mock.fn(async (): Promise<void> => undefined);
 
@@ -1043,36 +1063,41 @@ describe('SouthConnector', () => {
 
     it('should not subscribe an item whose group scan mode is not subscription, even if its own scan mode is', async () => {
       south['subscribedItems'] = [];
-      south['connector'].items = [
-        {
-          id: 'southItemGroupNotSub',
-          name: 'grouped item with non-subscription group',
-          enabled: true,
-          settings: { mode: 'da' } as SouthOPCUAItemSettings,
-          // The item's own scan mode IS subscription, but the group must win.
-          scanMode: testData.scanMode.list[2],
-          group: {
-            id: 'group1',
-            name: 'Group 1',
-            scanMode: testData.scanMode.list[0], // not 'subscription'
-            overlap: null,
+      // Routed through the setter (rather than mutating `.items` directly) so the scan-mode-grouped
+      // cache updateSubscriptions() reads from is rebuilt to reflect the new item list.
+      south.connectorConfiguration = {
+        ...south.connectorConfiguration,
+        items: [
+          {
+            id: 'southItemGroupNotSub',
+            name: 'grouped item with non-subscription group',
+            enabled: true,
+            settings: { mode: 'da' } as SouthOPCUAItemSettings,
+            // The item's own scan mode IS subscription, but the group must win.
+            scanMode: testData.scanMode.list[2],
+            group: {
+              id: 'group1',
+              name: 'Group 1',
+              scanMode: testData.scanMode.list[0], // not 'subscription'
+              overlap: null,
+              maxReadInterval: null,
+              readDelay: null,
+              createdBy: '',
+              updatedBy: '',
+              createdAt: '',
+              updatedAt: ''
+            },
+            syncWithGroup: true,
             maxReadInterval: null,
             readDelay: null,
+            overlap: null,
             createdBy: '',
             updatedBy: '',
             createdAt: '',
             updatedAt: ''
-          },
-          syncWithGroup: true,
-          maxReadInterval: null,
-          readDelay: null,
-          overlap: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        }
-      ];
+          }
+        ]
+      };
       south.subscribe = mock.fn(async (): Promise<void> => undefined);
       south.unsubscribe = mock.fn(async (): Promise<void> => undefined);
 
@@ -1083,35 +1108,40 @@ describe('SouthConnector', () => {
 
     it('should not subscribe a disabled item even if its group scan mode is subscription', async () => {
       south['subscribedItems'] = [];
-      south['connector'].items = [
-        {
-          id: 'southItemGroupDisabled',
-          name: 'disabled grouped item with subscription group',
-          enabled: false,
-          settings: { mode: 'da' } as SouthOPCUAItemSettings,
-          scanMode: testData.scanMode.list[0],
-          group: {
-            id: 'group1',
-            name: 'Group 1',
-            scanMode: testData.scanMode.list[2], // 'subscription'
-            overlap: null,
+      // Routed through the setter (rather than mutating `.items` directly) so the scan-mode-grouped
+      // cache updateSubscriptions() reads from is rebuilt to reflect the new item list.
+      south.connectorConfiguration = {
+        ...south.connectorConfiguration,
+        items: [
+          {
+            id: 'southItemGroupDisabled',
+            name: 'disabled grouped item with subscription group',
+            enabled: false,
+            settings: { mode: 'da' } as SouthOPCUAItemSettings,
+            scanMode: testData.scanMode.list[0],
+            group: {
+              id: 'group1',
+              name: 'Group 1',
+              scanMode: testData.scanMode.list[2], // 'subscription'
+              overlap: null,
+              maxReadInterval: null,
+              readDelay: null,
+              createdBy: '',
+              updatedBy: '',
+              createdAt: '',
+              updatedAt: ''
+            },
+            syncWithGroup: true,
             maxReadInterval: null,
             readDelay: null,
+            overlap: null,
             createdBy: '',
             updatedBy: '',
             createdAt: '',
             updatedAt: ''
-          },
-          syncWithGroup: true,
-          maxReadInterval: null,
-          readDelay: null,
-          overlap: null,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        }
-      ];
+          }
+        ]
+      };
       south.subscribe = mock.fn(async (): Promise<void> => undefined);
       south.unsubscribe = mock.fn(async (): Promise<void> => undefined);
 
@@ -1149,7 +1179,9 @@ describe('SouthConnector', () => {
         updatedAt: ''
       };
       south['subscribedItems'] = [alreadySubscribedItem];
-      south['connector'].items = [alreadySubscribedItem];
+      // Routed through the setter (rather than mutating `.items` directly) so the scan-mode-grouped
+      // cache updateSubscriptions() reads from is rebuilt to reflect the new item list.
+      south.connectorConfiguration = { ...south.connectorConfiguration, items: [alreadySubscribedItem] };
       south.subscribe = mock.fn(async (): Promise<void> => undefined);
       south.unsubscribe = mock.fn(async (): Promise<void> => undefined);
 

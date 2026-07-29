@@ -350,8 +350,13 @@ export default class DataStreamEngine {
 
   async reloadSouthItems(southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>): Promise<void> {
     const south = this.getSouth(southConnector.id).south;
-    // Only reload the items list — the connector's other settings (type, name, etc.) haven't changed.
-    south.connectorConfiguration.items = this.southConnectorRepository.findAllItemsForSouth(southConnector.id);
+    // Only reload the items list — the connector's other settings (type, name, etc.) haven't
+    // changed. Reassigned through the setter (rather than mutating .items in place) so South's
+    // scan-mode-grouped-items cache is rebuilt from the new list.
+    south.connectorConfiguration = {
+      ...south.connectorConfiguration,
+      items: this.southConnectorRepository.findAllItemsForSouth(southConnector.id)
+    };
     if (south.isEnabled() && south.hasSubscription()) {
       await south.updateSubscriptions();
     }

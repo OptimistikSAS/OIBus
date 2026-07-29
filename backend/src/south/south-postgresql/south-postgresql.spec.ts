@@ -67,6 +67,7 @@ describe('SouthPostgreSQL', () => {
   pgExports.default = pgExports;
 
   const utilsExports = {
+    groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
     convertDateTimeToInstant: mock.fn((instant: unknown) => instant),
     formatInstant: mock.fn((instant: unknown) => instant),
     generateCsvContent: mock.fn(() => ''),

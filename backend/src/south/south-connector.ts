@@ -71,9 +71,11 @@ import { loggerService } from '../service/logger/logger.service';
  *    scan mode and calls `trigger(scanMode)` on every south connector on each tick, regardless
  *    of whether that connector actually uses it — `trigger` itself is the one place that decides
  *    whether there's anything to do, so the engine doesn't need to track per-connector interest.
- *    Items for that scan mode are grouped via `groupItemsByGroup` (so multi-item
- *    connectors batch grouped items into a single request, and single-item
- *    connectors get one call per item) into one or more work-units.
+ *    Enabled items are grouped via `groupItemsByGroup` (so multi-item connectors batch grouped
+ *    items into a single request, and single-item connectors get one call per item) into one or
+ *    more work-units, bucketed by scan mode ahead of time in `itemGroupsByScanModeId` — rebuilt
+ *    once whenever `connector.items` changes, not on every tick — so `trigger()` just looks up
+ *    this scan mode's work-units.
  *  - Every enabled item tracks a status: `'pending'` (idle) → `'queued'`
  *    (enqueued by a cron tick, waiting for a free execution slot) →
  *    `'running'` (currently being queried) → back to `'pending'`. A work-unit
@@ -91,7 +93,7 @@ import { loggerService } from '../service/logger/logger.service';
  *  - `stop()` flips a `stopping` flag and awaits both any in-flight
  *    `runProgress$` deferred (used by one-shot History Query runs that call
  *    `historyQueryHandler` directly, bypassing this scheduler entirely) and
- *    every in-flight task from `inFlightTasks`, so the engine can shut down
+ *    every in-flight task from `runningTasks`, so the engine can shut down
  *    cleanly mid-scan regardless of how many queries are running at once.
  */
 export default abstract class SouthConnector<T extends SouthSettings, I extends SouthItemSettings> {
@@ -105,7 +107,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   // FIFO queue of work-units (groups, or singleton arrays for connectors in SOUTH_SINGLE_ITEMS) waiting for a free slot.
   private taskQueue: Array<{ scanModeId: string; items: Array<SouthConnectorItemEntity<I>> }> = [];
   // Every currently-running task's promise. Its size is the current concurrency; stop() awaits all of them.
-  private inFlightTasks = new Set<Promise<void>>();
+  private runningTasks = new Set<Promise<void>>();
+  // Enabled items grouped via `groupItemsByGroup`, bucketed by their effective scan mode id (own
+  // scan mode, or the group's when synced). Rebuilt once whenever `connector.items` changes (see
+  // the constructor and the `connectorConfiguration` setter) so `trigger()` — called on every scan
+  // mode tick for every south connector, most of which are no-ops — doesn't redo this filter/group
+  // work on every single tick.
+  private itemGroupsByScanModeId = new Map<string, Array<Array<SouthConnectorItemEntity<I>>>>();
   private stopping = false;
   // Used only by callers that drive historyQueryHandler() directly, bypassing this scheduler (see HistoryQuery).
   private runProgress$: DeferredPromise | null = null;
@@ -135,6 +143,33 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   ) {
     this.logger = loggerService.createChildLogger('south', this.connector.id, this.connector.name);
     this.tmpFolder = path.resolve(cacheFolderPath, 'tmp');
+    this.rebuildItemGroupsByScanMode();
+  }
+
+  /**
+   * Recompute `itemGroupsByScanModeId` from the current `connector.items`. Called once from the
+   * constructor and again whenever `connectorConfiguration` is reassigned (the only place
+   * `connector` itself changes) — never from `trigger()`, which just reads the result.
+   */
+  private rebuildItemGroupsByScanMode(): void {
+    this.itemGroupsByScanModeId.clear();
+    const itemsByScanModeId = new Map<string, Array<SouthConnectorItemEntity<I>>>();
+    // Some throwaway test fixtures construct a connector entity without `items` (e.g. `{} as
+    // SouthConnectorEntity<...>` for a metrics-only mock) — real entities from the repository
+    // always populate it, so this is just defensive, not a real production case.
+    for (const item of this.connector.items ?? []) {
+      if (!item.enabled) continue;
+      const scanModeId = item.syncWithGroup && item.group ? item.group.scanMode.id : item.scanMode!.id;
+      const items = itemsByScanModeId.get(scanModeId);
+      if (items) {
+        items.push(item);
+      } else {
+        itemsByScanModeId.set(scanModeId, [item]);
+      }
+    }
+    for (const [scanModeId, items] of itemsByScanModeId) {
+      this.itemGroupsByScanModeId.set(scanModeId, groupItemsByGroup<I>(this.connector.type, items));
+    }
   }
 
   /**
@@ -204,12 +239,12 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    *
    * "Subscription items" are items whose *effective* scan mode is the
    * reserved `'subscription'` id — push-driven rather than pull-driven, so
-   * they don't run through the cron loop. The effective scan mode is the
-   * item's own `scanMode`, unless the item is synced with a group
-   * (`syncWithGroup` and a non-null `group`), in which case the group's
-   * `scanMode` takes over (same precedence as `trigger()`). Subclasses
-   * must implement `SouthSubscription` for this to do anything;
-   * non-subscription connectors get a trace log and return.
+   * they don't run through the cron loop. Read straight from
+   * `itemGroupsByScanModeId` (the same effective-scan-mode bucketing
+   * `trigger()` uses, keyed here by the reserved id instead of a real scan
+   * mode), flattened back into one array since grouping doesn't matter for
+   * subscriptions. Subclasses must implement `SouthSubscription` for this to
+   * do anything; non-subscription connectors get a trace log and return.
    *
    * Errors from `subscribe()` / `unsubscribe()` are logged per-batch but never
    * rethrown — a partial failure on either side leaves the connector running
@@ -220,14 +255,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       this.logger.trace('This connector does not support subscriptions');
       return;
     }
-    // Get all subscription items, resolving the effective scan mode through the group when synced
-    const subscriptionItems = this.connector.items.filter(item => {
-      if (!item.enabled) return false;
-      if (item.group) {
-        return item.group.scanMode.id === 'subscription';
-      }
-      return item.scanMode?.id === 'subscription';
-    });
+    // itemGroupsByScanModeId already buckets enabled items by this same effective scan mode
+    // (own, or the group's when synced) — 'subscription' is just another bucket key in it.
+    const subscriptionItems = (this.itemGroupsByScanModeId.get('subscription') ?? []).flat();
     const subscribedIds = new Set(this.subscribedItems.map(item => item.id));
     const subscriptionIds = new Set(subscriptionItems.map(item => item.id));
 
@@ -270,17 +300,16 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * for a disabled connector or one with no items on this scan mode, so the engine doesn't need to
    * track which connectors currently care about which scan mode.
    *
-   * Computes the enabled items for this scan mode and groups them via
-   * `groupItemsByGroup` (so multi-item connectors batch grouped items into a
-   * single request, single-item connectors get one call per item) into one or
-   * more work-units. A work-unit is dropped (logged but not re-enqueued) when
-   * any of its items is already `'queued'` or `'running'` — i.e. the previous
-   * tick's work for that same group/item hasn't finished yet. This is a
-   * backpressure signal — usually it means the scan interval is too short for
-   * the work being done — surfaced as a throttled warning (once per hour per
-   * work-unit) so operators see it without flooding the logs. Other
-   * work-units for the same scan mode, and any other scan mode, are
-   * unaffected.
+   * Looks up this scan mode's work-units from `itemGroupsByScanModeId` — enabled items already
+   * grouped via `groupItemsByGroup` (so multi-item connectors batch grouped items into a single
+   * request, single-item connectors get one call per item) and bucketed by scan mode, computed
+   * once in `rebuildItemGroupsByScanMode()` rather than refiltered/regrouped on every tick. A
+   * work-unit is dropped (logged but not re-enqueued) when any of its items is already `'queued'`
+   * or `'running'` — i.e. the previous tick's work for that same group/item hasn't finished yet.
+   * This is a backpressure signal — usually it means the scan interval is too short for the work
+   * being done — surfaced as a throttled warning (once per hour per work-unit) so operators see it
+   * without flooding the logs. Other work-units for the same scan mode, and any other scan mode,
+   * are unaffected.
    *
    * Newly-queued work-units are handed to `dispatch()`, which starts them
    * immediately if a concurrency slot is free.
@@ -297,19 +326,14 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       this.logger.trace(`Connector is exiting. Cron "${scanMode.name}" (${scanMode.cron}) not added`);
       return;
     }
-    const itemsToRun = this.connector.items.filter(
-      item =>
-        item.enabled &&
-        (((!item.syncWithGroup || !item.group) && item.scanMode!.id === scanMode.id) ||
-          (item.syncWithGroup && item.group && item.group.scanMode.id === scanMode.id))
-    );
-    if (itemsToRun.length === 0) {
+    const groupedItemsList = this.itemGroupsByScanModeId.get(scanMode.id);
+    if (!groupedItemsList || groupedItemsList.length === 0) {
       this.logger.trace(`No items to run for scan mode ${scanMode.name}`);
       return;
     }
 
-    const groupedItemsList = groupItemsByGroup<I>(this.connector.type, itemsToRun);
-    this.logger.trace(`Queuing ${itemsToRun.length} items for scan mode ${scanMode.name}, grouped in ${groupedItemsList.length} groups`);
+    const itemCount = groupedItemsList.reduce((count, items) => count + items.length, 0);
+    this.logger.trace(`Queuing ${itemCount} items for scan mode ${scanMode.name}, grouped in ${groupedItemsList.length} groups`);
 
     for (const items of groupedItemsList) {
       if (items.some(item => this.itemStatus.get(item.id) === 'queued' || this.itemStatus.get(item.id) === 'running')) {
@@ -350,7 +374,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * is picked up immediately.
    */
   private dispatch(): void {
-    while (!this.stopping && this.inFlightTasks.size < this.getMaxParallelRun() && this.taskQueue.length > 0) {
+    while (!this.stopping && this.runningTasks.size < this.getMaxParallelRun() && this.taskQueue.length > 0) {
       const task = this.taskQueue.shift()!;
       for (const item of task.items) {
         this.itemStatus.set(item.id, 'running');
@@ -363,7 +387,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
           this.logger.error(`Unhandled error in South task runner: ${(error as Error).message}`);
         })
         .finally(() => {
-          this.inFlightTasks.delete(taskPromise);
+          this.runningTasks.delete(taskPromise);
           for (const item of task.items) {
             this.itemStatus.set(item.id, 'pending');
           }
@@ -371,7 +395,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
             this.dispatch();
           }
         });
-      this.inFlightTasks.add(taskPromise);
+      this.runningTasks.add(taskPromise);
     }
   }
 
@@ -778,7 +802,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
   /**
    * Graceful shutdown. Flips `stopping`, awaits any in-flight direct-call history query via
-   * `runProgress$` and every in-flight scheduled task via `inFlightTasks`, then disconnects. Used
+   * `runProgress$` and every in-flight scheduled task via `runningTasks`, then disconnects. Used
    * by the engine on connector delete / config reload / OIBus shutdown.
    */
   async stop(): Promise<void> {
@@ -789,9 +813,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       this.logger.debug('Waiting for South task to finish');
       await this.runProgress$.promise;
     }
-    if (this.inFlightTasks.size > 0) {
-      this.logger.debug(`Waiting for ${this.inFlightTasks.size} South task(s) to finish`);
-      await Promise.all(this.inFlightTasks);
+    if (this.runningTasks.size > 0) {
+      this.logger.debug(`Waiting for ${this.runningTasks.size} South task(s) to finish`);
+      await Promise.all(this.runningTasks);
     }
 
     await this.disconnect();
@@ -852,6 +876,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
   set connectorConfiguration(connectorConfiguration: SouthConnectorEntity<T, I>) {
     this.connector = connectorConfiguration;
+    this.rebuildItemGroupsByScanMode();
   }
 
   get connectorConfiguration(): SouthConnectorEntity<T, I> {
