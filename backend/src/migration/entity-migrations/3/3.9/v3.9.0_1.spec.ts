@@ -128,4 +128,116 @@ describe('Entity migration v3.9.0_1', () => {
     assert.strictEqual(row.auth_token_duration, '7d');
     assert.strictEqual(row.forward_proxy_enabled, 0);
   });
+
+  describe('opcua maxParallelRun', () => {
+    async function insertSouthConnector(type: string, settings: object, id = 'south-1') {
+      await db('south_connectors').insert({
+        id,
+        name: `Test ${type}`,
+        type,
+        description: '',
+        enabled: 1,
+        settings: JSON.stringify(settings),
+        created_by: 'admin',
+        updated_by: 'admin',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z'
+      });
+    }
+
+    async function insertHistoryQuery(southType: string, southSettings: object, id = 'history-1') {
+      await db('scan_modes').insert({
+        id: 'scan-mode-1',
+        name: 'Every 10s',
+        description: '',
+        cron: '*/10 * * * * *',
+        created_by: 'admin',
+        updated_by: 'admin',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z'
+      });
+      await db('history_queries').insert({
+        id,
+        status: 'PENDING',
+        name: `Test ${id}`,
+        description: '',
+        start_time: '2026-01-01T00:00:00Z',
+        end_time: '2026-01-02T00:00:00Z',
+        south_type: southType,
+        north_type: 'file-writer',
+        south_settings: JSON.stringify(southSettings),
+        north_settings: '{}',
+        caching_trigger_schedule: 'scan-mode-1',
+        caching_trigger_number_of_elements: 1000,
+        caching_trigger_number_of_files: 1,
+        caching_throttling_cache_max_size: 0,
+        caching_throttling_max_number_of_elements: 10000,
+        caching_error_retry_interval: 1000,
+        caching_error_retry_count: 3,
+        caching_archive_enabled: 0,
+        caching_archive_retention_duration: 0,
+        created_by: 'admin',
+        updated_by: 'admin',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z'
+      });
+    }
+
+    it('backfills maxParallelRun to 1 on an opcua south connector', async () => {
+      await insertSouthConnector('opcua', { url: 'opc.tcp://localhost:4840', keepSessionAlive: false });
+
+      await up(db);
+
+      const row = await db('south_connectors').where('id', 'south-1').first();
+      const settings = JSON.parse(row.settings);
+      assert.strictEqual(settings.maxParallelRun, 1);
+      assert.strictEqual(settings.url, 'opc.tcp://localhost:4840', 'existing settings are preserved');
+    });
+
+    it('does not touch south connectors of a different type', async () => {
+      await insertSouthConnector('mssql', { host: 'localhost' });
+
+      await up(db);
+
+      const row = await db('south_connectors').where('id', 'south-1').first();
+      const settings = JSON.parse(row.settings);
+      assert.strictEqual(settings.maxParallelRun, undefined);
+      assert.strictEqual(settings.host, 'localhost');
+    });
+
+    it('backfills maxParallelRun to 1 on an opcua history query south settings', async () => {
+      await insertHistoryQuery('opcua', { url: 'opc.tcp://localhost:4840', keepSessionAlive: false });
+
+      await up(db);
+
+      const row = await db('history_queries').where('id', 'history-1').first();
+      const southSettings = JSON.parse(row.south_settings);
+      assert.strictEqual(southSettings.maxParallelRun, 1);
+      assert.strictEqual(southSettings.url, 'opc.tcp://localhost:4840', 'existing settings are preserved');
+    });
+
+    it('does not touch history queries with a different south type', async () => {
+      await insertHistoryQuery('mssql', { host: 'localhost' });
+
+      await up(db);
+
+      const row = await db('history_queries').where('id', 'history-1').first();
+      const southSettings = JSON.parse(row.south_settings);
+      assert.strictEqual(southSettings.maxParallelRun, undefined);
+      assert.strictEqual(southSettings.host, 'localhost');
+    });
+
+    it('is reversible: up then down removes maxParallelRun again', async () => {
+      await insertSouthConnector('opcua', { url: 'opc.tcp://localhost:4840' });
+      await insertHistoryQuery('opcua', { url: 'opc.tcp://localhost:4840' });
+
+      await up(db);
+      await down(db);
+
+      const southRow = await db('south_connectors').where('id', 'south-1').first();
+      assert.strictEqual(JSON.parse(southRow.settings).maxParallelRun, undefined);
+      const historyRow = await db('history_queries').where('id', 'history-1').first();
+      assert.strictEqual(JSON.parse(historyRow.south_settings).maxParallelRun, undefined);
+    });
+  });
 });

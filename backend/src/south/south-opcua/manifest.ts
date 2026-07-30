@@ -233,7 +233,7 @@ const manifest: SouthConnectorManifest = {
           },
           {
             type: 'MAXIMUM',
-            arguments: ['10']
+            arguments: ['32']
           }
         ],
         displayProperties: {

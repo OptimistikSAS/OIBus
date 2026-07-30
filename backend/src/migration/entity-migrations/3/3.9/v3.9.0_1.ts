@@ -1,6 +1,8 @@
 import { Knex } from 'knex';
 
 const ENGINES_TABLE = 'engines';
+const SOUTH_CONNECTORS_TABLE = 'south_connectors';
+const HISTORY_QUERIES_TABLE = 'history_queries';
 
 /**
  * Add auth_token_duration to engines, storing the same jsonwebtoken `expiresIn` duration string
@@ -22,6 +24,8 @@ export async function up(knex: Knex): Promise<void> {
   });
   await knex(ENGINES_TABLE).whereNotNull('forward_proxy_url').update({ forward_proxy_enabled: 1 });
   await knex(ENGINES_TABLE).whereNull('forward_proxy_url').update({ forward_proxy_enabled: 0 });
+
+  await addOpcuaMaxParallelRun(knex);
 }
 
 export async function down(knex: Knex): Promise<void> {
@@ -29,4 +33,55 @@ export async function down(knex: Knex): Promise<void> {
     t.dropColumn('auth_token_duration');
     t.dropColumn('forward_proxy_enabled');
   });
+
+  await removeOpcuaMaxParallelRun(knex);
+}
+
+/**
+ * The OPC UA south settings gained a required maxParallelRun field (how many HA node reads can run
+ * concurrently). Existing connectors/history queries never had it, so it's backfilled to 1 — a
+ * single sequential read at a time, matching the behavior before this setting existed.
+ */
+async function addOpcuaMaxParallelRun(knex: Knex): Promise<void> {
+  const southConnectors: Array<{ id: string; settings: string }> = await knex(SOUTH_CONNECTORS_TABLE)
+    .select('id', 'settings')
+    .where('type', 'opcua');
+  for (const southConnector of southConnectors) {
+    const settings = JSON.parse(southConnector.settings);
+    await knex(SOUTH_CONNECTORS_TABLE)
+      .where('id', southConnector.id)
+      .update({ settings: JSON.stringify({ ...settings, maxParallelRun: 1 }) });
+  }
+
+  const historyQueries: Array<{ id: string; south_settings: string }> = await knex(HISTORY_QUERIES_TABLE)
+    .select('id', 'south_settings')
+    .where('south_type', 'opcua');
+  for (const historyQuery of historyQueries) {
+    const southSettings = JSON.parse(historyQuery.south_settings);
+    await knex(HISTORY_QUERIES_TABLE)
+      .where('id', historyQuery.id)
+      .update({ south_settings: JSON.stringify({ ...southSettings, maxParallelRun: 1 }) });
+  }
+}
+
+async function removeOpcuaMaxParallelRun(knex: Knex): Promise<void> {
+  const southConnectors: Array<{ id: string; settings: string }> = await knex(SOUTH_CONNECTORS_TABLE)
+    .select('id', 'settings')
+    .where('type', 'opcua');
+  for (const southConnector of southConnectors) {
+    const { maxParallelRun: _removed, ...settings } = JSON.parse(southConnector.settings);
+    await knex(SOUTH_CONNECTORS_TABLE)
+      .where('id', southConnector.id)
+      .update({ settings: JSON.stringify(settings) });
+  }
+
+  const historyQueries: Array<{ id: string; south_settings: string }> = await knex(HISTORY_QUERIES_TABLE)
+    .select('id', 'south_settings')
+    .where('south_type', 'opcua');
+  for (const historyQuery of historyQueries) {
+    const { maxParallelRun: _removed, ...southSettings } = JSON.parse(historyQuery.south_settings);
+    await knex(HISTORY_QUERIES_TABLE)
+      .where('id', historyQuery.id)
+      .update({ south_settings: JSON.stringify(southSettings) });
+  }
 }
