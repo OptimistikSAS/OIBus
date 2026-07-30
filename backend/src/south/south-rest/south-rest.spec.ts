@@ -619,9 +619,10 @@ describe('SouthRestAPI connector', () => {
       history: { startTime: testData.constants.dates.DATE_1, endTime: testData.constants.dates.DATE_2 }
     };
 
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) =>
-      createMockResponse(200, { test: 'ok' }, { 'content-type': 'application/json' })
-    );
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => {
+      mock.timers.tick(25);
+      return createMockResponse(200, { test: 'ok' }, { 'content-type': 'application/json' });
+    });
 
     const result = await south.testItem(item, testingSettings);
 
@@ -629,7 +630,7 @@ describe('SouthRestAPI connector', () => {
     assert.strictEqual((result.result as OIBusFileContent).content, JSON.stringify({ test: 'ok' }));
     assert.notStrictEqual((result.result as OIBusFileContent).filePath, undefined);
     assert.strictEqual(result.connectionDuration, 0);
-    assert.strictEqual(result.queryDuration, 0);
+    assert.strictEqual(result.queryDuration, 25);
   });
 
   // --------------------------------------------------------------------------

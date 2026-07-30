@@ -98,7 +98,9 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
   ): Promise<SouthConnectorItemQueryResult> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
+    const queryStart = DateTime.now().toMillis();
     const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
+    const queryDuration = DateTime.now().toMillis() - queryStart;
 
     const formattedResults = result.map(entry => {
       const formattedEntry: Record<string, string | number> = {};
@@ -134,9 +136,11 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
     }
     return {
       result: oibusContent,
-      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+      // Connect + query happen together inside the query call above — splitting them would mean
+      // refactoring a method the scheduled query path also uses, so connectionDuration stays 0 and
+      // queryDuration covers the whole call.
       connectionDuration: 0,
-      queryDuration: 0
+      queryDuration
     };
   }
 

@@ -701,7 +701,9 @@ describe('South ADS', () => {
     const connectMock = mock.method(
       south,
       'connect',
-      mock.fn(async () => undefined)
+      mock.fn(async () => {
+        mock.timers.tick(15);
+      })
     );
     const disconnectMock = mock.method(
       south,
@@ -716,15 +718,18 @@ describe('South ADS', () => {
     mock.method(
       south,
       'readAdsSymbol',
-      mock.fn(async () => [mockedResult])
+      mock.fn(async () => {
+        mock.timers.tick(25);
+        return [mockedResult];
+      })
     );
     await south.start();
     const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
     assert.deepStrictEqual(result, {
       result: { type: 'time-values', content: [mockedResult] },
-      connectionDuration: 0,
-      queryDuration: 0
+      connectionDuration: 15,
+      queryDuration: 25
     });
     assert.ok(connectMock.mock.calls.length >= 1);
   });

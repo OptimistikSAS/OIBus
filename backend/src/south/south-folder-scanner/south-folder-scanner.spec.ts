@@ -187,6 +187,8 @@ describe('SouthFolderScanner', () => {
       const result = await south.testItem(configuration.items[0], { history: undefined } satisfies SouthConnectorItemTestingSettings);
       assert.strictEqual(result.result.type, 'time-values');
       assert.strictEqual((result.result as { type: string; content: Array<unknown> }).content.length, 2);
+      assert.strictEqual(typeof result.connectionDuration, 'number');
+      assert.strictEqual(typeof result.queryDuration, 'number');
     });
 
     it('should return empty time values when no files match the regex', async () => {

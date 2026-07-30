@@ -372,13 +372,14 @@ describe('South OPC', () => {
   });
 
   it('should test item', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) =>
-      createMockResponse(200, {
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
+      mock.timers.tick(25);
+      return createMockResponse(200, {
         recordCount: 2,
         content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
         maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-      })
-    );
+      });
+    });
 
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
     const fetchOptions = {
@@ -396,13 +397,15 @@ describe('South OPC', () => {
       headers: { 'Content-Type': 'application/json' }
     };
 
-    await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
+    const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
 
     const testCall = httpRequestExports.HTTPRequest.mock.calls[0];
     assertContains(testCall.arguments[0] as object, {
       href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}-test/read`
     });
     assert.deepStrictEqual(testCall.arguments[1], fetchOptions);
+    assert.strictEqual(result.queryDuration, 25);
+    assert.strictEqual(result.connectionDuration, 0);
   });
 
   it('should test item and throw error if bad status', async () => {

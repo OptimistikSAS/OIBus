@@ -123,7 +123,9 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
     };
 
     const requestUrl = new URL(`/api/opc/${this.connector.id}-test/read`, this.connector.settings.agentUrl);
+    const queryStart = DateTime.now().toMillis();
     const response = await HTTPRequest(requestUrl, fetchOptions);
+    const queryDuration = DateTime.now().toMillis() - queryStart;
 
     if (response.statusCode === 200) {
       const result: {
@@ -141,9 +143,10 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
     }
     return {
       result: content,
-      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+      // No separate connection step in testItem() for this connector — the call above does
+      // connect + query together, so connectionDuration stays 0 and queryDuration covers the whole call.
       connectionDuration: 0,
-      queryDuration: 0
+      queryDuration
     };
   }
 

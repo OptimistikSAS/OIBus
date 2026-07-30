@@ -203,7 +203,10 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     return new Promise<SouthConnectorItemQueryResult>((resolve, reject) => {
       (async () => {
         try {
+          const connectStart = DateTime.now().toMillis();
           const client = await mqtt.connectAsync(this.connector.settings.url, options);
+          const connectionDuration = DateTime.now().toMillis() - connectStart;
+          const queryStart = DateTime.now().toMillis();
           client.once('message', async (topic, message, _packet) => {
             try {
               const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
@@ -220,9 +223,11 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
                     }
                   ])
                 },
-                // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
-                connectionDuration: 0,
-                queryDuration: 0
+                connectionDuration,
+                // The "query" here is really "how long we waited for the broker to push a matching
+                // message" — there's no traditional request/response, but this is still the
+                // meaningful span between subscribing and getting data.
+                queryDuration: DateTime.now().toMillis() - queryStart
               });
             } catch (error: unknown) {
               reject(`Error when testing item ${item.settings.topic} (received message "${message}"): ${(error as Error).message}`);
