@@ -4982,6 +4982,51 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NorthAzureDataExplorerSettingsAuthentication": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["aad-app-secret"]},{"dataType":"enum","enums":["aad-app-certificate"]},{"dataType":"enum","enums":["managed-identity"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NorthAzureDataExplorerSettingsDataFormat": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["csv"]},{"dataType":"enum","enums":["json"]},{"dataType":"enum","enums":["multijson"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NorthAzureDataExplorerSettings": {
+        "dataType": "refObject",
+        "properties": {
+            "clusterUrl": {"dataType":"string","required":true},
+            "database": {"dataType":"string","required":true},
+            "table": {"dataType":"string","required":true},
+            "authentication": {"ref":"NorthAzureDataExplorerSettingsAuthentication","required":true},
+            "tenantId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "clientId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "clientSecret": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "certificateId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "dataFormat": {"ref":"NorthAzureDataExplorerSettingsDataFormat","required":true},
+            "ingestionMappingName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "useProxy": {"dataType":"boolean","required":true},
+            "proxyUrl": {"dataType":"string"},
+            "proxyUsername": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "proxyPassword": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NorthConnectorAzureDataExplorerCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "name": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["azure-data-explorer"],"required":true},
+            "description": {"dataType":"string","required":true},
+            "enabled": {"dataType":"boolean","required":true},
+            "settings": {"ref":"NorthAzureDataExplorerSettings","required":true},
+            "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanModeName":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"scanModeId":{"dataType":"string","required":true}},"required":true}},"required":true},
+            "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerCommandDTOWithOptions"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NorthConsoleSettings": {
         "dataType": "refObject",
         "properties": {
@@ -5377,7 +5422,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NorthConnectorCommandDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"NorthConnectorAmazonS3CommandDTO"},{"ref":"NorthConnectorAzureBlobCommandDTO"},{"ref":"NorthConnectorConsoleCommandDTO"},{"ref":"NorthConnectorFileWriterCommandDTO"},{"ref":"NorthConnectorModbusCommandDTO"},{"ref":"NorthConnectorMQTTCommandDTO"},{"ref":"NorthConnectorOIAnalyticsCommandDTO"},{"ref":"NorthConnectorOPCUACommandDTO"},{"ref":"NorthConnectorRESTCommandDTO"},{"ref":"NorthConnectorSFTPCommandDTO"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"NorthConnectorAmazonS3CommandDTO"},{"ref":"NorthConnectorAzureBlobCommandDTO"},{"ref":"NorthConnectorAzureDataExplorerCommandDTO"},{"ref":"NorthConnectorConsoleCommandDTO"},{"ref":"NorthConnectorFileWriterCommandDTO"},{"ref":"NorthConnectorModbusCommandDTO"},{"ref":"NorthConnectorMQTTCommandDTO"},{"ref":"NorthConnectorOIAnalyticsCommandDTO"},{"ref":"NorthConnectorOPCUACommandDTO"},{"ref":"NorthConnectorRESTCommandDTO"},{"ref":"NorthConnectorSFTPCommandDTO"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusCreateNorthConnectorCommandDTO": {
@@ -6143,6 +6188,15 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "HistoryQueryAzureDataExplorerNorthCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "northType": {"dataType":"enum","enums":["azure-data-explorer"],"required":true},
+            "northSettings": {"ref":"NorthAzureDataExplorerSettings","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryConsoleNorthCommandDTO": {
         "dataType": "refObject",
         "properties": {
@@ -6217,7 +6271,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryCommandDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"intersection","subSchemas":[{"ref":"HistoryQueryCommandCommonDTO"},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryADSSouthCommandDTO"},{"ref":"HistoryQueryFolderScannerSouthCommandDTO"},{"ref":"HistoryQueryFTPSouthCommandDTO"},{"ref":"HistoryQueryInfluxDBSouthCommandDTO"},{"ref":"HistoryQueryModbusSouthCommandDTO"},{"ref":"HistoryQueryMQTTSouthCommandDTO"},{"ref":"HistoryQueryMSSQLSouthCommandDTO"},{"ref":"HistoryQueryMySQLSouthCommandDTO"},{"ref":"HistoryQueryODBCSouthCommandDTO"},{"ref":"HistoryQueryOIAnalyticsSouthCommandDTO"},{"ref":"HistoryQueryOLEDBSouthCommandDTO"},{"ref":"HistoryQueryOPCSouthCommandDTO"},{"ref":"HistoryQueryOPCUASouthCommandDTO"},{"ref":"HistoryQueryOracleSouthCommandDTO"},{"ref":"HistoryQueryOsisoftPISouthCommandDTO"},{"ref":"HistoryQueryPostgreSQLSouthCommandDTO"},{"ref":"HistoryQueryRESTSouthCommandDTO"},{"ref":"HistoryQueryS7SouthCommandDTO"},{"ref":"HistoryQuerySFTPSouthCommandDTO"},{"ref":"HistoryQuerySQLiteSouthCommandDTO"}]},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryAmazonS3NorthCommandDTO"},{"ref":"HistoryQueryAzureBlobNorthCommandDTO"},{"ref":"HistoryQueryConsoleNorthCommandDTO"},{"ref":"HistoryQueryFileWriterNorthCommandDTO"},{"ref":"HistoryQueryModbusNorthCommandDTO"},{"ref":"HistoryQueryMQTTNorthCommandDTO"},{"ref":"HistoryQueryOIAnalyticsNorthCommandDTO"},{"ref":"HistoryQueryOPCUANorthCommandDTO"},{"ref":"HistoryQueryRESTNorthCommandDTO"},{"ref":"HistoryQuerySFTPNorthCommandDTO"}]}],"validators":{}},
+        "type": {"dataType":"intersection","subSchemas":[{"ref":"HistoryQueryCommandCommonDTO"},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryADSSouthCommandDTO"},{"ref":"HistoryQueryFolderScannerSouthCommandDTO"},{"ref":"HistoryQueryFTPSouthCommandDTO"},{"ref":"HistoryQueryInfluxDBSouthCommandDTO"},{"ref":"HistoryQueryModbusSouthCommandDTO"},{"ref":"HistoryQueryMQTTSouthCommandDTO"},{"ref":"HistoryQueryMSSQLSouthCommandDTO"},{"ref":"HistoryQueryMySQLSouthCommandDTO"},{"ref":"HistoryQueryODBCSouthCommandDTO"},{"ref":"HistoryQueryOIAnalyticsSouthCommandDTO"},{"ref":"HistoryQueryOLEDBSouthCommandDTO"},{"ref":"HistoryQueryOPCSouthCommandDTO"},{"ref":"HistoryQueryOPCUASouthCommandDTO"},{"ref":"HistoryQueryOracleSouthCommandDTO"},{"ref":"HistoryQueryOsisoftPISouthCommandDTO"},{"ref":"HistoryQueryPostgreSQLSouthCommandDTO"},{"ref":"HistoryQueryRESTSouthCommandDTO"},{"ref":"HistoryQueryS7SouthCommandDTO"},{"ref":"HistoryQuerySFTPSouthCommandDTO"},{"ref":"HistoryQuerySQLiteSouthCommandDTO"}]},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryAmazonS3NorthCommandDTO"},{"ref":"HistoryQueryAzureBlobNorthCommandDTO"},{"ref":"HistoryQueryAzureDataExplorerNorthCommandDTO"},{"ref":"HistoryQueryConsoleNorthCommandDTO"},{"ref":"HistoryQueryFileWriterNorthCommandDTO"},{"ref":"HistoryQueryModbusNorthCommandDTO"},{"ref":"HistoryQueryMQTTNorthCommandDTO"},{"ref":"HistoryQueryOIAnalyticsNorthCommandDTO"},{"ref":"HistoryQueryOPCUANorthCommandDTO"},{"ref":"HistoryQueryRESTNorthCommandDTO"},{"ref":"HistoryQuerySFTPNorthCommandDTO"}]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusCreateHistoryQueryCommandDTO": {
@@ -6606,12 +6660,12 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusNorthType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["opcua"]},{"dataType":"enum","enums":["mqtt"]},{"dataType":"enum","enums":["modbus"]},{"dataType":"enum","enums":["oianalytics"]},{"dataType":"enum","enums":["rest"]},{"dataType":"enum","enums":["sftp"]},{"dataType":"enum","enums":["aws-s3"]},{"dataType":"enum","enums":["azure-blob"]},{"dataType":"enum","enums":["console"]},{"dataType":"enum","enums":["file-writer"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["opcua"]},{"dataType":"enum","enums":["mqtt"]},{"dataType":"enum","enums":["modbus"]},{"dataType":"enum","enums":["oianalytics"]},{"dataType":"enum","enums":["rest"]},{"dataType":"enum","enums":["sftp"]},{"dataType":"enum","enums":["aws-s3"]},{"dataType":"enum","enums":["azure-blob"]},{"dataType":"enum","enums":["azure-data-explorer"]},{"dataType":"enum","enums":["console"]},{"dataType":"enum","enums":["file-writer"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusNorthCategory": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["file"]},{"dataType":"enum","enums":["iot"]},{"dataType":"enum","enums":["api"]},{"dataType":"enum","enums":["debug"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["file"]},{"dataType":"enum","enums":["iot"]},{"dataType":"enum","enums":["database"]},{"dataType":"enum","enums":["api"]},{"dataType":"enum","enums":["debug"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NorthConnectorType": {
@@ -6752,6 +6806,25 @@ const models: TsoaRoute.Models = {
             "description": {"dataType":"string","required":true},
             "enabled": {"dataType":"boolean","required":true},
             "settings": {"ref":"NorthAzureBlobSettings","required":true},
+            "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
+            "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NorthConnectorAzureDataExplorerDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "createdBy": {"ref":"UserInfo","required":true},
+            "updatedBy": {"ref":"UserInfo","required":true},
+            "createdAt": {"ref":"Instant","required":true},
+            "updatedAt": {"ref":"Instant","required":true},
+            "name": {"dataType":"string","required":true},
+            "type": {"dataType":"enum","enums":["azure-data-explorer"],"required":true},
+            "description": {"dataType":"string","required":true},
+            "enabled": {"dataType":"boolean","required":true},
+            "settings": {"ref":"NorthAzureDataExplorerSettings","required":true},
             "caching": {"dataType":"nestedObjectLiteral","nestedProperties":{"archive":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"error":{"dataType":"nestedObjectLiteral","nestedProperties":{"retentionDuration":{"dataType":"double","required":true},"retryCount":{"dataType":"double","required":true},"retryInterval":{"dataType":"double","required":true}},"required":true},"throttling":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfElements":{"dataType":"double","required":true},"maxSize":{"dataType":"double","required":true},"runMinDelay":{"dataType":"double","required":true}},"required":true},"trigger":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"numberOfElements":{"dataType":"double","required":true},"scanMode":{"ref":"ScanModeDTO","required":true}},"required":true}},"required":true},
             "transformers": {"dataType":"array","array":{"dataType":"refObject","ref":"TransformerDTOWithOptions"},"required":true},
         },
@@ -6912,12 +6985,12 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NorthConnectorDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"NorthConnectorAmazonS3DTO"},{"ref":"NorthConnectorAzureBlobDTO"},{"ref":"NorthConnectorConsoleDTO"},{"ref":"NorthConnectorFileWriterDTO"},{"ref":"NorthConnectorModbusDTO"},{"ref":"NorthConnectorMQTTDTO"},{"ref":"NorthConnectorOIAnalyticsDTO"},{"ref":"NorthConnectorOPCUADTO"},{"ref":"NorthConnectorRESTDTO"},{"ref":"NorthConnectorSFTPDTO"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"NorthConnectorAmazonS3DTO"},{"ref":"NorthConnectorAzureBlobDTO"},{"ref":"NorthConnectorAzureDataExplorerDTO"},{"ref":"NorthConnectorConsoleDTO"},{"ref":"NorthConnectorFileWriterDTO"},{"ref":"NorthConnectorModbusDTO"},{"ref":"NorthConnectorMQTTDTO"},{"ref":"NorthConnectorOIAnalyticsDTO"},{"ref":"NorthConnectorOPCUADTO"},{"ref":"NorthConnectorRESTDTO"},{"ref":"NorthConnectorSFTPDTO"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NorthSettings": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"NorthAmazonS3Settings"},{"ref":"NorthAzureBlobSettings"},{"ref":"NorthConsoleSettings"},{"ref":"NorthFileWriterSettings"},{"ref":"NorthModbusSettings"},{"ref":"NorthMQTTSettings"},{"ref":"NorthOIAnalyticsSettings"},{"ref":"NorthOPCUASettings"},{"ref":"NorthRESTSettings"},{"ref":"NorthSFTPSettings"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"NorthAmazonS3Settings"},{"ref":"NorthAzureBlobSettings"},{"ref":"NorthAzureDataExplorerSettings"},{"ref":"NorthConsoleSettings"},{"ref":"NorthFileWriterSettings"},{"ref":"NorthModbusSettings"},{"ref":"NorthMQTTSettings"},{"ref":"NorthOIAnalyticsSettings"},{"ref":"NorthOPCUASettings"},{"ref":"NorthRESTSettings"},{"ref":"NorthSFTPSettings"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "CacheMetadata": {
@@ -7908,6 +7981,15 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "HistoryQueryAzureDataExplorerNorthDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "northType": {"dataType":"enum","enums":["azure-data-explorer"],"required":true},
+            "northSettings": {"ref":"NorthAzureDataExplorerSettings","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryConsoleNorthDTO": {
         "dataType": "refObject",
         "properties": {
@@ -7982,7 +8064,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistoryQueryDTO": {
         "dataType": "refAlias",
-        "type": {"dataType":"intersection","subSchemas":[{"ref":"BaseEntity"},{"ref":"HistoryQueryCommonDTO"},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryADSSouthDTO"},{"ref":"HistoryQueryFolderScannerSouthDTO"},{"ref":"HistoryQueryFTPSouthDTO"},{"ref":"HistoryQueryInfluxDBSouthDTO"},{"ref":"HistoryQueryModbusSouthDTO"},{"ref":"HistoryQueryMQTTSouthDTO"},{"ref":"HistoryQueryMSSQLSouthDTO"},{"ref":"HistoryQueryMySQLSouthDTO"},{"ref":"HistoryQueryODBCSouthDTO"},{"ref":"HistoryQueryOIAnalyticsSouthDTO"},{"ref":"HistoryQueryOLEDBSouthDTO"},{"ref":"HistoryQueryOPCSouthDTO"},{"ref":"HistoryQueryOPCUASouthDTO"},{"ref":"HistoryQueryOracleSouthDTO"},{"ref":"HistoryQueryOsisoftPISouthDTO"},{"ref":"HistoryQueryPostgreSQLSouthDTO"},{"ref":"HistoryQueryRESTSouthDTO"},{"ref":"HistoryQueryS7SouthDTO"},{"ref":"HistoryQuerySFTPSouthDTO"},{"ref":"HistoryQuerySQLiteSouthDTO"}]},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryAmazonS3NorthDTO"},{"ref":"HistoryQueryAzureBlobNorthDTO"},{"ref":"HistoryQueryConsoleNorthDTO"},{"ref":"HistoryQueryFileWriterNorthDTO"},{"ref":"HistoryQueryModbusNorthDTO"},{"ref":"HistoryQueryMQTTNorthDTO"},{"ref":"HistoryQueryOIAnalyticsNorthDTO"},{"ref":"HistoryQueryOPCUANorthDTO"},{"ref":"HistoryQueryRESTNorthDTO"},{"ref":"HistoryQuerySFTPNorthDTO"}]}],"validators":{}},
+        "type": {"dataType":"intersection","subSchemas":[{"ref":"BaseEntity"},{"ref":"HistoryQueryCommonDTO"},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryADSSouthDTO"},{"ref":"HistoryQueryFolderScannerSouthDTO"},{"ref":"HistoryQueryFTPSouthDTO"},{"ref":"HistoryQueryInfluxDBSouthDTO"},{"ref":"HistoryQueryModbusSouthDTO"},{"ref":"HistoryQueryMQTTSouthDTO"},{"ref":"HistoryQueryMSSQLSouthDTO"},{"ref":"HistoryQueryMySQLSouthDTO"},{"ref":"HistoryQueryODBCSouthDTO"},{"ref":"HistoryQueryOIAnalyticsSouthDTO"},{"ref":"HistoryQueryOLEDBSouthDTO"},{"ref":"HistoryQueryOPCSouthDTO"},{"ref":"HistoryQueryOPCUASouthDTO"},{"ref":"HistoryQueryOracleSouthDTO"},{"ref":"HistoryQueryOsisoftPISouthDTO"},{"ref":"HistoryQueryPostgreSQLSouthDTO"},{"ref":"HistoryQueryRESTSouthDTO"},{"ref":"HistoryQueryS7SouthDTO"},{"ref":"HistoryQuerySFTPSouthDTO"},{"ref":"HistoryQuerySQLiteSouthDTO"}]},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryAmazonS3NorthDTO"},{"ref":"HistoryQueryAzureBlobNorthDTO"},{"ref":"HistoryQueryAzureDataExplorerNorthDTO"},{"ref":"HistoryQueryConsoleNorthDTO"},{"ref":"HistoryQueryFileWriterNorthDTO"},{"ref":"HistoryQueryModbusNorthDTO"},{"ref":"HistoryQueryMQTTNorthDTO"},{"ref":"HistoryQueryOIAnalyticsNorthDTO"},{"ref":"HistoryQueryOPCUANorthDTO"},{"ref":"HistoryQueryRESTNorthDTO"},{"ref":"HistoryQuerySFTPNorthDTO"}]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistorySouthItemTestRequest": {
