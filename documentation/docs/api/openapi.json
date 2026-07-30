@@ -7861,10 +7861,6 @@
 						"type": "number",
 						"format": "double"
 					},
-					"maxParallelRun": {
-						"type": "number",
-						"format": "double"
-					},
 					"maxNumberOfMessages": {
 						"type": "number",
 						"format": "double"
@@ -7879,6 +7875,10 @@
 					"securityPolicy": {
 						"$ref": "#/components/schemas/SouthOPCUASettingsSecurityPolicy"
 					},
+					"maxParallelRun": {
+						"type": "number",
+						"format": "double"
+					},
 					"authentication": {
 						"$ref": "#/components/schemas/SouthOPCUASettingsAuthentication"
 					}
@@ -7888,10 +7888,10 @@
 					"keepSessionAlive",
 					"readTimeout",
 					"retryInterval",
-					"maxParallelRun",
 					"maxNumberOfMessages",
 					"flushMessageTimeout",
 					"securityMode",
+					"maxParallelRun",
 					"authentication"
 				],
 				"type": "object",
