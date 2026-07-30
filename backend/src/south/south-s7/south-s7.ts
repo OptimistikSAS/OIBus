@@ -12,7 +12,7 @@ import {
 import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { Instant } from '../../model/types';
 
 const CONNECTION_TYPE_SRC_TSAP: Record<SouthS7SettingsConnectionType, number> = {
@@ -136,7 +136,7 @@ export default class SouthS7 extends SouthConnector<SouthS7Settings, SouthS7Item
   override async testItem(
     item: SouthConnectorItemEntity<SouthS7ItemSettings>,
     _testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemQueryResult> {
     const endpoint = new S7Endpoint({
       host: this.connector.settings.host,
       port: this.connector.settings.port,
@@ -146,11 +146,15 @@ export default class SouthS7 extends SouthConnector<SouthS7Settings, SouthS7Item
       autoReconnect: 0
     });
     try {
+      const connectStart = DateTime.now().toMillis();
       await endpoint.connect();
+      const connectionDuration = DateTime.now().toMillis() - connectStart;
+      const queryStart = DateTime.now().toMillis();
       const group = new S7ItemGroup(endpoint);
       group.setTranslationCB(() => item.settings.address);
       group.addItems([item.name]);
       const values = await group.readAllItems();
+      const queryDuration = DateTime.now().toMillis() - queryStart;
       const dataValues: Array<OIBusTimeValue> = [
         {
           pointId: item.name,
@@ -159,8 +163,12 @@ export default class SouthS7 extends SouthConnector<SouthS7Settings, SouthS7Item
         }
       ];
       return {
-        type: 'time-values',
-        content: dataValues
+        result: {
+          type: 'time-values',
+          content: dataValues
+        },
+        connectionDuration,
+        queryDuration
       };
     } catch (error: unknown) {
       switch ((error as { code: string; message: string }).code) {

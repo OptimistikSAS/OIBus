@@ -5,7 +5,6 @@ import { EventEmitter } from 'node:events';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type { SouthItemSettings, SouthS7ItemSettings, SouthS7Settings } from '../../../shared/model/south-settings.model';
@@ -46,7 +45,6 @@ describe('South S7', () => {
     ): Promise<void> => undefined
   );
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
-  let southCacheService: SouthCacheServiceMock;
   let latestEndpoint: FakeS7Endpoint;
   let latestGroup: {
     setTranslationCB: ReturnType<typeof mock.fn>;
@@ -87,12 +85,6 @@ describe('South S7', () => {
 
   before(() => {
     mockModule(nodeRequire, '@st-one-io/nodes7', nodes7Exports);
-    mockModule(nodeRequire, '../../service/south-cache.service', {
-      __esModule: true,
-      default: function () {
-        return southCacheService;
-      }
-    });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}
@@ -178,7 +170,6 @@ describe('South S7', () => {
   };
 
   beforeEach(() => {
-    southCacheService = new SouthCacheServiceMock();
     readAllItemsResult = { Var1: 42, Var2: 7, Var3: true };
     nodes7Exports.S7Endpoint = mock.fn(function () {
       latestEndpoint = new FakeS7Endpoint();
@@ -534,9 +525,35 @@ describe('South S7', () => {
   });
 
   it('should properly test item', async () => {
+    nodes7Exports.S7Endpoint = mock.fn(function () {
+      latestEndpoint = new FakeS7Endpoint();
+      latestEndpoint.connect = mock.fn(async () => {
+        mock.timers.tick(15);
+      });
+      return latestEndpoint;
+    });
+    nodes7Exports.S7ItemGroup = mock.fn(function () {
+      latestGroup = {
+        setTranslationCB: mock.fn((cb: (name: string) => string | undefined) => {
+          latestGroup.translationCB = cb;
+        }),
+        addItems: mock.fn((_names: string | Array<string>) => undefined),
+        removeItems: mock.fn((_names: string | Array<string>) => undefined),
+        readAllItems: mock.fn(async () => {
+          mock.timers.tick(25);
+          return readAllItemsResult;
+        }),
+        destroy: mock.fn(() => undefined),
+        translationCB: null
+      };
+      return latestGroup;
+    });
+
     const content = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
-    assert.strictEqual(content.type, 'time-values');
-    assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
+    assert.strictEqual(content.result.type, 'time-values');
+    assert.deepStrictEqual(content.result.content, [{ pointId: 'Var1', timestamp: '2021-01-02T00:00:00.040Z', data: { value: '42' } }]);
+    assert.strictEqual(content.connectionDuration, 15);
+    assert.strictEqual(content.queryDuration, 25);
     assert.strictEqual(latestGroup.translationCB!('Var1'), 'DB1,REAL0');
     assert.strictEqual(latestEndpoint.disconnect.mock.calls.length, 1);
   });
@@ -567,7 +584,7 @@ describe('South S7', () => {
     });
 
     const content = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
-    assert.strictEqual(content.type, 'time-values');
+    assert.strictEqual(content.result.type, 'time-values');
     assert.strictEqual(latestEndpoint.disconnect.mock.calls.length, 1);
   });
 
