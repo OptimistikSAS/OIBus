@@ -4,6 +4,7 @@ import { BaseEntity } from './types';
 import {
   NorthAmazonS3Settings,
   NorthAzureBlobSettings,
+  NorthAzureDataExplorerSettings,
   NorthConsoleSettings,
   NorthFileWriterSettings,
   NorthModbusSettings,
@@ -20,7 +21,7 @@ import { OIBusObjectAttribute } from './form.model';
 /**
  * List of available categories for OIBus North connectors.
  */
-export const OIBUS_NORTH_CATEGORIES = ['debug', 'api', 'file', 'iot'] as const;
+export const OIBUS_NORTH_CATEGORIES = ['debug', 'api', 'file', 'iot', 'database'] as const;
 
 /**
  * Type representing the possible categories for a North connector.
@@ -34,6 +35,7 @@ export type OIBusNorthCategory = (typeof OIBUS_NORTH_CATEGORIES)[number];
  */
 export const OIBUS_NORTH_TYPES = [
   'azure-blob',
+  'azure-data-explorer',
   'aws-s3',
   'console',
   'file-writer',
@@ -243,6 +245,8 @@ export interface NorthConnectorTypedDTO<T extends OIBusNorthType, S> extends Bas
 export interface NorthConnectorAmazonS3DTO extends NorthConnectorTypedDTO<'aws-s3', NorthAmazonS3Settings> {}
 /** North connector configuration for Azure Blob Storage. */
 export interface NorthConnectorAzureBlobDTO extends NorthConnectorTypedDTO<'azure-blob', NorthAzureBlobSettings> {}
+/** North connector configuration for Azure Data Explorer. */
+export interface NorthConnectorAzureDataExplorerDTO extends NorthConnectorTypedDTO<'azure-data-explorer', NorthAzureDataExplorerSettings> {}
 /** North connector configuration for the Console debug output. */
 export interface NorthConnectorConsoleDTO extends NorthConnectorTypedDTO<'console', NorthConsoleSettings> {}
 /** North connector configuration for the File Writer. */
@@ -267,6 +271,7 @@ export interface NorthConnectorSFTPDTO extends NorthConnectorTypedDTO<'sftp', No
 export type NorthConnectorDTO =
   | NorthConnectorAmazonS3DTO
   | NorthConnectorAzureBlobDTO
+  | NorthConnectorAzureDataExplorerDTO
   | NorthConnectorConsoleDTO
   | NorthConnectorFileWriterDTO
   | NorthConnectorModbusDTO
@@ -415,6 +420,11 @@ export interface NorthConnectorCommandTypedDTO<T extends OIBusNorthType, S> {
 export interface NorthConnectorAmazonS3CommandDTO extends NorthConnectorCommandTypedDTO<'aws-s3', NorthAmazonS3Settings> {}
 /** North connector command for Azure Blob Storage. */
 export interface NorthConnectorAzureBlobCommandDTO extends NorthConnectorCommandTypedDTO<'azure-blob', NorthAzureBlobSettings> {}
+/** North connector command for Azure Data Explorer. */
+export interface NorthConnectorAzureDataExplorerCommandDTO extends NorthConnectorCommandTypedDTO<
+  'azure-data-explorer',
+  NorthAzureDataExplorerSettings
+> {}
 /** North connector command for the Console debug output. */
 export interface NorthConnectorConsoleCommandDTO extends NorthConnectorCommandTypedDTO<'console', NorthConsoleSettings> {}
 /** North connector command for the File Writer. */
@@ -439,6 +449,7 @@ export interface NorthConnectorSFTPCommandDTO extends NorthConnectorCommandTyped
 export type NorthConnectorCommandDTO =
   | NorthConnectorAmazonS3CommandDTO
   | NorthConnectorAzureBlobCommandDTO
+  | NorthConnectorAzureDataExplorerCommandDTO
   | NorthConnectorConsoleCommandDTO
   | NorthConnectorFileWriterCommandDTO
   | NorthConnectorModbusCommandDTO
