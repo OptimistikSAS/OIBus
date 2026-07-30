@@ -10,6 +10,7 @@ import type OIAnalyticsRegistrationRepository from '../repository/config/oianaly
 import type {
   NorthAmazonS3Settings,
   NorthAzureBlobSettings,
+  NorthAzureDataExplorerSettings,
   NorthConsoleSettings,
   NorthFileWriterSettings,
   NorthModbusSettings,
@@ -52,6 +53,7 @@ describe('North Connector Factory', () => {
 
   const MockNorthAmazonS3 = makeMock('aws-s3');
   const MockNorthAzureBlob = makeMock('azure-blob');
+  const MockNorthAzureDataExplorer = makeMock('azure-data-explorer');
   const MockNorthConsole = makeMock('console');
   const MockNorthFileWriter = makeMock('file-writer');
   const MockNorthModbus = makeMock('modbus');
@@ -69,6 +71,10 @@ describe('North Connector Factory', () => {
     mockModule(nodeRequire, '../service/cache/cache.service', { __esModule: true, default: MockCacheService });
     mockModule(nodeRequire, '../north/north-amazon-s3/north-amazon-s3', { __esModule: true, default: MockNorthAmazonS3 });
     mockModule(nodeRequire, '../north/north-azure-blob/north-azure-blob', { __esModule: true, default: MockNorthAzureBlob });
+    mockModule(nodeRequire, '../north/north-azure-data-explorer/north-azure-data-explorer', {
+      __esModule: true,
+      default: MockNorthAzureDataExplorer
+    });
     mockModule(nodeRequire, '../north/north-console/north-console', { __esModule: true, default: MockNorthConsole });
     mockModule(nodeRequire, '../north/north-file-writer/north-file-writer', { __esModule: true, default: MockNorthFileWriter });
     mockModule(nodeRequire, '../north/north-modbus/north-modbus', { __esModule: true, default: MockNorthModbus });
@@ -160,6 +166,20 @@ describe('North Connector Factory', () => {
       const result = callBuildNorth(settings);
       assert.strictEqual(ctorCalls['azure-blob']?.length, 1);
       assert.ok(result instanceof MockNorthAzureBlob);
+    });
+
+    it('should create NorthAzureDataExplorer for type "azure-data-explorer"', () => {
+      const settings: NorthConnectorEntity<NorthAzureDataExplorerSettings> = {
+        ...baseSettings,
+        type: 'azure-data-explorer',
+        settings: {} as NorthAzureDataExplorerSettings
+      };
+      const result = callBuildNorth(settings);
+      assert.strictEqual(ctorCalls['azure-data-explorer']?.length, 1);
+      const args = ctorCalls['azure-data-explorer'][0];
+      assert.deepStrictEqual(args[1], {}); // orchestrator
+      assert.strictEqual(args[2], mockCertificateRepository);
+      assert.ok(result instanceof MockNorthAzureDataExplorer);
     });
 
     it('should create NorthConsole for type "console"', () => {
