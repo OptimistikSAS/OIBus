@@ -51,8 +51,9 @@ the **Use proxy** option and configure the proxy details below.
 | **Proxy password** | Password for proxy authentication (if required). | `••••••••`                      |
 
 Proxy support is partial. The Azure Data Explorer SDK exposes no proxy option, so OIBus installs the proxy directly on
-the SDK's HTTP clients. This covers the Azure Data Explorer calls themselves — management commands (including **Test
-settings**) and ingestion resource discovery.
+the SDK's HTTP clients, and also passes it to the Entra ID (`@azure/identity`) credentials used to authenticate. This
+covers the Azure Data Explorer calls themselves — management commands (including **Test settings**) and ingestion
+resource discovery — as well as the token requests made to Entra ID to acquire and refresh credentials.
 
 It does **not** cover the payload upload: queued ingestion uploads the file through the Azure Storage SDK, which does
 not honour this setting. If those uploads must also go through the proxy, set `HTTPS_PROXY` at the OS level in addition

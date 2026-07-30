@@ -219,6 +219,34 @@ describe('NorthAzureDataExplorer', () => {
     assert.deepStrictEqual(ClientSecretCredentialMock.mock.calls[0].arguments, ['tenantId', 'clientId', 'mySecret']);
   });
 
+  it('should build credential with aad-app-secret authentication and proxyOptions when useProxy is true', async () => {
+    const settings: NorthAzureDataExplorerSettings = {
+      clusterUrl: 'https://mycluster.westeurope.kusto.windows.net',
+      database: 'mydatabase',
+      table: 'mytable',
+      authentication: 'aad-app-secret',
+      tenantId: 'tenantId',
+      clientId: 'clientId',
+      clientSecret: 'mySecret',
+      certificateId: null,
+      dataFormat: 'csv',
+      ingestionMappingName: null,
+      useProxy: true,
+      proxyUrl: 'http://myproxy:8080',
+      proxyUsername: 'proxyUser',
+      proxyPassword: 'proxySecret'
+    };
+    north.connectorConfiguration = buildNorthEntity<NorthAzureDataExplorerSettings>('azure-data-explorer', settings);
+    await north.prepareConnection(settings);
+    assert.strictEqual(ClientSecretCredentialMock.mock.calls.length, 1);
+    assert.deepStrictEqual(ClientSecretCredentialMock.mock.calls[0].arguments, [
+      'tenantId',
+      'clientId',
+      'mySecret',
+      { proxyOptions: { host: 'http://myproxy', port: 8080, username: 'proxyUser', password: 'proxySecret' } }
+    ]);
+  });
+
   it('should build credential with aad-app-certificate authentication', async () => {
     certificateRepository.findById.mock.mockImplementationOnce(() => testData.certificates.list[0]);
     const settings: NorthAzureDataExplorerSettings = {
@@ -242,6 +270,34 @@ describe('NorthAzureDataExplorer', () => {
       'tenantId',
       'clientId',
       { certificate: `${testData.certificates.list[0].certificate}\n${testData.certificates.list[0].privateKey}` }
+    ]);
+  });
+
+  it('should build credential with aad-app-certificate authentication and proxyOptions when useProxy is true', async () => {
+    certificateRepository.findById.mock.mockImplementationOnce(() => testData.certificates.list[0]);
+    const settings: NorthAzureDataExplorerSettings = {
+      clusterUrl: 'https://mycluster.westeurope.kusto.windows.net',
+      database: 'mydatabase',
+      table: 'mytable',
+      authentication: 'aad-app-certificate',
+      tenantId: 'tenantId',
+      clientId: 'clientId',
+      certificateId: 'certificate1',
+      dataFormat: 'csv',
+      ingestionMappingName: null,
+      useProxy: true,
+      proxyUrl: 'http://myproxy:8080',
+      proxyUsername: 'proxyUser',
+      proxyPassword: 'proxySecret'
+    };
+    north.connectorConfiguration = buildNorthEntity<NorthAzureDataExplorerSettings>('azure-data-explorer', settings);
+    await north.prepareConnection(settings);
+    assert.strictEqual(ClientCertificateCredentialMock.mock.calls.length, 1);
+    assert.deepStrictEqual(ClientCertificateCredentialMock.mock.calls[0].arguments, [
+      'tenantId',
+      'clientId',
+      { certificate: `${testData.certificates.list[0].certificate}\n${testData.certificates.list[0].privateKey}` },
+      { proxyOptions: { host: 'http://myproxy', port: 8080, username: 'proxyUser', password: 'proxySecret' } }
     ]);
   });
 
@@ -277,7 +333,47 @@ describe('NorthAzureDataExplorer', () => {
     north.connectorConfiguration = buildNorthEntity<NorthAzureDataExplorerSettings>('azure-data-explorer', settings);
     await north.prepareConnection(settings);
     assert.strictEqual(DefaultAzureCredentialMock.mock.calls.length, 1);
+    assert.deepStrictEqual(DefaultAzureCredentialMock.mock.calls[0].arguments, []);
     assert.strictEqual(encryptionServiceMock.decryptText.mock.calls.length, 0);
+  });
+
+  it('should build credential with managed-identity authentication and proxyOptions when useProxy is true', async () => {
+    const settings: NorthAzureDataExplorerSettings = {
+      clusterUrl: 'https://mycluster.westeurope.kusto.windows.net',
+      database: 'mydatabase',
+      table: 'mytable',
+      authentication: 'managed-identity',
+      certificateId: null,
+      dataFormat: 'csv',
+      ingestionMappingName: null,
+      useProxy: true,
+      proxyUrl: 'http://myproxy:8080',
+      proxyUsername: 'proxyUser',
+      proxyPassword: 'proxySecret'
+    };
+    north.connectorConfiguration = buildNorthEntity<NorthAzureDataExplorerSettings>('azure-data-explorer', settings);
+    await north.prepareConnection(settings);
+    assert.strictEqual(DefaultAzureCredentialMock.mock.calls.length, 1);
+    assert.deepStrictEqual(DefaultAzureCredentialMock.mock.calls[0].arguments, [
+      { proxyOptions: { host: 'http://myproxy', port: 8080, username: 'proxyUser', password: 'proxySecret' } }
+    ]);
+  });
+
+  it('should build credential without proxyOptions when useProxy is false', async () => {
+    const settings: NorthAzureDataExplorerSettings = {
+      clusterUrl: 'https://mycluster.westeurope.kusto.windows.net',
+      database: 'mydatabase',
+      table: 'mytable',
+      authentication: 'managed-identity',
+      certificateId: null,
+      dataFormat: 'csv',
+      ingestionMappingName: null,
+      useProxy: false
+    };
+    north.connectorConfiguration = buildNorthEntity<NorthAzureDataExplorerSettings>('azure-data-explorer', settings);
+    await north.prepareConnection(settings);
+    assert.strictEqual(DefaultAzureCredentialMock.mock.calls.length, 1);
+    assert.deepStrictEqual(DefaultAzureCredentialMock.mock.calls[0].arguments, []);
   });
 
   it('should build two distinct connection string builders for management and ingest clients', async () => {
@@ -367,7 +463,7 @@ describe('NorthAzureDataExplorer', () => {
     const testResult = await north.testConnection();
     assert.strictEqual(prepareConnectionMock.mock.calls.length, 1);
     assert.strictEqual(kustoClientInstance.executeMgmt.mock.calls.length, 1);
-    assert.deepStrictEqual(kustoClientInstance.executeMgmt.mock.calls[0].arguments, ['mydatabase', '.show table mytable cslschema']);
+    assert.deepStrictEqual(kustoClientInstance.executeMgmt.mock.calls[0].arguments, ['mydatabase', ".show table ['mytable'] cslschema"]);
     assert.deepStrictEqual(testResult, {
       items: [
         { key: 'Cluster', value: 'https://mycluster.westeurope.kusto.windows.net' },
@@ -376,17 +472,38 @@ describe('NorthAzureDataExplorer', () => {
         { key: 'Data format', value: 'csv' }
       ]
     });
+    // both clients are closed at the end of testConnection, on the success path
+    assert.strictEqual(kustoClientInstance.close.mock.calls.length, 1);
+    assert.strictEqual(north['kustoClient'], null);
+    assert.strictEqual(north['ingestClient'], null);
+  });
+
+  it('should build the bracket-quoted mgmt command for a table name containing hyphens', async () => {
+    mock.method(north, 'prepareConnection', async () => undefined);
+    const settings: NorthAzureDataExplorerSettings = {
+      ...north.connectorConfiguration.settings,
+      table: 'raw-events'
+    };
+    north.connectorConfiguration = buildNorthEntity<NorthAzureDataExplorerSettings>('azure-data-explorer', settings);
+    north['kustoClient'] = kustoClientInstance as unknown as (typeof north)['kustoClient'];
+    await north.testConnection();
+    assert.deepStrictEqual(kustoClientInstance.executeMgmt.mock.calls[0].arguments, ['mydatabase', ".show table ['raw-events'] cslschema"]);
   });
 
   it('should properly fail testing connection when executeMgmt rejects', async () => {
     mock.method(north, 'prepareConnection', async () => undefined);
-    north['kustoClient'] = {
+    const adHocKustoClient = {
       executeMgmt: mock.fn(async () => {
         throw new Error('connection error');
       }),
       close: mock.fn()
-    } as unknown as (typeof north)['kustoClient'];
+    };
+    north['kustoClient'] = adHocKustoClient as unknown as (typeof north)['kustoClient'];
     await assert.rejects(async () => north.testConnection(), new Error('Error testing Azure Data Explorer connection: connection error'));
+    // both clients are closed even when the mgmt command fails
+    assert.strictEqual(adHocKustoClient.close.mock.calls.length, 1);
+    assert.strictEqual(north['kustoClient'], null);
+    assert.strictEqual(north['ingestClient'], null);
   });
 
   it('should reject testing connection with invalid table name without connecting', async () => {
