@@ -47,6 +47,7 @@ import {
 import {
   NorthAmazonS3Settings,
   NorthAzureBlobSettings,
+  NorthAzureDataExplorerSettings,
   NorthConsoleSettings,
   NorthFileWriterSettings,
   NorthModbusSettings,
@@ -411,6 +412,11 @@ export interface HistoryQuerySQLiteSouthDTO extends HistoryQuerySouthTypedDTO<'s
 export interface HistoryQueryAmazonS3NorthDTO extends HistoryQueryNorthTypedDTO<'aws-s3', NorthAmazonS3Settings> {}
 /** History query north DTO for Azure Blob Storage. */
 export interface HistoryQueryAzureBlobNorthDTO extends HistoryQueryNorthTypedDTO<'azure-blob', NorthAzureBlobSettings> {}
+/** History query north DTO for Azure Data Explorer. */
+export interface HistoryQueryAzureDataExplorerNorthDTO extends HistoryQueryNorthTypedDTO<
+  'azure-data-explorer',
+  NorthAzureDataExplorerSettings
+> {}
 /** History query north DTO for the Console debug output. */
 export interface HistoryQueryConsoleNorthDTO extends HistoryQueryNorthTypedDTO<'console', NorthConsoleSettings> {}
 /** History query north DTO for the File Writer. */
@@ -455,6 +461,7 @@ export type HistoryQueryDTO = BaseEntity &
   (
     | HistoryQueryAmazonS3NorthDTO
     | HistoryQueryAzureBlobNorthDTO
+    | HistoryQueryAzureDataExplorerNorthDTO
     | HistoryQueryConsoleNorthDTO
     | HistoryQueryFileWriterNorthDTO
     | HistoryQueryModbusNorthDTO
@@ -668,6 +675,11 @@ export interface HistoryQuerySQLiteSouthCommandDTO extends HistoryQuerySouthComm
 export interface HistoryQueryAmazonS3NorthCommandDTO extends HistoryQueryNorthCommandTypedDTO<'aws-s3', NorthAmazonS3Settings> {}
 /** History query north command for Azure Blob Storage. */
 export interface HistoryQueryAzureBlobNorthCommandDTO extends HistoryQueryNorthCommandTypedDTO<'azure-blob', NorthAzureBlobSettings> {}
+/** History query north command for Azure Data Explorer. */
+export interface HistoryQueryAzureDataExplorerNorthCommandDTO extends HistoryQueryNorthCommandTypedDTO<
+  'azure-data-explorer',
+  NorthAzureDataExplorerSettings
+> {}
 /** History query north command for the Console debug output. */
 export interface HistoryQueryConsoleNorthCommandDTO extends HistoryQueryNorthCommandTypedDTO<'console', NorthConsoleSettings> {}
 /** History query north command for the File Writer. */
@@ -715,6 +727,7 @@ export type HistoryQueryCommandDTO = HistoryQueryCommandCommonDTO &
   (
     | HistoryQueryAmazonS3NorthCommandDTO
     | HistoryQueryAzureBlobNorthCommandDTO
+    | HistoryQueryAzureDataExplorerNorthCommandDTO
     | HistoryQueryConsoleNorthCommandDTO
     | HistoryQueryFileWriterNorthCommandDTO
     | HistoryQueryModbusNorthCommandDTO
