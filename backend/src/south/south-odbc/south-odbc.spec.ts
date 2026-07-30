@@ -464,13 +464,18 @@ describe('SouthODBC', () => {
       const queryOdbcDataMock = mock.method(
         south,
         'queryOdbcData',
-        mock.fn(async () => mockReturnValue)
+        mock.fn(async () => {
+          mock.timers.tick(25);
+          return mockReturnValue;
+        })
       );
 
-      await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
+      const result = await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
       assert.strictEqual(queryOdbcDataMock.mock.calls.length, 1);
       assert.strictEqual(utilsExports.convertDateTimeToInstant.mock.calls.length, 0);
       assert.strictEqual(utilsExports.formatInstant.mock.calls.length, 0);
+      assert.strictEqual(result.queryDuration, 25);
+      assert.strictEqual(result.connectionDuration, 0);
     });
 
     it('should test item with queryOdbcData and dateTimeFields', async () => {
@@ -1432,11 +1437,16 @@ describe('SouthODBC', () => {
       const queryRemoteAgentDataMock = mock.method(
         south,
         'queryRemoteAgentData',
-        mock.fn(async () => mockReturnValue)
+        mock.fn(async () => {
+          mock.timers.tick(25);
+          return mockReturnValue;
+        })
       );
 
-      await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
+      const result = await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
       assert.ok(queryRemoteAgentDataMock.mock.calls.length > 0);
+      assert.strictEqual(result.queryDuration, 25);
+      assert.strictEqual(result.connectionDuration, 0);
     });
 
     it('QueryRemoteAgentData in case of item test', async () => {

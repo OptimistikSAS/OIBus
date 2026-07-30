@@ -818,9 +818,19 @@ describe('South Modbus', () => {
   });
 
   it('should properly test item', async () => {
-    await assert.doesNotReject(south.testItem(configuration.items[0], testData.south.itemTestingSettings));
+    utilsModbusExports.connectSocket = mock.fn(async (_socket: unknown, _settings: unknown): Promise<void> => {
+      mock.timers.tick(15);
+    });
+    utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string | undefined> => {
+      mock.timers.tick(25);
+      return undefined;
+    });
+
+    const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
     assert.strictEqual(utilsModbusExports.connectSocket.mock.calls.length, 1);
     assert.strictEqual(socketMock.mock.calls.length, 1);
+    assert.strictEqual(result.connectionDuration, 15);
+    assert.strictEqual(result.queryDuration, 25);
   });
 
   it('should properly manage error on test item failure', async () => {

@@ -55,13 +55,16 @@ export default class SouthOIAnalytics
   ): Promise<SouthConnectorItemQueryResult> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
+    const queryStart = DateTime.now().toMillis();
     const result: Array<OIATimeValues> = await this.queryData(item, startTime, endTime);
+    const queryDuration = DateTime.now().toMillis() - queryStart;
     const { formattedResult } = parseData(result);
     return {
       result: { type: 'time-values', content: formattedResult },
-      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+      // No separate connection step in testItem() for this connector — the call above does
+      // connect + query together, so connectionDuration stays 0 and queryDuration covers the whole call.
       connectionDuration: 0,
-      queryDuration: 0
+      queryDuration
     };
   }
 

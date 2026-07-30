@@ -75,12 +75,15 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
   ): Promise<SouthConnectorItemQueryResult> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
+    const queryStart = DateTime.now().toMillis();
     const { filename, content } = await this.queryData(item, startTime, endTime);
+    const queryDuration = DateTime.now().toMillis() - queryStart;
     return {
       result: { type: 'any', filePath: filename, content },
-      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+      // No separate connection step in testItem() for this connector — the call above does
+      // connect + query together, so connectionDuration stays 0 and queryDuration covers the whole call.
       connectionDuration: 0,
-      queryDuration: 0
+      queryDuration
     };
   }
 

@@ -288,17 +288,20 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     _testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
     try {
+      const connectStart = DateTime.now().toMillis();
       await this.connect();
+      const connectionDuration = DateTime.now().toMillis() - connectStart;
+      const queryStart = DateTime.now().toMillis();
       const dataValues: Array<OIBusTimeValue> = await this.readAdsSymbol(item, DateTime.now().toUTC().toISO()!);
+      const queryDuration = DateTime.now().toMillis() - queryStart;
       await this.disconnect();
       return {
         result: {
           type: 'time-values',
           content: dataValues
         },
-        // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
-        connectionDuration: 0,
-        queryDuration: 0
+        connectionDuration,
+        queryDuration
       };
     } catch (error: unknown) {
       throw new Error(`Unable to connect. ${(error as Error).message}`);

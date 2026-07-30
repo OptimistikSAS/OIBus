@@ -128,17 +128,20 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     try {
       const socket = new net.Socket();
       const modbusClient = new client.TCP(socket, this.connector.settings.slaveId);
+      const connectStart = DateTime.now().toMillis();
       await connectSocket(socket, this.connector.settings);
+      const connectionDuration = DateTime.now().toMillis() - connectStart;
+      const queryStart = DateTime.now().toMillis();
       const dataValues: Array<OIBusTimeValue> = await this.modbusFunction(modbusClient, item);
+      const queryDuration = DateTime.now().toMillis() - queryStart;
       await this.disconnect();
       return {
         result: {
           type: 'time-values',
           content: dataValues
         },
-        // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
-        connectionDuration: 0,
-        queryDuration: 0
+        connectionDuration,
+        queryDuration
       };
     } catch (error: unknown) {
       switch ((error as { code: string; message: string }).code) {
