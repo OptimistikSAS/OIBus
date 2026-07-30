@@ -1355,7 +1355,7 @@ export default class OIAnalyticsCommandService {
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings
     );
-    this.completeTestItemCommand(command, result);
+    this.completeDualResultTestCommand(command, result);
   }
 
   private async executeUpdateHistoryQueryStatusCommand(command: OIBusUpdateHistoryQueryStatusCommand) {
@@ -1469,25 +1469,12 @@ export default class OIAnalyticsCommandService {
     return { ...result, truncated, totalSize };
   }
 
-  private completeTestItemCommand(command: OIBusTestHistoryQuerySouthItemCommand, result: SouthConnectorItemTestResult) {
-    this.oIAnalyticsCommandRepository.markAsCompleted(
-      command.id,
-      DateTime.now().toUTC().toISO(),
-      JSON.stringify({
-        ...this.truncateContentForResult(result.transformed ?? result.raw),
-        connectionDuration: result.connectionDuration,
-        queryDuration: result.queryDuration
-      })
-    );
-  }
-
   /**
-   * Unlike completeTestItemCommand (which only cares about the final output), these results must
-   * show the full raw → transformer → output pipeline, so both raw and transformed (when there is
-   * one) are kept and truncated independently.
+   * These results show the full raw → transformer → output pipeline, so both raw and transformed
+   * (when there is one) are kept and truncated independently.
    */
   private completeDualResultTestCommand(
-    command: OIBusTestSouthConnectorItemCommand | OIBusTestTransformerCommand,
+    command: OIBusTestSouthConnectorItemCommand | OIBusTestTransformerCommand | OIBusTestHistoryQuerySouthItemCommand,
     result: SouthConnectorItemTestResult
   ) {
     this.oIAnalyticsCommandRepository.markAsCompleted(

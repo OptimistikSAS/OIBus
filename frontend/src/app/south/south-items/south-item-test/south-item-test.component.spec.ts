@@ -57,13 +57,18 @@ describe('SouthItemTestComponent', () => {
     });
   });
 
-  function createComponent(type: 'south' | 'history-south' = 'south', entityId = 'southId1') {
+  function createComponent(
+    type: 'south' | 'history-south' = 'south',
+    entityId = 'southId1',
+    inMemoryTransformers: Array<unknown> | null = null
+  ) {
     const fixture = TestBed.createComponent(SouthItemTestComponent);
     fixture.componentRef.setInput('type', type);
     fixture.componentRef.setInput('entityId', entityId);
     fixture.componentRef.setInput('item', item);
     fixture.componentRef.setInput('connectorCommand', connectorCommand);
     fixture.componentRef.setInput('manifest', manifest);
+    fixture.componentRef.setInput('inMemoryTransformers', inMemoryTransformers);
     fixture.detectChanges();
     return fixture;
   }
@@ -114,5 +119,14 @@ describe('SouthItemTestComponent', () => {
 
     const component = createComponent('history-south', 'hq1').componentInstance;
     expect(component.transformerChoices.map(t => t.transformerId)).toEqual(['t1']);
+  });
+
+  test('history context in create/edit mode uses the in-memory transformer list instead of fetching', () => {
+    const inMemoryTransformer = { id: 'transformerId1', items: [], transformer: standardTransformer, options: { foo: 'bar' } };
+
+    const component = createComponent('history-south', 'create', [inMemoryTransformer]).componentInstance;
+
+    expect(historyQueryService.findById).not.toHaveBeenCalled();
+    expect(component.transformerChoices).toEqual([{ transformerId: 't1', transformer: standardTransformer, options: { foo: 'bar' } }]);
   });
 });

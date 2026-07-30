@@ -17,7 +17,7 @@ import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Va
 import { DateTime } from 'luxon';
 import { HistoryQueryService } from '../../../services/history-query.service';
 import { HistoryQueryItemCommandDTO } from '../../../../../../backend/shared/model/history-query.model';
-import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
+import { HistoryTransformerDTOWithOptions, TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
 import { NorthConnectorLightDTO } from '../../../../../../backend/shared/model/north-connector.model';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { DateRange, DateRangeSelectorComponent } from '../../../shared/date-range-selector/date-range-selector.component';
@@ -67,6 +67,12 @@ class SouthItemTestComponent implements AfterContentInit {
   readonly item = input.required<SouthConnectorItemCommandDTO | HistoryQueryItemCommandDTO>();
   readonly connectorCommand = input.required<SouthConnectorCommandDTO>();
   readonly manifest = input.required<SouthConnectorManifest>();
+  /**
+   * History context only. When the history query's transformers are still being edited in memory
+   * (create mode, or edit mode before the whole form is saved), the caller passes the current
+   * in-memory list here so it's used instead of fetching the last-saved state from the API.
+   */
+  readonly inMemoryTransformers = input<Array<HistoryTransformerDTOWithOptions> | null>(null);
 
   private southConnectorService = inject(SouthConnectorService);
   private northConnectorService = inject(NorthConnectorService);
@@ -186,10 +192,22 @@ class SouthItemTestComponent implements AfterContentInit {
   /** Load norths (south) or the history query's transformers (history) once inputs are known. */
   private loadTransformerSource() {
     const entityId = this.entityId();
-    if (entityId === 'create') {
-      return;
-    }
     if (this.isHistory) {
+      // While the history query's transformers are still being edited in memory (create mode, or
+      // edit mode before the whole form is saved), use that live list directly instead of fetching
+      // the last-saved state — a fetch would either 404 (create) or return stale data (edit).
+      const inMemory = this.inMemoryTransformers();
+      if (inMemory) {
+        this.transformerChoices = inMemory.map(t => ({
+          transformerId: t.transformer.id,
+          transformer: t.transformer,
+          options: t.options
+        }));
+        return;
+      }
+      if (entityId === 'create') {
+        return;
+      }
       this.historyQueryService
         .findById(entityId)
         .pipe(catchError(() => of(null)))
@@ -200,12 +218,15 @@ class SouthItemTestComponent implements AfterContentInit {
             options: t.options
           }));
         });
-    } else {
-      this.northConnectorService
-        .list()
-        .pipe(catchError(() => of([])))
-        .subscribe(norths => (this.norths = norths));
+      return;
     }
+    if (entityId === 'create') {
+      return;
+    }
+    this.northConnectorService
+      .list()
+      .pipe(catchError(() => of([])))
+      .subscribe(norths => (this.norths = norths));
   }
 
   private onNorthChange(northId: string | null) {
