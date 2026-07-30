@@ -899,7 +899,10 @@ describe('SouthSFTP test connection with private key', () => {
     mock.method(
       south,
       'listFiles',
-      mock.fn(async () => [{ name: 'file.csv', modifyTime: DateTime.now().toMillis() }])
+      mock.fn(async () => {
+        mock.timers.tick(25);
+        return [{ name: 'file.csv', modifyTime: DateTime.now().toMillis() }];
+      })
     );
 
     const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
@@ -912,13 +915,15 @@ describe('SouthSFTP test connection with private key', () => {
         content: [
           {
             pointId: configuration.items[0].name,
-            timestamp: testData.constants.dates.FAKE_NOW,
+            timestamp: DateTime.fromMillis(DateTime.fromISO(testData.constants.dates.FAKE_NOW).toMillis() + 25)
+              .toUTC()
+              .toISO(),
             data: { value: 'file.csv' }
           }
         ]
       },
       connectionDuration: 0,
-      queryDuration: 0
+      queryDuration: 25
     });
   });
 

@@ -81,7 +81,9 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     item: SouthConnectorItemEntity<SouthPIItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
+    const connectStart = DateTime.now().toMillis();
     await this.connect();
+    const connectionDuration = DateTime.now().toMillis() - connectStart;
     const content: OIBusContent = { type: 'time-values', content: [] };
 
     const startTime = testingSettings.history!.startTime;
@@ -104,6 +106,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       })
     };
     const requestUrl = new URL(`/api/pi/${this.connector.id}/read`, this.connector.settings.agentUrl);
+    const queryStart = DateTime.now().toMillis();
     const response = await HTTPRequest(requestUrl, fetchOptions);
     if (response.statusCode === 200) {
       const result: {
@@ -116,17 +119,12 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
         maxInstantRetrieved: string;
       };
       content.content = result.content;
+      const queryDuration = DateTime.now().toMillis() - queryStart;
       await this.disconnect();
-    } else {
-      await this.disconnect();
-      throw new Error(`Error occurred when sending connect command to remote agent. ${response.statusCode}`);
+      return { result: content, connectionDuration, queryDuration };
     }
-    return {
-      result: content,
-      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
-      connectionDuration: 0,
-      queryDuration: 0
-    };
+    await this.disconnect();
+    throw new Error(`Error occurred when sending connect command to remote agent. ${response.statusCode}`);
   }
 
   /**

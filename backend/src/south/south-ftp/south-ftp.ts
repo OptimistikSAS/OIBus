@@ -53,7 +53,9 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
     item: SouthConnectorItemEntity<SouthFTPItemSettings>,
     _testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
+    const queryStart = DateTime.now().toMillis();
     const filesInFolder = await this.listFiles(item, []);
+    const queryDuration = DateTime.now().toMillis() - queryStart;
 
     const values: Array<OIBusTimeValue> = filesInFolder.map(file => ({
       pointId: item.name,
@@ -64,9 +66,10 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
     }));
     return {
       result: { type: 'time-values', content: values },
-      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
+      // No separate connection step in testItem() for this connector — the call above does
+      // connect + query together, so connectionDuration stays 0 and queryDuration covers the whole call.
       connectionDuration: 0,
-      queryDuration: 0
+      queryDuration
     };
   }
 

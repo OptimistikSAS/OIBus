@@ -261,7 +261,10 @@ describe('SouthFTP', () => {
     it('should test item', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mock.method(south, 'listFiles', async () => [fileInfo]);
+      mock.method(south, 'listFiles', async () => {
+        mock.timers.tick(25);
+        return [fileInfo];
+      });
 
       const item = configuration.items[0];
       const result = await south.testItem(item, { history: undefined });
@@ -273,6 +276,8 @@ describe('SouthFTP', () => {
       assert.strictEqual(content[0].pointId, 'item1');
       assert.ok(typeof content[0].timestamp === 'string');
       assert.deepStrictEqual(content[0].data, { value: 'test.csv' });
+      assert.strictEqual(result.queryDuration, 25);
+      assert.strictEqual(result.connectionDuration, 0);
     });
 
     it('should test item with file without modifiedAt date', async () => {
@@ -294,13 +299,18 @@ describe('SouthFTP', () => {
         date: new Date()
       } as unknown as FileInfo;
 
-      mock.method(south, 'listFiles', async () => [fileInfoWithoutDate]);
+      mock.method(south, 'listFiles', async () => {
+        mock.timers.tick(25);
+        return [fileInfoWithoutDate];
+      });
 
       const item = configuration.items[0];
       const result = await south.testItem(item, { history: undefined });
 
       assert.strictEqual(result.result.type, 'time-values');
       assert.strictEqual((result.result as { type: string; content: Array<unknown> }).content.length, 1);
+      assert.strictEqual(result.queryDuration, 25);
+      assert.strictEqual(result.connectionDuration, 0);
     });
 
     it('should list files', async () => {

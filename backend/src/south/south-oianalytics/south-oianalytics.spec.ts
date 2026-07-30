@@ -218,7 +218,10 @@ describe('SouthOIAnalytics', () => {
       const mockRawData = [{ raw: 'data' }];
       const mockFormatted = [{ pointId: 'p1', value: 10 }];
 
-      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, mockRawData));
+      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => {
+        mock.timers.tick(25);
+        return createMockResponse(200, mockRawData);
+      });
       utilsOianalyticsExports.parseData = mock.fn((): { formattedResult: Array<unknown>; maxInstant?: string } => ({
         formattedResult: mockFormatted
       }));
@@ -235,7 +238,7 @@ describe('SouthOIAnalytics', () => {
       assert.deepStrictEqual(result, {
         result: { type: 'time-values', content: mockFormatted },
         connectionDuration: 0,
-        queryDuration: 0
+        queryDuration: 25
       });
     });
   });

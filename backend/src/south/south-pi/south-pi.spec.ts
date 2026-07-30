@@ -334,15 +334,18 @@ describe('South PI', () => {
   });
 
   it('should test item', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) =>
-      createMockResponse(200, {
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
+      mock.timers.tick(25);
+      return createMockResponse(200, {
         recordCount: 2,
         content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
         maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-      })
-    );
+      });
+    });
 
-    const connectMock = mock.fn(async () => undefined);
+    const connectMock = mock.fn(async () => {
+      mock.timers.tick(15);
+    });
     south.connect = connectMock;
     const disconnectMock2 = mock.fn(async () => undefined);
     south.disconnect = disconnectMock2;
@@ -365,13 +368,15 @@ describe('South PI', () => {
       headers: { 'Content-Type': 'application/json' }
     };
 
-    await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
+    const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
     assert.strictEqual(connectMock.mock.calls.length, 1);
     assert.strictEqual(disconnectMock2.mock.calls.length, 1);
     assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
       href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}/read`
     });
     assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], fetchOptions);
+    assert.strictEqual(result.connectionDuration, 15);
+    assert.strictEqual(result.queryDuration, 25);
 
     await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
     assert.strictEqual(connectMock.mock.calls.length, 2);

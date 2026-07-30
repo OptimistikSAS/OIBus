@@ -122,7 +122,10 @@ export default class SouthFolderScanner
     item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>,
     _testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
+    const connectStart = DateTime.now().toMillis();
     await this.testConnection();
+    const connectionDuration = DateTime.now().toMillis() - connectStart;
+    const queryStart = DateTime.now().toMillis();
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
     const filesInFolder = await fs.readdir(inputFolder);
     const filteredFiles = filesInFolder.filter(file => file.match(item.settings.regex));
@@ -133,6 +136,7 @@ export default class SouthFolderScanner
         matchedFiles.push({ name: file, modifyTime: DateTime.fromMillis(stats.mtimeMs).toUTC().toISO()! });
       }
     }
+    const queryDuration = DateTime.now().toMillis() - queryStart;
     const values: Array<OIBusTimeValue> = matchedFiles.map(file => ({
       pointId: item.name,
       timestamp: file.modifyTime,
@@ -140,9 +144,8 @@ export default class SouthFolderScanner
     }));
     return {
       result: { type: 'time-values', content: values },
-      // TODO: not yet instrumented for this connector — see backend/src/south/south-opcua/south-opcua.ts for the pattern.
-      connectionDuration: 0,
-      queryDuration: 0
+      connectionDuration,
+      queryDuration
     };
   }
 

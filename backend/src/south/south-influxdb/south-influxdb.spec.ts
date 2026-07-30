@@ -279,7 +279,10 @@ describe('SouthInfluxDB', () => {
       mock.method(
         south,
         'queryData',
-        mock.fn(async () => [{ time: '2020-02-01T00:00:00Z', value: 1 }])
+        mock.fn(async () => {
+          mock.timers.tick(25);
+          return [{ time: '2020-02-01T00:00:00Z', value: 1 }];
+        })
       );
       const result = await south.testItem(baseItem, {
         history: { startTime: testData.constants.dates.DATE_1, endTime: testData.constants.dates.DATE_2 }
@@ -287,6 +290,8 @@ describe('SouthInfluxDB', () => {
       assert.equal(result.result.type, 'any-content');
       assert.ok(result.result.content?.startsWith('['));
       assert.ok(JSON.parse(result.result.content!).length === 1);
+      assert.strictEqual(result.queryDuration, 25);
+      assert.strictEqual(result.connectionDuration, 0);
     });
 
     it('should execute v1 query via queryData', async () => {

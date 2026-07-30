@@ -660,16 +660,23 @@ describe('SouthMQTT', () => {
       mock.fn(async () => undefined)
     );
     mqttStream.unsubscribeAsync = mock.fn(async () => undefined);
+    mqttExports.default.connectAsync = mock.fn(async () => {
+      mock.timers.tick(15);
+      return mqttStream;
+    });
 
     const testItemPromise = south.testItem(configuration.items[0], { history: undefined });
 
     await flushPromises();
+    mock.timers.tick(25);
     mqttStream.emit('message', 'myTopic', Buffer.from('hello from PLC'), { dup: false });
     await flushPromises();
 
     const result = await testItemPromise;
     const parsed = JSON.parse(result.result.content as string);
     assert.strictEqual(parsed[0].message, 'hello from PLC');
+    assert.strictEqual(result.connectionDuration, 15);
+    assert.strictEqual(result.queryDuration, 25);
   });
 
   it('should properly test item and manage unsubscribe error', async () => {

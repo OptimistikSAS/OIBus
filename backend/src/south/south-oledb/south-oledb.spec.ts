@@ -517,30 +517,40 @@ describe('SouthOLEDB', () => {
     const queryRemoteAgentDataMock = mock.method(
       south,
       'queryRemoteAgentData',
-      mock.fn(async () => [
-        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
-        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-      ])
+      mock.fn(async () => {
+        mock.timers.tick(25);
+        return [
+          { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+          { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+        ];
+      })
     );
 
-    await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
+    const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
     assert.deepStrictEqual(queryRemoteAgentDataMock.mock.calls[0].arguments, [configuration.items[0], startTime, endTime, true]);
+    assert.strictEqual(result.queryDuration, 25);
+    assert.strictEqual(result.connectionDuration, 0);
   });
 
   it('should test item without datetimeFields', async () => {
     const queryRemoteAgentDataMock = mock.method(
       south,
       'queryRemoteAgentData',
-      mock.fn(async () => [
-        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
-        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-      ])
+      mock.fn(async () => {
+        mock.timers.tick(25);
+        return [
+          { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+          { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+        ];
+      })
     );
 
-    await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
+    const result = await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
     assert.deepStrictEqual(queryRemoteAgentDataMock.mock.calls[0].arguments, [configuration.items[1], startTime, endTime, true]);
+    assert.strictEqual(result.queryDuration, 25);
+    assert.strictEqual(result.connectionDuration, 0);
   });
 
   it('QueryRemoteAgentData in case of item test', async () => {

@@ -425,10 +425,13 @@ describe('SouthMySQL', () => {
       const queryDataMock = mock.method(
         south,
         'queryData',
-        mock.fn(async () => [
-          { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
-          { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-        ])
+        mock.fn(async () => {
+          mock.timers.tick(25);
+          return [
+            { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+            { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+          ];
+        })
       );
 
       const formattedInstant = '2020-01-01T00:00:00.000Z';
@@ -439,26 +442,31 @@ describe('SouthMySQL', () => {
       const { startTime, endTime } = testData.south.itemTestingSettings.history!;
       assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [configuration.items[0], startTime, endTime]);
       assert.strictEqual(result.connectionDuration, 0);
-      assert.strictEqual(result.queryDuration, 0);
+      assert.strictEqual(result.queryDuration, 25);
     });
 
     it('should test item without datetimeFields', async () => {
       const queryDataMock = mock.method(
         south,
         'queryData',
-        mock.fn(async () => [
-          { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
-          { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-        ])
+        mock.fn(async () => {
+          mock.timers.tick(25);
+          return [
+            { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+            { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+          ];
+        })
       );
 
       const formattedInstant = '2020-01-01T00:00:00.000Z';
       utilsExports.formatInstant = mock.fn(() => formattedInstant);
       utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
 
-      await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
+      const result = await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
       const { startTime, endTime } = testData.south.itemTestingSettings.history!;
       assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [configuration.items[1], startTime, endTime]);
+      assert.strictEqual(result.connectionDuration, 0);
+      assert.strictEqual(result.queryDuration, 25);
     });
   });
 
