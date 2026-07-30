@@ -9,7 +9,7 @@ const CERTIFICATES_TABLE = 'certificates';
  */
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.alterTable(CERTIFICATES_TABLE, t => {
-    t.text('certificate_chain').nullable();
+    t.string('certificate_chain').nullable();
   });
 }
 

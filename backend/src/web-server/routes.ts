@@ -12403,11 +12403,11 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         const argsCertificateController_import: Record<string, TsoaRoute.ParameterSchema> = {
                 name: {"in":"formData","name":"name","required":true,"dataType":"string"},
                 description: {"in":"formData","name":"description","required":true,"dataType":"string"},
+                privateKeyPassphrase: {"in":"formData","name":"privateKeyPassphrase","dataType":"string"},
                 certificateFile: {"in":"formData","name":"certificate","required":true,"dataType":"file"},
                 privateKeyFile: {"in":"formData","name":"privateKey","required":true,"dataType":"file"},
+                certificateChainFile: {"in":"formData","name":"certificateChain","required":true,"dataType":"file"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
-                privateKeyPassphrase: {"in":"formData","name":"privateKeyPassphrase","dataType":"string"},
-                caChainFile: {"in":"formData","name":"caChain","dataType":"file"},
         };
         app.post('/api/certificates/import',
             upload.fields([
@@ -12420,7 +12420,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                     maxCount: 1
                 },
                 {
-                    name: "caChain",
+                    name: "certificateChain",
                     maxCount: 1
                 }
             ]),
@@ -12452,9 +12452,9 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsCertificateController_exportCertificate: Record<string, TsoaRoute.ParameterSchema> = {
                 certificateId: {"in":"path","name":"certificateId","required":true,"dataType":"string"},
-                request: {"in":"request","name":"request","required":true,"dataType":"object"},
                 format: {"default":"PEM","in":"query","name":"format","ref":"CertificateExportFormat"},
                 includeChain: {"default":false,"in":"query","name":"includeChain","dataType":"boolean"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.get('/api/certificates/:certificateId/export',
             ...(fetchMiddlewares<RequestHandler>(CertificateController)),
@@ -12476,7 +12476,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 response,
                 next,
                 validatedArgs,
-                successStatus: undefined,
+                successStatus: 200,
               });
             } catch (err) {
                 return next(err);

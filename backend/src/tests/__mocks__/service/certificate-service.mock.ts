@@ -16,22 +16,11 @@ export default class CertificateServiceMock {
       _certificateId: string,
       _format: CertificateExportFormat,
       _includeChain: boolean
-    ): { fileName: string; contentType: string; body: string | Buffer } => ({
-      fileName: 'certificate.pem',
-      contentType: 'application/x-pem-file',
-      body: ''
+    ): { extension: string; content: string | Buffer } => ({
+      extension: 'pem',
+      content: ''
     })
   );
-  exportPrivateKey = mock.fn(
-    async (
-      _certificateId: string,
-      _passphrase: string,
-      _requestedBy: string
-    ): Promise<{ fileName: string; contentType: string; body: string }> => ({
-      fileName: 'private-key.pem',
-      contentType: 'application/x-pem-file',
-      body: ''
-    })
-  );
+  exportPrivateKey = mock.fn(async (_certificateId: string, _passphrase: string, _requestedBy: string): Promise<string> => '');
   delete = mock.fn(async (_certificateId: string): Promise<void> => undefined);
 }

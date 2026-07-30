@@ -39208,6 +39208,10 @@
 										"type": "string",
 										"description": "Certificate description"
 									},
+									"privateKeyPassphrase": {
+										"type": "string",
+										"description": "The passphrase used to decrypt the private key, if it is encrypted"
+									},
 									"certificate": {
 										"type": "string",
 										"format": "binary",
@@ -39218,11 +39222,7 @@
 										"format": "binary",
 										"description": "The private key file, PEM (PKCS#1, PKCS#8, optionally encrypted) or DER encoded"
 									},
-									"privateKeyPassphrase": {
-										"type": "string",
-										"description": "The passphrase used to decrypt the private key, if it is encrypted"
-									},
-									"caChain": {
+									"certificateChain": {
 										"type": "string",
 										"format": "binary",
 										"description": "The optional CA chain bundle (intermediate/root certificates), PEM encoded"
@@ -39232,7 +39232,8 @@
 									"name",
 									"description",
 									"certificate",
-									"privateKey"
+									"privateKey",
+									"certificateChain"
 								]
 							}
 						}
@@ -39244,8 +39245,8 @@
 			"get": {
 				"operationId": "ExportCertificate",
 				"responses": {
-					"204": {
-						"description": "No content"
+					"200": {
+						"description": "Certificate exported successfully"
 					}
 				},
 				"description": "Exports a certificate, optionally including its CA chain",
@@ -39312,11 +39313,13 @@
 					}
 				],
 				"requestBody": {
+					"description": "Passphrase used to encrypt the exported private key",
 					"required": true,
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/CertificatePrivateKeyExportCommandDTO"
+								"$ref": "#/components/schemas/CertificatePrivateKeyExportCommandDTO",
+								"description": "Passphrase used to encrypt the exported private key"
 							}
 						}
 					}

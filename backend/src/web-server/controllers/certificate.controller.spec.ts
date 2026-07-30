@@ -124,7 +124,7 @@ describe('CertificateController', () => {
   it('should import a certificate', async () => {
     const certificateFile = { path: 'certPath' } as Express.Multer.File;
     const privateKeyFile = { path: 'keyPath' } as Express.Multer.File;
-    const caChainFile = { path: 'chainPath' } as Express.Multer.File;
+    const certificateChainFile = { path: 'chainPath' } as Express.Multer.File;
     const importedCertificate = testData.certificates.list[0];
     certificateService.import = mock.fn(async () => importedCertificate);
     const readFileMock = mock.method(fs, 'readFile', async (path: string) => Buffer.from(`content-of-${path}`));
@@ -133,11 +133,11 @@ describe('CertificateController', () => {
     const result = await controller.import(
       'my cert',
       'my description',
+      'passphrase',
       certificateFile,
       privateKeyFile,
-      mockRequest as CustomExpressRequest,
-      'passphrase',
-      caChainFile
+      certificateChainFile,
+      mockRequest as CustomExpressRequest
     );
 
     assert.strictEqual(readFileMock.mock.calls.length, 3);
@@ -149,7 +149,7 @@ describe('CertificateController', () => {
         certificateContent: Buffer.from('content-of-certPath'),
         privateKeyContent: Buffer.from('content-of-keyPath'),
         privateKeyPassphrase: 'passphrase',
-        caChainContent: Buffer.from('content-of-chainPath')
+        certificateChainContent: Buffer.from('content-of-chainPath')
       },
       'test'
     ]);
@@ -164,7 +164,15 @@ describe('CertificateController', () => {
     mock.method(fs, 'readFile', async (path: string) => Buffer.from(`content-of-${path}`));
     const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
 
-    await controller.import('my cert', 'my description', certificateFile, privateKeyFile, mockRequest as CustomExpressRequest);
+    await controller.import(
+      'my cert',
+      'my description',
+      undefined,
+      certificateFile,
+      privateKeyFile,
+      undefined,
+      mockRequest as CustomExpressRequest
+    );
 
     assert.deepStrictEqual(certificateService.import.mock.calls[0].arguments[0], {
       name: 'my cert',
@@ -172,7 +180,7 @@ describe('CertificateController', () => {
       certificateContent: Buffer.from('content-of-certPath'),
       privateKeyContent: Buffer.from('content-of-keyPath'),
       privateKeyPassphrase: null,
-      caChainContent: null
+      certificateChainContent: null
     });
     assert.strictEqual(unlinkMock.mock.calls.length, 2);
   });
@@ -184,11 +192,13 @@ describe('CertificateController', () => {
       controller.import(
         'my cert',
         'my description',
+        undefined,
         undefined as unknown as Express.Multer.File,
         privateKeyFile,
+        undefined,
         mockRequest as CustomExpressRequest
       ),
-      { message: 'Missing "certificate" file' }
+      { message: 'Missing file "certificate"' }
     );
   });
 
@@ -199,11 +209,13 @@ describe('CertificateController', () => {
       controller.import(
         'my cert',
         'my description',
+        undefined,
         certificateFile,
         undefined as unknown as Express.Multer.File,
+        undefined,
         mockRequest as CustomExpressRequest
       ),
-      { message: 'Missing "privateKey" file' }
+      { message: 'Missing file "privateKey"' }
     );
   });
 
@@ -217,7 +229,15 @@ describe('CertificateController', () => {
     const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
 
     await assert.rejects(
-      controller.import('my cert', 'my description', certificateFile, privateKeyFile, mockRequest as CustomExpressRequest),
+      controller.import(
+        'my cert',
+        'my description',
+        undefined,
+        certificateFile,
+        privateKeyFile,
+        undefined,
+        mockRequest as CustomExpressRequest
+      ),
       { message: 'import error' }
     );
 
@@ -225,33 +245,45 @@ describe('CertificateController', () => {
   });
 
   it('should export a certificate', () => {
+    certificateService.findById = mock.fn(() => ({ ...testData.certificates.list[0], name: 'my certificate' }));
     certificateService.exportCertificate = mock.fn(() => ({
-      fileName: 'certificate.pem',
-      contentType: 'application/x-pem-file',
-      body: 'pem-content'
+      extension: 'pem',
+      content: 'pem-content'
     }));
 
-    controller.exportCertificate('test-id', mockRequest as CustomExpressRequest, 'PEM', true);
+    controller.exportCertificate('test-id', 'PEM', true, mockRequest as CustomExpressRequest);
 
     assert.deepStrictEqual(certificateService.exportCertificate.mock.calls[0].arguments, ['test-id', 'PEM', true]);
-    assert.deepStrictEqual(mockRes.attachment.mock.calls[0].arguments, ['certificate.pem']);
+    assert.deepStrictEqual(mockRes.attachment.mock.calls[0].arguments, ['my-certificate.pem']);
     assert.deepStrictEqual(mockRes.contentType.mock.calls[0].arguments, ['application/x-pem-file']);
     assert.deepStrictEqual(mockRes.status.mock.calls[0].arguments, [200]);
     assert.deepStrictEqual(mockRes.send.mock.calls[0].arguments, ['pem-content']);
   });
 
+  it('should export a certificate in DER format', () => {
+    certificateService.findById = mock.fn(() => ({ ...testData.certificates.list[0], name: 'my certificate' }));
+    certificateService.exportCertificate = mock.fn(() => ({
+      extension: 'cer',
+      content: Buffer.from('der-content')
+    }));
+
+    controller.exportCertificate('test-id', 'DER', false, mockRequest as CustomExpressRequest);
+
+    assert.deepStrictEqual(mockRes.attachment.mock.calls[0].arguments, ['my-certificate.cer']);
+    assert.deepStrictEqual(mockRes.contentType.mock.calls[0].arguments, ['application/pkix-cert']);
+    assert.deepStrictEqual(mockRes.status.mock.calls[0].arguments, [200]);
+    assert.deepStrictEqual(mockRes.send.mock.calls[0].arguments, [Buffer.from('der-content')]);
+  });
+
   it('should export the private key of a certificate', async () => {
     const command: CertificatePrivateKeyExportCommandDTO = { passphrase: 'a-strong-passphrase' };
-    certificateService.exportPrivateKey = mock.fn(async () => ({
-      fileName: 'private-key.pem',
-      contentType: 'application/x-pem-file',
-      body: 'encrypted-key-content'
-    }));
+    certificateService.findById = mock.fn(() => ({ ...testData.certificates.list[0], name: 'my certificate' }));
+    certificateService.exportPrivateKey = mock.fn(async () => 'encrypted-key-content');
 
     await controller.exportPrivateKey('test-id', command, mockRequest as CustomExpressRequest);
 
     assert.deepStrictEqual(certificateService.exportPrivateKey.mock.calls[0].arguments, ['test-id', 'a-strong-passphrase', 'test']);
-    assert.deepStrictEqual(mockRes.attachment.mock.calls[0].arguments, ['private-key.pem']);
+    assert.deepStrictEqual(mockRes.attachment.mock.calls[0].arguments, ['my-certificate-private-key.pem']);
     assert.deepStrictEqual(mockRes.contentType.mock.calls[0].arguments, ['application/x-pem-file']);
     assert.deepStrictEqual(mockRes.status.mock.calls[0].arguments, [200]);
     assert.deepStrictEqual(mockRes.send.mock.calls[0].arguments, ['encrypted-key-content']);

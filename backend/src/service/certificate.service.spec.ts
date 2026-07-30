@@ -28,7 +28,7 @@ let logger: LoggerMock;
 let service: CertificateService;
 let certPem: string;
 let privateKeyPem: string;
-let caChainPem: string;
+let certificateChainPem: string;
 
 const generateSelfSignedCertificate = (commonName: string): { pem: string; privateKeyPem: string } => {
   const keys = forge.pki.rsa.generateKeyPair(1024);
@@ -50,7 +50,7 @@ describe('Certificate Service', () => {
     const generated = generateSelfSignedCertificate('oibus-test');
     certPem = generated.pem;
     privateKeyPem = generated.privateKeyPem;
-    caChainPem = generateSelfSignedCertificate('oibus-ca').pem;
+    certificateChainPem = generateSelfSignedCertificate('oibus-ca').pem;
   });
 
   beforeEach(() => {
@@ -189,7 +189,7 @@ describe('Certificate Service', () => {
       certificateContent: Buffer.from(certPem),
       privateKeyContent: Buffer.from(privateKeyPem),
       privateKeyPassphrase: null,
-      caChainContent: null
+      certificateChainContent: null
     };
 
     const result = await service.import(command, 'userTest');
@@ -221,12 +221,12 @@ describe('Certificate Service', () => {
       certificateContent: Buffer.from(certPem),
       privateKeyContent: Buffer.from(privateKeyPem),
       privateKeyPassphrase: null,
-      caChainContent: Buffer.from(caChainPem)
+      certificateChainContent: Buffer.from(certificateChainPem)
     };
 
     await service.import(command, 'userTest');
 
-    const expectedChain = splitPemChain(certificateContentToPem(Buffer.from(caChainPem))).join('\n');
+    const expectedChain = splitPemChain(certificateContentToPem(Buffer.from(certificateChainPem))).join('\n');
     const createArgs = certificateRepository.create.mock.calls[0].arguments[0] as Record<string, unknown>;
     assert.strictEqual(createArgs.certificateChain, expectedChain);
   });
@@ -239,7 +239,7 @@ describe('Certificate Service', () => {
       certificateContent: Buffer.from(certPem),
       privateKeyContent: Buffer.from(otherKeyPem),
       privateKeyPassphrase: null,
-      caChainContent: null
+      certificateChainContent: null
     };
 
     await assert.rejects(service.import(command, 'userTest'), {
@@ -251,25 +251,25 @@ describe('Certificate Service', () => {
     certificateRepository.findById.mock.mockImplementationOnce(() => ({
       ...testData.certificates.list[0],
       certificate: certPem,
-      certificateChain: caChainPem
+      certificateChain: certificateChainPem
     }));
 
     const result = service.exportCertificate(testData.certificates.list[0].id, 'PEM', false);
 
-    assert.strictEqual(result.contentType, 'application/x-pem-file');
-    assert.strictEqual(result.body, certPem);
+    assert.strictEqual(result.extension, 'pem');
+    assert.strictEqual(result.content, certPem);
   });
 
   it('should export a certificate in PEM format including the CA chain', () => {
     certificateRepository.findById.mock.mockImplementationOnce(() => ({
       ...testData.certificates.list[0],
       certificate: certPem,
-      certificateChain: caChainPem
+      certificateChain: certificateChainPem
     }));
 
     const result = service.exportCertificate(testData.certificates.list[0].id, 'PEM', true);
 
-    assert.strictEqual(result.body, [certPem, caChainPem].join('\n'));
+    assert.strictEqual(result.content, [certPem, certificateChainPem].join(''));
   });
 
   it('should export a certificate in DER format', () => {
@@ -281,15 +281,15 @@ describe('Certificate Service', () => {
 
     const result = service.exportCertificate(testData.certificates.list[0].id, 'DER', false);
 
-    assert.strictEqual(result.contentType, 'application/pkix-cert');
-    assert.deepStrictEqual(result.body, certificatePemToDer(certPem));
+    assert.strictEqual(result.extension, 'cer');
+    assert.deepStrictEqual(result.content, certificatePemToDer(certPem));
   });
 
   it('should reject exporting the CA chain in DER format', () => {
     certificateRepository.findById.mock.mockImplementationOnce(() => ({
       ...testData.certificates.list[0],
       certificate: certPem,
-      certificateChain: caChainPem
+      certificateChain: certificateChainPem
     }));
 
     assert.throws(() => service.exportCertificate(testData.certificates.list[0].id, 'DER', true), {
@@ -318,8 +318,7 @@ describe('Certificate Service', () => {
       certificatePrivateKeyExportSchema,
       { passphrase: 'a-strong-passphrase' }
     ]);
-    assert.strictEqual(result.contentType, 'application/x-pem-file');
-    assert.ok(result.body.includes('ENCRYPTED PRIVATE KEY'));
+    assert.ok(result.includes('ENCRYPTED PRIVATE KEY'));
     assert.strictEqual(logger.info.mock.calls.length, 1);
     assert.match(logger.info.mock.calls[0].arguments[0] as string, /my certificate/);
     assert.match(logger.info.mock.calls[0].arguments[0] as string, /userTest/);

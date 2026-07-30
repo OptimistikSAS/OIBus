@@ -109,7 +109,9 @@ export default class CertificateService {
     const parsed = readCertificate(certificatePem);
     const privateKeyPem = privateKeyContentToPem(command.privateKeyContent, command.privateKeyPassphrase);
     assertKeyMatchesCertificate(parsed.pem, privateKeyPem);
-    const certificateChain = command.caChainContent ? splitPemChain(certificateContentToPem(command.caChainContent)).join('\n') : null;
+    const certificateChain = command.certificateChainContent
+      ? splitPemChain(certificateContentToPem(command.certificateChainContent)).join('\n')
+      : null;
 
     const certificate = this.certificateRepository.create({
       id: generateRandomId(6),
@@ -131,54 +133,40 @@ export default class CertificateService {
     certificateId: string,
     format: CertificateExportFormat,
     includeChain: boolean
-  ): { fileName: string; contentType: string; body: string | Buffer } {
+  ): { extension: string; content: string | Buffer } {
     const certificate = this.findById(certificateId);
-    const sanitisedName = this.sanitiseFileName(certificate.name);
 
     if (format === 'DER') {
       if (includeChain) {
         throw new OIBusValidationError('The CA chain cannot be exported in DER format');
       }
       return {
-        fileName: `${sanitisedName}.cer`,
-        contentType: 'application/pkix-cert',
-        body: certificatePemToDer(certificate.certificate)
+        extension: 'cer',
+        content: certificatePemToDer(certificate.certificate)
       };
     }
 
-    const body = [certificate.certificate, includeChain ? certificate.certificateChain : null].filter(Boolean).join('\n');
+    const content = [certificate.certificate, includeChain ? certificate.certificateChain : null].filter(Boolean).join('');
     return {
-      fileName: `${sanitisedName}.pem`,
-      contentType: 'application/x-pem-file',
-      body
+      extension: 'pem',
+      content
     };
   }
 
-  async exportPrivateKey(
-    certificateId: string,
-    passphrase: string,
-    requestedBy: string
-  ): Promise<{ fileName: string; contentType: string; body: string }> {
+  async exportPrivateKey(certificateId: string, passphrase: string, requestedBy: string): Promise<string> {
     await this.validator.validate(certificatePrivateKeyExportSchema, { passphrase });
     const certificate = this.findById(certificateId);
+    // awaited like the neighbouring encryptText call: EncryptionServiceMock declares these async
     const privateKeyPem = await this.encryptionService.decryptText(certificate.privateKey);
-    const body = privateKeyToEncryptedPkcs8Pem(privateKeyPem, passphrase);
+    const content = privateKeyToEncryptedPkcs8Pem(privateKeyPem, passphrase);
     this.logger.info(`Private key of certificate "${certificate.name}" (${certificate.id}) exported by ${requestedBy}`);
-    return {
-      fileName: `${this.sanitiseFileName(certificate.name)}-private-key.pem`,
-      contentType: 'application/x-pem-file',
-      body
-    };
+    return content;
   }
 
   delete(certificateId: string): void {
     const certificate = this.findById(certificateId);
     this.certificateRepository.delete(certificate.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-  }
-
-  private sanitiseFileName(name: string): string {
-    return name.replace(/[^a-zA-Z0-9-_]/g, '_');
   }
 }
 
