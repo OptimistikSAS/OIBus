@@ -348,6 +348,8 @@ export function buildNorthInterfaceName(connectorId: string): string {
       return 'NorthAmazonS3Settings';
     case 'azure-blob':
       return 'NorthAzureBlobSettings';
+    case 'azure-data-explorer':
+      return 'NorthAzureDataExplorerSettings';
     case 'console':
       return 'NorthConsoleSettings';
     case 'file-writer':

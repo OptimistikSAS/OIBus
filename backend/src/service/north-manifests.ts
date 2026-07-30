@@ -1,5 +1,6 @@
 import { NorthConnectorManifest } from '../../shared/model/north-connector.model';
 import azureManifest from '../north/north-azure-blob/manifest';
+import azureDataExplorerManifest from '../north/north-azure-data-explorer/manifest';
 import oianalyticsManifest from '../north/north-oianalytics/manifest';
 import fileWriterManifest from '../north/north-file-writer/manifest';
 import consoleManifest from '../north/north-console/manifest';
@@ -14,6 +15,7 @@ export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
   oianalyticsManifest,
   azureManifest,
+  azureDataExplorerManifest,
   amazonManifest,
   fileWriterManifest,
   sftpManifest,
