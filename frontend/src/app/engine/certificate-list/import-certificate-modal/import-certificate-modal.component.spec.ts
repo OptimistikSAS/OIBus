@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test } from 'vitest';
 
@@ -20,6 +20,7 @@ class ImportCertificateModalComponentTester {
   readonly privateKeyPassphrase = page.getByCss('#private-key-passphrase');
   readonly save = page.getByCss('#save-button');
   readonly cancel = page.getByCss('#cancel-button');
+  readonly error = page.getByCss('.alert-danger');
 
   constructor() {
     this.fixture.detectChanges();
@@ -103,6 +104,25 @@ describe('ImportCertificateModalComponent', () => {
       { name: 'my cert', description: '', privateKeyPassphrase: 'secret' },
       { certificate: certificateFile, privateKey: privateKeyFile, certificateChain: certificateChainFile }
     );
+  });
+
+  test('should show the backend error message when the import fails', async () => {
+    certificateService.importCertificate.mockReturnValue(throwError(() => 'boom'));
+
+    const certificateFile = new File(['cert'], 'cert.pem');
+    const privateKeyFile = new File(['key'], 'key.pem');
+
+    await tester.name.fill('my cert');
+    tester.componentInstance.onFileSelected('certificateFile', certificateFile);
+    tester.componentInstance.onFileSelected('privateKeyFile', privateKeyFile);
+    tester.fixture.detectChanges();
+
+    await tester.save.click();
+    tester.fixture.detectChanges();
+
+    expect(tester.componentInstance.error()).toBe('boom');
+    await expect.element(tester.error).toHaveTextContent('boom');
+    expect(activeModal.close).not.toHaveBeenCalled();
   });
 
   test('should reject a file that is too large', () => {

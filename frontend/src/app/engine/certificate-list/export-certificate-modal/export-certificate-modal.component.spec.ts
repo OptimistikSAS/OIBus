@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test } from 'vitest';
 
@@ -23,6 +23,7 @@ class ExportCertificateModalComponentTester {
   readonly validationErrors = page.getByCss('val-errors div');
   readonly save = page.getByCss('#save-button');
   readonly cancel = page.getByCss('#cancel-button');
+  readonly error = page.getByCss('.alert-danger');
 
   constructor() {
     this.fixture.detectChanges();
@@ -124,6 +125,17 @@ describe('ExportCertificateModalComponent', () => {
     expect(certificateService.exportCertificate).toHaveBeenCalledWith('id1', 'PEM', false, 'Certificate_1.pem');
     expect(certificateService.exportPrivateKey).toHaveBeenCalledWith('id1', 'password1', 'Certificate_1-private-key.pem');
     expect(activeModal.close).toHaveBeenCalled();
+  });
+
+  test('should show the backend error message when the export fails', async () => {
+    certificateService.exportCertificate.mockReturnValue(throwError(() => 'boom'));
+
+    await tester.save.click();
+    tester.fixture.detectChanges();
+
+    expect(tester.componentInstance.error()).toBe('boom');
+    await expect.element(tester.error).toHaveTextContent('boom');
+    expect(activeModal.close).not.toHaveBeenCalled();
   });
 
   test('should cancel', async () => {

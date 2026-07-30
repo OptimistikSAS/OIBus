@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { CertificateService } from './certificate.service';
 import { CertificateDTO } from '../../../../backend/shared/model/certificate.model';
@@ -149,5 +149,37 @@ describe('CertificateService', () => {
 
     expect(downloadService.download).toHaveBeenCalledWith(expect.anything(), 'key.pem');
     expect(done).toBe(true);
+  });
+
+  test('should surface the backend message when importing a certificate fails', () => {
+    let receivedMessage: string | null = null;
+    const certificateFile = new File(['cert'], 'cert.pem');
+    const privateKeyFile = new File(['key'], 'key.pem');
+
+    service
+      .importCertificate(
+        { name: 'my cert', description: 'desc', privateKeyPassphrase: null },
+        { certificate: certificateFile, privateKey: privateKeyFile, certificateChain: null }
+      )
+      .subscribe({ error: message => (receivedMessage = message) });
+
+    const testRequest = http.expectOne({ url: '/api/certificates/import', method: 'POST' });
+    testRequest.flush({ message: 'boom' }, { status: 400, statusText: 'Bad Request' });
+
+    expect(receivedMessage!).toBe('boom');
+  });
+
+  test('should surface the backend message when exporting a certificate fails with a blob error body', async () => {
+    let receivedMessage: string | null = null;
+
+    service.exportCertificate('id1', 'PEM', true, 'cert.pem').subscribe({ error: message => (receivedMessage = message) });
+
+    const testRequest = http.expectOne(
+      req => req.url === '/api/certificates/id1/export' && req.params.get('format') === 'PEM' && req.params.get('includeChain') === 'true'
+    );
+    const blob = new Blob([JSON.stringify({ message: 'boom' })]);
+    testRequest.flush(blob, { status: 400, statusText: 'Bad Request' });
+
+    await vi.waitFor(() => expect(receivedMessage).toBe('boom'));
   });
 });

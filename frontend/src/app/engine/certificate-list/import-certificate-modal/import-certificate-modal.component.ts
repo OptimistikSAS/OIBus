@@ -26,7 +26,7 @@ export class ImportCertificateModalComponent {
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
   state = new ObservableState();
-  error = signal(false);
+  error = signal<string | null>(null);
   fileError = signal<string | null>(null);
 
   readonly initializeFile = new File([''], 'Choose a file');
@@ -94,6 +94,7 @@ export class ImportCertificateModalComponent {
       return;
     }
 
+    this.error.set(null);
     const formValue = this.form.value;
     this.certificateService
       .importCertificate(
@@ -111,7 +112,7 @@ export class ImportCertificateModalComponent {
       .pipe(this.state.pendingUntilFinalization())
       .subscribe({
         next: (certificate: CertificateDTO) => this.modal.close(certificate),
-        error: () => this.error.set(true)
+        error: (message: string) => this.error.set(message)
       });
   }
 }

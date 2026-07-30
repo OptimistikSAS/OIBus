@@ -690,7 +690,6 @@
       "import": {
         "button": "Import",
         "title": "Import a certificate",
-        "error": "An error occurred while importing the certificate",
         "certificate-file": "Certificate file",
         "private-key-file": "Private key file",
         "certificate-chain-file": "Certificate chain file (optional)",
@@ -700,7 +699,6 @@
       },
       "export": {
         "title": "Export certificate",
-        "error": "An error occurred while exporting the certificate",
         "format": "Format",
         "include-chain": "Include CA chain",
         "include-chain-der-hint": "The CA chain cannot be included when exporting in DER format",

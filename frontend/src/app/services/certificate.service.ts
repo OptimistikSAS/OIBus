@@ -1,11 +1,41 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { BehaviorSubject, map, Observable, shareReplay, switchMap } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { HttpClient, HttpErrorResponse, HttpParams, HttpStatusCode } from '@angular/common/http';
+import { BehaviorSubject, from, map, Observable, shareReplay, switchMap, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { Service, inject } from '@angular/core';
 import { CertificateCommandDTO, CertificateDTO, CertificateExportFormat } from '../../../../backend/shared/model/certificate.model';
 import { DownloadService } from './download.service';
+import { getMessageFromHttpErrorResponse, ignoreErrorIfStatusIs } from '../shared/error-interceptor.service';
 
 const ENDPOINT = '/api/certificates';
+
+const messageFromBody = (body: unknown): string | undefined => {
+  if (!body || typeof body !== 'object') return undefined;
+  const { message, error } = body as { message?: unknown; error?: unknown };
+  // tsoa ValidateError puts a field map (not a string) in `message`
+  if (typeof message === 'string') return message;
+  if (typeof error === 'string') return error;
+  return undefined;
+};
+
+/** Rethrows the message the backend put in the error body, falling back to the generic HTTP description. */
+const rethrowServerMessage = (errorResponse: HttpErrorResponse): Observable<never> => {
+  const fallback = getMessageFromHttpErrorResponse(errorResponse);
+  if (errorResponse.error instanceof Blob) {
+    // blob responseType: the JSON error body arrives unparsed
+    return from(errorResponse.error.text()).pipe(
+      switchMap(text => {
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          parsed = undefined;
+        }
+        return throwError(() => messageFromBody(parsed) ?? fallback);
+      })
+    );
+  }
+  return throwError(() => messageFromBody(errorResponse.error) ?? fallback);
+};
 
 /**
  * Service used to interact with the backend for CRUD operations on Certificates
@@ -63,7 +93,11 @@ export class CertificateService {
       formData.set('privateKeyPassphrase', command.privateKeyPassphrase);
     }
 
-    return this.http.post<CertificateDTO>(`${ENDPOINT}/import`, formData).pipe(tap(() => this.listTrigger$.next()));
+    const context = ignoreErrorIfStatusIs(HttpStatusCode.BadRequest, HttpStatusCode.NotFound);
+    return this.http.post<CertificateDTO>(`${ENDPOINT}/import`, formData, { context }).pipe(
+      tap(() => this.listTrigger$.next()),
+      catchError(rethrowServerMessage)
+    );
   }
 
   /**
@@ -71,18 +105,24 @@ export class CertificateService {
    */
   exportCertificate(certificateId: string, format: CertificateExportFormat, includeChain: boolean, filename: string): Observable<void> {
     const params = new HttpParams().set('format', format).set('includeChain', includeChain);
+    const context = ignoreErrorIfStatusIs(HttpStatusCode.BadRequest, HttpStatusCode.NotFound);
 
-    return this.http
-      .get(`${ENDPOINT}/${certificateId}/export`, { params, responseType: 'blob', observe: 'response' })
-      .pipe(map(response => this.downloadService.download(response, filename)));
+    return this.http.get(`${ENDPOINT}/${certificateId}/export`, { params, context, responseType: 'blob', observe: 'response' }).pipe(
+      map(response => this.downloadService.download(response, filename)),
+      catchError(rethrowServerMessage)
+    );
   }
 
   /**
    * Export the encrypted private key of a certificate
    */
   exportPrivateKey(certificateId: string, passphrase: string, filename: string): Observable<void> {
+    const context = ignoreErrorIfStatusIs(HttpStatusCode.BadRequest, HttpStatusCode.NotFound);
     return this.http
-      .post(`${ENDPOINT}/${certificateId}/export/private-key`, { passphrase }, { responseType: 'blob', observe: 'response' })
-      .pipe(map(response => this.downloadService.download(response, filename)));
+      .post(`${ENDPOINT}/${certificateId}/export/private-key`, { passphrase }, { context, responseType: 'blob', observe: 'response' })
+      .pipe(
+        map(response => this.downloadService.download(response, filename)),
+        catchError(rethrowServerMessage)
+      );
   }
 }

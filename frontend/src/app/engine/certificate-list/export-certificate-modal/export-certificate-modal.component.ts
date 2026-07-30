@@ -40,7 +40,7 @@ export class ExportCertificateModalComponent {
   certificate: CertificateDTO | null = null;
   readonly formats = ALL_CERTIFICATE_EXPORT_FORMATS;
   state = new ObservableState();
-  error = signal(false);
+  error = signal<string | null>(null);
 
   form = inject(NonNullableFormBuilder).group({
     format: ['PEM' as CertificateExportFormat, Validators.required],
@@ -100,7 +100,7 @@ export class ExportCertificateModalComponent {
       return;
     }
 
-    this.error.set(false);
+    this.error.set(null);
     const formValue = this.form.getRawValue();
     const format = formValue.format;
     const sanitisedName = this.sanitise(this.certificate.name);
@@ -117,7 +117,7 @@ export class ExportCertificateModalComponent {
       .pipe(this.state.pendingUntilFinalization())
       .subscribe({
         complete: () => this.modal.close(),
-        error: () => this.error.set(true)
+        error: (message: string) => this.error.set(message)
       });
   }
 }
