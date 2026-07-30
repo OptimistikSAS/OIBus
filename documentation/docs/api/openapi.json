@@ -20675,6 +20675,264 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"NorthAzureDataExplorerSettingsAuthentication": {
+				"type": "string",
+				"enum": [
+					"aad-app-secret",
+					"aad-app-certificate",
+					"managed-identity"
+				]
+			},
+			"NorthAzureDataExplorerSettingsDataFormat": {
+				"type": "string",
+				"enum": [
+					"csv",
+					"json",
+					"multijson"
+				]
+			},
+			"NorthAzureDataExplorerSettings": {
+				"properties": {
+					"clusterUrl": {
+						"type": "string"
+					},
+					"database": {
+						"type": "string"
+					},
+					"table": {
+						"type": "string"
+					},
+					"authentication": {
+						"$ref": "#/components/schemas/NorthAzureDataExplorerSettingsAuthentication"
+					},
+					"tenantId": {
+						"type": "string",
+						"nullable": true
+					},
+					"clientId": {
+						"type": "string",
+						"nullable": true
+					},
+					"clientSecret": {
+						"type": "string",
+						"nullable": true
+					},
+					"certificateId": {
+						"type": "string",
+						"nullable": true
+					},
+					"dataFormat": {
+						"$ref": "#/components/schemas/NorthAzureDataExplorerSettingsDataFormat"
+					},
+					"ingestionMappingName": {
+						"type": "string",
+						"nullable": true
+					},
+					"useProxy": {
+						"type": "boolean"
+					},
+					"proxyUrl": {
+						"type": "string"
+					},
+					"proxyUsername": {
+						"type": "string",
+						"nullable": true
+					},
+					"proxyPassword": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"clusterUrl",
+					"database",
+					"table",
+					"authentication",
+					"dataFormat",
+					"ingestionMappingName",
+					"useProxy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"NorthConnectorAzureDataExplorerCommandDTO": {
+				"description": "North connector command for Azure Data Explorer.",
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "The name of the North connector.",
+						"example": "Debug Console Output"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"azure-data-explorer"
+						],
+						"nullable": false,
+						"description": "The type of the North connector.",
+						"example": "console"
+					},
+					"description": {
+						"type": "string",
+						"description": "The description of the North connector.",
+						"example": "Outputs data to console for debugging purposes"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the North connector is enabled.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/NorthAzureDataExplorerSettings",
+						"description": "The settings specific to the North connector type."
+					},
+					"caching": {
+						"properties": {
+							"archive": {
+								"properties": {
+									"retentionDuration": {
+										"type": "number",
+										"format": "double",
+										"description": "The duration (in ms) to retain archived files.",
+										"example": 0
+									},
+									"enabled": {
+										"type": "boolean",
+										"description": "Whether archiving is enabled.",
+										"example": false
+									}
+								},
+								"required": [
+									"retentionDuration",
+									"enabled"
+								],
+								"type": "object",
+								"description": "The archive configuration for caching."
+							},
+							"error": {
+								"properties": {
+									"retentionDuration": {
+										"type": "number",
+										"format": "double",
+										"description": "The duration (in ms) to retain error files.",
+										"example": 86400000
+									},
+									"retryCount": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum number of retry attempts.",
+										"example": 0
+									},
+									"retryInterval": {
+										"type": "number",
+										"format": "double",
+										"description": "The interval (in ms) between retry attempts.",
+										"example": 1000
+									}
+								},
+								"required": [
+									"retentionDuration",
+									"retryCount",
+									"retryInterval"
+								],
+								"type": "object",
+								"description": "The error handling configuration for caching."
+							},
+							"throttling": {
+								"properties": {
+									"maxNumberOfElements": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum number of elements in the cache before sending.",
+										"example": 100
+									},
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in bytes) of the cache before sending.",
+										"example": 1048576
+									},
+									"runMinDelay": {
+										"type": "number",
+										"format": "double",
+										"description": "The minimum delay (in ms) between runs.",
+										"example": 100
+									}
+								},
+								"required": [
+									"maxNumberOfElements",
+									"maxSize",
+									"runMinDelay"
+								],
+								"type": "object",
+								"description": "The throttling configuration for caching."
+							},
+							"trigger": {
+								"properties": {
+									"numberOfFiles": {
+										"type": "number",
+										"format": "double",
+										"description": "The number of files to trigger a send.",
+										"example": 1
+									},
+									"numberOfElements": {
+										"type": "number",
+										"format": "double",
+										"description": "The number of elements to trigger a send.",
+										"example": 1
+									},
+									"scanModeName": {
+										"type": "string",
+										"nullable": true,
+										"description": "The name of the scan mode. Used to select a scan mode when its ID is unavailable",
+										"example": null
+									},
+									"scanModeId": {
+										"type": "string",
+										"description": "The ID of the scan mode.",
+										"example": "scanModeId1"
+									}
+								},
+								"required": [
+									"numberOfFiles",
+									"numberOfElements",
+									"scanModeName",
+									"scanModeId"
+								],
+								"type": "object",
+								"description": "The trigger configuration for caching."
+							}
+						},
+						"required": [
+							"archive",
+							"error",
+							"throttling",
+							"trigger"
+						],
+						"type": "object",
+						"description": "The caching configuration for the North connector."
+					},
+					"transformers": {
+						"items": {
+							"$ref": "#/components/schemas/TransformerCommandDTOWithOptions"
+						},
+						"type": "array",
+						"description": "The list of transformers to apply to the data.",
+						"example": []
+					}
+				},
+				"required": [
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"caching",
+					"transformers"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"NorthConsoleSettings": {
 				"properties": {
 					"verbose": {
@@ -22755,6 +23013,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/NorthConnectorAzureBlobCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/NorthConnectorAzureDataExplorerCommandDTO"
 					},
 					{
 						"$ref": "#/components/schemas/NorthConnectorConsoleCommandDTO"
@@ -24941,6 +25202,27 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryQueryAzureDataExplorerNorthCommandDTO": {
+				"description": "History query north command for Azure Data Explorer.",
+				"properties": {
+					"northType": {
+						"type": "string",
+						"enum": [
+							"azure-data-explorer"
+						],
+						"nullable": false
+					},
+					"northSettings": {
+						"$ref": "#/components/schemas/NorthAzureDataExplorerSettings"
+					}
+				},
+				"required": [
+					"northType",
+					"northSettings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQueryConsoleNorthCommandDTO": {
 				"description": "History query north command for the Console debug output.",
 				"properties": {
@@ -25182,6 +25464,9 @@
 							},
 							{
 								"$ref": "#/components/schemas/HistoryQueryAzureBlobNorthCommandDTO"
+							},
+							{
+								"$ref": "#/components/schemas/HistoryQueryAzureDataExplorerNorthCommandDTO"
 							},
 							{
 								"$ref": "#/components/schemas/HistoryQueryConsoleNorthCommandDTO"
@@ -27287,6 +27572,7 @@
 					"sftp",
 					"aws-s3",
 					"azure-blob",
+					"azure-data-explorer",
 					"console",
 					"file-writer"
 				],
@@ -27297,6 +27583,7 @@
 				"enum": [
 					"file",
 					"iot",
+					"database",
 					"api",
 					"debug"
 				],
@@ -27859,6 +28146,203 @@
 					},
 					"settings": {
 						"$ref": "#/components/schemas/NorthAzureBlobSettings",
+						"description": "The settings specific to the North connector type."
+					},
+					"caching": {
+						"properties": {
+							"archive": {
+								"properties": {
+									"retentionDuration": {
+										"type": "number",
+										"format": "double",
+										"description": "The duration (in ms) to retain archived files.",
+										"example": 0
+									},
+									"enabled": {
+										"type": "boolean",
+										"description": "Whether archiving is enabled.",
+										"example": false
+									}
+								},
+								"required": [
+									"retentionDuration",
+									"enabled"
+								],
+								"type": "object",
+								"description": "The archive configuration for caching."
+							},
+							"error": {
+								"properties": {
+									"retentionDuration": {
+										"type": "number",
+										"format": "double",
+										"description": "The duration (in ms) to retain error files.",
+										"example": 86400000
+									},
+									"retryCount": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum number of retry attempts.",
+										"example": 0
+									},
+									"retryInterval": {
+										"type": "number",
+										"format": "double",
+										"description": "The interval (in ms) between retry attempts.",
+										"example": 1000
+									}
+								},
+								"required": [
+									"retentionDuration",
+									"retryCount",
+									"retryInterval"
+								],
+								"type": "object",
+								"description": "The error handling configuration for caching."
+							},
+							"throttling": {
+								"properties": {
+									"maxNumberOfElements": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum number of elements in the cache before sending.",
+										"example": 100
+									},
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in bytes) of the cache before sending.",
+										"example": 1048576
+									},
+									"runMinDelay": {
+										"type": "number",
+										"format": "double",
+										"description": "The minimum delay (in ms) between runs.",
+										"example": 100
+									}
+								},
+								"required": [
+									"maxNumberOfElements",
+									"maxSize",
+									"runMinDelay"
+								],
+								"type": "object",
+								"description": "The throttling configuration for caching."
+							},
+							"trigger": {
+								"properties": {
+									"numberOfFiles": {
+										"type": "number",
+										"format": "double",
+										"description": "The number of files to trigger a send.",
+										"example": 1
+									},
+									"numberOfElements": {
+										"type": "number",
+										"format": "double",
+										"description": "The number of elements to trigger a send.",
+										"example": 1
+									},
+									"scanMode": {
+										"$ref": "#/components/schemas/ScanModeDTO",
+										"description": "The scan mode configuration."
+									}
+								},
+								"required": [
+									"numberOfFiles",
+									"numberOfElements",
+									"scanMode"
+								],
+								"type": "object",
+								"description": "The trigger configuration for caching."
+							}
+						},
+						"required": [
+							"archive",
+							"error",
+							"throttling",
+							"trigger"
+						],
+						"type": "object",
+						"description": "The caching configuration for the North connector."
+					},
+					"transformers": {
+						"items": {
+							"$ref": "#/components/schemas/TransformerDTOWithOptions"
+						},
+						"type": "array",
+						"description": "The list of transformers applied to the data."
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"caching",
+					"transformers"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"NorthConnectorAzureDataExplorerDTO": {
+				"description": "North connector configuration for Azure Data Explorer.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the North connector.",
+						"example": "Debug Console Output"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"azure-data-explorer"
+						],
+						"nullable": false,
+						"description": "The type of the North connector.",
+						"example": "console"
+					},
+					"description": {
+						"type": "string",
+						"description": "The description of the North connector.",
+						"example": "Outputs data to console for debugging purposes"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the North connector is enabled.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/NorthAzureDataExplorerSettings",
 						"description": "The settings specific to the North connector type."
 					},
 					"caching": {
@@ -29589,6 +30073,9 @@
 						"$ref": "#/components/schemas/NorthConnectorAzureBlobDTO"
 					},
 					{
+						"$ref": "#/components/schemas/NorthConnectorAzureDataExplorerDTO"
+					},
+					{
 						"$ref": "#/components/schemas/NorthConnectorConsoleDTO"
 					},
 					{
@@ -29622,6 +30109,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/NorthAzureBlobSettings"
+					},
+					{
+						"$ref": "#/components/schemas/NorthAzureDataExplorerSettings"
 					},
 					{
 						"$ref": "#/components/schemas/NorthConsoleSettings"
@@ -32852,6 +33342,27 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryQueryAzureDataExplorerNorthDTO": {
+				"description": "History query north DTO for Azure Data Explorer.",
+				"properties": {
+					"northType": {
+						"type": "string",
+						"enum": [
+							"azure-data-explorer"
+						],
+						"nullable": false
+					},
+					"northSettings": {
+						"$ref": "#/components/schemas/NorthAzureDataExplorerSettings"
+					}
+				},
+				"required": [
+					"northType",
+					"northSettings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQueryConsoleNorthDTO": {
 				"description": "History query north DTO for the Console debug output.",
 				"properties": {
@@ -33096,6 +33607,9 @@
 							},
 							{
 								"$ref": "#/components/schemas/HistoryQueryAzureBlobNorthDTO"
+							},
+							{
+								"$ref": "#/components/schemas/HistoryQueryAzureDataExplorerNorthDTO"
 							},
 							{
 								"$ref": "#/components/schemas/HistoryQueryConsoleNorthDTO"
