@@ -5,6 +5,12 @@
 export const NORTH_AZURE_BLOB_SETTINGS_AUTHENTICATIONS = ['access-key', 'sas-token', 'aad', 'external'] as const;
 export type NorthAzureBlobSettingsAuthentication = (typeof NORTH_AZURE_BLOB_SETTINGS_AUTHENTICATIONS)[number];
 
+export const NORTH_AZURE_DATA_EXPLORER_SETTINGS_AUTHENTICATIONS = ['aad-app-secret', 'aad-app-certificate', 'managed-identity'] as const;
+export type NorthAzureDataExplorerSettingsAuthentication = (typeof NORTH_AZURE_DATA_EXPLORER_SETTINGS_AUTHENTICATIONS)[number];
+
+export const NORTH_AZURE_DATA_EXPLORER_SETTINGS_DATA_FORMATS = ['csv', 'json', 'multijson'] as const;
+export type NorthAzureDataExplorerSettingsDataFormat = (typeof NORTH_AZURE_DATA_EXPLORER_SETTINGS_DATA_FORMATS)[number];
+
 export const NORTH_MODBUS_SETTINGS_ADDRESS_OFFSETS = ['modbus', 'jbus'] as const;
 export type NorthModbusSettingsAddressOffset = (typeof NORTH_MODBUS_SETTINGS_ADDRESS_OFFSETS)[number];
 
@@ -159,6 +165,23 @@ export interface NorthAzureBlobSettings {
   proxyPassword?: string | null;
 }
 
+export interface NorthAzureDataExplorerSettings {
+  clusterUrl: string;
+  database: string;
+  table: string;
+  authentication: NorthAzureDataExplorerSettingsAuthentication;
+  tenantId?: string | null;
+  clientId?: string | null;
+  clientSecret?: string | null;
+  certificateId?: string | null;
+  dataFormat: NorthAzureDataExplorerSettingsDataFormat;
+  ingestionMappingName: string | null;
+  useProxy: boolean;
+  proxyUrl?: string;
+  proxyUsername?: string | null;
+  proxyPassword?: string | null;
+}
+
 export interface NorthConsoleSettings {
   verbose: boolean;
 }
@@ -241,6 +264,7 @@ export interface NorthSFTPSettings {
 export type NorthSettings =
   | NorthAmazonS3Settings
   | NorthAzureBlobSettings
+  | NorthAzureDataExplorerSettings
   | NorthConsoleSettings
   | NorthFileWriterSettings
   | NorthModbusSettings

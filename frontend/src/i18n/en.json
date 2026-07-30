@@ -272,11 +272,13 @@
       "debug": "Debug",
       "file": "File",
       "api": "API",
-      "iot": "IoT"
+      "iot": "IoT",
+      "database": "Database"
     },
     "oibus-north-type": {
       "aws-s3": "Amazon S3™",
       "azure-blob": "Azure Blob Storage™",
+      "azure-data-explorer": "Azure Data Explorer™",
       "console": "Console",
       "file-writer": "File writer",
       "modbus": "Modbus",
@@ -289,6 +291,7 @@
     "oibus-north-type-description": {
       "aws-s3": "Store files in Amazon S3™ (Simple Storage Service)",
       "azure-blob": "Store files in Microsoft Azure Blob Storage™",
+      "azure-data-explorer": "Ingest data into an Azure Data Explorer™ (Kusto) table",
       "console": "Display filenames or values in Console (used for debug)",
       "file-writer": "Write files and data to the output folder",
       "modbus": "Write in Modbus registers on a PLC",
@@ -767,6 +770,32 @@
             "tenant-id": "Tenant ID",
             "client-id": "Client ID",
             "client-secret": "Client secret",
+            "use-proxy": "Use proxy",
+            "proxy-url": "Proxy URL",
+            "proxy-username": "Proxy username",
+            "proxy-password": "Proxy password"
+          },
+          "azure-data-explorer": {
+            "cluster-url": "Cluster URL",
+            "database": "Database",
+            "table": "Table",
+            "authentication": {
+              "title": "Authentication",
+              "aad-app-secret": "AAD application secret",
+              "aad-app-certificate": "AAD application certificate",
+              "managed-identity": "Managed identity"
+            },
+            "tenant-id": "Tenant ID",
+            "client-id": "Client ID",
+            "client-secret": "Client secret",
+            "certificate-id": "Certificate",
+            "data-format": {
+              "title": "Data format",
+              "csv": "CSV",
+              "json": "JSON",
+              "multijson": "Multiline JSON"
+            },
+            "ingestion-mapping-name": "Ingestion mapping name",
             "use-proxy": "Use proxy",
             "proxy-url": "Proxy URL",
             "proxy-username": "Proxy username",
