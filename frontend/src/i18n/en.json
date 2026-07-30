@@ -681,7 +681,6 @@
       "days-before-expiry": "Days before expiry",
       "tooltips": {
         "add": "Add a new certificate",
-        "import": "Import a certificate",
         "export": "Export certificate",
         "edit": "Edit certificate",
         "delete": "Delete certificate",
@@ -689,16 +688,15 @@
         "copy-certificate": "Copy certificate to clipboard"
       },
       "import": {
+        "button": "Import",
         "title": "Import a certificate",
         "error": "An error occurred while importing the certificate",
         "certificate-file": "Certificate file",
         "private-key-file": "Private key file",
-        "ca-chain-file": "CA chain file (optional)",
+        "certificate-chain-file": "Certificate chain file (optional)",
         "private-key-passphrase": "Private key passphrase",
-        "private-key-passphrase-hint": "Only needed if the uploaded private key file is encrypted",
-        "choose-a-file": "Choose a file",
         "file-too-large": "The selected file is too large. Maximum size is 1 MB",
-        "files-required": "A certificate file and a private key file are required"
+        "hint": "Accepted formats: PEM, CRT, CER, DER. The passphrase is only needed if the uploaded private key file is encrypted."
       },
       "export": {
         "title": "Export certificate",

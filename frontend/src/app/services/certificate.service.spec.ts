@@ -82,7 +82,7 @@ describe('CertificateService', () => {
     service
       .importCertificate(
         { name: 'my cert', description: 'desc', privateKeyPassphrase: null },
-        { certificate: certificateFile, privateKey: privateKeyFile, caChain: null }
+        { certificate: certificateFile, privateKey: privateKeyFile, certificateChain: null }
       )
       .subscribe(certificate => (importedCertificate = certificate));
 
@@ -91,7 +91,7 @@ describe('CertificateService', () => {
     const body = testRequest.request.body as FormData;
     expect(body.get('certificate')).toBe(certificateFile);
     expect(body.get('privateKey')).toBe(privateKeyFile);
-    expect(body.get('caChain')).toBeNull();
+    expect(body.get('certificateChain')).toBeNull();
     expect(body.get('name')).toBe('my cert');
     expect(body.get('description')).toBe('desc');
     expect(body.get('privateKeyPassphrase')).toBeNull();
@@ -104,18 +104,18 @@ describe('CertificateService', () => {
   test('should import a certificate with a ca chain and passphrase', () => {
     const certificateFile = new File(['cert'], 'cert.pem');
     const privateKeyFile = new File(['key'], 'key.pem');
-    const caChainFile = new File(['chain'], 'chain.pem');
+    const certificateChainFile = new File(['chain'], 'chain.pem');
 
     service
       .importCertificate(
         { name: 'my cert', description: 'desc', privateKeyPassphrase: 'secret' },
-        { certificate: certificateFile, privateKey: privateKeyFile, caChain: caChainFile }
+        { certificate: certificateFile, privateKey: privateKeyFile, certificateChain: certificateChainFile }
       )
       .subscribe();
 
     const testRequest = http.expectOne({ url: '/api/certificates/import', method: 'POST' });
     const body = testRequest.request.body as FormData;
-    expect(body.get('caChain')).toBe(caChainFile);
+    expect(body.get('certificateChain')).toBe(certificateChainFile);
     expect(body.get('privateKeyPassphrase')).toBe('secret');
 
     testRequest.flush({ id: 'id1' });

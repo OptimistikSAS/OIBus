@@ -2,65 +2,76 @@
   <h4 class="modal-title" translate="engine.certificate.export.title"></h4>
 </div>
 <div class="modal-body">
-  <div [ngbCollapse]="!error()" class="alert alert-danger" translate="engine.certificate.export.error"></div>
-  <form [formGroup]="form" (ngSubmit)="save()" id="export-certificate-form">
-    <!-- Format -->
-    <div class="form-group">
-      <label class="form-label" translate="engine.certificate.export.format"></label>
-      <div class="form-check">
-        <input formControlName="format" type="radio" id="format-pem" class="form-check-input" value="PEM" />
-        <label class="form-check-label" for="format-pem" [translate]="'enums.certificate-export-format.PEM'"></label>
-      </div>
-      <div class="form-check">
-        <input formControlName="format" type="radio" id="format-der" class="form-check-input" value="DER" />
-        <label class="form-check-label" for="format-der" [translate]="'enums.certificate-export-format.DER'"></label>
-      </div>
-    </div>
+  <form [formGroup]="form" (ngSubmit)="save()" id="form">
+    <div [ngbCollapse]="!error()" class="alert alert-danger" translate="engine.certificate.export.error"></div>
 
-    <!-- Include chain -->
-    @if (certificate?.certificateChain) {
-      <div class="form-group">
-        <div class="form-check">
-          <input formControlName="includeChain" type="checkbox" id="include-chain" class="form-check-input" />
-          <label class="form-check-label" for="include-chain" translate="engine.certificate.export.include-chain"></label>
+    <div class="row">
+      <!-- Format -->
+      <div class="col-6">
+        <div class="form-group">
+          <label class="form-label" for="format" translate="engine.certificate.export.format"></label>
+          <select formControlName="format" class="form-select" id="format">
+            @for (format of formats; track format) {
+              <option [ngValue]="format" [translate]="'enums.certificate-export-format.' + format"></option>
+            }
+          </select>
         </div>
-        @if (form.get('format')?.value === 'DER') {
-          <small class="form-text text-muted" translate="engine.certificate.export.include-chain-der-hint"></small>
-        }
       </div>
-    }
+      <!-- Include chain -->
+      @if (certificate?.certificateChain) {
+        <div class="col-6">
+          <div class="form-group">
+            <div class="form-check form-switch">
+              <input formControlName="includeChain" type="checkbox" id="include-chain" class="form-check-input" />
+              <label class="form-check-label" for="include-chain" translate="engine.certificate.export.include-chain"></label>
+            </div>
+            @if (form.controls.format.value === 'DER') {
+              <div class="alert alert-info" translate="engine.certificate.export.include-chain-der-hint"></div>
+            }
+          </div>
+        </div>
+      }
+    </div>
 
     <!-- Include private key -->
     <div class="form-group">
-      <div class="form-check">
+      <div class="form-check form-switch">
         <input formControlName="includePrivateKey" type="checkbox" id="include-private-key" class="form-check-input" />
         <label class="form-check-label" for="include-private-key" translate="engine.certificate.export.include-private-key"></label>
       </div>
     </div>
 
     @if (form.value.includePrivateKey) {
-      <div class="alert alert-warning" translate="engine.certificate.export.private-key-warning"></div>
+      <div class="alert alert-info" translate="engine.certificate.export.private-key-warning"></div>
       <ng-container formGroupName="passphraseForm">
-        <div class="form-group">
-          <label class="form-label" for="passphrase" translate="engine.certificate.export.passphrase"></label>
-          <input formControlName="passphrase" type="password" id="passphrase" class="form-control" autocomplete="new-password" />
-          <val-errors controlName="passphrase" />
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="passphrase-confirmation" translate="engine.certificate.export.passphrase-confirmation"></label>
-          <input
-            formControlName="passphraseConfirmation"
-            type="password"
-            id="passphrase-confirmation"
-            class="form-control"
-            autocomplete="new-password"
-          />
-          <val-errors controlName="passphraseConfirmation" />
-          <val-errors [control]="form.get('passphraseForm')">
-            <ng-template valError="samePassphrase">
-              <span translate="engine.certificate.export.passphrases-not-identical"></span>
-            </ng-template>
-          </val-errors>
+        <div class="row">
+          <!-- Passphrase -->
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label" for="passphrase" translate="engine.certificate.export.passphrase"></label>
+              <input formControlName="passphrase" type="password" id="passphrase" class="form-control" autocomplete="new-password" />
+              <val-errors controlName="passphrase" />
+            </div>
+          </div>
+          <!-- Passphrase confirmation -->
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label" for="passphrase-confirmation" translate="engine.certificate.export.passphrase-confirmation"></label>
+              <input
+                formControlName="passphraseConfirmation"
+                type="password"
+                id="passphrase-confirmation"
+                class="form-control"
+                autocomplete="new-password"
+              />
+              <val-errors controlName="passphraseConfirmation" />
+              <val-errors [control]="form.controls.passphraseForm">
+                <ng-template valError="samePassphrase">
+                  <span translate="engine.certificate.export.passphrases-not-identical"></span>
+                </ng-template>
+              </val-errors>
+            </div>
+          </div>
         </div>
       </ng-container>
     }
@@ -68,7 +79,7 @@
 </div>
 <div class="modal-footer">
   <div class="btn-group">
-    <button [oib-save-button]="state" form="export-certificate-form" id="export-button"></button>
+    <button [oib-save-button]="state" form="form"></button>
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>

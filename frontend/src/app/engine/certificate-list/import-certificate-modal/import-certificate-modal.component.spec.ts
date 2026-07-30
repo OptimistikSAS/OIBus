@@ -52,8 +52,10 @@ describe('ImportCertificateModalComponent', () => {
 
   test('should not save when files are missing', async () => {
     await tester.name.fill('my cert');
-    await tester.save.click();
+    tester.fixture.detectChanges();
 
+    // the save button is force-disabled until both required files are chosen, so it cannot be clicked at all
+    await expect.element(tester.save).toBeDisabled();
     expect(certificateService.importCertificate).not.toHaveBeenCalled();
     expect(activeModal.close).not.toHaveBeenCalled();
   });
@@ -75,23 +77,23 @@ describe('ImportCertificateModalComponent', () => {
 
     expect(certificateService.importCertificate).toHaveBeenCalledWith(
       { name: 'my cert', description: 'my desc', privateKeyPassphrase: null },
-      { certificate: certificateFile, privateKey: privateKeyFile, caChain: null }
+      { certificate: certificateFile, privateKey: privateKeyFile, certificateChain: null }
     );
     expect(activeModal.close).toHaveBeenCalledWith(importedCertificate);
   });
 
-  test('should include the ca chain and passphrase when provided', async () => {
+  test('should include the certificate chain and passphrase when provided', async () => {
     const importedCertificate = { id: 'id1', name: 'my cert' } as CertificateDTO;
     certificateService.importCertificate.mockReturnValue(of(importedCertificate));
 
     const certificateFile = new File(['cert'], 'cert.pem');
     const privateKeyFile = new File(['key'], 'key.pem');
-    const caChainFile = new File(['chain'], 'chain.pem');
+    const certificateChainFile = new File(['chain'], 'chain.pem');
 
     await tester.name.fill('my cert');
     tester.componentInstance.onFileSelected('certificateFile', certificateFile);
     tester.componentInstance.onFileSelected('privateKeyFile', privateKeyFile);
-    tester.componentInstance.onFileSelected('caChainFile', caChainFile);
+    tester.componentInstance.onFileSelected('certificateChainFile', certificateChainFile);
     await tester.privateKeyPassphrase.fill('secret');
     tester.fixture.detectChanges();
 
@@ -99,7 +101,7 @@ describe('ImportCertificateModalComponent', () => {
 
     expect(certificateService.importCertificate).toHaveBeenCalledWith(
       { name: 'my cert', description: '', privateKeyPassphrase: 'secret' },
-      { certificate: certificateFile, privateKey: privateKeyFile, caChain: caChainFile }
+      { certificate: certificateFile, privateKey: privateKeyFile, certificateChain: certificateChainFile }
     );
   });
 

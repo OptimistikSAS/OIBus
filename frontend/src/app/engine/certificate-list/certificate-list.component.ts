@@ -123,7 +123,14 @@ export class CertificateListComponent {
    * Open a modal to export a certificate
    */
   exportCertificate(certificate: CertificateDTO) {
-    const modalRef = this.modalService.open(ExportCertificateModalComponent, { size: 'lg' });
+    const modalRef = this.modalService.open(ExportCertificateModalComponent, {
+      size: 'lg',
+      beforeDismiss: () => {
+        const component: ExportCertificateModalComponent = modalRef.componentInstance;
+        const result = component.canDismiss();
+        return typeof result === 'boolean' ? result : firstValueFrom(result);
+      }
+    });
     const component: ExportCertificateModalComponent = modalRef.componentInstance;
     component.prepare(certificate);
   }

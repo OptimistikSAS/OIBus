@@ -1,7 +1,7 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { concat } from 'rxjs';
+import { concat, Observable } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective } from '@ngx-translate/core';
 import {
@@ -11,6 +11,7 @@ import {
 } from '../../../../../../backend/shared/model/certificate.model';
 import { CertificateService } from '../../../services/certificate.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
+import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 
 interface PassphraseFormValue {
   passphrase: string;
@@ -27,12 +28,14 @@ function samePassphraseValidator(passphraseForm: AbstractControl): ValidationErr
 @Component({
   selector: 'oib-export-certificate-modal',
   templateUrl: './export-certificate-modal.component.html',
+  styleUrl: './export-certificate-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent, NgbCollapse]
 })
 export class ExportCertificateModalComponent {
   private modal = inject(NgbActiveModal);
   private certificateService = inject(CertificateService);
+  private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
   certificate: CertificateDTO | null = null;
   readonly formats = ALL_CERTIFICATE_EXPORT_FORMATS;
@@ -75,6 +78,13 @@ export class ExportCertificateModalComponent {
 
   prepare(certificate: CertificateDTO) {
     this.certificate = certificate;
+  }
+
+  canDismiss(): Observable<boolean> | boolean {
+    if (this.form.dirty) {
+      return this.unsavedChangesConfirmation.confirmUnsavedChanges();
+    }
+    return true;
   }
 
   private sanitise(name: string) {

@@ -49,13 +49,13 @@ export class CertificateService {
    */
   importCertificate(
     command: { name: string; description: string; privateKeyPassphrase: string | null },
-    files: { certificate: File; privateKey: File; caChain: File | null }
+    files: { certificate: File; privateKey: File; certificateChain: File | null }
   ): Observable<CertificateDTO> {
     const formData = new FormData();
     formData.set('certificate', files.certificate);
     formData.set('privateKey', files.privateKey);
-    if (files.caChain) {
-      formData.set('caChain', files.caChain);
+    if (files.certificateChain) {
+      formData.set('certificateChain', files.certificateChain);
     }
     formData.set('name', command.name);
     formData.set('description', command.description);

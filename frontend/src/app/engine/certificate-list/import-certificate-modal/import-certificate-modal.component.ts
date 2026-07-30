@@ -11,7 +11,7 @@ import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-chang
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB
 
-type FileSlot = 'certificateFile' | 'privateKeyFile' | 'caChainFile';
+type FileField = 'certificateFile' | 'privateKeyFile' | 'certificateChainFile';
 
 @Component({
   selector: 'oib-import-certificate-modal',
@@ -28,12 +28,11 @@ export class ImportCertificateModalComponent {
   state = new ObservableState();
   error = signal(false);
   fileError = signal<string | null>(null);
-  filesRequired = signal(false);
 
-  readonly initializeFile = new File([''], '');
+  readonly initializeFile = new File([''], 'Choose a file');
   certificateFile: File = this.initializeFile;
   privateKeyFile: File = this.initializeFile;
-  caChainFile: File = this.initializeFile;
+  certificateChainFile: File = this.initializeFile;
 
   form = inject(NonNullableFormBuilder).group({
     name: ['', Validators.required],
@@ -45,36 +44,32 @@ export class ImportCertificateModalComponent {
     return this.form.valid && this.certificateFile !== this.initializeFile && this.privateKeyFile !== this.initializeFile;
   }
 
-  onFileSelected(slot: FileSlot, file: File) {
+  onFileSelected(field: FileField, file: File) {
     if (file.size > MAX_FILE_SIZE) {
       this.fileError.set('file-too-large');
       return;
     }
     this.fileError.set(null);
-    this[slot] = file;
-  }
-
-  clearFile(slot: FileSlot) {
-    this[slot] = this.initializeFile;
+    this[field] = file;
   }
 
   onDragOver(e: Event) {
     e.preventDefault();
   }
 
-  onDrop(slot: FileSlot, e: DragEvent) {
+  onDrop(field: FileField, e: DragEvent) {
     e.preventDefault();
     const file = e.dataTransfer?.files?.[0];
     if (file) {
-      this.onFileSelected(slot, file);
+      this.onFileSelected(field, file);
     }
   }
 
-  onInputChange(slot: FileSlot, e: Event) {
+  onInputChange(field: FileField, e: Event) {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
     if (file) {
-      this.onFileSelected(slot, file);
+      this.onFileSelected(field, file);
     }
     input.value = '';
   }
@@ -83,7 +78,7 @@ export class ImportCertificateModalComponent {
     const hasFile =
       this.certificateFile !== this.initializeFile ||
       this.privateKeyFile !== this.initializeFile ||
-      this.caChainFile !== this.initializeFile;
+      this.certificateChainFile !== this.initializeFile;
     if (this.form.dirty || hasFile) {
       return this.unsavedChangesConfirmation.confirmUnsavedChanges();
     }
@@ -96,10 +91,8 @@ export class ImportCertificateModalComponent {
 
   save() {
     if (!this.canSave) {
-      this.filesRequired.set(this.certificateFile === this.initializeFile || this.privateKeyFile === this.initializeFile);
       return;
     }
-    this.filesRequired.set(false);
 
     const formValue = this.form.value;
     this.certificateService
@@ -112,7 +105,7 @@ export class ImportCertificateModalComponent {
         {
           certificate: this.certificateFile,
           privateKey: this.privateKeyFile,
-          caChain: this.caChainFile !== this.initializeFile ? this.caChainFile : null
+          certificateChain: this.certificateChainFile !== this.initializeFile ? this.certificateChainFile : null
         }
       )
       .pipe(this.state.pendingUntilFinalization())
