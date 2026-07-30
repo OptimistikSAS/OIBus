@@ -35,6 +35,9 @@ import { toScanModeDTO } from './scan-mode.service';
 
 const nodeRequire = createRequire(import.meta.url);
 
+// Looked up by id rather than by position: northManifestList order shifts whenever a connector is added.
+const fileWriterManifest = northManifestList.find(northManifest => northManifest.id === 'file-writer')!;
+
 const logger = new PinoLogger();
 const historyQueryRepository = new HistoryQueryRepositoryMock();
 const northConnectorRepository = new NorthConnectorRepositoryMock();
@@ -148,7 +151,7 @@ describe('History Query service', () => {
     logRepository.deleteLogsByScopeId.mock.resetCalls();
 
     // Default implementations
-    northService.getManifest.mock.mockImplementation(() => northManifestList[4]); // file-writer
+    northService.getManifest.mock.mockImplementation(() => fileWriterManifest); // file-writer
     northService.findById.mock.mockImplementation(() => testData.north.list[0]);
     southService.getManifest.mock.mockImplementation(() => southManifestList[0]); // folder-scanner
     southService.findById.mock.mockImplementation(() => testData.south.list[0]);
@@ -854,14 +857,14 @@ describe('History Query service', () => {
   it('should retrieve secrets from history query', () => {
     const historySource = JSON.parse(JSON.stringify(testData.historyQueries.list[0]));
     historySource.southType = southManifestList[4].id;
-    historySource.northType = northManifestList[4].id;
+    historySource.northType = fileWriterManifest.id;
     historyQueryRepository.findHistoryById.mock.mockImplementationOnce(() => historySource);
     const result = service.retrieveSecrets(
       undefined,
       undefined,
       testData.historyQueries.list[0].id,
       southManifestList[4],
-      northManifestList[4]
+      fileWriterManifest
     );
     assert.deepStrictEqual(historyQueryRepository.findHistoryById.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
     assert.deepStrictEqual(result, historySource);
@@ -873,7 +876,7 @@ describe('History Query service', () => {
     historyQueryRepository.findHistoryById.mock.mockImplementationOnce(() => historySource);
 
     assert.throws(
-      () => service.retrieveSecrets(undefined, undefined, testData.historyQueries.list[0].id, southManifestList[4], northManifestList[4]),
+      () => service.retrieveSecrets(undefined, undefined, testData.historyQueries.list[0].id, southManifestList[4], fileWriterManifest),
       new Error(
         `History query "${historySource.id}" (South type "${historySource.southType}") must be of the South type "${southManifestList[4].id}"`
       )
@@ -887,9 +890,9 @@ describe('History Query service', () => {
     historyQueryRepository.findHistoryById.mock.mockImplementationOnce(() => historySource);
 
     assert.throws(
-      () => service.retrieveSecrets(undefined, undefined, testData.historyQueries.list[0].id, southManifestList[4], northManifestList[4]),
+      () => service.retrieveSecrets(undefined, undefined, testData.historyQueries.list[0].id, southManifestList[4], fileWriterManifest),
       new Error(
-        `History query "${historySource.id}" (North type "${historySource.northType}") must be of the North type "${northManifestList[4].id}"`
+        `History query "${historySource.id}" (North type "${historySource.northType}") must be of the North type "${fileWriterManifest.id}"`
       )
     );
     assert.deepStrictEqual(historyQueryRepository.findHistoryById.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
@@ -902,7 +905,7 @@ describe('History Query service', () => {
       testData.north.list[0].id,
       undefined,
       southManifestList[4],
-      northManifestList[4]
+      fileWriterManifest
     );
 
     assert.deepStrictEqual(result, {
@@ -917,7 +920,7 @@ describe('History Query service', () => {
   it('should retrieve secrets from south only', () => {
     southService.findById.mock.mockImplementationOnce(() => testData.south.list[1]); // retrieve the mssql connector
 
-    const result = service.retrieveSecrets(testData.south.list[1].id, undefined, undefined, southManifestList[4], northManifestList[4]);
+    const result = service.retrieveSecrets(testData.south.list[1].id, undefined, undefined, southManifestList[4], fileWriterManifest);
 
     assert.deepStrictEqual(result, {
       southType: testData.south.list[1].type,
@@ -927,7 +930,7 @@ describe('History Query service', () => {
   });
 
   it('should retrieve secrets from north only', () => {
-    const result = service.retrieveSecrets(undefined, testData.north.list[0].id, undefined, southManifestList[4], northManifestList[4]);
+    const result = service.retrieveSecrets(undefined, testData.north.list[0].id, undefined, southManifestList[4], fileWriterManifest);
 
     assert.deepStrictEqual(result, {
       items: [],
@@ -943,13 +946,7 @@ describe('History Query service', () => {
 
     assert.throws(
       () =>
-        service.retrieveSecrets(
-          testData.south.list[0].id,
-          testData.north.list[0].id,
-          undefined,
-          southManifestList[4],
-          northManifestList[4]
-        ),
+        service.retrieveSecrets(testData.south.list[0].id, testData.north.list[0].id, undefined, southManifestList[4], fileWriterManifest),
       new Error(`South connector "${testData.south.list[0].id}" (type "${south.type}") must be of the type "${southManifestList[4].id}"`)
     );
   });
@@ -963,19 +960,13 @@ describe('History Query service', () => {
 
     assert.throws(
       () =>
-        service.retrieveSecrets(
-          testData.north.list[0].id,
-          testData.north.list[0].id,
-          undefined,
-          southManifestList[4],
-          northManifestList[4]
-        ),
-      new Error(`North connector "${testData.north.list[0].id}" (type "${north.type}") must be of the type "${northManifestList[4].id}"`)
+        service.retrieveSecrets(testData.north.list[0].id, testData.north.list[0].id, undefined, southManifestList[4], fileWriterManifest),
+      new Error(`North connector "${testData.north.list[0].id}" (type "${north.type}") must be of the type "${fileWriterManifest.id}"`)
     );
   });
 
   it('should return null', () => {
-    assert.strictEqual(service.retrieveSecrets(undefined, undefined, undefined, southManifestList[4], northManifestList[4]), null);
+    assert.strictEqual(service.retrieveSecrets(undefined, undefined, undefined, southManifestList[4], fileWriterManifest), null);
   });
 
   it('should properly convert to DTO', () => {

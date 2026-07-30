@@ -8,7 +8,7 @@ describe('northManifestList', () => {
   });
 
   it('contains one manifest per registered north connector', () => {
-    assert.equal(northManifestList.length, 10);
+    assert.equal(northManifestList.length, 11);
   });
 
   it('contains only manifests with a non-empty unique id', () => {
@@ -22,7 +22,19 @@ describe('northManifestList', () => {
 
   it('includes the expected connector ids', () => {
     const ids: Array<string> = northManifestList.map(manifest => manifest.id);
-    for (const expected of ['console', 'oianalytics', 'azure-blob', 'aws-s3', 'file-writer', 'sftp', 'rest', 'opcua', 'modbus', 'mqtt']) {
+    for (const expected of [
+      'console',
+      'oianalytics',
+      'azure-blob',
+      'azure-data-explorer',
+      'aws-s3',
+      'file-writer',
+      'sftp',
+      'rest',
+      'opcua',
+      'modbus',
+      'mqtt'
+    ]) {
       assert.ok(ids.includes(expected), `expected northManifestList to include '${expected}'`);
     }
   });
