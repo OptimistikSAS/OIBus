@@ -42,7 +42,9 @@ html {
   padding: 0.75rem 0.75rem 1rem;
 }
 
-.settings-summary-chip {
+// specificity must beat the global .btn-link white (that rule targets buttons in the dark
+// oib-box-title bars; this chip sits on the light testing-item-panel background instead)
+.btn-link.settings-summary-chip {
   color: $darkGrey;
   text-decoration: none;
 

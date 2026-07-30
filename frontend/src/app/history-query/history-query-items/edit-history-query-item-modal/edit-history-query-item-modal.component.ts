@@ -21,6 +21,7 @@ import SouthItemTestComponent from '../../../south/south-items/south-item-test/s
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../../backend/shared/model/history-query.model';
 import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
+import { HistoryTransformerDTOWithOptions } from '../../../../../../backend/shared/model/transformer.model';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 
 @Component({
@@ -53,6 +54,12 @@ export class EditHistoryQueryItemModalComponent {
   mode: 'create' | 'edit' | 'copy' = 'create';
   /** True when opened from history-query-detail (saves directly to API); false when opened from edit-history-query (changes are applied in-memory). */
   directSave = true;
+  /**
+   * Set by edit-history-query (in-memory editing) to the history query's current, possibly-unsaved
+   * transformer list, so the item-test panel offers them instead of fetching the last-saved state.
+   * Left null when opened from history-query-detail, where a fetch is already accurate.
+   */
+  inMemoryTransformers: Array<HistoryTransformerDTOWithOptions> | null = null;
   state = new ObservableState();
   historyId!: string;
   fromSouth: string | null = null;

@@ -2138,8 +2138,9 @@ describe('OIAnalytics Command Service', () => {
       }
     } as OIBusTestHistoryQuerySouthItemCommand;
 
-    const rawContent: OIBusContent = { type: 'any-content', content: '' };
-    const testItemResult = { raw: rawContent, transformed: null, connectionDuration: 0, queryDuration: 0 };
+    const rawContent: OIBusContent = { type: 'any-content', content: 'raw content' };
+    const transformedContent: OIBusContent = { type: 'any-content', content: 'transformed content' };
+    const testItemResult = { raw: rawContent, transformed: transformedContent, connectionDuration: 56, queryDuration: 78 };
     oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     historyQueryService.testItem.mock.mockImplementationOnce(async () => testItemResult);
     southService.listManifest.mock.mockImplementationOnce(() => [
@@ -2148,8 +2149,6 @@ describe('OIAnalytics Command Service', () => {
         id: command.commandContent.historyCommand.southType
       }
     ]);
-    const completeTestItemMock = mock.fn();
-    (service as unknown as { completeTestItemCommand: typeof completeTestItemMock }).completeTestItemCommand = completeTestItemMock;
 
     await service.processNextCommand();
 
@@ -2162,7 +2161,62 @@ describe('OIAnalytics Command Service', () => {
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings
     ]);
-    assert.deepStrictEqual(completeTestItemMock.mock.calls[0].arguments, [command, testItemResult]);
+    // History query item tests now keep the full raw → transformer → output pipeline, same as
+    // south-item tests, instead of collapsing to a single result.
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify({
+        raw: { ...rawContent, truncated: false, totalSize: 0 },
+        transformed: { ...transformedContent, truncated: false, totalSize: 0 },
+        connectionDuration: 56,
+        queryDuration: 78
+      })
+    ]);
+  });
+
+  it('should execute test-history-query-south-item command and store transformed: null when there is no transformer', async () => {
+    const command: OIBusTestHistoryQuerySouthItemCommand = {
+      id: 'testHistoryQuerySouthItemNoTransformId',
+      type: 'test-history-query-south-item',
+      targetVersion: testData.engine.settings.version,
+      historyQueryId: 'historyId',
+      itemId: 'itemId',
+      southConnectorId: 'southConnectorId',
+      commandContent: {
+        historyCommand: testData.historyQueries.command,
+        itemCommand: testData.historyQueries.itemCommand,
+        testingSettings: {} as SouthConnectorItemTestingSettings
+      }
+    } as OIBusTestHistoryQuerySouthItemCommand;
+
+    const rawContent: OIBusContent = { type: 'any-content', content: 'raw content' };
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+    historyQueryService.testItem.mock.mockImplementationOnce(async () => ({
+      raw: rawContent,
+      transformed: null,
+      connectionDuration: 0,
+      queryDuration: 0
+    }));
+    southService.listManifest.mock.mockImplementationOnce(() => [
+      {
+        ...testData.south.manifest,
+        id: command.commandContent.historyCommand.southType
+      }
+    ]);
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify({
+        raw: { ...rawContent, truncated: false, totalSize: 0 },
+        transformed: null,
+        connectionDuration: 0,
+        queryDuration: 0
+      })
+    ]);
   });
 
   it('should execute update-history-query-status command', async () => {
@@ -2927,17 +2981,17 @@ describe('OIAnalytics Command service with no commands and without update', () =
       queryDuration: 10
     };
     (
-      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void }
-    ).completeTestItemCommand(command, result);
+      service as unknown as {
+        completeDualResultTestCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void;
+      }
+    ).completeDualResultTestCommand(command, result);
 
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[0].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({
-        type: 'time-values',
-        content: content.slice(0, 1000),
-        truncated: true,
-        totalSize: 2000,
+        raw: { type: 'time-values', content: content.slice(0, 1000), truncated: true, totalSize: 2000 },
+        transformed: null,
         connectionDuration: 5,
         queryDuration: 10
       })
@@ -2951,12 +3005,19 @@ describe('OIAnalytics Command service with no commands and without update', () =
       queryDuration: 10
     };
     (
-      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void }
-    ).completeTestItemCommand(command, result2);
+      service as unknown as {
+        completeDualResultTestCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void;
+      }
+    ).completeDualResultTestCommand(command, result2);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
-      JSON.stringify({ type: 'time-values', content: content2, truncated: false, totalSize: 10, connectionDuration: 5, queryDuration: 10 })
+      JSON.stringify({
+        raw: { type: 'time-values', content: content2, truncated: false, totalSize: 10 },
+        transformed: null,
+        connectionDuration: 5,
+        queryDuration: 10
+      })
     ]);
   });
 
@@ -2977,17 +3038,16 @@ describe('OIAnalytics Command service with no commands and without update', () =
     const content: OIBusContent = { type: 'any', filePath: 'file.csv', content: 'content' };
     const result: SouthConnectorItemTestResult = { raw: content, transformed: null, connectionDuration: 5, queryDuration: 10 };
     (
-      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void }
-    ).completeTestItemCommand(command, result);
+      service as unknown as {
+        completeDualResultTestCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void;
+      }
+    ).completeDualResultTestCommand(command, result);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[0].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({
-        type: 'any',
-        filePath: 'file.csv',
-        content: content.content,
-        truncated: false,
-        totalSize: content.content!.length,
+        raw: { type: 'any', filePath: 'file.csv', content: content.content, truncated: false, totalSize: content.content!.length },
+        transformed: null,
         connectionDuration: 5,
         queryDuration: 10
       })
@@ -2997,17 +3057,16 @@ describe('OIAnalytics Command service with no commands and without update', () =
     const fileContent2: OIBusContent = { type: 'any', filePath: 'file.csv', content: content2 };
     const result2: SouthConnectorItemTestResult = { raw: fileContent2, transformed: null, connectionDuration: 5, queryDuration: 10 };
     (
-      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void }
-    ).completeTestItemCommand(command, result2);
+      service as unknown as {
+        completeDualResultTestCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void;
+      }
+    ).completeDualResultTestCommand(command, result2);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({
-        type: 'any',
-        filePath: 'file.csv',
-        content: content2.slice(0, 1024 * 500),
-        truncated: true,
-        totalSize: 1025 * 500,
+        raw: { type: 'any', filePath: 'file.csv', content: content2.slice(0, 1024 * 500), truncated: true, totalSize: 1025 * 500 },
+        transformed: null,
         connectionDuration: 5,
         queryDuration: 10
       })
@@ -3016,12 +3075,19 @@ describe('OIAnalytics Command service with no commands and without update', () =
     const fileContent3: OIBusContent = { type: 'any', filePath: 'file.csv' };
     const result3: SouthConnectorItemTestResult = { raw: fileContent3, transformed: null, connectionDuration: 5, queryDuration: 10 };
     (
-      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void }
-    ).completeTestItemCommand(command, result3);
+      service as unknown as {
+        completeDualResultTestCommand(cmd: OIBusTestSouthConnectorItemCommand, r: SouthConnectorItemTestResult): void;
+      }
+    ).completeDualResultTestCommand(command, result3);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[2].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
-      JSON.stringify({ type: 'any', filePath: 'file.csv', truncated: false, totalSize: 0, connectionDuration: 5, queryDuration: 10 })
+      JSON.stringify({
+        raw: { type: 'any', filePath: 'file.csv', truncated: false, totalSize: 0 },
+        transformed: null,
+        connectionDuration: 5,
+        queryDuration: 10
+      })
     ]);
   });
 
