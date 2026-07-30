@@ -11,5 +11,6 @@ describe('OIBusNorthCategoryEnumPipe', () => {
     expect(pipe.transform('file')).toBe('File');
     expect(pipe.transform('api')).toBe('API');
     expect(pipe.transform('iot')).toBe('IoT');
+    expect(pipe.transform('database')).toBe('Database');
   });
 });
