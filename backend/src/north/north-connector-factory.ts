@@ -5,6 +5,7 @@ import type { ICacheService } from '../model/cache.service.model';
 import NorthAmazonS3 from './north-amazon-s3/north-amazon-s3';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import NorthAzureBlob from './north-azure-blob/north-azure-blob';
+import NorthAzureDataExplorer from './north-azure-data-explorer/north-azure-data-explorer';
 import NorthConsole from './north-console/north-console';
 import NorthFileWriter from './north-file-writer/north-file-writer';
 import NorthModbus from './north-modbus/north-modbus';
@@ -16,6 +17,7 @@ import NorthSFTP from './north-sftp/north-sftp';
 import {
   NorthAmazonS3Settings,
   NorthAzureBlobSettings,
+  NorthAzureDataExplorerSettings,
   NorthConsoleSettings,
   NorthFileWriterSettings,
   NorthModbusSettings,
@@ -45,6 +47,12 @@ export const buildNorth = (
       return new NorthAmazonS3(settings as NorthConnectorEntity<NorthAmazonS3Settings>, orchestrator);
     case 'azure-blob':
       return new NorthAzureBlob(settings as NorthConnectorEntity<NorthAzureBlobSettings>, orchestrator);
+    case 'azure-data-explorer':
+      return new NorthAzureDataExplorer(
+        settings as NorthConnectorEntity<NorthAzureDataExplorerSettings>,
+        orchestrator,
+        certificateRepository
+      );
     case 'console':
       return new NorthConsole(settings as NorthConnectorEntity<NorthConsoleSettings>, orchestrator);
     case 'file-writer':

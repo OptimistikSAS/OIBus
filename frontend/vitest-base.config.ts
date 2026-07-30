@@ -5,6 +5,9 @@ export default defineConfig({
     restoreMocks: true,
     browser: {
       screenshotFailures: false,
+      api: {
+        host: '127.0.0.1'
+      },
       server: {
         host: '127.0.0.1'
       }

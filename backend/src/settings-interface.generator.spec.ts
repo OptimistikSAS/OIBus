@@ -112,6 +112,7 @@ describe('settings-interface.generator', () => {
     const cases: Array<[string, string]> = [
       ['aws-s3', 'NorthAmazonS3Settings'],
       ['azure-blob', 'NorthAzureBlobSettings'],
+      ['azure-data-explorer', 'NorthAzureDataExplorerSettings'],
       ['console', 'NorthConsoleSettings'],
       ['file-writer', 'NorthFileWriterSettings'],
       ['oianalytics', 'NorthOIAnalyticsSettings'],
