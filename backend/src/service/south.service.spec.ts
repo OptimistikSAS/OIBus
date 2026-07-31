@@ -1028,9 +1028,9 @@ describe('South Service', () => {
           group: null,
           maxReadInterval: 0,
           startTimeOffset: 0,
-          endTimeOffset: null,
+          endTimeOffset: 0,
           readDelay: 0,
-          recoveryStrategy: null,
+          recoveryStrategy: 'oldest',
           syncWithGroup: true
         }
       ],
@@ -1144,9 +1144,9 @@ describe('South Service', () => {
           group: null,
           maxReadInterval: 0,
           startTimeOffset: 0,
-          endTimeOffset: null,
+          endTimeOffset: 0,
           readDelay: 0,
-          recoveryStrategy: null,
+          recoveryStrategy: 'oldest',
           syncWithGroup: true
         }
       ],
@@ -1199,9 +1199,9 @@ describe('South Service', () => {
           group: { id: '', standardSettings: { name: 'Test Group' } },
           maxReadInterval: 0,
           startTimeOffset: 0,
-          endTimeOffset: null,
+          endTimeOffset: 0,
           readDelay: 0,
-          recoveryStrategy: null,
+          recoveryStrategy: 'oldest',
           syncWithGroup: true
         }
       ],
@@ -1252,9 +1252,9 @@ describe('South Service', () => {
           group: { id: '', standardSettings: { name: 'Test Group' } },
           maxReadInterval: 0,
           startTimeOffset: 0,
-          endTimeOffset: null,
+          endTimeOffset: 0,
           readDelay: 0,
-          recoveryStrategy: null,
+          recoveryStrategy: 'oldest',
           syncWithGroup: true
         }
       ],
@@ -1361,6 +1361,11 @@ describe('South Service', () => {
     const saveAllItemsCall = southConnectorRepository.saveAllItems.mock.calls[0];
     const savedItems = saveAllItemsCall.arguments[1] as Array<{ group: unknown }>;
     assert.deepStrictEqual(savedItems[0].group, newGroup);
+
+    // The group snapshot taken before creation is empty; the newly created group must be added to it,
+    // otherwise checkGroups() (real implementation) would throw "Group not found" for every item in it.
+    assert.strictEqual(mockUtils.checkGroups.mock.calls.length, 1);
+    assert.deepStrictEqual(mockUtils.checkGroups.mock.calls[0].arguments, [[newGroup], 'newGroupId', null]);
   });
 
   it('should create a new group using the startTimeOffset, endTimeOffset, maxReadInterval, readDelay and recoveryStrategy of the first item where the group is noticed', async () => {
@@ -1461,9 +1466,11 @@ describe('South Service', () => {
     assert.strictEqual(southItemGroupRepository.create.mock.calls[0].arguments[0].name, 'Group1');
 
     // The item must resolve to the newly created group's id rather than falling through with the
-    // untrimmed group name (which would previously throw `Group "Group1\t" not found`)
+    // untrimmed group name (which would previously throw `Group "Group1\t" not found`). The newly
+    // created group must also be present in the `groups` list passed to checkGroups (which is a
+    // snapshot taken before this group existed) or checkGroups would throw `Group not found`.
     assert.strictEqual(mockUtils.checkGroups.mock.calls.length, 1);
-    assert.deepStrictEqual(mockUtils.checkGroups.mock.calls[0].arguments, [[], 'newGroupId', null]);
+    assert.deepStrictEqual(mockUtils.checkGroups.mock.calls[0].arguments, [[newGroup], 'newGroupId', null]);
   });
 
   it('should import items with groupName and use existing group when it exists', async () => {

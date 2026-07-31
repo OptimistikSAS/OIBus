@@ -430,7 +430,15 @@ export class SouthDetailComponent {
   importItems() {
     const modal = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
     const expectedHeaders = ['name', 'enabled', 'scanMode'];
-    const optionalHeaders: Array<string> = ['group', 'maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'syncWithGroup'];
+    const optionalHeaders: Array<string> = [
+      'group',
+      'maxReadInterval',
+      'readDelay',
+      'startTimeOffset',
+      'endTimeOffset',
+      'recoveryStrategy',
+      'syncWithGroup'
+    ];
     const settingsAttribute = this.manifest!.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
