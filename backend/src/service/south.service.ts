@@ -14,6 +14,7 @@ import {
   SouthConnectorLightDTO,
   SouthConnectorManifest,
   SouthConnectorTypedDTO,
+  SouthHistoryRecoveryStrategy,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO,
   SouthItemLastValue
@@ -584,8 +585,8 @@ export default class SouthService {
         maxReadInterval: Number(data.maxReadInterval || '0'),
         readDelay: Number(data.readDelay || '0'),
         startTimeOffset: Number(data.startTimeOffset || '0'),
-        endTimeOffset: data.endTimeOffset !== undefined && data.endTimeOffset !== '' ? Number(data.endTimeOffset) : null,
-        recoveryStrategy: null
+        endTimeOffset: Number(data.endTimeOffset || '0'),
+        recoveryStrategy: (data.recoveryStrategy ? data.recoveryStrategy : 'oldest') as SouthHistoryRecoveryStrategy
       } as SouthConnectorItemDTO;
 
       if (existingItems.find(existingItem => existingItem.name === item.name)) {
@@ -680,6 +681,9 @@ export default class SouthService {
           recoveryStrategy: itemWithGroup.recoveryStrategy
         };
         group = this.southItemGroupRepository.create(groupEntity, user);
+        // Newly created groups aren't in the `groups` snapshot taken above; without this, checkGroups()
+        // below would fail to resolve them and throw "Group not found" for every item in a brand-new group.
+        groups.push(group);
       }
       groupNameToIdMap.set(groupName, group.id);
     }
