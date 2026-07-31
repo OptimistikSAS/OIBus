@@ -13,13 +13,13 @@ Change the password immediately after your first login in the [User Settings](#u
 :::
 
 :::note Port configuration
-The default port **2223** can be changed in [Engine Settings](../engine/engine-settings.mdx#oibus-port) if it conflicts with another service.
+The default port **2223** can be changed in [Engine Settings](../engine/engine-settings.mdx#port) if it conflicts with another service.
 :::
 
 ## Home Page
 
-The home page gives a real-time overview of your OIBus instance: enabled South and North connectors are listed with
-their live metrics, and the engine status is shown at the top.
+The home page gives a real-time overview of your OIBus instance: enabled North connectors are listed with their
+live metrics first, followed by the engine status, then the enabled South connectors.
 
 <div style={{ textAlign: 'center' }}>![Home page](../../../static/img/guide/installation/first_access/home-page.png)</div>
 
@@ -30,19 +30,26 @@ inspect detailed metrics and cache status.
 
 The engine page is the control centre for OIBus-wide settings. From here you can configure:
 
-- [Engine settings](../engine/engine-settings.mdx) (name, port, proxy server)
+- General settings (name)
+- [Web server settings](../engine/engine-settings.mdx#web-server) (port, authentication duration)
+- [Proxy server](../engine/engine-settings.mdx#proxy-server)
 - [Logging parameters](../engine/engine-settings.mdx#logging-parameters)
 - [Scan Modes](../engine/scan-modes.mdx)
 - [IP Filters](../engine/ip-filters.mdx)
+- Certificates
+- Transformers
+
+The **OIAnalytics** button at the top of the page opens the [OIAnalytics registration](./oianalytics.mdx) settings.
 
 <div style={{ textAlign: 'center' }}>![Engine](../../../static/img/guide/installation/first_access/engine.png)</div>
 
 :::note Restart button
-The **Restart** button works only when OIBus is running as a system service. It signals the service manager
-to stop and restart the process — the service itself handles the actual restart.
+The **Restart** button stops the OIBus process. It comes back up automatically only when OIBus runs under the
+**OIBus Launcher** (`oibus-launcher`), which is how the installed system service runs it — the launcher detects
+that the OIBus process exited and starts it again.
 
-If OIBus is started manually (e.g. from a terminal), the restart button will stop the process without
-bringing it back up automatically.
+If the `oibus` binary is started directly (e.g. from a terminal, without the launcher), the restart button will
+stop the process without bringing it back up automatically.
 :::
 
 :::tip Allow remote access
@@ -52,18 +59,20 @@ See [IP Filters](../engine/ip-filters.mdx) for details.
 
 ### Engine Metrics
 
-The engine display page shows real-time resource usage for the OIBus process:
+The engine display page shows real-time resource usage for the OIBus process, tracked since the last time metrics
+were reset (a **Reset metrics** button is available on this page):
 
-| Metric              | Description                                                                   |
-| ------------------- | ----------------------------------------------------------------------------- |
-| **CPU usage**       | Instantaneous CPU usage and rolling average over recent intervals.            |
-| **Uptime**          | Time elapsed since the OIBus process last started.                            |
-| **Free memory**     | Percentage of system memory currently available.                              |
-| **RAM usage**       | Process memory resident in RAM — minimum, current, and maximum since startup. |
-| **Heap total**      | Total memory allocated for the JavaScript heap.                               |
-| **Heap used**       | Memory actively used within the heap.                                         |
-| **External memory** | Memory used by native extensions (e.g., C++ bindings).                        |
-| **Array buffer**    | Memory allocated for binary data buffers.                                     |
+| Metric                                     | Description                                              |
+| ------------------------------------------- | ---------------------------------------------------------- |
+| **CPU usage (last second)**                 | CPU usage over the last second.                          |
+| **CPU usage (average)**                     | Rolling average CPU usage since metrics were last reset. |
+| **Uptime**                                  | Time elapsed since the OIBus process last started.       |
+| **Free memory**                             | Percentage of system memory currently available.         |
+| **RAM usage (min / current / max)**         | Process memory resident in RAM since metrics were reset. |
+| **Heap total (min / current / max)**        | Total memory allocated for the JavaScript heap.          |
+| **Heap used (min / current / max)**         | Memory actively used within the heap.                    |
+| **External memory (min / current / max)**   | Memory used by native extensions (e.g., C++ bindings).   |
+| **Array buffer (min / current / max)**      | Memory allocated for binary data buffers.                |
 
 ## North Connectors
 
@@ -112,9 +121,9 @@ Click **+** to create a new history query.
 
 <div style={{ textAlign: 'center' }}>![History Queries](../../../static/img/guide/installation/first_access/history-query.png)</div>
 
-Each history query in the list has the following actions on the right-hand side:
+Each history query in the list has the following actions on the right-hand side, depending on its current status:
 
-- **Start / Pause** — begin or suspend the query execution
+- **Start / Pause / Resume / Restart** — control the query's execution
 - **Display** — open the query's monitoring page (progress, metrics)
 - **Edit** — modify the query's settings
 - **Duplicate** — create a copy of the query
@@ -133,20 +142,24 @@ The log page displays OIBus runtime logs and refreshes automatically every 10 se
 
 Use the filters to narrow down what you see:
 
-| Filter         | Description                                                                            |
-| -------------- | -------------------------------------------------------------------------------------- |
-| **Date range** | Show only logs within a specific time window.                                          |
-| **Level**      | Filter by severity: `trace`, `debug`, `info`, `warn`, `error`.                         |
-| **Scope**      | Restrict logs to the engine, a South connector, a North connector, or a history query. |
-| **Message**    | Search by free text within log message content.                                        |
+| Filter         | Description                                                                                  |
+| -------------- | ---------------------------------------------------------------------------------------------|
+| **Date range** | Show only logs within a specific time window.                                                |
+| **Level**      | Filter by severity, selected as clickable chips: `trace`, `debug`, `info`, `warn`, `error`.   |
+| **Scope type** | Filter by category, also selected as clickable chips: engine, South, North, or history query. |
+| **Scope**      | Restrict logs to a specific South connector, North connector, or history query.              |
+| **Item**       | Restrict logs to a specific South/history query item.                                        |
+| **Group**      | Restrict logs to a specific South item group.                                                |
+| **Message**    | Search by free text within log message content.                                              |
 
-Log verbosity is configured per destination (console, file, database, OIAnalytics) in
+Log verbosity is configured per destination (console, file, database, Loki, Syslog, OIAnalytics) in
 [Engine Settings → Logging Parameters](../engine/engine-settings.mdx#logging-parameters).
 
 ## About
 
-The **About** page shows version and build information for the running OIBus instance, along with a link to this
-documentation.
+The **About** page shows the OIBus version, launcher version, and runtime environment details (executable path,
+data folder, operating system, architecture, process ID, hostname), along with a license link and a link to the
+official OIBus site.
 
 <div style={{ textAlign: 'center' }}>![About](../../../static/img/guide/installation/first_access/about.png)</div>
 
@@ -154,12 +167,14 @@ Use this page to confirm the exact version when reporting issues or checking com
 
 ## User Settings
 
-The **User Settings** page lets you update your account password and set the timezone used for date and time
-displays throughout the interface.
+The **User Settings** page lets you update your account's name, set the timezone used for date and time displays
+throughout the interface, and change your login password.
 
 <div style={{ textAlign: 'center' }}>![User settings](../../../static/img/guide/installation/first_access/user-settings.png)</div>
 
-| Setting      | Description                                                          |
-| ------------ | -------------------------------------------------------------------- |
-| **Password** | Change the current user's login password.                            |
-| **Timezone** | Select the timezone for all date/time values shown in the interface. |
+| Setting        | Description                                                            |
+| -------------- | ------------------------------------------------------------------------ |
+| **First name** | The user's first name.                                                |
+| **Last name**  | The user's last name.                                                 |
+| **Timezone**   | Select the timezone for all date/time values shown in the interface.  |
+| **Password**   | Change the current user's login password (via a separate dialog).     |

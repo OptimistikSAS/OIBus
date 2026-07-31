@@ -15,14 +15,18 @@ data operations at specific dates and intervals.
 
 OIBus provides six built-in scan modes for common scheduling needs:
 
-| Scan Mode        | Cron Expression | Description                                     |
-| ---------------- | --------------- | ----------------------------------------------- |
-| Every second     | `* * * * * *`   | Runs every second.                              |
-| Every 10 seconds | `/10 * * * * *` | Runs every 10 seconds.                          |
-| Every minute     | `0 * * * * *`   | Runs every minute at the 0-second mark.         |
-| Every 10 minutes | `0 /10 * * * *` | Runs every 10 minutes at the 0-second mark.     |
-| Every hour       | `0 0 * * * *`   | Runs every hour at the 0-minute, 0-second mark. |
-| Every 24 hours   | `0 0 0 * * *`   | Runs daily at midnight (00:00:00).              |
+| Scan Mode        | Cron Expression  | Description                                     |
+| ---------------- | ---------------- | ------------------------------------------------ |
+| Every second     | `* * * * * *`    | Runs every second.                              |
+| Every 10 seconds | `*/10 * * * * *` | Runs every 10 seconds.                          |
+| Every minute     | `0 * * * * *`    | Runs every minute at the 0-second mark.         |
+| Every 10 minutes | `0 */10 * * * *` | Runs every 10 minutes at the 0-second mark.     |
+| Every hour       | `0 0 * * * *`    | Runs every hour at the 0-minute, 0-second mark. |
+| Every 24 hours   | `0 0 0 * * *`    | Runs daily at midnight (00:00:00).              |
+
+A seventh, non-editable **Subscription** scan mode also exists (with no cron expression) for South connectors
+that push data as it arrives rather than on a schedule (e.g. MQTT, OPC UA DA). It is not displayed in the scan
+mode list since it cannot be triggered or edited like the others.
 
 ## Custom Scan Modes
 
@@ -31,10 +35,12 @@ You can create **custom scan modes** to fit your specific scheduling requirement
 ### Tips for Cron Expressions
 
 - **Format**: Cron expressions consist of six fields:
-  `[seconds] [minutes] [hours] [day of month] [month] [day of week]`.
+  `[seconds] [minutes] [hours] [day of month] [month] [day of week]`. A 7th field (year, as used by Quartz cron)
+  is not supported and will be rejected.
 - **Wildcards**: Use `*` to match any value (e.g., `* * * * * *` for every second).
-- **Intervals**: Use `/` to specify intervals (e.g., `/10` for every 10 seconds).
+- **Intervals**: Use `*/` to specify intervals (e.g., `*/10` for every 10 seconds).
 - **Precision**: For predictable behavior, specify exact seconds or minutes (e.g., `0` for the top of the minute/hour).
+- **Non-standard characters**: `L`, `W`, `#`, `?`, and `H` are not supported and will be rejected.
 
 #### Example Cron Expressions
 

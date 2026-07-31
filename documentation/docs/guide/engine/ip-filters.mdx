@@ -46,11 +46,13 @@ Rules can be added, edited, and deleted at any time. Changes take effect immedia
 
 ## Adding a Filter via the API
 
-Filters can also be created programmatically. The following example uses `curl` to add a rule that allows a
+Filters can also be created programmatically. Every OIBus API endpoint requires authentication (Basic or Bearer
+token), so requests must include credentials. The following example uses `curl` to add a rule that allows a
 specific subnet:
 
 ```bash title="Allow a specific subnet"
 curl --location 'http://localhost:2223/api/ip-filters' \
+--user 'admin:<password>' \
 --header 'Content-Type: application/json' \
 --header 'Accept: application/json' \
 --data '{
@@ -63,6 +65,7 @@ To allow all remote addresses (useful during initial setup):
 
 ```bash title="Allow all IP addresses"
 curl --location 'http://localhost:2223/api/ip-filters' \
+--user 'admin:<password>' \
 --header 'Content-Type: application/json' \
 --header 'Accept: application/json' \
 --data '{
@@ -78,9 +81,15 @@ For a complete list of available endpoints, visit the [API documentation page](.
 :::danger Open access and the proxy server
 IP filter rules apply to **all** incoming connections — both the OIBus web interface and the
 [proxy server](./engine-settings.mdx#proxy-server). Allowing all IP addresses (`*`) therefore also opens the
-proxy to every machine on the network. Because the proxy forwards requests without authentication, this can let
-any reachable host relay arbitrary traffic through OIBus. Always restrict access to known IP addresses in
-production.
+proxy to every machine on the network. The proxy server can be configured to require its own username/password
+(see [Authentication](./engine-settings.mdx#authentication)), but if that is left empty, any reachable host can
+relay arbitrary traffic through OIBus. Always restrict access to known IP addresses in production.
+:::
+
+:::note Disabling IP filtering entirely
+If OIBus is started with the `--ignoreIpFilters` flag, all IP filtering is bypassed and existing rules are not
+applied. When this flag is set, the **IP Filters** page becomes read-only and displays a notice instead of the
+usual rule list.
 :::
 
 :::tip Best practices
