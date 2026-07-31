@@ -8,10 +8,18 @@ sidebar_position: 1
 
 Naming your OIBus instance is important, especially when managing multiple instances. A clear name helps identify each OIBus in logs, dashboards, and monitoring tools.
 
-## OIBus Port
+## Web Server
+
+### Port
 
 The default port for accessing OIBus settings via the web interface is **2223** (`http://localhost:2223`).
 You can change this port if needed—for example, to resolve conflicts or improve security.
+
+### Authentication Duration
+
+The **Authentication duration** setting controls how long a login session stays valid before the user must log
+in again. Available values are **1 hour**, **6 hours**, **1 day**, **3 days**, **7 days** (default), **14 days**,
+and **30 days**.
 
 ## Proxy Server
 
@@ -48,7 +56,7 @@ By configuring **OIBus1** as a proxy server, **OIBus2** can send data to the int
 The proxy server can require clients to authenticate with a **Username** and **Password** (HTTP Basic authentication) before it will forward any request. Leave these fields empty to allow anonymous access.
 
 :::tip
-Authentication is checked before IP filtering restricts access. Both can be used together for defense in depth: the IP filter limits which hosts may reach the proxy, and authentication controls who may use it from those hosts.
+IP filtering is checked before authentication: a request from a non-authorized host is rejected before its credentials are even checked. Both can be used together for defense in depth: the IP filter limits which hosts may reach the proxy, and authentication controls who may use it from those hosts.
 :::
 
 ### Forward to an Upstream Proxy
@@ -108,7 +116,7 @@ OIBus supports six log levels, from most to least critical:
 
 | Log Level | Description                                                                  |
 | --------- | ---------------------------------------------------------------------------- |
-| None      | Deactivates all logs.                                                        |
+| Silent    | Deactivates all logs.                                                        |
 | Error     | Logs only errors.                                                            |
 | Warning   | Logs warnings and errors.                                                    |
 | Info      | Logs informational messages, warnings, and errors.                           |
@@ -150,6 +158,14 @@ Use **Trace** and **Debug** log levels only for troubleshooting, as they generat
 :::caution
 Logs sent to Loki are identified by the **OIBus ID** and name. Ensure the name is correctly set to locate your logs, especially if you have multiple OIBus instances.
 :::
+
+#### Syslog
+
+- Send logs to a remote **Syslog** server (RFC 5424).
+- Configure:
+- **Host**
+- **Port** (default: 514)
+- **Protocol**: UDP or TCP
 
 #### Console
 
