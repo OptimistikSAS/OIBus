@@ -8,6 +8,8 @@ import { ModalService } from '../shared/modal.service';
 import { Router, RouterLink } from '@angular/router';
 import { CreateHistoryQueryModalComponent } from './create-history-query-modal/create-history-query-modal.component';
 import { HistoryQueryLightDTO, HistoryQueryStatus } from '../../../../backend/shared/model/history-query.model';
+import { OIBusSouthType } from '../../../../backend/shared/model/south-connector.model';
+import { OIBusNorthType } from '../../../../backend/shared/model/north-connector.model';
 import { HistoryQueryService } from '../services/history-query.service';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { createPageFromArray, Page } from '../../../../backend/shared/model/types';
@@ -16,12 +18,13 @@ import { emptyPage } from '../shared/test-utils';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 import { DatetimePipe } from '../shared/datetime.pipe';
 import { ObservableState } from '../shared/save-button/save-button.component';
-import { LegendComponent } from '../shared/legend/legend.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AuditInfoComponent } from '../shared/audit-info/audit-info.component';
+import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
+import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
 
-type HistorySortField = 'name' | 'interval' | 'createdAt' | 'updatedAt' | null;
+type HistorySortField = 'name' | 'interval' | 'southType' | 'northType' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
 
 const PAGE_SIZE = 15;
@@ -37,12 +40,12 @@ const PAGE_SIZE = 15;
     LoadingSpinnerComponent,
     DatetimePipe,
     AsyncPipe,
-    LegendComponent,
     NgbTooltip,
     TranslatePipe,
-    LegendComponent,
     OI_FORM_VALIDATION_DIRECTIVES,
-    AuditInfoComponent
+    AuditInfoComponent,
+    OIBusSouthTypeEnumPipe,
+    OIBusNorthTypeEnumPipe
   ],
   templateUrl: './history-query-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -59,19 +62,26 @@ export class HistoryQueryListComponent {
   filteredHistoryQueries: Array<HistoryQueryLightDTO> = [];
   displayedHistoryQueries: Page<HistoryQueryLightDTO> = emptyPage();
   states = new Map<string, ObservableState>();
-  sortField: HistorySortField = null;
-  sortDirection: SortDirection = 'asc';
+  sortField: HistorySortField = 'updatedAt';
+  sortDirection: SortDirection = 'desc';
+
+  // Active filters for the clickable status/south type/north type legends. Empty array means "no filter" (show all).
+  activeStatuses: Array<HistoryQueryStatus> = [];
+  activeSouthTypes: Array<OIBusSouthType> = [];
+  activeNorthTypes: Array<OIBusNorthType> = [];
 
   searchForm = inject(NonNullableFormBuilder).group({
     name: [null as string | null]
   });
 
-  readonly LEGEND = [
-    { label: 'enums.status.PENDING', class: 'grey-dot' },
-    { label: 'enums.status.RUNNING', class: 'green-dot' },
-    { label: 'enums.status.PAUSED', class: 'yellow-dot' },
-    { label: 'enums.status.FINISHED', class: 'blue-dot' },
-    { label: 'enums.status.ABORTED', class: 'red-dot' }
+  // Each status pairs a distinct icon shape with its color, so meaning does not rely on color alone
+  // (e.g. colorblind users can still tell ERRORED from RUNNING even when red and green look the same).
+  readonly LEGEND: Array<{ label: string; status: HistoryQueryStatus; class: string }> = [
+    { label: 'enums.status.PENDING', status: 'PENDING', class: 'fa fa-hourglass-half status-grey' },
+    { label: 'enums.status.RUNNING', status: 'RUNNING', class: 'fa fa-spinner fa-spin status-green' },
+    { label: 'enums.status.PAUSED', status: 'PAUSED', class: 'fa fa-pause-circle status-yellow' },
+    { label: 'enums.status.FINISHED', status: 'FINISHED', class: 'fa fa-check-circle status-blue' },
+    { label: 'enums.status.ERRORED', status: 'ERRORED', class: 'fa fa-times-circle status-red' }
   ];
 
   constructor() {
@@ -89,6 +99,21 @@ export class HistoryQueryListComponent {
         this.updateList(0);
       }
     });
+  }
+
+  /** Distinct South connector types among the currently loaded history queries, used to build the filter chips. */
+  get southTypes(): Array<OIBusSouthType> {
+    return this.distinctTypes(query => query.southType);
+  }
+
+  /** Distinct North connector types among the currently loaded history queries, used to build the filter chips. */
+  get northTypes(): Array<OIBusNorthType> {
+    return this.distinctTypes(query => query.northType);
+  }
+
+  private distinctTypes<T extends string>(getType: (query: HistoryQueryLightDTO) => T): Array<T> {
+    const types = new Set((this.allHistoryQueries ?? []).map(getType));
+    return Array.from(types).sort((a, b) => a.localeCompare(b));
   }
 
   delete(historyQuery: HistoryQueryLightDTO) {
@@ -161,12 +186,21 @@ export class HistoryQueryListComponent {
     this.changePage(pageNumber);
   }
 
-  filter(souths: Array<HistoryQueryLightDTO>): Array<HistoryQueryLightDTO> {
+  filter(historyQueries: Array<HistoryQueryLightDTO>): Array<HistoryQueryLightDTO> {
     const formValue = this.searchForm.value;
-    let filteredItems = souths;
+    let filteredItems = historyQueries;
 
     if (formValue.name) {
       filteredItems = filteredItems.filter(item => item.name.toLowerCase().includes(formValue.name!.toLowerCase()));
+    }
+    if (this.activeStatuses.length > 0) {
+      filteredItems = filteredItems.filter(item => this.activeStatuses.includes(item.status));
+    }
+    if (this.activeSouthTypes.length > 0) {
+      filteredItems = filteredItems.filter(item => this.activeSouthTypes.includes(item.southType));
+    }
+    if (this.activeNorthTypes.length > 0) {
+      filteredItems = filteredItems.filter(item => this.activeNorthTypes.includes(item.northType));
     }
 
     return filteredItems;
@@ -186,6 +220,12 @@ export class HistoryQueryListComponent {
       }
       if (field === 'updatedAt') {
         return (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') * direction;
+      }
+      if (field === 'southType') {
+        return a.southType.localeCompare(b.southType) * direction;
+      }
+      if (field === 'northType') {
+        return a.northType.localeCompare(b.northType) * direction;
       }
       const aStart = a.startTime ?? '';
       const bStart = b.startTime ?? '';
@@ -226,10 +266,54 @@ export class HistoryQueryListComponent {
   }
 
   getStatusClass(status: HistoryQueryStatus) {
-    const foundElement = this.LEGEND.find(element => element.label === `enums.status.${status}`);
+    const foundElement = this.LEGEND.find(element => element.status === status);
     if (foundElement) {
       return foundElement.class;
     }
-    return 'red-dot';
+    return 'fa fa-times-circle status-red';
+  }
+
+  getStatusLabel(status: HistoryQueryStatus): string {
+    const foundElement = this.LEGEND.find(element => element.status === status);
+    return foundElement?.label ?? status;
+  }
+
+  /** Toggles a status in/out of the active status filter and re-applies filtering. */
+  toggleStatus(status: HistoryQueryStatus) {
+    this.activeStatuses = this.activeStatuses.includes(status)
+      ? this.activeStatuses.filter(s => s !== status)
+      : [...this.activeStatuses, status];
+    this.updateList(0);
+  }
+
+  clearStatuses() {
+    this.activeStatuses = [];
+    this.updateList(0);
+  }
+
+  /** Toggles a South type in/out of the active filter and re-applies filtering. */
+  toggleSouthType(type: OIBusSouthType) {
+    this.activeSouthTypes = this.activeSouthTypes.includes(type)
+      ? this.activeSouthTypes.filter(t => t !== type)
+      : [...this.activeSouthTypes, type];
+    this.updateList(0);
+  }
+
+  clearSouthTypes() {
+    this.activeSouthTypes = [];
+    this.updateList(0);
+  }
+
+  /** Toggles a North type in/out of the active filter and re-applies filtering. */
+  toggleNorthType(type: OIBusNorthType) {
+    this.activeNorthTypes = this.activeNorthTypes.includes(type)
+      ? this.activeNorthTypes.filter(t => t !== type)
+      : [...this.activeNorthTypes, type];
+    this.updateList(0);
+  }
+
+  clearNorthTypes() {
+    this.activeNorthTypes = [];
+    this.updateList(0);
   }
 }

@@ -186,7 +186,7 @@
       "PAUSED": "Paused",
       "FINISHED": "Finished",
       "RUNNING": "Running",
-      "ABORTED": "Aborted"
+      "ERRORED": "Errored"
     },
     "oibus-command-status": {
       "RETRIEVED": "Pending",
@@ -2782,6 +2782,8 @@
     "name": "Name",
     "description": "Description",
     "status": "Status",
+    "south-type": "South type",
+    "north-type": "North type",
     "interval": "Interval",
     "query-time-range": {
       "start": "Start",
