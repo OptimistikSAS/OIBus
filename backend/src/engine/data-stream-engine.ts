@@ -134,6 +134,11 @@ export default class DataStreamEngine {
    * to stop cleanly never blocks or fails the others.
    */
   async stop(): Promise<void> {
+    for (const job of this.cronByScanModeId.values()) {
+      job.stop();
+    }
+    this.cronByScanModeId.clear();
+
     const stopAllSouths = Promise.all(
       Array.from(this.southConnectors.keys()).map(id =>
         this.stopSouth(id).catch((error: unknown) => {
@@ -159,11 +164,6 @@ export default class DataStreamEngine {
     );
 
     await Promise.all([stopAllSouths, stopAllNorths, stopAllHistoryQueries]);
-
-    for (const job of this.cronByScanModeId.values()) {
-      job.stop();
-    }
-    this.cronByScanModeId.clear();
 
     clearProxyAgentCache();
     clearOIAnalyticsCredentialCache();

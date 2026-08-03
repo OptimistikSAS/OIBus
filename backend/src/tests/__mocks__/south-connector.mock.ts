@@ -23,8 +23,6 @@ export default class SouthConnectorMock extends SouthConnector<SouthSettings, So
   override isEnabled = mock.fn((): boolean => false);
   override updateSubscriptions = mock.fn(async (): Promise<void> => undefined);
   override trigger = mock.fn((_scanMode: ScanMode): void => undefined);
-  override createDeferredPromise = mock.fn((): void => undefined);
-  override resolveDeferredPromise = mock.fn((): void => undefined);
   override historyQueryHandler = mock.fn(
     async (_items: Array<SouthConnectorItemEntity<SouthItemSettings>>, _startTime: Instant, _endTime: Instant): Promise<void> => undefined
   );

@@ -9,7 +9,6 @@ import {
   SouthItemLastValue
 } from '../../shared/model/south-connector.model';
 import { Instant, Interval } from '../../shared/model/types';
-import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
 import { SouthDirectQuery, SouthHistoryQuery, SouthSubscription } from './south-interface';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
@@ -116,8 +115,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   // work on every single tick.
   private itemGroupsByScanModeId = new Map<string, Array<Array<SouthConnectorItemEntity<I>>>>();
   private stopping = false;
-  // Used only by callers that drive historyQueryHandler() directly, bypassing this scheduler (see HistoryQuery).
-  private runProgress$: DeferredPromise | null = null;
   private subscribedItems: Array<SouthConnectorItemEntity<I>> = [];
   protected readonly tmpFolder: string;
 
@@ -461,28 +458,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   /**
-   * Arm the `runProgress$` deferred. `stop()` awaits this promise so it can
-   * cleanly interrupt mid-scan; the history-query engine also reuses this
-   * hook to drive history runs as if they were a single coordinated task.
-   */
-  createDeferredPromise(): void {
-    this.runProgress$ = new DeferredPromise();
-  }
-
-  /**
-   * Resolve and clear the in-flight `runProgress$`. Pairs with
-   * `createDeferredPromise`; safe to call when no promise is armed (no-op).
-   * Must be called on EVERY exit path of `run()`, including early-out cases,
-   * otherwise `stop()` will hang.
-   */
-  resolveDeferredPromise(): void {
-    if (this.runProgress$) {
-      this.runProgress$.resolve();
-      this.runProgress$ = null;
-    }
-  }
-
-  /**
    * One-shot read of the current value(s). Skips the call entirely if
    * `filterDirectItems()` drops every item (subclasses may filter on settings
    * that disable direct reads for some items).
@@ -716,14 +691,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
   }
 
-  private calculateIntervalProgress(numberOfIntervals: number, currentIntervalIndex: number) {
-    if (currentIntervalIndex === numberOfIntervals) {
-      return 1;
-    }
-    // round to 2 decimals
-    return Math.round((currentIntervalIndex / numberOfIntervals + Number.EPSILON) * 100) / 100;
-  }
-
   /**
    * Entry point subclasses call after a successful read. Dispatches by content
    * shape to the engine callback and updates per-shape metrics:
@@ -810,10 +777,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.stopping = true;
     this.logger.debug(`Stopping South "${this.connector.name}" (${this.connector.id})...`);
 
-    if (this.runProgress$) {
-      this.logger.debug('Waiting for South task to finish');
-      await this.runProgress$.promise;
-    }
     if (this.runningTasks.size > 0) {
       this.logger.debug(`Waiting for ${this.runningTasks.size} South task(s) to finish`);
       await Promise.all(this.runningTasks);
