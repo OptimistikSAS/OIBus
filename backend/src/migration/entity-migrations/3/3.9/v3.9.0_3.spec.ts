@@ -5,10 +5,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { readdirSync } from 'node:fs';
 import knex, { Knex } from 'knex';
-import { down, up } from './v3.9.0_2';
+import { down, up } from './v3.9.0_3';
 
-/** Build the schema as it exists just before v3.9.0_2 by running every prior entity migration in order. */
-async function buildPreV3902Schema(db: Knex): Promise<void> {
+/** Build the schema as it exists just before v3.9.0_3 by running every prior entity migration in order. */
+async function buildPreV3903Schema(db: Knex): Promise<void> {
   const entityRoot = path.resolve(__dirname, '..', '..');
   const collect = (base: string): Array<{ file: string; full: string }> => {
     const out: Array<{ file: string; full: string }> = [];
@@ -24,7 +24,7 @@ async function buildPreV3902Schema(db: Knex): Promise<void> {
   };
   const priorFiles = collect(entityRoot)
     .sort((a, b) => (a.file > b.file ? 1 : a.file < b.file ? -1 : 0))
-    .filter(f => f.file < 'v3.9.0_2');
+    .filter(f => f.file < 'v3.9.0_3');
 
   for (const { full } of priorFiles) {
     const migration = (await import(full)) as { up: (k: Knex) => Promise<void> };
@@ -37,13 +37,13 @@ async function columnNames(db: Knex, table: string): Promise<Array<string>> {
   return cols.map(c => c.name);
 }
 
-describe('Entity migration v3.9.0_2', () => {
+describe('Entity migration v3.9.0_3', () => {
   let db: Knex;
   let tmpDir: string;
   let dbFile: string;
 
   before(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-entity-v3902-'));
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-entity-v3903-'));
     dbFile = path.join(tmpDir, 'test.db');
   });
 
@@ -56,7 +56,7 @@ describe('Entity migration v3.9.0_2', () => {
     await db?.destroy();
     await fs.rm(dbFile, { force: true });
     db = knex({ client: 'better-sqlite3', connection: { filename: dbFile }, useNullAsDefault: true });
-    await buildPreV3902Schema(db);
+    await buildPreV3903Schema(db);
     await db('scan_modes').insert([
       { id: 'sm1', name: 'Every minute', description: 'Trigger every minute', cron: '0 * * * * *' },
       { id: 'sm2', name: 'Every hour', description: 'Trigger every hour', cron: '0 0 * * * *' },
