@@ -1006,13 +1006,29 @@ export default class OIAnalyticsCommandService {
     );
   }
 
+  /**
+   * OIAnalytics versions predating interval scan modes send no `type`, `interval` or
+   * `activationWindow`. Every scan mode used to be cron-driven, so a missing `type` means 'cron' —
+   * matching how existing rows are backfilled on upgrade.
+   */
+  private toScanModeCommand(commandContent: ScanModeCommandDTO): ScanModeCommandDTO {
+    return {
+      name: commandContent.name,
+      description: commandContent.description,
+      type: commandContent.type ?? 'cron',
+      cron: commandContent.cron ?? '',
+      interval: commandContent.interval ?? null,
+      activationWindow: commandContent.activationWindow ?? null
+    };
+  }
+
   private async executeCreateScanModeCommand(command: OIBusCreateScanModeCommand) {
-    await this.scanModeService.create(command.commandContent, 'oianalytics');
+    await this.scanModeService.create(this.toScanModeCommand(command.commandContent), 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Scan mode created successfully');
   }
 
   private async executeUpdateScanModeCommand(command: OIBusUpdateScanModeCommand) {
-    await this.scanModeService.update(command.scanModeId, command.commandContent, 'oianalytics');
+    await this.scanModeService.update(command.scanModeId, this.toScanModeCommand(command.commandContent), 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Scan mode updated successfully');
   }
 
