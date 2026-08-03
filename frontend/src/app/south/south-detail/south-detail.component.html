@@ -286,6 +286,9 @@
                         }
                       }
                     }
+                    @if (isWindowExpired(tooltipItem.group ? tooltipItem.group.standardSettings.scanMode : tooltipItem.scanMode)) {
+                      <div class="text-warning mt-1">⚠ {{ 'engine.scan-mode.window-never-fires' | translate }}</div>
+                    }
                   </div>
                 }
               </ng-template>
@@ -368,11 +371,17 @@
                                 item.scanMode?.id === 'subscription' ? ('scan-mode.subscription' | translate) : item.scanMode?.name || ''
                               }})</span
                             >
+                            @if (isWindowExpired(item.scanMode)) {
+                              <i class="fa fa-warning text-warning ms-1 scan-mode-window-expired" aria-hidden="true"></i>
+                            }
                           } @else {
                             {{ item.group.standardSettings.name }}
                             <span class="text-muted">({{ item.group.standardSettings.scanMode.name }})</span>
                             @if (!item.syncWithGroup) {
                               <i class="fa fa-warning text-warning ms-1" aria-hidden="true"></i>
+                            }
+                            @if (isWindowExpired(item.group.standardSettings.scanMode)) {
+                              <i class="fa fa-warning text-warning ms-1 scan-mode-window-expired" aria-hidden="true"></i>
                             }
                           }
                         </span>
