@@ -3,16 +3,53 @@ import path from 'node:path';
 import { readdirSync } from 'node:fs';
 
 /**
+ * Compares two directory names component-by-component as dot-separated numbers
+ * (e.g. "3.10" vs "3.9") instead of as plain strings, so "3.10" sorts after "3.9"
+ * rather than before it (a plain string compare puts "3.10" right after "3.1",
+ * since '0' < '2' at the first differing character). Any non-numeric component
+ * falls back to a string comparison so unexpected directory names still sort
+ * deterministically instead of throwing.
+ */
+function compareVersionDirNames(a: string, b: string): number {
+  const aParts = a.split('.');
+  const bParts = b.split('.');
+  const length = Math.max(aParts.length, bParts.length);
+  for (let i = 0; i < length; i++) {
+    const aPart = aParts[i] ?? '';
+    const bPart = bParts[i] ?? '';
+    const aNum = Number(aPart);
+    const bNum = Number(bPart);
+    if (aPart !== '' && bPart !== '' && Number.isFinite(aNum) && Number.isFinite(bNum)) {
+      if (aNum !== bNum) {
+        return aNum - bNum;
+      }
+    } else if (aPart !== bPart) {
+      return aPart > bPart ? 1 : -1;
+    }
+  }
+  return 0;
+}
+
+/**
  * Recursively finds all leaf directories under `base` (i.e. directories that
  * contain no further subdirectories). Migration files are placed in these
  * leaves, grouped by major → minor version: e.g. entity-migrations/3/3.8/.
+ *
+ * Subdirectories at each level are visited in numeric version order (via
+ * compareVersionDirNames), so leaf directories come back ordered "3.9" before
+ * "3.10" — the order getMigrations relies on to run migrations minor-version
+ * by minor-version.
  *
  * If `base` has no subdirectories at all it is returned as-is, which keeps
  * backward compatibility for any flat directory that has not been restructured.
  */
 function getMigrationDirs(base: string): Array<string> {
   const entries = readdirSync(base, { withFileTypes: true });
-  const subDirs = entries.filter(e => e.isDirectory()).map(e => path.join(base, e.name));
+  const subDirs = entries
+    .filter(e => e.isDirectory())
+    .map(e => e.name)
+    .sort(compareVersionDirNames)
+    .map(name => path.join(base, name));
   if (subDirs.length === 0) {
     return [base];
   }
@@ -35,8 +72,11 @@ interface MigrationFile {
  * v3.6.0-x.spec.ts in the same leaf dir). knex's default file-system source globs
  * every `.ts`/`.js` in a directory and rejects any file without up/down — so those
  * spec files would otherwise abort `migrate.latest`. This source skips them while
- * keeping knex's exact naming (filename) and ordering (lexicographic by filename),
- * so the set/order/recorded names of real migrations are unchanged — no re-runs.
+ * keeping the set of real migrations unchanged (so recorded names/no re-runs are
+ * unaffected) and ordering them minor-version directory first (numerically, via
+ * getMigrationDirs), then lexicographically by filename within each directory —
+ * NOT lexicographically by filename across the whole tree, which would sort a
+ * directory like "3.10" ahead of "3.2"..."3.9".
  */
 export function specFilteredMigrationSource(base: string): Knex.MigrationSource<MigrationFile> {
   const dirs = getMigrationDirs(base);
@@ -46,10 +86,9 @@ export function specFilteredMigrationSource(base: string): Knex.MigrationSource<
       const migrations = dirs.flatMap(directory =>
         readdirSync(directory)
           .filter(file => extensions.includes(path.extname(file)) && !file.includes('.spec.'))
+          .sort((a, b) => (a > b ? 1 : a < b ? -1 : 0))
           .map(file => ({ file, directory }))
       );
-      // Match knex's FsMigrations ordering: lexicographic by filename across all dirs.
-      migrations.sort((a, b) => (a.file > b.file ? 1 : a.file < b.file ? -1 : 0));
       return Promise.resolve(migrations);
     },
     getMigrationName(migration: MigrationFile): string {

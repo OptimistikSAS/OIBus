@@ -1,0 +1,14 @@
+@import '../../../../common';
+
+.oib-day-pill {
+  min-width: 3.25rem;
+  border: 1px solid $mediumGrey;
+  background-color: #fff;
+  color: #5f5e5a;
+
+  &.active {
+    background-color: $electricBlue;
+    border-color: $electricBlue;
+    color: #fff;
+  }
+}
