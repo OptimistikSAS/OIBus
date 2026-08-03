@@ -15,6 +15,7 @@ import {
 import { HistoryQueryEntity } from '../model/histor-query.model';
 import { EventEmitter } from 'node:events';
 import { Instant } from '../model/types';
+import { ScanMode } from '../model/scan-mode.model';
 import { CacheSize } from '../model/engine.model';
 import TypedEventEmitter from '../service/typed-event-emitter';
 import type { ILogger } from '../model/logger.model';
@@ -118,7 +119,10 @@ export default class HistoryQuery {
               id: 'history',
               name: 'history',
               description: '',
+              type: 'cron',
               cron: '',
+              interval: null,
+              activationWindow: null,
               createdBy: '',
               updatedBy: '',
               createdAt: '',

@@ -95,7 +95,19 @@ describe('HistoryQuery enabled', () => {
       mockedSouth1Mock.historyQueryHandler.mock.calls[0].arguments[0],
       testData.historyQueries.list[0].items.map(item => ({
         ...item,
-        scanMode: { cron: '', description: '', id: 'history', name: 'history', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
+        scanMode: {
+          type: 'cron',
+          cron: '',
+          interval: null,
+          activationWindow: null,
+          description: '',
+          id: 'history',
+          name: 'history',
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
         group: null,
         syncWithGroup: false,
         maxReadInterval: 3600,
@@ -138,7 +150,19 @@ describe('HistoryQuery enabled', () => {
       mockedSouth1Mock.historyQueryHandler.mock.calls[0].arguments[0],
       testData.historyQueries.list[0].items.map(item => ({
         ...item,
-        scanMode: { cron: '', description: '', id: 'history', name: 'history', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
+        scanMode: {
+          type: 'cron',
+          cron: '',
+          interval: null,
+          activationWindow: null,
+          description: '',
+          id: 'history',
+          name: 'history',
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
         group: null,
         syncWithGroup: false,
         maxReadInterval: 3600,

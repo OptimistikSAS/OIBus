@@ -1,6 +1,59 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { Instant } from '../../../../../backend/shared/model/types';
+import { IntervalUnit } from '../../../../../backend/shared/model/scan-mode.model';
 import { DateTime } from 'luxon';
+
+/** Smallest scan mode interval accepted by the backend, in milliseconds. */
+export const MIN_INTERVAL_MS = 10;
+
+export const INTERVAL_UNIT_TO_MS: Record<IntervalUnit, number> = {
+  ms: 1,
+  s: 1_000,
+  min: 60_000,
+  hour: 3_600_000
+};
+
+/**
+ * Cross-field validator for a scan mode interval group: the interval, resolved to milliseconds,
+ * must be at least MIN_INTERVAL_MS. Checking the resolved value rather than each unit separately
+ * means `5 ms` is rejected while `1 s` is not.
+ */
+export function minIntervalValidator(group: AbstractControl): ValidationErrors | null {
+  const value = group.get('value')?.value;
+  const unit = group.get('unit')?.value as IntervalUnit | null;
+  if (value === null || value === undefined || value === '' || !unit) {
+    return null;
+  }
+  const milliseconds = Number(value) * INTERVAL_UNIT_TO_MS[unit];
+  if (!Number.isFinite(milliseconds)) {
+    return null;
+  }
+  return milliseconds < MIN_INTERVAL_MS ? { intervalTooSmall: { min: MIN_INTERVAL_MS } } : null;
+}
+
+/**
+ * Cross-field validator for the scan mode activation window group. The date range must be ordered,
+ * and the time of day must be either fully set or fully empty and never zero-length (the engine
+ * tests `start <= now < end`, so equal bounds would never match).
+ */
+export function activationWindowValidator(group: AbstractControl): ValidationErrors | null {
+  const start: string | null = group.get('start')?.value;
+  const end: string | null = group.get('end')?.value;
+  const timeStart: string | null = group.get('timeStart')?.value;
+  const timeEnd: string | null = group.get('timeEnd')?.value;
+
+  // Both bounds are ISO UTC instants, so a lexicographic comparison is well defined.
+  if (start && end && start >= end) {
+    return { ascendingDates: true };
+  }
+  if ((timeStart && !timeEnd) || (!timeStart && timeEnd)) {
+    return { timeOfDayIncomplete: true };
+  }
+  if (timeStart && timeEnd && timeStart === timeEnd) {
+    return { timeOfDayEmpty: true };
+  }
+  return null;
+}
 
 export interface RangeFormValue {
   start: Instant;

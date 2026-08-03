@@ -11,7 +11,7 @@ import { OIBusSouthType } from '../../../shared/model/south-connector.model';
 import { HistoryTransformerWithOptions } from '../../model/transformer.model';
 import { toTransformer } from './transformer.repository';
 import { ScanMode } from '../../model/scan-mode.model';
-import { toScanMode } from './scan-mode.repository';
+import { scanModeColumns, toScanMode } from './scan-mode.repository';
 import { SouthConnectorItemEntityLight } from '../../model/south-connector.model';
 
 const HISTORY_QUERIES_TABLE = 'history_queries';
@@ -499,7 +499,7 @@ export default class HistoryQueryRepository {
   }
 
   private findScanModeForHistory(scanModeId: string): ScanMode {
-    const query = `SELECT id, name, description, cron, created_by, updated_by, created_at, updated_at FROM ${SCAN_MODE} WHERE id = ?;`;
+    const query = `SELECT ${scanModeColumns()} FROM ${SCAN_MODE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(scanModeId) as Record<string, string>;
     return toScanMode(result);
   }

@@ -6,10 +6,13 @@ import CronTester from '../../../src/components/CronTester/index';
 
 # Scan Modes
 
-OIBus uses **Cron-defined scan modes** to schedule
+OIBus uses **scan modes** to schedule
 when [South connectors](../../guide/south-connectors/common-settings.md) retrieve or
 when [North connectors](../../guide/north-connectors/common-settings.md) send data. Scan modes allow you to automate
 data operations at specific dates and intervals.
+
+A scan mode is either **cron-based** or **interval-based**, and can optionally be restricted to an
+**activation window**.
 
 ## Default Scan Modes
 
@@ -30,7 +33,57 @@ mode list since it cannot be triggered or edited like the others.
 
 ## Custom Scan Modes
 
-You can create **custom scan modes** to fit your specific scheduling requirements.
+You can create **custom scan modes** to fit your specific scheduling requirements. Each one has a
+**type**, either `Cron` or `Interval`.
+
+## Interval Scan Modes
+
+For the common "just poll every N seconds" case, an interval is simpler than a cron expression. Pick a
+positive whole number and a unit — milliseconds, seconds, minutes or hours.
+
+- The shortest accepted interval is **10 ms**.
+- Below 1 second, OIBus shows a warning: such intervals may not be achievable in practice, depending on
+  the data source and on network and system capacity. It is a warning only and does not prevent saving.
+
+Unlike a cron expression, which is re-anchored to the wall clock on every run, an interval simply waits
+the configured delay between runs and may drift slightly under heavy load.
+
+## Activation Window
+
+Independently of its type, a scan mode can be restricted to an **activation window**. When a scheduled
+run falls outside the window it is skipped silently: nothing is queued and nothing is deferred to when
+the window reopens, and no error is raised.
+
+A window combines two optional criteria, both of which must be satisfied:
+
+- **Date range** — an absolute start and/or end date and time. Each side is independently optional, so
+  you can express "from now on", "until the end of the month", or a closed range. These are absolute
+  instants, stored in UTC and displayed in your account's timezone.
+- **Recurring rule** — an optional day-of-week filter (no day selected means every day) and an optional
+  time-of-day range (unset means all day).
+
+Because a recurring rule is expressed in civil time rather than as a fixed offset — "Thursday 12:00"
+shifts by an hour across a daylight-saving change — it is saved together with the timezone taken from
+your account settings, and re-evaluated in that timezone on every run.
+
+### Overnight Windows
+
+If the end time is earlier than the start time, the window spans into the next day; the form marks this
+with a **+1** next to the end time. The day-of-week filter then applies to the day the window *opened*:
+"Friday, 22:00–02:00" stays active from Friday 22:00 through Saturday 02:00, even though Saturday is not
+itself selected.
+
+### Examples
+
+- *Only collect during working hours*: no date range, days Monday to Friday, time of day 08:00–18:00.
+- *Only query on weekends for the next month*: date range from today to today + 1 month, days Saturday
+  and Sunday, no time-of-day restriction.
+
+Manually testing an item from the South connector page **ignores** the activation window, so a test run
+is never a silent no-op.
+
+If a window can never trigger again — for instance its end date is already past — OIBus displays a
+warning on the scan mode list and on every item using that scan mode.
 
 ### Tips for Cron Expressions
 

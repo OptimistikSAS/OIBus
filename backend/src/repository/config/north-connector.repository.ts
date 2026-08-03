@@ -7,7 +7,7 @@ import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { toTransformer } from './transformer.repository';
 import { NorthTransformerWithOptions, TransformerSource } from '../../model/transformer.model';
 import { ScanMode } from '../../model/scan-mode.model';
-import { toScanMode } from './scan-mode.repository';
+import { scanModeAliasedColumns, scanModeColumns, toScanMode } from './scan-mode.repository';
 import { OIBusSouthType } from '../../../shared/model/south-connector.model';
 import { toSouthItemGroup } from './south-item-group.repository';
 
@@ -308,9 +308,8 @@ export default class NorthConnectorRepository {
   private findGroup(groupId: string): SouthItemGroupEntity {
     const query =
       `SELECT g.id, g.created_at, g.updated_at, g.created_by, g.updated_by, g.name, g.south_id, ` +
-      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, s.id as scan_mode_id_full, ` +
-      `s.name as scan_mode_name, s.description as scan_mode_description, s.cron as scan_mode_cron, ` +
-      `s.created_at as scan_mode_created_at, s.updated_at as scan_mode_updated_at, s.created_by as scan_mode_created_by, s.updated_by as scan_mode_updated_by ` +
+      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, ` +
+      `${scanModeAliasedColumns('s', 'sm_')} ` +
       `FROM ${SOUTH_ITEM_GROUPS_TABLE} g JOIN ${SCAN_MODE_TABLE} s ON g.scan_mode_id = s.id WHERE g.id = ?;`;
     const result = this.database.prepare<[string], Record<string, string | number>>(query).get(groupId)!;
     return toSouthItemGroup(result, this.findAllItemsForGroup(result.id as string));
@@ -322,7 +321,7 @@ export default class NorthConnectorRepository {
   }
 
   private findScanModeForNorth(scanModeId: string): ScanMode {
-    const query = `SELECT id, name, description, cron, created_by, updated_by, created_at, updated_at FROM ${SCAN_MODE_TABLE} WHERE id = ?;`;
+    const query = `SELECT ${scanModeColumns()} FROM ${SCAN_MODE_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(scanModeId) as Record<string, string>;
     return toScanMode(result);
   }
