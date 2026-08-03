@@ -3,7 +3,7 @@
  * All external services and the filesystem are mocked so the test process
  * never starts real databases, HTTP servers, or connectivity.
  */
-import { describe, it, before, afterEach, mock } from 'node:test';
+import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { mockModule, reloadModule, flushPromises } from './tests/utils/test-utils';
@@ -100,7 +100,7 @@ describe('index.ts bootstrap()', () => {
   let cleanupServiceMock: ReturnType<typeof makeServiceMock>;
   let oianalyticsRegistrationServiceMock: { start: ReturnType<typeof mock.fn>; stop: ReturnType<typeof mock.fn> };
 
-  before(() => {
+  beforeEach(() => {
     mock.method(console, 'info', () => undefined);
     mock.method(console, 'error', () => undefined);
   });

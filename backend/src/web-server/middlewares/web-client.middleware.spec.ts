@@ -23,6 +23,10 @@ describe('webClientMiddleware', () => {
     mockNext = mock.fn();
     mockRes = { sendFile: mock.fn() };
     staticMiddlewareMock.mock.resetCalls();
+    // Every request path logs (console.info for static/index.html, console.trace otherwise) —
+    // mock both here so the real messages don't leak into the test run.
+    mock.method(console, 'info', () => undefined);
+    mock.method(console, 'trace', () => undefined);
   });
 
   afterEach(() => {

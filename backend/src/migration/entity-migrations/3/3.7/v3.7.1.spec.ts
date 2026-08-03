@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { readdirSync } from 'node:fs';
 import knex, { Knex } from 'knex';
 import { up, down } from './v3.7.1';
@@ -32,7 +33,7 @@ function entityMigrationFiles(): Array<{ file: string; full: string }> {
 async function buildPriorSchema(db: Knex): Promise<void> {
   const priorFiles = entityMigrationFiles().filter(f => f.file < 'v3.7.1');
   for (const { full } of priorFiles) {
-    const migration = (await import(full)) as { up: (k: Knex) => Promise<void> };
+    const migration = (await import(pathToFileURL(full).href)) as { up: (k: Knex) => Promise<void> };
     await migration.up(db);
   }
 }

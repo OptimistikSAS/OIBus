@@ -260,6 +260,12 @@ describe('WebServer', () => {
     });
 
     it('inline error handler via HTTP: routes throw OIBus error types → correct status codes', async () => {
+      // Express's own app.handle() always schedules a final onerror(err) via finalhandler
+      // regardless of our own error middleware having already responded to the request —
+      // that callback does `console.error(err.stack)` unconditionally outside of app.get('env')
+      // === 'test'. The /test-null-err case below deliberately hits the missing-index.html
+      // path, so silence console.error for this test rather than fighting Express's internals.
+      mock.method(console, 'error', () => undefined);
       await webServer.init();
       const base = `http://localhost:${TEST_PORT}`;
 
@@ -282,6 +288,10 @@ describe('WebServer', () => {
       const r6 = await fetch(`${base}/test-null-err`);
       // The response could be 200 (index.html found) or 404 from Angular fallback or handle404
       assert.ok([200, 404, 500].includes(r6.status));
+      // finalhandler's onerror logging is scheduled via setImmediate, so it can still fire
+      // after this test function returns (and afterEach's mock.restoreAll() has already run).
+      // Give it a tick to flush now, while console.error is still mocked.
+      await new Promise(resolve => setImmediate(resolve));
     });
   });
 });

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { readdirSync } from 'node:fs';
 import knex, { Knex } from 'knex';
 import { down, up } from './v3.9.0_1';
@@ -27,7 +28,7 @@ async function buildPreV3901Schema(db: Knex): Promise<void> {
     .filter(f => f.file < 'v3.9.0_1');
 
   for (const { full } of priorFiles) {
-    const migration = (await import(full)) as { up: (k: Knex) => Promise<void> };
+    const migration = (await import(pathToFileURL(full).href)) as { up: (k: Knex) => Promise<void> };
     await migration.up(db);
   }
 }

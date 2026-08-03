@@ -2178,12 +2178,15 @@ describe('Service utils', () => {
     });
 
     it('should fall back to env vars when init file is malformed JSON', () => {
+      const consoleWarn = mock.method(console, 'warn', () => undefined);
       mock.method(fsSync, 'existsSync', () => true);
       mock.method(fsSync, 'readFileSync', () => '{invalid json}');
       process.env.ADMIN_USERNAME = 'charlie';
 
       const result = utils.readInitConfig();
       assert.strictEqual(result.adminUsername, 'charlie');
+      assert.strictEqual(consoleWarn.mock.calls.length, 1);
+      assert.strictEqual((consoleWarn.mock.calls[0].arguments[0] as string).includes('Failed to parse'), true);
     });
 
     it('should return undefined port when DEFAULT_PORT is not a valid number', () => {

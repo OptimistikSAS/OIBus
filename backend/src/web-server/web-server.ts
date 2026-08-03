@@ -226,7 +226,12 @@ export default class WebServer {
     // Final middleware to serve Angular routes
     this.app.use((req, res, next) => {
       if (!isApiRoute(req.path) && !isStaticFile(req.path)) {
-        return res.sendFile(path.join(__dirname, '../../../frontend/browser', 'index.html'));
+        // Pass an explicit callback: without one, a missing index.html can surface as a raw,
+        // unhandled error event outside this request's next(err) chain instead of going
+        // through our own error-handling middleware below.
+        return res.sendFile(path.join(__dirname, '../../../frontend/browser', 'index.html'), err => {
+          if (err) next(err);
+        });
       }
       return next();
     });
