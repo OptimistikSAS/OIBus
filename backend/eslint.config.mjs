@@ -9,8 +9,12 @@ import { defineConfig } from 'eslint/config';
 // Allows us to use the typed utility for our config, and to bring in the recommended rules for TypeScript projects from typescript-eslint
 import tseslint from 'typescript-eslint';
 
-// Allows us to bring in the recommended rules for Prettier from eslint-plugin-prettier
-import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+// Turns off ESLint stylistic rules that would conflict with Prettier's formatting decisions.
+// Deliberately NOT eslint-plugin-prettier/recommended: that also adds a `prettier/prettier` rule
+// that runs Prettier's full formatter as an ESLint rule, which is ~45x slower than running
+// `prettier --check` directly (measured: ~500s vs ~11s for this repo's backend). Formatting is
+// checked by a separate `prettier --check` step (see package.json's `lint` script) instead.
+import eslintConfigPrettier from 'eslint-config-prettier';
 
 // Export our config array, which is composed together thanks to the defineConfig utility function from eslint
 export default [
@@ -76,7 +80,7 @@ export default [
       'require-await': 'error'
     }
   }),
-  eslintPluginPrettierRecommended,
+  eslintConfigPrettier,
   // set the parse options for typed rules
   {
     languageOptions: {
