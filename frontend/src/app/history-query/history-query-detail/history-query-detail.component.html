@@ -116,14 +116,23 @@
             <tbody>
               <tr>
                 <td translate="north.caching.trigger.title" style="width: 33%"></td>
-                <td
-                  translate="north.caching.trigger.value"
-                  [translateParams]="{
-                    scanMode: historyQuery.caching.trigger.scanMode.name,
-                    numberOfElements: historyQuery.caching.trigger.numberOfElements,
-                    numberOfFiles: historyQuery.caching.trigger.numberOfFiles
-                  }"
-                ></td>
+                <td>
+                  <span
+                    translate="north.caching.trigger.value"
+                    [translateParams]="{
+                      scanMode: historyQuery.caching.trigger.scanMode.name,
+                      numberOfElements: historyQuery.caching.trigger.numberOfElements,
+                      numberOfFiles: historyQuery.caching.trigger.numberOfFiles
+                    }"
+                  ></span>
+                  @if (isWindowExpired(historyQuery.caching.trigger.scanMode)) {
+                    <i
+                      class="fa fa-warning text-warning ms-1 scan-mode-window-expired"
+                      aria-hidden="true"
+                      [ngbTooltip]="'engine.scan-mode.window-never-fires' | translate"
+                    ></i>
+                  }
+                </td>
               </tr>
               <tr>
                 <td translate="north.caching.throttling.title"></td>

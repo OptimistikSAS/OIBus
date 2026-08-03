@@ -301,7 +301,12 @@ export default class SouthService {
         id: '',
         name: '',
         description: '',
+        type: 'cron',
         cron: '',
+        interval: null,
+        // A manual test run is never gated by an activation window: a silent no-op would be
+        // impossible for the user to diagnose.
+        activationWindow: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',

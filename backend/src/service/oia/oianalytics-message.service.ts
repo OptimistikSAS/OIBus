@@ -447,7 +447,10 @@ export default class OIAnalyticsMessageService {
       settings: {
         name: scanMode.name,
         description: scanMode.description,
-        cron: scanMode.cron
+        type: scanMode.type,
+        cron: scanMode.cron,
+        interval: scanMode.interval,
+        activationWindow: scanMode.activationWindow
       }
     }));
   }

@@ -15,6 +15,7 @@ import { createPageFromArray, Page } from '../../../../../backend/shared/model/t
 import { emptyPage } from '../../shared/test-utils';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
+import { isScanModeWindowExpired, ScanModeSchedulePipe } from '../../shared/scan-mode-schedule.pipe';
 
 type ScanModeSortField = 'name' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -31,7 +32,8 @@ const PAGE_SIZE = 20;
     NgbTooltip,
     TranslatePipe,
     PaginationComponent,
-    AuditInfoComponent
+    AuditInfoComponent,
+    ScanModeSchedulePipe
   ],
   templateUrl: './scan-mode-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -118,6 +120,10 @@ export class ScanModeListComponent {
         )
       )
       .subscribe();
+  }
+
+  isWindowExpired(scanMode: ScanModeDTO): boolean {
+    return isScanModeWindowExpired(scanMode);
   }
 
   excludeSubscriptionScanModes(scanModes: Array<ScanModeDTO>): Array<ScanModeDTO> {

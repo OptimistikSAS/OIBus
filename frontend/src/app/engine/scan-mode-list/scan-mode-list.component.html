@@ -36,7 +36,7 @@
             </button>
           </th>
           <th translate="engine.scan-mode.description"></th>
-          <th translate="engine.scan-mode.cron"></th>
+          <th translate="engine.scan-mode.schedule"></th>
           <th>
             <button
               type="button"
@@ -55,7 +55,19 @@
           <tr>
             <td>{{ scanMode.name }}</td>
             <td>{{ scanMode.description }}</td>
-            <td>{{ scanMode.cron }}</td>
+            <td>
+              <span>{{ scanMode | scanModeSchedule }}</span>
+              @if (isWindowExpired(scanMode)) {
+                <i
+                  class="fa fa-warning text-warning ms-1 window-expired-warning"
+                  aria-hidden="true"
+                  [ngbTooltip]="'engine.scan-mode.window-never-fires' | translate"
+                ></i>
+              }
+              @if (scanMode.activationWindow) {
+                <div class="text-muted small" translate="engine.scan-mode.window-restricted"></div>
+              }
+            </td>
             <td>
               <oib-audit-info
                 [createdAt]="scanMode.createdAt"
