@@ -22,8 +22,8 @@
     "build:linux-arm64": "npm run internal:build:lib && rimraf ../build/bin/linux-arm64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-arm64/oibus-launcher --target node26-linux-arm64",
     "start": "tsc --sourceMap --project tsconfig.app.json && npm run start:launcher",
     "start:launcher": "node ./dist/src/index.js --config ../data-folder",
-    "lint": "eslint src/ --cache",
-    "lint:fix": "npm run lint -- --fix",
+    "lint": "eslint src/ --cache && prettier --check \"src/**/*.ts\"",
+    "lint:fix": "eslint src/ --cache --fix && prettier --write \"src/**/*.ts\"",
     "build": "tsc --project tsconfig.app.json",
     "internal:build:lib": "npm run --prefix node_modules/argon2 install",
     "test": "node scripts/run-tests.mjs"

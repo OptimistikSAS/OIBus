@@ -12,8 +12,12 @@ import tseslint from 'typescript-eslint';
 // Allows us to bring in the recommended rules for Angular projects from angular-eslint
 import angular from 'angular-eslint';
 
-// Allows us to bring in the recommended rules for Prettier from eslint-plugin-prettier
-import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+// Turns off ESLint stylistic rules that would conflict with Prettier's formatting decisions.
+// Deliberately NOT eslint-plugin-prettier/recommended: that also adds a `prettier/prettier` rule
+// that runs Prettier's full formatter as an ESLint rule, which is far slower than running
+// `prettier --check` directly. Formatting is checked by a separate step (see package.json's
+// `lint` script) instead.
+import eslintConfigPrettier from 'eslint-config-prettier';
 
 // Export our config array, which is composed together thanks to the defineConfig utility function from eslint
 export default [
@@ -130,7 +134,7 @@ export default [
       }
     }
   ),
-  eslintPluginPrettierRecommended,
+  eslintConfigPrettier,
   // set the parse options for typed rules
   {
     languageOptions: {
