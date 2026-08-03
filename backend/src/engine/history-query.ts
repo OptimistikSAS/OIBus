@@ -15,6 +15,7 @@ import {
 import { HistoryQueryEntity } from '../model/histor-query.model';
 import { EventEmitter } from 'node:events';
 import { Instant } from '../model/types';
+import { ScanMode } from '../model/scan-mode.model';
 import { CacheSize } from '../model/engine.model';
 import TypedEventEmitter from '../service/typed-event-emitter';
 import type { ILogger } from '../model/logger.model';
@@ -74,6 +75,15 @@ export default class HistoryQuery {
     return this.north.getCacheSizes();
   }
 
+  /**
+   * Relay a scan-mode tick to the north, which decides whether the scan mode is its caching
+   * trigger. Only the north is ticked: the south side of a history query is a one-shot backfill
+   * driven by its own completion loop, not by a scan mode.
+   */
+  triggerNorth(scanMode: ScanMode): void {
+    this.north.trigger(scanMode);
+  }
+
   async start(): Promise<void> {
     this.north.metricsEvent.on('connect', (data: { lastConnection: Instant }) => {
       this.metricsEvent.emit('north-connect', data);
@@ -108,7 +118,10 @@ export default class HistoryQuery {
               id: 'history',
               name: 'history',
               description: '',
+              type: 'cron',
               cron: '',
+              interval: null,
+              activationWindow: null,
               createdBy: '',
               updatedBy: '',
               createdAt: '',
