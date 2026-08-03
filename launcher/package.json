@@ -33,7 +33,7 @@
   ],
   "dependencies": {
     "argon2": "0.45.1",
-    "better-sqlite3": "13.0.1",
+    "better-sqlite3": "13.0.2",
     "minimist": "1.2.8"
   },
   "devDependencies": {
