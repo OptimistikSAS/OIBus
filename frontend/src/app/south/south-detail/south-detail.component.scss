@@ -1,0 +1,8 @@
+/**
+ * The schedule cell is a flex row: the label truncates, the warning icons next to it do not.
+ * `min-width: 0` is what actually lets a flex child shrink below its content width, without which
+ * `text-truncate` has no effect and the icons get pushed out of the cell's clipped box.
+ */
+.oib-schedule-label {
+  min-width: 0;
+}

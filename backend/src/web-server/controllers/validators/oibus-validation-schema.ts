@@ -1,11 +1,56 @@
 import Joi from 'joi';
+import { DateTime } from 'luxon';
 import { validateCronExpression } from '../../../service/utils';
 import { AUTH_TOKEN_DURATIONS } from '../../../../shared/model/engine.model';
+import { INTERVAL_UNITS, SCAN_MODE_TYPES, ScanModeInterval } from '../../../../shared/model/scan-mode.model';
+import { MAX_INTERVAL_MS, MIN_INTERVAL_MS, intervalToMs } from '../../../service/scan-mode.utils';
+
+const TIME_OF_DAY_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+const activationWindowSchema: Joi.ObjectSchema = Joi.object({
+  dateRange: Joi.object({
+    start: Joi.string().isoDate().allow(null),
+    end: Joi.string().isoDate().allow(null)
+  }).allow(null),
+  recurring: Joi.object({
+    timezone: Joi.string().custom(timezoneValidator).required(),
+    daysOfWeek: Joi.array().items(Joi.number().integer().min(0).max(6)).unique().allow(null),
+    timeOfDay: Joi.object({
+      start: Joi.string().pattern(TIME_OF_DAY_REGEX).required().messages({
+        'string.pattern.base': '"timeOfDay.start" must be a time of day in HH:mm format'
+      }),
+      end: Joi.string().pattern(TIME_OF_DAY_REGEX).required().messages({
+        'string.pattern.base': '"timeOfDay.end" must be a time of day in HH:mm format'
+      })
+    }).allow(null)
+  }).allow(null)
+});
 
 const scanModeSchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required(),
   description: Joi.string().required().allow(null, ''),
-  cron: Joi.string().custom(cronValidator).required()
+  type: Joi.string()
+    .valid(...SCAN_MODE_TYPES)
+    .required(),
+  cron: Joi.when('type', {
+    is: 'cron',
+    then: Joi.string().custom(cronValidator).required(),
+    // Interval scan modes still persist an empty cron, so accept and ignore whatever is sent.
+    otherwise: Joi.string().allow(null, '').optional()
+  }),
+  interval: Joi.when('type', {
+    is: 'interval',
+    then: Joi.object({
+      value: Joi.number().integer().positive().required(),
+      unit: Joi.string()
+        .valid(...INTERVAL_UNITS)
+        .required()
+    })
+      .custom(intervalBoundsValidator)
+      .required(),
+    otherwise: Joi.valid(null).optional()
+  }),
+  activationWindow: activationWindowSchema.allow(null)
 });
 
 const certificateSchema: Joi.ObjectSchema = Joi.object({
@@ -179,6 +224,26 @@ const transformerSchema: Joi.ObjectSchema = Joi.object({
 function cronValidator(value: string, helper: Joi.CustomHelpers) {
   const cronValidation = validateCronExpression(value);
   return cronValidation.isValid ? true : helper.message({ custom: cronValidation.errorMessage });
+}
+
+/**
+ * The bounds are checked on the resolved millisecond value rather than per unit, so both
+ * `{ value: 5, unit: 'ms' }` and an interval overflowing Node's setInterval limit are rejected.
+ */
+function intervalBoundsValidator(value: ScanModeInterval, helper: Joi.CustomHelpers) {
+  const milliseconds = intervalToMs(value);
+  if (milliseconds < MIN_INTERVAL_MS) {
+    return helper.message({ custom: `"interval" must be at least ${MIN_INTERVAL_MS} ms (got ${milliseconds} ms)` });
+  }
+  if (milliseconds > MAX_INTERVAL_MS) {
+    return helper.message({ custom: `"interval" must not exceed ${MAX_INTERVAL_MS} ms (got ${milliseconds} ms)` });
+  }
+  return value;
+}
+
+/** IANA zone validity is delegated to luxon rather than a hardcoded list. */
+function timezoneValidator(value: string, helper: Joi.CustomHelpers) {
+  return DateTime.now().setZone(value).isValid ? value : helper.message({ custom: `"${value}" is not a valid IANA timezone` });
 }
 
 export {

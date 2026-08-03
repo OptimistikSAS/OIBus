@@ -46,6 +46,7 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
 import { ViewItemValueModalComponent } from '../south-items/view-item-value-modal/view-item-value-modal.component';
+import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
 
 const PAGE_SIZE = 20;
 
@@ -133,6 +134,11 @@ export class SouthDetailComponent {
 
   /** The item currently hovered in the list — drives the schedule details tooltip. */
   tooltipItem: SouthConnectorItemDTO | null = null;
+
+  /** Whether the scan mode driving an item has an activation window that can never fire again. */
+  isWindowExpired(scanMode: ScanModeDTO | null | undefined): boolean {
+    return isScanModeWindowExpired(scanMode);
+  }
 
   columnSortStates: { [key in keyof TableData]: ColumnSortState } = {
     name: ColumnSortState.INDETERMINATE,

@@ -83,6 +83,15 @@
   <ng-template valError="mustBeUnique">
     <span translate="common.validation-errors.must-be-unique"></span>
   </ng-template>
+  <ng-template valError="intervalTooSmall" let-error="error">
+    <span translate="common.validation-errors.interval-too-small" [translateParams]="{ min: error.min }"></span>
+  </ng-template>
+  <ng-template valError="timeOfDayIncomplete">
+    <span translate="common.validation-errors.time-of-day-incomplete"></span>
+  </ng-template>
+  <ng-template valError="timeOfDayEmpty">
+    <span translate="common.validation-errors.time-of-day-empty"></span>
+  </ng-template>
   <ng-template valError="resolvePendingChanges">
     <span translate="common.validation-errors.resolve-pending-changes"></span>
   </ng-template>
