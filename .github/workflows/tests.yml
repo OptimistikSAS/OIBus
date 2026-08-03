@@ -26,11 +26,14 @@ jobs:
           filters: |
             backend:
               - 'backend/**'
+              - '.github/workflows/tests.yml'
             frontend:
               - 'frontend/**'
               - 'backend/shared/**'
+              - '.github/workflows/tests.yml'
             launcher:
               - 'launcher/**'
+              - '.github/workflows/tests.yml'
 
   test-backend:
     name: Test backend on ${{ matrix.os }}
