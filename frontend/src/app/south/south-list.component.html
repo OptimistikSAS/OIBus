@@ -26,12 +26,55 @@
         <input type="text" class="form-control" id="name" formControlName="name" />
       </div>
     </div>
+
+    @if (allSouths && allSouths.length > 0) {
+      <!-- Status filter chips — clickable legend, doubling as the enabled/disabled filter -->
+      <div class="d-flex align-items-center gap-1 flex-wrap py-2">
+        <span class="filter-label text-muted" translate="south.status"></span>
+        @for (entry of LEGEND; track entry.enabled) {
+          <button
+            type="button"
+            class="filter-chip d-flex align-items-center gap-1 px-2 py-1"
+            [class.active]="activeEnabledStates.includes(entry.enabled)"
+            [class.inactive]="activeEnabledStates.length > 0 && !activeEnabledStates.includes(entry.enabled)"
+            (click)="toggleEnabledState(entry.enabled)"
+          >
+            <span [class]="entry.class"></span>
+            <span class="filter-chip-label" [translate]="entry.label"></span>
+          </button>
+        }
+        @if (activeEnabledStates.length > 0) {
+          <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-enabled-states-button" (click)="clearEnabledStates()">
+            <span class="fa fa-times me-1"></span>
+            <span translate="common.clear"></span>
+          </button>
+        }
+
+        <div class="vr mx-2"></div>
+
+        <span class="filter-label text-muted" translate="south.type"></span>
+        @for (type of types; track type) {
+          <button
+            type="button"
+            class="filter-chip d-flex align-items-center px-2 py-1"
+            [class.active]="activeTypes.includes(type)"
+            [class.inactive]="activeTypes.length > 0 && !activeTypes.includes(type)"
+            (click)="toggleType(type)"
+          >
+            <span class="filter-chip-label">{{ type | oIBusSouthTypeEnum }}</span>
+          </button>
+        }
+        @if (activeTypes.length > 0) {
+          <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-types-button" (click)="clearTypes()">
+            <span class="fa fa-times me-1"></span>
+            <span translate="common.clear"></span>
+          </button>
+        }
+      </div>
+    }
   </form>
 
-  <div class="justify-content-between d-flex">
-    @if (allSouths && allSouths.length > 0) {
-      <oib-legend [legendList]="LEGEND" />
-    }
+  <div class="justify-content-end d-flex">
     <!-- only display it if there is more than 1 page -->
     @if (displayedSouths.totalPages > 1) {
       <oib-pagination class="d-flex justify-content-end" [page]="displayedSouths" (pageChanged)="changePage($event)" />
@@ -88,11 +131,11 @@
               <tr>
                 @if (!south.enabled) {
                   <td>
-                    <div class="grey-dot"></div>
+                    <span [ngbTooltip]="'south.disabled' | translate" class="fa fa-minus-circle status-grey"></span>
                   </td>
                 } @else {
                   <td>
-                    <div class="green-dot"></div>
+                    <span [ngbTooltip]="'south.enabled' | translate" class="fa fa-check-circle status-green"></span>
                   </td>
                 }
                 <td>
