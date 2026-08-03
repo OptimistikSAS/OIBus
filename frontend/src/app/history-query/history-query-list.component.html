@@ -28,12 +28,76 @@
         <input type="text" class="form-control" id="name" formControlName="name" />
       </div>
     </div>
+
+    @if (allHistoryQueries && allHistoryQueries.length > 0) {
+      <!-- Status filter chips — clickable legend, doubling as the status filter -->
+      <div class="d-flex align-items-center gap-1 flex-wrap py-2">
+        <span class="filter-label text-muted" translate="history-query.status"></span>
+        @for (entry of LEGEND; track entry.status) {
+          <button
+            type="button"
+            class="filter-chip d-flex align-items-center gap-1 px-2 py-1"
+            [class.active]="activeStatuses.includes(entry.status)"
+            [class.inactive]="activeStatuses.length > 0 && !activeStatuses.includes(entry.status)"
+            (click)="toggleStatus(entry.status)"
+          >
+            <span [class]="entry.class"></span>
+            <span class="filter-chip-label" [translate]="entry.label"></span>
+          </button>
+        }
+        @if (activeStatuses.length > 0) {
+          <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-statuses-button" (click)="clearStatuses()">
+            <span class="fa fa-times me-1"></span>
+            <span translate="common.clear"></span>
+          </button>
+        }
+
+        <div class="vr mx-2"></div>
+
+        <span class="filter-label text-muted" translate="history-query.south-type"></span>
+        @for (type of southTypes; track type) {
+          <button
+            type="button"
+            class="filter-chip d-flex align-items-center px-2 py-1"
+            [class.active]="activeSouthTypes.includes(type)"
+            [class.inactive]="activeSouthTypes.length > 0 && !activeSouthTypes.includes(type)"
+            (click)="toggleSouthType(type)"
+          >
+            <span class="filter-chip-label">{{ type | oIBusSouthTypeEnum }}</span>
+          </button>
+        }
+        @if (activeSouthTypes.length > 0) {
+          <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-south-types-button" (click)="clearSouthTypes()">
+            <span class="fa fa-times me-1"></span>
+            <span translate="common.clear"></span>
+          </button>
+        }
+
+        <div class="vr mx-2"></div>
+
+        <span class="filter-label text-muted" translate="history-query.north-type"></span>
+        @for (type of northTypes; track type) {
+          <button
+            type="button"
+            class="filter-chip d-flex align-items-center px-2 py-1"
+            [class.active]="activeNorthTypes.includes(type)"
+            [class.inactive]="activeNorthTypes.length > 0 && !activeNorthTypes.includes(type)"
+            (click)="toggleNorthType(type)"
+          >
+            <span class="filter-chip-label">{{ type | oIBusNorthTypeEnum }}</span>
+          </button>
+        }
+        @if (activeNorthTypes.length > 0) {
+          <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-north-types-button" (click)="clearNorthTypes()">
+            <span class="fa fa-times me-1"></span>
+            <span translate="common.clear"></span>
+          </button>
+        }
+      </div>
+    }
   </form>
 
-  <div class="justify-content-between d-flex">
-    @if (allHistoryQueries && allHistoryQueries.length > 0) {
-      <oib-legend [legendList]="LEGEND" />
-    }
+  <div class="justify-content-end d-flex">
     <!-- only display it if there is more than 1 page -->
     @if (displayedHistoryQueries.totalPages > 1) {
       <oib-pagination class="d-flex justify-content-end" [page]="displayedHistoryQueries" (pageChanged)="changePage($event)" />
@@ -71,6 +135,26 @@
                   <span class="fa {{ getSortIcon('interval') }}"></span>
                 </button>
               </th>
+              <th>
+                <button
+                  type="button"
+                  style="background: none; border: none; font-weight: bold; color: inherit"
+                  (click)="toggleSort('southType')"
+                >
+                  <span translate="history-query.south-type" class="me-2"></span>
+                  <span class="fa {{ getSortIcon('southType') }}"></span>
+                </button>
+              </th>
+              <th>
+                <button
+                  type="button"
+                  style="background: none; border: none; font-weight: bold; color: inherit"
+                  (click)="toggleSort('northType')"
+                >
+                  <span translate="history-query.north-type" class="me-2"></span>
+                  <span class="fa {{ getSortIcon('northType') }}"></span>
+                </button>
+              </th>
               <th translate="history-query.description"></th>
               <th>
                 <button
@@ -89,7 +173,7 @@
             @for (query of displayedHistoryQueries.content; track query.id) {
               <tr>
                 <td>
-                  <div [class]="getStatusClass(query.status)"></div>
+                  <span [ngbTooltip]="getStatusLabel(query.status) | translate" [class]="getStatusClass(query.status)"></span>
                 </td>
                 <td>
                   <span [ngbTooltip]="query.name" placement="top-start">{{ query.name }}</span>
@@ -101,6 +185,8 @@
                     {{ query.endTime | datetime: 'ff' }}
                   </div>
                 </td>
+                <td>{{ query.southType | oIBusSouthTypeEnum }}</td>
+                <td>{{ query.northType | oIBusNorthTypeEnum }}</td>
                 <td>{{ query.description }}</td>
                 <td>
                   <oib-audit-info
