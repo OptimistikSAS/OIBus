@@ -592,6 +592,67 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ScanModeType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["cron"]},{"dataType":"enum","enums":["interval"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "IntervalUnit": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["ms"]},{"dataType":"enum","enums":["s"]},{"dataType":"enum","enums":["min"]},{"dataType":"enum","enums":["hour"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ScanModeInterval": {
+        "dataType": "refObject",
+        "properties": {
+            "value": {"dataType":"double","required":true},
+            "unit": {"ref":"IntervalUnit","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ActivationWindowDateRange": {
+        "dataType": "refObject",
+        "properties": {
+            "start": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}]},
+            "end": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "LocalTime": {
+        "dataType": "refAlias",
+        "type": {"dataType":"string","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ActivationWindowTimeOfDay": {
+        "dataType": "refObject",
+        "properties": {
+            "start": {"ref":"LocalTime","required":true},
+            "end": {"ref":"LocalTime","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ActivationWindowRecurring": {
+        "dataType": "refObject",
+        "properties": {
+            "timezone": {"ref":"Timezone","required":true},
+            "daysOfWeek": {"dataType":"union","subSchemas":[{"dataType":"array","array":{"dataType":"double"}},{"dataType":"enum","enums":[null]}]},
+            "timeOfDay": {"dataType":"union","subSchemas":[{"ref":"ActivationWindowTimeOfDay"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ActivationWindow": {
+        "dataType": "refObject",
+        "properties": {
+            "dateRange": {"dataType":"union","subSchemas":[{"ref":"ActivationWindowDateRange"},{"dataType":"enum","enums":[null]}]},
+            "recurring": {"dataType":"union","subSchemas":[{"ref":"ActivationWindowRecurring"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ScanModeDTO": {
         "dataType": "refObject",
         "properties": {
@@ -602,7 +663,11 @@ const models: TsoaRoute.Models = {
             "updatedAt": {"ref":"Instant","required":true},
             "name": {"dataType":"string","required":true},
             "description": {"dataType":"string","required":true},
+            "type": {"ref":"ScanModeType","required":true},
             "cron": {"dataType":"string","required":true},
+            "interval": {"dataType":"union","subSchemas":[{"ref":"ScanModeInterval"},{"dataType":"enum","enums":[null]}],"required":true},
+            "activationWindow": {"dataType":"union","subSchemas":[{"ref":"ActivationWindow"},{"dataType":"enum","enums":[null]}],"required":true},
+            "activationWindowExpired": {"dataType":"boolean","required":true},
         },
         "additionalProperties": false,
     },
@@ -4338,7 +4403,10 @@ const models: TsoaRoute.Models = {
         "properties": {
             "name": {"dataType":"string","required":true},
             "description": {"dataType":"string","required":true},
+            "type": {"ref":"ScanModeType","required":true},
             "cron": {"dataType":"string","required":true},
+            "interval": {"dataType":"union","subSchemas":[{"ref":"ScanModeInterval"},{"dataType":"enum","enums":[null]}],"required":true},
+            "activationWindow": {"dataType":"union","subSchemas":[{"ref":"ActivationWindow"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
