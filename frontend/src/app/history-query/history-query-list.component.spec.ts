@@ -59,4 +59,87 @@ describe('HistoryQueryListComponent', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
   });
+
+  test('should sort by updated on by default', () => {
+    const fixture = TestBed.createComponent(HistoryQueryListComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.sortField).toBe('updatedAt');
+    expect(fixture.componentInstance.sortDirection).toBe('desc');
+  });
+
+  test('should display south type and north type columns', async () => {
+    const fixture = TestBed.createComponent(HistoryQueryListComponent);
+    fixture.detectChanges();
+
+    const root = page.elementLocator(fixture.nativeElement);
+    const firstRowCells = root.getByCss('tbody tr').nth(0).getByCss('td');
+    await expect.element(firstRowCells.nth(3)).toHaveTextContent('Microsoft SQL Server');
+    await expect.element(firstRowCells.nth(4)).toHaveTextContent('OIAnalytics');
+  });
+
+  test('should filter the list by toggling a status filter', async () => {
+    const fixture = TestBed.createComponent(HistoryQueryListComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.toggleStatus(fixture.componentInstance.LEGEND[0].status);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.activeStatuses.length).toBe(1);
+    const root = page.elementLocator(fixture.nativeElement);
+    const rows = root.getByCss('tbody tr');
+    await expect.element(rows).toHaveLength(1);
+  });
+
+  test('should clear the status filter', () => {
+    const fixture = TestBed.createComponent(HistoryQueryListComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.toggleStatus('RUNNING');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.filteredHistoryQueries.length).toBe(1);
+
+    fixture.componentInstance.clearStatuses();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.activeStatuses.length).toBe(0);
+    expect(fixture.componentInstance.filteredHistoryQueries.length).toBe(testData.historyQueries.listLight.length);
+  });
+
+  test('should filter the list by north type', () => {
+    const fixture = TestBed.createComponent(HistoryQueryListComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.toggleNorthType('file-writer');
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.filteredHistoryQueries.length).toBe(1);
+    expect(fixture.componentInstance.filteredHistoryQueries[0].northType).toBe('file-writer');
+  });
+
+  test('should filter the list by south type', () => {
+    const fixture = TestBed.createComponent(HistoryQueryListComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.toggleSouthType('mssql');
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.filteredHistoryQueries.length).toBe(testData.historyQueries.listLight.length);
+
+    fixture.componentInstance.clearSouthTypes();
+    fixture.componentInstance.toggleNorthType('oianalytics');
+    fixture.detectChanges();
+    expect(fixture.componentInstance.filteredHistoryQueries.length).toBe(1);
+  });
+
+  test('should sort by south type when clicking the column header', () => {
+    const fixture = TestBed.createComponent(HistoryQueryListComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.toggleSort('southType');
+    expect(fixture.componentInstance.sortField).toBe('southType');
+    expect(fixture.componentInstance.sortDirection).toBe('asc');
+
+    fixture.componentInstance.toggleSort('southType');
+    expect(fixture.componentInstance.sortDirection).toBe('desc');
+  });
 });
