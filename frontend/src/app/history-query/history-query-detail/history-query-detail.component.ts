@@ -7,6 +7,7 @@ import { PageLoader } from '../../shared/page-loader.service';
 import { NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
+import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
 import { ScanModeService } from '../../services/scan-mode.service';
 import {
   HistoryQueryDTO,
@@ -118,6 +119,12 @@ export class HistoryQueryDetailComponent {
   southDisplayedSettings: Array<{ key: string; value: string }> = [];
 
   scanModes: Array<ScanModeDTO> = [];
+
+  /** Whether a scan mode's activation window can never fire again. */
+  isWindowExpired(scanMode: ScanModeDTO | null | undefined): boolean {
+    return isScanModeWindowExpired(scanMode);
+  }
+
   certificates: Array<CertificateDTO> = [];
   transformers: Array<TransformerDTO> = [];
   northManifest: NorthConnectorManifest | null = null;

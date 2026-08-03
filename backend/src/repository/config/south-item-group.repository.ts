@@ -3,6 +3,7 @@ import { Database } from 'better-sqlite3';
 import { SouthItemGroupCommand, SouthItemGroupEntity } from '../../model/south-connector.model';
 import { ScanMode } from '../../model/scan-mode.model';
 import { SouthHistoryRecoveryStrategy } from '../../../shared/model/south-connector.model';
+import { scanModeAliasedColumns, toScanModeFromPrefixedRow } from './scan-mode.repository';
 
 const SOUTH_ITEM_GROUPS_TABLE = 'south_item_groups';
 const SOUTH_ITEMS_TABLE = 'south_items';
@@ -18,9 +19,8 @@ export default class SouthItemGroupRepository {
   findById(id: string): SouthItemGroupEntity | null {
     const query =
       `SELECT g.id, g.created_at, g.updated_at, g.created_by, g.updated_by, g.name, g.south_id, ` +
-      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, g.recovery_strategy, s.id as scan_mode_id_full, ` +
-      `s.name as scan_mode_name, s.description as scan_mode_description, s.cron as scan_mode_cron, ` +
-      `s.created_at as scan_mode_created_at, s.updated_at as scan_mode_updated_at, s.created_by as scan_mode_created_by, s.updated_by as scan_mode_updated_by ` +
+      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, g.recovery_strategy, ` +
+      `${scanModeAliasedColumns('s', 'sm_')} ` +
       `FROM ${SOUTH_ITEM_GROUPS_TABLE} g JOIN ${SCAN_MODE_TABLE} s ON g.scan_mode_id = s.id WHERE g.id = ?;`;
     const result = this.database.prepare<[string], Record<string, string | number> | undefined>(query).get(id);
     return result ? toSouthItemGroup(result, this.findAllItemsForGroup(result.id as string)) : null;
@@ -29,9 +29,8 @@ export default class SouthItemGroupRepository {
   findBySouthId(southId: string): Array<SouthItemGroupEntity> {
     const query =
       `SELECT g.id, g.created_at, g.updated_at, g.created_by, g.updated_by, g.name, g.south_id, ` +
-      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, g.recovery_strategy, s.id as scan_mode_id_full, ` +
-      `s.name as scan_mode_name, s.description as scan_mode_description, s.cron as scan_mode_cron, ` +
-      `s.created_at as scan_mode_created_at, s.updated_at as scan_mode_updated_at, s.created_by as scan_mode_created_by, s.updated_by as scan_mode_updated_by ` +
+      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, g.recovery_strategy, ` +
+      `${scanModeAliasedColumns('s', 'sm_')} ` +
       `FROM ${SOUTH_ITEM_GROUPS_TABLE} g JOIN scan_modes s ON g.scan_mode_id = s.id WHERE g.south_id = ? ORDER BY g.name;`;
     return this.database
       .prepare<[string], Record<string, string | number>>(query)
@@ -42,9 +41,8 @@ export default class SouthItemGroupRepository {
   findByNameAndSouthId(name: string, southId: string): SouthItemGroupEntity | null {
     const query =
       `SELECT g.id, g.created_at, g.updated_at, g.created_by, g.updated_by, g.name, g.south_id, ` +
-      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, g.recovery_strategy, s.id as scan_mode_id_full, ` +
-      `s.name as scan_mode_name, s.description as scan_mode_description, s.cron as scan_mode_cron, ` +
-      `s.created_at as scan_mode_created_at, s.updated_at as scan_mode_updated_at, s.created_by as scan_mode_created_by, s.updated_by as scan_mode_updated_by ` +
+      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, g.recovery_strategy, ` +
+      `${scanModeAliasedColumns('s', 'sm_')} ` +
       `FROM ${SOUTH_ITEM_GROUPS_TABLE} g JOIN ${SCAN_MODE_TABLE} s ON g.scan_mode_id = s.id WHERE g.name = ? AND g.south_id = ?;`;
     const result = this.database.prepare(query).get(name, southId) as Record<string, string | number> | undefined;
     return result ? toSouthItemGroup(result, this.findAllItemsForGroup(result.id as string)) : null;
@@ -118,16 +116,7 @@ export const toSouthItemGroup = (
   result: Record<string, string | number>,
   items: Array<Record<string, string | number>>
 ): SouthItemGroupEntity => {
-  const scanMode: ScanMode = {
-    id: result.scan_mode_id_full as string,
-    name: result.scan_mode_name as string,
-    description: result.scan_mode_description as string,
-    cron: result.scan_mode_cron as string,
-    createdBy: result.scan_mode_created_by as string,
-    updatedBy: result.scan_mode_updated_by as string,
-    createdAt: result.scan_mode_created_at as string,
-    updatedAt: result.scan_mode_updated_at as string
-  };
+  const scanMode: ScanMode = toScanModeFromPrefixedRow(result, 'sm_');
   return {
     id: result.id as string,
     name: result.name as string,
