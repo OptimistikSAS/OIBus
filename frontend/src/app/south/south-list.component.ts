@@ -1,6 +1,6 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
+import { OIBusSouthType, SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
@@ -15,7 +15,6 @@ import { createPageFromArray, Page } from '../../../../backend/shared/model/type
 import { emptyPage } from '../shared/test-utils';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';
-import { LegendComponent } from '../shared/legend/legend.component';
 import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 import { FormControlValidationDirective } from '../shared/form/form-control-validation.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -36,7 +35,6 @@ const PAGE_SIZE = 15;
     ReactiveFormsModule,
     PaginationComponent,
     AsyncPipe,
-    LegendComponent,
     OIBusSouthTypeEnumPipe,
     NgbTooltip,
     TranslatePipe,
@@ -53,19 +51,26 @@ export class SouthListComponent {
   private southConnectorService = inject(SouthConnectorService);
 
   allSouths: Array<SouthConnectorLightDTO> | null = null;
-  private filteredSouths: Array<SouthConnectorLightDTO> = [];
+  filteredSouths: Array<SouthConnectorLightDTO> = [];
   displayedSouths: Page<SouthConnectorLightDTO> = emptyPage();
   states = new Map<string, ObservableState>();
-  sortField: SouthSortField = null;
+  sortField: SouthSortField = 'name';
   sortDirection: SortDirection = 'asc';
+
+  // Active filters for the clickable status/type legends. Empty array means "no filter" (show all).
+  activeEnabledStates: Array<boolean> = [];
+  activeTypes: Array<OIBusSouthType> = [];
 
   searchForm = inject(NonNullableFormBuilder).group({
     name: [null as string | null]
   });
 
-  readonly LEGEND = [
-    { label: 'south.disabled', class: 'grey-dot' },
-    { label: 'south.enabled', class: 'green-dot' }
+  // Each status pairs a distinct icon shape with its color, so meaning does not rely on color alone
+  // (e.g. colorblind users can still tell enabled from disabled even when green and grey look the same).
+  // Avoids fa-play/fa-pause/fa-toggle-* shapes, which could be mistaken for the row's own action control.
+  readonly LEGEND: Array<{ label: string; enabled: boolean; class: string }> = [
+    { label: 'south.disabled', enabled: false, class: 'fa fa-minus-circle status-grey' },
+    { label: 'south.enabled', enabled: true, class: 'fa fa-check-circle status-green' }
   ];
 
   constructor() {
@@ -83,6 +88,12 @@ export class SouthListComponent {
         this.updateList(0);
       }
     });
+  }
+
+  /** Distinct South connector types among the currently loaded connectors, used to build the filter chips. */
+  get types(): Array<OIBusSouthType> {
+    const types = new Set((this.allSouths ?? []).map(south => south.type));
+    return Array.from(types).sort((a, b) => a.localeCompare(b));
   }
 
   /**
@@ -166,8 +177,38 @@ export class SouthListComponent {
     if (formValue.name) {
       filteredItems = filteredItems.filter(item => item.name.toLowerCase().includes(formValue.name!.toLowerCase()));
     }
+    if (this.activeEnabledStates.length > 0) {
+      filteredItems = filteredItems.filter(item => this.activeEnabledStates.includes(item.enabled));
+    }
+    if (this.activeTypes.length > 0) {
+      filteredItems = filteredItems.filter(item => this.activeTypes.includes(item.type));
+    }
 
     return filteredItems;
+  }
+
+  /** Toggles an enabled/disabled state in/out of the active status filter and re-applies filtering. */
+  toggleEnabledState(enabled: boolean) {
+    this.activeEnabledStates = this.activeEnabledStates.includes(enabled)
+      ? this.activeEnabledStates.filter(e => e !== enabled)
+      : [...this.activeEnabledStates, enabled];
+    this.updateList(0);
+  }
+
+  clearEnabledStates() {
+    this.activeEnabledStates = [];
+    this.updateList(0);
+  }
+
+  /** Toggles a South type in/out of the active filter and re-applies filtering. */
+  toggleType(type: OIBusSouthType) {
+    this.activeTypes = this.activeTypes.includes(type) ? this.activeTypes.filter(t => t !== type) : [...this.activeTypes, type];
+    this.updateList(0);
+  }
+
+  clearTypes() {
+    this.activeTypes = [];
+    this.updateList(0);
   }
 
   private sortSouths() {
