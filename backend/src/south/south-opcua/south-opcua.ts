@@ -394,17 +394,18 @@ export default class SouthOPCUA
     // connect() swallows connection errors to drive the streaming reconnect loop. For the
     // interactive explore we (re)establish the session lazily so the real connection failure
     // is surfaced to the user instead of a generic "not connected" message.
-    if (this.client === null) {
-      this.client = await this.createSession();
+    if (this.session === null) {
+      this.session = await this.createSession();
     }
+    const session = this.session;
     const nodeToBrowse = parentId ?? 'ns=0;i=85';
     try {
       const references: Array<ReferenceDescription> = [];
-      const browseResult = await this.client.browse(nodeToBrowse);
+      const browseResult = await session.browse(nodeToBrowse);
       references.push(...(browseResult.references ?? []));
       let continuationPoint = browseResult.continuationPoint;
       while (continuationPoint && continuationPoint.length > 0) {
-        const nextResult = await this.client.browseNext(continuationPoint, false);
+        const nextResult = await session.browseNext(continuationPoint, false);
         references.push(...(nextResult.references ?? []));
         continuationPoint = nextResult.continuationPoint;
       }
