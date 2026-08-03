@@ -54,6 +54,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Exclude workspace from Windows Defender scanning
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: Add-MpPreference -ExclusionPath "${{ github.workspace }}"
+
       - name: Use Node.js
         uses: actions/setup-node@v7
         with:
@@ -174,6 +179,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+
+      - name: Exclude workspace from Windows Defender scanning
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: Add-MpPreference -ExclusionPath "${{ github.workspace }}"
 
       - name: Use Node.js
         uses: actions/setup-node@v7
