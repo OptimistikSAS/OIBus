@@ -280,10 +280,11 @@ describe('South Item Group Repository', () => {
         end_time_offset: 0,
         max_read_interval: 3600,
         read_delay: 200,
-        scan_mode_id_full: testData.scanMode.list[0].id,
-        scan_mode_name: testData.scanMode.list[0].name,
-        scan_mode_description: testData.scanMode.list[0].description,
-        scan_mode_cron: testData.scanMode.list[0].cron
+        sm_id: testData.scanMode.list[0].id,
+        sm_name: testData.scanMode.list[0].name,
+        sm_description: testData.scanMode.list[0].description,
+        sm_cron: testData.scanMode.list[0].cron,
+        sm_type: testData.scanMode.list[0].type
       };
 
       const converted = toSouthItemGroup(dbResult, [
@@ -327,10 +328,11 @@ describe('South Item Group Repository', () => {
         scan_mode_id: testData.scanMode.list[0].id,
         start_time_offset: null,
         end_time_offset: null,
-        scan_mode_id_full: testData.scanMode.list[0].id,
-        scan_mode_name: testData.scanMode.list[0].name,
-        scan_mode_description: testData.scanMode.list[0].description,
-        scan_mode_cron: testData.scanMode.list[0].cron
+        sm_id: testData.scanMode.list[0].id,
+        sm_name: testData.scanMode.list[0].name,
+        sm_description: testData.scanMode.list[0].description,
+        sm_cron: testData.scanMode.list[0].cron,
+        sm_type: testData.scanMode.list[0].type
       };
 
       const converted = toSouthItemGroup(dbResult as Record<string, string | number>, []);
@@ -347,10 +349,11 @@ describe('South Item Group Repository', () => {
         scan_mode_id: testData.scanMode.list[0].id,
         start_time_offset: undefined,
         end_time_offset: undefined,
-        scan_mode_id_full: testData.scanMode.list[0].id,
-        scan_mode_name: testData.scanMode.list[0].name,
-        scan_mode_description: testData.scanMode.list[0].description,
-        scan_mode_cron: testData.scanMode.list[0].cron
+        sm_id: testData.scanMode.list[0].id,
+        sm_name: testData.scanMode.list[0].name,
+        sm_description: testData.scanMode.list[0].description,
+        sm_cron: testData.scanMode.list[0].cron,
+        sm_type: testData.scanMode.list[0].type
       };
 
       const converted = toSouthItemGroup(dbResult as Record<string, string | number>, []);
@@ -369,10 +372,11 @@ describe('South Item Group Repository', () => {
         endTimeOffset: null,
         max_read_interval: null,
         read_delay: 0,
-        scan_mode_id_full: testData.scanMode.list[0].id,
-        scan_mode_name: testData.scanMode.list[0].name,
-        scan_mode_description: testData.scanMode.list[0].description,
-        scan_mode_cron: testData.scanMode.list[0].cron
+        sm_id: testData.scanMode.list[0].id,
+        sm_name: testData.scanMode.list[0].name,
+        sm_description: testData.scanMode.list[0].description,
+        sm_cron: testData.scanMode.list[0].cron,
+        sm_type: testData.scanMode.list[0].type
       };
 
       const converted = toSouthItemGroup(dbResult as Record<string, string | number>, []);

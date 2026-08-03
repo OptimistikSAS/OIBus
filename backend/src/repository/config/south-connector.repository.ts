@@ -11,7 +11,7 @@ import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-se
 import { OIBusSouthType, SouthConnectorItemSearchParam, SouthHistoryRecoveryStrategy } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
 import { ScanMode } from '../../model/scan-mode.model';
-import { toScanMode } from './scan-mode.repository';
+import { scanModeAliasedColumns, scanModeColumns, toScanMode, toScanModeFromPrefixedRow } from './scan-mode.repository';
 import SouthItemGroupRepository from './south-item-group.repository';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
@@ -30,15 +30,11 @@ const PAGE_SIZE = 50;
 const ITEM_JOIN_SELECT =
   `SELECT si.id, si.name, si.enabled, si.scan_mode_id, si.settings, si.sync_with_group, ` +
   `si.max_read_interval, si.read_delay, si.start_time_offset, si.end_time_offset, si.recovery_strategy, si.created_by, si.updated_by, si.created_at, si.updated_at, ` +
-  `sm.id AS sm_id, sm.name AS sm_name, sm.description AS sm_description, sm.cron AS sm_cron, ` +
-  `sm.created_by AS sm_created_by, sm.updated_by AS sm_updated_by, ` +
-  `sm.created_at AS sm_created_at, sm.updated_at AS sm_updated_at, ` +
+  `${scanModeAliasedColumns('sm', 'sm_')}, ` +
   `g.id AS g_id, g.name AS g_name, g.start_time_offset AS g_start_time_offset, g.end_time_offset AS g_end_time_offset, g.max_read_interval AS g_max_read_interval, ` +
   `g.read_delay AS g_read_delay, g.recovery_strategy AS g_recovery_strategy, g.created_by AS g_created_by, g.updated_by AS g_updated_by, ` +
   `g.created_at AS g_created_at, g.updated_at AS g_updated_at, ` +
-  `gsm.id AS gsm_id, gsm.name AS gsm_name, gsm.description AS gsm_description, gsm.cron AS gsm_cron, ` +
-  `gsm.created_by AS gsm_created_by, gsm.updated_by AS gsm_updated_by, ` +
-  `gsm.created_at AS gsm_created_at, gsm.updated_at AS gsm_updated_at`;
+  `${scanModeAliasedColumns('gsm', 'gsm_')}`;
 
 const ITEM_JOIN_FROM =
   `FROM ${SOUTH_ITEMS_TABLE} si ` +
@@ -556,7 +552,7 @@ export default class SouthConnectorRepository {
   }
 
   findScanModeForSouth(scanModeId: string): ScanMode {
-    const query = `SELECT id, name, description, cron, created_by, updated_by, created_at, updated_at FROM ${SCAN_MODE_TABLE} WHERE id = ?;`;
+    const query = `SELECT ${scanModeColumns()} FROM ${SCAN_MODE_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(scanModeId) as Record<string, string>;
     return toScanMode(result);
   }
@@ -564,9 +560,8 @@ export default class SouthConnectorRepository {
   findGroupBySouthId(southId: string): Array<SouthItemGroupEntityLight> {
     const query =
       `SELECT g.id, g.created_at, g.updated_at, g.created_by, g.updated_by, g.name, ` +
-      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, g.recovery_strategy, s.id as scan_mode_id_full, ` +
-      `s.name as scan_mode_name, s.description as scan_mode_description, s.cron as scan_mode_cron, ` +
-      `s.created_at as scan_mode_created_at, s.updated_at as scan_mode_updated_at, s.created_by as scan_mode_created_by, s.updated_by as scan_mode_updated_by ` +
+      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, g.recovery_strategy, ` +
+      `${scanModeAliasedColumns('s', 'sm_')} ` +
       `FROM ${SOUTH_ITEM_GROUPS_TABLE} g JOIN ${SCAN_MODE_TABLE} s ON g.scan_mode_id = s.id WHERE g.south_id = ? ORDER BY g.name;`;
     return this.database
       .prepare<[string], Record<string, string | number>>(query)
@@ -597,33 +592,13 @@ export default class SouthConnectorRepository {
  * This is the single-trip replacement for the old N+1 toSouthConnectorItemEntity approach.
  */
 export function toItemEntityFromJoinedRow(row: Record<string, string | number | null>): SouthConnectorItemEntity<SouthItemSettings> {
-  const scanMode: ScanMode | null = row.sm_id
-    ? {
-        id: row.sm_id as string,
-        name: row.sm_name as string,
-        description: row.sm_description as string,
-        cron: row.sm_cron as string,
-        createdBy: row.sm_created_by as string,
-        updatedBy: row.sm_updated_by as string,
-        createdAt: row.sm_created_at as string,
-        updatedAt: row.sm_updated_at as string
-      }
-    : null;
+  const scanMode: ScanMode | null = row.sm_id ? toScanModeFromPrefixedRow(row, 'sm_') : null;
 
   const group: SouthItemGroupEntityLight | null = row.g_id
     ? {
         id: row.g_id as string,
         name: row.g_name as string,
-        scanMode: {
-          id: row.gsm_id as string,
-          name: row.gsm_name as string,
-          description: row.gsm_description as string,
-          cron: row.gsm_cron as string,
-          createdBy: row.gsm_created_by as string,
-          updatedBy: row.gsm_updated_by as string,
-          createdAt: row.gsm_created_at as string,
-          updatedAt: row.gsm_updated_at as string
-        },
+        scanMode: toScanModeFromPrefixedRow(row, 'gsm_'),
         startTimeOffset: row.g_start_time_offset !== null && row.g_start_time_offset !== undefined ? Number(row.g_start_time_offset) : null,
         endTimeOffset: row.g_end_time_offset !== null && row.g_end_time_offset !== undefined ? Number(row.g_end_time_offset) : null,
         maxReadInterval: row.g_max_read_interval !== null && row.g_max_read_interval !== undefined ? Number(row.g_max_read_interval) : null,
@@ -671,16 +646,7 @@ export const toSouthConnectorLight = (result: Record<string, string>): SouthConn
 };
 
 export const toSouthItemGroupLight = (result: Record<string, string | number>): SouthItemGroupEntityLight => {
-  const scanMode: ScanMode = {
-    id: result.scan_mode_id_full as string,
-    name: result.scan_mode_name as string,
-    description: result.scan_mode_description as string,
-    cron: result.scan_mode_cron as string,
-    createdBy: result.scan_mode_created_by as string,
-    updatedBy: result.scan_mode_updated_by as string,
-    createdAt: result.scan_mode_created_at as string,
-    updatedAt: result.scan_mode_updated_at as string
-  };
+  const scanMode: ScanMode = toScanModeFromPrefixedRow(result, 'sm_');
   return {
     id: result.id as string,
     name: result.name as string,
