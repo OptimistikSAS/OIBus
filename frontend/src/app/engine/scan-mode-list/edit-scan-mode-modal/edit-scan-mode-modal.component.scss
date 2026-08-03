@@ -1,0 +1,23 @@
+@import '../../../../common';
+
+.oib-interval-unit {
+  max-width: 10rem;
+}
+
+/**
+ * Marks a time-of-day window that rolls over into the next day. Sits in the gutter to the right of
+ * the end time; the timezone label next to it reserves the matching space so the two never collide.
+ */
+.oib-overnight-badge {
+  position: absolute;
+  right: -1.15rem;
+  bottom: 0.4rem;
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: $electricBlue;
+  cursor: help;
+}
+
+.oib-window-timezone {
+  padding-left: 1.5rem;
+}
