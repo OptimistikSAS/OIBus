@@ -1,7 +1,15 @@
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import { CronJob } from 'cron';
+import { DateTime } from 'luxon';
 import { validateCronExpression } from '../service/utils';
+import {
+  MAX_INTERVAL_MS,
+  MIN_INTERVAL_MS,
+  intervalToMs,
+  isActivationWindowExpired,
+  isWithinActivationWindow
+} from '../service/scan-mode.utils';
 import path from 'node:path';
 import { Instant, NotFoundError } from '../model/types';
 import {
@@ -54,6 +62,9 @@ export default class DataStreamEngine {
   // One shared cron per scan mode, regardless of whether any connector currently uses it — see
   // start()/onScanModeTriggered() for why this replaced per-connector cron ownership.
   private cronByScanModeId = new Map<string, CronJob>();
+  // Sibling of cronByScanModeId for `type: 'interval'` scan modes. A scan mode lives in exactly one
+  // of the two maps, keyed by id, so it can switch mechanism without leaking a timer.
+  private intervalByScanModeId = new Map<string, NodeJS.Timeout>();
 
   private readonly _logger = loggerService.createChildLogger('internal', 'engine');
   readonly baseFolder: string;
@@ -88,8 +99,7 @@ export default class DataStreamEngine {
      * on every startup.
      */
     for (const scanMode of this.scanModeRepository.findAll()) {
-      if (scanMode.id === 'subscription') continue;
-      this.createCronJob(scanMode);
+      this.scheduleScanMode(scanMode);
     }
 
     for (const northLight of northConnectorList) {
@@ -138,6 +148,10 @@ export default class DataStreamEngine {
       job.stop();
     }
     this.cronByScanModeId.clear();
+    for (const timer of this.intervalByScanModeId.values()) {
+      clearInterval(timer);
+    }
+    this.intervalByScanModeId.clear();
 
     const stopAllSouths = Promise.all(
       Array.from(this.southConnectors.keys()).map(id =>
@@ -169,24 +183,79 @@ export default class DataStreamEngine {
     clearOIAnalyticsCredentialCache();
   }
 
-  /** Replace (or create) the shared cron for one scan mode. Invalid cron expressions are logged and skipped. */
-  private createCronJob(scanMode: ScanMode): void {
-    const existingCron = this.cronByScanModeId.get(scanMode.id);
-    if (existingCron) {
-      existingCron.stop();
-      this.cronByScanModeId.delete(scanMode.id);
+  /**
+   * Replace (or create) the shared scheduler entry for one scan mode. Invalid schedules are logged
+   * and skipped rather than thrown, so one bad scan mode cannot stop the engine from starting.
+   *
+   * The `'subscription'` sentinel is excluded here rather than at each call site: it is a real
+   * seeded row with an empty cron (subscription items are push-driven, never polled).
+   */
+  private scheduleScanMode(scanMode: ScanMode): void {
+    this.unscheduleScanMode(scanMode.id);
+    if (scanMode.id === 'subscription') {
+      return;
     }
+
+    if (isActivationWindowExpired(scanMode.activationWindow, DateTime.utc())) {
+      // Non-blocking: the schedule is still installed, but no tick will ever pass the gate.
+      this._logger.warn(
+        `Scan mode "${scanMode.name}" (${scanMode.id}) has an activation window that can never be active again; it will never trigger`
+      );
+    }
+
     try {
-      validateCronExpression(scanMode.cron);
-      const newCron = new CronJob(scanMode.cron, () => this.onScanModeTriggered(scanMode), null, true);
-      this.cronByScanModeId.set(scanMode.id, newCron);
+      if (scanMode.type === 'interval') {
+        const periodMs = scanMode.interval ? intervalToMs(scanMode.interval) : 0;
+        // Re-checked here and not only in the request validator: the engine reads scan modes
+        // straight from the database at startup, where rows may predate the current schema.
+        if (periodMs < MIN_INTERVAL_MS || periodMs > MAX_INTERVAL_MS) {
+          throw new Error(`Interval must be between ${MIN_INTERVAL_MS} ms and ${MAX_INTERVAL_MS} ms, got ${periodMs} ms`);
+        }
+        // The global setInterval on purpose, so node:test's mock.timers can intercept it. Not
+        // unref'd: like the CronJob below, a scheduled scan mode keeps the process alive, and
+        // stop() clears every timer for a clean shutdown. Unlike cron this drifts under event-loop
+        // pressure, which is acceptable for a polling trigger.
+        this.intervalByScanModeId.set(
+          scanMode.id,
+          setInterval(() => this.onScanModeTriggered(scanMode), periodMs)
+        );
+      } else {
+        validateCronExpression(scanMode.cron);
+        const newCron = new CronJob(scanMode.cron, () => this.onScanModeTriggered(scanMode), null, true);
+        this.cronByScanModeId.set(scanMode.id, newCron);
+      }
     } catch (error: unknown) {
-      this._logger.error(`Error when creating cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${(error as Error).message}`);
+      this._logger.error(`Error when scheduling scan mode "${scanMode.name}" (${scanMode.id}): ${(error as Error).message}`);
     }
   }
 
-  /** Fan out one scan-mode tick to every south and north connector; each decides for itself whether it applies. */
+  /** Stop and forget whichever scheduler entry — cron or interval — a scan mode currently owns. */
+  private unscheduleScanMode(scanModeId: string): void {
+    const existingCron = this.cronByScanModeId.get(scanModeId);
+    if (existingCron) {
+      existingCron.stop();
+      this.cronByScanModeId.delete(scanModeId);
+    }
+    const existingInterval = this.intervalByScanModeId.get(scanModeId);
+    if (existingInterval) {
+      clearInterval(existingInterval);
+      this.intervalByScanModeId.delete(scanModeId);
+    }
+  }
+
+  /**
+   * Fan out one scan-mode tick to every south, north and history query; each decides for itself
+   * whether it applies.
+   *
+   * A scan mode with an activation window only fans out while the window is open. The scheduler
+   * keeps ticking and the tick is simply dropped, so nothing has to be rescheduled when the window
+   * opens or closes, and no run is recorded for a skipped tick.
+   */
   private onScanModeTriggered(scanMode: ScanMode): void {
+    if (!isWithinActivationWindow(scanMode, DateTime.utc())) {
+      this._logger.trace(`Scan mode "${scanMode.name}" tick skipped: outside its activation window`);
+      return;
+    }
     for (const { south } of this.southConnectors.values()) {
       south.trigger(scanMode);
     }
@@ -550,23 +619,19 @@ export default class DataStreamEngine {
     await this.getHistoryQuery(id).historyQuery.updateCacheContent(updateCommand);
   }
 
-  /** Called by ScanModeService.create() — install the new scan mode's shared cron. */
+  /** Called by ScanModeService.create() — install the new scan mode's shared schedule. */
   createScanMode(scanMode: ScanMode): void {
-    this.createCronJob(scanMode);
+    this.scheduleScanMode(scanMode);
   }
 
-  /** Called by ScanModeService.update() when the cron expression changed — replace the one affected cron. */
+  /** Called by ScanModeService.update() when the schedule changed — replace the one affected entry. */
   updateScanMode(scanMode: ScanMode): void {
-    this.createCronJob(scanMode);
+    this.scheduleScanMode(scanMode);
   }
 
-  /** Called by ScanModeService.delete() — stop and remove the scan mode's shared cron. */
+  /** Called by ScanModeService.delete() — stop and remove the scan mode's shared schedule. */
   deleteScanMode(scanModeId: string): void {
-    const job = this.cronByScanModeId.get(scanModeId);
-    if (job) {
-      job.stop();
-      this.cronByScanModeId.delete(scanModeId);
-    }
+    this.unscheduleScanMode(scanModeId);
   }
 
   /**

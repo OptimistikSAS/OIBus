@@ -1,0 +1,15 @@
+<div class="d-flex flex-wrap gap-1">
+  @for (day of days; track day.value) {
+    <button
+      type="button"
+      class="btn btn-sm oib-day-pill"
+      [class.active]="isSelected(day.value)"
+      [disabled]="disabled()"
+      [attr.aria-pressed]="isSelected(day.value)"
+      [attr.data-day]="day.value"
+      (click)="toggle(day.value)"
+    >
+      {{ day.label }}
+    </button>
+  }
+</div>

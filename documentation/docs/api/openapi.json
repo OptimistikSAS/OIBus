@@ -1984,6 +1984,158 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ScanModeType": {
+				"type": "string",
+				"enum": [
+					"cron",
+					"interval"
+				],
+				"description": "How a scan mode decides when to tick.\n- `cron`: driven by a cron expression (the historical behaviour).\n- `interval`: driven by a fixed period between ticks."
+			},
+			"IntervalUnit": {
+				"type": "string",
+				"enum": [
+					"ms",
+					"s",
+					"min",
+					"hour"
+				]
+			},
+			"ScanModeInterval": {
+				"description": "Fixed period between two ticks of an `interval` scan mode.",
+				"properties": {
+					"value": {
+						"type": "number",
+						"format": "double",
+						"description": "How many `unit`s between two ticks.",
+						"example": 30
+					},
+					"unit": {
+						"$ref": "#/components/schemas/IntervalUnit",
+						"description": "The unit `value` is expressed in.",
+						"example": "s"
+					}
+				},
+				"required": [
+					"value",
+					"unit"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ActivationWindowDateRange": {
+				"description": "Absolute bounds of an activation window. Each side is independently optional: an absent bound\nmeans the window is open-ended on that side.",
+				"properties": {
+					"start": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "Inclusive start instant, ISO UTC.",
+						"example": "2026-08-01T00:00:00.000Z"
+					},
+					"end": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "Inclusive end instant, ISO UTC.",
+						"example": "2026-08-31T00:00:00.000Z"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"LocalTime": {
+				"type": "string",
+				"example": "12:34:56",
+				"description": "Represents a local time as an ISO time string (HH:MM:SS)."
+			},
+			"ActivationWindowTimeOfDay": {
+				"description": "Local time-of-day bounds. `start` is inclusive, `end` is exclusive. When `end` is earlier than\n`start` the window is overnight and spans into the following day.",
+				"properties": {
+					"start": {
+						"$ref": "#/components/schemas/LocalTime",
+						"example": "22:00"
+					},
+					"end": {
+						"$ref": "#/components/schemas/LocalTime",
+						"example": "02:00"
+					}
+				},
+				"required": [
+					"start",
+					"end"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ActivationWindowRecurring": {
+				"description": "A civil-time recurrence rule. Unlike the date range, this is not a pair of instants: \"Thursday\n12:00\" shifts by an hour across DST transitions, so the rule carries the IANA timezone it is\nexpressed in and is re-derived at every evaluation.",
+				"properties": {
+					"timezone": {
+						"$ref": "#/components/schemas/Timezone",
+						"description": "IANA timezone the day and time filters are expressed in, captured from the user's account\nsetting when the scan mode was saved.",
+						"example": "Europe/Paris"
+					},
+					"daysOfWeek": {
+						"items": {
+							"type": "number",
+							"format": "double"
+						},
+						"type": "array",
+						"nullable": true,
+						"description": "Days on which the window is active, 0 = Sunday … 6 = Saturday.\nAbsent or empty means every day.",
+						"example": [
+							6,
+							0
+						]
+					},
+					"timeOfDay": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ActivationWindowTimeOfDay"
+							}
+						],
+						"nullable": true,
+						"description": "Time-of-day bounds. Absent means all day."
+					}
+				},
+				"required": [
+					"timezone"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ActivationWindow": {
+				"description": "Optional gate applied on top of the schedule. A tick only fires when it satisfies every\nconfigured criterion; the two criteria below are combined with AND. A tick falling outside the\nwindow is skipped silently — it is never queued or deferred.",
+				"properties": {
+					"dateRange": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ActivationWindowDateRange"
+							}
+						],
+						"nullable": true,
+						"description": "Absolute bounds. Absent means unbounded on both sides."
+					},
+					"recurring": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ActivationWindowRecurring"
+							}
+						],
+						"nullable": true,
+						"description": "Recurring day-of-week and time-of-day rule. Absent means no recurrence restriction."
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
 			"ScanModeDTO": {
 				"description": "Data Transfer Object for a scan mode.\nRepresents a configured scan mode with its metadata and schedule.",
 				"properties": {
@@ -2020,10 +2172,38 @@
 						"description": "A description of the scan mode's purpose or behavior.",
 						"example": "Scans for new backup data every day at midnight"
 					},
+					"type": {
+						"$ref": "#/components/schemas/ScanModeType",
+						"description": "Which scheduling mechanism drives this scan mode.",
+						"example": "cron"
+					},
 					"cron": {
 						"type": "string",
-						"description": "A cron expression defining the scan schedule.",
+						"description": "A cron expression defining the scan schedule. Empty when `type` is `\"interval\"`.",
 						"example": "0 0 * * *"
+					},
+					"interval": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeInterval"
+							}
+						],
+						"nullable": true,
+						"description": "The fixed period between two ticks. `null` when `type` is `\"cron\"`."
+					},
+					"activationWindow": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ActivationWindow"
+							}
+						],
+						"nullable": true,
+						"description": "Optional activation window gating every tick. `null` means always active."
+					},
+					"activationWindowExpired": {
+						"type": "boolean",
+						"description": "Whether the activation window can never trigger again (for instance its end date is already\npast). Computed server-side; drives a non-blocking warning in the UI.",
+						"example": false
 					}
 				},
 				"required": [
@@ -2034,7 +2214,11 @@
 					"updatedAt",
 					"name",
 					"description",
-					"cron"
+					"type",
+					"cron",
+					"interval",
+					"activationWindow",
+					"activationWindowExpired"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -17808,16 +17992,42 @@
 						"description": "A description of the scan mode's purpose or behavior.",
 						"example": "Scans for new backup data every day at midnight"
 					},
+					"type": {
+						"$ref": "#/components/schemas/ScanModeType",
+						"description": "Which scheduling mechanism drives this scan mode.",
+						"example": "cron"
+					},
 					"cron": {
 						"type": "string",
-						"description": "A cron expression defining the scan schedule.",
+						"description": "A cron expression defining the scan schedule. Ignored when `type` is `\"interval\"`.",
 						"example": "0 0 * * *"
+					},
+					"interval": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeInterval"
+							}
+						],
+						"nullable": true,
+						"description": "The fixed period between two ticks. Required when `type` is `\"interval\"`."
+					},
+					"activationWindow": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ActivationWindow"
+							}
+						],
+						"nullable": true,
+						"description": "Optional activation window gating every tick. `null` means always active."
 					}
 				},
 				"required": [
 					"name",
 					"description",
-					"cron"
+					"type",
+					"cron",
+					"interval",
+					"activationWindow"
 				],
 				"type": "object",
 				"additionalProperties": false
