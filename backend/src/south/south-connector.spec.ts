@@ -440,7 +440,6 @@ describe('SouthConnector', () => {
 
     it('should ignore history query when not history items', async () => {
       await south.historyQueryHandler([], '2020-02-02T02:02:02.222Z', '2020-02-02T02:02:02.222Z');
-      south.resolveDeferredPromise();
       assert.ok(
         (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) => c.arguments[0] === 'No history items to read. Ignoring historyQuery'
@@ -825,17 +824,19 @@ describe('SouthConnector', () => {
           })
       );
       south.historyQuery = historyQueryMock;
-
-      south.createDeferredPromise();
-      south
-        .historyQueryHandler(
-          testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
-          '2020-02-02T02:02:02.222Z',
-          '2023-02-02T02:02:02.222Z'
-        )
-        .then(() => {
-          south.resolveDeferredPromise();
-        });
+      south.disconnect = mock.fn(
+        () =>
+          new Promise<void>(resolve => {
+            setTimeout(() => {
+              resolve();
+            }, 1000);
+          })
+      );
+      south.historyQueryHandler(
+        testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
+        '2020-02-02T02:02:02.222Z',
+        '2023-02-02T02:02:02.222Z'
+      );
       south.stop();
 
       mock.timers.tick(10000);
