@@ -94,6 +94,10 @@ describe('Launcher', () => {
     updateDir = createTempDir();
     backupDir = createTempDir();
     configDir = createTempDir();
+    // Launcher logs unconditionally on most operations (start/stop/update/rollback/...) —
+    // mock it globally here so real output doesn't leak into the test run.
+    mock.method(console, 'info', () => undefined);
+    mock.method(console, 'error', () => undefined);
     mock.timers.enable();
   });
 

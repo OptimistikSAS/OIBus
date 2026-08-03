@@ -26,7 +26,7 @@
     "lint:fix": "npm run lint -- --fix",
     "build": "tsc --project tsconfig.app.json",
     "internal:build:lib": "npm run --prefix node_modules/argon2 install",
-    "test": "node --experimental-config-file=test.config.json --test 'src/**/*.spec.ts'"
+    "test": "node scripts/run-tests.mjs"
   },
   "keywords": [
     "Optimistik"
@@ -61,7 +61,7 @@
     "esbuild@0.27.7": true,
     "fsevents@2.3.3": true,
     "esbuild@0.28.1": true,
-    "better-sqlite3@13.0.1": true,
-    "argon2@0.45.1": true
+    "argon2@0.45.1": true,
+    "better-sqlite3@13.0.2": true
   }
 }

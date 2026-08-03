@@ -280,6 +280,7 @@ describe('authMiddleware', () => {
 
   describe('Unexpected errors', () => {
     it('should return 500 when an unexpected exception is thrown', async () => {
+      const consoleError = mock.method(console, 'error', () => undefined);
       userService.getHashedPasswordByLogin = mock.fn(() => {
         throw new Error('db error');
       });
@@ -289,6 +290,7 @@ describe('authMiddleware', () => {
 
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 500);
       assert.strictEqual(mockNext.mock.calls.length, 0);
+      assert.strictEqual(consoleError.mock.calls.length, 1);
     });
   });
 });

@@ -50,7 +50,7 @@ export default [
       'no-console': [
         'error',
         {
-          allow: ['info', 'warn', 'error', 'table']
+          allow: ['trace', 'info', 'warn', 'error', 'table']
         }
       ],
       'no-restricted-imports': ['error'],

@@ -20,6 +20,9 @@ let mockRepoSaveAll: ReturnType<typeof mock.fn>;
 let mockRepoDelete: ReturnType<typeof mock.fn>;
 let mockDbPragma: ReturnType<typeof mock.fn>;
 let mockDbClose: ReturnType<typeof mock.fn>;
+// Every test constructs a transport, which unconditionally logs via console.info — mock it here
+// once instead of per-test so the real messages don't spam the test run's own output.
+let consoleInfoSpy: ReturnType<typeof mock.method>;
 
 // Capture build() arguments so tests can drive the source and close handlers
 let capturedSourceFn: ((source: AsyncIterable<PinoLog>) => Promise<void>) | null = null;
@@ -72,6 +75,7 @@ beforeEach(() => {
   mockDbClose = mock.fn();
   capturedSourceFn = null;
   capturedCloseFn = null;
+  consoleInfoSpy = mock.method(console, 'info', () => undefined);
   mock.timers.enable({ apis: ['setTimeout'] });
 });
 
@@ -88,6 +92,8 @@ describe('SqliteTransport (createTransport)', () => {
     assert.strictEqual(mockRepoCount.mock.calls.length, 1);
     assert.ok(capturedSourceFn !== null, 'build() source handler should be captured');
     assert.ok(capturedCloseFn !== null, 'build() close handler should be captured');
+    assert.strictEqual(consoleInfoSpy.mock.calls.length, 1);
+    assert.strictEqual(consoleInfoSpy.mock.calls[0].arguments[0], '0 logs in database');
   });
 
   it('should delete old logs when count >= maxNumberOfLogs on construction', () => {
@@ -97,6 +103,8 @@ describe('SqliteTransport (createTransport)', () => {
     createTransport({ filename: 'test.db', maxNumberOfLogs: 100 });
 
     assert.strictEqual(mockRepoDelete.mock.calls.length, 1);
+    assert.strictEqual(consoleInfoSpy.mock.calls.length, 2);
+    assert.strictEqual(consoleInfoSpy.mock.calls[1].arguments[0], 'Removing 20 rows from logs table');
   });
 
   it('should catch and log errors thrown during construction', () => {

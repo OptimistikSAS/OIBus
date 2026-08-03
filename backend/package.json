@@ -26,7 +26,7 @@
     "generate:openapi": "tsoa spec-and-routes && eslint shared/model/ src/web-server/routes.ts --cache --fix",
     "generate:settings-interface": "tsc -p tsconfig.generator.json && node dist/interface-generator/src/settings-interface.generator.js && npm run generate:openapi",
     "migrate": "tsc -p tsconfig.generator.json && node dist/backend/src/settings-interface.generator.js",
-    "test": "node --experimental-config-file=test.config.json --test 'src/**/*.spec.ts'",
+    "test": "node scripts/run-tests.mjs",
     "lint": "eslint src/ shared/model/ --cache",
     "lint:fix": "npm run lint -- --fix",
     "build": "tsc --project tsconfig.app.json",
@@ -161,9 +161,10 @@
     "odbc@2.5.0": true,
     "ssh2@1.17.0": true,
     "esbuild@0.28.1": true,
-    "better-sqlite3@13.0.1": true,
     "oracledb@7.0.1": true,
     "argon2@0.45.1": true,
-    "cpu-features@0.0.10": true
+    "cpu-features@0.0.10": true,
+    "better-sqlite3@13.0.2": true,
+    "protobufjs@7.6.5": true
   }
 }

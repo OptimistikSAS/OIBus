@@ -243,24 +243,38 @@ describe('NorthFileWriter', () => {
       logger.trace.mock.resetCalls();
     });
 
-    it('should log trace and skip SMB credential store on non-Windows platforms', async () => {
-      configuration.settings.username = 'user';
-      configuration.settings.outputFolder = '\\\\server\\share\\out';
-      north = new NorthFileWriter(configuration, cacheService);
-      logger.trace.mock.resetCalls();
-      type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
-      await (north as unknown as Private)['mountNetworkShare']('\\\\server\\share\\out');
-      assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB credential store')));
-    });
+    describe('on non-windows', () => {
+      // These tests assert the "not on Windows" branch specifically, so force the platform
+      // instead of relying on the ambient OS running the test (which is win32 on Windows CI).
+      const originalPlatform = process.platform;
 
-    it('should log trace and skip SMB credential removal on non-Windows platforms', async () => {
-      configuration.settings.username = 'user';
-      configuration.settings.outputFolder = '\\\\server\\share\\out';
-      north = new NorthFileWriter(configuration, cacheService);
-      logger.trace.mock.resetCalls();
-      type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
-      await (north as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\out');
-      assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB credential removal')));
+      before(() => {
+        Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
+      });
+
+      after(() => {
+        Object.defineProperty(process, 'platform', { value: originalPlatform, configurable: true });
+      });
+
+      it('should log trace and skip SMB credential store on non-Windows platforms', async () => {
+        configuration.settings.username = 'user';
+        configuration.settings.outputFolder = '\\\\server\\share\\out';
+        north = new NorthFileWriter(configuration, cacheService);
+        logger.trace.mock.resetCalls();
+        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+        await (north as unknown as Private)['mountNetworkShare']('\\\\server\\share\\out');
+        assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB credential store')));
+      });
+
+      it('should log trace and skip SMB credential removal on non-Windows platforms', async () => {
+        configuration.settings.username = 'user';
+        configuration.settings.outputFolder = '\\\\server\\share\\out';
+        north = new NorthFileWriter(configuration, cacheService);
+        logger.trace.mock.resetCalls();
+        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+        await (north as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\out');
+        assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB credential removal')));
+      });
     });
 
     it('should skip SMB mount when username is empty', async () => {
@@ -276,81 +290,90 @@ describe('NorthFileWriter', () => {
       await assert.doesNotReject(north.connect());
     });
 
-    describe('on windows', () => {
-      const originalPlatform = process.platform;
-      type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+    describe(
+      'on windows',
+      {
+        // These tests simulate win32 and rely on cmdkey being ABSENT so execFile rejects with
+        // ENOENT — on an actual Windows runner cmdkey is a real command, so skip there instead
+        // of shelling out to it for real (slow/non-deterministic, and can leak into other tests).
+        skip: process.platform === 'win32' ? 'cmdkey is a real command on Windows; nothing to simulate here' : false
+      },
+      () => {
+        const originalPlatform = process.platform;
+        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
 
-      before(() => {
-        Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
-      });
+        before(() => {
+          Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+        });
 
-      after(() => {
-        Object.defineProperty(process, 'platform', { value: originalPlatform, configurable: true });
-      });
+        after(() => {
+          Object.defineProperty(process, 'platform', { value: originalPlatform, configurable: true });
+        });
 
-      // cmdkey does not exist on the (non-Windows) test runner, so execFile rejects with
-      // ENOENT — which drives the catch branch (logger.error + rethrow) of mountNetworkShare.
-      it('should throw and log an error when mountNetworkShare execFile fails', async () => {
-        configuration.settings.username = 'user';
-        configuration.settings.domain = 'DOMAIN';
-        configuration.settings.outputFolder = '\\\\server\\share\\out';
-        north = new NorthFileWriter(configuration, cacheService);
+        // cmdkey does not exist on the (non-Windows) test runner, so execFile rejects with
+        // ENOENT — which drives the catch branch (logger.error + rethrow) of mountNetworkShare.
+        it('should throw and log an error when mountNetworkShare execFile fails', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.domain = 'DOMAIN';
+          configuration.settings.outputFolder = '\\\\server\\share\\out';
+          north = new NorthFileWriter(configuration, cacheService);
 
-        await assert.rejects(async () => (north as unknown as Private)['mountNetworkShare']('\\\\server\\share\\out'));
-        assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Failed to store SMB credentials')));
-      });
+          await assert.rejects(async () => (north as unknown as Private)['mountNetworkShare']('\\\\server\\share\\out'));
+          assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Failed to store SMB credentials')));
+        });
 
-      it('should skip mountNetworkShare when username is empty on windows', async () => {
-        configuration.settings.username = null;
-        configuration.settings.outputFolder = '\\\\server\\share\\out';
-        north = new NorthFileWriter(configuration, cacheService);
+        it('should skip mountNetworkShare when username is empty on windows', async () => {
+          configuration.settings.username = null;
+          configuration.settings.outputFolder = '\\\\server\\share\\out';
+          north = new NorthFileWriter(configuration, cacheService);
 
-        await (north as unknown as Private)['mountNetworkShare']('\\\\server\\share\\out');
-      });
+          await (north as unknown as Private)['mountNetworkShare']('\\\\server\\share\\out');
+        });
 
-      it('should skip mountNetworkShare when outputFolder is not a UNC path on windows', async () => {
-        configuration.settings.username = 'user';
-        configuration.settings.outputFolder = 'C:\\local\\output';
-        north = new NorthFileWriter(configuration, cacheService);
+        it('should skip mountNetworkShare when outputFolder is not a UNC path on windows', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.outputFolder = 'C:\\local\\output';
+          north = new NorthFileWriter(configuration, cacheService);
 
-        await (north as unknown as Private)['mountNetworkShare']('C:\\local\\output');
-      });
+          await (north as unknown as Private)['mountNetworkShare']('C:\\local\\output');
+        });
 
-      it('should skip unmountNetworkShare when username is empty on windows', async () => {
-        configuration.settings.username = null;
-        configuration.settings.outputFolder = '\\\\server\\share\\out';
-        north = new NorthFileWriter(configuration, cacheService);
+        it('should skip unmountNetworkShare when username is empty on windows', async () => {
+          configuration.settings.username = null;
+          configuration.settings.outputFolder = '\\\\server\\share\\out';
+          north = new NorthFileWriter(configuration, cacheService);
 
-        await (north as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\out');
-      });
+          await (north as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\out');
+        });
 
-      it('should skip unmountNetworkShare when outputFolder is not a UNC path on windows', async () => {
-        configuration.settings.username = 'user';
-        configuration.settings.outputFolder = 'C:\\local\\output';
-        north = new NorthFileWriter(configuration, cacheService);
+        it('should skip unmountNetworkShare when outputFolder is not a UNC path on windows', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.outputFolder = 'C:\\local\\output';
+          north = new NorthFileWriter(configuration, cacheService);
 
-        await (north as unknown as Private)['unmountNetworkShare']('C:\\local\\output');
-      });
+          await (north as unknown as Private)['unmountNetworkShare']('C:\\local\\output');
+        });
 
-      // unmountNetworkShare swallows execFile failures (ENOENT here), so it resolves —
-      // covering its try + catch branch.
-      it('should silently ignore unmountNetworkShare execFile failures', async () => {
-        configuration.settings.username = 'user';
-        configuration.settings.outputFolder = '\\\\server\\share\\out';
-        north = new NorthFileWriter(configuration, cacheService);
+        // unmountNetworkShare swallows execFile failures (ENOENT here), so it resolves —
+        // covering its try + catch branch.
+        it('should silently ignore unmountNetworkShare execFile failures', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.outputFolder = '\\\\server\\share\\out';
+          north = new NorthFileWriter(configuration, cacheService);
 
-        await assert.doesNotReject(async () => (north as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\out'));
-      });
+          await assert.doesNotReject(async () => (north as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\out'));
+        });
 
-      // testConnection mounts the share first; on the test runner cmdkey is missing so the
-      // mount rejects and testConnection propagates the failure.
-      it('should propagate SMB mount failure from testConnection', async () => {
-        configuration.settings.username = 'user';
-        configuration.settings.outputFolder = '\\\\server\\share\\out';
-        north = new NorthFileWriter(configuration, cacheService);
+        // testConnection mounts the share first; on the test runner cmdkey is missing so the
+        // mount rejects and testConnection propagates the failure.
+        it('should propagate SMB mount failure from testConnection', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.outputFolder = '\\\\server\\share\\out';
+          north = new NorthFileWriter(configuration, cacheService);
 
-        await assert.rejects(async () => north.testConnection());
-      });
-    });
+          await assert.rejects(async () => north.testConnection());
+        });
+      }
+    );
   });
 });

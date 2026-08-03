@@ -199,14 +199,20 @@ describe('Data folder migration v3.8.0', () => {
       await fs.mkdir(southCache, { recursive: true });
       await fs.writeFile(path.join(southCache, 'stuck.csv'), 'csv data');
 
-      // Deny write+execute on the "cache" parent so removing the south-* entry inside it fails (EACCES).
-      const cacheRoot = path.join(tmpRoot, 'cache');
-      await fs.chmod(cacheRoot, 0o555);
+      // Simulate a removal failure for this one folder. chmod-based EACCES tricks don't reliably
+      // block Windows deletion (no POSIX-style directory execute bit), so mock fs.rm directly instead.
+      const realRm = fs.rm.bind(fs);
+      const rmMock = mock.method(fs, 'rm', (target: string, options?: Parameters<typeof fs.rm>[1]) => {
+        if (path.resolve(target) === path.resolve(southCache)) {
+          return Promise.reject(Object.assign(new Error('EACCES: permission denied'), { code: 'EACCES' }));
+        }
+        return realRm(target, options);
+      });
       try {
         // Must not throw: the error is caught and logged internally.
         await assert.doesNotReject(migration.up({} as Knex));
       } finally {
-        await fs.chmod(cacheRoot, 0o755);
+        rmMock.mock.restore();
       }
 
       // Folder removal failed, so the south folder is still present.
@@ -343,12 +349,19 @@ describe('Data folder migration v3.8.0', () => {
       await fs.mkdir(opcuaFolder, { recursive: true });
       await fs.writeFile(path.join(opcuaFolder, 'leftover.txt'), 'leftover');
 
-      // Deny write+execute on the data folder root so removing the opcua-* entry inside it fails (EACCES).
-      await fs.chmod(tmpRoot, 0o555);
+      // Simulate a removal failure for this one folder. chmod-based EACCES tricks don't reliably
+      // block Windows deletion (no POSIX-style directory execute bit), so mock fs.rm directly instead.
+      const realRm = fs.rm.bind(fs);
+      const rmMock = mock.method(fs, 'rm', (target: string, options?: Parameters<typeof fs.rm>[1]) => {
+        if (path.resolve(target) === path.resolve(opcuaFolder)) {
+          return Promise.reject(Object.assign(new Error('EACCES: permission denied'), { code: 'EACCES' }));
+        }
+        return realRm(target, options);
+      });
       try {
         await assert.doesNotReject(migration.up({} as Knex));
       } finally {
-        await fs.chmod(tmpRoot, 0o755);
+        rmMock.mock.restore();
       }
 
       assert.strictEqual(fsSync.existsSync(opcuaFolder), true);
