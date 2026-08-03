@@ -62,6 +62,23 @@ in the item list. Deleting a group does not delete its items — they become una
 
 ---
 
+## Concurrent Execution
+
+By default, a South connector processes one item (or item group) at a time: even if several scan modes
+fire at once, only a single query runs at any given moment, and the rest wait their turn.
+
+If a scan mode fires again while the item or group it targets is still running — or already waiting in
+line — from a previous tick, that new run is skipped rather than piling up. A warning is logged when this
+happens, throttled to once per hour per item/group, so a scan mode configured too aggressively for the
+current workload doesn't flood the logs while still letting you know it's happening.
+
+Some connector types can safely run more than one query at a time, depending on how their underlying
+connection model behaves, and expose this as a **Max parallel queries** setting in
+their own configuration — see that connector's documentation (e.g. [OPC UA](./opcua.mdx#parallel-queries))
+for details. For every other connector type, execution stays fully sequential and isn't configurable.
+
+---
+
 ## Items
 
 Items retrieve data as files or JSON payloads. Each item has the following fields:

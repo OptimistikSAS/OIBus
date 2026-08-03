@@ -56,12 +56,34 @@ interoperable**.
 
 ### Connection Configuration
 
-| Setting                | Description                                          | Example Value              |
-| ---------------------- | ---------------------------------------------------- | -------------------------- |
-| **Endpoint URL**       | URL of the OPC UA server.                            | `opc.tcp://localhost:4840` |
-| **Keep session alive** | Keep the session alive between messages.             | Enabled/Disabled           |
-| **Retry Interval**     | Delay in milliseconds between retries.               | `5000`                     |
-| **Read timeout**       | Maximum execution time in milliseconds for requests. | `15000`                    |
+| Setting                                     | Description                                                                                                               | Example Value              |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| **Endpoint URL**                            | URL of the OPC UA server.                                                                                                 | `opc.tcp://localhost:4840` |
+| **Keep session alive**                      | Keep the session alive between messages.                                                                                  | Enabled/Disabled           |
+| **Retry Interval**                          | Delay in milliseconds between retries.                                                                                    | `5000`                     |
+| **Read timeout**                            | Maximum execution time in milliseconds for requests.                                                                      | `15000`                    |
+| **Max parallel queries** (`maxParallelRun`) | Maximum number of item/group queries OIBus may run concurrently against this server. From `1` (fully sequential) to `32`. | `1`                        |
+
+### Parallel Queries
+
+By default (**Max parallel queries** = `1`), OIBus queries this connector's items and groups one at a
+time, even if several of them are due at once. Raising this setting lets OIBus pipeline up to that many
+queries concurrently instead, which helps when many items/groups are on short scan modes and waiting
+their turn would otherwise fall behind.
+
+All concurrent queries share the **same OPC UA session** — OIBus does not open a separate session per
+query. A single session already supports overlapping running requests safely, and many OPC UA
+servers (especially those embedded in PLCs) cap the number of concurrent sessions per client at a low
+number, sometimes exactly one, so sharing one session avoids hitting that cap. **Max parallel queries**
+only bounds how many requests get pipelined over that shared session at once — it does not open
+additional sessions.
+
+:::tip Raise gradually
+Each concurrent query still adds load on the same underlying connection and on the server itself.
+Increase **Max parallel queries** gradually and watch server response times and the connector's
+logs — a server with limited processing capacity may respond better to a lower value even if more
+concurrent queries would technically be allowed.
+:::
 
 ### Data Throttling
 
