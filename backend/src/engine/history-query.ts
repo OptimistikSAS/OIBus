@@ -96,8 +96,6 @@ export default class HistoryQuery {
     await this.north.start();
 
     this.south.connectedEvent.on('connected', () => {
-      this.south!.createDeferredPromise();
-
       this.metricsEvent.emit('south-history-query-start', { running: true });
       this.south!.historyQueryHandler(
         this.historyConfiguration.items
@@ -127,11 +125,9 @@ export default class HistoryQuery {
       )
         .then(() => {
           this.metricsEvent.emit('south-history-query-stop', { running: false });
-          this.south!.resolveDeferredPromise();
         })
         .catch(async error => {
           this.logger.error(`Error while executing history query. ${error}`);
-          this.south!.resolveDeferredPromise();
           await delay(FINISH_INTERVAL);
           if (this.historyConfiguration.status === 'RUNNING' && !this.stopping) {
             await this.south!.stop();
