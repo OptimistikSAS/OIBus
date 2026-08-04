@@ -6,15 +6,17 @@ import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import CryptoRepository from './crypto.repository';
 import testData from '../../tests/utils/test-data';
 
+const TEST_DB_PATH = 'src/tests/test-crypto-db.db';
+
 let database: Database;
 describe('Repository with populated database', () => {
   before(async () => {
-    database = await initDatabase('crypto');
+    database = await initDatabase('crypto', true, TEST_DB_PATH);
   });
 
   after(async () => {
     database.close();
-    await emptyDatabase('crypto');
+    await emptyDatabase('crypto', TEST_DB_PATH);
   });
 
   describe('Crypto', () => {
@@ -43,12 +45,12 @@ describe('Repository with populated database', () => {
 
 describe('Repository with empty database', () => {
   before(async () => {
-    database = await initDatabase('crypto', false);
+    database = await initDatabase('crypto', false, TEST_DB_PATH);
   });
 
   after(async () => {
     database.close();
-    await emptyDatabase('crypto');
+    await emptyDatabase('crypto', TEST_DB_PATH);
   });
 
   describe('Crypto', () => {

@@ -4,15 +4,17 @@ import { Database } from 'better-sqlite3';
 import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import SouthCacheRepository from './south-cache.repository';
 
+const TEST_DB_PATH = 'src/tests/test-cache-db.db';
+
 let database: Database;
 describe('Repository with populated database', () => {
   before(async () => {
-    database = await initDatabase('cache');
+    database = await initDatabase('cache', true, TEST_DB_PATH);
   });
 
   after(async () => {
     database.close();
-    await emptyDatabase('cache');
+    await emptyDatabase('cache', TEST_DB_PATH);
   });
 
   describe('South Cache', () => {
