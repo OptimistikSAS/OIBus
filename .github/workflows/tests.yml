@@ -45,19 +45,12 @@ jobs:
         include:
           - os: ubuntu-24.04
             platform: linux-x64
-            timeout: 25
           - os: windows-2025
             platform: win-x64
-            timeout: 45
-    timeout-minutes: ${{ matrix.timeout }}
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-
-      - name: Exclude workspace from Windows Defender scanning
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: Add-MpPreference -ExclusionPath "${{ github.workspace }}"
 
       - name: Use Node.js
         uses: actions/setup-node@v7
@@ -171,19 +164,12 @@ jobs:
         include:
           - os: ubuntu-24.04
             platform: linux-x64
-            timeout: 25
           - os: windows-2025
             platform: win-x64
-            timeout: 45
-    timeout-minutes: ${{ matrix.timeout }}
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-
-      - name: Exclude workspace from Windows Defender scanning
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: Add-MpPreference -ExclusionPath "${{ github.workspace }}"
 
       - name: Use Node.js
         uses: actions/setup-node@v7
