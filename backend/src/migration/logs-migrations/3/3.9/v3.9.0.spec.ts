@@ -1,8 +1,5 @@
-import { describe, it, before, after, beforeEach } from 'node:test';
+import { describe, it, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
 import knex, { Knex } from 'knex';
 import { down, up } from './v3.9.0';
 
@@ -33,23 +30,14 @@ async function indexExists(db: Knex, indexName: string): Promise<boolean> {
 
 describe('Logs migration v3.9.0 (scope-and-group-items)', () => {
   let db: Knex;
-  let tmpDir: string;
-  let dbFile: string;
-
-  before(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-logs-v390-'));
-    dbFile = path.join(tmpDir, 'test.db');
-  });
 
   after(async () => {
     await db?.destroy();
-    await fs.rm(tmpDir, { recursive: true, force: true });
   });
 
   beforeEach(async () => {
     await db?.destroy();
-    await fs.rm(dbFile, { force: true });
-    db = knex({ client: 'better-sqlite3', connection: { filename: dbFile }, useNullAsDefault: true });
+    db = knex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
     await createLogsTable(db);
   });
 

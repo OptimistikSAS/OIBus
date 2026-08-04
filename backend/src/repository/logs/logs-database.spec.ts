@@ -6,15 +6,17 @@ import LogRepository from './log.repository';
 import testData from '../../tests/utils/test-data';
 import { createPageFromArray } from '../../../shared/model/types';
 
+const TEST_DB_PATH = 'src/tests/test-logs-db.db';
+
 let database: Database;
 describe('Repository with populated database', () => {
   before(async () => {
-    database = await initDatabase('logs');
+    database = await initDatabase('logs', true, TEST_DB_PATH);
   });
 
   after(async () => {
     database.close();
-    await emptyDatabase('logs');
+    await emptyDatabase('logs', TEST_DB_PATH);
   });
 
   describe('Logs', () => {
