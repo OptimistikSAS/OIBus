@@ -1,9 +1,14 @@
-@switch (state().isPending | async) {
+@let pending = state().isPending | async;
+@switch (pending) {
   @case (true) {
     <span aria-hidden="true" class="fa fa-spinner fa-spin me-2" role="status"></span>
   }
   @case (false) {
     <span aria-hidden="true" [class]="iconClass() ? iconClass() + ' fa me-2' : ''" role="status"></span>
   }
+  @case (null) {
+    <!-- TODO exhaustive switch missing case -->
+  }
+  @default never;
 }
 <span [translate]="translationKey()"></span>

@@ -1,8 +1,9 @@
+@let currentCacheType = cacheType();
 <oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
       <div class="d-flex align-items-center gap-2">
-        @switch (cacheType()) {
+        @switch (currentCacheType) {
           @case ('cache') {
             <span class="fa fa-database text-primary"></span>
           }
@@ -12,13 +13,14 @@
           @case ('archive') {
             <span class="fa fa-archive text-secondary"></span>
           }
+          @default never;
         }
-        <span [translate]="'explore-cache.' + cacheType() + '.title'"></span>
+        <span [translate]="'explore-cache.' + currentCacheType + '.title'"></span>
         <span class="badge bg-secondary fw-normal ms-1">{{ size() | fileSize }}</span>
       </div>
       @if (cacheContentFiles().length !== 0) {
         <div>
-          @switch (cacheType()) {
+          @switch (currentCacheType) {
             @case ('cache') {
               <button
                 type="button"
@@ -65,6 +67,7 @@
                 id="retry-selected-archive-content"
               ></button>
             }
+            @default never;
           }
           <button
             type="button"
@@ -180,7 +183,7 @@
               <td>{{ file.metadata.contentSize | fileSize }}</td>
               <td class="action-buttons">
                 <div class="text-nowrap text-end">
-                  @switch (cacheType()) {
+                  @switch (currentCacheType) {
                     @case ('cache') {
                       <button
                         type="button"
@@ -242,6 +245,7 @@
                         <span class="fa fa-refresh"></span>
                       </button>
                     }
+                    @default never;
                   }
                   <button
                     type="button"
@@ -273,7 +277,7 @@
       </table>
     </div>
   } @else {
-    @switch (cacheType()) {
+    @switch (currentCacheType) {
       @case ('cache') {
         <div>
           <div class="mb-3 oib-grey-container" translate="explore-cache.cache.none"></div>
@@ -289,6 +293,7 @@
           <div class="mb-3 oib-grey-container" translate="explore-cache.archive.none"></div>
         </div>
       }
+      @default never;
     }
   }
 </oib-box>

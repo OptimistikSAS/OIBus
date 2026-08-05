@@ -175,6 +175,94 @@
                 [translateParams]="{ northConnectorId: cmd.northConnectorId }"
               ></li>
             }
+            @case ('create-ip-filter') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('update-ip-filter') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('delete-ip-filter') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('create-certificate') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('update-certificate') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('delete-certificate') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('test-south-connection') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('test-south-item') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('test-north-connection') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('create-history-query') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('update-history-query') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('delete-history-query') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('test-history-query-north-connection') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('test-history-query-south-connection') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('test-history-query-south-item') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('create-or-update-history-query-south-items-from-csv') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('update-history-query-status') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('setpoint') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('search-north-cache-content') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('search-history-cache-content') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('get-north-cache-file-content') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('get-history-cache-file-content') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('update-north-cache-content') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('update-history-cache-content') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('create-custom-transformer') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('update-custom-transformer') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('delete-custom-transformer') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('test-custom-transformer') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('test-transformer') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @default never(cmd);
           }
         </ul>
       </div>

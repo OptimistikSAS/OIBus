@@ -116,6 +116,7 @@ export default [
         // some of our directives use hostDirectives with inputs/output metadata properties
         '@angular-eslint/no-inputs-metadata-property': 'off',
         '@angular-eslint/no-outputs-metadata-property': 'off',
+        '@angular-eslint/template/require-switch-default': 'error',
         '@angular-eslint/template/prefer-control-flow': 'error',
         '@angular-eslint/template/prefer-self-closing-tags': 'error',
         '@angular-eslint/template/eqeqeq': [

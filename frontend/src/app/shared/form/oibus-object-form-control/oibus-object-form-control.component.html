@@ -41,6 +41,13 @@
                     @case ('timezone') {
                       <oib-oibus-timezone-form-control [timezoneAttribute]="column.attribute" />
                     }
+                    @case ('object') {
+                      <!-- TODO exhaustive switch missing case -->
+                    }
+                    @case ('array') {
+                      <!-- TODO exhaustive switch missing case -->
+                    }
+                    @default never(column.attribute);
                   }
                 </div>
               }
@@ -69,6 +76,37 @@
                   [southId]="southId()"
                 />
               }
+              @case ('string') {
+                <!-- TODO exhaustive switch missing case -->
+              }
+              @case ('code') {
+                <!-- TODO exhaustive switch missing case -->
+              }
+              @case ('string-select') {
+                <!-- TODO exhaustive switch missing case -->
+              }
+              @case ('secret') {
+                <!-- TODO exhaustive switch missing case -->
+              }
+              @case ('number') {
+                <!-- TODO exhaustive switch missing case -->
+              }
+              @case ('boolean') {
+                <!-- TODO exhaustive switch missing case -->
+              }
+              @case ('instant') {
+                <!-- TODO exhaustive switch missing case -->
+              }
+              @case ('scan-mode') {
+                <!-- TODO exhaustive switch missing case -->
+              }
+              @case ('certificate') {
+                <!-- TODO exhaustive switch missing case -->
+              }
+              @case ('timezone') {
+                <!-- TODO exhaustive switch missing case -->
+              }
+              @default never(row.columns[0].attribute);
             }
           }
         }
@@ -112,6 +150,13 @@
                   @case ('timezone') {
                     <oib-oibus-timezone-form-control [timezoneAttribute]="column.attribute" />
                   }
+                  @case ('object') {
+                    <!-- TODO exhaustive switch missing case -->
+                  }
+                  @case ('array') {
+                    <!-- TODO exhaustive switch missing case -->
+                  }
+                  @default never(column.attribute);
                 }
               </div>
             }
@@ -140,6 +185,37 @@
                 [southId]="southId()"
               />
             }
+            @case ('string') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('code') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('string-select') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('secret') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('number') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('boolean') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('instant') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('scan-mode') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('certificate') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @case ('timezone') {
+              <!-- TODO exhaustive switch missing case -->
+            }
+            @default never(row.columns[0].attribute);
           }
         }
       }
