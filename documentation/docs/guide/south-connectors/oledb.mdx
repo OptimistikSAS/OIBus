@@ -18,14 +18,14 @@ Connect to OLEDB data sources through a remote [OIBus Agent](../oibus-agent/oled
 
 ## Specific Settings
 
-| Setting            | Description                                                                                            | Example Value                               |
-| ------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
-| Remote agent URL   | Agent endpoint URL. Required for all connections.                                                      | `http://192.168.1.100:2224`                 |
-| Connection timeout | Maximum time in milliseconds to establish connection. Default: `15000`.                                | `15000`                                     |
-| Retry interval     | Time in milliseconds to wait before retrying the connection. Default: `10000`.                         | `10000`                                     |
-| Request timeout    | Maximum execution time in milliseconds for individual queries. Default: `15000`.                       | `15000`                                     |
-| Connection string  | OLEDB connection string in provider-specific format.                                                   | `Provider=OraOLEDB.Oracle;Data Source=mydb` |
-| Password           | Authentication password (stored securely). Added as `Password=<password>` if not in connection string. | `••••••••`                                  |
+| Setting            | Description                                                                                                                                                                                                          | Example Value                               |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Remote agent URL   | Agent endpoint URL. Required for all connections.                                                                                                                                                                    | `http://192.168.1.100:2224`                 |
+| Connection timeout | Maximum time in milliseconds to establish connection. Default: `15000`.                                                                                                                                              | `15000`                                     |
+| Retry interval     | Time in milliseconds to wait before retrying the connection. Default: `10000`.                                                                                                                                       | `10000`                                     |
+| Request timeout    | Maximum execution time in milliseconds for individual queries. Default: `15000`.                                                                                                                                     | `15000`                                     |
+| Connection string  | OLEDB connection string in provider-specific format.                                                                                                                                                                 | `Provider=OraOLEDB.Oracle;Data Source=mydb` |
+| Password           | Authentication password (stored securely). Always appended as `Password=<password>;` — if your connection string already includes its own `Password=` entry, remove it here or from the string to avoid a duplicate. | `••••••••`                                  |
 
 <ItemSettings />
 

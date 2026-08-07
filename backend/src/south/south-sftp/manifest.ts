@@ -57,7 +57,7 @@ const manifest: SouthConnectorManifest = {
         type: 'number',
         key: 'port',
         translationKey: 'configuration.oibus.manifest.south.sftp.port',
-        defaultValue: 8080,
+        defaultValue: 22,
         unit: null,
         validators: [
           {

@@ -21,6 +21,22 @@ The user running OIBus (terminal user or service account) **must have read acces
 
 :::
 
+### Network Share Authentication (Windows only)
+
+To scan a Windows network share, set **Input folder** to a UNC path (`\\server\share\...`) and provide credentials
+for it:
+
+| Setting          | Description                                                        | Example Value |
+| ---------------- | ------------------------------------------------------------------ | ------------- |
+| **SMB username** | Username used to authenticate against the network share.           | `svc_oibus`   |
+| **SMB password** | Password for the SMB username.                                     | `••••••••`    |
+| **SMB domain**   | Domain for the SMB username (optional, e.g. for Active Directory). | `CORP`        |
+
+:::info Windows only
+These fields only appear when OIBus runs on Windows. OIBus registers the credentials for the share via the Windows
+Credential Manager (`cmdkey`) before scanning, and removes them when the connector disconnects.
+:::
+
 ## Item Settings
 
 | Setting               | Description                                                                                                                                                             | Example Value                           |

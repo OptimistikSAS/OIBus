@@ -48,6 +48,7 @@ The following **Type** values are available for datetime field configuration:
 :::
 
 :::note MySQL item request timeout
-Each MySQL item has an additional **Request timeout** field (milliseconds) that overrides the connection-level
-default for that specific query.
+Each MySQL item has its own **Request timeout** field (milliseconds), setting the maximum execution time for that
+item's query. There is no connection-level equivalent to override — **Connection timeout** only bounds how long
+OIBus waits to establish the connection itself, not how long a query may run.
 :::

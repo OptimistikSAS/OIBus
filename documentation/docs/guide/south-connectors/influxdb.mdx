@@ -155,16 +155,24 @@ read interval** throttling setting. Each sub-interval gets its own `@StartTime` 
 
 ## Timestamp Tracking
 
-After each successful query, OIBus automatically extracts the maximum timestamp from the result set
-and uses it as `@StartTime` of the next scan cycle. No configuration is required.
+After each successful query, OIBus takes the timestamp of the **last row** of the result set and uses it as
+`@StartTime` of the next scan cycle. No configuration is required.
+
+:::caution Query results must be in ascending time order
+OIBus does not scan the whole result set for the true maximum — it assumes InfluxDB returns rows in ascending
+time order (its default) and simply reads the last row. Queries that don't guarantee that order — for example a
+multi-series `GROUP BY` query without an explicit `ORDER BY time` — can return a last row that isn't actually the
+latest timestamp, which may cause skipped or re-fetched data. Add an explicit `ORDER BY time` (or equivalent) to
+your query if it groups or reorders results.
+:::
 
 The timestamp column name is determined by the API version:
 
-| Version | Timestamp column | Format                                                                         |
-| ------- | ---------------- | ------------------------------------------------------------------------------ |
-| v1      | `time`           | ISO 8601 string — OIBus normalizes the raw `INanoDate` returned by the client  |
-| v2      | `_time`          | RFC 3339 string returned directly by the Flux query API                        |
-| v3      | `time`           | ISO 8601 string returned by the Arrow Flight client                            |
+| Version | Timestamp column | Format                                                                        |
+| ------- | ---------------- | ----------------------------------------------------------------------------- |
+| v1      | `time`           | ISO 8601 string — OIBus normalizes the raw `INanoDate` returned by the client |
+| v2      | `_time`          | RFC 3339 string returned directly by the Flux query API                       |
+| v3      | `time`           | ISO 8601 string returned by the Arrow Flight client                           |
 
 If no results are returned, `@StartTime` is not advanced and the next scan retries the same interval.
 

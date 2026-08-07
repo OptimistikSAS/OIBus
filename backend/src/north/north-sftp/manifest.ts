@@ -52,7 +52,7 @@ const manifest: NorthConnectorManifest = {
         type: 'number',
         key: 'port',
         translationKey: 'configuration.oibus.manifest.north.sftp.port',
-        defaultValue: 8080,
+        defaultValue: 22,
         unit: null,
         validators: [
           {

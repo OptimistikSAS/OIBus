@@ -14,12 +14,12 @@ interact with MQTT brokers.
 
 ### Connection
 
-| Setting             | Description                                                                         | Example Value                    |
-| ------------------- | ----------------------------------------------------------------------------------- | -------------------------------- |
-| URL                 | Address of the MQTT broker (format: `mqtt://address:port`). Default port is `1883`. | `mqtt://broker.example.com:1883` |
-| Reconnect period    | Time (in milliseconds) to wait before reconnection attempts                         | `5000`                           |
-| Connect timeout     | Maximum time (in milliseconds) to wait for connection establishment                 | `30000`                          |
-| Reject unauthorized | Reject connections with unverified certificates (e.g., self-signed)                 | Enabled/Disabled                 |
+| Setting             | Description                                                                                                                                                                           | Example Value                    |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| URL                 | Address of the MQTT broker. Accepts `mqtt://`, `mqtts://`, `tcp://`, `tls://`, `ws://`, or `wss://` (use `mqtts://`/`tls://` for Certificate authentication). Default port is `1883`. | `mqtt://broker.example.com:1883` |
+| Reconnect period    | Time (in milliseconds) to wait before reconnection attempts                                                                                                                           | `5000`                           |
+| Connect timeout     | Maximum time (in milliseconds) to wait for connection establishment                                                                                                                   | `30000`                          |
+| Reject unauthorized | Reject connections with unverified certificates (e.g., self-signed)                                                                                                                   | Enabled/Disabled                 |
 
 ### Quality of Service
 
@@ -45,11 +45,11 @@ interact with MQTT brokers.
 
 #### Certificate Authentication
 
-| Setting        | Description                                                                | Example Value       |
-| -------------- | -------------------------------------------------------------------------- | ------------------- |
-| Cert file path | Path to the signed certificate file                                        | `/path/to/cert.pem` |
-| Key file path  | Path to the private key file                                               | `/path/to/key.pem`  |
-| CA file path   | Path to the certificate authority file. Leave empty for self-signed certs. | `/path/to/ca.pem`   |
+| Setting        | Description                                                                      | Example Value       |
+| -------------- | -------------------------------------------------------------------------------- | ------------------- |
+| Cert file path | Path to the signed certificate file                                              | `/path/to/cert.pem` |
+| Key file path  | Path to the private key file                                                     | `/path/to/key.pem`  |
+| CA file path   | Path to the certificate authority file. Required for Certificate authentication. | `/path/to/ca.pem`   |
 
 ### Data Throttling
 

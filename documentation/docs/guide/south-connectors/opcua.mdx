@@ -119,13 +119,13 @@ concurrent queries would technically be allowed.
 
 ### Authentication Methods
 
-| Setting            | Description                                             | Example Value                                   |
-| ------------------ | ------------------------------------------------------- | ----------------------------------------------- |
-| Authentication     | Authentication method for the OPC UA server connection. | `Anonymous`, `Username/Password`, `Certificate` |
-| Username           | Username for Username/Password authentication.          | `opc_user`                                      |
-| Password           | Password for Username/Password authentication.          | `••••••••`                                      |
-| Client certificate | Client certificate file for Certificate authentication. | `/path/to/cert.pem`                             |
-| Private key        | Private key file for Certificate authentication.        | `/path/to/key.pem`                              |
+| Setting        | Description                                             | Example Value                              |
+| -------------- | ------------------------------------------------------- | ------------------------------------------ |
+| Authentication | Authentication method for the OPC UA server connection. | `None`, `Username/Password`, `Certificate` |
+| Username       | Username for Username/Password authentication.          | `opc_user`                                 |
+| Password       | Password for Username/Password authentication.          | `••••••••`                                 |
+| Cert file path | Client certificate file for Certificate authentication. | `/path/to/cert.pem`                        |
+| Key file path  | Private key file for Certificate authentication.        | `/path/to/key.pem`                         |
 
 ## Group Settings
 
@@ -210,7 +210,7 @@ To authorise it, import or copy `<OIBusData>/certs/cert.pem` into the server's t
 ### Authentication Certificate
 
 When **Authentication** is set to `Certificate`, you must supply a separate identity certificate and its
-private key in the connector settings (**Client certificate** and **Private key** fields). This certificate
+private key in the connector settings (**Cert file path** and **Key file path** fields). This certificate
 identifies the _user_, independently of the transport security certificate above.
 
 The server must also trust this identity certificate. For Prosys, import it into:
@@ -224,7 +224,7 @@ certificates land in `.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\re
 the `certs\` folder next to it.
 
 :::tip Reuse OIBus's generated certificate for authentication
-You can point the **Client certificate** and **Private key** connector fields to OIBus's own certificate
+You can point the **Cert file path** and **Key file path** connector fields to OIBus's own certificate
 (`<OIBusData>/certs/cert.pem` and `<OIBusData>/certs/private.pem`) to use a single certificate for
 both transport-level security and user authentication.
 :::
@@ -283,4 +283,4 @@ openssl x509 -inform PEM -outform DER -in oibus.pem -out oibus.der
 cp oibus.der ".prosysopc/prosys-opc-ua-simulation-server/USERS_PKI/CA/certs/"
 ```
 
-Then, in the OIBus connector settings, set **Client certificate** to `oibus.pem` and **Private key** to `oibus.key`.
+Then, in the OIBus connector settings, set **Cert file path** to `oibus.pem` and **Key file path** to `oibus.key`.
