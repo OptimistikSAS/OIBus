@@ -53,7 +53,7 @@ Click **Test settings** to verify the connection before saving.
 
 Add the node IDs you want to read. Ask the OPC UA server administrator for the list of available nodes.
 
-Choose the access **mode** (DA or HA). In HA mode, OIBus retrieves all values recorded since the last query and can aggregate or resample them — check with the server administrator which aggregates are supported. If unsure, use the **Raw** aggregate. In DA mode, OIBus retrieves one value per item per scan.
+Choose the access **mode** (DA or HA). In HA mode, OIBus retrieves all values recorded since the last query and can aggregate or resample them — check with the server administrator which aggregates are supported. If unsure, use the **Raw** aggregate. In DA mode, OIBus polls one value per item at each scan — unless the item is assigned the built-in **Subscription** scan mode, in which case OIBus instead receives value changes pushed by the server in real time.
 
 Select a [scan mode](../guide/engine/scan-modes.mdx) to control the collection interval.
 

@@ -82,16 +82,21 @@ In this scenario, the datetime fields section can still be employed to parse dat
 
 #### With variables
 
-The `@StartTime` variable captures the last maximum instant retrieved from a previous query. By default, for the initial query, it takes the
-current time minus one hour. The `@EndTime` variable is replaced by the current time.
+The `@StartTime` variable captures the last maximum instant retrieved from a previous query. For the very first query, before any instant
+has been tracked, OIBus looks back by the **Max read interval** setting (in seconds) from the current time — or 1 hour if Max read interval
+is left at `0`. The `@EndTime` variable is set to the current time, or to the sub-interval end when the query is split by **Max read interval**.
 
 To prevent overloading the server with a large query, you can divide the \[`@StartTime`, `@EndTime`\] interval into smaller chunks. This can
 be configured in the **History settings** section, from the connector settings:
 
-- Max read interval (in seconds): If set to 60 seconds, and the interval is 1 hour, 60 sub-interval queries will be generated.
-- Read delay (in milliseconds) between each sub-interval query.
-- Overlap (in milliseconds) deduced a number of milliseconds from the `@StartTime` of the interval that will be chunked, expanding the query
-  interval while still allowing the retrieval of data before the last maximum instant retrieved.
+- **Max read interval** (in seconds): If set to 60 seconds, and the interval is 1 hour, 60 sub-interval queries will be generated.
+- **Read delay** (in milliseconds) between each sub-interval query.
+- **Start time offset** (in milliseconds): added to the start of the query window (`@StartTime`). A negative value moves the start earlier,
+  to capture late-arriving data — this is the old "Overlap" behavior.
+- **End time offset** (in milliseconds): added to the end of the query window (`@EndTime`). A negative value pulls the end in earlier; a
+  positive value extends it later.
+- **Recovery strategy**: order in which OIBus catches up a backlog of sub-intervals — `From oldest to newest` (default) or
+  `From newest to oldest`.
 
 <div style={{ textAlign: 'center' }}>
   <div>
@@ -101,9 +106,9 @@ be configured in the **History settings** section, from the connector settings:
   </div>
 </div>
 
-:::caution When to use overlap?
-Overlap proves beneficial when certain retrieved data exhibit latency and are stored after the query has
-been executed. In such cases, it allows for a slight extension of the requested interval.
+:::caution When to use Start time offset?
+A negative **Start time offset** is beneficial when certain retrieved data exhibit latency and are stored after the query has been executed.
+In such cases, it allows for a slight extension of the requested interval backwards, so that late-arriving rows are not missed.
 
 Exercise caution if your query involves aggregation, as it might alter your data by shifting the time origin of the first interval.
 :::
