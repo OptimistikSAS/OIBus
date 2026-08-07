@@ -14,6 +14,7 @@ Only South connectors with historian capabilities support history queries:
 
 | Connector                                               |
 | ------------------------------------------------------- |
+| [InfluxDB](./south-connectors/influxdb.mdx)             |
 | [MSSQL](./south-connectors/mssql.mdx)                   |
 | [MySQL® / MariaDB™](./south-connectors/mysql.mdx)       |
 | [ODBC](./south-connectors/odbc.mdx)                     |
@@ -29,10 +30,17 @@ Only South connectors with historian capabilities support history queries:
 
 ## Create a History Query
 
-From the **History** page, click **+** and choose:
+From the **History** page, click **+**. The South and North sides are configured independently, each with
+its own **From existing connector** switch:
 
-- **New connectors** — configure a dedicated South and North connector for this query.
-- **Existing connectors** — all items from the selected South connector are copied into the history query.
+- **Disabled** (default) — pick a connector type and configure it from scratch for this query.
+- **Enabled** — pick an existing South or North connector. For the South side, all of its items are copied
+  into the history query.
+
+Any combination is allowed — for example, a brand-new South connector paired with an existing North connector.
+
+You can also **duplicate** an existing history query from the history query list — this copies the full
+South and North configuration, items, and transformers into a new query.
 
 ## Settings
 
@@ -65,20 +73,26 @@ AND timestamp <= @EndTime
 
 ### South and North Configuration
 
-A history query embeds a full South connector (type, settings, items) and a full North connector
-(type, settings, transformers, caching). These are configured the same way as their live counterparts.
+A history query embeds a full South connector and a full North connector. The North side (settings,
+caching, transformers) is configured exactly like a live North connector. The South side's connection
+settings are configured the same way too, but items are simplified: a history query item only has a
+**name**, an **enabled** flag, and its type-specific settings — there is no per-item scan mode, group, or
+throttling override. Every item shares the single **Time Range** settings above instead.
 
 ## Execution Controls
 
-| Control         | Description                                                                          |
-| --------------- | ------------------------------------------------------------------------------------ |
-| **Start**       | Begin the query from the current tracked position (or from Start time if never run). |
-| **Pause**       | Suspend execution. Progress is preserved — the query resumes from where it stopped.  |
-| **Resume**      | Continue a paused query from its last tracked position.                              |
-| **Restart**     | Re-run a finished or errored query from the beginning.                               |
-| **Reset cache** | Clear all cached progress and force the next run to restart from Start time.         |
+| Control     | Description                                                                                                                                        |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Start**   | Available when the query is `PENDING`. Begins the query from Start time.                                                                           |
+| **Pause**   | Available when the query is `RUNNING`. Suspends execution; each item's progress is preserved.                                                      |
+| **Resume**  | Available when the query is `PAUSED`. Continues from each item's last tracked position.                                                            |
+| **Restart** | Available when the query is `FINISHED` or `ERRORED`. Re-runs the query from Start time — starting it in this state always resets tracked progress. |
 
-Controls are available from the display page, the editing page, and the history query list.
+These controls are available from the history query list and its display page.
+
+Editing an existing history query also prompts you to reset the cache when you save. Answering **Yes**
+clears all tracked progress so the next run restarts from Start time; answering **No** keeps the current
+progress.
 
 ## Monitoring
 
@@ -88,6 +102,7 @@ The display page shows real-time metrics for both the South and North sides of t
 
 - Interval progress — current interval number out of total intervals
 - Number of values and files retrieved
+- Last connection time
 - Last value retrieved (point ID, timestamp, data)
 - Last file retrieved
 - Last run start time and duration
@@ -97,15 +112,17 @@ The display page shows real-time metrics for both the South and North sides of t
 - Cache size — current, total cached, total sent
 - Error size — current, total errored
 - Archive size — current, total archived
+- Last connection time
 - Last content sent
 - Last run start time and duration
 
 ## Automatic Recovery
 
-The query tracks the last successfully retrieved timestamp so it can resume after a failure or restart
-without re-fetching already-retrieved data. Progress is preserved across OIBus restarts.
+Each item (or synced group) tracks its own last-retrieved timestamp independently, so the query can resume
+after a failure or restart without re-fetching already-retrieved data. Progress is preserved across OIBus
+restarts.
 
 :::caution Resetting progress
-Using **Reset cache** clears all tracked progress. The next run will start over from the original
+Resetting the cache clears every item's tracked progress. The next run will start over from the original
 **Start time**, which may result in duplicate data being sent to the North connector.
 :::
