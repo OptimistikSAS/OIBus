@@ -49,6 +49,10 @@ override them individually by disabling **Sync with group**.
 
 Items that are **not assigned to any group** define their own scan mode directly on the item.
 
+Groups also matter beyond scheduling: on the North side, a transformer can be assigned at the group
+level, so every item in the group is transformed the same way without configuring each item
+individually. This applies regardless of whether the South connector is history-capable.
+
 :::note Execution model for SQL and REST connectors
 For SQL-based and REST connectors, items within the same group are still fetched **one at a time**
 sequentially. The group provides a shared schedule and default throttling settings, but each item
@@ -117,18 +121,34 @@ Items retrieve data as files or JSON payloads. Each item has the following field
 ## Max Instant Tracking
 
 History-capable South connectors track the last successfully retrieved timestamp (the _max instant_) so
-that each run only fetches new data. The max instant is tracked at the **item** level — each item
-maintains its own independent tracking, whether it belongs to a group or not.
+that each run only fetches new data. Whether that instant is tracked per item or shared across a group
+depends on how the group is actually queried:
+
+- If the connector can batch grouped items into a single query (i.e. it is *not* one of the SQL/REST-style
+  connectors described above, which always query one item at a time) **and** the item has **Sync with
+  group** enabled, the whole group shares **one** tracked instant — since the group is queried as a
+  single unit, there is no meaningful per-item value to track separately.
+- Otherwise (no group, sync disabled, or a SQL/REST-style connector) each item tracks its own instant
+  independently, even when it belongs to a group.
+
+:::tip Leaving a shared group keeps the tracked instant, not the cached value
+When an item stops being backed by a shared group instant — its group is set to none, **Sync with
+group** is turned off, or the group itself is deleted — it carries the group's *tracked instant* over
+to its own, now-independent tracking, so it resumes from there instead of re-querying a full lookback
+window. The group's last cached *value* is **not** carried over; the item's own value is simply
+re-populated on its next standalone query. Moving directly from one synced group to another does not
+trigger this: the item keeps consulting a shared instant throughout, just under the new group.
+:::
 
 ### Behaviour when configuration changes
 
-| Action                   | Effect on max instant                                                      |
-| ------------------------ | -------------------------------------------------------------------------- |
-| Change item's group      | Item retains its own tracked instant; only throttling defaults may change. |
-| Change group's scan mode | Each item's tracked instant is preserved under the new scan mode.          |
-| Delete a group           | Items become unassigned; their tracked instants are preserved.             |
-| Delete an item           | Its tracked instant is removed.                                            |
-| Delete the connector     | All items and tracked instants are removed.                                |
+| Action                   | Effect on max instant                                                                                                |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------|
+| Change item's group      | An already-independent item keeps its own tracked instant. An item leaving a shared group carries that group's tracked instant over to its own tracking (see tip above). Moving between two synced groups keeps using a shared instant throughout. |
+| Change group's scan mode | Tracked instant(s) — per-item or shared — are preserved under the new scan mode.                                     |
+| Delete a group           | Items become unassigned. An item that was independent keeps its own tracked instant; an item that was synced with the group carries its shared tracked instant over to its own tracking. |
+| Delete an item           | Its own tracked instant is removed; a shared group instant is unaffected as long as other items remain in the group. |
+| Delete the connector     | All items, groups, and tracked instants are removed.                                                                 |
 
 :::warning Data gaps and duplicates when changing throttling settings
 If you change the Max read interval or Overlap on a group or item, the next query will use the new

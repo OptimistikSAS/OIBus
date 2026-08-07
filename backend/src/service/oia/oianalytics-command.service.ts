@@ -523,7 +523,7 @@ export default class OIAnalyticsCommandService {
           break;
         case 'update-engine-logger':
           {
-            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeUpdateEngineLoggerCommand(command, privateKey);
           }
           break;
@@ -559,13 +559,13 @@ export default class OIAnalyticsCommandService {
           break;
         case 'create-south':
           {
-            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeCreateSouthCommand(command, privateKey);
           }
           break;
         case 'update-south':
           {
-            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeUpdateSouthCommand(command, privateKey);
           }
           break;
@@ -1078,6 +1078,7 @@ export default class OIAnalyticsCommandService {
         syncWithGroup: item.syncWithGroup,
         maxReadInterval: item.maxReadInterval,
         readDelay: item.readDelay,
+        recoveryStrategy: item.recoveryStrategy,
         startTimeOffset: item.startTimeOffset,
         endTimeOffset: item.endTimeOffset
       }))

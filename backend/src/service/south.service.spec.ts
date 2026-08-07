@@ -645,11 +645,14 @@ describe('South Service', () => {
     });
   });
 
-  it('should get item last value from group cache when item is synced with group', () => {
-    const southId = testData.south.list[0].id;
+  it('should get item last value from group cache when item is synced with a group on a connector that can batch', () => {
+    // opcua (testData.south.list[2]) is NOT in SOUTH_SINGLE_ITEMS: a synced group there is queried
+    // in one batched call and cached under a single group-keyed row.
+    const southConnector = testData.south.list[2];
+    const southId = southConnector.id;
     const groupId = 'group-123';
     const groupedItem = {
-      ...testData.south.list[0].items[0],
+      ...southConnector.items[0],
       syncWithGroup: true,
       group: {
         id: groupId,
@@ -666,9 +669,10 @@ describe('South Service', () => {
         updatedAt: ''
       }
     };
+    southConnectorRepository.findSouthById.mock.mockImplementationOnce(() => southConnector);
     southConnectorRepository.findItemById.mock.mockImplementationOnce(() => groupedItem);
     const cached = {
-      itemId: 'some-lead-item-id',
+      itemId: null,
       groupId,
       queryTime: '2024-03-01T00:00:00.000Z',
       value: { temperature: 99 },
@@ -682,6 +686,55 @@ describe('South Service', () => {
     assert.deepStrictEqual(southCacheRepository.getGroupLastValue.mock.calls[0].arguments, [southId, groupId]);
     assert.deepStrictEqual(result, {
       groupId,
+      groupName: 'My Group',
+      itemId: groupedItem.id,
+      itemName: groupedItem.name,
+      queryTime: cached.queryTime,
+      value: cached.value,
+      trackedInstant: cached.trackedInstant
+    });
+  });
+
+  it("should get the item's own cache, not the group cache, when the connector cannot batch even if the item is synced with a group", () => {
+    // folder-scanner (testData.south.list[0]) IS in SOUTH_SINGLE_ITEMS: every item — synced or not —
+    // is always queried and cached on its own, so the group cache must never be consulted for it.
+    const southConnector = testData.south.list[0];
+    const southId = southConnector.id;
+    const groupedItem = {
+      ...southConnector.items[0],
+      syncWithGroup: true,
+      group: {
+        id: 'group-456',
+        name: 'My Group',
+        scanMode: testData.scanMode.list[0],
+        startTimeOffset: null,
+        endTimeOffset: null,
+        maxReadInterval: null,
+        readDelay: null,
+        recoveryStrategy: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    };
+    southConnectorRepository.findSouthById.mock.mockImplementationOnce(() => southConnector);
+    southConnectorRepository.findItemById.mock.mockImplementationOnce(() => groupedItem);
+    const cached = {
+      itemId: groupedItem.id,
+      groupId: null,
+      queryTime: '2024-03-01T00:00:00.000Z',
+      value: { temperature: 99 },
+      trackedInstant: '2024-03-01T00:01:00.000Z'
+    };
+    southCacheRepository.getItemLastValue.mock.mockImplementationOnce(() => cached);
+
+    const result = service.getItemLastValue(southId, groupedItem.id);
+
+    assert.strictEqual(southCacheRepository.getGroupLastValue.mock.calls.length, 0);
+    assert.deepStrictEqual(southCacheRepository.getItemLastValue.mock.calls[0].arguments, [southId, groupedItem.id]);
+    assert.deepStrictEqual(result, {
+      groupId: 'group-456',
       groupName: 'My Group',
       itemId: groupedItem.id,
       itemName: groupedItem.name,
@@ -824,6 +877,122 @@ describe('South Service', () => {
     assert.strictEqual(southConnectorRepository.saveItem.mock.calls.length, 1);
     const savedItemCall = southConnectorRepository.saveItem.mock.calls[0];
     assert.deepStrictEqual((savedItemCall.arguments[1] as { group: unknown }).group, null);
+  });
+
+  it("should carry over the group's tracked instant, but not its value, when an item's group is set to none", async () => {
+    // opcua (testData.south.list[2]) is NOT in SOUTH_SINGLE_ITEMS: a synced group there shares one
+    // cache row, so leaving it must seed the item's own row from that shared row.
+    const southConnector = testData.south.list[2];
+    southConnectorRepository.findSouthById.mock.mockImplementation(() => southConnector);
+
+    const group: SouthItemGroupEntity = {
+      id: 'group1',
+      name: 'Group 1',
+      southId: southConnector.id,
+      scanMode: testData.scanMode.list[0],
+      startTimeOffset: null,
+      endTimeOffset: null,
+      maxReadInterval: null,
+      readDelay: null,
+      recoveryStrategy: null,
+      items: [],
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    const existingItem = { ...southConnector.items[0], group, syncWithGroup: true };
+    southConnectorRepository.findItemById.mock.mockImplementation(() => existingItem);
+
+    const groupCache = {
+      itemId: null,
+      groupId: group.id,
+      queryTime: '2024-05-01T00:00:00.000Z',
+      value: { temperature: 42 },
+      trackedInstant: '2024-05-01T00:00:10.000Z'
+    };
+    southCacheRepository.getGroupLastValue.mock.mockImplementation(() => groupCache);
+
+    const commandWithoutGroup: SouthConnectorItemCommandDTO = {
+      ...testData.south.itemCommand,
+      groupId: null,
+      groupName: null,
+      syncWithGroup: false
+    };
+
+    await service.updateItem(southConnector.id, existingItem.id, commandWithoutGroup, 'userTest');
+
+    assert.deepStrictEqual(southCacheRepository.getGroupLastValue.mock.calls[0].arguments, [southConnector.id, group.id]);
+    assert.strictEqual(southCacheRepository.saveItemLastValue.mock.calls.length, 1);
+    assert.deepStrictEqual(southCacheRepository.saveItemLastValue.mock.calls[0].arguments, [
+      southConnector.id,
+      {
+        itemId: existingItem.id,
+        groupId: null,
+        queryTime: groupCache.queryTime,
+        value: null, // the group's last VALUE is deliberately not carried over
+        trackedInstant: groupCache.trackedInstant // but its tracked instant is
+      }
+    ]);
+  });
+
+  it('should not touch the cache when an item moves from one synced group straight to another', async () => {
+    // Still consults a group cache afterward (just a different one) — nothing to carry over.
+    const southConnector = testData.south.list[2];
+    southConnectorRepository.findSouthById.mock.mockImplementation(() => southConnector);
+
+    const oldGroup = { id: 'group1', name: 'Group 1' } as SouthItemGroupEntity;
+    const newGroup: SouthItemGroupEntity = {
+      id: 'group2',
+      name: 'Group 2',
+      southId: southConnector.id,
+      scanMode: testData.scanMode.list[0],
+      startTimeOffset: null,
+      endTimeOffset: null,
+      maxReadInterval: null,
+      readDelay: null,
+      recoveryStrategy: null,
+      items: [],
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    const existingItem = { ...southConnector.items[0], group: oldGroup, syncWithGroup: true };
+    southConnectorRepository.findItemById.mock.mockImplementation(() => existingItem);
+    southItemGroupRepository.findById.mock.mockImplementation(() => newGroup);
+    // copySouthItemCommandToSouthItemEntity resolves command.groupId to an entity via the (mocked)
+    // checkGroups() util — without this, southItemEntity.group would stay undefined.
+    mockUtils.checkGroups.mock.mockImplementation(() => newGroup);
+
+    const commandWithNewGroup: SouthConnectorItemCommandDTO = {
+      ...testData.south.itemCommand,
+      groupId: newGroup.id,
+      syncWithGroup: true
+    };
+
+    await service.updateItem(southConnector.id, existingItem.id, commandWithNewGroup, 'userTest');
+
+    assert.strictEqual(southCacheRepository.getGroupLastValue.mock.calls.length, 0);
+    assert.strictEqual(southCacheRepository.saveItemLastValue.mock.calls.length, 0);
+  });
+
+  it('should not touch the cache when the connector cannot batch, even if the item leaves a synced group', async () => {
+    // folder-scanner (testData.south.list[0], the default findSouthById() mock) is a
+    // SOUTH_SINGLE_ITEMS connector: it never shared a group cache, so there is nothing to carry over.
+    const group = { id: 'group1', name: 'Group 1' } as SouthItemGroupEntity;
+    const existingItem = { ...testData.south.list[0].items[0], group, syncWithGroup: true };
+    southConnectorRepository.findItemById.mock.mockImplementation(() => existingItem);
+
+    const commandWithoutGroup: SouthConnectorItemCommandDTO = {
+      ...testData.south.itemCommand,
+      groupId: null
+    };
+
+    await service.updateItem(testData.south.list[0].id, existingItem.id, commandWithoutGroup, 'userTest');
+
+    assert.strictEqual(southCacheRepository.getGroupLastValue.mock.calls.length, 0);
+    assert.strictEqual(southCacheRepository.saveItemLastValue.mock.calls.length, 0);
   });
 
   it('should enable an item', async () => {
@@ -2220,6 +2389,60 @@ describe('South Service', () => {
       assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
     });
 
+    it("should carry over the group's tracked instant, but not its value, to every item that was synced with a deleted group", async () => {
+      // opcua (testData.south.list[2]) is NOT in SOUTH_SINGLE_ITEMS: a synced group there shares one
+      // cache row, so deleting it must seed each formerly-synced item's own row from that shared row.
+      const southConnector = testData.south.list[2];
+      southConnectorRepository.findSouthById.mock.mockImplementation(() => southConnector);
+
+      const groupToDelete: SouthItemGroupEntity = {
+        id: 'groupToDelete',
+        name: 'Group To Delete',
+        southId: southConnector.id,
+        scanMode: testData.scanMode.list[0],
+        startTimeOffset: null,
+        endTimeOffset: null,
+        maxReadInterval: null,
+        recoveryStrategy: null,
+        readDelay: 0,
+        items: [],
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      const syncedItem = { ...southConnector.items[0], group: groupToDelete, syncWithGroup: true };
+      const unrelatedItem = { ...southConnector.items[1], group: null, syncWithGroup: false };
+
+      southItemGroupRepository.findById.mock.mockImplementation(() => groupToDelete);
+      southConnectorRepository.findAllItemsForSouth.mock.mockImplementation(() => [syncedItem, unrelatedItem]);
+      engine.reloadSouthItems.mock.mockImplementation(async () => undefined);
+
+      const groupCache = {
+        itemId: null,
+        groupId: groupToDelete.id,
+        queryTime: '2024-05-01T00:00:00.000Z',
+        value: { temperature: 42 },
+        trackedInstant: '2024-05-01T00:00:10.000Z'
+      };
+      southCacheRepository.getGroupLastValue.mock.mockImplementation(() => groupCache);
+
+      await service.deleteGroup(southConnector.id, 'groupToDelete');
+
+      assert.deepStrictEqual(southCacheRepository.getGroupLastValue.mock.calls[0].arguments, [southConnector.id, groupToDelete.id]);
+      assert.strictEqual(southCacheRepository.saveItemLastValue.mock.calls.length, 1);
+      assert.deepStrictEqual(southCacheRepository.saveItemLastValue.mock.calls[0].arguments, [
+        southConnector.id,
+        {
+          itemId: syncedItem.id,
+          groupId: null,
+          queryTime: groupCache.queryTime,
+          value: null,
+          trackedInstant: groupCache.trackedInstant
+        }
+      ]);
+    });
+
     it('should throw error when deleting non-existent group', async () => {
       southItemGroupRepository.findById.mock.mockImplementation(() => null);
 
@@ -2322,6 +2545,35 @@ describe('South Service', () => {
 
       assert.deepStrictEqual(southConnectorRepository.moveItemsToGroup.mock.calls[0].arguments, [itemIds, null]);
       assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
+    });
+
+    it("should carry over the group's tracked instant, but not its value, when items are moved out of a synced group to no group", async () => {
+      // opcua (testData.south.list[2]) is NOT in SOUTH_SINGLE_ITEMS: a synced group there shares one
+      // cache row, so moving items out of it must seed each item's own row from that shared row.
+      const southConnector = testData.south.list[2];
+      southConnectorRepository.findSouthById.mock.mockImplementation(() => southConnector);
+
+      const group = { id: 'group1', name: 'Group 1' } as SouthItemGroupEntity;
+      const item = { ...southConnector.items[0], group, syncWithGroup: true };
+      southConnectorRepository.findItemById.mock.mockImplementation(() => item);
+      engine.reloadSouthItems.mock.mockImplementation(async () => undefined);
+
+      const groupCache = {
+        itemId: null,
+        groupId: group.id,
+        queryTime: '2024-05-01T00:00:00.000Z',
+        value: { temperature: 42 },
+        trackedInstant: '2024-05-01T00:00:10.000Z'
+      };
+      southCacheRepository.getGroupLastValue.mock.mockImplementation(() => groupCache);
+
+      await service.moveItemsToGroup(southConnector.id, [item.id], null);
+
+      assert.deepStrictEqual(southCacheRepository.getGroupLastValue.mock.calls[0].arguments, [southConnector.id, group.id]);
+      assert.deepStrictEqual(southCacheRepository.saveItemLastValue.mock.calls[0].arguments, [
+        southConnector.id,
+        { itemId: item.id, groupId: null, queryTime: groupCache.queryTime, value: null, trackedInstant: groupCache.trackedInstant }
+      ]);
     });
 
     it('should throw error when moving items to non-existent group', async () => {

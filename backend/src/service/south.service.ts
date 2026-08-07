@@ -4,6 +4,7 @@ import { encryptionService } from './encryption.service';
 // South imports
 import {
   OIBusSouthType,
+  SOUTH_SINGLE_ITEMS,
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
@@ -393,16 +394,19 @@ export default class SouthService {
 
   getItemLastValue(southId: string, itemId: string): SouthItemLastValue {
     // Verify south connector and item exist
-    this.findById(southId);
+    const southConnector = this.findById(southId);
     const item = this.findItemById(southId, itemId);
 
-    // When the item is synchronised with its group, the cache entry is shared across
-    // all items in the group (saved once with the lead item's ID). Look it up by
-    // group ID so every item in the group returns the same cached value.
-    const lastValue =
-      item.syncWithGroup && item.group
-        ? this.southCacheRepository.getGroupLastValue(southId, item.group.id)
-        : this.southCacheRepository.getItemLastValue(southId, itemId);
+    // When the item is synced with its group AND the connector can actually batch grouped items
+    // into one query, the cache entry is shared across the whole group (saved once, keyed by the
+    // group rather than any one item) — look it up by group ID so every item in the group returns
+    // the same cached value. Connectors in SOUTH_SINGLE_ITEMS never batch, so even a synced item
+    // there always queries (and is cached) on its own; looking it up by group would incorrectly
+    // return nothing, since no such connector ever writes a group-keyed row.
+    const usesSharedGroupCache = item.syncWithGroup && item.group && !SOUTH_SINGLE_ITEMS.includes(southConnector.type);
+    const lastValue = usesSharedGroupCache
+      ? this.southCacheRepository.getGroupLastValue(southId, item.group!.id)
+      : this.southCacheRepository.getItemLastValue(southId, itemId);
 
     return {
       groupId: item.group?.id || null,
@@ -467,8 +471,52 @@ export default class SouthService {
     southItemEntity.createdBy = existingItem.createdBy;
     southItemEntity.updatedBy = updatedBy;
     this.southConnectorRepository.saveItem(southId, southItemEntity);
+    this.carryOverGroupTrackedInstant(southConnector, [
+      { before: existingItem, afterGroupId: southItemEntity.group?.id ?? null, afterSyncWithGroup: southItemEntity.syncWithGroup }
+    ]);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
+  }
+
+  /**
+   * When one or more items stop being backed by a batching connector's shared group cache — group
+   * set to none, "Sync with group" turned off, or moved out of the group some other way — seed each
+   * item's own per-item cache row with the group's tracked instant, so it resumes history queries
+   * from where the group left off instead of re-querying a full lookback window. The cached *value*
+   * is intentionally NOT carried over: it belonged to the group's last combined query, not to any
+   * one item, and is safe to just re-populate on the item's next standalone query.
+   *
+   * No-op for `SOUTH_SINGLE_ITEMS` connectors, which never share a group cache to begin with (see
+   * `SouthConnector.directQueryHandler`/`runHistoryQueryForLead`), and for items moving from one
+   * synced group straight to another, which will keep consulting a *group* cache (just a different
+   * one) rather than falling back to their own per-item row.
+   */
+  private carryOverGroupTrackedInstant(
+    southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
+    items: Array<{
+      before: SouthConnectorItemEntity<SouthItemSettings>;
+      afterGroupId: string | null;
+      afterSyncWithGroup: boolean;
+    }>
+  ): void {
+    if (SOUTH_SINGLE_ITEMS.includes(southConnector.type)) return;
+
+    for (const { before, afterGroupId, afterSyncWithGroup } of items) {
+      const wasUsingSharedGroupCache = !!(before.group && before.syncWithGroup);
+      const willUseOwnCacheGoingForward = !afterSyncWithGroup || afterGroupId === null;
+      if (!wasUsingSharedGroupCache || !willUseOwnCacheGoingForward) continue;
+
+      const groupCache = this.southCacheRepository.getGroupLastValue(southConnector.id, before.group!.id);
+      if (!groupCache?.trackedInstant) continue;
+
+      this.southCacheRepository.saveItemLastValue(southConnector.id, {
+        itemId: before.id,
+        groupId: null,
+        queryTime: groupCache.queryTime,
+        value: null,
+        trackedInstant: groupCache.trackedInstant
+      });
+    }
   }
 
   async enableItem(southId: string, itemId: string): Promise<void> {
@@ -810,7 +858,14 @@ export default class SouthService {
       throw new NotFoundError(`South item group "${groupId}" does not belong to south connector "${southId}"`);
     }
     const manifest = this.getManifest(southConnector.type);
+    // Fetched before deleteGroupAndUpdateItems() clears item.group / item.syncWithGroup, so we still
+    // know which items were synced with this group when seeding their per-item cache below.
+    const affectedItems = this.southConnectorRepository.findAllItemsForSouth(southId).filter(item => item.group?.id === groupId);
     this.southConnectorRepository.deleteGroupAndUpdateItems(southId, group, manifest.modes.history);
+    this.carryOverGroupTrackedInstant(
+      southConnector,
+      affectedItems.map(item => ({ before: item, afterGroupId: null, afterSyncWithGroup: false }))
+    );
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
   }
@@ -828,15 +883,25 @@ export default class SouthService {
       }
     }
 
-    // Verify all items belong to this south connector
+    // Verify all items belong to this south connector, keeping their pre-move state (group,
+    // syncWithGroup) for the cache carry-over below.
+    const items: Array<SouthConnectorItemEntity<SouthItemSettings>> = [];
     for (const itemId of itemIds) {
       const item = this.southConnectorRepository.findItemById(southId, itemId);
       if (!item) {
         throw new NotFoundError(`South item "${itemId}" not found`);
       }
+      items.push(item);
     }
 
     this.southConnectorRepository.moveItemsToGroup(itemIds, groupId);
+    // moveItemsToGroup() (repository) always sets syncWithGroup to true when moving into a group,
+    // and to false when moving out of one (see its implementation) — mirrored here so items leaving
+    // a synced group carry its tracked instant over to their own cache row.
+    this.carryOverGroupTrackedInstant(
+      southConnector,
+      items.map(item => ({ before: item, afterGroupId: groupId, afterSyncWithGroup: groupId !== null }))
+    );
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
   }

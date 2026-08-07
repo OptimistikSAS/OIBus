@@ -5,8 +5,7 @@ import {
   SOUTH_SINGLE_ITEMS,
   SouthConnectorItemQueryResult,
   SouthConnectorItemTestingSettings,
-  SouthHistoryRecoveryStrategy,
-  SouthItemLastValue
+  SouthHistoryRecoveryStrategy
 } from '../../shared/model/south-connector.model';
 import { Instant, Interval } from '../../shared/model/types';
 import { DateTime } from 'luxon';
@@ -37,7 +36,7 @@ export interface SouthMetricsEvents {
   'add-file': { lastFileRetrieved: string };
 }
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
-import SouthCacheRepository from '../repository/cache/south-cache.repository';
+import SouthCacheRepository, { SouthCacheEntry } from '../repository/cache/south-cache.repository';
 import { ScanMode } from '../model/scan-mode.model';
 import type { ILogger } from '../model/logger.model';
 import { loggerService } from '../service/logger/logger.service';
@@ -157,7 +156,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     // always populate it, so this is just defensive, not a real production case.
     for (const item of this.connector.items ?? []) {
       if (!item.enabled) continue;
-      const scanModeId = item.syncWithGroup && item.group ? item.group.scanMode.id : item.scanMode!.id;
+      const scanModeId = item.group ? item.group.scanMode.id : item.scanMode!.id;
       const items = itemsByScanModeId.get(scanModeId);
       if (items) {
         items.push(item);
@@ -433,8 +432,12 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     if (this.hasHistoryQuery()) {
       try {
         // By default, retrieve the last hour. If the scan mode has already run and retrieves data, the max instant will
-        // be retrieved from the South cache inside the history query handler
-        const maxReadInterval = items[0].group?.maxReadInterval ?? items[0].maxReadInterval!;
+        // be retrieved from the South cache inside the history query handler.
+        // Group settings apply only when the lead item is synced with its group, matching the
+        // `settingsSource` rule in runHistoryQueryForLead — an item that merely belongs to a group
+        // without being synced to it must use its own maxReadInterval, not the group's.
+        const lead = items[0];
+        const maxReadInterval = lead.group && lead.syncWithGroup ? lead.group.maxReadInterval : lead.maxReadInterval!;
         // Capture a single `now` so that endTime - startTime == maxReadInterval exactly.
         // Two separate DateTime.now() calls can differ by 1 ms, making the interval
         // fractionally larger than maxReadInterval and causing generateIntervals to
@@ -478,13 +481,24 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     // @ts-expect-error
     const lastValue = await this.directQuery(items);
 
-    this.southCacheRepository.saveItemLastValue(this.connector.id, {
-      groupId: items[0].group && items[0].syncWithGroup && !SOUTH_SINGLE_ITEMS.includes(this.connector.type) ? items[0].group.id : null,
-      itemId: items[0].id,
-      queryTime: startTime,
-      value: lastValue,
-      trackedInstant: null
-    });
+    const lead = items[0];
+    if (lead.group && lead.syncWithGroup && !SOUTH_SINGLE_ITEMS.includes(this.connector.type)) {
+      // Batched, synced group: one shared row keyed by the group, not by whichever item happens to
+      // be the lead this time — see saveGroupLastValue for why it can't just be item_id = lead.id.
+      this.southCacheRepository.saveGroupLastValue(this.connector.id, lead.group.id, {
+        queryTime: startTime,
+        value: lastValue,
+        trackedInstant: null
+      });
+    } else {
+      this.southCacheRepository.saveItemLastValue(this.connector.id, {
+        groupId: null,
+        itemId: lead.id,
+        queryTime: startTime,
+        value: lastValue,
+        trackedInstant: null
+      });
+    }
   }
 
   /**
@@ -558,10 +572,15 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     startTime: Instant,
     endTime: Instant
   ): Promise<void> {
-    let southCache = this.southCacheRepository.getItemLastValue(this.connector.id, lead.id);
+    // A non-null groupId means this is a batched, synced group (the only caller that passes one —
+    // see historyQueryHandler): the cache is shared by the whole group, keyed by group_id alone, so
+    // it's looked up/created without ever tying it back to whichever item happens to be `lead`.
+    let southCache = groupId
+      ? this.southCacheRepository.getGroupLastValue(this.connector.id, groupId)
+      : this.southCacheRepository.getItemLastValue(this.connector.id, lead.id);
     if (!southCache) {
       southCache = {
-        itemId: lead.id,
+        itemId: groupId ? null : lead.id,
         groupId,
         trackedInstant: null,
         queryTime: null,
@@ -592,7 +611,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   private async queryIntervals(
     intervals: Array<Interval>,
     items: Array<SouthConnectorItemEntity<I>>,
-    southCache: Omit<SouthItemLastValue, 'itemName' | 'groupName'>,
+    southCache: SouthCacheEntry,
     readDelay: number,
     strategy: SouthHistoryRecoveryStrategy
   ) {
@@ -615,13 +634,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         // With a negative startTimeOffset the window extends backwards, so lastInstantRetrieved may be below trackedInstant — check both conditions
         if (lastValue && (!southCache.trackedInstant || lastValue.trackedInstant > southCache.trackedInstant)) {
           this.logger.debug(`Saving last value ${JSON.stringify(lastValue.value)}, trackedInstant ${lastValue.trackedInstant}`);
-          this.southCacheRepository.saveItemLastValue(this.connector.id, {
-            groupId: southCache.groupId,
-            itemId: southCache.itemId,
-            queryTime,
-            value: lastValue.value,
-            trackedInstant: lastValue.trackedInstant
-          });
+          this.saveTrackedValue(southCache, queryTime, lastValue.value, lastValue.trackedInstant);
         }
       } else if (lastValue && (!latestValue || lastValue.trackedInstant > latestValue.trackedInstant)) {
         latestValue = lastValue;
@@ -642,12 +655,24 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     // Only save if data was actually found — otherwise leave the cache untouched.
     if (strategy === 'newest' && !this.stopping && latestValue) {
       this.logger.debug(`Saving last value ${JSON.stringify(latestValue.value)}, trackedInstant ${latestValue.trackedInstant}`);
+      this.saveTrackedValue(southCache, DateTime.now().toUTC().toISO()!, latestValue.value, latestValue.trackedInstant);
+    }
+  }
+
+  /**
+   * Persist a tracked-value update against whichever cache identity `southCache` was looked up
+   * with: the shared group row (`groupId` set, `itemId` null) or a plain per-item row.
+   */
+  private saveTrackedValue(southCache: SouthCacheEntry, queryTime: Instant, value: unknown, trackedInstant: Instant): void {
+    if (southCache.groupId) {
+      this.southCacheRepository.saveGroupLastValue(this.connector.id, southCache.groupId, { queryTime, value, trackedInstant });
+    } else {
       this.southCacheRepository.saveItemLastValue(this.connector.id, {
-        groupId: southCache.groupId,
-        itemId: southCache.itemId,
-        queryTime: DateTime.now().toUTC().toISO()!,
-        value: latestValue.value,
-        trackedInstant: latestValue.trackedInstant
+        groupId: null,
+        itemId: southCache.itemId!,
+        queryTime,
+        value,
+        trackedInstant
       });
     }
   }
