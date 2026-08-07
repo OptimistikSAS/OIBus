@@ -102,7 +102,9 @@ Items retrieve data as files or JSON payloads. Each item has the following field
 ### Item Actions
 
 - **Disable/Enable**: Toggle from the item edit form or directly from the connector's display page.
-- **Test**: Verify item settings and preview results from the create/edit modal.
+- **Test**: Verify item settings and preview results from the create/edit modal. You can also run the
+  raw result through one of the item's North transformers to preview the transformed output — see
+  [Testing a Transformer Against a Real South Item](../engine/transformers.mdx#testing-a-transformer-against-a-real-south-item).
   > **Tip**: Test the connection settings before testing individual items.
 - **View last value** (🔍): Opens a read-only panel showing the item's last retrieval state. See
   [Inspecting the last retrieved value](#inspecting-the-last-retrieved-value) for details.
