@@ -40,13 +40,13 @@ All release assets are listed on the [Releases page](https://github.com/Optimist
 
 ### Bundled inside the binary archive
 
-Each platform archive (`oibus-win-x64.zip`, `oibus-linux-x64.tar.gz`, …) includes
+Each platform archive (`oibus-win_x64-<version>.zip`, `oibus-linux_x64-<version>.zip`, …) includes
 `oibus-sbom.json` alongside the binary. If you have already downloaded and unpacked OIBus, the SBOM
 file is already present in the same directory as the `oibus` or `oibus.exe` executable.
 
 :::note
-The SBOM is only attached to **stable** (non-prerelease) releases. Pre-release and nightly builds produce
-the SBOM as a CI artifact but do not publish it to the release page.
+The SBOM is only attached to **stable** (non-prerelease) releases. Pre-release builds produce the SBOM
+as a CI artifact but do not publish it to the release page.
 :::
 
 ## Using the SBOM

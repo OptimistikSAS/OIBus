@@ -21,6 +21,14 @@ OIBus sends data in two modes, depending on the North connector:
 
 The choice of format has a large effect on throughput and cache size, particularly for high-frequency or multi-signal workloads.
 
+:::note Scope of this page
+This page's byte-size formulas model CSV files and the `{timestamp, pointId, value}` JSON shape used by the
+connectors above. They do not apply to **Modbus**, **MQTT**, or **OPC UA** North connectors, which write
+directly to their industrial protocol (register writes, topic publishes, node writes) using a different,
+protocol-specific cache format — nor to the **Console** North connector, which only logs to stdout and does
+not transmit or buffer data for an outage at all.
+:::
+
 ## CSV Format Estimations
 
 Byte sizes below use the following representative field widths:

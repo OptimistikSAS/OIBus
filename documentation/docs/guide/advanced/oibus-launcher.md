@@ -32,8 +32,14 @@ OIBus/
 │       └── oibus
 └── backup/                 ← created automatically before an upgrade
     ├── oibus
-    └── data-folder/        ← snapshot of the data directory
+    └── data-folder/        ← backup of the data folder (see note below)
 ```
+
+:::info Partial data-folder backup
+Only the parts of the data folder matching a configurable pattern are backed up to `data-folder/` —
+by default, everything under `cache/`. This is not a full snapshot of the data folder. The pattern can
+be overridden by a `backupFolders` entry in `update.json`, dropped alongside the staged update.
+:::
 
 When an upgrade command is received from OIAnalytics, the new binary is placed in `update/binaries/`.
 The launcher detects it on the next start.
@@ -45,7 +51,7 @@ Every time `oibus-launcher` starts, it follows this sequence:
 1. **Check for a staged update** — inspect the `update/` folder for new binaries.
 
 2. **Apply the update** (if files are present):
-   - Back up the current binary from `binaries/` and the data folder to `backup/`.
+   - Back up the current binary from `binaries/` and the matching parts of the data folder to `backup/`.
    - Replace the binary in `binaries/` with the one from `update/`.
 
 3. **Start OIBus** — launch `oibus` from `binaries/` as a child process, forwarding all CLI arguments.
@@ -53,7 +59,7 @@ Every time `oibus-launcher` starts, it follows this sequence:
 4. **Monitor for 30 seconds** — if OIBus exits or crashes within 30 seconds of an update, the launcher
    treats it as a failed upgrade:
    - Stops the crashed process.
-   - Restores the previous binary and data folder from `backup/`.
+   - Restores the previous binary and the backed-up parts of the data folder from `backup/`.
    - Restarts OIBus from the restored binary.
 
 5. **Mark as stable** — if OIBus is still running after 30 seconds, the update is considered successful
@@ -88,7 +94,8 @@ oibus-launcher --config C:\OIBusData
 
 ### `--version`
 
-Print the versions of `oibus-launcher` and `oibus`, then exit. No update check is performed.
+Print the versions of `oibus-launcher` and `oibus`, then exit. The launcher still checks whether a
+staged update is present, but does not apply it — the binary/data-folder swap is skipped.
 
 ```bash
 oibus-launcher --version
