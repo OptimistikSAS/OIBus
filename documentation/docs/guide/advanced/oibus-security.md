@@ -31,14 +31,15 @@ be re-entered after restarting OIBus. Treat `crypto.db` with the same care as a 
 
 ### Database Layout
 
-OIBus uses four SQLite databases in the data folder:
+OIBus uses five SQLite databases:
 
-| Database        | Contents                                                                                                   |
-| --------------- | ---------------------------------------------------------------------------------------------------------- |
-| **`oibus.db`**  | All configuration: connectors, items, scan modes, IP filters, users (hashed passwords), encrypted secrets. |
-| **`crypto.db`** | AES-256-CBC key and IV used to encrypt/decrypt connector secrets.                                          |
-| **`logs.db`**   | Runtime log entries.                                                                                       |
-| **`cache.db`**  | South connector cache (values pending transmission to North connectors).                                   |
+| Database         | Contents                                                                                                                   |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **`oibus.db`**   | All configuration: connectors, items, scan modes, IP filters, users (hashed passwords), encrypted secrets.                 |
+| **`crypto.db`**  | AES-256-CBC key and IV used to encrypt/decrypt connector secrets.                                                          |
+| **`logs.db`**    | Runtime log entries. Stored under the `logs/` subfolder.                                                                   |
+| **`metrics.db`** | South/North/history-query runtime metrics, updated on every scan and every North send. Stored under the `logs/` subfolder. |
+| **`cache.db`**   | South connector cache (values pending transmission to North connectors). Stored under the `cache/` subfolder.              |
 
 Backing up both `oibus.db` and `crypto.db` together is necessary for a complete, restorable snapshot.
 
@@ -50,7 +51,7 @@ The OIBus web interface supports two authentication methods:
 
 After a successful login, OIBus issues a **JWT signed with RS256** (RSA-SHA256). The token:
 
-- Has a **7-day lifetime**.
+- Has a **7-day lifetime by default**, configurable in engine settings from 1 hour up to 30 days.
 - Is signed with an RSA private key held by OIBus.
 - Is verified on every API request using the corresponding public key.
 - Contains the user's login and a hash of their password — the token is automatically invalidated if the
@@ -58,7 +59,8 @@ After a successful login, OIBus issues a **JWT signed with RS256** (RSA-SHA256).
 
 ### Basic Auth (API / CLI)
 
-HTTP Basic Authentication is also accepted on every endpoint. It is used by curl-based automation scripts
+HTTP Basic Authentication is also accepted on every API endpoint except the public status endpoints
+(`/api/status`, `/api/engine/status`), which require no authentication. It is used by curl-based automation scripts
 (see [automated installation](../installation/disk-image.mdx)) and by tools that do not support JWT.
 
 :::tip
@@ -78,7 +80,7 @@ Key behaviours:
 | **Localhost bypass**    | `127.0.0.1`, `::1`, and other loopback addresses are always allowed, regardless of the filter list.           |
 | **Wildcard**            | An entry of `*` allows all remote addresses.                                                                  |
 | **IPv4 / IPv6**         | Both formats are supported. IPv4-mapped IPv6 addresses (e.g. `::ffff:192.168.1.1`) are handled transparently. |
-| **Pattern matching**    | Entries are treated as regex patterns, allowing subnet-style rules.                                           |
+| **Pattern matching**    | Entries support `*` as a wildcard (compiled internally to a regular expression), allowing subnet-style rules. |
 | **Disable for testing** | Pass `--ignore-ip-filters` to `oibus-launcher` to bypass all IP checks without modifying the configuration.   |
 
 See [IP Filters](../engine/ip-filters.mdx) for configuration details.
@@ -97,8 +99,10 @@ The RSA key pair is generated during OIAnalytics registration and can be rotated
 **Regenerate cipher keys** remote command. After rotation, any secrets previously entered through
 OIAnalytics must be re-entered because the old ciphertext can no longer be decrypted.
 
-The same 4096-bit RSA infrastructure is also used to generate self-signed certificates for OPC UA
-connections.
+Separately, OIBus generates its own 4096-bit RSA certificate/key pair at startup (`private.pem` /
+`public.pem` / `cert.pem`) — this is what signs the JWTs described above, and is also used to self-sign
+the certificate presented for OPC UA connections. It is a distinct key pair from the one used for
+OIAnalytics secret exchange.
 
 ## Network Security
 
