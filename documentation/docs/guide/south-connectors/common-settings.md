@@ -44,8 +44,8 @@ A group bundles items that share the same collection schedule. Each group has:
 | **Throttling** | _(History-capable connectors only)_ Default throttling settings inherited by items in the group. | `3600, 200, 0` |
 
 Items assigned to a group inherit its scan mode. For history-capable connectors, items also inherit
-the group's throttling settings by default (Max read interval, Read delay, Overlap), but each item can
-override them individually by disabling **Sync with group**.
+the group's throttling settings by default (Max read interval, Read delay, Start time offset, End time offset,
+Recovery strategy), but each item can override them individually by disabling **Sync with group**.
 
 Items that are **not assigned to any group** define their own scan mode directly on the item.
 
@@ -87,17 +87,19 @@ for details. For every other connector type, execution stays fully sequential an
 
 Items retrieve data as files or JSON payloads. Each item has the following fields:
 
-| Setting               | Description                                                                                                                    | Example Value         |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ | --------------------- |
-| **Name**              | Unique reference used by North connectors and transformers to identify this data point.                                        | `Temperature_Sensor1` |
-| **Group**             | The group this item belongs to. Leave empty for a standalone item with its own scan mode.                                      | `Group A`             |
-| **Scan mode**         | Schedule that determines when OIBus collects data. Only shown when the item has no group (otherwise inherited from the group). | `Every 1 min`         |
-| **Enabled**           | Whether the item is active.                                                                                                    | Enabled/Disabled      |
-| **Sync with group**   | _(History-capable connectors only)_ When enabled, throttling settings are inherited from the group.                            | Enabled/Disabled      |
-| **Max read interval** | _(History-capable connectors)_ Maximum sub-query duration in seconds.                                                          | `3600`                |
-| **Read delay**        | _(History-capable connectors)_ Pause in milliseconds between consecutive sub-queries.                                          | `200`                 |
-| **Overlap**           | _(History-capable connectors)_ Milliseconds subtracted from `@StartTime` to capture late-arriving data.                        | `0`                   |
-| **Specific settings** | Varies by connector type — see each connector's documentation.                                                                 | —                     |
+| Setting               | Description                                                                                                                       | Example Value         |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| **Name**              | Unique reference used by North connectors and transformers to identify this data point.                                           | `Temperature_Sensor1` |
+| **Group**             | The group this item belongs to. Leave empty for a standalone item with its own scan mode.                                         | `Group A`             |
+| **Scan mode**         | Schedule that determines when OIBus collects data. Only shown when the item has no group (otherwise inherited from the group).    | `Every 1 min`         |
+| **Enabled**           | Whether the item is active.                                                                                                       | Enabled/Disabled      |
+| **Sync with group**   | _(History-capable connectors only)_ When enabled, throttling settings are inherited from the group.                               | Enabled/Disabled      |
+| **Max read interval** | _(History-capable connectors)_ Maximum sub-query duration in seconds.                                                             | `3600`                |
+| **Read delay**        | _(History-capable connectors)_ Pause in milliseconds between consecutive sub-queries.                                             | `200`                 |
+| **Start time offset** | _(History-capable connectors)_ Milliseconds added to `@StartTime`. Negative values move it earlier to capture late-arriving data. | `-60000`              |
+| **End time offset**   | _(History-capable connectors)_ Milliseconds added to `@EndTime`. Negative values pull it earlier.                                 | `0`                   |
+| **Recovery strategy** | _(History-capable connectors)_ Order in which a backlog of unqueried sub-intervals is caught up: oldest-first (default) or newest-first. | `From oldest to newest` |
+| **Specific settings** | Varies by connector type — see each connector's documentation.                                                                    | —                     |
 
 ### Item Actions
 
@@ -113,7 +115,8 @@ Items retrieve data as files or JSON payloads. Each item has the following field
 ### Import/Export Items
 
 - **Export**: Download all items as a CSV. Columns include `name`, `enabled`, `scanMode`, `group`,
-  `syncWithGroup`, `maxReadInterval`, `readDelay`, `overlap`, and connector-specific `settings_*` columns.
+  `syncWithGroup`, `maxReadInterval`, `readDelay`, `startTimeOffset`, `endTimeOffset`, `recoveryStrategy`, and
+  connector-specific `settings_*` columns.
 - **Import**: Upload a CSV to create or update items in bulk. Export an existing list to get a valid
   template with the correct column names.
   > **Note**: The system validates for duplicates and correct formatting before applying the import.
@@ -126,7 +129,7 @@ History-capable South connectors track the last successfully retrieved timestamp
 that each run only fetches new data. Whether that instant is tracked per item or shared across a group
 depends on how the group is actually queried:
 
-- If the connector can batch grouped items into a single query (i.e. it is *not* one of the SQL/REST-style
+- If the connector can batch grouped items into a single query (i.e. it is _not_ one of the SQL/REST-style
   connectors described above, which always query one item at a time) **and** the item has **Sync with
   group** enabled, the whole group shares **one** tracked instant — since the group is queried as a
   single unit, there is no meaningful per-item value to track separately.
@@ -135,27 +138,27 @@ depends on how the group is actually queried:
 
 :::tip Leaving a shared group keeps the tracked instant, not the cached value
 When an item stops being backed by a shared group instant — its group is set to none, **Sync with
-group** is turned off, or the group itself is deleted — it carries the group's *tracked instant* over
+group** is turned off, or the group itself is deleted — it carries the group's _tracked instant_ over
 to its own, now-independent tracking, so it resumes from there instead of re-querying a full lookback
-window. The group's last cached *value* is **not** carried over; the item's own value is simply
+window. The group's last cached _value_ is **not** carried over; the item's own value is simply
 re-populated on its next standalone query. Moving directly from one synced group to another does not
 trigger this: the item keeps consulting a shared instant throughout, just under the new group.
 :::
 
 ### Behaviour when configuration changes
 
-| Action                   | Effect on max instant                                                                                                |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------|
+| Action                   | Effect on max instant                                                                                                                                                                                                                              |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Change item's group      | An already-independent item keeps its own tracked instant. An item leaving a shared group carries that group's tracked instant over to its own tracking (see tip above). Moving between two synced groups keeps using a shared instant throughout. |
-| Change group's scan mode | Tracked instant(s) — per-item or shared — are preserved under the new scan mode.                                     |
-| Delete a group           | Items become unassigned. An item that was independent keeps its own tracked instant; an item that was synced with the group carries its shared tracked instant over to its own tracking. |
-| Delete an item           | Its own tracked instant is removed; a shared group instant is unaffected as long as other items remain in the group. |
-| Delete the connector     | All items, groups, and tracked instants are removed.                                                                 |
+| Change group's scan mode | Tracked instant(s) — per-item or shared — are preserved under the new scan mode.                                                                                                                                                                   |
+| Delete a group           | Items become unassigned. An item that was independent keeps its own tracked instant; an item that was synced with the group carries its shared tracked instant over to its own tracking.                                                           |
+| Delete an item           | Its own tracked instant is removed; a shared group instant is unaffected as long as other items remain in the group.                                                                                                                               |
+| Delete the connector     | All items, groups, and tracked instants are removed.                                                                                                                                                                                               |
 
 :::warning Data gaps and duplicates when changing throttling settings
-If you change the Max read interval or Overlap on a group or item, the next query will use the new
-parameters from the current tracked instant. A significantly different overlap can cause small gaps
-or duplicates at the boundary.
+If you change the Max read interval, Start time offset, or End time offset on a group or item, the next query
+will use the new parameters from the current tracked instant. A significantly different offset can cause small
+gaps or duplicates at the boundary.
 :::
 
 ### Inspecting the last retrieved value

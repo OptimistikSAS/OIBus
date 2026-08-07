@@ -18,15 +18,15 @@ Connect to ODBC data sources either locally or through a remote [OIBus Agent](..
 
 ## Specific Settings
 
-| Setting            | Description                                                                                           | Example Value                                     |
-| ------------------ | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Use remote agent   | Enable to route queries through an OIBus Agent on a remote machine.                                   | Enabled/Disabled                                  |
-| Remote agent URL   | Agent endpoint URL. Required when using remote agent.                                                 | `http://host:2224`                                |
-| Connection timeout | Maximum time in milliseconds to establish connection. Default: `15000`.                               | `15000`                                           |
-| Retry interval     | Time in milliseconds to wait before retrying the connection. Default: `10000`.                        | `10000`                                           |
-| Request timeout    | Maximum execution time in milliseconds for individual queries. Leave empty to use the driver default. | `30000`                                           |
-| Connection string  | ODBC connection string in driver-specific format.                                                     | `Driver={AspenTech SQLplus};HOST=ip21;PORT=10014` |
-| Password           | Authentication password (stored securely). Added as `PWD=<password>` if not in connection string.     | `••••••••`                                        |
+| Setting            | Description                                                                                                                                                                                                       | Example Value                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Use remote agent   | Enable to route queries through an OIBus Agent on a remote machine.                                                                                                                                               | Enabled/Disabled                                  |
+| Remote agent URL   | Agent endpoint URL. Required when using remote agent.                                                                                                                                                             | `http://host:2224`                                |
+| Connection timeout | Maximum time in milliseconds to establish connection. Default: `15000`.                                                                                                                                           | `15000`                                           |
+| Retry interval     | Time in milliseconds to wait before retrying the connection. Default: `10000`.                                                                                                                                    | `10000`                                           |
+| Request timeout    | _(Only used with **Use remote agent**)_ Maximum execution time in milliseconds for individual queries, sent to the agent. Default: `15000`. Not applicable to local (non-agent) connections.                      | `15000`                                           |
+| Connection string  | ODBC connection string in driver-specific format.                                                                                                                                                                 | `Driver={AspenTech SQLplus};HOST=ip21;PORT=10014` |
+| Password           | Authentication password (stored securely). Always appended as `PWD=<password>;` — if your connection string already includes its own `PWD=`/`Pwd=` entry, remove it here or from the string to avoid a duplicate. | `••••••••`                                        |
 
 ### Connection String Examples
 

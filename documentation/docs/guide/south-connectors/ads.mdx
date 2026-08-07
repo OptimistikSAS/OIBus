@@ -20,10 +20,10 @@ Use this configuration if TwinCAT is installed on the same machine and network a
 
 **Local AMS Server Settings**
 
-| Setting  | Description                                                                             | Example Value   |
-| -------- | --------------------------------------------------------------------------------------- | --------------- |
-| Net ID   | Unique address of the PLC, resembling an IP address with two additional numeric values. | `127.0.0.1.1.1` |
-| PLC Port | Communication endpoint for the PLC.                                                     | `851`           |
+| Setting | Description                                                                             | Example Value   |
+| ------- | --------------------------------------------------------------------------------------- | --------------- |
+| Net ID  | Unique address of the PLC, resembling an IP address with two additional numeric values. | `127.0.0.1.1.1` |
+| Port    | Communication endpoint for the PLC.                                                     | `851`           |
 
 > **Note**: When using a local AMS server, you do not need to specify the Router address, Router TCP port, Client AMS
 > Net ID, or Client ADS port.
@@ -37,7 +37,7 @@ Use this configuration if TwinCAT is installed on a remote machine.
 | Setting         | Description                                                                              | Example Value      |
 | --------------- | ---------------------------------------------------------------------------------------- | ------------------ |
 | Net ID          | Unique address of the PLC.                                                               | `192.168.1.10.1.1` |
-| PLC Port        | Communication endpoint for the PLC.                                                      | `851`              |
+| Port            | Communication endpoint for the PLC.                                                      | `851`              |
 | Router Address  | IP address or domain name of the AMS Router.                                             | `192.168.1.100`    |
 | Router TCP Port | Port used by the AMS Router for communication.                                           | `48898`            |
 | AMS Net ID      | Client identifier for connecting to the TwinCAT runtime.                                 | `192.168.1.50.1.1` |
@@ -70,16 +70,20 @@ simultaneously, use a local AMS server.
 
 #### Structure Filtering
 
-| Setting        | Description                                                    | Example Value     |
-| -------------- | -------------------------------------------------------------- | ----------------- |
-| Structure Name | Name of the structure to filter.                               | `MyStructure`     |
-| Fields to Keep | Comma-separated list of fields to retrieve from the structure. | `MyDate,MyNumber` |
+| Setting        | Description                                                                               | Example Value     |
+| -------------- | ----------------------------------------------------------------------------------------- | ----------------- |
+| Structure Name | Name of the structure to filter.                                                          | `MyStructure`     |
+| Fields to Keep | Comma-separated list of fields to retrieve from the structure, or `*` to keep all fields. | `MyDate,MyNumber` |
 
 > **Example**: If `MyVariable` is of type `MyStructure` with fields `MyDate`, `MyNumber`, and `Value`, filtering to keep
 > only `MyDate, MyNumber` will generate unique point IDs:
 >
 > - `MyVariable.MyDate`
 > - `MyVariable.MyNumber`
+
+:::tip Keep every field
+Set **Fields to Keep** to `*` to keep all fields of the structure instead of listing them individually.
+:::
 
 ## Item Settings
 

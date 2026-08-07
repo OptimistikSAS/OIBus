@@ -26,16 +26,16 @@ Query time series data from [OIAnalytics®](https://optimistik.com/oianalytics/)
 
 #### Authentication Settings
 
-| Setting               | Description                                                 | Example Value                                                             |
-| --------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Authentication method | Authentication type for the connection.                     | `Access key/Secret`, `Azure AD (Client Secret)`, `Azure AD (Certificate)` |
-| Access key            | Access key for Access key/Secret authentication.            | `my_access_key`                                                           |
-| Secret                | Secret for Access key/Secret authentication.                | `••••••••`                                                                |
-| Tenant ID             | Azure AD tenant identifier (for Azure AD methods).          | `tenant-id-uuid`                                                          |
-| Client ID             | Azure AD client identifier (for Azure AD methods).          | `client-id-uuid`                                                          |
-| Client Secret         | Azure AD client secret (for Azure AD Client Secret method). | `••••••••`                                                                |
-| Certificate           | Certificate file path (for Azure AD Certificate method).    | `/path/to/cert.pem`                                                       |
-| Scope                 | OAuth scope (for Azure AD Certificate method).              | `https://resource/.default`                                               |
+| Setting               | Description                                                                                                 | Example Value                                                             |
+| --------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Authentication method | Authentication type for the connection.                                                                     | `Access key/Secret`, `Azure AD (Client Secret)`, `Azure AD (Certificate)` |
+| Access key            | Access key for Access key/Secret authentication.                                                            | `my_access_key`                                                           |
+| Secret                | Secret for Access key/Secret authentication.                                                                | `••••••••`                                                                |
+| Tenant ID             | Azure AD tenant identifier (for Azure AD methods).                                                          | `tenant-id-uuid`                                                          |
+| Client ID             | Azure AD client identifier (for Azure AD methods).                                                          | `client-id-uuid`                                                          |
+| Client Secret         | Azure AD client secret (for Azure AD Client Secret method).                                                 | `••••••••`                                                                |
+| Certificate           | Certificate selected from OIBus's Certificates page (for Azure AD Certificate method), not a raw file path. | (selected from list)                                                      |
+| Scope                 | OAuth scope (for Azure AD Certificate method).                                                              | `https://resource/.default`                                               |
 
 #### Proxy Configuration
 
@@ -52,11 +52,11 @@ Items can be organised into groups. Each group defines a shared collection sched
 settings. Items in the same group are still fetched **one at a time** in sequence — the group simply
 provides common defaults that individual items can override.
 
-| Setting        | Description                                                                                         | Example Value  |
-| -------------- | --------------------------------------------------------------------------------------------------- | -------------- |
-| **Name**       | Unique label for the group within this connector.                                                   | `Group A`      |
-| **Scan mode**  | Schedule used to collect all items in the group.                                                    | `Every 1 min`  |
-| **Throttling** | Default throttling values (Max read interval, Read delay, Overlap) inherited by items in the group. | `3600, 200, 0` |
+| Setting        | Description                                                                                                                    | Example Value     |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------- |
+| **Name**       | Unique label for the group within this connector.                                                                              | `Group A`         |
+| **Scan mode**  | Schedule used to collect all items in the group.                                                                               | `Every 1 min`     |
+| **Throttling** | Default throttling values (Max read interval, Read delay, Start time offset, End time offset, Recovery strategy) inherited by items in the group. | `3600, 200, 0, 0, oldest` |
 
 ## Item Settings
 

@@ -19,7 +19,7 @@ the [jsmodbus](https://github.com/Cloud-Automation/node-modbus) library **in TCP
 | **Host**               | IP address or hostname of the Modbus server machine.                                                                                                                              | `192.168.1.100` |
 | **Port**               | Port to use for connection (502 by default).                                                                                                                                      | `502`           |
 | **Connection timeout** | Maximum time to wait for a connection (in milliseconds).                                                                                                                          | `10000`         |
-| **Retry interval**     | Time to wait (in milliseconds) between reconnections after a connection failure.                                                                                                  | `5000`          |
+| **Retry interval**     | Time to wait (in milliseconds) between reconnections after a connection failure.                                                                                                  | `10000`         |
 | **Network timeout**    | Delay (in milliseconds) before TCP keepalive probes start being sent on an idle connection. Keeps the connection alive through firewalls and NAT devices that close idle sockets. | `15000`         |
 | **Slave ID**           | Identifies the Modbus source machine (default is 1).                                                                                                                              | `1`             |
 | **Address offset**     | For most PLCs, there is no offset (Modbus option). Some PLCs may start the address range at 1 instead of 0 (JBus option)                                                          | `Modbus`        |
@@ -38,11 +38,14 @@ Use the tester below to see how these three settings affect the decoded value fo
 
 ### Query Optimisation
 
-| Setting          | Description                                                                                                                                                                                     | Example Value |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| **Grouping gap** | Maximum address gap (in registers) allowed when merging non-consecutive items of the same type into a single Modbus request. Set to `0` to batch only strictly consecutive addresses (default). | `0` – `100`   |
+| Setting                  | Description                                                                                                                                                                                                                                             | Example Value    |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| **Group batch queries?** | Enable to merge items of the same Modbus type into as few requests as possible, instead of issuing one request per item. Disabled by default.                                                                                                           | Enabled/Disabled |
+| **Grouping gap**         | _(Only shown when **Group batch queries?** is enabled)_ Maximum address gap (in registers) allowed when merging non-consecutive items of the same type into a single Modbus request. Set to `0` to batch only strictly consecutive addresses (default). | `0` – `100`      |
 
-OIBus always groups items of the same Modbus type (coil, discrete input, input register, holding register) whose addresses are consecutive into a single request, reducing round-trips to the device.
+With **Group batch queries?** disabled (the default), OIBus issues one Modbus request per item — no merging at all.
+Enabling it makes OIBus group items of the same Modbus type (coil, discrete input, input register, holding register)
+whose addresses are consecutive into a single request, reducing round-trips to the device.
 
 With a **grouping gap > 0**, items that are almost—but not quite—consecutive are also merged. For example, three holding registers at addresses 1, 3, and 5 would normally require three separate requests. With a grouping gap of 2, all three are read in one request (the two intermediate filler registers are fetched and discarded).
 
@@ -69,7 +72,7 @@ Ranges that exceed these limits are automatically split into multiple requests.
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | Address                | Address of the register within the device, without the leading data type digit. Accepts a plain decimal number (e.g. `1`) or a hexadecimal number prefixed with `0x` (e.g. `0x0001`). | `0x0001`           |
 | Modbus type            | Specifies whether it's a _coil_, _discrete input_, _input register_, or _holding register_ (default).                                                                                 | `Holding Register` |
-| Data type              | Relevant for _holding registers_ or _input registers_. Defines the type of data fetched from the register (Bit, UInt16, Int16, UInt32, Int32, UInt64, Int64, Float, Double).          | `UInt16`           |
+| Data type              | Relevant for _holding registers_ or _input registers_. Defines the type of data fetched from the register (Bit, UInt16, Int16, UInt32, Int32, Big UInt64, Big Int64, Float, Double).  | `UInt16`           |
 | Bit index              | (_Bit data type only_) The index of the bit to retrieve from the read value (0 to 15).                                                                                                | `0` to `15`        |
 | Multiplier Coefficient | Multiplies the retrieved value (default is 1).                                                                                                                                        | `1`                |
 
