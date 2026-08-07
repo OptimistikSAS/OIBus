@@ -20,7 +20,7 @@ OIAnalytics® includes **built-in file parsers**, eliminating the need for pre-p
 | Setting                          | Description                                                                                          | Example Value    |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------- |
 | **Use OIAnalytics registration** | Use connection settings from [OIAnalytics registration](../installation/oianalytics.mdx).            | Enabled/Disabled |
-| **Timeout**                      | Duration (in milliseconds) before a connection failure is reported.                                  | `30000`          |
+| **Timeout**                      | Duration (in seconds) before a connection failure is reported.                                       | `30`             |
 | **Compress data**                | Compress data if not already compressed. Adds `.gz` extension to files and compresses JSON payloads. | Enabled/Disabled |
 
 ### Manual Configuration (if registration is not used)

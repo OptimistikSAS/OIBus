@@ -68,7 +68,9 @@ Manage how OIBus handles transmission failures:
 
 :::tip Retryable Send
 Some North connectors, such as the [OIAnalytics North Connector](./oianalytics.md), will **indefinitely retry** sending
-data for specific errors (e.g., network failures), even after the retry count is exceeded.
+data for specific errors, even after the retry count is exceeded. This covers network failures as well as certain HTTP
+error responses (e.g. authentication or rate-limiting errors) that are expected to resolve once the underlying issue —
+a misconfigured API key, a temporary outage — is fixed, rather than moving the data to the error folder.
 :::
 
 ### Archive

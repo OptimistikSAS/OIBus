@@ -9,6 +9,22 @@ for local storage, data processing pipelines, or integration with file-based sys
 | ----------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------- |
 | **Output folder** | Directory where files will be stored. Relative paths are resolved based on the **Data folder** (see _About_ section). | `/data/oibus-out` |
 
+### Network Share Authentication (Windows only)
+
+To write to a Windows network share, set **Output folder** to a UNC path (`\\server\share\...`) and provide credentials
+for it:
+
+| Setting          | Description                                                        | Example Value |
+| ---------------- | ------------------------------------------------------------------ | ------------- |
+| **SMB username** | Username used to authenticate against the network share.           | `svc_oibus`   |
+| **SMB password** | Password for the SMB username.                                     | `••••••••`    |
+| **SMB domain**   | Domain for the SMB username (optional, e.g. for Active Directory). | `CORP`        |
+
+:::info Windows only
+These fields only appear when OIBus runs on Windows. OIBus registers the credentials for the share via the Windows
+Credential Manager (`cmdkey`) before writing, and removes them when the connector disconnects.
+:::
+
 ### File Naming Options
 
 | Setting    | Description                                                                                             | Example Value     |

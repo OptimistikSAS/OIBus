@@ -22,10 +22,10 @@ the [OPC UA South Connector](../south-connectors/opcua.mdx) which reads data fro
 
 ### Security Settings
 
-| Setting             | Description                                                       | Example Value                                       |
-| ------------------- | ----------------------------------------------------------------- | --------------------------------------------------- |
-| **Security Mode**   | Security mode for the connection.                                 | `None`, `Sign`, `Sign and encrypt`                  |
-| **Security Policy** | Security policy for the connection. See note below for full list. | `None`, `Basic256-SHA256`, `AES128-SHA256-RSA-OAEP` |
+| Setting             | Description                                                                                                                                                                  | Example Value                                       |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| **Security Mode**   | Security mode for the connection.                                                                                                                                            | `None`, `Sign`, `Sign and encrypt`                  |
+| **Security Policy** | Security policy for the connection. Only shown when **Security Mode** is `Sign` or `Sign and encrypt` — not used when Security Mode is `None`. See note below for full list. | `None`, `Basic256-SHA256`, `AES128-SHA256-RSA-OAEP` |
 
 :::note Security Policy values
 
