@@ -7,7 +7,7 @@ The **SFTP North Connector** securely uploads files and data to an **SFTP (SSH F
 | Setting  | Description                                | Example Value   |
 | -------- | ------------------------------------------ | --------------- |
 | **Host** | IP address or hostname of the SFTP server. | `192.168.1.100` |
-| **Port** | Port for the connection (default: `22`).   | `22`            |
+| **Port** | Port for the connection (default: `8080`). | `22`            |
 
 ### Authentication
 

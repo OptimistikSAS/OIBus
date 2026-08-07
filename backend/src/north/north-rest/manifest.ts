@@ -523,7 +523,7 @@ const manifest: NorthConnectorManifest = {
         },
         enablingConditions: [
           {
-            referralPathFromRoot: 'method',
+            referralPathFromRoot: 'testMethod',
             targetPathFromRoot: 'body',
             values: ['POST', 'PUT']
           }

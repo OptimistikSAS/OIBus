@@ -1,7 +1,7 @@
 # Console
 
-The **Console North Connector** displays filenames or values directly in the console output, making it ideal for \*
-\*debugging and development purposes\*\*.
+The **Console North Connector** displays filenames or values directly in the console output, making it ideal for
+**debugging and development purposes**.
 
 ## Specific Settings
 

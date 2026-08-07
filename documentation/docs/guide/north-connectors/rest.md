@@ -38,15 +38,15 @@ OIBus can transmit:
 
 ### Authentication
 
-| Setting          | Description                                                                        | Example Value                                                  |
-| ---------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| **Type**         | Authentication method.                                                             | `None`, `Basic (username/password)`, `Bearer token`, `API key` |
-| **Username**     | Username. Required for Basic authentication.                                       | `api_user`                                                     |
-| **Password**     | Password. Required for Basic authentication.                                       | `••••••••`                                                     |
-| **Bearer token** | Token sent in the `Authorization: Bearer` header. Required for Bearer token.       | `••••••••`                                                     |
-| **API key**      | Name of the API key parameter. Required for API key authentication.                | `X-API-Key`                                                    |
-| **API value**    | Value of the API key. Required for API key authentication.                         | `••••••••`                                                     |
-| **Add to**       | Where to attach the API key: `Header` or `Query parameters`. Required for API key. | `Header`                                                       |
+| Setting          | Description                                                                                                                                    | Example Value                                                  |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| **Type**         | Authentication method.                                                                                                                         | `None`, `Basic (username/password)`, `Bearer token`, `API key` |
+| **Username**     | Username. Required for Basic authentication.                                                                                                   | `api_user`                                                     |
+| **Password**     | Password used with Basic authentication (leave blank when editing to keep the existing password).                                              | `••••••••`                                                     |
+| **Bearer token** | Token sent in the `Authorization: Bearer` header, used with Bearer token authentication (leave blank when editing to keep the existing token). | `••••••••`                                                     |
+| **API key**      | Name of the API key parameter. Required for API key authentication.                                                                            | `X-API-Key`                                                    |
+| **API value**    | Value of the API key, used with API key authentication (leave blank when editing to keep the existing value).                                  | `••••••••`                                                     |
+| **Add to**       | Where to attach the API key: `Header` or `Query parameters`. Required for API key.                                                             | `Header`                                                       |
 
 ### Proxy Configuration
 
@@ -55,6 +55,7 @@ the **Use proxy** option and configure the proxy details below.
 
 | Setting            | Description                                      | Example Value                   |
 | ------------------ | ------------------------------------------------ | ------------------------------- |
+| **Use proxy**      | Route requests through a proxy server.           | Enabled/Disabled                |
 | **Proxy URL**      | URL of the proxy server.                         | `http://proxy.example.com:8080` |
 | **Proxy username** | Username for proxy authentication (if required). | `proxy_user`                    |
 | **Proxy password** | Password for proxy authentication (if required). | `••••••••`                      |
@@ -93,5 +94,5 @@ Use the **Connection Test** section to verify connectivity before OIBus starts s
 | **Body**                  | JSON body sent with the test request. Only available when method is `POST` or `PUT`. | `{}`          |
 | **Expected success code** | HTTP status code that indicates a successful test response.                          | `200`         |
 
-The test uses the same host, authentication, proxy, query parameters, and headers as the live configuration, so it
-reflects real connectivity conditions.
+The test uses the same host, authentication, and proxy settings as the live configuration. It does **not** reuse the
+configured query parameters or headers — those are only sent with real data.

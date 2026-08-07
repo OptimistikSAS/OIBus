@@ -13,10 +13,10 @@ Data Lake Storage**. This connector is ideal for cloud storage, data lakes, or i
 
 Configure the following parameters to connect to your Azure Blob Storage:
 
-| Setting            | Description                                                                       | Example Value    |
-| ------------------ | --------------------------------------------------------------------------------- | ---------------- |
-| **Use Data Lake**  | Enable to use **Azure Data Lake Storage** instead of standard Azure Blob Storage. | Enabled/Disabled |
-| **Use custom URL** | Use a custom endpoint URL instead of the account-based standard URL.              | Enabled/Disabled |
+| Setting                     | Description                                                                       | Example Value    |
+| --------------------------- | --------------------------------------------------------------------------------- | ---------------- |
+| **Azure Data Lake Storage** | Enable to use **Azure Data Lake Storage** instead of standard Azure Blob Storage. | Enabled/Disabled |
+| **Use custom URL**          | Use a custom endpoint URL instead of the account-based standard URL.              | Enabled/Disabled |
 
 ### Connection Settings
 
