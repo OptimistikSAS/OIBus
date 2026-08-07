@@ -45,8 +45,9 @@ automatically.
 `install.bat` is the low-level service installer bundled with OIBus. It:
 
 1. Verifies it is running as Administrator.
-2. Accepts two parameters (`-n` for service name, `-c` for data directory). If `-c` is omitted it
-   prompts interactively.
+2. Accepts up to five parameters: `-n` (service name), `-c` (data directory), `-u`/`-p` (initial admin
+   username/password), and `-port` (initial HTTP port) — see [Windows installation](./installation.mdx)
+   for the full flag reference. If `-c` is omitted it prompts interactively.
 3. Creates the data directory if it does not exist.
 4. Registers the OIBus launcher as a Windows service via NSSM, setting the application path,
    parameters, and working directory.
@@ -55,7 +56,8 @@ automatically.
    useful for debugging.
 
 This script is called by `mass-install.bat` with the appropriate parameters, so no manual interaction
-is needed in a disk-image context.
+is needed in a disk-image context. `mass-install.bat` only passes `-c` and `-n` — it relies on OIBus's
+default admin credentials (see Phase 1 below) rather than setting them via `-u`/`-p`.
 
 ## The `mass-install.bat` Script
 
@@ -210,7 +212,7 @@ initialized.
 
 ```batch
 :WAIT_FOR_WEB
-curl --silent --output NUL --fail http://localhost:2223/api
+curl --silent --output NUL --fail http://localhost:2223/api/status
 if %errorlevel% neq 0 (
     timeout /t 5 >nul
     goto WAIT_FOR_WEB
@@ -218,8 +220,9 @@ if %errorlevel% neq 0 (
 ```
 
 Even after the service is `RUNNING`, the OIBus HTTP server takes a moment to initialize its database
-and start listening. This loop polls the `/api` endpoint every 5 seconds until it returns an HTTP 2xx
-response, at which point the API is ready to accept configuration calls.
+and start listening. This loop polls `/api/status` — an unauthenticated endpoint that exists solely to
+confirm the server is reachable — every 5 seconds until it returns an HTTP 2xx response, at which point
+the API is ready to accept configuration calls.
 
 ### Phase 9 — Initial configuration via the API
 
@@ -381,7 +384,7 @@ echo %SERVICE_NAME% service is now running.
 :: Wait for the OIBus web server to accept requests
 echo Waiting for %SERVICE_NAME% web server to be up...
 :WAIT_FOR_WEB
-curl --silent --output NUL --fail http://localhost:2223/api
+curl --silent --output NUL --fail http://localhost:2223/api/status
 if %errorlevel% neq 0 (
     timeout /t 5 >nul
     goto WAIT_FOR_WEB
