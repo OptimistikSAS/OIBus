@@ -5,7 +5,9 @@ sidebar_position: 4
 # Transformers
 
 A **Transformer** sits between a data source and a North connector. It converts incoming data into the format the
-North connector expects before it is placed in the connector's cache.
+North connector expects before it is placed in the connector's cache. Beyond format conversion, transformers are
+also the mechanism for **filtering** which data a North connector receives — see
+[Data Filtering](../north-connectors/common-settings.md#data-filtering) for details.
 
 Transformers are configured **on the North connector**, in the **Transformers** section of its settings page.
 
@@ -38,8 +40,20 @@ When the source is a South connector, you can restrict which of its items the tr
 :::tip
 A single North connector can have **multiple transformers** with different sources and scopes. This lets you apply
 different conversions to different parts of the same South connector — for example, one transformer for a group of
-temperature sensors and another for flow meters.
+temperature sensors and another for flow meters. When an incoming batch mixes items covered by different
+transformers, OIBus automatically splits it so each part is processed by the transformer that actually targets it.
 :::
+
+If more than one transformer could match the same item (e.g. one scoped to a group and another to "All items" of
+the same South connector), OIBus resolves it with this priority, most specific first:
+
+1. A transformer scoped to that **specific item**.
+2. A transformer scoped to the item's **group**.
+3. A transformer scoped to **all items** of the South connector (no group, no specific items selected) —
+   the fallback.
+
+The first configured transformer that matches, in that order, is used; ties within the same level are broken by
+the transformer's position in the list.
 
 ### 3 — Transformer
 
@@ -658,6 +672,22 @@ Mapping: `pump1/speed → ns=1;s=PumpSpeed`
 ```json
 [{ "nodeId": "ns=1;s=PumpSpeed", "value": 1200 }]
 ```
+
+---
+
+## Testing a Transformer Against a Real South Item
+
+Beyond testing a custom transformer's code in isolation (see below), you can preview any transformer —
+standard or custom — end-to-end against real, freshly-collected data from the **South item's Test** modal
+(described in [South connector items](../south-connectors/common-settings.md#item-actions)):
+
+1. Pick one of the item's associated North connectors (or, for a History Query item, one of the query's
+   own transformers directly).
+2. Choose one of that North's configured transformers and tweak its options for this test run only —
+   the saved configuration is untouched.
+3. Run the test. The modal shows the full pipeline: **Raw result → Transformer (+ options) → Transformed
+   output**, so you can validate a transformer against the item's actual data before it ever reaches the
+   North's cache.
 
 ---
 
