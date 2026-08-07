@@ -28,6 +28,45 @@ only exposes port 2223 — changing it internally will make the interface unreac
 
 Open `http://localhost:2223` in a browser and follow the [first access guide](./first-access.mdx).
 
+## Initial Configuration (First Run)
+
+Set these environment variables on the container to configure the admin account, port, and engine name
+before OIBus starts for the first time — the equivalent of the `-u`/`-p`/`-port`/`-n` flags used by the
+Windows and Linux installers.
+
+| Variable              | Description                                                                        | Default                         |
+| ---------------------- | ------------------------------------------------------------------------------------ | -------------------------------- |
+| `ENGINE_NAME`           | Name given to the OIBus engine                                                       | omitted (OIBus default applies) |
+| `ADMIN_USERNAME`        | Admin username                                                                       | omitted (OIBus default applies) |
+| `ADMIN_PASSWORD`        | Admin password                                                                       | omitted (OIBus default applies) |
+| `ADMIN_USERNAME_FILE`   | Path (inside the container) to a file holding the admin username — for Docker Secrets; takes priority over `ADMIN_USERNAME` when set | omitted |
+| `ADMIN_PASSWORD_FILE`   | Path (inside the container) to a file holding the admin password — for Docker Secrets; takes priority over `ADMIN_PASSWORD` when set | omitted |
+| `DEFAULT_PORT`          | Port OIBus listens on inside the container                                           | omitted (OIBus default applies) |
+
+<CodeBlock language="bash">
+  {`docker run -d \\
+  --name oibus-container \\
+  -p 2223:2223 \\
+  -v ./OIBusData:/app/OIBus/OIBusData \\
+  -e ENGINE_NAME=MyOIBus \\
+  -e ADMIN_USERNAME=admin \\
+  -e ADMIN_PASSWORD=changeme \\
+  --restart unless-stopped \\
+  ghcr.io/optimistiksas/oibus:v${packageInfo.version}`}
+</CodeBlock>
+
+:::info
+These variables are only applied when the data folder does not yet contain an `oibus.db` — i.e. on the
+very first start. On any later start (including after an update) they have no effect; OIBus already has
+a configuration database and uses the values stored in it.
+:::
+
+:::caution Changing the exposed port
+`DEFAULT_PORT` only changes the port OIBus listens on **inside the container**. You still need to publish
+the same port on the host, e.g. `-p 8080:8080 -e DEFAULT_PORT=8080`, and it must be set on that very first
+run for the same reason as above.
+:::
+
 ## Docker Compose
 
 <CodeBlock language="yaml">
