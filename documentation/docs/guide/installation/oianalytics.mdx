@@ -97,41 +97,49 @@ Only **outbound HTTPS (TCP 443)** to the OIAnalytics domain needs to be allowed.
 
 ### Supported Commands
 
-| Command                    | Description                                                                     |
-| -------------------------- | ------------------------------------------------------------------------------- |
-| **Upgrade version**        | Download and install a new OIBus version.                                       |
-| **Restart**                | Restart the OIBus service.                                                      |
-| **Update engine settings** | Apply new engine configuration (logging, proxy…).                               |
-| **Regenerate cipher keys** | Generate a new RSA key pair for secret encryption.                              |
-| **Scan mode management**   | Create, update, or delete scan modes.                                           |
-| **North connector**        | Create, update, delete, or test North connectors.                               |
-| **North connector cache**  | Search, retrieve, or delete cached content in a North connector's cache.        |
-| **South connector**        | Create, update, delete, or test South connectors and their items.               |
-| **History query**          | Create, update, delete, or test history queries and their items.                |
-| **History query cache**    | Search, retrieve, or delete cached content in a history query's cache.          |
-| **Custom transformer**     | Create, update, delete, or test custom transformers.                            |
-| **Setpoint**               | Receive setpoint values from OIAnalytics and dispatch them to North connectors. |
+| Command                          | Description                                                                                                                                                 |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Upgrade version**              | Download and install a new OIBus version.                                                                                                                   |
+| **Restart**                      | Restart the OIBus service.                                                                                                                                  |
+| **Update engine settings**       | Apply new engine configuration (logging, proxy…).                                                                                                           |
+| **Update registration settings** | Apply new OIAnalytics registration settings (network, timing, permissions…).                                                                                |
+| **Regenerate cipher keys**       | Generate a new RSA key pair for secret encryption.                                                                                                          |
+| **Scan mode management**         | Create, update, or delete scan modes.                                                                                                                       |
+| **North connector**              | Create, update, delete, or test North connectors.                                                                                                           |
+| **North connector cache**        | Search, retrieve, move, or delete cached content in a North connector's cache. Moving covers retrying an errored file (back to the cache) or archiving one. |
+| **South connector**              | Create, update, delete, or test South connectors and their items.                                                                                           |
+| **History query**                | Create, update, delete, or test history queries and their items.                                                                                            |
+| **History query cache**          | Search, retrieve, move, or delete cached content in a history query's cache. Moving covers retrying an errored file (back to the cache) or archiving one.   |
+| **Custom transformer**           | Create, update, delete, or test custom transformers.                                                                                                        |
+| **Test transformer**             | Test any transformer (standard or custom) against a real South item or pasted input data — distinct from testing a custom transformer's own code.           |
+| **Setpoint**                     | Receive setpoint values from OIAnalytics and dispatch them to North connectors.                                                                             |
 
 ### Version Upgrade Process
 
 Upgrades are downloaded through OIAnalytics, so the OIBus machine does not need direct access to GitHub.
 
-1. OIBus receives an upgrade command with the target version.
-2. OIBus downloads the package through OIAnalytics, extracts it to a temporary update folder, backs up the
-   current data folder, then shuts down gracefully.
-3. The **OIBus launcher** (`oibus-launcher`) detects the new binaries, replaces the existing ones, and restarts
-   OIBus with the upgraded version.
-4. If any step fails, the launcher automatically restores the backed-up binaries and data folder.
+1. OIBus receives an upgrade command with the target version and downloads the release package through
+   OIAnalytics.
+2. OIBus extracts the package into a temporary `update` folder, then shuts down. At this point OIBus itself
+   is done — the rest happens on the launcher's side once it notices the process has stopped.
+3. The **OIBus launcher** (`oibus-launcher`) detects the new binaries in the `update` folder on its next
+   start cycle. Before swapping them in, it backs up the current OIBus binary and the data-folder subfolders
+   matched by the upgrade's backup pattern (the `cache/` folder by default — OIAnalytics can override this),
+   then starts the upgraded OIBus.
+4. If the upgraded OIBus fails to start (crashes, or doesn't come up within about 30 seconds), the launcher
+   automatically restores the backed-up binary and folders and restarts the previous version.
 
 :::info Launcher architecture
 `oibus-launcher` runs the main `oibus` process as a child process. Whenever `oibus` stops — whether normally or
-unexpectedly — the launcher checks the update folder: if new binaries are present it upgrades, otherwise it
-restarts the existing binary. This handles both upgrades and crash recovery automatically.
+unexpectedly — the launcher checks the update folder: if new binaries are present it upgrades (backing up first,
+as above), otherwise it just restarts the existing binary. This handles both upgrades and crash recovery
+automatically.
 :::
 
 :::danger Disk space requirement
-The upgrade creates a full backup of the data folder, so you need **at least twice the current data folder size**
-in free disk space. Verify available space and schedule upgrades during low-activity periods.
+Before installing the new version, the launcher backs up the current binary and the folders matched by the
+backup pattern (the `cache/` folder by default) — make sure you have enough free disk space to hold a second
+copy of that content. Verify available space and schedule upgrades during low-activity periods.
 :::
 
 ## Security Architecture
