@@ -119,6 +119,7 @@ describe('SouthConnector', () => {
         southCacheRepository.getItemLastValue,
         southCacheRepository.getGroupLastValue,
         southCacheRepository.saveItemLastValue,
+        southCacheRepository.saveGroupLastValue,
         southCacheRepository.deleteItemValue,
         southCacheRepository.deleteItemsBySouth
       ]) {
@@ -348,6 +349,7 @@ describe('SouthConnector', () => {
         southCacheRepository.getItemLastValue,
         southCacheRepository.getGroupLastValue,
         southCacheRepository.saveItemLastValue,
+        southCacheRepository.saveGroupLastValue,
         southCacheRepository.deleteItemValue,
         southCacheRepository.deleteItemsBySouth
       ]) {
@@ -537,6 +539,7 @@ describe('SouthConnector', () => {
         southCacheRepository.getItemLastValue,
         southCacheRepository.getGroupLastValue,
         southCacheRepository.saveItemLastValue,
+        southCacheRepository.saveGroupLastValue,
         southCacheRepository.deleteItemValue,
         southCacheRepository.deleteItemsBySouth
       ]) {
@@ -886,6 +889,123 @@ describe('SouthConnector', () => {
       assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[1], '2023-02-02T02:02:02.222Z');
       assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[2], 1800);
       assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[3], 'oldest');
+    });
+
+    it("should size the initial lookback window from the item's own maxReadInterval, not the group's, when the item is not synced with its group", async () => {
+      const historyQueryHandlerMock = mock.fn(async () => undefined);
+      south.historyQueryHandler = historyQueryHandlerMock;
+      south.directQuery = mock.fn(async (): Promise<null> => null);
+
+      const group = {
+        id: 'group1',
+        name: 'Group 1',
+        scanMode: testData.scanMode.list[0],
+        maxReadInterval: 999999,
+        readDelay: 0,
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      const items = [
+        {
+          ...(testData.south.list[2].items[0] as SouthConnectorItemEntity<SouthOPCUAItemSettings>),
+          group,
+          syncWithGroup: false,
+          maxReadInterval: 3600
+        }
+      ];
+
+      await south['runTask']({ scanModeId: testData.scanMode.list[0].id, items });
+
+      assert.strictEqual(historyQueryHandlerMock.mock.calls.length, 1);
+      const [, startTime, endTime] = historyQueryHandlerMock.mock.calls[0].arguments as [unknown, string, string];
+      // Lookback must come from the item's own maxReadInterval (3600s), not the group's (999999s),
+      // since the item isn't synced with it.
+      assert.strictEqual(DateTime.fromISO(endTime).diff(DateTime.fromISO(startTime)).as('seconds'), 3600);
+    });
+
+    it('should look up and save the shared group cache row (not a per-item row) for a synced group on a batching connector', async () => {
+      const group = {
+        id: 'group1',
+        name: 'Group 1',
+        scanMode: testData.scanMode.list[0],
+        maxReadInterval: 1800,
+        readDelay: 0,
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      const itemA = {
+        ...(testData.south.list[2].items[0] as SouthConnectorItemEntity<SouthOPCUAItemSettings>),
+        group,
+        syncWithGroup: true
+      };
+      const itemB = {
+        ...(testData.south.list[2].items[1] as SouthConnectorItemEntity<SouthOPCUAItemSettings>),
+        group,
+        syncWithGroup: true
+      };
+      const interval = { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
+      utilsExports.generateIntervals = mock.fn(() => [interval]);
+      south.historyQuery = mock.fn(async () => ({ trackedInstant: '2021-02-02T02:02:02.222Z', value: null }));
+
+      await south.historyQueryHandler([itemA, itemB], '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z');
+
+      assert.strictEqual((southCacheRepository.getItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
+      assert.deepStrictEqual(
+        (southCacheRepository.getGroupLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls[0].arguments,
+        [south.connectorConfiguration.id, group.id]
+      );
+      assert.strictEqual((southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
+      const saveCalls = (southCacheRepository.saveGroupLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      assert.strictEqual(saveCalls.length, 1);
+      assert.strictEqual(saveCalls[0].arguments[0], south.connectorConfiguration.id);
+      assert.strictEqual(saveCalls[0].arguments[1], group.id);
+      assert.strictEqual((saveCalls[0].arguments[2] as { trackedInstant: string }).trackedInstant, '2021-02-02T02:02:02.222Z');
+    });
+
+    it('should save a shared group cache row for a synced group on a batching connector via directQueryHandler', async () => {
+      const group = {
+        id: 'group2',
+        name: 'Group 2',
+        scanMode: testData.scanMode.list[0],
+        maxReadInterval: null,
+        readDelay: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      const itemA = {
+        ...(testData.south.list[2].items[0] as SouthConnectorItemEntity<SouthOPCUAItemSettings>),
+        group,
+        syncWithGroup: true
+      };
+      const itemB = {
+        ...(testData.south.list[2].items[1] as SouthConnectorItemEntity<SouthOPCUAItemSettings>),
+        group,
+        syncWithGroup: true
+      };
+      south.directQuery = mock.fn(async () => ({ pointId: 'p', timestamp: '2024-01-01T00:00:00.000Z', data: { value: '1' } }));
+
+      await south.directQueryHandler([itemA, itemB]);
+
+      const saveGroupCalls = (southCacheRepository.saveGroupLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      assert.strictEqual(saveGroupCalls.length, 1);
+      assert.strictEqual(saveGroupCalls[0].arguments[0], south.connectorConfiguration.id);
+      assert.strictEqual(saveGroupCalls[0].arguments[1], group.id);
+      assert.strictEqual((southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
     });
 
     it('should update subscriptions', async () => {
