@@ -54,7 +54,7 @@
     "@smithy/node-http-handler": "4.9.12",
     "ads-client": "2.2.0",
     "argon2": "0.45.1",
-    "basic-auth": "2.0.1",
+    "basic-auth": "3.0.0",
     "basic-ftp": "6.0.2",
     "better-sqlite3": "13.0.2",
     "cors": "2.8.6",
