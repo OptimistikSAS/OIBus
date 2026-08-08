@@ -60,7 +60,10 @@
       "invalid-date-range": "Invalid date range selected",
       "duplicate-field-names": "Duplicate field names detected",
       "only-one-reference": "Only one element can be marked as reference",
-      "mqtt-topic-overlap": "MQTT topic subscriptions cannot overlap. Conflicting topics: {{ conflictingTopics }}"
+      "mqtt-topic-overlap": "MQTT topic subscriptions cannot overlap. Conflicting topics: {{ conflictingTopics }}",
+      "interval-too-small": "The interval must be at least {{ min }} ms",
+      "time-of-day-incomplete": "Both the start and end times must be set, or neither",
+      "time-of-day-empty": "The start and end times must be different"
     },
     "period": {
       "none": "None",
@@ -638,6 +641,53 @@
       "name": "Name",
       "description": "Description",
       "cron": "Cron",
+      "schedule": "Schedule",
+      "schedule-every": "every {{ value }} {{ unit }}",
+      "type": "Type",
+      "type-cron": "Cron",
+      "type-interval": "Interval",
+      "interval": "Every",
+      "interval-unit": {
+        "ms": "milliseconds",
+        "s": "seconds",
+        "min": "minutes",
+        "hour": "hours"
+      },
+      "interval-unit-short": {
+        "ms": "ms",
+        "s": "s",
+        "min": "min",
+        "hour": "h"
+      },
+      "sub-second-warning": "Intervals under 1 second may not be achievable depending on the data source and network capacity.",
+      "restrict-activation-window": "Restrict activation window",
+      "date-range": "Date range",
+      "date-range-hint": "(optional on each side)",
+      "date-range-from": "From",
+      "date-range-to": "To",
+      "clear-bound": "Clear",
+      "days-of-week": "Days of week",
+      "days-of-week-hint": "(none selected = every day)",
+      "time-of-day": "Time of day",
+      "time-of-day-hint": "(optional)",
+      "time-start": "Start",
+      "time-end": "End",
+      "live-summary": "Live summary",
+      "window-restricted": "Restricted activation window",
+      "window-never-fires": "This activation window can never fire again",
+      "timezone-changed-warning": "This activation window was saved with the timezone {{ persisted }}. Saving now will re-anchor it to your current timezone {{ current }}.",
+      "summary": {
+        "always": "Active",
+        "from-date": "Active from {{ start }}",
+        "until-date": "Active until {{ end }}",
+        "between-dates": "Active {{ start }} - {{ end }}",
+        "on-days": "on {{ days }}",
+        "all-day": "all day",
+        "between-times": "between {{ start }} and {{ end }} ({{ timezone }})",
+        "between-times-overnight": "between {{ start }} and {{ end }} (+1 day) ({{ timezone }})",
+        "separator": ", ",
+        "day-separator": ", "
+      },
       "created-by": "Created by",
       "created-at": "Created on",
       "updated-at": "Updated on",
@@ -646,7 +696,8 @@
       "tooltips": {
         "add": "Add a new scan mode",
         "edit": "Edit scan mode",
-        "delete": "Delete scan mode"
+        "delete": "Delete scan mode",
+        "overnight": "The end time is on the following day"
       }
     },
     "certificate": {
