@@ -309,6 +309,9 @@ export type SouthRestItemSettingsMethod = (typeof SOUTH_REST_ITEM_SETTINGS_METHO
 export const SOUTH_REST_ITEM_SETTINGS_RETURN_TYPES = ['body', 'file'] as const;
 export type SouthRestItemSettingsReturnType = (typeof SOUTH_REST_ITEM_SETTINGS_RETURN_TYPES)[number];
 
+export const SOUTH_S7_SETTINGS_CONNECTION_TYPES = ['PG', 'OP', 'S7Basic'] as const;
+export type SouthS7SettingsConnectionType = (typeof SOUTH_S7_SETTINGS_CONNECTION_TYPES)[number];
+
 export const SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS = ['password', 'private-key'] as const;
 export type SouthSFTPSettingsAuthentication = (typeof SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
 
@@ -569,6 +572,17 @@ export interface SouthRestSettings {
   test: SouthRestSettingsTest;
 }
 
+export interface SouthS7Settings {
+  host: string;
+  port: number;
+  connectionType: SouthS7SettingsConnectionType;
+  rack: number;
+  slot: number;
+  connectTimeout: number;
+  requestTimeout: number;
+  retryInterval: number;
+}
+
 export interface SouthSFTPSettings {
   host: string;
   port: number;
@@ -602,6 +616,7 @@ export type SouthSettings =
   | SouthPISettings
   | SouthPostgreSQLSettings
   | SouthRestSettings
+  | SouthS7Settings
   | SouthSFTPSettings
   | SouthSQLiteSettings;
 
@@ -917,6 +932,10 @@ export interface SouthRestItemSettings {
   trackingInstant?: SouthRestItemSettingsTrackingInstant | null;
 }
 
+export interface SouthS7ItemSettings {
+  address: string;
+}
+
 export interface SouthSFTPItemSettings {
   remoteFolder: string;
   regex: string;
@@ -952,5 +971,6 @@ export type SouthItemSettings =
   | SouthPIItemSettings
   | SouthPostgreSQLItemSettings
   | SouthRestItemSettings
+  | SouthS7ItemSettings
   | SouthSFTPItemSettings
   | SouthSQLiteItemSettings;
