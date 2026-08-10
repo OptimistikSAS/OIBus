@@ -86,9 +86,39 @@ describe('HistoryMetricsService', () => {
       currentIntervalStart: testData.constants.dates.DATE_1,
       currentIntervalEnd: testData.constants.dates.DATE_3,
       currentIntervalNumber: 2,
-      numberOfIntervals: 10
+      numberOfIntervals: 10,
+      itemName: 'item1',
+      currentItemNumber: 1,
+      numberOfItems: 3,
+      itemIntervalProgress: 0.5,
+      itemIntervalNumber: 2,
+      itemNumberOfIntervals: 10
+    });
+    const itemsStatus = [
+      {
+        itemId: 'id1',
+        itemName: 'item1',
+        status: 'running' as const,
+        lastValueTimestamp: testData.constants.dates.DATE_1,
+        recordsCount: 5
+      },
+      { itemId: 'id2', itemName: 'item2', status: 'pending' as const, lastValueTimestamp: null, recordsCount: 0 }
+    ];
+    historyQueryMock.metricsEvent.emit('south-history-query-item', {
+      itemName: 'item1',
+      currentItemNumber: 1,
+      numberOfItems: 3,
+      itemsStatus
     });
     historyQueryMock.metricsEvent.emit('south-history-query-stop', { running: false });
+
+    assert.deepStrictEqual(service.metrics.historyMetrics.itemsStatus, itemsStatus);
+    assert.strictEqual(service.metrics.historyMetrics.itemName, 'item1');
+    assert.strictEqual(service.metrics.historyMetrics.currentItemNumber, 1);
+    assert.strictEqual(service.metrics.historyMetrics.numberOfItems, 3);
+    assert.strictEqual(service.metrics.historyMetrics.itemIntervalProgress, 0.5);
+    assert.strictEqual(service.metrics.historyMetrics.itemIntervalNumber, 2);
+    assert.strictEqual(service.metrics.historyMetrics.itemNumberOfIntervals, 10);
 
     // Still no DB write — debounce timer hasn't fired.
     assert.strictEqual(historyQueryMetricsRepository.updateMetrics.mock.calls.length, 0);
@@ -131,7 +161,14 @@ describe('HistoryMetricsService', () => {
           currentIntervalStart: testData.constants.dates.DATE_1,
           currentIntervalEnd: testData.constants.dates.DATE_3,
           currentIntervalNumber: 2,
-          numberOfIntervals: 10
+          numberOfIntervals: 10,
+          itemName: 'item1',
+          currentItemNumber: 1,
+          numberOfItems: 3,
+          itemIntervalProgress: 0.5,
+          itemIntervalNumber: 2,
+          itemNumberOfIntervals: 10,
+          itemsStatus
         }
       }
     ]);
@@ -197,6 +234,7 @@ describe('HistoryMetricsService', () => {
     assert.ok(offEvents.includes('south-run-end'));
     assert.ok(offEvents.includes('south-history-query-start'));
     assert.ok(offEvents.includes('south-history-query-interval'));
+    assert.ok(offEvents.includes('south-history-query-item'));
     assert.ok(offEvents.includes('south-history-query-stop'));
     assert.ok(offEvents.includes('south-add-values'));
     assert.ok(offEvents.includes('south-add-file'));

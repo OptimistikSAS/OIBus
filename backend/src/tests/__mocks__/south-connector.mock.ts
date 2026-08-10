@@ -41,6 +41,13 @@ export default class SouthConnectorMock extends SouthConnector<SouthSettings, So
       _testingSettings: SouthConnectorItemTestingSettings
     ): Promise<SouthConnectorItemQueryResult> => ({ result: {} as OIBusContent, connectionDuration: 0, queryDuration: 0 })
   );
+  override getHistoryQuerySnapshot = mock.fn(
+    (
+      _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+    ): {
+      items: Array<{ itemId: string; itemName: string; trackedInstant: Instant | null; queryTime: Instant | null; value: unknown | null }>;
+    } => ({ items: [] })
+  );
   override connectedEvent = new EventEmitter();
   override metricsEvent = new EventEmitter();
 
