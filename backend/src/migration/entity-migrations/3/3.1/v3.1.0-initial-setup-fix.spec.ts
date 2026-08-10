@@ -1,42 +1,11 @@
-import { describe, it, after, beforeEach } from 'node:test';
+import { describe, it, after, before, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { readdirSync } from 'node:fs';
-import knex, { Knex } from 'knex';
+import { Knex } from 'knex';
+import { createMigrationSchemaHarness, buildSchemaBefore } from '../../../../tests/utils/migration-test-utils';
 import { up, down } from './v3.1.0-initial-setup-fix';
 
-const THIS_FILE = 'v3.1.0-initial-setup-fix.ts';
-
-/**
- * Collect every entity migration file (excluding specs) under the entity-migrations root,
- * sorted lexicographically by filename — the same order OIBus's migration runner uses.
- */
-function entityMigrationFiles(): Array<{ file: string; full: string }> {
-  const root = path.resolve(__dirname, '..', '..'); // .../entity-migrations
-  const collect = (base: string): Array<{ file: string; full: string }> => {
-    const out: Array<{ file: string; full: string }> = [];
-    for (const entry of readdirSync(base, { withFileTypes: true })) {
-      const full = path.join(base, entry.name);
-      if (entry.isDirectory()) {
-        out.push(...collect(full));
-      } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.spec.ts')) {
-        out.push({ file: entry.name, full });
-      }
-    }
-    return out;
-  };
-  return collect(root).sort((a, b) => (a.file > b.file ? 1 : a.file < b.file ? -1 : 0));
-}
-
-/** Build the real schema as it exists just before this migration by running every prior migration in order. */
-async function buildPriorSchema(db: Knex): Promise<void> {
-  const priorFiles = entityMigrationFiles().filter(f => f.file < THIS_FILE);
-  for (const { full } of priorFiles) {
-    const migration = (await import(pathToFileURL(full).href)) as { up: (k: Knex) => Promise<void> };
-    await migration.up(db);
-  }
-}
+const ENTITY_MIGRATIONS_ROOT = path.resolve(__dirname, '..', '..');
 
 async function columnNames(db: Knex, table: string): Promise<Array<string>> {
   const cols = (await db.raw(`PRAGMA table_info(${table})`)) as Array<{ name: string }>;
@@ -70,18 +39,20 @@ async function insertHistoryQuery(db: Knex, id: string, name: string, enabled: b
 }
 
 describe('Entity migration v3.1.0-initial-setup-fix', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBefore(ENTITY_MIGRATIONS_ROOT, 'v3.1.0-initial-setup-fix.ts', db)
+  });
   let db: Knex;
 
-  after(async () => {
-    await db?.destroy();
-  });
+  before(() => harness.before());
+  after(() => harness.after());
 
   beforeEach(async () => {
-    await db?.destroy();
-    db = knex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
-    await buildPriorSchema(db);
+    await harness.beforeEach();
+    db = harness.getDb();
     await db('scan_modes').insert({ id: 'scan-mode-1', name: 'Every 10s', cron: '*/10 * * * * *' });
   });
+  afterEach(() => harness.afterEach());
 
   it('runs end-to-end on a realistic pre-3.1.0 schema', async () => {
     await up(db); // must not throw

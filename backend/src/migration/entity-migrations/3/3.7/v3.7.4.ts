@@ -20,50 +20,62 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 async function updateOPCUAItemHA(knex: Knex): Promise<void> {
-  const oldSouth: Array<{
-    id: string;
-    type: string;
-  }> = await knex(SOUTH_CONNECTORS_TABLE).select('id', 'type', 'settings').where('type', 'opcua');
-  for (const connector of oldSouth) {
-    const oldItems: Array<{
-      id: string;
-      settings: string;
-    }> = await knex(SOUTH_ITEMS_TABLE).select('id', 'settings').where('connector_id', connector.id);
-    for (const item of oldItems) {
-      const oldSettings = JSON.parse(item.settings) as SouthOPCUAItemSettings;
+  const oldItems: Array<{ id: string; settings: string }> = await knex(SOUTH_ITEMS_TABLE)
+    .join(SOUTH_CONNECTORS_TABLE, `${SOUTH_CONNECTORS_TABLE}.id`, '=', `${SOUTH_ITEMS_TABLE}.connector_id`)
+    .select(`${SOUTH_ITEMS_TABLE}.id as id`, `${SOUTH_ITEMS_TABLE}.settings as settings`)
+    .where(`${SOUTH_CONNECTORS_TABLE}.type`, 'opcua');
+  const southSettingsUpdates = oldItems.map(item => {
+    const oldSettings = JSON.parse(item.settings) as SouthOPCUAItemSettings;
+    const newSettings: SouthOPCUAItemSettings = {
+      ...oldSettings,
+      haMode: oldSettings.mode === 'ha' ? oldSettings.haMode : undefined,
+      timestampOrigin: oldSettings.mode === 'da' ? oldSettings.timestampOrigin : undefined
+    };
+    return { id: item.id, settings: JSON.stringify(newSettings) };
+  });
+  await bulkUpdateSettings(knex, SOUTH_ITEMS_TABLE, southSettingsUpdates);
 
-      const newSettings: SouthOPCUAItemSettings = {
-        ...oldSettings,
-        haMode: oldSettings.mode === 'ha' ? oldSettings.haMode : undefined,
-        timestampOrigin: oldSettings.mode === 'da' ? oldSettings.timestampOrigin : undefined
-      };
-      await knex(SOUTH_ITEMS_TABLE)
-        .update({ settings: JSON.stringify(newSettings) })
-        .where('id', item.id);
-    }
+  const oldHistoryItems: Array<{ id: string; settings: string }> = await knex(HISTORY_ITEMS_TABLE)
+    .join(HISTORY_QUERIES_TABLE, `${HISTORY_QUERIES_TABLE}.id`, '=', `${HISTORY_ITEMS_TABLE}.history_id`)
+    .select(`${HISTORY_ITEMS_TABLE}.id as id`, `${HISTORY_ITEMS_TABLE}.settings as settings`)
+    .where(`${HISTORY_QUERIES_TABLE}.south_type`, 'opcua');
+  const historySettingsUpdates = oldHistoryItems.map(item => {
+    const oldSettings = JSON.parse(item.settings) as SouthOPCUAItemSettings;
+    const newSettings: SouthOPCUAItemSettings = {
+      ...oldSettings,
+      haMode: oldSettings.mode === 'ha' ? oldSettings.haMode : undefined,
+      timestampOrigin: oldSettings.mode === 'da' ? oldSettings.timestampOrigin : undefined
+    };
+    return { id: item.id, settings: JSON.stringify(newSettings) };
+  });
+  await bulkUpdateSettings(knex, HISTORY_ITEMS_TABLE, historySettingsUpdates);
+}
+
+/** Splits `array` into consecutive chunks of at most `size` elements, preserving order. */
+function chunk<T>(array: Array<T>, size: number): Array<Array<T>> {
+  const result: Array<Array<T>> = [];
+  for (let i = 0; i < array.length; i += size) {
+    result.push(array.slice(i, i + size));
   }
+  return result;
+}
 
-  const oldHistories: Array<{
-    id: string;
-    south_type: string;
-  }> = await knex(HISTORY_QUERIES_TABLE).select('id', 'south_type', 'south_settings').where('south_type', 'opcua');
-  for (const history of oldHistories) {
-    const oldItems: Array<{
-      id: string;
-      settings: string;
-    }> = await knex(HISTORY_ITEMS_TABLE).select('id', 'settings').where('history_id', history.id);
-    for (const item of oldItems) {
-      const oldSettings = JSON.parse(item.settings) as SouthOPCUAItemSettings;
-
-      const newSettings: SouthOPCUAItemSettings = {
-        ...oldSettings,
-        haMode: oldSettings.mode === 'ha' ? oldSettings.haMode : undefined,
-        timestampOrigin: oldSettings.mode === 'da' ? oldSettings.timestampOrigin : undefined
-      };
-      await knex(HISTORY_ITEMS_TABLE)
-        .update({ settings: JSON.stringify(newSettings) })
-        .where('id', item.id);
-    }
+/**
+ * Writes each `{ id, settings }` pair to `table`'s `settings` column via chunked
+ * `UPDATE ... SET settings = CASE id WHEN ? THEN ? ... END WHERE id IN (...)` statements instead of
+ * one UPDATE per row, cutting N sequential UPDATE statements down to N/100 while producing the exact
+ * same per-row values.
+ */
+async function bulkUpdateSettings(knex: Knex, table: string, updates: Array<{ id: string; settings: string }>): Promise<void> {
+  for (const batch of chunk(updates, 100)) {
+    const caseSql = batch.map(() => 'when ? then ?').join(' ');
+    const caseBindings = batch.flatMap(u => [u.id, u.settings]);
+    await knex(table)
+      .whereIn(
+        'id',
+        batch.map(u => u.id)
+      )
+      .update({ settings: knex.raw(`case id ${caseSql} end`, caseBindings) });
   }
 }
 

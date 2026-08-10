@@ -1,35 +1,11 @@
-import { describe, it, after, beforeEach } from 'node:test';
+import { describe, it, before, after, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { readdirSync } from 'node:fs';
-import knex, { Knex } from 'knex';
+import { Knex } from 'knex';
+import { createMigrationSchemaHarness, buildSchemaBefore } from '../../../../tests/utils/migration-test-utils';
 import { down, up } from './v3.9.0_1';
 
-/** Build the schema as it exists just before v3.9.0_1 by running every prior entity migration in order. */
-async function buildPreV3901Schema(db: Knex): Promise<void> {
-  const entityRoot = path.resolve(__dirname, '..', '..');
-  const collect = (base: string): Array<{ file: string; full: string }> => {
-    const out: Array<{ file: string; full: string }> = [];
-    for (const entry of readdirSync(base, { withFileTypes: true })) {
-      const full = path.join(base, entry.name);
-      if (entry.isDirectory()) {
-        out.push(...collect(full));
-      } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.spec.ts')) {
-        out.push({ file: entry.name, full });
-      }
-    }
-    return out;
-  };
-  const priorFiles = collect(entityRoot)
-    .sort((a, b) => (a.file > b.file ? 1 : a.file < b.file ? -1 : 0))
-    .filter(f => f.file < 'v3.9.0_1');
-
-  for (const { full } of priorFiles) {
-    const migration = (await import(pathToFileURL(full).href)) as { up: (k: Knex) => Promise<void> };
-    await migration.up(db);
-  }
-}
+const ENTITY_MIGRATIONS_ROOT = path.resolve(__dirname, '..', '..');
 
 async function columnNames(db: Knex, table: string): Promise<Array<string>> {
   const cols = (await db.raw(`PRAGMA table_info(${table})`)) as Array<{ name: string }>;
@@ -37,16 +13,17 @@ async function columnNames(db: Knex, table: string): Promise<Array<string>> {
 }
 
 describe('Entity migration v3.9.0_1', () => {
+  const harness = createMigrationSchemaHarness({
+    buildSchema: db => buildSchemaBefore(ENTITY_MIGRATIONS_ROOT, 'v3.9.0_1.ts', db)
+  });
   let db: Knex;
 
-  after(async () => {
-    await db?.destroy();
-  });
+  before(() => harness.before());
+  after(() => harness.after());
 
   beforeEach(async () => {
-    await db?.destroy();
-    db = knex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
-    await buildPreV3901Schema(db);
+    await harness.beforeEach();
+    db = harness.getDb();
     await db('engines').insert({
       id: 'test-engine-id',
       name: 'Test Engine',
@@ -68,6 +45,7 @@ describe('Entity migration v3.9.0_1', () => {
       updated_at: '2026-01-01T00:00:00Z'
     });
   });
+  afterEach(() => harness.afterEach());
 
   describe('up', () => {
     it('adds the auth_token_duration and forward_proxy_enabled columns to engines', async () => {
