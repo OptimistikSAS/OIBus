@@ -382,7 +382,9 @@ describe('SouthMQTT', () => {
         type: 'any-content'
       },
       testData.constants.dates.FAKE_NOW,
-      [mockPayload.item]
+      [mockPayload.item],
+      null,
+      null
     ]);
 
     assert.deepStrictEqual(priv['bufferedMessages'], []);

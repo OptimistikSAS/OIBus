@@ -4,6 +4,7 @@ import { pipeline, Readable, Transform } from 'node:stream';
 import { CacheMetadata, CacheMetadataSource } from '../../../../shared/model/engine.model';
 import { promisify } from 'node:util';
 import {
+  applyFilenameVariables,
   convertDateTime,
   convertDelimiter,
   convertEscapeChar,
@@ -14,7 +15,6 @@ import {
   stringToBoolean
 } from '../../../service/utils';
 import csv from 'papaparse';
-import { DateTime } from 'luxon';
 import { TransformerJsonToCsvSettings } from '../../../../shared/model/transformer-settings.model';
 import { applyFieldProcess } from '../../field-process';
 import { resolveJsonPath, resolveJsonPathRows } from '../../json-path';
@@ -26,7 +26,7 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
 
   async transform(
     data: ReadStream | Readable,
-    _source: CacheMetadataSource,
+    source: CacheMetadataSource,
     _filename: string
   ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
     // 1. Read stream into buffer
@@ -112,9 +112,7 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
     });
 
     const metadata: CacheMetadata = {
-      contentFile: sanitizeFilename(
-        this.options.filename.replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
-      ),
+      contentFile: sanitizeFilename(applyFilenameVariables(this.options.filename, source)),
       contentSize: 0, // It will be set outside the transformer, once the file is written
       createdAt: '', // It will be set outside the transformer, once the file is written
       numberOfElement: 0,

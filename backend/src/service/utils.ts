@@ -12,7 +12,7 @@ import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, T
 import { SouthHistoryRecoveryStrategy } from '../../shared/model/south-connector.model';
 import { OIBusInitConfig } from '../model/oibus-init-config.model';
 import csv from 'papaparse';
-import { EngineSettingsDTO, OIBusContent, OIBusInfo } from '../../shared/model/engine.model';
+import { CacheMetadataSource, EngineSettingsDTO, OIBusContent, OIBusInfo } from '../../shared/model/engine.model';
 import os from 'node:os';
 import cronstrue from 'cronstrue';
 import cronparser from 'cron-parser';
@@ -467,6 +467,22 @@ export const generateFilenameForSerialization = (baseFolder: string, filename: s
       .replace('@ConnectorName', connectorName)
       .replace('@ItemName', itemName)
   );
+};
+
+/**
+ * Substitute the filename placeholders supported by the CSV output transformers (time-values-to-csv,
+ * json-to-csv): `@CurrentDate` (when the transform runs) and, when the content came from a bounded
+ * history query, `@QueryStartTime`/`@QueryEndTime` (the queried window). The latter two are left
+ * empty for content that isn't bound to a time window (subscriptions, direct queries, other sources).
+ */
+export const applyFilenameVariables = (filename: string, source: CacheMetadataSource): string => {
+  const formatQueryBound = (instant: Instant | null | undefined): string =>
+    instant ? DateTime.fromISO(instant).toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS') : '';
+
+  return filename
+    .replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
+    .replace('@QueryStartTime', source.source === 'south' ? formatQueryBound(source.queryStartTime) : '')
+    .replace('@QueryEndTime', source.source === 'south' ? formatQueryBound(source.queryEndTime) : '');
 };
 
 export const generateCsvContent = (data: Array<Record<string, string | number>>, delimiter: CsvCharacter): string => {

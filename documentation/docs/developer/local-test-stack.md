@@ -120,14 +120,14 @@ the usernames `oibus` and `admin` respectively (set in `docker-compose.yml`).
 
 **Connecting from OIBus:** create a South OPC UA connector with the following settings:
 
-| Setting                      | Value                            |
-| ----------------------------- | --------------------------------- |
-| **URL**                       | `opc.tcp://localhost:50000`       |
-| **Security mode**              | `none`                            |
-| **Security policy**            | `none`                            |
-| **Authentication**             | `basic`                           |
-| **Username**                   | `oibus`                           |
-| **Password**                   | `pass` (or `$OPCUA_DEFAULT_PASSWORD`) |
+| Setting             | Value                                 |
+| ------------------- | ------------------------------------- |
+| **URL**             | `opc.tcp://localhost:50000`           |
+| **Security mode**   | `none`                                |
+| **Security policy** | `none`                                |
+| **Authentication**  | `basic`                               |
+| **Username**        | `oibus`                               |
+| **Password**        | `pass` (or `$OPCUA_DEFAULT_PASSWORD`) |
 
 <div style={{ display: 'flex', justifyContent: 'center' }}>
   <DownloadButton link="/files/opcua-item-list.csv">Download item list (CSV)</DownloadButton>
@@ -179,11 +179,11 @@ values are static and come from `server_config.json`. Holding registers and coil
 **Connecting from OIBus:** create a South Modbus connector with the following settings:
 
 | Setting            | Value       |
-| ------------------- | ------------ |
-| **Host**             | `localhost`  |
-| **Port**             | `5020`       |
-| **Slave ID**         | `1`          |
-| **Address offset**   | `Modbus`     |
+| ------------------ | ----------- |
+| **Host**           | `localhost` |
+| **Port**           | `5020`      |
+| **Slave ID**       | `1`         |
+| **Address offset** | `Modbus`    |
 
 <div style={{ display: 'flex', justifyContent: 'center' }}>
   <DownloadButton link="/files/modbus-item-list.csv">Download item list (CSV)</DownloadButton>
@@ -206,13 +206,13 @@ The `9001` WebSocket port is available for browser-based MQTT clients if needed.
 
 **Connecting from OIBus:** create a South MQTT connector with the following settings:
 
-| Setting            | Value                   |
-| ------------------- | ------------------------ |
-| **URL**              | `mqtt://localhost:1883`  |
-| **QoS**              | `1`                      |
-| **Authentication**   | `basic`                  |
-| **Username**         | `oibus`                  |
-| **Password**         | `pass` (or `$MQTT_PASSWORD`) |
+| Setting            | Value                        |
+| ------------------ | ---------------------------- |
+| **URL**            | `mqtt://localhost:1883`      |
+| **QoS**            | `1`                          |
+| **Authentication** | `basic`                      |
+| **Username**       | `oibus`                      |
+| **Password**       | `pass` (or `$MQTT_PASSWORD`) |
 
 Items subscribe to the [scalar topics](#scalar-topics) published by the simulator (the JSON topics
 are meant for `any-content` / custom-transformer testing, not point-value items):
@@ -226,7 +226,7 @@ are meant for `any-content` / custom-transformer testing, not point-value items)
 ### Syslog Server — `syslog-server` _(profile: `logging`)_
 
 | Property   | Value                                                 |
-| ---------- | ------------------------------------------------------ |
+| ---------- | ----------------------------------------------------- |
 | **Image**  | [`python:3.14-slim`](https://hub.docker.com/_/python) |
 | **Ports**  | `514` (UDP), `514` (TCP)                              |
 | **Script** | `docker/syslog/syslog_server.py`                      |
@@ -246,11 +246,11 @@ docker compose logs -f syslog-server
 
 ### Squid Proxy — `squid-proxy` _(profile: `proxy`)_
 
-| Property   | Value                                                          |
-| ---------- | ---------------------------------------------------------------- |
-| **Image**  | [`ubuntu/squid`](https://hub.docker.com/r/ubuntu/squid)          |
-| **Port**   | `3128` (HTTP/HTTPS forward proxy)                                |
-| **Config** | `docker/squid/conf.d/auth.conf`, `docker/squid/entrypoint.sh`    |
+| Property   | Value                                                         |
+| ---------- | ------------------------------------------------------------- |
+| **Image**  | [`ubuntu/squid`](https://hub.docker.com/r/ubuntu/squid)       |
+| **Port**   | `3128` (HTTP/HTTPS forward proxy)                             |
+| **Config** | `docker/squid/conf.d/auth.conf`, `docker/squid/entrypoint.sh` |
 
 A real Squid forward proxy requiring HTTP Basic authentication, used to test OIBus's
 [proxy server](../guide/engine/engine-settings.mdx#proxy-server) — specifically the
@@ -367,6 +367,7 @@ from(bucket: "oibus-bucket")
   |> filter(fn: (r) => r._measurement == "temperature")
   |> filter(fn: (r) => r._field == "value")
 ```
+
 :::
 
 ---

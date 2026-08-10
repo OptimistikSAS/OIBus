@@ -4,13 +4,13 @@ Throttling controls how OIBus paces historical data requests. These settings app
 connectors that support groups) or on each **item** (for single-item connectors). Items in a group can override
 the group defaults by disabling the **Sync with group** toggle.
 
-| Setting                 | Description                                                                                                                     | Example Value |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| **Max read interval**   | Maximum duration of each sub-query in seconds. Larger time ranges are automatically split into chunks not exceeding this value. | `3600`         |
-| **Read delay**          | Pause in milliseconds between consecutive sub-queries. Helps prevent server overload and manages rate limits.                   | `1000`         |
-| **Start time offset**  | Milliseconds added to the start of the query window (`@StartTime`). A **negative** value moves the start earlier, to capture late-arriving data from the previous interval — this is the old "Overlap" behavior. A **positive** value moves the start later instead, skipping that much of the window. | `-60000`       |
-| **End time offset**    | Milliseconds added to the end of the query window (`@EndTime`). A **negative** value pulls the end in earlier — useful for eventually-consistent sources where the very latest rows aren't reliable yet. A **positive** value extends the window later. If the resulting end is not after the effective start, the query is skipped for this run. | `0`            |
-| **Recovery strategy**  | Order in which OIBus catches up on a backlog of unqueried sub-intervals — e.g. after being stopped for a while, or on first run against a wide time range. `From oldest to newest` (default) processes the backlog chronologically. `From newest to oldest` queries the most recent sub-interval first, so up-to-date values become available immediately while older gaps are backfilled afterward. | `From oldest to newest` |
+| Setting               | Description                                                                                                                                                                                                                                                                                                                                                                                          | Example Value           |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| **Max read interval** | Maximum duration of each sub-query in seconds. Larger time ranges are automatically split into chunks not exceeding this value.                                                                                                                                                                                                                                                                      | `3600`                  |
+| **Read delay**        | Pause in milliseconds between consecutive sub-queries. Helps prevent server overload and manages rate limits.                                                                                                                                                                                                                                                                                        | `1000`                  |
+| **Start time offset** | Milliseconds added to the start of the query window (`@StartTime`). A **negative** value moves the start earlier, to capture late-arriving data from the previous interval — this is the old "Overlap" behavior. A **positive** value moves the start later instead, skipping that much of the window.                                                                                               | `-60000`                |
+| **End time offset**   | Milliseconds added to the end of the query window (`@EndTime`). A **negative** value pulls the end in earlier — useful for eventually-consistent sources where the very latest rows aren't reliable yet. A **positive** value extends the window later. If the resulting end is not after the effective start, the query is skipped for this run.                                                    | `0`                     |
+| **Recovery strategy** | Order in which OIBus catches up on a backlog of unqueried sub-intervals — e.g. after being stopped for a while, or on first run against a wide time range. `From oldest to newest` (default) processes the backlog chronologically. `From newest to oldest` queries the most recent sub-interval first, so up-to-date values become available immediately while older gaps are backfilled afterward. | `From oldest to newest` |
 
 #### How Throttling Works
 
@@ -21,7 +21,7 @@ the group defaults by disabling the **Sync with group** toggle.
    requests `[9:59–11:00]`, ensuring no late-arriving data is missed. `End time offset` shifts the other boundary
    the same way.
 4. **Recovery strategy** — Only matters when there's more than one sub-interval to catch up on. With `From newest
-   to oldest`, the tracked instant only advances once every sub-interval in the backlog has been queried — this
+to oldest`, the tracked instant only advances once every sub-interval in the backlog has been queried — this
    avoids skipping over not-yet-queried older intervals if OIBus restarts mid-catch-up.
 
 :::info Offsets apply to the full query range
@@ -32,8 +32,8 @@ each individual sub-interval when a large range is split into chunks by Max read
 #### Recommended Configurations
 
 | Scenario                       | Max read interval | Read delay | Start time offset |
-| ------------------------------- | ------------------ | ---------- | ------------------- |
-| Stable network, small datasets | 3600 (1 hour)      | 500        | 0 (none)            |
-| Unstable network               | 1800 (30 min)      | 2000       | 0 (none)            |
-| Large historical retrievals    | 7200 (2 hours)     | 1000       | 0 (none)            |
-| Real-time with occasional gaps | 900 (15 min)       | 200        | -15000 (-15 sec)    |
+| ------------------------------ | ----------------- | ---------- | ----------------- |
+| Stable network, small datasets | 3600 (1 hour)     | 500        | 0 (none)          |
+| Unstable network               | 1800 (30 min)     | 2000       | 0 (none)          |
+| Large historical retrievals    | 7200 (2 hours)    | 1000       | 0 (none)          |
+| Real-time with occasional gaps | 900 (15 min)      | 200        | -15000 (-15 sec)  |

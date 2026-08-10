@@ -1892,6 +1892,19 @@ export interface CacheMetadataSourceOriginSouth {
   queryTime: Instant;
 
   /**
+   * Start of the history query interval this content was retrieved from, if any (null for
+   * subscription-based or direct-query content, which aren't bound to a time window).
+   * @example "2023-01-01T00:00:00Z"
+   */
+  queryStartTime?: Instant | null;
+
+  /**
+   * End of the history query interval this content was retrieved from, if any.
+   * @example "2023-01-01T01:00:00Z"
+   */
+  queryEndTime?: Instant | null;
+
+  /**
    * ID of the south connector at the source of the data
    */
   southId: string;

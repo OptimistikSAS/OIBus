@@ -480,18 +480,29 @@ export default class DataStreamEngine {
     southId: string,
     data: OIBusContent,
     queryTime: Instant,
-    items: Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>
+    items: Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>,
+    queryStartTime?: Instant | null,
+    queryEndTime?: Instant | null
   ) {
     const pending: Array<Promise<void>> = [];
     for (const north of this.northConnectors.values()) {
       if (!north.north.isEnabled()) continue;
       pending.push(
-        north.north.cacheContent(data, { source: 'south', southId, queryTime, items }).catch((error: unknown) => {
-          this._logger.error(
-            `Error while caching content to North "${north.north.connectorConfiguration.name}" ` +
-              `(${north.north.connectorConfiguration.id}): ${(error as Error).message}`
-          );
-        })
+        north.north
+          .cacheContent(data, {
+            source: 'south',
+            southId,
+            queryTime,
+            queryStartTime: queryStartTime ?? null,
+            queryEndTime: queryEndTime ?? null,
+            items
+          })
+          .catch((error: unknown) => {
+            this._logger.error(
+              `Error while caching content to North "${north.north.connectorConfiguration.name}" ` +
+                `(${north.north.connectorConfiguration.id}): ${(error as Error).message}`
+            );
+          })
       );
     }
     await Promise.all(pending);

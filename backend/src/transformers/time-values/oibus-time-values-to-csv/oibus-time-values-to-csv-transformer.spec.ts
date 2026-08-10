@@ -5,7 +5,7 @@ import { Readable } from 'stream';
 import testData from '../../../tests/utils/test-data';
 import { flushPromises, mockModule, reloadModule } from '../../../tests/utils/test-utils';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
-import { streamToString } from '../../../service/utils';
+import { applyFilenameVariables, streamToString } from '../../../service/utils';
 import type OIBusTimeValuesToCsvTransformerType from './oibus-time-values-to-csv-transformer';
 import timeValuesToCsvManifest from './manifest';
 import { OIBusTimeValue } from '../../../../shared/model/engine.model';
@@ -24,7 +24,8 @@ before(() => {
     convertQuoteChar: mock.fn(() => '"'),
     convertEscapeChar: mock.fn(() => '"'),
     convertNewline: mock.fn(() => ''),
-    streamToString: mock.fn(streamToString)
+    streamToString: mock.fn(streamToString),
+    applyFilenameVariables: mock.fn(applyFilenameVariables)
   };
   mockPapaparse = { unparse: mock.fn(() => 'csv content') };
   mockModule(nodeRequire, '../../../service/utils', mockUtils);
@@ -44,6 +45,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
     mockUtils.convertQuoteChar = mock.fn(() => '"');
     mockUtils.convertEscapeChar = mock.fn(() => '"');
     mockUtils.convertNewline = mock.fn(() => '');
+    mockUtils.applyFilenameVariables = mock.fn(applyFilenameVariables);
     mockPapaparse.unparse = mock.fn(() => 'csv content');
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
@@ -88,6 +90,41 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
         contentType: 'any'
       }
     });
+  });
+
+  it('should replace @QueryStartTime and @QueryEndTime with the south history query window', async () => {
+    const options = {
+      filename: '@QueryStartTime_@QueryEndTime.csv',
+      delimiter: 'SEMI_COLON',
+      pointIdColumnTitle: 'Reference',
+      valueColumnTitle: 'Value',
+      timestampColumnTitle: 'Timestamp',
+      timestampType: 'string',
+      timestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+      timezone: 'Europe/Paris'
+    };
+    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
+    const mockStream = new Readable();
+
+    const promise = transformer.transform(
+      mockStream,
+      {
+        source: 'south',
+        southId: 'south1',
+        queryTime: testData.constants.dates.DATE_1,
+        queryStartTime: '2023-01-01T00:00:00.000Z',
+        queryEndTime: '2023-01-01T01:00:00.000Z',
+        items: []
+      },
+      null
+    );
+    mockStream.push(JSON.stringify([]));
+    mockStream.push(null);
+
+    await flushPromises();
+    const result = await promise;
+
+    assert.strictEqual(result.metadata.contentFile, '2023_01_01_00_00_00_000_2023_01_01_01_00_00_000.csv');
   });
 
   it('should pass quoteChar, escapeChar, newline and header to csv.unparse', async () => {
