@@ -114,7 +114,7 @@
         <table class="mt-2 table table-sm table-hover oib-table">
           <thead>
             <tr>
-              <th style="width: 3rem"></th>
+              <th style="width: 6rem"></th>
               <th>
                 <button
                   type="button"
@@ -174,6 +174,15 @@
               <tr>
                 <td>
                   <span [ngbTooltip]="getStatusLabel(query.status) | translate" [class]="getStatusClass(query.status)"></span>
+                  @if (query.numberOfItems) {
+                    <span
+                      class="ms-1 text-muted"
+                      [ngbTooltip]="
+                        'history-query.item-progress' | translate: { current: query.currentItemNumber, total: query.numberOfItems }
+                      "
+                      >({{ query.currentItemNumber }} / {{ query.numberOfItems }})</span
+                    >
+                  }
                 </td>
                 <td>
                   <span [ngbTooltip]="query.name" placement="top-start">{{ query.name }}</span>
