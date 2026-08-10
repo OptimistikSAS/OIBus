@@ -1552,7 +1552,92 @@ export interface HistoryQueryMetrics {
      * @example 2
      */
     numberOfIntervals: number;
+
+    /**
+     * The name of the item currently being queried. Only set for connectors that query items one
+     * at a time (SOUTH_SINGLE_ITEMS).
+     * @example "item1"
+     */
+    itemName?: string;
+
+    /**
+     * The 1-based index of the item currently being queried, among the run's enabled items. Only
+     * set for connectors that query items one at a time (SOUTH_SINGLE_ITEMS).
+     * @example 3
+     */
+    currentItemNumber?: number;
+
+    /**
+     * The total number of enabled items in the run. Only set for connectors that query items one
+     * at a time (SOUTH_SINGLE_ITEMS).
+     * @example 10
+     */
+    numberOfItems?: number;
+
+    /**
+     * The progress of the current item's own interval list as a fraction [0, 1], scoped to that
+     * item only (not ratcheted, unlike `intervalProgress`). Only set for connectors that query
+     * items one at a time (SOUTH_SINGLE_ITEMS).
+     * @example 0.25
+     */
+    itemIntervalProgress?: number;
+
+    /**
+     * The 1-based index of the current lead's own interval, within its own interval list (raw, not
+     * ratcheted) — same source data as `itemIntervalProgress`, surfaced raw for display. Only set
+     * for connectors that query items one at a time (SOUTH_SINGLE_ITEMS).
+     * @example 12
+     */
+    itemIntervalNumber?: number;
+
+    /**
+     * The total number of intervals in the current lead's own interval list (raw, not ratcheted).
+     * Only set for connectors that query items one at a time (SOUTH_SINGLE_ITEMS).
+     * @example 34
+     */
+    itemNumberOfIntervals?: number;
+
+    /**
+     * The runtime status of every item in the run. Only set for connectors that query items one at
+     * a time (SOUTH_SINGLE_ITEMS).
+     */
+    itemsStatus?: Array<HistoryQueryItemStatus>;
   };
+}
+
+/**
+ * Runtime status of a single item within a history query run, for progress-monitoring UIs.
+ */
+export interface HistoryQueryItemStatus {
+  /**
+   * The item ID.
+   * @example "e4f7e3f0-1234-4567-8901-abcdef123456"
+   */
+  itemId: string;
+
+  /**
+   * The item name.
+   * @example "item1"
+   */
+  itemName: string;
+
+  /**
+   * The item's runtime status within the run.
+   * @example "running"
+   */
+  status: 'pending' | 'running' | 'done';
+
+  /**
+   * The timestamp of the last value retrieved for this item.
+   * @example "2023-01-01T00:00:00Z"
+   */
+  lastValueTimestamp: Instant | null;
+
+  /**
+   * The number of records (values or files) retrieved for this item so far.
+   * @example 42
+   */
+  recordsCount: number;
 }
 
 /**

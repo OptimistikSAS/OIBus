@@ -7191,6 +7191,8 @@ const models: TsoaRoute.Models = {
             "endTime": {"dataType":"string","required":true},
             "southType": {"ref":"OIBusSouthType","required":true},
             "northType": {"ref":"OIBusNorthType","required":true},
+            "currentItemNumber": {"dataType":"double"},
+            "numberOfItems": {"dataType":"double"},
         },
         "additionalProperties": false,
     },
