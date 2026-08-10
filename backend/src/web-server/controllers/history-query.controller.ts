@@ -98,7 +98,13 @@ export class HistoryQueryController extends Controller {
   list(@Request() request: CustomExpressRequest): Array<HistoryQueryLightDTO> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     const historyQueries = historyQueryService.list();
-    return historyQueries.map(historyQuery => toHistoryQueryLightDTO(historyQuery, id => request.services.userService.getUserInfo(id)));
+    return historyQueries.map(historyQuery =>
+      toHistoryQueryLightDTO(
+        historyQuery,
+        id => request.services.userService.getUserInfo(id),
+        id => historyQueryService.getHistoryMetric(id)
+      )
+    );
   }
 
   /**

@@ -1627,7 +1627,18 @@ const historyQueryMetrics: HistoryQueryMetrics = {
     currentIntervalStart: null,
     currentIntervalEnd: null,
     currentIntervalNumber: 0,
-    numberOfIntervals: 0
+    numberOfIntervals: 0,
+    itemName: 'item1',
+    currentItemNumber: 1,
+    numberOfItems: 3,
+    itemIntervalProgress: 0,
+    itemIntervalNumber: 0,
+    itemNumberOfIntervals: 0,
+    itemsStatus: [
+      { itemId: 'historyQueryItem1', itemName: 'item1', status: 'running', lastValueTimestamp: null, recordsCount: 0 },
+      { itemId: 'historyQueryItem2', itemName: 'item2', status: 'pending', lastValueTimestamp: null, recordsCount: 0 },
+      { itemId: 'historyQueryItem3', itemName: 'item3', status: 'pending', lastValueTimestamp: null, recordsCount: 0 }
+    ]
   }
 };
 

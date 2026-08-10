@@ -131,6 +131,29 @@ describe('HistoryQueryListComponent', () => {
     expect(fixture.componentInstance.filteredHistoryQueries.length).toBe(1);
   });
 
+  test('should display the item progress indicator when numberOfItems is set', async () => {
+    const queriesWithProgress = (testData.historyQueries.listLight as unknown as Array<HistoryQueryLightDTO>).map((query, index) =>
+      index === 0 ? { ...query, currentItemNumber: 3, numberOfItems: 10 } : query
+    );
+    historyQueryService.list.mockReturnValue(of(queriesWithProgress));
+
+    const fixture = TestBed.createComponent(HistoryQueryListComponent);
+    fixture.detectChanges();
+
+    const root = page.elementLocator(fixture.nativeElement);
+    const firstRowCells = root.getByCss('tbody tr').nth(0).getByCss('td');
+    await expect.element(firstRowCells.nth(0)).toHaveTextContent('(3 / 10)');
+  });
+
+  test('should not display the item progress indicator when numberOfItems is not set', async () => {
+    const fixture = TestBed.createComponent(HistoryQueryListComponent);
+    fixture.detectChanges();
+
+    const root = page.elementLocator(fixture.nativeElement);
+    const firstRowCells = root.getByCss('tbody tr').nth(0).getByCss('td');
+    await expect.element(firstRowCells.nth(0).getByCss('.text-muted')).not.toBeInTheDocument();
+  });
+
   test('should sort by south type when clicking the column header', () => {
     const fixture = TestBed.createComponent(HistoryQueryListComponent);
     fixture.detectChanges();

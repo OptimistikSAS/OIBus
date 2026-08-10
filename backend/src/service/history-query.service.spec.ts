@@ -1057,10 +1057,106 @@ describe('History Query service', () => {
       endTime: historyQuery.queryTimeRange.endTime,
       southType: historyQuery.southType,
       northType: historyQuery.northType,
+      currentItemNumber: undefined,
+      numberOfItems: undefined,
       createdBy: getUserInfo(historyQueryLight.createdBy),
       updatedBy: getUserInfo(historyQueryLight.updatedBy),
       createdAt: historyQueryLight.createdAt,
       updatedAt: historyQueryLight.updatedAt
     });
+  });
+
+  it('should include current item progress in light DTO when the history query is currently running', () => {
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+    const historyQuery = testData.historyQueries.list[0];
+    const historyQueryLight: HistoryQueryEntityLight = {
+      id: historyQuery.id,
+      name: historyQuery.name,
+      description: historyQuery.description,
+      status: historyQuery.status,
+      startTime: historyQuery.queryTimeRange.startTime,
+      endTime: historyQuery.queryTimeRange.endTime,
+      southType: historyQuery.southType,
+      northType: historyQuery.northType,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    const runningMetrics = {
+      ...testData.historyQueries.metrics,
+      historyMetrics: {
+        ...testData.historyQueries.metrics.historyMetrics,
+        running: true,
+        currentItemNumber: 2,
+        numberOfItems: 5
+      }
+    };
+    const getHistoryMetrics = mock.fn((_historyId: string) => runningMetrics);
+
+    const result = toHistoryQueryLightDTO(historyQueryLight, getUserInfo, getHistoryMetrics);
+
+    assert.deepStrictEqual(getHistoryMetrics.mock.calls[0].arguments, [historyQueryLight.id]);
+    assert.strictEqual(result.currentItemNumber, 2);
+    assert.strictEqual(result.numberOfItems, 5);
+  });
+
+  it('should omit current item progress in light DTO when the history query is not currently running', () => {
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+    const historyQuery = testData.historyQueries.list[0];
+    const historyQueryLight: HistoryQueryEntityLight = {
+      id: historyQuery.id,
+      name: historyQuery.name,
+      description: historyQuery.description,
+      status: historyQuery.status,
+      startTime: historyQuery.queryTimeRange.startTime,
+      endTime: historyQuery.queryTimeRange.endTime,
+      southType: historyQuery.southType,
+      northType: historyQuery.northType,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    const notRunningMetrics = {
+      ...testData.historyQueries.metrics,
+      historyMetrics: {
+        ...testData.historyQueries.metrics.historyMetrics,
+        running: false,
+        currentItemNumber: 2,
+        numberOfItems: 5
+      }
+    };
+    const getHistoryMetrics = mock.fn((_historyId: string) => notRunningMetrics);
+
+    const result = toHistoryQueryLightDTO(historyQueryLight, getUserInfo, getHistoryMetrics);
+
+    assert.strictEqual(result.currentItemNumber, undefined);
+    assert.strictEqual(result.numberOfItems, undefined);
+  });
+
+  it('should omit current item progress in light DTO when the engine has no metrics for the history query', () => {
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+    const historyQuery = testData.historyQueries.list[0];
+    const historyQueryLight: HistoryQueryEntityLight = {
+      id: historyQuery.id,
+      name: historyQuery.name,
+      description: historyQuery.description,
+      status: historyQuery.status,
+      startTime: historyQuery.queryTimeRange.startTime,
+      endTime: historyQuery.queryTimeRange.endTime,
+      southType: historyQuery.southType,
+      northType: historyQuery.northType,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    const getHistoryMetrics = mock.fn((_historyId: string) => null);
+
+    const result = toHistoryQueryLightDTO(historyQueryLight, getUserInfo, getHistoryMetrics);
+
+    assert.strictEqual(result.currentItemNumber, undefined);
+    assert.strictEqual(result.numberOfItems, undefined);
   });
 });
