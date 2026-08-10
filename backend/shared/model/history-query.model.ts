@@ -132,6 +132,23 @@ export interface HistoryQueryLightDTO extends BaseEntity {
    * @example "aws-s3"
    */
   northType: OIBusNorthType;
+
+  /**
+   * The 1-based index of the item currently being queried, among the run's enabled items. Only
+   * set while the history query is actively running on a connector that queries items one at a
+   * time (SOUTH_SINGLE_ITEMS).
+   *
+   * @example 3
+   */
+  currentItemNumber?: number;
+
+  /**
+   * The total number of enabled items in the run. Only set while the history query is actively
+   * running on a connector that queries items one at a time (SOUTH_SINGLE_ITEMS).
+   *
+   * @example 10
+   */
+  numberOfItems?: number;
 }
 
 export interface HistoryQueryCommonDTO {

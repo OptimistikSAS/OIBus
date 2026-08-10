@@ -769,7 +769,15 @@ const copyHistoryQueryItemCommandToHistoryQueryItemEntity = async (
   );
 };
 
-export const toHistoryQueryLightDTO = (historyQuery: HistoryQueryEntityLight, getUserInfo: GetUserInfo): HistoryQueryLightDTO => {
+export const toHistoryQueryLightDTO = (
+  historyQuery: HistoryQueryEntityLight,
+  getUserInfo: GetUserInfo,
+  getHistoryMetrics?: (historyId: string) => HistoryQueryMetrics | null
+): HistoryQueryLightDTO => {
+  // Plain synchronous read of the already-in-memory metrics of the running engine, if any.
+  // No SSE connection or polling is involved here.
+  const metrics = getHistoryMetrics?.(historyQuery.id);
+  const isRunning = metrics?.historyMetrics.running ?? false;
   return {
     id: historyQuery.id,
     name: historyQuery.name,
@@ -779,6 +787,8 @@ export const toHistoryQueryLightDTO = (historyQuery: HistoryQueryEntityLight, ge
     endTime: historyQuery.endTime,
     southType: historyQuery.southType,
     northType: historyQuery.northType,
+    currentItemNumber: isRunning ? metrics!.historyMetrics.currentItemNumber : undefined,
+    numberOfItems: isRunning ? metrics!.historyMetrics.numberOfItems : undefined,
     createdBy: getUserInfo(historyQuery.createdBy),
     updatedBy: getUserInfo(historyQuery.updatedBy),
     createdAt: historyQuery.createdAt,

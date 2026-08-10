@@ -10,9 +10,11 @@ import {
   CacheSearchResult,
   DataFolderType,
   FileCacheContent,
+  HistoryQueryItemStatus,
   OIBusTimeValue
 } from '../../shared/model/engine.model';
 import { HistoryQueryEntity } from '../model/histor-query.model';
+import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import { EventEmitter } from 'node:events';
 import { Instant } from '../model/types';
 import { ScanMode } from '../model/scan-mode.model';
@@ -23,6 +25,13 @@ import { loggerService } from '../service/logger/logger.service';
 import { Interval } from '../../shared/model/types';
 
 const FINISH_INTERVAL = 5000;
+
+// Per-item runtime status is tracked across a history query run, for progress-monitoring UIs, using
+// the canonical `HistoryQueryItemStatus` shape from `../../shared/model/engine.model` (shared with
+// the frontend). It's seeded at `start()` from the south connector's persisted cache snapshot
+// (`getHistoryQuerySnapshot`) so a resumed run reflects the correct starting point instead of
+// looking like it starts from scratch, then kept live via the `history-query-item-start` /
+// `add-values` / `add-file` / `south-history-query-stop` events.
 
 /** Events published by a History Query's {@link HistoryQuery.metricsEvent} (relayed from its north/south). */
 export interface HistoryMetricsEvents {
@@ -37,13 +46,35 @@ export interface HistoryMetricsEvents {
   'south-history-query-start': { running: boolean };
   'south-history-query-interval': {
     running: boolean;
+    // Ratcheted progress against the whole, fixed configured time range — never regresses, even
+    // when a multi-item connector moves on to an item whose own window starts well before where
+    // the previous item left off.
     intervalProgress: number;
     currentIntervalStart: Instant;
     currentIntervalEnd: Instant;
     currentIntervalNumber: number;
     numberOfIntervals: number;
+    // Item identity, only set for SOUTH_SINGLE_ITEMS connectors (items queried one at a time).
+    itemName?: string;
+    currentItemNumber?: number;
+    numberOfItems?: number;
+    // Progress scoped to the CURRENT item's own interval list (raw, not ratcheted) — resets to
+    // (close to) 0 for every new item, unlike `intervalProgress`.
+    itemIntervalProgress?: number;
+    // Raw pass-through of the current lead's own interval index/total (not ratcheted), for display
+    // purposes (e.g. "12 / 34"). Same source data as `itemIntervalProgress`, just surfaced raw.
+    itemIntervalNumber?: number;
+    itemNumberOfIntervals?: number;
   };
   'south-history-query-stop': { running: boolean };
+  // Emitted once per item (SOUTH_SINGLE_ITEMS connectors only), when the run moves to a new item —
+  // carries the full up-to-date itemsStatus array so the UI never needs to reconstruct it itself.
+  'south-history-query-item': {
+    itemName: string;
+    currentItemNumber: number;
+    numberOfItems: number;
+    itemsStatus: Array<HistoryQueryItemStatus>;
+  };
   'south-add-values': { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue | null };
   'south-add-file': { lastFileRetrieved: string };
 }
@@ -53,6 +84,13 @@ export default class HistoryQuery {
   private stopping = false;
   private logger!: ILogger;
   private intervals: Array<Interval> = [];
+  // Ratcheted high-water mark of `currentIntervalEnd` seen so far. Never allowed to regress — see
+  // `computeCurrentProgress`. Seeded at `start()` from the persisted south cache so a resumed run
+  // doesn't visually restart from zero.
+  private maxIntervalEndReached: Instant | null = null;
+  // Per-item runtime status, keyed by itemId. Seeded at `start()`, then kept live via item-start /
+  // add-values / add-file / stop events.
+  private itemsStatus: Map<string, HistoryQueryItemStatus> = new Map<string, HistoryQueryItemStatus>();
 
   public metricsEvent: TypedEventEmitter<HistoryMetricsEvents> = new TypedEventEmitter<HistoryMetricsEvents>();
   public finishEvent: EventEmitter = new EventEmitter();
@@ -105,38 +143,26 @@ export default class HistoryQuery {
     });
     await this.north.start();
 
+    const southItems = this.buildSouthItems();
+    this.seedItemsStatus(southItems);
+
     this.south.connectedEvent.on('connected', () => {
       this.metricsEvent.emit('south-history-query-start', { running: true });
       this.south!.historyQueryHandler(
-        this.historyConfiguration.items
-          .filter(item => item.enabled)
-          .map(item => ({
-            ...item,
-            group: null,
-            syncWithGroup: false,
-            scanMode: {
-              id: 'history',
-              name: 'history',
-              description: '',
-              type: 'cron',
-              cron: '',
-              interval: null,
-              activationWindow: null,
-              createdBy: '',
-              updatedBy: '',
-              createdAt: '',
-              updatedAt: ''
-            },
-            maxReadInterval: this.historyConfiguration.queryTimeRange.maxReadInterval,
-            readDelay: this.historyConfiguration.queryTimeRange.readDelay,
-            startTimeOffset: null,
-            endTimeOffset: null,
-            recoveryStrategy: null
-          })),
+        southItems,
         this.historyConfiguration.queryTimeRange.startTime,
         this.historyConfiguration.queryTimeRange.endTime
       )
         .then(() => {
+          // The run completed normally: whichever item was still marked 'running' is done. If we're
+          // in the middle of stopping, leave it as 'running' so a resumed run picks it back up.
+          if (!this.stopping) {
+            for (const status of this.itemsStatus.values()) {
+              if (status.status === 'running') {
+                status.status = 'done';
+              }
+            }
+          }
           this.metricsEvent.emit('south-history-query-stop', { running: false });
         })
         .catch(async error => {
@@ -161,16 +187,122 @@ export default class HistoryQuery {
     this.south.metricsEvent.on('run-end', (data: { lastRunDuration: number }) => {
       this.metricsEvent.emit('south-run-end', data);
     });
-    this.south.metricsEvent.on('history-query-interval', (data: { currentIntervalStart: Instant; currentIntervalEnd: Instant }) => {
-      this.metricsEvent.emit('south-history-query-interval', this.computeCurrentProgress(data));
-    });
+    this.south.metricsEvent.on(
+      'history-query-interval',
+      (data: {
+        currentIntervalStart: Instant;
+        currentIntervalEnd: Instant;
+        currentIntervalNumber?: number;
+        numberOfIntervals?: number;
+        itemName?: string;
+        currentItemNumber?: number;
+        numberOfItems?: number;
+      }) => {
+        this.metricsEvent.emit('south-history-query-interval', this.computeCurrentProgress(data));
+      }
+    );
+    this.south.metricsEvent.on(
+      'history-query-item-start',
+      (data: { itemName: string; currentItemNumber: number; numberOfItems: number }) => {
+        for (const status of this.itemsStatus.values()) {
+          if (status.status === 'running') {
+            status.status = 'done';
+          }
+        }
+        const currentStatus = Array.from(this.itemsStatus.values()).find(status => status.itemName === data.itemName);
+        if (currentStatus) {
+          currentStatus.status = 'running';
+        }
+        this.metricsEvent.emit('south-history-query-item', {
+          itemName: data.itemName,
+          currentItemNumber: data.currentItemNumber,
+          numberOfItems: data.numberOfItems,
+          itemsStatus: Array.from(this.itemsStatus.values())
+        });
+      }
+    );
     this.south.metricsEvent.on('add-values', (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue | null }) => {
+      this.updateRunningItemStatus(data.numberOfValuesRetrieved, data.lastValueRetrieved?.timestamp ?? null);
       this.metricsEvent.emit('south-add-values', data);
     });
     this.south.metricsEvent.on('add-file', (data: { lastFileRetrieved: string }) => {
+      this.updateRunningItemStatus(1, null);
       this.metricsEvent.emit('south-add-file', data);
     });
     await this.south.start();
+  }
+
+  /**
+   * Build the SouthConnectorItemEntity-shaped item list `historyQueryHandler` / `getHistoryQuerySnapshot`
+   * expect, from the history query's own configured items — adding the synthetic 'history' scan mode
+   * and the query-time-range-derived interval settings every history query item shares.
+   */
+  private buildSouthItems(): Array<SouthConnectorItemEntity<SouthItemSettings>> {
+    return this.historyConfiguration.items
+      .filter(item => item.enabled)
+      .map(item => ({
+        ...item,
+        group: null,
+        syncWithGroup: false,
+        scanMode: {
+          id: 'history',
+          name: 'history',
+          description: '',
+          type: 'cron',
+          cron: '',
+          interval: null,
+          activationWindow: null,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        maxReadInterval: this.historyConfiguration.queryTimeRange.maxReadInterval,
+        readDelay: this.historyConfiguration.queryTimeRange.readDelay,
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null
+      }));
+  }
+
+  /**
+   * Seed `maxIntervalEndReached` and `itemsStatus` from the south connector's persisted cache
+   * snapshot, so a resumed run reflects the correct starting point (progress bar, per-item status)
+   * instead of visually restarting from zero.
+   */
+  private seedItemsStatus(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): void {
+    const snapshot = this.south.getHistoryQuerySnapshot(items);
+    this.maxIntervalEndReached = snapshot.items.reduce<Instant | null>((max, item) => {
+      if (!item.trackedInstant) return max;
+      return !max || item.trackedInstant > max ? item.trackedInstant : max;
+    }, null);
+    this.itemsStatus = new Map(
+      snapshot.items.map(item => [
+        item.itemId,
+        {
+          itemId: item.itemId,
+          itemName: item.itemName,
+          status: (item.trackedInstant && item.trackedInstant >= this.historyConfiguration.queryTimeRange.endTime
+            ? 'done'
+            : 'pending') as HistoryQueryItemStatus['status'],
+          lastValueTimestamp: item.trackedInstant,
+          recordsCount: 0
+        }
+      ])
+    );
+  }
+
+  /** Update whichever item is currently marked `'running'` with newly retrieved records. No-op if no item is running (e.g. batched connectors, which never emit `history-query-item-start`). */
+  private updateRunningItemStatus(recordsDelta: number, lastValueTimestamp: Instant | null): void {
+    for (const status of this.itemsStatus.values()) {
+      if (status.status === 'running') {
+        status.recordsCount += recordsDelta;
+        if (lastValueTimestamp) {
+          status.lastValueTimestamp = lastValueTimestamp;
+        }
+        break;
+      }
+    }
   }
 
   async stop(): Promise<void> {
@@ -277,28 +409,48 @@ export default class HistoryQuery {
     await this.north.updateCacheContent(updateCommand);
   }
 
-  private computeCurrentProgress(data: { currentIntervalStart: Instant; currentIntervalEnd: Instant }): {
-    running: boolean;
-    intervalProgress: number;
+  private computeCurrentProgress(data: {
     currentIntervalStart: Instant;
     currentIntervalEnd: Instant;
-    currentIntervalNumber: number;
-    numberOfIntervals: number;
-  } {
+    currentIntervalNumber?: number;
+    numberOfIntervals?: number;
+    itemName?: string;
+    currentItemNumber?: number;
+    numberOfItems?: number;
+  }): HistoryMetricsEvents['south-history-query-interval'] {
     // this.intervals is the full, fixed breakdown of the history query's configured time range
     // (oldest to newest), computed once in the constructor. It's independent of the south
     // connector's own per-run sub-intervals (which vary with recovery strategy and cache state),
-    // so counting how many of its slots are fully covered by currentIntervalEnd gives a stable
-    // overall progress measure across restarts.
+    // so counting how many of its slots are fully covered by the ratcheted `maxIntervalEndReached`
+    // gives a stable overall progress measure across restarts.
+    //
+    // The ratchet itself is what fixes the sawtooth bug: a multi-item connector reports its own,
+    // independent `currentIntervalEnd` per item, which is usually much earlier than where the
+    // previous item left off when the run moves on to a new item. Recomputing `currentIntervalNumber`
+    // fresh from that raw value every call (the old behavior) made the overall progress bar visibly
+    // jump backwards on every item transition. Ratcheting the high-water mark forward-only means
+    // `currentIntervalNumber` here only ever advances.
     const numberOfIntervals = this.intervals.length || 1;
-    const currentIntervalNumber = this.intervals.filter(interval => interval.end <= data.currentIntervalEnd).length;
+    if (this.maxIntervalEndReached === null || data.currentIntervalEnd > this.maxIntervalEndReached) {
+      this.maxIntervalEndReached = data.currentIntervalEnd;
+    }
+    const currentIntervalNumber = this.intervals.filter(interval => interval.end <= this.maxIntervalEndReached!).length;
+
     return {
       running: true,
       intervalProgress: currentIntervalNumber / numberOfIntervals,
       currentIntervalStart: data.currentIntervalStart,
       currentIntervalEnd: data.currentIntervalEnd,
       currentIntervalNumber,
-      numberOfIntervals
+      numberOfIntervals,
+      ...(data.itemName !== undefined ? { itemName: data.itemName } : {}),
+      ...(data.currentItemNumber !== undefined ? { currentItemNumber: data.currentItemNumber } : {}),
+      ...(data.numberOfItems !== undefined ? { numberOfItems: data.numberOfItems } : {}),
+      // Scoped to the current item's own raw interval count (NOT ratcheted) so it resets to (near)
+      // 0 for each new item, unlike the ratcheted `intervalProgress` above.
+      ...(data.numberOfIntervals ? { itemIntervalProgress: (data.currentIntervalNumber ?? 0) / data.numberOfIntervals } : {}),
+      itemIntervalNumber: data.currentIntervalNumber,
+      itemNumberOfIntervals: data.numberOfIntervals
     };
   }
 }
