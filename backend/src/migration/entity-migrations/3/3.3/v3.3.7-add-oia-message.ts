@@ -43,28 +43,52 @@ function createDefaultEntityFields(table: CreateTableBuilder): void {
 }
 
 async function updateModbusItems(knex: Knex) {
-  const modbusConnectors: Array<{ id: string }> = await knex(SOUTH_CONNECTORS_TABLE).select('id').where('type', 'modbus');
+  const modbusItems: Array<{ id: string; settings: string }> = await knex(SOUTH_ITEMS_TABLE)
+    .join(SOUTH_CONNECTORS_TABLE, `${SOUTH_CONNECTORS_TABLE}.id`, '=', `${SOUTH_ITEMS_TABLE}.connector_id`)
+    .select(`${SOUTH_ITEMS_TABLE}.id as id`, `${SOUTH_ITEMS_TABLE}.settings as settings`)
+    .where(`${SOUTH_CONNECTORS_TABLE}.type`, 'modbus');
 
-  for (const { id } of modbusConnectors) {
-    const modbusConnectorItems: Array<{ id: string; settings: string }> = await knex(SOUTH_ITEMS_TABLE)
-      .select('id', 'settings')
-      .where('connector_id', id);
+  const settingsUpdates = modbusItems.map(item => {
+    const oldSettings: OldSouthModbusItemSettings = JSON.parse(item.settings);
+    const newSettings: NewSouthModbusItemSettings = {
+      address: oldSettings.address,
+      modbusType: oldSettings.modbusType,
+      data: {
+        dataType: oldSettings.dataType,
+        multiplierCoefficient: oldSettings.multiplierCoefficient,
+        bitIndex: oldSettings.bitIndex
+      }
+    };
+    return { id: item.id, settings: JSON.stringify(newSettings) };
+  });
+  await bulkUpdateSettings(knex, SOUTH_ITEMS_TABLE, settingsUpdates);
+}
 
-    for (const item of modbusConnectorItems) {
-      const oldSettings: OldSouthModbusItemSettings = JSON.parse(item.settings);
-      const newSettings: NewSouthModbusItemSettings = {
-        address: oldSettings.address,
-        modbusType: oldSettings.modbusType,
-        data: {
-          dataType: oldSettings.dataType,
-          multiplierCoefficient: oldSettings.multiplierCoefficient,
-          bitIndex: oldSettings.bitIndex
-        }
-      };
-      await knex(SOUTH_ITEMS_TABLE)
-        .update({ settings: JSON.stringify(newSettings) })
-        .where('id', item.id);
-    }
+/** Splits `array` into consecutive chunks of at most `size` elements, preserving order. */
+function chunk<T>(array: Array<T>, size: number): Array<Array<T>> {
+  const result: Array<Array<T>> = [];
+  for (let i = 0; i < array.length; i += size) {
+    result.push(array.slice(i, i + size));
+  }
+  return result;
+}
+
+/**
+ * Writes each `{ id, settings }` pair to `table`'s `settings` column via chunked
+ * `UPDATE ... SET settings = CASE id WHEN ? THEN ? ... END WHERE id IN (...)` statements instead of
+ * one UPDATE per row, cutting N sequential UPDATE statements down to N/100 while producing the exact
+ * same per-row values.
+ */
+async function bulkUpdateSettings(knex: Knex, table: string, updates: Array<{ id: string; settings: string }>): Promise<void> {
+  for (const batch of chunk(updates, 100)) {
+    const caseSql = batch.map(() => 'when ? then ?').join(' ');
+    const caseBindings = batch.flatMap(u => [u.id, u.settings]);
+    await knex(table)
+      .whereIn(
+        'id',
+        batch.map(u => u.id)
+      )
+      .update({ settings: knex.raw(`case id ${caseSql} end`, caseBindings) });
   }
 }
 

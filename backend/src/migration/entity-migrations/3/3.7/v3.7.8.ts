@@ -520,31 +520,23 @@ async function recreateJunctionTables(
     FOREIGN KEY (transformer_id) REFERENCES ${TRANSFORMERS_TABLE}(id)
   );`);
 
-  // Restore all data
+  // Restore all data. batchInsert chunks in groups of 100 (same convention as elsewhere in this
+  // migration set) instead of issuing one INSERT statement per row, while still preserving the
+  // rowid insertion order established by the `orderBy('rowid')` reads above.
   if (southItems.length > 0) {
-    for (const row of southItems) {
-      await trx(SOUTH_ITEMS_TABLE).insert(row);
-    }
+    await trx.batchInsert(SOUTH_ITEMS_TABLE, southItems, 100);
   }
   if (historyItems.length > 0) {
-    for (const row of historyItems) {
-      await trx(HISTORY_ITEMS_TABLE).insert(row);
-    }
+    await trx.batchInsert(HISTORY_ITEMS_TABLE, historyItems, 100);
   }
   if (subscriptions.length > 0) {
-    for (const row of subscriptions) {
-      await trx(SUBSCRIPTION_TABLE).insert(row);
-    }
+    await trx.batchInsert(SUBSCRIPTION_TABLE, subscriptions, 100);
   }
   if (northTransformers.length > 0) {
-    for (const row of northTransformers) {
-      await trx('north_transformers').insert(row);
-    }
+    await trx.batchInsert('north_transformers', northTransformers, 100);
   }
   if (historyTransformers.length > 0) {
-    for (const row of historyTransformers) {
-      await trx('history_query_transformers').insert(row);
-    }
+    await trx.batchInsert('history_query_transformers', historyTransformers, 100);
   }
 }
 

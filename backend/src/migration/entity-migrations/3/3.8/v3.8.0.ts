@@ -589,22 +589,40 @@ async function migrateSouthMQTTItems(
     }
   }
 
-  // 5. Clean up South Items (remove settings that were moved to the transformer)
-  for (const connector of oldSouth) {
-    const oldItems: Array<{
-      id: string;
-      settings: string;
-    }> = await knex(SOUTH_ITEMS_TABLE).select('id', 'settings').where('connector_id', connector.id);
-    for (const item of oldItems) {
-      const oldSettings = JSON.parse(item.settings) as OldSouthMQTTItemSettings;
+  // 5. Clean up South Items (remove settings that were moved to the transformer). Fetches every
+  // matching item in one query (instead of one SELECT per connector) and writes the new settings
+  // back with chunked bulk updates (instead of one UPDATE per item) — each item's new settings still
+  // differs per row (topic), so unlike populateItemHistorianFields there's no shared value to group by.
+  const allOldItems: Array<{ id: string; settings: string }> = await knex(SOUTH_ITEMS_TABLE)
+    .select('id', 'settings')
+    .whereIn(
+      'connector_id',
+      oldSouth.map(connector => connector.id)
+    );
+  const settingsUpdates = allOldItems.map(item => {
+    const oldSettings = JSON.parse(item.settings) as OldSouthMQTTItemSettings;
+    const newSettings: NewSouthMQTTItemSettings = { topic: oldSettings.topic };
+    return { id: item.id, settings: JSON.stringify(newSettings) };
+  });
+  await bulkUpdateSettings(knex, SOUTH_ITEMS_TABLE, settingsUpdates);
+}
 
-      const newSettings: NewSouthMQTTItemSettings = {
-        topic: oldSettings.topic
-      };
-      await knex(SOUTH_ITEMS_TABLE)
-        .update({ settings: JSON.stringify(newSettings) })
-        .where('id', item.id);
-    }
+/**
+ * Writes each `{ id, settings }` pair to `table`'s `settings` column via chunked
+ * `UPDATE ... SET settings = CASE id WHEN ? THEN ? ... END WHERE id IN (...)` statements instead of
+ * one UPDATE per row, cutting N sequential UPDATE statements down to N/100 while producing the exact
+ * same per-row values.
+ */
+async function bulkUpdateSettings(knex: Knex, table: string, updates: Array<{ id: string; settings: string }>): Promise<void> {
+  for (const batch of chunk(updates, 100)) {
+    const caseSql = batch.map(() => 'when ? then ?').join(' ');
+    const caseBindings = batch.flatMap(u => [u.id, u.settings]);
+    await knex(table)
+      .whereIn(
+        'id',
+        batch.map(u => u.id)
+      )
+      .update({ settings: knex.raw(`case id ${caseSql} end`, caseBindings) });
   }
 }
 
@@ -674,6 +692,15 @@ async function populateItemHistorianFields(knex: Knex): Promise<void> {
       .from(`${SOUTH_ITEMS_TABLE} as si`)
       .join(`${SOUTH_CONNECTORS_TABLE} as sc`, 'si.connector_id', 'sc.id');
 
+    // max_read_interval/read_delay/overlap come from the connector's own settings, not the item's,
+    // so every item on the same connector (and with the same historian-ness) ends up with the exact
+    // same triple of values. Group item ids by that triple so each distinct value combination is
+    // written with a handful of bulk `whereIn(...).update(...)` calls instead of one UPDATE per item.
+    const groups = new Map<
+      string,
+      { itemIds: Array<string>; values: { max_read_interval: number | null; read_delay: number | null; overlap: number | null } }
+    >();
+
     for (const item of items) {
       const isHistorian = HISTORIAN_CONNECTOR_TYPES.includes(item.connector_type);
 
@@ -697,15 +724,31 @@ async function populateItemHistorianFields(knex: Knex): Promise<void> {
         }
       }
 
-      // Non-historian items get NULL values; grouping and sync_with_group flag are set later in groupItems()
-      await trx(SOUTH_ITEMS_TABLE).where('id', item.item_id).update({
-        max_read_interval: maxReadInterval,
-        read_delay: readDelay,
-        overlap: overlap,
-        sync_with_group: 0
-      });
+      const key = JSON.stringify([maxReadInterval, readDelay, overlap]);
+      if (!groups.has(key)) {
+        groups.set(key, { itemIds: [], values: { max_read_interval: maxReadInterval, read_delay: readDelay, overlap } });
+      }
+      groups.get(key)!.itemIds.push(item.item_id);
+    }
+
+    // Non-historian items get NULL values; grouping and sync_with_group flag are set later in groupItems()
+    for (const { itemIds, values } of groups.values()) {
+      for (const idsChunk of chunk(itemIds, 100)) {
+        await trx(SOUTH_ITEMS_TABLE)
+          .whereIn('id', idsChunk)
+          .update({ ...values, sync_with_group: 0 });
+      }
     }
   });
+}
+
+/** Splits `array` into consecutive chunks of at most `size` elements, preserving order. */
+function chunk<T>(array: Array<T>, size: number): Array<Array<T>> {
+  const result: Array<Array<T>> = [];
+  for (let i = 0; i < array.length; i += size) {
+    result.push(array.slice(i, i + size));
+  }
+  return result;
 }
 
 async function removeThrottlingFieldsInConnectorSettings(knex: Knex): Promise<void> {

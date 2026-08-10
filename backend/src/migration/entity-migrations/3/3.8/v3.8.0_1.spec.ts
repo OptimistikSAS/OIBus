@@ -1,40 +1,19 @@
-import { describe, it, before, after, beforeEach } from 'node:test';
+import { describe, it, before, after, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs/promises';
-import os from 'node:os';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { readdirSync } from 'node:fs';
-import knex, { Knex } from 'knex';
+import { Knex } from 'knex';
+import { buildSchemaBefore, createMigrationFileCloneHarness } from '../../../../tests/utils/migration-test-utils';
 import { down, up } from './v3.8.0_1';
+
+const ENTITY_MIGRATIONS_ROOT = path.resolve(__dirname, '..', '..');
 
 /**
  * Build the schema as it exists just before v3.8.0_1 by running every prior entity migration
- * in lexicographic order. This includes v3.8.0, which creates the `group_items` table that
- * v3.8.0_1 adds an index to.
+ * in order. This includes v3.8.0, which creates the `group_items` table that v3.8.0_1 adds an
+ * index to.
  */
 async function buildPreV3801Schema(db: Knex): Promise<void> {
-  const entityRoot = path.resolve(__dirname, '..', '..');
-  const collect = (base: string): Array<{ file: string; full: string }> => {
-    const out: Array<{ file: string; full: string }> = [];
-    for (const entry of readdirSync(base, { withFileTypes: true })) {
-      const full = path.join(base, entry.name);
-      if (entry.isDirectory()) {
-        out.push(...collect(full));
-      } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.spec.ts')) {
-        out.push({ file: entry.name, full });
-      }
-    }
-    return out;
-  };
-  const priorFiles = collect(entityRoot)
-    .sort((a, b) => (a.file > b.file ? 1 : a.file < b.file ? -1 : 0))
-    .filter(f => f.file < 'v3.8.0_1');
-
-  for (const { full } of priorFiles) {
-    const migration = (await import(pathToFileURL(full).href)) as { up: (k: Knex) => Promise<void> };
-    await migration.up(db);
-  }
+  await buildSchemaBefore(ENTITY_MIGRATIONS_ROOT, 'v3.8.0_1.ts', db);
 }
 
 async function indexExists(db: Knex, indexName: string): Promise<boolean> {
@@ -45,27 +24,25 @@ async function indexExists(db: Knex, indexName: string): Promise<boolean> {
 }
 
 describe('Entity migration v3.8.0_1', () => {
+  // File-based SQLite required: the migration chain rebuilds several tables (dropColumns /
+  // drop+create). Builds the pre-3.8.0_1 schema ONCE into a template file, then hands each test a
+  // fresh connection to a copy of it, instead of replaying the whole migration history per test —
+  // a real-file rebuild is expensive everywhere, and dramatically so on Windows. A genuinely fresh
+  // per-test connection (not a shared transaction/savepoint) is required here: the 'preserves all
+  // existing group_items rows' test below toggles `PRAGMA foreign_keys` OFF then back ON mid-test
+  // and relies on both taking effect, which SQLite turns into a no-op once any transaction
+  // (including a savepoint) is active.
+  const harness = createMigrationFileCloneHarness({ buildSchema: buildPreV3801Schema });
   let db: Knex;
-  let tmpDir: string;
-  let dbFile: string;
 
-  before(async () => {
-    // File-based SQLite required: the migration chain rebuilds several tables (dropColumns / drop+create).
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-entity-v3801-'));
-    dbFile = path.join(tmpDir, 'test.db');
-  });
-
-  after(async () => {
-    await db?.destroy();
-    await fs.rm(tmpDir, { recursive: true, force: true });
-  });
+  before(() => harness.before());
+  after(() => harness.after());
 
   beforeEach(async () => {
-    await db?.destroy();
-    await fs.rm(dbFile, { force: true });
-    db = knex({ client: 'better-sqlite3', connection: { filename: dbFile }, useNullAsDefault: true });
-    await buildPreV3801Schema(db);
+    await harness.beforeEach();
+    db = harness.getDb();
   });
+  afterEach(() => harness.afterEach());
 
   describe('up', () => {
     it('creates the group_items_item_id_idx index on group_items.item_id', async () => {

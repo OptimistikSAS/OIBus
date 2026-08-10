@@ -1,33 +1,20 @@
 import { describe, it, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { readdirSync } from 'node:fs';
 import knex, { Knex } from 'knex';
+import { buildSchemaBefore } from '../../../../tests/utils/migration-test-utils';
 import { up, down } from './v3.8.3_1';
 
-async function buildPreV3831Schema(db: Knex): Promise<void> {
-  const entityRoot = path.resolve(__dirname, '..', '..');
-  const collect = (base: string): Array<{ file: string; full: string }> => {
-    const out: Array<{ file: string; full: string }> = [];
-    for (const entry of readdirSync(base, { withFileTypes: true })) {
-      const full = path.join(base, entry.name);
-      if (entry.isDirectory()) {
-        out.push(...collect(full));
-      } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.spec.ts')) {
-        out.push({ file: entry.name, full });
-      }
-    }
-    return out;
-  };
-  const priorFiles = collect(entityRoot)
-    .sort((a, b) => (a.file > b.file ? 1 : a.file < b.file ? -1 : 0))
-    .filter(f => f.file < 'v3.8.3_1');
+const ENTITY_MIGRATIONS_ROOT = path.resolve(__dirname, '..', '..');
 
-  for (const { full } of priorFiles) {
-    const migration = (await import(pathToFileURL(full).href)) as { up: (k: Knex) => Promise<void> };
-    await migration.up(db);
-  }
+/**
+ * Kept on a bare (non-transactional) connection rather than the shared savepoint-based harness:
+ * tests below repeatedly toggle `PRAGMA foreign_keys = OFF`/`= ON` mid-test and rely on it actually
+ * taking effect, which SQLite turns into a no-op once any transaction (including a savepoint) is
+ * active.
+ */
+async function buildPreV3831Schema(db: Knex): Promise<void> {
+  await buildSchemaBefore(ENTITY_MIGRATIONS_ROOT, 'v3.8.3_1.ts', db);
 }
 
 describe('Entity migration v3.8.3_1', () => {

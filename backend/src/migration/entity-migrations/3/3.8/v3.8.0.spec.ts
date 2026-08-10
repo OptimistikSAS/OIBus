@@ -1,41 +1,15 @@
-import { describe, it, before, after, beforeEach } from 'node:test';
+import { describe, it, before, after, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs/promises';
-import os from 'node:os';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { readdirSync } from 'node:fs';
-import knex, { Knex } from 'knex';
+import { Knex } from 'knex';
+import { buildSchemaBefore, createMigrationFileCloneHarness } from '../../../../tests/utils/migration-test-utils';
 import { up, down } from './v3.8.0';
 
-/**
- * Collect every entity migration file (excluding specs) under the entity-migrations root,
- * sorted lexicographically by filename — the same order OIBus's migration runner uses.
- */
-function entityMigrationFiles(): Array<{ file: string; full: string }> {
-  const root = path.resolve(__dirname, '..', '..'); // .../entity-migrations
-  const collect = (base: string): Array<{ file: string; full: string }> => {
-    const out: Array<{ file: string; full: string }> = [];
-    for (const entry of readdirSync(base, { withFileTypes: true })) {
-      const full = path.join(base, entry.name);
-      if (entry.isDirectory()) {
-        out.push(...collect(full));
-      } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.spec.ts')) {
-        out.push({ file: entry.name, full });
-      }
-    }
-    return out;
-  };
-  return collect(root).sort((a, b) => (a.file > b.file ? 1 : a.file < b.file ? -1 : 0));
-}
+const ENTITY_MIGRATIONS_ROOT = path.resolve(__dirname, '..', '..');
 
 /** Build the real schema as it exists just before v3.8.0 by running every prior migration in order. */
 async function buildPreV380Schema(db: Knex): Promise<void> {
-  const priorFiles = entityMigrationFiles().filter(f => f.file < 'v3.8.0');
-  for (const { full } of priorFiles) {
-    const migration = (await import(pathToFileURL(full).href)) as { up: (k: Knex) => Promise<void> };
-    await migration.up(db);
-  }
+  await buildSchemaBefore(ENTITY_MIGRATIONS_ROOT, 'v3.8.0.ts', db);
 }
 
 async function tableExists(db: Knex, table: string): Promise<boolean> {
@@ -120,28 +94,24 @@ function historyRow(fields: Record<string, unknown>): Record<string, unknown> {
 }
 
 describe('Entity migration v3.8.0', () => {
+  // File-based SQLite is required: several steps recreate tables (dropColumns / drop+create),
+  // which need a real file connection. Builds the pre-3.8.0 schema ONCE into a template file, then
+  // hands each test a fresh connection to a copy of it, instead of replaying the whole migration
+  // history per test — a real-file rebuild is expensive everywhere, and dramatically so on Windows.
+  // A genuinely fresh per-test connection (not a shared transaction/savepoint) is required here:
+  // the `seed()` helper below relies on `PRAGMA foreign_keys = OFF` actually taking effect, which
+  // SQLite turns into a no-op once any transaction (including a savepoint) is active.
+  const harness = createMigrationFileCloneHarness({ buildSchema: buildPreV380Schema });
   let db: Knex;
-  let tmpDir: string;
-  let dbFile: string;
 
-  before(async () => {
-    // File-based SQLite is required: several steps recreate tables (dropColumns / drop+create),
-    // which need a real file connection.
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-entity-v380-'));
-    dbFile = path.join(tmpDir, 'test.db');
-  });
-
-  after(async () => {
-    await db?.destroy();
-    await fs.rm(tmpDir, { recursive: true, force: true });
-  });
+  before(() => harness.before());
+  after(() => harness.after());
 
   beforeEach(async () => {
-    await db?.destroy();
-    await fs.rm(dbFile, { force: true });
-    db = knex({ client: 'better-sqlite3', connection: { filename: dbFile }, useNullAsDefault: true });
-    await buildPreV380Schema(db);
+    await harness.beforeEach();
+    db = harness.getDb();
   });
+  afterEach(() => harness.afterEach());
 
   describe('schema and default transformers', () => {
     it('runs end-to-end on a realistic pre-3.8.0 schema', async () => {
