@@ -95,25 +95,87 @@
         </tr>
       </thead>
       <tbody>
-        <!-- south interval progressbar -->
-        @if (historyMetrics().historyMetrics.intervalProgress) {
+        <!-- whole-range progress, only for batched connectors (no per-item data) -->
+        @if (!hasItemProgress()) {
+          <!-- south interval progressbar -->
+          @if (historyMetrics().historyMetrics.intervalProgress) {
+            <tr>
+              <td translate="history-query.monitoring.south.data-retrieved"></td>
+              <td>
+                <oib-progressbar [value]="historyMetrics().historyMetrics.intervalProgress" [animated]="southProgressbarAnimated()" />
+              </td>
+            </tr>
+          }
+          <!-- south interval progress -->
+          @if (historyMetrics().historyMetrics.currentIntervalNumber && historyMetrics().historyMetrics.numberOfIntervals) {
+            <tr>
+              <td translate="history-query.monitoring.south.interval-progress"></td>
+              <td>
+                {{ historyMetrics().historyMetrics.currentIntervalNumber }}
+                / {{ historyMetrics().historyMetrics.numberOfIntervals }} : [
+                @if (historyMetrics().historyMetrics.currentIntervalStart; as currentIntervalStart) {
+                  {{ currentIntervalStart | datetime: 'ff' }}
+                }
+                ,
+                @if (historyMetrics().historyMetrics.currentIntervalEnd; as currentIntervalEnd) {
+                  {{ currentIntervalEnd | datetime: 'ff' }}
+                }
+                ]
+              </td>
+            </tr>
+          }
+        }
+        <!-- per-item progress, only for connectors that query items one at a time -->
+        @if (hasItemProgress()) {
           <tr>
-            <td translate="history-query.monitoring.south.data-retrieved"></td>
+            <td translate="history-query.monitoring.south.item-progress"></td>
             <td>
-              <oib-progressbar [value]="historyMetrics().historyMetrics.intervalProgress" [animated]="southProgressbarAnimated()" />
+              <span
+                translate="history-query.monitoring.south.current-item"
+                [translateParams]="{
+                  name: historyMetrics().historyMetrics.itemName,
+                  current: historyMetrics().historyMetrics.currentItemNumber,
+                  total: historyMetrics().historyMetrics.numberOfItems
+                }"
+              ></span>
+              <oib-progressbar
+                [value]="(historyMetrics().historyMetrics.currentItemNumber ?? 0) / (historyMetrics().historyMetrics.numberOfItems ?? 1)"
+                [animated]="itemProgressbarAnimated()"
+              />
+            </td>
+          </tr>
+          <tr>
+            <td translate="history-query.monitoring.south.item-interval-progress"></td>
+            <td>
+              {{ historyMetrics().historyMetrics.itemIntervalNumber }}
+              / {{ historyMetrics().historyMetrics.itemNumberOfIntervals }} : [
+              @if (historyMetrics().historyMetrics.currentIntervalStart; as currentIntervalStart) {
+                {{ currentIntervalStart | datetime: 'ff' }}
+              }
+              ,
+              @if (historyMetrics().historyMetrics.currentIntervalEnd; as currentIntervalEnd) {
+                {{ currentIntervalEnd | datetime: 'ff' }}
+              }
+              ]
+              <oib-progressbar
+                [value]="historyMetrics().historyMetrics.itemIntervalProgress ?? 0"
+                [animated]="itemIntervalProgressbarAnimated()"
+              />
             </td>
           </tr>
         }
-        <!-- south interval progress -->
-        @if (historyMetrics().historyMetrics.currentIntervalNumber && historyMetrics().historyMetrics.numberOfIntervals) {
+        <!-- rate and ETA, only while the query is running -->
+        @if (historyQuery().status === 'RUNNING') {
           <tr>
-            <td translate="history-query.monitoring.south.interval-progress"></td>
-            <td>
-              {{ historyMetrics().historyMetrics.currentIntervalNumber }}
-              / {{ historyMetrics().historyMetrics.numberOfIntervals }} : [{{ historyMetrics().historyMetrics.currentIntervalStart }},
-              {{ historyMetrics().historyMetrics.currentIntervalEnd }}]
-            </td>
+            <td translate="history-query.monitoring.south.values-per-second"></td>
+            <td>{{ southRate() | number: '1.0-2' }}</td>
           </tr>
+          @if (southEta(); as eta) {
+            <tr>
+              <td translate="history-query.monitoring.south.eta"></td>
+              <td>{{ eta * 1000 | duration: 'short' }}</td>
+            </tr>
+          }
         }
         <!-- number of values for point connectors -->
         <tr>
@@ -173,3 +235,35 @@
     </table>
   </div>
 </oib-box>
+
+@if (historyMetrics().historyMetrics.itemsStatus?.length) {
+  <oib-box>
+    <ng-template oibBoxTitle>
+      <span translate="history-query.monitoring.south.items-status.title"></span>
+    </ng-template>
+    <div>
+      <table class="table table-sm table-hover oib-table">
+        <thead class="light">
+          <tr>
+            <th translate="history-query.monitoring.south.items-status.status"></th>
+            <th translate="history-query.monitoring.south.items-status.name"></th>
+            <th translate="history-query.monitoring.south.items-status.last-value"></th>
+            <th translate="history-query.monitoring.south.items-status.records"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (itemStatus of historyMetrics().historyMetrics.itemsStatus; track itemStatus.itemId) {
+            <tr class="history-item-status">
+              <td>
+                <span [translate]="'history-query.monitoring.south.items-status.' + itemStatus.status"></span>
+              </td>
+              <td>{{ itemStatus.itemName }}</td>
+              <td>{{ itemStatus.lastValueTimestamp ? (itemStatus.lastValueTimestamp | datetime: 'ff') : '' }}</td>
+              <td>{{ itemStatus.recordsCount }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </oib-box>
+}
