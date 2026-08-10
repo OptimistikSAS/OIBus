@@ -1,4 +1,4 @@
-import { CacheMetadata, HistoryQueryMetrics, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { CacheMetadata, HistoryQueryItemStatus, HistoryQueryMetrics, OIBusTimeValue } from '../../../shared/model/engine.model';
 import HistoryQuery from '../../engine/history-query';
 import HistoryQueryMetricsRepository, { PersistedHistoryQueryMetrics } from '../../repository/metrics/history-query-metrics.repository';
 import { DateTime } from 'luxon';
@@ -42,7 +42,8 @@ export default class HistoryQueryMetricsService {
       currentIntervalStart: null,
       currentIntervalEnd: null,
       currentIntervalNumber: 0,
-      numberOfIntervals: 0
+      numberOfIntervals: 0,
+      itemsStatus: []
     }
   };
 
@@ -62,6 +63,7 @@ export default class HistoryQueryMetricsService {
     this.historyQuery.metricsEvent.on('south-run-end', this.onSouthRunEnd);
     this.historyQuery.metricsEvent.on('south-history-query-start', this.onSouthHistoryQueryStart);
     this.historyQuery.metricsEvent.on('south-history-query-interval', this.onSouthHistoryQueryInterval);
+    this.historyQuery.metricsEvent.on('south-history-query-item', this.onSouthHistoryQueryItem);
     this.historyQuery.metricsEvent.on('south-history-query-stop', this.onSouthHistoryQueryStop);
     this.historyQuery.metricsEvent.on('south-add-values', this.onSouthAddValues);
     this.historyQuery.metricsEvent.on('south-add-file', this.onSouthAddFile);
@@ -121,6 +123,12 @@ export default class HistoryQueryMetricsService {
     currentIntervalEnd: Instant;
     currentIntervalNumber: number;
     numberOfIntervals: number;
+    itemName?: string;
+    currentItemNumber?: number;
+    numberOfItems?: number;
+    itemIntervalProgress?: number;
+    itemIntervalNumber?: number;
+    itemNumberOfIntervals?: number;
   }) => {
     this._metrics.historyMetrics.running = data.running;
     this._metrics.historyMetrics.intervalProgress = data.intervalProgress;
@@ -128,6 +136,25 @@ export default class HistoryQueryMetricsService {
     this._metrics.historyMetrics.currentIntervalEnd = data.currentIntervalEnd;
     this._metrics.historyMetrics.currentIntervalNumber = data.currentIntervalNumber;
     this._metrics.historyMetrics.numberOfIntervals = data.numberOfIntervals;
+    this._metrics.historyMetrics.itemName = data.itemName;
+    this._metrics.historyMetrics.currentItemNumber = data.currentItemNumber;
+    this._metrics.historyMetrics.numberOfItems = data.numberOfItems;
+    this._metrics.historyMetrics.itemIntervalProgress = data.itemIntervalProgress;
+    this._metrics.historyMetrics.itemIntervalNumber = data.itemIntervalNumber;
+    this._metrics.historyMetrics.itemNumberOfIntervals = data.itemNumberOfIntervals;
+    this.updateMetrics();
+  };
+
+  private onSouthHistoryQueryItem = (data: {
+    itemName: string;
+    currentItemNumber: number;
+    numberOfItems: number;
+    itemsStatus: Array<HistoryQueryItemStatus>;
+  }) => {
+    this._metrics.historyMetrics.itemName = data.itemName;
+    this._metrics.historyMetrics.currentItemNumber = data.currentItemNumber;
+    this._metrics.historyMetrics.numberOfItems = data.numberOfItems;
+    this._metrics.historyMetrics.itemsStatus = data.itemsStatus;
     this.updateMetrics();
   };
 
@@ -202,6 +229,7 @@ export default class HistoryQueryMetricsService {
     this.historyQuery.metricsEvent.off('south-run-end', this.onSouthRunEnd);
     this.historyQuery.metricsEvent.off('south-history-query-start', this.onSouthHistoryQueryStart);
     this.historyQuery.metricsEvent.off('south-history-query-interval', this.onSouthHistoryQueryInterval);
+    this.historyQuery.metricsEvent.off('south-history-query-item', this.onSouthHistoryQueryItem);
     this.historyQuery.metricsEvent.off('south-history-query-stop', this.onSouthHistoryQueryStop);
     this.historyQuery.metricsEvent.off('south-add-values', this.onSouthAddValues);
     this.historyQuery.metricsEvent.off('south-add-file', this.onSouthAddFile);
