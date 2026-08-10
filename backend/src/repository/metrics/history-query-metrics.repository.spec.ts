@@ -35,7 +35,18 @@ describe('HistoryQueryMetricsRepository with populated database', () => {
     const result = repository.getMetrics(testData.historyQueries.list[0].id);
     // north current* sizes are no longer persisted (read live by the service) — compare the persisted subset.
     const { currentCacheSize: _c, currentErrorSize: _e, currentArchiveSize: _a, ...north } = testData.historyQueries.metrics.north;
-    assert.deepStrictEqual(result, { ...testData.historyQueries.metrics, north });
+    // per-item fields on historyMetrics are derived live from the running engine, not persisted — compare the persisted subset.
+    const {
+      itemName: _in,
+      currentItemNumber: _cin,
+      numberOfItems: _noi,
+      itemIntervalProgress: _iip,
+      itemIntervalNumber: _iin,
+      itemNumberOfIntervals: _inoi,
+      itemsStatus: _is,
+      ...historyMetrics
+    } = testData.historyQueries.metrics.historyMetrics;
+    assert.deepStrictEqual(result, { ...testData.historyQueries.metrics, north, historyMetrics });
   });
 
   it('should update metrics', () => {
