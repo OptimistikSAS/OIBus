@@ -2920,6 +2920,7 @@
     "south-type": "South type",
     "north-type": "North type",
     "interval": "Interval",
+    "item-progress": "{{ current }}/{{ total }} items",
     "query-time-range": {
       "start": "Start",
       "end": "End",
@@ -3045,7 +3046,22 @@
         "last-run-start": "Last run",
         "last-run-duration": "Last run duration",
         "data-retrieved": "Data retrieved",
-        "interval-progress": "Interval progress"
+        "interval-progress": "Interval progress",
+        "current-item": "Current item: {{ name }} ({{ current }} / {{ total }})",
+        "item-progress": "Items processed",
+        "item-interval-progress": "Current item progress",
+        "values-per-second": "Values/files per second",
+        "eta": "Estimated time remaining",
+        "items-status": {
+          "title": "Items status",
+          "name": "Name",
+          "status": "Status",
+          "last-value": "Last value retrieved",
+          "records": "Records retrieved",
+          "pending": "Pending",
+          "running": "Running",
+          "done": "Done"
+        }
       }
     },
     "tooltips": {
