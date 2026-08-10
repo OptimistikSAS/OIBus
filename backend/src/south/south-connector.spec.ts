@@ -768,7 +768,9 @@ describe('SouthConnector', () => {
         testData.south.list[2].id,
         { type: 'time-values', content: values },
         testData.constants.dates.DATE_1,
-        testData.south.list[2].items
+        testData.south.list[2].items,
+        null,
+        null
       ]);
     });
 
@@ -784,7 +786,9 @@ describe('SouthConnector', () => {
         testData.south.list[2].id,
         { type: 'any', filePath: 'file.csv' },
         testData.constants.dates.DATE_1,
-        testData.south.list[2].items
+        testData.south.list[2].items,
+        null,
+        null
       ]);
     });
 
@@ -803,7 +807,9 @@ describe('SouthConnector', () => {
         testData.south.list[2].id,
         { type: 'any-content', content: 'file.csv' },
         testData.constants.dates.DATE_1,
-        []
+        [],
+        null,
+        null
       ]);
       // any-content is one opaque payload: counts as 1 value (not its byte length), no time value
       assert.strictEqual(addValuesListener.mock.calls.length, 1);
@@ -854,6 +860,39 @@ describe('SouthConnector', () => {
         )
       );
       assert.strictEqual(historyQueryMock.mock.calls.length, 1);
+    });
+
+    it('should tag content added during historyQuery with the queried interval bounds', async () => {
+      const intervals = [{ start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' }];
+      utilsExports.generateIntervals = mock.fn(() => intervals);
+
+      south.historyQuery = mock.fn(
+        async (
+          items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>
+        ): Promise<{ trackedInstant: Instant | null; value: null }> => {
+          await south.addContent({ type: 'any-content', content: 'x' }, '2020-02-02T02:02:02.222Z', items);
+          return { trackedInstant: null, value: null };
+        }
+      );
+
+      await south.historyQueryHandler(
+        testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
+        '2020-02-02T02:02:02.222Z',
+        '2023-02-02T02:02:02.222Z'
+      );
+
+      assert.strictEqual(addContentCallback.mock.calls.length, 1);
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments.slice(-2), [
+        '2020-02-02T02:02:02.222Z',
+        '2021-02-02T02:02:02.222Z'
+      ]);
+    });
+
+    it('should not tag content added outside of a historyQuery window (direct call) with any interval', async () => {
+      await south.addContent({ type: 'any-content', content: 'x' }, '2020-02-02T02:02:02.222Z', []);
+
+      assert.strictEqual(addContentCallback.mock.calls.length, 1);
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments.slice(-2), [null, null]);
     });
 
     it('should use group historian settings when syncWithGroup is true', async () => {

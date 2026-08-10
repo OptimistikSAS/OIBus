@@ -60,12 +60,12 @@ the transformer's position in the list.
 Once a source is selected, the list is automatically filtered to show only compatible transformers. The available
 choices depend on the type of South connector chosen:
 
-| South connector type                                                          | Compatible standard transformers                                                            |
-| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| **OPC UA, OPC Classic, Modbus, ADS, OSIsoft PI, OIAnalytics** (PLC / historian) | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values     |
-| **MQTT, REST, SFTP, FTP, Folder Scanner, SQL databases** (file / query-based)   | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON)     |
-| **OIBus API**                                                                   | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON)     |
-| **OIAnalytics Setpoint**                                                       | MQTT payloads, Modbus values, OPCUA values                                                     |
+| South connector type                                                            | Compatible standard transformers                                                           |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **OPC UA, OPC Classic, Modbus, ADS, OSIsoft PI, OIAnalytics** (PLC / historian) | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values |
+| **MQTT, REST, SFTP, FTP, Folder Scanner, SQL databases** (file / query-based)   | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
+| **OIBus API**                                                                   | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
+| **OIAnalytics Setpoint**                                                        | MQTT payloads, Modbus values, OPCUA values                                                 |
 
 Custom transformers are also shown in this list and are always named by the user. In addition, **Ignore** and
 **No transform** (see below) are available for every source type.
@@ -84,10 +84,10 @@ Standard transformers are built-in and require only configuration — no coding.
 
 These two are available for **every** source type, regardless of content type, and require no configuration.
 
-| Transformer      | Behavior                                                                                                                                                                |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Ignore**        | Drops the data. Nothing is cached and nothing is sent to the North connector. Useful to silence part of a South connector's output for a given North (via item/group scoping) without disabling the item itself. |
-| **No transform** | Caches the data exactly as received, with no conversion at all. Use this when the North connector already accepts the South's native content type.                    |
+| Transformer      | Behavior                                                                                                                                                                                                         |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ignore**       | Drops the data. Nothing is cached and nothing is sent to the North connector. Useful to silence part of a South connector's output for a given North (via item/group scoping) without disabling the item itself. |
+| **No transform** | Caches the data exactly as received, with no conversion at all. Use this when the North connector already accepts the South's native content type.                                                               |
 
 ---
 
@@ -112,24 +112,24 @@ transform individual values before they are written.
 
 ##### Settings
 
-| Setting               | Description                                                                    |
-| --------------------- | ------------------------------------------------------------------------------ |
-| **Filename**          | Output filename; `@CurrentDate` is replaced with the current UTC timestamp     |
-| **Encoding**          | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, or `UTF_16_LE`                                |
-| **Header**            | Whether to include the column header row                                       |
-| **Delimiter**         | Column separator                                                               |
-| **Newline**           | Line ending (`LF`, `CRLF`, `CR`)                                               |
-| **Quote char**        | `DOUBLE_QUOTE`, `SINGLE_QUOTE`, or `NONE`                                      |
-| **Escape char**       | `DOUBLE_QUOTE` or `BACKSLASH`                                                  |
-| **Point ID column**   | Header label for the point identifier column                                   |
-| **Value column**      | Header label for the value column                                              |
-| **Timestamp column**  | Header label for the timestamp column                                          |
-| **Timestamp type**    | Output format (`iso-string`, `unix-epoch`, `unix-epoch-ms`, `string`)          |
-| **Timestamp format**  | Custom pattern when type is `string` (e.g. `yyyy-MM-dd HH:mm:ss.SSS`)          |
-| **Timezone**          | Timezone for formatting when type is `string`                                  |
-| **Point ID process**  | Optional JS expression applied to each point ID (variable: `value`)            |
-| **Value process**     | Optional JS expression applied to each value (variable: `value`)               |
-| **Timestamp process** | Optional JS expression applied to each formatted timestamp (variable: `value`) |
+| Setting               | Description                                                                                                                                                                                        |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Filename**          | Output filename; supports `@CurrentDate` (current UTC timestamp), and, for content coming from a South history query, `@QueryStartTime`/`@QueryEndTime` (the queried time window, empty otherwise) |
+| **Encoding**          | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, or `UTF_16_LE`                                                                                                                                                    |
+| **Header**            | Whether to include the column header row                                                                                                                                                           |
+| **Delimiter**         | Column separator                                                                                                                                                                                   |
+| **Newline**           | Line ending (`LF`, `CRLF`, `CR`)                                                                                                                                                                   |
+| **Quote char**        | `DOUBLE_QUOTE`, `SINGLE_QUOTE`, or `NONE`                                                                                                                                                          |
+| **Escape char**       | `DOUBLE_QUOTE` or `BACKSLASH`                                                                                                                                                                      |
+| **Point ID column**   | Header label for the point identifier column                                                                                                                                                       |
+| **Value column**      | Header label for the value column                                                                                                                                                                  |
+| **Timestamp column**  | Header label for the timestamp column                                                                                                                                                              |
+| **Timestamp type**    | Output format (`iso-string`, `unix-epoch`, `unix-epoch-ms`, `string`)                                                                                                                              |
+| **Timestamp format**  | Custom pattern when type is `string` (e.g. `yyyy-MM-dd HH:mm:ss.SSS`)                                                                                                                              |
+| **Timezone**          | Timezone for formatting when type is `string`                                                                                                                                                      |
+| **Point ID process**  | Optional JS expression applied to each point ID (variable: `value`)                                                                                                                                |
+| **Value process**     | Optional JS expression applied to each value (variable: `value`)                                                                                                                                   |
+| **Timestamp process** | Optional JS expression applied to each formatted timestamp (variable: `value`)                                                                                                                     |
 
 ##### Example
 
@@ -433,18 +433,18 @@ support datetime conversion, type casting, and optional per-field JavaScript pos
 
 ##### Settings
 
-| Setting               | Description                                                                |
-| --------------------- | -------------------------------------------------------------------------- |
-| **Filename**          | Output filename; `@CurrentDate` is replaced with the current UTC timestamp |
-| **Encoding**          | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, or `UTF_16_LE`                            |
-| **Header**            | Whether to include the column header row                                   |
-| **Delimiter**         | Column separator                                                           |
-| **Newline**           | Line ending (`LF`, `CRLF`, `CR`)                                           |
-| **Quote char**        | `DOUBLE_QUOTE`, `SINGLE_QUOTE`, or `NONE`                                  |
-| **Escape char**       | `DOUBLE_QUOTE` or `BACKSLASH`                                              |
-| **Null value**        | String written when a field is missing or null (defaults to empty string)  |
-| **Row iterator path** | JSONPath pointing to the array of rows (e.g. `$.data[*]`)                  |
-| **Fields**            | One entry per CSV column (see below)                                       |
+| Setting               | Description                                                                                                                                                                                        |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Filename**          | Output filename; supports `@CurrentDate` (current UTC timestamp), and, for content coming from a South history query, `@QueryStartTime`/`@QueryEndTime` (the queried time window, empty otherwise) |
+| **Encoding**          | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, or `UTF_16_LE`                                                                                                                                                    |
+| **Header**            | Whether to include the column header row                                                                                                                                                           |
+| **Delimiter**         | Column separator                                                                                                                                                                                   |
+| **Newline**           | Line ending (`LF`, `CRLF`, `CR`)                                                                                                                                                                   |
+| **Quote char**        | `DOUBLE_QUOTE`, `SINGLE_QUOTE`, or `NONE`                                                                                                                                                          |
+| **Escape char**       | `DOUBLE_QUOTE` or `BACKSLASH`                                                                                                                                                                      |
+| **Null value**        | String written when a field is missing or null (defaults to empty string)                                                                                                                          |
+| **Row iterator path** | JSONPath pointing to the array of rows (e.g. `$.data[*]`)                                                                                                                                          |
+| **Fields**            | One entry per CSV column (see below)                                                                                                                                                               |
 
 Each **field** entry:
 
@@ -511,17 +511,17 @@ OIAnalytics North connector without writing a custom transformer.
 
 ##### Settings
 
-| Setting                   | Description                                                                                                                        |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| **Row Iterator JSONPath**  | JSONPath to the array of rows that become time-values (e.g. `$[*]`). Automatically parses a JSON-stringified intermediate node when direct traversal fails, so the path may cross into a field holding raw JSON text (e.g. an MQTT payload) and still yield one row per nested match |
-| **Point ID JSONPath**      | JSONPath to the point identifier within the current row (e.g. `$[*].id`); wildcards (`[*]`) are resolved to the current row's indices |
-| **Value JSONPath**         | JSONPath to the value within the current row                                                                                          |
-| **Timestamp JSONPath**     | JSONPath to the raw timestamp within the current row. Falls back to the current time if it cannot be resolved                       |
-| **Timestamp input type**   | Format of the raw timestamp: `String`, `ISO string`, `Unix epoch (s)`, or `Unix epoch (ms)`                                          |
-| **Timezone**               | Timezone used when parsing (only used when input type is `String`)                                                                   |
-| **Format**                 | Custom datetime pattern (only used when input type is `String`, e.g. `yyyy-MM-dd HH:mm:ss`)                                          |
-| **Locale**                 | Locale used for parsing month/day names (only used when input type is `String`)                                                      |
-| **Timestamp precision**    | Output precision the resulting ISO timestamp is truncated to: `Millisecond`, `Second`, `Minute`, or `Hour`                            |
+| Setting                   | Description                                                                                                                                                                                                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Row Iterator JSONPath** | JSONPath to the array of rows that become time-values (e.g. `$[*]`). Automatically parses a JSON-stringified intermediate node when direct traversal fails, so the path may cross into a field holding raw JSON text (e.g. an MQTT payload) and still yield one row per nested match |
+| **Point ID JSONPath**     | JSONPath to the point identifier within the current row (e.g. `$[*].id`); wildcards (`[*]`) are resolved to the current row's indices                                                                                                                                                |
+| **Value JSONPath**        | JSONPath to the value within the current row                                                                                                                                                                                                                                         |
+| **Timestamp JSONPath**    | JSONPath to the raw timestamp within the current row. Falls back to the current time if it cannot be resolved                                                                                                                                                                        |
+| **Timestamp input type**  | Format of the raw timestamp: `String`, `ISO string`, `Unix epoch (s)`, or `Unix epoch (ms)`                                                                                                                                                                                          |
+| **Timezone**              | Timezone used when parsing (only used when input type is `String`)                                                                                                                                                                                                                   |
+| **Format**                | Custom datetime pattern (only used when input type is `String`, e.g. `yyyy-MM-dd HH:mm:ss`)                                                                                                                                                                                          |
+| **Locale**                | Locale used for parsing month/day names (only used when input type is `String`)                                                                                                                                                                                                      |
+| **Timestamp precision**   | Output precision the resulting ISO timestamp is truncated to: `Millisecond`, `Second`, `Minute`, or `Hour`                                                                                                                                                                           |
 
 ##### Example — MQTT messages with a JSON-stringified payload
 

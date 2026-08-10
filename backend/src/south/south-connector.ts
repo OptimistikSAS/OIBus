@@ -127,13 +127,22 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   private historyRunningCount = 0;
   historyIsRunning = false;
 
+  // Interval of the historyQuery() call currently in flight, set by queryIntervals() around that
+  // call so addContent (invoked synchronously from within a connector's historyQuery()) can tag
+  // the resulting content with the window it was queried from. Consumed e.g. by the
+  // @QueryStartTime/@QueryEndTime filename placeholders in CSV transformers. Null outside a
+  // history query (direct query, subscriptions), where content isn't bound to a time window.
+  private currentHistoryQueryInterval: Interval | null = null;
+
   protected constructor(
     protected connector: SouthConnectorEntity<T, I>,
     private engineAddContentCallback: (
       southId: string,
       data: OIBusContent,
       queryTime: Instant,
-      items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+      items: Array<SouthConnectorItemEntity<SouthItemSettings>>,
+      queryStartTime?: Instant | null,
+      queryEndTime?: Instant | null
     ) => Promise<void>,
     protected readonly southCacheRepository: SouthCacheRepository,
     protected cacheFolderPath: string
@@ -625,9 +634,15 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       const interval = intervals[index];
 
       this.metricsEvent.emit('history-query-interval', { currentIntervalStart: interval.start, currentIntervalEnd: interval.end });
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      const lastValue: { trackedInstant: Instant; value: unknown } | null = await this.historyQuery(items, interval.start, interval.end);
+      this.currentHistoryQueryInterval = interval;
+      let lastValue: { trackedInstant: Instant; value: unknown } | null;
+      try {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
+        lastValue = await this.historyQuery(items, interval.start, interval.end);
+      } finally {
+        this.currentHistoryQueryInterval = null;
+      }
 
       if (strategy === 'oldest') {
         // We update the max instant only if the start interval is lower than the lastInstantRetrieved (i.e., we found data)
@@ -742,7 +757,14 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     items: Array<SouthConnectorItemEntity<SouthItemSettings>>
   ): Promise<void> {
     this.logger.debug(`Add ${data.content.length} bytes of content to cache from South "${this.connector.name}"`);
-    await this.engineAddContentCallback(this.connector.id, data, queryTime, items);
+    await this.engineAddContentCallback(
+      this.connector.id,
+      data,
+      queryTime,
+      items,
+      this.currentHistoryQueryInterval?.start ?? null,
+      this.currentHistoryQueryInterval?.end ?? null
+    );
     // `any-content` is a single opaque serialised payload, not a list of time values: count it
     // as one retrieved item (not its byte length) and carry no "last value" (no OIBusTimeValue).
     this.metricsEvent.emit('add-values', {
@@ -758,7 +780,14 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   ): Promise<void> {
     if (data.content.length > 0) {
       this.logger.debug(`Add ${data.content.length} values to cache from South "${this.connector.name}"`);
-      await this.engineAddContentCallback(this.connector.id, data, queryTime, items);
+      await this.engineAddContentCallback(
+        this.connector.id,
+        data,
+        queryTime,
+        items,
+        this.currentHistoryQueryInterval?.start ?? null,
+        this.currentHistoryQueryInterval?.end ?? null
+      );
       this.metricsEvent.emit('add-values', {
         numberOfValuesRetrieved: data.content.length,
         lastValueRetrieved: data.content[data.content.length - 1]
@@ -772,7 +801,14 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     items: Array<SouthConnectorItemEntity<SouthItemSettings>>
   ): Promise<void> {
     this.logger.debug(`Add file "${data.filePath}" to cache from South "${this.connector.name}"`);
-    await this.engineAddContentCallback(this.connector.id, data, queryTime, items);
+    await this.engineAddContentCallback(
+      this.connector.id,
+      data,
+      queryTime,
+      items,
+      this.currentHistoryQueryInterval?.start ?? null,
+      this.currentHistoryQueryInterval?.end ?? null
+    );
     this.metricsEvent.emit('add-file', {
       lastFileRetrieved: path.parse(data.filePath).base
     });

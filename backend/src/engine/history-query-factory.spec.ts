@@ -259,7 +259,62 @@ describe('HistoryQueryFactory', () => {
       assert.strictEqual(mockNorthConnector.cacheContent.mock.calls.length, 1);
       assert.deepStrictEqual(mockNorthConnector.cacheContent.mock.calls[0].arguments, [
         mockData,
-        { source: 'south', southId: mockSettings.id, queryTime: mockQueryTime, items: mockItemIds }
+        {
+          source: 'south',
+          southId: mockSettings.id,
+          queryTime: mockQueryTime,
+          queryStartTime: undefined,
+          queryEndTime: undefined,
+          items: mockItemIds
+        }
+      ]);
+    });
+
+    it('should forward the queried interval bounds to the north caching callback', async () => {
+      const mockAddContent = mock.fn(
+        async (
+          _southId: string,
+          _data: OIBusContent,
+          _queryTime: Instant,
+          _items: Array<HistoryQueryItemEntity<SouthItemSettings>>
+        ): Promise<void> => undefined
+      );
+      buildHistoryQuery(
+        mockSettings,
+        mockAddContent,
+        baseFolder,
+        mockSouthCacheRepository,
+        mockCertificateRepository,
+        mockOIAnalyticsRegistrationRepository,
+        mockOrchestrator
+      );
+
+      const buildSouthMock = southFactoryExports.buildSouth as { mock: { calls: Array<{ arguments: Array<unknown> }> } };
+      const southCallback = buildSouthMock.mock.calls[0].arguments[1] as (
+        southId: string,
+        data: unknown,
+        queryTime: string,
+        items: Array<unknown>,
+        queryStartTime?: string | null,
+        queryEndTime?: string | null
+      ) => Promise<void>;
+
+      const mockData = { type: 'data' };
+      const mockQueryTime = '2023-01-01';
+      const mockItemIds = ['item1'];
+
+      await southCallback('southId', mockData, mockQueryTime, mockItemIds, '2023-01-01T00:00:00.000Z', '2023-01-01T01:00:00.000Z');
+
+      assert.deepStrictEqual(mockNorthConnector.cacheContent.mock.calls[0].arguments, [
+        mockData,
+        {
+          source: 'south',
+          southId: mockSettings.id,
+          queryTime: mockQueryTime,
+          queryStartTime: '2023-01-01T00:00:00.000Z',
+          queryEndTime: '2023-01-01T01:00:00.000Z',
+          items: mockItemIds
+        }
       ]);
     });
   });

@@ -89,8 +89,14 @@ export const buildHistoryQuery = (
       createdAt: settings.createdAt,
       updatedAt: settings.updatedAt
     },
-    async (historyId: string, data: OIBusContent, queryTime: Instant, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
-      await north.cacheContent(data, { source: 'south', southId: settings.id, queryTime, items }),
+    async (
+      historyId: string,
+      data: OIBusContent,
+      queryTime: Instant,
+      items: Array<SouthConnectorItemEntity<SouthItemSettings>>,
+      queryStartTime?: Instant | null,
+      queryEndTime?: Instant | null
+    ) => await north.cacheContent(data, { source: 'south', southId: settings.id, queryTime, queryStartTime, queryEndTime, items }),
     path.join(baseFolderPath, 'cache', `history-${settings.id}`, 'south'),
     southCacheRepository,
     certificateRepository,

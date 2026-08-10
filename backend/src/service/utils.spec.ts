@@ -2005,6 +2005,57 @@ describe('Service utils', () => {
     });
   });
 
+  describe('applyFilenameVariables', () => {
+    beforeEach(() => {
+      mock.method(Date, 'now', () => new Date(testData.constants.dates.FAKE_NOW).getTime());
+    });
+
+    it('should replace @QueryStartTime and @QueryEndTime with the south query window', () => {
+      const result = utils.applyFilenameVariables('export_@QueryStartTime_@QueryEndTime.csv', {
+        source: 'south',
+        southId: 'south1',
+        queryTime: testData.constants.dates.DATE_1,
+        queryStartTime: '2023-01-01T00:00:00.000Z',
+        queryEndTime: '2023-01-01T01:00:00.000Z',
+        items: []
+      });
+
+      assert.strictEqual(result, 'export_2023_01_01_00_00_00_000_2023_01_01_01_00_00_000.csv');
+    });
+
+    it('should replace @CurrentDate alongside the query window variables', () => {
+      const result = utils.applyFilenameVariables('@CurrentDate_@QueryStartTime.csv', {
+        source: 'south',
+        southId: 'south1',
+        queryTime: testData.constants.dates.DATE_1,
+        queryStartTime: '2023-01-01T00:00:00.000Z',
+        queryEndTime: null,
+        items: []
+      });
+
+      assert.strictEqual(result, '2021_01_02_00_00_00_000_2023_01_01_00_00_00_000.csv');
+    });
+
+    it('should replace @QueryStartTime/@QueryEndTime with an empty string when the south content is not bound to a query window', () => {
+      const result = utils.applyFilenameVariables('export_@QueryStartTime_@QueryEndTime.csv', {
+        source: 'south',
+        southId: 'south1',
+        queryTime: testData.constants.dates.DATE_1,
+        queryStartTime: null,
+        queryEndTime: null,
+        items: []
+      });
+
+      assert.strictEqual(result, 'export__.csv');
+    });
+
+    it('should replace @QueryStartTime/@QueryEndTime with an empty string for a non-south source', () => {
+      const result = utils.applyFilenameVariables('export_@QueryStartTime_@QueryEndTime.csv', { source: 'test' });
+
+      assert.strictEqual(result, 'export__.csv');
+    });
+  });
+
   describe('generateCsvContent', () => {
     beforeEach(() => {
       csvExports.unparse.mock.resetCalls();

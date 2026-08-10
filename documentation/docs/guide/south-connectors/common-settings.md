@@ -87,19 +87,19 @@ for details. For every other connector type, execution stays fully sequential an
 
 Items retrieve data as files or JSON payloads. Each item has the following fields:
 
-| Setting               | Description                                                                                                                       | Example Value         |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
-| **Name**              | Unique reference used by North connectors and transformers to identify this data point.                                           | `Temperature_Sensor1` |
-| **Group**             | The group this item belongs to. Leave empty for a standalone item with its own scan mode.                                         | `Group A`             |
-| **Scan mode**         | Schedule that determines when OIBus collects data. Only shown when the item has no group (otherwise inherited from the group).    | `Every 1 min`         |
-| **Enabled**           | Whether the item is active.                                                                                                       | Enabled/Disabled      |
-| **Sync with group**   | _(History-capable connectors only)_ When enabled, throttling settings are inherited from the group.                               | Enabled/Disabled      |
-| **Max read interval** | _(History-capable connectors)_ Maximum sub-query duration in seconds.                                                             | `3600`                |
-| **Read delay**        | _(History-capable connectors)_ Pause in milliseconds between consecutive sub-queries.                                             | `200`                 |
-| **Start time offset** | _(History-capable connectors)_ Milliseconds added to `@StartTime`. Negative values move it earlier to capture late-arriving data. | `-60000`              |
-| **End time offset**   | _(History-capable connectors)_ Milliseconds added to `@EndTime`. Negative values pull it earlier.                                 | `0`                   |
+| Setting               | Description                                                                                                                              | Example Value           |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| **Name**              | Unique reference used by North connectors and transformers to identify this data point.                                                  | `Temperature_Sensor1`   |
+| **Group**             | The group this item belongs to. Leave empty for a standalone item with its own scan mode.                                                | `Group A`               |
+| **Scan mode**         | Schedule that determines when OIBus collects data. Only shown when the item has no group (otherwise inherited from the group).           | `Every 1 min`           |
+| **Enabled**           | Whether the item is active.                                                                                                              | Enabled/Disabled        |
+| **Sync with group**   | _(History-capable connectors only)_ When enabled, throttling settings are inherited from the group.                                      | Enabled/Disabled        |
+| **Max read interval** | _(History-capable connectors)_ Maximum sub-query duration in seconds.                                                                    | `3600`                  |
+| **Read delay**        | _(History-capable connectors)_ Pause in milliseconds between consecutive sub-queries.                                                    | `200`                   |
+| **Start time offset** | _(History-capable connectors)_ Milliseconds added to `@StartTime`. Negative values move it earlier to capture late-arriving data.        | `-60000`                |
+| **End time offset**   | _(History-capable connectors)_ Milliseconds added to `@EndTime`. Negative values pull it earlier.                                        | `0`                     |
 | **Recovery strategy** | _(History-capable connectors)_ Order in which a backlog of unqueried sub-intervals is caught up: oldest-first (default) or newest-first. | `From oldest to newest` |
-| **Specific settings** | Varies by connector type — see each connector's documentation.                                                                    | —                     |
+| **Specific settings** | Varies by connector type — see each connector's documentation.                                                                           | —                       |
 
 ### Item Actions
 

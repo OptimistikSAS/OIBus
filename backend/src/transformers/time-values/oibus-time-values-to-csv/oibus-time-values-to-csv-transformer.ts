@@ -3,8 +3,8 @@ import csv from 'papaparse';
 import { CacheMetadata, CacheMetadataSource, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
-import { DateTime } from 'luxon';
 import {
+  applyFilenameVariables,
   convertDelimiter,
   convertEscapeChar,
   convertNewline,
@@ -40,7 +40,7 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
    */
   override transformInMemory(
     data: unknown,
-    _source: CacheMetadataSource,
+    source: CacheMetadataSource,
     _filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
     const jsonData: Array<OIBusTimeValue> = Array.isArray(data)
@@ -48,9 +48,7 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
       : (JSON.parse(String(data)) as Array<OIBusTimeValue>);
 
     const metadata: CacheMetadata = {
-      contentFile: sanitizeFilename(
-        this.options.filename.replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
-      ),
+      contentFile: sanitizeFilename(applyFilenameVariables(this.options.filename, source)),
       contentSize: 0, // It will be set outside the transformer, once the file is written
       createdAt: '', // It will be set outside the transformer, once the file is written
       numberOfElement: 0,

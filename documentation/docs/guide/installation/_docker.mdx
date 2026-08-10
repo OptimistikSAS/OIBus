@@ -34,14 +34,14 @@ Set these environment variables on the container to configure the admin account,
 before OIBus starts for the first time — the equivalent of the `-u`/`-p`/`-port`/`-n` flags used by the
 Windows and Linux installers.
 
-| Variable              | Description                                                                        | Default                         |
-| ---------------------- | ------------------------------------------------------------------------------------ | -------------------------------- |
-| `ENGINE_NAME`           | Name given to the OIBus engine                                                       | omitted (OIBus default applies) |
-| `ADMIN_USERNAME`        | Admin username                                                                       | omitted (OIBus default applies) |
-| `ADMIN_PASSWORD`        | Admin password                                                                       | omitted (OIBus default applies) |
-| `ADMIN_USERNAME_FILE`   | Path (inside the container) to a file holding the admin username — for Docker Secrets; takes priority over `ADMIN_USERNAME` when set | omitted |
-| `ADMIN_PASSWORD_FILE`   | Path (inside the container) to a file holding the admin password — for Docker Secrets; takes priority over `ADMIN_PASSWORD` when set | omitted |
-| `DEFAULT_PORT`          | Port OIBus listens on inside the container                                           | omitted (OIBus default applies) |
+| Variable              | Description                                                                                                                          | Default                         |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
+| `ENGINE_NAME`         | Name given to the OIBus engine                                                                                                       | omitted (OIBus default applies) |
+| `ADMIN_USERNAME`      | Admin username                                                                                                                       | omitted (OIBus default applies) |
+| `ADMIN_PASSWORD`      | Admin password                                                                                                                       | omitted (OIBus default applies) |
+| `ADMIN_USERNAME_FILE` | Path (inside the container) to a file holding the admin username — for Docker Secrets; takes priority over `ADMIN_USERNAME` when set | omitted                         |
+| `ADMIN_PASSWORD_FILE` | Path (inside the container) to a file holding the admin password — for Docker Secrets; takes priority over `ADMIN_PASSWORD` when set | omitted                         |
+| `DEFAULT_PORT`        | Port OIBus listens on inside the container                                                                                           | omitted (OIBus default applies) |
 
 <CodeBlock language="bash">
   {`docker run -d \\

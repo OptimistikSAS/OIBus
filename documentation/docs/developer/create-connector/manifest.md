@@ -32,12 +32,8 @@ const manifest: SouthConnectorManifest = {
     lastFile: true, // class implements SouthDirectQuery for a file?
     history: false // class implements SouthHistoryQuery?
   },
-  settings: {
-    /* OIBusObjectAttribute — see below */
-  },
-  items: {
-    /* OIBusArrayAttribute — see below */
-  }
+  settings: {/* OIBusObjectAttribute — see below */},
+  items: {/* OIBusArrayAttribute — see below */}
 };
 
 export default manifest;
@@ -57,9 +53,7 @@ const manifest: NorthConnectorManifest = {
   id: 'console', // must be in OIBUS_NORTH_TYPES
   category: 'debug', // 'debug' | 'api' | 'file' | 'iot'
   types: ['any', 'time-values', 'setpoint'], // content types this North can deliver
-  settings: {
-    /* OIBusObjectAttribute */
-  }
+  settings: {/* OIBusObjectAttribute */}
 };
 
 export default manifest;

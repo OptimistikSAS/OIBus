@@ -62,17 +62,17 @@ See [IP Filters](../engine/ip-filters.mdx) for details.
 The engine display page shows real-time resource usage for the OIBus process, tracked since the last time metrics
 were reset (a **Reset metrics** button is available on this page):
 
-| Metric                                     | Description                                              |
-| ------------------------------------------- | ---------------------------------------------------------- |
-| **CPU usage (last second)**                 | CPU usage over the last second.                          |
-| **CPU usage (average)**                     | Rolling average CPU usage since metrics were last reset. |
-| **Uptime**                                  | Time elapsed since the OIBus process last started.       |
-| **Free memory**                             | Percentage of system memory currently available.         |
-| **RAM usage (min / current / max)**         | Process memory resident in RAM since metrics were reset. |
-| **Heap total (min / current / max)**        | Total memory allocated for the JavaScript heap.          |
-| **Heap used (min / current / max)**         | Memory actively used within the heap.                    |
-| **External memory (min / current / max)**   | Memory used by native extensions (e.g., C++ bindings).   |
-| **Array buffer (min / current / max)**      | Memory allocated for binary data buffers.                |
+| Metric                                    | Description                                              |
+| ----------------------------------------- | -------------------------------------------------------- |
+| **CPU usage (last second)**               | CPU usage over the last second.                          |
+| **CPU usage (average)**                   | Rolling average CPU usage since metrics were last reset. |
+| **Uptime**                                | Time elapsed since the OIBus process last started.       |
+| **Free memory**                           | Percentage of system memory currently available.         |
+| **RAM usage (min / current / max)**       | Process memory resident in RAM since metrics were reset. |
+| **Heap total (min / current / max)**      | Total memory allocated for the JavaScript heap.          |
+| **Heap used (min / current / max)**       | Memory actively used within the heap.                    |
+| **External memory (min / current / max)** | Memory used by native extensions (e.g., C++ bindings).   |
+| **Array buffer (min / current / max)**    | Memory allocated for binary data buffers.                |
 
 ## North Connectors
 
@@ -142,15 +142,15 @@ The log page displays OIBus runtime logs and refreshes automatically every 10 se
 
 Use the filters to narrow down what you see:
 
-| Filter         | Description                                                                                  |
-| -------------- | ---------------------------------------------------------------------------------------------|
-| **Date range** | Show only logs within a specific time window.                                                |
+| Filter         | Description                                                                                   |
+| -------------- | --------------------------------------------------------------------------------------------- |
+| **Date range** | Show only logs within a specific time window.                                                 |
 | **Level**      | Filter by severity, selected as clickable chips: `trace`, `debug`, `info`, `warn`, `error`.   |
 | **Scope type** | Filter by category, also selected as clickable chips: engine, South, North, or history query. |
-| **Scope**      | Restrict logs to a specific South connector, North connector, or history query.              |
-| **Item**       | Restrict logs to a specific South/history query item.                                        |
-| **Group**      | Restrict logs to a specific South item group.                                                |
-| **Message**    | Search by free text within log message content.                                              |
+| **Scope**      | Restrict logs to a specific South connector, North connector, or history query.               |
+| **Item**       | Restrict logs to a specific South/history query item.                                         |
+| **Group**      | Restrict logs to a specific South item group.                                                 |
+| **Message**    | Search by free text within log message content.                                               |
 
 Log verbosity is configured per destination (console, file, database, Loki, Syslog, OIAnalytics) in
 [Engine Settings → Logging Parameters](../engine/engine-settings.mdx#logging-parameters).
@@ -172,9 +172,9 @@ throughout the interface, and change your login password.
 
 <div style={{ textAlign: 'center' }}>![User settings](../../../static/img/guide/installation/first_access/user-settings.png)</div>
 
-| Setting        | Description                                                            |
-| -------------- | ------------------------------------------------------------------------ |
-| **First name** | The user's first name.                                                |
-| **Last name**  | The user's last name.                                                 |
-| **Timezone**   | Select the timezone for all date/time values shown in the interface.  |
-| **Password**   | Change the current user's login password (via a separate dialog).     |
+| Setting        | Description                                                          |
+| -------------- | -------------------------------------------------------------------- |
+| **First name** | The user's first name.                                               |
+| **Last name**  | The user's last name.                                                |
+| **Timezone**   | Select the timezone for all date/time values shown in the interface. |
+| **Password**   | Change the current user's login password (via a separate dialog).    |

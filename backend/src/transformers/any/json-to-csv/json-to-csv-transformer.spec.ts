@@ -5,6 +5,7 @@ import { Readable } from 'stream';
 import testData from '../../../tests/utils/test-data';
 import { flushPromises, mockModule, reloadModule, assertContains } from '../../../tests/utils/test-utils';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
+import { applyFilenameVariables } from '../../../service/utils';
 import type JSONToCSVTransformerType from './json-to-csv-transformer';
 import jsonToCsvManifest from './manifest';
 
@@ -26,7 +27,8 @@ before(() => {
     stringToBoolean: mock.fn(() => true),
     convertQuoteChar: mock.fn(() => '"'),
     convertEscapeChar: mock.fn(() => '"'),
-    convertNewline: mock.fn(() => '')
+    convertNewline: mock.fn(() => ''),
+    applyFilenameVariables: mock.fn(applyFilenameVariables)
   };
   mockPapaparse = { unparse: mock.fn(() => 'csv content') };
   mockModule(nodeRequire, '../../../service/utils', mockUtils);
@@ -51,6 +53,7 @@ describe('JSONToCSVTransformer', () => {
     mockUtils.convertQuoteChar = mock.fn(() => '"');
     mockUtils.convertEscapeChar = mock.fn(() => '"');
     mockUtils.convertNewline = mock.fn(() => '');
+    mockUtils.applyFilenameVariables = mock.fn(applyFilenameVariables);
     mockPapaparse.unparse = mock.fn(() => 'csv content');
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
@@ -101,6 +104,38 @@ describe('JSONToCSVTransformer', () => {
         contentType: 'any'
       }
     });
+  });
+
+  it('should replace @QueryStartTime and @QueryEndTime with the south history query window', async () => {
+    const options = {
+      regex: '.*\\.json',
+      filename: '@QueryStartTime_@QueryEndTime.csv',
+      delimiter: 'SEMI_COLON',
+      rowIteratorPath: '$[*]',
+      fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' }]
+    };
+    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
+    const mockStream = new Readable();
+
+    const promise = transformer.transform(
+      mockStream,
+      {
+        source: 'south',
+        southId: 'south1',
+        queryTime: '2023-01-01T00:00:00.000Z',
+        queryStartTime: '2023-01-01T00:00:00.000Z',
+        queryEndTime: '2023-01-01T01:00:00.000Z',
+        items: []
+      },
+      'input.json'
+    );
+    mockStream.push(JSON.stringify([]));
+    mockStream.push(null);
+
+    await flushPromises();
+    const result = await promise;
+
+    assert.strictEqual(result.metadata.contentFile, '2023_01_01_00_00_00_000_2023_01_01_01_00_00_000.csv');
   });
 
   it('should handle complex data types (datetime, boolean, object, array) and missing values', async () => {
