@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import knex, { Knex } from 'knex';
 import Database from 'better-sqlite3';
-import { up } from './v3.8.0-south-item-cache';
+import { up, down } from './v3.8.0-south-item-cache';
 
 const CACHE_HISTORY_TABLE = 'cache_history';
 const HINTS_TABLE = '_migration_v380_file_connector_hints';
@@ -291,5 +291,125 @@ describe('South cache migration v3.8.0 (south-item-cache)', () => {
       entityDb.close();
       await fs.rm(tmpDir, { recursive: true, force: true });
     }
+  });
+
+  it('skips a hint with preserve_files falsy', async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-sch-nopreserve-'));
+    const entityDbPath = path.join(tmpDir, 'oibus.db');
+    const originalCwd = process.cwd();
+
+    try {
+      const entityDb = new Database(entityDbPath);
+      entityDb.prepare(`CREATE TABLE "${HINTS_TABLE}" (connector_id TEXT, item_id TEXT, preserve_files INTEGER, regex TEXT)`).run();
+      entityDb.prepare(`INSERT INTO "${HINTS_TABLE}" VALUES (?, ?, ?, ?)`).run('fileConn', 'itemA', 0, '.*\\.csv$');
+      entityDb.close();
+
+      await createLegacyFileTable(db, 'folder_scanner_fileConn', [{ filename: 'report.csv', mtime_ms: 1700000000000 }]);
+
+      process.chdir(tmpDir);
+      await up(db); // must not throw; the falsy preserve_files hint should be skipped via `continue`
+    } finally {
+      process.chdir(originalCwd);
+      await fs.rm(tmpDir, { recursive: true, force: true });
+    }
+
+    const rows = await db('south_item_cache_fileConn').where({ item_id: 'itemA' }).select('*');
+    assert.strictEqual(rows.length, 0, 'no row should be created since preserve_files was falsy');
+  });
+
+  it('skips a hint whose connector has no preserved files', async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-sch-nofiles-'));
+    const entityDbPath = path.join(tmpDir, 'oibus.db');
+    const originalCwd = process.cwd();
+
+    try {
+      const entityDb = new Database(entityDbPath);
+      entityDb.prepare(`CREATE TABLE "${HINTS_TABLE}" (connector_id TEXT, item_id TEXT, preserve_files INTEGER, regex TEXT)`).run();
+      // Hint references a connector that never had a legacy file table, so
+      // preservedFilesByConnector has no entry for it.
+      entityDb.prepare(`INSERT INTO "${HINTS_TABLE}" VALUES (?, ?, ?, ?)`).run('unknownConn', 'itemA', 1, '.*\\.csv$');
+      entityDb.close();
+
+      await createCacheHistory(db);
+      await db(CACHE_HISTORY_TABLE).insert({ south_id: 'unknownConn', scan_mode_id: 'sm1', item_id: 'itemA', max_instant: null });
+
+      process.chdir(tmpDir);
+      await up(db); // must not throw; hint should be skipped since no preserved files exist for the connector
+    } finally {
+      process.chdir(originalCwd);
+      await fs.rm(tmpDir, { recursive: true, force: true });
+    }
+
+    const rows = await db('south_item_cache_unknownConn').where({ item_id: 'itemA' }).select('*');
+    assert.strictEqual(rows[0].value, null, 'value should remain untouched since there were no preserved files');
+  });
+
+  it('skips a hint whose regex matches none of the preserved files', async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-sch-noregexmatch-'));
+    const entityDbPath = path.join(tmpDir, 'oibus.db');
+    const originalCwd = process.cwd();
+
+    try {
+      const entityDb = new Database(entityDbPath);
+      entityDb.prepare(`CREATE TABLE "${HINTS_TABLE}" (connector_id TEXT, item_id TEXT, preserve_files INTEGER, regex TEXT)`).run();
+      entityDb.prepare(`INSERT INTO "${HINTS_TABLE}" VALUES (?, ?, ?, ?)`).run('fileConn', 'itemA', 1, '.*\\.doesnotmatch$');
+      entityDb.close();
+
+      await createLegacyFileTable(db, 'folder_scanner_fileConn', [{ filename: 'report.csv', mtime_ms: 1700000000000 }]);
+
+      process.chdir(tmpDir);
+      await up(db); // must not throw; the hint's regex matches nothing so it should be skipped
+    } finally {
+      process.chdir(originalCwd);
+      await fs.rm(tmpDir, { recursive: true, force: true });
+    }
+
+    const rows = await db('south_item_cache_fileConn').where({ item_id: 'itemA' }).select('*');
+    assert.strictEqual(rows.length, 0, 'no row should be created since the regex matched nothing');
+  });
+
+  it('updates an existing item row in place when a hint matches a pre-existing cache entry', async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-sch-update-'));
+    const entityDbPath = path.join(tmpDir, 'oibus.db');
+    const originalCwd = process.cwd();
+
+    try {
+      const entityDb = new Database(entityDbPath);
+      entityDb.prepare(`CREATE TABLE "${HINTS_TABLE}" (connector_id TEXT, item_id TEXT, preserve_files INTEGER, regex TEXT)`).run();
+      entityDb.prepare(`INSERT INTO "${HINTS_TABLE}" VALUES (?, ?, ?, ?)`).run('fileConn', 'itemA', 1, '.*\\.csv$');
+      entityDb.close();
+
+      // cache_history already has a row for the same south_id/item_id, so the item row
+      // is created BEFORE the hints step runs, forcing the `existing` branch (UPDATE) rather
+      // than the INSERT branch.
+      await createCacheHistory(db);
+      await db(CACHE_HISTORY_TABLE).insert({
+        south_id: 'fileConn',
+        scan_mode_id: 'sm1',
+        item_id: 'itemA',
+        max_instant: '2025-01-01T00:00:00.000Z'
+      });
+      await createLegacyFileTable(db, 'folder_scanner_fileConn', [{ filename: 'report.csv', mtime_ms: 1700000000000 }]);
+
+      process.chdir(tmpDir);
+      await up(db);
+    } finally {
+      process.chdir(originalCwd);
+      await fs.rm(tmpDir, { recursive: true, force: true });
+    }
+
+    const rows = await db('south_item_cache_fileConn').where({ item_id: 'itemA' }).select('*');
+    assert.strictEqual(rows.length, 1, 'the pre-existing row should have been updated, not duplicated');
+    assert.strictEqual(rows[0].tracked_instant, '2025-01-01T00:00:00.000Z', 'tracked_instant should be preserved by the update');
+    const value = JSON.parse(rows[0].value) as Array<{ filename: string; modifiedTime: number }>;
+    assert.strictEqual(value.length, 1);
+    assert.strictEqual(value[0].filename, 'report.csv');
+  });
+
+  // ─── down ───────────────────────────────────────────────────────────────────
+
+  it('down() resolves without making any changes', async () => {
+    await createCacheHistory(db);
+    await assert.doesNotReject(down(db));
   });
 });

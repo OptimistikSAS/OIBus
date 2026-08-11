@@ -195,6 +195,16 @@ describe('Entity migration v3.9.0_1', () => {
       assert.strictEqual(southSettings.host, 'localhost');
     });
 
+    it('down rejects when an opcua south connector has corrupted (non-JSON) settings', async () => {
+      // removeOpcuaMaxParallelRun does JSON.parse(southConnector.settings) with no guard: a corrupted
+      // settings column (e.g. partial write, disk corruption) must surface as a rejected migration
+      // rather than being silently swallowed.
+      await insertSouthConnector('opcua', {});
+      await db('south_connectors').where('id', 'south-1').update({ settings: 'not-valid-json' });
+
+      await assert.rejects(() => down(db));
+    });
+
     it('is reversible: up then down removes maxParallelRun again', async () => {
       await insertSouthConnector('opcua', { url: 'opc.tcp://localhost:4840' });
       await insertHistoryQuery('opcua', { url: 'opc.tcp://localhost:4840' });
