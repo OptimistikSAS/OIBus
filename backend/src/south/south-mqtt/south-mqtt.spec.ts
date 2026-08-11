@@ -619,6 +619,34 @@ describe('SouthMQTT', () => {
     assert.deepStrictEqual(mqttStream.unsubscribeAsync.mock.calls[0].arguments, [configuration.items.map(item => item.settings.topic)]);
   });
 
+  it('should subscribe successfully without error when client is set', async () => {
+    mqttStream.subscribeAsync = mock.fn(async () => undefined);
+    // logger.error's call history is never reset between tests in this file, so only calls made
+    // after this point (not leftover calls from earlier error-path tests) are relevant here.
+    logger.error.mock.resetCalls();
+
+    south.connect();
+    await flushPromises();
+    await south.subscribe(configuration.items);
+    assert.strictEqual(mqttStream.subscribeAsync.mock.calls.length, 1);
+    assert.ok(!logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => String(c.arguments[0]).startsWith('Subscription error')));
+  });
+
+  it('should unsubscribe successfully without error when client is set', async () => {
+    mqttStream.unsubscribeAsync = mock.fn(async () => undefined);
+    // logger.error's call history is never reset between tests in this file, so only calls made
+    // after this point (not leftover calls from earlier error-path tests) are relevant here.
+    logger.error.mock.resetCalls();
+
+    south.connect();
+    await flushPromises();
+    await south.unsubscribe(configuration.items);
+    assert.strictEqual(mqttStream.unsubscribeAsync.mock.calls.length, 1);
+    assert.ok(
+      !logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => String(c.arguments[0]).startsWith('Unsubscription error'))
+    );
+  });
+
   it('should properly test connection', async () => {
     const connackPacket = { sessionPresent: false };
     mqttExports.default.connect = mock.fn((_url: string) => {
@@ -630,6 +658,52 @@ describe('SouthMQTT', () => {
 
     assert.strictEqual(mqttStream.end.mock.calls.length, 1);
     assert.deepStrictEqual(testResult, { items: [{ key: 'SessionPresent', value: 'false' }] });
+  });
+
+  it('should reject test connection when client emits an error', async () => {
+    const connectionError = new Error('connection refused');
+    mqttExports.default.connect = mock.fn((_url: string) => {
+      setImmediate(() => mqttStream.emit('error', connectionError));
+      return mqttStream;
+    });
+
+    await assert.rejects(south.testConnection(), connectionError);
+    assert.strictEqual(mqttStream.end.mock.calls.length, 1);
+    assert.deepStrictEqual(mqttStream.end.mock.calls[0].arguments, [true]);
+  });
+
+  it('should properly test connection and populate all connack properties', async () => {
+    const connackPacket = {
+      sessionPresent: true,
+      properties: {
+        maximumQoS: 1,
+        retainAvailable: true,
+        wildcardSubscriptionAvailable: true,
+        sharedSubscriptionAvailable: false,
+        maximumPacketSize: 1024,
+        serverKeepAlive: 60,
+        topicAliasMaximum: 10
+      }
+    };
+    mqttExports.default.connect = mock.fn((_url: string) => {
+      setImmediate(() => mqttStream.emit('connect', connackPacket));
+      return mqttStream;
+    });
+
+    const testResult = await south.testConnection();
+
+    assert.deepStrictEqual(testResult, {
+      items: [
+        { key: 'SessionPresent', value: 'true' },
+        { key: 'MaximumQoS', value: '1' },
+        { key: 'RetainAvailable', value: 'true' },
+        { key: 'WildcardSubscriptions', value: 'true' },
+        { key: 'SharedSubscriptions', value: 'false' },
+        { key: 'MaxPacketSize', value: '1024' },
+        { key: 'ServerKeepAlive', value: '60s' },
+        { key: 'TopicAliasMaximum', value: '10' }
+      ]
+    });
   });
 
   it('should properly test item', async () => {

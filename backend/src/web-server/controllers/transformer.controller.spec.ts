@@ -220,6 +220,17 @@ describe('TransformerController', () => {
     assert.deepStrictEqual(transformerService.test.mock.calls[0].arguments, [transformerCommand, testRequest]);
   });
 
+  it('should wrap a transformer test failure in an OIBusTestingError', async () => {
+    const testRequest: TransformerTestRequest = { inputData: 'time-values', options: {} };
+    const transformerCommand = testData.transformers.list[0] as unknown as CustomTransformerCommandDTO;
+    const body = { transformer: transformerCommand, testRequest };
+    transformerService.test = mock.fn(async () => {
+      throw new Error('transformer failed');
+    });
+
+    await assert.rejects(controller.test(body, mockRequest as CustomExpressRequest), { message: 'transformer failed' });
+  });
+
   it('should test a transformer with input data by id', async () => {
     const testRequest: TransformerTestRequest = { inputData: '[]', options: { foo: 'bar' } };
     const testResult = {
