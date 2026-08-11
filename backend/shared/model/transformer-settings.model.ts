@@ -137,6 +137,40 @@ export const TRANSFORMER_JSON_TO_OIANALYTICS_SETTINGS_DATETIME_SETTINGS_OUTPUT_P
 export type TransformerJsonToOianalyticsSettingsDatetimeSettingsOutputPrecision =
   (typeof TRANSFORMER_JSON_TO_OIANALYTICS_SETTINGS_DATETIME_SETTINGS_OUTPUT_PRECISIONS)[number];
 
+export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_DATETIME_FIELDS_INPUT_TYPES = [
+  'string',
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms',
+  'date-time'
+] as const;
+export type TransformerRecordListToCsvSettingsDatetimeFieldsInputType =
+  (typeof TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_DATETIME_FIELDS_INPUT_TYPES)[number];
+
+export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_ENCODINGS = ['UTF_8', 'UTF_8_BOM', 'LATIN_1', 'UTF_16_LE'] as const;
+export type TransformerRecordListToCsvSettingsEncoding = (typeof TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_ENCODINGS)[number];
+
+export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_DELIMITERS = [
+  'DOT',
+  'SEMI_COLON',
+  'COLON',
+  'COMMA',
+  'NON_BREAKING_SPACE',
+  'SLASH',
+  'TAB',
+  'PIPE'
+] as const;
+export type TransformerRecordListToCsvSettingsDelimiter = (typeof TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_DELIMITERS)[number];
+
+export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_NEWLINES = ['CRLF', 'LF', 'CR'] as const;
+export type TransformerRecordListToCsvSettingsNewline = (typeof TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_NEWLINES)[number];
+
+export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_QUOTE_CHARS = ['DOUBLE_QUOTE', 'SINGLE_QUOTE', 'NONE'] as const;
+export type TransformerRecordListToCsvSettingsQuoteChar = (typeof TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_QUOTE_CHARS)[number];
+
+export const TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_ESCAPE_CHARS = ['BACKSLASH', 'DOUBLE_QUOTE'] as const;
+export type TransformerRecordListToCsvSettingsEscapeChar = (typeof TRANSFORMER_RECORD_LIST_TO_CSV_SETTINGS_ESCAPE_CHARS)[number];
+
 export const TRANSFORMER_SETPOINT_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES = ['coil', 'register'] as const;
 export type TransformerSetpointToModbusSettingsMappingModbusType =
   (typeof TRANSFORMER_SETPOINT_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES)[number];
@@ -239,6 +273,20 @@ export interface TransformerJsonToOianalyticsSettingsDatetimeSettings {
   outputPrecision: TransformerJsonToOianalyticsSettingsDatetimeSettingsOutputPrecision;
 }
 
+export interface TransformerRecordListToCsvSettingsDatetimeFieldsInput {
+  type: TransformerRecordListToCsvSettingsDatetimeFieldsInputType;
+  timezone?: Timezone;
+  format?: string;
+  locale?: string;
+}
+
+export interface TransformerRecordListToCsvSettingsDatetimeFields {
+  fieldName: string;
+  input: TransformerRecordListToCsvSettingsDatetimeFieldsInput | null;
+  outputTimestampFormat: string;
+  outputTimezone: Timezone;
+}
+
 export interface TransformerSetpointToModbusSettingsMapping {
   reference: string;
   address: string;
@@ -311,6 +359,18 @@ export interface TransformerJsonToOianalyticsSettings {
   datetimeSettings: TransformerJsonToOianalyticsSettingsDatetimeSettings | null;
 }
 
+export interface TransformerRecordListToCsvSettings {
+  filename: string;
+  encoding: TransformerRecordListToCsvSettingsEncoding;
+  header: boolean | null;
+  compression: boolean;
+  delimiter: TransformerRecordListToCsvSettingsDelimiter;
+  newline: TransformerRecordListToCsvSettingsNewline;
+  quoteChar: TransformerRecordListToCsvSettingsQuoteChar;
+  escapeChar: TransformerRecordListToCsvSettingsEscapeChar;
+  datetimeFields: Array<TransformerRecordListToCsvSettingsDatetimeFields> | null;
+}
+
 export type TransformerIgnoreSettings = object;
 
 export type TransformerIsoSettings = object;
@@ -367,6 +427,7 @@ export type TransformerSettings =
   | TransformerCsvToTimeValuesSettings
   | TransformerJsonToCsvSettings
   | TransformerJsonToOianalyticsSettings
+  | TransformerRecordListToCsvSettings
   | TransformerIgnoreSettings
   | TransformerIsoSettings
   | TransformerSetpointToModbusSettings
