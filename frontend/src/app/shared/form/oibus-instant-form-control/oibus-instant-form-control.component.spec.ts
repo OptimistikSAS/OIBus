@@ -24,7 +24,7 @@ class TestComponent {
   instantAttribute: OIBusInstantAttribute = {
     type: 'instant',
     key: 'testKey',
-    translationKey: 'configuration.oibus.manifest.south.items.mssql.date-time-fields.field-name'
+    translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.field-name'
   } as OIBusInstantAttribute;
 
   formGroup = new FormGroup({

@@ -25,7 +25,7 @@ class TestComponent {
   certificateAttribute: OIBusCertificateAttribute = {
     type: 'certificate',
     key: 'testKey',
-    translationKey: 'configuration.oibus.manifest.south.items.mssql.date-time-fields.field-name'
+    translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.field-name'
   } as OIBusCertificateAttribute;
 
   allCertificates = testData.certificates.list as unknown as Array<CertificateDTO>;

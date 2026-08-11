@@ -125,7 +125,10 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
 
     let updatedStartTime: Instant | null = null;
     if (result.length > 0) {
-      this.logger.info({ itemId: item.id, itemName: item.name }, `Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
+      this.logger.info(
+        { itemId: item.id, itemName: item.name },
+        `Found ${result.length} results for item ${item.name} in ${requestDuration} ms`
+      );
       updatedStartTime = this.trackMaxInstant(item, result);
       await this.addContent({ type: 'record-list', content: result }, startRequest.toUTC().toISO(), items);
     } else {
