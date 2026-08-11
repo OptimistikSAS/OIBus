@@ -259,6 +259,83 @@ describe('JSONToCSVTransformer', () => {
     ]);
   });
 
+  describe('encoding', () => {
+    it('should prepend a UTF-8 BOM when encoding is UTF_8_BOM', async () => {
+      mockPapaparse.unparse = mock.fn(() => 'csv content');
+      const options = {
+        filename: 'output.csv',
+        encoding: 'UTF_8_BOM',
+        rowIteratorPath: '$[*]',
+        fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' }]
+      };
+      const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
+      const mockStream = new Readable();
+      const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
+      mockStream.push(JSON.stringify([{ name: 'a' }]));
+      mockStream.push(null);
+      await flushPromises();
+      const result = await promise;
+
+      assert.deepStrictEqual(result.output, Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from('csv content')]));
+    });
+
+    it('should encode output as latin1 when encoding is LATIN_1', async () => {
+      mockPapaparse.unparse = mock.fn(() => 'csv content');
+      const options = {
+        filename: 'output.csv',
+        encoding: 'LATIN_1',
+        rowIteratorPath: '$[*]',
+        fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' }]
+      };
+      const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
+      const mockStream = new Readable();
+      const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
+      mockStream.push(JSON.stringify([{ name: 'a' }]));
+      mockStream.push(null);
+      await flushPromises();
+      const result = await promise;
+
+      assert.deepStrictEqual(result.output, Buffer.from('csv content', 'latin1'));
+    });
+
+    it('should prepend a UTF-16LE BOM and encode as utf16le when encoding is UTF_16_LE', async () => {
+      mockPapaparse.unparse = mock.fn(() => 'csv content');
+      const options = {
+        filename: 'output.csv',
+        encoding: 'UTF_16_LE',
+        rowIteratorPath: '$[*]',
+        fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' }]
+      };
+      const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
+      const mockStream = new Readable();
+      const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
+      mockStream.push(JSON.stringify([{ name: 'a' }]));
+      mockStream.push(null);
+      await flushPromises();
+      const result = await promise;
+
+      assert.deepStrictEqual(result.output, Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from('csv content', 'utf16le')]));
+    });
+  });
+
+  it('should fall back to a double quote char when convertQuoteChar resolves to an empty string', async () => {
+    mockUtils.convertQuoteChar = mock.fn(() => '');
+    const options = {
+      filename: 'output.csv',
+      rowIteratorPath: '$[*]',
+      fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' }]
+    };
+    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
+    const mockStream = new Readable();
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
+    mockStream.push(JSON.stringify([{ name: 'a' }]));
+    mockStream.push(null);
+    await flushPromises();
+    await promise;
+
+    assertContains(mockPapaparse.unparse.mock.calls[0].arguments[1] as Record<string, unknown>, { quoteChar: '"', quotes: false });
+  });
+
   describe('fieldProcess', () => {
     it('should apply fieldProcess expression to the typed value before writing to CSV', async () => {
       mockPapaparse.unparse = mock.fn(() => 'csv result');

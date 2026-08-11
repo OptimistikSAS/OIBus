@@ -1016,6 +1016,15 @@ describe('DataStreamEngine', () => {
       assert.strictEqual(engine['intervalByScanModeId'].size, 0);
     });
 
+    it('should refuse an interval scan mode with no interval configured', async () => {
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [{ ...intervalScanMode(), interval: null }]);
+
+      await engine.start(northList, southList, historyList);
+
+      // No interval set means periodMs falls back to 0, which is below MIN_INTERVAL_MS.
+      assert.strictEqual(engine['intervalByScanModeId'].size, 0);
+    });
+
     it('should clear both cron and interval maps on stop', async () => {
       scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [testData.scanMode.list[0], intervalScanMode()]);
       await engine.start(northList, southList, historyList);
