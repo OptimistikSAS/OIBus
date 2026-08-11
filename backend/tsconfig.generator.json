@@ -4,11 +4,6 @@
     "outDir": "./dist/interface-generator",
     "module": "CommonJS"
   },
-  "files": [
-    "src/index.ts",
-    "src/settings-interface.generator.ts"
-  ],
-  "exclude": [
-    "./**/*.spec.ts",
-  ]
+  "files": ["src/index.ts", "src/@types/nodes7.d.ts", "src/settings-interface.generator.ts"],
+  "exclude": ["./**/*.spec.ts"]
 }
