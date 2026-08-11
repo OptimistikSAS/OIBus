@@ -754,6 +754,63 @@ describe('SouthConnectorController', () => {
     );
   });
 
+  it('should check CSV import with an empty existing items list when deleteItemsNotPresent is true', async () => {
+    const southType = testData.south.manifest.id;
+    const delimiter = ',';
+    const itemsToImportFile = {
+      path: 'myFile.csv'
+    } as Express.Multer.File;
+    const currentItemsFile = {
+      path: 'myFile.json'
+    } as Express.Multer.File;
+
+    const csvContent = 'id,name\n1,item1';
+    const readFileMock = mock.method(fs, 'readFile', async () => csvContent);
+    const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
+
+    const mockResult = {
+      items: [{ id: '1', name: 'item1' }] as Array<SouthConnectorItemDTO>,
+      errors: []
+    };
+    southService.checkImportItems = mock.fn(async () => mockResult);
+
+    const result = await controller.checkImportItems(
+      southType,
+      delimiter,
+      'true',
+      itemsToImportFile,
+      currentItemsFile,
+      mockRequest as CustomExpressRequest
+    );
+
+    assert.strictEqual(readFileMock.mock.calls.length, 1);
+    assert.strictEqual(southService.checkImportItems.mock.calls.length, 1);
+    assert.deepStrictEqual(southService.checkImportItems.mock.calls[0].arguments, [southType, csvContent, delimiter, []]);
+    assert.deepStrictEqual(result, mockResult);
+    assert.strictEqual(unlinkMock.mock.calls.length, 2);
+  });
+
+  it('should not throw an error if the unlink calls fail in checkImportItems', async () => {
+    const southType = testData.south.manifest.id;
+    const delimiter = ',';
+    const itemsToImportFile = {
+      path: 'myFile.csv'
+    } as Express.Multer.File;
+    const currentItemsFile = {
+      path: 'myFile.json'
+    } as Express.Multer.File;
+
+    mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1' }]));
+    mock.method(fs, 'unlink', async () => {
+      throw new Error('unlink error');
+    });
+    southService.checkImportItems = mock.fn(async () => ({ items: [], errors: [] }));
+
+    await assert.doesNotReject(
+      controller.checkImportItems(southType, delimiter, 'false', itemsToImportFile, currentItemsFile, mockRequest as CustomExpressRequest)
+    );
+  });
+
   it('should import items from CSV', async () => {
     const southId = testData.south.list[0].id;
     const itemsFile = {

@@ -50,6 +50,7 @@ describe('LogController', () => {
     const scopeTypes = 'south,north';
     const scopeIds = 'scope1,scope2';
     const itemIds = 'item1,item2';
+    const groupIds = 'group1,group2';
     const messageContent = 'message';
 
     const searchParams: LogSearchParam = {
@@ -60,7 +61,7 @@ describe('LogController', () => {
       scopeTypes: ['south', 'north'],
       scopeIds: ['scope1', 'scope2'],
       itemIds: ['item1', 'item2'],
-      groupIds: [],
+      groupIds: ['group1', 'group2'],
       messageContent
     };
 
@@ -74,7 +75,7 @@ describe('LogController', () => {
       scopeIds,
       scopeTypes,
       itemIds,
-      undefined,
+      groupIds,
       messageContent,
       page,
       mockRequest as CustomExpressRequest

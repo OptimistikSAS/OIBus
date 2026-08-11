@@ -172,6 +172,29 @@ describe('HistoryQueryRepository', () => {
     assert.strictEqual(updatedHistoryQuery.northTransformers[0].items.length, 1);
   });
 
+  it('should save a history query with a "temp_" north transformer id (treated as new)', () => {
+    const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+      JSON.stringify(testData.historyQueries.list[1])
+    );
+    newHistoryQuery.id = '';
+    newHistoryQuery.name = 'history query with temp transformer id';
+    newHistoryQuery.items = [];
+    newHistoryQuery.northTransformers = [
+      {
+        id: 'temp_north_1',
+        transformer: testData.transformers.list[0],
+        options: {},
+        items: []
+      }
+    ];
+    repository.saveHistory(newHistoryQuery);
+
+    assert.ok(newHistoryQuery.id);
+    const created = repository.findHistoryById(newHistoryQuery.id)!;
+    assert.strictEqual(created.northTransformers.length, 1);
+    assert.notStrictEqual(created.northTransformers[0].id, 'temp_north_1');
+  });
+
   it('should update a history query by removing items and transformers', () => {
     // Operate on newHistoryId (created in 'save a new history query'), not testData.historyQueries.list[1]
     const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
