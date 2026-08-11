@@ -247,6 +247,62 @@ describe('NorthAzureDataExplorer', () => {
     ]);
   });
 
+  it('should build credential with aad-app-secret authentication and proxyOptions using default https port', async () => {
+    const settings: NorthAzureDataExplorerSettings = {
+      clusterUrl: 'https://mycluster.westeurope.kusto.windows.net',
+      database: 'mydatabase',
+      table: 'mytable',
+      authentication: 'aad-app-secret',
+      tenantId: 'tenantId',
+      clientId: 'clientId',
+      clientSecret: 'mySecret',
+      certificateId: null,
+      dataFormat: 'csv',
+      ingestionMappingName: null,
+      useProxy: true,
+      proxyUrl: 'https://myproxy',
+      proxyUsername: '',
+      proxyPassword: ''
+    };
+    north.connectorConfiguration = buildNorthEntity<NorthAzureDataExplorerSettings>('azure-data-explorer', settings);
+    await north.prepareConnection(settings);
+    assert.strictEqual(ClientSecretCredentialMock.mock.calls.length, 1);
+    assert.deepStrictEqual(ClientSecretCredentialMock.mock.calls[0].arguments, [
+      'tenantId',
+      'clientId',
+      'mySecret',
+      { proxyOptions: { host: 'https://myproxy', port: 443, username: undefined, password: undefined } }
+    ]);
+  });
+
+  it('should build credential with aad-app-secret authentication and proxyOptions using default http port', async () => {
+    const settings: NorthAzureDataExplorerSettings = {
+      clusterUrl: 'https://mycluster.westeurope.kusto.windows.net',
+      database: 'mydatabase',
+      table: 'mytable',
+      authentication: 'aad-app-secret',
+      tenantId: 'tenantId',
+      clientId: 'clientId',
+      clientSecret: 'mySecret',
+      certificateId: null,
+      dataFormat: 'csv',
+      ingestionMappingName: null,
+      useProxy: true,
+      proxyUrl: 'http://myproxy',
+      proxyUsername: '',
+      proxyPassword: ''
+    };
+    north.connectorConfiguration = buildNorthEntity<NorthAzureDataExplorerSettings>('azure-data-explorer', settings);
+    await north.prepareConnection(settings);
+    assert.strictEqual(ClientSecretCredentialMock.mock.calls.length, 1);
+    assert.deepStrictEqual(ClientSecretCredentialMock.mock.calls[0].arguments, [
+      'tenantId',
+      'clientId',
+      'mySecret',
+      { proxyOptions: { host: 'http://myproxy', port: 80, username: undefined, password: undefined } }
+    ]);
+  });
+
   it('should build credential with aad-app-certificate authentication', async () => {
     certificateRepository.findById.mock.mockImplementationOnce(() => testData.certificates.list[0]);
     const settings: NorthAzureDataExplorerSettings = {

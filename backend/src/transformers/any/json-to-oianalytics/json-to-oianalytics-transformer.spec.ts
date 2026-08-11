@@ -155,6 +155,22 @@ describe('JSONToOIAnalyticsTransformer', () => {
     assert.strictEqual(parsed[0].timestamp, testData.constants.dates.FAKE_NOW);
   });
 
+  it('should fall back to plain ISO parsing and "ms" precision when no datetimeSettings are configured', async () => {
+    const transformer = new JSONToOIAnalyticsTransformer(logger, testData.transformers.list[0], {
+      rowIteratorPath: '$[*]',
+      pointId: '$[*].id',
+      value: '$[*].val',
+      timestamp: '$[*].ts'
+    });
+    const inputData = [{ id: 'point-1', ts: '2020-01-01T00:00:00.000Z', val: 42 }];
+
+    const result = await transformer.transformInMemory(inputData, { source: 'test' }, null);
+
+    const parsed = JSON.parse(result.output.toString());
+    assert.strictEqual(parsed[0].pointId, 'point-1');
+    assert.strictEqual(parsed[0].timestamp, '2020-01-01T00:00:00.000Z');
+  });
+
   it('should properly format instant with precision', () => {
     const transformer = new JSONToOIAnalyticsTransformer(logger, testData.transformers.list[0], options);
 

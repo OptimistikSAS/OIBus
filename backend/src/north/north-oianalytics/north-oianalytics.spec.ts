@@ -2,6 +2,7 @@ import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { ReadStream } from 'node:fs';
+import { Readable } from 'node:stream';
 import zlib from 'node:zlib';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule, buildNorthEntity, assertContains } from '../../tests/utils/test-utils';
@@ -208,6 +209,18 @@ describe('NorthOIAnalytics', () => {
     });
   });
 
+  it('should resolve without doing anything for an unsupported content type', async () => {
+    await north.handleContent(mockReadStream, {
+      contentFile: 'file.bin',
+      contentSize: 10,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'opcua'
+    });
+
+    assert.strictEqual(httpRequestMock.mock.calls.length, 0);
+  });
+
   describe('handleFile (any)', () => {
     const metadata = {
       contentFile: 'test-file.txt',
@@ -270,6 +283,40 @@ describe('NorthOIAnalytics', () => {
     it('should throw OIBusError on non-ok response', async () => {
       httpRequestMock.mock.mockImplementation(async (_url: URL, _options: ReqOptions) => createMockResponse(400, 'Bad Request'));
       await assert.rejects(async () => north.handleContent(mockReadStream, metadata), /Error 400: Bad Request/);
+    });
+
+    it('should actually stream the file content through the multipart generator', async () => {
+      // mockReadStream never gets iterated by the mocked HTTPRequest, so the multipart
+      // async-generator body is never driven. Use a real async-iterable stream here and
+      // manually drain the resulting body to force the generator to run to completion.
+      const realFileStream = Readable.from([Buffer.from('chunk-a'), Buffer.from('chunk-b')]) as unknown as ReadStream;
+
+      await north.handleContent(realFileStream, { ...metadata, contentFile: 'real-file.txt' });
+
+      assert.strictEqual(httpRequestMock.mock.calls.length, 1);
+      const [, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
+      const chunks: Array<Buffer> = [];
+      for await (const chunk of options.body as AsyncIterable<Buffer>) {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      }
+      const full = Buffer.concat(chunks).toString();
+      assert.ok(full.includes('chunk-a'));
+      assert.ok(full.includes('chunk-b'));
+    });
+
+    it('should produce a valid multipart body even for an empty file stream', async () => {
+      const emptyFileStream = Readable.from([]) as unknown as ReadStream;
+
+      await north.handleContent(emptyFileStream, { ...metadata, contentFile: 'empty-file.txt' });
+
+      const [, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
+      const chunks: Array<Buffer> = [];
+      for await (const chunk of options.body as AsyncIterable<Buffer>) {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      }
+      const full = Buffer.concat(chunks).toString();
+      assert.ok(full.includes('Content-Disposition'));
+      assert.ok(full.includes('--\r\n'));
     });
   });
 });
