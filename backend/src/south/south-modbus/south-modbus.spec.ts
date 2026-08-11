@@ -798,6 +798,7 @@ describe('South Modbus', () => {
       south.modbusFunction(mockedClient, item),
       new Error(`Wrong Modbus type "${item.settings.modbusType}" for point "${item.name}"`)
     );
+    configuration.settings.addressOffset = 'modbus'; // restore
   });
 
   it('should properly test connection', async () => {
@@ -845,5 +846,136 @@ describe('South Modbus', () => {
         new Error(`${ERROR_CODES[code]}: ${errorMessage}`)
       );
     }
+  });
+
+  it('should return null from directQuery when no items are queried', async () => {
+    (south as unknown as Record<string, unknown>)['modbusClient'] = {};
+    (south as unknown as Record<string, unknown>)['connector'] = {
+      ...configuration,
+      settings: { ...configuration.settings, batchQuery: true }
+    };
+    south.addContent = mock.fn(async (): Promise<void> => undefined);
+
+    const result = await south.directQuery([]);
+
+    assert.strictEqual(result, null);
+  });
+
+  it('should merge consecutive coils into a single request and chunk within MAX_COIL_READ_COUNT', async () => {
+    const makeBitItem = (id: string, address: string) => ({
+      id,
+      name: id,
+      enabled: true,
+      settings: { address, modbusType: 'coil' as const },
+      scanMode: testData.scanMode.list[0],
+      group: null,
+      syncWithGroup: false,
+      maxReadInterval: null,
+      readDelay: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    });
+    // Three consecutive coils (addresses 10, 11, 12) merge into one run (groupingGap = 0, gap of 1
+    // is within tolerance) which is then chunked without exceeding MAX_COIL_READ_COUNT (2000).
+    const bitItems = [makeBitItem('bit1', '10'), makeBitItem('bit2', '11'), makeBitItem('bit3', '12')];
+
+    const readCoilsMock = mock.fn(async (_addr: number, count: number) => ({
+      response: { body: { valuesAsArray: Array(count).fill(0) } }
+    }));
+    (south as unknown as Record<string, unknown>)['modbusClient'] = { readCoils: readCoilsMock };
+    (south as unknown as Record<string, unknown>)['connector'] = {
+      ...configuration,
+      settings: { ...configuration.settings, batchQuery: true, groupingGap: 0, addressOffset: 'modbus' as const }
+    };
+    south.addContent = mock.fn(async (): Promise<void> => undefined);
+
+    await south.directQuery(bitItems);
+
+    assert.strictEqual(readCoilsMock.mock.calls.length, 1);
+    assert.deepStrictEqual(readCoilsMock.mock.calls[0].arguments, [10, 3]);
+  });
+
+  it('should split a merged coil run into multiple requests when the span exceeds MAX_COIL_READ_COUNT', async () => {
+    const makeBitItem = (id: string, address: string) => ({
+      id,
+      name: id,
+      enabled: true,
+      settings: { address, modbusType: 'coil' as const },
+      scanMode: testData.scanMode.list[0],
+      group: null,
+      syncWithGroup: false,
+      maxReadInterval: null,
+      readDelay: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    });
+    // With a large groupingGap the two coils (addresses 0 and 2500) are merged into a single run,
+    // but the address span (2501) exceeds MAX_COIL_READ_COUNT (2000), forcing the chunking loop to
+    // split them into two separate requests.
+    const bitItems = [makeBitItem('bit1', '0'), makeBitItem('bit2', '2500')];
+
+    const readCoilsMock = mock.fn(async (_addr: number, count: number) => ({
+      response: { body: { valuesAsArray: Array(count).fill(0) } }
+    }));
+    (south as unknown as Record<string, unknown>)['modbusClient'] = { readCoils: readCoilsMock };
+    (south as unknown as Record<string, unknown>)['connector'] = {
+      ...configuration,
+      settings: { ...configuration.settings, batchQuery: true, groupingGap: 3000, addressOffset: 'modbus' as const }
+    };
+    south.addContent = mock.fn(async (): Promise<void> => undefined);
+
+    await south.directQuery(bitItems);
+
+    assert.strictEqual(readCoilsMock.mock.calls.length, 2);
+    assert.deepStrictEqual(readCoilsMock.mock.calls[0].arguments, [0, 1]);
+    assert.deepStrictEqual(readCoilsMock.mock.calls[1].arguments, [2500, 1]);
+  });
+
+  it('should split a merged register run into multiple requests when the span exceeds MAX_REGISTER_WORD_COUNT', async () => {
+    const makeItem = (id: string, address: string) => ({
+      id,
+      name: id,
+      enabled: true,
+      settings: { address, modbusType: 'holding-register' as const, data: { dataType: 'uint16' as const, multiplierCoefficient: 1 } },
+      scanMode: testData.scanMode.list[0],
+      group: null,
+      syncWithGroup: false,
+      maxReadInterval: null,
+      readDelay: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    });
+    // With a large groupingGap the two registers (addresses 0 and 200) are merged into a single run,
+    // but the span (201 words) exceeds MAX_REGISTER_WORD_COUNT (125), forcing the chunking loop to
+    // split them into two separate requests.
+    const registerItems = [makeItem('reg1', '0'), makeItem('reg2', '200')];
+
+    const readHoldingRegistersMock = mock.fn(async (_addr: number, count: number) => ({
+      response: { body: { valuesAsBuffer: Buffer.alloc(count * 2) } }
+    }));
+    (south as unknown as Record<string, unknown>)['modbusClient'] = { readHoldingRegisters: readHoldingRegistersMock };
+    (south as unknown as Record<string, unknown>)['connector'] = {
+      ...configuration,
+      settings: { ...configuration.settings, batchQuery: true, groupingGap: 300, addressOffset: 'modbus' as const }
+    };
+    south.addContent = mock.fn(async (): Promise<void> => undefined);
+
+    await south.directQuery(registerItems);
+
+    assert.strictEqual(readHoldingRegistersMock.mock.calls.length, 2);
+    assert.deepStrictEqual(readHoldingRegistersMock.mock.calls[0].arguments, [0, 1]);
+    assert.deepStrictEqual(readHoldingRegistersMock.mock.calls[1].arguments, [200, 1]);
   });
 });
