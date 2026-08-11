@@ -110,7 +110,7 @@ describe('Entity migration v3.10.0_2', () => {
     // north2: south-level 'iso' passthrough for south1 -> should be shadowed per item.
     // north3: item-level 'ignore' on item1, nothing on item2/item3 -> item1 left alone, others get one.
     // north4: item-level 'csv-to-mqtt' on item3 -> left untouched (edge case).
-    // north5 (disabled): must be skipped entirely.
+    // north5 (disabled): still gets the migration applied like any other north.
     const northConnectorDefaults = {
       type: 'file-writer',
       settings: JSON.stringify({}),
@@ -362,10 +362,16 @@ describe('Entity migration v3.10.0_2', () => {
     assert.deepStrictEqual(rows.map(r => r.item_id).sort(), ['item1', 'item2']);
   });
 
-  it('should skip disabled north connectors entirely (north5)', async () => {
+  it('should still attach transformers for a disabled north connector (north5)', async () => {
     await up(db);
-    const rows = await db('north_transformers').where('north_id', 'north5');
-    assert.strictEqual(rows.length, 0);
+
+    const recordListToCsv = await db('transformers').where('function_name', 'record-list-to-csv').first();
+    const rows = await db('north_transformers as nt')
+      .join('north_transformers_items as nti', 'nti.id', 'nt.id')
+      .where('nt.north_id', 'north5')
+      .select('nt.transformer_id', 'nti.item_id');
+    assert.strictEqual(rows.length, 3); // item1, item2, item3
+    assert.ok(rows.every(r => r.transformer_id === recordListToCsv.id));
   });
 
   it('should apply the same treatment to history queries', async () => {
