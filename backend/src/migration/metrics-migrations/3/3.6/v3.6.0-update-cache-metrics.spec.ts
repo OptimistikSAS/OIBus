@@ -1,7 +1,7 @@
 import { describe, it, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import knex, { Knex } from 'knex';
-import { up } from './v3.6.0-update-cache-metrics';
+import { up, down } from './v3.6.0-update-cache-metrics';
 
 /**
  * Build the pre-v3.6.0 north_metrics schema (v3.0 + v3.5.0 additions).
@@ -176,5 +176,9 @@ describe('Metrics migration v3.6.0', () => {
   it('handles completely empty tables without error', async () => {
     // No rows inserted — migration must not throw on empty tables
     await up(db);
+  });
+
+  it('down is a no-op', async () => {
+    await assert.doesNotReject(() => down());
   });
 });

@@ -46,4 +46,11 @@ describe('Logs migration v3.0 (initial-setup)', () => {
     await down(); // must not throw
     assert.ok(await db.schema.hasTable('logs'), 'table should still exist since down does nothing');
   });
+
+  it('down resolves to undefined and can be called multiple times without side effects', async () => {
+    const result1 = await down();
+    const result2 = await down();
+    assert.strictEqual(result1, undefined);
+    assert.strictEqual(result2, undefined);
+  });
 });
