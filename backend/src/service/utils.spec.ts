@@ -19,7 +19,8 @@ import type { OIBusError as OIBusErrorType } from '../model/engine.model';
 import cronstrue from 'cronstrue';
 import testData from '../tests/utils/test-data';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
-import type { SouthItemGroupEntity } from '../model/south-connector.model';
+import type { SouthConnectorItemEntity, SouthItemGroupEntity } from '../model/south-connector.model';
+import type { SouthItemSettings } from '../../shared/model/south-settings.model';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -2015,6 +2016,7 @@ describe('Service utils', () => {
       const result = utils.applyFilenameVariables('export_@QueryStartTime_@QueryEndTime.csv', {
         source: 'south',
         southId: 'south1',
+        southName: 'South 1',
         queryTime: testData.constants.dates.DATE_1,
         queryStartTime: '2023-01-01T00:00:00.000Z',
         queryEndTime: '2023-01-01T01:00:00.000Z',
@@ -2028,6 +2030,7 @@ describe('Service utils', () => {
       const result = utils.applyFilenameVariables('@CurrentDate_@QueryStartTime.csv', {
         source: 'south',
         southId: 'south1',
+        southName: 'South 1',
         queryTime: testData.constants.dates.DATE_1,
         queryStartTime: '2023-01-01T00:00:00.000Z',
         queryEndTime: null,
@@ -2041,6 +2044,7 @@ describe('Service utils', () => {
       const result = utils.applyFilenameVariables('export_@QueryStartTime_@QueryEndTime.csv', {
         source: 'south',
         southId: 'south1',
+        southName: 'South 1',
         queryTime: testData.constants.dates.DATE_1,
         queryStartTime: null,
         queryEndTime: null,
@@ -2048,6 +2052,61 @@ describe('Service utils', () => {
       });
 
       assert.strictEqual(result, 'export__.csv');
+    });
+
+    it('should replace @ConnectorName with the south connector name', () => {
+      const result = utils.applyFilenameVariables('export_@ConnectorName.csv', {
+        source: 'south',
+        southId: 'south1',
+        southName: 'My SQL South',
+        queryTime: testData.constants.dates.DATE_1,
+        queryStartTime: null,
+        queryEndTime: null,
+        items: []
+      });
+
+      assert.strictEqual(result, 'export_My SQL South.csv');
+    });
+
+    it('should replace @ItemName with the single item name when the batch has exactly one item', () => {
+      const result = utils.applyFilenameVariables('export_@ItemName.csv', {
+        source: 'south',
+        southId: 'south1',
+        southName: 'South 1',
+        queryTime: testData.constants.dates.DATE_1,
+        queryStartTime: null,
+        queryEndTime: null,
+        items: [{ id: 'item1', name: 'MyItem' } as SouthConnectorItemEntity<SouthItemSettings>]
+      });
+
+      assert.strictEqual(result, 'export_MyItem.csv');
+    });
+
+    it('should replace @ItemName with an empty string when the batch has zero or several items', () => {
+      const resultWithNoItems = utils.applyFilenameVariables('export_@ItemName.csv', {
+        source: 'south',
+        southId: 'south1',
+        southName: 'South 1',
+        queryTime: testData.constants.dates.DATE_1,
+        queryStartTime: null,
+        queryEndTime: null,
+        items: []
+      });
+      assert.strictEqual(resultWithNoItems, 'export_.csv');
+
+      const resultWithSeveralItems = utils.applyFilenameVariables('export_@ItemName.csv', {
+        source: 'south',
+        southId: 'south1',
+        southName: 'South 1',
+        queryTime: testData.constants.dates.DATE_1,
+        queryStartTime: null,
+        queryEndTime: null,
+        items: [
+          { id: 'item1', name: 'Item1' } as SouthConnectorItemEntity<SouthItemSettings>,
+          { id: 'item2', name: 'Item2' } as SouthConnectorItemEntity<SouthItemSettings>
+        ]
+      });
+      assert.strictEqual(resultWithSeveralItems, 'export_.csv');
     });
 
     it('should replace @QueryStartTime/@QueryEndTime with an empty string for a non-south source', () => {
