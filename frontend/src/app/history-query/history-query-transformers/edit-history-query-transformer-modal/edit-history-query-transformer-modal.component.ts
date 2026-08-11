@@ -20,6 +20,7 @@ import {
   NorthTransformerTestComponent,
   TransformerTestItemSource
 } from '../../../north/north-transformers/transformer-test/transformer-test.component';
+import { SelectExistingTransformerComponent } from '../../../shared/transformer/select-existing-transformer/select-existing-transformer.component';
 
 @Component({
   selector: 'oib-edit-history-query-transformer-modal',
@@ -38,7 +39,8 @@ import {
     NgbDropdownMenu,
     NgbDropdownItem,
     PillComponent,
-    NorthTransformerTestComponent
+    NorthTransformerTestComponent,
+    SelectExistingTransformerComponent
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   viewProviders: [
@@ -56,6 +58,8 @@ export class EditHistoryQueryTransformerModalComponent {
 
   state = new ObservableState();
   mode: 'create' | 'edit' = 'create';
+  /** Whether the transformer is configured from scratch or copied from an existing North/History attachment (create mode only). */
+  creationMode: 'new' | 'from-north' | 'from-history' = 'new';
   /** True when opened from history-query-detail (saves directly to API); false when opened from edit-history-query (changes are applied in-memory). */
   directSave = true;
   form: FormGroup<{
@@ -185,6 +189,17 @@ export class EditHistoryQueryTransformerModalComponent {
       addAttributeToForm(this.fb, this.form!.controls.options, attribute);
     }
     addEnablingConditions(this.form!.controls.options, this.manifest.enablingConditions);
+  }
+
+  setCreationMode(mode: 'new' | 'from-north' | 'from-history') {
+    this.creationMode = mode;
+    this.form.patchValue({ transformer: null, options: {} });
+  }
+
+  /** Called when the user picks an already-configured transformer attachment to copy as a starting point. */
+  applyExistingTransformer(selection: { transformer: TransformerDTO; options: Record<string, unknown> }) {
+    this.createOptionsForm(selection.transformer);
+    this.form.patchValue({ transformer: selection.transformer, options: selection.options }, { emitEvent: false });
   }
 
   canDismiss(): Observable<boolean> | boolean {

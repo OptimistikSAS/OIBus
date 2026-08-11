@@ -82,24 +82,87 @@
             </div>
           </div>
         }
-        <div [class]="form.controls.source.value.dataSourceType === 'oibus-api' ? 'col-4' : 'col-6'">
-          <div class="form-group">
-            <label class="form-label" for="output" translate="configuration.oibus.manifest.transformers.output"></label>
-            <select class="form-select" id="output" formControlName="transformer" [compareWith]="compareTransformers">
-              <option [ngValue]="null"></option>
-              @for (transformer of selectableOutputs; track transformer.id) {
-                @if (transformer.type === 'standard') {
-                  <option [ngValue]="transformer">
-                    {{ 'configuration.oibus.manifest.transformers.standard.' + transformer.functionName | translate }}
-                  </option>
-                } @else {
-                  <option [ngValue]="transformer">{{ transformer.name }}</option>
-                }
-              }
-            </select>
+      </div>
+      @if (mode === 'create') {
+        <div class="d-flex gap-3 mb-3">
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              id="creationModeNew"
+              name="creationMode"
+              [checked]="creationMode === 'new'"
+              (change)="setCreationMode('new')"
+            />
+            <label
+              class="form-check-label"
+              for="creationModeNew"
+              translate="configuration.oibus.manifest.transformers.copy-from-existing.mode-new"
+            ></label>
+          </div>
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              id="creationModeFromNorth"
+              name="creationMode"
+              [checked]="creationMode === 'from-north'"
+              (change)="setCreationMode('from-north')"
+            />
+            <label
+              class="form-check-label"
+              for="creationModeFromNorth"
+              translate="configuration.oibus.manifest.transformers.copy-from-existing.mode-from-north"
+            ></label>
+          </div>
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              id="creationModeFromHistory"
+              name="creationMode"
+              [checked]="creationMode === 'from-history'"
+              (change)="setCreationMode('from-history')"
+            />
+            <label
+              class="form-check-label"
+              for="creationModeFromHistory"
+              translate="configuration.oibus.manifest.transformers.copy-from-existing.mode-from-history"
+            ></label>
           </div>
         </div>
-      </div>
+      }
+      @if (creationMode === 'new') {
+        <div class="row">
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label" for="output" translate="configuration.oibus.manifest.transformers.output"></label>
+              <select class="form-select" id="output" formControlName="transformer" [compareWith]="compareTransformers">
+                <option [ngValue]="null"></option>
+                @for (transformer of selectableOutputs; track transformer.id) {
+                  @if (transformer.type === 'standard') {
+                    <option [ngValue]="transformer">
+                      {{ 'configuration.oibus.manifest.transformers.standard.' + transformer.functionName | translate }}
+                    </option>
+                  } @else {
+                    <option [ngValue]="transformer">{{ transformer.name }}</option>
+                  }
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div class="row mb-2">
+          <div class="col-12">
+            <oib-select-existing-transformer
+              [sourceKind]="creationMode === 'from-north' ? 'north' : 'history-query'"
+              [supportedOutputTypes]="supportedOutputTypes"
+              (transformerPicked)="applyExistingTransformer($event)"
+            />
+          </div>
+        </div>
+      }
       @if (form.controls.source.value.south) {
         <div class="row">
           <div class="col">

@@ -1027,6 +1027,14 @@
             "transformer": "Transformer to apply",
             "options": "Options"
           },
+          "copy-from-existing": {
+            "mode-new": "New",
+            "mode-from-north": "From a North connector",
+            "mode-from-history": "From a History query",
+            "select-source": "Select a source",
+            "select-transformer": "Transformer to copy",
+            "no-compatible-transformer": "No compatible transformer found for this source"
+          },
           "edit-transformer-modal": {
             "create-title": "Create a Custom Transformer",
             "edit-title": "Edit a Custom Transformer",
