@@ -70,6 +70,7 @@ import {
   OIBusSetpointCommand
 } from '../../model/oianalytics-command.model';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
+import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
 import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
 import {
   SouthConnectorItemDTO,
@@ -1128,6 +1129,135 @@ describe('OIAnalytics Command Service', () => {
       testData.oIAnalytics.commands.oIBusList[9].id,
       testData.constants.dates.FAKE_NOW,
       'Scan mode created successfully'
+    ]);
+  });
+
+  it('should execute create-scan-mode command with old-style payload missing type, cron, interval and activationWindow', async () => {
+    const oldStyleCommandContent = {
+      name: 'my new scan mode',
+      description: 'another scan mode'
+    } as ScanModeCommandDTO;
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => ({
+      ...(testData.oIAnalytics.commands.oIBusList[9] as OIBusCreateScanModeCommand),
+      commandContent: oldStyleCommandContent
+    }));
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(scanModeService.create.mock.calls[0].arguments, [
+      {
+        name: 'my new scan mode',
+        description: 'another scan mode',
+        type: 'cron',
+        cron: '',
+        interval: null,
+        activationWindow: null
+      },
+      'oianalytics'
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      testData.oIAnalytics.commands.oIBusList[9].id,
+      testData.constants.dates.FAKE_NOW,
+      'Scan mode created successfully'
+    ]);
+  });
+
+  it('should execute create-scan-mode command with new-style interval payload, defaulting only the missing cron', async () => {
+    const newStyleCommandContent = {
+      name: 'my new interval scan mode',
+      description: 'an interval scan mode',
+      type: 'interval',
+      interval: { value: 30, unit: 's' },
+      activationWindow: { dateRange: { start: '2026-08-01T00:00:00.000Z', end: null } }
+    } as ScanModeCommandDTO;
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => ({
+      ...(testData.oIAnalytics.commands.oIBusList[9] as OIBusCreateScanModeCommand),
+      commandContent: newStyleCommandContent
+    }));
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(scanModeService.create.mock.calls[0].arguments, [
+      {
+        name: 'my new interval scan mode',
+        description: 'an interval scan mode',
+        type: 'interval',
+        cron: '',
+        interval: { value: 30, unit: 's' },
+        activationWindow: { dateRange: { start: '2026-08-01T00:00:00.000Z', end: null } }
+      },
+      'oianalytics'
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      testData.oIAnalytics.commands.oIBusList[9].id,
+      testData.constants.dates.FAKE_NOW,
+      'Scan mode created successfully'
+    ]);
+  });
+
+  it('should execute update-scan-mode command with old-style payload missing type, cron, interval and activationWindow', async () => {
+    const oldStyleCommandContent = {
+      name: 'my scan mode',
+      description: 'a scan mode'
+    } as ScanModeCommandDTO;
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => ({
+      ...(testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand),
+      commandContent: oldStyleCommandContent
+    }));
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(scanModeService.update.mock.calls[0].arguments, [
+      (testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand).scanModeId,
+      {
+        name: 'my scan mode',
+        description: 'a scan mode',
+        type: 'cron',
+        cron: '',
+        interval: null,
+        activationWindow: null
+      },
+      'oianalytics'
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      testData.oIAnalytics.commands.oIBusList[3].id,
+      testData.constants.dates.FAKE_NOW,
+      'Scan mode updated successfully'
+    ]);
+  });
+
+  it('should execute update-scan-mode command keeping an explicit cron and not defaulting already-present fields', async () => {
+    const explicitCronCommandContent = {
+      name: 'my scan mode',
+      description: 'a scan mode',
+      type: 'cron',
+      cron: '0 0 * * * *',
+      interval: null,
+      activationWindow: null
+    } as ScanModeCommandDTO;
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => ({
+      ...(testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand),
+      commandContent: explicitCronCommandContent
+    }));
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(scanModeService.update.mock.calls[0].arguments, [
+      (testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand).scanModeId,
+      {
+        name: 'my scan mode',
+        description: 'a scan mode',
+        type: 'cron',
+        cron: '0 0 * * * *',
+        interval: null,
+        activationWindow: null
+      },
+      'oianalytics'
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      testData.oIAnalytics.commands.oIBusList[3].id,
+      testData.constants.dates.FAKE_NOW,
+      'Scan mode updated successfully'
     ]);
   });
 
