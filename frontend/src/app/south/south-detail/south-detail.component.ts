@@ -24,6 +24,7 @@ import { OIBusInfo, SouthConnectorMetrics } from '../../../../../backend/shared/
 import { WindowService } from '../../shared/window.service';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
+import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { EngineService } from '../../services/engine.service';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { LogsComponent } from '../../logs/logs.component';
@@ -849,6 +850,12 @@ export class SouthDetailComponent {
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
     component.runTest('south', this.southConnector!.id, this.southConnector!.settings, this.southConnector!.type);
+  }
+
+  explore() {
+    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
+    const component: SouthExploreModalComponent = modalRef.componentInstance;
+    component.prepare(this.southConnector!.id, this.southConnector!.settings, this.southConnector!.type);
   }
 
   toggleConnector(value: boolean) {
