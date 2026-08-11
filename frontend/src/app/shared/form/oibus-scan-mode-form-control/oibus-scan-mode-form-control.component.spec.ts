@@ -25,7 +25,7 @@ class TestComponent {
   scanModeAttribute: OIBusScanModeAttribute = {
     type: 'scan-mode',
     key: 'testKey',
-    translationKey: 'configuration.oibus.manifest.south.items.mssql.date-time-fields.field-name',
+    translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.field-name',
     acceptableType: 'SUBSCRIPTION_AND_POLL'
   } as OIBusScanModeAttribute;
 

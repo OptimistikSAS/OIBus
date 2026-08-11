@@ -179,7 +179,7 @@ export class ItemTestResultComponent {
   get isContentEmpty(): boolean {
     const content = this._result();
     if (!content) return false;
-    if (content.type === 'time-values') return content.content.length === 0;
+    if (content.type === 'time-values' || content.type === 'record-list') return content.content.length === 0;
     if (content.type === 'any' || content.type === 'any-content') return !content.content;
     return false;
   }
@@ -217,6 +217,12 @@ export class ItemTestResultComponent {
         this.genericTableView = createPageFromArray(rows, PAGE_SIZE, pageNumber);
         break;
       }
+      case 'record-list': {
+        this.headers = Object.keys(content.content[0] ?? {});
+        const rows = content.content.map(record => this.headers!.map(header => (record[header] == null ? '' : String(record[header]))));
+        this.genericTableView = createPageFromArray(rows, PAGE_SIZE, pageNumber);
+        break;
+      }
     }
   }
 
@@ -238,6 +244,10 @@ export class ItemTestResultComponent {
       case 'any-content':
         modes.add('any');
         break;
+      case 'record-list':
+        modes.add('table');
+        modes.add('json');
+        break;
     }
 
     this.changeAvailableDisplayModes([...modes]);
@@ -253,7 +263,7 @@ export class ItemTestResultComponent {
   }
 
   private getDisplayContent(content: OIBusContent): string {
-    if (content.type === 'time-values') {
+    if (content.type === 'time-values' || content.type === 'record-list') {
       return JSON.stringify(content.content, null, 2);
     }
     if (content.type === 'any' || content.type === 'any-content') {
