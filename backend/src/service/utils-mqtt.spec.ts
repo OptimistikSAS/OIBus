@@ -152,6 +152,20 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
   }
 ];
 
+const bareHashItem: SouthConnectorItemEntity<SouthMQTTItemSettings> = {
+  id: 'id11',
+  name: 'item11',
+  enabled: true,
+  settings: { topic: '#' },
+  scanMode,
+  ...auditFields,
+  group: null,
+  syncWithGroup: false,
+  maxReadInterval: null,
+  readDelay: null,
+  overlap: null
+};
+
 describe('Service utils MQTT', () => {
   let logger: PinoLogger;
   let decryptTextMock: ReturnType<typeof mock.fn>;
@@ -207,6 +221,30 @@ describe('Service utils MQTT', () => {
 
       result.log!({ object: 'test' });
       assert.deepStrictEqual(logger.trace.mock.calls[1].arguments, [JSON.stringify({ object: 'test' })]);
+    });
+
+    it('should not log when trace level is not enabled', async () => {
+      logger.isLevelEnabled.mock.mockImplementation(() => false);
+      const result = await utils.createConnectionOptions(
+        'connectorId',
+        {
+          url: 'url',
+          qos: '1',
+          reconnectPeriod: 10000,
+          maxNumberOfMessages: 1000,
+          flushMessageTimeout: 100,
+          authentication: {
+            type: 'none'
+          },
+          rejectUnauthorized: false,
+          connectTimeout: 10_000,
+          persistent: false
+        },
+        logger
+      );
+
+      result.log!('should not be logged');
+      assert.strictEqual(logger.trace.mock.calls.length, 0);
     });
 
     it('should create connection options with password', async () => {
@@ -387,6 +425,10 @@ describe('Service utils MQTT', () => {
 
     it('should handle empty items array', () => {
       assert.throws(() => utils.getItem('any/topic', []), { message: "Item can't be determined from topic any/topic" });
+    });
+
+    it('should match an item whose topic is the bare "#" wildcard', () => {
+      assert.deepStrictEqual(utils.getItem('any/completely/different/topic', [bareHashItem]), bareHashItem);
     });
 
     describe('Testing with a filtered items list to avoid duplicates', () => {

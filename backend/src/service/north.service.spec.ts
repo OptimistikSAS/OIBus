@@ -253,6 +253,51 @@ describe('North Service', () => {
     assert.ok(savedSource.group?.updatedAt === '');
   });
 
+  it('should not create a north connector if transformer source group is not found', async () => {
+    const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
+    const firstTransformerSource = command.transformers[0].source;
+    if (firstTransformerSource.type !== 'south') {
+      throw new Error('Expected south source in test data');
+    }
+    southItemGroupRepository.findById.mock.mockImplementationOnce(() => null);
+    command.transformers = [
+      {
+        ...command.transformers[0],
+        source: {
+          type: 'south',
+          southId: firstTransformerSource.southId,
+          groupId: 'unknownGroupId',
+          items: []
+        }
+      }
+    ];
+
+    await assert.rejects(() => service.create(command, null, 'userTest'), new NotFoundError('Could not find Group "unknownGroupId"'));
+  });
+
+  it('should not create a north connector if transformer source item is not found', async () => {
+    const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
+    const firstTransformerSource = command.transformers[0].source;
+    if (firstTransformerSource.type !== 'south') {
+      throw new Error('Expected south source in test data');
+    }
+    command.transformers = [
+      {
+        ...command.transformers[0],
+        source: {
+          type: 'south',
+          southId: firstTransformerSource.southId,
+          items: [{ id: 'unknownItemId', name: 'unknown item', enabled: true }]
+        }
+      }
+    ];
+
+    await assert.rejects(
+      () => service.create(command, null, 'userTest'),
+      new NotFoundError('Could not find South connector item "unknown item" (unknownItemId)')
+    );
+  });
+
   it('should create a north connector and not start it if disabled', async () => {
     const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
     command.enabled = false;

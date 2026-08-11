@@ -326,4 +326,11 @@ describe('toSyslogField', () => {
   it('should return the NILVALUE when sanitization strips everything', () => {
     assert.strictEqual(toSyslogField('   '), '-');
   });
+
+  it('should return the NILVALUE when the input is only non-printable characters and no whitespace remains to collapse into a dash', () => {
+    // Control characters (e.g. \x01, \x02) are not matched by \s, so they reach the
+    // non-printable-ASCII strip directly and leave an empty string, exercising the `|| '-'`
+    // fallback (as opposed to '   ' above, where whitespace collapsing already yields '-').
+    assert.strictEqual(toSyslogField('\x01\x02'), '-');
+  });
 });

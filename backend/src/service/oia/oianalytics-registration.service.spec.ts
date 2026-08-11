@@ -176,6 +176,23 @@ describe('OIAnalytics Registration Service', () => {
     assert.strictEqual(checkRegistrationMock.mock.calls.length, 2);
   });
 
+  it('should reject registration when key pair generation fails', async () => {
+    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.completed);
+
+    const keyPairError = new Error('key pair generation failed');
+    mock.method(
+      crypto,
+      'generateKeyPair',
+      (_type: unknown, _options: unknown, cb: (err: Error | null, pub?: string, priv?: string) => void) => {
+        cb(keyPairError);
+      }
+    );
+
+    await assert.rejects(service.register(testData.oIAnalytics.registration.command, testData.users.list[0].id), keyPairError);
+
+    assert.strictEqual(oIAnalyticsClient.register.mock.calls.length, 0);
+  });
+
   it('should register with proxy', async () => {
     const command: Omit<OIAnalyticsRegistration, 'id' | 'status' | 'activationDate'> = {
       host: 'http://localhost:4200/',

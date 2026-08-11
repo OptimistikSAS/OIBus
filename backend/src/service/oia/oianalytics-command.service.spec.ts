@@ -67,7 +67,11 @@ import {
   OIBusUpdateScanModeCommand,
   OIBusUpdateSouthConnectorCommand,
   OIBusUpdateVersionCommand,
-  OIBusSetpointCommand
+  OIBusSetpointCommand,
+  OIBusCreateCustomTransformerCommand,
+  OIBusUpdateCustomTransformerCommand,
+  OIBusDeleteCustomTransformerCommand,
+  OIBusTestCustomTransformerCommand
 } from '../../model/oianalytics-command.model';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
@@ -315,6 +319,32 @@ describe('OIAnalytics Command Service', () => {
     // registrationEvent with PENDING status -> no new setTimeout
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => testData.oIAnalytics.registration.pending);
     oIAnalyticsRegistrationService.registrationEvent.emit('updated');
+  });
+
+  it('should clear the pending refresh timeout and refresh again when registration is updated while running', async () => {
+    oIAnalyticsCommandRepository.list.mock.mockImplementation(() => []);
+    mock.method(process, 'exit', () => undefined as never);
+    mock.method(process, 'kill', () => undefined as unknown as void);
+
+    await service.start();
+    // start() -> refreshCommands() scheduled a refreshCommandsTimeout since registration is REGISTERED
+    const refreshCommandsSpy = mock.method(service, 'refreshCommands', async () => undefined);
+
+    oIAnalyticsRegistrationService.registrationEvent.emit('updated');
+    await flushPromises();
+
+    assert.strictEqual(refreshCommandsSpy.mock.calls.length, 1);
+
+    await service.stop();
+  });
+
+  it('should do nothing when processing the next command while stopped', async () => {
+    await service.stop();
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.resetCalls();
+
+    await service.processNextCommand();
+
+    assert.strictEqual(oIAnalyticsCommandRepository.findFirstToExecute.mock.calls.length, 0);
   });
 
   it('should search commands', () => {
@@ -1351,6 +1381,48 @@ describe('OIAnalytics Command Service', () => {
     ]);
   });
 
+  it('should execute create-or-update-south-items-from-csv command and error when south connector resolves to a falsy value', async () => {
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[14]);
+    southService.findById.mock.mockImplementationOnce(() => null as never);
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
+      testData.oIAnalytics.commands.oIBusList[14].id,
+      `South connector ${(testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).southConnectorId} not found`
+    ]);
+    assert.strictEqual(southService.checkImportItems.mock.calls.length, 0);
+  });
+
+  it('should execute create-or-update-south-items-from-csv command with an item that has no scan mode', async () => {
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[14]);
+    southService.findById.mock.mockImplementationOnce(() => testData.south.list[0]);
+    const itemWithoutScanMode = {
+      ...toSouthConnectorItemDTO(testData.south.list[0].items[0], testData.south.list[0].type, (id: string) => ({
+        id,
+        friendlyName: id
+      })),
+      scanMode: null
+    } as unknown as SouthConnectorItemDTO;
+    southService.checkImportItems.mock.mockImplementationOnce(async () => ({
+      items: [itemWithoutScanMode],
+      errors: [] as Array<{ item: Record<string, string>; error: string }>
+    }));
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(southService.importItems.mock.calls[0].arguments[1], [
+      {
+        id: itemWithoutScanMode.id,
+        enabled: itemWithoutScanMode.enabled,
+        name: itemWithoutScanMode.name,
+        settings: itemWithoutScanMode.settings,
+        scanModeId: null,
+        scanModeName: null
+      }
+    ]);
+  });
+
   it('should execute create-or-update-south-items-from-csv command with item errors', async () => {
     const command: OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand = JSON.parse(
       JSON.stringify(testData.oIAnalytics.commands.oIBusList[14])
@@ -1454,6 +1526,62 @@ describe('OIAnalytics Command Service', () => {
     assert.strictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls.length, 0);
     // Cancel the scheduled retry to prevent async activity after the test ends
     await service.stop();
+  });
+
+  it('sendPendingAcks should do nothing when the service is stopped', async () => {
+    const internal = service as unknown as {
+      sendPendingAcks(): Promise<void>;
+      ackQueue: Map<string, unknown>;
+    };
+    internal.ackQueue.set(testData.oIAnalytics.commands.oIBusList[0].id, testData.oIAnalytics.commands.oIBusList[0]);
+    await service.stop();
+
+    await internal.sendPendingAcks();
+
+    assert.strictEqual(oIAnalyticsClient.updateCommandStatus.mock.calls.length, 0);
+  });
+
+  it('sendPendingAcks should do nothing when the ack queue is empty', async () => {
+    const internal = service as unknown as { sendPendingAcks(): Promise<void> };
+
+    await internal.sendPendingAcks();
+
+    assert.strictEqual(oIAnalyticsRegistrationService.getRegistrationSettings.mock.calls.length, 0);
+    assert.strictEqual(oIAnalyticsClient.updateCommandStatus.mock.calls.length, 0);
+  });
+
+  it('sendPendingAcks should clear a pending retry timeout before flushing', async () => {
+    const internal = service as unknown as {
+      sendPendingAcks(): Promise<void>;
+      ackQueue: Map<string, unknown>;
+      ackRetryTimeout: ReturnType<typeof setTimeout> | null;
+    };
+    internal.ackQueue.set(testData.oIAnalytics.commands.oIBusList[0].id, testData.oIAnalytics.commands.oIBusList[0]);
+    internal.ackRetryTimeout = setTimeout(() => undefined, 100_000);
+
+    await internal.sendPendingAcks();
+
+    assert.strictEqual(internal.ackRetryTimeout, null);
+    assert.strictEqual(oIAnalyticsClient.updateCommandStatus.mock.calls.length, 1);
+  });
+
+  it('sendPendingAcks should treat a 404 as already acknowledged and clear the queue', async () => {
+    const internal = service as unknown as {
+      sendPendingAcks(): Promise<void>;
+      ackQueue: Map<string, unknown>;
+    };
+    internal.ackQueue.set(testData.oIAnalytics.commands.oIBusList[0].id, testData.oIAnalytics.commands.oIBusList[0]);
+    oIAnalyticsClient.updateCommandStatus.mock.mockImplementationOnce(async () => {
+      throw new Error('404 - not found');
+    });
+
+    await internal.sendPendingAcks();
+
+    assert.strictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls.length, 1);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls[0].arguments, [
+      testData.oIAnalytics.commands.oIBusList[0].id
+    ]);
+    assert.strictEqual(internal.ackQueue.size, 0);
   });
 
   it('should not execute command if target version is not the same', async () => {
@@ -1745,6 +1873,114 @@ describe('OIAnalytics Command Service', () => {
         queryDuration: 0
       })
     ]);
+  });
+
+  it('should execute create-custom-transformer command', async () => {
+    const command: OIBusCreateCustomTransformerCommand = {
+      id: 'createCustomTransformerId',
+      type: 'create-custom-transformer',
+      targetVersion: testData.engine.settings.version,
+      commandContent: testData.transformers.command
+    } as OIBusCreateCustomTransformerCommand;
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(transformerService.create.mock.calls[0].arguments, [testData.transformers.command, 'oianalytics']);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Transformer created successfully'
+    ]);
+  });
+
+  it('should execute update-custom-transformer command', async () => {
+    const command: OIBusUpdateCustomTransformerCommand = {
+      id: 'updateCustomTransformerId',
+      type: 'update-custom-transformer',
+      targetVersion: testData.engine.settings.version,
+      transformerId: 'transformerId1',
+      commandContent: testData.transformers.command
+    } as OIBusUpdateCustomTransformerCommand;
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(transformerService.update.mock.calls[0].arguments, [
+      'transformerId1',
+      testData.transformers.command,
+      'oianalytics'
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Transformer updated successfully'
+    ]);
+  });
+
+  it('should execute delete-custom-transformer command', async () => {
+    const command: OIBusDeleteCustomTransformerCommand = {
+      id: 'deleteCustomTransformerId',
+      type: 'delete-custom-transformer',
+      targetVersion: testData.engine.settings.version,
+      transformerId: 'transformerId1'
+    } as OIBusDeleteCustomTransformerCommand;
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(transformerService.delete.mock.calls[0].arguments, ['transformerId1']);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Transformer deleted successfully'
+    ]);
+  });
+
+  it('should execute test-custom-transformer command', async () => {
+    const testRequest = { inputData: 'raw', options: {} };
+    const command: OIBusTestCustomTransformerCommand = {
+      id: 'testCustomTransformerId',
+      type: 'test-custom-transformer',
+      targetVersion: testData.engine.settings.version,
+      commandContent: { command: testData.transformers.command, testRequest }
+    } as OIBusTestCustomTransformerCommand;
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+    const testResult = { output: 'result', metadata: {} };
+    transformerService.test.mock.mockImplementationOnce(async () => testResult as never);
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(transformerService.test.mock.calls[0].arguments, [testData.transformers.command, testRequest]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify(testResult)
+    ]);
+  });
+
+  it('should execute test-transformer command with pasted input data using no explicit options', async () => {
+    const command: OIBusTestTransformerCommand = {
+      id: 'testTransformerNoOptionsId',
+      type: 'test-transformer',
+      targetVersion: testData.engine.settings.version,
+      transformerId: 'transformerId',
+      commandContent: { inputData: 'pasted content' }
+    } as OIBusTestTransformerCommand;
+
+    const raw: OIBusContent = { type: 'any-content', content: 'raw content' };
+    const transformed: OIBusContent = { type: 'any-content', content: 'transformed content' };
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+    transformerService.testTransformer.mock.mockImplementationOnce(async () => ({
+      raw,
+      transformed,
+      connectionDuration: 0,
+      queryDuration: 0
+    }));
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(transformerService.testTransformer.mock.calls[0].arguments, [command.transformerId, {}, 'pasted content']);
   });
 
   it('should execute test-transformer command with pasted input data, keeping both raw and transformed', async () => {
@@ -2137,6 +2373,30 @@ describe('OIAnalytics Command Service', () => {
       command.id,
       `History query ${command.historyQueryId} not found`
     ]);
+  });
+
+  it('should execute create-or-update-history-query-south-items-from-csv command and error when history query resolves to a falsy value', async () => {
+    const command: OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand = {
+      id: 'createOrUpdateHistoryQuerySouthItemsId',
+      type: 'create-or-update-history-query-south-items-from-csv',
+      targetVersion: testData.engine.settings.version,
+      historyQueryId: 'h1',
+      commandContent: {
+        deleteItemsNotPresent: false,
+        csvContent: '',
+        delimiter: ','
+      }
+    } as OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
+    historyQueryService.findById.mock.mockImplementationOnce(() => null as never);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+
+    await service.processNextCommand();
+
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
+      command.id,
+      `History query ${command.historyQueryId} not found`
+    ]);
+    assert.strictEqual(historyQueryService.checkImportItems.mock.calls.length, 0);
   });
 
   it('should execute create-or-update-history-query-south-items-from-csv command with item error', async () => {
@@ -3224,5 +3484,38 @@ describe('OIAnalytics Command service with no commands and without update', () =
   it('should properly convert to DTO', () => {
     const command = testData.oIAnalytics.commands.oIBusList[0];
     assert.deepStrictEqual(toOIBusCommandDTO(command), command);
+  });
+
+  it('should properly convert custom transformer commands to DTO', () => {
+    const createCommand: OIBusCreateCustomTransformerCommand = {
+      id: 'createCustomTransformerId',
+      type: 'create-custom-transformer',
+      targetVersion: testData.engine.settings.version,
+      commandContent: testData.transformers.command
+    } as OIBusCreateCustomTransformerCommand;
+    const updateCommand: OIBusUpdateCustomTransformerCommand = {
+      id: 'updateCustomTransformerId',
+      type: 'update-custom-transformer',
+      targetVersion: testData.engine.settings.version,
+      transformerId: 'transformerId1',
+      commandContent: testData.transformers.command
+    } as OIBusUpdateCustomTransformerCommand;
+    const deleteCommand: OIBusDeleteCustomTransformerCommand = {
+      id: 'deleteCustomTransformerId',
+      type: 'delete-custom-transformer',
+      targetVersion: testData.engine.settings.version,
+      transformerId: 'transformerId1'
+    } as OIBusDeleteCustomTransformerCommand;
+    const testCommand: OIBusTestCustomTransformerCommand = {
+      id: 'testCustomTransformerId',
+      type: 'test-custom-transformer',
+      targetVersion: testData.engine.settings.version,
+      commandContent: { command: testData.transformers.command, testRequest: { inputData: 'raw', options: {} } }
+    } as OIBusTestCustomTransformerCommand;
+
+    assert.deepStrictEqual(toOIBusCommandDTO(createCommand), createCommand);
+    assert.deepStrictEqual(toOIBusCommandDTO(updateCommand), updateCommand);
+    assert.deepStrictEqual(toOIBusCommandDTO(deleteCommand), deleteCommand);
+    assert.deepStrictEqual(toOIBusCommandDTO(testCommand), testCommand);
   });
 });

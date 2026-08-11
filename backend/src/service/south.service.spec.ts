@@ -362,6 +362,46 @@ describe('South Service', () => {
     assert.strictEqual(engine.reloadSouth.mock.calls.length, 1);
   });
 
+  it('should update a south connector and map groups from the command onto the entity', async () => {
+    const command = JSON.parse(JSON.stringify(testData.south.command));
+    const groupCommand: SouthItemGroupCommandDTO = {
+      id: 'existingGroupId',
+      standardSettings: {
+        name: 'My Group',
+        scanModeId: testData.scanMode.list[0].id
+      },
+      historySettings: {
+        startTimeOffset: 5,
+        endTimeOffset: 10,
+        maxReadInterval: 3600,
+        readDelay: 200,
+        recoveryStrategy: 'oldest'
+      }
+    };
+    command.groups = [groupCommand];
+    southConnectorRepository.findAllSouth.mock.mockImplementation(() => testData.south.list);
+    mockUtils.checkScanMode.mock.mockImplementation(() => testData.scanMode.list[0]);
+
+    await service.update(testData.south.list[0].id, command, 'userTest');
+
+    assert.strictEqual(southConnectorRepository.saveSouth.mock.calls.length, 1);
+    const savedEntity = southConnectorRepository.saveSouth.mock.calls[0].arguments[0] as SouthConnectorEntity<
+      SouthSettings,
+      SouthItemSettings
+    >;
+    assert.strictEqual(savedEntity.groups.length, 1);
+    assert.deepStrictEqual(savedEntity.groups[0], {
+      id: 'existingGroupId',
+      name: 'My Group',
+      startTimeOffset: 5,
+      endTimeOffset: 10,
+      maxReadInterval: 3600,
+      readDelay: 200,
+      recoveryStrategy: 'oldest',
+      scanMode: testData.scanMode.list[0]
+    });
+  });
+
   it('should update a south connector and set createdBy on new items', async () => {
     const command = JSON.parse(JSON.stringify(testData.south.command));
     command.items[0].id = '';
@@ -1082,6 +1122,89 @@ describe('South Service', () => {
     assert.strictEqual(southCacheRepository.saveItemLastValue.mock.calls.length, 0);
   });
 
+  it('should not save an item last value when the group cache has no tracked instant', async () => {
+    const southConnector = testData.south.list[2];
+    southConnectorRepository.findSouthById.mock.mockImplementation(() => southConnector);
+
+    const group: SouthItemGroupEntity = {
+      id: 'group1',
+      name: 'Group 1',
+      southId: southConnector.id,
+      scanMode: testData.scanMode.list[0],
+      startTimeOffset: null,
+      endTimeOffset: null,
+      maxReadInterval: null,
+      readDelay: null,
+      recoveryStrategy: null,
+      items: [],
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    const existingItem = { ...southConnector.items[0], group, syncWithGroup: true };
+    southConnectorRepository.findItemById.mock.mockImplementation(() => existingItem);
+
+    // group cache exists but has never been assigned a tracked instant
+    southCacheRepository.getGroupLastValue.mock.mockImplementation(() => ({
+      itemId: null,
+      groupId: group.id,
+      queryTime: '2024-05-01T00:00:00.000Z',
+      value: null,
+      trackedInstant: null
+    }));
+
+    const commandWithoutGroup: SouthConnectorItemCommandDTO = {
+      ...testData.south.itemCommand,
+      groupId: null,
+      groupName: null,
+      syncWithGroup: false
+    };
+
+    await service.updateItem(southConnector.id, existingItem.id, commandWithoutGroup, 'userTest');
+
+    assert.strictEqual(southCacheRepository.getGroupLastValue.mock.calls.length, 1);
+    assert.strictEqual(southCacheRepository.saveItemLastValue.mock.calls.length, 0);
+  });
+
+  it('should not save an item last value when there is no group cache at all', async () => {
+    const southConnector = testData.south.list[2];
+    southConnectorRepository.findSouthById.mock.mockImplementation(() => southConnector);
+
+    const group: SouthItemGroupEntity = {
+      id: 'group1',
+      name: 'Group 1',
+      southId: southConnector.id,
+      scanMode: testData.scanMode.list[0],
+      startTimeOffset: null,
+      endTimeOffset: null,
+      maxReadInterval: null,
+      readDelay: null,
+      recoveryStrategy: null,
+      items: [],
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    const existingItem = { ...southConnector.items[0], group, syncWithGroup: true };
+    southConnectorRepository.findItemById.mock.mockImplementation(() => existingItem);
+
+    southCacheRepository.getGroupLastValue.mock.mockImplementation(() => null);
+
+    const commandWithoutGroup: SouthConnectorItemCommandDTO = {
+      ...testData.south.itemCommand,
+      groupId: null,
+      groupName: null,
+      syncWithGroup: false
+    };
+
+    await service.updateItem(southConnector.id, existingItem.id, commandWithoutGroup, 'userTest');
+
+    assert.strictEqual(southCacheRepository.getGroupLastValue.mock.calls.length, 1);
+    assert.strictEqual(southCacheRepository.saveItemLastValue.mock.calls.length, 0);
+  });
+
   it('should enable an item', async () => {
     await service.enableItem(testData.south.list[0].id, testData.south.list[0].items[0].id);
 
@@ -1447,6 +1570,38 @@ describe('South Service', () => {
       ],
       errors: []
     });
+  });
+
+  it('should use the recoveryStrategy provided in the CSV instead of the default', async () => {
+    const csvData = [
+      {
+        name: 'itemWithRecoveryStrategy',
+        enabled: 'true',
+        settings_regex: '*',
+        settings_preserveFiles: 'true',
+        settings_ignoreModifiedDate: 'false',
+        settings_minAge: 100,
+        scanMode: testData.scanMode.list[0].name,
+        recoveryStrategy: 'newest'
+      }
+    ];
+
+    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
+    if (papaparseMod) {
+      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
+        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
+      );
+    }
+
+    const result = await service.checkImportItems(
+      testData.south.list[0].type,
+      'file content',
+      ',',
+      testData.south.list[0].items.map(item => ({ ...item, group: null }))
+    );
+
+    assert.strictEqual(result.errors.length, 0);
+    assert.strictEqual(result.items[0].recoveryStrategy, 'newest');
   });
 
   it('should properly check items with group name and no scan mode from CSV', async () => {
@@ -2259,6 +2414,60 @@ describe('South Service', () => {
       assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
     });
 
+    it('should update a group with a non-null endTimeOffset and a null readDelay', async () => {
+      const command: SouthItemGroupCommandDTO = {
+        id: null,
+        standardSettings: {
+          name: 'Updated Group Offsets',
+          scanModeId: testData.scanMode.list[0].id
+        },
+        historySettings: {
+          startTimeOffset: null,
+          endTimeOffset: 30,
+          maxReadInterval: null,
+          recoveryStrategy: null,
+          readDelay: null
+        }
+      };
+
+      const existingGroup: SouthItemGroupEntity = {
+        id: 'groupToUpdateOffsets',
+        name: 'Original Name',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        startTimeOffset: null,
+        endTimeOffset: null,
+        maxReadInterval: null,
+        recoveryStrategy: null,
+        readDelay: 0,
+        items: [],
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+
+      const updatedGroup: SouthItemGroupEntity = { ...existingGroup, endTimeOffset: 30 };
+
+      southItemGroupRepository.findById.mock.mockImplementation(
+        seq(
+          () => existingGroup,
+          () => updatedGroup
+        )
+      );
+      southItemGroupRepository.findBySouthId.mock.mockImplementation(() => [existingGroup]);
+      engine.reloadSouthItems.mock.mockImplementation(async () => undefined);
+
+      await service.updateGroup(testData.south.list[0].id, 'groupToUpdateOffsets', 'testUser', command);
+
+      const entity = southItemGroupRepository.update.mock.calls[0].arguments[1] as {
+        endTimeOffset: number | null;
+        readDelay: number;
+      };
+      assert.strictEqual(entity.endTimeOffset, 30);
+      assert.strictEqual(entity.readDelay, 0);
+    });
+
     it('should throw error when updating non-existent group', async () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
@@ -2907,6 +3116,30 @@ describe('South Service', () => {
 
           assert.strictEqual(southItemEntity.scanMode, null);
           assert.strictEqual(southItemEntity.group, null);
+        });
+
+        it('should default scanMode and startTimeOffset to null when scanModeId/scanModeName/startTimeOffset are not provided', async () => {
+          const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
+          const command: SouthConnectorItemCommandDTO = {
+            ...testData.south.itemCommand,
+            id: 'testItemId',
+            scanModeId: null,
+            scanModeName: null,
+            startTimeOffset: null
+          };
+
+          await copySouthItemCommandToSouthItemEntity(
+            southItemEntity,
+            command,
+            null,
+            testData.south.list[0].type,
+            testData.scanMode.list,
+            [],
+            false
+          );
+
+          assert.strictEqual(southItemEntity.scanMode, null);
+          assert.strictEqual(southItemEntity.startTimeOffset, null);
         });
 
         it('should default syncWithGroup to false when command.syncWithGroup is undefined', async () => {
