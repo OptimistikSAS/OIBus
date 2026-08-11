@@ -168,6 +168,8 @@ describe('settings-interface.generator', () => {
       ['postgresql', true, 'SouthPostgreSQLItemSettings'],
       ['rest', false, 'SouthRestSettings'],
       ['rest', true, 'SouthRestItemSettings'],
+      ['s7', false, 'SouthS7Settings'],
+      ['s7', true, 'SouthS7ItemSettings'],
       ['sqlite', false, 'SouthSQLiteSettings'],
       ['sqlite', true, 'SouthSQLiteItemSettings'],
       ['sftp', false, 'SouthSFTPSettings'],
@@ -197,6 +199,11 @@ describe('settings-interface.generator', () => {
 
     it('nullable=true when no validators', () => {
       assert.equal(checkIfNullableOrUndefined(makeSimpleAttr('string', 'host'), []).nullable, true);
+    });
+
+    it('nullable=true when validators is undefined (short-circuits the ternary)', () => {
+      const attr = { type: 'string', key: 'host', translationKey: 'host', displayProperties: {} } as never;
+      assert.equal(checkIfNullableOrUndefined(attr, []).nullable, true);
     });
 
     it('nullable=false when REQUIRED validator present', () => {
@@ -376,7 +383,9 @@ describe('settings-interface.generator', () => {
         itemSettingsInterfaces: [
           { name: 'ItemFooSettings', attributes: [{ key: 'query', type: 'string', nullable: false, undefinable: false }] }
         ],
-        itemSettingsSubInterfaces: []
+        itemSettingsSubInterfaces: [
+          { name: 'ItemFooSettingsAuth', attributes: [{ key: 'token', type: 'string', nullable: true, undefinable: false }] }
+        ]
       };
     }
 
@@ -385,6 +394,8 @@ describe('settings-interface.generator', () => {
       const content = fsSync.readFileSync(path.join(tmpDir, 'shared/model/south-settings.model.ts'), 'utf8');
       assert.ok(content.includes('SouthItemSettings'));
       assert.ok(content.includes('ItemFooSettings'));
+      assert.ok(content.includes('interface ItemFooSettingsAuth'));
+      assert.ok(content.includes('token: string | null'));
     });
 
     it('generates North type file (no item settings)', () => {
@@ -459,6 +470,21 @@ describe('settings-interface.generator', () => {
       generateTypesForManifest(manifest as never, desc, 'South');
       assert.ok(desc.settingsInterfaces.some((i: Interface) => i.name === 'SouthSQLiteSettings'));
       assert.ok(desc.itemSettingsInterfaces.some((i: Interface) => i.name === 'SouthSQLiteItemSettings'));
+    });
+
+    it('generates sub-interfaces when the main (connector-level) settings contain a nested object attribute', () => {
+      const nestedAuth = makeObjectAttr('auth', [makeSimpleAttr('string', 'token', [{ type: 'REQUIRED' }])]);
+      const manifest = {
+        id: 'mqtt',
+        settings: makeObjectAttr('settings', [makeSimpleAttr('string', 'url', [{ type: 'REQUIRED' }]), nestedAuth]),
+        items: {
+          rootAttribute: makeObjectAttr('item', [makeObjectAttr('settings', [makeSimpleAttr('string', 'topic', [{ type: 'REQUIRED' }])])])
+        }
+      };
+      const desc = emptyDesc();
+      generateTypesForManifest(manifest as never, desc, 'South');
+      assert.ok(desc.settingsInterfaces.some((i: Interface) => i.name === 'SouthMQTTSettings'));
+      assert.ok(desc.settingsSubInterfaces.some((i: Interface) => i.name === 'SouthMQTTSettingsAuth'));
     });
 
     it('generates types for a north connector manifest', () => {
