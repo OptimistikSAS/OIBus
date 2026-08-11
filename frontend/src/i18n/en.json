@@ -261,7 +261,8 @@
       "any": "Files (for all sources)",
       "setpoint": "Setpoints (for all sources)",
       "time-values": "OIBus Time Values (for all sources)",
-      "any-content": "Any content"
+      "any-content": "Any content",
+      "record-list": "Record list (SQL-like sources)"
     },
     "oibus-output-data-type": {
       "any": "Any",
@@ -1121,6 +1122,7 @@
             "iso": "No transform",
             "json-to-csv": "CSV (from JSON)",
             "json-to-oianalytics": "OIAnalytics (from JSON)",
+            "record-list-to-csv": "CSV (from Record list)",
             "time-values-to-csv": "CSV",
             "time-values-to-json": "JSON",
             "time-values-to-modbus": "Modbus values",
@@ -1409,6 +1411,69 @@
                 "format": "Format",
                 "locale": "Locale"
               }
+            }
+          },
+          "record-list-to-csv": {
+            "filename": "Filename",
+            "encoding": {
+              "title": "Encoding",
+              "UTF_8": "UTF-8",
+              "UTF_8_BOM": "UTF-8 BOM",
+              "LATIN_1": "Latin-1 (ISO-8859-1)",
+              "UTF_16_LE": "UTF-16 LE"
+            },
+            "header": "First row as header",
+            "compression": "Compress file",
+            "delimiter": {
+              "title": "Delimiter",
+              "DOT": "Dot .",
+              "SEMI_COLON": "Semi colon ;",
+              "COLON": "Colon :",
+              "COMMA": "Comma ,",
+              "SLASH": "Slash /",
+              "TAB": "Tab",
+              "NON_BREAKING_SPACE": "Space",
+              "PIPE": "Pipe |"
+            },
+            "newline": {
+              "title": "Newline",
+              "CRLF": "CRLF (\\r\\n)",
+              "LF": "LF (\\n)",
+              "CR": "CR (\\r)"
+            },
+            "quote-char": {
+              "title": "Quote character",
+              "DOUBLE_QUOTE": "Double quote (\")",
+              "SINGLE_QUOTE": "Single quote (')",
+              "NONE": "None"
+            },
+            "escape-char": {
+              "title": "Escape character",
+              "BACKSLASH": "Backslash (\\)",
+              "DOUBLE_QUOTE": "Double quote (\")"
+            },
+            "datetime-fields": {
+              "title": "Datetime columns",
+              "item": {
+                "title": "Datetime column"
+              },
+              "field-name": "Column name",
+              "input": {
+                "title": "Input format",
+                "type": {
+                  "title": "Type",
+                  "string": "String",
+                  "iso-string": "ISO string",
+                  "unix-epoch": "Unix epoch (s)",
+                  "unix-epoch-ms": "Unix epoch (ms)",
+                  "date-time": "DateTime"
+                },
+                "timezone": "Timezone",
+                "format": "Format",
+                "locale": "Locale"
+              },
+              "output-timestamp-format": "Output date time format",
+              "output-timezone": "Output timezone"
             }
           },
           "setpoint-to-modbus": {
@@ -1983,91 +2048,51 @@
             },
             "mssql": {
               "query": "Query",
-              "date-time-fields": {
-                "date-time-field": "Date time fields",
+              "tracking-instant": {
+                "title": "Tracking instant",
+                "track-instant": "Track instant",
                 "field-name": "Field name",
-                "use-as-reference": "Reference field",
-                "type": {
-                  "title": "Type",
-                  "iso-string": "ISO String",
-                  "unix-epoch": "UNIX epoch (s)",
-                  "unix-epoch-ms": "UNIX epoch (ms)",
-                  "string": "String",
-                  "timestamp": "Timestamp",
-                  "timestamptz": "Timestamp with timezone",
-                  "date-time": "DateTime",
-                  "date-time-2": "DateTime2",
-                  "date-time-offset": "DateTime Offset",
-                  "small-date-time": "Small DateTime",
-                  "date": "Date"
-                },
-                "timezone": "Timezone",
-                "format": "Format",
-                "locale": "Locale"
-              },
-              "serialization": {
-                "title": "Serialization",
-                "type": {
-                  "title": "Type",
-                  "csv": "CSV"
-                },
-                "filename": "Filename",
-                "delimiter": {
-                  "title": "Delimiter",
-                  "DOT": "Dot .",
-                  "SEMI_COLON": "Semi colon ;",
-                  "COLON": "Colon :",
-                  "COMMA": "Comma ,",
-                  "SLASH": "Slash /",
-                  "TAB": "Tab",
-                  "NON_BREAKING_SPACE": "Space",
-                  "PIPE": "Pipe |"
-                },
-                "compression": "Compression",
-                "output-timestamp-format": "Output date time format",
-                "output-timezone": "Output timezone"
+                "date-time-input": {
+                  "title": "Date time input",
+                  "type": {
+                    "title": "Type",
+                    "string": "String",
+                    "date": "Date",
+                    "date-time": "DateTime",
+                    "date-time-2": "DateTime2",
+                    "date-time-offset": "DateTime Offset",
+                    "small-date-time": "Small DateTime",
+                    "iso-string": "ISO String",
+                    "unix-epoch": "UNIX epoch (s)",
+                    "unix-epoch-ms": "UNIX epoch (ms)"
+                  },
+                  "timezone": "Timezone",
+                  "format": "Format",
+                  "locale": "Locale"
+                }
               }
             },
             "mysql": {
               "query": "Query",
               "request-timeout": "Request timeout",
-              "date-time-fields": {
-                "date-time-field": "Date time fields",
+              "tracking-instant": {
+                "title": "Tracking instant",
+                "track-instant": "Track instant",
                 "field-name": "Field name",
-                "use-as-reference": "Reference field",
-                "type": {
-                  "title": "Type",
-                  "iso-string": "ISO String",
-                  "unix-epoch": "UNIX epoch (s)",
-                  "unix-epoch-ms": "UNIX epoch (ms)",
-                  "string": "String",
-                  "date-time": "DateTime"
-                },
-                "timezone": "Timezone",
-                "format": "Format",
-                "locale": "Locale"
-              },
-              "serialization": {
-                "title": "Serialization",
-                "type": {
-                  "title": "Type",
-                  "csv": "CSV"
-                },
-                "filename": "Filename",
-                "delimiter": {
-                  "title": "Delimiter",
-                  "DOT": "Dot .",
-                  "SEMI_COLON": "Semi colon ;",
-                  "COLON": "Colon :",
-                  "COMMA": "Comma ,",
-                  "SLASH": "Slash /",
-                  "TAB": "Tab",
-                  "NON_BREAKING_SPACE": "Space",
-                  "PIPE": "Pipe |"
-                },
-                "compression": "Compression",
-                "output-timestamp-format": "Output date time format",
-                "output-timezone": "Output timezone"
+                "date-time-input": {
+                  "title": "Date time input",
+                  "type": {
+                    "title": "Type",
+                    "string": "String",
+                    "iso-string": "ISO String",
+                    "unix-epoch": "UNIX epoch (s)",
+                    "unix-epoch-ms": "UNIX epoch (ms)",
+                    "date-time": "DateTime"
+                  },
+                  "timezone": "Timezone",
+                  "format": "Format",
+                  "locale": "Locale"
+                }
               }
             },
             "influxdb": {
@@ -2279,43 +2304,24 @@
             "oracle": {
               "query": "Query",
               "request-timeout": "Request timeout",
-              "date-time-fields": {
-                "date-time-field": "Date time fields",
+              "tracking-instant": {
+                "title": "Tracking instant",
+                "track-instant": "Track instant",
                 "field-name": "Field name",
-                "use-as-reference": "Reference field",
-                "type": {
-                  "title": "Type",
-                  "iso-string": "ISO String",
-                  "unix-epoch": "UNIX epoch (s)",
-                  "unix-epoch-ms": "UNIX epoch (ms)",
-                  "string": "String",
-                  "date-time": "DateTime"
-                },
-                "timezone": "Timezone",
-                "format": "Format",
-                "locale": "Locale"
-              },
-              "serialization": {
-                "title": "Serialization",
-                "type": {
-                  "title": "Type",
-                  "csv": "CSV"
-                },
-                "filename": "Filename",
-                "delimiter": {
-                  "title": "Delimiter",
-                  "DOT": "Dot .",
-                  "SEMI_COLON": "Semi colon ;",
-                  "COLON": "Colon :",
-                  "COMMA": "Comma ,",
-                  "SLASH": "Slash /",
-                  "TAB": "Tab",
-                  "NON_BREAKING_SPACE": "Space",
-                  "PIPE": "Pipe |"
-                },
-                "compression": "Compression",
-                "output-timestamp-format": "Output date time format",
-                "output-timezone": "Output timezone"
+                "date-time-input": {
+                  "title": "Date time input",
+                  "type": {
+                    "title": "Type",
+                    "iso-string": "ISO String",
+                    "unix-epoch": "UNIX epoch (s)",
+                    "unix-epoch-ms": "UNIX epoch (ms)",
+                    "string": "String",
+                    "date-time": "DateTime"
+                  },
+                  "timezone": "Timezone",
+                  "format": "Format",
+                  "locale": "Locale"
+                }
               }
             },
             "osisoft-pi": {
@@ -2329,44 +2335,25 @@
             },
             "postgresql": {
               "query": "Query",
-              "date-time-fields": {
-                "date-time-field": "Date time fields",
+              "tracking-instant": {
+                "title": "Tracking instant",
+                "track-instant": "Track instant",
                 "field-name": "Field name",
-                "use-as-reference": "Reference field",
-                "type": {
-                  "title": "Type",
-                  "iso-string": "ISO String",
-                  "unix-epoch": "UNIX epoch (s)",
-                  "unix-epoch-ms": "UNIX epoch (ms)",
-                  "string": "String",
-                  "timestamp": "Timestamp",
-                  "timestamptz": "Timestamp with timezone"
-                },
-                "timezone": "Timezone",
-                "format": "Format",
-                "locale": "Locale"
-              },
-              "serialization": {
-                "title": "Serialization",
-                "type": {
-                  "title": "Type",
-                  "csv": "CSV"
-                },
-                "filename": "Filename",
-                "delimiter": {
-                  "title": "Delimiter",
-                  "DOT": "Dot .",
-                  "SEMI_COLON": "Semi colon ;",
-                  "COLON": "Colon :",
-                  "COMMA": "Comma ,",
-                  "SLASH": "Slash /",
-                  "TAB": "Tab",
-                  "NON_BREAKING_SPACE": "Space",
-                  "PIPE": "Pipe |"
-                },
-                "compression": "Compression",
-                "output-timestamp-format": "Output date time format",
-                "output-timezone": "Output timezone"
+                "date-time-input": {
+                  "title": "Date time input",
+                  "type": {
+                    "title": "Type",
+                    "string": "String",
+                    "iso-string": "ISO String",
+                    "unix-epoch": "UNIX epoch (s)",
+                    "unix-epoch-ms": "UNIX epoch (ms)",
+                    "timestamp": "Timestamp",
+                    "timestamptz": "Timestamp with timezone"
+                  },
+                  "timezone": "Timezone",
+                  "format": "Format",
+                  "locale": "Locale"
+                }
               }
             },
             "rest": {
@@ -2438,42 +2425,23 @@
             },
             "sqlite": {
               "query": "Query",
-              "date-time-fields": {
-                "date-time-field": "Date time fields",
+              "tracking-instant": {
+                "title": "Tracking instant",
+                "track-instant": "Track instant",
                 "field-name": "Field name",
-                "use-as-reference": "Reference field",
-                "type": {
-                  "title": "Type",
-                  "iso-string": "ISO String",
-                  "unix-epoch": "UNIX epoch (s)",
-                  "unix-epoch-ms": "UNIX epoch (ms)",
-                  "string": "String"
-                },
-                "timezone": "Timezone",
-                "format": "Format",
-                "locale": "Locale"
-              },
-              "serialization": {
-                "title": "Serialization",
-                "type": {
-                  "title": "Type",
-                  "csv": "CSV"
-                },
-                "filename": "Filename",
-                "delimiter": {
-                  "title": "Delimiter",
-                  "DOT": "Dot .",
-                  "SEMI_COLON": "Semi colon ;",
-                  "COLON": "Colon :",
-                  "COMMA": "Comma ,",
-                  "SLASH": "Slash /",
-                  "TAB": "Tab",
-                  "NON_BREAKING_SPACE": "Space",
-                  "PIPE": "Pipe |"
-                },
-                "compression": "Compression",
-                "output-timestamp-format": "Output date time format",
-                "output-timezone": "Output timezone"
+                "date-time-input": {
+                  "title": "Date time input",
+                  "type": {
+                    "title": "Type",
+                    "string": "String",
+                    "iso-string": "ISO String",
+                    "unix-epoch": "UNIX epoch (s)",
+                    "unix-epoch-ms": "UNIX epoch (ms)"
+                  },
+                  "timezone": "Timezone",
+                  "format": "Format",
+                  "locale": "Locale"
+                }
               }
             }
           }

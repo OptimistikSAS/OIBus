@@ -182,7 +182,11 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
    * parsing/formatting) — only `@StartTime`/`@EndTime` query parameters are formatted, using the
    * tracking field's `dateTimeInput` config so they match the source column's native representation.
    */
-  async queryData(item: SouthConnectorItemEntity<SouthOracleItemSettings>, startTime: Instant, endTime: Instant): Promise<Array<OIBusRecord>> {
+  async queryData(
+    item: SouthConnectorItemEntity<SouthOracleItemSettings>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Array<OIBusRecord>> {
     let connectString = `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}`;
     if (this.connector.settings.connectionTimeout) {
       connectString += `?connect_timeout=${this.connector.settings.connectionTimeout}ms`;
