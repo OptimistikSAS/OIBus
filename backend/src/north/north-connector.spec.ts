@@ -1147,4 +1147,170 @@ describe('NorthConnector', () => {
   it('should get cache folder', () => {
     assert.strictEqual(north['getCacheFolder'](), 'cache');
   });
+
+  it('should get cache sizes from the cache service', () => {
+    cacheService.getCacheContentSizes.mock.mockImplementation(() => ({ cache: 10, error: 20, archive: 30 }));
+    assert.deepStrictEqual(north.getCacheSizes(), { cache: 10, error: 20, archive: 30 });
+    assert.strictEqual(cacheService.getCacheContentSizes.mock.calls.length, 1);
+  });
+
+  it('should resolve an oianalytics-setpoint transformer and only keep the first one found', () => {
+    setConnectorTransformers([
+      {
+        id: 'setpoint1',
+        options: {},
+        transformer: { id: 'tr-setpoint-1', type: 'standard', functionName: 'noop', outputType: 'setpoint' },
+        source: { type: 'oianalytics-setpoint' }
+      },
+      {
+        id: 'setpoint2',
+        options: {},
+        transformer: { id: 'tr-setpoint-2', type: 'standard', functionName: 'noop', outputType: 'setpoint' },
+        source: { type: 'oianalytics-setpoint' }
+      }
+    ]);
+
+    const found = north['findTransformer']({ source: 'oianalytics-setpoints' } as CacheMetadataSource);
+    // First-wins: the second oianalytics-setpoint transformer must NOT overwrite the first.
+    assert.strictEqual((found as { id: string } | undefined)?.id, 'setpoint1');
+  });
+
+  it('should return undefined from findTransformer for an unhandled metadata source', () => {
+    setConnectorTransformers([]);
+    const found = north['findTransformer']({ source: 'unknown-source' } as unknown as CacheMetadataSource);
+    assert.strictEqual(found, undefined);
+  });
+
+  it('should fall back to a single group when a value cannot be attributed to a known item', async () => {
+    setConnectorTransformers([
+      {
+        id: 't1',
+        options: {},
+        transformer: { id: 'tr1', type: 'standard', functionName: 'noop', outputType: 'time-values' },
+        source: { type: 'south', south: { id: 'southX' }, group: undefined, items: [{ id: 'i1', name: 'point-1' }] }
+      },
+      {
+        id: 't2',
+        options: {},
+        transformer: { id: 'tr2', type: 'standard', functionName: 'noop', outputType: 'time-values' },
+        source: { type: 'south', south: { id: 'southX' }, group: undefined, items: [{ id: 'i2', name: 'point-2' }] }
+      }
+    ]);
+
+    const metadata: CacheMetadata = {
+      contentFile: 'f.json',
+      contentSize: 10,
+      numberOfElement: 1,
+      createdAt: '',
+      contentType: 'time-values'
+    };
+    oiBusTransformer.transformInMemory.mock.resetCalls();
+    oiBusTransformer.transformInMemory.mock.mockImplementation(async () => ({ metadata, output: Buffer.from('out') }));
+
+    const v1 = { pointId: 'point-1', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 1 } };
+    const v2 = { pointId: 'point-2', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 2 } };
+    const unmatched = { pointId: 'point-unknown', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 3 } };
+
+    await north.cacheContent({ type: 'time-values', content: [v1, v2, unmatched] }, {
+      source: 'south',
+      southId: 'southX',
+      items: [
+        { id: 'i1', name: 'point-1' },
+        { id: 'i2', name: 'point-2' }
+      ]
+    } as unknown as CacheMetadataSourceOriginSouth);
+
+    // Falls back to a single group over the whole batch instead of dropping the unmatched value.
+    assert.strictEqual(oiBusTransformer.transformInMemory.mock.calls.length, 1);
+    assert.deepStrictEqual(oiBusTransformer.transformInMemory.mock.calls[0].arguments[0], [v1, v2, unmatched]);
+    assert.ok(
+      logger.warn.mock.calls.some((c: { arguments: Array<unknown> }) =>
+        (c.arguments[0] as string).includes('Cannot route point "point-unknown" to a transformer')
+      )
+    );
+  });
+
+  it('should resolve item/group/south-level transformers independently when splitting a batch', async () => {
+    setConnectorTransformers([
+      {
+        id: 'itemLevel',
+        options: {},
+        transformer: { id: 'tr-item', type: 'standard', functionName: 'noop', outputType: 'time-values' },
+        source: { type: 'south', south: { id: 'southX' }, group: undefined, items: [{ id: 'i1', name: 'point-1' }] }
+      },
+      {
+        id: 'groupLevel',
+        options: {},
+        transformer: { id: 'tr-group', type: 'standard', functionName: 'noop', outputType: 'time-values' },
+        source: {
+          type: 'south',
+          south: { id: 'southX' },
+          group: { id: 'g1', items: [{ id: 'i2', name: 'point-2' }] },
+          items: []
+        }
+      },
+      {
+        id: 'southLevel',
+        options: {},
+        transformer: { id: 'tr-south', type: 'standard', functionName: 'noop', outputType: 'time-values' },
+        source: { type: 'south', south: { id: 'southX' }, group: undefined, items: [] }
+      }
+    ]);
+
+    const metadata: CacheMetadata = {
+      contentFile: 'f.json',
+      contentSize: 10,
+      numberOfElement: 1,
+      createdAt: '',
+      contentType: 'time-values'
+    };
+    oiBusTransformer.transformInMemory.mock.resetCalls();
+    oiBusTransformer.transformInMemory.mock.mockImplementation(async () => ({ metadata, output: Buffer.from('out') }));
+
+    const v1 = { pointId: 'point-1', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 1 } };
+    const v2 = { pointId: 'point-2', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 2 } };
+    const v3 = { pointId: 'point-3', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 3 } };
+
+    await north.cacheContent({ type: 'time-values', content: [v1, v2, v3] }, {
+      source: 'south',
+      southId: 'southX',
+      items: [
+        { id: 'i1', name: 'point-1' },
+        { id: 'i2', name: 'point-2' },
+        { id: 'i3', name: 'point-3' }
+      ]
+    } as unknown as CacheMetadataSourceOriginSouth);
+
+    // Item-level, group-level and south-level fallback each resolve a distinct transformer
+    // for its item, so the batch is split into three groups.
+    assert.strictEqual(oiBusTransformer.transformInMemory.mock.calls.length, 3);
+  });
+
+  it('should replace the current best candidate when a later item resolves to an earlier-listed transformer', () => {
+    setConnectorTransformers([
+      {
+        id: 'later',
+        options: {},
+        transformer: { id: 'tr-later', type: 'standard', functionName: 'noop', outputType: 'time-values' },
+        source: { type: 'south', south: { id: 'southY' }, group: undefined, items: [{ id: 'iB', name: 'point-b' }] }
+      },
+      {
+        id: 'earlier',
+        options: {},
+        transformer: { id: 'tr-earlier', type: 'standard', functionName: 'noop', outputType: 'time-values' },
+        source: { type: 'south', south: { id: 'southY' }, group: undefined, items: [{ id: 'iA', name: 'point-a' }] }
+      }
+    ]);
+
+    // 'iA' (transformer "earlier", listIndex 1) is visited first and becomes `best`; then 'iB'
+    // (transformer "later", listIndex 0) is visited and, since 0 < 1, replaces `best` — exercising
+    // the `candidate.listIndex < best.listIndex` branch (not just the initial `!best` branch).
+    const found = north['findTransformer']({
+      source: 'south',
+      southId: 'southY',
+      items: [{ id: 'iA' }, { id: 'iB' }]
+    } as unknown as CacheMetadataSource);
+
+    assert.strictEqual((found as unknown as { id: string }).id, 'later');
+  });
 });
