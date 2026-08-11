@@ -24,7 +24,7 @@ class TestComponent {
   secretAttribute: OIBusSecretAttribute = {
     type: 'secret',
     key: 'testKey',
-    translationKey: 'configuration.oibus.manifest.south.items.mssql.date-time-fields.field-name'
+    translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.field-name'
   } as OIBusSecretAttribute;
 
   formGroup = new FormGroup({

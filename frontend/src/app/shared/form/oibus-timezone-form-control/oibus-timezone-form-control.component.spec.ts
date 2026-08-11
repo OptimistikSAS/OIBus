@@ -25,7 +25,7 @@ class TestComponent {
   timezoneAttribute: OIBusTimezoneAttribute = {
     type: 'timezone',
     key: 'testKey',
-    translationKey: 'configuration.oibus.manifest.south.items.mssql.date-time-fields.timezone'
+    translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.date-time-input.timezone'
   } as OIBusTimezoneAttribute;
 
   formGroup = new FormGroup({

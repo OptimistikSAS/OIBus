@@ -23,7 +23,7 @@ class TestComponent {
   stringSelectAttribute: OIBusStringSelectAttribute = {
     type: 'string-select',
     key: 'testKey',
-    translationKey: 'configuration.oibus.manifest.south.items.mssql.date-time-fields.type',
+    translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.date-time-input.type',
     selectableValues: ['iso-string', 'unix-epoch']
   } as OIBusStringSelectAttribute;
 
