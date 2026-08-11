@@ -462,6 +462,26 @@ describe('SouthSFTP', () => {
       assert.deepStrictEqual(getFileMock.calls[0].arguments[2], []);
     });
 
+    it('directQuery should reuse filesPreserved from the south cache when available', async () => {
+      const preserved = [{ filename: 'cached.csv', modifiedTime: 123 }];
+      mock.method(
+        southCacheRepository,
+        'getItemLastValue',
+        mock.fn(() => ({ value: preserved }))
+      );
+      mock.method(
+        south,
+        'listFiles',
+        mock.fn(async (_item: unknown, filesPreserved: unknown) => {
+          assert.deepStrictEqual(filesPreserved, preserved);
+          return [];
+        })
+      );
+
+      const result = await south.directQuery(configuration.items);
+      assert.deepStrictEqual(result, preserved);
+    });
+
     it('should respect max files limit and skip remaining files', async () => {
       const configWithLimit: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
         ...configuration,

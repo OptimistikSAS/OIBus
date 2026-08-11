@@ -380,6 +380,27 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(disconnectMock.mock.calls.length, 0);
   });
 
+  it('should properly create a real OPCUA session', async () => {
+    const createdSession = { close: mock.fn(async () => undefined) };
+    nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementationOnce(async () => createdSession as unknown as ClientSession);
+
+    const session = await south.createSession();
+
+    assert.strictEqual(session, createdSession);
+    assert.strictEqual(utilsOpcuaExports.createSessionConfigs.mock.calls.length, 1);
+    assert.strictEqual(nodeOPCUAMock.OPCUAClient.createSession.mock.calls.length, 1);
+    assert.deepStrictEqual(nodeOPCUAMock.OPCUAClient.createSession.mock.calls[0].arguments, [
+      configuration.settings.url,
+      opcuaUserIdentity,
+      opcuaOptions
+    ]);
+    assert.ok(
+      (logger.info as ReturnType<typeof mock.fn>).mock.calls.some(
+        c => c.arguments[0] === `OPCUA connector "${configuration.name}" connected`
+      )
+    );
+  });
+
   it('should not reconnect if disconnecting', async () => {
     south.createSession = mock.fn(() => {
       throw new Error('get session error');
@@ -413,6 +434,19 @@ describe('SouthOPCUA', () => {
     );
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
     // setTimeout should have been called for reconnect
+  });
+
+  it('should not schedule a reconnect after a failed connect when the connector is disabled', async () => {
+    south.createSession = mock.fn(() => {
+      throw new Error('get session error');
+    });
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
+    south['disconnecting'] = false;
+    south['connector'].enabled = false;
+    await south.connect();
+    assert.strictEqual(south['reconnectTimeout'], null);
+    south['connector'].enabled = true;
   });
 
   it('should properly disconnect', async () => {
@@ -583,6 +617,41 @@ describe('SouthOPCUA', () => {
     assert.ok(testResult.items.some(i => i.key === 'SupportedAggregates'));
     assert.strictEqual(mockEndpointClient.connect.mock.calls.length, 1);
     assert.strictEqual(mockEndpointClient.disconnect.mock.calls.length, 1);
+    fsMock.mock.restore();
+  });
+
+  it('should test connection and fall back to raw values for unmapped security mode, empty policy uri, and unmapped token type', async () => {
+    const mockEndpointClient = {
+      connect: mock.fn(async () => undefined),
+      getEndpoints: mock.fn(async () => [
+        {
+          securityMode: 99, // not present in SECURITY_MODE_LABELS
+          securityPolicyUri: undefined,
+          userIdentityTokens: [{ tokenType: 42 }] // not present in AUTH_TYPE_LABELS
+        }
+      ]),
+      disconnect: mock.fn(async () => undefined)
+    };
+    nodeOPCUAMock.OPCUAClient.create.mock.mockImplementation(() => mockEndpointClient);
+
+    const mockedClient = {
+      close: mock.fn(async () => undefined),
+      read: mock.fn(async () => [
+        { statusCode: { value: 0 }, value: { value: 0 } },
+        { statusCode: { value: 0 }, value: { value: 'Prosys OPC' } },
+        { statusCode: { value: 0 }, value: { value: 'OPC UA Server' } },
+        { statusCode: { value: 0 }, value: { value: '1.2.3' } },
+        { statusCode: { value: 0 }, value: { value: '1234' } }
+      ])
+    };
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    const fsMock = mock.method(fs, 'rm', async () => undefined);
+
+    const testResult = await south.testConnection();
+
+    assert.ok(testResult.items.some(i => i.key === 'SecurityModes' && i.value === '99'));
+    assert.ok(!testResult.items.some(i => i.key === 'SecurityPolicies'));
+    assert.ok(testResult.items.some(i => i.key === 'AuthenticationModes' && i.value === '42'));
     fsMock.mock.restore();
   });
 
