@@ -4,6 +4,7 @@ import {
   connectSocket,
   getNumberOfWords,
   getValueFromBuffer,
+  parseAddress,
   readBuffer,
   readCoil,
   readDiscreteInputRegister,
@@ -252,6 +253,17 @@ describe('Modbus Utilities', () => {
         const buffer = createBuffer([0x00, 0x00]);
         assert.strictEqual(readBuffer(buffer, 'bit', 'big-endian', 15), '0');
       });
+    });
+  });
+
+  describe('parseAddress', () => {
+    it('should parse a hexadecimal address', () => {
+      assert.strictEqual(parseAddress('0x1A'), 26);
+      assert.strictEqual(parseAddress('0X1a'), 26);
+    });
+
+    it('should parse a decimal address', () => {
+      assert.strictEqual(parseAddress('42'), 42);
     });
   });
 
