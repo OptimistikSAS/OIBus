@@ -68,6 +68,20 @@ describe('EngineRepository with populated database', () => {
       assert.strictEqual(repository.get()!.webServer.port, testData.engine.webServerCommand.port);
     });
 
+    it('should update engine settings without a forward proxy (falls back to disabled defaults)', () => {
+      const { forward: _forward, ...proxyServerWithoutForward } = testData.engine.command.proxyServer;
+      const command = {
+        ...testData.engine.command,
+        proxyServer: proxyServerWithoutForward
+      };
+      repository.update(command, testData.users.list[0].id);
+      const result = repository.get()!;
+      assert.strictEqual(result.proxyServer.forward.enabled, false);
+      assert.strictEqual(result.proxyServer.forward.url, null);
+      assert.strictEqual(result.proxyServer.forward.username, null);
+      assert.strictEqual(result.proxyServer.forward.password, null);
+    });
+
     it('should update proxy settings with proxy disabled', () => {
       const disabledForward = { enabled: false, url: null, username: null, password: null };
       repository.updateProxy({ enabled: false, port: null, forward: disabledForward }, testData.users.list[0].id);
@@ -82,6 +96,17 @@ describe('EngineRepository with populated database', () => {
       const result = repository.get()!;
       assert.strictEqual(result.proxyServer.enabled, true);
       assert.strictEqual(result.proxyServer.port, 8080);
+    });
+
+    it('should update proxy settings without a forward proxy (falls back to disabled defaults)', () => {
+      repository.updateProxy({ enabled: true, port: 8081 }, testData.users.list[0].id);
+      const result = repository.get()!;
+      assert.strictEqual(result.proxyServer.enabled, true);
+      assert.strictEqual(result.proxyServer.port, 8081);
+      assert.strictEqual(result.proxyServer.forward.enabled, false);
+      assert.strictEqual(result.proxyServer.forward.url, null);
+      assert.strictEqual(result.proxyServer.forward.username, null);
+      assert.strictEqual(result.proxyServer.forward.password, null);
     });
 
     it('should update logger settings only', () => {

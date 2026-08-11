@@ -505,6 +505,26 @@ describe('SouthFolderScanner', () => {
         await (south as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\data');
         assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB session removal')));
       });
+
+      it('should return without logging when username is empty on non-Windows platforms (mount)', async () => {
+        configuration.settings.username = null;
+        configuration.settings.inputFolder = '\\\\server\\share\\data';
+        south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+        logger.trace.mock.resetCalls();
+        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+        await (south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data');
+        assert.strictEqual(logger.trace.mock.calls.length, 0);
+      });
+
+      it('should return without logging when username is empty on non-Windows platforms (unmount)', async () => {
+        configuration.settings.username = null;
+        configuration.settings.inputFolder = '\\\\server\\share\\data';
+        south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+        logger.trace.mock.resetCalls();
+        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+        await (south as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\data');
+        assert.strictEqual(logger.trace.mock.calls.length, 0);
+      });
     });
 
     it('should skip SMB mount when username is empty', async () => {
@@ -556,6 +576,28 @@ describe('SouthFolderScanner', () => {
               c => typeof c.arguments[0] === 'string' && c.arguments[0].includes('Failed to authenticate SMB session')
             )
           );
+        });
+
+        it('should skip SMB mount on Windows when inputFolder is not a UNC path', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.inputFolder = 'C:\\local\\folder';
+          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+          type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+          await assert.doesNotReject((south as unknown as Private)['mountNetworkShare']('C:\\local\\folder'));
+        });
+
+        it('should use the domain-qualified username when a domain is configured', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.domain = 'MYDOMAIN';
+          configuration.settings.password = '';
+          configuration.settings.inputFolder = '\\\\server\\share\\data';
+          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+          type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+          // cmdkey does not exist on the test runner platform, so execFile rejects and the
+          // catch branch (log + rethrow) is exercised — this still exercises the domain-qualified
+          // username ternary branch before the failure.
+          await assert.rejects((south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data'));
+          assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Failed to store SMB credentials')));
         });
 
         it('should skip SMB mount on Windows when username is empty', async () => {
