@@ -188,7 +188,11 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
    * parsing/formatting) — only `@StartTime`/`@EndTime` query parameters are formatted, using the
    * tracking field's `dateTimeInput` config so they match the source column's native representation.
    */
-  async queryData(item: SouthConnectorItemEntity<SouthMSSQLItemSettings>, startTime: Instant, endTime: Instant): Promise<Array<OIBusRecord>> {
+  async queryData(
+    item: SouthConnectorItemEntity<SouthMSSQLItemSettings>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Array<OIBusRecord>> {
     const config = await this.createConnectionOptions();
 
     const dateTimeInput = item.settings.trackingInstant?.trackInstant ? item.settings.trackingInstant.dateTimeInput : null;
