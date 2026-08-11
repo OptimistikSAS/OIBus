@@ -500,6 +500,26 @@ describe('SouthInfluxDB', () => {
       const queryResult = await southNoToken.queryData(itemNoTracking, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
       assert.equal(queryResult.length, 1);
     });
+
+    it('should track max instant from the _time field on v2', async () => {
+      mock.method(
+        south,
+        'queryData',
+        mock.fn(async () => [{ _time: testData.constants.dates.DATE_2, _value: 1 }])
+      );
+      const result = await south.historyQuery([baseItem], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
+      assert.equal(result.trackedInstant, testData.constants.dates.DATE_2);
+    });
+
+    it('should return a null trackedInstant when the time field is missing on v2', async () => {
+      mock.method(
+        south,
+        'queryData',
+        mock.fn(async () => [{ _value: 1 }])
+      );
+      const result = await south.historyQuery([baseItem], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
+      assert.equal(result.trackedInstant, null);
+    });
   });
 
   // ——————————————————————————————————————————————————

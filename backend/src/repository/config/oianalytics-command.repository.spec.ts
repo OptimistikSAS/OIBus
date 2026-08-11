@@ -34,6 +34,9 @@ import {
   OIAnalyticsFetchTestSouthItemCommandDTO,
   OIAnalyticsFetchUpdateCertificateCommandDTO,
   OIAnalyticsFetchUpdateEngineGeneralCommandDTO,
+  OIAnalyticsFetchUpdateEngineWebServerCommandDTO,
+  OIAnalyticsFetchUpdateEngineProxyCommandDTO,
+  OIAnalyticsFetchUpdateEngineLoggerCommandDTO,
   OIAnalyticsFetchUpdateHistoryCacheContentCommandDTO,
   OIAnalyticsFetchUpdateHistoryQueryCommandDTO,
   OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO,
@@ -199,6 +202,91 @@ describe('OIAnalyticsCommandRepository', () => {
       targetVersion: command.targetVersion,
       commandContent: command.commandContent
     });
+  });
+
+  it('should create an update engine web server command', () => {
+    const command: OIAnalyticsFetchUpdateEngineWebServerCommandDTO = {
+      id: 'web-server-command-id',
+      type: 'update-engine-web-server',
+      targetVersion: testData.oIAnalytics.commands.oIAnalyticsList[1].targetVersion,
+      commandContent: { port: 8080, authTokenDuration: '7d' }
+    };
+    repository.create(command);
+
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
+      id: command.id,
+      type: command.type,
+      status: 'RETRIEVED',
+      ack: false,
+      targetVersion: command.targetVersion,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      commandContent: command.commandContent
+    });
+  });
+
+  it('should create an update engine proxy command', () => {
+    const command: OIAnalyticsFetchUpdateEngineProxyCommandDTO = {
+      id: 'proxy-command-id',
+      type: 'update-engine-proxy',
+      targetVersion: testData.oIAnalytics.commands.oIAnalyticsList[1].targetVersion,
+      commandContent: { enabled: false }
+    };
+    repository.create(command);
+
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
+      id: command.id,
+      type: command.type,
+      status: 'RETRIEVED',
+      ack: false,
+      targetVersion: command.targetVersion,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      commandContent: command.commandContent
+    });
+  });
+
+  it('should create an update engine logger command', () => {
+    const command: OIAnalyticsFetchUpdateEngineLoggerCommandDTO = {
+      id: 'logger-command-id',
+      type: 'update-engine-logger',
+      targetVersion: testData.oIAnalytics.commands.oIAnalyticsList[1].targetVersion,
+      commandContent: {
+        console: { level: 'info' },
+        file: { level: 'info', maxFileSize: 50, numberOfFiles: 5 },
+        database: { level: 'info', maxNumberOfLogs: 10000 },
+        loki: { level: 'info', interval: 60, address: '', username: '', password: '' },
+        oia: { level: 'info', interval: 60 }
+      } as never
+    };
+    repository.create(command);
+
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
+      id: command.id,
+      type: command.type,
+      status: 'RETRIEVED',
+      ack: false,
+      targetVersion: command.targetVersion,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      commandContent: command.commandContent
+    });
+  });
+
+  it('should return null when there is no first command to execute', () => {
+    const allCommands = repository.findAll();
+    for (const command of allCommands) {
+      database.prepare(`UPDATE commands SET status = 'COMPLETED' WHERE id = ?;`).run(command.id);
+    }
+    assert.strictEqual(repository.findFirstToExecute(), null);
+
+    // restore statuses for other tests
+    for (const command of allCommands) {
+      database.prepare(`UPDATE commands SET status = ? WHERE id = ?;`).run(command.status, command.id);
+    }
   });
 
   it('should create a restart command', () => {

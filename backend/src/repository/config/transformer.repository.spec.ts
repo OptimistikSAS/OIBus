@@ -219,6 +219,12 @@ describe('TransformerRepository', () => {
     const secondRepo = new TransformerRepository(database);
     const all = secondRepo.list().filter(t => t.type === 'standard');
     assert.strictEqual(all.length, 16);
+    // Explicitly pin the last standard transformer registered by createStandardTransformers()
+    // (setpoint-to-opcua) to make sure it was not duplicated on this second construction.
+    const setpointToOpcuaEntries = all.filter(
+      t => (t as StandardTransformer).functionName === OIBusSetpointToOPCUATransformer.transformerName
+    );
+    assert.strictEqual(setpointToOpcuaEntries.length, 1);
   });
 
   it('should create all standard transformers when none exist', () => {
@@ -227,5 +233,28 @@ describe('TransformerRepository', () => {
     const freshRepo = new TransformerRepository(database);
     const standardTransformers = freshRepo.list().filter(t => t.type === 'standard');
     assert.strictEqual(standardTransformers.length, 16);
+    // Explicitly pin the last standard transformer registered by createStandardTransformers()
+    // (setpoint-to-opcua) to make sure the creation branch is exercised for it specifically,
+    // not just implicitly via the aggregate count above.
+    const setpointToOpcua = standardTransformers.find(
+      t => (t as StandardTransformer).functionName === OIBusSetpointToOPCUATransformer.transformerName
+    );
+    assert.ok(setpointToOpcua, 'setpoint-to-opcua standard transformer was not created');
+    assert.strictEqual(setpointToOpcua!.inputType, 'setpoint');
+    assert.strictEqual((setpointToOpcua as StandardTransformer).outputType, 'opcua');
+
+    // And re-constructing once more against the now fully-populated table should skip it again,
+    // covering the false branch of that same last if-check without disturbing other tests' state.
+    database.prepare('DELETE FROM transformers WHERE function_name = ?').run(OIBusSetpointToOPCUATransformer.transformerName);
+    const repoMissingLastOne = new TransformerRepository(database);
+    const recreated = repoMissingLastOne
+      .list()
+      .filter(t => t.type === 'standard' && (t as StandardTransformer).functionName === OIBusSetpointToOPCUATransformer.transformerName);
+    assert.strictEqual(recreated.length, 1);
+    const repoWithAllPresent = new TransformerRepository(database);
+    const stillOne = repoWithAllPresent
+      .list()
+      .filter(t => t.type === 'standard' && (t as StandardTransformer).functionName === OIBusSetpointToOPCUATransformer.transformerName);
+    assert.strictEqual(stillOne.length, 1);
   });
 });
