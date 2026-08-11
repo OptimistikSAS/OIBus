@@ -1,7 +1,7 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import knex, { Knex } from 'knex';
-import { up } from './v3.0-initial-setup';
+import { up, down } from './v3.0-initial-setup';
 
 /** Return the column names for a table via PRAGMA. */
 async function columnNames(db: Knex, table: string): Promise<Array<string>> {
@@ -105,5 +105,9 @@ describe('Metrics migration v3.0 initial setup', () => {
       const row = await db('engine_metrics').count('* as c').first();
       assert.strictEqual(Number(row!.c), 0);
     });
+  });
+
+  it('down is a no-op', async () => {
+    await assert.doesNotReject(() => down());
   });
 });
