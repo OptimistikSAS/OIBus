@@ -1,35 +1,8 @@
 import { describe, it, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { readdirSync } from 'node:fs';
 import knex, { Knex } from 'knex';
+import { buildPreMigrationSchema } from '../../../../tests/utils/test-utils';
 import { down, up } from './v3.10.0_1';
-
-/** Build the schema as it exists just before v3.10.0_1 by running every prior entity migration in order. */
-async function buildPreMigrationSchema(db: Knex): Promise<void> {
-  const entityRoot = path.resolve(__dirname, '..', '..');
-  const collect = (base: string): Array<{ file: string; full: string }> => {
-    const out: Array<{ file: string; full: string }> = [];
-    for (const entry of readdirSync(base, { withFileTypes: true })) {
-      const full = path.join(base, entry.name);
-      if (entry.isDirectory()) {
-        out.push(...collect(full));
-      } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.spec.ts')) {
-        out.push({ file: entry.name, full });
-      }
-    }
-    return out;
-  };
-  const priorFiles = collect(entityRoot)
-    .sort((a, b) => (a.file > b.file ? 1 : a.file < b.file ? -1 : 0))
-    .filter(f => f.file < 'v3.10.0_1');
-
-  for (const { full } of priorFiles) {
-    const migration = (await import(pathToFileURL(full).href)) as { up: (k: Knex) => Promise<void> };
-    await migration.up(db);
-  }
-}
 
 async function columnNames(db: Knex, table: string): Promise<Array<string>> {
   const cols = (await db.raw(`PRAGMA table_info(${table})`)) as Array<{ name: string }>;
@@ -46,7 +19,7 @@ describe('Entity migration v3.10.0_1', () => {
   beforeEach(async () => {
     await db?.destroy();
     db = knex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
-    await buildPreMigrationSchema(db);
+    await buildPreMigrationSchema(db, 'v3.10.0_1');
     await db('scan_modes').insert([
       { id: 'sm1', name: 'Every minute', description: 'Trigger every minute', cron: '0 * * * * *' },
       { id: 'sm2', name: 'Every hour', description: 'Trigger every hour', cron: '0 0 * * * *' },
