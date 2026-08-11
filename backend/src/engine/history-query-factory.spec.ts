@@ -262,6 +262,7 @@ describe('HistoryQueryFactory', () => {
         {
           source: 'south',
           southId: mockSettings.id,
+          southName: mockSettings.name,
           queryTime: mockQueryTime,
           queryStartTime: undefined,
           queryEndTime: undefined,
@@ -310,6 +311,7 @@ describe('HistoryQueryFactory', () => {
         {
           source: 'south',
           southId: mockSettings.id,
+          southName: mockSettings.name,
           queryTime: mockQueryTime,
           queryStartTime: '2023-01-01T00:00:00.000Z',
           queryEndTime: '2023-01-01T01:00:00.000Z',
