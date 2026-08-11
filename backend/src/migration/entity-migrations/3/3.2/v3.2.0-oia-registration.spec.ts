@@ -277,6 +277,22 @@ describe('Entity migration v3.2.0-oia-registration', () => {
       assert.strictEqual(settings.specificSettings.proxyUrl, undefined);
     });
 
+    it('rewrites settings for a south oianalytics connector without an access key', async () => {
+      await insertSouthConnector(db, 'south-4', 'oianalytics', {
+        host: 'https://oia.example.com',
+        acceptUnauthorized: true,
+        timeout: 15,
+        secretKey: null,
+        useProxy: false
+      });
+
+      await up(db);
+
+      const row = await db('south_connectors').where('id', 'south-4').first();
+      const settings = JSON.parse(row.settings);
+      assert.strictEqual(settings.specificSettings.accessKey, undefined);
+    });
+
     it('does not touch settings of south connectors of other types', async () => {
       await insertSouthConnector(db, 'south-3', 'mssql', { host: 'db-host', port: 1433 });
 
@@ -345,6 +361,54 @@ describe('Entity migration v3.2.0-oia-registration', () => {
       assert.strictEqual(southSettings.specificSettings.accessKey, 'key');
       const northSettings = JSON.parse(row.north_settings);
       assert.strictEqual(northSettings.outputFolder, 'output', 'north_settings of a non-oianalytics north is untouched');
+    });
+
+    it('rewrites north_settings without certificateId or useProxy when they are absent', async () => {
+      await insertHistoryQuery(
+        db,
+        'history-4',
+        'mssql',
+        'oianalytics',
+        { host: 'db-host', port: 1433 },
+        {
+          host: 'https://oia.example.com',
+          acceptUnauthorized: false,
+          timeout: 30,
+          authentication: 'basic',
+          accessKey: 'key',
+          secretKey: 'secret'
+        }
+      );
+
+      await up(db);
+
+      const row = await db('history_queries').where('id', 'history-4').first();
+      const northSettings = JSON.parse(row.north_settings);
+      assert.strictEqual(northSettings.specificSettings.certificateId, undefined);
+      assert.strictEqual(northSettings.specificSettings.useProxy, false);
+    });
+
+    it('rewrites south_settings without accessKey or secretKey when they are absent', async () => {
+      await insertHistoryQuery(
+        db,
+        'history-5',
+        'oianalytics',
+        'file-writer',
+        {
+          host: 'https://oia.example.com',
+          acceptUnauthorized: true,
+          timeout: 15,
+          useProxy: false
+        },
+        { outputFolder: 'output' }
+      );
+
+      await up(db);
+
+      const row = await db('history_queries').where('id', 'history-5').first();
+      const southSettings = JSON.parse(row.south_settings);
+      assert.strictEqual(southSettings.specificSettings.accessKey, undefined);
+      assert.strictEqual(southSettings.specificSettings.secretKey, undefined);
     });
 
     it('does not touch history queries with neither side using oianalytics', async () => {

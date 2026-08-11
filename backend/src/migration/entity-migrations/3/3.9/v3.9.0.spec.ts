@@ -740,6 +740,14 @@ describe('Entity migration v3.9.0', () => {
     });
   });
 
+  describe('down error path', () => {
+    it('rejects when called on a schema that still has the original overlap column (i.e. without a prior up())', async () => {
+      // down() re-adds an `overlap` column via alterTable; on a schema that never ran up() the column
+      // already exists, so SQLite rejects the duplicate column and the migration must reject too.
+      await assert.rejects(() => down(db));
+    });
+  });
+
   describe('dropping the overlap column when it is still referenced by other tables', () => {
     it('does not fail with a FOREIGN KEY constraint error when group_items rows still reference south_item_groups/south_items, inside a real transaction', async () => {
       // Reproduces the production migration runner, which always wraps each migration file's up() in a

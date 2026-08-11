@@ -1,6 +1,7 @@
 import { describe, it, before, after, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import fs from 'node:fs/promises';
 import { Knex } from 'knex';
 import { createMigrationSchemaHarness, buildSchemaBefore } from '../../../../tests/utils/migration-test-utils';
 import { up, down } from './v3.5.0';
@@ -318,6 +319,21 @@ describe('Entity migration v3.5.0', () => {
       assert.strictEqual(subscription, undefined, 'associated subscription removed');
     });
 
+    it('removes the north cache folder on disk when it exists', async () => {
+      await insertNorthConnector(db, 'north-oibus-fs', 'oibus', {}, 'scan-mode-1');
+      const baseFolder = path.resolve('./cache/data-stream', 'north-north-oibus-fs');
+      await fs.mkdir(baseFolder, { recursive: true });
+      await fs.writeFile(path.join(baseFolder, 'marker.txt'), 'x');
+
+      try {
+        await up(db);
+
+        await assert.rejects(() => fs.access(baseFolder), 'the cache folder should be removed by the migration');
+      } finally {
+        await fs.rm(baseFolder, { recursive: true, force: true });
+      }
+    });
+
     it('leaves non-oibus north connectors untouched', async () => {
       await insertNorthConnector(db, 'north-fw-1', 'file-writer', { outputFolder: 'output', prefix: null, suffix: null }, 'scan-mode-1');
 
@@ -348,6 +364,29 @@ describe('Entity migration v3.5.0', () => {
 
       const historyItem = await db('history_items').where('id', 'hitem-1').first();
       assert.strictEqual(historyItem, undefined, 'associated history item removed');
+    });
+
+    it('removes the history cache folder on disk when it exists', async () => {
+      await insertHistoryQuery(
+        db,
+        'history-oibus-fs',
+        'folder-scanner',
+        'oibus',
+        { inputFolder: 'input', compression: false },
+        {},
+        'scan-mode-1'
+      );
+      const baseFolder = path.resolve('./cache/history-query', 'history-history-oibus-fs');
+      await fs.mkdir(baseFolder, { recursive: true });
+      await fs.writeFile(path.join(baseFolder, 'marker.txt'), 'x');
+
+      try {
+        await up(db);
+
+        await assert.rejects(() => fs.access(baseFolder), 'the cache folder should be removed by the migration');
+      } finally {
+        await fs.rm(baseFolder, { recursive: true, force: true });
+      }
     });
   });
 
