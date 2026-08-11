@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { Database } from 'better-sqlite3';
 import { emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
-import SouthConnectorRepository from './south-connector.repository';
+import SouthConnectorRepository, { toItemEntityFromJoinedRow, toSouthItemGroupLight } from './south-connector.repository';
 import SouthItemGroupRepository from './south-item-group.repository';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthItemGroupEntityLight } from '../../model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
@@ -855,5 +855,236 @@ describe('SouthConnectorRepository', () => {
 
     const row = database.prepare(`SELECT updated_at FROM south_items WHERE id = ?;`).get(itemId) as { updated_at: string };
     assert.notStrictEqual(row.updated_at, '2000-01-01T00:00:00Z');
+  });
+
+  it('should insert and update items without a scan mode', () => {
+    const newSouthConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+    newSouthConnector.id = '';
+    newSouthConnector.name = 'connector with scan-mode-less item';
+    newSouthConnector.items = [
+      {
+        id: '',
+        name: 'item without scan mode',
+        enabled: true,
+        scanMode: null,
+        settings: {} as SouthItemSettings,
+        group: null,
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ];
+    repository.saveSouth(newSouthConnector);
+    const itemId = newSouthConnector.items[0].id;
+    assert.ok(itemId);
+    let saved = repository.findItemById(newSouthConnector.id, itemId)!;
+    assert.strictEqual(saved.scanMode, null);
+
+    // Now update it to have a scan mode (changes hasChanged/update.run branch), then clear it again
+    const withScanMode: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(newSouthConnector));
+    withScanMode.items[0].scanMode = testData.scanMode.list[0];
+    repository.saveSouth(withScanMode);
+    saved = repository.findItemById(newSouthConnector.id, itemId)!;
+    assert.strictEqual(saved.scanMode!.id, testData.scanMode.list[0].id);
+
+    const backToNull: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(withScanMode));
+    backToNull.items[0].scanMode = null;
+    repository.saveSouth(backToNull);
+    saved = repository.findItemById(newSouthConnector.id, itemId)!;
+    assert.strictEqual(saved.scanMode, null);
+  });
+
+  it('should update an item to clear its scan mode via saveItem', () => {
+    const item: SouthConnectorItemEntity<SouthItemSettings> = {
+      id: '',
+      name: 'save-item-clear-scan-mode',
+      enabled: true,
+      scanMode: testData.scanMode.list[0],
+      settings: {} as SouthItemSettings,
+      group: null,
+      syncWithGroup: false,
+      maxReadInterval: null,
+      readDelay: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    repository.saveItem(testData.south.list[0].id, item);
+    assert.ok(item.id);
+
+    item.scanMode = null;
+    repository.saveItem(testData.south.list[0].id, item);
+
+    const saved = repository.findItemById(testData.south.list[0].id, item.id)!;
+    assert.strictEqual(saved.scanMode, null);
+  });
+
+  it('should persist a non-null recovery strategy when updating an existing group', () => {
+    const groupRepository = new SouthItemGroupRepository(database);
+    const group = groupRepository.create(
+      {
+        name: 'Group With Recovery Strategy',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: 'newest',
+        maxReadInterval: null,
+        readDelay: 0
+      },
+      'userTest'
+    );
+    assert.strictEqual(group.recoveryStrategy, 'newest');
+
+    const south: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+    south.items = [];
+    south.groups = [group];
+    repository.saveSouth(south);
+
+    const savedGroup = groupRepository.findById(group.id)!;
+    assert.strictEqual(savedGroup.recoveryStrategy, 'newest');
+  });
+
+  it('should throw when an existing group is saved without a scan mode (NOT NULL constraint)', () => {
+    const groupRepository = new SouthItemGroupRepository(database);
+    const group = groupRepository.create(
+      {
+        name: 'Group Missing Scan Mode',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
+        maxReadInterval: null,
+        readDelay: 0
+      },
+      'userTest'
+    );
+
+    const south: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+    south.items = [];
+    south.groups = [{ ...group, scanMode: undefined as unknown as typeof group.scanMode }];
+
+    assert.throws(() => repository.saveSouth(south));
+  });
+});
+
+describe('toItemEntityFromJoinedRow / toSouthItemGroupLight helpers', () => {
+  it('should default a joined item group readDelay to null when the column is missing', () => {
+    const row: Record<string, string | number | null> = {
+      id: 'itemId',
+      name: 'item',
+      enabled: 1,
+      scan_mode_id: null,
+      settings: '{}',
+      sync_with_group: 0,
+      max_read_interval: null,
+      read_delay: null,
+      start_time_offset: null,
+      end_time_offset: null,
+      recovery_strategy: null,
+      created_by: '',
+      updated_by: '',
+      created_at: '',
+      updated_at: '',
+      sm_id: null,
+      g_id: 'groupId',
+      g_name: 'group',
+      g_start_time_offset: null,
+      g_end_time_offset: null,
+      g_max_read_interval: null,
+      g_read_delay: null,
+      g_recovery_strategy: null,
+      g_created_by: '',
+      g_updated_by: '',
+      g_created_at: '',
+      g_updated_at: '',
+      gsm_id: null
+    };
+    const entity = toItemEntityFromJoinedRow(row);
+    assert.ok(entity.group);
+    assert.strictEqual(entity.group!.readDelay, null);
+  });
+
+  it('should default a joined item group readDelay to a number when the column is present', () => {
+    const row: Record<string, string | number | null> = {
+      id: 'itemId',
+      name: 'item',
+      enabled: 1,
+      scan_mode_id: null,
+      settings: '{}',
+      sync_with_group: 0,
+      max_read_interval: null,
+      read_delay: null,
+      start_time_offset: null,
+      end_time_offset: null,
+      recovery_strategy: null,
+      created_by: '',
+      updated_by: '',
+      created_at: '',
+      updated_at: '',
+      sm_id: null,
+      g_id: 'groupId',
+      g_name: 'group',
+      g_start_time_offset: null,
+      g_end_time_offset: null,
+      g_max_read_interval: null,
+      g_read_delay: 200,
+      g_recovery_strategy: null,
+      g_created_by: '',
+      g_updated_by: '',
+      g_created_at: '',
+      g_updated_at: '',
+      gsm_id: null
+    };
+    const entity = toItemEntityFromJoinedRow(row);
+    assert.strictEqual(entity.group!.readDelay, 200);
+  });
+
+  it('should hydrate non-null historian fields for toSouthItemGroupLight', () => {
+    const result: Record<string, string | number> = {
+      id: 'groupId',
+      name: 'group',
+      start_time_offset: 10,
+      end_time_offset: 20,
+      max_read_interval: 3600,
+      read_delay: 200,
+      recovery_strategy: 'oldest',
+      created_by: '',
+      updated_by: '',
+      created_at: '',
+      updated_at: ''
+    };
+    const group = toSouthItemGroupLight(result);
+    assert.strictEqual(group.startTimeOffset, 10);
+    assert.strictEqual(group.endTimeOffset, 20);
+    assert.strictEqual(group.maxReadInterval, 3600);
+  });
+
+  it('should default historian fields to null for toSouthItemGroupLight when absent', () => {
+    const result: Record<string, string | number> = {
+      id: 'groupId',
+      name: 'group',
+      read_delay: 0,
+      created_by: '',
+      updated_by: '',
+      created_at: '',
+      updated_at: ''
+    };
+    const group = toSouthItemGroupLight(result);
+    assert.strictEqual(group.startTimeOffset, null);
+    assert.strictEqual(group.endTimeOffset, null);
+    assert.strictEqual(group.maxReadInterval, null);
   });
 });
