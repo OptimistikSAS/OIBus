@@ -29,6 +29,7 @@ import { EngineService } from '../../services/engine.service';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
+import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { LogsComponent } from '../../logs/logs.component';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
@@ -344,6 +345,16 @@ export class HistoryQueryDetailComponent {
       type === 'south' ? this.historyQuery!.southSettings : this.historyQuery!.northSettings,
       type === 'south' ? this.historyQuery!.southType : this.historyQuery!.northType
     );
+  }
+
+  explore() {
+    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
+    const component: SouthExploreModalComponent = modalRef.componentInstance;
+    component.prepare(this.historyQuery!.id, this.historyQuery!.southSettings, this.historyQuery!.southType, {
+      start: (settings, type) => this.historyQueryService.startExplore(this.historyQuery!.id, settings, type),
+      browse: (sessionId, parentId) => this.historyQueryService.browseExplore(this.historyQuery!.id, sessionId, parentId),
+      close: sessionId => this.historyQueryService.closeExplore(this.historyQuery!.id, sessionId)
+    });
   }
 
   get historyQueryFinishedByMetrics() {
