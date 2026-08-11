@@ -475,6 +475,54 @@ describe('NorthOPCUA', () => {
     assert.strictEqual(mockSessionClose.mock.calls.length, 1);
   });
 
+  it('should fall back to raw value when server state is not in the known labels', async () => {
+    const mockSessionClose = mock.fn(async () => undefined);
+    const unknownStateDataValues = [
+      { statusCode: { value: StatusCodes.Good.value }, value: { value: 42 } } // State -> unknown, falls back to String(raw)
+    ];
+    const buildInfoReadMock = mock.fn(async () => unknownStateDataValues);
+    nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementation(async () => ({ close: mockSessionClose, read: buildInfoReadMock }));
+
+    const result = await north.testConnection();
+
+    assert.deepStrictEqual(
+      result.items.find(item => item.key === 'State'),
+      { key: 'State', value: '42' }
+    );
+  });
+
+  it('should fall back to raw values for endpoint discovery when security mode, policy uri and identity tokens are unmapped or missing', async () => {
+    const mockSessionClose = mock.fn(async () => undefined);
+    nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementation(async () => ({ close: mockSessionClose, read: sessionReadMock }));
+
+    const mockEndpointClient = {
+      connect: mock.fn(async () => undefined),
+      getEndpoints: mock.fn(async () => [
+        {
+          securityMode: MessageSecurityMode.Invalid,
+          securityPolicyUri: undefined,
+          userIdentityTokens: undefined
+        },
+        {
+          securityMode: MessageSecurityMode.None,
+          securityPolicyUri: 'no-hash-policy-uri',
+          userIdentityTokens: [{ tokenType: 99 as unknown as UserTokenType }]
+        }
+      ]),
+      disconnect: mock.fn(async () => undefined)
+    };
+    nodeOPCUAMock.OPCUAClient.create.mock.mockImplementation(() => mockEndpointClient as unknown);
+
+    const result = await north.testConnection();
+
+    const securityModes = result.items.find(item => item.key === 'SecurityModes');
+    assert.ok(securityModes?.value.includes(String(MessageSecurityMode.Invalid)));
+    const securityPolicies = result.items.find(item => item.key === 'SecurityPolicies');
+    assert.ok(securityPolicies?.value.includes('no-hash-policy-uri'));
+    const authModes = result.items.find(item => item.key === 'AuthenticationModes');
+    assert.ok(authModes?.value.includes('99'));
+  });
+
   it('should throw error if test fails', async () => {
     nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementation(async () => {
       throw new Error('Auth failed');

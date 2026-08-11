@@ -267,6 +267,19 @@ describe('NorthMQTT', () => {
     assert.ok(testResult.items.some(item => item.key === 'TopicAliasMaximum'));
   });
 
+  it('should reject test connection when the MQTT client emits an error', async () => {
+    const error = new Error('Connection refused');
+    connectFn.mock.mockImplementation((_url: string) => {
+      setImmediate(() => mockMqttClient.emit('error', error));
+      return mockMqttClient;
+    });
+
+    await assert.rejects(async () => north.testConnection(), error);
+
+    assert.strictEqual(mockMqttClient.end.mock.calls.length, 1);
+    assert.deepStrictEqual(mockMqttClient.end.mock.calls[0].arguments, [true]);
+  });
+
   it('should throw error if connector is in reconnecting state', async () => {
     (north as unknown as { reconnectTimeout: NodeJS.Timeout | null })['reconnectTimeout'] = setTimeout(() => null);
     const readStream = {} as ReadStream;

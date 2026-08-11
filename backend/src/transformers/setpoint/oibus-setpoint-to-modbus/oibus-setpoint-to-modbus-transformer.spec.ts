@@ -74,6 +74,18 @@ describe('OIBusSetpointToModbusTransformer', () => {
     });
   });
 
+  it('should parse setpoints when transformInMemory receives a JSON string instead of an array', async () => {
+    const options = {
+      mapping: [{ reference: 'reference1', address: 0x0001, modbusType: 'coil' }]
+    };
+    const transformer = new OIBusSetpointToModbusTransformer(logger, testData.transformers.list[0], options);
+    const dataChunks: Array<OIBusSetpoint> = [{ reference: 'reference1', value: '1' }];
+
+    const result = await transformer.transformInMemory(JSON.stringify(dataChunks), { source: 'test' }, null);
+
+    assert.deepStrictEqual(JSON.parse(result.output.toString()), [{ address: 1, value: true, modbusType: 'coil' }]);
+  });
+
   it('should return manifest', () => {
     assert.deepStrictEqual(setpointToModbusManifest.settings, {
       type: 'object',
