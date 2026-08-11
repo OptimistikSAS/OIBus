@@ -1,7 +1,7 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import knex, { Knex } from 'knex';
-import { up } from './v3.5.0-history-query-metrics';
+import { up, down } from './v3.5.0-history-query-metrics';
 
 /**
  * Create north_metrics in its v3.0 state (before v3.5.0 migration).
@@ -160,5 +160,9 @@ describe('Metrics migration v3.5.0 history query metrics', () => {
   it('handles completely empty tables without error', async () => {
     // No rows in either table — must not throw
     await up(db);
+  });
+
+  it('down is a no-op', async () => {
+    await assert.doesNotReject(() => down());
   });
 });

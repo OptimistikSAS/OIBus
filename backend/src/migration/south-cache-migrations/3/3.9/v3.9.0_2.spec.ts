@@ -1,7 +1,7 @@
 import { describe, it, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import knex, { Knex } from 'knex';
-import { up } from './v3.9.0_2';
+import { up, down } from './v3.9.0_2';
 
 describe('South cache migration v3.9.0_2 (nullable item_id, collapse batched-group rows)', () => {
   let db: Knex;
@@ -154,5 +154,11 @@ describe('South cache migration v3.9.0_2 (nullable item_id, collapse batched-gro
     assert.strictEqual(rows.length, 1);
     assert.strictEqual(rows[0].item_id, null);
     assert.strictEqual(rows[0].group_id, 'group1');
+  });
+
+  it('down() resolves without making any changes', async () => {
+    await createCurrentSchemaTable();
+    await assert.doesNotReject(down(db));
+    assert.ok(await db.schema.hasTable('south_item_cache'));
   });
 });

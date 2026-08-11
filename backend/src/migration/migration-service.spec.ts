@@ -137,6 +137,62 @@ describe('migration-service', () => {
 
       assert.deepStrictEqual(afterSecondRun, beforeSecondRun);
     });
+
+    it('rejects when the target db path is not reachable', async () => {
+      const unreachableDbPath = path.join(dataFolderRoot, 'does-not-exist', 'data-folder.db');
+
+      await assert.rejects(migrateDataFolder(unreachableDbPath));
+    });
+  });
+
+  describe('compareVersionDirNames (exercised indirectly via getMigrationDirs sorting)', () => {
+    // compareVersionDirNames itself is not exported; getMigrationDirs sorts sibling
+    // subdirectory names with it as soon as specFilteredMigrationSource(base) is
+    // constructed (before getMigrations is ever called), so building a source over a
+    // synthetic directory tree is enough to drive specific comparator branches.
+    async function makeSiblingDirs(names: Array<string>): Promise<string> {
+      const base = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-compare-version-'));
+      for (const name of names) {
+        await fs.mkdir(path.join(base, name));
+      }
+      return base;
+    }
+
+    it('handles sibling directories with mismatched part counts where the shorter name sorts first (undefined -> "" fallback on the "a" side)', async () => {
+      // "1" (1 part) vs "1.2" (2 parts), created in that order: readdirSync on a freshly
+      // created, small directory returns entries in creation order on this platform, so
+      // compare(a="1", b="1.2") is invoked with a running out of parts first.
+      const base = await makeSiblingDirs(['1', '1.2']);
+      const source = specFilteredMigrationSource(base);
+      await assert.doesNotReject(source.getMigrations());
+    });
+
+    it('handles sibling directories with mismatched part counts where the longer, numerically-equal-prefix name sorts first (undefined -> "" fallback on the "b" side)', async () => {
+      // "03.5" (2 parts, numeric prefix 3) vs "3" (1 part, numeric prefix 3), created in
+      // that order: compare(a="03.5", b="3") is invoked with a having more parts than b
+      // once the equal numeric prefix is consumed, exercising the fallback on the "b" side.
+      const base = await makeSiblingDirs(['03.5', '3']);
+      const source = specFilteredMigrationSource(base);
+      await assert.doesNotReject(source.getMigrations());
+    });
+
+    it('handles sibling directories whose components are numerically equal but textually different, falling through the whole loop to return 0', async () => {
+      // "01" and "1" both have a single component that parses to the same number (1),
+      // so every iteration of the comparison loop resolves as equal and the function
+      // falls through to its final `return 0`.
+      const base = await makeSiblingDirs(['01', '1']);
+      const source = specFilteredMigrationSource(base);
+      await assert.doesNotReject(source.getMigrations());
+    });
+
+    it('handles sibling directories with a shared non-numeric component before a differing numeric component', async () => {
+      // "x.1" vs "x.2": the first component ("x") is non-numeric so the numeric fast path
+      // is skipped, but the two "x" parts are textually equal so the loop continues
+      // instead of returning early; the second component then resolves the comparison.
+      const base = await makeSiblingDirs(['x.1', 'x.2']);
+      const source = specFilteredMigrationSource(base);
+      await assert.doesNotReject(source.getMigrations());
+    });
   });
 
   describe('specFilteredMigrationSource', () => {
@@ -187,6 +243,27 @@ describe('migration-service', () => {
       const loaded = await source.getMigration(migration);
 
       assert.strictEqual(typeof loaded.up, 'function');
+    });
+
+    it('sorts migration files within a directory regardless of the order returned by the filesystem', async () => {
+      // Seed filenames so a naive/unsorted listing would present them out of order in
+      // both directions, forcing the file-name sort comparator's `a > b` and `a < b`
+      // branches to both be exercised (not just whichever order readdirSync happens to
+      // return).
+      const base = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-migration-sort-'));
+      const stub = 'exports.up = async () => {};\nexports.down = async () => {};\n';
+      await fs.writeFile(path.join(base, 'c_migration.js'), stub);
+      await fs.writeFile(path.join(base, 'a_migration.js'), stub);
+      await fs.writeFile(path.join(base, 'b_migration.js'), stub);
+      await fs.writeFile(path.join(base, 'ignored.spec.js'), stub);
+
+      const source = specFilteredMigrationSource(base);
+      const migrations = await source.getMigrations();
+
+      assert.deepStrictEqual(
+        migrations.map(m => m.file),
+        ['a_migration.js', 'b_migration.js', 'c_migration.js']
+      );
     });
   });
 });

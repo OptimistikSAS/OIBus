@@ -47,4 +47,8 @@ describe('Crypto migration v3.0 (initial-setup)', () => {
     await down(db);
     assert.strictEqual(await db.schema.hasTable('crypto'), false);
   });
+
+  it('rejects on down when the crypto table does not exist', async () => {
+    await assert.rejects(down(db));
+  });
 });

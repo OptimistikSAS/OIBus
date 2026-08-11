@@ -1,7 +1,7 @@
 import { describe, it, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import knex, { Knex } from 'knex';
-import { up } from './v3.8.0_1';
+import { up, down } from './v3.8.0_1';
 
 describe('South cache migration v3.8.0_1 (repair south_item_cache key)', () => {
   let db: Knex;
@@ -110,5 +110,12 @@ describe('South cache migration v3.8.0_1 (repair south_item_cache key)', () => {
 
   it('is a no-op when there are no south_item_cache tables', async () => {
     await up(db); // must not throw
+  });
+
+  it('down() resolves without making any changes', async () => {
+    await createBrokenTable('south_item_cache_AAA');
+    await assert.doesNotReject(down(db));
+    // Table is left untouched since down() is a no-op.
+    assert.ok(await db.schema.hasTable('south_item_cache_AAA'));
   });
 });

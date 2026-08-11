@@ -117,6 +117,42 @@ describe('Data folder migration v3.8.0_1 (drop legacy opcua/ subfolders)', () =>
     // No assertion needed — the test passes if no exception was thrown.
   });
 
+  it('skips cache folders that are neither north-* nor history-* (e.g. south-* or unrelated names)', async () => {
+    const southCacheRoot = path.join(tmpRoot, 'cache', 'south-MODBUS1');
+    await fs.mkdir(southCacheRoot, { recursive: true });
+    await makeOpcuaTree(path.join(southCacheRoot, 'opcua'));
+    const unrelatedRoot = path.join(tmpRoot, 'cache', 'some-other-folder');
+    await fs.mkdir(unrelatedRoot, { recursive: true });
+
+    await assert.doesNotReject(migration.up({} as Knex));
+
+    // Not a north-*/history-* folder, so its opcua/ subtree (if any) is left alone by this migration.
+    assert.strictEqual(fsSync.existsSync(path.join(southCacheRoot, 'opcua')), true);
+    assert.strictEqual(fsSync.existsSync(unrelatedRoot), true);
+  });
+
+  it('logs and continues when removing a legacy opcua/ folder fails', async () => {
+    const northCacheRoot = path.join(tmpRoot, 'cache', 'north-OPCUA-FAIL');
+    const opcuaRoot = path.join(northCacheRoot, 'opcua');
+    await makeOpcuaTree(opcuaRoot);
+
+    const realRm = fs.rm.bind(fs);
+    const rmMock = mock.method(fs, 'rm', (target: string, options?: Parameters<typeof fs.rm>[1]) => {
+      if (path.resolve(target) === path.resolve(opcuaRoot)) {
+        return Promise.reject(Object.assign(new Error('EACCES: permission denied'), { code: 'EACCES' }));
+      }
+      return realRm(target, options);
+    });
+    try {
+      await assert.doesNotReject(migration.up({} as Knex));
+    } finally {
+      rmMock.mock.restore();
+    }
+
+    // Removal failed, so the folder is still present.
+    assert.strictEqual(fsSync.existsSync(opcuaRoot), true);
+  });
+
   it('down() is a no-op (migration is not reversible)', async () => {
     const result = await migration.down();
     assert.strictEqual(result, undefined);

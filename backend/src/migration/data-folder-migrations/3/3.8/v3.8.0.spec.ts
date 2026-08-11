@@ -331,6 +331,35 @@ describe('Data folder migration v3.8.0', () => {
       assert.deepStrictEqual(await fs.readdir(metadataDir), []);
       assert.deepStrictEqual(await fs.readdir(contentDir), []);
     });
+
+    it('cleans up both the renamed content file and a stray bare metadata file when the metadata rename fails', async () => {
+      const { contentDir, metadataDir } = await setupNorth();
+      await fs.writeFile(path.join(metadataDir, 'target.json'), metadataBody('orig.csv'));
+      await fs.writeFile(path.join(contentDir, 'orig.csv'), 'content data');
+      // A stray bare metadata file already sitting at the rename destination (e.g. leftover from an
+      // earlier interrupted run). This must be cleaned up too once the metadata rename below fails.
+      await fs.writeFile(path.join(metadataDir, 'target'), 'stray leftover');
+
+      const realRename = fs.rename.bind(fs);
+      const renameMock = mock.method(fs, 'rename', (src: string, dest: string) => {
+        // Let the content rename succeed, but force the metadata rename to fail so the catch
+        // block runs while the renamed content file ("target") already exists on disk.
+        if (path.resolve(dest) === path.resolve(path.join(metadataDir, 'target'))) {
+          return Promise.reject(Object.assign(new Error('EACCES: permission denied'), { code: 'EACCES' }));
+        }
+        return realRename(src, dest);
+      });
+      try {
+        await assert.doesNotReject(migration.up({} as Knex));
+      } finally {
+        renameMock.mock.restore();
+      }
+
+      // The successfully-renamed content file is rolled back, the original metadata json is removed,
+      // and the pre-existing stray bare metadata file is removed as well.
+      assert.deepStrictEqual(await fs.readdir(contentDir), []);
+      assert.deepStrictEqual(await fs.readdir(metadataDir), []);
+    });
   });
 
   describe('removeOPCUATestFolders', () => {
@@ -417,6 +446,13 @@ describe('Data folder migration v3.8.0', () => {
 
     it('does not throw when the root/cache/error/archive folders cannot be read', async () => {
       await assert.doesNotReject(brokenMigration.up({} as Knex));
+    });
+  });
+
+  describe('down', () => {
+    it('resolves without doing anything (irreversible migration)', async () => {
+      await assert.doesNotReject(migration.down());
+      assert.strictEqual(await migration.down(), undefined);
     });
   });
 });

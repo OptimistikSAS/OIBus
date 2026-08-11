@@ -68,4 +68,11 @@ describe('Logs migration v3.6.5 (remove-metrics-table-if-present)', () => {
   it('down is a no-op', async () => {
     await down();
   });
+
+  it('down resolves to undefined and can be called multiple times without side effects', async () => {
+    const result1 = await down();
+    const result2 = await down();
+    assert.strictEqual(result1, undefined);
+    assert.strictEqual(result2, undefined);
+  });
 });
