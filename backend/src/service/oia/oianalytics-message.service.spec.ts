@@ -230,6 +230,76 @@ describe('OIAnalytics Message Service', () => {
     });
   });
 
+  it('should properly build south connector groups, item scanMode/group ids and north transformer south group id', async () => {
+    const customSouth = {
+      ...testData.south.list[0],
+      items: [
+        {
+          ...testData.south.list[0].items[0],
+          scanMode: null,
+          group: { id: 'groupId1' }
+        }
+      ],
+      groups: [
+        {
+          id: 'groupId1',
+          name: 'My Group',
+          scanMode: testData.scanMode.list[0],
+          startTimeOffset: 1,
+          endTimeOffset: 2,
+          maxReadInterval: 3,
+          readDelay: 4,
+          recoveryStrategy: 'oldest'
+        }
+      ]
+    };
+    southRepository.findAllSouth = mock.fn(() => [customSouth] as unknown as typeof testData.south.list);
+    southRepository.findSouthById = mock.fn(() => customSouth as unknown as (typeof testData.south.list)[0]);
+
+    const originalNorthSource = testData.north.list[0].transformers[0].source as { south: unknown };
+    const customNorth = {
+      ...testData.north.list[0],
+      transformers: [
+        {
+          ...testData.north.list[0].transformers[0],
+          source: {
+            type: 'south',
+            south: originalNorthSource.south,
+            group: { id: 'northGroupId1' },
+            items: []
+          }
+        }
+      ]
+    };
+    northRepository.findAllNorth = mock.fn(() => [customNorth] as unknown as typeof testData.north.list);
+    northRepository.findNorthById = mock.fn(() => customNorth as unknown as (typeof testData.north.list)[0]);
+
+    oIAnalyticsClient.sendConfiguration = mock.fn(() => Promise.resolve());
+    service.start();
+
+    const sentConfiguration = JSON.parse(oIAnalyticsClient.sendConfiguration.mock.calls[0].arguments[1] as string);
+    const southSettings = sentConfiguration.southConnectors[0].settings;
+    assert.strictEqual(southSettings.items[0].scanModeId, null);
+    assert.strictEqual(southSettings.items[0].groupId, 'groupId1');
+    assert.deepStrictEqual(southSettings.groups[0], {
+      id: 'groupId1',
+      standardSettings: {
+        name: 'My Group',
+        scanModeId: testData.scanMode.list[0].id
+      },
+      historySettings: {
+        startTimeOffset: 1,
+        endTimeOffset: 2,
+        maxReadInterval: 3,
+        readDelay: 4,
+        recoveryStrategy: 'oldest'
+      }
+    });
+
+    const northTransformer = sentConfiguration.northConnectors[0].settings.transformers[0];
+    assert.strictEqual(northTransformer.source.groupId, 'northGroupId1');
+  });
+
   it('should properly send scan mode settings with type, interval and activationWindow for a cron scan mode', async () => {
     oIAnalyticsClient.sendConfiguration = mock.fn(() => Promise.resolve());
     service.start(); // trigger a runProgress
