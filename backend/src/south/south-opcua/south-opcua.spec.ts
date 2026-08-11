@@ -175,6 +175,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -199,6 +200,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -223,6 +225,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -244,6 +247,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -265,6 +269,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -286,6 +291,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -2381,9 +2387,9 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(mockedClient.browse.mock.calls.length, 1);
     assert.strictEqual(mockedClient.browse.mock.calls[0].arguments[0], 'ns=0;i=85');
     assert.deepStrictEqual(entries, [
-      { id: 'ns=0;i=85', name: 'Objects', type: 'Object', hasChildren: true },
-      { id: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable', hasChildren: true },
-      { id: 'ns=1;s=Start', name: 'Start', type: 'Method', hasChildren: false }
+      { id: 'ns=0;i=85', name: 'Objects', metadata: { type: 'Object', nodeId: 'ns=0;i=85' }, hasChildren: true },
+      { id: 'ns=1;s=Temperature', name: 'Temperature', metadata: { type: 'Variable', nodeId: 'ns=1;s=Temperature' }, hasChildren: true },
+      { id: 'ns=1;s=Start', name: 'Start', metadata: { type: 'Method', nodeId: 'ns=1;s=Start' }, hasChildren: false }
     ]);
   });
 
@@ -2405,8 +2411,8 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(browse.mock.calls[0].arguments[0], 'ns=1;s=Folder');
     assert.strictEqual(browseNext.mock.calls.length, 1);
     assert.deepStrictEqual(entries, [
-      { id: 'ns=1;s=A', name: 'A', type: 'Variable', hasChildren: true },
-      { id: 'ns=1;s=B', name: 'B', type: 'Variable', hasChildren: true }
+      { id: 'ns=1;s=A', name: 'A', metadata: { type: 'Variable', nodeId: 'ns=1;s=A' }, hasChildren: true },
+      { id: 'ns=1;s=B', name: 'B', metadata: { type: 'Variable', nodeId: 'ns=1;s=B' }, hasChildren: true }
     ]);
   });
 
