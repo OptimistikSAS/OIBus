@@ -21,6 +21,7 @@ before(() => {
   mockUtils = {
     sanitizeFilename: mock.fn((name: string) => name),
     convertDateTime: mock.fn((value: unknown) => value),
+    stringToBoolean: mock.fn((value: string) => value === 'true'),
     convertDelimiter: mock.fn(() => ';'),
     convertQuoteChar: mock.fn(() => '"'),
     convertEscapeChar: mock.fn(() => '"'),
@@ -42,6 +43,7 @@ describe('RecordListToCsvTransformer', () => {
     logger = new PinoLogger();
     mockUtils.sanitizeFilename = mock.fn((name: string) => name);
     mockUtils.convertDateTime = mock.fn((value: unknown) => value);
+    mockUtils.stringToBoolean = mock.fn((value: string) => value === 'true');
     mockUtils.convertDelimiter = mock.fn(() => ';');
     mockUtils.convertQuoteChar = mock.fn(() => '"');
     mockUtils.convertEscapeChar = mock.fn(() => '"');
@@ -64,7 +66,8 @@ describe('RecordListToCsvTransformer', () => {
     newline: 'DEFAULT',
     quoteChar: 'DOUBLE_QUOTE',
     escapeChar: 'DOUBLE_QUOTE',
-    datetimeFields: null
+    nullValue: '',
+    fields: null
   };
 
   it('should transform record-list data from a stream and return metadata', async () => {
@@ -107,7 +110,7 @@ describe('RecordListToCsvTransformer', () => {
     assert.deepStrictEqual(result.output, Buffer.from('csv content'));
   });
 
-  it('should leave non-datetime columns untouched and never call convertDateTime when no datetimeFields are configured', async () => {
+  it('should leave every column untouched when no fields are configured', async () => {
     const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], baseOptions);
     const rows: Array<OIBusRecord> = [{ id: 1, timestamp: '2024-01-01T00:00:00Z', value: 42 }];
 
@@ -117,17 +120,42 @@ describe('RecordListToCsvTransformer', () => {
     assert.deepStrictEqual((mockPapaparse.unparse.mock.calls[0].arguments as [unknown])[0], rows);
   });
 
-  it('should re-render configured datetime columns via convertDateTime, leaving other columns as-is', async () => {
+  it('should leave columns not covered by a field configuration untouched', async () => {
+    const options = {
+      ...baseOptions,
+      fields: [{ fieldName: 'id', columnName: null, dataType: 'number', fieldProcess: null, datetimeSettings: null }]
+    };
+    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], options);
+    const rows: Array<OIBusRecord> = [{ id: 1, timestamp: '2024-01-01T00:00:00Z', value: 42 }];
+
+    await transformer.transformInMemory(rows, { source: 'test' }, null);
+
+    assert.deepStrictEqual((mockPapaparse.unparse.mock.calls[0].arguments as [unknown])[0], [
+      { timestamp: '2024-01-01T00:00:00Z', value: 42, id: 1 }
+    ]);
+  });
+
+  it('should re-render a configured datetime field via convertDateTime', async () => {
     mockUtils.convertDateTime = mock.fn(() => '2024-01-01 00:00:00');
 
     const options = {
       ...baseOptions,
-      datetimeFields: [
+      fields: [
         {
           fieldName: 'timestamp',
-          input: { type: 'iso-string', timezone: 'UTC', format: null, locale: null },
-          outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss',
-          outputTimezone: 'Europe/Paris'
+          columnName: null,
+          dataType: 'datetime',
+          fieldProcess: null,
+          datetimeSettings: {
+            inputType: 'iso-string',
+            inputTimezone: 'UTC',
+            inputFormat: null,
+            inputLocale: null,
+            outputType: 'string',
+            outputTimezone: 'Europe/Paris',
+            outputFormat: 'yyyy-MM-dd HH:mm:ss',
+            outputLocale: null
+          }
         }
       ]
     };
@@ -140,34 +168,74 @@ describe('RecordListToCsvTransformer', () => {
     assert.deepStrictEqual(mockUtils.convertDateTime.mock.calls[0].arguments, [
       '2024-01-01T00:00:00Z',
       { type: 'iso-string', timezone: 'UTC', format: null, locale: null },
-      { type: 'string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss' }
+      { type: 'string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss', locale: null }
     ]);
     assert.deepStrictEqual((mockPapaparse.unparse.mock.calls[0].arguments as [unknown])[0], [
-      { id: 1, timestamp: '2024-01-01 00:00:00', value: 42 }
+      { id: 1, value: 42, timestamp: '2024-01-01 00:00:00' }
     ]);
     // The original row array must not be mutated in place.
     assert.strictEqual(rows[0].timestamp, '2024-01-01T00:00:00Z');
   });
 
-  it('should skip a configured datetime column when its value is null or undefined', async () => {
+  it('should rename a field to its configured column name', async () => {
     const options = {
       ...baseOptions,
-      datetimeFields: [
-        {
-          fieldName: 'timestamp',
-          input: { type: 'iso-string', timezone: 'UTC', format: null, locale: null },
-          outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss',
-          outputTimezone: 'UTC'
-        }
+      fields: [{ fieldName: 'id', columnName: 'identifier', dataType: 'number', fieldProcess: null, datetimeSettings: null }]
+    };
+    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], options);
+    const rows: Array<OIBusRecord> = [{ id: 1, value: 42 }];
+
+    await transformer.transformInMemory(rows, { source: 'test' }, null);
+
+    assert.deepStrictEqual((mockPapaparse.unparse.mock.calls[0].arguments as [unknown])[0], [{ value: 42, identifier: 1 }]);
+  });
+
+  it('should cast a field to string/number/boolean/object per its configured data type', async () => {
+    const options = {
+      ...baseOptions,
+      fields: [
+        { fieldName: 'a', columnName: null, dataType: 'string', fieldProcess: null, datetimeSettings: null },
+        { fieldName: 'b', columnName: null, dataType: 'number', fieldProcess: null, datetimeSettings: null },
+        { fieldName: 'c', columnName: null, dataType: 'boolean', fieldProcess: null, datetimeSettings: null },
+        { fieldName: 'd', columnName: null, dataType: 'object', fieldProcess: null, datetimeSettings: null }
       ]
     };
     const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], options);
-    const rows: Array<OIBusRecord> = [{ id: 1, timestamp: null, value: 42 }];
+    const rows: Array<OIBusRecord> = [{ a: 42, b: '3.14', c: true, d: '{"nested":true}' }];
+
+    await transformer.transformInMemory(rows, { source: 'test' }, null);
+
+    assert.deepStrictEqual((mockPapaparse.unparse.mock.calls[0].arguments as [unknown])[0], [
+      { a: '42', b: 3.14, c: 'true', d: '"{\\"nested\\":true}"' }
+    ]);
+  });
+
+  it('should use the configured null value when a field is null or undefined', async () => {
+    const options = {
+      ...baseOptions,
+      nullValue: 'N/A',
+      fields: [{ fieldName: 'timestamp', columnName: null, dataType: 'string', fieldProcess: null, datetimeSettings: null }]
+    };
+    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], options);
+    const rows: Array<OIBusRecord> = [{ id: 1, timestamp: null }];
 
     await transformer.transformInMemory(rows, { source: 'test' }, null);
 
     assert.strictEqual(mockUtils.convertDateTime.mock.calls.length, 0);
-    assert.deepStrictEqual((mockPapaparse.unparse.mock.calls[0].arguments as [unknown])[0], [{ id: 1, timestamp: null, value: 42 }]);
+    assert.deepStrictEqual((mockPapaparse.unparse.mock.calls[0].arguments as [unknown])[0], [{ id: 1, timestamp: 'N/A' }]);
+  });
+
+  it('should apply the field process expression after casting', async () => {
+    const options = {
+      ...baseOptions,
+      fields: [{ fieldName: 'name', columnName: null, dataType: 'string', fieldProcess: 'value.toUpperCase()', datetimeSettings: null }]
+    };
+    const transformer = new RecordListToCsvTransformer(logger, testData.transformers.list[0], options);
+    const rows: Array<OIBusRecord> = [{ name: 'sensor1' }];
+
+    await transformer.transformInMemory(rows, { source: 'test' }, null);
+
+    assert.deepStrictEqual((mockPapaparse.unparse.mock.calls[0].arguments as [unknown])[0], [{ name: 'SENSOR1' }]);
   });
 
   it('should pass quoteChar, escapeChar, newline and header to csv.unparse', async () => {

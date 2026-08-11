@@ -146,8 +146,9 @@ function toNewItemSettings(oldSettings: OldSqlItemSettings): Record<string, unkn
 /**
  * Builds the options for a `record-list-to-csv` transformer that reproduces one item's old CSV
  * output: same filename/delimiter/compression, and every old dateTimeFields entry (not just the
- * reference one — the original code rendered all of them) becomes a `datetimeFields` entry sharing
- * the item's old `outputTimestampFormat`/`outputTimezone`.
+ * reference one — the original code rendered all of them) becomes a `fields` entry with
+ * `dataType: 'datetime'`, sharing the item's old `outputTimestampFormat`/`outputTimezone`. Columns
+ * with no entry in `fields` pass through unchanged, same as before.
  */
 function buildTransformerOptions(oldSettings: OldSqlItemSettings): Record<string, unknown> {
   const serialization = oldSettings.serialization;
@@ -160,16 +161,22 @@ function buildTransformerOptions(oldSettings: OldSqlItemSettings): Record<string
     newline: 'LF',
     quoteChar: 'NONE',
     escapeChar: 'DOUBLE_QUOTE',
-    datetimeFields: (oldSettings.dateTimeFields ?? []).map(field => ({
+    nullValue: '',
+    fields: (oldSettings.dateTimeFields ?? []).map(field => ({
       fieldName: field.fieldName,
-      input: {
-        type: field.type,
-        timezone: field.timezone ?? null,
-        format: field.format ?? null,
-        locale: field.locale ?? null
-      },
-      outputTimestampFormat: serialization?.outputTimestampFormat ?? 'yyyy-MM-dd HH:mm:ss.SSS',
-      outputTimezone: serialization?.outputTimezone ?? 'UTC'
+      columnName: null,
+      dataType: 'datetime',
+      fieldProcess: null,
+      datetimeSettings: {
+        inputType: field.type,
+        inputTimezone: field.timezone ?? null,
+        inputFormat: field.format ?? null,
+        inputLocale: field.locale ?? null,
+        outputType: 'string',
+        outputTimezone: serialization?.outputTimezone ?? 'UTC',
+        outputFormat: serialization?.outputTimestampFormat ?? 'yyyy-MM-dd HH:mm:ss.SSS',
+        outputLocale: null
+      }
     }))
   };
 }
