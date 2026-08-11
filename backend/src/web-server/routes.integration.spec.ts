@@ -224,4 +224,84 @@ describe('routes.ts integration (real RegisterRoutes over HTTP)', () => {
     });
     assert.ok(res.status >= 200 && res.status < 500);
   });
+
+  // The following routes have a required @Body() or a query/path param backed by an enum ref.
+  // TSOA's generated handler wraps `getValidatedArgs` + `apiHandler` in a try/catch that forwards
+  // to `next(err)` on failure (the routes.ts "outer catch"). Since `apiHandler` itself swallows any
+  // controller-level error and calls `next` directly (never rethrowing), the only way to reach that
+  // outer catch is a synchronous validation failure inside `getValidatedArgs` — i.e. a required
+  // parameter that is missing/invalid before the controller is even invoked. Sending a POST/PUT
+  // request with no body at all (no Content-Type) leaves `req.body` as `undefined`, which trips the
+  // "'<name>' is required" check; an unmatched value against an enum ref does the same for query/path.
+  describe('routes.ts outer catch: validation failures reach next(err)', () => {
+    it('UserController_create: missing body', async () => {
+      const res = await fetch(`${baseUrl}/api/users`, { method: 'POST' });
+      assert.equal(res.status, 400);
+    });
+
+    it('UserController_update: missing body', async () => {
+      const res = await fetch(`${baseUrl}/api/users/test-id`, { method: 'PUT' });
+      assert.equal(res.status, 400);
+    });
+
+    it('UserController_updatePassword: missing body', async () => {
+      const res = await fetch(`${baseUrl}/api/users/test-id/password`, { method: 'POST' });
+      assert.equal(res.status, 400);
+    });
+
+    it('TransformerController_search: invalid enum value for "type"', async () => {
+      const res = await fetch(`${baseUrl}/api/transformers/search?type=not-a-real-type`);
+      assert.equal(res.status, 400);
+    });
+
+    it('TransformerController_create: missing body', async () => {
+      const res = await fetch(`${baseUrl}/api/transformers`, { method: 'POST' });
+      assert.equal(res.status, 400);
+    });
+
+    it('TransformerController_update: missing body', async () => {
+      const res = await fetch(`${baseUrl}/api/transformers/test-id`, { method: 'PUT' });
+      assert.equal(res.status, 400);
+    });
+
+    it('TransformerController_test: missing body', async () => {
+      const res = await fetch(`${baseUrl}/api/transformers/test`, { method: 'POST' });
+      assert.equal(res.status, 400);
+    });
+
+    it('TransformerController_testTransformer: missing body', async () => {
+      const res = await fetch(`${baseUrl}/api/transformers/test-id/test`, { method: 'POST' });
+      assert.equal(res.status, 400);
+    });
+
+    it('SouthConnectorController_getManifest: invalid enum value for "type"', async () => {
+      const res = await fetch(`${baseUrl}/api/south/manifests/not-a-real-south-type`);
+      assert.equal(res.status, 400);
+    });
+
+    it('SouthConnectorController_create: missing body', async () => {
+      const res = await fetch(`${baseUrl}/api/south`, { method: 'POST' });
+      assert.equal(res.status, 400);
+    });
+
+    it('SouthConnectorController_update: missing body', async () => {
+      const res = await fetch(`${baseUrl}/api/south/test-id`, { method: 'PUT' });
+      assert.equal(res.status, 400);
+    });
+
+    it('SouthConnectorController_testConnection: missing body', async () => {
+      const res = await fetch(`${baseUrl}/api/south/test-id/test/connection`, { method: 'POST' });
+      assert.equal(res.status, 400);
+    });
+
+    it('SouthConnectorController_testItem: missing body', async () => {
+      const res = await fetch(`${baseUrl}/api/south/test-id/items/test`, { method: 'POST' });
+      assert.equal(res.status, 400);
+    });
+
+    it('SouthConnectorController_startExplore: missing body', async () => {
+      const res = await fetch(`${baseUrl}/api/south/test-id/explore`, { method: 'POST' });
+      assert.equal(res.status, 400);
+    });
+  });
 });
