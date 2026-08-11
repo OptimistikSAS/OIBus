@@ -20,6 +20,7 @@ import TypedEventEmitter from '../service/typed-event-emitter';
 import type { ILogger } from '../model/logger.model';
 import { loggerService } from '../service/logger/logger.service';
 import { Interval } from '../../shared/model/types';
+import { ScanMode } from '../model/scan-mode.model';
 
 const FINISH_INTERVAL = 5000;
 
@@ -72,6 +73,15 @@ export default class HistoryQuery {
   /** Live north cache/error/archive folder sizes, read from the cache service (the authoritative source). */
   getNorthCacheSizes(): CacheSize {
     return this.north.getCacheSizes();
+  }
+
+  /**
+   * Relay a scan-mode tick to the north, which decides whether the scan mode is its caching
+   * trigger. Only the north is ticked: the south side of a history query is a one-shot backfill
+   * driven by its own completion loop, not by a scan mode.
+   */
+  triggerNorth(scanMode: ScanMode): void {
+    this.north.trigger(scanMode);
   }
 
   async start(): Promise<void> {

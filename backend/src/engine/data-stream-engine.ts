@@ -193,6 +193,9 @@ export default class DataStreamEngine {
     for (const { north } of this.northConnectors.values()) {
       north.trigger(scanMode);
     }
+    for (const { historyQuery } of this.historyQueries.values()) {
+      historyQuery.triggerNorth(scanMode);
+    }
   }
 
   async createNorth(northId: string): Promise<NorthConnector<NorthSettings>> {
