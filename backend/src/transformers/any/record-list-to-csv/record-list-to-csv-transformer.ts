@@ -12,9 +12,14 @@ import {
   convertNewline,
   convertQuoteChar,
   sanitizeFilename,
-  streamToString
+  streamToString,
+  stringToBoolean
 } from '../../../service/utils';
-import { TransformerRecordListToCsvSettings } from '../../../../shared/model/transformer-settings.model';
+import {
+  TransformerRecordListToCsvSettings,
+  TransformerRecordListToCsvSettingsFields
+} from '../../../../shared/model/transformer-settings.model';
+import { applyFieldProcess } from '../../field-process';
 
 export default class RecordListToCsvTransformer extends OIBusTransformer {
   public static transformerName = 'record-list-to-csv';
@@ -36,7 +41,9 @@ export default class RecordListToCsvTransformer extends OIBusTransformer {
   /**
    * In-memory fast path — operates directly on the `Array<OIBusRecord>` that
    * the caller already has (rows are passed through by SQL-like souths
-   * untouched; datetime parsing/rendering happens here, not on the south side).
+   * untouched; per-column casting/renaming/formatting happens here, not on
+   * the south side). Every field is passed through as-is unless it's covered
+   * by a `fields` entry, mirroring json-to-csv's field-mapping model.
    */
   override transformInMemory(
     data: unknown,
@@ -53,34 +60,21 @@ export default class RecordListToCsvTransformer extends OIBusTransformer {
       contentType: 'any'
     };
 
-    const datetimeFields = this.options.datetimeFields || [];
-    const quoteChar = convertQuoteChar(this.options.quoteChar);
-    const csvRows =
-      datetimeFields.length === 0
-        ? rows
-        : rows.map(row => {
-            const csvRow: OIBusRecord = { ...row };
-            for (const field of datetimeFields) {
-              const rawValue = row[field.fieldName];
-              if (rawValue === null || rawValue === undefined || !field.input) continue;
-              csvRow[field.fieldName] = convertDateTime(
-                rawValue as string | number,
-                {
-                  type: field.input.type,
-                  timezone: field.input.timezone,
-                  format: field.input.format,
-                  locale: field.input.locale
-                },
-                {
-                  type: 'string',
-                  timezone: field.outputTimezone,
-                  format: field.outputTimestampFormat
-                }
-              );
-            }
-            return csvRow;
-          });
+    const fields = this.options.fields || [];
+    const configuredFieldNames = new Set(fields.map(field => field.fieldName));
+    const csvRows = rows.map(row => {
+      const csvRow: Record<string, unknown> = {};
+      // Fields not covered by an explicit configuration pass through unchanged.
+      for (const [key, value] of Object.entries(row)) {
+        if (!configuredFieldNames.has(key)) csvRow[key] = value;
+      }
+      for (const field of fields) {
+        csvRow[field.columnName || field.fieldName] = this.resolveFieldValue(row[field.fieldName], field);
+      }
+      return csvRow;
+    });
 
+    const quoteChar = convertQuoteChar(this.options.quoteChar);
     const outputCSV = csv.unparse(csvRows, {
       header: this.options.header || false,
       delimiter: convertDelimiter(this.options.delimiter),
@@ -111,6 +105,53 @@ export default class RecordListToCsvTransformer extends OIBusTransformer {
     }
 
     return Promise.resolve({ output, metadata });
+  }
+
+  /**
+   * Casts one raw field value according to its configured data type, then applies the optional
+   * field-process expression — the same per-type handling json-to-csv uses.
+   */
+  private resolveFieldValue(rawValue: OIBusRecord[string] | undefined, field: TransformerRecordListToCsvSettingsFields): unknown {
+    let typedValue: unknown;
+    if (rawValue === undefined || rawValue === null) {
+      typedValue = this.options.nullValue ?? '';
+    } else {
+      switch (field.dataType) {
+        case 'datetime':
+          typedValue = convertDateTime(
+            rawValue as string | number,
+            {
+              type: field.datetimeSettings!.inputType,
+              timezone: field.datetimeSettings!.inputTimezone,
+              format: field.datetimeSettings!.inputFormat,
+              locale: field.datetimeSettings!.inputLocale
+            },
+            {
+              type: field.datetimeSettings!.outputType,
+              timezone: field.datetimeSettings!.outputTimezone,
+              format: field.datetimeSettings!.outputFormat,
+              locale: field.datetimeSettings!.outputLocale
+            }
+          );
+          break;
+        case 'number':
+          typedValue = Number(rawValue);
+          break;
+        case 'boolean':
+          typedValue = (typeof rawValue === 'boolean' ? rawValue : stringToBoolean(String(rawValue))).toString();
+          break;
+        case 'string':
+          typedValue = String(rawValue);
+          break;
+        case 'object':
+        case 'array':
+        default:
+          typedValue = JSON.stringify(rawValue);
+          break;
+      }
+    }
+
+    return applyFieldProcess(typedValue, field.fieldProcess);
   }
 
   get options(): TransformerRecordListToCsvSettings {
