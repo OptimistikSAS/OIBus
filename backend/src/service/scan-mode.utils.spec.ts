@@ -158,6 +158,11 @@ describe('scan-mode utils', () => {
     it('should flag an unknown timezone, which can never be evaluated', () => {
       assert.strictEqual(isActivationWindowExpired({ recurring: { timezone: 'Not/AZone' } }, now), true);
     });
+
+    it('should flag a malformed time-of-day string that fails the HH:mm format', () => {
+      const window = { recurring: { timezone: 'UTC', timeOfDay: { start: '25:00', end: '10:00' } } };
+      assert.strictEqual(isActivationWindowExpired(window, now), true);
+    });
   });
 
   describe('hasScheduleChanged', () => {
@@ -176,6 +181,10 @@ describe('scan-mode utils', () => {
         true
       );
       assert.strictEqual(hasScheduleChanged(baseScanMode, withWindow({ recurring: { timezone: 'UTC' } })), true);
+    });
+
+    it('should detect an interval appearing where there was none before', () => {
+      assert.strictEqual(hasScheduleChanged(baseScanMode, { ...baseScanMode, interval: { value: 30, unit: 's' } }), true);
     });
   });
 });

@@ -346,6 +346,26 @@ describe('OIBus Service', () => {
     assert.strictEqual(engineRepository.update.mock.calls.length, 1);
   });
 
+  it('should encrypt proxy forward password and hash proxy password when both provided', async () => {
+    const specificTestCommand: EngineSettingsCommandDTO = JSON.parse(JSON.stringify(testData.engine.command));
+    specificTestCommand.proxyServer.forward = {
+      enabled: true,
+      url: 'http://forward-proxy:3128',
+      username: 'proxy-user',
+      password: 'new forward password'
+    };
+    specificTestCommand.proxyServer.password = 'new proxy password';
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+
+    await service.updateEngineSettings(specificTestCommand, testData.users.list[0].id);
+
+    const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
+    assert.strictEqual(encryptionMock.encryptText.mock.calls.length, 1);
+    assert.deepStrictEqual(encryptionMock.encryptText.mock.calls[0].arguments, ['new forward password']);
+    assert.strictEqual(specificTestCommand.proxyServer.password, 'argon2hash:new proxy password');
+    assert.strictEqual(engineRepository.update.mock.calls.length, 1);
+  });
+
   it('should correctly update settings without reloading logger', async () => {
     const specificTestCommand: EngineSettingsCommandDTO = JSON.parse(JSON.stringify(testData.engine.command));
     specificTestCommand.logger = JSON.parse(JSON.stringify(testData.engine.settings.logger));
@@ -450,6 +470,24 @@ describe('OIBus Service', () => {
       new Error('Web server port and proxy port can not be the same')
     );
     assert.strictEqual(engineRepository.updateProxy.mock.calls.length, 0);
+  });
+
+  it('should preserve old forward password when proxy forward password not provided', async () => {
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+
+    const command = {
+      enabled: true,
+      port: 9000,
+      forward: { enabled: true, url: 'http://forward-proxy:3128', username: 'proxy-user', password: null },
+      username: 'proxy-server-user',
+      password: null
+    };
+
+    await service.updateEngineProxy(command, testData.users.list[0].id);
+
+    assert.strictEqual(command.forward.password, testData.engine.settings.proxyServer.forward.password);
+    assert.strictEqual(command.password, testData.engine.settings.proxyServer.password);
+    assert.strictEqual(engineRepository.updateProxy.mock.calls.length, 1);
   });
 
   it('should start proxy server when proxy is enabled', async () => {

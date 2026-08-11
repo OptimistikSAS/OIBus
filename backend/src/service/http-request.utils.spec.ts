@@ -516,6 +516,21 @@ describe('HTTPRequest Service', () => {
       assert.strictEqual(requestMock.mock.calls.length, 2);
     });
 
+    it('should actually hit the proxy agent cache on a second call (fresh options object, since options.proxy is deleted in-place)', async () => {
+      // HTTPRequest deletes `options.proxy` after use, so reusing the very same `options` object across
+      // calls (as above) never truly exercises the "cached" branch on the second call - it just skips
+      // the proxy branch entirely. Passing a brand new options object with the same proxy URL each time
+      // is required to genuinely hit the `if (cached) return cached;` true branch.
+      await HTTPRequest(testUrl, { proxy: { url: testProxyUrl } });
+      await HTTPRequest(testUrl, { proxy: { url: testProxyUrl } });
+
+      assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(requestMock.mock.calls.length, 2);
+      const firstDispatcher = requestMock.mock.calls[0].arguments[1]?.dispatcher;
+      const secondDispatcher = requestMock.mock.calls[1].arguments[1]?.dispatcher;
+      assert.strictEqual(firstDispatcher, secondDispatcher);
+    });
+
     it('should create separate ProxyAgent instances for different proxy configs', async () => {
       const optionsA: ReqOptions = { proxy: { url: testProxyUrl } };
       const optionsB: ReqOptions = { proxy: { url: 'http://other-proxy.example.com:3128' } };

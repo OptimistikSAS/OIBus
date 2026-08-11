@@ -308,6 +308,53 @@ describe('Logger', () => {
     assert.strictEqual(proxy.isLevelEnabled('info'), false);
   });
 
+  it('should drop log calls silently after a restart sets the root logger back to null', () => {
+    const childMock = mock.fn((_bindings: Record<string, unknown>): ILogger => new PinoLogger());
+    const root: ILogger = { ...new PinoLogger(), child: childMock };
+    (service as unknown as { _rawLogger: ILogger })._rawLogger = root;
+    const proxy = service.createChildLogger('internal');
+
+    // First call binds the proxy to the non-null root.
+    proxy.info('first log');
+    assert.strictEqual(childMock.mock.calls.length, 1);
+
+    // Root is cleared (e.g. logger stopped) - the proxy must re-resolve to null and stop calling child().
+    (service as unknown as { _rawLogger: null })._rawLogger = null;
+
+    assert.doesNotThrow(() => proxy.info('dropped after restart'));
+    assert.strictEqual(childMock.mock.calls.length, 1);
+  });
+
+  it('should route trace, debug, warn, error and fatal calls through the root logger', () => {
+    const childLogger = new PinoLogger();
+    const childMock = mock.fn((_bindings: Record<string, unknown>): ILogger => childLogger);
+    const root: ILogger = { ...new PinoLogger(), child: childMock };
+    (service as unknown as { _rawLogger: ILogger })._rawLogger = root;
+    const proxy = service.createChildLogger('internal');
+
+    proxy.trace('trace message');
+    proxy.debug('debug message');
+    proxy.warn('warn message');
+    proxy.error('error message');
+    proxy.fatal('fatal message');
+
+    assert.deepStrictEqual(childLogger.trace.mock.calls[0].arguments, ['trace message', undefined]);
+    assert.deepStrictEqual(childLogger.debug.mock.calls[0].arguments, ['debug message', undefined]);
+    assert.deepStrictEqual(childLogger.warn.mock.calls[0].arguments, ['warn message', undefined]);
+    assert.deepStrictEqual(childLogger.error.mock.calls[0].arguments, ['error message', undefined]);
+    assert.deepStrictEqual(childLogger.fatal.mock.calls[0].arguments, ['fatal message', undefined]);
+  });
+
+  it('should return the real isLevelEnabled result when a root logger is set', () => {
+    const childLogger = new PinoLogger();
+    childLogger.isLevelEnabled.mock.mockImplementation(() => true);
+    const root: ILogger = { ...new PinoLogger(), child: () => childLogger };
+    (service as unknown as { _rawLogger: ILogger })._rawLogger = root;
+    const proxy = service.createChildLogger('internal');
+
+    assert.strictEqual(proxy.isLevelEnabled('info'), true);
+  });
+
   it('should properly stop logger and flush the transport', async () => {
     // No-op when transport is null
     await service.stop();
@@ -327,6 +374,41 @@ describe('Logger', () => {
     assert.strictEqual(flushMock.mock.calls.length, 1);
     assert.strictEqual(endMock.mock.calls.length, 1);
     assert.strictEqual(service.rootLogger, null);
+  });
+
+  it('should skip silent targets when computing the most-verbose parent level', async () => {
+    const specificSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
+    specificSettings.logger.console.level = 'silent';
+    specificSettings.logger.database.maxNumberOfLogs = 0;
+    specificSettings.logger.loki.address = '';
+    specificSettings.logger.syslog.host = '';
+
+    await service.start(specificSettings, null);
+
+    // console (silent) is skipped, so the parent level falls back to the file level.
+    assert.deepStrictEqual(pinoMock.mock.calls[0]!.arguments[0], {
+      base: undefined,
+      level: specificSettings.logger.file.level,
+      timestamp: isoTimeFn
+    });
+  });
+
+  it('should return the same in-flight promise when stop is called concurrently', async () => {
+    const stopMock = mock.fn();
+    service.fileCleanUpService = { stop: stopMock } as unknown as FileCleanupServiceType;
+    const flushMock = mock.fn((cb?: (err?: Error) => void) => {
+      if (cb) cb();
+    });
+    const endMock = mock.fn();
+    (service as unknown as { _transport: unknown })._transport = { flush: flushMock, end: endMock };
+
+    const firstStop = service.stop();
+    const secondStop = service.stop();
+    assert.strictEqual(firstStop, secondStop);
+
+    await firstStop;
+    assert.strictEqual(stopMock.mock.calls.length, 1);
+    assert.strictEqual(flushMock.mock.calls.length, 1);
   });
 
   it('should add syslog transport when host is set and level is not silent', async () => {
