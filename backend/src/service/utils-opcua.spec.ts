@@ -2,11 +2,13 @@ import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { DataType, DataValue, InMemoryCertificateStore, TimestampsToReturn, UserTokenType, Variant } from 'node-opcua';
 import { encryptionService } from './encryption.service';
 import {
   createSessionConfigs,
   getHistoryReadRequest,
+  getOPCUAApplicationUri,
   getResamplingValue,
   getTimestamp,
   logMessages,
@@ -15,6 +17,9 @@ import {
   toOPCUASecurityMode,
   toOPCUASecurityPolicy
 } from './utils-opcua';
+
+const nodeRequire = createRequire(import.meta.url);
+const nodeOpcuaCryptoModule = nodeRequire('node-opcua-crypto');
 import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../shared/model/south-settings.model';
 import { NorthOPCUASettings } from '../../shared/model/north-settings.model';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
@@ -44,6 +49,50 @@ describe('Service utils OPCUA', () => {
       assert.strictEqual(toOPCUASecurityMode('none'), 1);
       assert.strictEqual(toOPCUASecurityMode('sign'), 2);
       assert.strictEqual(toOPCUASecurityMode('sign-and-encrypt'), 3);
+    });
+  });
+
+  describe('getOPCUAApplicationUri', () => {
+    afterEach(() => {
+      mock.restoreAll();
+    });
+
+    it('should return undefined when the certificate cannot be read/parsed', async () => {
+      mock.method(fs, 'readFile', async () => {
+        throw new Error('ENOENT');
+      });
+      const result = await getOPCUAApplicationUri();
+      assert.strictEqual(result, undefined);
+    });
+
+    it('should return the applicationUri extracted from the certificate subjectAltName', async () => {
+      mock.method(fs, 'readFile', async () => 'pem-content');
+      mock.method(nodeOpcuaCryptoModule, 'convertPEMtoDER', () => Buffer.from('der'));
+      mock.method(nodeOpcuaCryptoModule, 'exploreCertificate', () => ({
+        tbsCertificate: {
+          extensions: {
+            subjectAltName: {
+              uniformResourceIdentifier: ['urn:oibus:test']
+            }
+          }
+        }
+      }));
+
+      const result = await getOPCUAApplicationUri();
+      assert.strictEqual(result, 'urn:oibus:test');
+    });
+
+    it('should return undefined when the certificate has no subjectAltName', async () => {
+      mock.method(fs, 'readFile', async () => 'pem-content');
+      mock.method(nodeOpcuaCryptoModule, 'convertPEMtoDER', () => Buffer.from('der'));
+      mock.method(nodeOpcuaCryptoModule, 'exploreCertificate', () => ({
+        tbsCertificate: {
+          extensions: {}
+        }
+      }));
+
+      const result = await getOPCUAApplicationUri();
+      assert.strictEqual(result, undefined);
     });
   });
 

@@ -253,6 +253,47 @@ describe('History Query service', () => {
     );
   });
 
+  it('should create a history query with a null south item id and resolve a non-temp northTransformer item', async () => {
+    service.retrieveSecrets = mock.fn(() => null);
+    const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
+    command.items[0].id = null;
+    command.northTransformers = [
+      {
+        id: 'historyTransformerId3',
+        transformerId: testData.transformers.list[0].id,
+        options: {},
+        items: [{ id: '', name: 'item4', enabled: true }]
+      }
+    ];
+
+    await service.create(command, undefined, undefined, undefined, 'userTest');
+
+    assert.strictEqual(historyQueryRepository.saveHistory.mock.calls.length, 1);
+    const savedHistoryQuery = historyQueryRepository.saveHistory.mock.calls[0].arguments[0];
+    assert.strictEqual(savedHistoryQuery.items[0].id, '');
+    assert.strictEqual(savedHistoryQuery.northTransformers[0].items[0].id, '');
+    assert.strictEqual(savedHistoryQuery.northTransformers[0].items[0].createdBy, 'userTest');
+  });
+
+  it('should fail to create a history query when a non-temp northTransformer item is not found among the history items', async () => {
+    service.retrieveSecrets = mock.fn(() => null);
+    const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
+    command.items[0].id = 'existingItem1';
+    command.northTransformers = [
+      {
+        id: 'historyTransformerId3',
+        transformerId: testData.transformers.list[0].id,
+        options: {},
+        items: [{ id: 'missing-item-id', name: 'missing item', enabled: true }]
+      }
+    ];
+
+    await assert.rejects(
+      async () => service.create(command, undefined, undefined, undefined, 'userTest'),
+      new NotFoundError('Could not find History item "missing item" (missing-item-id)')
+    );
+  });
+
   it('should update a history query', async () => {
     historyQueryRepository.findAllHistoriesLight.mock.mockImplementation(() => testData.historyQueries.listLight);
     await service.update(testData.historyQueries.list[0].id, testData.historyQueries.command, false, 'userTest');
@@ -324,6 +365,45 @@ describe('History Query service', () => {
     await assert.rejects(
       async () => service.update(testData.historyQueries.list[0].id, command, false, 'userTest'),
       new NotFoundError(`Could not find OIBus transformer "bad-id"`)
+    );
+  });
+
+  it('should update a history query with a null south item id and resolve a non-temp northTransformer item', async () => {
+    const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
+    command.items[0].id = null;
+    command.northTransformers = [
+      {
+        id: 'historyTransformerId3',
+        transformerId: testData.transformers.list[0].id,
+        options: {},
+        items: [{ id: '', name: 'item4', enabled: true }]
+      }
+    ];
+
+    await service.update(testData.historyQueries.list[0].id, command, false, 'userTest');
+
+    assert.strictEqual(historyQueryRepository.saveHistory.mock.calls.length, 1);
+    const savedHistoryQuery = historyQueryRepository.saveHistory.mock.calls[0].arguments[0];
+    assert.strictEqual(savedHistoryQuery.items[0].id, '');
+    assert.strictEqual(savedHistoryQuery.items[0].createdBy, 'userTest');
+    assert.strictEqual(savedHistoryQuery.northTransformers[0].items[0].id, '');
+  });
+
+  it('should fail to update a history query when a non-temp northTransformer item is not found among the history items', async () => {
+    const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
+    command.items[0].id = 'existingItem1';
+    command.northTransformers = [
+      {
+        id: 'historyTransformerId3',
+        transformerId: testData.transformers.list[0].id,
+        options: {},
+        items: [{ id: 'missing-item-id', name: 'missing item', enabled: true }]
+      }
+    ];
+
+    await assert.rejects(
+      async () => service.update(testData.historyQueries.list[0].id, command, false, 'userTest'),
+      new NotFoundError('Could not find History item "missing item" (missing-item-id)')
     );
   });
 

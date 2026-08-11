@@ -1686,6 +1686,30 @@ describe('Service utils', () => {
       assert.strictEqual(capturedData[0].recoveryStrategy, null);
     });
 
+    it('should default scanMode to an empty string when the item has no group and no scan mode', () => {
+      const baseItem = {
+        id: 'item1',
+        connectorId: 'conn1',
+        name: 'Item 1',
+        enabled: true,
+        scanModeId: null,
+        scanMode: null,
+        group: null,
+        syncWithGroup: false,
+        maxReadInterval: 0,
+        readDelay: 0,
+        startTimeOffset: 0,
+        endTimeOffset: 0,
+        settings: { address: '40001' }
+      } as unknown as SouthConnectorItemDTO;
+
+      utils.itemToFlattenedCSV([baseItem], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
+
+      const capturedData = csvExports.unparse.mock.calls[0].arguments[0] as Array<Record<string, unknown>>;
+      assert.strictEqual(capturedData[0].scanMode, '');
+      assert.strictEqual(capturedData[0].group, '');
+    });
+
     it('should flatten settings declared in the schema, stringifying object values', () => {
       const baseItem = {
         id: 'item1',
@@ -2361,6 +2385,22 @@ describe('Service utils', () => {
       assert.strictEqual(result.adminPassword, 'dockersecret');
     });
 
+    it('should fall back to the direct env var and warn when the secret file cannot be read', () => {
+      const consoleWarn = mock.method(console, 'warn', () => undefined);
+      mock.method(fsSync, 'existsSync', () => false);
+      mock.method(fsSync, 'readFileSync', (filePath: string) => {
+        throw new Error(`ENOENT: no such file or directory, open '${filePath}'`);
+      });
+      process.env.ADMIN_USERNAME_FILE = '/run/secrets/missing_username';
+      process.env.ADMIN_USERNAME = 'fallback-user';
+
+      const result = utils.readInitConfig();
+      assert.strictEqual(result.adminUsername, 'fallback-user');
+      assert.ok(
+        consoleWarn.mock.calls.some(c => (c.arguments[0] as string).includes('Failed to read secret from /run/secrets/missing_username'))
+      );
+    });
+
     it('should ignore fields with wrong types in the init file', () => {
       mock.method(fsSync, 'existsSync', () => true);
       mock.method(fsSync, 'readFileSync', () => '{"engineName":99,"adminUsername":123,"adminPassword":null,"port":"not-a-number"}');
@@ -2407,6 +2447,104 @@ describe('Service utils', () => {
       const result = utils.sanitizeCommandError({}, 'Compteur123');
 
       assert.strictEqual(result.message, 'Unknown error');
+    });
+  });
+
+  describe('checkAge', () => {
+    const logger = new PinoLogger();
+
+    const makeItem = (settings: Partial<{ minAge: number; preserveFiles: boolean; ignoreModifiedDate: boolean }>) =>
+      ({
+        settings: {
+          minAge: 0,
+          preserveFiles: false,
+          ignoreModifiedDate: false,
+          ...settings
+        }
+      }) as unknown as Parameters<UtilsModule['checkAge']>[0];
+
+    it('should return false when the file is not old enough', () => {
+      const item = makeItem({ minAge: 100_000 });
+      const result = utils.checkAge(item, 'file.txt', Date.now(), [], logger);
+      assert.strictEqual(result, false);
+    });
+
+    it('should return true when preserveFiles is false and the file is old enough', () => {
+      const item = makeItem({ minAge: 0, preserveFiles: false });
+      const result = utils.checkAge(item, 'file.txt', Date.now() - 1_000, [], logger);
+      assert.strictEqual(result, true);
+    });
+
+    it('should return true when preserveFiles is true and ignoreModifiedDate is true', () => {
+      const item = makeItem({ minAge: 0, preserveFiles: true, ignoreModifiedDate: true });
+      const result = utils.checkAge(
+        item,
+        'file.txt',
+        Date.now() - 1_000,
+        [{ filename: 'file.txt', modifiedTime: 999_999_999_999 }],
+        logger
+      );
+      assert.strictEqual(result, true);
+    });
+
+    it('should return true when preserveFiles is true and the file was not seen before', () => {
+      const item = makeItem({ minAge: 0, preserveFiles: true, ignoreModifiedDate: false });
+      const mtimeMs = Date.now() - 1_000;
+      const result = utils.checkAge(item, 'file.txt', mtimeMs, [], logger);
+      assert.strictEqual(result, true);
+    });
+
+    it('should return false when preserveFiles is true and the file was already sent with a newer or equal mtime', () => {
+      const item = makeItem({ minAge: 0, preserveFiles: true, ignoreModifiedDate: false });
+      const mtimeMs = Date.now() - 1_000;
+      const result = utils.checkAge(item, 'file.txt', mtimeMs, [{ filename: 'file.txt', modifiedTime: mtimeMs }], logger);
+      assert.strictEqual(result, false);
+    });
+  });
+
+  describe('getErrorMessage', () => {
+    it('should join AggregateError sub-messages with a semicolon', () => {
+      const error = new AggregateError([new Error('first'), new Error('second')], '');
+      assert.strictEqual(utils.getErrorMessage(error), 'first; second');
+    });
+
+    it('should fall back to the AggregateError message when no sub-message is present', () => {
+      const error = new AggregateError([], 'top-level message');
+      assert.strictEqual(utils.getErrorMessage(error), 'top-level message');
+    });
+
+    it('should fall back to toString() when an AggregateError has neither message nor sub-messages', () => {
+      const error = new AggregateError([], '');
+      assert.strictEqual(utils.getErrorMessage(error), error.toString());
+    });
+
+    it('should append a non-empty cause message separated by a colon', () => {
+      const error = Object.assign(new Error('outer'), { cause: new Error('inner') });
+      assert.strictEqual(utils.getErrorMessage(error), 'outer: inner');
+    });
+
+    it('should ignore a null cause', () => {
+      const error = Object.assign(new Error('outer'), { cause: null });
+      assert.strictEqual(utils.getErrorMessage(error), 'outer');
+    });
+
+    it('should fall back to toString() when the error has an empty message and no cause', () => {
+      const error = new Error('');
+      assert.strictEqual(utils.getErrorMessage(error), error.toString());
+    });
+
+    it('should return a plain string error as-is', () => {
+      assert.strictEqual(utils.getErrorMessage('plain string error'), 'plain string error');
+    });
+
+    it('should JSON.stringify a non-Error, non-string value', () => {
+      assert.strictEqual(utils.getErrorMessage({ code: 42 }), JSON.stringify({ code: 42 }));
+    });
+
+    it('should fall back to String() when JSON.stringify throws (e.g. circular structure)', () => {
+      const circular: Record<string, unknown> = {};
+      circular.self = circular;
+      assert.strictEqual(utils.getErrorMessage(circular), String(circular));
     });
   });
 });
