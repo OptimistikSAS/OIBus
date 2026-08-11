@@ -1,0 +1,104 @@
+import ThrottlingSettings from './_throttling-settings.mdx';
+
+## Group Settings
+
+Items can be organised into groups. Each group defines a shared collection schedule and default throttling
+settings. Items in the same group are still fetched **one at a time** in sequence — the group simply
+provides common defaults that individual items can override.
+
+| Setting        | Description                                                                                                                                       | Example Value             |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| **Name**       | Unique label for the group within this connector.                                                                                                 | `Group A`                 |
+| **Scan mode**  | Schedule used to collect all items in the group.                                                                                                  | `Every 1 min`             |
+| **Throttling** | Default throttling values (Max read interval, Read delay, Start time offset, End time offset, Recovery strategy) inherited by items in the group. | `3600, 200, 0, 0, oldest` |
+
+## Item Settings
+
+Each item can be individually configured with its own query parameters and, optionally, a tracking instant used
+to read the source incrementally. Items inherit their scan mode and throttling defaults from their group, but
+each setting can be overridden per item by disabling **Sync with group**.
+
+<ThrottlingSettings />
+### Query Configuration
+
+The query field accepts standard SQL syntax with support for internal variables that enhance data retrieval
+resilience and performance optimization.
+
+#### Query Variables
+
+| Setting      | Description                                                                                           | Example Value              |
+| ------------ | ----------------------------------------------------------------------------------------------------- | -------------------------- |
+| `@StartTime` | Initialized to first execution time, then updated to the most recent timestamp from the tracked field | `2024-01-15T10:00:00.000Z` |
+| `@EndTime`   | Set to current time (`now()`) or sub-interval end when queries are split                              | `2024-01-15T11:00:00.000Z` |
+
+Example Query:
+
+```sql
+SELECT device_id, value, reading_time
+FROM sensor_data
+WHERE reading_time > @StartTime
+AND reading_time < @EndTime
+ORDER BY reading_time
+```
+
+:::info Query Splitting
+For handling large datasets, queries can be automatically divided into smaller time-based chunks based on the
+**Max read interval** throttling setting.
+:::
+
+### Tracking Instant Configuration
+
+Every column returned by the query is sent downstream exactly as the database returned it — OIBus does not parse,
+reformat, or reshape any of it. The only optional per-item setting is a **tracking instant**: a single column
+whose maximum value across a batch becomes the next query's `@StartTime`, for incremental collection.
+
+| Setting           | Description                                                                                                    | Example Value               |
+| ----------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| **Track instant** | Enables incremental collection using the field below. When disabled, every query re-reads the full result set. | Enabled/Disabled            |
+| **Field name**    | Name of the datetime column in your SELECT statement to track                                                  | `timestamp`, `reading_time` |
+| **Type**          | Data type of that column. Available values differ by connector — see the connector-specific note below.        | `iso-string`, `unix-epoch`  |
+| **Timezone**      | Timezone of the stored datetime (for string/date types)                                                        | `UTC`, `Europe/Paris`       |
+| **Format**        | Format pattern for string-based datetimes                                                                      | `yyyy-MM-dd HH:mm:ss`       |
+| **Locale**        | Locale for format elements (e.g., month names)                                                                 | `en_US`, `fr_FR`            |
+
+:::warning Type Consistency Requirement
+When using datetime conversions in queries, keep the type consistent in both the SELECT list and the WHERE
+clause:
+
+Problematic approach (may cause unexpected behavior):
+
+```sql
+SELECT value, CONVERT(datetime, string_field) AS timestamp
+FROM table
+WHERE string_field > @StartTime
+```
+
+Recommended approach:
+
+```sql
+SELECT value, CONVERT(datetime, string_field) AS timestamp
+FROM table
+WHERE CONVERT(datetime, string_field) > @StartTime
+```
+
+:::
+
+### Data Flow Process
+
+1. OIBus executes each configured query sequentially.
+2. Rows are sent downstream as-is — no column is parsed, reformatted, or reshaped.
+3. If **Track instant** is enabled, the tracked field's max value across the batch is extracted, converted to
+   UTC, and stored as the next `@StartTime`.
+4. Data is sent to configured North connectors as record-list content (one entry per row).
+5. To render this data as CSV (or another format), attach a compatible transformer — e.g.
+   **record-list-to-csv** — to the North connector or history query. See
+   [Transformers](../engine/transformers.mdx) for details.
+
+:::tip Best Practices
+
+1. When tracking an instant, choose a field with consistent, increasing values.
+2. For string datetimes, ensure the format matches between database storage and query variables.
+3. Add indexes on datetime fields for better query performance.
+4. Use the Max read interval to split large time ranges into manageable chunks.
+
+:::
