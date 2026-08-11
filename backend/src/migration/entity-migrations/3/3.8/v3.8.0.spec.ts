@@ -218,6 +218,15 @@ describe('Entity migration v3.8.0', () => {
         await db('users').insert({ id: 'admin-1', login: 'admin', password: 'secret' });
         await db('registrations').insert({ id: 'reg-1', host: 'http://localhost' });
         await db('north_connectors').insert(northRow({ id: 'n-rest', name: 'n-rest', type: 'rest', settings: JSON.stringify(oldRest) }));
+        // queryParams: null exercises the `oldSettings.queryParams || []` fallback branch
+        await db('north_connectors').insert(
+          northRow({
+            id: 'n-rest-no-params',
+            name: 'n-rest-no-params',
+            type: 'rest',
+            settings: JSON.stringify({ ...oldRest, queryParams: null })
+          })
+        );
         await db('history_queries').insert(
           historyRow({
             id: 'h-rest',
@@ -252,6 +261,11 @@ describe('Entity migration v3.8.0', () => {
       assert.strictEqual(newNorthSettings.proxy.useProxy, true);
       assert.strictEqual(newNorthSettings.queryParams.length, 1);
       assert.strictEqual(newNorthSettings.test.testEndpoint, '/test');
+
+      // updateNorthRestConnectors — queryParams null falls back to an empty array
+      const northNoParams = await db('north_connectors').where('id', 'n-rest-no-params').first();
+      const newNorthNoParamsSettings = JSON.parse(northNoParams.settings);
+      assert.deepStrictEqual(newNorthNoParamsSettings.queryParams, []);
 
       // updateNorthRestConnectors — history query north settings converted
       const history = await db('history_queries').where('id', 'h-rest').first();
@@ -366,7 +380,10 @@ describe('Entity migration v3.8.0', () => {
       const jsonPayload = {
         useArray: true,
         dataArrayPath: 'data.items',
-        valuePath: 'value',
+        // Already a JSONPath expression (starts with '$') — exercises the early-return branch in
+        // convertObjectPathToJsonPath, as opposed to dataArrayPath/pointIdPath below which are
+        // legacy dot-paths that need conversion.
+        valuePath: '$.value',
         pointIdOrigin: 'payload',
         pointIdPath: 'meta.0.id',
         timestampOrigin: 'payload',
@@ -501,6 +518,190 @@ describe('Entity migration v3.8.0', () => {
       const southSettings = JSON.parse(south.settings);
       assert.strictEqual(southSettings.throttling, undefined);
       assert.strictEqual(southSettings.sharedConnection, undefined);
+    });
+
+    it('defaults historian fields to null when a historian connector has unparsable settings', async () => {
+      await seed(async () => {
+        await db('scan_modes').insert(scanModeRow('sm1', 'sm1'));
+        await db('south_connectors').insert(southRow({ id: 'so-bad-json', name: 'so-bad-json', type: 'opcua', settings: 'not-json{' }));
+        await db('south_items').insert(
+          southItemRow({
+            id: 'it-bad',
+            connector_id: 'so-bad-json',
+            scan_mode_id: 'sm1',
+            name: 'it-bad',
+            settings: JSON.stringify({ nodeId: 'ns=1' })
+          })
+        );
+      });
+
+      // populateItemHistorianFields commits its own defaulted values in an inner transaction before
+      // removeThrottlingFieldsInConnectorSettings runs later in up() and rejects on the same malformed
+      // JSON (that function has no fallback - malformed connector settings is expected to fail loudly).
+      await assert.rejects(() => up(db));
+
+      // populateItemHistorianFields — JSON.parse failure on connector settings falls back to null/default values
+      const item = await db('south_items').where('id', 'it-bad').first();
+      assert.strictEqual(item.max_read_interval, null);
+      assert.strictEqual(item.read_delay, null);
+      assert.strictEqual(item.overlap, null);
+    });
+
+    it('does not suffix the group name when a historian south produces a single group', async () => {
+      await seed(async () => {
+        await db('scan_modes').insert(scanModeRow('sm1', 'sm1'));
+        await db('south_connectors').insert(southRow({ id: 'so-single', name: 'so-single', type: 'opcua' }));
+        await db('south_items').insert(
+          southItemRow({
+            id: 'it-single-1',
+            connector_id: 'so-single',
+            scan_mode_id: 'sm1',
+            name: 'it-single-1',
+            settings: JSON.stringify({ nodeId: 'ns=1' })
+          })
+        );
+        await db('south_items').insert(
+          southItemRow({
+            id: 'it-single-2',
+            connector_id: 'so-single',
+            scan_mode_id: 'sm1',
+            name: 'it-single-2',
+            settings: JSON.stringify({ nodeId: 'ns=2' })
+          })
+        );
+      });
+
+      await up(db);
+
+      const groups = await db('south_item_groups').where('south_id', 'so-single');
+      assert.strictEqual(groups.length, 1, 'items sharing the same scan mode/throttling form a single group');
+      assert.strictEqual(groups[0].name, 'so-single', 'a single group keeps the connector name with no numeric suffix');
+    });
+
+    it('defaults preserve_files/regex hints when item settings omit them', async () => {
+      await seed(async () => {
+        await db('scan_modes').insert(scanModeRow('sm1', 'sm1'));
+        await db('south_connectors').insert(southRow({ id: 'so-fs-defaults', name: 'so-fs-defaults', type: 'ftp' }));
+        await db('south_items').insert(
+          southItemRow({
+            id: 'it-fs-defaults',
+            connector_id: 'so-fs-defaults',
+            scan_mode_id: 'sm1',
+            name: 'it-fs-defaults',
+            settings: JSON.stringify({})
+          })
+        );
+      });
+
+      await up(db);
+
+      const hint = await db('_migration_v380_file_connector_hints').where('item_id', 'it-fs-defaults').first();
+      assert.ok(hint);
+      assert.strictEqual(hint.preserve_files, 0, 'missing preserveFiles defaults to 0');
+      assert.strictEqual(hint.regex, '.*', 'missing regex defaults to .*');
+    });
+
+    it('normalizes csv transformer options with shared defaults and per-function fields', async () => {
+      const jsonCsvId = 'json-csv-std';
+      const tvCsvId = 'tv-csv-std';
+
+      await seed(async () => {
+        await db('scan_modes').insert(scanModeRow('sm1', 'sm1'));
+        // Pre-seed the standard csv transformers so createDefaultTransformers does not re-create them
+        // under new ids, preserving these ids through the north/history transformer rebuild.
+        await db('transformers').insert({
+          id: jsonCsvId,
+          type: 'standard',
+          function_name: 'json-to-csv',
+          input_type: 'any',
+          output_type: 'any',
+          name: 'json-to-csv'
+        });
+        await db('transformers').insert({
+          id: tvCsvId,
+          type: 'standard',
+          function_name: 'time-values-to-csv',
+          input_type: 'time-values',
+          output_type: 'any',
+          name: 'time-values-to-csv'
+        });
+
+        await db('south_connectors').insert(southRow({ id: 'so-csv', name: 'so-csv', type: 'folder-scanner' }));
+        await db('north_connectors').insert(northRow({ id: 'no-csv', name: 'no-csv', type: 'file-writer' }));
+        await db('north_transformers').insert({
+          north_id: 'no-csv',
+          transformer_id: jsonCsvId,
+          input_type: 'any',
+          options: JSON.stringify({ fields: [{ fieldName: 'a' }, { fieldName: 'b', fieldProcess: 'upper' }] })
+        });
+        await db('subscription').insert({ north_connector_id: 'no-csv', south_connector_id: 'so-csv' });
+
+        await db('history_queries').insert(historyRow({ id: 'h-csv', name: 'h-csv' }));
+        await db('history_query_transformers').insert({
+          history_id: 'h-csv',
+          transformer_id: tvCsvId,
+          options: JSON.stringify({ encoding: 'UTF_8' })
+        });
+      });
+
+      await up(db);
+
+      const northInstance = await db('north_transformers').where('transformer_id', jsonCsvId).first();
+      assert.ok(northInstance, 'a north_transformers row referencing the json-to-csv transformer should exist');
+      const northOptions = JSON.parse(northInstance.options);
+      assert.strictEqual(northOptions.encoding, 'UTF_8');
+      assert.strictEqual(northOptions.quoteChar, 'DOUBLE_QUOTE');
+      assert.strictEqual(northOptions.escapeChar, 'DOUBLE_QUOTE');
+      assert.strictEqual(northOptions.newline, 'DEFAULT');
+      assert.strictEqual(northOptions.header, true);
+      assert.deepStrictEqual(northOptions.fields, [
+        { fieldName: 'a', fieldProcess: null },
+        { fieldName: 'b', fieldProcess: 'upper' }
+      ]);
+
+      const historyInstance = await db('history_query_transformers').where('transformer_id', tvCsvId).first();
+      assert.ok(historyInstance, 'a history_query_transformers row referencing the time-values-to-csv transformer should exist');
+      const historyOptions = JSON.parse(historyInstance.options);
+      assert.strictEqual(historyOptions.encoding, 'UTF_8');
+      assert.strictEqual(historyOptions.quoteChar, 'DOUBLE_QUOTE');
+      assert.strictEqual(historyOptions.pointIdProcess, null, 'time-values-to-csv defaults pointIdProcess to null');
+    });
+
+    it('adds modbus grouping/batch/timeout defaults to modbus south connectors missing them', async () => {
+      await seed(async () => {
+        await db('south_connectors').insert(
+          southRow({ id: 'so-modbus', name: 'so-modbus', type: 'modbus', settings: JSON.stringify({ host: 'host' }) })
+        );
+      });
+
+      await up(db);
+
+      const row = await db('south_connectors').where('id', 'so-modbus').first();
+      const settings = JSON.parse(row.settings);
+      assert.strictEqual(settings.groupingGap, 0);
+      assert.strictEqual(settings.batchQuery, false);
+      assert.strictEqual(settings.networkTimeout, 15000);
+    });
+
+    it('does not overwrite existing modbus grouping/batch/timeout settings', async () => {
+      await seed(async () => {
+        await db('south_connectors').insert(
+          southRow({
+            id: 'so-modbus-2',
+            name: 'so-modbus-2',
+            type: 'modbus',
+            settings: JSON.stringify({ host: 'host', groupingGap: 42, batchQuery: true, networkTimeout: 5000 })
+          })
+        );
+      });
+
+      await up(db);
+
+      const row = await db('south_connectors').where('id', 'so-modbus-2').first();
+      const settings = JSON.parse(row.settings);
+      assert.strictEqual(settings.groupingGap, 42);
+      assert.strictEqual(settings.batchQuery, true);
+      assert.strictEqual(settings.networkTimeout, 5000);
     });
   });
 });
