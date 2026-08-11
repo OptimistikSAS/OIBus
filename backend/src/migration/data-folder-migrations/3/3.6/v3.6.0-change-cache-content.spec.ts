@@ -180,6 +180,20 @@ describe('Data folder migration v3.6.0 (change cache content)', () => {
     assert.strictEqual(await pathExists(filesPath), false);
   });
 
+  it('creates empty content/metadata folders for a north connector with neither files/ nor time-values/', async () => {
+    // Exercises the false branch of folderExists() for BOTH the files/ and time-values/ checks
+    // within the same refactorNorthFolder call (as opposed to other tests where at least one exists).
+    const northFolderPath = path.join(tmpRoot, 'cache', 'north-5');
+    await fs.mkdir(northFolderPath, { recursive: true });
+
+    await migration.up({} as Knex);
+
+    const contentDir = path.join(tmpRoot, 'cache', 'north-5', 'content');
+    const metadataDir = path.join(tmpRoot, 'cache', 'north-5', 'metadata');
+    assert.deepStrictEqual(await fs.readdir(contentDir), []);
+    assert.deepStrictEqual(await fs.readdir(metadataDir), []);
+  });
+
   it('down is a no-op', async () => {
     assert.strictEqual(await migration.down(), undefined);
   });

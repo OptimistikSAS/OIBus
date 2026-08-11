@@ -21,4 +21,11 @@ describe('Logs migration v3.6.0 (update-cache-metrics)', () => {
   it('down is a no-op and does not throw', async () => {
     await assert.doesNotReject(() => down());
   });
+
+  it('down resolves to undefined and can be called multiple times', async () => {
+    const result1 = await down();
+    const result2 = await down();
+    assert.strictEqual(result1, undefined);
+    assert.strictEqual(result2, undefined);
+  });
 });
