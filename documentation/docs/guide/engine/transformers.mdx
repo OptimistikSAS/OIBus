@@ -63,7 +63,8 @@ choices depend on the type of South connector chosen:
 | South connector type                                                            | Compatible standard transformers                                                           |
 | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | **OPC UA, OPC Classic, Modbus, ADS, OSIsoft PI, OIAnalytics** (PLC / historian) | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values |
-| **MQTT, REST, SFTP, FTP, Folder Scanner, SQL databases** (file / query-based)   | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
+| **MQTT, REST, SFTP, FTP, Folder Scanner, ODBC, OLEDB** (file / query-based)     | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
+| **MySQL, PostgreSQL, MSSQL, Oracle, SQLite** (query-based, row-list output)     | CSV (from Record list)                                                                     |
 | **OIBus API**                                                                   | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
 | **OIAnalytics Setpoint**                                                        | MQTT payloads, Modbus values, OPCUA values                                                 |
 
@@ -312,7 +313,7 @@ Mapping: `plant/temp1 → ns=1;s=Temperature`, `plant/valve1 → ns=1;s=Valve1`
 ### For file and query-based South connectors
 
 These transformers process files or JSON payloads produced by connectors such as REST, SFTP, FTP, Folder Scanner,
-and SQL databases (MySQL, PostgreSQL, MSSQL, SQLite…), as well as data injected via the **OIBus API**.
+ODBC, and OLEDB, as well as data injected via the **OIBus API**.
 
 ---
 
@@ -498,7 +499,7 @@ one row per nested match, so a single message holding several readings splits in
 
 ---
 
-#### OIAnalytics (from JSON) {#oianalytics-from-json}
+#### OIAnalytics (from JSON)
 
 Extracts point ID, value, and timestamp from an arbitrary JSON structure via JSONPath expressions and produces a
 standard OIBus time-values array — the same shape produced by PLC/historian South connectors. A **row iterator
@@ -561,6 +562,72 @@ handles a single-metric message and a multi-metric message alike.
   { "pointId": "PLANT.UNIT1.TANK3.TEMP", "timestamp": "2026-07-16T08:50:19.001Z", "data": { "value": 18.4 } },
   { "pointId": "PLANT.UNIT2.PUMP1.SPEED", "timestamp": "2026-07-16T08:50:20.500Z", "data": { "value": 1450 } }
 ]
+```
+
+---
+
+### For SQL database South connectors
+
+MySQL, PostgreSQL, MSSQL, Oracle, and SQLite South connectors don't serialize their query results themselves —
+each row is sent downstream exactly as the database returned it, as **record-list** content (an array of flat
+row objects). Rendering that data into any other shape, including CSV, is the transformer's job.
+
+---
+
+#### CSV (from Record list)
+
+Converts an array of rows into a CSV file. Unlike [CSV (from JSON)](#csv-from-json), there is no row-iterator
+path or per-column mapping to configure: every key present in the rows becomes a column automatically. The only
+per-column configuration needed is for columns that hold a datetime and should be re-rendered in a specific
+output format — every other column is written out as-is.
+
+##### Settings
+
+| Setting                 | Description                                                                                    |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| **Filename**            | Output filename pattern (supports `@CurrentDate`, `@QueryStartTime`, `@QueryEndTime`)          |
+| **Encoding**            | Output character encoding (`UTF_8`, `UTF_8_BOM`, `LATIN_1`, `UTF_16_LE`)                       |
+| **First row as header** | Whether to write a header row with the column names                                            |
+| **Compression**         | Gzip-compress the output file                                                                  |
+| **Delimiter**           | Column separator (`COMMA`, `SEMI_COLON`, `TAB`, etc.)                                          |
+| **Newline**             | Row separator (`CRLF`, `LF`, `CR`)                                                             |
+| **Quote character**     | Character used to quote fields (`DOUBLE_QUOTE`, `SINGLE_QUOTE`, `NONE`)                        |
+| **Escape character**    | Character used to escape a quote character inside a quoted field (`BACKSLASH`, `DOUBLE_QUOTE`) |
+| **Datetime columns**    | A list of columns to re-render as a formatted date string (see below)                          |
+
+Each entry in **Datetime columns** describes how to parse one column's raw value and how to render it in the
+output CSV:
+
+| Setting                              | Description                                                                                     |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| **Column name**                      | Name of the column to reformat, matching a key in the source rows                               |
+| **Input type**                       | How to parse the raw value (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`, `date-time`) |
+| **Input timezone / format / locale** | Used to parse the raw value when its input type is `string`                                     |
+| **Output date time format**          | Format pattern for the rendered value in the CSV                                                |
+| **Output timezone**                  | Timezone used to render the value in the CSV                                                    |
+
+Columns not listed here are written to the CSV unchanged, whatever their type (string, number, boolean...).
+
+##### Example
+
+**Input** (record-list content from a MySQL item)
+
+```json
+[
+  { "deviceId": "sensor-1", "readingTime": "2024-01-15T10:00:00.000Z", "value": 23.5 },
+  { "deviceId": "sensor-1", "readingTime": "2024-01-15T10:01:00.000Z", "value": 23.8 }
+]
+```
+
+With a single datetime column configured (`readingTime`, input type `iso-string`, output format
+`yyyy-MM-dd HH:mm:ss`, output timezone `Europe/Paris`):
+
+**Output CSV**
+
+```csv
+deviceId,readingTime,value
+sensor-1,2024-01-15 11:00:00,23.5
+sensor-1,2024-01-15 11:01:00,23.8
 ```
 
 ---
