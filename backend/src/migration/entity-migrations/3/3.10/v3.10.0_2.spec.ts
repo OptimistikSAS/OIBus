@@ -276,18 +276,39 @@ describe('Entity migration v3.10.0_2', () => {
       newline: 'LF',
       quoteChar: 'NONE',
       escapeChar: 'DOUBLE_QUOTE',
-      datetimeFields: [
+      nullValue: '',
+      fields: [
         {
           fieldName: 'other',
-          input: { type: 'unix-epoch-ms', timezone: null, format: null, locale: null },
-          outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-          outputTimezone: 'Europe/Paris'
+          columnName: null,
+          dataType: 'datetime',
+          fieldProcess: null,
+          datetimeSettings: {
+            inputType: 'unix-epoch-ms',
+            inputTimezone: null,
+            inputFormat: null,
+            inputLocale: null,
+            outputType: 'string',
+            outputTimezone: 'Europe/Paris',
+            outputFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputLocale: null
+          }
         },
         {
           fieldName: 'timestamp',
-          input: { type: 'string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' },
-          outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-          outputTimezone: 'Europe/Paris'
+          columnName: null,
+          dataType: 'datetime',
+          fieldProcess: null,
+          datetimeSettings: {
+            inputType: 'string',
+            inputTimezone: 'Europe/Paris',
+            inputFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            inputLocale: 'en-US',
+            outputType: 'string',
+            outputTimezone: 'Europe/Paris',
+            outputFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputLocale: null
+          }
         }
       ]
     });
