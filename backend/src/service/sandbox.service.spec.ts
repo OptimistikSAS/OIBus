@@ -7,6 +7,12 @@ import { mockModule, reloadModule } from '../tests/utils/test-utils';
 import type { CustomTransformer } from '../model/transformer.model';
 import type { CacheMetadataSource } from '../../shared/model/engine.model';
 import type SandboxServiceClass from './sandbox.service';
+// Real, unmocked singleton export - every other suite in this file only ever exercises `SandboxService`
+// (the class) via a reloaded module with `fs`/`./utils` mocked, so the real `sandboxService` singleton
+// created at module-load time (with the real luxon/jsonpath-plus/papaparse files) is otherwise never
+// actually instantiated/used by any test in the codebase (production code always imports it through a
+// module that gets mocked in its own spec).
+import { sandboxService as realSandboxService } from './sandbox.service';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -715,5 +721,32 @@ describe('SandboxService - failing createContext', () => {
       async () => sandboxService.execute('', { source: 'test' }, 'null-ctx.txt', transformer, {}, logger),
       /\[RUNTIME_ERROR\] Custom code execution failed: createContext failed/
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite: the real exported singleton, built at module-load time with the real
+// luxon / jsonpath-plus / papaparse library files (no mocking at all).
+// ---------------------------------------------------------------------------
+describe('SandboxService - real exported singleton', () => {
+  const logger = new PinoLogger();
+
+  it('should execute a transform with the real, production sandboxService singleton', async () => {
+    const transformer = {
+      language: 'javascript',
+      customCode: `
+        const { DateTime } = require('luxon');
+        function transform(content) {
+          return { data: { valid: DateTime.fromISO(content).isValid }, filename: 'real.json' };
+        }
+      `,
+      timeout: 5000
+    } as CustomTransformer;
+
+    const result = await realSandboxService.execute('2026-01-01', { source: 'test' }, 'real.txt', transformer, {}, logger);
+
+    const parsed = JSON.parse(result.output as string);
+    assert.strictEqual(parsed.valid, true);
+    assert.strictEqual(result.metadata.contentFile, 'real.json');
   });
 });

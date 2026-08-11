@@ -244,4 +244,46 @@ describe('User Service', () => {
     const result = service.getUserInfo('some-id');
     assert.deepStrictEqual(result, { id: 'some-id', friendlyName: 'noname (noname)' });
   });
+
+  it('should convert to DTO a user with only a firstName set', () => {
+    const user = { ...testData.users.list[1], login: 'onlyfirst', firstName: 'OnlyFirst', lastName: null };
+    assert.deepStrictEqual(
+      toUserDTO(user, id => ({ id, friendlyName: 'test' })),
+      {
+        id: user.id,
+        login: user.login,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        language: user.language,
+        timezone: user.timezone,
+        friendlyName: 'OnlyFirst (onlyfirst)',
+        createdBy: { id: user.createdBy, friendlyName: 'test' },
+        updatedBy: { id: user.updatedBy, friendlyName: 'test' },
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
+    );
+  });
+
+  it('should convert to DTO a user with only a lastName set', () => {
+    const user = { ...testData.users.list[1], login: 'onlylast', firstName: null, lastName: 'OnlyLast' };
+    assert.deepStrictEqual(
+      toUserDTO(user, id => ({ id, friendlyName: 'test' })),
+      {
+        id: user.id,
+        login: user.login,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        language: user.language,
+        timezone: user.timezone,
+        friendlyName: 'OnlyLast (onlylast)',
+        createdBy: { id: user.createdBy, friendlyName: 'test' },
+        updatedBy: { id: user.updatedBy, friendlyName: 'test' },
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
+    );
+  });
 });
