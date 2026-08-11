@@ -762,6 +762,23 @@ describe('SouthFTP', () => {
       );
     });
 
+    it('should seed filesPreserved from the cached item value when it is an array', async () => {
+      const cachedFilesPreserved = [{ filename: 'previous.csv', modifiedTime: 123 }];
+      (southCacheRepository as unknown as SouthCacheRepositoryMock).getItemLastValue.mock.mockImplementation(() => ({
+        itemId: configuration.items[0].id,
+        groupId: null,
+        queryTime: null,
+        trackedInstant: null,
+        value: cachedFilesPreserved
+      }));
+
+      mockFtpClient.list.mock.mockImplementation(async () => []);
+
+      const result = await south.directQuery([configuration.items[0]]);
+
+      assert.deepStrictEqual(result, cachedFilesPreserved);
+    });
+
     it('should respect max files limit and skip remaining files', async () => {
       const configWithLimit = {
         ...configuration,
@@ -946,6 +963,22 @@ describe('SouthFTP', () => {
 
       const result = south.checkCondition(item, fileInfo, []);
       assert.strictEqual(result, true);
+    });
+
+    it('should fall back to the current timestamp when modifiedAt is undefined', () => {
+      const fileInfoWithoutDate: FileInfo = {
+        ...createMockFileInfo('test.csv', new Date()),
+        modifiedAt: undefined
+      } as unknown as FileInfo;
+      const item = configuration.items[0]; // regex: '.*.csv', no ignoreModifiedDate
+      const now = DateTime.now().toMillis();
+
+      // checkAge itself is mocked (always returns true) - assert on the mtimeMs it was called with
+      // instead, since that's the actual behavior under test here: falling back to now + minAge.
+      south.checkCondition(item, fileInfoWithoutDate, []);
+
+      const lastCall = utilsExports.checkAge.mock.calls.at(-1)!;
+      assert.strictEqual(lastCall.arguments[2], now + item.settings.minAge);
     });
 
     it('should handle regex not matching', () => {

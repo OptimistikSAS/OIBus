@@ -1,6 +1,9 @@
-import { describe, it, beforeEach, afterEach, mock, before } from 'node:test';
+import { describe, it, beforeEach, afterEach, mock, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import IpFilterServiceMock from '../tests/__mocks__/service/ip-filter-service.mock';
 import OIBusServiceMock from '../tests/__mocks__/service/oibus-service.mock';
 import ScanModeServiceMock from '../tests/__mocks__/service/scan-mode-service.mock';
@@ -31,12 +34,23 @@ import type HistoryQueryService from '../service/history-query.service';
 import type HomeMetricsService from '../service/metrics/home-metrics.service';
 import type EncryptionService from '../service/encryption.service';
 import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model/types';
+import os from 'node:os';
 
 const nodeRequire = createRequire(import.meta.url);
 // ValidateError is resolved after fixTsoaModuleResolution() in the before() hook.
 let ValidateError: typeof import('tsoa').ValidateError;
 
 const TEST_PORT = 19998;
+
+// The Angular catch-all in web-server.ts's init() serves this file for any non-API/non-static
+// path. It doesn't exist in a test environment (the frontend isn't built), so res.sendFile()
+// always takes its ENOENT error path - whose exact timing/outcome (200 vs 404 vs 500, or worse,
+// an indefinitely-pending response under heavy coverage instrumentation) is not reliable. Creating
+// a real placeholder file here makes every test that (deliberately or incidentally) falls through
+// to this path deterministic and fast instead.
+const frontendIndexDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../../frontend/browser');
+const frontendIndexPath = path.join(frontendIndexDir, 'index.html');
+let createdFrontendIndex = false;
 
 interface HomeMetricsMockType {
   getHomeMetrics: ReturnType<typeof mock.fn>;
@@ -67,6 +81,12 @@ describe('WebServer', () => {
   const loggerMock = new PinoLogger();
 
   before(() => {
+    if (!fs.existsSync(frontendIndexPath)) {
+      fs.mkdirSync(frontendIndexDir, { recursive: true });
+      fs.writeFileSync(frontendIndexPath, '<!doctype html><html><body>test placeholder</body></html>');
+      createdFrontendIndex = true;
+    }
+
     fixTsoaModuleResolution(nodeRequire);
     ValidateError = (nodeRequire('tsoa') as { ValidateError: typeof import('tsoa').ValidateError }).ValidateError;
 
@@ -84,14 +104,19 @@ describe('WebServer', () => {
     WebServer = reloadModule<{ default: typeof WebServerClass }>(nodeRequire, './web-server').default;
   });
 
-  beforeEach(() => {
-    ipFilterService = new IpFilterServiceMock();
-    oIBusService = new OIBusServiceMock();
-    encryptionMock = buildEncryptionMock();
-    homeMetricsMock = buildHomeMetricsMock();
+  after(() => {
+    if (createdFrontendIndex) {
+      fs.rmSync(frontendIndexDir, { recursive: true, force: true });
+    }
+  });
 
-    webServer = new WebServer(
-      TEST_PORT,
+  // Builds an independent WebServer bound to its own port, for tests that need a real listen
+  // cycle but must not share TEST_PORT with the shared `webServer`/other such tests - reusing the
+  // same port across many sequential real listen/close cycles in one process is a known source of
+  // bind races once close() is slowed down (e.g. under coverage instrumentation).
+  function buildWebServer(port: number): WebServerClass {
+    return new WebServer(
+      port,
       encryptionMock as unknown as EncryptionService,
       new ScanModeServiceMock() as unknown as ScanModeService,
       ipFilterService as unknown as IPFilterService,
@@ -109,6 +134,15 @@ describe('WebServer', () => {
       false,
       loggerMock
     );
+  }
+
+  beforeEach(() => {
+    ipFilterService = new IpFilterServiceMock();
+    oIBusService = new OIBusServiceMock();
+    encryptionMock = buildEncryptionMock();
+    homeMetricsMock = buildHomeMetricsMock();
+
+    webServer = buildWebServer(TEST_PORT);
   });
 
   afterEach(async () => {
@@ -187,7 +221,11 @@ describe('WebServer', () => {
     process.env.NODE_ENV = 'development';
     try {
       await webServer.init();
-      const res = await fetch(`http://localhost:${TEST_PORT}/health`, {
+      // Use a static-looking path (handled by the fast, filesystem-free handle404 middleware)
+      // rather than an arbitrary path that falls through to the Angular catch-all's res.sendFile()
+      // - that call targets a frontend build that doesn't exist in the test environment, and its
+      // error-callback timing is not reliable under heavy coverage instrumentation.
+      const res = await fetch(`http://localhost:${TEST_PORT}/assets/does-not-exist.png`, {
         headers: { Origin: 'http://localhost:4200' }
       });
       assert.ok(res.headers.has('access-control-allow-origin') || res.status === 200);
@@ -293,5 +331,88 @@ describe('WebServer', () => {
       // Give it a tick to flush now, while console.error is still mocked.
       await new Promise(resolve => setImmediate(resolve));
     });
+  });
+
+  it('handle404: unmatched static-file-looking path falls through to 404 JSON handler', async () => {
+    // Own port + own server instance so this doesn't add another real listen/close cycle on the
+    // shared TEST_PORT (see buildWebServer's comment).
+    const localPort = TEST_PORT + 20;
+    const localServer = buildWebServer(localPort);
+    try {
+      await localServer.init();
+      const res = await fetch(`http://localhost:${localPort}/assets/does-not-exist.png`);
+      assert.equal(res.status, 404);
+      const body = (await res.json()) as { error: string; message: string };
+      assert.equal(body.error, 'Not Found');
+      assert.match(body.message, /Cannot GET \/assets\/does-not-exist\.png/);
+    } finally {
+      await localServer.stop();
+    }
+  });
+
+  it('setupRoutes: multer diskStorage destination/filename callbacks', async () => {
+    const localPort = TEST_PORT + 21;
+    const localServer = buildWebServer(localPort);
+    const multerLib = nodeRequire('multer') as { diskStorage: (opts: unknown) => unknown };
+    let capturedOptions:
+      | {
+          destination: (req: unknown, file: unknown, cb: (err: unknown, dest: string) => void) => void;
+          filename: (req: unknown, file: { originalname: string }, cb: (err: unknown, name: string) => void) => void;
+        }
+      | undefined;
+    mock.method(multerLib, 'diskStorage', (opts: typeof capturedOptions) => {
+      capturedOptions = opts;
+      return { _handleFile: mock.fn(), _removeFile: mock.fn() };
+    });
+
+    try {
+      await localServer.init();
+
+      const destCb = mock.fn();
+      capturedOptions!.destination({}, {}, destCb);
+      assert.deepStrictEqual(destCb.mock.calls[0]?.arguments, [null, os.tmpdir()]);
+
+      const fileCb = mock.fn();
+      capturedOptions!.filename({}, { originalname: 'test.txt' }, fileCb);
+      assert.deepStrictEqual(fileCb.mock.calls[0]?.arguments, [null, 'test.txt']);
+    } finally {
+      await localServer.stop();
+    }
+  });
+
+  it('start(): logs an error when the underlying listen callback reports one', () => {
+    const fakeServer = { closeAllConnections: mock.fn(), close: mock.fn((cb: () => void) => cb()) };
+    let listenCallback: ((error?: Error) => void) | undefined;
+    (webServer as unknown as { app: { listen: (port: number, cb: (error?: Error) => void) => unknown } }).app = {
+      listen: (_port: number, cb: (error?: Error) => void) => {
+        listenCallback = cb;
+        return fakeServer;
+      }
+    };
+
+    webServer.start();
+    listenCallback!(new Error('listen failed'));
+
+    assert.deepStrictEqual(loggerMock.error.mock.calls.at(-1)?.arguments, [
+      `Could not start server on port ${webServer.port}: listen failed`
+    ]);
+  });
+
+  it('stop(): logs an error if closing the server throws', async () => {
+    // Deliberately skip webServer.init() - it would create a real listening socket, and
+    // immediately replacing `this.webServer` below would orphan that socket forever (nothing
+    // would ever be able to close it). Only `this.webServer` needs to be truthy for stop() to
+    // proceed into its try/catch.
+    const closeError = new Error('close failed');
+    (webServer as unknown as { webServer: { closeAllConnections: () => void; close: () => void } }).webServer = {
+      closeAllConnections: () => {
+        throw closeError;
+      },
+      close: mock.fn()
+    };
+
+    await webServer.stop();
+
+    assert.ok(loggerMock.error.mock.calls.some(call => call.arguments[0] === closeError));
   });
 });

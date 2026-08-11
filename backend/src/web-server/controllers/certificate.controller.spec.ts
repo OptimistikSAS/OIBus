@@ -244,6 +244,30 @@ describe('CertificateController', () => {
     assert.strictEqual(unlinkMock.mock.calls.length, 2);
   });
 
+  it('should swallow unlink errors for all uploaded files during cleanup', async () => {
+    const certificateFile = { path: 'certPath' } as Express.Multer.File;
+    const privateKeyFile = { path: 'keyPath' } as Express.Multer.File;
+    const certificateChainFile = { path: 'chainPath' } as Express.Multer.File;
+    certificateService.import = mock.fn(async () => testData.certificates.list[0]);
+    mock.method(fs, 'readFile', async (path: string) => Buffer.from(`content-of-${path}`));
+    const unlinkMock = mock.method(fs, 'unlink', async () => {
+      throw new Error('unlink failed');
+    });
+
+    const result = await controller.import(
+      'my cert',
+      'my description',
+      'passphrase',
+      certificateFile,
+      privateKeyFile,
+      certificateChainFile,
+      mockRequest as CustomExpressRequest
+    );
+
+    assert.strictEqual(unlinkMock.mock.calls.length, 3);
+    assert.deepStrictEqual(result, testData.certificates.list[0]);
+  });
+
   it('should export a certificate', () => {
     certificateService.findById = mock.fn(() => ({ ...testData.certificates.list[0], name: 'my certificate' }));
     certificateService.exportCertificate = mock.fn(() => ({
