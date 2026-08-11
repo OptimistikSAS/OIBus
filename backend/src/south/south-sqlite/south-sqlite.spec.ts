@@ -382,6 +382,67 @@ describe('SouthSQLite test connection', () => {
     });
   });
 
+  it('Database is reachable but version query throws', async () => {
+    const tableCountAll = mock.fn(() => [{ table_count: 5 }]);
+    let prepareCallCount = 0;
+    mockDatabase.prepare = mock.fn(() => {
+      prepareCallCount++;
+      if (prepareCallCount === 1) return { all: tableCountAll };
+      throw new Error('version query error');
+    });
+    mock.method(
+      fs,
+      'access',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
+      fs,
+      'stat',
+      mock.fn(async () => ({ size: 2048 }))
+    );
+
+    const testResult = await south.testConnection();
+
+    assert.deepStrictEqual(testResult, {
+      items: [
+        { key: 'Tables', value: '5' },
+        { key: 'File Size', value: '2.0 KB' }
+      ]
+    });
+  });
+
+  it('Database is reachable but file stat throws', async () => {
+    const tableCountAll = mock.fn(() => [{ table_count: 5 }]);
+    const versionAll = mock.fn(() => [{ version: '3.39.5' }]);
+    let prepareCallCount = 0;
+    mockDatabase.prepare = mock.fn(() => {
+      prepareCallCount++;
+      if (prepareCallCount === 1) return { all: tableCountAll };
+      return { all: versionAll };
+    });
+    mock.method(
+      fs,
+      'access',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
+      fs,
+      'stat',
+      mock.fn(async () => {
+        throw new Error('stat error');
+      })
+    );
+
+    const testResult = await south.testConnection();
+
+    assert.deepStrictEqual(testResult, {
+      items: [
+        { key: 'SQLite Version', value: '3.39.5' },
+        { key: 'Tables', value: '5' }
+      ]
+    });
+  });
+
   it('Database file does not exist', async () => {
     const errorMessage = 'File does not exist';
     mock.method(

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { Database } from 'better-sqlite3';
 import { emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
-import ScanModeRepository, { scanModeAliasedColumns, scanModeColumns, toScanModeFromPrefixedRow } from './scan-mode.repository';
+import ScanModeRepository, { scanModeAliasedColumns, scanModeColumns, toScanMode, toScanModeFromPrefixedRow } from './scan-mode.repository';
 import { ActivationWindow, ScanModeInterval } from '../../../shared/model/scan-mode.model';
 
 const TEST_DB_PATH = 'src/tests/test-config-scan-mode.db';
@@ -226,6 +226,31 @@ describe('scan-mode column helpers', () => {
     };
 
     const scanMode = toScanModeFromPrefixedRow(row, 'sm_');
+    assert.strictEqual(scanMode.type, 'cron');
+    assert.strictEqual(scanMode.interval, null);
+    assert.strictEqual(scanMode.activationWindow, null);
+  });
+
+  it('should default cron to an empty string when the row has no cron column', () => {
+    const scanMode = toScanMode({
+      id: 'scanModeId1',
+      name: 'scanMode1',
+      description: 'my first scanMode',
+      type: 'cron',
+      cron: null,
+      interval: null,
+      activation_window: null,
+      created_by: 'system',
+      updated_by: 'system',
+      created_at: '2020-01-01T00:00:00.000Z',
+      updated_at: '2020-01-01T00:00:00.000Z'
+    });
+    assert.strictEqual(scanMode.cron, '');
+  });
+
+  it('should default all prefixed columns to null when none are present on the row', () => {
+    const scanMode = toScanModeFromPrefixedRow({ unrelated_column: 'ignored' }, 'sm_');
+    assert.strictEqual(scanMode.cron, '');
     assert.strictEqual(scanMode.type, 'cron');
     assert.strictEqual(scanMode.interval, null);
     assert.strictEqual(scanMode.activationWindow, null);
