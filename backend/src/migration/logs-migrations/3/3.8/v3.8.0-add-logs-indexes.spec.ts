@@ -163,6 +163,14 @@ describe('Logs migration v3.8.0 (add-logs-indexes)', () => {
     await down(db); // must not throw even if indexes were never created
   });
 
+  it('down propagates the error when the underlying connection is unavailable', async () => {
+    // Force knex.raw() to reject synchronously-from-the-caller's-perspective by
+    // destroying the pool first. down() must not swallow the failure.
+    await db.destroy();
+
+    await assert.rejects(() => down(db));
+  });
+
   // ─── Reversibility ─────────────────────────────────────────────────────────
 
   it('is reversible: up → down → up re-creates both indexes', async () => {
