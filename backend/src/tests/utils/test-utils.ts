@@ -16,6 +16,8 @@ import UserServiceMock from '../__mocks__/service/user-service.mock';
 import { setImmediate } from 'node:timers';
 import { migrateCrypto, migrateEntities, migrateLogs, migrateMetrics, migrateSouthCache } from '../../migration/migration-service';
 import path from 'node:path';
+import { readdirSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import knex from 'knex';
 import testData from './test-data';
 import { ScanMode } from '../../model/scan-mode.model';
@@ -181,6 +183,56 @@ export function stripAuditFields<T>(obj: T): T {
     return result as T;
   }
   return obj;
+}
+
+/**
+ * Version-aware comparison of entity-migration filenames (`v3.10.0_2.ts`, `v3.0-initial-setup.ts`,
+ * ...): compares the numeric groups embedded in the name (major, minor, patch, sequence) as numbers,
+ * not as a plain string. A naive string comparison (`'v3.7.0.ts' < 'v3.10.0_2.ts'`) is false — '7' is
+ * a "bigger" character than '1' — which silently drops every 3.6+ migration from an ordered/filtered
+ * list built this way.
+ */
+function entityMigrationVersionKey(filename: string): Array<number> {
+  return (filename.match(/\d+/g) ?? []).map(Number);
+}
+function compareEntityMigrationVersions(a: string, b: string): number {
+  const aKey = entityMigrationVersionKey(a);
+  const bKey = entityMigrationVersionKey(b);
+  for (let i = 0; i < Math.max(aKey.length, bKey.length); i++) {
+    const diff = (aKey[i] ?? 0) - (bKey[i] ?? 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+/**
+ * Builds the schema as it exists just before `beforeFilename` (e.g. `'v3.10.0_2'`, extension
+ * optional) by running every entity migration whose version sorts strictly earlier, in order. Used
+ * by an entity migration's own spec file to set up the "pre-migration" state its `up()` expects,
+ * without hand-maintaining a parallel schema-creation script that drifts from the real migrations.
+ */
+export async function buildPreMigrationSchema(db: knex.Knex, beforeFilename: string): Promise<void> {
+  const entityRoot = path.resolve(__dirname, '..', '..', 'migration', 'entity-migrations', '3');
+  const collect = (base: string): Array<{ file: string; full: string }> => {
+    const out: Array<{ file: string; full: string }> = [];
+    for (const entry of readdirSync(base, { withFileTypes: true })) {
+      const full = path.join(base, entry.name);
+      if (entry.isDirectory()) {
+        out.push(...collect(full));
+      } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.spec.ts')) {
+        out.push({ file: entry.name, full });
+      }
+    }
+    return out;
+  };
+  const priorFiles = collect(entityRoot)
+    .filter(f => compareEntityMigrationVersions(f.file, beforeFilename) < 0)
+    .sort((a, b) => compareEntityMigrationVersions(a.file, b.file));
+
+  for (const { full } of priorFiles) {
+    const migration = (await import(pathToFileURL(full).href)) as { up: (k: knex.Knex) => Promise<void> };
+    await migration.up(db);
+  }
 }
 
 export const initDatabase = async (database: 'config' | 'crypto' | 'cache' | 'logs' | 'metrics', populate = true, dbPath?: string) => {
