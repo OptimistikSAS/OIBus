@@ -23,7 +23,6 @@ import TypedEventEmitter from '../service/typed-event-emitter';
 import type { ILogger } from '../model/logger.model';
 import { loggerService } from '../service/logger/logger.service';
 import { Interval } from '../../shared/model/types';
-import { ScanMode } from '../model/scan-mode.model';
 
 const FINISH_INTERVAL = 5000;
 
