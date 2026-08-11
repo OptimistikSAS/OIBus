@@ -91,6 +91,27 @@ describe('utils-certificate', () => {
     it('throws an OIBusValidationError when the certificate cannot be parsed', () => {
       assert.throws(() => readCertificate('not a certificate'), OIBusValidationError);
     });
+
+    it('throws an OIBusValidationError when the certificate public key is not RSA', () => {
+      const fakeCert = {
+        publicKey: { notN: true, notE: true },
+        validity: { notAfter: new Date() }
+      } as unknown as forge.pki.Certificate;
+      const original = forge.pki.certificateFromPem;
+      forge.pki.certificateFromPem = () => fakeCert;
+      try {
+        assert.throws(
+          () => readCertificate(certPem),
+          (error: unknown) => {
+            assert.ok(error instanceof OIBusValidationError);
+            assert.strictEqual((error as Error).message, 'Only RSA certificates are supported');
+            return true;
+          }
+        );
+      } finally {
+        forge.pki.certificateFromPem = original;
+      }
+    });
   });
 
   describe('privateKeyContentToPem', () => {
@@ -146,6 +167,28 @@ describe('utils-certificate', () => {
       const result = privateKeyContentToPem(derBuffer, null);
 
       assert.strictEqual(forge.pki.privateKeyToPem(forge.pki.privateKeyFromPem(result)), privateKeyPkcs1Pem);
+    });
+
+    it('throws an OIBusValidationError when decrypting the legacy DEK-Info key throws instead of returning null', () => {
+      const legacyPem = forge.pki.encryptRsaPrivateKey(keys.privateKey, 'legacy-pass');
+      const original = forge.pki.decryptRsaPrivateKey;
+      forge.pki.decryptRsaPrivateKey = () => {
+        throw new Error('boom');
+      };
+      try {
+        assert.throws(() => privateKeyContentToPem(Buffer.from(legacyPem, 'utf8'), 'wrong-pass'), OIBusValidationError);
+      } finally {
+        forge.pki.decryptRsaPrivateKey = original;
+      }
+    });
+
+    it('throws an OIBusValidationError for an unencrypted PEM block that is not a valid private key', () => {
+      const bogusPem = '-----BEGIN RSA PRIVATE KEY-----\nbm90IGEga2V5\n-----END RSA PRIVATE KEY-----';
+      assert.throws(() => privateKeyContentToPem(Buffer.from(bogusPem, 'utf8'), null), OIBusValidationError);
+    });
+
+    it('throws an OIBusValidationError for garbage DER content that is not a valid private key', () => {
+      assert.throws(() => privateKeyContentToPem(Buffer.from([1, 2, 3, 4, 5]), null), OIBusValidationError);
     });
   });
 

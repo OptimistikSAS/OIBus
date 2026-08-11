@@ -497,6 +497,42 @@ describe('CacheService', () => {
     await assert.rejects(service.getFileFromCache('error', path.join('..', 'test')));
   });
 
+  it('should properly add cache content from a stream, computing size via the counting transform', async () => {
+    const { Writable, Readable } = await import('node:stream');
+    const fsSync = nodeRequire('node:fs');
+    const written: Array<Buffer> = [];
+    const writeStream = new Writable({
+      write(chunk: Buffer, _enc, cb) {
+        written.push(chunk);
+        cb();
+      }
+    });
+    mock.method(
+      fsSync,
+      'createWriteStream',
+      mock.fn(() => writeStream)
+    );
+    writeFileMock.mock.mockImplementation(async () => undefined);
+    generateRandomIdMock.mock.mockImplementation(() => 'random-stream');
+    const emitEventMock = mock.method(service.cacheSizeEventEmitter, 'emit', mock.fn());
+
+    const input = Readable.from([Buffer.from('hello '), Buffer.from('world')]);
+
+    await service.addCacheContent(input, { contentType: 'any' });
+
+    const expectedSize = Buffer.from('hello world').length;
+    assert.strictEqual(Buffer.concat(written).length, expectedSize);
+    const contentSizeCall = emitEventMock.mock.calls.find(c => c.arguments[0] === 'cache-content-size');
+    assert.ok(contentSizeCall, 'cache-content-size must be emitted when content is cached from a stream');
+    assert.strictEqual(contentSizeCall!.arguments[1], expectedSize);
+  });
+
+  it('should return a snapshot copy of the current cache content sizes', () => {
+    const sizes = service.getCacheContentSizes();
+    assert.deepStrictEqual(sizes, priv()['cacheSize']);
+    assert.notStrictEqual(sizes, priv()['cacheSize']);
+  });
+
   it('should properly add cache content and log state', async () => {
     const output = Buffer.from('some content');
     writeFileMock.mock.mockImplementation(async () => undefined);
