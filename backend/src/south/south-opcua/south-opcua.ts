@@ -425,7 +425,10 @@ export default class SouthOPCUA
       return references.map(reference => ({
         id: reference.nodeId.toString(),
         name: reference.displayName?.text ?? reference.browseName?.toString() ?? reference.nodeId.toString(),
-        type: NodeClass[reference.nodeClass] ?? String(reference.nodeClass),
+        metadata: {
+          nodeId: reference.nodeId.toString(),
+          type: NodeClass[reference.nodeClass] ?? String(reference.nodeClass)
+        },
         hasChildren: reference.nodeClass === NodeClass.Object || reference.nodeClass === NodeClass.Variable
       }));
     } catch (error) {
