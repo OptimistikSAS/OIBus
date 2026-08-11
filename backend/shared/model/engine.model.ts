@@ -7,7 +7,7 @@ import { HistoryQueryItemEntity } from '../../src/model/histor-query.model';
 /**
  * List of possible OIBus data types.
  */
-export const OIBUS_DATA_TYPES = ['any', 'time-values', 'setpoint'] as const;
+export const OIBUS_DATA_TYPES = ['any', 'time-values', 'setpoint', 'record-list'] as const;
 /**
  * Type representing an OIBus data type.
  * @example 'time-values'
@@ -1928,9 +1928,32 @@ export interface OIBusAnyContent extends BaseOIBusContent {
 }
 
 /**
+ * A single row of data, as returned by a query-based source (e.g. a SQL database). Keys are
+ * column names; values are whatever the source returned, untouched (no datetime parsing/formatting
+ * is applied here — that is the responsibility of the north-side transformer, e.g. record-list-to-csv).
+ */
+export type OIBusRecord = Record<string, string | number | boolean | null>;
+
+/**
+ * Record-list content: a list of flat, arbitrarily-shaped rows (e.g. the result of a SQL query).
+ */
+export interface OIBusRecordListContent extends BaseOIBusContent {
+  /**
+   * The type of content.
+   * @example "record-list"
+   */
+  type: 'record-list';
+
+  /**
+   * The array of rows.
+   */
+  content: Array<OIBusRecord>;
+}
+
+/**
  * Type representing OIBus content.
  */
-export type OIBusContent = OIBusTimeValueContent | OIBusFileContent | OIBusAnyContent | OIBusSetpointContent;
+export type OIBusContent = OIBusTimeValueContent | OIBusFileContent | OIBusAnyContent | OIBusSetpointContent | OIBusRecordListContent;
 
 /**
  * Metadata for cached content.
