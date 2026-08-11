@@ -1332,7 +1332,8 @@
 				"enum": [
 					"any",
 					"time-values",
-					"setpoint"
+					"setpoint",
+					"record-list"
 				],
 				"description": "Type representing an OIBus data type."
 			},
@@ -1678,6 +1679,56 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"Record_string.string-or-number-or-boolean-or-null_": {
+				"properties": {},
+				"additionalProperties": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "number",
+							"format": "double"
+						},
+						{
+							"type": "boolean"
+						}
+					]
+				},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"OIBusRecord": {
+				"$ref": "#/components/schemas/Record_string.string-or-number-or-boolean-or-null_",
+				"description": "A single row of data, as returned by a query-based source (e.g. a SQL database). Keys are\ncolumn names; values are whatever the source returned, untouched (no datetime parsing/formatting\nis applied here — that is the responsibility of the north-side transformer, e.g. record-list-to-csv)."
+			},
+			"OIBusRecordListContent": {
+				"description": "Record-list content: a list of flat, arbitrarily-shaped rows (e.g. the result of a SQL query).",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"record-list"
+						],
+						"nullable": false,
+						"description": "The type of content.",
+						"example": "record-list"
+					},
+					"content": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusRecord"
+						},
+						"type": "array",
+						"description": "The array of rows."
+					}
+				},
+				"required": [
+					"type",
+					"content"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"OIBusContent": {
 				"anyOf": [
 					{
@@ -1691,6 +1742,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/OIBusSetpointContent"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusRecordListContent"
 					}
 				],
 				"description": "Type representing OIBus content."
@@ -4901,7 +4955,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthMSSQLItemSettingsDateTimeFieldsType": {
+			"SouthMSSQLItemSettingsTrackingInstantDateTimeInputType": {
 				"type": "string",
 				"enum": [
 					"string",
@@ -4915,16 +4969,10 @@
 					"unix-epoch-ms"
 				]
 			},
-			"SouthMSSQLItemSettingsDateTimeFields": {
+			"SouthMSSQLItemSettingsTrackingInstantDateTimeInput": {
 				"properties": {
-					"fieldName": {
-						"type": "string"
-					},
-					"useAsReference": {
-						"type": "boolean"
-					},
 					"type": {
-						"$ref": "#/components/schemas/SouthMSSQLItemSettingsDateTimeFieldsType"
+						"$ref": "#/components/schemas/SouthMSSQLItemSettingsTrackingInstantDateTimeInputType"
 					},
 					"timezone": {
 						"$ref": "#/components/schemas/Timezone"
@@ -4937,61 +4985,30 @@
 					}
 				},
 				"required": [
-					"fieldName",
-					"useAsReference",
 					"type"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthMSSQLItemSettingsSerializationType": {
-				"type": "string",
-				"enum": [
-					"csv"
-				],
-				"nullable": false
-			},
-			"SouthMSSQLItemSettingsSerializationDelimiter": {
-				"type": "string",
-				"enum": [
-					"DOT",
-					"SEMI_COLON",
-					"COLON",
-					"COMMA",
-					"NON_BREAKING_SPACE",
-					"SLASH",
-					"TAB",
-					"PIPE"
-				]
-			},
-			"SouthMSSQLItemSettingsSerialization": {
+			"SouthMSSQLItemSettingsTrackingInstant": {
 				"properties": {
-					"type": {
-						"$ref": "#/components/schemas/SouthMSSQLItemSettingsSerializationType"
-					},
-					"filename": {
-						"type": "string"
-					},
-					"delimiter": {
-						"$ref": "#/components/schemas/SouthMSSQLItemSettingsSerializationDelimiter"
-					},
-					"compression": {
+					"trackInstant": {
 						"type": "boolean"
 					},
-					"outputTimestampFormat": {
+					"fieldName": {
 						"type": "string"
 					},
-					"outputTimezone": {
-						"$ref": "#/components/schemas/Timezone"
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthMSSQLItemSettingsTrackingInstantDateTimeInput"
+							}
+						],
+						"nullable": true
 					}
 				},
 				"required": [
-					"type",
-					"filename",
-					"delimiter",
-					"compression",
-					"outputTimestampFormat",
-					"outputTimezone"
+					"trackInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5001,21 +5018,18 @@
 					"query": {
 						"type": "string"
 					},
-					"dateTimeFields": {
-						"items": {
-							"$ref": "#/components/schemas/SouthMSSQLItemSettingsDateTimeFields"
-						},
-						"type": "array",
+					"trackingInstant": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthMSSQLItemSettingsTrackingInstant"
+							}
+						],
 						"nullable": true
-					},
-					"serialization": {
-						"$ref": "#/components/schemas/SouthMSSQLItemSettingsSerialization"
 					}
 				},
 				"required": [
 					"query",
-					"dateTimeFields",
-					"serialization"
+					"trackingInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5405,7 +5419,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthMySQLItemSettingsDateTimeFieldsType": {
+			"SouthMySQLItemSettingsTrackingInstantDateTimeInputType": {
 				"type": "string",
 				"enum": [
 					"string",
@@ -5415,16 +5429,10 @@
 					"unix-epoch-ms"
 				]
 			},
-			"SouthMySQLItemSettingsDateTimeFields": {
+			"SouthMySQLItemSettingsTrackingInstantDateTimeInput": {
 				"properties": {
-					"fieldName": {
-						"type": "string"
-					},
-					"useAsReference": {
-						"type": "boolean"
-					},
 					"type": {
-						"$ref": "#/components/schemas/SouthMySQLItemSettingsDateTimeFieldsType"
+						"$ref": "#/components/schemas/SouthMySQLItemSettingsTrackingInstantDateTimeInputType"
 					},
 					"timezone": {
 						"$ref": "#/components/schemas/Timezone"
@@ -5437,61 +5445,30 @@
 					}
 				},
 				"required": [
-					"fieldName",
-					"useAsReference",
 					"type"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthMySQLItemSettingsSerializationType": {
-				"type": "string",
-				"enum": [
-					"csv"
-				],
-				"nullable": false
-			},
-			"SouthMySQLItemSettingsSerializationDelimiter": {
-				"type": "string",
-				"enum": [
-					"DOT",
-					"SEMI_COLON",
-					"COLON",
-					"COMMA",
-					"NON_BREAKING_SPACE",
-					"SLASH",
-					"TAB",
-					"PIPE"
-				]
-			},
-			"SouthMySQLItemSettingsSerialization": {
+			"SouthMySQLItemSettingsTrackingInstant": {
 				"properties": {
-					"type": {
-						"$ref": "#/components/schemas/SouthMySQLItemSettingsSerializationType"
-					},
-					"filename": {
-						"type": "string"
-					},
-					"delimiter": {
-						"$ref": "#/components/schemas/SouthMySQLItemSettingsSerializationDelimiter"
-					},
-					"compression": {
+					"trackInstant": {
 						"type": "boolean"
 					},
-					"outputTimestampFormat": {
+					"fieldName": {
 						"type": "string"
 					},
-					"outputTimezone": {
-						"$ref": "#/components/schemas/Timezone"
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthMySQLItemSettingsTrackingInstantDateTimeInput"
+							}
+						],
+						"nullable": true
 					}
 				},
 				"required": [
-					"type",
-					"filename",
-					"delimiter",
-					"compression",
-					"outputTimestampFormat",
-					"outputTimezone"
+					"trackInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5505,22 +5482,19 @@
 						"type": "number",
 						"format": "double"
 					},
-					"dateTimeFields": {
-						"items": {
-							"$ref": "#/components/schemas/SouthMySQLItemSettingsDateTimeFields"
-						},
-						"type": "array",
+					"trackingInstant": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthMySQLItemSettingsTrackingInstant"
+							}
+						],
 						"nullable": true
-					},
-					"serialization": {
-						"$ref": "#/components/schemas/SouthMySQLItemSettingsSerialization"
 					}
 				},
 				"required": [
 					"query",
 					"requestTimeout",
-					"dateTimeFields",
-					"serialization"
+					"trackingInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8310,7 +8284,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthOracleItemSettingsDateTimeFieldsType": {
+			"SouthOracleItemSettingsTrackingInstantDateTimeInputType": {
 				"type": "string",
 				"enum": [
 					"string",
@@ -8320,16 +8294,10 @@
 					"unix-epoch-ms"
 				]
 			},
-			"SouthOracleItemSettingsDateTimeFields": {
+			"SouthOracleItemSettingsTrackingInstantDateTimeInput": {
 				"properties": {
-					"fieldName": {
-						"type": "string"
-					},
-					"useAsReference": {
-						"type": "boolean"
-					},
 					"type": {
-						"$ref": "#/components/schemas/SouthOracleItemSettingsDateTimeFieldsType"
+						"$ref": "#/components/schemas/SouthOracleItemSettingsTrackingInstantDateTimeInputType"
 					},
 					"timezone": {
 						"$ref": "#/components/schemas/Timezone"
@@ -8342,61 +8310,30 @@
 					}
 				},
 				"required": [
-					"fieldName",
-					"useAsReference",
 					"type"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthOracleItemSettingsSerializationType": {
-				"type": "string",
-				"enum": [
-					"csv"
-				],
-				"nullable": false
-			},
-			"SouthOracleItemSettingsSerializationDelimiter": {
-				"type": "string",
-				"enum": [
-					"DOT",
-					"SEMI_COLON",
-					"COLON",
-					"COMMA",
-					"NON_BREAKING_SPACE",
-					"SLASH",
-					"TAB",
-					"PIPE"
-				]
-			},
-			"SouthOracleItemSettingsSerialization": {
+			"SouthOracleItemSettingsTrackingInstant": {
 				"properties": {
-					"type": {
-						"$ref": "#/components/schemas/SouthOracleItemSettingsSerializationType"
-					},
-					"filename": {
-						"type": "string"
-					},
-					"delimiter": {
-						"$ref": "#/components/schemas/SouthOracleItemSettingsSerializationDelimiter"
-					},
-					"compression": {
+					"trackInstant": {
 						"type": "boolean"
 					},
-					"outputTimestampFormat": {
+					"fieldName": {
 						"type": "string"
 					},
-					"outputTimezone": {
-						"$ref": "#/components/schemas/Timezone"
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthOracleItemSettingsTrackingInstantDateTimeInput"
+							}
+						],
+						"nullable": true
 					}
 				},
 				"required": [
-					"type",
-					"filename",
-					"delimiter",
-					"compression",
-					"outputTimestampFormat",
-					"outputTimezone"
+					"trackInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8410,22 +8347,19 @@
 						"type": "number",
 						"format": "double"
 					},
-					"dateTimeFields": {
-						"items": {
-							"$ref": "#/components/schemas/SouthOracleItemSettingsDateTimeFields"
-						},
-						"type": "array",
+					"trackingInstant": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthOracleItemSettingsTrackingInstant"
+							}
+						],
 						"nullable": true
-					},
-					"serialization": {
-						"$ref": "#/components/schemas/SouthOracleItemSettingsSerialization"
 					}
 				},
 				"required": [
 					"query",
 					"requestTimeout",
-					"dateTimeFields",
-					"serialization"
+					"trackingInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9177,7 +9111,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthPostgreSQLItemSettingsDateTimeFieldsType": {
+			"SouthPostgreSQLItemSettingsTrackingInstantDateTimeInputType": {
 				"type": "string",
 				"enum": [
 					"string",
@@ -9188,16 +9122,10 @@
 					"timestamptz"
 				]
 			},
-			"SouthPostgreSQLItemSettingsDateTimeFields": {
+			"SouthPostgreSQLItemSettingsTrackingInstantDateTimeInput": {
 				"properties": {
-					"fieldName": {
-						"type": "string"
-					},
-					"useAsReference": {
-						"type": "boolean"
-					},
 					"type": {
-						"$ref": "#/components/schemas/SouthPostgreSQLItemSettingsDateTimeFieldsType"
+						"$ref": "#/components/schemas/SouthPostgreSQLItemSettingsTrackingInstantDateTimeInputType"
 					},
 					"timezone": {
 						"$ref": "#/components/schemas/Timezone"
@@ -9210,61 +9138,30 @@
 					}
 				},
 				"required": [
-					"fieldName",
-					"useAsReference",
 					"type"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthPostgreSQLItemSettingsSerializationType": {
-				"type": "string",
-				"enum": [
-					"csv"
-				],
-				"nullable": false
-			},
-			"SouthPostgreSQLItemSettingsSerializationDelimiter": {
-				"type": "string",
-				"enum": [
-					"DOT",
-					"SEMI_COLON",
-					"COLON",
-					"COMMA",
-					"NON_BREAKING_SPACE",
-					"SLASH",
-					"TAB",
-					"PIPE"
-				]
-			},
-			"SouthPostgreSQLItemSettingsSerialization": {
+			"SouthPostgreSQLItemSettingsTrackingInstant": {
 				"properties": {
-					"type": {
-						"$ref": "#/components/schemas/SouthPostgreSQLItemSettingsSerializationType"
-					},
-					"filename": {
-						"type": "string"
-					},
-					"delimiter": {
-						"$ref": "#/components/schemas/SouthPostgreSQLItemSettingsSerializationDelimiter"
-					},
-					"compression": {
+					"trackInstant": {
 						"type": "boolean"
 					},
-					"outputTimestampFormat": {
+					"fieldName": {
 						"type": "string"
 					},
-					"outputTimezone": {
-						"$ref": "#/components/schemas/Timezone"
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthPostgreSQLItemSettingsTrackingInstantDateTimeInput"
+							}
+						],
+						"nullable": true
 					}
 				},
 				"required": [
-					"type",
-					"filename",
-					"delimiter",
-					"compression",
-					"outputTimestampFormat",
-					"outputTimezone"
+					"trackInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9274,21 +9171,18 @@
 					"query": {
 						"type": "string"
 					},
-					"dateTimeFields": {
-						"items": {
-							"$ref": "#/components/schemas/SouthPostgreSQLItemSettingsDateTimeFields"
-						},
-						"type": "array",
+					"trackingInstant": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthPostgreSQLItemSettingsTrackingInstant"
+							}
+						],
 						"nullable": true
-					},
-					"serialization": {
-						"$ref": "#/components/schemas/SouthPostgreSQLItemSettingsSerialization"
 					}
 				},
 				"required": [
 					"query",
-					"dateTimeFields",
-					"serialization"
+					"trackingInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -11263,7 +11157,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthSQLiteItemSettingsDateTimeFieldsType": {
+			"SouthSQLiteItemSettingsTrackingInstantDateTimeInputType": {
 				"type": "string",
 				"enum": [
 					"string",
@@ -11272,16 +11166,10 @@
 					"unix-epoch-ms"
 				]
 			},
-			"SouthSQLiteItemSettingsDateTimeFields": {
+			"SouthSQLiteItemSettingsTrackingInstantDateTimeInput": {
 				"properties": {
-					"fieldName": {
-						"type": "string"
-					},
-					"useAsReference": {
-						"type": "boolean"
-					},
 					"type": {
-						"$ref": "#/components/schemas/SouthSQLiteItemSettingsDateTimeFieldsType"
+						"$ref": "#/components/schemas/SouthSQLiteItemSettingsTrackingInstantDateTimeInputType"
 					},
 					"timezone": {
 						"$ref": "#/components/schemas/Timezone"
@@ -11294,61 +11182,30 @@
 					}
 				},
 				"required": [
-					"fieldName",
-					"useAsReference",
 					"type"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthSQLiteItemSettingsSerializationType": {
-				"type": "string",
-				"enum": [
-					"csv"
-				],
-				"nullable": false
-			},
-			"SouthSQLiteItemSettingsSerializationDelimiter": {
-				"type": "string",
-				"enum": [
-					"DOT",
-					"SEMI_COLON",
-					"COLON",
-					"COMMA",
-					"NON_BREAKING_SPACE",
-					"SLASH",
-					"TAB",
-					"PIPE"
-				]
-			},
-			"SouthSQLiteItemSettingsSerialization": {
+			"SouthSQLiteItemSettingsTrackingInstant": {
 				"properties": {
-					"type": {
-						"$ref": "#/components/schemas/SouthSQLiteItemSettingsSerializationType"
-					},
-					"filename": {
-						"type": "string"
-					},
-					"delimiter": {
-						"$ref": "#/components/schemas/SouthSQLiteItemSettingsSerializationDelimiter"
-					},
-					"compression": {
+					"trackInstant": {
 						"type": "boolean"
 					},
-					"outputTimestampFormat": {
+					"fieldName": {
 						"type": "string"
 					},
-					"outputTimezone": {
-						"$ref": "#/components/schemas/Timezone"
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthSQLiteItemSettingsTrackingInstantDateTimeInput"
+							}
+						],
+						"nullable": true
 					}
 				},
 				"required": [
-					"type",
-					"filename",
-					"delimiter",
-					"compression",
-					"outputTimestampFormat",
-					"outputTimezone"
+					"trackInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -11358,21 +11215,18 @@
 					"query": {
 						"type": "string"
 					},
-					"dateTimeFields": {
-						"items": {
-							"$ref": "#/components/schemas/SouthSQLiteItemSettingsDateTimeFields"
-						},
-						"type": "array",
+					"trackingInstant": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthSQLiteItemSettingsTrackingInstant"
+							}
+						],
 						"nullable": true
-					},
-					"serialization": {
-						"$ref": "#/components/schemas/SouthSQLiteItemSettingsSerialization"
 					}
 				},
 				"required": [
 					"query",
-					"dateTimeFields",
-					"serialization"
+					"trackingInstant"
 				],
 				"type": "object",
 				"additionalProperties": false

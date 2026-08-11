@@ -47,7 +47,7 @@ export type SouthMQTTSettingsAuthenticationType = (typeof SOUTH_M_Q_T_T_SETTINGS
 export const SOUTH_M_Q_T_T_SETTINGS_QOSS = ['0', '1', '2'] as const;
 export type SouthMQTTSettingsQos = (typeof SOUTH_M_Q_T_T_SETTINGS_QOSS)[number];
 
-export const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = [
+export const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES = [
   'string',
   'date',
   'date-time',
@@ -58,46 +58,18 @@ export const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = [
   'unix-epoch',
   'unix-epoch-ms'
 ] as const;
-export type SouthMSSQLItemSettingsDateTimeFieldsType = (typeof SOUTH_M_S_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
+export type SouthMSSQLItemSettingsTrackingInstantDateTimeInputType =
+  (typeof SOUTH_M_S_S_Q_L_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES)[number];
 
-export const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
-export type SouthMSSQLItemSettingsSerializationType = (typeof SOUTH_M_S_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
-
-export const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
-  'DOT',
-  'SEMI_COLON',
-  'COLON',
-  'COMMA',
-  'NON_BREAKING_SPACE',
-  'SLASH',
-  'TAB',
-  'PIPE'
-] as const;
-export type SouthMSSQLItemSettingsSerializationDelimiter = (typeof SOUTH_M_S_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
-
-export const SOUTH_MY_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = [
+export const SOUTH_MY_S_Q_L_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES = [
   'string',
   'iso-string',
   'unix-epoch',
   'unix-epoch-ms',
   'date-time'
 ] as const;
-export type SouthMySQLItemSettingsDateTimeFieldsType = (typeof SOUTH_MY_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
-
-export const SOUTH_MY_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
-export type SouthMySQLItemSettingsSerializationType = (typeof SOUTH_MY_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
-
-export const SOUTH_MY_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
-  'DOT',
-  'SEMI_COLON',
-  'COLON',
-  'COMMA',
-  'NON_BREAKING_SPACE',
-  'SLASH',
-  'TAB',
-  'PIPE'
-] as const;
-export type SouthMySQLItemSettingsSerializationDelimiter = (typeof SOUTH_MY_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
+export type SouthMySQLItemSettingsTrackingInstantDateTimeInputType =
+  (typeof SOUTH_MY_S_Q_L_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES)[number];
 
 export const SOUTH_O_D_B_C_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
 export type SouthODBCItemSettingsDateTimeFieldsType = (typeof SOUTH_O_D_B_C_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
@@ -223,34 +195,20 @@ export type SouthOPCUAItemSettingsMode = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_M
 export const SOUTH_O_P_C_U_A_ITEM_SETTINGS_TIMESTAMP_ORIGINS = ['oibus', 'point', 'server'] as const;
 export type SouthOPCUAItemSettingsTimestampOrigin = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_TIMESTAMP_ORIGINS)[number];
 
-export const SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = [
+export const SOUTH_ORACLE_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES = [
   'iso-string',
   'unix-epoch',
   'unix-epoch-ms',
   'string',
   'date-time'
 ] as const;
-export type SouthOracleItemSettingsDateTimeFieldsType = (typeof SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
-
-export const SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
-export type SouthOracleItemSettingsSerializationType = (typeof SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
-
-export const SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
-  'DOT',
-  'SEMI_COLON',
-  'COLON',
-  'COMMA',
-  'NON_BREAKING_SPACE',
-  'SLASH',
-  'TAB',
-  'PIPE'
-] as const;
-export type SouthOracleItemSettingsSerializationDelimiter = (typeof SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
+export type SouthOracleItemSettingsTrackingInstantDateTimeInputType =
+  (typeof SOUTH_ORACLE_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES)[number];
 
 export const SOUTH_P_I_ITEM_SETTINGS_TYPES = ['point-id', 'point-query'] as const;
 export type SouthPIItemSettingsType = (typeof SOUTH_P_I_ITEM_SETTINGS_TYPES)[number];
 
-export const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = [
+export const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES = [
   'string',
   'iso-string',
   'unix-epoch',
@@ -258,22 +216,8 @@ export const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = [
   'timestamp',
   'timestamptz'
 ] as const;
-export type SouthPostgreSQLItemSettingsDateTimeFieldsType = (typeof SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
-
-export const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
-export type SouthPostgreSQLItemSettingsSerializationType = (typeof SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
-
-export const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
-  'DOT',
-  'SEMI_COLON',
-  'COLON',
-  'COMMA',
-  'NON_BREAKING_SPACE',
-  'SLASH',
-  'TAB',
-  'PIPE'
-] as const;
-export type SouthPostgreSQLItemSettingsSerializationDelimiter = (typeof SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
+export type SouthPostgreSQLItemSettingsTrackingInstantDateTimeInputType =
+  (typeof SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES)[number];
 
 export const SOUTH_REST_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'bearer', 'api-key'] as const;
 export type SouthRestSettingsAuthenticationType = (typeof SOUTH_REST_SETTINGS_AUTHENTICATION_TYPES)[number];
@@ -315,23 +259,14 @@ export type SouthS7SettingsConnectionType = (typeof SOUTH_S7_SETTINGS_CONNECTION
 export const SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS = ['password', 'private-key'] as const;
 export type SouthSFTPSettingsAuthentication = (typeof SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
 
-export const SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
-export type SouthSQLiteItemSettingsDateTimeFieldsType = (typeof SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
-
-export const SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
-export type SouthSQLiteItemSettingsSerializationType = (typeof SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
-
-export const SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
-  'DOT',
-  'SEMI_COLON',
-  'COLON',
-  'COMMA',
-  'NON_BREAKING_SPACE',
-  'SLASH',
-  'TAB',
-  'PIPE'
+export const SOUTH_S_Q_LITE_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES = [
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms',
+  'string'
 ] as const;
-export type SouthSQLiteItemSettingsSerializationDelimiter = (typeof SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
+export type SouthSQLiteItemSettingsTrackingInstantDateTimeInputType =
+  (typeof SOUTH_S_Q_LITE_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES)[number];
 
 export interface SouthADSSettingsStructureFiltering {
   name: string;
@@ -628,40 +563,30 @@ export interface SouthModbusItemSettingsData {
   multiplierCoefficient: number;
 }
 
-export interface SouthMSSQLItemSettingsDateTimeFields {
-  fieldName: string;
-  useAsReference: boolean;
-  type: SouthMSSQLItemSettingsDateTimeFieldsType;
+export interface SouthMSSQLItemSettingsTrackingInstantDateTimeInput {
+  type: SouthMSSQLItemSettingsTrackingInstantDateTimeInputType;
   timezone?: Timezone;
   format?: string;
   locale?: string;
 }
 
-export interface SouthMSSQLItemSettingsSerialization {
-  type: SouthMSSQLItemSettingsSerializationType;
-  filename: string;
-  delimiter: SouthMSSQLItemSettingsSerializationDelimiter;
-  compression: boolean;
-  outputTimestampFormat: string;
-  outputTimezone: Timezone;
+export interface SouthMSSQLItemSettingsTrackingInstant {
+  trackInstant: boolean;
+  fieldName?: string;
+  dateTimeInput?: SouthMSSQLItemSettingsTrackingInstantDateTimeInput | null;
 }
 
-export interface SouthMySQLItemSettingsDateTimeFields {
-  fieldName: string;
-  useAsReference: boolean;
-  type: SouthMySQLItemSettingsDateTimeFieldsType;
+export interface SouthMySQLItemSettingsTrackingInstantDateTimeInput {
+  type: SouthMySQLItemSettingsTrackingInstantDateTimeInputType;
   timezone?: Timezone;
   format?: string;
   locale?: string;
 }
 
-export interface SouthMySQLItemSettingsSerialization {
-  type: SouthMySQLItemSettingsSerializationType;
-  filename: string;
-  delimiter: SouthMySQLItemSettingsSerializationDelimiter;
-  compression: boolean;
-  outputTimestampFormat: string;
-  outputTimezone: Timezone;
+export interface SouthMySQLItemSettingsTrackingInstant {
+  trackInstant: boolean;
+  fieldName?: string;
+  dateTimeInput?: SouthMySQLItemSettingsTrackingInstantDateTimeInput | null;
 }
 
 export interface SouthODBCItemSettingsDateTimeFields {
@@ -719,40 +644,30 @@ export interface SouthOPCUAItemSettingsHaMode {
   resampling?: SouthOPCUAItemSettingsHaModeResampling;
 }
 
-export interface SouthOracleItemSettingsDateTimeFields {
-  fieldName: string;
-  useAsReference: boolean;
-  type: SouthOracleItemSettingsDateTimeFieldsType;
+export interface SouthOracleItemSettingsTrackingInstantDateTimeInput {
+  type: SouthOracleItemSettingsTrackingInstantDateTimeInputType;
   timezone?: Timezone;
   format?: string;
   locale?: string;
 }
 
-export interface SouthOracleItemSettingsSerialization {
-  type: SouthOracleItemSettingsSerializationType;
-  filename: string;
-  delimiter: SouthOracleItemSettingsSerializationDelimiter;
-  compression: boolean;
-  outputTimestampFormat: string;
-  outputTimezone: Timezone;
+export interface SouthOracleItemSettingsTrackingInstant {
+  trackInstant: boolean;
+  fieldName?: string;
+  dateTimeInput?: SouthOracleItemSettingsTrackingInstantDateTimeInput | null;
 }
 
-export interface SouthPostgreSQLItemSettingsDateTimeFields {
-  fieldName: string;
-  useAsReference: boolean;
-  type: SouthPostgreSQLItemSettingsDateTimeFieldsType;
+export interface SouthPostgreSQLItemSettingsTrackingInstantDateTimeInput {
+  type: SouthPostgreSQLItemSettingsTrackingInstantDateTimeInputType;
   timezone?: Timezone;
   format?: string;
   locale?: string;
 }
 
-export interface SouthPostgreSQLItemSettingsSerialization {
-  type: SouthPostgreSQLItemSettingsSerializationType;
-  filename: string;
-  delimiter: SouthPostgreSQLItemSettingsSerializationDelimiter;
-  compression: boolean;
-  outputTimestampFormat: string;
-  outputTimezone: Timezone;
+export interface SouthPostgreSQLItemSettingsTrackingInstant {
+  trackInstant: boolean;
+  fieldName?: string;
+  dateTimeInput?: SouthPostgreSQLItemSettingsTrackingInstantDateTimeInput | null;
 }
 
 export interface SouthRestItemSettingsQueryParamsDateTimeInput {
@@ -803,22 +718,17 @@ export interface SouthRestItemSettingsTrackingInstant {
   dateTimeInput?: SouthRestItemSettingsTrackingInstantDateTimeInput | null;
 }
 
-export interface SouthSQLiteItemSettingsDateTimeFields {
-  fieldName: string;
-  useAsReference: boolean;
-  type: SouthSQLiteItemSettingsDateTimeFieldsType;
+export interface SouthSQLiteItemSettingsTrackingInstantDateTimeInput {
+  type: SouthSQLiteItemSettingsTrackingInstantDateTimeInputType;
   timezone?: Timezone;
   format?: string;
   locale?: string;
 }
 
-export interface SouthSQLiteItemSettingsSerialization {
-  type: SouthSQLiteItemSettingsSerializationType;
-  filename: string;
-  delimiter: SouthSQLiteItemSettingsSerializationDelimiter;
-  compression: boolean;
-  outputTimestampFormat: string;
-  outputTimezone: Timezone;
+export interface SouthSQLiteItemSettingsTrackingInstant {
+  trackInstant: boolean;
+  fieldName?: string;
+  dateTimeInput?: SouthSQLiteItemSettingsTrackingInstantDateTimeInput | null;
 }
 
 export interface SouthADSItemSettings {
@@ -863,15 +773,13 @@ export interface SouthMQTTItemSettings {
 
 export interface SouthMSSQLItemSettings {
   query: string;
-  dateTimeFields: Array<SouthMSSQLItemSettingsDateTimeFields> | null;
-  serialization: SouthMSSQLItemSettingsSerialization;
+  trackingInstant: SouthMSSQLItemSettingsTrackingInstant | null;
 }
 
 export interface SouthMySQLItemSettings {
   query: string;
   requestTimeout: number;
-  dateTimeFields: Array<SouthMySQLItemSettingsDateTimeFields> | null;
-  serialization: SouthMySQLItemSettingsSerialization;
+  trackingInstant: SouthMySQLItemSettingsTrackingInstant | null;
 }
 
 export interface SouthODBCItemSettings {
@@ -908,8 +816,7 @@ export interface SouthOPCUAItemSettings {
 export interface SouthOracleItemSettings {
   query: string;
   requestTimeout: number;
-  dateTimeFields: Array<SouthOracleItemSettingsDateTimeFields> | null;
-  serialization: SouthOracleItemSettingsSerialization;
+  trackingInstant: SouthOracleItemSettingsTrackingInstant | null;
 }
 
 export interface SouthPIItemSettings {
@@ -920,8 +827,7 @@ export interface SouthPIItemSettings {
 
 export interface SouthPostgreSQLItemSettings {
   query: string;
-  dateTimeFields: Array<SouthPostgreSQLItemSettingsDateTimeFields> | null;
-  serialization: SouthPostgreSQLItemSettingsSerialization;
+  trackingInstant: SouthPostgreSQLItemSettingsTrackingInstant | null;
 }
 
 export interface SouthRestItemSettings {
@@ -951,8 +857,7 @@ export interface SouthSFTPItemSettings {
 
 export interface SouthSQLiteItemSettings {
   query: string;
-  dateTimeFields: Array<SouthSQLiteItemSettingsDateTimeFields> | null;
-  serialization: SouthSQLiteItemSettingsSerialization;
+  trackingInstant: SouthSQLiteItemSettingsTrackingInstant | null;
 }
 
 export type SouthItemSettings =
