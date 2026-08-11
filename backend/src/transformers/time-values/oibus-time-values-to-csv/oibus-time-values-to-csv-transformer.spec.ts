@@ -111,6 +111,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
       {
         source: 'south',
         southId: 'south1',
+        southName: 'South 1',
         queryTime: testData.constants.dates.DATE_1,
         queryStartTime: '2023-01-01T00:00:00.000Z',
         queryEndTime: '2023-01-01T01:00:00.000Z',
