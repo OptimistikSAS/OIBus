@@ -53,11 +53,12 @@ interface OldSqlItemSettings {
  *     single `trackingInstant` (mirroring south-rest's own trackingInstant shape), used only to
  *     compute the incremental query cursor. The CSV-rendering config itself (filename, delimiter,
  *     compression, per-column datetime formatting) moves to a transformer.
- *  2. For every enabled north connector (content fans out to all of them, unconditionally — see
- *     `DataStreamEngine.addContent`) and every affected item, preserves today's behavior by
- *     attaching a `record-list-to-csv` transformer, scoped to that one item, carrying the old
- *     per-item CSV settings as its options — but only where doing so doesn't override a
- *     deliberate user choice:
+ *  2. For every north connector — enabled or not, so a currently-disabled one is already correctly
+ *     wired up whenever it's re-enabled later; content fans out to every north connector
+ *     unconditionally once enabled, see `DataStreamEngine.addContent` — and every affected item,
+ *     preserves today's behavior by attaching a `record-list-to-csv` transformer, scoped to that one
+ *     item, carrying the old per-item CSV settings as its options — but only where doing so doesn't
+ *     override a deliberate user choice:
  *       - No transformer currently resolves for that (north, item) → attach one (today the north
  *         silently receives the pre-built CSV file untouched; after this migration, without a
  *         transformer it would receive a raw JSON dump instead of the SQL south's actual CSV text).
@@ -79,12 +80,12 @@ interface OldSqlItemSettings {
 export async function up(knex: Knex): Promise<void> {
   const recordListToCsvTransformerId = await ensureRecordListToCsvTransformer(knex);
 
-  const enabledNorthIds = (await knex(NORTH_CONNECTORS_TABLE).select('id').where('enabled', true)).map(n => n.id as string);
+  const northIds = (await knex(NORTH_CONNECTORS_TABLE).select('id')).map(n => n.id as string);
 
   for (const southType of SQL_SOUTH_TYPES) {
     const souths: Array<{ id: string }> = await knex(SOUTH_CONNECTORS_TABLE).select('id').where('type', southType);
     for (const south of souths) {
-      await migrateSouthConnectorItems(knex, south.id, enabledNorthIds, recordListToCsvTransformerId);
+      await migrateSouthConnectorItems(knex, south.id, northIds, recordListToCsvTransformerId);
     }
   }
 
@@ -277,7 +278,7 @@ async function buildTransformerLookup(
 async function migrateSouthConnectorItems(
   knex: Knex,
   southId: string,
-  enabledNorthIds: Array<string>,
+  northIds: Array<string>,
   recordListToCsvTransformerId: string
 ): Promise<void> {
   const items: Array<{ id: string; settings: string }> = await knex(SOUTH_ITEMS_TABLE)
@@ -304,7 +305,7 @@ async function migrateSouthConnectorItems(
     const transformerOptions = buildTransformerOptions(oldSettings);
     const groupId = groupIdByItemId.get(item.id) ?? null;
 
-    for (const northId of enabledNorthIds) {
+    for (const northId of northIds) {
       const resolved =
         itemLevel.get(`${northId}\0${item.id}`) ??
         (groupId ? groupLevel.get(`${northId}\0${groupId}`) : undefined) ??
