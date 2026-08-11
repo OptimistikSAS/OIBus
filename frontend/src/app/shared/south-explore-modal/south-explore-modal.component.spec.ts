@@ -6,7 +6,7 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { NEVER, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import testData from '../../../../../backend/src/tests/utils/test-data';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { page } from 'vitest/browser';
 
@@ -234,6 +234,24 @@ describe('SouthExploreModalComponent', () => {
   test('should not close anything when destroyed without a session', () => {
     tester.fixture.destroy();
 
+    expect(southConnectorService.closeExplore).not.toHaveBeenCalled();
+  });
+
+  test('should use a custom api instead of the south connector service when provided', () => {
+    const customApi = {
+      start: vi.fn().mockReturnValue(of({ sessionId: 'sessionId', entries: [{ id: 'a', name: 'A', metadata: {}, hasChildren: false }] })),
+      browse: vi.fn().mockReturnValue(of({ entries: [] })),
+      close: vi.fn().mockReturnValue(of(undefined))
+    };
+
+    tester.component.prepare('historyId', southConnector.settings, southConnector.type, customApi);
+    tester.fixture.detectChanges();
+
+    expect(customApi.start).toHaveBeenCalledWith(southConnector.settings, southConnector.type);
+    expect(southConnectorService.startExplore).not.toHaveBeenCalled();
+
+    tester.fixture.destroy();
+    expect(customApi.close).toHaveBeenCalledWith('sessionId');
     expect(southConnectorService.closeExplore).not.toHaveBeenCalled();
   });
 });
