@@ -34,7 +34,19 @@ describe('NorthFileWriter', () => {
     createTransformer: mock.fn(() => oiBusTransformer)
   };
 
+  // node:child_process's `execFile` is captured (via promisify) into a local `execFile` const at
+  // module-load time, so it must be mocked BEFORE the SUT is loaded — mutating it afterwards
+  // (like the in-place fs/stream mocks above) would not reach the already-captured reference.
+  const execFileMock = mock.fn(
+    (_cmd: string, _args: Array<string>, callback: (error: Error | null, stdout?: string, stderr?: string) => void) => {
+      callback(new Error('ENOENT: cmdkey not found'));
+    }
+  );
+  const decryptTextMock = mock.fn(async (_value: string) => 'decrypted-password');
+
   before(() => {
+    mockModule(nodeRequire, 'node:child_process', { execFile: execFileMock });
+    mockModule(nodeRequire, '../../service/encryption.service', { encryptionService: { decryptText: decryptTextMock } });
     mockModule(nodeRequire, '../../service/transformer.service', transformerExports);
     mockModule(nodeRequire, '../../service/cache/cache.service', {
       __esModule: true,
@@ -59,6 +71,16 @@ describe('NorthFileWriter', () => {
     logger.info.mock.resetCalls();
     logger.warn.mock.resetCalls();
     logger.error.mock.resetCalls();
+
+    // Reset execFile/decryptText mocks to their default (failing) behaviour
+    execFileMock.mock.resetCalls();
+    execFileMock.mock.mockImplementation(
+      (_cmd: string, _args: Array<string>, callback: (error: Error | null, stdout?: string, stderr?: string) => void) => {
+        callback(new Error('ENOENT: cmdkey not found'));
+      }
+    );
+    decryptTextMock.mock.resetCalls();
+    decryptTextMock.mock.mockImplementation(async () => 'decrypted-password');
 
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
@@ -235,6 +257,22 @@ describe('NorthFileWriter', () => {
       },
       new Error(`Write access error on "${outputFolder}": ${errorMessage}`)
     );
+  });
+
+  it('should ignore a readdir failure when counting files (Test Connection)', async () => {
+    const writeFileMock = mock.method(fs, 'writeFile', async () => undefined);
+    const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
+    mock.method(fs, 'readdir', async () => {
+      throw new Error('EACCES: permission denied');
+    });
+
+    const testResult = await north.testConnection();
+
+    const outputFolder = path.resolve(configuration.settings.outputFolder);
+    assert.strictEqual(writeFileMock.mock.calls.length, 1);
+    assert.strictEqual(unlinkMock.mock.calls.length, 1);
+    // The file count is skipped, but the folder check still succeeds.
+    assert.deepStrictEqual(testResult, { items: [{ key: 'Output Folder', value: outputFolder }] });
   });
 
   describe('connect and disconnect (SMB)', () => {

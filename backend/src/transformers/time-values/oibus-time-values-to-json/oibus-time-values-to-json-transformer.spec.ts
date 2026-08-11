@@ -66,6 +66,26 @@ describe('OIBusTimeValuesToJSONTransformer', () => {
     });
   });
 
+  it('should parse content from a JSON string when transformInMemory receives non-array data', async () => {
+    const transformer = new OIBusTimeValuesToJSONTransformer(logger, testData.transformers.list[0], {});
+    const dataChunks: Array<OIBusTimeValue> = [
+      { pointId: 'reference1', timestamp: testData.constants.dates.DATE_1, data: { value: 'value1' } }
+    ];
+
+    const result = await transformer.transformInMemory(JSON.stringify(dataChunks), { source: 'test' }, null);
+
+    assert.deepStrictEqual(result, {
+      output: Buffer.from(JSON.stringify(dataChunks)),
+      metadata: {
+        contentFile: 'randomId.json',
+        contentSize: 0,
+        createdAt: '',
+        numberOfElement: 1,
+        contentType: 'any'
+      }
+    });
+  });
+
   it('should return manifest', () => {
     assert.deepStrictEqual(timeValuesToJsonManifest.settings, {
       type: 'object',

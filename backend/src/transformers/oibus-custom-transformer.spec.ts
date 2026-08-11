@@ -95,4 +95,25 @@ describe('OIBusCustomTransformer', () => {
     assert.deepStrictEqual(args[3], testData.transformers.list[0]);
     assert.deepStrictEqual(args[4], {});
   });
+
+  it('should convert a string sandbox output to a UTF-8 Buffer', async () => {
+    const stringSandboxOutput = {
+      output: 'plain text output',
+      metadata: {
+        contentFile: '',
+        contentSize: 0,
+        createdAt: '',
+        numberOfElement: 0,
+        contentType: '',
+        source: { source: 'test' }
+      }
+    };
+    mockSandboxServiceObj.execute = mock.fn(async () => stringSandboxOutput);
+
+    const transformer = new OIBusCustomTransformer(logger, testData.transformers.list[0] as CustomTransformer, {});
+    const result = await transformer.transformInMemory('some text', { source: 'test' }, 'test.txt');
+
+    assert.ok(result.output instanceof Buffer);
+    assert.strictEqual((result.output as Buffer).toString('utf8'), 'plain text output');
+  });
 });
