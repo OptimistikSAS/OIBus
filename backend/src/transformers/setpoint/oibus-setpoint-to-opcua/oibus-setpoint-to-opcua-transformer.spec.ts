@@ -74,6 +74,18 @@ describe('OIBusSetpointToOPCUATransformer', () => {
     });
   });
 
+  it('should parse setpoints when transformInMemory receives a JSON string instead of an array', async () => {
+    const options = {
+      mapping: [{ reference: 'reference1', nodeId: 'ns=3;i=1001' }]
+    };
+    const transformer = new OIBusSetpointToOPCUATransformer(logger, testData.transformers.list[0], options);
+    const dataChunks: Array<OIBusSetpoint> = [{ reference: 'reference1', value: '1' }];
+
+    const result = await transformer.transformInMemory(JSON.stringify(dataChunks), { source: 'test' }, null);
+
+    assert.deepStrictEqual(JSON.parse(result.output.toString()), [{ nodeId: 'ns=3;i=1001', value: '1' }]);
+  });
+
   it('should return manifest', () => {
     assert.deepStrictEqual(setpointToOpcuaManifest.settings, {
       type: 'object',
