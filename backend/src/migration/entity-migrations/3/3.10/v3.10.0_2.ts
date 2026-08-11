@@ -273,7 +273,9 @@ async function migrateSouthConnectorItems(
   enabledNorthIds: Array<string>,
   recordListToCsvTransformerId: string
 ): Promise<void> {
-  const items: Array<{ id: string; settings: string }> = await knex(SOUTH_ITEMS_TABLE).select('id', 'settings').where('connector_id', southId);
+  const items: Array<{ id: string; settings: string }> = await knex(SOUTH_ITEMS_TABLE)
+    .select('id', 'settings')
+    .where('connector_id', southId);
   if (items.length === 0) return;
 
   const groupMemberships: Array<{ item_id: string; group_id: string }> = await knex(`${GROUP_ITEMS_TABLE} as gi`)
@@ -297,7 +299,9 @@ async function migrateSouthConnectorItems(
 
     for (const northId of enabledNorthIds) {
       const resolved =
-        itemLevel.get(`${northId}\0${item.id}`) ?? (groupId ? groupLevel.get(`${northId}\0${groupId}`) : undefined) ?? southLevel.get(northId);
+        itemLevel.get(`${northId}\0${item.id}`) ??
+        (groupId ? groupLevel.get(`${northId}\0${groupId}`) : undefined) ??
+        southLevel.get(northId);
 
       // No transformer at all, or a bare passthrough that only "worked" because the south used to
       // hand it pre-built CSV bytes -> attach a record-list-to-csv transformer for this item.
@@ -332,9 +336,7 @@ async function migrateSouthConnectorItems(
  * resolution is item-level vs. history-level fallback only - no group level.
  */
 async function migrateHistoryQueries(knex: Knex, recordListToCsvTransformerId: string): Promise<void> {
-  const historyQueries: Array<{ id: string }> = await knex(HISTORY_QUERIES_TABLE)
-    .select('id')
-    .whereIn('south_type', SQL_SOUTH_TYPES);
+  const historyQueries: Array<{ id: string }> = await knex(HISTORY_QUERIES_TABLE).select('id').whereIn('south_type', SQL_SOUTH_TYPES);
   if (historyQueries.length === 0) return;
 
   const settingsUpdates: Array<{ id: string; settings: string }> = [];

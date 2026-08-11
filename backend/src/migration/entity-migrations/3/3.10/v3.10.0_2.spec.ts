@@ -43,7 +43,14 @@ describe('Entity migration v3.10.0_2', () => {
           requestTimeout: 1000,
           dateTimeFields: [
             { fieldName: 'other', useAsReference: false, type: 'unix-epoch-ms', timezone: null, format: null, locale: null },
-            { fieldName: 'timestamp', useAsReference: true, type: 'string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
           ],
           serialization: {
             type: 'csv',
@@ -84,7 +91,9 @@ describe('Entity migration v3.10.0_2', () => {
         settings: JSON.stringify({
           query: 'SELECT * FROM t3',
           requestTimeout: 1000,
-          dateTimeFields: [{ fieldName: 'timestamp', useAsReference: true, type: 'string', timezone: 'UTC', format: 'yyyy-MM-dd', locale: 'en-US' }],
+          dateTimeFields: [
+            { fieldName: 'timestamp', useAsReference: true, type: 'string', timezone: 'UTC', format: 'yyyy-MM-dd', locale: 'en-US' }
+          ],
           serialization: {
             type: 'csv',
             filename: 'item3.csv',
@@ -189,7 +198,9 @@ describe('Entity migration v3.10.0_2', () => {
       enabled: true,
       settings: JSON.stringify({
         query: 'SELECT * FROM t1',
-        dateTimeFields: [{ fieldName: 'timestamp', useAsReference: true, type: 'string', timezone: 'UTC', format: 'yyyy-MM-dd', locale: 'en-US' }],
+        dateTimeFields: [
+          { fieldName: 'timestamp', useAsReference: true, type: 'string', timezone: 'UTC', format: 'yyyy-MM-dd', locale: 'en-US' }
+        ],
         serialization: {
           type: 'csv',
           filename: 'hitem1.csv',
@@ -311,10 +322,7 @@ describe('Entity migration v3.10.0_2', () => {
       .where('nt.north_id', 'north3')
       .andWhere('nt.transformer_id', recordListToCsv.id)
       .select('nti.item_id');
-    assert.deepStrictEqual(
-      rows.map(r => r.item_id).sort(),
-      ['item2', 'item3']
-    );
+    assert.deepStrictEqual(rows.map(r => r.item_id).sort(), ['item2', 'item3']);
   });
 
   it('should leave an unrelated pre-existing transformer untouched (north4, csv-to-mqtt on item3)', async () => {
@@ -330,10 +338,7 @@ describe('Entity migration v3.10.0_2', () => {
       .where('nt.north_id', 'north4')
       .andWhere('nt.transformer_id', recordListToCsv.id)
       .select('nti.item_id');
-    assert.deepStrictEqual(
-      rows.map(r => r.item_id).sort(),
-      ['item1', 'item2']
-    );
+    assert.deepStrictEqual(rows.map(r => r.item_id).sort(), ['item1', 'item2']);
   });
 
   it('should skip disabled north connectors entirely (north5)', async () => {
