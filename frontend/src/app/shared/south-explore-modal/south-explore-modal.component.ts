@@ -1,7 +1,7 @@
 import { Component, inject, ChangeDetectionStrategy, OnDestroy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { NgTemplateOutlet } from '@angular/common';
+import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { OIBusSouthType, SouthConnectorExploreEntry } from '../../../../../backend/shared/model/south-connector.model';
@@ -26,7 +26,7 @@ interface ExploreTreeNode {
   templateUrl: './south-explore-modal.component.html',
   styleUrl: './south-explore-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [TranslateDirective, NgTemplateOutlet]
+  imports: [TranslateDirective, NgTemplateOutlet, KeyValuePipe]
 })
 export class SouthExploreModalComponent implements OnDestroy {
   private modal = inject(NgbActiveModal);
