@@ -36,6 +36,7 @@ export default class HistoryQueryMock extends HistoryQuery {
   override finish = mock.fn(async (): Promise<void> => undefined);
   override refreshLogger = mock.fn((): void => undefined);
   override getNorthCacheSizes = mock.fn((): CacheSize => ({ cache: 10, error: 20, archive: 30 }));
+  override triggerNorth = mock.fn((): void => undefined);
   override metricsEvent = new EventEmitter();
   override finishEvent = new EventEmitter();
   override searchCacheContent = mock.fn(

@@ -968,6 +968,11 @@ describe('DataStreamEngine', () => {
       assert.strictEqual(mockedNorth1.trigger.mock.calls.length, 1);
       assert.deepStrictEqual(mockedNorth1.trigger.mock.calls[0].arguments, [testData.scanMode.list[0]]);
       assert.strictEqual(mockedNorth2.trigger.mock.calls.length, 1);
+
+      // History query norths take part in the same fan-out: their caching trigger scan mode used to
+      // be configurable but was never actually fired.
+      assert.strictEqual(mockedHistoryQuery1.triggerNorth.mock.calls.length, 1);
+      assert.deepStrictEqual(mockedHistoryQuery1.triggerNorth.mock.calls[0].arguments, [testData.scanMode.list[0]]);
     });
 
     it('createScanMode should add a new cron', async () => {
