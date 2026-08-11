@@ -23,7 +23,7 @@ class TestComponent {
   stringAttribute: OIBusStringAttribute = {
     type: 'string',
     key: 'testKey',
-    translationKey: 'configuration.oibus.manifest.south.items.mssql.date-time-fields.field-name'
+    translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.field-name'
   } as OIBusStringAttribute;
 
   formGroup = new FormGroup({

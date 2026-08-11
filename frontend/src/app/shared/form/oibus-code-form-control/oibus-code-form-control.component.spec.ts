@@ -23,7 +23,7 @@ class TestComponent {
   codeAttribute: OIBusCodeAttribute = {
     type: 'code',
     key: 'testKey',
-    translationKey: 'configuration.oibus.manifest.south.items.mssql.date-time-fields.field-name',
+    translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.field-name',
     contentType: 'sql',
     defaultValue: null
   } as OIBusCodeAttribute;
