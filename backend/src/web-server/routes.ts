@@ -414,7 +414,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusDataType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["any"]},{"dataType":"enum","enums":["time-values"]},{"dataType":"enum","enums":["setpoint"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["any"]},{"dataType":"enum","enums":["time-values"]},{"dataType":"enum","enums":["setpoint"]},{"dataType":"enum","enums":["record-list"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "CustomTransformerCommandDTO": {
@@ -508,9 +508,28 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Record_string.string-or-number-or-boolean-or-null_": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"},{"dataType":"boolean"}]},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusRecord": {
+        "dataType": "refAlias",
+        "type": {"ref":"Record_string.string-or-number-or-boolean-or-null_","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusRecordListContent": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"enum","enums":["record-list"],"required":true},
+            "content": {"dataType":"array","array":{"dataType":"refAlias","ref":"OIBusRecord"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusContent": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"OIBusTimeValueContent"},{"ref":"OIBusFileContent"},{"ref":"OIBusAnyContent"},{"ref":"OIBusSetpointContent"}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"ref":"OIBusTimeValueContent"},{"ref":"OIBusFileContent"},{"ref":"OIBusAnyContent"},{"ref":"OIBusSetpointContent"},{"ref":"OIBusRecordListContent"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorItemTestResult": {
@@ -1321,17 +1340,15 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthMSSQLItemSettingsDateTimeFieldsType": {
+    "SouthMSSQLItemSettingsTrackingInstantDateTimeInputType": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["date"]},{"dataType":"enum","enums":["date-time"]},{"dataType":"enum","enums":["date-time-2"]},{"dataType":"enum","enums":["date-time-offset"]},{"dataType":"enum","enums":["small-date-time"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthMSSQLItemSettingsDateTimeFields": {
+    "SouthMSSQLItemSettingsTrackingInstantDateTimeInput": {
         "dataType": "refObject",
         "properties": {
-            "fieldName": {"dataType":"string","required":true},
-            "useAsReference": {"dataType":"boolean","required":true},
-            "type": {"ref":"SouthMSSQLItemSettingsDateTimeFieldsType","required":true},
+            "type": {"ref":"SouthMSSQLItemSettingsTrackingInstantDateTimeInputType","required":true},
             "timezone": {"ref":"Timezone"},
             "format": {"dataType":"string"},
             "locale": {"dataType":"string"},
@@ -1339,25 +1356,12 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthMSSQLItemSettingsSerializationType": {
-        "dataType": "refAlias",
-        "type": {"dataType":"enum","enums":["csv"],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthMSSQLItemSettingsSerializationDelimiter": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["DOT"]},{"dataType":"enum","enums":["SEMI_COLON"]},{"dataType":"enum","enums":["COLON"]},{"dataType":"enum","enums":["COMMA"]},{"dataType":"enum","enums":["NON_BREAKING_SPACE"]},{"dataType":"enum","enums":["SLASH"]},{"dataType":"enum","enums":["TAB"]},{"dataType":"enum","enums":["PIPE"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthMSSQLItemSettingsSerialization": {
+    "SouthMSSQLItemSettingsTrackingInstant": {
         "dataType": "refObject",
         "properties": {
-            "type": {"ref":"SouthMSSQLItemSettingsSerializationType","required":true},
-            "filename": {"dataType":"string","required":true},
-            "delimiter": {"ref":"SouthMSSQLItemSettingsSerializationDelimiter","required":true},
-            "compression": {"dataType":"boolean","required":true},
-            "outputTimestampFormat": {"dataType":"string","required":true},
-            "outputTimezone": {"ref":"Timezone","required":true},
+            "trackInstant": {"dataType":"boolean","required":true},
+            "fieldName": {"dataType":"string"},
+            "dateTimeInput": {"dataType":"union","subSchemas":[{"ref":"SouthMSSQLItemSettingsTrackingInstantDateTimeInput"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
@@ -1366,8 +1370,7 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "query": {"dataType":"string","required":true},
-            "dateTimeFields": {"dataType":"union","subSchemas":[{"dataType":"array","array":{"dataType":"refObject","ref":"SouthMSSQLItemSettingsDateTimeFields"}},{"dataType":"enum","enums":[null]}],"required":true},
-            "serialization": {"ref":"SouthMSSQLItemSettingsSerialization","required":true},
+            "trackingInstant": {"dataType":"union","subSchemas":[{"ref":"SouthMSSQLItemSettingsTrackingInstant"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -1454,17 +1457,15 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthMySQLItemSettingsDateTimeFieldsType": {
+    "SouthMySQLItemSettingsTrackingInstantDateTimeInputType": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["date-time"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthMySQLItemSettingsDateTimeFields": {
+    "SouthMySQLItemSettingsTrackingInstantDateTimeInput": {
         "dataType": "refObject",
         "properties": {
-            "fieldName": {"dataType":"string","required":true},
-            "useAsReference": {"dataType":"boolean","required":true},
-            "type": {"ref":"SouthMySQLItemSettingsDateTimeFieldsType","required":true},
+            "type": {"ref":"SouthMySQLItemSettingsTrackingInstantDateTimeInputType","required":true},
             "timezone": {"ref":"Timezone"},
             "format": {"dataType":"string"},
             "locale": {"dataType":"string"},
@@ -1472,25 +1473,12 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthMySQLItemSettingsSerializationType": {
-        "dataType": "refAlias",
-        "type": {"dataType":"enum","enums":["csv"],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthMySQLItemSettingsSerializationDelimiter": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["DOT"]},{"dataType":"enum","enums":["SEMI_COLON"]},{"dataType":"enum","enums":["COLON"]},{"dataType":"enum","enums":["COMMA"]},{"dataType":"enum","enums":["NON_BREAKING_SPACE"]},{"dataType":"enum","enums":["SLASH"]},{"dataType":"enum","enums":["TAB"]},{"dataType":"enum","enums":["PIPE"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthMySQLItemSettingsSerialization": {
+    "SouthMySQLItemSettingsTrackingInstant": {
         "dataType": "refObject",
         "properties": {
-            "type": {"ref":"SouthMySQLItemSettingsSerializationType","required":true},
-            "filename": {"dataType":"string","required":true},
-            "delimiter": {"ref":"SouthMySQLItemSettingsSerializationDelimiter","required":true},
-            "compression": {"dataType":"boolean","required":true},
-            "outputTimestampFormat": {"dataType":"string","required":true},
-            "outputTimezone": {"ref":"Timezone","required":true},
+            "trackInstant": {"dataType":"boolean","required":true},
+            "fieldName": {"dataType":"string"},
+            "dateTimeInput": {"dataType":"union","subSchemas":[{"ref":"SouthMySQLItemSettingsTrackingInstantDateTimeInput"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
@@ -1500,8 +1488,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "query": {"dataType":"string","required":true},
             "requestTimeout": {"dataType":"double","required":true},
-            "dateTimeFields": {"dataType":"union","subSchemas":[{"dataType":"array","array":{"dataType":"refObject","ref":"SouthMySQLItemSettingsDateTimeFields"}},{"dataType":"enum","enums":[null]}],"required":true},
-            "serialization": {"ref":"SouthMySQLItemSettingsSerialization","required":true},
+            "trackingInstant": {"dataType":"union","subSchemas":[{"ref":"SouthMySQLItemSettingsTrackingInstant"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2237,17 +2224,15 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthOracleItemSettingsDateTimeFieldsType": {
+    "SouthOracleItemSettingsTrackingInstantDateTimeInputType": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["date-time"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthOracleItemSettingsDateTimeFields": {
+    "SouthOracleItemSettingsTrackingInstantDateTimeInput": {
         "dataType": "refObject",
         "properties": {
-            "fieldName": {"dataType":"string","required":true},
-            "useAsReference": {"dataType":"boolean","required":true},
-            "type": {"ref":"SouthOracleItemSettingsDateTimeFieldsType","required":true},
+            "type": {"ref":"SouthOracleItemSettingsTrackingInstantDateTimeInputType","required":true},
             "timezone": {"ref":"Timezone"},
             "format": {"dataType":"string"},
             "locale": {"dataType":"string"},
@@ -2255,25 +2240,12 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthOracleItemSettingsSerializationType": {
-        "dataType": "refAlias",
-        "type": {"dataType":"enum","enums":["csv"],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthOracleItemSettingsSerializationDelimiter": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["DOT"]},{"dataType":"enum","enums":["SEMI_COLON"]},{"dataType":"enum","enums":["COLON"]},{"dataType":"enum","enums":["COMMA"]},{"dataType":"enum","enums":["NON_BREAKING_SPACE"]},{"dataType":"enum","enums":["SLASH"]},{"dataType":"enum","enums":["TAB"]},{"dataType":"enum","enums":["PIPE"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthOracleItemSettingsSerialization": {
+    "SouthOracleItemSettingsTrackingInstant": {
         "dataType": "refObject",
         "properties": {
-            "type": {"ref":"SouthOracleItemSettingsSerializationType","required":true},
-            "filename": {"dataType":"string","required":true},
-            "delimiter": {"ref":"SouthOracleItemSettingsSerializationDelimiter","required":true},
-            "compression": {"dataType":"boolean","required":true},
-            "outputTimestampFormat": {"dataType":"string","required":true},
-            "outputTimezone": {"ref":"Timezone","required":true},
+            "trackInstant": {"dataType":"boolean","required":true},
+            "fieldName": {"dataType":"string"},
+            "dateTimeInput": {"dataType":"union","subSchemas":[{"ref":"SouthOracleItemSettingsTrackingInstantDateTimeInput"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
@@ -2283,8 +2255,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "query": {"dataType":"string","required":true},
             "requestTimeout": {"dataType":"double","required":true},
-            "dateTimeFields": {"dataType":"union","subSchemas":[{"dataType":"array","array":{"dataType":"refObject","ref":"SouthOracleItemSettingsDateTimeFields"}},{"dataType":"enum","enums":[null]}],"required":true},
-            "serialization": {"ref":"SouthOracleItemSettingsSerialization","required":true},
+            "trackingInstant": {"dataType":"union","subSchemas":[{"ref":"SouthOracleItemSettingsTrackingInstant"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -2458,17 +2429,15 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthPostgreSQLItemSettingsDateTimeFieldsType": {
+    "SouthPostgreSQLItemSettingsTrackingInstantDateTimeInputType": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]},{"dataType":"enum","enums":["timestamp"]},{"dataType":"enum","enums":["timestamptz"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthPostgreSQLItemSettingsDateTimeFields": {
+    "SouthPostgreSQLItemSettingsTrackingInstantDateTimeInput": {
         "dataType": "refObject",
         "properties": {
-            "fieldName": {"dataType":"string","required":true},
-            "useAsReference": {"dataType":"boolean","required":true},
-            "type": {"ref":"SouthPostgreSQLItemSettingsDateTimeFieldsType","required":true},
+            "type": {"ref":"SouthPostgreSQLItemSettingsTrackingInstantDateTimeInputType","required":true},
             "timezone": {"ref":"Timezone"},
             "format": {"dataType":"string"},
             "locale": {"dataType":"string"},
@@ -2476,25 +2445,12 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthPostgreSQLItemSettingsSerializationType": {
-        "dataType": "refAlias",
-        "type": {"dataType":"enum","enums":["csv"],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthPostgreSQLItemSettingsSerializationDelimiter": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["DOT"]},{"dataType":"enum","enums":["SEMI_COLON"]},{"dataType":"enum","enums":["COLON"]},{"dataType":"enum","enums":["COMMA"]},{"dataType":"enum","enums":["NON_BREAKING_SPACE"]},{"dataType":"enum","enums":["SLASH"]},{"dataType":"enum","enums":["TAB"]},{"dataType":"enum","enums":["PIPE"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthPostgreSQLItemSettingsSerialization": {
+    "SouthPostgreSQLItemSettingsTrackingInstant": {
         "dataType": "refObject",
         "properties": {
-            "type": {"ref":"SouthPostgreSQLItemSettingsSerializationType","required":true},
-            "filename": {"dataType":"string","required":true},
-            "delimiter": {"ref":"SouthPostgreSQLItemSettingsSerializationDelimiter","required":true},
-            "compression": {"dataType":"boolean","required":true},
-            "outputTimestampFormat": {"dataType":"string","required":true},
-            "outputTimezone": {"ref":"Timezone","required":true},
+            "trackInstant": {"dataType":"boolean","required":true},
+            "fieldName": {"dataType":"string"},
+            "dateTimeInput": {"dataType":"union","subSchemas":[{"ref":"SouthPostgreSQLItemSettingsTrackingInstantDateTimeInput"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
@@ -2503,8 +2459,7 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "query": {"dataType":"string","required":true},
-            "dateTimeFields": {"dataType":"union","subSchemas":[{"dataType":"array","array":{"dataType":"refObject","ref":"SouthPostgreSQLItemSettingsDateTimeFields"}},{"dataType":"enum","enums":[null]}],"required":true},
-            "serialization": {"ref":"SouthPostgreSQLItemSettingsSerialization","required":true},
+            "trackingInstant": {"dataType":"union","subSchemas":[{"ref":"SouthPostgreSQLItemSettingsTrackingInstant"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -3035,17 +2990,15 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthSQLiteItemSettingsDateTimeFieldsType": {
+    "SouthSQLiteItemSettingsTrackingInstantDateTimeInputType": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthSQLiteItemSettingsDateTimeFields": {
+    "SouthSQLiteItemSettingsTrackingInstantDateTimeInput": {
         "dataType": "refObject",
         "properties": {
-            "fieldName": {"dataType":"string","required":true},
-            "useAsReference": {"dataType":"boolean","required":true},
-            "type": {"ref":"SouthSQLiteItemSettingsDateTimeFieldsType","required":true},
+            "type": {"ref":"SouthSQLiteItemSettingsTrackingInstantDateTimeInputType","required":true},
             "timezone": {"ref":"Timezone"},
             "format": {"dataType":"string"},
             "locale": {"dataType":"string"},
@@ -3053,25 +3006,12 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthSQLiteItemSettingsSerializationType": {
-        "dataType": "refAlias",
-        "type": {"dataType":"enum","enums":["csv"],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthSQLiteItemSettingsSerializationDelimiter": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["DOT"]},{"dataType":"enum","enums":["SEMI_COLON"]},{"dataType":"enum","enums":["COLON"]},{"dataType":"enum","enums":["COMMA"]},{"dataType":"enum","enums":["NON_BREAKING_SPACE"]},{"dataType":"enum","enums":["SLASH"]},{"dataType":"enum","enums":["TAB"]},{"dataType":"enum","enums":["PIPE"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthSQLiteItemSettingsSerialization": {
+    "SouthSQLiteItemSettingsTrackingInstant": {
         "dataType": "refObject",
         "properties": {
-            "type": {"ref":"SouthSQLiteItemSettingsSerializationType","required":true},
-            "filename": {"dataType":"string","required":true},
-            "delimiter": {"ref":"SouthSQLiteItemSettingsSerializationDelimiter","required":true},
-            "compression": {"dataType":"boolean","required":true},
-            "outputTimestampFormat": {"dataType":"string","required":true},
-            "outputTimezone": {"ref":"Timezone","required":true},
+            "trackInstant": {"dataType":"boolean","required":true},
+            "fieldName": {"dataType":"string"},
+            "dateTimeInput": {"dataType":"union","subSchemas":[{"ref":"SouthSQLiteItemSettingsTrackingInstantDateTimeInput"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
@@ -3080,8 +3020,7 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "query": {"dataType":"string","required":true},
-            "dateTimeFields": {"dataType":"union","subSchemas":[{"dataType":"array","array":{"dataType":"refObject","ref":"SouthSQLiteItemSettingsDateTimeFields"}},{"dataType":"enum","enums":[null]}],"required":true},
-            "serialization": {"ref":"SouthSQLiteItemSettingsSerialization","required":true},
+            "trackingInstant": {"dataType":"union","subSchemas":[{"ref":"SouthSQLiteItemSettingsTrackingInstant"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -8318,7 +8257,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
     const upload = opts?.multer ||  multer({"limits":{"fileSize":8388608}});
 
-
+    
         const argsUserController_search: Record<string, TsoaRoute.ParameterSchema> = {
                 login: {"in":"query","name":"login","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
                 page: {"in":"query","name":"page","required":true,"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"undefined"}]},

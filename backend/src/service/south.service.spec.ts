@@ -1345,15 +1345,7 @@ describe('South Service', () => {
         name: 'item',
         enabled: 'true',
         settings_query: 'query',
-        settings_dateTimeFields: '[]',
-        settings_serialization: JSON.stringify({
-          type: 'csv',
-          filename: 'filename',
-          delimiter: 'SEMI_COLON',
-          compression: true,
-          outputTimestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
-          outputTimezone: 'Europe/Paris'
-        }),
+        settings_trackingInstant: JSON.stringify({ trackInstant: false }),
         scanMode: testData.scanMode.list[0].name
       }
     ];
@@ -1380,15 +1372,7 @@ describe('South Service', () => {
           enabled: true,
           settings: {
             query: 'query',
-            dateTimeFields: [],
-            serialization: {
-              type: 'csv',
-              filename: 'filename',
-              delimiter: 'SEMI_COLON',
-              compression: true,
-              outputTimestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
-              outputTimezone: 'Europe/Paris'
-            }
+            trackingInstant: { trackInstant: false }
           },
           group: null,
           maxReadInterval: 0,
