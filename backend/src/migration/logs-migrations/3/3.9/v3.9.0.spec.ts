@@ -279,6 +279,34 @@ describe('Logs migration v3.9.0 (scope-and-group-items)', () => {
       assert.strictEqual(row.message, 'query failed');
     });
 
+    it('propagates the error when copying rows into the tmp table fails', async () => {
+      // Stub just enough of the Knex surface used by down() to force the
+      // INSERT INTO ..._dg_tmp step to reject, and assert the failure is not
+      // swallowed (i.e. the migration does not silently continue past it).
+      let schemaRawCallCount = 0;
+      const knexStub = Object.assign(
+        (_table: string) => ({
+          where: (_cond: unknown) => ({ update: (_data: unknown) => Promise.resolve() })
+        }),
+        {
+          schema: {
+            raw: (_sql: string) => {
+              schemaRawCallCount += 1;
+              // 1st call = CREATE TABLE ..._dg_tmp (succeeds), 2nd call = the
+              // INSERT INTO ..._dg_tmp copy step that we want to fail.
+              if (schemaRawCallCount === 2) {
+                return Promise.reject(new Error('simulated copy failure'));
+              }
+              return Promise.resolve();
+            }
+          },
+          raw: (_sql: string) => Promise.resolve()
+        }
+      );
+
+      await assert.rejects(() => down(knexStub as unknown as Knex), /simulated copy failure/);
+    });
+
     it('restores idx_logs_timestamp and idx_logs_scope after tmp-table rename', async () => {
       await up(db);
 

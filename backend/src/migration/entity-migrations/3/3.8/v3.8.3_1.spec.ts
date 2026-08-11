@@ -241,6 +241,25 @@ describe('Entity migration v3.8.3_1', () => {
     await assert.doesNotReject(() => up(db));
   });
 
+  it('is a no-op when the time-values-to-oianalytics transformer does not exist at all', async () => {
+    // Simulate an install whose standard transformers table never had this transformer registered
+    // (e.g. a stripped-down deployment): fixOIAnalyticsTransformerOptions must bail out early
+    // instead of throwing when transformer_id lookup finds nothing.
+    await db('transformers').where('function_name', 'time-values-to-oianalytics').del();
+
+    await assert.doesNotReject(() => up(db));
+
+    const transformer = await db('transformers').where('function_name', 'time-values-to-oianalytics').first();
+    assert.equal(transformer, undefined);
+  });
+
+  it('is a no-op when neither csv transformer (json-to-csv, time-values-to-csv) exists', async () => {
+    // fixCsvTransformerOptions must bail out early when the whereIn lookup returns no rows.
+    await db('transformers').whereIn('function_name', ['json-to-csv', 'time-values-to-csv']).del();
+
+    await assert.doesNotReject(() => up(db));
+  });
+
   it('down is a no-op', async () => {
     await assert.doesNotReject(() => down(db));
   });
