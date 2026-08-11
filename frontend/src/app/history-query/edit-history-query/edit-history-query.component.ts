@@ -42,6 +42,7 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { DateTime } from 'luxon';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
+import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-query-modal/reset-cache-history-query-modal.component';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
@@ -595,6 +596,24 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
     component.runHistoryQueryTest(type, historyQueryId, command.settings, command.type, fromConnectorId ? fromConnectorId : null);
+  }
+
+  explore() {
+    // Explore: only validate the south settings section, like the test connection button
+    this.form?.controls.southSettings.markAllAsTouched();
+    if (!this.form?.controls.southSettings.valid) {
+      return;
+    }
+
+    const historyQueryId = this.historyQuery?.id ?? null;
+    const fromSouthId = this.fromSouthId || null;
+    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
+    const component: SouthExploreModalComponent = modalRef.componentInstance;
+    component.prepare(historyQueryId, this.southConnectorCommand.settings, this.southConnectorCommand.type, {
+      start: (settings, type) => this.historyQueryService.startExplore(historyQueryId || 'create', settings, type, fromSouthId),
+      browse: (sessionId, parentId) => this.historyQueryService.browseExplore(historyQueryId || 'create', sessionId, parentId),
+      close: sessionId => this.historyQueryService.closeExplore(historyQueryId || 'create', sessionId)
+    });
   }
 
   get southConnectorCommand() {
