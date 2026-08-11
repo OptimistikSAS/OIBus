@@ -4,7 +4,7 @@
     "import": ["tsx"]
   },
   "test": {
-    "experimental-test-coverage": true,
+    "experimental-test-coverage": false,
     "test-reporter": "spec",
     "test-coverage-exclude": [
       "src/**/*.spec.ts",
