@@ -594,6 +594,92 @@ describe('HistoryQuery enabled', () => {
     ]);
   });
 
+  it('should relay a scan-mode tick to the north connector only', () => {
+    const scanMode = testData.scanMode.list[0];
+    historyQuery.triggerNorth(scanMode);
+    assert.strictEqual(mockedNorth1Mock.trigger.mock.calls.length, 1);
+    assert.strictEqual(mockedNorth1Mock.trigger.mock.calls[0].arguments[0], scanMode);
+  });
+
+  it('should mark running items as done when the history run completes normally (not stopping)', async () => {
+    mockedSouth1Mock.getHistoryQuerySnapshot = mock.fn(() => ({
+      items: [{ itemId: 'historyQueryItem1', itemName: 'item1', trackedInstant: null, queryTime: null, value: null }]
+    }));
+    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => undefined);
+
+    await historyQuery.start();
+
+    // Mark item1 as running before the run resolves.
+    mockedSouth1Mock.metricsEvent.emit('history-query-item-start', { itemName: 'item1', currentItemNumber: 1, numberOfItems: 1 });
+    mockedSouth1Mock.connectedEvent.emit('connected');
+    await flushPromises();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const internal = historyQuery as any;
+    assert.strictEqual(internal.itemsStatus.get('historyQueryItem1').status, 'done');
+  });
+
+  it('should leave a running item status untouched when the history run completes while stopping', async () => {
+    mockedSouth1Mock.getHistoryQuerySnapshot = mock.fn(() => ({
+      items: [{ itemId: 'historyQueryItem1', itemName: 'item1', trackedInstant: null, queryTime: null, value: null }]
+    }));
+    let resolveHandler!: () => void;
+    mockedSouth1Mock.historyQueryHandler = mock.fn(
+      () =>
+        new Promise<void>(resolve => {
+          resolveHandler = resolve;
+        })
+    );
+
+    await historyQuery.start();
+    mockedSouth1Mock.metricsEvent.emit('history-query-item-start', { itemName: 'item1', currentItemNumber: 1, numberOfItems: 1 });
+    mockedSouth1Mock.connectedEvent.emit('connected');
+
+    // Begin stopping (sets `stopping = true` synchronously) before the run's promise resolves.
+    const stopPromise = historyQuery.stop();
+    resolveHandler();
+    await flushPromises();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const internal = historyQuery as any;
+    assert.strictEqual(internal.itemsStatus.get('historyQueryItem1').status, 'running');
+
+    await stopPromise;
+  });
+
+  it('should keep the earlier seeded max interval end when a later item is not further ahead', async () => {
+    mockedSouth1Mock.getHistoryQuerySnapshot = mock.fn(() => ({
+      items: [
+        { itemId: 'historyQueryItem1', itemName: 'item1', trackedInstant: '2020-03-18T00:00:00.000Z', queryTime: null, value: null },
+        { itemId: 'historyQueryItem2', itemName: 'item2', trackedInstant: '2020-03-16T00:00:00.000Z', queryTime: null, value: null }
+      ]
+    }));
+    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => undefined);
+
+    await historyQuery.start();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const internal = historyQuery as any;
+    // item2's trackedInstant is earlier than item1's, so the ratcheted max stays at item1's value.
+    assert.strictEqual(internal.maxIntervalEndReached, '2020-03-18T00:00:00.000Z');
+  });
+
+  it('should surface itemIntervalProgress when the south connector reports its own interval count', async () => {
+    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => undefined);
+    const emitMock = mock.method(historyQuery.metricsEvent, 'emit');
+
+    await historyQuery.start();
+
+    mockedSouth1Mock.metricsEvent.emit('history-query-interval', {
+      currentIntervalStart: testData.constants.dates.DATE_1,
+      currentIntervalEnd: testData.constants.dates.DATE_2,
+      currentIntervalNumber: 3,
+      numberOfIntervals: 10
+    });
+    const call = emitMock.mock.calls.find(c => c.arguments[0] === 'south-history-query-interval')!;
+    assert.strictEqual((call.arguments[1] as { itemIntervalProgress: number }).itemIntervalProgress, 0.3);
+  });
+
   it('should get north cache sizes', async () => {
     const cacheSizes = historyQuery.getNorthCacheSizes();
     assert.strictEqual(mockedNorth1Mock.getCacheSizes.mock.calls.length, 1);

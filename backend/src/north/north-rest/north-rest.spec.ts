@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { EventEmitter } from 'node:events';
 import { ReadStream } from 'node:fs';
+import { Readable } from 'node:stream';
 import { mockModule, reloadModule, buildNorthEntity, assertContains } from '../../tests/utils/test-utils';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
@@ -344,6 +345,24 @@ describe('NorthREST', () => {
 
     const options = httpRequestMock.mock.calls[0].arguments[1] as ReqOptions;
     assertContains(options.headers as Record<string, unknown>, { 'content-type': 'text/csv' });
+  });
+
+  it('should actually stream file content through the multipart generator', async () => {
+    // MockReadStream's pipe() is a no-op and its content is never consumed by the mocked
+    // HTTPRequest, so the multipart async-generator body never actually iterates the source
+    // stream. Use a real async-iterable stream and drain the resulting body manually.
+    const realFileStream = Readable.from([Buffer.from('chunk-a'), Buffer.from('chunk-b')]) as unknown as ReadStream;
+
+    await north.handleContent(realFileStream, { contentType: 'any', contentFile: 'real-file.txt' } as CacheMetadata);
+
+    const [, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
+    const chunks: Array<Buffer> = [];
+    for await (const chunk of options.body as AsyncIterable<Buffer>) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    const full = Buffer.concat(chunks).toString();
+    assert.ok(full.includes('chunk-a'));
+    assert.ok(full.includes('chunk-b'));
   });
 
   it('should handle upload failures (HTTP 500)', async () => {
