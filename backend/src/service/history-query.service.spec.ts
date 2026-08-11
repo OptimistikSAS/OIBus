@@ -142,6 +142,7 @@ describe('History Query service', () => {
     southService.getManifest.mock.resetCalls();
     southService.findById.mock.resetCalls();
     southService.testSouth.mock.resetCalls();
+    southService.startExplore.mock.resetCalls();
     southService.testItem.mock.resetCalls();
     transformerService.findAll.mock.resetCalls();
     scanModeRepository.findAll.mock.resetCalls();
@@ -421,6 +422,36 @@ describe('History Query service', () => {
     await service.testSouth(testData.historyQueries.list[0].id, testData.south.command.type, undefined, testData.south.command.settings);
 
     assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [
+      'history',
+      testData.south.command.type,
+      testData.south.command.settings
+    ]);
+  });
+
+  it('should start an explore session in creation mode', async () => {
+    await service.startExplore('create', testData.south.command.type, undefined, testData.south.command.settings);
+
+    assert.deepStrictEqual(southService.startExplore.mock.calls[0].arguments, [
+      'history',
+      testData.south.command.type,
+      testData.south.command.settings
+    ]);
+  });
+
+  it('should start an explore session in creation mode and retrieve secrets', async () => {
+    await service.startExplore('create', testData.south.command.type, testData.south.list[0].id, testData.south.command.settings);
+
+    assert.deepStrictEqual(southService.startExplore.mock.calls[0].arguments, [
+      'history',
+      testData.south.command.type,
+      testData.south.command.settings
+    ]);
+  });
+
+  it('should start an explore session in edit mode', async () => {
+    await service.startExplore(testData.historyQueries.list[0].id, testData.south.command.type, undefined, testData.south.command.settings);
+
+    assert.deepStrictEqual(southService.startExplore.mock.calls[0].arguments, [
       'history',
       testData.south.command.type,
       testData.south.command.settings

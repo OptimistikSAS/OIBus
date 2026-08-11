@@ -9,7 +9,7 @@ import {
   HistoryQueryItemSearchParam
 } from '../../../../shared/model/history-query.model';
 import { HistoryTransformerWithOptions } from '../../../model/transformer.model';
-import { SouthConnectorItemTestResult } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemTestResult, SouthExploreStartResult } from '../../../../shared/model/south-connector.model';
 import { OIBusAnyContent, OIBusConnectionTestResult } from '../../../../shared/model/engine.model';
 import { HistoryQueryMetrics } from '../../../../shared/model/engine.model';
 import { Page } from '../../../../shared/model/types';
@@ -40,6 +40,7 @@ export default class HistoryQueryServiceMock {
   getAllHistoryMetrics = mock.fn((): unknown => ({}));
   testNorth = mock.fn(async (): Promise<OIBusConnectionTestResult> => ({ items: [] }) as unknown as OIBusConnectionTestResult);
   testSouth = mock.fn(async (): Promise<OIBusConnectionTestResult> => ({ items: [] }) as unknown as OIBusConnectionTestResult);
+  startExplore = mock.fn(async (): Promise<SouthExploreStartResult> => ({ sessionId: 'sessionId', entries: [] }));
   testItem = mock.fn(async (): Promise<SouthConnectorItemTestResult> => ({
     raw: { type: 'any-content', content: '' } as OIBusAnyContent,
     transformed: null,

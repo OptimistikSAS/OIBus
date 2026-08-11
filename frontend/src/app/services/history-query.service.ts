@@ -14,7 +14,9 @@ import { Page } from '../../../../backend/shared/model/types';
 import {
   OIBusSouthType,
   SouthConnectorItemTestingSettings,
-  SouthConnectorItemTestResult
+  SouthConnectorItemTestResult,
+  SouthExploreBrowseResult,
+  SouthExploreStartResult
 } from '../../../../backend/shared/model/south-connector.model';
 import { DownloadService } from './download.service';
 import {
@@ -133,6 +135,35 @@ export class HistoryQueryService {
       // the test connection modal already displays the error inline, so skip the global error notification
       context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
     });
+  }
+
+  /**
+   * Start an interactive explore session for a history query's south connector and return the
+   * root-level entries
+   */
+  startExplore(
+    historyId: string,
+    settings: SouthSettings,
+    southType: OIBusSouthType,
+    fromSouth: string | null = null
+  ): Observable<SouthExploreStartResult> {
+    return this.http.post<SouthExploreStartResult>(`/api/history/${historyId}/explore`, settings, {
+      params: fromSouth ? { fromSouth, southType } : { southType }
+    });
+  }
+
+  /**
+   * Browse (expand) an entry within an explore session
+   */
+  browseExplore(historyId: string, sessionId: string, parentId: string | null): Observable<SouthExploreBrowseResult> {
+    return this.http.put<SouthExploreBrowseResult>(`/api/history/${historyId}/explore/${sessionId}`, { parentId });
+  }
+
+  /**
+   * Close an explore session
+   */
+  closeExplore(historyId: string, sessionId: string): Observable<void> {
+    return this.http.delete<void>(`/api/history/${historyId}/explore/${sessionId}`);
   }
 
   testItem(
