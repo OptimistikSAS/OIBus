@@ -392,5 +392,18 @@ describe('utils-oianalytics', () => {
         );
       });
     });
+
+    it('should build the request URL through the API gateway when registration uses it', async () => {
+      const gatewayRegistration = {
+        ...mockRegistration,
+        useApiGateway: true,
+        apiGatewayBaseEndpoint: '/gateway'
+      } as OIAnalyticsRegistration;
+
+      await assert.doesNotReject(testOIAnalyticsConnection(true, gatewayRegistration, null, 30000, null, false));
+
+      assert.strictEqual(requestMock.mock.calls.length, 1);
+      assert.ok(String(requestMock.mock.calls[0].arguments[0]).includes('/gateway/api/oianalytics/oibus/status'));
+    });
   });
 });

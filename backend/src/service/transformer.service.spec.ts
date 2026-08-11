@@ -26,6 +26,7 @@ import ignoreManifest from '../transformers/ignore-transformer/manifest';
 import csvToMqttManifest from '../transformers/any/csv-to-mqtt/manifest';
 import csvToTimeValuesManifest from '../transformers/any/csv-to-time-values/manifest';
 import jsonToCsvManifest from '../transformers/any/json-to-csv/manifest';
+import jsonToOianalyticsManifest from '../transformers/any/json-to-oianalytics/manifest';
 import timeValuesToCsvManifest from '../transformers/time-values/oibus-time-values-to-csv/manifest';
 import timeValuesToJsonManifest from '../transformers/time-values/oibus-time-values-to-json/manifest';
 import timeValuesToModbusManifest from '../transformers/time-values/oibus-time-values-to-modbus/manifest';
@@ -47,6 +48,7 @@ import OIBusSetpointToModbusTransformer from '../transformers/setpoint/oibus-set
 import OIBusSetpointToOPCUATransformer from '../transformers/setpoint/oibus-setpoint-to-opcua/oibus-setpoint-to-opcua-transformer';
 import OIBusTimeValuesToOIAnalyticsTransformer from '../transformers/time-values/oibus-time-values-to-oianalytics/oibus-time-values-to-oianalytics-transformer';
 import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
+import JSONToOIAnalyticsTransformer from '../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
 import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToTimeValuesTransformer from '../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
 
@@ -436,6 +438,15 @@ describe('Transformer Service', () => {
       ) instanceof JSONToCSVTransformer
     );
 
+    transformer.functionName = 'json-to-oianalytics';
+    assert.ok(
+      createTransformer(
+        { id: 'northTransformerId1', transformer, options: {}, source: { type: 'oianalytics-setpoint' } },
+        testData.north.list[0],
+        logger
+      ) instanceof JSONToOIAnalyticsTransformer
+    );
+
     transformer.functionName = 'time-values-to-csv';
     assert.ok(
       createTransformer(
@@ -663,6 +674,46 @@ describe('Transformer Service', () => {
 
       assert.deepStrictEqual(runSpy.mock.calls[0].arguments, ['t2', {}, { type: 'any-content', content: 'raw text' }]);
     });
+
+    it('wraps setpoint input as a parsed setpoint array', async () => {
+      const setpoints = [{ reference: 'ref1', value: 1 }];
+      transformerRepository.findById.mock.mockImplementation(() => ({ id: 't3', type: 'standard', inputType: 'setpoint' }) as never);
+      const runSpy = mock.method(service, 'runTransformer', async () => ({ type: 'any-content', content: '' }) as never);
+
+      await service.testTransformer('t3', {}, JSON.stringify(setpoints));
+
+      assert.deepStrictEqual(runSpy.mock.calls[0].arguments, ['t3', {}, { type: 'setpoint', content: setpoints }]);
+    });
+  });
+
+  describe('runTransformer', () => {
+    it('runs a standard transformer end to end and wraps the result as OIBusContent', async () => {
+      const standardTransformer: StandardTransformer = {
+        id: 'std-json',
+        type: 'standard',
+        inputType: 'time-values',
+        outputType: 'any',
+        functionName: 'time-values-to-json'
+      } as StandardTransformer;
+      transformerRepository.findById.mock.mockImplementation(() => standardTransformer);
+
+      const content = { type: 'time-values' as const, content: [{ pointId: 'p1', timestamp: '2024-01-01T00:00:00.000Z', data: {} }] };
+      const result = await service.runTransformer('std-json', {}, content);
+
+      assert.strictEqual(transformerRepository.findById.mock.calls[0].arguments[0], 'std-json');
+      assert.strictEqual(result.type, 'any');
+      assert.match((result as { filePath: string }).filePath, /^[\w-]{10}\.json$/);
+      assert.strictEqual(result.content, JSON.stringify(content.content));
+    });
+
+    it('throws a NotFoundError when the transformer to run does not exist', async () => {
+      transformerRepository.findById.mock.mockImplementation(() => null);
+
+      await assert.rejects(
+        async () => service.runTransformer('bad-id', {}, { type: 'any-content', content: 'x' }),
+        new NotFoundError('Transformer "bad-id" not found')
+      );
+    });
   });
 
   describe('test a custom transformer', () => {
@@ -818,6 +869,7 @@ describe('Transformer Service', () => {
     assert.deepStrictEqual(getStandardManifest('iso'), isoManifest.settings);
     assert.deepStrictEqual(getStandardManifest('ignore'), ignoreManifest.settings);
     assert.deepStrictEqual(getStandardManifest('json-to-csv'), jsonToCsvManifest.settings);
+    assert.deepStrictEqual(getStandardManifest('json-to-oianalytics'), jsonToOianalyticsManifest.settings);
     assert.deepStrictEqual(getStandardManifest('time-values-to-csv'), timeValuesToCsvManifest.settings);
     assert.deepStrictEqual(getStandardManifest('time-values-to-json'), timeValuesToJsonManifest.settings);
     assert.deepStrictEqual(getStandardManifest('time-values-to-modbus'), timeValuesToModbusManifest.settings);
