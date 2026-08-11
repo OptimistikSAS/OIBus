@@ -192,6 +192,30 @@ describe('NorthAzureBlob', () => {
     });
   });
 
+  it('should properly test connection with Azure Blob Storage and successful delete', async () => {
+    const prepareConnectionMock = mock.method(north, 'prepareConnection', async () => undefined);
+    const fileClient = {
+      upload: mock.fn(async () => undefined),
+      exists: mock.fn(async () => true),
+      deleteIfExists: mock.fn(async () => undefined)
+    };
+    const blobServiceClient = {
+      getContainerClient: mock.fn(() => ({ getBlockBlobClient: mock.fn(() => fileClient) }))
+    };
+    north['blobClient'] = blobServiceClient as unknown as (typeof north)['blobClient'];
+    const testResult = await north.testConnection();
+    assert.strictEqual(prepareConnectionMock.mock.calls.length, 1);
+    assert.strictEqual(fileClient.deleteIfExists.mock.calls.length, 1);
+    assert.strictEqual(logger.error.mock.calls.length, 0);
+    assert.deepStrictEqual(testResult, {
+      items: [
+        { key: 'Account', value: north.connectorConfiguration.settings.account },
+        { key: 'Container', value: north.connectorConfiguration.settings.container },
+        { key: 'Storage Type', value: 'Azure Blob Storage' }
+      ]
+    });
+  });
+
   it('should properly test connection with Azure Data Lake Storage', async () => {
     const settings: NorthAzureBlobSettings = {
       useCustomUrl: false,
