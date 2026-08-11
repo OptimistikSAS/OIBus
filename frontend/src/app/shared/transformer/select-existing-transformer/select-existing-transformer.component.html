@@ -1,0 +1,58 @@
+<div class="row">
+  <div class="col-6">
+    <div class="form-group">
+      <label
+        class="form-label"
+        for="existing-source"
+        translate="configuration.oibus.manifest.transformers.copy-from-existing.select-source"
+      ></label>
+      <select
+        class="form-select"
+        id="existing-source"
+        [(ngModel)]="selectedSourceId"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="onSourceChange()"
+      >
+        <option [ngValue]="null"></option>
+        @if (sourceKind() === 'north') {
+          @for (northConnector of norths; track northConnector.id) {
+            <option [ngValue]="northConnector.id">{{ northConnector.name }}</option>
+          }
+        } @else {
+          @for (historyQuery of historyQueries; track historyQuery.id) {
+            <option [ngValue]="historyQuery.id">{{ historyQuery.name }}</option>
+          }
+        }
+      </select>
+    </div>
+  </div>
+  @if (selectedSourceId) {
+    <div class="col-6">
+      <div class="form-group">
+        <label
+          class="form-label"
+          for="existing-transformer"
+          translate="configuration.oibus.manifest.transformers.copy-from-existing.select-transformer"
+        ></label>
+        <select
+          class="form-select"
+          id="existing-transformer"
+          [(ngModel)]="selectedAttachmentId"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="onAttachmentChange()"
+        >
+          <option [ngValue]="null"></option>
+          @for (attachment of attachments; track attachment.id) {
+            <option [ngValue]="attachment.id">{{ attachment.label }}</option>
+          }
+        </select>
+        @if (!loading && attachments.length === 0) {
+          <small
+            class="text-muted"
+            translate="configuration.oibus.manifest.transformers.copy-from-existing.no-compatible-transformer"
+          ></small>
+        }
+      </div>
+    </div>
+  }
+</div>

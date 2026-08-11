@@ -8,6 +8,7 @@ import { EditNorthTransformerModalComponent } from './edit-north-transformer-mod
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { TransformerService } from '../../../services/transformer.service';
+import { NorthConnectorService } from '../../../services/north-connector.service';
 import { HistoryQueryService } from '../../../services/history-query.service';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
@@ -79,11 +80,19 @@ const transformer: TransformerDTO = {
 describe('EditNorthTransformerModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
   let southConnectorService: MockObject<SouthConnectorService>;
+  let northConnectorService: MockObject<NorthConnectorService>;
+  let historyQueryService: MockObject<HistoryQueryService>;
 
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
     southConnectorService = createMock(SouthConnectorService);
     southConnectorService.getGroups.mockReturnValue(of([]));
+
+    // Services used by the "copy from existing" picker (rendered once the user leaves the 'new' creation mode).
+    northConnectorService = createMock(NorthConnectorService);
+    historyQueryService = createMock(HistoryQueryService);
+    northConnectorService.list.mockReturnValue(of([]));
+    historyQueryService.list.mockReturnValue(of([]));
 
     // Services used by the embedded transformer-test panel (rendered once a transformer is selected).
     const transformerService = createMock(TransformerService);
@@ -95,7 +104,8 @@ describe('EditNorthTransformerModalComponent', () => {
         { provide: NgbActiveModal, useValue: activeModal },
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: TransformerService, useValue: transformerService },
-        { provide: HistoryQueryService, useValue: createMock(HistoryQueryService) },
+        { provide: NorthConnectorService, useValue: northConnectorService },
+        { provide: HistoryQueryService, useValue: historyQueryService },
         { provide: UnsavedChangesConfirmationService, useValue: createMock(UnsavedChangesConfirmationService) }
       ]
     });
@@ -150,5 +160,65 @@ describe('EditNorthTransformerModalComponent', () => {
         source: expect.objectContaining({ type: 'oibus-api', dataSourceId: 'dataSourceId' })
       })
     );
+  });
+
+  test('defaults to the new creation mode', () => {
+    const fixture = TestBed.createComponent(EditNorthTransformerModalComponent);
+    fixture.componentInstance.prepareForCreation([], [], [], [transformer], ['mqtt']);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.creationMode).toBe('new');
+  });
+
+  test('copies the transformer and its options from an existing attachment', () => {
+    const fixture = TestBed.createComponent(EditNorthTransformerModalComponent);
+    fixture.componentInstance.prepareForCreation([], [], [], [transformer], ['mqtt']);
+    fixture.detectChanges();
+
+    fixture.componentInstance.setCreationMode('from-north');
+    fixture.detectChanges();
+
+    const copiedOptions = { mapping: [{ pointId: 'copiedPointId', address: 'copiedAddress', modbusType: 'coil' }] };
+    fixture.componentInstance.applyExistingTransformer({ transformer, options: copiedOptions });
+
+    expect(fixture.componentInstance.form.controls.transformer.value).toEqual(transformer);
+    expect(fixture.componentInstance.form.controls.options.value).toEqual(copiedOptions);
+  });
+
+  test('does not wipe the copied transformer when the source changes outside of the new creation mode', () => {
+    const fixture = TestBed.createComponent(EditNorthTransformerModalComponent);
+    fixture.componentInstance.prepareForCreation([], [], [], [transformer], ['mqtt']);
+    fixture.detectChanges();
+    fixture.componentInstance.setCreationMode('from-north');
+    fixture.detectChanges();
+    fixture.componentInstance.applyExistingTransformer({ transformer, options: {} });
+
+    fixture.componentInstance.form.controls.source.setValue({ dataSourceType: 'oibus-api', south: null });
+
+    expect(fixture.componentInstance.form.controls.transformer.value).toEqual(transformer);
+  });
+
+  test('wipes the selected transformer when the source changes in the new creation mode', () => {
+    const fixture = TestBed.createComponent(EditNorthTransformerModalComponent);
+    fixture.componentInstance.prepareForCreation([], [], [], [transformer], ['mqtt']);
+    fixture.detectChanges();
+    fixture.componentInstance.form.controls.transformer.setValue(transformer);
+
+    fixture.componentInstance.form.controls.source.setValue({ dataSourceType: 'oibus-api', south: null });
+
+    expect(fixture.componentInstance.form.controls.transformer.value).toBeNull();
+  });
+
+  test('resets the copied transformer when switching back to the new creation mode', () => {
+    const fixture = TestBed.createComponent(EditNorthTransformerModalComponent);
+    fixture.componentInstance.prepareForCreation([], [], [], [transformer], ['mqtt']);
+    fixture.detectChanges();
+    fixture.componentInstance.setCreationMode('from-north');
+    fixture.detectChanges();
+    fixture.componentInstance.applyExistingTransformer({ transformer, options: {} });
+
+    fixture.componentInstance.setCreationMode('new');
+
+    expect(fixture.componentInstance.form.controls.transformer.value).toBeNull();
   });
 });

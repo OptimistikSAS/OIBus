@@ -27,6 +27,7 @@ import { PillComponent } from '../../../shared/pill/pill.component';
 import { ValErrorDelayDirective } from '../../../shared/form/val-error-delay.directive';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { NorthTransformerTestComponent, TransformerTestItemSource } from '../transformer-test/transformer-test.component';
+import { SelectExistingTransformerComponent } from '../../../shared/transformer/select-existing-transformer/select-existing-transformer.component';
 
 @Component({
   selector: 'oib-edit-north-transformer-modal',
@@ -48,7 +49,8 @@ import { NorthTransformerTestComponent, TransformerTestItemSource } from '../tra
     PillComponent,
     ValErrorDelayDirective,
     ValidationErrorsComponent,
-    NorthTransformerTestComponent
+    NorthTransformerTestComponent,
+    SelectExistingTransformerComponent
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   viewProviders: [
@@ -67,6 +69,8 @@ export class EditNorthTransformerModalComponent {
 
   state = new ObservableState();
   mode: 'create' | 'edit' = 'create';
+  /** Whether the transformer is configured from scratch or copied from an existing North/History attachment (create mode only). */
+  creationMode: 'new' | 'from-north' | 'from-history' = 'new';
   /** Stable source descriptor for the embedded transformer-test panel (updated on source change). */
   transformerTestSource: TransformerTestItemSource = { kind: 'none' };
   /** True when opened from north-detail (saves directly to API); false when opened from edit-north (changes are applied in-memory). */
@@ -219,10 +223,14 @@ export class EditNorthTransformerModalComponent {
 
   buildForm() {
     this.form.controls.source.valueChanges.subscribe(source => {
-      this.form.patchValue({
-        transformer: null,
-        options: {}
-      });
+      // In 'from-north'/'from-history' mode the transformer/options come from the copy-picker, not from the Output
+      // select below, so changing the source shouldn't wipe them out.
+      if (this.creationMode === 'new') {
+        this.form.patchValue({
+          transformer: null,
+          options: {}
+        });
+      }
       this.updateSelectableOutput(source);
       this.selectionType = 'all';
       this.selectedGroup = null;
@@ -255,6 +263,17 @@ export class EditNorthTransformerModalComponent {
       addAttributeToForm(this.fb, this.form.controls.options, attribute);
     }
     addEnablingConditions(this.form.controls.options, this.manifest.enablingConditions);
+  }
+
+  setCreationMode(mode: 'new' | 'from-north' | 'from-history') {
+    this.creationMode = mode;
+    this.form.patchValue({ transformer: null, options: {} });
+  }
+
+  /** Called when the user picks an already-configured transformer attachment to copy as a starting point. */
+  applyExistingTransformer(selection: { transformer: TransformerDTO; options: Record<string, unknown> }) {
+    this.createOptionsForm(selection.transformer);
+    this.form.patchValue({ transformer: selection.transformer, options: selection.options }, { emitEvent: false });
   }
 
   canDismiss(): Observable<boolean> | boolean {
