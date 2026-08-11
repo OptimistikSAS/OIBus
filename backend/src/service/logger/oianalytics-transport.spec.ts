@@ -295,6 +295,19 @@ describe('OianalyticsTransport (createTransport)', () => {
     assert.strictEqual(mockHTTPRequest.mock.calls.length, 2);
   });
 
+  it('addLogs should cap the rescheduled interval at MAX_BATCH_INTERVAL_S when interval > 60', async () => {
+    const opts: OIAnalyticsOptions = { ...defaultOpts, interval: 120, batchLimit: 1 };
+    await createTransport(opts);
+
+    await capturedSourceFn!(makeSource([makeLog('log1')]));
+    assert.strictEqual(mockHTTPRequest.mock.calls.length, 1);
+
+    // Rescheduled interval must be capped at MAX_BATCH_INTERVAL_S (60s), not the full 120s
+    mock.timers.tick(60000);
+    await drainMicrotasks();
+    assert.strictEqual(mockHTTPRequest.mock.calls.length, 2);
+  });
+
   it('addLogs should use default MAX_BATCH_LOG (500) when batchLimit is not provided', async () => {
     await createTransport(defaultOpts);
 
