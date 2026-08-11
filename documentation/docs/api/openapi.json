@@ -17556,6 +17556,22 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"Record_string.string-or-number_": {
+				"properties": {},
+				"additionalProperties": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "number",
+							"format": "double"
+						}
+					]
+				},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
 			"SouthConnectorExploreEntry": {
 				"description": "A single entry returned while exploring/discovering a South connector's data source.\nRepresents an OPC-UA node or a file-system entry. Kept intentionally generic and\nextensible so item creation and item synchronisation can build on it later.",
 				"properties": {
@@ -17567,9 +17583,9 @@
 						"type": "string",
 						"description": "Human-readable label (OPC-UA display name or file/folder name)."
 					},
-					"type": {
-						"type": "string",
-						"description": "Nature of the entry. For OPC-UA the node class ('Object', 'Variable', ...);\nfor the folder scanner 'folder' or 'file'."
+					"metadata": {
+						"$ref": "#/components/schemas/Record_string.string-or-number_",
+						"description": "Additional data linked to the entry"
 					},
 					"hasChildren": {
 						"type": "boolean",
@@ -17579,7 +17595,7 @@
 				"required": [
 					"id",
 					"name",
-					"type",
+					"metadata",
 					"hasChildren"
 				],
 				"type": "object",

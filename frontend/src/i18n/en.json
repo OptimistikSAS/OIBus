@@ -1460,28 +1460,44 @@
               "BACKSLASH": "Backslash (\\)",
               "DOUBLE_QUOTE": "Double quote (\")"
             },
-            "datetime-fields": {
-              "title": "Datetime columns",
+            "null-value": "Null value",
+            "fields": {
+              "title": "Fields Mapping",
               "item": {
-                "title": "Datetime column"
+                "title": "Field Configuration"
               },
-              "field-name": "Column name",
-              "input": {
-                "title": "Input format",
-                "type": {
-                  "title": "Type",
+              "field-name": "Field Name",
+              "column-name": "Column Name",
+              "data-type": {
+                "title": "Data Type",
+                "string": "String",
+                "number": "Number",
+                "boolean": "Boolean",
+                "datetime": "Datetime",
+                "array": "Array",
+                "object": "Object"
+              },
+              "field-process": "Field Process (JS expression, e.g. value.toUpperCase())",
+              "datetime-settings": {
+                "title": "Datetime Settings",
+                "input-type": {
+                  "title": "Timestamp input type",
                   "string": "String",
                   "iso-string": "ISO string",
                   "unix-epoch": "Unix epoch (s)",
-                  "unix-epoch-ms": "Unix epoch (ms)",
-                  "date-time": "DateTime"
+                  "unix-epoch-ms": "Unix epoch (ms)"
+                },
+                "output-type": {
+                  "title": "Timestamp output type",
+                  "string": "String",
+                  "iso-string": "ISO string",
+                  "unix-epoch": "Unix epoch (s)",
+                  "unix-epoch-ms": "Unix epoch (ms)"
                 },
                 "timezone": "Timezone",
                 "format": "Format",
                 "locale": "Locale"
-              },
-              "output-timestamp-format": "Output date time format",
-              "output-timezone": "Output timezone"
+              }
             }
           },
           "setpoint-to-modbus": {
