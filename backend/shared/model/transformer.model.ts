@@ -2,7 +2,7 @@ import { OIBusObjectAttribute } from './form.model';
 import { ItemLightDTO, SouthConnectorLightDTO, SouthItemGroupLightDTO } from './south-connector.model';
 import { Instant, UserInfo } from './types';
 
-export const INPUT_TYPES = ['any', 'time-values', 'setpoint'];
+export const INPUT_TYPES = ['any', 'time-values', 'setpoint', 'record-list'];
 export type InputType = (typeof INPUT_TYPES)[number];
 
 export const DATA_SOURCE_TYPES = ['south', 'oibus-api', 'oianalytics-setpoint'];
