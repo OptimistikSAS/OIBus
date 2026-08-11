@@ -16,6 +16,7 @@ import {
   OIBusConnectionTestResult,
   OIBusContent,
   OIBusFileContent,
+  OIBusRecordListContent,
   OIBusTimeValue,
   OIBusTimeValueContent
 } from '../../shared/model/engine.model';
@@ -755,6 +756,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    *   - `'time-values'`  → array of OIBusTimeValue (timestamp + pointId + data)
    *   - `'any-content'`  → opaque serialised payload (MQTT messages, etc.)
    *   - `'any'`          → a file on disk (folder-scanner, FTP, etc.)
+   *   - `'record-list'`  → array of flat rows, untouched (SQL-like souths)
    */
   addContent(data: OIBusContent, queryTime: Instant, items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> {
     switch (data.type) {
@@ -764,6 +766,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         return this.addAnyContent(data, queryTime, items);
       case 'any':
         return this.addFile(data, queryTime, items);
+      case 'record-list':
+        return this.addRecords(data, queryTime, items);
       default:
         return Promise.resolve();
     }
@@ -809,6 +813,28 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       this.metricsEvent.emit('add-values', {
         numberOfValuesRetrieved: data.content.length,
         lastValueRetrieved: data.content[data.content.length - 1]
+      });
+    }
+  }
+
+  private async addRecords(
+    data: OIBusRecordListContent,
+    queryTime: Instant,
+    items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+  ): Promise<void> {
+    if (data.content.length > 0) {
+      this.logger.debug(`Add ${data.content.length} records to cache from South "${this.connector.name}"`);
+      await this.engineAddContentCallback(
+        this.connector.id,
+        data,
+        queryTime,
+        items,
+        this.currentHistoryQueryInterval?.start ?? null,
+        this.currentHistoryQueryInterval?.end ?? null
+      );
+      this.metricsEvent.emit('add-values', {
+        numberOfValuesRetrieved: data.content.length,
+        lastValueRetrieved: null
       });
     }
   }
