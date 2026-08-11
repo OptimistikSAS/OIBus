@@ -221,6 +221,37 @@ describe('Repository with populated database', () => {
       assert.strictEqual(result.content[0].itemName, 'Flow Meter');
     });
 
+    it('should filter search results by groupIds', () => {
+      repository.saveAll([
+        {
+          msg: 'group filter log',
+          scopeType: 'south',
+          scopeId: 'south-y',
+          scopeName: 'South Y',
+          groupId: 'group-xyz',
+          groupName: 'Flow Group',
+          time: testData.constants.dates.DATE_1,
+          level: '30'
+        }
+      ]);
+
+      const result = repository.search({
+        levels: [],
+        scopeIds: [],
+        scopeTypes: [],
+        itemIds: [],
+        groupIds: ['group-xyz'],
+        messageContent: '',
+        page: 0,
+        start: testData.constants.dates.DATE_1,
+        end: testData.constants.dates.DATE_2
+      });
+
+      assert.strictEqual(result.totalElements, 1);
+      assert.strictEqual(result.content[0].groupId, 'group-xyz');
+      assert.strictEqual(result.content[0].groupName, 'Flow Group');
+    });
+
     it('should search groups and find by id', () => {
       repository.saveAll([
         {
