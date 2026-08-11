@@ -230,6 +230,62 @@ describe('OIAnalytics Message Service', () => {
     });
   });
 
+  it('should properly send scan mode settings with type, interval and activationWindow for a cron scan mode', async () => {
+    oIAnalyticsClient.sendConfiguration = mock.fn(() => Promise.resolve());
+    service.start(); // trigger a runProgress
+
+    const sentConfiguration = JSON.parse(oIAnalyticsClient.sendConfiguration.mock.calls[0].arguments[1] as string);
+    assert.deepStrictEqual(
+      sentConfiguration.scanModes.map((scanMode: { settings: unknown }) => scanMode.settings),
+      testData.scanMode.list.map(scanMode => ({
+        name: scanMode.name,
+        description: scanMode.description,
+        type: scanMode.type,
+        cron: scanMode.cron,
+        interval: scanMode.interval,
+        activationWindow: scanMode.activationWindow
+      }))
+    );
+    for (const scanMode of sentConfiguration.scanModes) {
+      assert.strictEqual(scanMode.settings.type, 'cron');
+      assert.strictEqual(scanMode.settings.interval, null);
+      assert.strictEqual(scanMode.settings.activationWindow, null);
+    }
+  });
+
+  it('should properly send scan mode settings with type, interval and activationWindow for an interval scan mode', async () => {
+    const intervalScanMode = {
+      id: 'scanModeIdInterval',
+      name: 'interval scan mode',
+      description: 'my interval scanMode',
+      type: 'interval' as const,
+      cron: '',
+      interval: { value: 30, unit: 's' as const },
+      activationWindow: {
+        dateRange: { start: '2026-08-01T00:00:00.000Z', end: '2026-08-31T00:00:00.000Z' },
+        recurring: { timezone: 'Europe/Paris', daysOfWeek: [6, 0], timeOfDay: { start: '22:00', end: '02:00' } }
+      },
+      createdBy: 'admin',
+      updatedBy: 'admin',
+      createdAt: testData.constants.dates.DATE_1,
+      updatedAt: testData.constants.dates.DATE_2
+    };
+    scanModeRepository.findAll = mock.fn(() => [intervalScanMode]);
+    oIAnalyticsClient.sendConfiguration = mock.fn(() => Promise.resolve());
+    service.start(); // trigger a runProgress
+
+    const sentConfiguration = JSON.parse(oIAnalyticsClient.sendConfiguration.mock.calls[0].arguments[1] as string);
+    assert.strictEqual(sentConfiguration.scanModes.length, 1);
+    assert.deepStrictEqual(sentConfiguration.scanModes[0].settings, {
+      name: intervalScanMode.name,
+      description: intervalScanMode.description,
+      type: 'interval',
+      cron: intervalScanMode.cron,
+      interval: intervalScanMode.interval,
+      activationWindow: intervalScanMode.activationWindow
+    });
+  });
+
   it('should properly send message and trigger timeout', async () => {
     oIAnalyticsClient.sendConfiguration = mock.fn(
       () =>
