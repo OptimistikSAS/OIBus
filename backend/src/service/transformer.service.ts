@@ -33,10 +33,11 @@ import { Readable } from 'node:stream';
 import { createReadStream } from 'node:fs';
 import path from 'node:path';
 import { DateTime } from 'luxon';
-import { CacheMetadata, CacheMetadataSource, OIBusContent, OIBusSetpoint, OIBusTimeValue } from '../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource, OIBusContent, OIBusRecord, OIBusSetpoint, OIBusTimeValue } from '../../shared/model/engine.model';
 import { SouthConnectorItemTestResult } from '../../shared/model/south-connector.model';
 import { generateRandomId } from './utils';
 import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
+import RecordListToCsvTransformer from '../transformers/any/record-list-to-csv/record-list-to-csv-transformer';
 import JSONToOIAnalyticsTransformer from '../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
 import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToTimeValuesTransformer from '../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
@@ -45,6 +46,7 @@ import ignoreManifest from '../transformers/ignore-transformer/manifest';
 import csvToMqttManifest from '../transformers/any/csv-to-mqtt/manifest';
 import csvToTimeValuesManifest from '../transformers/any/csv-to-time-values/manifest';
 import jsonToCsvManifest from '../transformers/any/json-to-csv/manifest';
+import recordListToCsvManifest from '../transformers/any/record-list-to-csv/manifest';
 import jsonToOianalyticsManifest from '../transformers/any/json-to-oianalytics/manifest';
 import timeValuesToCsvManifest from '../transformers/time-values/oibus-time-values-to-csv/manifest';
 import timeValuesToJsonManifest from '../transformers/time-values/oibus-time-values-to-json/manifest';
@@ -69,6 +71,7 @@ export const transformerManifestList: Array<TransformerManifest> = [
   csvToMqttManifest,
   csvToTimeValuesManifest,
   jsonToCsvManifest,
+  recordListToCsvManifest,
   jsonToOianalyticsManifest,
   timeValuesToCsvManifest,
   timeValuesToJsonManifest,
@@ -91,6 +94,8 @@ const buildContentFromInput = (inputType: string, inputData: string): OIBusConte
       return { type: 'time-values', content: JSON.parse(inputData) };
     case 'setpoint':
       return { type: 'setpoint', content: JSON.parse(inputData) };
+    case 'record-list':
+      return { type: 'record-list', content: JSON.parse(inputData) };
     default:
       return { type: 'any-content', content: inputData };
   }
@@ -275,6 +280,8 @@ export default class TransformerService {
       case 'any':
       case 'any-content':
         return this.generateFileTemplate(inputType);
+      case 'record-list':
+        return this.generateRecordListTemplate();
       case 'setpoint':
       default:
         return this.generateSetpointTemplate();
@@ -350,6 +357,24 @@ export default class TransformerService {
       type: 'setpoint',
       data: JSON.stringify(setpoints, null, 2),
       description: 'Sample setpoint commands for various parameters'
+    };
+  }
+
+  /**
+   * Generate input template for record-list input type (e.g. SQL query results)
+   */
+  private generateRecordListTemplate(): InputTemplate {
+    const now = DateTime.now().toUTC().toISO()!;
+    const records: Array<OIBusRecord> = [
+      { id: 1, name: 'temperature_sensor_01', value: 23.5, timestamp: now },
+      { id: 2, name: 'pressure_sensor_01', value: 1013.25, timestamp: now },
+      { id: 3, name: 'humidity_sensor_01', value: 65.2, timestamp: now }
+    ];
+
+    return {
+      type: 'record-list',
+      data: JSON.stringify(records, null, 2),
+      description: 'Sample rows as returned by a query-based source (e.g. a SQL database)'
     };
   }
 
@@ -438,6 +463,9 @@ export const createTransformer = (
       case JSONToCSVTransformer.transformerName: {
         return new JSONToCSVTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
+      case RecordListToCsvTransformer.transformerName: {
+        return new RecordListToCsvTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
+      }
       case JSONToOIAnalyticsTransformer.transformerName: {
         return new JSONToOIAnalyticsTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
@@ -507,6 +535,9 @@ export const runTransformerOnContent = async (
     case 'setpoint':
       results.push(await transformer.transformInMemory(data.content, source, null));
       break;
+    case 'record-list':
+      results.push(await transformer.transformInMemory(data.content, source, null));
+      break;
     case 'any-content':
       // any-content is already a serialised string; pass it through as-is.
       results.push(await transformer.transformInMemory(data.content, source, null));
@@ -541,6 +572,9 @@ export const getStandardManifest = (functionName: string): OIBusObjectAttribute 
     }
     case jsonToCsvManifest.id: {
       return jsonToCsvManifest.settings;
+    }
+    case recordListToCsvManifest.id: {
+      return recordListToCsvManifest.settings;
     }
     case jsonToOianalyticsManifest.id: {
       return jsonToOianalyticsManifest.settings;

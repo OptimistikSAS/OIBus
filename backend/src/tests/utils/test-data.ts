@@ -1143,14 +1143,8 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         enabled: true,
         settings: {
           query: 'SELECT * FROM table1',
-          dateTimeFields: null,
-          serialization: {
-            type: 'csv',
-            filename: 'item1.csv',
-            delimiter: 'COMMA',
-            compression: false,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'UTC'
+          trackingInstant: {
+            trackInstant: false
           }
         } as SouthMSSQLItemSettings,
         createdBy: '',
@@ -1164,14 +1158,8 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         enabled: true,
         settings: {
           query: 'SELECT * FROM table2',
-          dateTimeFields: null,
-          serialization: {
-            type: 'csv',
-            filename: 'item2.csv',
-            delimiter: 'COMMA',
-            compression: false,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'UTC'
+          trackingInstant: {
+            trackInstant: false
           }
         } as SouthMSSQLItemSettings,
         createdBy: '',
@@ -1265,14 +1253,8 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         enabled: true,
         settings: {
           query: 'SELECT * FROM table3',
-          dateTimeFields: null,
-          serialization: {
-            type: 'csv',
-            filename: 'item3.csv',
-            delimiter: 'COMMA',
-            compression: false,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'UTC'
+          trackingInstant: {
+            trackInstant: false
           }
         } as SouthMSSQLItemSettings,
         createdBy: '',
@@ -1358,14 +1340,8 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
       enabled: true,
       settings: {
         query: 'SELECT * FROM table4',
-        dateTimeFields: null,
-        serialization: {
-          type: 'csv',
-          filename: 'item4.csv',
-          delimiter: 'COMMA',
-          compression: false,
-          outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-          outputTimezone: 'UTC'
+        trackingInstant: {
+          trackInstant: false
         }
       } as SouthMSSQLItemSettings
     }
@@ -1397,14 +1373,8 @@ const historyQueryItemCommand: HistoryQueryItemCommandDTO = {
   enabled: true,
   settings: {
     query: 'SELECT * FROM newTable',
-    dateTimeFields: null,
-    serialization: {
-      type: 'csv',
-      filename: 'newItem.csv',
-      delimiter: 'COMMA',
-      compression: false,
-      outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-      outputTimezone: 'UTC'
+    trackingInstant: {
+      trackInstant: false
     }
   } as SouthMSSQLItemSettings
 };
