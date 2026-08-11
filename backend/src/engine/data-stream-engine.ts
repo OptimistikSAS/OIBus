@@ -556,6 +556,7 @@ export default class DataStreamEngine {
     queryStartTime?: Instant | null,
     queryEndTime?: Instant | null
   ) {
+    const southName = this.southConnectors.get(southId)?.south.connectorConfiguration.name ?? '';
     const pending: Array<Promise<void>> = [];
     for (const north of this.northConnectors.values()) {
       if (!north.north.isEnabled()) continue;
@@ -564,6 +565,7 @@ export default class DataStreamEngine {
           .cacheContent(data, {
             source: 'south',
             southId,
+            southName,
             queryTime,
             queryStartTime: queryStartTime ?? null,
             queryEndTime: queryEndTime ?? null,

@@ -2018,6 +2018,12 @@ export interface CacheMetadataSourceOriginSouth {
   southId: string;
 
   /**
+   * Name of the south connector at the source of the data, substituted for `@ConnectorName` in
+   * transformer filename patterns.
+   */
+  southName: string;
+
+  /**
    * The items at the source of the data
    */
   items: Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>;
