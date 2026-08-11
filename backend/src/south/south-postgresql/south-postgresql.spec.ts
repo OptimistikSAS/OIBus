@@ -9,11 +9,7 @@ import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type { OIBusContent } from '../../../shared/model/engine.model';
 import type { SouthItemSettings } from '../../../shared/model/south-settings.model';
-import type {
-  SouthPostgreSQLItemSettings,
-  SouthPostgreSQLItemSettingsDateTimeFields,
-  SouthPostgreSQLSettings
-} from '../../../shared/model/south-settings.model';
+import type { SouthPostgreSQLItemSettings, SouthPostgreSQLSettings } from '../../../shared/model/south-settings.model';
 import type SouthPostgreSQLClass from './south-postgresql';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { DateTime } from 'luxon';
@@ -70,12 +66,9 @@ describe('SouthPostgreSQL', () => {
     groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
     convertDateTimeToInstant: mock.fn((instant: unknown) => instant),
     formatInstant: mock.fn((instant: unknown) => instant),
-    generateCsvContent: mock.fn(() => ''),
-    generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
     generateReplacementParameters: mock.fn((): unknown => []),
     logQuery: mock.fn(),
     getSqlQueryTimeVariablesUsage: mock.fn((_query: string) => ({ usesStartTime: true, usesEndTime: true, hasInlineOffset: false })),
-    persistResults: mock.fn(async () => undefined),
     getErrorMessage: mock.fn((error: unknown) => {
       if (error instanceof Error) return error.message;
       if (typeof error === 'string') return error;
@@ -119,11 +112,8 @@ describe('SouthPostgreSQL', () => {
     });
     utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
     utilsExports.formatInstant = mock.fn((instant: unknown) => instant);
-    utilsExports.generateCsvContent = mock.fn(() => '');
-    utilsExports.generateFilenameForSerialization = mock.fn(() => 'filename.csv');
     utilsExports.generateReplacementParameters = mock.fn(() => []);
     utilsExports.logQuery = mock.fn();
-    utilsExports.persistResults = mock.fn(async () => undefined);
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
 
@@ -158,31 +148,15 @@ describe('SouthPostgreSQL', () => {
           enabled: true,
           settings: {
             query: 'query1',
-            dateTimeFields: [
-              {
-                fieldName: 'anotherTimestamp',
-                useAsReference: false,
-                type: 'unix-epoch-ms',
-                timezone: null,
-                format: null,
-                locale: null
-              } as unknown as SouthPostgreSQLItemSettingsDateTimeFields,
-              {
-                fieldName: 'timestamp',
-                useAsReference: true,
+            trackingInstant: {
+              trackInstant: true,
+              fieldName: 'timestamp',
+              dateTimeInput: {
                 type: 'string',
                 timezone: 'Europe/Paris',
                 format: 'yyyy-MM-dd HH:mm:ss.SSS',
                 locale: 'en-US'
               }
-            ],
-            serialization: {
-              type: 'csv',
-              filename: 'sql-@CurrentDate.csv',
-              delimiter: 'COMMA',
-              compression: true,
-              outputTimestampFormat: 'yyyy-MM-dd',
-              outputTimezone: 'Europe/Paris'
             }
           },
           scanMode: testData.scanMode.list[0],
@@ -203,14 +177,8 @@ describe('SouthPostgreSQL', () => {
           enabled: true,
           settings: {
             query: 'query2',
-            dateTimeFields: null,
-            serialization: {
-              type: 'csv',
-              filename: 'sql-@CurrentDate.csv',
-              delimiter: 'COMMA',
-              compression: true,
-              outputTimestampFormat: 'yyyy-MM-dd',
-              outputTimezone: 'Europe/Paris'
+            trackingInstant: {
+              trackInstant: false
             }
           },
           scanMode: testData.scanMode.list[0],
@@ -231,31 +199,15 @@ describe('SouthPostgreSQL', () => {
           enabled: true,
           settings: {
             query: 'query3',
-            dateTimeFields: [
-              {
-                fieldName: 'anotherTimestamp',
-                useAsReference: false,
-                type: 'unix-epoch-ms',
-                timezone: null,
-                format: null,
-                locale: null
-              } as unknown as SouthPostgreSQLItemSettingsDateTimeFields,
-              {
-                fieldName: 'timestamp',
-                useAsReference: true,
+            trackingInstant: {
+              trackInstant: true,
+              fieldName: 'timestamp',
+              dateTimeInput: {
                 type: 'string',
                 timezone: 'Europe/Paris',
                 format: 'yyyy-MM-dd HH:mm:ss.SSS',
                 locale: 'en-US'
               }
-            ],
-            serialization: {
-              type: 'csv',
-              filename: 'sql-@CurrentDate.csv',
-              delimiter: 'COMMA',
-              compression: true,
-              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss',
-              outputTimezone: 'Europe/Paris'
             }
           },
           scanMode: testData.scanMode.list[1],
@@ -305,7 +257,14 @@ describe('SouthPostgreSQL', () => {
       utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
 
       const result = await south.historyQuery([configuration.items[0]], startTime, testData.constants.dates.FAKE_NOW);
-      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(addContentCallback.mock.calls.length, 1);
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
+        type: 'record-list',
+        content: [
+          { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 },
+          { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
+        ]
+      });
       assert.strictEqual(queryDataMock.mock.calls.length, 1);
       assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [
         configuration.items[0],
@@ -332,7 +291,7 @@ describe('SouthPostgreSQL', () => {
       );
 
       const result = await south.historyQuery([configuration.items[0]], startTime, testData.constants.dates.FAKE_NOW);
-      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual(addContentCallback.mock.calls.length, 0);
       assert.strictEqual(queryDataMock.mock.calls.length, 1);
       assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [
         configuration.items[0],
@@ -505,31 +464,15 @@ describe('SouthPostgreSQL', () => {
           enabled: true,
           settings: {
             query: 'query1',
-            dateTimeFields: [
-              {
-                fieldName: 'anotherTimestamp',
-                useAsReference: false,
-                type: 'unix-epoch-ms',
-                timezone: null,
-                format: null,
-                locale: null
-              } as unknown as SouthPostgreSQLItemSettingsDateTimeFields,
-              {
-                fieldName: 'timestamp',
-                useAsReference: true,
+            trackingInstant: {
+              trackInstant: true,
+              fieldName: 'timestamp',
+              dateTimeInput: {
                 type: 'string',
                 timezone: 'Europe/Paris',
                 format: 'yyyy-MM-dd HH:mm:ss.SSS',
                 locale: 'en-US'
               }
-            ],
-            serialization: {
-              type: 'csv',
-              filename: 'sql-@CurrentDate.csv',
-              delimiter: 'COMMA',
-              compression: true,
-              outputTimestampFormat: 'yyyy-MM-dd',
-              outputTimezone: 'Europe/Paris'
             }
           },
           scanMode: testData.scanMode.list[0],
@@ -550,14 +493,8 @@ describe('SouthPostgreSQL', () => {
           enabled: true,
           settings: {
             query: 'query2',
-            dateTimeFields: null,
-            serialization: {
-              type: 'csv',
-              filename: 'sql-@CurrentDate.csv',
-              delimiter: 'COMMA',
-              compression: true,
-              outputTimestampFormat: 'yyyy-MM-dd',
-              outputTimezone: 'Europe/Paris'
+            trackingInstant: {
+              trackInstant: false
             }
           },
           scanMode: testData.scanMode.list[0],
@@ -578,31 +515,15 @@ describe('SouthPostgreSQL', () => {
           enabled: true,
           settings: {
             query: 'query3',
-            dateTimeFields: [
-              {
-                fieldName: 'anotherTimestamp',
-                useAsReference: false,
-                type: 'unix-epoch-ms',
-                timezone: null,
-                format: null,
-                locale: null
-              } as unknown as SouthPostgreSQLItemSettingsDateTimeFields,
-              {
-                fieldName: 'timestamp',
-                useAsReference: true,
+            trackingInstant: {
+              trackInstant: true,
+              fieldName: 'timestamp',
+              dateTimeInput: {
                 type: 'string',
                 timezone: 'Europe/Paris',
                 format: 'yyyy-MM-dd HH:mm:ss.SSS',
                 locale: 'en-US'
               }
-            ],
-            serialization: {
-              type: 'csv',
-              filename: 'sql-@CurrentDate.csv',
-              delimiter: 'COMMA',
-              compression: true,
-              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss',
-              outputTimezone: 'Europe/Paris'
             }
           },
           scanMode: testData.scanMode.list[1],
