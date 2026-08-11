@@ -74,6 +74,18 @@ describe('OIBusSetpointToMQTTTransformer', () => {
     });
   });
 
+  it('should parse setpoints when transformInMemory receives a JSON string instead of an array', async () => {
+    const options = {
+      mapping: [{ reference: 'reference1', topic: '/oibus/reference1' }]
+    };
+    const transformer = new OIBusSetpointToMQTTTransformer(logger, testData.transformers.list[0], options);
+    const dataChunks: Array<OIBusSetpoint> = [{ reference: 'reference1', value: '1' }];
+
+    const result = await transformer.transformInMemory(JSON.stringify(dataChunks), { source: 'test' }, null);
+
+    assert.deepStrictEqual(JSON.parse(result.output.toString()), [{ topic: '/oibus/reference1', payload: '1' }]);
+  });
+
   it('should return manifest', () => {
     assert.deepStrictEqual(setpointToMqttManifest.settings, {
       type: 'object',
