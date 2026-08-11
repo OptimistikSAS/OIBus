@@ -2,9 +2,15 @@ import { Component, inject, ChangeDetectionStrategy, OnDestroy } from '@angular/
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
+import { Observable } from 'rxjs';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
-import { OIBusSouthType, SouthConnectorExploreEntry } from '../../../../../backend/shared/model/south-connector.model';
+import {
+  OIBusSouthType,
+  SouthConnectorExploreEntry,
+  SouthExploreBrowseResult,
+  SouthExploreStartResult
+} from '../../../../../backend/shared/model/south-connector.model';
 
 interface ExploreTreeNode {
   entry: SouthConnectorExploreEntry;
@@ -14,6 +20,17 @@ interface ExploreTreeNode {
   loaded: boolean;
   error: string | null;
   children: Array<ExploreTreeNode>;
+}
+
+/**
+ * Backend calls needed to drive an explore session, kept as a plain port so the modal isn't tied
+ * to `SouthConnectorService` — a south connector and a history query's south settings start/browse/
+ * close their explore sessions through different endpoints.
+ */
+export interface SouthExploreApi {
+  start(settings: SouthSettings, type: OIBusSouthType): Observable<SouthExploreStartResult>;
+  browse(sessionId: string, parentId: string | null): Observable<SouthExploreBrowseResult>;
+  close(sessionId: string): Observable<void>;
 }
 
 /**
@@ -32,7 +49,7 @@ export class SouthExploreModalComponent implements OnDestroy {
   private modal = inject(NgbActiveModal);
   private southConnectorService = inject(SouthConnectorService);
 
-  southId = 'create';
+  private api: SouthExploreApi | null = null;
   loading = false;
   error: string | null = null;
   sessionId: string | null = null;
@@ -40,11 +57,19 @@ export class SouthExploreModalComponent implements OnDestroy {
 
   /**
    * Start the explore session and load the root-level entries.
+   *
+   * @param connectorId - id used to scope the session when exploring a persisted south connector's
+   *   own settings; pass `null` for unsaved settings (create/edit forms)
+   * @param settingsToExplore - the south settings to explore
+   * @param southType - the south connector type
+   * @param api - override the backend calls used to start/browse/close the session — needed when
+   *   exploring settings that don't belong to a standalone south connector (e.g. a history query's
+   *   south settings). Defaults to the south connector explore endpoints keyed by `connectorId`.
    */
-  prepare(connectorId: string | null, settingsToExplore: SouthSettings, southType: OIBusSouthType) {
-    this.southId = connectorId || 'create';
+  prepare(connectorId: string | null, settingsToExplore: SouthSettings, southType: OIBusSouthType, api?: SouthExploreApi) {
+    this.api = api ?? this.defaultApi(connectorId || 'create');
     this.loading = true;
-    this.southConnectorService.startExplore(this.southId, settingsToExplore, southType).subscribe({
+    this.api.start(settingsToExplore, southType).subscribe({
       error: httpError => {
         this.error = httpError.error?.message ?? httpError.message;
         this.loading = false;
@@ -55,6 +80,14 @@ export class SouthExploreModalComponent implements OnDestroy {
         this.loading = false;
       }
     });
+  }
+
+  private defaultApi(southId: string): SouthExploreApi {
+    return {
+      start: (settings, type) => this.southConnectorService.startExplore(southId, settings, type),
+      browse: (sessionId, parentId) => this.southConnectorService.browseExplore(southId, sessionId, parentId),
+      close: sessionId => this.southConnectorService.closeExplore(southId, sessionId)
+    };
   }
 
   /**
@@ -77,7 +110,7 @@ export class SouthExploreModalComponent implements OnDestroy {
     }
     node.loading = true;
     node.error = null;
-    this.southConnectorService.browseExplore(this.southId, this.sessionId, node.entry.id).subscribe({
+    this.api!.browse(this.sessionId, node.entry.id).subscribe({
       error: httpError => {
         node.error = httpError.error?.message ?? httpError.message;
         node.loading = false;
@@ -109,7 +142,7 @@ export class SouthExploreModalComponent implements OnDestroy {
    */
   ngOnDestroy() {
     if (this.sessionId) {
-      this.southConnectorService.closeExplore(this.southId, this.sessionId).subscribe({ error: () => undefined });
+      this.api!.close(this.sessionId).subscribe({ error: () => undefined });
     }
   }
 }

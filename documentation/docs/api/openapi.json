@@ -39561,6 +39561,148 @@
 				}
 			}
 		},
+		"/api/history/{historyId}/explore": {
+			"post": {
+				"operationId": "StartExplore",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SouthExploreStartResult"
+								}
+							}
+						}
+					}
+				},
+				"description": "Start an interactive explore session for a history query's south connector",
+				"summary": "Start south explore session",
+				"tags": [
+					"History Queries"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "historyId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "southType",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/OIBusSouthType"
+						}
+					},
+					{
+						"in": "query",
+						"name": "fromSouth",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SouthSettings"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/history/{historyId}/explore/{sessionId}": {
+			"put": {
+				"operationId": "BrowseExplore",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SouthExploreBrowseResult"
+								}
+							}
+						}
+					}
+				},
+				"description": "Browse (expand) an entry within a history query explore session",
+				"summary": "Browse south explore session",
+				"tags": [
+					"History Queries"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "historyId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "sessionId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SouthExploreBrowseCommand"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "CloseExplore",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"description": "Close a history query explore session",
+				"summary": "Close south explore session",
+				"tags": [
+					"History Queries"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "historyId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "sessionId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/api/history/{historyId}/items/list": {
 			"get": {
 				"operationId": "ListItems",
