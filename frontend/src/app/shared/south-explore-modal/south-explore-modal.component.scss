@@ -47,3 +47,33 @@
   display: inline-block;
   width: 0.85rem;
 }
+
+// Two-tone "key | value" chip for metadata entries. Bootstrap's default .badge (0.75em,
+// bold, single flat color) reads as a tiny, hard-to-parse blob once it holds a "key: value"
+// pair — splitting key/value into their own tinted halves keeps each legible at a glance.
+.explore-metadata {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid $mediumGrey;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  vertical-align: middle;
+}
+
+.explore-metadata-key {
+  padding: 0.1rem 0.45rem;
+  background-color: $mediumGrey;
+  color: $darkGrey;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.explore-metadata-value {
+  padding: 0.1rem 0.5rem;
+  background-color: $veryLightGrey;
+  color: $darkGrey;
+  font-weight: 400;
+}
