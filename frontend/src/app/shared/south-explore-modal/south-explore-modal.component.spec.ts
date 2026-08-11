@@ -19,7 +19,7 @@ class SouthExploreModalComponentTester {
   readonly empty = this.root.getByCss('#explore-empty');
   readonly tree = this.root.getByCss('#explore-tree');
   readonly cancel = this.root.getByRole('button', { name: 'Close' });
-  readonly typeBadges = this.root.getByCss('.explore-type');
+  readonly typeBadges = this.root.getByCss('.explore-metadata');
 }
 
 describe('SouthExploreModalComponent', () => {
@@ -54,7 +54,7 @@ describe('SouthExploreModalComponent', () => {
 
   test('should display the root entries', async () => {
     southConnectorService.startExplore.mockReturnValue(
-      of({ sessionId: 'sessionId', entries: [{ id: 'ns=0;i=85', name: 'Objects', type: 'Object', hasChildren: true }] })
+      of({ sessionId: 'sessionId', entries: [{ id: 'ns=0;i=85', name: 'Objects', metadata: { type: 'Object' }, hasChildren: true }] })
     );
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
     tester.fixture.detectChanges();
@@ -70,8 +70,8 @@ describe('SouthExploreModalComponent', () => {
       of({
         sessionId: 'sessionId',
         entries: [
-          { id: 'a', name: 'a-folder', type: 'folder', hasChildren: true },
-          { id: 'b', name: 'b-file', type: 'file', hasChildren: false }
+          { id: 'a', name: 'a-folder', metadata: { type: 'folder' }, hasChildren: true },
+          { id: 'b', name: 'b-file', metadata: { type: 'file' }, hasChildren: false }
         ]
       })
     );
@@ -87,14 +87,17 @@ describe('SouthExploreModalComponent', () => {
     // it hasChildren:true, and browsing it back with zero entries flips hasChildren to false.
     // The type badge must still read "Variable" — hasChildren is a separate, corrected flag.
     southConnectorService.startExplore.mockReturnValue(
-      of({ sessionId: 'sessionId', entries: [{ id: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable', hasChildren: true }] })
+      of({
+        sessionId: 'sessionId',
+        entries: [{ id: 'ns=1;s=Temperature', name: 'Temperature', metadata: { type: 'Variable' }, hasChildren: true }]
+      })
     );
     southConnectorService.browseExplore.mockReturnValue(of({ entries: [] }));
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
 
     tester.component.toggle(tester.component.nodes[0]);
 
-    expect(tester.component.nodes[0].entry.type).toBe('Variable');
+    expect(tester.component.nodes[0].entry.metadata['type']).toBe('Variable');
     expect(tester.component.nodes[0].entry.hasChildren).toBe(false);
   });
 
@@ -124,10 +127,10 @@ describe('SouthExploreModalComponent', () => {
 
   test('should expand a node and load its children', () => {
     southConnectorService.startExplore.mockReturnValue(
-      of({ sessionId: 'sessionId', entries: [{ id: 'parent', name: 'Parent', type: 'Object', hasChildren: true }] })
+      of({ sessionId: 'sessionId', entries: [{ id: 'parent', name: 'Parent', metadata: { type: 'Object' }, hasChildren: true }] })
     );
     southConnectorService.browseExplore.mockReturnValue(
-      of({ entries: [{ id: 'child', name: 'Child', type: 'file', hasChildren: false }] })
+      of({ entries: [{ id: 'child', name: 'Child', metadata: { type: 'file' }, hasChildren: false }] })
     );
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
 
@@ -140,10 +143,10 @@ describe('SouthExploreModalComponent', () => {
 
   test('should collapse an already expanded node', () => {
     southConnectorService.startExplore.mockReturnValue(
-      of({ sessionId: 'sessionId', entries: [{ id: 'parent', name: 'Parent', type: 'Object', hasChildren: true }] })
+      of({ sessionId: 'sessionId', entries: [{ id: 'parent', name: 'Parent', metadata: { type: 'Object' }, hasChildren: true }] })
     );
     southConnectorService.browseExplore.mockReturnValue(
-      of({ entries: [{ id: 'child', name: 'Child', type: 'file', hasChildren: false }] })
+      of({ entries: [{ id: 'child', name: 'Child', metadata: { type: 'file' }, hasChildren: false }] })
     );
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
 
@@ -157,10 +160,10 @@ describe('SouthExploreModalComponent', () => {
 
   test('should re-expand a cached node without browsing again', () => {
     southConnectorService.startExplore.mockReturnValue(
-      of({ sessionId: 'sessionId', entries: [{ id: 'parent', name: 'Parent', type: 'Object', hasChildren: true }] })
+      of({ sessionId: 'sessionId', entries: [{ id: 'parent', name: 'Parent', metadata: { type: 'Object' }, hasChildren: true }] })
     );
     southConnectorService.browseExplore.mockReturnValue(
-      of({ entries: [{ id: 'child', name: 'Child', type: 'file', hasChildren: false }] })
+      of({ entries: [{ id: 'child', name: 'Child', metadata: { type: 'file' }, hasChildren: false }] })
     );
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
 
@@ -174,7 +177,7 @@ describe('SouthExploreModalComponent', () => {
 
   test('should not browse a leaf node', () => {
     southConnectorService.startExplore.mockReturnValue(
-      of({ sessionId: 'sessionId', entries: [{ id: 'leaf', name: 'Leaf', type: 'file', hasChildren: false }] })
+      of({ sessionId: 'sessionId', entries: [{ id: 'leaf', name: 'Leaf', metadata: { type: 'file' }, hasChildren: false }] })
     );
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
 
@@ -185,7 +188,7 @@ describe('SouthExploreModalComponent', () => {
 
   test('should surface an error when browsing fails', () => {
     southConnectorService.startExplore.mockReturnValue(
-      of({ sessionId: 'sessionId', entries: [{ id: 'parent', name: 'Parent', type: 'Object', hasChildren: true }] })
+      of({ sessionId: 'sessionId', entries: [{ id: 'parent', name: 'Parent', metadata: { type: 'Object' }, hasChildren: true }] })
     );
     southConnectorService.browseExplore.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'nope' } })));
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
@@ -198,7 +201,7 @@ describe('SouthExploreModalComponent', () => {
 
   test('should drop the caret when an expanded node has no children', () => {
     southConnectorService.startExplore.mockReturnValue(
-      of({ sessionId: 'sessionId', entries: [{ id: 'parent', name: 'Parent', type: 'Object', hasChildren: true }] })
+      of({ sessionId: 'sessionId', entries: [{ id: 'parent', name: 'Parent', metadata: { type: 'Object' }, hasChildren: true }] })
     );
     southConnectorService.browseExplore.mockReturnValue(of({ entries: [] }));
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);

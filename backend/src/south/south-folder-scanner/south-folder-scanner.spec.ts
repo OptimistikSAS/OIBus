@@ -105,6 +105,7 @@ describe('SouthFolderScanner', () => {
           readDelay: null,
           startTimeOffset: null,
           endTimeOffset: null,
+          recoveryStrategy: 'oldest',
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -703,8 +704,8 @@ describe('SouthFolderScanner', () => {
 
       assert.strictEqual(String(readdirMock.mock.calls[0].arguments[0]), path.resolve('inputFolder'));
       assert.deepStrictEqual(entries, [
-        { id: 'subfolder', name: 'subfolder', type: 'folder', hasChildren: true },
-        { id: 'file1.csv', name: 'file1.csv', type: 'file', hasChildren: false }
+        { id: 'subfolder', name: 'subfolder', metadata: { type: 'folder' }, hasChildren: true },
+        { id: 'file1.csv', name: 'file1.csv', metadata: { type: 'file' }, hasChildren: false }
       ]);
     });
 
@@ -719,7 +720,9 @@ describe('SouthFolderScanner', () => {
       const entries = await south.explore('subfolder');
 
       assert.strictEqual(String(readdirMock.mock.calls[0].arguments[0]), path.resolve('inputFolder', 'subfolder'));
-      assert.deepStrictEqual(entries, [{ id: path.join('subfolder', 'nested.csv'), name: 'nested.csv', type: 'file', hasChildren: false }]);
+      assert.deepStrictEqual(entries, [
+        { id: path.join('subfolder', 'nested.csv'), name: 'nested.csv', metadata: { type: 'file' }, hasChildren: false }
+      ]);
     });
 
     it('should reject a path outside of the input folder', async () => {

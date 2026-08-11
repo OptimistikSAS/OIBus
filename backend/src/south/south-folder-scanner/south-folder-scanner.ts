@@ -216,7 +216,9 @@ export default class SouthFolderScanner
         return {
           id: path.join(relative, entry.name),
           name: entry.name,
-          type: isDirectory ? 'folder' : 'file',
+          metadata: {
+            type: isDirectory ? 'folder' : 'file'
+          },
           hasChildren: isDirectory
         };
       });
