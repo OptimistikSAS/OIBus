@@ -11653,6 +11653,105 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsHistoryQueryController_startExplore: Record<string, TsoaRoute.ParameterSchema> = {
+                historyId: {"in":"path","name":"historyId","required":true,"dataType":"string"},
+                southType: {"in":"query","name":"southType","required":true,"ref":"OIBusSouthType"},
+                fromSouth: {"in":"query","name":"fromSouth","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
+                command: {"in":"body","name":"command","required":true,"ref":"SouthSettings"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/history/:historyId/explore',
+            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController)),
+            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController.prototype.startExplore)),
+
+            async function HistoryQueryController_startExplore(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsHistoryQueryController_startExplore, request, response });
+
+                const controller = new HistoryQueryController();
+
+              await templateService.apiHandler({
+                methodName: 'startExplore',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsHistoryQueryController_browseExplore: Record<string, TsoaRoute.ParameterSchema> = {
+                _historyId: {"in":"path","name":"historyId","required":true,"dataType":"string"},
+                sessionId: {"in":"path","name":"sessionId","required":true,"dataType":"string"},
+                command: {"in":"body","name":"command","required":true,"ref":"SouthExploreBrowseCommand"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.put('/api/history/:historyId/explore/:sessionId',
+            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController)),
+            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController.prototype.browseExplore)),
+
+            async function HistoryQueryController_browseExplore(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsHistoryQueryController_browseExplore, request, response });
+
+                const controller = new HistoryQueryController();
+
+              await templateService.apiHandler({
+                methodName: 'browseExplore',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsHistoryQueryController_closeExplore: Record<string, TsoaRoute.ParameterSchema> = {
+                _historyId: {"in":"path","name":"historyId","required":true,"dataType":"string"},
+                sessionId: {"in":"path","name":"sessionId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.delete('/api/history/:historyId/explore/:sessionId',
+            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController)),
+            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController.prototype.closeExplore)),
+
+            async function HistoryQueryController_closeExplore(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsHistoryQueryController_closeExplore, request, response });
+
+                const controller = new HistoryQueryController();
+
+              await templateService.apiHandler({
+                methodName: 'closeExplore',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsHistoryQueryController_listItems: Record<string, TsoaRoute.ParameterSchema> = {
                 historyId: {"in":"path","name":"historyId","required":true,"dataType":"string"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
