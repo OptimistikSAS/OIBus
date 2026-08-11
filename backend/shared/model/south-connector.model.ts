@@ -1210,10 +1210,9 @@ export interface SouthConnectorExploreEntry {
   name: string;
 
   /**
-   * Nature of the entry. For OPC-UA the node class ('Object', 'Variable', ...);
-   * for the folder scanner 'folder' or 'file'.
+   * Additional data linked to the entry
    */
-  type: string;
+  metadata: Record<string, string | number>;
 
   /**
    * Whether the entry can be expanded to reveal children in the explore tree.
