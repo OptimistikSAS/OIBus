@@ -155,16 +155,15 @@
     ]
   },
   "allowScripts": {
-    "esbuild@0.27.7": true,
     "fsevents@2.3.3": true,
-    "isolated-vm@7.0.0": true,
     "odbc@2.5.0": true,
     "ssh2@1.17.0": true,
-    "esbuild@0.28.1": true,
     "oracledb@7.0.1": true,
     "argon2@0.45.1": true,
     "cpu-features@0.0.10": true,
-    "better-sqlite3@13.0.2": true,
-    "protobufjs@7.6.5": true
+    "protobufjs@7.6.5": true,
+    "better-sqlite3@13.0.3": true,
+    "esbuild@0.28.2": true,
+    "isolated-vm@7.0.1": true
   }
 }
