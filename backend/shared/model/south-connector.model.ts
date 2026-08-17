@@ -35,6 +35,8 @@ import {
   SouthPostgreSQLSettings,
   SouthRestItemSettings,
   SouthRestSettings,
+  SouthS7ItemSettings,
+  SouthS7Settings,
   SouthSFTPItemSettings,
   SouthSFTPSettings,
   SouthSQLiteItemSettings,
@@ -84,6 +86,7 @@ export const OIBUS_SOUTH_TYPES = [
   'osisoft-pi', // OSIsoft PI System
   'postgresql', // PostgreSQL database
   'rest', // REST API connector
+  's7', // Siemens S7 industrial protocol
   'sftp', // SFTP file transfer protocol
   'sqlite' // SQLite database
 ] as const;
@@ -120,6 +123,13 @@ export interface SouthType {
    * @example "file"
    */
   category: OIBusSouthCategory;
+
+  /**
+   * Whether this connector type is in beta.
+   *
+   * @example false
+   */
+  beta?: boolean;
 
   /**
    * The operating modes supported by this connector type.
@@ -561,6 +571,10 @@ export interface SouthConnectorPostgreSQLDTO extends SouthConnectorTypedDTO<
 export interface SouthConnectorRESTDTO extends SouthConnectorTypedDTO<'rest', SouthRestSettings, SouthRestItemSettings> {
   items: Array<SouthConnectorRESTItemDTO>;
 }
+/** South connector configuration for Siemens S7. */
+export interface SouthConnectorS7DTO extends SouthConnectorTypedDTO<'s7', SouthS7Settings, SouthS7ItemSettings> {
+  items: Array<SouthConnectorS7ItemDTO>;
+}
 /** South connector configuration for SFTP file transfer. */
 export interface SouthConnectorSFTPDTO extends SouthConnectorTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings> {
   items: Array<SouthConnectorSFTPItemDTO>;
@@ -592,6 +606,7 @@ export type SouthConnectorDTO =
   | SouthConnectorOsisoftPIDTO
   | SouthConnectorPostgreSQLDTO
   | SouthConnectorRESTDTO
+  | SouthConnectorS7DTO
   | SouthConnectorSFTPDTO
   | SouthConnectorSQLiteDTO;
 
@@ -853,6 +868,10 @@ export interface SouthConnectorPostgreSQLCommandDTO extends SouthConnectorComman
 export interface SouthConnectorRESTCommandDTO extends SouthConnectorCommandTypedDTO<'rest', SouthRestSettings, SouthRestItemSettings> {
   items: Array<SouthConnectorRESTItemCommandDTO>;
 }
+/** South connector command for Siemens S7. */
+export interface SouthConnectorS7CommandDTO extends SouthConnectorCommandTypedDTO<'s7', SouthS7Settings, SouthS7ItemSettings> {
+  items: Array<SouthConnectorS7ItemCommandDTO>;
+}
 /** South connector command for SFTP file transfer. */
 export interface SouthConnectorSFTPCommandDTO extends SouthConnectorCommandTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings> {
   items: Array<SouthConnectorSFTPItemCommandDTO>;
@@ -888,6 +907,7 @@ export type SouthConnectorCommandDTO =
   | SouthConnectorOsisoftPICommandDTO
   | SouthConnectorPostgreSQLCommandDTO
   | SouthConnectorRESTCommandDTO
+  | SouthConnectorS7CommandDTO
   | SouthConnectorSFTPCommandDTO
   | SouthConnectorSQLiteCommandDTO;
 
@@ -928,6 +948,8 @@ export interface SouthConnectorPostgreSQLItemDTO extends SouthConnectorItemTyped
 export interface SouthConnectorRESTItemDTO extends SouthConnectorItemTypedDTO<SouthRestItemSettings> {}
 /** South connector item DTO for SFTP file transfer. */
 export interface SouthConnectorSFTPItemDTO extends SouthConnectorItemTypedDTO<SouthSFTPItemSettings> {}
+/** South connector item DTO for Siemens S7. */
+export interface SouthConnectorS7ItemDTO extends SouthConnectorItemTypedDTO<SouthS7ItemSettings> {}
 /** South connector item DTO for SQLite. */
 export interface SouthConnectorSQLiteItemDTO extends SouthConnectorItemTypedDTO<SouthSQLiteItemSettings> {}
 
@@ -953,6 +975,7 @@ export type SouthConnectorItemDTO =
   | SouthConnectorOsisoftPIItemDTO
   | SouthConnectorPostgreSQLItemDTO
   | SouthConnectorRESTItemDTO
+  | SouthConnectorS7ItemDTO
   | SouthConnectorSFTPItemDTO
   | SouthConnectorSQLiteItemDTO;
 
@@ -991,6 +1014,8 @@ export interface SouthConnectorOsisoftPIItemCommandDTO extends SouthConnectorIte
 export interface SouthConnectorPostgreSQLItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthPostgreSQLItemSettings> {}
 /** South connector item command for the REST API. */
 export interface SouthConnectorRESTItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthRestItemSettings> {}
+/** South connector item command for Siemens S7. */
+export interface SouthConnectorS7ItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthS7ItemSettings> {}
 /** South connector item command for SFTP file transfer. */
 export interface SouthConnectorSFTPItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthSFTPItemSettings> {}
 /** South connector item command for SQLite. */
@@ -1018,6 +1043,7 @@ export type SouthConnectorItemCommandDTO =
   | SouthConnectorOsisoftPIItemCommandDTO
   | SouthConnectorPostgreSQLItemCommandDTO
   | SouthConnectorRESTItemCommandDTO
+  | SouthConnectorS7ItemCommandDTO
   | SouthConnectorSFTPItemCommandDTO
   | SouthConnectorSQLiteItemCommandDTO;
 
@@ -1107,6 +1133,13 @@ export interface SouthConnectorManifest {
   category: OIBusSouthCategory;
 
   /**
+   * Whether this connector type is in beta.
+   *
+   * @example false
+   */
+  beta?: boolean;
+
+  /**
    * The operating modes supported by this connector type.
    */
   modes: {
@@ -1140,6 +1173,15 @@ export interface SouthConnectorManifest {
   };
 
   /**
+   * Whether this connector type supports the interactive "explore/discovery" feature
+   * (browsing the data source, e.g. expanding OPC-UA nodes or walking a folder tree).
+   * UI capability flag — mirrors the connector's structural `hasExplore()`.
+   *
+   * @example true
+   */
+  explore?: boolean;
+
+  /**
    * The configuration schema for the connector settings.
    */
   settings: OIBusObjectAttribute;
@@ -1148,6 +1190,69 @@ export interface SouthConnectorManifest {
    * The configuration schema for items (data points).
    */
   items: OIBusArrayAttribute;
+}
+
+/**
+ * A single entry returned while exploring/discovering a South connector's data source.
+ * Represents an OPC-UA node or a file-system entry. Kept intentionally generic and
+ * extensible so item creation and item synchronisation can build on it later.
+ */
+export interface SouthConnectorExploreEntry {
+  /**
+   * Stable identifier of the entry, passed back to expand it.
+   * OPC-UA node id (e.g. "ns=1;s=Temperature") or a folder-relative path.
+   */
+  id: string;
+
+  /**
+   * Human-readable label (OPC-UA display name or file/folder name).
+   */
+  name: string;
+
+  /**
+   * Additional data linked to the entry
+   */
+  metadata: Record<string, string | number>;
+
+  /**
+   * Whether the entry can be expanded to reveal children in the explore tree.
+   */
+  hasChildren: boolean;
+}
+
+/**
+ * Result of starting an explore session.
+ */
+export interface SouthExploreStartResult {
+  /**
+   * Identifier of the stateful explore session, used for subsequent browse/close calls.
+   */
+  sessionId: string;
+
+  /**
+   * The root-level entries of the data source.
+   */
+  entries: Array<SouthConnectorExploreEntry>;
+}
+
+/**
+ * Result of browsing (expanding) an entry within an explore session.
+ */
+export interface SouthExploreBrowseResult {
+  /**
+   * The children of the browsed entry.
+   */
+  entries: Array<SouthConnectorExploreEntry>;
+}
+
+/**
+ * Command body to browse (expand) an entry within an explore session.
+ */
+export interface SouthExploreBrowseCommand {
+  /**
+   * The id of the entry to expand, or null to (re)load the root level.
+   */
+  parentId: string | null;
 }
 
 /**

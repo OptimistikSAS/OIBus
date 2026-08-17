@@ -2,7 +2,8 @@ import {
   OIBusSouthType,
   SouthConnectorItemTestingSettings,
   SouthConnectorItemTestResult,
-  SouthConnectorManifest
+  SouthConnectorManifest,
+  SouthExploreStartResult
 } from '../../shared/model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../model/histor-query.model';
@@ -50,6 +51,7 @@ interface ISouthService {
   getManifest(type: string): SouthConnectorManifest;
   findById(southId: string): SouthConnectorEntity<SouthSettings, SouthItemSettings>;
   testSouth(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<OIBusConnectionTestResult>;
+  startExplore(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<SouthExploreStartResult>;
   testItem(
     southId: string,
     southType: OIBusSouthType,
@@ -359,6 +361,32 @@ export default class HistoryQueryService {
     const southManifest = this.southService.getManifest(southType);
     await this.validator.validateSettings(southManifest.settings, settingsToTest);
     return await this.southService.testSouth(
+      'history',
+      southType,
+      await encryptionService.decryptConnectorSecrets(
+        await encryptionService.encryptConnectorSecrets(settingsToTest, southSettings, southManifest.settings),
+        southManifest.settings
+      )
+    );
+  }
+
+  async startExplore(
+    historyId: string,
+    southType: OIBusSouthType,
+    retrieveSecretsFromSouth: string | undefined,
+    settingsToTest: SouthSettings
+  ): Promise<SouthExploreStartResult> {
+    let southSettings: SouthSettings | null = null;
+    if (historyId !== 'create') {
+      const historyQuery = this.findById(historyId);
+      southSettings = historyQuery.southSettings;
+    } else if (retrieveSecretsFromSouth) {
+      const south = this.southService.findById(retrieveSecretsFromSouth);
+      southSettings = south.settings;
+    }
+    const southManifest = this.southService.getManifest(southType);
+    await this.validator.validateSettings(southManifest.settings, settingsToTest);
+    return await this.southService.startExplore(
       'history',
       southType,
       await encryptionService.decryptConnectorSecrets(
@@ -769,7 +797,15 @@ const copyHistoryQueryItemCommandToHistoryQueryItemEntity = async (
   );
 };
 
-export const toHistoryQueryLightDTO = (historyQuery: HistoryQueryEntityLight, getUserInfo: GetUserInfo): HistoryQueryLightDTO => {
+export const toHistoryQueryLightDTO = (
+  historyQuery: HistoryQueryEntityLight,
+  getUserInfo: GetUserInfo,
+  getHistoryMetrics?: (historyId: string) => HistoryQueryMetrics | null
+): HistoryQueryLightDTO => {
+  // Plain synchronous read of the already-in-memory metrics of the running engine, if any.
+  // No SSE connection or polling is involved here.
+  const metrics = getHistoryMetrics?.(historyQuery.id);
+  const isRunning = metrics?.historyMetrics.running ?? false;
   return {
     id: historyQuery.id,
     name: historyQuery.name,
@@ -779,6 +815,8 @@ export const toHistoryQueryLightDTO = (historyQuery: HistoryQueryEntityLight, ge
     endTime: historyQuery.endTime,
     southType: historyQuery.southType,
     northType: historyQuery.northType,
+    currentItemNumber: isRunning ? metrics!.historyMetrics.currentItemNumber : undefined,
+    numberOfItems: isRunning ? metrics!.historyMetrics.numberOfItems : undefined,
     createdBy: getUserInfo(historyQuery.createdBy),
     updatedBy: getUserInfo(historyQuery.updatedBy),
     createdAt: historyQuery.createdAt,

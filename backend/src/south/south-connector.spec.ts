@@ -17,7 +17,7 @@ import type {
   SouthOPCUAItemSettings,
   SouthOPCUASettings
 } from '../../shared/model/south-settings.model';
-import type { OIBusContent, OIBusTimeValue } from '../../shared/model/engine.model';
+import type { OIBusContent, OIBusRecord, OIBusTimeValue } from '../../shared/model/engine.model';
 import type { Instant } from '../../shared/model/types';
 import type SouthFolderScannerClass from './south-folder-scanner/south-folder-scanner';
 import type SouthMSSQLClass from './south-mssql/south-mssql';
@@ -303,6 +303,50 @@ describe('SouthConnector', () => {
       assert.strictEqual((southCacheRepository.deleteItemsBySouth as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
     });
 
+    it('should build a history query snapshot from persisted cache entries', () => {
+      const items = testData.south.list[0].items as Array<SouthConnectorItemEntity<SouthFolderScannerItemSettings>>;
+      const groupedItem = {
+        ...items[1],
+        syncWithGroup: true,
+        group: { id: 'groupId1', name: 'group 1' }
+      } as unknown as SouthConnectorItemEntity<SouthFolderScannerItemSettings>;
+
+      (southCacheRepository.getItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.mockImplementationOnce(() => ({
+        itemId: items[0].id,
+        groupId: null,
+        trackedInstant: '2020-02-02T02:02:02.222Z',
+        queryTime: '2020-02-02T03:02:02.222Z',
+        value: { foo: 'bar' }
+      }));
+      (southCacheRepository.getGroupLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.mockImplementationOnce(() => null);
+
+      const snapshot = south.getHistoryQuerySnapshot([items[0], groupedItem]);
+
+      assert.deepStrictEqual(snapshot, {
+        items: [
+          {
+            itemId: items[0].id,
+            itemName: items[0].name,
+            trackedInstant: '2020-02-02T02:02:02.222Z',
+            queryTime: '2020-02-02T03:02:02.222Z',
+            value: { foo: 'bar' }
+          },
+          {
+            itemId: groupedItem.id,
+            itemName: groupedItem.name,
+            trackedInstant: null,
+            queryTime: null,
+            value: null
+          }
+        ]
+      });
+
+      const getItemCalls = (southCacheRepository.getItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      assert.strictEqual(getItemCalls[getItemCalls.length - 1].arguments[1], items[0].id);
+      const getGroupCalls = (southCacheRepository.getGroupLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      assert.strictEqual(getGroupCalls[getGroupCalls.length - 1].arguments[1], 'groupId1');
+    });
+
     it('should properly connect and disconnect without touching any cron state', async () => {
       await south.connect();
       await south.disconnect();
@@ -449,12 +493,52 @@ describe('SouthConnector', () => {
       );
     });
 
+    it('should skip the history query when the effective window does not extend past the tracked instant', async () => {
+      const historyQueryMock = mock.fn(async () => ({ trackedInstant: '2021-02-02T02:02:02.222Z', value: null }));
+      south.historyQuery = historyQueryMock;
+
+      // startTimeOffset/endTimeOffset are both 0 on this item, so passing startTime === endTime
+      // makes the effective window collapse to a single instant, which is not "past" it.
+      const items = [testData.south.list[1].items[0]] as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>;
+      await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2020-02-02T02:02:02.222Z');
+
+      assert.strictEqual(historyQueryMock.mock.calls.length, 0);
+      assert.strictEqual(utilsExports.generateIntervals.mock.calls.length, 0);
+      assert.ok(
+        (logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some((c: { arguments: Array<unknown> }) =>
+          String(c.arguments[0]).startsWith('Skipping history query: effective window')
+        )
+      );
+    });
+
+    it('should log a trace message for more than 2 sub-intervals', async () => {
+      const interval1 = { start: '2020-02-02T02:02:02.222Z', end: '2020-04-02T02:02:02.222Z' };
+      const interval2 = { start: '2020-04-02T02:02:02.222Z', end: '2020-06-02T02:02:02.222Z' };
+      const interval3 = { start: '2020-06-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
+      utilsExports.generateIntervals = mock.fn(() => [interval1, interval2, interval3]);
+      south.historyQuery = mock.fn(async () => ({ trackedInstant: '2021-02-02T02:02:02.222Z', value: null }));
+
+      const items = [testData.south.list[1].items[0]] as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>;
+      await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2021-02-02T02:02:02.222Z');
+
+      assert.ok(
+        (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some((c: { arguments: Array<unknown> }) =>
+          String(c.arguments[0]).startsWith('Interval split in 3 sub-intervals')
+        )
+      );
+    });
+
     it('should call historyQuery once per item for single-item connectors', async () => {
       const interval = { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
       utilsExports.generateIntervals = mock.fn(() => [interval]);
 
       const historyQueryMock = mock.fn(async () => ({ trackedInstant: '2021-02-02T02:02:02.222Z', value: null }));
       south.historyQuery = historyQueryMock;
+
+      const itemStartListener = mock.fn();
+      const intervalListener = mock.fn();
+      south.metricsEvent.on('history-query-item-start', itemStartListener);
+      south.metricsEvent.on('history-query-interval', intervalListener);
 
       const items = testData.south.list[1].items as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>;
       await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2021-02-02T02:02:02.222Z');
@@ -465,6 +549,40 @@ describe('SouthConnector', () => {
       assert.strictEqual(historyQueryMock.mock.calls.length, 2);
       assert.deepStrictEqual(historyQueryMock.mock.calls[0].arguments[0], [items[0]]);
       assert.deepStrictEqual(historyQueryMock.mock.calls[1].arguments[0], [items[1]]);
+
+      // history-query-item-start is emitted once per item, before it is queried
+      assert.strictEqual(itemStartListener.mock.calls.length, 2);
+      assert.deepStrictEqual(itemStartListener.mock.calls[0].arguments[0], {
+        itemName: items[0].name,
+        currentItemNumber: 1,
+        numberOfItems: 2
+      });
+      assert.deepStrictEqual(itemStartListener.mock.calls[1].arguments[0], {
+        itemName: items[1].name,
+        currentItemNumber: 2,
+        numberOfItems: 2
+      });
+
+      // history-query-interval carries the item context and interval position/count
+      assert.strictEqual(intervalListener.mock.calls.length, 2);
+      assert.deepStrictEqual(intervalListener.mock.calls[0].arguments[0], {
+        currentIntervalStart: interval.start,
+        currentIntervalEnd: interval.end,
+        currentIntervalNumber: 1,
+        numberOfIntervals: 1,
+        itemName: items[0].name,
+        currentItemNumber: 1,
+        numberOfItems: 2
+      });
+      assert.deepStrictEqual(intervalListener.mock.calls[1].arguments[0], {
+        currentIntervalStart: interval.start,
+        currentIntervalEnd: interval.end,
+        currentIntervalNumber: 1,
+        numberOfIntervals: 1,
+        itemName: items[1].name,
+        currentItemNumber: 2,
+        numberOfItems: 2
+      });
     });
 
     it('should use independent cache entries per item for single-item connectors', async () => {
@@ -628,6 +746,43 @@ describe('SouthConnector', () => {
       assert.strictEqual(directQueryMock.mock.calls.length, 2);
     });
 
+    it('should log the group id/name in the error context when running a task for multiple items in a group', async () => {
+      const historyQueryHandlerMock = mock.fn(async () => {
+        throw new Error('history query error');
+      });
+      south.historyQueryHandler = historyQueryHandlerMock;
+      const directQueryMock = mock.fn(async (): Promise<null> => {
+        throw new Error('last point query error');
+      });
+      south.directQuery = directQueryMock;
+
+      const group = { id: 'groupId1', name: 'group 1', scanMode: testData.scanMode.list[0], maxReadInterval: 3600 };
+      const baseItem = testData.south.list[2].items[0] as SouthConnectorItemEntity<SouthOPCUAItemSettings>;
+      const items = [
+        { ...baseItem, id: 'groupedItem1', group, syncWithGroup: true, settings: { ...baseItem.settings, mode: 'da' as const } },
+        { ...baseItem, id: 'groupedItem2', group, syncWithGroup: true, settings: { ...baseItem.settings, mode: 'da' as const } }
+      ];
+
+      await south['runTask']({ scanModeId: testData.scanMode.list[0].id, items });
+
+      assert.ok(
+        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
+          (c: { arguments: Array<unknown> }) =>
+            c.arguments[1] === 'Error when querying items with history capabilities: history query error' &&
+            (c.arguments[0] as { groupId?: string; groupName?: string }).groupId === 'groupId1' &&
+            (c.arguments[0] as { groupId?: string; groupName?: string }).groupName === 'group 1'
+        )
+      );
+      assert.ok(
+        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
+          (c: { arguments: Array<unknown> }) =>
+            c.arguments[1] === 'Error when querying items with direct access: last point query error' &&
+            (c.arguments[0] as { groupId?: string; groupName?: string }).groupId === 'groupId1' &&
+            (c.arguments[0] as { groupId?: string; groupName?: string }).groupName === 'group 1'
+        )
+      );
+    });
+
     it('should run up to getMaxParallelRun() tasks concurrently and dispatch queued work as slots free up', async () => {
       south['getMaxParallelRun'] = () => 2;
       const resolvers: Array<() => void> = [];
@@ -774,6 +929,75 @@ describe('SouthConnector', () => {
       ]);
     });
 
+    it('should forward the current history query interval bounds when adding values', async () => {
+      const interval = { start: '2020-01-01T00:00:00.000Z', end: '2020-01-02T00:00:00.000Z' };
+      south['currentHistoryQueryInterval'] = interval;
+
+      const values = [{}] as Array<OIBusTimeValue>;
+      await south.addContent({ type: 'time-values', content: values }, testData.constants.dates.DATE_1, testData.south.list[2].items);
+
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments, [
+        testData.south.list[2].id,
+        { type: 'time-values', content: values },
+        testData.constants.dates.DATE_1,
+        testData.south.list[2].items,
+        interval.start,
+        interval.end
+      ]);
+
+      south['currentHistoryQueryInterval'] = null;
+    });
+
+    it('should forward the current history query interval bounds when adding records', async () => {
+      const interval = { start: '2020-01-01T00:00:00.000Z', end: '2020-01-02T00:00:00.000Z' };
+      south['currentHistoryQueryInterval'] = interval;
+
+      const records = [{ col: 1 }] as Array<OIBusRecord>;
+      await south.addContent({ type: 'record-list', content: records }, testData.constants.dates.DATE_1, testData.south.list[2].items);
+
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments, [
+        testData.south.list[2].id,
+        { type: 'record-list', content: records },
+        testData.constants.dates.DATE_1,
+        testData.south.list[2].items,
+        interval.start,
+        interval.end
+      ]);
+
+      south['currentHistoryQueryInterval'] = null;
+    });
+
+    it('should add records', async () => {
+      await south.addContent({ type: 'record-list', content: [] }, testData.constants.dates.DATE_1, []);
+      assert.strictEqual(addContentCallback.mock.calls.length, 0);
+
+      const records = [{ col: 1 }, { col: 2 }] as Array<OIBusRecord>;
+      await south.addContent({ type: 'record-list', content: records }, testData.constants.dates.DATE_1, testData.south.list[2].items);
+      assert.ok(
+        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
+          (c: { arguments: Array<unknown> }) => c.arguments[0] === `Add 2 records to cache from South "${testData.south.list[2].name}"`
+        )
+      );
+      assert.strictEqual(addContentCallback.mock.calls.length, 1);
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments, [
+        testData.south.list[2].id,
+        { type: 'record-list', content: records },
+        testData.constants.dates.DATE_1,
+        testData.south.list[2].items,
+        null,
+        null
+      ]);
+    });
+
+    it('should resolve without calling the engine callback for an unknown content type', async () => {
+      await south.addContent(
+        { type: 'unknown-type' } as unknown as OIBusContent,
+        testData.constants.dates.DATE_1,
+        testData.south.list[2].items
+      );
+      assert.strictEqual(addContentCallback.mock.calls.length, 0);
+    });
+
     it('should add file', async () => {
       await south.addContent({ type: 'any', filePath: 'file.csv' }, testData.constants.dates.DATE_1, testData.south.list[2].items);
       assert.ok(
@@ -841,6 +1065,10 @@ describe('SouthConnector', () => {
             }, 1000);
           })
       );
+
+      const intervalListener = mock.fn();
+      south.metricsEvent.on('history-query-interval', intervalListener);
+
       south.historyQueryHandler(
         testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
         '2020-02-02T02:02:02.222Z',
@@ -860,6 +1088,15 @@ describe('SouthConnector', () => {
         )
       );
       assert.strictEqual(historyQueryMock.mock.calls.length, 1);
+
+      // This is a batched (non-single-items) connector, so no item context is attached
+      assert.strictEqual(intervalListener.mock.calls.length, 1);
+      assert.deepStrictEqual(intervalListener.mock.calls[0].arguments[0], {
+        currentIntervalStart: intervals[0].start,
+        currentIntervalEnd: intervals[0].end,
+        currentIntervalNumber: 1,
+        numberOfIntervals: intervals.length
+      });
     });
 
     it('should tag content added during historyQuery with the queried interval bounds', async () => {

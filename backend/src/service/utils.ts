@@ -478,11 +478,17 @@ export const generateFilenameForSerialization = (baseFolder: string, filename: s
 export const applyFilenameVariables = (filename: string, source: CacheMetadataSource): string => {
   const formatQueryBound = (instant: Instant | null | undefined): string =>
     instant ? DateTime.fromISO(instant).toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS') : '';
+  // Only meaningful when the batch is unambiguously about one item (e.g. a SQL-like south, which
+  // always queries a single item at a time) — a batch spanning several items has no single name to
+  // substitute, so it's left empty rather than misleadingly naming the file after just one of them.
+  const itemName = source.source === 'south' && source.items.length === 1 ? source.items[0].name : '';
 
   return filename
     .replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
     .replace('@QueryStartTime', source.source === 'south' ? formatQueryBound(source.queryStartTime) : '')
-    .replace('@QueryEndTime', source.source === 'south' ? formatQueryBound(source.queryEndTime) : '');
+    .replace('@QueryEndTime', source.source === 'south' ? formatQueryBound(source.queryEndTime) : '')
+    .replace('@ConnectorName', source.source === 'south' ? source.southName : '')
+    .replace('@ItemName', itemName);
 };
 
 export const generateCsvContent = (data: Array<Record<string, string | number>>, delimiter: CsvCharacter): string => {

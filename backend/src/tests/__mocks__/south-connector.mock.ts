@@ -8,7 +8,11 @@ import type { OIBusConnectionTestResult, OIBusContent } from '../../../shared/mo
 import type { ScanMode } from '../../model/scan-mode.model';
 import type { Instant } from '../../../shared/model/types';
 import type { SouthConnectorItemEntity } from '../../model/south-connector.model';
-import type { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import type {
+  SouthConnectorExploreEntry,
+  SouthConnectorItemQueryResult,
+  SouthConnectorItemTestingSettings
+} from '../../../shared/model/south-connector.model';
 
 /**
  * Create a mock object for South Connector
@@ -41,10 +45,19 @@ export default class SouthConnectorMock extends SouthConnector<SouthSettings, So
       _testingSettings: SouthConnectorItemTestingSettings
     ): Promise<SouthConnectorItemQueryResult> => ({ result: {} as OIBusContent, connectionDuration: 0, queryDuration: 0 })
   );
+  override getHistoryQuerySnapshot = mock.fn(
+    (
+      _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+    ): {
+      items: Array<{ itemId: string; itemName: string; trackedInstant: Instant | null; queryTime: Instant | null; value: unknown | null }>;
+    } => ({ items: [] })
+  );
   override connectedEvent = new EventEmitter();
   override metricsEvent = new EventEmitter();
 
   hasHistoryQuery = mock.fn((): boolean => false);
   hasDirectQuery = mock.fn((): boolean => false);
   hasSubscription = mock.fn((): boolean => false);
+  hasExplore = mock.fn((): boolean => false);
+  explore = mock.fn(async (_parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> => []);
 }

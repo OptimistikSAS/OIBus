@@ -85,6 +85,7 @@ describe('SouthFolderScanner', () => {
           readDelay: null,
           startTimeOffset: null,
           endTimeOffset: null,
+          recoveryStrategy: 'oldest',
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -476,6 +477,26 @@ describe('SouthFolderScanner', () => {
         await (south as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\data');
         assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB credential removal')));
       });
+
+      it('should return without logging when username is empty on non-Windows platforms (mount)', async () => {
+        configuration.settings.username = null;
+        configuration.settings.inputFolder = '\\\\server\\share\\data';
+        south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+        logger.trace.mock.resetCalls();
+        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+        await (south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data');
+        assert.strictEqual(logger.trace.mock.calls.length, 0);
+      });
+
+      it('should return without logging when username is empty on non-Windows platforms (unmount)', async () => {
+        configuration.settings.username = null;
+        configuration.settings.inputFolder = '\\\\server\\share\\data';
+        south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+        logger.trace.mock.resetCalls();
+        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+        await (south as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\data');
+        assert.strictEqual(logger.trace.mock.calls.length, 0);
+      });
     });
 
     it('should skip SMB mount when username is empty', async () => {
@@ -525,6 +546,28 @@ describe('SouthFolderScanner', () => {
           assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Failed to store SMB credentials')));
         });
 
+        it('should skip SMB mount on Windows when inputFolder is not a UNC path', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.inputFolder = 'C:\\local\\folder';
+          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+          type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+          await assert.doesNotReject((south as unknown as Private)['mountNetworkShare']('C:\\local\\folder'));
+        });
+
+        it('should use the domain-qualified username when a domain is configured', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.domain = 'MYDOMAIN';
+          configuration.settings.password = '';
+          configuration.settings.inputFolder = '\\\\server\\share\\data';
+          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+          type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+          // cmdkey does not exist on the test runner platform, so execFile rejects and the
+          // catch branch (log + rethrow) is exercised — this still exercises the domain-qualified
+          // username ternary branch before the failure.
+          await assert.rejects((south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data'));
+          assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Failed to store SMB credentials')));
+        });
+
         it('should skip SMB mount on Windows when username is empty', async () => {
           configuration.settings.username = null;
           configuration.settings.inputFolder = '\\\\server\\share\\data';
@@ -560,5 +603,48 @@ describe('SouthFolderScanner', () => {
         });
       }
     );
+  });
+
+  describe('explore', () => {
+    it('should list folders and files at the root', async () => {
+      const mockDirents = [
+        { name: 'subfolder', isDirectory: () => true, isFile: () => false },
+        { name: 'file1.csv', isDirectory: () => false, isFile: () => true },
+        { name: 'socket', isDirectory: () => false, isFile: () => false }
+      ];
+      const readdirMock = mock.method(
+        fs,
+        'readdir',
+        mock.fn(async () => mockDirents)
+      );
+
+      const entries = await south.explore(null);
+
+      assert.strictEqual(String(readdirMock.mock.calls[0].arguments[0]), path.resolve('inputFolder'));
+      assert.deepStrictEqual(entries, [
+        { id: 'subfolder', name: 'subfolder', metadata: { type: 'folder' }, hasChildren: true },
+        { id: 'file1.csv', name: 'file1.csv', metadata: { type: 'file' }, hasChildren: false }
+      ]);
+    });
+
+    it('should browse a sub-folder relative to the input folder', async () => {
+      const mockDirents = [{ name: 'nested.csv', isDirectory: () => false, isFile: () => true }];
+      const readdirMock = mock.method(
+        fs,
+        'readdir',
+        mock.fn(async () => mockDirents)
+      );
+
+      const entries = await south.explore('subfolder');
+
+      assert.strictEqual(String(readdirMock.mock.calls[0].arguments[0]), path.resolve('inputFolder', 'subfolder'));
+      assert.deepStrictEqual(entries, [
+        { id: path.join('subfolder', 'nested.csv'), name: 'nested.csv', metadata: { type: 'file' }, hasChildren: false }
+      ]);
+    });
+
+    it('should reject a path outside of the input folder', async () => {
+      await assert.rejects(() => south.explore('../../etc'), /path is outside of the input folder/);
+    });
   });
 });

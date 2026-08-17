@@ -1,6 +1,7 @@
 import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { DateTime } from 'luxon';
 
 import testData from '../tests/utils/test-data';
 import { mockModule, reloadModule, flushPromises } from '../tests/utils/test-utils';
@@ -191,7 +192,7 @@ describe('DataStreamEngine', () => {
   ];
 
   beforeEach(() => {
-    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
+    mock.timers.enable({ apis: ['Date', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
     // Reset all mock call history on repositories
     northConnectorRepository.findNorthById.mock.resetCalls();
@@ -938,6 +939,166 @@ describe('DataStreamEngine', () => {
     });
   });
 
+  describe('Scan mode intervals', () => {
+    const intervalScanMode = (): ScanMode => ({
+      ...testData.scanMode.list[0],
+      id: 'intervalScanModeId',
+      type: 'interval',
+      cron: '',
+      interval: { value: 30, unit: 's' }
+    });
+
+    it('should schedule an interval scan mode without creating a cron', async () => {
+      const scanMode = intervalScanMode();
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+
+      await engine.start(northList, southList, historyList);
+
+      assert.strictEqual(cronExports.CronJob.mock.calls.length, 0);
+      assert.strictEqual(engine['cronByScanModeId'].size, 0);
+      assert.strictEqual(engine['intervalByScanModeId'].size, 1);
+      assert.ok(engine['intervalByScanModeId'].has(scanMode.id));
+    });
+
+    it('should fan out on each interval tick', async () => {
+      const scanMode = intervalScanMode();
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+      await engine.start(northList, southList, historyList);
+
+      mock.timers.tick(30_000);
+      assert.strictEqual(mockedSouth1.trigger.mock.calls.length, 1);
+      assert.strictEqual(mockedNorth1.trigger.mock.calls.length, 1);
+      assert.strictEqual(mockedHistoryQuery1.triggerNorth.mock.calls.length, 1);
+
+      mock.timers.tick(60_000);
+      assert.strictEqual(mockedSouth1.trigger.mock.calls.length, 3);
+    });
+
+    it('should switch a scan mode between cron and interval without leaking a timer', async () => {
+      const scanMode = intervalScanMode();
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+      await engine.start(northList, southList, historyList);
+      assert.strictEqual(engine['intervalByScanModeId'].size, 1);
+
+      // interval -> cron
+      await engine.updateScanMode({ ...scanMode, type: 'cron', cron: '0 * * * * *', interval: null });
+      assert.strictEqual(engine['intervalByScanModeId'].size, 0);
+      assert.strictEqual(engine['cronByScanModeId'].size, 1);
+
+      // cron -> interval again
+      await engine.updateScanMode(scanMode);
+      assert.strictEqual(cronMockInstance.stop.mock.calls.length, 1);
+      assert.strictEqual(engine['cronByScanModeId'].size, 0);
+      assert.strictEqual(engine['intervalByScanModeId'].size, 1);
+    });
+
+    it('should stop ticking once the scan mode is deleted', async () => {
+      const scanMode = intervalScanMode();
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+      await engine.start(northList, southList, historyList);
+
+      engine.deleteScanMode(scanMode.id);
+      mock.timers.tick(120_000);
+
+      assert.strictEqual(engine['intervalByScanModeId'].size, 0);
+      assert.strictEqual(mockedSouth1.trigger.mock.calls.length, 0);
+    });
+
+    it('should refuse an interval outside the accepted bounds', async () => {
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [
+        { ...intervalScanMode(), id: 'tooShort', interval: { value: 5, unit: 'ms' } },
+        // Past 2^31-1 ms Node would wrap the delay back to 1 ms, turning this into a hot loop.
+        { ...intervalScanMode(), id: 'tooLong', interval: { value: 1000, unit: 'hour' } }
+      ]);
+
+      await engine.start(northList, southList, historyList);
+
+      assert.strictEqual(engine['intervalByScanModeId'].size, 0);
+    });
+
+    it('should refuse an interval scan mode with no interval configured', async () => {
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [{ ...intervalScanMode(), interval: null }]);
+
+      await engine.start(northList, southList, historyList);
+
+      // No interval set means periodMs falls back to 0, which is below MIN_INTERVAL_MS.
+      assert.strictEqual(engine['intervalByScanModeId'].size, 0);
+    });
+
+    it('should clear both cron and interval maps on stop', async () => {
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [testData.scanMode.list[0], intervalScanMode()]);
+      await engine.start(northList, southList, historyList);
+      assert.strictEqual(engine['cronByScanModeId'].size, 1);
+      assert.strictEqual(engine['intervalByScanModeId'].size, 1);
+
+      await engine.stop();
+
+      assert.strictEqual(engine['cronByScanModeId'].size, 0);
+      assert.strictEqual(engine['intervalByScanModeId'].size, 0);
+    });
+  });
+
+  describe('Scan mode activation window', () => {
+    // FAKE_NOW drives DateTime.utc() through mock.timers, so the gate is deterministic.
+    const fakeNow = DateTime.fromISO(testData.constants.dates.FAKE_NOW, { zone: 'utc' });
+
+    const withWindow = (activationWindow: ScanMode['activationWindow']): ScanMode => ({
+      ...testData.scanMode.list[0],
+      activationWindow
+    });
+
+    const fireCron = () => (cronExports.CronJob.mock.calls[0].arguments[1] as () => void)();
+
+    it('should fan out when the tick falls inside the window', async () => {
+      const scanMode = withWindow({ dateRange: { start: fakeNow.minus({ days: 1 }).toISO(), end: fakeNow.plus({ days: 1 }).toISO() } });
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+      await engine.start(northList, southList, historyList);
+
+      fireCron();
+
+      assert.strictEqual(mockedSouth1.trigger.mock.calls.length, 1);
+    });
+
+    it('should silently skip a tick outside the window, recording no run anywhere', async () => {
+      const scanMode = withWindow({ dateRange: { end: fakeNow.minus({ days: 1 }).toISO() } });
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+      await engine.start(northList, southList, historyList);
+
+      fireCron();
+
+      assert.strictEqual(mockedSouth1.trigger.mock.calls.length, 0);
+      assert.strictEqual(mockedSouth2.trigger.mock.calls.length, 0);
+      assert.strictEqual(mockedNorth1.trigger.mock.calls.length, 0);
+      assert.strictEqual(mockedHistoryQuery1.triggerNorth.mock.calls.length, 0);
+    });
+
+    it('should gate interval scan modes the same way', async () => {
+      const scanMode: ScanMode = {
+        ...withWindow({ dateRange: { end: fakeNow.minus({ days: 1 }).toISO() } }),
+        type: 'interval',
+        cron: '',
+        interval: { value: 1, unit: 's' }
+      };
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+      await engine.start(northList, southList, historyList);
+
+      mock.timers.tick(5_000);
+
+      assert.strictEqual(mockedSouth1.trigger.mock.calls.length, 0);
+    });
+
+    it('should still install a schedule for a window that can never fire again', async () => {
+      const scanMode = withWindow({ recurring: { timezone: 'Europe/Paris', timeOfDay: { start: '08:00', end: '08:00' } } });
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [scanMode]);
+
+      await engine.start(northList, southList, historyList);
+
+      assert.strictEqual(engine['cronByScanModeId'].size, 1);
+      fireCron();
+      assert.strictEqual(mockedSouth1.trigger.mock.calls.length, 0);
+    });
+  });
+
   describe('Scan mode crons', () => {
     it('should create one shared cron per scan mode at startup, excluding the subscription sentinel', async () => {
       scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [
@@ -968,7 +1129,6 @@ describe('DataStreamEngine', () => {
       assert.strictEqual(mockedNorth1.trigger.mock.calls.length, 1);
       assert.deepStrictEqual(mockedNorth1.trigger.mock.calls[0].arguments, [testData.scanMode.list[0]]);
       assert.strictEqual(mockedNorth2.trigger.mock.calls.length, 1);
-
       // History query norths take part in the same fan-out: their caching trigger scan mode used to
       // be configurable but was never actually fired.
       assert.strictEqual(mockedHistoryQuery1.triggerNorth.mock.calls.length, 1);

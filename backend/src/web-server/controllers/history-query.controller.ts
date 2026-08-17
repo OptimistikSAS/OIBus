@@ -26,7 +26,10 @@ import { CustomExpressRequest } from '../express';
 import {
   OIBusSouthType,
   SouthConnectorItemTestingSettings,
-  SouthConnectorItemTestResult
+  SouthConnectorItemTestResult,
+  SouthExploreBrowseCommand,
+  SouthExploreBrowseResult,
+  SouthExploreStartResult
 } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
@@ -98,7 +101,13 @@ export class HistoryQueryController extends Controller {
   list(@Request() request: CustomExpressRequest): Array<HistoryQueryLightDTO> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     const historyQueries = historyQueryService.list();
-    return historyQueries.map(historyQuery => toHistoryQueryLightDTO(historyQuery, id => request.services.userService.getUserInfo(id)));
+    return historyQueries.map(historyQuery =>
+      toHistoryQueryLightDTO(
+        historyQuery,
+        id => request.services.userService.getUserInfo(id),
+        id => historyQueryService.getHistoryMetric(id)
+      )
+    );
   }
 
   /**
@@ -250,6 +259,59 @@ export class HistoryQueryController extends Controller {
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }
+  }
+
+  /**
+   * Start an interactive explore session for a history query's south connector
+   * @summary Start south explore session
+   */
+  @Post('/{historyId}/explore')
+  async startExplore(
+    @Path() historyId: string,
+    @Query() southType: OIBusSouthType,
+    @Query() fromSouth: string | undefined,
+    @Body() command: SouthSettings,
+    @Request() request: CustomExpressRequest
+  ): Promise<SouthExploreStartResult> {
+    const historyQueryService = request.services.historyQueryService as HistoryQueryService;
+    try {
+      return await historyQueryService.startExplore(historyId, southType, fromSouth, command);
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
+  }
+
+  /**
+   * Browse (expand) an entry within a history query explore session
+   * @summary Browse south explore session
+   */
+  @Put('/{historyId}/explore/{sessionId}')
+  async browseExplore(
+    @Path('historyId') _historyId: string,
+    @Path() sessionId: string,
+    @Body() command: SouthExploreBrowseCommand,
+    @Request() request: CustomExpressRequest
+  ): Promise<SouthExploreBrowseResult> {
+    const southService = request.services.southService as SouthService;
+    try {
+      return await southService.browseExplore(sessionId, command.parentId);
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
+  }
+
+  /**
+   * Close a history query explore session
+   * @summary Close south explore session
+   */
+  @Delete('/{historyId}/explore/{sessionId}')
+  async closeExplore(
+    @Path('historyId') _historyId: string,
+    @Path() sessionId: string,
+    @Request() request: CustomExpressRequest
+  ): Promise<void> {
+    const southService = request.services.southService as SouthService;
+    await southService.closeExplore(sessionId);
   }
 
   /**

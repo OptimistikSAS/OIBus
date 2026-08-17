@@ -111,6 +111,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
       {
         source: 'south',
         southId: 'south1',
+        southName: 'South 1',
         queryTime: testData.constants.dates.DATE_1,
         queryStartTime: '2023-01-01T00:00:00.000Z',
         queryEndTime: '2023-01-01T01:00:00.000Z',
@@ -287,6 +288,34 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
     assert.strictEqual(buf[0], 0xff);
     assert.strictEqual(buf[1], 0xfe);
     assert.strictEqual(buf.subarray(2).toString('utf16le'), 'csv content');
+  });
+
+  it('should parse jsonData from a JSON string when transformInMemory receives non-array data', async () => {
+    mockPapaparse.unparse = mock.fn(() => 'csv content');
+
+    const options = {
+      filename: 'output.csv',
+      encoding: 'UTF_8',
+      header: true,
+      delimiter: 'SEMI_COLON',
+      newline: 'DEFAULT',
+      quoteChar: 'DOUBLE_QUOTE',
+      escapeChar: 'DOUBLE_QUOTE',
+      pointIdColumnTitle: 'Ref',
+      valueColumnTitle: 'Val',
+      timestampColumnTitle: 'TS',
+      timestampType: 'iso-string'
+    };
+
+    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
+    const dataChunks: Array<OIBusTimeValue> = [{ pointId: 'ref-1', timestamp: '2024-01-01T00:00:00Z', data: { value: '42' } }];
+
+    const result = await transformer.transformInMemory(JSON.stringify(dataChunks), { source: 'test' }, null);
+
+    assert.strictEqual(mockPapaparse.unparse.mock.calls.length, 1);
+    const callData = (mockPapaparse.unparse.mock.calls[0].arguments as [Array<Record<string, string>>, unknown])[0];
+    assert.deepStrictEqual(callData, [{ Ref: 'ref-1', Val: '42', TS: '2024-01-01T00:00:00Z' }]);
+    assert.ok(result.output instanceof Buffer);
   });
 
   it('should correctly expose the manifest settings', () => {

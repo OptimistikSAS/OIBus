@@ -348,6 +348,8 @@ export function buildNorthInterfaceName(connectorId: string): string {
       return 'NorthAmazonS3Settings';
     case 'azure-blob':
       return 'NorthAzureBlobSettings';
+    case 'azure-data-explorer':
+      return 'NorthAzureDataExplorerSettings';
     case 'console':
       return 'NorthConsoleSettings';
     case 'file-writer':
@@ -405,6 +407,8 @@ export function buildSouthInterfaceName(connectorId: string, itemInterface: bool
       return `SouthPostgreSQL${prefix}Settings`;
     case 'rest':
       return `SouthRest${prefix}Settings`;
+    case 's7':
+      return `SouthS7${prefix}Settings`;
     case 'sqlite':
       return `SouthSQLite${prefix}Settings`;
     case 'sftp':

@@ -19,6 +19,8 @@ import type {
   SouthFolderScannerSettings,
   SouthFTPItemSettings,
   SouthFTPSettings,
+  SouthInfluxDBItemSettings,
+  SouthInfluxDBSettings,
   SouthItemSettings,
   SouthModbusItemSettings,
   SouthModbusSettings,
@@ -46,6 +48,8 @@ import type {
   SouthPostgreSQLSettings,
   SouthRestItemSettings,
   SouthRestSettings,
+  SouthS7ItemSettings,
+  SouthS7Settings,
   SouthSettings,
   SouthSFTPItemSettings,
   SouthSFTPSettings,
@@ -98,8 +102,10 @@ describe('South Connector Factory', () => {
   const MockSouthPI = makeMock('osisoft-pi');
   const MockSouthPostgreSQL = makeMock('postgresql');
   const MockSouthRest = makeMock('rest');
+  const MockSouthS7 = makeMock('s7');
   const MockSouthSFTP = makeMock('sftp');
   const MockSouthFTP = makeMock('ftp');
+  const MockSouthInfluxDB = makeMock('influxdb');
   const MockSouthSQLite = makeMock('sqlite');
 
   const utilsExports = { createFolder: mock.fn(async (_path: string) => undefined) };
@@ -121,8 +127,10 @@ describe('South Connector Factory', () => {
     mockModule(nodeRequire, '../south/south-pi/south-pi', { __esModule: true, default: MockSouthPI });
     mockModule(nodeRequire, '../south/south-postgresql/south-postgresql', { __esModule: true, default: MockSouthPostgreSQL });
     mockModule(nodeRequire, '../south/south-rest/south-rest', { __esModule: true, default: MockSouthRest });
+    mockModule(nodeRequire, '../south/south-s7/south-s7', { __esModule: true, default: MockSouthS7 });
     mockModule(nodeRequire, '../south/south-sftp/south-sftp', { __esModule: true, default: MockSouthSFTP });
     mockModule(nodeRequire, '../south/south-ftp/south-ftp', { __esModule: true, default: MockSouthFTP });
+    mockModule(nodeRequire, '../south/south-influxdb/south-influxdb', { __esModule: true, default: MockSouthInfluxDB });
     mockModule(nodeRequire, '../south/south-sqlite/south-sqlite', { __esModule: true, default: MockSouthSQLite });
 
     const factory = reloadModule<{
@@ -309,6 +317,15 @@ describe('South Connector Factory', () => {
       assert.ok(result instanceof MockSouthRest);
     });
 
+    it('should create SouthS7 for type "s7"', () => {
+      const result = callBuildSouth({ ...baseSettings, type: 's7', settings: {} as SouthS7Settings } as SouthConnectorEntity<
+        SouthS7Settings,
+        SouthS7ItemSettings
+      >);
+      assert.strictEqual(ctorCalls['s7'], 1);
+      assert.ok(result instanceof MockSouthS7);
+    });
+
     it('should create SouthSFTP for type "sftp"', () => {
       const result = callBuildSouth({ ...baseSettings, type: 'sftp', settings: {} as SouthSFTPSettings } as SouthConnectorEntity<
         SouthSFTPSettings,
@@ -325,6 +342,15 @@ describe('South Connector Factory', () => {
       >);
       assert.strictEqual(ctorCalls['ftp'], 1);
       assert.ok(result instanceof MockSouthFTP);
+    });
+
+    it('should create SouthInfluxDB for type "influxdb"', () => {
+      const result = callBuildSouth({ ...baseSettings, type: 'influxdb', settings: {} as SouthInfluxDBSettings } as SouthConnectorEntity<
+        SouthInfluxDBSettings,
+        SouthInfluxDBItemSettings
+      >);
+      assert.strictEqual(ctorCalls['influxdb'], 1);
+      assert.ok(result instanceof MockSouthInfluxDB);
     });
 
     it('should create SouthSQLite for type "sqlite"', () => {

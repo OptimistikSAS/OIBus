@@ -27,7 +27,8 @@ import {
   ClientSession,
   ClientSubscription,
   ClientMonitoredItem,
-  NodeId
+  NodeId,
+  NodeClass
 } from 'node-opcua';
 import { DateTime } from 'luxon';
 
@@ -113,7 +114,8 @@ describe('SouthOPCUA', () => {
     MessageSecurityMode,
     TimestampsToReturn,
     AggregateFunction,
-    HistoryReadRequest
+    HistoryReadRequest,
+    NodeClass
   };
 
   const configuration: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings> = {
@@ -157,6 +159,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -181,6 +184,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -205,6 +209,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -226,6 +231,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -247,6 +253,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -268,6 +275,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -356,6 +364,27 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(disconnectMock.mock.calls.length, 0);
   });
 
+  it('should properly create a real OPCUA session', async () => {
+    const createdSession = { close: mock.fn(async () => undefined) };
+    nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementationOnce(async () => createdSession as unknown as ClientSession);
+
+    const session = await south.createSession();
+
+    assert.strictEqual(session, createdSession);
+    assert.strictEqual(utilsOpcuaExports.createSessionConfigs.mock.calls.length, 1);
+    assert.strictEqual(nodeOPCUAMock.OPCUAClient.createSession.mock.calls.length, 1);
+    assert.deepStrictEqual(nodeOPCUAMock.OPCUAClient.createSession.mock.calls[0].arguments, [
+      configuration.settings.url,
+      opcuaUserIdentity,
+      opcuaOptions
+    ]);
+    assert.ok(
+      (logger.info as ReturnType<typeof mock.fn>).mock.calls.some(
+        c => c.arguments[0] === `OPCUA connector "${configuration.name}" connected`
+      )
+    );
+  });
+
   it('should not reconnect if disconnecting', async () => {
     south.createSession = mock.fn(() => {
       throw new Error('get session error');
@@ -389,6 +418,19 @@ describe('SouthOPCUA', () => {
     );
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
     // setTimeout should have been called for reconnect
+  });
+
+  it('should not schedule a reconnect after a failed connect when the connector is disabled', async () => {
+    south.createSession = mock.fn(() => {
+      throw new Error('get session error');
+    });
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
+    south['disconnecting'] = false;
+    south['connector'].enabled = false;
+    await south.connect();
+    assert.strictEqual(south['reconnectTimeout'], null);
+    south['connector'].enabled = true;
   });
 
   it('should properly disconnect', async () => {
@@ -559,6 +601,41 @@ describe('SouthOPCUA', () => {
     assert.ok(testResult.items.some(i => i.key === 'SupportedAggregates'));
     assert.strictEqual(mockEndpointClient.connect.mock.calls.length, 1);
     assert.strictEqual(mockEndpointClient.disconnect.mock.calls.length, 1);
+    fsMock.mock.restore();
+  });
+
+  it('should test connection and fall back to raw values for unmapped security mode, empty policy uri, and unmapped token type', async () => {
+    const mockEndpointClient = {
+      connect: mock.fn(async () => undefined),
+      getEndpoints: mock.fn(async () => [
+        {
+          securityMode: 99, // not present in SECURITY_MODE_LABELS
+          securityPolicyUri: undefined,
+          userIdentityTokens: [{ tokenType: 42 }] // not present in AUTH_TYPE_LABELS
+        }
+      ]),
+      disconnect: mock.fn(async () => undefined)
+    };
+    nodeOPCUAMock.OPCUAClient.create.mock.mockImplementation(() => mockEndpointClient);
+
+    const mockedClient = {
+      close: mock.fn(async () => undefined),
+      read: mock.fn(async () => [
+        { statusCode: { value: 0 }, value: { value: 0 } },
+        { statusCode: { value: 0 }, value: { value: 'Prosys OPC' } },
+        { statusCode: { value: 0 }, value: { value: 'OPC UA Server' } },
+        { statusCode: { value: 0 }, value: { value: '1.2.3' } },
+        { statusCode: { value: 0 }, value: { value: '1234' } }
+      ])
+    };
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    const fsMock = mock.method(fs, 'rm', async () => undefined);
+
+    const testResult = await south.testConnection();
+
+    assert.ok(testResult.items.some(i => i.key === 'SecurityModes' && i.value === '99'));
+    assert.ok(!testResult.items.some(i => i.key === 'SecurityPolicies'));
+    assert.ok(testResult.items.some(i => i.key === 'AuthenticationModes' && i.value === '42'));
     fsMock.mock.restore();
   });
 
@@ -2283,5 +2360,111 @@ describe('SouthOPCUA', () => {
         (c.arguments[0] as string).includes('Error during reconnect after subscription issue')
       )
     );
+  });
+
+  it('explore should lazily create a session when not connected', async () => {
+    const mockedClient = {
+      close: mock.fn(async () => undefined),
+      browse: mock.fn(async () => ({ references: [], continuationPoint: null }))
+    };
+    const createSessionMock = mock.fn(async () => mockedClient as unknown as ClientSession);
+    south.createSession = createSessionMock;
+
+    const entries = await south.explore(null);
+
+    assert.strictEqual(createSessionMock.mock.calls.length, 1);
+    assert.deepStrictEqual(entries, []);
+  });
+
+  it('explore should surface the connection error when the session cannot be created', async () => {
+    south.createSession = mock.fn(async () => {
+      throw new Error('connection refused');
+    });
+
+    await assert.rejects(() => south.explore(null), { message: 'connection refused' });
+  });
+
+  it('explore should browse the root and map references', async () => {
+    const mockedClient = {
+      close: mock.fn(async () => undefined),
+      browse: mock.fn(async () => ({
+        references: [
+          { nodeId: 'ns=0;i=85', displayName: { text: 'Objects' }, browseName: { toString: () => 'Objects' }, nodeClass: NodeClass.Object },
+          {
+            nodeId: 'ns=1;s=Temperature',
+            displayName: { text: 'Temperature' },
+            browseName: { toString: () => 'Temperature' },
+            nodeClass: NodeClass.Variable
+          },
+          { nodeId: 'ns=1;s=Start', displayName: { text: 'Start' }, browseName: { toString: () => 'Start' }, nodeClass: NodeClass.Method }
+        ],
+        continuationPoint: null
+      })),
+      browseNext: mock.fn(async () => ({ references: [], continuationPoint: null }))
+    };
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    await south.connect();
+
+    const entries = await south.explore(null);
+
+    assert.strictEqual(mockedClient.browse.mock.calls.length, 1);
+    assert.strictEqual(mockedClient.browse.mock.calls[0].arguments[0], 'ns=0;i=85');
+    assert.deepStrictEqual(entries, [
+      { id: 'ns=0;i=85', name: 'Objects', metadata: { type: 'Object', nodeId: 'ns=0;i=85' }, hasChildren: true },
+      { id: 'ns=1;s=Temperature', name: 'Temperature', metadata: { type: 'Variable', nodeId: 'ns=1;s=Temperature' }, hasChildren: true },
+      { id: 'ns=1;s=Start', name: 'Start', metadata: { type: 'Method', nodeId: 'ns=1;s=Start' }, hasChildren: false }
+    ]);
+  });
+
+  it('explore should browse a given parent and follow continuation points', async () => {
+    const browse = mock.fn(async () => ({
+      references: [{ nodeId: 'ns=1;s=A', displayName: { text: 'A' }, browseName: { toString: () => 'A' }, nodeClass: NodeClass.Variable }],
+      continuationPoint: Buffer.from([1])
+    }));
+    const browseNext = mock.fn(async () => ({
+      references: [{ nodeId: 'ns=1;s=B', displayName: null, browseName: { toString: () => 'B' }, nodeClass: NodeClass.Variable }],
+      continuationPoint: null
+    }));
+    const mockedClient = { close: mock.fn(async () => undefined), browse, browseNext };
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    await south.connect();
+
+    const entries = await south.explore('ns=1;s=Folder');
+
+    assert.strictEqual(browse.mock.calls[0].arguments[0], 'ns=1;s=Folder');
+    assert.strictEqual(browseNext.mock.calls.length, 1);
+    assert.deepStrictEqual(entries, [
+      { id: 'ns=1;s=A', name: 'A', metadata: { type: 'Variable', nodeId: 'ns=1;s=A' }, hasChildren: true },
+      { id: 'ns=1;s=B', name: 'B', metadata: { type: 'Variable', nodeId: 'ns=1;s=B' }, hasChildren: true }
+    ]);
+  });
+
+  it('explore should rethrow a session-expired error with a clear message', async () => {
+    const mockedClient = {
+      close: mock.fn(async () => undefined),
+      browse: mock.fn(async () => {
+        throw new Error('BadSessionIdInvalid');
+      })
+    };
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    await south.connect();
+
+    await assert.rejects(
+      () => south.explore(null),
+      (error: Error) => error.message.includes('explore session expired')
+    );
+  });
+
+  it('explore should rethrow non-session errors as-is', async () => {
+    const mockedClient = {
+      close: mock.fn(async () => undefined),
+      browse: mock.fn(async () => {
+        throw new Error('some other error');
+      })
+    };
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    await south.connect();
+
+    await assert.rejects(() => south.explore(null), { message: 'some other error' });
   });
 });

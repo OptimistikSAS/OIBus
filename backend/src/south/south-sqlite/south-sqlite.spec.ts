@@ -12,11 +12,7 @@ import type SouthSQLiteClass from './south-sqlite';
 import type { SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type { OIBusContent } from '../../../shared/model/engine.model';
 import type { SouthItemSettings } from '../../../shared/model/south-settings.model';
-import type {
-  SouthSQLiteItemSettings,
-  SouthSQLiteItemSettingsDateTimeFields,
-  SouthSQLiteSettings
-} from '../../../shared/model/south-settings.model';
+import type { SouthSQLiteItemSettings, SouthSQLiteSettings } from '../../../shared/model/south-settings.model';
 import { DateTime } from 'luxon';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -49,10 +45,7 @@ const utilsExports = {
   formatInstant: mock.fn((inst: unknown) => inst),
   convertDateTimeToInstant: mock.fn((inst: unknown) => inst),
   logQuery: mock.fn(),
-  persistResults: mock.fn(async () => undefined),
-  generateReplacementParameters: mock.fn((): unknown => []),
-  generateCsvContent: mock.fn(() => ''),
-  generateFilenameForSerialization: mock.fn(() => 'file.csv')
+  generateReplacementParameters: mock.fn((): unknown => [])
 };
 
 const connectorSettings: SouthSQLiteSettings = {
@@ -62,72 +55,34 @@ const connectorSettings: SouthSQLiteSettings = {
 const itemSettings: Array<SouthSQLiteItemSettings> = [
   {
     query: 'SELECT * FROM table WHERE timestamp > @StartTime and timestamp < @EndTime',
-    dateTimeFields: [
-      {
-        fieldName: 'anotherTimestamp',
-        useAsReference: false,
-        type: 'unix-epoch-ms',
-        timezone: null,
-        format: null,
-        locale: null
-      } as unknown as SouthSQLiteItemSettingsDateTimeFields,
-      {
-        fieldName: 'timestamp',
-        useAsReference: true,
+    trackingInstant: {
+      trackInstant: true,
+      fieldName: 'timestamp',
+      dateTimeInput: {
         type: 'string',
         timezone: 'Europe/Paris',
         format: 'yyyy-MM-dd HH:mm:ss.SSS',
         locale: 'en-US'
       }
-    ],
-    serialization: {
-      type: 'csv',
-      filename: 'sql-@CurrentDate.csv',
-      delimiter: 'COMMA',
-      compression: true,
-      outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-      outputTimezone: 'Europe/Paris'
     }
   },
   {
     query: 'query 2',
-    dateTimeFields: null,
-    serialization: {
-      type: 'csv',
-      filename: 'sql-@CurrentDate.csv',
-      delimiter: 'COMMA',
-      compression: true,
-      outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-      outputTimezone: 'Europe/Paris'
+    trackingInstant: {
+      trackInstant: false
     }
   },
   {
     query: 'query 3',
-    dateTimeFields: [
-      {
-        fieldName: 'anotherTimestamp',
-        useAsReference: false,
-        type: 'unix-epoch-ms',
-        timezone: null,
-        format: null,
-        locale: null
-      } as unknown as SouthSQLiteItemSettingsDateTimeFields,
-      {
-        fieldName: 'timestamp',
-        useAsReference: true,
+    trackingInstant: {
+      trackInstant: true,
+      fieldName: 'timestamp',
+      dateTimeInput: {
         type: 'string',
         timezone: 'Europe/Paris',
         format: 'yyyy-MM-dd HH:mm:ss.SSS',
         locale: 'en-US'
       }
-    ],
-    serialization: {
-      type: 'csv',
-      filename: 'sql-@CurrentDate.csv',
-      delimiter: 'COMMA',
-      compression: true,
-      outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-      outputTimezone: 'Europe/Paris'
     }
   }
 ];
@@ -158,7 +113,6 @@ describe('SouthSQLite', () => {
     utilsExports.formatInstant = mock.fn((inst: unknown) => inst);
     utilsExports.convertDateTimeToInstant = mock.fn((inst: unknown) => inst);
     utilsExports.logQuery = mock.fn();
-    utilsExports.persistResults = mock.fn(async () => undefined);
     utilsExports.generateReplacementParameters = mock.fn(() => [
       new Date(testData.constants.dates.FAKE_NOW),
       new Date(testData.constants.dates.FAKE_NOW)
@@ -184,7 +138,11 @@ describe('SouthSQLite', () => {
     utilsExports.formatInstant = mock.fn(() => '2020-02-01 00:00:00.000');
 
     const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-    assert.strictEqual(utilsExports.persistResults.mock.calls.length, 1);
+    assert.strictEqual(addContentCallback.mock.calls.length, 1);
+    assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
+      type: 'record-list',
+      content: queryDataResults
+    });
     assert.strictEqual(queryDataMock.mock.calls.length, 1);
     assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [
       configuration.items[0],
@@ -208,7 +166,7 @@ describe('SouthSQLite', () => {
     const queryDataMock = mock.method(south, 'queryData', async () => [] as Array<Record<string, string | number>>);
 
     const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-    assert.strictEqual(utilsExports.persistResults.mock.calls.length, 0);
+    assert.strictEqual(addContentCallback.mock.calls.length, 0);
     assert.strictEqual(queryDataMock.mock.calls.length, 1);
     assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [
       configuration.items[0],
@@ -405,6 +363,67 @@ describe('SouthSQLite test connection', () => {
       items: [
         { key: 'Tables', value: '5' },
         { key: 'File Size', value: '2.0 KB' }
+      ]
+    });
+  });
+
+  it('Database is reachable but version query throws', async () => {
+    const tableCountAll = mock.fn(() => [{ table_count: 5 }]);
+    let prepareCallCount = 0;
+    mockDatabase.prepare = mock.fn(() => {
+      prepareCallCount++;
+      if (prepareCallCount === 1) return { all: tableCountAll };
+      throw new Error('version query error');
+    });
+    mock.method(
+      fs,
+      'access',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
+      fs,
+      'stat',
+      mock.fn(async () => ({ size: 2048 }))
+    );
+
+    const testResult = await south.testConnection();
+
+    assert.deepStrictEqual(testResult, {
+      items: [
+        { key: 'Tables', value: '5' },
+        { key: 'File Size', value: '2.0 KB' }
+      ]
+    });
+  });
+
+  it('Database is reachable but file stat throws', async () => {
+    const tableCountAll = mock.fn(() => [{ table_count: 5 }]);
+    const versionAll = mock.fn(() => [{ version: '3.39.5' }]);
+    let prepareCallCount = 0;
+    mockDatabase.prepare = mock.fn(() => {
+      prepareCallCount++;
+      if (prepareCallCount === 1) return { all: tableCountAll };
+      return { all: versionAll };
+    });
+    mock.method(
+      fs,
+      'access',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
+      fs,
+      'stat',
+      mock.fn(async () => {
+        throw new Error('stat error');
+      })
+    );
+
+    const testResult = await south.testConnection();
+
+    assert.deepStrictEqual(testResult, {
+      items: [
+        { key: 'SQLite Version', value: '3.39.5' },
+        { key: 'Tables', value: '5' }
       ]
     });
   });

@@ -241,6 +241,25 @@ describe('SouthRestAPI connector', () => {
     });
   });
 
+  it('should push additional values onto an already-converted array query param', async () => {
+    const item = createItem({
+      queryParams: [
+        { key: 'tag', value: 'a' },
+        { key: 'tag', value: 'b' },
+        { key: 'tag', value: 'c' }
+      ]
+    });
+
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, { data: [] }));
+
+    await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
+
+    const options = getRequestOptions();
+    assert.deepStrictEqual(options.query, {
+      tag: ['a', 'b', 'c']
+    });
+  });
+
   it('should turn a repeated key into an array of substituted @StartTime/@EndTime values', async () => {
     const item = createItem({
       queryParams: [
@@ -607,6 +626,21 @@ describe('SouthRestAPI connector', () => {
     assert.strictEqual(fsMock.writeFile.mock.calls.length, 1);
     assert.strictEqual(addContentCallback.mock.calls.length, 0);
     assert.strictEqual(fsMock.unlink.mock.calls.length, 1, 'the empty temp file should still be cleaned up');
+  });
+
+  it('should log an error but not throw if deleting an empty temp file fails', async () => {
+    const item = createItem();
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, {}));
+
+    fsMock.stat.mock.mockImplementation(async () => ({ size: 0 }));
+    fsMock.unlink.mock.mockImplementation(async () => {
+      throw new Error('EBUSY');
+    });
+
+    await south.historyQuery([item], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
+
+    assert.strictEqual(addContentCallback.mock.calls.length, 0);
+    assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Error when deleting empty file')));
   });
 
   // --------------------------------------------------------------------------

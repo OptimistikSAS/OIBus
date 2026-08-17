@@ -95,7 +95,9 @@ describe('HistoryQueryController', () => {
         historyQueryService,
         southService: {
           getInstalledSouthManifests: mock.fn(() => [{ ...testData.south.manifest, id: testData.historyQueries.list[0].southType }]),
-          getManifest: mock.fn(() => testData.south.manifest)
+          getManifest: mock.fn(() => testData.south.manifest),
+          browseExplore: mock.fn(async () => ({ entries: [] })),
+          closeExplore: mock.fn(async () => undefined)
         } as unknown as CustomExpressRequest['services']['southService'],
         oIBusService,
         userService
@@ -282,6 +284,82 @@ describe('HistoryQueryController', () => {
     }
     assert.strictEqual(historyQueryService.testSouth.mock.calls.length, 1);
     assert.deepStrictEqual(historyQueryService.testSouth.mock.calls[0].arguments, [historyId, southType, fromSouth, settings]);
+  });
+
+  it('should start an explore session', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const southType = testData.south.command.type;
+    const fromSouth = testData.south.list[0].id;
+    const settings = testData.south.command.settings;
+    const mockResult = { sessionId: 'sessionId', entries: [] };
+    historyQueryService.startExplore = mock.fn(async () => mockResult);
+
+    const result = await controller.startExplore(historyId, southType, fromSouth, settings, mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(historyQueryService.startExplore.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.startExplore.mock.calls[0].arguments, [historyId, southType, fromSouth, settings]);
+    assert.deepStrictEqual(result, mockResult);
+  });
+
+  it('should wrap errors when starting an explore session', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const southType = testData.south.command.type;
+    const fromSouth = testData.south.list[0].id;
+    const settings = testData.south.command.settings;
+    historyQueryService.startExplore = mock.fn(async () => {
+      throw new Error('Explore start failure');
+    });
+
+    try {
+      await controller.startExplore(historyId, southType, fromSouth, settings, mockRequest as CustomExpressRequest);
+      assert.fail('Expected error to be thrown');
+    } catch (error) {
+      assert.ok(error instanceof OIBusTestingError);
+      assert.strictEqual((error as OIBusTestingError).message, 'Explore start failure');
+    }
+  });
+
+  it('should browse an explore session', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const sessionId = 'sessionId';
+    const mockResult = { entries: [] };
+    (mockRequest.services!.southService as unknown as Record<string, unknown>).browseExplore = mock.fn(async () => mockResult);
+
+    const result = await controller.browseExplore(historyId, sessionId, { parentId: null }, mockRequest as CustomExpressRequest);
+
+    assert.deepStrictEqual(
+      (mockRequest.services!.southService as unknown as { browseExplore: ReturnType<typeof mock.fn> }).browseExplore.mock.calls[0]
+        .arguments,
+      [sessionId, null]
+    );
+    assert.deepStrictEqual(result, mockResult);
+  });
+
+  it('should wrap errors when browsing an explore session', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const sessionId = 'sessionId';
+    (mockRequest.services!.southService as unknown as Record<string, unknown>).browseExplore = mock.fn(async () => {
+      throw new Error('Browse failure');
+    });
+
+    try {
+      await controller.browseExplore(historyId, sessionId, { parentId: null }, mockRequest as CustomExpressRequest);
+      assert.fail('Expected error to be thrown');
+    } catch (error) {
+      assert.ok(error instanceof OIBusTestingError);
+      assert.strictEqual((error as OIBusTestingError).message, 'Browse failure');
+    }
+  });
+
+  it('should close an explore session', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const sessionId = 'sessionId';
+    const closeExplore = mock.fn(async () => undefined);
+    (mockRequest.services!.southService as unknown as Record<string, unknown>).closeExplore = closeExplore;
+
+    await controller.closeExplore(historyId, sessionId, mockRequest as CustomExpressRequest);
+
+    assert.deepStrictEqual(closeExplore.mock.calls[0].arguments, [sessionId]);
   });
 
   it('should test a history query item', async () => {
@@ -691,6 +769,63 @@ describe('HistoryQueryController', () => {
     await assert.rejects(
       controller.checkImportItems(southType, delimiter, 'false', itemsToImportFile, undefined!, mockRequest as CustomExpressRequest),
       { message: 'Missing "itemsToImport" or "currentItems"' }
+    );
+  });
+
+  it('should check CSV import with an empty existing items list when deleteItemsNotPresent is true', async () => {
+    const southType = testData.historyQueries.list[0].southType;
+    const delimiter = ',';
+    const itemsToImportFile = {
+      path: 'myFile.csv'
+    } as Express.Multer.File;
+    const currentItemsFile = {
+      path: 'myFile.json'
+    } as Express.Multer.File;
+
+    const csvContent = 'id,name\n1,item1';
+    const readFileMock = mock.method(fs, 'readFile', async () => csvContent);
+    const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
+
+    const mockResult = {
+      items: [testData.historyQueries.itemCommand as HistoryQueryItemDTO],
+      errors: []
+    };
+    historyQueryService.checkImportItems = mock.fn(async () => mockResult);
+
+    const result = await controller.checkImportItems(
+      southType,
+      delimiter,
+      'true',
+      itemsToImportFile,
+      currentItemsFile,
+      mockRequest as CustomExpressRequest
+    );
+
+    assert.strictEqual(readFileMock.mock.calls.length, 1);
+    assert.strictEqual(historyQueryService.checkImportItems.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.checkImportItems.mock.calls[0].arguments, [southType, csvContent, delimiter, []]);
+    assert.deepStrictEqual(result, mockResult);
+    assert.strictEqual(unlinkMock.mock.calls.length, 2);
+  });
+
+  it('should not throw an error if the unlink calls fail in checkImportItems', async () => {
+    const southType = testData.historyQueries.list[0].southType;
+    const delimiter = ',';
+    const itemsToImportFile = {
+      path: 'myFile.csv'
+    } as Express.Multer.File;
+    const currentItemsFile = {
+      path: 'myFile.json'
+    } as Express.Multer.File;
+
+    mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1' }]));
+    mock.method(fs, 'unlink', async () => {
+      throw new Error('unlink error');
+    });
+    historyQueryService.checkImportItems = mock.fn(async () => ({ items: [], errors: [] }));
+
+    await assert.doesNotReject(
+      controller.checkImportItems(southType, delimiter, 'false', itemsToImportFile, currentItemsFile, mockRequest as CustomExpressRequest)
     );
   });
 

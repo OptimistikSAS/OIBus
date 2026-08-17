@@ -35,6 +35,9 @@ import { toScanModeDTO } from './scan-mode.service';
 
 const nodeRequire = createRequire(import.meta.url);
 
+// Looked up by id rather than by position: northManifestList order shifts whenever a connector is added.
+const fileWriterManifest = northManifestList.find(northManifest => northManifest.id === 'file-writer')!;
+
 const logger = new PinoLogger();
 const historyQueryRepository = new HistoryQueryRepositoryMock();
 const northConnectorRepository = new NorthConnectorRepositoryMock();
@@ -139,6 +142,7 @@ describe('History Query service', () => {
     southService.getManifest.mock.resetCalls();
     southService.findById.mock.resetCalls();
     southService.testSouth.mock.resetCalls();
+    southService.startExplore.mock.resetCalls();
     southService.testItem.mock.resetCalls();
     transformerService.findAll.mock.resetCalls();
     scanModeRepository.findAll.mock.resetCalls();
@@ -149,7 +153,7 @@ describe('History Query service', () => {
     logRepository.deleteLogsByScopeId.mock.resetCalls();
 
     // Default implementations
-    northService.getManifest.mock.mockImplementation(() => northManifestList[4]); // file-writer
+    northService.getManifest.mock.mockImplementation(() => fileWriterManifest); // file-writer
     northService.findById.mock.mockImplementation(() => testData.north.list[0]);
     southService.getManifest.mock.mockImplementation(() => southManifestList[0]); // folder-scanner
     southService.findById.mock.mockImplementation(() => testData.south.list[0]);
@@ -249,6 +253,47 @@ describe('History Query service', () => {
     );
   });
 
+  it('should create a history query with a null south item id and resolve a non-temp northTransformer item', async () => {
+    service.retrieveSecrets = mock.fn(() => null);
+    const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
+    command.items[0].id = null;
+    command.northTransformers = [
+      {
+        id: 'historyTransformerId3',
+        transformerId: testData.transformers.list[0].id,
+        options: {},
+        items: [{ id: '', name: 'item4', enabled: true }]
+      }
+    ];
+
+    await service.create(command, undefined, undefined, undefined, 'userTest');
+
+    assert.strictEqual(historyQueryRepository.saveHistory.mock.calls.length, 1);
+    const savedHistoryQuery = historyQueryRepository.saveHistory.mock.calls[0].arguments[0];
+    assert.strictEqual(savedHistoryQuery.items[0].id, '');
+    assert.strictEqual(savedHistoryQuery.northTransformers[0].items[0].id, '');
+    assert.strictEqual(savedHistoryQuery.northTransformers[0].items[0].createdBy, 'userTest');
+  });
+
+  it('should fail to create a history query when a non-temp northTransformer item is not found among the history items', async () => {
+    service.retrieveSecrets = mock.fn(() => null);
+    const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
+    command.items[0].id = 'existingItem1';
+    command.northTransformers = [
+      {
+        id: 'historyTransformerId3',
+        transformerId: testData.transformers.list[0].id,
+        options: {},
+        items: [{ id: 'missing-item-id', name: 'missing item', enabled: true }]
+      }
+    ];
+
+    await assert.rejects(
+      async () => service.create(command, undefined, undefined, undefined, 'userTest'),
+      new NotFoundError('Could not find History item "missing item" (missing-item-id)')
+    );
+  });
+
   it('should update a history query', async () => {
     historyQueryRepository.findAllHistoriesLight.mock.mockImplementation(() => testData.historyQueries.listLight);
     await service.update(testData.historyQueries.list[0].id, testData.historyQueries.command, false, 'userTest');
@@ -320,6 +365,45 @@ describe('History Query service', () => {
     await assert.rejects(
       async () => service.update(testData.historyQueries.list[0].id, command, false, 'userTest'),
       new NotFoundError(`Could not find OIBus transformer "bad-id"`)
+    );
+  });
+
+  it('should update a history query with a null south item id and resolve a non-temp northTransformer item', async () => {
+    const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
+    command.items[0].id = null;
+    command.northTransformers = [
+      {
+        id: 'historyTransformerId3',
+        transformerId: testData.transformers.list[0].id,
+        options: {},
+        items: [{ id: '', name: 'item4', enabled: true }]
+      }
+    ];
+
+    await service.update(testData.historyQueries.list[0].id, command, false, 'userTest');
+
+    assert.strictEqual(historyQueryRepository.saveHistory.mock.calls.length, 1);
+    const savedHistoryQuery = historyQueryRepository.saveHistory.mock.calls[0].arguments[0];
+    assert.strictEqual(savedHistoryQuery.items[0].id, '');
+    assert.strictEqual(savedHistoryQuery.items[0].createdBy, 'userTest');
+    assert.strictEqual(savedHistoryQuery.northTransformers[0].items[0].id, '');
+  });
+
+  it('should fail to update a history query when a non-temp northTransformer item is not found among the history items', async () => {
+    const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
+    command.items[0].id = 'existingItem1';
+    command.northTransformers = [
+      {
+        id: 'historyTransformerId3',
+        transformerId: testData.transformers.list[0].id,
+        options: {},
+        items: [{ id: 'missing-item-id', name: 'missing item', enabled: true }]
+      }
+    ];
+
+    await assert.rejects(
+      async () => service.update(testData.historyQueries.list[0].id, command, false, 'userTest'),
+      new NotFoundError('Could not find History item "missing item" (missing-item-id)')
     );
   });
 
@@ -418,6 +502,36 @@ describe('History Query service', () => {
     await service.testSouth(testData.historyQueries.list[0].id, testData.south.command.type, undefined, testData.south.command.settings);
 
     assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [
+      'history',
+      testData.south.command.type,
+      testData.south.command.settings
+    ]);
+  });
+
+  it('should start an explore session in creation mode', async () => {
+    await service.startExplore('create', testData.south.command.type, undefined, testData.south.command.settings);
+
+    assert.deepStrictEqual(southService.startExplore.mock.calls[0].arguments, [
+      'history',
+      testData.south.command.type,
+      testData.south.command.settings
+    ]);
+  });
+
+  it('should start an explore session in creation mode and retrieve secrets', async () => {
+    await service.startExplore('create', testData.south.command.type, testData.south.list[0].id, testData.south.command.settings);
+
+    assert.deepStrictEqual(southService.startExplore.mock.calls[0].arguments, [
+      'history',
+      testData.south.command.type,
+      testData.south.command.settings
+    ]);
+  });
+
+  it('should start an explore session in edit mode', async () => {
+    await service.startExplore(testData.historyQueries.list[0].id, testData.south.command.type, undefined, testData.south.command.settings);
+
+    assert.deepStrictEqual(southService.startExplore.mock.calls[0].arguments, [
       'history',
       testData.south.command.type,
       testData.south.command.settings
@@ -763,15 +877,7 @@ describe('History Query service', () => {
         name: 'item',
         enabled: 'true',
         settings_query: 'query',
-        settings_dateTimeFields: '[]',
-        settings_serialization: JSON.stringify({
-          type: 'csv',
-          filename: 'filename',
-          delimiter: 'SEMI_COLON',
-          compression: true,
-          outputTimestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
-          outputTimezone: 'Europe/Paris'
-        })
+        settings_trackingInstant: JSON.stringify({ trackInstant: false })
       }
     ];
     mockPapaparse.parse.mock.mockImplementationOnce(() => ({
@@ -792,15 +898,7 @@ describe('History Query service', () => {
           enabled: String(csvData[0].enabled).toLowerCase() === 'true',
           settings: {
             query: 'query',
-            dateTimeFields: [],
-            serialization: {
-              type: 'csv',
-              filename: 'filename',
-              delimiter: 'SEMI_COLON',
-              compression: true,
-              outputTimestampFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
-              outputTimezone: 'Europe/Paris'
-            }
+            trackingInstant: { trackInstant: false }
           }
         }
       ],
@@ -860,14 +958,14 @@ describe('History Query service', () => {
   it('should retrieve secrets from history query', () => {
     const historySource = JSON.parse(JSON.stringify(testData.historyQueries.list[0]));
     historySource.southType = southManifestList[4].id;
-    historySource.northType = northManifestList[4].id;
+    historySource.northType = fileWriterManifest.id;
     historyQueryRepository.findHistoryById.mock.mockImplementationOnce(() => historySource);
     const result = service.retrieveSecrets(
       undefined,
       undefined,
       testData.historyQueries.list[0].id,
       southManifestList[4],
-      northManifestList[4]
+      fileWriterManifest
     );
     assert.deepStrictEqual(historyQueryRepository.findHistoryById.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
     assert.deepStrictEqual(result, historySource);
@@ -879,7 +977,7 @@ describe('History Query service', () => {
     historyQueryRepository.findHistoryById.mock.mockImplementationOnce(() => historySource);
 
     assert.throws(
-      () => service.retrieveSecrets(undefined, undefined, testData.historyQueries.list[0].id, southManifestList[4], northManifestList[4]),
+      () => service.retrieveSecrets(undefined, undefined, testData.historyQueries.list[0].id, southManifestList[4], fileWriterManifest),
       new Error(
         `History query "${historySource.id}" (South type "${historySource.southType}") must be of the South type "${southManifestList[4].id}"`
       )
@@ -893,9 +991,9 @@ describe('History Query service', () => {
     historyQueryRepository.findHistoryById.mock.mockImplementationOnce(() => historySource);
 
     assert.throws(
-      () => service.retrieveSecrets(undefined, undefined, testData.historyQueries.list[0].id, southManifestList[4], northManifestList[4]),
+      () => service.retrieveSecrets(undefined, undefined, testData.historyQueries.list[0].id, southManifestList[4], fileWriterManifest),
       new Error(
-        `History query "${historySource.id}" (North type "${historySource.northType}") must be of the North type "${northManifestList[4].id}"`
+        `History query "${historySource.id}" (North type "${historySource.northType}") must be of the North type "${fileWriterManifest.id}"`
       )
     );
     assert.deepStrictEqual(historyQueryRepository.findHistoryById.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
@@ -908,7 +1006,7 @@ describe('History Query service', () => {
       testData.north.list[0].id,
       undefined,
       southManifestList[4],
-      northManifestList[4]
+      fileWriterManifest
     );
 
     assert.deepStrictEqual(result, {
@@ -923,7 +1021,7 @@ describe('History Query service', () => {
   it('should retrieve secrets from south only', () => {
     southService.findById.mock.mockImplementationOnce(() => testData.south.list[1]); // retrieve the mssql connector
 
-    const result = service.retrieveSecrets(testData.south.list[1].id, undefined, undefined, southManifestList[4], northManifestList[4]);
+    const result = service.retrieveSecrets(testData.south.list[1].id, undefined, undefined, southManifestList[4], fileWriterManifest);
 
     assert.deepStrictEqual(result, {
       southType: testData.south.list[1].type,
@@ -933,7 +1031,7 @@ describe('History Query service', () => {
   });
 
   it('should retrieve secrets from north only', () => {
-    const result = service.retrieveSecrets(undefined, testData.north.list[0].id, undefined, southManifestList[4], northManifestList[4]);
+    const result = service.retrieveSecrets(undefined, testData.north.list[0].id, undefined, southManifestList[4], fileWriterManifest);
 
     assert.deepStrictEqual(result, {
       items: [],
@@ -949,13 +1047,7 @@ describe('History Query service', () => {
 
     assert.throws(
       () =>
-        service.retrieveSecrets(
-          testData.south.list[0].id,
-          testData.north.list[0].id,
-          undefined,
-          southManifestList[4],
-          northManifestList[4]
-        ),
+        service.retrieveSecrets(testData.south.list[0].id, testData.north.list[0].id, undefined, southManifestList[4], fileWriterManifest),
       new Error(`South connector "${testData.south.list[0].id}" (type "${south.type}") must be of the type "${southManifestList[4].id}"`)
     );
   });
@@ -969,19 +1061,13 @@ describe('History Query service', () => {
 
     assert.throws(
       () =>
-        service.retrieveSecrets(
-          testData.north.list[0].id,
-          testData.north.list[0].id,
-          undefined,
-          southManifestList[4],
-          northManifestList[4]
-        ),
-      new Error(`North connector "${testData.north.list[0].id}" (type "${north.type}") must be of the type "${northManifestList[4].id}"`)
+        service.retrieveSecrets(testData.north.list[0].id, testData.north.list[0].id, undefined, southManifestList[4], fileWriterManifest),
+      new Error(`North connector "${testData.north.list[0].id}" (type "${north.type}") must be of the type "${fileWriterManifest.id}"`)
     );
   });
 
   it('should return null', () => {
-    assert.strictEqual(service.retrieveSecrets(undefined, undefined, undefined, southManifestList[4], northManifestList[4]), null);
+    assert.strictEqual(service.retrieveSecrets(undefined, undefined, undefined, southManifestList[4], fileWriterManifest), null);
   });
 
   it('should properly convert to DTO', () => {
@@ -1066,10 +1152,106 @@ describe('History Query service', () => {
       endTime: historyQuery.queryTimeRange.endTime,
       southType: historyQuery.southType,
       northType: historyQuery.northType,
+      currentItemNumber: undefined,
+      numberOfItems: undefined,
       createdBy: getUserInfo(historyQueryLight.createdBy),
       updatedBy: getUserInfo(historyQueryLight.updatedBy),
       createdAt: historyQueryLight.createdAt,
       updatedAt: historyQueryLight.updatedAt
     });
+  });
+
+  it('should include current item progress in light DTO when the history query is currently running', () => {
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+    const historyQuery = testData.historyQueries.list[0];
+    const historyQueryLight: HistoryQueryEntityLight = {
+      id: historyQuery.id,
+      name: historyQuery.name,
+      description: historyQuery.description,
+      status: historyQuery.status,
+      startTime: historyQuery.queryTimeRange.startTime,
+      endTime: historyQuery.queryTimeRange.endTime,
+      southType: historyQuery.southType,
+      northType: historyQuery.northType,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    const runningMetrics = {
+      ...testData.historyQueries.metrics,
+      historyMetrics: {
+        ...testData.historyQueries.metrics.historyMetrics,
+        running: true,
+        currentItemNumber: 2,
+        numberOfItems: 5
+      }
+    };
+    const getHistoryMetrics = mock.fn((_historyId: string) => runningMetrics);
+
+    const result = toHistoryQueryLightDTO(historyQueryLight, getUserInfo, getHistoryMetrics);
+
+    assert.deepStrictEqual(getHistoryMetrics.mock.calls[0].arguments, [historyQueryLight.id]);
+    assert.strictEqual(result.currentItemNumber, 2);
+    assert.strictEqual(result.numberOfItems, 5);
+  });
+
+  it('should omit current item progress in light DTO when the history query is not currently running', () => {
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+    const historyQuery = testData.historyQueries.list[0];
+    const historyQueryLight: HistoryQueryEntityLight = {
+      id: historyQuery.id,
+      name: historyQuery.name,
+      description: historyQuery.description,
+      status: historyQuery.status,
+      startTime: historyQuery.queryTimeRange.startTime,
+      endTime: historyQuery.queryTimeRange.endTime,
+      southType: historyQuery.southType,
+      northType: historyQuery.northType,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    const notRunningMetrics = {
+      ...testData.historyQueries.metrics,
+      historyMetrics: {
+        ...testData.historyQueries.metrics.historyMetrics,
+        running: false,
+        currentItemNumber: 2,
+        numberOfItems: 5
+      }
+    };
+    const getHistoryMetrics = mock.fn((_historyId: string) => notRunningMetrics);
+
+    const result = toHistoryQueryLightDTO(historyQueryLight, getUserInfo, getHistoryMetrics);
+
+    assert.strictEqual(result.currentItemNumber, undefined);
+    assert.strictEqual(result.numberOfItems, undefined);
+  });
+
+  it('should omit current item progress in light DTO when the engine has no metrics for the history query', () => {
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+    const historyQuery = testData.historyQueries.list[0];
+    const historyQueryLight: HistoryQueryEntityLight = {
+      id: historyQuery.id,
+      name: historyQuery.name,
+      description: historyQuery.description,
+      status: historyQuery.status,
+      startTime: historyQuery.queryTimeRange.startTime,
+      endTime: historyQuery.queryTimeRange.endTime,
+      southType: historyQuery.southType,
+      northType: historyQuery.northType,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    const getHistoryMetrics = mock.fn((_historyId: string) => null);
+
+    const result = toHistoryQueryLightDTO(historyQueryLight, getUserInfo, getHistoryMetrics);
+
+    assert.strictEqual(result.currentItemNumber, undefined);
+    assert.strictEqual(result.numberOfItems, undefined);
   });
 });

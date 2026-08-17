@@ -1332,7 +1332,8 @@
 				"enum": [
 					"any",
 					"time-values",
-					"setpoint"
+					"setpoint",
+					"record-list"
 				],
 				"description": "Type representing an OIBus data type."
 			},
@@ -1678,6 +1679,56 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"Record_string.string-or-number-or-boolean-or-null_": {
+				"properties": {},
+				"additionalProperties": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "number",
+							"format": "double"
+						},
+						{
+							"type": "boolean"
+						}
+					]
+				},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"OIBusRecord": {
+				"$ref": "#/components/schemas/Record_string.string-or-number-or-boolean-or-null_",
+				"description": "A single row of data, as returned by a query-based source (e.g. a SQL database). Keys are\ncolumn names; values are whatever the source returned, untouched (no datetime parsing/formatting\nis applied here — that is the responsibility of the north-side transformer, e.g. record-list-to-csv)."
+			},
+			"OIBusRecordListContent": {
+				"description": "Record-list content: a list of flat, arbitrarily-shaped rows (e.g. the result of a SQL query).",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"record-list"
+						],
+						"nullable": false,
+						"description": "The type of content.",
+						"example": "record-list"
+					},
+					"content": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusRecord"
+						},
+						"type": "array",
+						"description": "The array of rows."
+					}
+				},
+				"required": [
+					"type",
+					"content"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"OIBusContent": {
 				"anyOf": [
 					{
@@ -1691,6 +1742,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/OIBusSetpointContent"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusRecordListContent"
 					}
 				],
 				"description": "Type representing OIBus content."
@@ -1767,6 +1821,7 @@
 					"osisoft-pi",
 					"postgresql",
 					"rest",
+					"s7",
 					"sftp",
 					"sqlite"
 				],
@@ -1794,6 +1849,11 @@
 						"$ref": "#/components/schemas/OIBusSouthCategory",
 						"description": "The category of the South connector.",
 						"example": "file"
+					},
+					"beta": {
+						"type": "boolean",
+						"description": "Whether this connector type is in beta.",
+						"example": false
 					},
 					"modes": {
 						"properties": {
@@ -1849,6 +1909,11 @@
 						"description": "The category of the South connector.",
 						"example": "file"
 					},
+					"beta": {
+						"type": "boolean",
+						"description": "Whether this connector type is in beta.",
+						"example": false
+					},
 					"modes": {
 						"properties": {
 							"history": {
@@ -1880,6 +1945,11 @@
 						],
 						"type": "object",
 						"description": "The operating modes supported by this connector type."
+					},
+					"explore": {
+						"type": "boolean",
+						"description": "Whether this connector type supports the interactive \"explore/discovery\" feature\n(browsing the data source, e.g. expanding OPC-UA nodes or walking a folder tree).\nUI capability flag — mirrors the connector's structural `hasExplore()`.",
+						"example": true
 					},
 					"settings": {
 						"$ref": "#/components/schemas/OIBusObjectAttribute",
@@ -1973,6 +2043,158 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ScanModeType": {
+				"type": "string",
+				"enum": [
+					"cron",
+					"interval"
+				],
+				"description": "How a scan mode decides when to tick.\n- `cron`: driven by a cron expression (the historical behaviour).\n- `interval`: driven by a fixed period between ticks."
+			},
+			"IntervalUnit": {
+				"type": "string",
+				"enum": [
+					"ms",
+					"s",
+					"min",
+					"hour"
+				]
+			},
+			"ScanModeInterval": {
+				"description": "Fixed period between two ticks of an `interval` scan mode.",
+				"properties": {
+					"value": {
+						"type": "number",
+						"format": "double",
+						"description": "How many `unit`s between two ticks.",
+						"example": 30
+					},
+					"unit": {
+						"$ref": "#/components/schemas/IntervalUnit",
+						"description": "The unit `value` is expressed in.",
+						"example": "s"
+					}
+				},
+				"required": [
+					"value",
+					"unit"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ActivationWindowDateRange": {
+				"description": "Absolute bounds of an activation window. Each side is independently optional: an absent bound\nmeans the window is open-ended on that side.",
+				"properties": {
+					"start": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "Inclusive start instant, ISO UTC.",
+						"example": "2026-08-01T00:00:00.000Z"
+					},
+					"end": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "Inclusive end instant, ISO UTC.",
+						"example": "2026-08-31T00:00:00.000Z"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"LocalTime": {
+				"type": "string",
+				"example": "12:34:56",
+				"description": "Represents a local time as an ISO time string (HH:MM:SS)."
+			},
+			"ActivationWindowTimeOfDay": {
+				"description": "Local time-of-day bounds. `start` is inclusive, `end` is exclusive. When `end` is earlier than\n`start` the window is overnight and spans into the following day.",
+				"properties": {
+					"start": {
+						"$ref": "#/components/schemas/LocalTime",
+						"example": "22:00"
+					},
+					"end": {
+						"$ref": "#/components/schemas/LocalTime",
+						"example": "02:00"
+					}
+				},
+				"required": [
+					"start",
+					"end"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ActivationWindowRecurring": {
+				"description": "A civil-time recurrence rule. Unlike the date range, this is not a pair of instants: \"Thursday\n12:00\" shifts by an hour across DST transitions, so the rule carries the IANA timezone it is\nexpressed in and is re-derived at every evaluation.",
+				"properties": {
+					"timezone": {
+						"$ref": "#/components/schemas/Timezone",
+						"description": "IANA timezone the day and time filters are expressed in, captured from the user's account\nsetting when the scan mode was saved.",
+						"example": "Europe/Paris"
+					},
+					"daysOfWeek": {
+						"items": {
+							"type": "number",
+							"format": "double"
+						},
+						"type": "array",
+						"nullable": true,
+						"description": "Days on which the window is active, 0 = Sunday … 6 = Saturday.\nAbsent or empty means every day.",
+						"example": [
+							6,
+							0
+						]
+					},
+					"timeOfDay": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ActivationWindowTimeOfDay"
+							}
+						],
+						"nullable": true,
+						"description": "Time-of-day bounds. Absent means all day."
+					}
+				},
+				"required": [
+					"timezone"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ActivationWindow": {
+				"description": "Optional gate applied on top of the schedule. A tick only fires when it satisfies every\nconfigured criterion; the two criteria below are combined with AND. A tick falling outside the\nwindow is skipped silently — it is never queued or deferred.",
+				"properties": {
+					"dateRange": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ActivationWindowDateRange"
+							}
+						],
+						"nullable": true,
+						"description": "Absolute bounds. Absent means unbounded on both sides."
+					},
+					"recurring": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ActivationWindowRecurring"
+							}
+						],
+						"nullable": true,
+						"description": "Recurring day-of-week and time-of-day rule. Absent means no recurrence restriction."
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
 			"ScanModeDTO": {
 				"description": "Data Transfer Object for a scan mode.\nRepresents a configured scan mode with its metadata and schedule.",
 				"properties": {
@@ -2009,10 +2231,38 @@
 						"description": "A description of the scan mode's purpose or behavior.",
 						"example": "Scans for new backup data every day at midnight"
 					},
+					"type": {
+						"$ref": "#/components/schemas/ScanModeType",
+						"description": "Which scheduling mechanism drives this scan mode.",
+						"example": "cron"
+					},
 					"cron": {
 						"type": "string",
-						"description": "A cron expression defining the scan schedule.",
+						"description": "A cron expression defining the scan schedule. Empty when `type` is `\"interval\"`.",
 						"example": "0 0 * * *"
+					},
+					"interval": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeInterval"
+							}
+						],
+						"nullable": true,
+						"description": "The fixed period between two ticks. `null` when `type` is `\"cron\"`."
+					},
+					"activationWindow": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ActivationWindow"
+							}
+						],
+						"nullable": true,
+						"description": "Optional activation window gating every tick. `null` means always active."
+					},
+					"activationWindowExpired": {
+						"type": "boolean",
+						"description": "Whether the activation window can never trigger again (for instance its end date is already\npast). Computed server-side; drives a non-blocking warning in the UI.",
+						"example": false
 					}
 				},
 				"required": [
@@ -2023,7 +2273,11 @@
 					"updatedAt",
 					"name",
 					"description",
-					"cron"
+					"type",
+					"cron",
+					"interval",
+					"activationWindow",
+					"activationWindowExpired"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4696,7 +4950,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthMSSQLItemSettingsDateTimeFieldsType": {
+			"SouthMSSQLItemSettingsTrackingInstantDateTimeInputType": {
 				"type": "string",
 				"enum": [
 					"string",
@@ -4710,16 +4964,10 @@
 					"unix-epoch-ms"
 				]
 			},
-			"SouthMSSQLItemSettingsDateTimeFields": {
+			"SouthMSSQLItemSettingsTrackingInstantDateTimeInput": {
 				"properties": {
-					"fieldName": {
-						"type": "string"
-					},
-					"useAsReference": {
-						"type": "boolean"
-					},
 					"type": {
-						"$ref": "#/components/schemas/SouthMSSQLItemSettingsDateTimeFieldsType"
+						"$ref": "#/components/schemas/SouthMSSQLItemSettingsTrackingInstantDateTimeInputType"
 					},
 					"timezone": {
 						"$ref": "#/components/schemas/Timezone"
@@ -4732,61 +4980,30 @@
 					}
 				},
 				"required": [
-					"fieldName",
-					"useAsReference",
 					"type"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthMSSQLItemSettingsSerializationType": {
-				"type": "string",
-				"enum": [
-					"csv"
-				],
-				"nullable": false
-			},
-			"SouthMSSQLItemSettingsSerializationDelimiter": {
-				"type": "string",
-				"enum": [
-					"DOT",
-					"SEMI_COLON",
-					"COLON",
-					"COMMA",
-					"NON_BREAKING_SPACE",
-					"SLASH",
-					"TAB",
-					"PIPE"
-				]
-			},
-			"SouthMSSQLItemSettingsSerialization": {
+			"SouthMSSQLItemSettingsTrackingInstant": {
 				"properties": {
-					"type": {
-						"$ref": "#/components/schemas/SouthMSSQLItemSettingsSerializationType"
-					},
-					"filename": {
-						"type": "string"
-					},
-					"delimiter": {
-						"$ref": "#/components/schemas/SouthMSSQLItemSettingsSerializationDelimiter"
-					},
-					"compression": {
+					"trackInstant": {
 						"type": "boolean"
 					},
-					"outputTimestampFormat": {
+					"fieldName": {
 						"type": "string"
 					},
-					"outputTimezone": {
-						"$ref": "#/components/schemas/Timezone"
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthMSSQLItemSettingsTrackingInstantDateTimeInput"
+							}
+						],
+						"nullable": true
 					}
 				},
 				"required": [
-					"type",
-					"filename",
-					"delimiter",
-					"compression",
-					"outputTimestampFormat",
-					"outputTimezone"
+					"trackInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4796,21 +5013,18 @@
 					"query": {
 						"type": "string"
 					},
-					"dateTimeFields": {
-						"items": {
-							"$ref": "#/components/schemas/SouthMSSQLItemSettingsDateTimeFields"
-						},
-						"type": "array",
+					"trackingInstant": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthMSSQLItemSettingsTrackingInstant"
+							}
+						],
 						"nullable": true
-					},
-					"serialization": {
-						"$ref": "#/components/schemas/SouthMSSQLItemSettingsSerialization"
 					}
 				},
 				"required": [
 					"query",
-					"dateTimeFields",
-					"serialization"
+					"trackingInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5200,7 +5414,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthMySQLItemSettingsDateTimeFieldsType": {
+			"SouthMySQLItemSettingsTrackingInstantDateTimeInputType": {
 				"type": "string",
 				"enum": [
 					"string",
@@ -5210,16 +5424,10 @@
 					"unix-epoch-ms"
 				]
 			},
-			"SouthMySQLItemSettingsDateTimeFields": {
+			"SouthMySQLItemSettingsTrackingInstantDateTimeInput": {
 				"properties": {
-					"fieldName": {
-						"type": "string"
-					},
-					"useAsReference": {
-						"type": "boolean"
-					},
 					"type": {
-						"$ref": "#/components/schemas/SouthMySQLItemSettingsDateTimeFieldsType"
+						"$ref": "#/components/schemas/SouthMySQLItemSettingsTrackingInstantDateTimeInputType"
 					},
 					"timezone": {
 						"$ref": "#/components/schemas/Timezone"
@@ -5232,61 +5440,30 @@
 					}
 				},
 				"required": [
-					"fieldName",
-					"useAsReference",
 					"type"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthMySQLItemSettingsSerializationType": {
-				"type": "string",
-				"enum": [
-					"csv"
-				],
-				"nullable": false
-			},
-			"SouthMySQLItemSettingsSerializationDelimiter": {
-				"type": "string",
-				"enum": [
-					"DOT",
-					"SEMI_COLON",
-					"COLON",
-					"COMMA",
-					"NON_BREAKING_SPACE",
-					"SLASH",
-					"TAB",
-					"PIPE"
-				]
-			},
-			"SouthMySQLItemSettingsSerialization": {
+			"SouthMySQLItemSettingsTrackingInstant": {
 				"properties": {
-					"type": {
-						"$ref": "#/components/schemas/SouthMySQLItemSettingsSerializationType"
-					},
-					"filename": {
-						"type": "string"
-					},
-					"delimiter": {
-						"$ref": "#/components/schemas/SouthMySQLItemSettingsSerializationDelimiter"
-					},
-					"compression": {
+					"trackInstant": {
 						"type": "boolean"
 					},
-					"outputTimestampFormat": {
+					"fieldName": {
 						"type": "string"
 					},
-					"outputTimezone": {
-						"$ref": "#/components/schemas/Timezone"
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthMySQLItemSettingsTrackingInstantDateTimeInput"
+							}
+						],
+						"nullable": true
 					}
 				},
 				"required": [
-					"type",
-					"filename",
-					"delimiter",
-					"compression",
-					"outputTimestampFormat",
-					"outputTimezone"
+					"trackInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5300,22 +5477,19 @@
 						"type": "number",
 						"format": "double"
 					},
-					"dateTimeFields": {
-						"items": {
-							"$ref": "#/components/schemas/SouthMySQLItemSettingsDateTimeFields"
-						},
-						"type": "array",
+					"trackingInstant": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthMySQLItemSettingsTrackingInstant"
+							}
+						],
 						"nullable": true
-					},
-					"serialization": {
-						"$ref": "#/components/schemas/SouthMySQLItemSettingsSerialization"
 					}
 				},
 				"required": [
 					"query",
 					"requestTimeout",
-					"dateTimeFields",
-					"serialization"
+					"trackingInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8105,7 +8279,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthOracleItemSettingsDateTimeFieldsType": {
+			"SouthOracleItemSettingsTrackingInstantDateTimeInputType": {
 				"type": "string",
 				"enum": [
 					"string",
@@ -8115,16 +8289,10 @@
 					"unix-epoch-ms"
 				]
 			},
-			"SouthOracleItemSettingsDateTimeFields": {
+			"SouthOracleItemSettingsTrackingInstantDateTimeInput": {
 				"properties": {
-					"fieldName": {
-						"type": "string"
-					},
-					"useAsReference": {
-						"type": "boolean"
-					},
 					"type": {
-						"$ref": "#/components/schemas/SouthOracleItemSettingsDateTimeFieldsType"
+						"$ref": "#/components/schemas/SouthOracleItemSettingsTrackingInstantDateTimeInputType"
 					},
 					"timezone": {
 						"$ref": "#/components/schemas/Timezone"
@@ -8137,61 +8305,30 @@
 					}
 				},
 				"required": [
-					"fieldName",
-					"useAsReference",
 					"type"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthOracleItemSettingsSerializationType": {
-				"type": "string",
-				"enum": [
-					"csv"
-				],
-				"nullable": false
-			},
-			"SouthOracleItemSettingsSerializationDelimiter": {
-				"type": "string",
-				"enum": [
-					"DOT",
-					"SEMI_COLON",
-					"COLON",
-					"COMMA",
-					"NON_BREAKING_SPACE",
-					"SLASH",
-					"TAB",
-					"PIPE"
-				]
-			},
-			"SouthOracleItemSettingsSerialization": {
+			"SouthOracleItemSettingsTrackingInstant": {
 				"properties": {
-					"type": {
-						"$ref": "#/components/schemas/SouthOracleItemSettingsSerializationType"
-					},
-					"filename": {
-						"type": "string"
-					},
-					"delimiter": {
-						"$ref": "#/components/schemas/SouthOracleItemSettingsSerializationDelimiter"
-					},
-					"compression": {
+					"trackInstant": {
 						"type": "boolean"
 					},
-					"outputTimestampFormat": {
+					"fieldName": {
 						"type": "string"
 					},
-					"outputTimezone": {
-						"$ref": "#/components/schemas/Timezone"
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthOracleItemSettingsTrackingInstantDateTimeInput"
+							}
+						],
+						"nullable": true
 					}
 				},
 				"required": [
-					"type",
-					"filename",
-					"delimiter",
-					"compression",
-					"outputTimestampFormat",
-					"outputTimezone"
+					"trackInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8205,22 +8342,19 @@
 						"type": "number",
 						"format": "double"
 					},
-					"dateTimeFields": {
-						"items": {
-							"$ref": "#/components/schemas/SouthOracleItemSettingsDateTimeFields"
-						},
-						"type": "array",
+					"trackingInstant": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthOracleItemSettingsTrackingInstant"
+							}
+						],
 						"nullable": true
-					},
-					"serialization": {
-						"$ref": "#/components/schemas/SouthOracleItemSettingsSerialization"
 					}
 				},
 				"required": [
 					"query",
 					"requestTimeout",
-					"dateTimeFields",
-					"serialization"
+					"trackingInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8972,7 +9106,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthPostgreSQLItemSettingsDateTimeFieldsType": {
+			"SouthPostgreSQLItemSettingsTrackingInstantDateTimeInputType": {
 				"type": "string",
 				"enum": [
 					"string",
@@ -8983,16 +9117,10 @@
 					"timestamptz"
 				]
 			},
-			"SouthPostgreSQLItemSettingsDateTimeFields": {
+			"SouthPostgreSQLItemSettingsTrackingInstantDateTimeInput": {
 				"properties": {
-					"fieldName": {
-						"type": "string"
-					},
-					"useAsReference": {
-						"type": "boolean"
-					},
 					"type": {
-						"$ref": "#/components/schemas/SouthPostgreSQLItemSettingsDateTimeFieldsType"
+						"$ref": "#/components/schemas/SouthPostgreSQLItemSettingsTrackingInstantDateTimeInputType"
 					},
 					"timezone": {
 						"$ref": "#/components/schemas/Timezone"
@@ -9005,61 +9133,30 @@
 					}
 				},
 				"required": [
-					"fieldName",
-					"useAsReference",
 					"type"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthPostgreSQLItemSettingsSerializationType": {
-				"type": "string",
-				"enum": [
-					"csv"
-				],
-				"nullable": false
-			},
-			"SouthPostgreSQLItemSettingsSerializationDelimiter": {
-				"type": "string",
-				"enum": [
-					"DOT",
-					"SEMI_COLON",
-					"COLON",
-					"COMMA",
-					"NON_BREAKING_SPACE",
-					"SLASH",
-					"TAB",
-					"PIPE"
-				]
-			},
-			"SouthPostgreSQLItemSettingsSerialization": {
+			"SouthPostgreSQLItemSettingsTrackingInstant": {
 				"properties": {
-					"type": {
-						"$ref": "#/components/schemas/SouthPostgreSQLItemSettingsSerializationType"
-					},
-					"filename": {
-						"type": "string"
-					},
-					"delimiter": {
-						"$ref": "#/components/schemas/SouthPostgreSQLItemSettingsSerializationDelimiter"
-					},
-					"compression": {
+					"trackInstant": {
 						"type": "boolean"
 					},
-					"outputTimestampFormat": {
+					"fieldName": {
 						"type": "string"
 					},
-					"outputTimezone": {
-						"$ref": "#/components/schemas/Timezone"
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthPostgreSQLItemSettingsTrackingInstantDateTimeInput"
+							}
+						],
+						"nullable": true
 					}
 				},
 				"required": [
-					"type",
-					"filename",
-					"delimiter",
-					"compression",
-					"outputTimestampFormat",
-					"outputTimezone"
+					"trackInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9069,21 +9166,18 @@
 					"query": {
 						"type": "string"
 					},
-					"dateTimeFields": {
-						"items": {
-							"$ref": "#/components/schemas/SouthPostgreSQLItemSettingsDateTimeFields"
-						},
-						"type": "array",
+					"trackingInstant": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthPostgreSQLItemSettingsTrackingInstant"
+							}
+						],
 						"nullable": true
-					},
-					"serialization": {
-						"$ref": "#/components/schemas/SouthPostgreSQLItemSettingsSerialization"
 					}
 				},
 				"required": [
 					"query",
-					"dateTimeFields",
-					"serialization"
+					"trackingInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -10236,6 +10330,403 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthS7ItemSettings": {
+				"properties": {
+					"address": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"address"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorS7ItemDTO": {
+				"description": "South connector item DTO for Siemens S7.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item is enabled and should be collected.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7ItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanMode": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"startTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"enabled",
+					"settings",
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"startTimeOffset",
+					"endTimeOffset",
+					"recoveryStrategy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthS7SettingsConnectionType": {
+				"type": "string",
+				"enum": [
+					"PG",
+					"OP",
+					"S7Basic"
+				]
+			},
+			"SouthS7Settings": {
+				"properties": {
+					"host": {
+						"type": "string"
+					},
+					"port": {
+						"type": "number",
+						"format": "double"
+					},
+					"connectionType": {
+						"$ref": "#/components/schemas/SouthS7SettingsConnectionType"
+					},
+					"rack": {
+						"type": "number",
+						"format": "double"
+					},
+					"slot": {
+						"type": "number",
+						"format": "double"
+					},
+					"connectTimeout": {
+						"type": "number",
+						"format": "double"
+					},
+					"requestTimeout": {
+						"type": "number",
+						"format": "double"
+					},
+					"retryInterval": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"host",
+					"port",
+					"connectionType",
+					"rack",
+					"slot",
+					"connectTimeout",
+					"requestTimeout",
+					"retryInterval"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorItemTypedDTO_SouthS7ItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item is enabled and should be collected.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7ItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanMode": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"startTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"enabled",
+					"settings",
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"startTimeOffset",
+					"endTimeOffset",
+					"recoveryStrategy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorS7DTO": {
+				"description": "South connector configuration for Siemens S7.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the South connector.",
+						"example": "Production Data Files"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"s7"
+						],
+						"nullable": false,
+						"description": "The type of the South connector.",
+						"example": "folder-scanner"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the South connector's purpose.",
+						"example": "Scans production data CSV files"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the South connector is enabled and active.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7Settings",
+						"description": "Configuration settings specific to this South connector type."
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorS7ItemDTO"
+						},
+						"type": "array",
+						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"items",
+					"groups"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthSFTPItemSettings": {
 				"properties": {
 					"remoteFolder": {
@@ -10656,7 +11147,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthSQLiteItemSettingsDateTimeFieldsType": {
+			"SouthSQLiteItemSettingsTrackingInstantDateTimeInputType": {
 				"type": "string",
 				"enum": [
 					"string",
@@ -10665,16 +11156,10 @@
 					"unix-epoch-ms"
 				]
 			},
-			"SouthSQLiteItemSettingsDateTimeFields": {
+			"SouthSQLiteItemSettingsTrackingInstantDateTimeInput": {
 				"properties": {
-					"fieldName": {
-						"type": "string"
-					},
-					"useAsReference": {
-						"type": "boolean"
-					},
 					"type": {
-						"$ref": "#/components/schemas/SouthSQLiteItemSettingsDateTimeFieldsType"
+						"$ref": "#/components/schemas/SouthSQLiteItemSettingsTrackingInstantDateTimeInputType"
 					},
 					"timezone": {
 						"$ref": "#/components/schemas/Timezone"
@@ -10687,61 +11172,30 @@
 					}
 				},
 				"required": [
-					"fieldName",
-					"useAsReference",
 					"type"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthSQLiteItemSettingsSerializationType": {
-				"type": "string",
-				"enum": [
-					"csv"
-				],
-				"nullable": false
-			},
-			"SouthSQLiteItemSettingsSerializationDelimiter": {
-				"type": "string",
-				"enum": [
-					"DOT",
-					"SEMI_COLON",
-					"COLON",
-					"COMMA",
-					"NON_BREAKING_SPACE",
-					"SLASH",
-					"TAB",
-					"PIPE"
-				]
-			},
-			"SouthSQLiteItemSettingsSerialization": {
+			"SouthSQLiteItemSettingsTrackingInstant": {
 				"properties": {
-					"type": {
-						"$ref": "#/components/schemas/SouthSQLiteItemSettingsSerializationType"
-					},
-					"filename": {
-						"type": "string"
-					},
-					"delimiter": {
-						"$ref": "#/components/schemas/SouthSQLiteItemSettingsSerializationDelimiter"
-					},
-					"compression": {
+					"trackInstant": {
 						"type": "boolean"
 					},
-					"outputTimestampFormat": {
+					"fieldName": {
 						"type": "string"
 					},
-					"outputTimezone": {
-						"$ref": "#/components/schemas/Timezone"
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthSQLiteItemSettingsTrackingInstantDateTimeInput"
+							}
+						],
+						"nullable": true
 					}
 				},
 				"required": [
-					"type",
-					"filename",
-					"delimiter",
-					"compression",
-					"outputTimestampFormat",
-					"outputTimezone"
+					"trackInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -10751,21 +11205,18 @@
 					"query": {
 						"type": "string"
 					},
-					"dateTimeFields": {
-						"items": {
-							"$ref": "#/components/schemas/SouthSQLiteItemSettingsDateTimeFields"
-						},
-						"type": "array",
+					"trackingInstant": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthSQLiteItemSettingsTrackingInstant"
+							}
+						],
 						"nullable": true
-					},
-					"serialization": {
-						"$ref": "#/components/schemas/SouthSQLiteItemSettingsSerialization"
 					}
 				},
 				"required": [
 					"query",
-					"dateTimeFields",
-					"serialization"
+					"trackingInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -11165,6 +11616,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorRESTDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorS7DTO"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorSFTPDTO"
@@ -15971,6 +16425,283 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthConnectorS7ItemCommandDTO": {
+				"description": "South connector item command for Siemens S7.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the item (null when creating a new item).",
+						"example": null
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item should be enabled.",
+						"example": true
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7ItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanModeId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the scan mode to use for this item.\nNull when the scan mode should be determined by the system.",
+						"example": "periodic-5min"
+					},
+					"scanModeName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
+						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"startTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
+					}
+				},
+				"required": [
+					"id",
+					"enabled",
+					"name",
+					"settings",
+					"scanModeId",
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"startTimeOffset",
+					"endTimeOffset",
+					"recoveryStrategy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorItemCommandTypedDTO_SouthS7ItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the item (null when creating a new item).",
+						"example": null
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item should be enabled.",
+						"example": true
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7ItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanModeId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the scan mode to use for this item.\nNull when the scan mode should be determined by the system.",
+						"example": "periodic-5min"
+					},
+					"scanModeName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
+						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"startTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
+					}
+				},
+				"required": [
+					"id",
+					"enabled",
+					"name",
+					"settings",
+					"scanModeId",
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"startTimeOffset",
+					"endTimeOffset",
+					"recoveryStrategy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorS7CommandDTO": {
+				"description": "South connector command for Siemens S7.",
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "The name of the South connector.",
+						"example": "Production Data Files"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"s7"
+						],
+						"nullable": false,
+						"description": "The type of the South connector.",
+						"example": "folder-scanner"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the South connector's purpose.",
+						"example": "Scans production data CSV files"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the South connector should be enabled.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7Settings",
+						"description": "Configuration settings specific to this South connector type."
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorS7ItemCommandDTO"
+						},
+						"type": "array",
+						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
+					}
+				},
+				"required": [
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"items",
+					"groups"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthConnectorSFTPItemCommandDTO": {
 				"description": "South connector item command for SFTP file transfer.",
 				"properties": {
@@ -16579,6 +17310,9 @@
 						"$ref": "#/components/schemas/SouthConnectorRESTCommandDTO"
 					},
 					{
+						"$ref": "#/components/schemas/SouthConnectorS7CommandDTO"
+					},
+					{
 						"$ref": "#/components/schemas/SouthConnectorSFTPCommandDTO"
 					},
 					{
@@ -16668,6 +17402,9 @@
 						"$ref": "#/components/schemas/SouthRestSettings"
 					},
 					{
+						"$ref": "#/components/schemas/SouthS7Settings"
+					},
+					{
 						"$ref": "#/components/schemas/SouthSFTPSettings"
 					},
 					{
@@ -16727,6 +17464,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthRestItemSettings"
+					},
+					{
+						"$ref": "#/components/schemas/SouthS7ItemSettings"
 					},
 					{
 						"$ref": "#/components/schemas/SouthSFTPItemSettings"
@@ -16806,6 +17546,105 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"Record_string.string-or-number_": {
+				"properties": {},
+				"additionalProperties": {
+					"anyOf": [
+						{
+							"type": "string"
+						},
+						{
+							"type": "number",
+							"format": "double"
+						}
+					]
+				},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"SouthConnectorExploreEntry": {
+				"description": "A single entry returned while exploring/discovering a South connector's data source.\nRepresents an OPC-UA node or a file-system entry. Kept intentionally generic and\nextensible so item creation and item synchronisation can build on it later.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "Stable identifier of the entry, passed back to expand it.\nOPC-UA node id (e.g. \"ns=1;s=Temperature\") or a folder-relative path."
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable label (OPC-UA display name or file/folder name)."
+					},
+					"metadata": {
+						"$ref": "#/components/schemas/Record_string.string-or-number_",
+						"description": "Additional data linked to the entry"
+					},
+					"hasChildren": {
+						"type": "boolean",
+						"description": "Whether the entry can be expanded to reveal children in the explore tree."
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"metadata",
+					"hasChildren"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthExploreStartResult": {
+				"description": "Result of starting an explore session.",
+				"properties": {
+					"sessionId": {
+						"type": "string",
+						"description": "Identifier of the stateful explore session, used for subsequent browse/close calls."
+					},
+					"entries": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorExploreEntry"
+						},
+						"type": "array",
+						"description": "The root-level entries of the data source."
+					}
+				},
+				"required": [
+					"sessionId",
+					"entries"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthExploreBrowseResult": {
+				"description": "Result of browsing (expanding) an entry within an explore session.",
+				"properties": {
+					"entries": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorExploreEntry"
+						},
+						"type": "array",
+						"description": "The children of the browsed entry."
+					}
+				},
+				"required": [
+					"entries"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthExploreBrowseCommand": {
+				"description": "Command body to browse (expand) an entry within an explore session.",
+				"properties": {
+					"parentId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The id of the entry to expand, or null to (re)load the root level."
+					}
+				},
+				"required": [
+					"parentId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthConnectorItemDTO": {
 				"anyOf": [
 					{
@@ -16858,6 +17697,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorRESTItemDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorS7ItemDTO"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorSFTPItemDTO"
@@ -17027,6 +17869,9 @@
 						"$ref": "#/components/schemas/SouthConnectorRESTItemCommandDTO"
 					},
 					{
+						"$ref": "#/components/schemas/SouthConnectorS7ItemCommandDTO"
+					},
+					{
 						"$ref": "#/components/schemas/SouthConnectorSFTPItemCommandDTO"
 					},
 					{
@@ -17105,16 +17950,42 @@
 						"description": "A description of the scan mode's purpose or behavior.",
 						"example": "Scans for new backup data every day at midnight"
 					},
+					"type": {
+						"$ref": "#/components/schemas/ScanModeType",
+						"description": "Which scheduling mechanism drives this scan mode.",
+						"example": "cron"
+					},
 					"cron": {
 						"type": "string",
-						"description": "A cron expression defining the scan schedule.",
+						"description": "A cron expression defining the scan schedule. Ignored when `type` is `\"interval\"`.",
 						"example": "0 0 * * *"
+					},
+					"interval": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeInterval"
+							}
+						],
+						"nullable": true,
+						"description": "The fixed period between two ticks. Required when `type` is `\"interval\"`."
+					},
+					"activationWindow": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ActivationWindow"
+							}
+						],
+						"nullable": true,
+						"description": "Optional activation window gating every tick. `null` means always active."
 					}
 				},
 				"required": [
 					"name",
 					"description",
-					"cron"
+					"type",
+					"cron",
+					"interval",
+					"activationWindow"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -20675,6 +21546,264 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"NorthAzureDataExplorerSettingsAuthentication": {
+				"type": "string",
+				"enum": [
+					"aad-app-secret",
+					"aad-app-certificate",
+					"managed-identity"
+				]
+			},
+			"NorthAzureDataExplorerSettingsDataFormat": {
+				"type": "string",
+				"enum": [
+					"csv",
+					"json",
+					"multijson"
+				]
+			},
+			"NorthAzureDataExplorerSettings": {
+				"properties": {
+					"clusterUrl": {
+						"type": "string"
+					},
+					"database": {
+						"type": "string"
+					},
+					"table": {
+						"type": "string"
+					},
+					"authentication": {
+						"$ref": "#/components/schemas/NorthAzureDataExplorerSettingsAuthentication"
+					},
+					"tenantId": {
+						"type": "string",
+						"nullable": true
+					},
+					"clientId": {
+						"type": "string",
+						"nullable": true
+					},
+					"clientSecret": {
+						"type": "string",
+						"nullable": true
+					},
+					"certificateId": {
+						"type": "string",
+						"nullable": true
+					},
+					"dataFormat": {
+						"$ref": "#/components/schemas/NorthAzureDataExplorerSettingsDataFormat"
+					},
+					"ingestionMappingName": {
+						"type": "string",
+						"nullable": true
+					},
+					"useProxy": {
+						"type": "boolean"
+					},
+					"proxyUrl": {
+						"type": "string"
+					},
+					"proxyUsername": {
+						"type": "string",
+						"nullable": true
+					},
+					"proxyPassword": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"clusterUrl",
+					"database",
+					"table",
+					"authentication",
+					"dataFormat",
+					"ingestionMappingName",
+					"useProxy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"NorthConnectorAzureDataExplorerCommandDTO": {
+				"description": "North connector command for Azure Data Explorer.",
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "The name of the North connector.",
+						"example": "Debug Console Output"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"azure-data-explorer"
+						],
+						"nullable": false,
+						"description": "The type of the North connector.",
+						"example": "console"
+					},
+					"description": {
+						"type": "string",
+						"description": "The description of the North connector.",
+						"example": "Outputs data to console for debugging purposes"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the North connector is enabled.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/NorthAzureDataExplorerSettings",
+						"description": "The settings specific to the North connector type."
+					},
+					"caching": {
+						"properties": {
+							"archive": {
+								"properties": {
+									"retentionDuration": {
+										"type": "number",
+										"format": "double",
+										"description": "The duration (in ms) to retain archived files.",
+										"example": 0
+									},
+									"enabled": {
+										"type": "boolean",
+										"description": "Whether archiving is enabled.",
+										"example": false
+									}
+								},
+								"required": [
+									"retentionDuration",
+									"enabled"
+								],
+								"type": "object",
+								"description": "The archive configuration for caching."
+							},
+							"error": {
+								"properties": {
+									"retentionDuration": {
+										"type": "number",
+										"format": "double",
+										"description": "The duration (in ms) to retain error files.",
+										"example": 86400000
+									},
+									"retryCount": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum number of retry attempts.",
+										"example": 0
+									},
+									"retryInterval": {
+										"type": "number",
+										"format": "double",
+										"description": "The interval (in ms) between retry attempts.",
+										"example": 1000
+									}
+								},
+								"required": [
+									"retentionDuration",
+									"retryCount",
+									"retryInterval"
+								],
+								"type": "object",
+								"description": "The error handling configuration for caching."
+							},
+							"throttling": {
+								"properties": {
+									"maxNumberOfElements": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum number of elements in the cache before sending.",
+										"example": 100
+									},
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in bytes) of the cache before sending.",
+										"example": 1048576
+									},
+									"runMinDelay": {
+										"type": "number",
+										"format": "double",
+										"description": "The minimum delay (in ms) between runs.",
+										"example": 100
+									}
+								},
+								"required": [
+									"maxNumberOfElements",
+									"maxSize",
+									"runMinDelay"
+								],
+								"type": "object",
+								"description": "The throttling configuration for caching."
+							},
+							"trigger": {
+								"properties": {
+									"numberOfFiles": {
+										"type": "number",
+										"format": "double",
+										"description": "The number of files to trigger a send.",
+										"example": 1
+									},
+									"numberOfElements": {
+										"type": "number",
+										"format": "double",
+										"description": "The number of elements to trigger a send.",
+										"example": 1
+									},
+									"scanModeName": {
+										"type": "string",
+										"nullable": true,
+										"description": "The name of the scan mode. Used to select a scan mode when its ID is unavailable",
+										"example": null
+									},
+									"scanModeId": {
+										"type": "string",
+										"description": "The ID of the scan mode.",
+										"example": "scanModeId1"
+									}
+								},
+								"required": [
+									"numberOfFiles",
+									"numberOfElements",
+									"scanModeName",
+									"scanModeId"
+								],
+								"type": "object",
+								"description": "The trigger configuration for caching."
+							}
+						},
+						"required": [
+							"archive",
+							"error",
+							"throttling",
+							"trigger"
+						],
+						"type": "object",
+						"description": "The caching configuration for the North connector."
+					},
+					"transformers": {
+						"items": {
+							"$ref": "#/components/schemas/TransformerCommandDTOWithOptions"
+						},
+						"type": "array",
+						"description": "The list of transformers to apply to the data.",
+						"example": []
+					}
+				},
+				"required": [
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"caching",
+					"transformers"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"NorthConsoleSettings": {
 				"properties": {
 					"verbose": {
@@ -22757,6 +23886,9 @@
 						"$ref": "#/components/schemas/NorthConnectorAzureBlobCommandDTO"
 					},
 					{
+						"$ref": "#/components/schemas/NorthConnectorAzureDataExplorerCommandDTO"
+					},
+					{
 						"$ref": "#/components/schemas/NorthConnectorConsoleCommandDTO"
 					},
 					{
@@ -24741,6 +25873,85 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryQueryS7ItemCommandDTO": {
+				"description": "History query item command for Siemens S7.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7ItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQueryItemCommandTypedDTO_SouthS7ItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7ItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQueryS7SouthCommandDTO": {
+				"description": "History query south command for Siemens S7.",
+				"properties": {
+					"southType": {
+						"type": "string",
+						"enum": [
+							"s7"
+						],
+						"nullable": false
+					},
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthS7Settings"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/HistoryQueryS7ItemCommandDTO"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"southType",
+					"southSettings",
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQuerySFTPItemCommandDTO": {
 				"description": "History query item command for SFTP file transfer.",
 				"properties": {
@@ -24932,6 +26143,27 @@
 					},
 					"northSettings": {
 						"$ref": "#/components/schemas/NorthAzureBlobSettings"
+					}
+				},
+				"required": [
+					"northType",
+					"northSettings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQueryAzureDataExplorerNorthCommandDTO": {
+				"description": "History query north command for Azure Data Explorer.",
+				"properties": {
+					"northType": {
+						"type": "string",
+						"enum": [
+							"azure-data-explorer"
+						],
+						"nullable": false
+					},
+					"northSettings": {
+						"$ref": "#/components/schemas/NorthAzureDataExplorerSettings"
 					}
 				},
 				"required": [
@@ -25168,6 +26400,9 @@
 								"$ref": "#/components/schemas/HistoryQueryRESTSouthCommandDTO"
 							},
 							{
+								"$ref": "#/components/schemas/HistoryQueryS7SouthCommandDTO"
+							},
+							{
 								"$ref": "#/components/schemas/HistoryQuerySFTPSouthCommandDTO"
 							},
 							{
@@ -25182,6 +26417,9 @@
 							},
 							{
 								"$ref": "#/components/schemas/HistoryQueryAzureBlobNorthCommandDTO"
+							},
+							{
+								"$ref": "#/components/schemas/HistoryQueryAzureDataExplorerNorthCommandDTO"
 							},
 							{
 								"$ref": "#/components/schemas/HistoryQueryConsoleNorthCommandDTO"
@@ -25683,6 +26921,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryRESTItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/HistoryQueryS7ItemCommandDTO"
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQuerySFTPItemCommandDTO"
@@ -27287,6 +28528,7 @@
 					"sftp",
 					"aws-s3",
 					"azure-blob",
+					"azure-data-explorer",
 					"console",
 					"file-writer"
 				],
@@ -27297,6 +28539,7 @@
 				"enum": [
 					"file",
 					"iot",
+					"database",
 					"api",
 					"debug"
 				],
@@ -27311,6 +28554,10 @@
 					"category": {
 						"$ref": "#/components/schemas/OIBusNorthCategory",
 						"description": "Category of the north connector"
+					},
+					"beta": {
+						"type": "boolean",
+						"description": "Whether this connector type is in beta"
 					},
 					"types": {
 						"items": {
@@ -27340,6 +28587,11 @@
 						"$ref": "#/components/schemas/OIBusNorthCategory",
 						"description": "The category of the North connector.",
 						"example": "debug"
+					},
+					"beta": {
+						"type": "boolean",
+						"description": "Whether this connector type is in beta.",
+						"example": false
 					},
 					"types": {
 						"items": {
@@ -27859,6 +29111,203 @@
 					},
 					"settings": {
 						"$ref": "#/components/schemas/NorthAzureBlobSettings",
+						"description": "The settings specific to the North connector type."
+					},
+					"caching": {
+						"properties": {
+							"archive": {
+								"properties": {
+									"retentionDuration": {
+										"type": "number",
+										"format": "double",
+										"description": "The duration (in ms) to retain archived files.",
+										"example": 0
+									},
+									"enabled": {
+										"type": "boolean",
+										"description": "Whether archiving is enabled.",
+										"example": false
+									}
+								},
+								"required": [
+									"retentionDuration",
+									"enabled"
+								],
+								"type": "object",
+								"description": "The archive configuration for caching."
+							},
+							"error": {
+								"properties": {
+									"retentionDuration": {
+										"type": "number",
+										"format": "double",
+										"description": "The duration (in ms) to retain error files.",
+										"example": 86400000
+									},
+									"retryCount": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum number of retry attempts.",
+										"example": 0
+									},
+									"retryInterval": {
+										"type": "number",
+										"format": "double",
+										"description": "The interval (in ms) between retry attempts.",
+										"example": 1000
+									}
+								},
+								"required": [
+									"retentionDuration",
+									"retryCount",
+									"retryInterval"
+								],
+								"type": "object",
+								"description": "The error handling configuration for caching."
+							},
+							"throttling": {
+								"properties": {
+									"maxNumberOfElements": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum number of elements in the cache before sending.",
+										"example": 100
+									},
+									"maxSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size (in bytes) of the cache before sending.",
+										"example": 1048576
+									},
+									"runMinDelay": {
+										"type": "number",
+										"format": "double",
+										"description": "The minimum delay (in ms) between runs.",
+										"example": 100
+									}
+								},
+								"required": [
+									"maxNumberOfElements",
+									"maxSize",
+									"runMinDelay"
+								],
+								"type": "object",
+								"description": "The throttling configuration for caching."
+							},
+							"trigger": {
+								"properties": {
+									"numberOfFiles": {
+										"type": "number",
+										"format": "double",
+										"description": "The number of files to trigger a send.",
+										"example": 1
+									},
+									"numberOfElements": {
+										"type": "number",
+										"format": "double",
+										"description": "The number of elements to trigger a send.",
+										"example": 1
+									},
+									"scanMode": {
+										"$ref": "#/components/schemas/ScanModeDTO",
+										"description": "The scan mode configuration."
+									}
+								},
+								"required": [
+									"numberOfFiles",
+									"numberOfElements",
+									"scanMode"
+								],
+								"type": "object",
+								"description": "The trigger configuration for caching."
+							}
+						},
+						"required": [
+							"archive",
+							"error",
+							"throttling",
+							"trigger"
+						],
+						"type": "object",
+						"description": "The caching configuration for the North connector."
+					},
+					"transformers": {
+						"items": {
+							"$ref": "#/components/schemas/TransformerDTOWithOptions"
+						},
+						"type": "array",
+						"description": "The list of transformers applied to the data."
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"caching",
+					"transformers"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"NorthConnectorAzureDataExplorerDTO": {
+				"description": "North connector configuration for Azure Data Explorer.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the North connector.",
+						"example": "Debug Console Output"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"azure-data-explorer"
+						],
+						"nullable": false,
+						"description": "The type of the North connector.",
+						"example": "console"
+					},
+					"description": {
+						"type": "string",
+						"description": "The description of the North connector.",
+						"example": "Outputs data to console for debugging purposes"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the North connector is enabled.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/NorthAzureDataExplorerSettings",
 						"description": "The settings specific to the North connector type."
 					},
 					"caching": {
@@ -29589,6 +31038,9 @@
 						"$ref": "#/components/schemas/NorthConnectorAzureBlobDTO"
 					},
 					{
+						"$ref": "#/components/schemas/NorthConnectorAzureDataExplorerDTO"
+					},
+					{
 						"$ref": "#/components/schemas/NorthConnectorConsoleDTO"
 					},
 					{
@@ -29622,6 +31074,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/NorthAzureBlobSettings"
+					},
+					{
+						"$ref": "#/components/schemas/NorthAzureDataExplorerSettings"
 					},
 					{
 						"$ref": "#/components/schemas/NorthConsoleSettings"
@@ -30155,6 +31610,18 @@
 						"$ref": "#/components/schemas/OIBusNorthType",
 						"description": "The type of the North connector used for data storage.",
 						"example": "aws-s3"
+					},
+					"currentItemNumber": {
+						"type": "number",
+						"format": "double",
+						"description": "The 1-based index of the item currently being queried, among the run's enabled items. Only\nset while the history query is actively running on a connector that queries items one at a\ntime (SOUTH_SINGLE_ITEMS).",
+						"example": 3
+					},
+					"numberOfItems": {
+						"type": "number",
+						"format": "double",
+						"description": "The total number of enabled items in the run. Only set while the history query is actively\nrunning on a connector that queries items one at a time (SOUTH_SINGLE_ITEMS).",
+						"example": 10
 					}
 				},
 				"required": [
@@ -32560,6 +34027,131 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryQueryS7ItemDTO": {
+				"description": "History query item DTO for Siemens S7.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7ItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQueryItemTypedDTO_SouthS7ItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthS7ItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQueryS7SouthDTO": {
+				"description": "History query south DTO for Siemens S7.",
+				"properties": {
+					"southType": {
+						"type": "string",
+						"enum": [
+							"s7"
+						],
+						"nullable": false
+					},
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthS7Settings"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/HistoryQueryS7ItemDTO"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"southType",
+					"southSettings",
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQuerySFTPItemDTO": {
 				"description": "History query item DTO for SFTP file transfer.",
 				"properties": {
@@ -32852,6 +34444,27 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryQueryAzureDataExplorerNorthDTO": {
+				"description": "History query north DTO for Azure Data Explorer.",
+				"properties": {
+					"northType": {
+						"type": "string",
+						"enum": [
+							"azure-data-explorer"
+						],
+						"nullable": false
+					},
+					"northSettings": {
+						"$ref": "#/components/schemas/NorthAzureDataExplorerSettings"
+					}
+				},
+				"required": [
+					"northType",
+					"northSettings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQueryConsoleNorthDTO": {
 				"description": "History query north DTO for the Console debug output.",
 				"properties": {
@@ -33082,6 +34695,9 @@
 								"$ref": "#/components/schemas/HistoryQueryRESTSouthDTO"
 							},
 							{
+								"$ref": "#/components/schemas/HistoryQueryS7SouthDTO"
+							},
+							{
 								"$ref": "#/components/schemas/HistoryQuerySFTPSouthDTO"
 							},
 							{
@@ -33096,6 +34712,9 @@
 							},
 							{
 								"$ref": "#/components/schemas/HistoryQueryAzureBlobNorthDTO"
+							},
+							{
+								"$ref": "#/components/schemas/HistoryQueryAzureDataExplorerNorthDTO"
 							},
 							{
 								"$ref": "#/components/schemas/HistoryQueryConsoleNorthDTO"
@@ -33200,6 +34819,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryRESTItemDTO"
+					},
+					{
+						"$ref": "#/components/schemas/HistoryQueryS7ItemDTO"
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQuerySFTPItemDTO"
@@ -33815,6 +35437,12 @@
 						"$ref": "#/components/schemas/Instant",
 						"description": "The expiry date and time of the certificate in ISO 8601 format.",
 						"example": "2026-01-01T00:00:00.000Z"
+					},
+					"certificateChain": {
+						"type": "string",
+						"nullable": true,
+						"description": "The PEM bundle of intermediate/root CA certificates supplied when importing an externally-issued\ncertificate. Null for self-signed certificates generated by OIBus.",
+						"example": "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKoK/heBjcOuMA0GCSqGSIb3DQEBBQUAMEUx...\n-----END CERTIFICATE-----"
 					}
 				},
 				"required": [
@@ -33827,7 +35455,30 @@
 					"description",
 					"publicKey",
 					"certificate",
-					"expiry"
+					"expiry",
+					"certificateChain"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CertificateExportFormat": {
+				"type": "string",
+				"enum": [
+					"PEM",
+					"DER"
+				]
+			},
+			"CertificatePrivateKeyExportCommandDTO": {
+				"description": "Command DTO for exporting a certificate's private key.\nUsed as the request body for the private key export endpoint, to protect the exported key at rest.",
+				"properties": {
+					"passphrase": {
+						"type": "string",
+						"description": "The passphrase used to encrypt the exported private key.",
+						"example": "S3cr3tPassphrase!"
+					}
+				},
+				"required": [
+					"passphrase"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -34868,6 +36519,140 @@
 						}
 					}
 				}
+			}
+		},
+		"/api/south/{southId}/explore": {
+			"post": {
+				"operationId": "StartExplore",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SouthExploreStartResult"
+								}
+							}
+						}
+					}
+				},
+				"description": "Start an interactive explore session for a south connector",
+				"summary": "Start south explore session",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "southType",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/OIBusSouthType"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SouthSettings"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/south/{southId}/explore/{sessionId}": {
+			"put": {
+				"operationId": "BrowseExplore",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SouthExploreBrowseResult"
+								}
+							}
+						}
+					}
+				},
+				"description": "Browse (expand) an entry within an explore session",
+				"summary": "Browse south explore session",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "sessionId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SouthExploreBrowseCommand"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "CloseExplore",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"description": "Close an explore session",
+				"summary": "Close south explore session",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "sessionId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		},
 		"/api/south/{southId}/items/list": {
@@ -37722,6 +39507,148 @@
 				}
 			}
 		},
+		"/api/history/{historyId}/explore": {
+			"post": {
+				"operationId": "StartExplore",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SouthExploreStartResult"
+								}
+							}
+						}
+					}
+				},
+				"description": "Start an interactive explore session for a history query's south connector",
+				"summary": "Start south explore session",
+				"tags": [
+					"History Queries"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "historyId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "southType",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/OIBusSouthType"
+						}
+					},
+					{
+						"in": "query",
+						"name": "fromSouth",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SouthSettings"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/history/{historyId}/explore/{sessionId}": {
+			"put": {
+				"operationId": "BrowseExplore",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SouthExploreBrowseResult"
+								}
+							}
+						}
+					}
+				},
+				"description": "Browse (expand) an entry within a history query explore session",
+				"summary": "Browse south explore session",
+				"tags": [
+					"History Queries"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "historyId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "sessionId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SouthExploreBrowseCommand"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "CloseExplore",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"description": "Close a history query explore session",
+				"summary": "Close south explore session",
+				"tags": [
+					"History Queries"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "historyId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "sessionId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/api/history/{historyId}/items/list": {
 			"get": {
 				"operationId": "ListItems",
@@ -39140,6 +41067,161 @@
 						}
 					}
 				]
+			}
+		},
+		"/api/certificates/import": {
+			"post": {
+				"operationId": "Import",
+				"responses": {
+					"201": {
+						"description": "Certificate imported successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CertificateDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Imports an externally-issued certificate together with its private key, and optionally its CA chain",
+				"summary": "Import certificate",
+				"tags": [
+					"Certificates"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"name": {
+										"type": "string",
+										"description": "Certificate name"
+									},
+									"description": {
+										"type": "string",
+										"description": "Certificate description"
+									},
+									"privateKeyPassphrase": {
+										"type": "string",
+										"description": "The passphrase used to decrypt the private key, if it is encrypted"
+									},
+									"certificate": {
+										"type": "string",
+										"format": "binary",
+										"description": "The certificate file, PEM or DER encoded"
+									},
+									"privateKey": {
+										"type": "string",
+										"format": "binary",
+										"description": "The private key file, PEM (PKCS#1, PKCS#8, optionally encrypted) or DER encoded"
+									},
+									"certificateChain": {
+										"type": "string",
+										"format": "binary",
+										"description": "The optional CA chain bundle (intermediate/root certificates), PEM encoded"
+									}
+								},
+								"required": [
+									"name",
+									"description",
+									"certificate",
+									"privateKey",
+									"certificateChain"
+								]
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/certificates/{certificateId}/export": {
+			"get": {
+				"operationId": "ExportCertificate",
+				"responses": {
+					"200": {
+						"description": "Certificate exported successfully"
+					}
+				},
+				"description": "Exports a certificate, optionally including its CA chain",
+				"summary": "Export certificate",
+				"tags": [
+					"Certificates"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "Certificate ID",
+						"in": "path",
+						"name": "certificateId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Export format (PEM or DER)",
+						"in": "query",
+						"name": "format",
+						"required": false,
+						"schema": {
+							"$ref": "#/components/schemas/CertificateExportFormat"
+						}
+					},
+					{
+						"description": "Whether to include the CA chain (PEM only)",
+						"in": "query",
+						"name": "includeChain",
+						"required": false,
+						"schema": {
+							"default": false,
+							"type": "boolean"
+						}
+					}
+				]
+			}
+		},
+		"/api/certificates/{certificateId}/export/private-key": {
+			"post": {
+				"operationId": "ExportPrivateKey",
+				"responses": {
+					"200": {
+						"description": "Private key exported successfully"
+					}
+				},
+				"description": "Exports the private key of a certificate, re-encrypted with the given passphrase",
+				"summary": "Export certificate private key",
+				"tags": [
+					"Certificates"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "Certificate ID",
+						"in": "path",
+						"name": "certificateId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "Passphrase used to encrypt the exported private key",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CertificatePrivateKeyExportCommandDTO",
+								"description": "Passphrase used to encrypt the exported private key"
+							}
+						}
+					}
+				}
 			}
 		}
 	},

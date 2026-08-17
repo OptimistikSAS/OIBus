@@ -600,6 +600,25 @@ describe('South ADS', () => {
     });
   });
 
+  it('should fall back to the numeric ADS state when adsStateStr is not provided', async () => {
+    readState.mock.mockImplementation(async () => ({ adsState: 5, adsStateStr: undefined, deviceState: 0 }));
+    const disconnectMock = mock.method(
+      south,
+      'disconnect',
+      mock.fn(async () => undefined)
+    );
+    const result = await south.testConnection();
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    assert.deepStrictEqual(result, {
+      items: [
+        { key: 'Device name', value: 'TestDevice' },
+        { key: 'Firmware version', value: '3.1.4000' },
+        { key: 'ADS state', value: '5' },
+        { key: 'Device state', value: '0' }
+      ]
+    });
+  });
+
   it('should disconnect even when testConnection device info fetch fails', async () => {
     readDeviceInfo.mock.mockImplementation(() => {
       throw new Error('readDeviceInfo failed');

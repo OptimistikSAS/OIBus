@@ -9,7 +9,14 @@ export const getAssociatedInputType = (southType: OIBusSouthType): InputType => 
     case 'opc':
     case 'opcua':
     case 'osisoft-pi':
+    case 's7':
       return 'time-values';
+    case 'mysql':
+    case 'postgresql':
+    case 'mssql':
+    case 'oracle':
+    case 'sqlite':
+      return 'record-list';
     default:
       return 'any';
   }

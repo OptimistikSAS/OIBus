@@ -7,6 +7,7 @@ import { PageLoader } from '../../shared/page-loader.service';
 import { NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
+import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
 import { ScanModeService } from '../../services/scan-mode.service';
 import {
   HistoryQueryDTO,
@@ -28,6 +29,7 @@ import { EngineService } from '../../services/engine.service';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
+import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { LogsComponent } from '../../logs/logs.component';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
@@ -118,6 +120,12 @@ export class HistoryQueryDetailComponent {
   southDisplayedSettings: Array<{ key: string; value: string }> = [];
 
   scanModes: Array<ScanModeDTO> = [];
+
+  /** Whether a scan mode's activation window can never fire again. */
+  isWindowExpired(scanMode: ScanModeDTO | null | undefined): boolean {
+    return isScanModeWindowExpired(scanMode);
+  }
+
   certificates: Array<CertificateDTO> = [];
   transformers: Array<TransformerDTO> = [];
   northManifest: NorthConnectorManifest | null = null;
@@ -337,6 +345,16 @@ export class HistoryQueryDetailComponent {
       type === 'south' ? this.historyQuery!.southSettings : this.historyQuery!.northSettings,
       type === 'south' ? this.historyQuery!.southType : this.historyQuery!.northType
     );
+  }
+
+  explore() {
+    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
+    const component: SouthExploreModalComponent = modalRef.componentInstance;
+    component.prepare(this.historyQuery!.id, this.historyQuery!.southSettings, this.historyQuery!.southType, {
+      start: (settings, type) => this.historyQueryService.startExplore(this.historyQuery!.id, settings, type),
+      browse: (sessionId, parentId) => this.historyQueryService.browseExplore(this.historyQuery!.id, sessionId, parentId),
+      close: sessionId => this.historyQueryService.closeExplore(this.historyQuery!.id, sessionId)
+    });
   }
 
   get historyQueryFinishedByMetrics() {

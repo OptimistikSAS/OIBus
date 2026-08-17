@@ -15,6 +15,20 @@ describe('resolveJsonPath', () => {
   it('should return undefined when the path does not resolve at all', () => {
     assert.strictEqual(resolveJsonPath('$[0].missing', [{ name: 'point-1' }]), undefined);
   });
+
+  it('should return undefined when the top-level json is an invalid JSON string', () => {
+    assert.strictEqual(resolveJsonPath('$.x', 'not valid json{'), undefined);
+  });
+
+  it('should return undefined when the top-level json is null or undefined', () => {
+    assert.strictEqual(resolveJsonPath('$.x', null), undefined);
+    assert.strictEqual(resolveJsonPath('$.x', undefined), undefined);
+  });
+
+  it('should skip an intermediate node that is a string but not valid JSON while scanning for a parseable node', () => {
+    const content = [{ message: 'not-json-string', other: { value: 5 } }];
+    assert.strictEqual(resolveJsonPath('$[0].message.foo', content), undefined);
+  });
 });
 
 describe('resolveJsonPathRows', () => {
@@ -69,6 +83,38 @@ describe('resolveJsonPathRows', () => {
         [0, 1],
         [1, 0]
       ]
+    );
+  });
+
+  it('should return an empty array when the top-level json is an invalid JSON string', () => {
+    assert.deepStrictEqual(resolveJsonPathRows('$[*]', 'not valid json{'), []);
+  });
+
+  it('should return an empty array when the top-level json is null or undefined', () => {
+    assert.deepStrictEqual(resolveJsonPathRows('$[*]', null), []);
+    assert.deepStrictEqual(resolveJsonPathRows('$[*]', undefined), []);
+  });
+
+  it('should auto-parse a top-level JSON-stringified array', () => {
+    const rows = resolveJsonPathRows('$[*]', JSON.stringify([{ id: 1 }, { id: 2 }]));
+    assert.deepStrictEqual(
+      rows.map(r => r.indices),
+      [[0], [1]]
+    );
+  });
+
+  it('should skip prefix matches that are not strings or that fail to parse, and still collect rows from a valid one', () => {
+    const content = [
+      { message: 123, item: { name: 'a' } },
+      { message: JSON.stringify({ metrics: [{ name: 'X' }] }), item: { name: 'b' } },
+      { message: 'bad{json', item: { name: 'c' } }
+    ];
+
+    const rows = resolveJsonPathRows('$[*].message.metrics[*]', content);
+
+    assert.deepStrictEqual(
+      rows.map(r => r.indices),
+      [[1, 0]]
     );
   });
 });

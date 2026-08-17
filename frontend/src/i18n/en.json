@@ -2,6 +2,7 @@
   "common": {
     "yes": "Yes",
     "no": "No",
+    "beta": "Beta",
     "ok": "OK",
     "save": "Save",
     "back": "Back",
@@ -60,7 +61,10 @@
       "invalid-date-range": "Invalid date range selected",
       "duplicate-field-names": "Duplicate field names detected",
       "only-one-reference": "Only one element can be marked as reference",
-      "mqtt-topic-overlap": "MQTT topic subscriptions cannot overlap. Conflicting topics: {{ conflictingTopics }}"
+      "mqtt-topic-overlap": "MQTT topic subscriptions cannot overlap. Conflicting topics: {{ conflictingTopics }}",
+      "interval-too-small": "The interval must be at least {{ min }} ms",
+      "time-of-day-incomplete": "Both the start and end times must be set, or neither",
+      "time-of-day-empty": "The start and end times must be different"
     },
     "period": {
       "none": "None",
@@ -171,6 +175,10 @@
       "iot": "IoT",
       "oi": "OI"
     },
+    "certificate-export-format": {
+      "PEM": "PEM (.pem)",
+      "DER": "DER (.cer)"
+    },
     "csv-character": {
       "DOT": "Dot .",
       "SEMI_COLON": "Semi colon ;",
@@ -253,7 +261,8 @@
       "any": "Files (for all sources)",
       "setpoint": "Setpoints (for all sources)",
       "time-values": "OIBus Time Values (for all sources)",
-      "any-content": "Any content"
+      "any-content": "Any content",
+      "record-list": "Record list (SQL-like sources)"
     },
     "oibus-output-data-type": {
       "any": "Any",
@@ -271,11 +280,13 @@
       "debug": "Debug",
       "file": "File",
       "api": "API",
-      "iot": "IoT"
+      "iot": "IoT",
+      "database": "Database"
     },
     "oibus-north-type": {
       "aws-s3": "Amazon S3™",
       "azure-blob": "Azure Blob Storage™",
+      "azure-data-explorer": "Azure Data Explorer™",
       "console": "Console",
       "file-writer": "File writer",
       "modbus": "Modbus",
@@ -288,6 +299,7 @@
     "oibus-north-type-description": {
       "aws-s3": "Store files in Amazon S3™ (Simple Storage Service)",
       "azure-blob": "Store files in Microsoft Azure Blob Storage™",
+      "azure-data-explorer": "Ingest data into an Azure Data Explorer™ (Kusto) table",
       "console": "Display filenames or values in Console (used for debug)",
       "file-writer": "Write files and data to the output folder",
       "modbus": "Write in Modbus registers on a PLC",
@@ -321,6 +333,7 @@
       "osisoft-pi": "OSIsoft PI System™",
       "postgresql": "PostgreSQL",
       "rest": "REST API",
+      "s7": "Siemens S7",
       "sftp": "SFTP",
       "sqlite": "SQLite™"
     },
@@ -342,6 +355,7 @@
       "osisoft-pi": "Establish a connection with an OIBus Agent to access data from a PI System™",
       "postgresql": "Query PostgreSQL databases",
       "rest": "Collect data from REST API endpoints",
+      "s7": "Access Siemens S7 PLC data over ISO-on-TCP",
       "sftp": "Read files from a remote SFTP server",
       "sqlite": "Query  SQLite™ databases"
     }
@@ -638,6 +652,53 @@
       "name": "Name",
       "description": "Description",
       "cron": "Cron",
+      "schedule": "Schedule",
+      "schedule-every": "every {{ value }} {{ unit }}",
+      "type": "Type",
+      "type-cron": "Cron",
+      "type-interval": "Interval",
+      "interval": "Every",
+      "interval-unit": {
+        "ms": "milliseconds",
+        "s": "seconds",
+        "min": "minutes",
+        "hour": "hours"
+      },
+      "interval-unit-short": {
+        "ms": "ms",
+        "s": "s",
+        "min": "min",
+        "hour": "h"
+      },
+      "sub-second-warning": "Intervals under 1 second may not be achievable depending on the data source and network capacity.",
+      "restrict-activation-window": "Restrict activation window",
+      "date-range": "Date range",
+      "date-range-hint": "(optional on each side)",
+      "date-range-from": "From",
+      "date-range-to": "To",
+      "clear-bound": "Clear",
+      "days-of-week": "Days of week",
+      "days-of-week-hint": "(none selected = every day)",
+      "time-of-day": "Time of day",
+      "time-of-day-hint": "(optional)",
+      "time-start": "Start",
+      "time-end": "End",
+      "live-summary": "Live summary",
+      "window-restricted": "Restricted activation window",
+      "window-never-fires": "This activation window can never fire again",
+      "timezone-changed-warning": "This activation window was saved with the timezone {{ persisted }}. Saving now will re-anchor it to your current timezone {{ current }}.",
+      "summary": {
+        "always": "Active",
+        "from-date": "Active from {{ start }}",
+        "until-date": "Active until {{ end }}",
+        "between-dates": "Active {{ start }} - {{ end }}",
+        "on-days": "on {{ days }}",
+        "all-day": "all day",
+        "between-times": "between {{ start }} and {{ end }} ({{ timezone }})",
+        "between-times-overnight": "between {{ start }} and {{ end }} (+1 day) ({{ timezone }})",
+        "separator": ", ",
+        "day-separator": ", "
+      },
       "created-by": "Created by",
       "created-at": "Created on",
       "updated-at": "Updated on",
@@ -646,7 +707,8 @@
       "tooltips": {
         "add": "Add a new scan mode",
         "edit": "Edit scan mode",
-        "delete": "Delete scan mode"
+        "delete": "Delete scan mode",
+        "overnight": "The end time is on the following day"
       }
     },
     "certificate": {
@@ -656,6 +718,7 @@
       "confirm-deletion": "Are you sure you want to delete the certificate {{ name }}? Beforehand, be sure it is not used.",
       "updated": "Certificate {{ name }} successfully updated",
       "created": "Certificate {{ name }} successfully created",
+      "imported": "Certificate {{ name }} successfully imported",
       "deleted": "Certificate {{ name }} deleted",
       "none": "No certificate",
       "name": "Name",
@@ -676,11 +739,32 @@
       "days-before-expiry": "Days before expiry",
       "tooltips": {
         "add": "Add a new certificate",
+        "export": "Export certificate",
         "edit": "Edit certificate",
         "delete": "Delete certificate",
         "copy-public-key": "Copy public key to clipboard",
-        "copy-certificate": "Copy certificate to clipboard",
-        "download": "Download certificate file"
+        "copy-certificate": "Copy certificate to clipboard"
+      },
+      "import": {
+        "button": "Import",
+        "title": "Import a certificate",
+        "certificate-file": "Certificate file",
+        "private-key-file": "Private key file",
+        "certificate-chain-file": "Certificate chain file (optional)",
+        "private-key-passphrase": "Private key passphrase",
+        "file-too-large": "The selected file is too large. Maximum size is 1 MB",
+        "hint": "Accepted formats: PEM, CRT, CER, DER. The passphrase is only needed if the uploaded private key file is encrypted."
+      },
+      "export": {
+        "title": "Export certificate",
+        "format": "Format",
+        "include-chain": "Include CA chain",
+        "include-chain-der-hint": "The CA chain cannot be included when exporting in DER format",
+        "include-private-key": "Include private key",
+        "private-key-warning": "The private key will be exported as an encrypted PKCS#8 file, using the passphrase below. This passphrase is not stored and cannot be recovered, so keep it safe.",
+        "passphrase": "Passphrase",
+        "passphrase-confirmation": "Confirm passphrase",
+        "passphrases-not-identical": "The passphrases are not identical"
       }
     },
     "ip-filter": {
@@ -764,6 +848,32 @@
             "tenant-id": "Tenant ID",
             "client-id": "Client ID",
             "client-secret": "Client secret",
+            "use-proxy": "Use proxy",
+            "proxy-url": "Proxy URL",
+            "proxy-username": "Proxy username",
+            "proxy-password": "Proxy password"
+          },
+          "azure-data-explorer": {
+            "cluster-url": "Cluster URL",
+            "database": "Database",
+            "table": "Table",
+            "authentication": {
+              "title": "Authentication",
+              "aad-app-secret": "AAD application secret",
+              "aad-app-certificate": "AAD application certificate",
+              "managed-identity": "Managed identity"
+            },
+            "tenant-id": "Tenant ID",
+            "client-id": "Client ID",
+            "client-secret": "Client secret",
+            "certificate-id": "Certificate",
+            "data-format": {
+              "title": "Data format",
+              "csv": "CSV",
+              "json": "JSON",
+              "multijson": "Multiline JSON"
+            },
+            "ingestion-mapping-name": "Ingestion mapping name",
             "use-proxy": "Use proxy",
             "proxy-url": "Proxy URL",
             "proxy-username": "Proxy username",
@@ -1012,6 +1122,7 @@
             "iso": "No transform",
             "json-to-csv": "CSV (from JSON)",
             "json-to-oianalytics": "OIAnalytics (from JSON)",
+            "record-list-to-csv": "CSV (from Record list)",
             "time-values-to-csv": "CSV",
             "time-values-to-json": "JSON",
             "time-values-to-modbus": "Modbus values",
@@ -1310,6 +1421,85 @@
               }
             }
           },
+          "record-list-to-csv": {
+            "filename": "Filename",
+            "encoding": {
+              "title": "Encoding",
+              "UTF_8": "UTF-8",
+              "UTF_8_BOM": "UTF-8 BOM",
+              "LATIN_1": "Latin-1 (ISO-8859-1)",
+              "UTF_16_LE": "UTF-16 LE"
+            },
+            "header": "First row as header",
+            "compression": "Compress file",
+            "delimiter": {
+              "title": "Delimiter",
+              "DOT": "Dot .",
+              "SEMI_COLON": "Semi colon ;",
+              "COLON": "Colon :",
+              "COMMA": "Comma ,",
+              "SLASH": "Slash /",
+              "TAB": "Tab",
+              "NON_BREAKING_SPACE": "Space",
+              "PIPE": "Pipe |"
+            },
+            "newline": {
+              "title": "Newline",
+              "CRLF": "CRLF (\\r\\n)",
+              "LF": "LF (\\n)",
+              "CR": "CR (\\r)"
+            },
+            "quote-char": {
+              "title": "Quote character",
+              "DOUBLE_QUOTE": "Double quote (\")",
+              "SINGLE_QUOTE": "Single quote (')",
+              "NONE": "None"
+            },
+            "escape-char": {
+              "title": "Escape character",
+              "BACKSLASH": "Backslash (\\)",
+              "DOUBLE_QUOTE": "Double quote (\")"
+            },
+            "null-value": "Null value",
+            "fields": {
+              "title": "Fields Mapping",
+              "item": {
+                "title": "Field Configuration"
+              },
+              "field-name": "Field Name",
+              "column-name": "Column Name",
+              "data-type": {
+                "title": "Data Type",
+                "string": "String",
+                "number": "Number",
+                "boolean": "Boolean",
+                "datetime": "Datetime",
+                "array": "Array",
+                "object": "Object"
+              },
+              "field-process": "Field Process (JS expression, e.g. value.toUpperCase())",
+              "datetime-settings": {
+                "title": "Datetime Settings",
+                "input-type": {
+                  "title": "Timestamp input type",
+                  "string": "String",
+                  "iso-string": "ISO string",
+                  "unix-epoch": "Unix epoch (s)",
+                  "unix-epoch-ms": "Unix epoch (ms)"
+                },
+                "output-type": {
+                  "title": "Timestamp output type",
+                  "string": "String",
+                  "iso-string": "ISO string",
+                  "unix-epoch": "Unix epoch (s)",
+                  "unix-epoch-ms": "Unix epoch (ms)"
+                },
+                "timezone": "Timezone",
+                "format": "Format",
+                "locale": "Locale"
+              }
+            }
+          },
           "setpoint-to-modbus": {
             "mapping": {
               "title": "Mapping table",
@@ -1553,6 +1743,21 @@
             "swap-words-in-dwords": "Swap Words?",
             "grouping-gap": "Max grouping gap (addresses)",
             "batch-query": "Group batch queries?"
+          },
+          "s7": {
+            "host": "Host",
+            "port": "Port",
+            "rack": "Rack",
+            "slot": "Slot",
+            "connection-type": {
+              "title": "Connection type",
+              "PG": "PG",
+              "OP": "OP",
+              "S7Basic": "S7 Basic"
+            },
+            "connect-timeout": "Connect timeout",
+            "request-timeout": "Request timeout",
+            "retry-interval": "Retry interval"
           },
           "mqtt": {
             "url": "URL",
@@ -1859,96 +2064,59 @@
                 "multiplier-coefficient": "Multiplier coefficient"
               }
             },
+            "s7": {
+              "address": "Address"
+            },
             "mqtt": {
               "topic": "Topic"
             },
             "mssql": {
               "query": "Query",
-              "date-time-fields": {
-                "date-time-field": "Date time fields",
+              "tracking-instant": {
+                "title": "Tracking instant",
+                "track-instant": "Track instant",
                 "field-name": "Field name",
-                "use-as-reference": "Reference field",
-                "type": {
-                  "title": "Type",
-                  "iso-string": "ISO String",
-                  "unix-epoch": "UNIX epoch (s)",
-                  "unix-epoch-ms": "UNIX epoch (ms)",
-                  "string": "String",
-                  "timestamp": "Timestamp",
-                  "timestamptz": "Timestamp with timezone",
-                  "date-time": "DateTime",
-                  "date-time-2": "DateTime2",
-                  "date-time-offset": "DateTime Offset",
-                  "small-date-time": "Small DateTime",
-                  "date": "Date"
-                },
-                "timezone": "Timezone",
-                "format": "Format",
-                "locale": "Locale"
-              },
-              "serialization": {
-                "title": "Serialization",
-                "type": {
-                  "title": "Type",
-                  "csv": "CSV"
-                },
-                "filename": "Filename",
-                "delimiter": {
-                  "title": "Delimiter",
-                  "DOT": "Dot .",
-                  "SEMI_COLON": "Semi colon ;",
-                  "COLON": "Colon :",
-                  "COMMA": "Comma ,",
-                  "SLASH": "Slash /",
-                  "TAB": "Tab",
-                  "NON_BREAKING_SPACE": "Space",
-                  "PIPE": "Pipe |"
-                },
-                "compression": "Compression",
-                "output-timestamp-format": "Output date time format",
-                "output-timezone": "Output timezone"
+                "date-time-input": {
+                  "title": "Date time input",
+                  "type": {
+                    "title": "Type",
+                    "string": "String",
+                    "date": "Date",
+                    "date-time": "DateTime",
+                    "date-time-2": "DateTime2",
+                    "date-time-offset": "DateTime Offset",
+                    "small-date-time": "Small DateTime",
+                    "iso-string": "ISO String",
+                    "unix-epoch": "UNIX epoch (s)",
+                    "unix-epoch-ms": "UNIX epoch (ms)"
+                  },
+                  "timezone": "Timezone",
+                  "format": "Format",
+                  "locale": "Locale"
+                }
               }
             },
             "mysql": {
               "query": "Query",
               "request-timeout": "Request timeout",
-              "date-time-fields": {
-                "date-time-field": "Date time fields",
+              "tracking-instant": {
+                "title": "Tracking instant",
+                "track-instant": "Track instant",
                 "field-name": "Field name",
-                "use-as-reference": "Reference field",
-                "type": {
-                  "title": "Type",
-                  "iso-string": "ISO String",
-                  "unix-epoch": "UNIX epoch (s)",
-                  "unix-epoch-ms": "UNIX epoch (ms)",
-                  "string": "String",
-                  "date-time": "DateTime"
-                },
-                "timezone": "Timezone",
-                "format": "Format",
-                "locale": "Locale"
-              },
-              "serialization": {
-                "title": "Serialization",
-                "type": {
-                  "title": "Type",
-                  "csv": "CSV"
-                },
-                "filename": "Filename",
-                "delimiter": {
-                  "title": "Delimiter",
-                  "DOT": "Dot .",
-                  "SEMI_COLON": "Semi colon ;",
-                  "COLON": "Colon :",
-                  "COMMA": "Comma ,",
-                  "SLASH": "Slash /",
-                  "TAB": "Tab",
-                  "NON_BREAKING_SPACE": "Space",
-                  "PIPE": "Pipe |"
-                },
-                "compression": "Compression",
-                "output-timestamp-format": "Output date time format",
-                "output-timezone": "Output timezone"
+                "date-time-input": {
+                  "title": "Date time input",
+                  "type": {
+                    "title": "Type",
+                    "string": "String",
+                    "iso-string": "ISO String",
+                    "unix-epoch": "UNIX epoch (s)",
+                    "unix-epoch-ms": "UNIX epoch (ms)",
+                    "date-time": "DateTime"
+                  },
+                  "timezone": "Timezone",
+                  "format": "Format",
+                  "locale": "Locale"
+                }
               }
             },
             "influxdb": {
@@ -2160,43 +2328,24 @@
             "oracle": {
               "query": "Query",
               "request-timeout": "Request timeout",
-              "date-time-fields": {
-                "date-time-field": "Date time fields",
+              "tracking-instant": {
+                "title": "Tracking instant",
+                "track-instant": "Track instant",
                 "field-name": "Field name",
-                "use-as-reference": "Reference field",
-                "type": {
-                  "title": "Type",
-                  "iso-string": "ISO String",
-                  "unix-epoch": "UNIX epoch (s)",
-                  "unix-epoch-ms": "UNIX epoch (ms)",
-                  "string": "String",
-                  "date-time": "DateTime"
-                },
-                "timezone": "Timezone",
-                "format": "Format",
-                "locale": "Locale"
-              },
-              "serialization": {
-                "title": "Serialization",
-                "type": {
-                  "title": "Type",
-                  "csv": "CSV"
-                },
-                "filename": "Filename",
-                "delimiter": {
-                  "title": "Delimiter",
-                  "DOT": "Dot .",
-                  "SEMI_COLON": "Semi colon ;",
-                  "COLON": "Colon :",
-                  "COMMA": "Comma ,",
-                  "SLASH": "Slash /",
-                  "TAB": "Tab",
-                  "NON_BREAKING_SPACE": "Space",
-                  "PIPE": "Pipe |"
-                },
-                "compression": "Compression",
-                "output-timestamp-format": "Output date time format",
-                "output-timezone": "Output timezone"
+                "date-time-input": {
+                  "title": "Date time input",
+                  "type": {
+                    "title": "Type",
+                    "iso-string": "ISO String",
+                    "unix-epoch": "UNIX epoch (s)",
+                    "unix-epoch-ms": "UNIX epoch (ms)",
+                    "string": "String",
+                    "date-time": "DateTime"
+                  },
+                  "timezone": "Timezone",
+                  "format": "Format",
+                  "locale": "Locale"
+                }
               }
             },
             "osisoft-pi": {
@@ -2210,44 +2359,25 @@
             },
             "postgresql": {
               "query": "Query",
-              "date-time-fields": {
-                "date-time-field": "Date time fields",
+              "tracking-instant": {
+                "title": "Tracking instant",
+                "track-instant": "Track instant",
                 "field-name": "Field name",
-                "use-as-reference": "Reference field",
-                "type": {
-                  "title": "Type",
-                  "iso-string": "ISO String",
-                  "unix-epoch": "UNIX epoch (s)",
-                  "unix-epoch-ms": "UNIX epoch (ms)",
-                  "string": "String",
-                  "timestamp": "Timestamp",
-                  "timestamptz": "Timestamp with timezone"
-                },
-                "timezone": "Timezone",
-                "format": "Format",
-                "locale": "Locale"
-              },
-              "serialization": {
-                "title": "Serialization",
-                "type": {
-                  "title": "Type",
-                  "csv": "CSV"
-                },
-                "filename": "Filename",
-                "delimiter": {
-                  "title": "Delimiter",
-                  "DOT": "Dot .",
-                  "SEMI_COLON": "Semi colon ;",
-                  "COLON": "Colon :",
-                  "COMMA": "Comma ,",
-                  "SLASH": "Slash /",
-                  "TAB": "Tab",
-                  "NON_BREAKING_SPACE": "Space",
-                  "PIPE": "Pipe |"
-                },
-                "compression": "Compression",
-                "output-timestamp-format": "Output date time format",
-                "output-timezone": "Output timezone"
+                "date-time-input": {
+                  "title": "Date time input",
+                  "type": {
+                    "title": "Type",
+                    "string": "String",
+                    "iso-string": "ISO String",
+                    "unix-epoch": "UNIX epoch (s)",
+                    "unix-epoch-ms": "UNIX epoch (ms)",
+                    "timestamp": "Timestamp",
+                    "timestamptz": "Timestamp with timezone"
+                  },
+                  "timezone": "Timezone",
+                  "format": "Format",
+                  "locale": "Locale"
+                }
               }
             },
             "rest": {
@@ -2319,42 +2449,23 @@
             },
             "sqlite": {
               "query": "Query",
-              "date-time-fields": {
-                "date-time-field": "Date time fields",
+              "tracking-instant": {
+                "title": "Tracking instant",
+                "track-instant": "Track instant",
                 "field-name": "Field name",
-                "use-as-reference": "Reference field",
-                "type": {
-                  "title": "Type",
-                  "iso-string": "ISO String",
-                  "unix-epoch": "UNIX epoch (s)",
-                  "unix-epoch-ms": "UNIX epoch (ms)",
-                  "string": "String"
-                },
-                "timezone": "Timezone",
-                "format": "Format",
-                "locale": "Locale"
-              },
-              "serialization": {
-                "title": "Serialization",
-                "type": {
-                  "title": "Type",
-                  "csv": "CSV"
-                },
-                "filename": "Filename",
-                "delimiter": {
-                  "title": "Delimiter",
-                  "DOT": "Dot .",
-                  "SEMI_COLON": "Semi colon ;",
-                  "COLON": "Colon :",
-                  "COMMA": "Comma ,",
-                  "SLASH": "Slash /",
-                  "TAB": "Tab",
-                  "NON_BREAKING_SPACE": "Space",
-                  "PIPE": "Pipe |"
-                },
-                "compression": "Compression",
-                "output-timestamp-format": "Output date time format",
-                "output-timezone": "Output timezone"
+                "date-time-input": {
+                  "title": "Date time input",
+                  "type": {
+                    "title": "Type",
+                    "string": "String",
+                    "iso-string": "ISO String",
+                    "unix-epoch": "UNIX epoch (s)",
+                    "unix-epoch-ms": "UNIX epoch (ms)"
+                  },
+                  "timezone": "Timezone",
+                  "format": "Format",
+                  "locale": "Locale"
+                }
               }
             }
           }
@@ -2393,6 +2504,12 @@
       "button": "Test settings",
       "success": "Connection successfully tested",
       "error": "Error when testing settings"
+    },
+    "explore": {
+      "title": "Explore data source",
+      "button": "Explore",
+      "empty": "Nothing to explore",
+      "error": "Error while exploring the data source"
     },
     "test-item": {
       "title": "Testing item",
@@ -2793,6 +2910,7 @@
     "south-type": "South type",
     "north-type": "North type",
     "interval": "Interval",
+    "item-progress": "{{ current }}/{{ total }} items",
     "query-time-range": {
       "start": "Start",
       "end": "End",
@@ -2918,7 +3036,22 @@
         "last-run-start": "Last run",
         "last-run-duration": "Last run duration",
         "data-retrieved": "Data retrieved",
-        "interval-progress": "Interval progress"
+        "interval-progress": "Interval progress",
+        "current-item": "Current item: {{ name }} ({{ current }} / {{ total }})",
+        "item-progress": "Items processed",
+        "item-interval-progress": "Current item progress",
+        "values-per-second": "Values/files per second",
+        "eta": "Estimated time remaining",
+        "items-status": {
+          "title": "Items status",
+          "name": "Name",
+          "status": "Status",
+          "last-value": "Last value retrieved",
+          "records": "Records retrieved",
+          "pending": "Pending",
+          "running": "Running",
+          "done": "Done"
+        }
       }
     },
     "tooltips": {

@@ -257,14 +257,20 @@ const customTransformers: Array<CustomTransformerDTO> = [
 const scanModeCommandDTO: ScanModeCommandDTO = {
   name: 'my new scan mode',
   description: 'another scan mode',
-  cron: '0 * * * * *'
+  type: 'cron',
+  cron: '0 * * * * *',
+  interval: null,
+  activationWindow: null
 };
 const scanModes: Array<ScanMode> = [
   {
     id: 'scanModeId1',
     name: 'scanMode1',
     description: 'my first scanMode',
+    type: 'cron',
     cron: '* * * * * *',
+    interval: null,
+    activationWindow: null,
     createdBy: '',
     updatedBy: '',
     createdAt: '',
@@ -274,7 +280,10 @@ const scanModes: Array<ScanMode> = [
     id: 'scanModeId2',
     name: 'scanMode2',
     description: 'my second scanMode',
+    type: 'cron',
     cron: '0 * * * * *',
+    interval: null,
+    activationWindow: null,
     createdBy: '',
     updatedBy: '',
     createdAt: '',
@@ -284,7 +293,10 @@ const scanModes: Array<ScanMode> = [
     id: 'subscription',
     name: 'Subscription',
     description: 'Subscription',
+    type: 'cron',
     cron: 'subscription',
+    interval: null,
+    activationWindow: null,
     createdBy: '',
     updatedBy: '',
     createdAt: '',
@@ -337,6 +349,7 @@ const certificates: Array<Certificate> = [
     publicKey: 'public key',
     privateKey: 'private key',
     certificate: 'certificate',
+    certificateChain: null,
     expiry: constants.dates.DATE_1,
     createdBy: '',
     updatedBy: '',
@@ -350,6 +363,7 @@ const certificates: Array<Certificate> = [
     publicKey: 'public key',
     privateKey: 'private key',
     certificate: 'certificate',
+    certificateChain: null,
     expiry: constants.dates.DATE_2,
     createdBy: '',
     updatedBy: '',
@@ -381,6 +395,7 @@ const southTestManifest: SouthConnectorManifest = {
     lastFile: true,
     history: true
   },
+  explore: true,
   settings: {
     type: 'object',
     key: 'settings',
@@ -705,7 +720,10 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
           id: 'subscription',
           name: 'subscription',
           description: '',
+          type: 'cron',
           cron: '',
+          interval: null,
+          activationWindow: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -1125,14 +1143,8 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         enabled: true,
         settings: {
           query: 'SELECT * FROM table1',
-          dateTimeFields: null,
-          serialization: {
-            type: 'csv',
-            filename: 'item1.csv',
-            delimiter: 'COMMA',
-            compression: false,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'UTC'
+          trackingInstant: {
+            trackInstant: false
           }
         } as SouthMSSQLItemSettings,
         createdBy: '',
@@ -1146,14 +1158,8 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         enabled: true,
         settings: {
           query: 'SELECT * FROM table2',
-          dateTimeFields: null,
-          serialization: {
-            type: 'csv',
-            filename: 'item2.csv',
-            delimiter: 'COMMA',
-            compression: false,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'UTC'
+          trackingInstant: {
+            trackInstant: false
           }
         } as SouthMSSQLItemSettings,
         createdBy: '',
@@ -1247,14 +1253,8 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         enabled: true,
         settings: {
           query: 'SELECT * FROM table3',
-          dateTimeFields: null,
-          serialization: {
-            type: 'csv',
-            filename: 'item3.csv',
-            delimiter: 'COMMA',
-            compression: false,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'UTC'
+          trackingInstant: {
+            trackInstant: false
           }
         } as SouthMSSQLItemSettings,
         createdBy: '',
@@ -1340,14 +1340,8 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
       enabled: true,
       settings: {
         query: 'SELECT * FROM table4',
-        dateTimeFields: null,
-        serialization: {
-          type: 'csv',
-          filename: 'item4.csv',
-          delimiter: 'COMMA',
-          compression: false,
-          outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-          outputTimezone: 'UTC'
+        trackingInstant: {
+          trackInstant: false
         }
       } as SouthMSSQLItemSettings
     }
@@ -1379,14 +1373,8 @@ const historyQueryItemCommand: HistoryQueryItemCommandDTO = {
   enabled: true,
   settings: {
     query: 'SELECT * FROM newTable',
-    dateTimeFields: null,
-    serialization: {
-      type: 'csv',
-      filename: 'newItem.csv',
-      delimiter: 'COMMA',
-      compression: false,
-      outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-      outputTimezone: 'UTC'
+    trackingInstant: {
+      trackInstant: false
     }
   } as SouthMSSQLItemSettings
 };
@@ -1610,7 +1598,18 @@ const historyQueryMetrics: HistoryQueryMetrics = {
     currentIntervalStart: null,
     currentIntervalEnd: null,
     currentIntervalNumber: 0,
-    numberOfIntervals: 0
+    numberOfIntervals: 0,
+    itemName: 'item1',
+    currentItemNumber: 1,
+    numberOfItems: 3,
+    itemIntervalProgress: 0,
+    itemIntervalNumber: 0,
+    itemNumberOfIntervals: 0,
+    itemsStatus: [
+      { itemId: 'historyQueryItem1', itemName: 'item1', status: 'running', lastValueTimestamp: null, recordsCount: 0 },
+      { itemId: 'historyQueryItem2', itemName: 'item2', status: 'pending', lastValueTimestamp: null, recordsCount: 0 },
+      { itemId: 'historyQueryItem3', itemName: 'item3', status: 'pending', lastValueTimestamp: null, recordsCount: 0 }
+    ]
   }
 };
 

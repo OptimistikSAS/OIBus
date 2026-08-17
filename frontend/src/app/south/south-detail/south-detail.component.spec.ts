@@ -6,7 +6,9 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { SouthDetailComponent } from './south-detail.component';
+import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
+import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { CertificateService } from '../../services/certificate.service';
@@ -238,5 +240,49 @@ describe('SouthDetailComponent', () => {
     );
     const getItemCount = prepare.mock.calls[0][4];
     expect(getItemCount('group1')).toBe(1);
+  });
+
+  test('should show the explore button when the manifest supports exploration', async () => {
+    const fixture = TestBed.createComponent(SouthDetailComponent);
+    fixture.detectChanges();
+
+    const root = page.elementLocator(fixture.nativeElement);
+    await expect.element(root.getByCss('#explore')).toBeInTheDocument();
+  });
+
+  test('should hide the explore button when the manifest does not support exploration', async () => {
+    southConnectorService.getSouthManifest.mockReturnValue(of({ ...manifest, explore: false }));
+    const fixture = TestBed.createComponent(SouthDetailComponent);
+    fixture.detectChanges();
+
+    const root = page.elementLocator(fixture.nativeElement);
+    await expect.element(root.getByCss('#explore')).not.toBeInTheDocument();
+  });
+
+  test('explore should open the explore modal with the persisted connector id, settings and type', () => {
+    const prepare = vi.fn();
+    modalService.open.mockReturnValue({ componentInstance: { prepare } } as any);
+
+    const fixture = TestBed.createComponent(SouthDetailComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.explore();
+
+    expect(modalService.open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'lg' });
+    expect(prepare).toHaveBeenCalledWith(southConnector.id, southConnector.settings, southConnector.type);
+  });
+
+  test('importItems should open the import modal with recoveryStrategy among the optional headers', () => {
+    const prepare = vi.fn();
+    modalService.open.mockReturnValue({ componentInstance: { prepare }, result: of(undefined) } as any);
+
+    const fixture = TestBed.createComponent(SouthDetailComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.importItems();
+
+    expect(modalService.open).toHaveBeenCalledWith(ImportSouthItemsModalComponent, expect.anything());
+    const optionalHeaders = prepare.mock.calls[0][2];
+    expect(optionalHeaders).toContain('recoveryStrategy');
   });
 });

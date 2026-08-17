@@ -9,13 +9,14 @@ import {
 } from '../../shared/model/south-connector.model';
 import { Instant, Interval } from '../../shared/model/types';
 import { DateTime } from 'luxon';
-import { SouthDirectQuery, SouthHistoryQuery, SouthSubscription } from './south-interface';
+import { SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from './south-interface';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import {
   OIBusAnyContent,
   OIBusConnectionTestResult,
   OIBusContent,
   OIBusFileContent,
+  OIBusRecordListContent,
   OIBusTimeValue,
   OIBusTimeValueContent
 } from '../../shared/model/engine.model';
@@ -30,7 +31,19 @@ export interface SouthMetricsEvents {
   'history-query-interval': {
     currentIntervalStart: Instant;
     currentIntervalEnd: Instant;
+    // 1-based index of this interval within the current lead/item's own generated interval list.
+    currentIntervalNumber: number;
+    // Total number of intervals generated for the current lead/item.
+    numberOfIntervals: number;
+    // Only set for SOUTH_SINGLE_ITEMS connectors, where items are queried one at a time.
+    currentItemName?: string;
+    currentItemNumber?: number;
+    numberOfItems?: number;
   };
+  // Emitted once per item, before it is queried, for SOUTH_SINGLE_ITEMS connectors — needed because
+  // an item whose window is already caught up may emit zero `history-query-interval` events, so the
+  // UI would otherwise have no boundary event to show progress moving to the next item.
+  'history-query-item-start': { itemName: string; currentItemNumber: number; numberOfItems: number };
   // `any-content` (opaque payloads) has no time value, hence the `| null`.
   'add-values': { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue | null };
   'add-file': { lastFileRetrieved: string };
@@ -551,14 +564,18 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       if (SOUTH_SINGLE_ITEMS.includes(this.connector.type)) {
         // Each item is queried independently so that each has its own cache entry and trackedInstant.
         // This mirrors how groupItemsByGroup() sends singleton arrays during normal scan flow.
-        for (const item of itemsToRead) {
-          await this.runHistoryQueryForLead(item, [item], null, startTime, endTime);
+        const numberOfItems = itemsToRead.length;
+        for (let i = 0; i < itemsToRead.length; i++) {
+          const item = itemsToRead[i];
+          const itemContext = { itemName: item.name, currentItemNumber: i + 1, numberOfItems };
+          this.metricsEvent.emit('history-query-item-start', itemContext);
+          await this.runHistoryQueryForLead(item, [item], null, startTime, endTime, itemContext);
           if (this.stopping) break;
         }
       } else {
         const lead = itemsToRead[0];
         const groupId = lead.group && lead.syncWithGroup ? lead.group.id : null;
-        await this.runHistoryQueryForLead(lead, itemsToRead, groupId, startTime, endTime);
+        await this.runHistoryQueryForLead(lead, itemsToRead, groupId, startTime, endTime, null);
       }
     } finally {
       // Guaranteed even if runHistoryQueryForLead throws, so a failed history query can't leave
@@ -579,7 +596,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     items: Array<SouthConnectorItemEntity<I>>,
     groupId: string | null,
     startTime: Instant,
-    endTime: Instant
+    endTime: Instant,
+    itemContext: { itemName: string; currentItemNumber: number; numberOfItems: number } | null
   ): Promise<void> {
     // A non-null groupId means this is a batched, synced group (the only caller that passes one —
     // see historyQueryHandler): the cache is shared by the whole group, keyed by group_id alone, so
@@ -614,7 +632,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     const { effectiveStartTime, effectiveEndTime } = queryWindow;
     const intervals = generateIntervals(effectiveStartTime, effectiveEndTime, maxReadInterval, recoveryStrategy);
     this.logIntervals(intervals);
-    await this.queryIntervals(intervals, items, southCache, readDelay, recoveryStrategy);
+    await this.queryIntervals(intervals, items, southCache, readDelay, recoveryStrategy, itemContext);
   }
 
   private async queryIntervals(
@@ -622,7 +640,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     items: Array<SouthConnectorItemEntity<I>>,
     southCache: SouthCacheEntry,
     readDelay: number,
-    strategy: SouthHistoryRecoveryStrategy
+    strategy: SouthHistoryRecoveryStrategy,
+    itemContext: { itemName: string; currentItemNumber: number; numberOfItems: number } | null
   ) {
     // For 'newest' strategy, track the max trackedInstant seen across all intervals. Intervals are
     // queried newest-first (see generateIntervals), so this is expected to resolve on the first
@@ -633,7 +652,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       const queryTime = DateTime.now().toUTC().toISO()!;
       const interval = intervals[index];
 
-      this.metricsEvent.emit('history-query-interval', { currentIntervalStart: interval.start, currentIntervalEnd: interval.end });
+      this.metricsEvent.emit('history-query-interval', {
+        currentIntervalStart: interval.start,
+        currentIntervalEnd: interval.end,
+        currentIntervalNumber: index + 1,
+        numberOfIntervals: intervals.length,
+        ...(itemContext ?? {})
+      });
       this.currentHistoryQueryInterval = interval;
       let lastValue: { trackedInstant: Instant; value: unknown } | null;
       try {
@@ -737,6 +762,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    *   - `'time-values'`  → array of OIBusTimeValue (timestamp + pointId + data)
    *   - `'any-content'`  → opaque serialised payload (MQTT messages, etc.)
    *   - `'any'`          → a file on disk (folder-scanner, FTP, etc.)
+   *   - `'record-list'`  → array of flat rows, untouched (SQL-like souths)
    */
   addContent(data: OIBusContent, queryTime: Instant, items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> {
     switch (data.type) {
@@ -746,6 +772,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         return this.addAnyContent(data, queryTime, items);
       case 'any':
         return this.addFile(data, queryTime, items);
+      case 'record-list':
+        return this.addRecords(data, queryTime, items);
       default:
         return Promise.resolve();
     }
@@ -791,6 +819,28 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       this.metricsEvent.emit('add-values', {
         numberOfValuesRetrieved: data.content.length,
         lastValueRetrieved: data.content[data.content.length - 1]
+      });
+    }
+  }
+
+  private async addRecords(
+    data: OIBusRecordListContent,
+    queryTime: Instant,
+    items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+  ): Promise<void> {
+    if (data.content.length > 0) {
+      this.logger.debug(`Add ${data.content.length} records to cache from South "${this.connector.name}"`);
+      await this.engineAddContentCallback(
+        this.connector.id,
+        data,
+        queryTime,
+        items,
+        this.currentHistoryQueryInterval?.start ?? null,
+        this.currentHistoryQueryInterval?.end ?? null
+      );
+      this.metricsEvent.emit('add-values', {
+        numberOfValuesRetrieved: data.content.length,
+        lastValueRetrieved: null
       });
     }
   }
@@ -864,6 +914,32 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   /**
+   * Snapshot the persisted history-query cache state for `items`, for progress-monitoring UIs.
+   * Mirrors the lookup `south.service.ts#getItemLastValue` uses: when an item is synced with its
+   * group, the cache entry is shared across the whole group (saved once under the group's lead
+   * item), so it's looked up by group id; otherwise it's looked up by the item's own id.
+   */
+  getHistoryQuerySnapshot(items: Array<SouthConnectorItemEntity<I>>): {
+    items: Array<{ itemId: string; itemName: string; trackedInstant: Instant | null; queryTime: Instant | null; value: unknown | null }>;
+  } {
+    return {
+      items: items.map(item => {
+        const cacheEntry =
+          item.syncWithGroup && item.group
+            ? this.southCacheRepository.getGroupLastValue(this.connector.id, item.group.id)
+            : this.southCacheRepository.getItemLastValue(this.connector.id, item.id);
+        return {
+          itemId: item.id,
+          itemName: item.name,
+          trackedInstant: cacheEntry?.trackedInstant ?? null,
+          queryTime: cacheEntry?.queryTime ?? null,
+          value: cacheEntry?.value ?? null
+        };
+      })
+    };
+  }
+
+  /**
    * Hook for subclasses that want to filter which items participate in a
    * history pass (default: all of them). Useful for connectors where some
    * items are direct-only or subscription-only.
@@ -897,6 +973,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   /** Capability check — true iff the subclass implements both `subscribe()` and `unsubscribe()` from `SouthSubscription`. */
   hasSubscription(): this is SouthSubscription {
     return 'subscribe' in this && 'unsubscribe' in this;
+  }
+
+  /** Capability check — true iff the subclass implements `SouthExplore.explore()`. */
+  hasExplore(): this is SouthExplore {
+    return 'explore' in this;
   }
 
   set connectorConfiguration(connectorConfiguration: SouthConnectorEntity<T, I>) {

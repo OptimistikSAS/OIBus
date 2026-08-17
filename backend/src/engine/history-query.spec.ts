@@ -95,7 +95,19 @@ describe('HistoryQuery enabled', () => {
       mockedSouth1Mock.historyQueryHandler.mock.calls[0].arguments[0],
       testData.historyQueries.list[0].items.map(item => ({
         ...item,
-        scanMode: { cron: '', description: '', id: 'history', name: 'history', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
+        scanMode: {
+          type: 'cron',
+          cron: '',
+          interval: null,
+          activationWindow: null,
+          description: '',
+          id: 'history',
+          name: 'history',
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
         group: null,
         syncWithGroup: false,
         maxReadInterval: 3600,
@@ -138,7 +150,19 @@ describe('HistoryQuery enabled', () => {
       mockedSouth1Mock.historyQueryHandler.mock.calls[0].arguments[0],
       testData.historyQueries.list[0].items.map(item => ({
         ...item,
-        scanMode: { cron: '', description: '', id: 'history', name: 'history', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
+        scanMode: {
+          type: 'cron',
+          cron: '',
+          interval: null,
+          activationWindow: null,
+          description: '',
+          id: 'history',
+          name: 'history',
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
         group: null,
         syncWithGroup: false,
         maxReadInterval: 3600,
@@ -312,6 +336,9 @@ describe('HistoryQuery enabled', () => {
     });
     assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'south-history-query-interval'));
 
+    mockedSouth1Mock.metricsEvent.emit('history-query-item-start', { itemName: 'item1', currentItemNumber: 1, numberOfItems: 2 });
+    assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'south-history-query-item'));
+
     // 'south-history-query-start'/'south-history-query-stop' are emitted directly by HistoryQuery
     // itself (not forwarded from a south metricsEvent) around the historyQueryHandler run.
     mockedSouth1Mock.connectedEvent.emit('connected');
@@ -354,7 +381,9 @@ describe('HistoryQuery enabled', () => {
       currentIntervalStart: '2020-03-15T00:00:00.000Z',
       currentIntervalEnd: '2020-03-15T00:30:00.000Z',
       currentIntervalNumber: 0,
-      numberOfIntervals: 4
+      numberOfIntervals: 4,
+      itemIntervalNumber: undefined,
+      itemNumberOfIntervals: undefined
     });
 
     // Exactly covers the first two slots: 2 of 4 done, 50% progress.
@@ -370,7 +399,9 @@ describe('HistoryQuery enabled', () => {
       currentIntervalStart: '2020-03-15T00:00:00.000Z',
       currentIntervalEnd: '2020-03-15T02:00:00.000Z',
       currentIntervalNumber: 2,
-      numberOfIntervals: 4
+      numberOfIntervals: 4,
+      itemIntervalNumber: undefined,
+      itemNumberOfIntervals: undefined
     });
 
     // Covers the whole range: 4 of 4 done, 100% progress.
@@ -386,10 +417,267 @@ describe('HistoryQuery enabled', () => {
       currentIntervalStart: '2020-03-15T03:00:00.000Z',
       currentIntervalEnd: '2020-03-15T04:00:00.000Z',
       currentIntervalNumber: 4,
-      numberOfIntervals: 4
+      numberOfIntervals: 4,
+      itemIntervalNumber: undefined,
+      itemNumberOfIntervals: undefined
     });
 
     await progressHistoryQuery.stop();
+  });
+
+  it('should never let intervalProgress regress when a later item reports an earlier currentIntervalEnd (sawtooth regression)', async () => {
+    // Same fixed, whole-range interval breakdown as the previous test.
+    const fixedIntervals = [
+      { start: '2020-03-15T00:00:00.000Z', end: '2020-03-15T01:00:00.000Z' },
+      { start: '2020-03-15T01:00:00.000Z', end: '2020-03-15T02:00:00.000Z' },
+      { start: '2020-03-15T02:00:00.000Z', end: '2020-03-15T03:00:00.000Z' },
+      { start: '2020-03-15T03:00:00.000Z', end: '2020-03-15T04:00:00.000Z' }
+    ];
+    utilsExports.generateIntervals = mock.fn(() => fixedIntervals);
+    const progressHistoryQuery = new HistoryQuery(testData.historyQueries.list[0], mockedNorth1, mockedSouth1);
+    const emitMock = mock.method(progressHistoryQuery.metricsEvent, 'emit');
+    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => undefined);
+
+    await progressHistoryQuery.start();
+
+    // First item's own window reaches the end of the third fixed slot: 3 of 4 done, 75% progress.
+    mockedSouth1Mock.metricsEvent.emit('history-query-interval', {
+      currentIntervalStart: '2020-03-15T02:00:00.000Z',
+      currentIntervalEnd: '2020-03-15T03:00:00.000Z',
+      itemName: 'item1',
+      currentItemNumber: 1,
+      numberOfItems: 2
+    });
+    let call = emitMock.mock.calls.find(c => c.arguments[0] === 'south-history-query-interval')!;
+    assert.deepStrictEqual(call.arguments[1], {
+      running: true,
+      intervalProgress: 0.75,
+      currentIntervalStart: '2020-03-15T02:00:00.000Z',
+      currentIntervalEnd: '2020-03-15T03:00:00.000Z',
+      currentIntervalNumber: 3,
+      numberOfIntervals: 4,
+      itemName: 'item1',
+      currentItemNumber: 1,
+      numberOfItems: 2,
+      itemIntervalNumber: undefined,
+      itemNumberOfIntervals: undefined
+    });
+    const firstIntervalProgress = (call.arguments[1] as { intervalProgress: number }).intervalProgress;
+    const firstCurrentIntervalNumber = (call.arguments[1] as { currentIntervalNumber: number }).currentIntervalNumber;
+
+    // The run moves on to a second item, whose own window starts (and ends) well before where the
+    // first item left off — without the ratchet this would make the overall progress drop back down.
+    emitMock.mock.resetCalls();
+    mockedSouth1Mock.metricsEvent.emit('history-query-interval', {
+      currentIntervalStart: '2020-03-15T00:00:00.000Z',
+      currentIntervalEnd: '2020-03-15T00:30:00.000Z',
+      itemName: 'item2',
+      currentItemNumber: 2,
+      numberOfItems: 2
+    });
+    call = emitMock.mock.calls.find(c => c.arguments[0] === 'south-history-query-interval')!;
+    const secondPayload = call.arguments[1] as { intervalProgress: number; currentIntervalNumber: number };
+
+    // The overall (ratcheted) progress must not decrease...
+    assert.ok(secondPayload.intervalProgress >= firstIntervalProgress);
+    assert.ok(secondPayload.currentIntervalNumber >= firstCurrentIntervalNumber);
+    assert.strictEqual(secondPayload.intervalProgress, firstIntervalProgress);
+    assert.strictEqual(secondPayload.currentIntervalNumber, firstCurrentIntervalNumber);
+    // ...even though this event's own currentIntervalEnd genuinely regressed.
+    assert.deepStrictEqual(call.arguments[1], {
+      running: true,
+      intervalProgress: 0.75,
+      currentIntervalStart: '2020-03-15T00:00:00.000Z',
+      currentIntervalEnd: '2020-03-15T00:30:00.000Z',
+      currentIntervalNumber: 3,
+      numberOfIntervals: 4,
+      itemName: 'item2',
+      currentItemNumber: 2,
+      numberOfItems: 2,
+      itemIntervalNumber: undefined,
+      itemNumberOfIntervals: undefined
+    });
+
+    await progressHistoryQuery.stop();
+  });
+
+  it('should seed maxIntervalEndReached and itemsStatus from the south connector cache snapshot on start (restart resume)', async () => {
+    mockedSouth1Mock.getHistoryQuerySnapshot = mock.fn(() => ({
+      items: [
+        { itemId: 'historyQueryItem1', itemName: 'item1', trackedInstant: '2020-03-17T00:00:00.000Z', queryTime: null, value: null },
+        {
+          itemId: 'historyQueryItem2',
+          itemName: 'item2',
+          trackedInstant: testData.historyQueries.list[0].queryTimeRange.endTime,
+          queryTime: null,
+          value: null
+        }
+      ]
+    }));
+    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => undefined);
+
+    await historyQuery.start();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const internal = historyQuery as any;
+    // The higher of the two seeded trackedInstants (item2's, which equals the configured end time).
+    assert.strictEqual(internal.maxIntervalEndReached, testData.historyQueries.list[0].queryTimeRange.endTime);
+    assert.deepStrictEqual(Array.from(internal.itemsStatus.values()), [
+      {
+        itemId: 'historyQueryItem1',
+        itemName: 'item1',
+        status: 'pending',
+        lastValueTimestamp: '2020-03-17T00:00:00.000Z',
+        recordsCount: 0
+      },
+      {
+        itemId: 'historyQueryItem2',
+        itemName: 'item2',
+        status: 'done',
+        lastValueTimestamp: testData.historyQueries.list[0].queryTimeRange.endTime,
+        recordsCount: 0
+      }
+    ]);
+  });
+
+  it('should relay history-query-item-start to south-history-query-item, marking items running/done and updating recordsCount', async () => {
+    mockedSouth1Mock.getHistoryQuerySnapshot = mock.fn(() => ({
+      items: [
+        { itemId: 'historyQueryItem1', itemName: 'item1', trackedInstant: null, queryTime: null, value: null },
+        { itemId: 'historyQueryItem2', itemName: 'item2', trackedInstant: null, queryTime: null, value: null }
+      ]
+    }));
+    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => undefined);
+    const emitMock = mock.method(historyQuery.metricsEvent, 'emit');
+
+    await historyQuery.start();
+
+    mockedSouth1Mock.metricsEvent.emit('history-query-item-start', { itemName: 'item1', currentItemNumber: 1, numberOfItems: 2 });
+    let call = emitMock.mock.calls.find(c => c.arguments[0] === 'south-history-query-item')!;
+    assert.deepStrictEqual(call.arguments[1], {
+      itemName: 'item1',
+      currentItemNumber: 1,
+      numberOfItems: 2,
+      itemsStatus: [
+        { itemId: 'historyQueryItem1', itemName: 'item1', status: 'running', lastValueTimestamp: null, recordsCount: 0 },
+        { itemId: 'historyQueryItem2', itemName: 'item2', status: 'pending', lastValueTimestamp: null, recordsCount: 0 }
+      ]
+    });
+
+    // Values retrieved while item1 is running are attributed to item1.
+    mockedSouth1Mock.metricsEvent.emit('add-values', {
+      numberOfValuesRetrieved: 3,
+      lastValueRetrieved: { pointId: 'point1', timestamp: '2020-03-16T00:00:00.000Z', data: {} }
+    });
+
+    // The run moves on to item2: item1 is marked done, item2 becomes running.
+    emitMock.mock.resetCalls();
+    mockedSouth1Mock.metricsEvent.emit('history-query-item-start', { itemName: 'item2', currentItemNumber: 2, numberOfItems: 2 });
+    call = emitMock.mock.calls.find(c => c.arguments[0] === 'south-history-query-item')!;
+    assert.deepStrictEqual(call.arguments[1], {
+      itemName: 'item2',
+      currentItemNumber: 2,
+      numberOfItems: 2,
+      itemsStatus: [
+        { itemId: 'historyQueryItem1', itemName: 'item1', status: 'done', lastValueTimestamp: '2020-03-16T00:00:00.000Z', recordsCount: 3 },
+        { itemId: 'historyQueryItem2', itemName: 'item2', status: 'running', lastValueTimestamp: null, recordsCount: 0 }
+      ]
+    });
+
+    // A retrieved file while item2 is running increments its recordsCount without touching item1.
+    mockedSouth1Mock.metricsEvent.emit('add-file', { lastFileRetrieved: 'file1.csv' });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const internal = historyQuery as any;
+    assert.deepStrictEqual(Array.from(internal.itemsStatus.values()), [
+      { itemId: 'historyQueryItem1', itemName: 'item1', status: 'done', lastValueTimestamp: '2020-03-16T00:00:00.000Z', recordsCount: 3 },
+      { itemId: 'historyQueryItem2', itemName: 'item2', status: 'running', lastValueTimestamp: null, recordsCount: 1 }
+    ]);
+  });
+
+  it('should relay a scan-mode tick to the north connector only', () => {
+    const scanMode = testData.scanMode.list[0];
+    historyQuery.triggerNorth(scanMode);
+    assert.strictEqual(mockedNorth1Mock.trigger.mock.calls.length, 1);
+    assert.strictEqual(mockedNorth1Mock.trigger.mock.calls[0].arguments[0], scanMode);
+  });
+
+  it('should mark running items as done when the history run completes normally (not stopping)', async () => {
+    mockedSouth1Mock.getHistoryQuerySnapshot = mock.fn(() => ({
+      items: [{ itemId: 'historyQueryItem1', itemName: 'item1', trackedInstant: null, queryTime: null, value: null }]
+    }));
+    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => undefined);
+
+    await historyQuery.start();
+
+    // Mark item1 as running before the run resolves.
+    mockedSouth1Mock.metricsEvent.emit('history-query-item-start', { itemName: 'item1', currentItemNumber: 1, numberOfItems: 1 });
+    mockedSouth1Mock.connectedEvent.emit('connected');
+    await flushPromises();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const internal = historyQuery as any;
+    assert.strictEqual(internal.itemsStatus.get('historyQueryItem1').status, 'done');
+  });
+
+  it('should leave a running item status untouched when the history run completes while stopping', async () => {
+    mockedSouth1Mock.getHistoryQuerySnapshot = mock.fn(() => ({
+      items: [{ itemId: 'historyQueryItem1', itemName: 'item1', trackedInstant: null, queryTime: null, value: null }]
+    }));
+    let resolveHandler!: () => void;
+    mockedSouth1Mock.historyQueryHandler = mock.fn(
+      () =>
+        new Promise<void>(resolve => {
+          resolveHandler = resolve;
+        })
+    );
+
+    await historyQuery.start();
+    mockedSouth1Mock.metricsEvent.emit('history-query-item-start', { itemName: 'item1', currentItemNumber: 1, numberOfItems: 1 });
+    mockedSouth1Mock.connectedEvent.emit('connected');
+
+    // Begin stopping (sets `stopping = true` synchronously) before the run's promise resolves.
+    const stopPromise = historyQuery.stop();
+    resolveHandler();
+    await flushPromises();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const internal = historyQuery as any;
+    assert.strictEqual(internal.itemsStatus.get('historyQueryItem1').status, 'running');
+
+    await stopPromise;
+  });
+
+  it('should keep the earlier seeded max interval end when a later item is not further ahead', async () => {
+    mockedSouth1Mock.getHistoryQuerySnapshot = mock.fn(() => ({
+      items: [
+        { itemId: 'historyQueryItem1', itemName: 'item1', trackedInstant: '2020-03-18T00:00:00.000Z', queryTime: null, value: null },
+        { itemId: 'historyQueryItem2', itemName: 'item2', trackedInstant: '2020-03-16T00:00:00.000Z', queryTime: null, value: null }
+      ]
+    }));
+    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => undefined);
+
+    await historyQuery.start();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const internal = historyQuery as any;
+    // item2's trackedInstant is earlier than item1's, so the ratcheted max stays at item1's value.
+    assert.strictEqual(internal.maxIntervalEndReached, '2020-03-18T00:00:00.000Z');
+  });
+
+  it('should surface itemIntervalProgress when the south connector reports its own interval count', async () => {
+    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => undefined);
+    const emitMock = mock.method(historyQuery.metricsEvent, 'emit');
+
+    await historyQuery.start();
+
+    mockedSouth1Mock.metricsEvent.emit('history-query-interval', {
+      currentIntervalStart: testData.constants.dates.DATE_1,
+      currentIntervalEnd: testData.constants.dates.DATE_2,
+      currentIntervalNumber: 3,
+      numberOfIntervals: 10
+    });
+    const call = emitMock.mock.calls.find(c => c.arguments[0] === 'south-history-query-interval')!;
+    assert.strictEqual((call.arguments[1] as { itemIntervalProgress: number }).itemIntervalProgress, 0.3);
   });
 
   it('should get north cache sizes', async () => {

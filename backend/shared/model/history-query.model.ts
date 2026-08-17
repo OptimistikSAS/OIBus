@@ -37,6 +37,8 @@ import {
   SouthPostgreSQLSettings,
   SouthRestItemSettings,
   SouthRestSettings,
+  SouthS7ItemSettings,
+  SouthS7Settings,
   SouthSFTPItemSettings,
   SouthSFTPSettings,
   SouthSQLiteItemSettings,
@@ -45,6 +47,7 @@ import {
 import {
   NorthAmazonS3Settings,
   NorthAzureBlobSettings,
+  NorthAzureDataExplorerSettings,
   NorthConsoleSettings,
   NorthFileWriterSettings,
   NorthModbusSettings,
@@ -129,6 +132,23 @@ export interface HistoryQueryLightDTO extends BaseEntity {
    * @example "aws-s3"
    */
   northType: OIBusNorthType;
+
+  /**
+   * The 1-based index of the item currently being queried, among the run's enabled items. Only
+   * set while the history query is actively running on a connector that queries items one at a
+   * time (SOUTH_SINGLE_ITEMS).
+   *
+   * @example 3
+   */
+  currentItemNumber?: number;
+
+  /**
+   * The total number of enabled items in the run. Only set while the history query is actively
+   * running on a connector that queries items one at a time (SOUTH_SINGLE_ITEMS).
+   *
+   * @example 10
+   */
+  numberOfItems?: number;
 }
 
 export interface HistoryQueryCommonDTO {
@@ -391,6 +411,10 @@ export interface HistoryQueryPostgreSQLSouthDTO extends HistoryQuerySouthTypedDT
 export interface HistoryQueryRESTSouthDTO extends HistoryQuerySouthTypedDTO<'rest', SouthRestSettings, SouthRestItemSettings> {
   items: Array<HistoryQueryRESTItemDTO>;
 }
+/** History query south DTO for Siemens S7. */
+export interface HistoryQueryS7SouthDTO extends HistoryQuerySouthTypedDTO<'s7', SouthS7Settings, SouthS7ItemSettings> {
+  items: Array<HistoryQueryS7ItemDTO>;
+}
 /** History query south DTO for SFTP file transfer. */
 export interface HistoryQuerySFTPSouthDTO extends HistoryQuerySouthTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings> {
   items: Array<HistoryQuerySFTPItemDTO>;
@@ -405,6 +429,11 @@ export interface HistoryQuerySQLiteSouthDTO extends HistoryQuerySouthTypedDTO<'s
 export interface HistoryQueryAmazonS3NorthDTO extends HistoryQueryNorthTypedDTO<'aws-s3', NorthAmazonS3Settings> {}
 /** History query north DTO for Azure Blob Storage. */
 export interface HistoryQueryAzureBlobNorthDTO extends HistoryQueryNorthTypedDTO<'azure-blob', NorthAzureBlobSettings> {}
+/** History query north DTO for Azure Data Explorer. */
+export interface HistoryQueryAzureDataExplorerNorthDTO extends HistoryQueryNorthTypedDTO<
+  'azure-data-explorer',
+  NorthAzureDataExplorerSettings
+> {}
 /** History query north DTO for the Console debug output. */
 export interface HistoryQueryConsoleNorthDTO extends HistoryQueryNorthTypedDTO<'console', NorthConsoleSettings> {}
 /** History query north DTO for the File Writer. */
@@ -442,12 +471,14 @@ export type HistoryQueryDTO = BaseEntity &
     | HistoryQueryOsisoftPISouthDTO
     | HistoryQueryPostgreSQLSouthDTO
     | HistoryQueryRESTSouthDTO
+    | HistoryQueryS7SouthDTO
     | HistoryQuerySFTPSouthDTO
     | HistoryQuerySQLiteSouthDTO
   ) &
   (
     | HistoryQueryAmazonS3NorthDTO
     | HistoryQueryAzureBlobNorthDTO
+    | HistoryQueryAzureDataExplorerNorthDTO
     | HistoryQueryConsoleNorthDTO
     | HistoryQueryFileWriterNorthDTO
     | HistoryQueryModbusNorthDTO
@@ -635,6 +666,10 @@ export interface HistoryQueryRESTSouthCommandDTO extends HistoryQuerySouthComman
 > {
   items: Array<HistoryQueryRESTItemCommandDTO>;
 }
+/** History query south command for Siemens S7. */
+export interface HistoryQueryS7SouthCommandDTO extends HistoryQuerySouthCommandTypedDTO<'s7', SouthS7Settings, SouthS7ItemSettings> {
+  items: Array<HistoryQueryS7ItemCommandDTO>;
+}
 /** History query south command for SFTP file transfer. */
 export interface HistoryQuerySFTPSouthCommandDTO extends HistoryQuerySouthCommandTypedDTO<
   'sftp',
@@ -657,6 +692,11 @@ export interface HistoryQuerySQLiteSouthCommandDTO extends HistoryQuerySouthComm
 export interface HistoryQueryAmazonS3NorthCommandDTO extends HistoryQueryNorthCommandTypedDTO<'aws-s3', NorthAmazonS3Settings> {}
 /** History query north command for Azure Blob Storage. */
 export interface HistoryQueryAzureBlobNorthCommandDTO extends HistoryQueryNorthCommandTypedDTO<'azure-blob', NorthAzureBlobSettings> {}
+/** History query north command for Azure Data Explorer. */
+export interface HistoryQueryAzureDataExplorerNorthCommandDTO extends HistoryQueryNorthCommandTypedDTO<
+  'azure-data-explorer',
+  NorthAzureDataExplorerSettings
+> {}
 /** History query north command for the Console debug output. */
 export interface HistoryQueryConsoleNorthCommandDTO extends HistoryQueryNorthCommandTypedDTO<'console', NorthConsoleSettings> {}
 /** History query north command for the File Writer. */
@@ -697,12 +737,14 @@ export type HistoryQueryCommandDTO = HistoryQueryCommandCommonDTO &
     | HistoryQueryOsisoftPISouthCommandDTO
     | HistoryQueryPostgreSQLSouthCommandDTO
     | HistoryQueryRESTSouthCommandDTO
+    | HistoryQueryS7SouthCommandDTO
     | HistoryQuerySFTPSouthCommandDTO
     | HistoryQuerySQLiteSouthCommandDTO
   ) &
   (
     | HistoryQueryAmazonS3NorthCommandDTO
     | HistoryQueryAzureBlobNorthCommandDTO
+    | HistoryQueryAzureDataExplorerNorthCommandDTO
     | HistoryQueryConsoleNorthCommandDTO
     | HistoryQueryFileWriterNorthCommandDTO
     | HistoryQueryModbusNorthCommandDTO
@@ -748,6 +790,8 @@ export interface HistoryQueryOsisoftPIItemDTO extends HistoryQueryItemTypedDTO<S
 export interface HistoryQueryPostgreSQLItemDTO extends HistoryQueryItemTypedDTO<SouthPostgreSQLItemSettings> {}
 /** History query item DTO for the REST API. */
 export interface HistoryQueryRESTItemDTO extends HistoryQueryItemTypedDTO<SouthRestItemSettings> {}
+/** History query item DTO for Siemens S7. */
+export interface HistoryQueryS7ItemDTO extends HistoryQueryItemTypedDTO<SouthS7ItemSettings> {}
 /** History query item DTO for SFTP file transfer. */
 export interface HistoryQuerySFTPItemDTO extends HistoryQueryItemTypedDTO<SouthSFTPItemSettings> {}
 /** History query item DTO for SQLite. */
@@ -775,6 +819,7 @@ export type HistoryQueryItemDTO =
   | HistoryQueryOsisoftPIItemDTO
   | HistoryQueryPostgreSQLItemDTO
   | HistoryQueryRESTItemDTO
+  | HistoryQueryS7ItemDTO
   | HistoryQuerySFTPItemDTO
   | HistoryQuerySQLiteItemDTO;
 
@@ -813,6 +858,8 @@ export interface HistoryQueryOsisoftPIItemCommandDTO extends HistoryQueryItemCom
 export interface HistoryQueryPostgreSQLItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthPostgreSQLItemSettings> {}
 /** History query item command for the REST API. */
 export interface HistoryQueryRESTItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthRestItemSettings> {}
+/** History query item command for Siemens S7. */
+export interface HistoryQueryS7ItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthS7ItemSettings> {}
 /** History query item command for SFTP file transfer. */
 export interface HistoryQuerySFTPItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthSFTPItemSettings> {}
 /** History query item command for SQLite. */
@@ -840,6 +887,7 @@ export type HistoryQueryItemCommandDTO =
   | HistoryQueryOsisoftPIItemCommandDTO
   | HistoryQueryPostgreSQLItemCommandDTO
   | HistoryQueryRESTItemCommandDTO
+  | HistoryQueryS7ItemCommandDTO
   | HistoryQuerySFTPItemCommandDTO
   | HistoryQuerySQLiteItemCommandDTO;
 

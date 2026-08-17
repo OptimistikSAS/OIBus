@@ -116,14 +116,23 @@
             <tbody>
               <tr>
                 <td translate="north.caching.trigger.title" style="width: 33%"></td>
-                <td
-                  translate="north.caching.trigger.value"
-                  [translateParams]="{
-                    scanMode: historyQuery.caching.trigger.scanMode.name,
-                    numberOfElements: historyQuery.caching.trigger.numberOfElements,
-                    numberOfFiles: historyQuery.caching.trigger.numberOfFiles
-                  }"
-                ></td>
+                <td>
+                  <span
+                    translate="north.caching.trigger.value"
+                    [translateParams]="{
+                      scanMode: historyQuery.caching.trigger.scanMode.name,
+                      numberOfElements: historyQuery.caching.trigger.numberOfElements,
+                      numberOfFiles: historyQuery.caching.trigger.numberOfFiles
+                    }"
+                  ></span>
+                  @if (isWindowExpired(historyQuery.caching.trigger.scanMode)) {
+                    <i
+                      class="fa fa-warning text-warning ms-1 scan-mode-window-expired"
+                      aria-hidden="true"
+                      [ngbTooltip]="'engine.scan-mode.window-never-fires' | translate"
+                    ></i>
+                  }
+                </td>
               </tr>
               <tr>
                 <td translate="north.caching.throttling.title"></td>
@@ -208,13 +217,25 @@
                 [translateParams]="{ type: southManifest.id | oIBusSouthTypeEnum }"
                 id="south-specific-settings-title"
               ></span>
-              <button
-                translate="south.test-connection.button"
-                type="button"
-                class="ms-3 btn btn-secondary btn-sm oib-box-btn"
-                id="test-connection-south"
-                (click)="test('south')"
-              ></button>
+              <div>
+                @if (southManifest.explore) {
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm oib-box-btn ms-3"
+                    id="explore"
+                    (click)="explore()"
+                    translate="south.explore.button"
+                  ></button>
+                }
+                <button
+                  translate="south.test-connection.button"
+                  type="button"
+                  class="btn btn-secondary btn-sm oib-box-btn"
+                  [class.ms-3]="!southManifest.explore"
+                  id="test-connection-south"
+                  (click)="test('south')"
+                ></button>
+              </div>
             </div>
           </ng-template>
           <table class="table table-sm table-hover oib-table">

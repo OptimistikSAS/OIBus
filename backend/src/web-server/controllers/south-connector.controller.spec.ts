@@ -121,6 +121,23 @@ describe('SouthConnectorController', () => {
       {
         id: testData.south.manifest.id,
         category: testData.south.manifest.category,
+        beta: testData.south.manifest.beta,
+        modes: testData.south.manifest.modes
+      }
+    ]);
+  });
+
+  it('should return south connector types with beta flag carried through', async () => {
+    const mockManifests = [{ ...testData.south.manifest, beta: true }];
+    southService.listManifest = mock.fn(() => mockManifests);
+
+    const result = await controller.listManifest(mockRequest as CustomExpressRequest);
+
+    assert.deepStrictEqual(result, [
+      {
+        id: testData.south.manifest.id,
+        category: testData.south.manifest.category,
+        beta: true,
         modes: testData.south.manifest.modes
       }
     ]);
@@ -314,6 +331,78 @@ describe('SouthConnectorController', () => {
       requestBody.itemSettings,
       requestBody.testingSettings
     ]);
+  });
+
+  it('should start a south explore session', async () => {
+    const southId = testData.south.list[0].id;
+    const southType = testData.south.command.type;
+    const settings = testData.south.command.settings;
+    const startResult = { sessionId: 'sessionId', entries: [{ id: 'n1', name: 'N1', type: 'Object', hasChildren: true }] };
+    southService.startExplore = mock.fn(async () => startResult);
+
+    const result = await controller.startExplore(southId, southType, settings, mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(southService.startExplore.mock.calls.length, 1);
+    assert.deepStrictEqual(southService.startExplore.mock.calls[0].arguments, [southId, southType, settings]);
+    assert.deepStrictEqual(result, startResult);
+  });
+
+  it('should wrap errors when starting a south explore session', async () => {
+    southService.startExplore = mock.fn(async () => {
+      throw new Error('Explore start failure');
+    });
+
+    try {
+      await controller.startExplore(
+        testData.south.list[0].id,
+        testData.south.command.type,
+        testData.south.command.settings,
+        mockRequest as CustomExpressRequest
+      );
+      assert.fail('Expected error to be thrown');
+    } catch (error) {
+      assert.ok(error instanceof OIBusTestingError);
+      assert.strictEqual((error as OIBusTestingError).message, 'Explore start failure');
+    }
+  });
+
+  it('should browse a south explore session', async () => {
+    const browseResult = { entries: [{ id: 'child', name: 'Child', type: 'file', hasChildren: false }] };
+    southService.browseExplore = mock.fn(async () => browseResult);
+
+    const result = await controller.browseExplore(
+      testData.south.list[0].id,
+      'sessionId',
+      { parentId: 'parent' },
+      mockRequest as CustomExpressRequest
+    );
+
+    assert.strictEqual(southService.browseExplore.mock.calls.length, 1);
+    assert.deepStrictEqual(southService.browseExplore.mock.calls[0].arguments, ['sessionId', 'parent']);
+    assert.deepStrictEqual(result, browseResult);
+  });
+
+  it('should wrap errors when browsing a south explore session', async () => {
+    southService.browseExplore = mock.fn(async () => {
+      throw new Error('Explore browse failure');
+    });
+
+    try {
+      await controller.browseExplore(testData.south.list[0].id, 'sessionId', { parentId: null }, mockRequest as CustomExpressRequest);
+      assert.fail('Expected error to be thrown');
+    } catch (error) {
+      assert.ok(error instanceof OIBusTestingError);
+      assert.strictEqual((error as OIBusTestingError).message, 'Explore browse failure');
+    }
+  });
+
+  it('should close a south explore session', async () => {
+    southService.closeExplore = mock.fn(async () => undefined);
+
+    await controller.closeExplore(testData.south.list[0].id, 'sessionId', mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(southService.closeExplore.mock.calls.length, 1);
+    assert.deepStrictEqual(southService.closeExplore.mock.calls[0].arguments, ['sessionId']);
   });
 
   it('should return a list of south connector items', async () => {
@@ -662,6 +751,63 @@ describe('SouthConnectorController', () => {
     await assert.rejects(
       controller.checkImportItems(southType, delimiter, 'false', itemsToImportFile, undefined!, mockRequest as CustomExpressRequest),
       { message: 'Missing "itemsToImport" or "currentItems"' }
+    );
+  });
+
+  it('should check CSV import with an empty existing items list when deleteItemsNotPresent is true', async () => {
+    const southType = testData.south.manifest.id;
+    const delimiter = ',';
+    const itemsToImportFile = {
+      path: 'myFile.csv'
+    } as Express.Multer.File;
+    const currentItemsFile = {
+      path: 'myFile.json'
+    } as Express.Multer.File;
+
+    const csvContent = 'id,name\n1,item1';
+    const readFileMock = mock.method(fs, 'readFile', async () => csvContent);
+    const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
+
+    const mockResult = {
+      items: [{ id: '1', name: 'item1' }] as Array<SouthConnectorItemDTO>,
+      errors: []
+    };
+    southService.checkImportItems = mock.fn(async () => mockResult);
+
+    const result = await controller.checkImportItems(
+      southType,
+      delimiter,
+      'true',
+      itemsToImportFile,
+      currentItemsFile,
+      mockRequest as CustomExpressRequest
+    );
+
+    assert.strictEqual(readFileMock.mock.calls.length, 1);
+    assert.strictEqual(southService.checkImportItems.mock.calls.length, 1);
+    assert.deepStrictEqual(southService.checkImportItems.mock.calls[0].arguments, [southType, csvContent, delimiter, []]);
+    assert.deepStrictEqual(result, mockResult);
+    assert.strictEqual(unlinkMock.mock.calls.length, 2);
+  });
+
+  it('should not throw an error if the unlink calls fail in checkImportItems', async () => {
+    const southType = testData.south.manifest.id;
+    const delimiter = ',';
+    const itemsToImportFile = {
+      path: 'myFile.csv'
+    } as Express.Multer.File;
+    const currentItemsFile = {
+      path: 'myFile.json'
+    } as Express.Multer.File;
+
+    mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1' }]));
+    mock.method(fs, 'unlink', async () => {
+      throw new Error('unlink error');
+    });
+    southService.checkImportItems = mock.fn(async () => ({ items: [], errors: [] }));
+
+    await assert.doesNotReject(
+      controller.checkImportItems(southType, delimiter, 'false', itemsToImportFile, currentItemsFile, mockRequest as CustomExpressRequest)
     );
   });
 

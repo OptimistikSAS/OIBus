@@ -7,7 +7,7 @@ import { HistoryQueryItemEntity } from '../../src/model/histor-query.model';
 /**
  * List of possible OIBus data types.
  */
-export const OIBUS_DATA_TYPES = ['any', 'time-values', 'setpoint'] as const;
+export const OIBUS_DATA_TYPES = ['any', 'time-values', 'setpoint', 'record-list'] as const;
 /**
  * Type representing an OIBus data type.
  * @example 'time-values'
@@ -1552,7 +1552,92 @@ export interface HistoryQueryMetrics {
      * @example 2
      */
     numberOfIntervals: number;
+
+    /**
+     * The name of the item currently being queried. Only set for connectors that query items one
+     * at a time (SOUTH_SINGLE_ITEMS).
+     * @example "item1"
+     */
+    itemName?: string;
+
+    /**
+     * The 1-based index of the item currently being queried, among the run's enabled items. Only
+     * set for connectors that query items one at a time (SOUTH_SINGLE_ITEMS).
+     * @example 3
+     */
+    currentItemNumber?: number;
+
+    /**
+     * The total number of enabled items in the run. Only set for connectors that query items one
+     * at a time (SOUTH_SINGLE_ITEMS).
+     * @example 10
+     */
+    numberOfItems?: number;
+
+    /**
+     * The progress of the current item's own interval list as a fraction [0, 1], scoped to that
+     * item only (not ratcheted, unlike `intervalProgress`). Only set for connectors that query
+     * items one at a time (SOUTH_SINGLE_ITEMS).
+     * @example 0.25
+     */
+    itemIntervalProgress?: number;
+
+    /**
+     * The 1-based index of the current lead's own interval, within its own interval list (raw, not
+     * ratcheted) — same source data as `itemIntervalProgress`, surfaced raw for display. Only set
+     * for connectors that query items one at a time (SOUTH_SINGLE_ITEMS).
+     * @example 12
+     */
+    itemIntervalNumber?: number;
+
+    /**
+     * The total number of intervals in the current lead's own interval list (raw, not ratcheted).
+     * Only set for connectors that query items one at a time (SOUTH_SINGLE_ITEMS).
+     * @example 34
+     */
+    itemNumberOfIntervals?: number;
+
+    /**
+     * The runtime status of every item in the run. Only set for connectors that query items one at
+     * a time (SOUTH_SINGLE_ITEMS).
+     */
+    itemsStatus?: Array<HistoryQueryItemStatus>;
   };
+}
+
+/**
+ * Runtime status of a single item within a history query run, for progress-monitoring UIs.
+ */
+export interface HistoryQueryItemStatus {
+  /**
+   * The item ID.
+   * @example "e4f7e3f0-1234-4567-8901-abcdef123456"
+   */
+  itemId: string;
+
+  /**
+   * The item name.
+   * @example "item1"
+   */
+  itemName: string;
+
+  /**
+   * The item's runtime status within the run.
+   * @example "running"
+   */
+  status: 'pending' | 'running' | 'done';
+
+  /**
+   * The timestamp of the last value retrieved for this item.
+   * @example "2023-01-01T00:00:00Z"
+   */
+  lastValueTimestamp: Instant | null;
+
+  /**
+   * The number of records (values or files) retrieved for this item so far.
+   * @example 42
+   */
+  recordsCount: number;
 }
 
 /**
@@ -1843,9 +1928,32 @@ export interface OIBusAnyContent extends BaseOIBusContent {
 }
 
 /**
+ * A single row of data, as returned by a query-based source (e.g. a SQL database). Keys are
+ * column names; values are whatever the source returned, untouched (no datetime parsing/formatting
+ * is applied here — that is the responsibility of the north-side transformer, e.g. record-list-to-csv).
+ */
+export type OIBusRecord = Record<string, string | number | boolean | null>;
+
+/**
+ * Record-list content: a list of flat, arbitrarily-shaped rows (e.g. the result of a SQL query).
+ */
+export interface OIBusRecordListContent extends BaseOIBusContent {
+  /**
+   * The type of content.
+   * @example "record-list"
+   */
+  type: 'record-list';
+
+  /**
+   * The array of rows.
+   */
+  content: Array<OIBusRecord>;
+}
+
+/**
  * Type representing OIBus content.
  */
-export type OIBusContent = OIBusTimeValueContent | OIBusFileContent | OIBusAnyContent | OIBusSetpointContent;
+export type OIBusContent = OIBusTimeValueContent | OIBusFileContent | OIBusAnyContent | OIBusSetpointContent | OIBusRecordListContent;
 
 /**
  * Metadata for cached content.
@@ -1908,6 +2016,12 @@ export interface CacheMetadataSourceOriginSouth {
    * ID of the south connector at the source of the data
    */
   southId: string;
+
+  /**
+   * Name of the south connector at the source of the data, substituted for `@ConnectorName` in
+   * transformer filename patterns.
+   */
+  southName: string;
 
   /**
    * The items at the source of the data

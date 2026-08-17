@@ -7,5 +7,10 @@ yarn-error.log
 /src/tests/coverage
 /src/tests/legacy-coverage
 /src/tests/*.db
+/src/tests/*.db-journal
+/src/tests/*.db-wal
+/src/tests/*.db-shm
 /src/tests/out-tsc
 /.eslintcache
+/coverage
+/.nyc_output

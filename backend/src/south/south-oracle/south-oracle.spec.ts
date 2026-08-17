@@ -10,11 +10,7 @@ import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type { OIBusContent } from '../../../shared/model/engine.model';
 import type { SouthItemSettings } from '../../../shared/model/south-settings.model';
-import type {
-  SouthOracleItemSettings,
-  SouthOracleItemSettingsDateTimeFields,
-  SouthOracleSettings
-} from '../../../shared/model/south-settings.model';
+import type { SouthOracleItemSettings, SouthOracleSettings } from '../../../shared/model/south-settings.model';
 import type SouthOracleClass from './south-oracle';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 
@@ -73,11 +69,8 @@ describe('SouthOracle', () => {
     groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
     convertDateTimeToInstant: mock.fn((instant: unknown) => instant),
     formatInstant: mock.fn((instant: unknown) => instant),
-    generateCsvContent: mock.fn(() => ''),
-    generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
     generateReplacementParameters: mock.fn((): unknown => []),
-    logQuery: mock.fn(),
-    persistResults: mock.fn(async () => undefined)
+    logQuery: mock.fn()
   };
 
   before(() => {
@@ -106,11 +99,8 @@ describe('SouthOracle', () => {
     oracledbExports.oracleClientVersion = undefined;
     utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
     utilsExports.formatInstant = mock.fn((instant: unknown) => instant);
-    utilsExports.generateCsvContent = mock.fn(() => '');
-    utilsExports.generateFilenameForSerialization = mock.fn(() => 'filename.csv');
     utilsExports.generateReplacementParameters = mock.fn(() => []);
     utilsExports.logQuery = mock.fn();
-    utilsExports.persistResults = mock.fn(async () => undefined);
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
 
@@ -145,31 +135,15 @@ describe('SouthOracle', () => {
           settings: {
             query: 'query1',
             requestTimeout: 1000,
-            dateTimeFields: [
-              {
-                fieldName: 'anotherTimestamp',
-                useAsReference: false,
-                type: 'unix-epoch-ms',
-                timezone: null,
-                format: null,
-                locale: null
-              } as unknown as SouthOracleItemSettingsDateTimeFields,
-              {
-                fieldName: 'timestamp',
-                useAsReference: true,
+            trackingInstant: {
+              trackInstant: true,
+              fieldName: 'timestamp',
+              dateTimeInput: {
                 type: 'string',
                 timezone: 'Europe/Paris',
                 format: 'yyyy-MM-dd HH:mm:ss.SSS',
                 locale: 'en-US'
               }
-            ],
-            serialization: {
-              type: 'csv',
-              filename: 'sql-@CurrentDate.csv',
-              delimiter: 'COMMA',
-              compression: true,
-              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-              outputTimezone: 'Europe/Paris'
             }
           },
           scanMode: testData.scanMode.list[0],
@@ -191,14 +165,8 @@ describe('SouthOracle', () => {
           settings: {
             query: 'query2',
             requestTimeout: 1000,
-            dateTimeFields: null,
-            serialization: {
-              type: 'csv',
-              filename: 'sql-@CurrentDate.csv',
-              delimiter: 'COMMA',
-              compression: true,
-              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-              outputTimezone: 'Europe/Paris'
+            trackingInstant: {
+              trackInstant: false
             }
           },
           scanMode: testData.scanMode.list[0],
@@ -220,31 +188,15 @@ describe('SouthOracle', () => {
           settings: {
             query: 'query3',
             requestTimeout: 1000,
-            dateTimeFields: [
-              {
-                fieldName: 'anotherTimestamp',
-                useAsReference: false,
-                type: 'unix-epoch-ms',
-                timezone: null,
-                format: null,
-                locale: null
-              } as unknown as SouthOracleItemSettingsDateTimeFields,
-              {
-                fieldName: 'timestamp',
-                useAsReference: true,
+            trackingInstant: {
+              trackInstant: true,
+              fieldName: 'timestamp',
+              dateTimeInput: {
                 type: 'string',
                 timezone: 'Europe/Paris',
                 format: 'yyyy-MM-dd HH:mm:ss.SSS',
                 locale: 'en-US'
               }
-            ],
-            serialization: {
-              type: 'csv',
-              filename: 'sql-@CurrentDate.csv',
-              delimiter: 'COMMA',
-              compression: true,
-              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-              outputTimezone: 'Europe/Paris'
             }
           },
           scanMode: testData.scanMode.list[1],
@@ -284,7 +236,14 @@ describe('SouthOracle', () => {
       utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
 
       const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(addContentCallback.mock.calls.length, 1);
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
+        type: 'record-list',
+        content: [
+          { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 },
+          { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
+        ]
+      });
       assert.strictEqual(queryDataMock.mock.calls.length, 1);
       assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [
         configuration.items[0],
@@ -312,7 +271,7 @@ describe('SouthOracle', () => {
       );
 
       const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual(addContentCallback.mock.calls.length, 0);
       assert.strictEqual(queryDataMock.mock.calls.length, 1);
       assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [
         configuration.items[0],
@@ -524,31 +483,15 @@ describe('SouthOracle', () => {
           settings: {
             query: 'query1',
             requestTimeout: 1000,
-            dateTimeFields: [
-              {
-                fieldName: 'anotherTimestamp',
-                useAsReference: false,
-                type: 'unix-epoch-ms',
-                timezone: null,
-                format: null,
-                locale: null
-              } as unknown as SouthOracleItemSettingsDateTimeFields,
-              {
-                fieldName: 'timestamp',
-                useAsReference: true,
+            trackingInstant: {
+              trackInstant: true,
+              fieldName: 'timestamp',
+              dateTimeInput: {
                 type: 'string',
                 timezone: 'Europe/Paris',
                 format: 'yyyy-MM-dd HH:mm:ss.SSS',
                 locale: 'en-US'
               }
-            ],
-            serialization: {
-              type: 'csv',
-              filename: 'sql-@CurrentDate.csv',
-              delimiter: 'COMMA',
-              compression: true,
-              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-              outputTimezone: 'Europe/Paris'
             }
           },
           scanMode: testData.scanMode.list[0],
@@ -570,14 +513,8 @@ describe('SouthOracle', () => {
           settings: {
             query: 'query2',
             requestTimeout: 1000,
-            dateTimeFields: null,
-            serialization: {
-              type: 'csv',
-              filename: 'sql-@CurrentDate.csv',
-              delimiter: 'COMMA',
-              compression: true,
-              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-              outputTimezone: 'Europe/Paris'
+            trackingInstant: {
+              trackInstant: false
             }
           },
           scanMode: testData.scanMode.list[0],

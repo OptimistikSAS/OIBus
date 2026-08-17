@@ -24,6 +24,7 @@ import { OIBusInfo, SouthConnectorMetrics } from '../../../../../backend/shared/
 import { WindowService } from '../../shared/window.service';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
+import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { EngineService } from '../../services/engine.service';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { LogsComponent } from '../../logs/logs.component';
@@ -46,6 +47,7 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
 import { ViewItemValueModalComponent } from '../south-items/view-item-value-modal/view-item-value-modal.component';
+import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
 
 const PAGE_SIZE = 20;
 
@@ -133,6 +135,11 @@ export class SouthDetailComponent {
 
   /** The item currently hovered in the list — drives the schedule details tooltip. */
   tooltipItem: SouthConnectorItemDTO | null = null;
+
+  /** Whether the scan mode driving an item has an activation window that can never fire again. */
+  isWindowExpired(scanMode: ScanModeDTO | null | undefined): boolean {
+    return isScanModeWindowExpired(scanMode);
+  }
 
   columnSortStates: { [key in keyof TableData]: ColumnSortState } = {
     name: ColumnSortState.INDETERMINATE,
@@ -843,6 +850,12 @@ export class SouthDetailComponent {
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
     component.runTest('south', this.southConnector!.id, this.southConnector!.settings, this.southConnector!.type);
+  }
+
+  explore() {
+    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
+    const component: SouthExploreModalComponent = modalRef.componentInstance;
+    component.prepare(this.southConnector!.id, this.southConnector!.settings, this.southConnector!.type);
   }
 
   toggleConnector(value: boolean) {

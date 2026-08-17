@@ -46,10 +46,20 @@
                 ></span>
               </div>
               <div>
+                @if (manifest.explore) {
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm oib-box-btn ms-3"
+                    id="explore"
+                    (click)="explore()"
+                    translate="south.explore.button"
+                  ></button>
+                }
                 <button
                   translate="south.test-connection.button"
                   type="button"
-                  class="btn btn-secondary btn-sm oib-box-btn ms-3"
+                  class="btn btn-secondary btn-sm oib-box-btn"
+                  [class.ms-3]="!manifest.explore"
                   id="test-connection"
                   (click)="testConnection()"
                 ></button>
@@ -286,6 +296,9 @@
                         }
                       }
                     }
+                    @if (isWindowExpired(tooltipItem.group ? tooltipItem.group.standardSettings.scanMode : tooltipItem.scanMode)) {
+                      <div class="text-warning mt-1">⚠ {{ 'engine.scan-mode.window-never-fires' | translate }}</div>
+                    }
                   </div>
                 }
               </ng-template>
@@ -360,19 +373,36 @@
                       </td>
                       <td>{{ item.name }}</td>
                       <td>
-                        <span [ngbTooltip]="scheduleTooltip" container="body" tooltipClass="schedule-tooltip">
+                        <!-- Flex row so a long schedule label truncates on its own while the warning
+                             icons stay pinned and visible rather than being clipped with it. -->
+                        <span
+                          class="d-flex align-items-center"
+                          [ngbTooltip]="scheduleTooltip"
+                          container="body"
+                          tooltipClass="schedule-tooltip"
+                        >
                           @if (!item.group) {
-                            <span translate="south.items.group-none"></span>
-                            <span class="text-muted ms-1"
-                              >({{
-                                item.scanMode?.id === 'subscription' ? ('scan-mode.subscription' | translate) : item.scanMode?.name || ''
-                              }})</span
-                            >
+                            <span class="text-truncate oib-schedule-label">
+                              <span translate="south.items.group-none"></span>
+                              <span class="text-muted ms-1"
+                                >({{
+                                  item.scanMode?.id === 'subscription' ? ('scan-mode.subscription' | translate) : item.scanMode?.name || ''
+                                }})</span
+                              >
+                            </span>
+                            @if (isWindowExpired(item.scanMode)) {
+                              <i class="fa fa-warning text-warning ms-1 flex-shrink-0 scan-mode-window-expired" aria-hidden="true"></i>
+                            }
                           } @else {
-                            {{ item.group.standardSettings.name }}
-                            <span class="text-muted">({{ item.group.standardSettings.scanMode.name }})</span>
+                            <span class="text-truncate oib-schedule-label">
+                              {{ item.group.standardSettings.name }}
+                              <span class="text-muted">({{ item.group.standardSettings.scanMode.name }})</span>
+                            </span>
                             @if (!item.syncWithGroup) {
-                              <i class="fa fa-warning text-warning ms-1" aria-hidden="true"></i>
+                              <i class="fa fa-warning text-warning ms-1 flex-shrink-0" aria-hidden="true"></i>
+                            }
+                            @if (isWindowExpired(item.group.standardSettings.scanMode)) {
+                              <i class="fa fa-warning text-warning ms-1 flex-shrink-0 scan-mode-window-expired" aria-hidden="true"></i>
                             }
                           }
                         </span>
