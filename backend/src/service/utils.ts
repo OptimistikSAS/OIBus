@@ -379,10 +379,11 @@ export const persistResults = async (
   addContentFn: (data: OIBusContent, queryTime: Instant, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => Promise<void>,
   logger: ILogger
 ): Promise<void> => {
+  const logCtx = workUnitLogCtx([item]);
   switch (serializationSettings.type) {
     case 'file':
       const filePath = generateFilenameForSerialization(baseFolder, serializationSettings.filename, connectorName, item.name);
-      logger.debug(`Writing ${data.length} bytes into file at "${filePath}"`);
+      logger.debug(logCtx, `Writing ${data.length} bytes into file at "${filePath}"`);
       await fs.writeFile(filePath, data as string);
 
       if (serializationSettings.compression) {
@@ -392,27 +393,27 @@ export const persistResults = async (
 
         try {
           await fs.unlink(filePath);
-          logger.info(`File "${filePath}" compressed and deleted`);
+          logger.info(logCtx, `File "${filePath}" compressed and deleted`);
         } catch (unlinkError) {
-          logger.error(`Error when deleting file "${filePath}" after compression. ${unlinkError}`);
+          logger.error(logCtx, `Error when deleting file "${filePath}" after compression: ${getErrorMessage(unlinkError)}`);
         }
 
-        logger.debug(`Sending compressed file "${gzipPath}" to Engine`);
+        logger.debug(logCtx, `Sending compressed file "${gzipPath}" to Engine`);
         await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [item]);
         try {
           await fs.unlink(gzipPath);
-          logger.trace(`File "${gzipPath}" deleted`);
+          logger.trace(logCtx, `File "${gzipPath}" deleted`);
         } catch (unlinkError) {
-          logger.error(`Error when deleting compressed file "${gzipPath}" after caching it. ${unlinkError}`);
+          logger.error(logCtx, `Error when deleting compressed file "${gzipPath}" after caching it: ${getErrorMessage(unlinkError)}`);
         }
       } else {
-        logger.debug(`Sending file "${filePath}" to Engine`);
+        logger.debug(logCtx, `Sending file "${filePath}" to Engine`);
         await addContentFn({ type: 'any', filePath }, queryTime, [item]);
         try {
           await fs.unlink(filePath);
-          logger.trace(`File ${filePath} deleted`);
+          logger.trace(logCtx, `File ${filePath} deleted`);
         } catch (unlinkError) {
-          logger.error(`Error when deleting file "${filePath}" after caching it. ${unlinkError}`);
+          logger.error(logCtx, `Error when deleting file "${filePath}" after caching it: ${getErrorMessage(unlinkError)}`);
         }
       }
       break;
@@ -420,7 +421,7 @@ export const persistResults = async (
       const csvPath = generateFilenameForSerialization(baseFolder, serializationSettings.filename, connectorName, item.name);
       const csvContent = generateCsvContent(data as Array<Record<string, string>>, serializationSettings.delimiter);
 
-      logger.debug(`Writing ${csvContent.length} bytes into CSV file at "${csvPath}"`);
+      logger.debug(logCtx, `Writing ${csvContent.length} bytes into CSV file at "${csvPath}"`);
       await fs.writeFile(csvPath, csvContent);
 
       if (serializationSettings.compression) {
@@ -430,29 +431,29 @@ export const persistResults = async (
 
         try {
           await fs.unlink(csvPath);
-          logger.info(`CSV file "${csvPath}" compressed and deleted`);
+          logger.info(logCtx, `CSV file "${csvPath}" compressed and deleted`);
         } catch (unlinkError) {
-          logger.error(`Error when deleting CSV file "${csvPath}" after compression. ${unlinkError}`);
+          logger.error(logCtx, `Error when deleting CSV file "${csvPath}" after compression: ${getErrorMessage(unlinkError)}`);
         }
 
-        logger.debug(`Sending compressed CSV file "${gzipPath}" to Engine`);
+        logger.debug(logCtx, `Sending compressed CSV file "${gzipPath}" to Engine`);
         await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [item]);
 
         try {
           await fs.unlink(gzipPath);
-          logger.trace(`CSV file "${gzipPath}" deleted`);
+          logger.trace(logCtx, `CSV file "${gzipPath}" deleted`);
         } catch (unlinkError) {
-          logger.error(`Error when deleting compressed CSV file "${gzipPath}" after caching it. ${unlinkError}`);
+          logger.error(logCtx, `Error when deleting compressed CSV file "${gzipPath}" after caching it: ${getErrorMessage(unlinkError)}`);
         }
       } else {
-        logger.debug(`Sending CSV file "${csvPath}" to Engine`);
+        logger.debug(logCtx, `Sending CSV file "${csvPath}" to Engine`);
         await addContentFn({ type: 'any', filePath: csvPath }, queryTime, [item]);
 
         try {
           await fs.unlink(csvPath);
-          logger.trace(`CSV file ${csvPath} deleted`);
+          logger.trace(logCtx, `CSV file ${csvPath} deleted`);
         } catch (unlinkError) {
-          logger.error(`Error when deleting CSV file "${csvPath}" after caching it. ${unlinkError}`);
+          logger.error(logCtx, `Error when deleting CSV file "${csvPath}" after caching it: ${getErrorMessage(unlinkError)}`);
         }
       }
       break;
@@ -495,7 +496,13 @@ export const generateCsvContent = (data: Array<Record<string, string | number>>,
 /**
  * Log the executed query with replacements values for query variables
  */
-export const logQuery = (query: string, startTime: string | number, endTime: string | number, logger: ILogger): void => {
+export const logQuery = (
+  query: string,
+  startTime: string | number,
+  endTime: string | number,
+  logger: ILogger,
+  logCtx: Record<string, string> = {}
+): void => {
   const startTimeLog = query.indexOf('@StartTime') !== -1 ? `@StartTime = ${startTime}` : '';
   const endTimeLog = query.indexOf('@EndTime') !== -1 ? `@EndTime = ${endTime}` : '';
   let log = `Sending "${query}"`;
@@ -508,7 +515,7 @@ export const logQuery = (query: string, startTime: string | number, endTime: str
   if (endTimeLog) {
     log += ` ${endTimeLog}`;
   }
-  logger.info(log);
+  logger.info(logCtx, log);
 };
 
 export const formatInstant = (
@@ -1176,6 +1183,12 @@ export function getErrorMessage(error: unknown): string {
     return parts.join(': ') || error.toString();
   }
   if (typeof error === 'string') return error;
+  // Some libraries (e.g. the `odbc` driver) throw plain objects shaped like an error rather than
+  // an actual Error instance — fall back to its `.message` before giving up and stringifying the
+  // whole object.
+  if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
+    return (error as { message: string }).message;
+  }
   try {
     return JSON.stringify(error);
   } catch {

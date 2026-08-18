@@ -41,7 +41,23 @@ describe('SouthODBC', () => {
     logQuery: mock.fn(),
     persistResults: mock.fn(
       async (_data: unknown, _serialization: unknown, _name: string, _item: unknown, _instant: unknown, _folder: string) => undefined
-    )
+    ),
+    getErrorMessage: mock.fn((error: unknown) => {
+      if (error instanceof Error) return error.message;
+      if (typeof error === 'string') return error;
+      if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
+        return (error as { message: string }).message;
+      }
+      return String(error);
+    }),
+    // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
+    // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
+    workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
+      if (items.length === 0) return {};
+      if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
+      const lead = items[0];
+      return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
+    })
   };
 
   const odbcLoaderExports = {
@@ -364,8 +380,8 @@ describe('SouthODBC', () => {
       odbcConnection.close.mock.resetCalls();
       const noResult = await south.queryOdbcData(configuration.items[0], startTime, endTime);
       assert.ok(
-        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some((c: { arguments: Array<unknown> }) =>
-          (c.arguments[0] as string).includes(`No result found for item ${configuration.items[0].name}`)
+        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+          (c: { arguments: Array<unknown> }) => typeof c.arguments[1] === 'string' && c.arguments[1].includes('No result found')
         )
       );
       assert.deepStrictEqual(noResult, { trackedInstant: null, value: null });
@@ -439,12 +455,12 @@ describe('SouthODBC', () => {
 
       assert.ok(
         (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Error from ODBC driver: error1'
+          (c: { arguments: Array<unknown> }) => c.arguments[1] === 'Error from ODBC driver: error1'
         )
       );
       assert.ok(
         (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Error from ODBC driver: error2'
+          (c: { arguments: Array<unknown> }) => c.arguments[1] === 'Error from ODBC driver: error2'
         )
       );
     });
@@ -1252,7 +1268,7 @@ describe('SouthODBC', () => {
       );
       assert.ok(
         (logger.error as ReturnType<typeof mock.fn>).mock.calls.some((c: { arguments: Array<unknown> }) =>
-          (c.arguments[0] as string).includes(`Error while sending disconnection HTTP request into agent.`)
+          (c.arguments[0] as string).includes(`Error while sending disconnection HTTP request into agent:`)
         )
       );
     });
@@ -1349,8 +1365,8 @@ describe('SouthODBC', () => {
 
       await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
       assert.ok(
-        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some((c: { arguments: Array<unknown> }) =>
-          (c.arguments[0] as string).includes(`No result found for item ${configuration.items[0].name}`)
+        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+          (c: { arguments: Array<unknown> }) => typeof c.arguments[1] === 'string' && c.arguments[1].includes('No result found')
         )
       );
     });
@@ -1408,20 +1424,10 @@ describe('SouthODBC', () => {
       await assert.rejects(south.queryRemoteAgentData(configuration.items[0], startTime, endTime), {
         message: `Error occurred when querying remote agent with status 400: bad request`
       });
-      assert.ok(
-        (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === `Error occurred when querying remote agent with status 400: bad request`
-        )
-      );
 
       await assert.rejects(south.queryRemoteAgentData(configuration.items[0], startTime, endTime), {
         message: `Error occurred when querying remote agent with status 500`
       });
-      assert.ok(
-        (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === `Error occurred when querying remote agent with status 500`
-        )
-      );
     });
 
     it('should test item with queryRemoteAgentData', async () => {

@@ -60,7 +60,14 @@ const utilsExports = {
   generateIntervals: mock.fn(() => []),
   groupItemsByGroup: mock.fn(() => []),
   validateCronExpression: mock.fn(() => ({ expression: '' })),
-  getErrorMessage: mock.fn((error: unknown) => (error instanceof Error ? error.message : String(error))),
+  getErrorMessage: mock.fn((error: unknown) => {
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'string') return error;
+    if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
+      return (error as { message: string }).message;
+    }
+    return String(error);
+  }),
   // Mirrors the real implementation in service/utils.ts — kept in sync manually, matching the
   // pattern established in south-modbus.spec.ts.
   workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {

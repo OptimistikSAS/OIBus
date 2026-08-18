@@ -2,7 +2,7 @@ import { InfluxDB } from '@influxdata/influxdb-client';
 import { InfluxDBClient } from '@influxdata/influxdb3-client';
 import { InfluxDB as InfluxDBv1 } from 'influx';
 import SouthConnector from '../south-connector';
-import { logQuery } from '../../service/utils';
+import { getErrorMessage, logQuery, workUnitLogCtx } from '../../service/utils';
 import { encryptionService } from '../../service/encryption.service';
 import { Instant } from '../../../shared/model/types';
 import { SouthHistoryQuery } from '../south-interface';
@@ -59,7 +59,7 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
     try {
       pingResults = await client.ping(5000);
     } catch (error: unknown) {
-      throw new Error(`Could not connect to InfluxDB v1 at ${host}:${port}. ${(error as Error).message}`);
+      throw new Error(`Could not connect to InfluxDB v1 at ${host}:${port}. ${getErrorMessage(error)}`);
     }
 
     const online = pingResults.some(p => p.online);
@@ -95,7 +95,7 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
         });
       });
     } catch (error: unknown) {
-      throw new Error(`Could not connect to InfluxDB v2 at ${url}. ${(error as Error).message}`);
+      throw new Error(`Could not connect to InfluxDB v2 at ${url}. ${getErrorMessage(error)}`);
     }
 
     return { items: [{ key: 'Buckets', value: String(rowCount) }] };
@@ -117,7 +117,7 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
         ]
       };
     } catch (error: unknown) {
-      throw new Error(`Could not connect to InfluxDB v3 at ${url}. ${(error as Error).message}`);
+      throw new Error(`Could not connect to InfluxDB v3 at ${url}. ${getErrorMessage(error)}`);
     } finally {
       await client.close();
     }
@@ -148,17 +148,18 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
     endTime: Instant
   ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
     const item = items[0];
+    const logCtx = workUnitLogCtx(items);
 
     const startRequest = DateTime.now();
     const result = await this.queryData(item, startTime, endTime);
     const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
 
     if (result.length === 0) {
-      this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
+      this.logger.debug(logCtx, `No result found. Request done in ${requestDuration} ms`);
       return { trackedInstant: null, value: null };
     }
 
-    this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
+    this.logger.info(logCtx, `Found ${result.length} results in ${requestDuration} ms`);
     const maxInstant = this.extractMaxInstant(result);
     await this.addContent({ type: 'any-content', content: JSON.stringify(result) }, startRequest.toUTC().toISO(), [item]);
     return { trackedInstant: maxInstant, value: result[result.length - 1] };
@@ -197,7 +198,7 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
     const { host, port, database, username } = this.connector.settings;
     const password = this.connector.settings.password ? encryptionService.decryptText(this.connector.settings.password) : undefined;
 
-    logQuery(item.settings.query, startTime, endTime, this.logger);
+    logQuery(item.settings.query, startTime, endTime, this.logger, workUnitLogCtx([item]));
 
     const query = item.settings.query.replace(/@StartTime/g, startTime).replace(/@EndTime/g, endTime);
 
@@ -234,7 +235,7 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
     const { url, organisation } = this.connector.settings;
     const token = this.connector.settings.token ? encryptionService.decryptText(this.connector.settings.token) : '';
 
-    logQuery(item.settings.query, startTime, endTime, this.logger);
+    logQuery(item.settings.query, startTime, endTime, this.logger, workUnitLogCtx([item]));
 
     const query = item.settings.query.replace(/@StartTime/g, startTime).replace(/@EndTime/g, endTime);
 
@@ -262,7 +263,7 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
     const { url, database } = this.connector.settings;
     const token = this.connector.settings.token ? encryptionService.decryptText(this.connector.settings.token) : '';
 
-    logQuery(item.settings.query, startTime, endTime, this.logger);
+    logQuery(item.settings.query, startTime, endTime, this.logger, workUnitLogCtx([item]));
 
     const query = item.settings.query.replace(/@StartTime/g, startTime).replace(/@EndTime/g, endTime);
 

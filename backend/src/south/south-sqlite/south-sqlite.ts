@@ -9,7 +9,8 @@ import {
   generateCsvContent,
   generateFilenameForSerialization,
   logQuery,
-  persistResults
+  persistResults,
+  workUnitLogCtx
 } from '../../service/utils';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
@@ -153,6 +154,7 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
     startTime: Instant,
     endTime: Instant
   ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
+    const logCtx = workUnitLogCtx(items);
     let updatedStartTime: Instant | null = null;
 
     const startRequest = DateTime.now();
@@ -160,10 +162,7 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
     const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
 
     if (result.length > 0) {
-      this.logger.info(
-        { itemId: items[0].id, itemName: items[0].name },
-        `Found ${result.length} results for item ${items[0].name} in ${requestDuration} ms`
-      );
+      this.logger.info(logCtx, `Found ${result.length} results in ${requestDuration} ms`);
 
       const formattedResult = result.map(entry => {
         const formattedEntry: Record<string, string | number> = {};
@@ -199,10 +198,7 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
         this.logger
       );
     } else {
-      this.logger.debug(
-        { itemId: items[0].id, itemName: items[0].name },
-        `No result found for item ${items[0].name}. Request done in ${requestDuration} ms`
-      );
+      this.logger.debug(logCtx, `No result found. Request done in ${requestDuration} ms`);
     }
     return { trackedInstant: updatedStartTime, value: result.length > 0 ? result[result.length - 1] : null };
   }
@@ -221,7 +217,7 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
     const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference);
     const sqliteStartTime = referenceTimestampField == null ? startTime : formatInstant(startTime, referenceTimestampField);
     const sqliteEndTime = referenceTimestampField == null ? endTime : formatInstant(endTime, referenceTimestampField);
-    logQuery(item.settings.query, sqliteStartTime, sqliteEndTime, this.logger);
+    logQuery(item.settings.query, sqliteStartTime, sqliteEndTime, this.logger, workUnitLogCtx([item]));
 
     try {
       const stmt = database.prepare(item.settings.query);
