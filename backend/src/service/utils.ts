@@ -1163,3 +1163,22 @@ export function getErrorMessage(error: unknown): string {
     return String(error);
   }
 }
+
+/**
+ * Builds a sanitized Error from a failed `child_process` exec/execFile call that was invoked with a
+ * secret (e.g. a plaintext password) as a command line argument. Node builds the default failure
+ * message as `Command failed: <command and all its arguments>`, so the secret would otherwise leak
+ * verbatim into logs and rethrown errors. This also surfaces stdout/stderr (redacted), since some
+ * commands (e.g. Windows' cmdkey) print their actual failure reason on stdout, which Node does not
+ * include in `error.message`.
+ */
+export const sanitizeCommandError = (error: unknown, secret: string): Error => {
+  const err = error as (NodeJS.ErrnoException & { stdout?: string; stderr?: string }) | undefined;
+  const redact = (value: string): string => (secret ? value.split(secret).join('********') : value);
+  const details = [err?.stdout, err?.stderr]
+    .filter((value): value is string => Boolean(value && value.trim()))
+    .map(redact)
+    .join(' | ');
+  const message = redact(err?.message || 'Unknown error');
+  return new Error(details ? `${message} (${details})` : message);
+};

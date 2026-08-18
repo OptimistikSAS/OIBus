@@ -5,6 +5,7 @@ import { promisify } from 'node:util';
 
 import NorthConnector from '../north-connector';
 import { encryptionService } from '../../service/encryption.service';
+import { sanitizeCommandError } from '../../service/utils';
 
 const execFile = promisify(execFileCb);
 import { DateTime } from 'luxon';
@@ -39,7 +40,7 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
 
   private async mountNetworkShare(folderPath: string): Promise<void> {
     if (process.platform !== 'win32') {
-      if (this.connector.settings.username) this.logger.trace('Skipping SMB credential store: not running on Windows');
+      if (this.connector.settings.username) this.logger.trace('Skipping SMB session authentication: not running on Windows');
       return;
     }
     if (!this.connector.settings.username) return;
@@ -48,28 +49,39 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
     const user = this.connector.settings.domain
       ? `${this.connector.settings.domain}\\${this.connector.settings.username}`
       : this.connector.settings.username;
+    let password = '';
     try {
-      const password = this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : '';
-      await execFile('cmdkey', [`/add:${serverRoot}`, `/user:${user}`, `/pass:${password}`]);
-      this.logger.debug(`Stored SMB credentials for ${serverRoot} as ${user}`);
+      password = this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : '';
+      // Authenticate against the server's IPC$ share rather than storing credentials via cmdkey:
+      // `net use` establishes a live, session-scoped SMB session for the calling process's own
+      // logon session, so subsequent UNC access to that server reuses it automatically. This
+      // avoids Windows Credential Manager/DPAPI entirely, which is unreliable when OIBus runs
+      // as a Windows service — cmdkey-stored credentials can silently fail to be usable even
+      // under the exact user account that works fine when run interactively.
+      await execFile('net', ['use', `${serverRoot}\\IPC$`, password, `/user:${user}`, '/persistent:no']);
+      this.logger.debug(`Authenticated SMB session for ${serverRoot} as ${user}`);
     } catch (error: unknown) {
-      this.logger.error(`Failed to store SMB credentials for ${serverRoot}: ${(error as Error).message}`);
-      throw error;
+      // net use is called with the plaintext password as an argument, so the default error message
+      // Node builds on failure (and stdout/stderr) can contain it verbatim — sanitize before
+      // logging or rethrowing so it never ends up in logs or bubbles up to the UI.
+      const sanitizedError = sanitizeCommandError(error, password);
+      this.logger.error(`Failed to authenticate SMB session for ${serverRoot}: ${sanitizedError.message}`);
+      throw sanitizedError;
     }
   }
 
   private async unmountNetworkShare(folderPath: string): Promise<void> {
     if (process.platform !== 'win32') {
-      if (this.connector.settings.username) this.logger.trace('Skipping SMB credential removal: not running on Windows');
+      if (this.connector.settings.username) this.logger.trace('Skipping SMB session removal: not running on Windows');
       return;
     }
     if (!this.connector.settings.username) return;
     const serverRoot = folderPath.match(/^(\\\\[^\\]+)/)?.[1];
     if (!serverRoot) return;
     try {
-      await execFile('cmdkey', [`/delete:${serverRoot}`]);
+      await execFile('net', ['use', `${serverRoot}\\IPC$`, '/delete', '/yes']);
     } catch {
-      // Ignore — credentials may have already been removed
+      // Ignore — session may have already been removed
     }
   }
 
