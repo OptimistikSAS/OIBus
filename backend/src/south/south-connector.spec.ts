@@ -62,8 +62,17 @@ describe('SouthConnector', () => {
     generateCsvContent: mock.fn(() => ''),
     generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
     generateReplacementParameters: mock.fn(() => []),
+    getErrorMessage: mock.fn((error: unknown) => (error instanceof Error ? error.message : String(error))),
     logQuery: mock.fn(),
-    persistResults: mock.fn(async () => undefined)
+    persistResults: mock.fn(async () => undefined),
+    // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
+    // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
+    workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
+      if (items.length === 0) return {};
+      if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
+      const lead = items[0];
+      return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
+    })
   };
 
   const utilsOpcuaExports = {

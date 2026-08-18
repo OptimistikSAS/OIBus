@@ -24,6 +24,7 @@ import {
 } from 'node-opcua';
 import { HistoryDataOptions, HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import { createSessionConfigs, getHistoryReadRequest, getTimestamp, logMessages, parseOPCUAValue } from '../../service/utils-opcua';
+import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
 
 // OPC-UA status codes that indicate a device/PLC-level failure. The OPC-UA session
 // itself is still alive — only the device behind the server is unreachable. Do NOT
@@ -100,10 +101,9 @@ export default class SouthOPCUA
     }
     try {
       this.session = await this.createSession();
-      this.logger.info(`OPCUA South connector "${this.connector.name}" connected`);
       await super.connect();
     } catch (error: unknown) {
-      this.logger.error(`Error while connecting to the OPCUA server: ${(error as Error).message}`);
+      this.logger.error(`Error while connecting to the OPCUA server: ${getErrorMessage(error)}`);
       // Wrap disconnect() so that errors from client.close() / subscription.terminate()
       // on an already-dead session do not escape the catch block. If they did, connect()
       // would itself reject — and since connect() is invoked from setTimeout, that
@@ -111,7 +111,7 @@ export default class SouthOPCUA
       try {
         await this.disconnect();
       } catch (disconnectError: unknown) {
-        this.logger.error(`Error while disconnecting after failed connect: ${(disconnectError as Error).message}`);
+        this.logger.error(`Error while disconnecting after failed connect: ${getErrorMessage(disconnectError)}`);
       }
       if (!this.disconnecting && this.connector.enabled) {
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
@@ -139,10 +139,14 @@ export default class SouthOPCUA
     }
     this.monitoredItems.clear();
     if (this.session) {
+      const disconnectStart = DateTime.now().toMillis();
       try {
         await this.session.close();
+        this.logger.info(
+          `Disconnected from OPCUA server ${this.connector.settings.url} in ${DateTime.now().toMillis() - disconnectStart} ms`
+        );
       } catch (error: unknown) {
-        this.logger.error(`Error closing OPC-UA session: ${(error as Error).message}`);
+        this.logger.error(`Error closing OPC-UA session: ${getErrorMessage(error)}`);
       }
       this.session = null;
     }
@@ -305,7 +309,7 @@ export default class SouthOPCUA
       let result: OIBusContent;
       if (item.settings.mode === 'da') {
         const nodeId = resolveNodeId(item.settings.nodeId);
-        const daValues = await this.getDAValues([{ nodeId, name: item.name, settings: item.settings }], session);
+        const daValues = await this.getDAValues([{ nodeId, name: item.name, settings: item.settings }], session, workUnitLogCtx([item]));
         result = { type: 'time-values', content: daValues };
       } else {
         const haResult = await this.getHAValues(
@@ -355,8 +359,9 @@ export default class SouthOPCUA
       this.connector.settings.readTimeout
     );
     this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
+    const connectStart = DateTime.now().toMillis();
     const session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
-    this.logger.info(`OPCUA connector "${this.connector.name}" connected`);
+    this.logger.info(`Connected to OPCUA server ${this.connector.settings.url} in ${DateTime.now().toMillis() - connectStart} ms`);
     return session;
   }
 
@@ -377,13 +382,9 @@ export default class SouthOPCUA
       return await this.getHAValues(items, startTime, endTime, session);
     } catch (error: unknown) {
       if (isDeviceError(error)) {
-        const preview = items
-          .slice(0, 10)
-          .map(i => i.name)
-          .join(', ');
-        const suffix = items.length > 10 ? ` … and ${items.length - 10} more` : '';
         this.logger.error(
-          `HA read failed for ${items.length} item(s) [${preview}${suffix}] (device/PLC error, session kept): ${(error as Error).message}`
+          workUnitLogCtx(items),
+          `HA read failed for ${items.length} item(s) (device/PLC error, session kept): ${getErrorMessage(error)}`
         );
         return { trackedInstant: null, value: null };
       }
@@ -399,6 +400,10 @@ export default class SouthOPCUA
     session: ClientSession,
     testingItem = false
   ): Promise<{ trackedInstant: Instant | null; value: OIBusTimeValue | null }> {
+    // One work-unit (single item, or a synced group) can still fan out into several
+    // aggregate/resampling sub-batches below — logCtx identifies the work-unit as a whole and is
+    // reused across all of them rather than recomputed per sub-batch.
+    const logCtx = workUnitLogCtx(items);
     let lastValue: OIBusTimeValue | null = null;
     // Track the most-recent timestamp in epoch-ms so we can compare numerically
     // and avoid re-parsing lastValue.timestamp ISO string on every history value.
@@ -413,7 +418,7 @@ export default class SouthOPCUA
       try {
         nodeId = resolveNodeId(item.settings.nodeId);
       } catch (error: unknown) {
-        this.logger.error(`Error when parsing node ID ${item.settings.nodeId} for item ${item.name}: ${(error as Error).message}`);
+        this.logger.error(logCtx, `Error when parsing node ID ${item.settings.nodeId} for item ${item.name}: ${getErrorMessage(error)}`);
         continue;
       }
 
@@ -465,8 +470,14 @@ export default class SouthOPCUA
         const totalNodes = resampledItems.length;
         // Hoist once instead of rebuilding per continuation-point round-trip
         const resampledItemsAsItems = resampledItems.map(({ item }) => item);
-        this.logger.trace(`Reading ${totalNodes} items with aggregate ${aggregate} and resampling ${resampling}`);
+        this.logger.trace(logCtx, `Reading ${totalNodes} items with aggregate ${aggregate} and resampling ${resampling}`);
+        // Accumulated across every continuation-point round-trip below so we can log one debug
+        // summary per sub-batch instead of one line per round-trip (a wide HA backfill can need many).
+        let totalValuesAdded = 0;
+        let roundTripCount = 0;
+        const subBatchStart = DateTime.now();
         do {
+          roundTripCount++;
           const batchValues: Array<OIBusTimeValue> = [];
           const startRequest = DateTime.now();
           const request = getHistoryReadRequest(
@@ -477,16 +488,17 @@ export default class SouthOPCUA
             nodesToRead.map(n => n.nodeToRead)
           );
           const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
-          this.logger.debug(`HA request done in ${requestDuration} ms`);
+          this.logger.trace(logCtx, `HA request done in ${requestDuration} ms`);
           request.requestHeader.timeoutHint = this.connector.settings.readTimeout;
 
           const response = await session.historyRead(request);
           if (response.responseHeader.serviceResult.isNot(StatusCodes.Good)) {
-            this.logger.error(`Error while reading history: ${response.responseHeader.serviceResult.description}`);
+            this.logger.error(logCtx, `Error while reading history: ${response.responseHeader.serviceResult.description}`);
           }
 
           if (response.results) {
-            this.logger.debug(
+            this.logger.trace(
+              logCtx,
               `Received a response of ${response.results.length}/${totalNodes} nodes` +
                 (response.results.length < totalNodes ? ` (${totalNodes - response.results.length} completed in a previous batch)` : '')
             );
@@ -561,22 +573,28 @@ export default class SouthOPCUA
                   entry.nodeToRead.continuationPoint.length > 0
               );
 
-            this.logger.debug(`Adding ${batchValues.length} values between ${startTime} and ${endTime}`);
+            totalValuesAdded += batchValues.length;
             if (!testingItem) {
               // addContent errors (cache/disk) must not propagate: they are unrelated
               // to the OPC-UA session and would trigger a needless disconnect+reconnect.
               try {
                 await this.addContent({ type: 'time-values', content: batchValues }, startRequest.toUTC().toISO(), resampledItemsAsItems);
               } catch (addError: unknown) {
-                this.logger.error(`Error saving HA values to cache: ${(addError as Error).message}`);
+                this.logger.error(logCtx, `Error saving HA values to cache: ${getErrorMessage(addError)}`);
               }
-              this.logger.trace(`Continue read for ${nodesToRead.length}/${totalNodes} nodes with pending data`);
+              this.logger.trace(logCtx, `Continue read for ${nodesToRead.length}/${totalNodes} nodes with pending data`);
             }
           } else {
-            this.logger.error('No result found in response');
+            this.logger.error(logCtx, 'No result found in response');
             nodesToRead = [];
           }
         } while (nodesToRead.length > 0);
+        const subBatchDuration = DateTime.now().toMillis() - subBatchStart.toMillis();
+        this.logger.debug(
+          logCtx,
+          `Added ${totalValuesAdded} values for ${totalNodes} items between ${startTime} and ${endTime} ` +
+            `in ${roundTripCount} request(s) (${subBatchDuration} ms)`
+        );
 
         // If all is retrieved, clear continuation points
         const releaseRequest = getHistoryReadRequest(
@@ -595,9 +613,9 @@ export default class SouthOPCUA
         const response = await session.historyRead(releaseRequest);
 
         if (response.responseHeader.serviceResult.isNot(StatusCodes.Good)) {
-          this.logger.error(`Error while releasing continuation points: ${response.responseHeader.serviceResult.description}`);
+          this.logger.error(logCtx, `Error while releasing continuation points: ${response.responseHeader.serviceResult.description}`);
         }
-        logMessages(logs, this.logger);
+        logMessages(logs, this.logger, logCtx);
       }
     }
 
@@ -612,6 +630,7 @@ export default class SouthOPCUA
   }
 
   async directQuery(items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<OIBusTimeValue | null> {
+    const logCtx = workUnitLogCtx(items);
     const nodesToRead: Array<{ nodeId: NodeId; name: string; settings: SouthOPCUAItemSettings }> = [];
     let content: Array<OIBusTimeValue> = [];
     for (const item of items) {
@@ -621,17 +640,14 @@ export default class SouthOPCUA
           nodeId = resolveNodeId(item.settings.nodeId);
           nodesToRead.push({ nodeId, name: item.name, settings: item.settings });
         } catch (error: unknown) {
-          this.logger.error(`Error when parsing node ID ${item.settings.nodeId} for item ${item.name}: ${(error as Error).message}`);
+          this.logger.error(logCtx, `Error when parsing node ID ${item.settings.nodeId} for item ${item.name}: ${getErrorMessage(error)}`);
         }
       }
     }
     if (nodesToRead.length === 0) {
       return null;
-    } else if (nodesToRead.length > 1) {
-      this.logger.debug(`Read ${nodesToRead.length} nodes ` + `[${nodesToRead[0].nodeId}...${nodesToRead[nodesToRead.length - 1].nodeId}]`);
-    } else {
-      this.logger.debug(`Read node ${nodesToRead[0].nodeId}`);
     }
+    this.logger.debug(logCtx, `Reading ${nodesToRead.length} node(s)`);
     const session = this.session;
     if (!session) {
       this.logger.debug('No OPCUA session available, skipping direct query');
@@ -647,16 +663,12 @@ export default class SouthOPCUA
     // session/transport failures (BadSessionClosed, ECONNRESET, …) trigger a reconnect.
     const queryTime = DateTime.now().toUTC().toISO();
     try {
-      content = await this.getDAValues(nodesToRead, session);
+      content = await this.getDAValues(nodesToRead, session, logCtx);
     } catch (error) {
       if (isDeviceError(error)) {
-        const preview = nodesToRead
-          .slice(0, 10)
-          .map(n => n.name)
-          .join(', ');
-        const suffix = nodesToRead.length > 10 ? ` … and ${nodesToRead.length - 10} more` : '';
         this.logger.error(
-          `DA read failed for ${nodesToRead.length} node(s) [${preview}${suffix}] (device/PLC error, session kept): ${(error as Error).message}`
+          logCtx,
+          `DA read failed for ${nodesToRead.length} node(s) (device/PLC error, session kept): ${getErrorMessage(error)}`
         );
         return null;
       }
@@ -669,7 +681,8 @@ export default class SouthOPCUA
 
   async getDAValues(
     nodesToRead: Array<{ nodeId: NodeId; name: string; settings: SouthOPCUAItemSettings }>,
-    session: ClientSession
+    session: ClientSession,
+    logCtx: Record<string, string> = {}
   ): Promise<Array<OIBusTimeValue>> {
     const startRequest = DateTime.now().toMillis();
     const timeoutMs = this.connector.settings.readTimeout;
@@ -693,9 +706,10 @@ export default class SouthOPCUA
       })
     ]);
     const requestDuration = DateTime.now().toMillis() - startRequest;
-    this.logger.debug(`Found ${dataValues.length} results for ${nodesToRead.length} items (DA mode) in ${requestDuration} ms`);
+    this.logger.debug(logCtx, `Found ${dataValues.length} results for ${nodesToRead.length} items (DA mode) in ${requestDuration} ms`);
     if (dataValues.length !== nodesToRead.length) {
       this.logger.error(
+        logCtx,
         `Received ${dataValues.length} node results, requested ${nodesToRead.length} nodes. Request done in ${requestDuration} ms`
       );
     }
@@ -753,7 +767,7 @@ export default class SouthOPCUA
       try {
         nodeId = resolveNodeId(item.settings.nodeId);
       } catch (error: unknown) {
-        this.logger.error(`Error when parsing node ID ${item.settings.nodeId} for item ${item.name}: ${(error as Error).message}`);
+        this.logger.error(`Error when parsing node ID ${item.settings.nodeId} for item ${item.name}: ${getErrorMessage(error)}`);
         continue;
       }
       const monitoredItem = await this.subscription.monitor(
@@ -783,7 +797,7 @@ export default class SouthOPCUA
             // rejection from flush is handled inside flushMessages itself rather than
             // becoming an unhandled rejection from an async event handler.
             this.flushMessages().catch((err: unknown) => {
-              this.logger.error(`Error flushing messages from subscription: ${(err as Error).message}`);
+              this.logger.error(`Error flushing messages from subscription: ${getErrorMessage(err)}`);
             });
           }
         }
@@ -817,7 +831,7 @@ export default class SouthOPCUA
         }
         await this.addContent({ type: 'time-values', content }, DateTime.now().toUTC().toISO(), Array.from(uniqueItems));
       } catch (error: unknown) {
-        this.logger.error(`Error when flushing messages: ${(error as Error).message}`);
+        this.logger.error(`Error when flushing messages: ${getErrorMessage(error)}`);
       }
     }
     this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.connector.settings.flushMessageTimeout);
@@ -853,7 +867,7 @@ export default class SouthOPCUA
         }
       })
       .catch((err: unknown) => {
-        this.logger.error(`Error during reconnect after subscription issue: ${(err as Error).message}`);
+        this.logger.error(`Error during reconnect after subscription issue: ${getErrorMessage(err)}`);
       });
   }
 
