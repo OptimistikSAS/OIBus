@@ -1,5 +1,12 @@
 import SouthConnector from '../south-connector';
-import { convertDateTimeToInstant, formatInstant, generateRandomId, sanitizeFilename } from '../../service/utils';
+import {
+  convertDateTimeToInstant,
+  formatInstant,
+  generateRandomId,
+  getErrorMessage,
+  sanitizeFilename,
+  workUnitLogCtx
+} from '../../service/utils';
 import { JSONPath } from 'jsonpath-plus';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
@@ -58,7 +65,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
 
       response = await HTTPRequest(requestUrl, fetchOptions);
     } catch (error: unknown) {
-      throw new Error(`Fetch error: ${(error as Error).message}`);
+      throw new Error(`Fetch error: ${getErrorMessage(error)}`);
     }
 
     if (response.statusCode !== successCode) {
@@ -92,6 +99,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     startTime: Instant,
     endTime: Instant
   ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
+    const logCtx = workUnitLogCtx(items);
     const startRequest = DateTime.now();
     const { filename, content, maxInstant } = await this.queryData(items[0], startTime, endTime);
     const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
@@ -100,20 +108,20 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     await fs.writeFile(filePath, content);
     const stats = await fs.stat(filePath);
     if (stats.size > 0) {
-      this.logger.info(`Downloaded file for item ${items[0].name} (${stats.size} bytes) in ${requestDuration} ms`);
+      this.logger.info(logCtx, `Downloaded file (${stats.size} bytes) in ${requestDuration} ms`);
       await this.addContent({ type: 'any', filePath }, startRequest.toUTC().toISO(), [items[0]]);
       try {
         await fs.unlink(filePath);
-        this.logger.trace(`File "${filePath}" deleted`);
+        this.logger.trace(logCtx, `File "${filePath}" deleted`);
       } catch (unlinkError) {
-        this.logger.error(`Error when deleting file "${filePath}" after caching it. ${unlinkError}`);
+        this.logger.error(logCtx, `Error when deleting file "${filePath}" after caching it: ${getErrorMessage(unlinkError)}`);
       }
     } else {
-      this.logger.debug(`Empty file downloaded for item ${items[0].name}. Request done in ${requestDuration} ms`);
+      this.logger.debug(logCtx, `Empty file downloaded. Request done in ${requestDuration} ms`);
       try {
         await fs.unlink(filePath);
       } catch (unlinkError) {
-        this.logger.error(`Error when deleting empty file "${filePath}". ${unlinkError}`);
+        this.logger.error(logCtx, `Error when deleting empty file "${filePath}": ${getErrorMessage(unlinkError)}`);
       }
     }
 
@@ -210,6 +218,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     }
 
     this.logger.info(
+      workUnitLogCtx([item]),
       `Requesting data from URL "${requestUrl}" with method "${item.settings.method}" and query params "${JSON.stringify(query)}"`
     );
 

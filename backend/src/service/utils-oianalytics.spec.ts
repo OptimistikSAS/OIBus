@@ -365,7 +365,7 @@ describe('utils-oianalytics', () => {
       });
 
       await assert.rejects(testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, false), {
-        message: `Fetch error ${error}`
+        message: `Fetch error: ${error.message}`
       });
     });
 
