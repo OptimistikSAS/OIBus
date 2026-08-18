@@ -131,6 +131,32 @@ const manifest: SouthConnectorManifest = {
           columns: 4,
           displayInViewMode: true
         }
+      },
+      {
+        type: 'number',
+        key: 'retryInterval',
+        translationKey: 'configuration.oibus.manifest.south.ftp.retry-interval',
+        unit: 'ms',
+        defaultValue: 10000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['60000']
+          }
+        ],
+        displayProperties: {
+          row: 3,
+          columns: 4,
+          displayInViewMode: true
+        }
       }
     ]
   },

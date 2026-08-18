@@ -1,4 +1,4 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import { describe, it, before, beforeEach, afterEach, mock, type Mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
@@ -31,7 +31,8 @@ describe('SouthFTP', () => {
     list: mock.fn(async (_path?: string) => [] as Array<FileInfo>),
     downloadTo: mock.fn(async (_dest: string, _remote: string) => undefined),
     remove: mock.fn(async (_path: string) => undefined),
-    close: mock.fn(async () => undefined)
+    close: mock.fn(() => undefined),
+    closed: false
   };
 
   const ftpExports = {
@@ -47,7 +48,16 @@ describe('SouthFTP', () => {
     delay: mock.fn(async () => undefined),
     generateIntervals: mock.fn(() => []),
     groupItemsByGroup: mock.fn(() => []),
-    validateCronExpression: mock.fn(() => ({ expression: '' }))
+    validateCronExpression: mock.fn(() => ({ expression: '' })),
+    getErrorMessage: mock.fn((error: unknown) => (error instanceof Error ? error.message : String(error))),
+    // Mirrors the real implementation in service/utils.ts — kept in sync manually, matching the
+    // pattern established in south-modbus.spec.ts.
+    workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
+      if (items.length === 0) return {};
+      if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
+      const lead = items[0];
+      return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
+    })
   };
 
   const encryptionExports = {
@@ -81,7 +91,8 @@ describe('SouthFTP', () => {
       authentication: 'password',
       username: 'user',
       password: 'pass',
-      compression: false
+      compression: false,
+      retryInterval: 10000
     },
     items: [
       {
@@ -105,6 +116,7 @@ describe('SouthFTP', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -131,6 +143,7 @@ describe('SouthFTP', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -157,6 +170,7 @@ describe('SouthFTP', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -184,6 +198,11 @@ describe('SouthFTP', () => {
       uniqueID: 'unique'
     }) as FileInfo;
 
+  // Some log calls are `logger.debug/error(logCtx, message)` (structured context first) and others
+  // are plain `logger.debug/error(message)` — this checks either shape without caring which.
+  const logIncludes = (mockFn: { mock: { calls: Array<{ arguments: Array<unknown> }> } }, text: string): boolean =>
+    mockFn.mock.calls.some(c => c.arguments.some(arg => typeof arg === 'string' && arg.includes(text)));
+
   beforeEach(() => {
     southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
     addContentCallback.mock.resetCalls();
@@ -194,12 +213,15 @@ describe('SouthFTP', () => {
     mockFtpClient.list = mock.fn(async (_path?: string) => [] as Array<FileInfo>);
     mockFtpClient.downloadTo = mock.fn(async (_dest: string, _remote: string) => undefined);
     mockFtpClient.remove = mock.fn(async (_path: string) => undefined);
-    mockFtpClient.close = mock.fn(async () => undefined);
+    mockFtpClient.close = mock.fn(() => undefined);
+    mockFtpClient.closed = false;
 
     utilsExports.checkAge.mock.resetCalls();
     utilsExports.checkAge.mock.mockImplementation(() => true);
     utilsExports.compress.mock.resetCalls();
     utilsExports.compress.mock.mockImplementation(async (_input: string, _output: string) => undefined);
+    utilsExports.getErrorMessage.mock.resetCalls();
+    utilsExports.workUnitLogCtx.mock.resetCalls();
 
     encryptionExports.encryptionService.decryptText.mock.resetCalls();
     encryptionExports.encryptionService.decryptText.mock.mockImplementation(async (_text?: string | null) => 'decrypted-password');
@@ -217,21 +239,190 @@ describe('SouthFTP', () => {
     mock.restoreAll();
   });
 
-  describe('with valid configuration', () => {
-    beforeEach(async () => {
-      await south.start();
+  describe('connect / disconnect / reconnect', () => {
+    it('should properly connect and establish a persistent client', async () => {
+      await south.connect();
+
+      assert.strictEqual(ftpExports.Client.mock.calls.length, 1);
+      assert.strictEqual(mockFtpClient.access.mock.calls.length, 1);
+      assert.deepStrictEqual(mockFtpClient.access.mock.calls[0].arguments[0], {
+        host: '127.0.0.1',
+        port: 21,
+        user: 'user',
+        password: 'decrypted-password',
+        secure: false
+      });
+      assert.strictEqual((south as unknown as Record<string, unknown>)['client'], mockFtpClient);
+      assert.ok(logIncludes(logger.debug, 'Connecting to FTP server 127.0.0.1:21'));
+      assert.ok(logIncludes(logger.info, 'Connected to FTP server 127.0.0.1:21'));
     });
 
-    it('should properly start', () => {
-      assert.ok(
-        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(c => (c.arguments[0] as string).includes('enabled'))
-      );
+    it('should reuse the same persistent client across multiple listFiles/getFile calls', async () => {
+      await south.connect();
+      const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
+      mockFtpClient.list.mock.mockImplementation(async () => [fileInfo]);
+
+      await south.listFiles(configuration.items[0], []);
+      await south.getFile(fileInfo, configuration.items[0], []);
+      await south.listFiles(configuration.items[0], []);
+
+      // Only the connect() call created a client — listFiles/getFile reused it.
+      assert.strictEqual(ftpExports.Client.mock.calls.length, 1);
+      assert.strictEqual(mockFtpClient.access.mock.calls.length, 1);
+      assert.strictEqual(mockFtpClient.close.mock.calls.length, 0);
+    });
+
+    it('should schedule a reconnect when connect() fails', async () => {
+      mockFtpClient.access.mock.mockImplementation(async () => {
+        throw new Error('connect error');
+      });
+
+      await south.connect();
+
+      assert.strictEqual((south as unknown as Record<string, unknown>)['client'], null);
+      assert.ok(logIncludes(logger.error, 'Error while connecting to FTP server 127.0.0.1:21: connect error'));
+
+      mockFtpClient.access.mock.mockImplementation(async () => undefined);
+      mock.timers.tick(configuration.settings.retryInterval);
+      // Let the scheduled connect() (which is async) run to completion.
+      await Promise.resolve();
+      await Promise.resolve();
+
+      assert.strictEqual(ftpExports.Client.mock.calls.length, 2);
+    });
+
+    it('should not schedule a reconnect on connect error when disconnecting is true', async () => {
+      // Mock disconnect() so the real implementation's own disconnecting=false reset at the end
+      // doesn't mask what we're testing here (mirrors south-modbus.spec.ts's equivalent test).
+      const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+      south.disconnect = disconnectMock;
+      (south as unknown as Record<string, unknown>)['disconnecting'] = true;
+      mockFtpClient.access.mock.mockImplementation(async () => {
+        throw new Error('connect error');
+      });
+
+      await south.connect();
+
+      assert.strictEqual(disconnectMock.mock.calls.length, 1);
+      mock.timers.tick(configuration.settings.retryInterval);
+      assert.strictEqual(ftpExports.Client.mock.calls.length, 1);
+    });
+
+    it('should properly disconnect an active client', async () => {
+      await south.connect();
+
+      await south.disconnect();
+
+      assert.strictEqual(mockFtpClient.close.mock.calls.length, 1);
+      assert.strictEqual((south as unknown as Record<string, unknown>)['client'], null);
+      assert.ok(logIncludes(logger.info, 'Disconnected from FTP server 127.0.0.1:21'));
+    });
+
+    it('should properly disconnect without an active client', async () => {
+      await south.disconnect();
+      // Nothing should throw, and close() must not be called since there was no client.
+      assert.strictEqual(mockFtpClient.close.mock.calls.length, 0);
+    });
+
+    it('should clear a pending reconnect timeout on disconnect', async () => {
+      (south as unknown as Record<string, unknown>)['reconnectTimeout'] = setTimeout(() => null, 1000);
+
+      await south.disconnect();
+
+      assert.strictEqual((south as unknown as Record<string, unknown>)['reconnectTimeout'], null);
+    });
+
+    it('should treat a listFiles failure during directQuery as a lost connection and reconnect', async () => {
+      await south.connect();
+      mockFtpClient.list.mock.mockImplementation(async () => {
+        throw new Error('Client is closed because of a timeout');
+      });
+
+      await assert.rejects(south.directQuery([configuration.items[0]]), new Error('Client is closed because of a timeout'));
+
+      // The connection is torn down and a reconnect scheduled.
+      assert.strictEqual((south as unknown as Record<string, unknown>)['client'], null);
+      assert.strictEqual(mockFtpClient.close.mock.calls.length, 1);
+
+      mockFtpClient.list.mock.mockImplementation(async () => []);
+      mock.timers.tick(configuration.settings.retryInterval);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      assert.strictEqual(ftpExports.Client.mock.calls.length, 2);
+    });
+
+    it('should not reconnect after a directQuery failure while disconnecting', async () => {
+      await south.connect();
+      // Mock disconnect() so the real implementation's own disconnecting=false reset at the end
+      // doesn't mask what we're testing here (mirrors south-modbus.spec.ts's equivalent test).
+      const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+      south.disconnect = disconnectMock;
+      (south as unknown as Record<string, unknown>)['disconnecting'] = true;
+      mockFtpClient.list.mock.mockImplementation(async () => {
+        throw new Error('boom');
+      });
+
+      await assert.rejects(south.directQuery([configuration.items[0]]), new Error('boom'));
+
+      assert.strictEqual(disconnectMock.mock.calls.length, 1);
+      mock.timers.tick(configuration.settings.retryInterval);
+      assert.strictEqual(ftpExports.Client.mock.calls.length, 1);
+    });
+
+    it('should throw from listFiles when the client is not connected', async () => {
+      // No connect() call — this.client stays null.
+      await assert.rejects(south.listFiles(configuration.items[0], []), new Error('FTP client is not connected'));
+      assert.strictEqual(mockFtpClient.list.mock.calls.length, 0);
+    });
+
+    it('should throw from listFiles when the client reports itself as closed', async () => {
+      await south.connect();
+      mockFtpClient.closed = true;
+
+      await assert.rejects(south.listFiles(configuration.items[0], []), new Error('FTP client is not connected'));
+      assert.strictEqual(mockFtpClient.list.mock.calls.length, 0);
+    });
+
+    it('should throw from getFile when the client is not connected', async () => {
+      const fileInfo = createMockFileInfo('test.csv', new Date());
+      await assert.rejects(south.getFile(fileInfo, configuration.items[0], []), new Error('FTP client is not connected'));
+      assert.strictEqual(mockFtpClient.downloadTo.mock.calls.length, 0);
+    });
+  });
+
+  describe('testConnection / testItem isolation', () => {
+    it('should never touch the persistent client in testConnection', async () => {
+      const sentinelClient = { marker: 'persistent-client-sentinel' };
+      (south as unknown as Record<string, unknown>)['client'] = sentinelClient;
+      const disconnectSpy = mock.method(south, 'disconnect');
+
+      await south.testConnection();
+
+      assert.strictEqual((south as unknown as Record<string, unknown>)['client'], sentinelClient);
+      assert.strictEqual(disconnectSpy.mock.calls.length, 0);
+      // testConnection() opened and closed its own local client.
+      assert.strictEqual(ftpExports.Client.mock.calls.length, 1);
+      assert.strictEqual(mockFtpClient.close.mock.calls.length, 1);
+    });
+
+    it('should never touch the persistent client in testItem', async () => {
+      const sentinelClient = { marker: 'persistent-client-sentinel' };
+      (south as unknown as Record<string, unknown>)['client'] = sentinelClient;
+      const disconnectSpy = mock.method(south, 'disconnect');
+      const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
+      mockFtpClient.list.mock.mockImplementation(async () => [fileInfo]);
+
+      const result = await south.testItem(configuration.items[0], { history: undefined });
+
+      assert.strictEqual((south as unknown as Record<string, unknown>)['client'], sentinelClient);
+      assert.strictEqual(disconnectSpy.mock.calls.length, 0);
+      assert.strictEqual(ftpExports.Client.mock.calls.length, 1);
+      assert.strictEqual(mockFtpClient.close.mock.calls.length, 1);
+      assert.strictEqual(result.result.type, 'time-values');
     });
 
     it('should test connection', async () => {
-      mockFtpClient.access.mock.mockImplementation(async () => undefined);
-      mockFtpClient.close.mock.mockImplementation(async () => undefined);
-
       const testResult = await south.testConnection();
 
       assert.deepStrictEqual(mockFtpClient.access.mock.calls[0].arguments[0], {
@@ -241,7 +432,7 @@ describe('SouthFTP', () => {
         password: 'decrypted-password',
         secure: false
       });
-      assert.ok(mockFtpClient.close.mock.calls.length > 0);
+      assert.strictEqual(mockFtpClient.close.mock.calls.length, 1);
       assert.deepStrictEqual(testResult, {
         items: [
           { key: 'Host', value: `${configuration.settings.host}:${configuration.settings.port}` },
@@ -256,12 +447,17 @@ describe('SouthFTP', () => {
       });
 
       await assert.rejects(south.testConnection(), new Error('Access error on "127.0.0.1:21": Connection failed'));
+      // The local test client is still closed even though access() failed.
+      assert.strictEqual(mockFtpClient.close.mock.calls.length, 1);
     });
 
-    it('should test item', async () => {
+    it('should test item and separately measure connection and query duration', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mock.method(south, 'listFiles', async () => {
+      mockFtpClient.access.mock.mockImplementation(async () => {
+        mock.timers.tick(15);
+      });
+      mockFtpClient.list.mock.mockImplementation(async () => {
         mock.timers.tick(25);
         return [fileInfo];
       });
@@ -276,8 +472,8 @@ describe('SouthFTP', () => {
       assert.strictEqual(content[0].pointId, 'item1');
       assert.ok(typeof content[0].timestamp === 'string');
       assert.deepStrictEqual(content[0].data, { value: 'test.csv' });
+      assert.strictEqual(result.connectionDuration, 15);
       assert.strictEqual(result.queryDuration, 25);
-      assert.strictEqual(result.connectionDuration, 0);
     });
 
     it('should test item with file without modifiedAt date', async () => {
@@ -299,18 +495,23 @@ describe('SouthFTP', () => {
         date: new Date()
       } as unknown as FileInfo;
 
-      mock.method(south, 'listFiles', async () => {
-        mock.timers.tick(25);
-        return [fileInfoWithoutDate];
-      });
+      mockFtpClient.list.mock.mockImplementation(async () => [fileInfoWithoutDate]);
 
       const item = configuration.items[0];
       const result = await south.testItem(item, { history: undefined });
 
       assert.strictEqual(result.result.type, 'time-values');
       assert.strictEqual((result.result as { type: string; content: Array<unknown> }).content.length, 1);
-      assert.strictEqual(result.queryDuration, 25);
-      assert.strictEqual(result.connectionDuration, 0);
+    });
+  });
+
+  describe('with a connected client', () => {
+    beforeEach(async () => {
+      await south.start();
+    });
+
+    it('should properly start', () => {
+      assert.ok(logIncludes(logger.debug, 'enabled'));
     });
 
     it('should list files', async () => {
@@ -322,15 +523,7 @@ describe('SouthFTP', () => {
       const files = await south.listFiles(item, []);
 
       assert.deepStrictEqual(files, [fileInfo]);
-      assert.deepStrictEqual(mockFtpClient.access.mock.calls[0].arguments[0], {
-        host: '127.0.0.1',
-        port: 21,
-        user: 'user',
-        password: 'decrypted-password',
-        secure: false
-      });
       assert.deepStrictEqual(mockFtpClient.list.mock.calls[0].arguments[0], 'input');
-      assert.ok(mockFtpClient.close.mock.calls.length > 0);
     });
 
     it('should filter files by regex', async () => {
@@ -361,6 +554,8 @@ describe('SouthFTP', () => {
       });
       assert.strictEqual(addContentCallback.mock.calls[0].arguments[2], testData.constants.dates.FAKE_NOW);
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[3], [item]);
+      // getFile() no longer closes the persistent client after each file.
+      assert.strictEqual(mockFtpClient.close.mock.calls.length, 0);
     });
 
     it('should get file with compression', async () => {
@@ -373,13 +568,7 @@ describe('SouthFTP', () => {
         settings: { ...configuration.settings, compression: true }
       };
 
-      const southWithCompression = new SouthFtp(
-        configurationWithCompression,
-        addContentCallback,
-        southCacheRepository,
-
-        'cacheFolder'
-      );
+      const southWithCompression = new SouthFtp(configurationWithCompression, addContentCallback, southCacheRepository, 'cacheFolder');
       await southWithCompression.start();
 
       const item = configuration.items[0];
@@ -434,7 +623,7 @@ describe('SouthFTP', () => {
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[3], [item]);
     });
 
-    it('should handle compression error', async () => {
+    it('should capture the real error when compression fails and send the file raw instead', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
       utilsExports.compress.mock.mockImplementation(async () => {
@@ -445,13 +634,7 @@ describe('SouthFTP', () => {
         ...configuration,
         settings: { ...configuration.settings, compression: true }
       };
-      const southWithCompression = new SouthFtp(
-        configurationWithCompression,
-        addContentCallback,
-        southCacheRepository,
-
-        'cacheFolder'
-      );
+      const southWithCompression = new SouthFtp(configurationWithCompression, addContentCallback, southCacheRepository, 'cacheFolder');
       await southWithCompression.start();
 
       const item = configuration.items[0];
@@ -461,6 +644,14 @@ describe('SouthFTP', () => {
         type: 'any',
         filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
       });
+      // The real compression error is captured and logged, not swallowed.
+      assert.ok(
+        logger.error.mock.calls.some(
+          (c: { arguments: Array<unknown> }) =>
+            c.arguments.some(arg => typeof arg === 'string' && arg.includes('Error compressing file')) &&
+            c.arguments.some(arg => typeof arg === 'string' && arg.includes('Compression failed'))
+        )
+      );
     });
 
     it('should list files recursively when recursive is true', async () => {
@@ -523,7 +714,7 @@ describe('SouthFTP', () => {
       assert.deepStrictEqual(mockFtpClient.downloadTo.mock.calls[0].arguments[0], path.resolve('cacheFolder', 'tmp', 'test.csv'));
     });
 
-    it('should query files', async () => {
+    it('should query files and use workUnitLogCtx for structured logging', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
       mockFtpClient.list.mock.mockImplementation(async () => [fileInfo]);
@@ -538,6 +729,9 @@ describe('SouthFTP', () => {
         filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
       });
       assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[3], [configuration.items[0]]);
+      assert.ok(
+        utilsExports.workUnitLogCtx.mock.calls.some(c => Array.isArray(c.arguments[0]) && c.arguments[0][0] === configuration.items[0])
+      );
     });
 
     it('should respect max files limit and skip remaining files', async () => {
@@ -565,11 +759,7 @@ describe('SouthFTP', () => {
       await southWithLimit.directQuery([configWithLimit.items[0]]);
 
       assert.strictEqual(mockFtpClient.downloadTo.mock.calls.length, 2);
-      assert.ok(
-        logger.debug.mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Max files limit (2) reached for item item1, skipping remaining files'
-        )
-      );
+      assert.ok(logIncludes(logger.debug, 'Max files limit (2) reached for item item1, skipping remaining files'));
     });
 
     it('should respect max files limit and stop file query across items', async () => {
@@ -597,11 +787,7 @@ describe('SouthFTP', () => {
       await southWithLimit.directQuery(configWithLimit.items);
 
       assert.strictEqual(mockFtpClient.downloadTo.mock.calls.length, 2);
-      assert.ok(
-        logger.debug.mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Max files limit (2) reached for item item1, skipping remaining files'
-        )
-      );
+      assert.ok(logIncludes(logger.debug, 'Max files limit (2) reached for item item1, skipping remaining files'));
     });
 
     it('should respect max size limit and skip remaining files', async () => {
@@ -630,11 +816,7 @@ describe('SouthFTP', () => {
       await southWithLimit.directQuery([configWithLimit.items[0]]);
 
       assert.strictEqual(mockFtpClient.downloadTo.mock.calls.length, 1);
-      assert.ok(
-        logger.debug.mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Max size limit (1 MB) reached for item item1, skipping remaining files'
-        )
-      );
+      assert.ok(logIncludes(logger.debug, 'Max size limit (1 MB) reached for item item1, skipping remaining files'));
     });
 
     it('should respect max size limit and stop file query across items', async () => {
@@ -664,11 +846,7 @@ describe('SouthFTP', () => {
       await southWithLimit.directQuery(configWithLimit.items);
 
       assert.strictEqual(mockFtpClient.downloadTo.mock.calls.length, 2);
-      assert.ok(
-        logger.debug.mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Max size limit (1 MB) reached for item item1, skipping remaining files'
-        )
-      );
+      assert.ok(logIncludes(logger.debug, 'Max size limit (1 MB) reached for item item1, skipping remaining files'));
     });
 
     it('should start a connector with a different id', async () => {
@@ -678,30 +856,7 @@ describe('SouthFTP', () => {
       (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
       await newSouth.start();
 
-      assert.ok(
-        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(c => (c.arguments[0] as string).includes('enabled'))
-      );
-    });
-
-    it('should handle listFiles error when FTP access fails', async () => {
-      mockFtpClient.access.mock.mockImplementation(async () => {
-        throw new Error('FTP access failed');
-      });
-
-      const item = configuration.items[0];
-      await assert.rejects(south.listFiles(item, []), new Error('FTP access failed'));
-      assert.ok(mockFtpClient.access.mock.calls.length > 0);
-    });
-
-    it('should handle getFile error when FTP access fails', async () => {
-      const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
-
-      mockFtpClient.access.mock.mockImplementation(async () => {
-        throw new Error('FTP access failed');
-      });
-
-      const item = configuration.items[0];
-      await assert.rejects(south.getFile(fileInfo, item, []), new Error('FTP access failed'));
+      assert.ok(logIncludes(logger.debug, 'enabled'));
     });
 
     it('should handle download error', async () => {
@@ -715,29 +870,6 @@ describe('SouthFTP', () => {
       await assert.rejects(south.getFile(fileInfo, item, []), new Error('Download failed'));
     });
 
-    it('should handle FTP close error in listFiles', async () => {
-      const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
-
-      mockFtpClient.list.mock.mockImplementation(async () => [fileInfo]);
-      mockFtpClient.close.mock.mockImplementationOnce(() => {
-        throw new Error('Close failed');
-      });
-
-      const item = configuration.items[0];
-      await assert.rejects(south.listFiles(item, []), new Error('Close failed'));
-    });
-
-    it('should handle FTP close error in getFile', async () => {
-      const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
-
-      mockFtpClient.downloadTo.mock.mockImplementation(async () => {
-        throw new Error('download failed');
-      });
-
-      const item = configuration.items[0];
-      await assert.rejects(south.getFile(fileInfo, item, []), new Error('download failed'));
-    });
-
     it('should handle file unlink error after compression', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
@@ -749,13 +881,7 @@ describe('SouthFTP', () => {
         ...configuration,
         settings: { ...configuration.settings, compression: true }
       };
-      const southWithCompression = new SouthFtp(
-        configurationWithCompression,
-        addContentCallback,
-        southCacheRepository,
-
-        'cacheFolder'
-      );
+      const southWithCompression = new SouthFtp(configurationWithCompression, addContentCallback, southCacheRepository, 'cacheFolder');
       await southWithCompression.start();
 
       const item = configuration.items[0];
@@ -772,14 +898,9 @@ describe('SouthFTP', () => {
         ...configuration,
         settings: { ...configuration.settings, username: '', password: '' }
       };
-      const southWithoutCredentials = new SouthFtp(
-        configWithoutCredentials,
-        addContentCallback,
-        southCacheRepository,
+      const southWithoutCredentials = new SouthFtp(configWithoutCredentials, addContentCallback, southCacheRepository, 'cacheFolder');
 
-        'cacheFolder'
-      );
-
+      mockFtpClient.access.mock.resetCalls();
       await southWithoutCredentials.testConnection();
 
       assert.deepStrictEqual(mockFtpClient.access.mock.calls[0].arguments[0], {
@@ -789,33 +910,6 @@ describe('SouthFTP', () => {
         password: '',
         secure: false
       });
-    });
-
-    it('should handle start method when connector id is not test', async () => {
-      const nonTestConfig = { ...configuration, id: 'southId-not-test' };
-      const nonTestSouth = new SouthFtp(nonTestConfig, addContentCallback, southCacheRepository, 'cacheFolder');
-
-      (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
-      await nonTestSouth.start();
-
-      assert.ok(
-        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(c => (c.arguments[0] as string).includes('enabled'))
-      );
-    });
-
-    it('should handle start method when connector id is not test and createFolder succeeds', async () => {
-      const nonTestConfig = { ...configuration, id: 'southId-not-test' };
-
-      mock.method(fs, 'mkdir', async () => undefined);
-
-      const nonTestSouth = new SouthFtp(nonTestConfig, addContentCallback, southCacheRepository, 'cacheFolder');
-      (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
-
-      await nonTestSouth.start();
-
-      assert.ok(
-        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(c => (c.arguments[0] as string).includes('enabled'))
-      );
     });
 
     it('should handle preserveFiles with ignoreModifiedDate true', () => {
@@ -834,17 +928,6 @@ describe('SouthFTP', () => {
       assert.strictEqual(result, false);
     });
 
-    it('should handle file access and close properly even with errors', async () => {
-      const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
-
-      const item = configuration.items[0];
-      await south.getFile(fileInfo, item, []);
-
-      assert.ok(mockFtpClient.access.mock.calls.length > 0);
-      assert.ok(mockFtpClient.downloadTo.mock.calls.length > 0);
-      assert.ok(mockFtpClient.close.mock.calls.length > 0);
-    });
-
     it('should handle try-catch blocks properly in getFile with compression error and unlink error', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
@@ -859,13 +942,7 @@ describe('SouthFTP', () => {
         ...configuration,
         settings: { ...configuration.settings, compression: true }
       };
-      const southWithCompression = new SouthFtp(
-        configurationWithCompression,
-        addContentCallback,
-        southCacheRepository,
-
-        'cacheFolder'
-      );
+      const southWithCompression = new SouthFtp(configurationWithCompression, addContentCallback, southCacheRepository, 'cacheFolder');
       await southWithCompression.start();
 
       const item = configuration.items[0];
@@ -884,13 +961,7 @@ describe('SouthFTP', () => {
         ...configuration,
         settings: { ...configuration.settings, password: 'encrypted-password' }
       };
-      const southWithEncryptedPassword = new SouthFtp(
-        configWithEncryptedPassword,
-        addContentCallback,
-        southCacheRepository,
-
-        'cacheFolder'
-      );
+      const southWithEncryptedPassword = new SouthFtp(configWithEncryptedPassword, addContentCallback, southCacheRepository, 'cacheFolder');
 
       await southWithEncryptedPassword.testConnection();
 
@@ -943,9 +1014,7 @@ describe('SouthFTP', () => {
       const item = configuration.items[1]; // preserveFiles: true
       await south.getFile(fileInfoWithoutDate, item, []);
 
-      assert.ok(mockFtpClient.access.mock.calls.length > 0);
       assert.ok(mockFtpClient.downloadTo.mock.calls.length > 0);
-      assert.ok(mockFtpClient.close.mock.calls.length > 0);
     });
 
     it('should handle file unlink error in non-compression mode', async () => {
@@ -978,13 +1047,7 @@ describe('SouthFTP', () => {
         ...configuration,
         settings: { ...configuration.settings, compression: true }
       };
-      const southWithCompression = new SouthFtp(
-        configurationWithCompression,
-        addContentCallback,
-        southCacheRepository,
-
-        'cacheFolder'
-      );
+      const southWithCompression = new SouthFtp(configurationWithCompression, addContentCallback, southCacheRepository, 'cacheFolder');
       await southWithCompression.start();
 
       const item = configuration.items[0];

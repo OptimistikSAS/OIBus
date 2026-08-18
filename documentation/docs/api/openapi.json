@@ -3160,13 +3160,18 @@
 					},
 					"compression": {
 						"type": "boolean"
+					},
+					"retryInterval": {
+						"type": "number",
+						"format": "double"
 					}
 				},
 				"required": [
 					"host",
 					"port",
 					"authentication",
-					"compression"
+					"compression",
+					"retryInterval"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -10436,6 +10441,10 @@
 					},
 					"compression": {
 						"type": "boolean"
+					},
+					"retryInterval": {
+						"type": "number",
+						"format": "double"
 					}
 				},
 				"required": [
@@ -10443,7 +10452,8 @@
 					"port",
 					"authentication",
 					"username",
-					"compression"
+					"compression",
+					"retryInterval"
 				],
 				"type": "object",
 				"additionalProperties": false
