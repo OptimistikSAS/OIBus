@@ -11,6 +11,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { createConnectionOptions, getItem } from '../../service/utils-mqtt';
+import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
 
 /**
  * Class SouthMQTT - Subscribe to a data topic from a MQTT broker
@@ -53,11 +54,13 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     }
     const options = await createConnectionOptions(this.connector.id, this.connector.settings, this.logger);
     try {
-      this.logger.info(`Connecting to "${this.connector.settings.url}"`);
+      this.logger.debug(`Connecting to "${this.connector.settings.url}"`);
+      const connectStart = DateTime.now().toMillis();
       this.client = await mqtt.connectAsync(this.connector.settings.url, options);
+      const connectDuration = DateTime.now().toMillis() - connectStart;
       this.client.once('error', async error => {
         await this.disconnect();
-        this.logger.error(`MQTT Client error: ${error}`);
+        this.logger.error(`MQTT Client error: ${getErrorMessage(error)}`);
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.reconnectPeriod);
       });
       this.client.once('close', () => {
@@ -82,15 +85,17 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
             await this.flushMessages();
           }
         } catch (error: unknown) {
-          this.logger.error(`Error for topic ${topic}: ${(error as Error).message}`);
+          this.logger.error(`Error for topic ${topic}: ${getErrorMessage(error)}`);
           return;
         }
       });
-      this.logger.info(`MQTT South connector "${this.connector.name}" connected`);
+      this.logger.info(
+        `MQTT South connector "${this.connector.name}" connected to "${this.connector.settings.url}" in ${connectDuration} ms`
+      );
       this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.connector.settings.flushMessageTimeout);
       await super.connect();
     } catch (error: unknown) {
-      this.logger.error(`Error while connecting to the MQTT broker: ${(error as Error).message}`);
+      this.logger.error(`Error while connecting to the MQTT broker: ${getErrorMessage(error)}`);
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.reconnectPeriod);
@@ -137,7 +142,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
           await this.addContent({ type: 'any-content', content: JSON.stringify(payload) }, DateTime.now().toUTC().toISO(), [item]);
         }
       } catch (error: unknown) {
-        this.logger.error(`Error when flushing messages: ${(error as Error).message}`);
+        this.logger.error(`Error when flushing messages: ${getErrorMessage(error)}`);
       }
     }
     this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.connector.settings.flushMessageTimeout);
@@ -166,6 +171,8 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
     const options = await createConnectionOptions(this.connector.id, this.connector.settings, this.logger);
+    this.logger.debug(`Connecting to "${this.connector.settings.url}"`);
+    const connectStart = DateTime.now().toMillis();
     const connack = await new Promise<IConnackPacket>((resolve, reject) => {
       const client = mqtt.connect(this.connector.settings.url, options);
       client.once('connect', (packet: IConnackPacket) => {
@@ -177,6 +184,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
         reject(error);
       });
     });
+    this.logger.info(`Connected to "${this.connector.settings.url}" in ${DateTime.now().toMillis() - connectStart} ms`);
 
     const items: Array<{ key: string; value: string }> = [];
     items.push({ key: 'SessionPresent', value: String(connack.sessionPresent) });
@@ -209,14 +217,16 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       return await new Promise<SouthConnectorItemQueryResult>((resolve, reject) => {
         (async () => {
           try {
-            const connectStart = DateTime.now().toMillis();
-            client = await mqtt.connectAsync(this.connector.settings.url, options);
+            this.logger.debug(`Connecting to "${this.connector.settings.url}"`);
+          const connectStart = DateTime.now().toMillis();
+           client = await mqtt.connectAsync(this.connector.settings.url, options);
             const connectionDuration = DateTime.now().toMillis() - connectStart;
-            const queryStart = DateTime.now().toMillis();
-            client.once('message', async (topic, message, _packet) => {
-              try {
-                const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
-                await client!.unsubscribeAsync(item.settings.topic);
+            this.logger.info(`Connected to "${this.connector.settings.url}" in ${connectionDuration} ms`);
+          const queryStart = DateTime.now().toMillis();
+          client.once('message', async (topic, message, _packet) => {
+            try {
+              const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
+              await client!.unsubscribeAsync(item.settings.topic);
                 resolve({
                   result: {
                     type: 'any-content',
@@ -235,12 +245,12 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
                   queryDuration: DateTime.now().toMillis() - queryStart
                 });
               } catch (error: unknown) {
-                reject(`Error when testing item ${item.settings.topic} (received message "${message}"): ${(error as Error).message}`);
+                reject(`Error when testing item ${item.settings.topic} (received message "${message}"): ${getErrorMessage(error)}`);
               }
             });
             await client.subscribeAsync(item.settings.topic);
           } catch (error: unknown) {
-            reject(`Error when testing item ${item.settings.topic}: ${(error as Error).message}`);
+            reject(`Error when testing item ${item.settings.topic}: ${getErrorMessage(error)}`);
           }
         })().catch(reject); // Immediately invoke the async IIFE and catch any errors
       });
@@ -264,7 +274,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
         { qos: parseInt(this.connector.settings.qos) as QoS }
       );
     } catch (error: unknown) {
-      this.logger.error(`Subscription error: ${(error as Error).message}`);
+      this.logger.error(workUnitLogCtx(items), `Subscription error: ${getErrorMessage(error)}`);
     }
   }
 
@@ -277,7 +287,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     try {
       await this.client.unsubscribeAsync(items.map(item => item.settings.topic));
     } catch (error: unknown) {
-      this.logger.error(`Unsubscription error: ${(error as Error).message}`);
+      this.logger.error(workUnitLogCtx(items), `Unsubscription error: ${getErrorMessage(error)}`);
     }
   }
 }

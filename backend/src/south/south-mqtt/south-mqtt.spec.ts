@@ -280,7 +280,9 @@ describe('SouthMQTT', () => {
     assert.strictEqual(mqttExports.default.connectAsync.mock.calls.length, 1);
     assert.deepStrictEqual(mqttExports.default.connectAsync.mock.calls[0].arguments, [configuration.settings.url, {}]);
     assert.ok(
-      logger.info.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === `MQTT South connector "south" connected`)
+      logger.info.mock.calls.some((c: { arguments: Array<unknown> }) =>
+        (c.arguments[0] as string).startsWith(`MQTT South connector "south" connected to "${configuration.settings.url}" in`)
+      )
     );
 
     // maxNumberOfMessages = 1, first message should NOT flush yet (message count < max before buffering)
@@ -586,7 +588,7 @@ describe('SouthMQTT', () => {
     await flushPromises();
     await south.subscribe(configuration.items);
     assert.ok(
-      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === `Subscription error: subscription error`)
+      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[1] === `Subscription error: subscription error`)
     );
     assert.strictEqual(mqttStream.subscribeAsync.mock.calls.length, 1);
     assert.deepStrictEqual(mqttStream.subscribeAsync.mock.calls[0].arguments, [
@@ -611,7 +613,7 @@ describe('SouthMQTT', () => {
     await flushPromises();
     await south.unsubscribe(configuration.items);
     assert.ok(
-      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === `Unsubscription error: unsubscription error`)
+      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[1] === `Unsubscription error: unsubscription error`)
     );
     assert.strictEqual(mqttStream.unsubscribeAsync.mock.calls.length, 1);
     assert.deepStrictEqual(mqttStream.unsubscribeAsync.mock.calls[0].arguments, [configuration.items.map(item => item.settings.topic)]);
