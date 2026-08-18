@@ -29,7 +29,23 @@ describe('South PI', () => {
     delay: mock.fn(async () => undefined),
     generateIntervals: mock.fn(() => []),
     groupItemsByGroup: mock.fn(() => []),
-    validateCronExpression: mock.fn(() => ({ expression: '' }))
+    validateCronExpression: mock.fn(() => ({ expression: '' })),
+    getErrorMessage: mock.fn((error: unknown) => {
+      if (error instanceof Error) return error.message;
+      if (typeof error === 'string') return error;
+      if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
+        return (error as { message: string }).message;
+      }
+      return String(error);
+    }),
+    // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
+    // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
+    workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
+      if (items.length === 0) return {};
+      if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
+      const lead = items[0];
+      return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
+    })
   };
 
   const httpRequestExports = {
@@ -324,8 +340,8 @@ describe('South PI', () => {
     });
     assert.strictEqual(addContentMock.mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
     assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [configuration.items[0], configuration.items[1]]);
-    assert.ok(logger.warn.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'log1'));
-    assert.ok(logger.warn.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'log2'));
+    assert.ok(logger.warn.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[1] === 'log1'));
+    assert.ok(logger.warn.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[1] === 'log2'));
 
     const resultNoUpdateInstant = await south.historyQuery(configuration.items, result!.trackedInstant!, endTime);
     assert.deepStrictEqual(resultNoUpdateInstant, {
@@ -336,7 +352,7 @@ describe('South PI', () => {
     const noResult = await south.historyQuery(configuration.items, startTime, endTime);
     assert.deepStrictEqual(noResult, { trackedInstant: null, value: null });
     assert.ok(
-      logger.debug.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'No result found. Request done in 0 ms')
+      logger.debug.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[1] === 'No result found. Request done in 0 ms')
     );
     assert.strictEqual(logger.warn.mock.calls.length, 2);
   });

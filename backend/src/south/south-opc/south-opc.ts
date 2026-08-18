@@ -8,6 +8,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
+import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
 
 /**
  * Class SouthOPC - Run an OPC agent to connect to an OPC server.
@@ -39,6 +40,8 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
     }
 
     try {
+      this.logger.debug(`Connecting to OPC agent at ${this.connector.settings.agentUrl}`);
+      const connectStart = DateTime.now().toMillis();
       const fetchOptions = {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -52,11 +55,15 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
       const requestUrl = new URL(`/api/opc/${this.connector.id}/connect`, this.connector.settings.agentUrl);
       await HTTPRequest(requestUrl, fetchOptions);
       this.connected = true;
+      this.logger.info(`Connected to OPC agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - connectStart} ms`);
       await super.connect();
     } catch (error) {
       this.logger.error(
-        `Error while sending connection HTTP request into agent. Reconnecting in ${this.connector.settings.retryInterval} ms. ${error}`
+        `Error while sending connection HTTP request into agent. Reconnecting in ${this.connector.settings.retryInterval} ms. ${getErrorMessage(error)}`
       );
+      // Guarded together (not just the reschedule): disconnect() resets `disconnecting` to false at
+      // its own end, so calling it re-entrantly while an outer disconnect()/stop() is still in
+      // flight would cut that outer call's "disconnecting" state short.
       if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
         await this.disconnect();
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
@@ -65,6 +72,8 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
+    this.logger.debug(`Connecting to OPC agent at ${this.connector.settings.agentUrl}`);
+    const connectStart = DateTime.now().toMillis();
     const fetchOptions: ReqOptions = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -79,12 +88,13 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
     const connectResponse = await HTTPRequest(connectUrl, fetchOptions);
 
     if (connectResponse.statusCode === 200) {
+      this.logger.info(`Connected to OPC agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - connectStart} ms`);
       const statusUrl = new URL(`/api/opc/${this.connector.id}-test/status`, this.connector.settings.agentUrl);
       const response = await HTTPRequest(statusUrl, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });
-      this.logger.info(`OPC server info: ${await response.body.json()}`);
+      this.logger.info(`OPC server info: ${JSON.stringify(await response.body.json())}`);
 
       const disconnectUrl = new URL(`/api/opc/${this.connector.id}-test/disconnect`, this.connector.settings.agentUrl);
       await HTTPRequest(disconnectUrl, { method: 'DELETE' });
@@ -159,6 +169,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
     startTime: Instant,
     endTime: Instant
   ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
+    const logCtx = workUnitLogCtx(items);
     let updatedStartTime: Instant | null = null;
     let result: {
       recordCount: number;
@@ -207,6 +218,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
       for (const [aggregate, aggregatedItems] of itemsByAggregates.entries()) {
         for (const [resampling, resampledItems] of aggregatedItems.entries()) {
           this.logger.debug(
+            logCtx,
             `Requesting ${resampledItems.length} items with aggregate ${aggregate} and resampling ${resampling} between ${startTime} and ${endTime}`
           );
           const startRequest = DateTime.now();
@@ -239,6 +251,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
 
             if (result.recordCount > 0) {
               this.logger.debug(
+                logCtx,
                 `Found ${result.recordCount} results for ${resampledItems.length} items in ${requestDuration} ms. Max instant retrieved: ${result.maxInstantRetrieved}`
               );
               await this.addContent(
@@ -251,14 +264,14 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
                 updatedStartTime = DateTime.fromISO(result.maxInstantRetrieved).plus({ millisecond: 1 }).toUTC().toISO()!;
               }
             } else {
-              this.logger.debug(`No result found. Request done in ${requestDuration} ms`);
+              this.logger.debug(logCtx, `No result found. Request done in ${requestDuration} ms`);
             }
           } else if (response.statusCode === 400) {
+            // No log here: the base class's runTask() already logs this error with this item's/group's
+            // context when it's thrown from the scheduled historyQuery() path.
             const errorMessage = await response.body.text();
-            this.logger.error(`Error occurred when querying remote agent with status ${response.statusCode}: ${errorMessage}`);
             throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}: ${errorMessage}`);
           } else {
-            this.logger.error(`Error occurred when querying remote agent with status ${response.statusCode}`);
             throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}`);
           }
         }
@@ -281,12 +294,16 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
     }
 
     if (this.connected) {
+      const disconnectStart = DateTime.now().toMillis();
       try {
         const fetchOptions = { method: 'DELETE' };
         const requestUrl = new URL(`/api/opc/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
         await HTTPRequest(requestUrl, fetchOptions);
+        this.logger.info(
+          `Disconnected from OPC agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - disconnectStart} ms`
+        );
       } catch (error) {
-        this.logger.error(`Error while sending disconnection HTTP request into agent. ${error}`);
+        this.logger.error(`Error while sending disconnection HTTP request into agent: ${getErrorMessage(error)}`);
       }
     }
     this.connected = false;

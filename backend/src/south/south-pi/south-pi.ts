@@ -8,6 +8,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest } from '../../service/http-request.utils';
+import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
 
 /**
  * Class SouthPI - Run a PI Agent to connect to a PI server.
@@ -39,6 +40,8 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     }
 
     try {
+      this.logger.debug(`Connecting to PI agent at ${this.connector.settings.agentUrl}`);
+      const connectStart = DateTime.now().toMillis();
       const fetchOptions = {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' }
@@ -47,11 +50,15 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       const requestUrl = new URL(`/api/pi/${this.connector.id}/connect`, this.connector.settings.agentUrl);
       await HTTPRequest(requestUrl, fetchOptions);
       this.connected = true;
+      this.logger.info(`Connected to PI agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - connectStart} ms`);
       await super.connect();
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(
-        `Error while sending connection HTTP request into agent. Reconnecting in ${this.connector.settings.retryInterval} ms. ${error}`
+        `Error while sending connection HTTP request into agent. Reconnecting in ${this.connector.settings.retryInterval} ms. ${getErrorMessage(error)}`
       );
+      // Guarded together (not just the reschedule): disconnect() resets `disconnecting` to false at
+      // its own end, so calling it re-entrantly while an outer disconnect()/stop() is still in
+      // flight would cut that outer call's "disconnecting" state short.
       if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
         await this.disconnect();
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
@@ -63,6 +70,8 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     // Uses an isolated `${this.connector.id}-test` agent session (like testItem()) so a running
     // connector's own live session is never connected/disconnected by a connection test.
     const testSessionId = `${this.connector.id}-test`;
+    this.logger.debug(`Connecting to PI agent at ${this.connector.settings.agentUrl}`);
+    const connectStart = DateTime.now().toMillis();
     const fetchOptions = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' }
@@ -70,6 +79,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     const requestUrl = new URL(`/api/pi/${testSessionId}/connect`, this.connector.settings.agentUrl);
     const response = await HTTPRequest(requestUrl, fetchOptions);
     if (response.statusCode === 200) {
+      this.logger.info(`Connected to PI agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - connectStart} ms`);
       const disconnectUrl = new URL(`/api/pi/${testSessionId}/disconnect`, this.connector.settings.agentUrl);
       await HTTPRequest(disconnectUrl, { method: 'DELETE' });
     } else if (response.statusCode === 400) {
@@ -155,8 +165,9 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     startTime: Instant,
     endTime: Instant
   ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
+    const logCtx = workUnitLogCtx(items);
     let updatedStartTime: Instant | null = null;
-    this.logger.debug(`Requesting ${items.length} items between ${startTime} and ${endTime}`);
+    this.logger.debug(logCtx, `Requesting ${items.length} items between ${startTime} and ${endTime}`);
     const startRequest = DateTime.now();
 
     const fetchOptions = {
@@ -192,17 +203,17 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
 
       if (result.logs.length > 0) {
         for (const log of result.logs) {
-          this.logger.warn(log);
+          this.logger.warn(logCtx, log);
         }
       }
       if (result.recordCount > 0) {
-        this.logger.debug(`Found ${result.recordCount} results for ${items.length} items in ${requestDuration} ms`);
+        this.logger.debug(logCtx, `Found ${result.recordCount} results for ${items.length} items in ${requestDuration} ms`);
         await this.addContent({ type: 'time-values', content: result.content }, startRequest.toUTC().toISO(), items);
         if (result.maxInstantRetrieved > startTime) {
           updatedStartTime = result.maxInstantRetrieved;
         }
       } else {
-        this.logger.debug(`No result found. Request done in ${requestDuration} ms`);
+        this.logger.debug(logCtx, `No result found. Request done in ${requestDuration} ms`);
       }
     } else if (response.statusCode === 400) {
       const errorMessage = await response.body.text();
@@ -220,12 +231,16 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       this.reconnectTimeout = null;
     }
     if (this.connected) {
+      const disconnectStart = DateTime.now().toMillis();
       try {
         const fetchOptions = { method: 'DELETE' };
         const requestUrl = new URL(`/api/pi/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
         await HTTPRequest(requestUrl, fetchOptions);
+        this.logger.info(
+          `Disconnected from PI agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - disconnectStart} ms`
+        );
       } catch (error) {
-        this.logger.error(`Error while sending disconnection HTTP request into agent. ${error}`);
+        this.logger.error(`Error while sending disconnection HTTP request into agent: ${getErrorMessage(error)}`);
       }
     }
     this.connected = false;
