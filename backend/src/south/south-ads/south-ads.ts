@@ -270,8 +270,12 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     return contentResult.length > 0 ? contentResult[contentResult.length - 1] : null;
   }
 
-  async readAdsSymbol(item: SouthConnectorItemEntity<SouthADSItemSettings>, timestamp: Instant): Promise<Array<OIBusTimeValue>> {
-    const result = await this.client!.readValue(item.settings.address);
+  async readAdsSymbol(
+    item: SouthConnectorItemEntity<SouthADSItemSettings>,
+    timestamp: Instant,
+    client: Client = this.client!
+  ): Promise<Array<OIBusTimeValue>> {
+    const result = await client.readValue(item.settings.address);
 
     return this.parseValues(
       `${this.connector.settings.plcName}${item.name}`,
@@ -287,14 +291,24 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     item: SouthConnectorItemEntity<SouthADSItemSettings>,
     _testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
+    // Reuse the already-connected live client when this instance is live and connected, instead of
+    // opening a second one on top of it. This.client (the connector's persistent connection) must
+    // never be mutated or closed from here — some ADS/TwinCAT routers also cap concurrent client
+    // connections, so reusing avoids exceeding that cap while the connector is running.
+    const reusingLiveClient = this.client !== null;
+    let client: Client | undefined = this.client ?? undefined;
+    let connectionDuration = 0;
     try {
-      const connectStart = DateTime.now().toMillis();
-      await this.connect();
-      const connectionDuration = DateTime.now().toMillis() - connectStart;
+      if (!client) {
+        const options = this.createConnectionOptions();
+        client = new Client(options);
+        const connectStart = DateTime.now().toMillis();
+        await client.connect();
+        connectionDuration = DateTime.now().toMillis() - connectStart;
+      }
       const queryStart = DateTime.now().toMillis();
-      const dataValues: Array<OIBusTimeValue> = await this.readAdsSymbol(item, DateTime.now().toUTC().toISO()!);
+      const dataValues: Array<OIBusTimeValue> = await this.readAdsSymbol(item, DateTime.now().toUTC().toISO()!, client);
       const queryDuration = DateTime.now().toMillis() - queryStart;
-      await this.disconnect();
       return {
         result: {
           type: 'time-values',
@@ -305,6 +319,10 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
       };
     } catch (error: unknown) {
       throw new Error(`Unable to connect. ${(error as Error).message}`);
+    } finally {
+      if (client && !reusingLiveClient) {
+        await this.closeLocalAdsClient(client);
+      }
     }
   }
 
@@ -361,11 +379,19 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
-    const options = this.createConnectionOptions();
-    this.client = new Client(options);
-    await this.client.connect();
+    // Reuse the already-connected live client when this instance is live and connected, instead of
+    // opening a second one on top of it. This.client (the connector's persistent connection) must
+    // never be mutated or closed from here — some ADS/TwinCAT routers also cap concurrent client
+    // connections, so reusing avoids exceeding that cap while the connector is running.
+    const reusingLiveClient = this.client !== null;
+    let client: Client | undefined = this.client ?? undefined;
     try {
-      const [deviceInfo, state] = await Promise.all([this.client.readDeviceInfo(), this.client.readState()]);
+      if (!client) {
+        const options = this.createConnectionOptions();
+        client = new Client(options);
+        await client.connect();
+      }
+      const [deviceInfo, state] = await Promise.all([client.readDeviceInfo(), client.readState()]);
       return {
         items: [
           { key: 'Device name', value: deviceInfo.deviceName },
@@ -375,7 +401,23 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
         ]
       };
     } finally {
-      await this.disconnect();
+      if (client && !reusingLiveClient) {
+        await this.closeLocalAdsClient(client);
+      }
+    }
+  }
+
+  /**
+   * Close a local ADS client created for testConnection()/testItem(). This is separate from
+   * disconnectAdsClient()/disconnect() which operate on the connector's persistent this.client —
+   * it must never touch this.client or this.reconnectTimeout.
+   */
+  private async closeLocalAdsClient(client: Client): Promise<void> {
+    if (!client.connection.connected) return;
+    try {
+      await client.disconnect();
+    } catch (error) {
+      this.logger.error(`ADS test client disconnect error. ${error}`);
     }
   }
 

@@ -589,7 +589,10 @@ describe('South ADS', () => {
       mock.fn(async () => undefined)
     );
     const result = await south.testConnection();
-    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    // testConnection() must never touch the connector's own disconnect()/this.client
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.strictEqual((south as unknown as Record<string, unknown>)['client'], null);
+    assert.strictEqual(disconnect.mock.calls.length, 1); // the local test client was closed instead
     assert.deepStrictEqual(result, {
       items: [
         { key: 'Device name', value: 'TestDevice' },
@@ -600,7 +603,7 @@ describe('South ADS', () => {
     });
   });
 
-  it('should disconnect even when testConnection device info fetch fails', async () => {
+  it('should close the local test client even when testConnection device info fetch fails', async () => {
     readDeviceInfo.mock.mockImplementation(() => {
       throw new Error('readDeviceInfo failed');
     });
@@ -610,7 +613,37 @@ describe('South ADS', () => {
       mock.fn(async () => undefined)
     );
     await assert.rejects(south.testConnection(), new Error('readDeviceInfo failed'));
-    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.strictEqual((south as unknown as Record<string, unknown>)['client'], null);
+    assert.strictEqual(disconnect.mock.calls.length, 1);
+  });
+
+  it('should reuse the live client in testConnection without touching this.client or reconnectTimeout', async () => {
+    await south.start();
+    await south.connect();
+    connect.mock.resetCalls();
+    const liveClient = (south as unknown as Record<string, unknown>)['client'];
+    assert.ok(liveClient !== null);
+
+    (south as unknown as Record<string, unknown>)['reconnectTimeout'] = 'sentinel';
+
+    const result = await south.testConnection();
+
+    // No new Client was created — the live one was reused
+    assert.strictEqual(connect.mock.calls.length, 0);
+    // this.client must be untouched: same reference, still set, never nulled or disconnected
+    assert.strictEqual((south as unknown as Record<string, unknown>)['client'], liveClient);
+    assert.strictEqual(disconnect.mock.calls.length, 0);
+    // this.reconnectTimeout must be untouched
+    assert.strictEqual((south as unknown as Record<string, unknown>)['reconnectTimeout'], 'sentinel');
+    assert.deepStrictEqual(result, {
+      items: [
+        { key: 'Device name', value: 'TestDevice' },
+        { key: 'Firmware version', value: '3.1.4000' },
+        { key: 'ADS state', value: 'Run' },
+        { key: 'Device state', value: '0' }
+      ]
+    });
   });
 
   it('should read symbol', async () => {
@@ -698,13 +731,10 @@ describe('South ADS', () => {
   });
 
   it('should test item and succeed', async () => {
-    const connectMock = mock.method(
-      south,
-      'connect',
-      mock.fn(async () => {
-        mock.timers.tick(15);
-      })
-    );
+    connect.mock.mockImplementationOnce(async () => {
+      mock.timers.tick(15);
+      return { targetAmsNetId: 'targetAmsNetId', localAmsNetId: 'localAmsNetId', localAdsPort: 'localAdsPort' };
+    });
     const disconnectMock = mock.method(
       south,
       'disconnect',
@@ -723,30 +753,66 @@ describe('South ADS', () => {
         return [mockedResult];
       })
     );
-    await south.start();
+    // Note: no south.start()/south.connect() here — this.client must stay null so testItem()
+    // exercises the "no live client" path and creates its own local client.
     const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
-    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    // testItem() must never touch the connector's own connect()/disconnect()/this.client
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.strictEqual((south as unknown as Record<string, unknown>)['client'], null);
+    assert.strictEqual(disconnect.mock.calls.length, 1); // the local test client was closed instead
     assert.deepStrictEqual(result, {
       result: { type: 'time-values', content: [mockedResult] },
       connectionDuration: 15,
       queryDuration: 25
     });
-    assert.ok(connectMock.mock.calls.length >= 1);
+  });
+
+  it('should reuse the live client in testItem without touching this.client or reconnectTimeout', async () => {
+    await south.start();
+    await south.connect();
+    connect.mock.resetCalls();
+    const liveClient = (south as unknown as Record<string, unknown>)['client'];
+    assert.ok(liveClient !== null);
+
+    (south as unknown as Record<string, unknown>)['reconnectTimeout'] = 'sentinel';
+
+    const mockedResult = {
+      pointId: 'pointId',
+      timestamp: '2024-06-10T14:00:00.000Z',
+      data: { value: 42 }
+    };
+    const readAdsSymbolMock = mock.method(
+      south,
+      'readAdsSymbol',
+      mock.fn(async () => [mockedResult])
+    );
+
+    const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
+
+    // No new Client was created and connected — the live one was reused
+    assert.strictEqual(connect.mock.calls.length, 0);
+    // this.client must be untouched: same reference, still set, never nulled or disconnected
+    assert.strictEqual((south as unknown as Record<string, unknown>)['client'], liveClient);
+    assert.strictEqual(disconnect.mock.calls.length, 0);
+    // this.reconnectTimeout must be untouched
+    assert.strictEqual((south as unknown as Record<string, unknown>)['reconnectTimeout'], 'sentinel');
+    // readAdsSymbol was handed the reused live client, not a fresh one
+    assert.strictEqual(readAdsSymbolMock.mock.calls[0].arguments[2], liveClient);
+    assert.deepStrictEqual(result.result, { type: 'time-values', content: [mockedResult] });
+    assert.strictEqual(result.connectionDuration, 0);
   });
 
   it('should test item and throw an error', async () => {
-    mock.method(
-      south,
-      'connect',
-      mock.fn(async () => {
-        throw new Error('undefined');
-      })
-    );
+    connect.mock.mockImplementationOnce(() => {
+      throw new Error('undefined');
+    });
 
     await assert.rejects(
       south.testItem(configuration.items[0], testData.south.itemTestingSettings),
       new Error('Unable to connect. undefined')
     );
+    // Failure must not have left the connector's own this.client set or touched
+    assert.strictEqual((south as unknown as Record<string, unknown>)['client'], null);
   });
 
   it('should use readRawMulti when items are found in the PLC symbol table', async () => {
