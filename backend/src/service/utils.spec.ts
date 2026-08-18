@@ -2192,6 +2192,47 @@ describe('Service utils', () => {
     });
   });
 
+  describe('workUnitLogCtx', () => {
+    const baseItem = testData.south.list[2].items[0];
+
+    const baseGroup = {
+      id: 'g1',
+      name: 'Group 1',
+      southId: 'south1',
+      scanMode: testData.scanMode.list[0],
+      startTimeOffset: null,
+      endTimeOffset: null,
+      maxReadInterval: null,
+      readDelay: 0,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+
+    it('should return an empty object for an empty work-unit', () => {
+      assert.deepStrictEqual(utils.workUnitLogCtx([]), {});
+    });
+
+    it('should return { itemId, itemName } for a single item, grouped or not', () => {
+      const item = { ...baseItem, id: 'item1', name: 'Item 1', group: null };
+      assert.deepStrictEqual(utils.workUnitLogCtx([item]), { itemId: 'item1', itemName: 'Item 1' });
+    });
+
+    it('should return { groupId, groupName } for several items sharing a synced group', () => {
+      const group = { ...baseGroup, id: 'g1', name: 'Group 1' };
+      const item1 = { ...baseItem, id: 'item1', group, syncWithGroup: true };
+      const item2 = { ...baseItem, id: 'item2', group, syncWithGroup: true };
+      assert.deepStrictEqual(utils.workUnitLogCtx([item1, item2]), { groupId: 'g1', groupName: 'Group 1' });
+    });
+
+    it('should return an empty object for several items that do not share a group', () => {
+      const item1 = { ...baseItem, id: 'item1', group: null, syncWithGroup: false };
+      const item2 = { ...baseItem, id: 'item2', group: null, syncWithGroup: false };
+      assert.deepStrictEqual(utils.workUnitLogCtx([item1, item2]), {});
+    });
+  });
+
   describe('readInitConfig', () => {
     const envVarsToClean = [
       'ENGINE_NAME',

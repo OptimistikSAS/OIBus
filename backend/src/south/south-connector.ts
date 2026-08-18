@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { delay, generateIntervals, groupItemsByGroup } from '../service/utils';
+import { delay, generateIntervals, getErrorMessage, groupItemsByGroup, workUnitLogCtx } from '../service/utils';
 
 import {
   SOUTH_SINGLE_ITEMS,
@@ -228,8 +228,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * subscription bookkeeping and the `'connected'` event are kept in sync.
    */
   connect(): Promise<void> {
-    this.logger.info(`South connector "${this.connector.name}" of type ${this.connector.type} started`);
-
     this.subscribedItems = [];
     this.metricsEvent.emit('connect', {
       lastConnection: DateTime.now().toUTC().toISO()!
@@ -281,7 +279,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         // whose id is still in subscriptionIds
         this.subscribedItems = this.subscribedItems.filter(item => subscriptionIds.has(item.id));
       } catch (error: unknown) {
-        this.logger.error(`Error when unsubscribing from items: ${(error as Error).message}`);
+        this.logger.error(`Error when unsubscribing from items: ${getErrorMessage(error)}`);
       }
     }
     // Subscribe to new items
@@ -291,7 +289,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         await this.subscribe(itemsToSubscribe);
         this.subscribedItems.push(...itemsToSubscribe);
       } catch (error: unknown) {
-        this.logger.error(`Error when subscribing to new items: ${(error as Error).message}`);
+        this.logger.error(`Error when subscribing to new items: ${getErrorMessage(error)}`);
       }
     }
   }
@@ -390,7 +388,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
           // Safety net for anything unexpected outside runTask's own per-branch try/catch (e.g. a
           // metrics emit throwing synchronously). Logged rather than left as an unhandled
           // rejection; this.taskQueue/itemStatus cleanup below still runs via finally() regardless.
-          this.logger.error(`Unhandled error in South task runner: ${(error as Error).message}`);
+          this.logger.error(`Unhandled error in South task runner: ${getErrorMessage(error)}`);
         })
         .finally(() => {
           this.runningTasks.delete(taskPromise);
@@ -429,13 +427,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       try {
         await this.directQueryHandler(items);
       } catch (error: unknown) {
-        const logCtx =
-          items.length === 1
-            ? { itemId: items[0].id, itemName: items[0].name }
-            : items[0].group
-              ? { groupId: items[0].group.id, groupName: items[0].group.name }
-              : {};
-        this.logger.error(logCtx, `Error when querying items with direct access: ${(error as Error).message}`);
+        this.logger.error(workUnitLogCtx(items), `Error when querying items with direct access: ${getErrorMessage(error)}`);
       }
     }
     if (this.hasHistoryQuery()) {
@@ -454,13 +446,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         const now = DateTime.now().toUTC();
         await this.historyQueryHandler(items, now.minus((maxReadInterval || 3600) * 1000).toISO() as Instant, now.toISO() as Instant);
       } catch (error: unknown) {
-        const logCtx =
-          items.length === 1
-            ? { itemId: items[0].id, itemName: items[0].name }
-            : items[0].group
-              ? { groupId: items[0].group.id, groupName: items[0].group.name }
-              : {};
-        this.logger.error(logCtx, `Error when querying items with history capabilities: ${(error as Error).message}`);
+        this.logger.error(workUnitLogCtx(items), `Error when querying items with history capabilities: ${getErrorMessage(error)}`);
       }
     }
 
@@ -825,7 +811,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.taskQueue = [];
     this.itemStatus.clear();
 
-    this.logger.debug(`South connector "${this.connector.name}" (${this.connector.id}) disconnected`);
     return Promise.resolve();
   }
 

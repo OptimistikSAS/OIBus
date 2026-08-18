@@ -409,6 +409,7 @@ describe('Service utils OPCUA', () => {
       logs.set('200', { description: 'Success', affectedNodes: ['node1', 'node2'] });
       logMessages(logs, logger);
       assert.deepStrictEqual((logger.debug as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        {},
         'Success with status code 200: [node1,node2]'
       ]);
     });
@@ -419,6 +420,7 @@ describe('Service utils OPCUA', () => {
       logs.set('500', { description: 'Error', affectedNodes: nodes });
       logMessages(logs, logger);
       assert.deepStrictEqual((logger.debug as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        {},
         `500 status code (Error): [node1..node${MAX_NUMBER_OF_NODE_TO_LOG + 1}]`
       ]);
     });
@@ -427,6 +429,16 @@ describe('Service utils OPCUA', () => {
       const logs = new Map<string, { description: string; affectedNodes: Array<string> }>();
       logMessages(logs, logger);
       assert.strictEqual((logger.debug as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    });
+
+    it('should attach the given logCtx to every log line', () => {
+      const logs = new Map<string, { description: string; affectedNodes: Array<string> }>();
+      logs.set('200', { description: 'Success', affectedNodes: ['node1', 'node2'] });
+      logMessages(logs, logger, { groupId: 'group1', groupName: 'Group 1' });
+      assert.deepStrictEqual((logger.debug as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        { groupId: 'group1', groupName: 'Group 1' },
+        'Success with status code 200: [node1,node2]'
+      ]);
     });
 
     it('should handle multiple status codes in the logs map', () => {
@@ -439,11 +451,11 @@ describe('Service utils OPCUA', () => {
       logMessages(logs, logger);
       assert.strictEqual((logger.debug as ReturnType<typeof mock.fn>).mock.calls.length, 2);
       assert.ok(
-        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === 'Success with status code 200: [node1,node2]')
+        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[1] === 'Success with status code 200: [node1,node2]')
       );
       assert.ok(
         (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
-          c => c.arguments[0] === `500 status code (Error): [node1..node${MAX_NUMBER_OF_NODE_TO_LOG + 1}]`
+          c => c.arguments[1] === `500 status code (Error): [node1..node${MAX_NUMBER_OF_NODE_TO_LOG + 1}]`
         )
       );
     });

@@ -95,7 +95,16 @@ describe('SouthOPCUA', () => {
     formatInstant: mock.fn((v: unknown) => v),
     generateCsvContent: mock.fn(() => ''),
     generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
+    // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
+    // handful of lines and several tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
+    workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
+      if (items.length === 0) return {};
+      if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
+      const lead = items[0];
+      return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
+    }),
     generateReplacementParameters: mock.fn(() => []),
+    getErrorMessage: mock.fn((error: unknown) => (error instanceof Error ? error.message : String(error))),
     logQuery: mock.fn(),
     persistResults: mock.fn(async () => undefined)
   };
@@ -645,7 +654,8 @@ describe('SouthOPCUA', () => {
 
     assert.deepStrictEqual(getDAValuesMock.mock.calls[0].arguments, [
       [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
-      mockedClient
+      mockedClient,
+      { itemId: configuration.items[3].id, itemName: configuration.items[3].name }
     ]);
     // The persistent session is reused, not replaced, and must not be closed by this call.
     assert.strictEqual(createSessionMock.mock.calls.length, 0);
@@ -845,17 +855,17 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(
       (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(
         c =>
-          c.arguments[0] ===
+          c.arguments[1] ===
           `Error when parsing node ID ${configuration.items[0].settings.nodeId} for item ${configuration.items[0].name}: node id error`
       ).length,
       1
     );
     assert.strictEqual(
-      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(c => c.arguments[0] === 'Error while reading history: not ok').length,
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(c => c.arguments[1] === 'Error while reading history: not ok').length,
       1
     );
     assert.strictEqual(
-      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(c => c.arguments[0] === 'No result found in response').length,
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(c => c.arguments[1] === 'No result found in response').length,
       1
     );
   });
@@ -898,11 +908,11 @@ describe('SouthOPCUA', () => {
     assert.ok(historyRead.mock.calls.length >= 1);
     assert.deepStrictEqual(historyReadRequest.requestHeader.timeoutHint, configuration.settings.readTimeout);
     assert.strictEqual(
-      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(c => c.arguments[0] === 'Error while reading history: not ok').length,
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(c => c.arguments[1] === 'Error while reading history: not ok').length,
       1
     );
     assert.strictEqual(
-      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(c => c.arguments[0] === 'No result found in response').length,
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(c => c.arguments[1] === 'No result found in response').length,
       1
     );
   });
@@ -1414,7 +1424,8 @@ describe('SouthOPCUA', () => {
     await south.directQuery([configuration.items[0], configuration.items[3]]);
     assert.deepStrictEqual(getDAValuesMock.mock.calls[0].arguments, [
       [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
-      mockedSession
+      mockedSession,
+      {}
     ]);
     assert.strictEqual(addContentMock.mock.calls.length, 1);
     // The shared session is unaffected by a successful query
@@ -1435,7 +1446,8 @@ describe('SouthOPCUA', () => {
     await assert.rejects(async () => south.directQuery([configuration.items[0], configuration.items[3]]), /opcua read error/);
     assert.deepStrictEqual(getDAValuesMock.mock.calls[0].arguments, [
       [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
-      failedSession
+      failedSession,
+      {}
     ]);
     assert.strictEqual(addContentMock.mock.calls.length, 0);
     // A non-device error means the session/channel itself is broken — the whole connector
@@ -1571,7 +1583,7 @@ describe('SouthOPCUA', () => {
     assert.deepStrictEqual(result, []);
     assert.strictEqual(
       (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(
-        c => c.arguments[0] === `Received 0 node results, requested 1 nodes. Request done in 0 ms`
+        c => c.arguments[1] === `Received 0 node results, requested 1 nodes. Request done in 0 ms`
       ).length,
       1
     );
@@ -1647,7 +1659,7 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(disconnectMock.mock.calls.length, 0);
     assert.ok(
       (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
-        c => (c.arguments[0] as string).includes('BadTimeout') && (c.arguments[0] as string).includes('device/PLC error, session kept')
+        c => (c.arguments[1] as string).includes('BadTimeout') && (c.arguments[1] as string).includes('device/PLC error, session kept')
       )
     );
   });
@@ -1966,7 +1978,7 @@ describe('SouthOPCUA', () => {
     }
   });
 
-  it('should truncate item names to 10 and append "… and N more" in HA device error log', async () => {
+  it('should log a bounded message (no per-item name list) in HA device error log, however many items', async () => {
     const manyItems = Array.from({ length: 13 }, (_, i) => ({
       ...configuration.items[0],
       id: `id${i}`,
@@ -1981,15 +1993,17 @@ describe('SouthOPCUA', () => {
     await south.historyQuery(manyItems, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
     const errorCalls = (logger.error as ReturnType<typeof mock.fn>).mock.calls;
-    const deviceErrorLog = errorCalls.find(c => (c.arguments[0] as string).includes('… and 3 more'));
-    assert.ok(deviceErrorLog, 'Expected "… and 3 more" in device error log');
+    const deviceErrorLog = errorCalls.find(c => (c.arguments[1] as string)?.startsWith('HA read failed for 13 item(s)'));
+    assert.ok(deviceErrorLog, 'Expected item count in device error log');
     assert.ok(
-      (deviceErrorLog.arguments[0] as string).startsWith('HA read failed for 13 item(s)'),
-      'Expected item count in device error log'
+      !(deviceErrorLog.arguments[1] as string).includes('item0'),
+      'Expected no per-item name preview — the log context carries item/group identity instead'
     );
+    // None of manyItems share a group (group: null in the fixture), so the structured context is empty.
+    assert.deepStrictEqual(deviceErrorLog.arguments[0], {});
   });
 
-  it('should truncate item names to 10 and append "… and N more" in DA device error log', async () => {
+  it('should log a bounded message (no per-item name list) in DA device error log, however many nodes', async () => {
     const manyItems = Array.from({ length: 12 }, (_, i) => ({
       ...configuration.items[3],
       id: `id${i}`,
@@ -2005,12 +2019,37 @@ describe('SouthOPCUA', () => {
 
     assert.strictEqual(result, null);
     const errorCalls = (logger.error as ReturnType<typeof mock.fn>).mock.calls;
-    const deviceErrorLog = errorCalls.find(c => (c.arguments[0] as string).includes('… and 2 more'));
-    assert.ok(deviceErrorLog, 'Expected "… and 2 more" in device error log');
+    const deviceErrorLog = errorCalls.find(c => (c.arguments[1] as string)?.startsWith('DA read failed for 12 node(s)'));
+    assert.ok(deviceErrorLog, 'Expected node count in device error log');
     assert.ok(
-      (deviceErrorLog.arguments[0] as string).startsWith('DA read failed for 12 node(s)'),
-      'Expected node count in device error log'
+      !(deviceErrorLog.arguments[1] as string).includes('daItem0'),
+      'Expected no per-item name preview — the log context carries item/group identity instead'
     );
+    // None of manyItems share a group (group: null in the fixture), so the structured context is empty.
+    assert.deepStrictEqual(deviceErrorLog.arguments[0], {});
+  });
+
+  it('should carry group identity in the HA device error log context when items belong to a synced group', async () => {
+    const group = { id: 'groupId1', name: 'group 1', scanMode: configuration.items[0].scanMode! };
+    const groupedItems = Array.from({ length: 3 }, (_, i) => ({
+      ...configuration.items[0],
+      id: `id${i}`,
+      name: `item${i}`,
+      group,
+      syncWithGroup: true
+    }));
+    south['session'] = {} as unknown as ClientSession;
+    south.getHAValues = mock.fn(() => {
+      throw new Error('BadTimeout: device timeout');
+    });
+    south.disconnect = mock.fn(async () => undefined);
+
+    await south.historyQuery(groupedItems, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
+
+    const errorCalls = (logger.error as ReturnType<typeof mock.fn>).mock.calls;
+    const deviceErrorLog = errorCalls.find(c => (c.arguments[1] as string)?.startsWith('HA read failed for 3 item(s)'));
+    assert.ok(deviceErrorLog, 'Expected item count in device error log');
+    assert.deepStrictEqual(deviceErrorLog.arguments[0], { groupId: 'groupId1', groupName: 'group 1' });
   });
 
   it('should log error when flushMessages() rejects from the changed handler', async () => {
