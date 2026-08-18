@@ -652,11 +652,13 @@ describe('SouthMQTT', () => {
     assert.deepStrictEqual(mqttStream.unsubscribeAsync.mock.calls[0].arguments, [configuration.items[0].settings.topic]);
     assert.strictEqual(mqttStream.end.mock.calls.length, 1);
     assert.deepStrictEqual(mqttStream.end.mock.calls[0].arguments, [true]);
-    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    // testItem() must never invoke the connector's own disconnect() lifecycle method: it would tear
+    // down this.client, the connector's persistent connection, instead of just the local test client.
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
   });
 
   it('should decode Buffer message as string when testing item', async () => {
-    mock.method(
+    const disconnectMock = mock.method(
       south,
       'disconnect',
       mock.fn(async () => undefined)
@@ -679,6 +681,8 @@ describe('SouthMQTT', () => {
     assert.strictEqual(parsed[0].message, 'hello from PLC');
     assert.strictEqual(result.connectionDuration, 15);
     assert.strictEqual(result.queryDuration, 25);
+    assert.strictEqual(mqttStream.end.mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
   });
 
   it('should properly test item and manage unsubscribe error', async () => {
@@ -703,8 +707,10 @@ describe('SouthMQTT', () => {
 
     assert.strictEqual(mqttStream.unsubscribeAsync.mock.calls.length, 1);
     assert.deepStrictEqual(mqttStream.unsubscribeAsync.mock.calls[0].arguments, [configuration.items[0].settings.topic]);
-    assert.strictEqual(mqttStream.end.mock.calls.length, 0);
-    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    // Even on the message-handling error path, the local test client must still be closed exactly once.
+    assert.strictEqual(mqttStream.end.mock.calls.length, 1);
+    assert.deepStrictEqual(mqttStream.end.mock.calls[0].arguments, [true]);
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
     assert.strictEqual(
       error,
       `Error when testing item ${configuration.items[0].settings.topic} (received message "myMessage"): unsubscribe error`
@@ -729,7 +735,68 @@ describe('SouthMQTT', () => {
     await flushPromises();
     await testItemPromise;
 
-    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    // The local client was connected before subscribeAsync failed, so it must still be closed.
+    assert.strictEqual(mqttStream.end.mock.calls.length, 1);
+    assert.deepStrictEqual(mqttStream.end.mock.calls[0].arguments, [true]);
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
     assert.strictEqual(error, `Error when testing item ${configuration.items[0].settings.topic}: subscribe error`);
+  });
+
+  it('should not close any client when testing item fails to connect', async () => {
+    const disconnectMock = mock.method(
+      south,
+      'disconnect',
+      mock.fn(async () => undefined)
+    );
+    mqttExports.default.connectAsync = mock.fn(async () => {
+      throw new Error('connect error');
+    });
+
+    let error: unknown;
+    const testItemPromise = south.testItem(configuration.items[0], { history: undefined }).catch(err => {
+      error = err;
+    });
+    await flushPromises();
+    await testItemPromise;
+
+    // No client was ever created, so there is nothing to close and disconnect() must not be called.
+    assert.strictEqual(mqttStream.end.mock.calls.length, 0);
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.strictEqual(error, `Error when testing item ${configuration.items[0].settings.topic}: connect error`);
+  });
+
+  it('should not touch or disconnect the connector own live client when testing item', async () => {
+    const disconnectMock = mock.method(
+      south,
+      'disconnect',
+      mock.fn(async () => undefined)
+    );
+
+    // Establish the connector's own persistent connection first, on a client distinct from the one
+    // testItem() will create, so a mix-up between the two is observable.
+    const liveClient = new MqttStreamMock();
+    mqttExports.default.connectAsync = mock.fn(async () => liveClient);
+    await south.connect();
+
+    const priv = south as unknown as { client: MqttClient | null };
+    assert.strictEqual(priv.client, liveClient);
+
+    const testClient = new MqttStreamMock();
+    mqttExports.default.connectAsync = mock.fn(async () => testClient);
+
+    const testItemPromise = south.testItem(configuration.items[0], { history: undefined });
+    await flushPromises();
+    testClient.emit('message', 'myTopic', 'myMessage', { dup: false });
+    await flushPromises();
+    await testItemPromise;
+
+    // The connector's live client must be left completely alone: not ended, not disconnected, still set.
+    assert.strictEqual(liveClient.end.mock.calls.length, 0);
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.strictEqual(priv.client, liveClient);
+
+    // Only the local test client created inside testItem() gets closed.
+    assert.strictEqual(testClient.end.mock.calls.length, 1);
+    assert.deepStrictEqual(testClient.end.mock.calls[0].arguments, [true]);
   });
 });
