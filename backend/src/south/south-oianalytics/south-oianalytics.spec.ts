@@ -54,7 +54,23 @@ const utilsExports = {
   convertDateTimeToInstant: mock.fn((inst: unknown) => inst),
   logQuery: mock.fn(),
   generateCsvContent: mock.fn(() => ''),
-  generateFilenameForSerialization: mock.fn(() => 'file.csv')
+  generateFilenameForSerialization: mock.fn(() => 'file.csv'),
+  getErrorMessage: mock.fn((error: unknown) => {
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'string') return error;
+    if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
+      return (error as { message: string }).message;
+    }
+    return String(error);
+  }),
+  // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
+  // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
+  workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
+    if (items.length === 0) return {};
+    if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
+    const lead = items[0];
+    return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
+  })
 };
 
 const baseConfiguration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
@@ -272,7 +288,7 @@ describe('SouthOIAnalytics', () => {
 
       assert.strictEqual(
         (logger.info as ReturnType<typeof mock.fn>).mock.calls.some((c: { arguments: Array<unknown> }) =>
-          (c.arguments[0] as string).includes(`Found ${mockFormatted.length} results`)
+          (c.arguments[1] as string).includes(`Found ${mockFormatted.length} results`)
         ),
         true
       );
@@ -290,7 +306,7 @@ describe('SouthOIAnalytics', () => {
       assert.strictEqual(utilsExports.persistResults.mock.calls.length, 0);
       assert.strictEqual(
         (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some((c: { arguments: Array<unknown> }) =>
-          (c.arguments[0] as string).includes('No result found')
+          (c.arguments[1] as string).includes('No result found')
         ),
         true
       );

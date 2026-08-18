@@ -10,6 +10,7 @@ export function clearOIAnalyticsCredentialCache(): void {
   credentialCache.clear();
 }
 import { encryptionService } from './encryption.service';
+import { getErrorMessage } from './utils';
 import { OIBusTimeValue } from '../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import { Instant } from '../model/types';
@@ -308,7 +309,7 @@ export const testOIAnalyticsConnection = async (
   try {
     response = await HTTPRequest(requestUrl, httpOptions);
   } catch (error) {
-    throw new Error(`Fetch error ${error}`);
+    throw new Error(`Fetch error: ${getErrorMessage(error)}`);
   }
 
   // During initial registration, a 401 response is expected and considered successful

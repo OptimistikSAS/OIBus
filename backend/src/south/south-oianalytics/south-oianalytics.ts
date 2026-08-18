@@ -1,5 +1,5 @@
 import SouthConnector from '../south-connector';
-import { formatQueryParams, persistResults } from '../../service/utils';
+import { formatQueryParams, persistResults, workUnitLogCtx } from '../../service/utils';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { SouthHistoryQuery } from '../south-interface';
@@ -77,13 +77,14 @@ export default class SouthOIAnalytics
     endTime: Instant
   ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
     const item = items[0];
+    const logCtx = workUnitLogCtx(items);
     const startRequest = DateTime.now();
     const result: Array<OIATimeValues> = await this.queryData(item, startTime, endTime);
     const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
     const { formattedResult, maxInstant } = parseData(result);
 
     if (formattedResult.length > 0) {
-      this.logger.info(`Found ${formattedResult.length} results for item ${item.name} in ${requestDuration} ms`);
+      this.logger.info(logCtx, `Found ${formattedResult.length} results in ${requestDuration} ms`);
       await persistResults(
         formattedResult,
         item.settings.serialization,
@@ -95,7 +96,7 @@ export default class SouthOIAnalytics
         this.logger
       );
     } else {
-      this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
+      this.logger.debug(logCtx, `No result found. Request done in ${requestDuration} ms`);
     }
 
     return { trackedInstant: maxInstant, value: formattedResult.length > 0 ? formattedResult[formattedResult.length - 1] : null };
@@ -121,7 +122,7 @@ export default class SouthOIAnalytics
       getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings),
       { useApiGateway: registrationSettings.useApiGateway, apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint }
     );
-    this.logger.info(`Requesting data from URL "${url}" and query params "${JSON.stringify(httpOptions.query)}"`);
+    this.logger.info(workUnitLogCtx([item]), `Requesting data from URL "${url}" and query params "${JSON.stringify(httpOptions.query)}"`);
     const response = await HTTPRequest(url, httpOptions);
     if (!response.ok) {
       throw new Error(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`);
