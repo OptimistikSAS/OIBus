@@ -647,7 +647,7 @@ describe('SouthSFTP', () => {
       assert.ok(
         logger.error.mock.calls.some(c =>
           (c.arguments[1] as string).includes(
-            `Error while removing file "${path.resolve('cacheFolder', 'tmp', fileInfo.name)}": ${new Error('unlink error')}`
+            `Error while removing file "${path.resolve('cacheFolder', 'tmp', fileInfo.name)}": unlink error`
           )
         )
       );
@@ -1026,7 +1026,7 @@ describe('SouthSFTP with preserve file and compression', () => {
     assert.ok(
       logger.error.mock.calls.some(c =>
         (c.arguments[1] as string).includes(
-          `Error while removing file "${path.resolve('cacheFolder', 'tmp', fileInfo.name)}": ${new Error('unlink error')}`
+          `Error while removing file "${path.resolve('cacheFolder', 'tmp', fileInfo.name)}": unlink error`
         )
       )
     );
