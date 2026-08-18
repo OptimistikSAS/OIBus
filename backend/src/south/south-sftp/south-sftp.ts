@@ -239,9 +239,19 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
       } catch {
         this.logger.error(`Error compressing file "${resultingFile}". Sending it raw instead`);
         await this.addContent({ type: 'any', filePath: resultingFile }, startRequest.toUTC().toISO(), [item]);
+        try {
+          await fs.unlink(resultingFile);
+        } catch (unlinkError) {
+          this.logger.error(`Error while removing file "${resultingFile}": ${unlinkError}`);
+        }
       }
     } else {
       await this.addContent({ type: 'any', filePath: resultingFile }, startRequest.toUTC().toISO(), [item]);
+      try {
+        await fs.unlink(resultingFile);
+      } catch (unlinkError) {
+        this.logger.error(`Error while removing file "${resultingFile}": ${unlinkError}`);
+      }
     }
 
     await client.end();
