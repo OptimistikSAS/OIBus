@@ -17,10 +17,16 @@ import { DateTime } from 'luxon';
 
 const nodeRequire = createRequire(import.meta.url);
 
-// Shared across both describe blocks so the same mock closure always returns the active logger
+// Shared across all describe blocks so the same mock closure always returns the active logger
 let activeSftpLogger: PinoLogger | null = null;
 
 const encryptionServiceMock = new EncryptionServiceMock('', '');
+
+interface SftpCallbacks {
+  error?: (error: unknown) => void;
+  end?: () => void;
+  close?: () => void;
+}
 
 const mockSftpClient = {
   connect: mock.fn(async () => undefined),
@@ -30,12 +36,20 @@ const mockSftpClient = {
   end: mock.fn(async () => undefined)
 };
 
-const sftpClientDefaultFn = mock.fn(function () {
+// Captures the callbacks object passed to `new sftpClient(name, callbacks)` on the most recent
+// construction, so tests can simulate the underlying ssh2 socket's 'close'/'error' events by
+// invoking these directly.
+let lastSftpCallbacks: SftpCallbacks | undefined;
+
+// Kept as the raw Mock instance (not cast to a constructor type) so tests can call `.mock.*` on
+// it directly; only the module-export wiring below needs the constructor-shaped view.
+const sftpClientDefaultFn = mock.fn(function (_name?: string, callbacks?: SftpCallbacks) {
+  lastSftpCallbacks = callbacks;
   return mockSftpClient;
-}) as unknown as new () => typeof mockSftpClient;
+});
 const sftpClientExports = {
   __esModule: true,
-  default: sftpClientDefaultFn
+  default: sftpClientDefaultFn as unknown as new (name?: string, callbacks?: SftpCallbacks) => typeof mockSftpClient
 };
 (sftpClientDefaultFn as unknown as Record<string, unknown>)['default'] = sftpClientDefaultFn;
 
@@ -45,7 +59,31 @@ const utilsExports = {
   delay: mock.fn(async () => undefined),
   generateIntervals: mock.fn(() => []),
   groupItemsByGroup: mock.fn(() => []),
-  validateCronExpression: mock.fn(() => ({ expression: '' }))
+  validateCronExpression: mock.fn(() => ({ expression: '' })),
+  getErrorMessage: mock.fn((error: unknown) => (error instanceof Error ? error.message : String(error))),
+  // Mirrors the real implementation in service/utils.ts — kept in sync manually, matching the
+  // pattern established in south-modbus.spec.ts.
+  workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
+    if (items.length === 0) return {};
+    if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
+    const lead = items[0];
+    return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
+  })
+};
+
+// Some log calls are `logger.debug/error(logCtx, message)` (structured context first) and others
+// are plain `logger.debug/error(message)` — this checks either shape without caring which.
+const logIncludes = (mockFn: { mock: { calls: Array<{ arguments: Array<unknown> }> } }, text: string): boolean =>
+  mockFn.mock.calls.some(c => c.arguments.some(arg => typeof arg === 'string' && arg.includes(text)));
+
+// The 'error'/'close' callbacks (and the reconnect timer's connect() call) run as fire-and-forget
+// async work that isn't awaited by the caller — draining several microtask turns lets their
+// `await` chains (disconnect() -> client.end(), createConnectionOptions() -> decryptText(), etc.)
+// fully settle before assertions run.
+const flushMicrotasks = async (turns = 10): Promise<void> => {
+  for (let i = 0; i < turns; i++) {
+    await Promise.resolve();
+  }
 };
 
 describe('SouthSFTP', () => {
@@ -68,7 +106,8 @@ describe('SouthSFTP', () => {
       authentication: 'password',
       username: 'user',
       password: 'pass',
-      compression: false
+      compression: false,
+      retryInterval: 10000
     },
     items: [
       {
@@ -92,6 +131,7 @@ describe('SouthSFTP', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -118,6 +158,7 @@ describe('SouthSFTP', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -144,6 +185,7 @@ describe('SouthSFTP', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -174,18 +216,25 @@ describe('SouthSFTP', () => {
 
   beforeEach(() => {
     activeSftpLogger = logger;
-    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW).getTime() });
-    mockSftpClient.connect.mock.resetCalls();
-    mockSftpClient.list.mock.resetCalls();
-    mockSftpClient.fastGet.mock.resetCalls();
-    mockSftpClient.delete.mock.resetCalls();
-    mockSftpClient.end.mock.resetCalls();
+    mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW).getTime() });
+    sftpClientDefaultFn.mock.resetCalls();
+    lastSftpCallbacks = undefined;
+    mockSftpClient.connect = mock.fn(async () => undefined);
     mockSftpClient.list = mock.fn(async (_folder?: string, _callback?: (fi: FileInfo) => boolean) => [] as Array<FileInfo>);
-    utilsExports.checkAge = mock.fn(() => true);
-    utilsExports.compress = mock.fn(async () => undefined);
+    mockSftpClient.fastGet = mock.fn(async () => undefined);
+    mockSftpClient.delete = mock.fn(async () => undefined);
+    mockSftpClient.end = mock.fn(async () => undefined);
+    utilsExports.checkAge.mock.mockImplementation(() => true);
+    utilsExports.compress.mock.mockImplementation(async () => undefined);
+    utilsExports.getErrorMessage.mock.resetCalls();
+    utilsExports.workUnitLogCtx.mock.resetCalls();
     addContentCallback.mock.resetCalls();
     encryptionServiceMock.decryptText.mock.resetCalls();
     mock.method(fs, 'unlink', async () => undefined);
+    logger.debug.mock.resetCalls();
+    logger.info.mock.resetCalls();
+    logger.warn.mock.resetCalls();
+    logger.error.mock.resetCalls();
 
     south = new SouthSftp(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
@@ -195,320 +244,490 @@ describe('SouthSFTP', () => {
     mock.restoreAll();
   });
 
-  it('directQuery should manage file retrieval', async () => {
-    const fileInfo1 = { name: 'file1' } as FileInfo;
-    const fileInfo2 = { name: 'file2' } as FileInfo;
+  describe('connect / disconnect / reconnect', () => {
+    it('should properly connect and establish a persistent client', async () => {
+      await south.connect();
 
-    mock.method(
-      south,
-      'listFiles',
-      mock.fn(async () => [fileInfo1, fileInfo2])
-    );
-    mock.method(
-      south,
-      'getFile',
-      mock.fn(async () => undefined)
-    );
-
-    await south.directQuery(configuration.items);
-
-    const listFilesMock = (south.listFiles as unknown as { mock: { calls: Array<{ arguments: Array<unknown> }> } }).mock;
-    const getFileMock = (south.getFile as unknown as { mock: { calls: Array<{ arguments: Array<unknown> }> } }).mock;
-
-    assert.strictEqual(listFilesMock.calls.length, 1);
-    assert.ok(
-      logger.debug.mock.calls.some(c =>
-        (c.arguments[0] as string).includes(`Folder ${configuration.items[0].settings.remoteFolder} listed 2 files`)
-      )
-    );
-    assert.strictEqual(getFileMock.calls.length, 2);
-    assert.deepStrictEqual(getFileMock.calls[0].arguments[0], fileInfo1);
-    assert.deepStrictEqual(getFileMock.calls[0].arguments[1], configuration.items[0]);
-    assert.deepStrictEqual(getFileMock.calls[0].arguments[2], []);
-  });
-
-  it('should respect max files limit and skip remaining files', async () => {
-    const configWithLimit: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
-      ...configuration,
-      settings: { ...configuration.settings },
-      items: configuration.items.map(item => ({
-        ...item,
-        settings: { ...item.settings, maxFiles: 2, maxSize: 0 }
-      })),
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
-    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, 'cacheFolder');
-    await southWithLimit.start();
-
-    const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
-    const file1 = { name: 'file1.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
-    const file2 = { name: 'file2.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
-    const file3 = { name: 'file3.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
-
-    mockSftpClient.list = mock.fn(async (_folder?: string, _callback?: (fi: FileInfo) => boolean) => [file1, file2, file3]);
-    mockSftpClient.fastGet = mock.fn(async () => undefined);
-    mockSftpClient.delete = mock.fn(async () => undefined);
-
-    await southWithLimit.directQuery([configWithLimit.items[0]]);
-
-    assert.strictEqual(mockSftpClient.fastGet.mock.calls.length, 2);
-    assert.ok(
-      logger.debug.mock.calls.some(c =>
-        (c.arguments[0] as string).includes('Max files limit (2) reached for item item1, skipping remaining files')
-      )
-    );
-  });
-
-  it('should respect max files limit and stop file query across items', async () => {
-    const configWithLimit: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
-      ...configuration,
-      settings: { ...configuration.settings },
-      items: configuration.items.map(item => ({
-        ...item,
-        settings: { ...item.settings, maxFiles: 2, maxSize: 0 }
-      })),
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
-    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, 'cacheFolder');
-    await southWithLimit.start();
-
-    const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
-    const file1 = { name: 'file1.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
-    const file2 = { name: 'file2.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
-    const file3 = { name: 'file3.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
-
-    let listCallCount = 0;
-    mockSftpClient.list = mock.fn(async (_folder?: string, _callback?: (fi: FileInfo) => boolean) => {
-      listCallCount++;
-      return listCallCount === 1 ? [file1, file2, file3] : [];
+      assert.strictEqual(sftpClientDefaultFn.mock.calls.length, 1);
+      assert.strictEqual(mockSftpClient.connect.mock.calls.length, 1);
+      assert.strictEqual((south as unknown as Record<string, unknown>)['client'], mockSftpClient);
+      assert.ok(logIncludes(logger.debug, 'Connecting to SFTP server 127.0.0.1:2222'));
+      assert.ok(logIncludes(logger.info, 'Connected to SFTP server 127.0.0.1:2222'));
     });
-    mockSftpClient.fastGet = mock.fn(async () => undefined);
-    mockSftpClient.delete = mock.fn(async () => undefined);
 
-    await southWithLimit.directQuery(configWithLimit.items);
+    it('should reuse the same persistent client across multiple listFiles/getFile calls', async () => {
+      await south.connect();
+      const fileInfo = { name: 'file1', size: 100, modifyTime: DateTime.now().toMillis() } as FileInfo;
+      mockSftpClient.list.mock.mockImplementation(async () => [fileInfo]);
 
-    assert.strictEqual(mockSftpClient.fastGet.mock.calls.length, 2);
-    assert.ok(
-      logger.debug.mock.calls.some(c =>
-        (c.arguments[0] as string).includes('Max files limit (2) reached for item item1, skipping remaining files')
-      )
-    );
+      await south.listFiles(configuration.items[0], []);
+      await south.getFile(fileInfo, configuration.items[0], []);
+      await south.listFiles(configuration.items[0], []);
+
+      assert.strictEqual(sftpClientDefaultFn.mock.calls.length, 1);
+      assert.strictEqual(mockSftpClient.connect.mock.calls.length, 1);
+      assert.strictEqual(mockSftpClient.end.mock.calls.length, 0);
+    });
+
+    it('should schedule a reconnect when connect() fails', async () => {
+      mockSftpClient.connect.mock.mockImplementation(async () => {
+        throw new Error('connect error');
+      });
+
+      await south.connect();
+
+      assert.strictEqual((south as unknown as Record<string, unknown>)['client'], null);
+      assert.ok(logIncludes(logger.error, 'Error while connecting to SFTP server 127.0.0.1:2222: connect error'));
+
+      mockSftpClient.connect.mock.mockImplementation(async () => undefined);
+      mock.timers.tick(configuration.settings.retryInterval);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      assert.strictEqual(sftpClientDefaultFn.mock.calls.length, 2);
+    });
+
+    it('should not schedule a reconnect on connect error when disconnecting is true', async () => {
+      const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+      south.disconnect = disconnectMock;
+      (south as unknown as Record<string, unknown>)['disconnecting'] = true;
+      mockSftpClient.connect.mock.mockImplementation(async () => {
+        throw new Error('connect error');
+      });
+
+      await south.connect();
+
+      assert.strictEqual(disconnectMock.mock.calls.length, 1);
+      mock.timers.tick(configuration.settings.retryInterval);
+      assert.strictEqual(sftpClientDefaultFn.mock.calls.length, 1);
+    });
+
+    it('should properly disconnect an active client', async () => {
+      await south.connect();
+
+      await south.disconnect();
+
+      assert.strictEqual(mockSftpClient.end.mock.calls.length, 1);
+      assert.strictEqual((south as unknown as Record<string, unknown>)['client'], null);
+      assert.ok(logIncludes(logger.info, 'Disconnected from SFTP server 127.0.0.1:2222'));
+    });
+
+    it('should properly disconnect without an active client', async () => {
+      await south.disconnect();
+      assert.strictEqual(mockSftpClient.end.mock.calls.length, 0);
+    });
+
+    it('should log and still null the client if end() throws during disconnect', async () => {
+      await south.connect();
+      mockSftpClient.end.mock.mockImplementation(async () => {
+        throw new Error('end error');
+      });
+
+      await south.disconnect();
+
+      assert.strictEqual((south as unknown as Record<string, unknown>)['client'], null);
+      assert.ok(logIncludes(logger.error, 'Error while disconnecting from SFTP server 127.0.0.1:2222: end error'));
+    });
+
+    it('should clear a pending reconnect timeout on disconnect', async () => {
+      (south as unknown as Record<string, unknown>)['reconnectTimeout'] = setTimeout(() => null, 1000);
+
+      await south.disconnect();
+
+      assert.strictEqual((south as unknown as Record<string, unknown>)['reconnectTimeout'], null);
+    });
+
+    it('should proactively reconnect when the client reports an unexpected close', async () => {
+      await south.connect();
+      assert.ok(lastSftpCallbacks?.close);
+
+      lastSftpCallbacks!.close!();
+      // The close handler is fire-and-forget (not awaited by ssh2-sftp-client) — flush microtasks.
+      await flushMicrotasks();
+
+      assert.strictEqual((south as unknown as Record<string, unknown>)['client'], null);
+      assert.ok(logIncludes(logger.warn, 'SFTP client closed unexpectedly'));
+
+      mock.timers.tick(configuration.settings.retryInterval);
+      await flushMicrotasks();
+      assert.strictEqual(sftpClientDefaultFn.mock.calls.length, 2);
+    });
+
+    it('should proactively reconnect when the client reports an unexpected error', async () => {
+      await south.connect();
+      assert.ok(lastSftpCallbacks?.error);
+
+      lastSftpCallbacks!.error!(new Error('socket reset'));
+      await flushMicrotasks();
+
+      assert.strictEqual((south as unknown as Record<string, unknown>)['client'], null);
+      assert.ok(logIncludes(logger.warn, 'SFTP client error: socket reset'));
+
+      mock.timers.tick(configuration.settings.retryInterval);
+      await flushMicrotasks();
+      assert.strictEqual(sftpClientDefaultFn.mock.calls.length, 2);
+    });
+
+    it('should ignore a close callback triggered while we are disconnecting ourselves', async () => {
+      await south.connect();
+      (south as unknown as Record<string, unknown>)['disconnecting'] = true;
+
+      lastSftpCallbacks!.close!();
+      await flushMicrotasks();
+
+      assert.strictEqual(sftpClientDefaultFn.mock.calls.length, 1);
+      mock.timers.tick(configuration.settings.retryInterval);
+      assert.strictEqual(sftpClientDefaultFn.mock.calls.length, 1);
+    });
+
+    it('should throw from listFiles when the client is not connected', async () => {
+      await assert.rejects(south.listFiles(configuration.items[0], []), new Error('SFTP client is not connected'));
+      assert.strictEqual(mockSftpClient.list.mock.calls.length, 0);
+    });
+
+    it('should throw from getFile when the client is not connected', async () => {
+      const fileInfo = { name: 'myFile1', size: 123 } as FileInfo;
+      await assert.rejects(south.getFile(fileInfo, configuration.items[0], []), new Error('SFTP client is not connected'));
+      assert.strictEqual(mockSftpClient.fastGet.mock.calls.length, 0);
+    });
   });
 
-  it('should respect max size limit and skip remaining files', async () => {
-    const configWithLimit: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
-      ...configuration,
-      settings: { ...configuration.settings },
-      items: configuration.items.map(item => ({
-        ...item,
-        settings: { ...item.settings, maxFiles: 0, maxSize: 1 }
-      })),
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
-    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, 'cacheFolder');
-    await southWithLimit.start();
+  describe('testConnection / testItem isolation', () => {
+    it('should never touch the persistent client in testConnection', async () => {
+      const sentinelClient = { marker: 'persistent-client-sentinel' };
+      (south as unknown as Record<string, unknown>)['client'] = sentinelClient;
+      const disconnectSpy = mock.method(south, 'disconnect');
 
-    const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
-    const file1 = { name: 'file1.csv', size: 600 * 1024, modifyTime: mtimeMs } as FileInfo;
-    const file2 = { name: 'file2.csv', size: 600 * 1024, modifyTime: mtimeMs } as FileInfo;
+      await south.testConnection();
 
-    mockSftpClient.list = mock.fn(async (_folder?: string, _callback?: (fi: FileInfo) => boolean) => [file1, file2]);
-    mockSftpClient.fastGet = mock.fn(async () => undefined);
-    mockSftpClient.delete = mock.fn(async () => undefined);
+      assert.strictEqual((south as unknown as Record<string, unknown>)['client'], sentinelClient);
+      assert.strictEqual(disconnectSpy.mock.calls.length, 0);
+      assert.strictEqual(sftpClientDefaultFn.mock.calls.length, 1);
+      assert.strictEqual(mockSftpClient.end.mock.calls.length, 1);
+    });
 
-    await southWithLimit.directQuery([configWithLimit.items[0]]);
+    it('should never touch the persistent client in testItem', async () => {
+      const sentinelClient = { marker: 'persistent-client-sentinel' };
+      (south as unknown as Record<string, unknown>)['client'] = sentinelClient;
+      const disconnectSpy = mock.method(south, 'disconnect');
+      mockSftpClient.list.mock.mockImplementation(async () => [{ name: 'file.csv', modifyTime: DateTime.now().toMillis() } as FileInfo]);
 
-    assert.strictEqual(mockSftpClient.fastGet.mock.calls.length, 1);
-    assert.ok(
-      logger.debug.mock.calls.some(c =>
-        (c.arguments[0] as string).includes('Max size limit (1 MB) reached for item item1, skipping remaining files')
-      )
-    );
+      const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
+
+      assert.strictEqual((south as unknown as Record<string, unknown>)['client'], sentinelClient);
+      assert.strictEqual(disconnectSpy.mock.calls.length, 0);
+      assert.strictEqual(sftpClientDefaultFn.mock.calls.length, 1);
+      assert.strictEqual(mockSftpClient.end.mock.calls.length, 1);
+      assert.strictEqual(result.result.type, 'time-values');
+    });
   });
 
-  it('should respect max size limit and stop file query across items', async () => {
-    const configWithLimit: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
-      ...configuration,
-      settings: { ...configuration.settings },
-      items: configuration.items.map(item => ({
-        ...item,
-        settings: { ...item.settings, maxFiles: 0, maxSize: 1 }
-      })),
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
-    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, 'cacheFolder');
-    await southWithLimit.start();
-
-    const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
-    const file1 = { name: 'file1.csv', size: 512 * 1024, modifyTime: mtimeMs } as FileInfo;
-    const file2 = { name: 'file2.csv', size: 512 * 1024, modifyTime: mtimeMs } as FileInfo;
-    const file3 = { name: 'file3.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
-
-    let listCallCount = 0;
-    mockSftpClient.list = mock.fn(async (_folder?: string, _callback?: (fi: FileInfo) => boolean) => {
-      listCallCount++;
-      return listCallCount === 1 ? [file1, file2, file3] : [];
+  describe('with a connected client', () => {
+    beforeEach(async () => {
+      await south.start();
     });
-    mockSftpClient.fastGet = mock.fn(async () => undefined);
-    mockSftpClient.delete = mock.fn(async () => undefined);
 
-    await southWithLimit.directQuery(configWithLimit.items);
+    it('directQuery should manage file retrieval', async () => {
+      const fileInfo1 = { name: 'file1' } as FileInfo;
+      const fileInfo2 = { name: 'file2' } as FileInfo;
 
-    assert.strictEqual(mockSftpClient.fastGet.mock.calls.length, 2);
-    assert.ok(
-      logger.debug.mock.calls.some(c =>
-        (c.arguments[0] as string).includes('Max size limit (1 MB) reached for item item1, skipping remaining files')
-      )
-    );
-  });
+      mock.method(
+        south,
+        'listFiles',
+        mock.fn(async () => [fileInfo1, fileInfo2])
+      );
+      mock.method(
+        south,
+        'getFile',
+        mock.fn(async () => undefined)
+      );
 
-  it('should properly get file', async () => {
-    mock.method(
-      south,
-      'addContent',
-      mock.fn(async () => undefined)
-    );
+      await south.directQuery(configuration.items);
 
-    const fileInfo = { name: 'myFile1', size: 123 } as FileInfo;
-    await south.getFile(fileInfo, configuration.items[0], []);
+      const listFilesMock = (south.listFiles as unknown as { mock: { calls: Array<{ arguments: Array<unknown> }> } }).mock;
+      const getFileMock = (south.getFile as unknown as { mock: { calls: Array<{ arguments: Array<unknown> }> } }).mock;
 
-    assert.strictEqual(mockSftpClient.connect.mock.calls.length, 1);
-    assert.strictEqual(mockSftpClient.fastGet.mock.calls.length, 1);
-    assert.strictEqual(mockSftpClient.delete.mock.calls.length, 1);
-    assert.strictEqual(mockSftpClient.end.mock.calls.length, 1);
-
-    const addContentMock = (south.addContent as unknown as { mock: { calls: Array<{ arguments: Array<unknown> }> } }).mock;
-    assert.deepStrictEqual(addContentMock.calls[0].arguments[0], {
-      type: 'any',
-      filePath: path.resolve('cacheFolder', 'tmp', fileInfo.name)
+      assert.strictEqual(listFilesMock.calls.length, 1);
+      assert.ok(logIncludes(logger.debug, `Folder ${configuration.items[0].settings.remoteFolder} listed 2 files`));
+      assert.strictEqual(getFileMock.calls.length, 2);
+      assert.deepStrictEqual(getFileMock.calls[0].arguments[0], fileInfo1);
+      assert.deepStrictEqual(getFileMock.calls[0].arguments[1], configuration.items[0]);
+      assert.deepStrictEqual(getFileMock.calls[0].arguments[2], []);
     });
-    assert.strictEqual(addContentMock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
-    assert.deepStrictEqual(addContentMock.calls[0].arguments[2], [configuration.items[0]]);
-    assert.strictEqual(logger.error.mock.calls.length, 0);
 
-    // The downloaded temp file must be cleaned up once it has been sent raw
-    assert.strictEqual((fs.unlink as unknown as { mock: { calls: Array<unknown> } }).mock.calls.length, 1);
-    assert.deepStrictEqual(
-      (
-        (fs.unlink as unknown as { mock: { calls: Array<{ arguments: Array<unknown> }> } }).mock.calls[0] as {
-          arguments: Array<unknown>;
-        }
-      ).arguments[0],
-      path.resolve('cacheFolder', 'tmp', fileInfo.name)
-    );
+    it('should respect max files limit and skip remaining files', async () => {
+      const configWithLimit: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
+        ...configuration,
+        settings: { ...configuration.settings },
+        items: configuration.items.map(item => ({
+          ...item,
+          settings: { ...item.settings, maxFiles: 2, maxSize: 0 }
+        })),
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, 'cacheFolder');
+      await southWithLimit.start();
 
-    // Test delete error
-    mockSftpClient.delete = mock.fn(async () => {
-      throw new Error('delete error');
+      const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
+      const file1 = { name: 'file1.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
+      const file2 = { name: 'file2.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
+      const file3 = { name: 'file3.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
+
+      mockSftpClient.list.mock.mockImplementation(async () => [file1, file2, file3]);
+
+      await southWithLimit.directQuery([configWithLimit.items[0]]);
+
+      assert.strictEqual(mockSftpClient.fastGet.mock.calls.length, 2);
+      assert.ok(logIncludes(logger.debug, 'Max files limit (2) reached for item item1, skipping remaining files'));
     });
-    await south.getFile(fileInfo, configuration.items[0], []);
 
-    assert.ok(
-      logger.error.mock.calls.some(c =>
-        (c.arguments[0] as string).includes(
-          `Error while removing "${configuration.items[0].settings.remoteFolder}/${fileInfo.name}": ${new Error('delete error')}`
+    it('should respect max files limit and stop file query across items', async () => {
+      const configWithLimit: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
+        ...configuration,
+        settings: { ...configuration.settings },
+        items: configuration.items.map(item => ({
+          ...item,
+          settings: { ...item.settings, maxFiles: 2, maxSize: 0 }
+        })),
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, 'cacheFolder');
+      await southWithLimit.start();
+
+      const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
+      const file1 = { name: 'file1.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
+      const file2 = { name: 'file2.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
+      const file3 = { name: 'file3.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
+
+      let listCallCount = 0;
+      mockSftpClient.list.mock.mockImplementation(async () => {
+        listCallCount++;
+        return listCallCount === 1 ? [file1, file2, file3] : [];
+      });
+
+      await southWithLimit.directQuery(configWithLimit.items);
+
+      assert.strictEqual(mockSftpClient.fastGet.mock.calls.length, 2);
+      assert.ok(logIncludes(logger.debug, 'Max files limit (2) reached for item item1, skipping remaining files'));
+    });
+
+    it('should respect max size limit and skip remaining files', async () => {
+      const configWithLimit: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
+        ...configuration,
+        settings: { ...configuration.settings },
+        items: configuration.items.map(item => ({
+          ...item,
+          settings: { ...item.settings, maxFiles: 0, maxSize: 1 }
+        })),
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, 'cacheFolder');
+      await southWithLimit.start();
+
+      const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
+      const file1 = { name: 'file1.csv', size: 600 * 1024, modifyTime: mtimeMs } as FileInfo;
+      const file2 = { name: 'file2.csv', size: 600 * 1024, modifyTime: mtimeMs } as FileInfo;
+
+      mockSftpClient.list.mock.mockImplementation(async () => [file1, file2]);
+
+      await southWithLimit.directQuery([configWithLimit.items[0]]);
+
+      assert.strictEqual(mockSftpClient.fastGet.mock.calls.length, 1);
+      assert.ok(logIncludes(logger.debug, 'Max size limit (1 MB) reached for item item1, skipping remaining files'));
+    });
+
+    it('should respect max size limit and stop file query across items', async () => {
+      const configWithLimit: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
+        ...configuration,
+        settings: { ...configuration.settings },
+        items: configuration.items.map(item => ({
+          ...item,
+          settings: { ...item.settings, maxFiles: 0, maxSize: 1 }
+        })),
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, 'cacheFolder');
+      await southWithLimit.start();
+
+      const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
+      const file1 = { name: 'file1.csv', size: 512 * 1024, modifyTime: mtimeMs } as FileInfo;
+      const file2 = { name: 'file2.csv', size: 512 * 1024, modifyTime: mtimeMs } as FileInfo;
+      const file3 = { name: 'file3.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
+
+      let listCallCount = 0;
+      mockSftpClient.list.mock.mockImplementation(async () => {
+        listCallCount++;
+        return listCallCount === 1 ? [file1, file2, file3] : [];
+      });
+
+      await southWithLimit.directQuery(configWithLimit.items);
+
+      assert.strictEqual(mockSftpClient.fastGet.mock.calls.length, 2);
+      assert.ok(logIncludes(logger.debug, 'Max size limit (1 MB) reached for item item1, skipping remaining files'));
+    });
+
+    it('should properly get file using the persistent client', async () => {
+      mock.method(
+        south,
+        'addContent',
+        mock.fn(async () => undefined)
+      );
+      mock.method(fs, 'unlink', async () => undefined);
+
+      const fileInfo = { name: 'myFile1', size: 123 } as FileInfo;
+      await south.getFile(fileInfo, configuration.items[0], []);
+
+      // connect() (from start()) is the only connection ever opened.
+      assert.strictEqual(mockSftpClient.connect.mock.calls.length, 1);
+      assert.strictEqual(mockSftpClient.fastGet.mock.calls.length, 1);
+      assert.strictEqual(mockSftpClient.delete.mock.calls.length, 1);
+      assert.strictEqual(mockSftpClient.end.mock.calls.length, 0);
+
+      const addContentMock = (south.addContent as unknown as { mock: { calls: Array<{ arguments: Array<unknown> }> } }).mock;
+      assert.deepStrictEqual(addContentMock.calls[0].arguments[0], {
+        type: 'any',
+        filePath: path.resolve('cacheFolder', 'tmp', fileInfo.name)
+      });
+      assert.strictEqual(addContentMock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
+      assert.deepStrictEqual(addContentMock.calls[0].arguments[2], [configuration.items[0]]);
+      assert.strictEqual(logger.error.mock.calls.length, 0);
+
+      // The downloaded temp file must be cleaned up once it has been sent raw
+      assert.strictEqual((fs.unlink as unknown as { mock: { calls: Array<unknown> } }).mock.calls.length, 1);
+      assert.deepStrictEqual(
+        (
+          (fs.unlink as unknown as { mock: { calls: Array<{ arguments: Array<unknown> }> } }).mock.calls[0] as {
+            arguments: Array<unknown>;
+          }
+        ).arguments[0],
+        path.resolve('cacheFolder', 'tmp', fileInfo.name)
+      );
+
+      // Test delete error — logged, not propagated, and the persistent client stays connected.
+      mockSftpClient.delete.mock.mockImplementation(async () => {
+        throw new Error('delete error');
+      });
+      await south.getFile(fileInfo, configuration.items[0], []);
+
+      assert.ok(
+        logIncludes(logger.error, `Error while removing "${configuration.items[0].settings.remoteFolder}/${fileInfo.name}": delete error`)
+      );
+      assert.strictEqual(addContentMock.calls.length, 2);
+      assert.strictEqual(mockSftpClient.end.mock.calls.length, 0);
+      assert.strictEqual(mockSftpClient.connect.mock.calls.length, 1);
+    });
+
+    it('should log an error but still complete when removing the local temp file fails (no compression)', async () => {
+      mock.method(
+        south,
+        'addContent',
+        mock.fn(async () => undefined)
+      );
+      mock.method(fs, 'unlink', async () => {
+        throw new Error('unlink error');
+      });
+
+      const fileInfo = { name: 'myFile1', size: 123 } as FileInfo;
+      await south.getFile(fileInfo, configuration.items[0], []);
+
+      const addContentMock = (south.addContent as unknown as { mock: { calls: Array<{ arguments: Array<unknown> }> } }).mock;
+      assert.strictEqual(addContentMock.calls.length, 1);
+      assert.ok(
+        logger.error.mock.calls.some(c =>
+          (c.arguments[1] as string).includes(
+            `Error while removing file "${path.resolve('cacheFolder', 'tmp', fileInfo.name)}": ${new Error('unlink error')}`
+          )
         )
-      )
-    );
-    assert.strictEqual(addContentMock.calls.length, 2);
-    assert.strictEqual(mockSftpClient.end.mock.calls.length, 2);
-  });
+      );
+    });
+    it('should properly list files using the persistent client', async () => {
+      const fileInfo = { name: 'myFile' } as FileInfo;
+      mock.method(
+        south,
+        'checkCondition',
+        mock.fn(() => true)
+      );
+      mockSftpClient.list.mock.mockImplementation(async (_folder?: string, callback?: (fi: FileInfo) => boolean) => {
+        if (callback) callback(fileInfo);
+        return [fileInfo];
+      });
 
-  it('should log an error but still complete when removing the local temp file fails (no compression)', async () => {
-    mock.method(
-      south,
-      'addContent',
-      mock.fn(async () => undefined)
-    );
-    mock.method(fs, 'unlink', async () => {
-      throw new Error('unlink error');
+      const result = await south.listFiles(configuration.items[0], []);
+
+      assert.strictEqual(mockSftpClient.connect.mock.calls.length, 1);
+      assert.strictEqual(mockSftpClient.end.mock.calls.length, 0);
+      assert.deepStrictEqual(result, [fileInfo]);
     });
 
-    const fileInfo = { name: 'myFile1', size: 123 } as FileInfo;
-    await south.getFile(fileInfo, configuration.items[0], []);
+    it('should list files recursively when recursive is true', async () => {
+      const configRecursive: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
+        ...configuration,
+        settings: { ...configuration.settings },
+        items: configuration.items.map(item => ({
+          ...item,
+          settings: { ...item.settings, recursive: true }
+        })),
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      const southRecursive = new SouthSftp(configRecursive, addContentCallback, southCacheRepository, 'cacheFolder');
+      await southRecursive.start();
 
-    const addContentMock = (south.addContent as unknown as { mock: { calls: Array<{ arguments: Array<unknown> }> } }).mock;
-    assert.strictEqual(addContentMock.calls.length, 1);
-    assert.ok(
-      logger.error.mock.calls.some(c =>
-        (c.arguments[0] as string).includes(
-          `Error while removing file "${path.resolve('cacheFolder', 'tmp', fileInfo.name)}": ${new Error('unlink error')}`
-        )
-      )
-    );
-  });
+      const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
+      const dirEntry = { type: 'd', name: 'subdir' } as FileInfo;
+      const fileInSubdir = { type: '-', name: 'file.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
+      const fileFailsCondition = { type: '-', name: 'other.xml', size: 100, modifyTime: mtimeMs } as FileInfo;
 
-  it('should properly list files', async () => {
-    const fileInfo = { name: 'myFile' } as FileInfo;
-    mock.method(
-      south,
-      'checkCondition',
-      mock.fn(() => true)
-    );
-    mockSftpClient.list = mock.fn(async (_folder?: string, callback?: (fi: FileInfo) => boolean) => {
-      if (callback) callback(fileInfo);
-      return [fileInfo];
-    });
-    configuration.settings.username = '';
-    configuration.settings.password = '';
-    const result = await south.listFiles(configuration.items[0], []);
-    assert.strictEqual(encryptionServiceMock.decryptText.mock.calls.length, 0);
-    assert.strictEqual(mockSftpClient.connect.mock.calls.length, 1);
-    assert.strictEqual(mockSftpClient.end.mock.calls.length, 1);
-    assert.deepStrictEqual(result, [fileInfo]);
-  });
+      let listCallCount = 0;
+      mockSftpClient.list.mock.mockImplementation(async () => {
+        listCallCount++;
+        return listCallCount === 1 ? [dirEntry] : [fileInSubdir, fileFailsCondition];
+      });
 
-  it('should list files recursively when recursive is true', async () => {
-    const configRecursive: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
-      ...configuration,
-      settings: { ...configuration.settings },
-      items: configuration.items.map(item => ({
-        ...item,
-        settings: { ...item.settings, recursive: true }
-      })),
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
-    const southRecursive = new SouthSftp(configRecursive, addContentCallback, southCacheRepository, 'cacheFolder');
-    await southRecursive.start();
+      const item = configRecursive.items[0];
+      const result = await southRecursive.listFiles(item, []);
 
-    const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
-    const dirEntry = { type: 'd', name: 'subdir' } as FileInfo;
-    const fileInSubdir = { type: '-', name: 'file.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
-    const fileFailsCondition = { type: '-', name: 'other.xml', size: 100, modifyTime: mtimeMs } as FileInfo;
-
-    let listCallCount = 0;
-    mockSftpClient.list = mock.fn(async (_folder?: string, _callback?: (fi: FileInfo) => boolean) => {
-      listCallCount++;
-      return listCallCount === 1 ? [dirEntry] : [fileInSubdir, fileFailsCondition];
+      const listCalls = mockSftpClient.list.mock.calls;
+      assert.ok(listCalls.some(c => c.arguments[0] === 'input'));
+      assert.ok(listCalls.some(c => c.arguments[0] === 'input/subdir'));
+      assert.strictEqual(result.length, 1);
+      assert.strictEqual(result[0].name, 'subdir/file.csv');
     });
 
-    const item = configRecursive.items[0];
-    const result = await southRecursive.listFiles(item, []);
+    it('should update modifiedTime when file already in filesPreserved', async () => {
+      const mtimeMs = new Date('2020-02-02T02:02:02.222Z').getTime();
+      const fileInfo = { name: 'myFile1', size: 123, modifyTime: mtimeMs } as FileInfo;
+      const filesPreserved: Array<{ filename: string; modifiedTime: number }> = [{ filename: 'myFile1', modifiedTime: 0 }];
 
-    const listCalls = mockSftpClient.list.mock.calls;
-    assert.ok(listCalls.some(c => c.arguments[0] === 'input'));
-    assert.ok(listCalls.some(c => c.arguments[0] === 'input/subdir'));
-    assert.strictEqual(result.length, 1);
-    assert.strictEqual(result[0].name, 'subdir/file.csv');
+      mock.method(
+        south,
+        'addContent',
+        mock.fn(async () => undefined)
+      );
+
+      await south.getFile(fileInfo, configuration.items[1], filesPreserved);
+
+      assert.strictEqual(filesPreserved.length, 1);
+      assert.strictEqual(filesPreserved[0].modifiedTime, mtimeMs);
+    });
   });
 });
 
-describe('SouthFTP with preserve file and compression', () => {
+describe('SouthSFTP with preserve file and compression', () => {
   let SouthSftp: typeof SouthSftpClass;
   let south: SouthSftpClass;
 
@@ -528,7 +747,8 @@ describe('SouthFTP with preserve file and compression', () => {
       authentication: 'password',
       username: 'user',
       password: 'pass',
-      compression: true
+      compression: true,
+      retryInterval: 10000
     },
     groups: [],
     items: [
@@ -553,6 +773,7 @@ describe('SouthFTP with preserve file and compression', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -579,6 +800,7 @@ describe('SouthFTP with preserve file and compression', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -605,6 +827,7 @@ describe('SouthFTP with preserve file and compression', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -624,21 +847,25 @@ describe('SouthFTP with preserve file and compression', () => {
       __esModule: true,
       encryptionService: encryptionServiceMock
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => activeSftpLogger) },
+      default: class {}
+    });
     SouthSftp = reloadModule<{ default: typeof SouthSftpClass }>(nodeRequire, './south-sftp').default;
   });
 
   beforeEach(async () => {
     activeSftpLogger = logger;
-    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW).getTime() });
-    mockSftpClient.connect.mock.resetCalls();
-    mockSftpClient.list.mock.resetCalls();
-    mockSftpClient.fastGet.mock.resetCalls();
-    mockSftpClient.delete.mock.resetCalls();
-    mockSftpClient.end.mock.resetCalls();
+    mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW).getTime() });
+    sftpClientDefaultFn.mock.resetCalls();
+    mockSftpClient.connect = mock.fn(async () => undefined);
     mockSftpClient.list = mock.fn(async (_folder?: string, _callback?: (fi: FileInfo) => boolean) => [] as Array<FileInfo>);
     mockSftpClient.fastGet = mock.fn(async () => undefined);
     mockSftpClient.delete = mock.fn(async () => undefined);
-    utilsExports.compress = mock.fn(async () => undefined);
+    mockSftpClient.end = mock.fn(async () => undefined);
+    utilsExports.compress.mock.mockImplementation(async () => undefined);
+    utilsExports.getErrorMessage.mock.resetCalls();
+    utilsExports.workUnitLogCtx.mock.resetCalls();
     addContentCallback.mock.resetCalls();
     encryptionServiceMock.decryptText.mock.resetCalls();
 
@@ -651,7 +878,7 @@ describe('SouthFTP with preserve file and compression', () => {
     mock.restoreAll();
   });
 
-  it('should properly add compressed file', async () => {
+  it('should properly add compressed file and capture the real compression error', async () => {
     const mtimeMs = new Date('2020-02-02T02:02:02.222Z').getTime();
     const fileInfo = { name: 'myFile1', size: 123, modifyTime: mtimeMs } as FileInfo;
 
@@ -688,7 +915,8 @@ describe('SouthFTP with preserve file and compression', () => {
     assert.strictEqual(addContentMock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
     assert.deepStrictEqual(addContentMock.calls[0].arguments[2], [configuration.items[1]]);
     assert.strictEqual(logger.error.mock.calls.length, 0);
-    assert.strictEqual(mockSftpClient.end.mock.calls.length, 1);
+    // The persistent client is never closed per-file.
+    assert.strictEqual(mockSftpClient.end.mock.calls.length, 0);
 
     // Second call — 3rd unlink throws
     fileInfo.name = 'myFile2';
@@ -697,14 +925,11 @@ describe('SouthFTP with preserve file and compression', () => {
       type: 'any',
       filePath: `${path.resolve('cacheFolder', 'tmp', 'myFile2')}.gz`
     });
-    assert.ok(
-      logger.error.mock.calls.some(c =>
-        (c.arguments[0] as string).includes(`Error while removing compressed file "${path.resolve('cacheFolder', 'tmp', 'myFile2')}.gz"`)
-      )
-    );
+    assert.ok(logIncludes(logger.error, `Error while removing compressed file "${path.resolve('cacheFolder', 'tmp', 'myFile2')}.gz"`));
 
-    // Third call — compress throws
-    utilsExports.compress = mock.fn(async () => {
+    // Third call — compress throws: the real error is captured (not swallowed), the file is sent
+    // raw, and the downloaded temp file is still cleaned up (the sibling leak fix).
+    utilsExports.compress.mock.mockImplementation(async () => {
       throw new Error('compression error');
     });
     await south.getFile(fileInfo, configuration.items[1], []);
@@ -713,16 +938,34 @@ describe('SouthFTP with preserve file and compression', () => {
       filePath: path.resolve('cacheFolder', 'tmp', 'myFile2')
     });
     assert.ok(
-      logger.error.mock.calls.some(c =>
-        (c.arguments[0] as string).includes(
-          `Error compressing file "${path.resolve('cacheFolder', 'tmp', fileInfo.name)}". Sending it raw instead`
-        )
+      logIncludes(
+        logger.error,
+        `Error compressing file "${path.resolve('cacheFolder', 'tmp', fileInfo.name)}": compression error. Sending it raw instead.`
       )
     );
+    // fs.unlink was called to remove the raw temp file after the compress-failure fallback send.
+    assert.ok(unlinkCallCount >= 4);
+  });
 
-    // The raw file sent as a compression fallback must still be cleaned up from the tmp folder
-    const unlinkMock = (fs.unlink as unknown as { mock: { calls: Array<{ arguments: Array<unknown> }> } }).mock;
-    assert.deepStrictEqual(unlinkMock.calls[unlinkMock.calls.length - 1].arguments[0], path.resolve('cacheFolder', 'tmp', 'myFile2'));
+  it('should clean up the downloaded temp file after sending it raw (no compression)', async () => {
+    const configurationWithoutCompression = {
+      ...configuration,
+      settings: { ...configuration.settings, compression: false }
+    };
+    const southWithoutCompression = new SouthSftp(configurationWithoutCompression, addContentCallback, southCacheRepository, 'cacheFolder');
+    await southWithoutCompression.start();
+
+    const fileInfo = { name: 'myFile1', size: 123, modifyTime: Date.now() } as FileInfo;
+    mock.method(
+      southWithoutCompression,
+      'addContent',
+      mock.fn(async () => undefined)
+    );
+    const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
+
+    await southWithoutCompression.getFile(fileInfo, configuration.items[0], []);
+
+    assert.ok(unlinkMock.mock.calls.some(c => c.arguments[0] === path.resolve('cacheFolder', 'tmp', fileInfo.name)));
   });
 
   it('should remove the local temp file after falling back to a raw send when compression fails', async () => {
@@ -782,7 +1025,7 @@ describe('SouthFTP with preserve file and compression', () => {
     assert.strictEqual(addContentMock.calls.length, 1);
     assert.ok(
       logger.error.mock.calls.some(c =>
-        (c.arguments[0] as string).includes(
+        (c.arguments[1] as string).includes(
           `Error while removing file "${path.resolve('cacheFolder', 'tmp', fileInfo.name)}": ${new Error('unlink error')}`
         )
       )
@@ -828,7 +1071,8 @@ describe('SouthSFTP test connection with private key', () => {
       privateKey: 'myPrivateKey',
       passphrase: 'myPassphrase',
       username: '',
-      compression: false
+      compression: false,
+      retryInterval: 10000
     },
     groups: [],
     items: [
@@ -853,6 +1097,7 @@ describe('SouthSFTP test connection with private key', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -879,6 +1124,7 @@ describe('SouthSFTP test connection with private key', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -905,6 +1151,7 @@ describe('SouthSFTP test connection with private key', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -924,18 +1171,23 @@ describe('SouthSFTP test connection with private key', () => {
       __esModule: true,
       encryptionService: encryptionServiceMock
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => activeSftpLogger) },
+      default: class {}
+    });
     SouthSftp = reloadModule<{ default: typeof SouthSftpClass }>(nodeRequire, './south-sftp').default;
   });
 
   beforeEach(() => {
-    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW).getTime() });
-    mockSftpClient.connect.mock.resetCalls();
-    mockSftpClient.list.mock.resetCalls();
-    mockSftpClient.fastGet.mock.resetCalls();
-    mockSftpClient.delete.mock.resetCalls();
-    mockSftpClient.end.mock.resetCalls();
+    activeSftpLogger = logger;
+    mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW).getTime() });
+    sftpClientDefaultFn.mock.resetCalls();
     mockSftpClient.connect = mock.fn(async () => undefined);
-    utilsExports.checkAge = mock.fn(() => true);
+    mockSftpClient.list = mock.fn(async (_folder?: string, _callback?: (fi: FileInfo) => boolean) => [] as Array<FileInfo>);
+    mockSftpClient.fastGet = mock.fn(async () => undefined);
+    mockSftpClient.delete = mock.fn(async () => undefined);
+    mockSftpClient.end = mock.fn(async () => undefined);
+    utilsExports.checkAge.mock.mockImplementation(() => true);
     addContentCallback.mock.resetCalls();
     encryptionServiceMock.decryptText.mock.resetCalls();
 
@@ -953,7 +1205,7 @@ describe('SouthSFTP test connection with private key', () => {
       'readFile',
       mock.fn(async () => 'key-contents')
     );
-    mockSftpClient.connect = mock.fn(async () => {
+    mockSftpClient.connect.mock.mockImplementation(async () => {
       throw new Error('connection fails');
     });
 
@@ -991,6 +1243,8 @@ describe('SouthSFTP test connection with private key', () => {
     assert.strictEqual(encryptionServiceMock.decryptText.mock.calls.length, 1);
     const readFileMock = fs.readFile as unknown as { mock: { calls: Array<unknown> } };
     assert.strictEqual(readFileMock.mock.calls.length, 1);
+    // testConnection() always closes its own local client.
+    assert.strictEqual(mockSftpClient.end.mock.calls.length, 1);
 
     // Without passphrase — no decryptText call
     configuration.settings.passphrase = '';
@@ -1001,18 +1255,19 @@ describe('SouthSFTP test connection with private key', () => {
 
   it('should test item', async () => {
     mock.method(
-      south,
-      'listFiles',
-      mock.fn(async () => {
-        mock.timers.tick(25);
-        return [{ name: 'file.csv', modifyTime: DateTime.now().toMillis() }];
-      })
+      fs,
+      'readFile',
+      mock.fn(async () => 'key-contents')
     );
+    mockSftpClient.list.mock.mockImplementation(async (_folder?: string, callback?: (fi: FileInfo) => boolean) => {
+      mock.timers.tick(25);
+      const fileInfo = { name: 'file.csv', modifyTime: DateTime.now().toMillis() } as FileInfo;
+      if (callback) callback(fileInfo);
+      return [fileInfo];
+    });
 
     const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
 
-    const listFilesMock = (south.listFiles as unknown as { mock: { calls: Array<unknown> } }).mock;
-    assert.strictEqual(listFilesMock.calls.length, 1);
     assert.deepStrictEqual(result, {
       result: {
         type: 'time-values',
@@ -1032,18 +1287,16 @@ describe('SouthSFTP test connection with private key', () => {
   });
 
   it('should test item and throw error', async () => {
-    const error = new Error('Could not list files');
     mock.method(
-      south,
-      'listFiles',
-      mock.fn(async () => {
-        throw error;
-      })
+      fs,
+      'readFile',
+      mock.fn(async () => 'key-contents')
     );
+    const error = new Error('Could not list files');
+    mockSftpClient.list.mock.mockImplementation(async () => {
+      throw error;
+    });
 
     await assert.rejects(south.testItem(configuration.items[0], testData.south.itemTestingSettings), error);
-
-    const listFilesMock = (south.listFiles as unknown as { mock: { calls: Array<unknown> } }).mock;
-    assert.strictEqual(listFilesMock.calls.length, 1);
   });
 });

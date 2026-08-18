@@ -422,6 +422,7 @@ export interface SouthFTPSettings {
   username?: string | null;
   password?: string | null;
   compression: boolean;
+  retryInterval: number;
 }
 
 export interface SouthInfluxDBSettings {
@@ -578,6 +579,7 @@ export interface SouthSFTPSettings {
   privateKey?: string;
   passphrase?: string | null;
   compression: boolean;
+  retryInterval: number;
 }
 
 export interface SouthSQLiteSettings {

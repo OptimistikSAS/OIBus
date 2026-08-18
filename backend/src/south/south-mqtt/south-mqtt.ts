@@ -218,15 +218,15 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
         (async () => {
           try {
             this.logger.debug(`Connecting to "${this.connector.settings.url}"`);
-          const connectStart = DateTime.now().toMillis();
-           client = await mqtt.connectAsync(this.connector.settings.url, options);
+            const connectStart = DateTime.now().toMillis();
+            client = await mqtt.connectAsync(this.connector.settings.url, options);
             const connectionDuration = DateTime.now().toMillis() - connectStart;
             this.logger.info(`Connected to "${this.connector.settings.url}" in ${connectionDuration} ms`);
-          const queryStart = DateTime.now().toMillis();
-          client.once('message', async (topic, message, _packet) => {
-            try {
-              const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
-              await client!.unsubscribeAsync(item.settings.topic);
+            const queryStart = DateTime.now().toMillis();
+            client.once('message', async (topic, message, _packet) => {
+              try {
+                const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
+                await client!.unsubscribeAsync(item.settings.topic);
                 resolve({
                   result: {
                     type: 'any-content',
