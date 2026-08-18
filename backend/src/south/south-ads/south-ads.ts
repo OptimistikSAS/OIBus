@@ -9,6 +9,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { AdsEnumInfoEntry } from 'ads-client/dist/types/ads-protocol-types';
 import { SouthDirectQuery } from '../south-interface';
+import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
 
 interface ADSOptions {
   targetAmsNetId: string;
@@ -164,7 +165,10 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     return [];
   }
 
-  private async buildSymbolCache(items: Array<SouthConnectorItemEntity<SouthADSItemSettings>>): Promise<void> {
+  private async buildSymbolCache(
+    items: Array<SouthConnectorItemEntity<SouthADSItemSettings>>,
+    logCtx: Record<string, string>
+  ): Promise<void> {
     const missing = items.filter(item => !this.symbolCache.has(item.settings.address));
     if (missing.length === 0) return;
 
@@ -189,7 +193,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
           try {
             return { item, symbol: await this.client!.getSymbol(item.settings.address) };
           } catch {
-            this.logger.warn(`Symbol "${item.settings.address}" not found on PLC, item "${item.name}" will be skipped`);
+            this.logger.warn(logCtx, `Symbol "${item.settings.address}" not found on PLC, item "${item.name}" will be skipped`);
             return null;
           }
         })
@@ -206,13 +210,14 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     for (const { item, symbol } of allResolved) {
       this.symbolCache.set(item.settings.address, { symbol, dataType: typeMap.get(symbol.type)! });
     }
-    this.logger.debug(`Symbol cache: ${this.symbolCache.size}/${items.length} symbols resolved`);
+    this.logger.debug(logCtx, `Symbol cache: ${this.symbolCache.size}/${items.length} symbols resolved`);
   }
 
   async directQuery(items: Array<SouthConnectorItemEntity<SouthADSItemSettings>>): Promise<OIBusTimeValue | null> {
+    const logCtx = workUnitLogCtx(items);
     const contentResult: Array<OIBusTimeValue> = [];
     try {
-      await this.buildSymbolCache(items);
+      await this.buildSymbolCache(items, logCtx);
 
       const timestamp = DateTime.now().toUTC().toISO()!;
       const startRequest = DateTime.now();
@@ -233,7 +238,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
           results.map(async (result, i) => {
             const item = chunk[i];
             if (!result.success) {
-              this.logger.error(`Failed to read "${item.settings.address}" (${item.name}): ${result.errorStr}`);
+              this.logger.error(logCtx, `Failed to read "${item.settings.address}" (${item.name}): ${result.errorStr}`);
               return [];
             }
             const { dataType } = this.symbolCache.get(item.settings.address)!;
@@ -255,12 +260,15 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
       contentResult.push(...uncachedResults.flat());
 
       const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
-      this.logger.debug(`Requested ${items.length} items in ${requestDuration} ms`);
+      this.logger.debug(logCtx, `Requested ${items.length} items in ${requestDuration} ms`);
 
       await this.addContent({ type: 'time-values', content: contentResult }, startRequest.toUTC().toISO(), items);
     } catch (error: unknown) {
-      if ((error as Error).message.includes('Client is not connected')) {
-        this.logger.error('ADS client disconnected. Reconnecting');
+      if (getErrorMessage(error).includes('Client is not connected')) {
+        // This branch handles the error itself (reconnect scheduled) rather than rethrowing, so —
+        // unlike other errors here, which the base class logs generically via its own runTask()
+        // catch — this is the only place this failure gets logged at all.
+        this.logger.error(logCtx, `ADS client disconnected while reading ${items.length} item(s). Reconnecting`);
         await this.disconnect();
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
       } else {
@@ -318,7 +326,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
         queryDuration
       };
     } catch (error: unknown) {
-      throw new Error(`Unable to connect. ${(error as Error).message}`);
+      throw new Error(`Unable to connect. ${getErrorMessage(error)}`);
     } finally {
       if (client && !reusingLiveClient) {
         await this.closeLocalAdsClient(client);
@@ -361,16 +369,18 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
 
     try {
       const options = this.createConnectionOptions();
-      this.logger.info(`Connecting to ADS Client with options ${JSON.stringify(options)}`);
+      this.logger.debug(`Connecting to ADS Client with options ${JSON.stringify(options)}`);
 
       this.client = new Client(options);
+      const connectStart = DateTime.now().toMillis();
       const result = await this.client.connect();
+      const connectDuration = DateTime.now().toMillis() - connectStart;
       this.logger.info(
-        `Connected to the ${result.targetAmsNetId} with local AmsNetId ${result.localAmsNetId} and local port ${result.localAdsPort}`
+        `Connected to the ${result.targetAmsNetId} with local AmsNetId ${result.localAmsNetId} and local port ${result.localAdsPort} in ${connectDuration} ms`
       );
       await super.connect();
     } catch (error: unknown) {
-      this.logger.error(`ADS connect error: ${(error as Error).message}`);
+      this.logger.error(`ADS connect error: ${getErrorMessage(error)}`);
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
@@ -447,13 +457,18 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
-    try {
-      await this.disconnectAdsClient();
-    } catch (error) {
-      this.logger.error(`ADS disconnect error. ${error}`);
+    if (this.client) {
+      const disconnectStart = DateTime.now().toMillis();
+      try {
+        await this.disconnectAdsClient();
+        this.logger.info(
+          `ADS client disconnected from ${this.connector.settings.netId}:${this.connector.settings.port} in ${DateTime.now().toMillis() - disconnectStart} ms`
+        );
+      } catch (error) {
+        this.logger.error(`ADS disconnect error: ${getErrorMessage(error)}`);
+      }
+      this.client = null;
     }
-    this.logger.info(`ADS client disconnected from ${this.connector.settings.netId}:${this.connector.settings.port}`);
-    this.client = null;
     await super.disconnect();
     this.disconnecting = false;
   }

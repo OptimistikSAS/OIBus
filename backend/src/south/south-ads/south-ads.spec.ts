@@ -539,7 +539,9 @@ describe('South ADS', () => {
     );
     await south.directQuery(configuration.items);
     assert.ok(
-      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'ADS client disconnected. Reconnecting')
+      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) =>
+        (c.arguments[1] as string)?.includes('ADS client disconnected while reading 2 item(s). Reconnecting')
+      )
     );
 
     // Reconnect timer is now set — advance time and disconnect to clear it
@@ -707,13 +709,16 @@ describe('South ADS', () => {
     assert.ok(
       logger.error.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
-          (c.arguments[0] as string).includes('ADS disconnect error') && (c.arguments[0] as string).includes('disconnect error')
+          typeof c.arguments[0] === 'string' &&
+          c.arguments[0].includes('ADS disconnect error') &&
+          c.arguments[0].includes('disconnect error')
       )
     );
     assert.ok(
       logger.info.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
-          c.arguments[0] === `ADS client disconnected from ${configuration.settings.netId}:${configuration.settings.port}`
+          typeof c.arguments[0] === 'string' &&
+          c.arguments[0].startsWith(`ADS client disconnected from ${configuration.settings.netId}:${configuration.settings.port} in`)
       )
     );
 
@@ -892,8 +897,9 @@ describe('South ADS', () => {
     assert.ok(
       logger.error.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
-          (c.arguments[0] as string).includes(configuration.items[0].settings.address) &&
-          (c.arguments[0] as string).includes('DEVICE_NOTFOUND')
+          typeof c.arguments[1] === 'string' &&
+          c.arguments[1].includes(configuration.items[0].settings.address) &&
+          c.arguments[1].includes('DEVICE_NOTFOUND')
       )
     );
     // Only one successful item contributed to content
@@ -934,8 +940,9 @@ describe('South ADS', () => {
     assert.ok(
       logger.warn.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
-          (c.arguments[0] as string).includes(configuration.items[1].settings.address) &&
-          (c.arguments[0] as string).includes('not found on PLC')
+          typeof c.arguments[1] === 'string' &&
+          c.arguments[1].includes(configuration.items[1].settings.address) &&
+          c.arguments[1].includes('not found on PLC')
       )
     );
   });
@@ -1005,8 +1012,9 @@ describe('South ADS', () => {
     assert.ok(
       logger.warn.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
-          (c.arguments[0] as string).includes(configuration.items[0].settings.address) &&
-          (c.arguments[0] as string).includes('not found on PLC')
+          typeof c.arguments[1] === 'string' &&
+          c.arguments[1].includes(configuration.items[0].settings.address) &&
+          c.arguments[1].includes('not found on PLC')
       )
     );
   });
