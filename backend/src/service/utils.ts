@@ -1134,6 +1134,25 @@ export const groupItemsByGroup = <I extends SouthItemSettings>(
 };
 
 /**
+ * Structured logger context identifying a work-unit (single item, or a synced group's items
+ * queried/handled together): `{ itemId, itemName }` for a single item, `{ groupId, groupName }`
+ * when several items share a synced group, or `{}` when neither applies (empty array, or several
+ * items that don't share a group). Kept as ids/names on the log object rather than inlined into
+ * every message — a synced group can hold thousands of items, so previewing item names in the
+ * message text doesn't scale the way it does for a handful of items.
+ */
+export function workUnitLogCtx<I extends SouthItemSettings>(items: Array<SouthConnectorItemEntity<I>>): Record<string, string> {
+  if (items.length === 0) {
+    return {};
+  }
+  if (items.length === 1) {
+    return { itemId: items[0].id, itemName: items[0].name };
+  }
+  const lead = items[0];
+  return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
+}
+
+/**
  * Extracts a human-readable message from any thrown value.
  *
  * Node.js / undici network errors can arrive as an {@link AggregateError}

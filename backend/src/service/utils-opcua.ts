@@ -298,14 +298,19 @@ export const parseOPCUAValue = (itemName: string, opcuaVariant: Variant, logger:
   }
 };
 
-export const logMessages = (logs: Map<string, { description: string; affectedNodes: Array<string> }>, logger: ILogger) => {
+export const logMessages = (
+  logs: Map<string, { description: string; affectedNodes: Array<string> }>,
+  logger: ILogger,
+  logCtx: Record<string, string> = {}
+) => {
   for (const [statusCode, log] of logs.entries()) {
     if (log.affectedNodes.length > MAX_NUMBER_OF_NODE_TO_LOG) {
       logger.debug(
+        logCtx,
         `${statusCode} status code (${log.description}): [${log.affectedNodes[0]}..${log.affectedNodes[log.affectedNodes.length - 1]}]`
       );
     } else {
-      logger.debug(`${log.description} with status code ${statusCode}: [${log.affectedNodes.toString()}]`);
+      logger.debug(logCtx, `${log.description} with status code ${statusCode}: [${log.affectedNodes.toString()}]`);
     }
   }
 };
