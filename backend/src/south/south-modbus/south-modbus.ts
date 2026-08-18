@@ -22,6 +22,7 @@ import {
   readInputRegister
 } from '../../service/utils-modbus';
 import { Instant } from '../../model/types';
+import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
 
 // Modbus Application Protocol limits (spec v1.1b3, §6.1 / §6.2 / §6.3 / §6.4)
 const MAX_COIL_READ_COUNT = 2000; // FC01 / FC02
@@ -59,7 +60,9 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       this.logger.debug(`Connecting Modbus socket into ${this.connector.settings.host}:${this.connector.settings.port}`);
       this.socket = new net.Socket();
       this.modbusClient = new client.TCP(this.socket, this.connector.settings.slaveId);
+      const connectStart = DateTime.now().toMillis();
       await connectSocket(this.socket, this.connector.settings);
+      const connectDuration = DateTime.now().toMillis() - connectStart;
       // Enable TCP keepalive probes so idle connections survive firewall / NAT
       // idle timeouts and stale connections are detected at the OS level.
       this.socket.setKeepAlive(true, this.connector.settings.networkTimeout);
@@ -74,10 +77,12 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
           this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
         }
       });
-      this.logger.info(`Modbus socket connected to ${this.connector.settings.host}:${this.connector.settings.port}`);
+      this.logger.info(
+        `Modbus socket connected to ${this.connector.settings.host}:${this.connector.settings.port} in ${connectDuration} ms`
+      );
       await super.connect();
     } catch (error: unknown) {
-      this.logger.error(`Modbus socket error: ${(error as Error).message}`);
+      this.logger.error(`Modbus socket error: ${getErrorMessage(error)}`);
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
@@ -95,6 +100,9 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       this.socket.removeAllListeners();
       this.socket.destroy();
       this.socket = null;
+      // No duration here: unlike OPC UA's session.close(), destroying a socket is a synchronous,
+      // local, always-fast operation — timing it would just add noise, not signal.
+      this.logger.info(`Modbus socket disconnected from ${this.connector.settings.host}:${this.connector.settings.port}`);
     }
     this.modbusClient = null;
     await super.disconnect();
@@ -104,7 +112,12 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   override async testConnection(): Promise<OIBusConnectionTestResult> {
     const socket = new net.Socket();
     try {
+      this.logger.debug(`Connecting Modbus socket into ${this.connector.settings.host}:${this.connector.settings.port}`);
+      const connectStart = DateTime.now().toMillis();
       await connectSocket(socket, this.connector.settings);
+      this.logger.info(
+        `Modbus socket connected to ${this.connector.settings.host}:${this.connector.settings.port} in ${DateTime.now().toMillis() - connectStart} ms`
+      );
       return {
         items: [{ key: 'RemoteAddress', value: `${socket.remoteAddress}:${socket.remotePort}` }]
       };
@@ -112,9 +125,9 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       switch ((error as { code: string; message: string }).code) {
         case 'ENOTFOUND':
         case 'ECONNREFUSED':
-          throw new Error(`Please check host and port: ${(error as Error).message}`);
+          throw new Error(`Please check host and port: ${getErrorMessage(error)}`);
         default:
-          throw new Error(`Unable to connect to socket: ${(error as Error).message}`);
+          throw new Error(`Unable to connect to socket: ${getErrorMessage(error)}`);
       }
     } finally {
       socket.destroy();
@@ -128,9 +141,13 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     const socket = new net.Socket();
     try {
       const modbusClient = new client.TCP(socket, this.connector.settings.slaveId);
+      this.logger.debug(`Connecting Modbus socket into ${this.connector.settings.host}:${this.connector.settings.port}`);
       const connectStart = DateTime.now().toMillis();
       await connectSocket(socket, this.connector.settings);
       const connectionDuration = DateTime.now().toMillis() - connectStart;
+      this.logger.info(
+        `Modbus socket connected to ${this.connector.settings.host}:${this.connector.settings.port} in ${connectionDuration} ms`
+      );
       const queryStart = DateTime.now().toMillis();
       const dataValues: Array<OIBusTimeValue> = await this.modbusFunction(modbusClient, item);
       const queryDuration = DateTime.now().toMillis() - queryStart;
@@ -146,9 +163,9 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       switch ((error as { code: string; message: string }).code) {
         case 'ENOTFOUND':
         case 'ECONNREFUSED':
-          throw new Error(`Please check host and port: ${(error as Error).message}`);
+          throw new Error(`Please check host and port: ${getErrorMessage(error)}`);
         default:
-          throw new Error(`Unable to connect to socket: ${(error as Error).message}`);
+          throw new Error(`Unable to connect to socket: ${getErrorMessage(error)}`);
       }
     } finally {
       socket.destroy();
@@ -156,6 +173,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   }
 
   async directQuery(items: Array<SouthConnectorItemEntity<SouthModbusItemSettings>>): Promise<OIBusTimeValue | null> {
+    const logCtx = workUnitLogCtx(items);
     const dataValues: Array<OIBusTimeValue> = [];
     try {
       if (!this.modbusClient) {
@@ -184,16 +202,17 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
         for (const [type, group] of groups) {
           group.sort((a, b) => a.address - b.address);
           if (type === 'coil' || type === 'discrete-input') {
-            dataValues.push(...(await this.queryBitsGrouped(type as 'coil' | 'discrete-input', group, timestamp, groupingGap)));
+            dataValues.push(...(await this.queryBitsGrouped(type as 'coil' | 'discrete-input', group, timestamp, groupingGap, logCtx)));
           } else if (type === 'input-register' || type === 'holding-register') {
             dataValues.push(
-              ...(await this.queryRegistersGrouped(type as 'input-register' | 'holding-register', group, timestamp, groupingGap))
+              ...(await this.queryRegistersGrouped(type as 'input-register' | 'holding-register', group, timestamp, groupingGap, logCtx))
             );
           }
         }
       } else {
         // Individual mode: one request per point
         for (const { item } of resolvedItems) {
+          this.logger.trace(logCtx, `Reading item "${item.name}" (${item.settings.modbusType} at address ${item.settings.address})`);
           const values = await this.modbusFunction(this.modbusClient, item);
           for (const v of values) {
             dataValues.push({ ...v, timestamp });
@@ -202,7 +221,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       }
 
       const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
-      this.logger.debug(`Requested ${items.length} items in ${requestDuration} ms`);
+      this.logger.debug(logCtx, `Requested ${items.length} items in ${requestDuration} ms`);
       await this.addContent({ type: 'time-values', content: dataValues }, startRequest.toUTC().toISO(), items);
     } catch (error: unknown) {
       // Only tear down and (re)schedule a reconnect when this failure happened on a connection that
@@ -232,7 +251,8 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     type: 'coil' | 'discrete-input',
     sortedItems: Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; address: number }>,
     timestamp: string,
-    groupingGap: number
+    groupingGap: number,
+    logCtx: Record<string, string>
   ): Promise<Array<OIBusTimeValue>> {
     const results: Array<OIBusTimeValue> = [];
     let i = 0;
@@ -252,6 +272,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
         }
         const chunk = batch.slice(c, chunkEnd);
         const count = chunk[chunk.length - 1].address - chunk[0].address + 1; // includes gap bits
+        this.logger.trace(logCtx, `Reading ${chunk.length} ${type}(s) in ${count} address(es) starting at ${chunk[0].address}`);
         const { response } =
           type === 'coil'
             ? await this.modbusClient!.readCoils(chunk[0].address, count)
@@ -278,7 +299,8 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     type: 'input-register' | 'holding-register',
     sortedItems: Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; address: number }>,
     timestamp: string,
-    groupingGap: number
+    groupingGap: number,
+    logCtx: Record<string, string>
   ): Promise<Array<OIBusTimeValue>> {
     const results: Array<OIBusTimeValue> = [];
     let i = 0;
@@ -310,6 +332,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
         const chunkLastItem = chunk[chunk.length - 1];
         const chunkWords = chunkLastItem.address - chunkStartAddress + getNumberOfWords(chunkLastItem.item.settings.data!.dataType!);
 
+        this.logger.trace(logCtx, `Reading ${chunk.length} ${type}(s) in ${chunkWords} word(s) starting at ${chunkStartAddress}`);
         const { response } =
           type === 'input-register'
             ? await this.modbusClient!.readInputRegisters(chunkStartAddress, chunkWords)
