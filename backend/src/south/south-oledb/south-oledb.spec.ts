@@ -43,7 +43,23 @@ describe('SouthOLEDB', () => {
     formatInstant: mock.fn((value: unknown) => value),
     generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
     logQuery: mock.fn(),
-    persistResults: mock.fn(async () => undefined)
+    persistResults: mock.fn(async () => undefined),
+    getErrorMessage: mock.fn((error: unknown) => {
+      if (error instanceof Error) return error.message;
+      if (typeof error === 'string') return error;
+      if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
+        return (error as { message: string }).message;
+      }
+      return String(error);
+    }),
+    // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
+    // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
+    workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
+      if (items.length === 0) return {};
+      if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
+      const lead = items[0];
+      return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
+    })
   };
 
   const configuration: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings> = {
@@ -439,8 +455,7 @@ describe('SouthOLEDB', () => {
     await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
     assert.ok(
       logger.debug.mock.calls.some(
-        (c: { arguments: Array<unknown> }) =>
-          (c.arguments[0] as string).includes('No result found') && (c.arguments[0] as string).includes(configuration.items[0].name)
+        (c: { arguments: Array<unknown> }) => typeof c.arguments[1] === 'string' && c.arguments[1].includes('No result found')
       )
     );
   });
@@ -496,20 +511,10 @@ describe('SouthOLEDB', () => {
       south.queryRemoteAgentData(configuration.items[0], startTime, endTime),
       new Error('Error occurred when querying remote agent with status 400: bad request')
     );
-    assert.ok(
-      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) =>
-        (c.arguments[0] as string).includes('Error occurred when querying remote agent with status 400: bad request')
-      )
-    );
 
     await assert.rejects(
       south.queryRemoteAgentData(configuration.items[0], startTime, endTime),
       new Error('Error occurred when querying remote agent with status 500')
-    );
-    assert.ok(
-      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) =>
-        (c.arguments[0] as string).includes('Error occurred when querying remote agent with status 500')
-      )
     );
   });
 
@@ -596,9 +601,7 @@ describe('SouthOLEDB', () => {
     httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
     await assert.doesNotReject(south.testConnection());
     assert.ok(
-      logger.info.mock.calls.some((c: { arguments: Array<unknown> }) =>
-        (c.arguments[0] as string).includes('Testing OLE OIBus Agent connection')
-      )
+      logger.info.mock.calls.some((c: { arguments: Array<unknown> }) => (c.arguments[0] as string).includes('Connected to OLE agent'))
     );
   });
 

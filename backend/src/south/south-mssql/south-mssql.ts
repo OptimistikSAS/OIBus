@@ -6,8 +6,10 @@ import {
   formatInstant,
   generateCsvContent,
   generateFilenameForSerialization,
+  getErrorMessage,
   logQuery,
-  persistResults
+  persistResults,
+  workUnitLogCtx
 } from '../../service/utils';
 import { encryptionService } from '../../service/encryption.service';
 import { Instant } from '../../../shared/model/types';
@@ -68,18 +70,16 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
       pool = await new mssql.ConnectionPool(config).connect();
       request = pool.request();
     } catch (error: unknown) {
-      switch ((error as { code: string; message: string }).code) {
+      switch ((error as { code: string }).code) {
         case 'ETIMEOUT':
         case 'ESOCKET':
-          throw new OIBusTestingError(`Please check host and port. ${(error as { code: string; message: string }).message}`);
+          throw new OIBusTestingError(`Please check host and port. ${getErrorMessage(error)}`);
 
         case 'ELOGIN':
-          throw new OIBusTestingError(
-            `Please check username, password and database name. ${(error as { code: string; message: string }).message}`
-          );
+          throw new OIBusTestingError(`Please check username, password and database name. ${getErrorMessage(error)}`);
 
         default:
-          throw new OIBusTestingError(`Unable to connect to database. ${(error as { code: string; message: string }).message}`);
+          throw new OIBusTestingError(`Unable to connect to database. ${getErrorMessage(error)}`);
       }
     }
 
@@ -95,7 +95,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
       table_count = (recordset[0]?.table_count as number) ?? 0;
     } catch (error: unknown) {
       await pool.close();
-      throw new OIBusTestingError(`Unable to read tables in database "${this.connector.settings.database}". ${(error as Error).message}`);
+      throw new OIBusTestingError(`Unable to read tables in database "${this.connector.settings.database}". ${getErrorMessage(error)}`);
     }
 
     if (table_count === 0) {
@@ -184,13 +184,14 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
     endTime: Instant
   ): Promise<{ trackedInstant: Instant | null; value: Record<string, string | number> | null }> {
     const item = items[0];
+    const logCtx = workUnitLogCtx(items);
     let updatedStartTime: Instant | null = null;
 
     const startRequest = DateTime.now();
     const result = await this.queryData(item, startTime, endTime);
     const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
     if (result.length > 0) {
-      this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
+      this.logger.info(logCtx, `Found ${result.length} results in ${requestDuration} ms`);
       const formattedResult = result.map(entry => {
         const formattedEntry: Record<string, string | number> = {};
         Object.entries(entry).forEach(([key, value]) => {
@@ -225,7 +226,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
         this.logger
       );
     } else {
-      this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
+      this.logger.debug(logCtx, `No result found. Request done in ${requestDuration} ms`);
     }
     return { trackedInstant: updatedStartTime, value: result.length > 0 ? result[result.length - 1] : null };
   }
@@ -243,7 +244,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
     const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference) || null;
     const mssqlStartTime = referenceTimestampField == null ? startTime : formatInstant(startTime, referenceTimestampField);
     const mssqlEndTime = referenceTimestampField == null ? endTime : formatInstant(endTime, referenceTimestampField);
-    logQuery(item.settings.query, mssqlStartTime, mssqlEndTime, this.logger);
+    logQuery(item.settings.query, mssqlStartTime, mssqlEndTime, this.logger, workUnitLogCtx([item]));
 
     const pool = await new mssql.ConnectionPool(config).connect();
     const request = pool.request();

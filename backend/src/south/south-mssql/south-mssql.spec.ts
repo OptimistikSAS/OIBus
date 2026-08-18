@@ -75,7 +75,23 @@ describe('SouthMSSQL', () => {
     generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
     generateReplacementParameters: mock.fn(() => []),
     logQuery: mock.fn(),
-    persistResults: mock.fn(async () => undefined)
+    persistResults: mock.fn(async () => undefined),
+    getErrorMessage: mock.fn((error: unknown) => {
+      if (error instanceof Error) return error.message;
+      if (typeof error === 'string') return error;
+      if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
+        return (error as { message: string }).message;
+      }
+      return String(error);
+    }),
+    // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
+    // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
+    workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
+      if (items.length === 0) return {};
+      if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
+      const lead = items[0];
+      return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
+    })
   };
 
   before(() => {
@@ -279,7 +295,7 @@ describe('SouthMSSQL', () => {
       utilsExports.formatInstant = mock.fn(() => '2020-02-01 00:00:00.000');
       utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
 
-      const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
+      const result = await south.historyQuery([configuration.items[0]], startTime, testData.constants.dates.FAKE_NOW);
       assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls.length, 1);
       assert.strictEqual(queryDataMock.mock.calls.length, 1);
       assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [
@@ -291,12 +307,11 @@ describe('SouthMSSQL', () => {
         trackedInstant: '2020-03-01T00:00:00.000Z',
         value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
       });
-      assert.ok(
-        logger.info.mock.calls.some(
-          (c: { arguments: Array<unknown> }) =>
-            (c.arguments[0] as string).includes('Found 2 results') && (c.arguments[0] as string).includes(configuration.items[0].name)
-        )
+      const foundLog = logger.info.mock.calls.find(
+        (c: { arguments: Array<unknown> }) => typeof c.arguments[1] === 'string' && c.arguments[1].includes('Found 2 results')
       );
+      assert.ok(foundLog);
+      assert.deepStrictEqual(foundLog.arguments[0], { itemId: configuration.items[0].id, itemName: configuration.items[0].name });
     });
 
     it('should properly run historyQuery without result', async () => {
@@ -307,7 +322,7 @@ describe('SouthMSSQL', () => {
         mock.fn(async () => [])
       );
 
-      const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
+      const result = await south.historyQuery([configuration.items[0]], startTime, testData.constants.dates.FAKE_NOW);
       assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls.length, 0);
       assert.strictEqual(queryDataMock.mock.calls.length, 1);
       assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [
@@ -316,12 +331,11 @@ describe('SouthMSSQL', () => {
         testData.constants.dates.FAKE_NOW
       ]);
       assert.deepStrictEqual(result, { trackedInstant: null, value: null });
-      assert.ok(
-        logger.debug.mock.calls.some(
-          (c: { arguments: Array<unknown> }) =>
-            (c.arguments[0] as string).includes('No result found') && (c.arguments[0] as string).includes(configuration.items[0].name)
-        )
+      const noResultLog = logger.debug.mock.calls.find(
+        (c: { arguments: Array<unknown> }) => typeof c.arguments[1] === 'string' && c.arguments[1].includes('No result found')
       );
+      assert.ok(noResultLog);
+      assert.deepStrictEqual(noResultLog.arguments[0], { itemId: configuration.items[0].id, itemName: configuration.items[0].name });
     });
 
     it('should get data from MSSQL', async () => {

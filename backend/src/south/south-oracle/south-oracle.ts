@@ -7,8 +7,10 @@ import {
   generateCsvContent,
   generateFilenameForSerialization,
   generateReplacementParameters,
+  getErrorMessage,
   logQuery,
-  persistResults
+  persistResults,
+  workUnitLogCtx
 } from '../../service/utils';
 import { encryptionService } from '../../service/encryption.service';
 import { Instant } from '../../../shared/model/types';
@@ -46,7 +48,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
         }
       } catch (err) {
         this.logger.error(
-          `FATAL: Failed to initialize Oracle Thick mode. Falling back to Thin mode. Error details: ${(err as Error).message}`
+          `FATAL: Failed to initialize Oracle Thick mode. Falling back to Thin mode. Error details: ${getErrorMessage(err)}`
         );
       }
     }
@@ -75,18 +77,18 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
       switch ((error as { code: string }).code) {
         case 'NJS-515':
         case 'NJS-503':
-          throw new Error(`Please check host and port. ${(error as Error).message}`);
+          throw new Error(`Please check host and port. ${getErrorMessage(error)}`);
 
         case 'ORA-01017':
-          throw new Error(`Please check username and password. ${(error as Error).message}`);
+          throw new Error(`Please check username and password. ${getErrorMessage(error)}`);
 
         case 'NJS-518':
           throw new Error(
-            `Cannot connect to database "${this.connector.settings.database}". Service is not registered. ${(error as Error).message}`
+            `Cannot connect to database "${this.connector.settings.database}". Service is not registered. ${getErrorMessage(error)}`
           );
 
         default:
-          throw new Error(`Unexpected error. ${(error as Error).message}`);
+          throw new Error(`Unexpected error. ${getErrorMessage(error)}`);
       }
     }
 
@@ -104,7 +106,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
       }
     } catch (error: unknown) {
       await connection.close();
-      throw new Error(`Unable to read tables in database "${this.connector.settings.database}": ${(error as Error).message}`);
+      throw new Error(`Unable to read tables in database "${this.connector.settings.database}": ${getErrorMessage(error)}`);
     }
 
     await connection.close();
@@ -177,6 +179,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
     startTime: Instant,
     endTime: Instant
   ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
+    const logCtx = workUnitLogCtx(items);
     let updatedStartTime: Instant | null = null;
 
     const startRequest = DateTime.now();
@@ -184,7 +187,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
     const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
 
     if (result.length > 0) {
-      this.logger.info(`Found ${result.length} results for item ${items[0].name} in ${requestDuration} ms`);
+      this.logger.info(logCtx, `Found ${result.length} results in ${requestDuration} ms`);
 
       const formattedResult = result.map(entry => {
         const formattedEntry: Record<string, string | number> = {};
@@ -220,7 +223,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
         this.logger
       );
     } else {
-      this.logger.debug(`No result found for item ${items[0].name}. Request done in ${requestDuration} ms`);
+      this.logger.debug(logCtx, `No result found. Request done in ${requestDuration} ms`);
     }
 
     return { trackedInstant: updatedStartTime, value: result.length > 0 ? result[result.length - 1] : null };
@@ -246,7 +249,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
     const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference);
     const oracleStartTime = referenceTimestampField ? formatInstant(startTime, referenceTimestampField) : startTime;
     const oracleEndTime = referenceTimestampField ? formatInstant(endTime, referenceTimestampField) : endTime;
-    logQuery(item.settings.query, oracleStartTime, oracleEndTime, this.logger);
+    logQuery(item.settings.query, oracleStartTime, oracleEndTime, this.logger, workUnitLogCtx([item]));
 
     let connection;
     try {

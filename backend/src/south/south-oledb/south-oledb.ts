@@ -4,8 +4,10 @@ import {
   extractLastCsvRow,
   formatInstant,
   generateFilenameForSerialization,
+  getErrorMessage,
   logQuery,
-  persistResults
+  persistResults,
+  workUnitLogCtx
 } from '../../service/utils';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
@@ -43,6 +45,8 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
   override async connect(): Promise<void> {
     try {
       this.connected = false;
+      this.logger.debug(`Connecting to OLE agent at ${this.connector.settings.agentUrl}`);
+      const connectStart = DateTime.now().toMillis();
       const { connectionString } = await this.buildConnectionString(this.connector.settings);
       const fetchOptions: ReqOptions = {
         method: 'PUT',
@@ -55,10 +59,11 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
       const requestUrl = new URL(`/api/ole/${this.connector.id}/connect`, this.connector.settings.agentUrl);
       await HTTPRequest(requestUrl, fetchOptions);
       this.connected = true;
+      this.logger.info(`Connected to OLE agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - connectStart} ms`);
       await super.connect();
     } catch (error) {
       this.logger.error(
-        `Error while sending connection HTTP request into agent. Reconnecting in ${this.connector.settings.retryInterval} ms. ${error}`
+        `Error while sending connection HTTP request into agent. Reconnecting in ${this.connector.settings.retryInterval} ms. ${getErrorMessage(error)}`
       );
       this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
     }
@@ -71,12 +76,16 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     this.reconnectTimeout = null;
 
     if (this.connected) {
+      const disconnectStart = DateTime.now().toMillis();
       try {
         const fetchOptions = { method: 'DELETE' };
         const requestUrl = new URL(`/api/ole/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
         await HTTPRequest(requestUrl, fetchOptions);
+        this.logger.info(
+          `Disconnected from OLE agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - disconnectStart} ms`
+        );
       } catch (error) {
-        this.logger.error(`Error while sending disconnection HTTP request into agent. ${error}`);
+        this.logger.error(`Error while sending disconnection HTTP request into agent: ${getErrorMessage(error)}`);
       }
     }
     this.connected = false;
@@ -85,10 +94,9 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
     const { connectionString, logValue } = await this.buildConnectionString(this.connector.settings);
-    this.logger.info(`Testing OLE OIBus Agent connection on ${this.connector.settings.agentUrl} with "${logValue}"`);
+    this.logger.debug(`Connecting to OLE agent at ${this.connector.settings.agentUrl} with "${logValue}"`);
+    const connectStart = DateTime.now().toMillis();
 
-    const headers: Record<string, string> = {};
-    headers['Content-Type'] = 'application/json';
     const fetchOptions = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -100,15 +108,13 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     const requestUrl = new URL(`/api/ole/${this.connector.id}/connect`, this.connector.settings.agentUrl);
     const response = await HTTPRequest(requestUrl, fetchOptions);
     if (response.statusCode === 200) {
-      this.logger.info('Connected to remote ole. Disconnecting...');
+      this.logger.info(`Connected to OLE agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - connectStart} ms`);
       const requestUrl = new URL(`/api/ole/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
       await HTTPRequest(requestUrl, { method: 'DELETE' });
     } else if (response.statusCode === 400) {
       const errorMessage = await response.body.text();
-      this.logger.error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}: ${errorMessage}`);
       throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}: ${errorMessage}`);
     } else {
-      this.logger.error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}`);
       throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}`);
     }
     return { items: [] };
@@ -165,6 +171,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     endTime: Instant,
     test?: boolean
   ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
+    const logCtx = workUnitLogCtx([item]);
     let updatedStartTime: Instant | null = null;
     const startRequest = DateTime.now();
 
@@ -172,7 +179,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     const oleStartTime = referenceTimestampField ? formatInstant(startTime, referenceTimestampField) : startTime;
     const oleEndTime = referenceTimestampField ? formatInstant(endTime, referenceTimestampField) : endTime;
     const adaptedQuery = item.settings.query.replace(/@StartTime/g, `${oleStartTime}`).replace(/@EndTime/g, `${oleEndTime}`);
-    logQuery(adaptedQuery, oleStartTime, oleEndTime, this.logger);
+    logQuery(adaptedQuery, oleStartTime, oleEndTime, this.logger, logCtx);
     const { connectionString } = await this.buildConnectionString(this.connector.settings);
 
     const fetchOptions: ReqOptions = {
@@ -201,7 +208,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
         maxInstant: Instant;
       };
       const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
-      this.logger.info(`Found ${result.recordCount} results for item ${item.name} in ${requestDuration} ms`);
+      this.logger.info(logCtx, `Found ${result.recordCount} results in ${requestDuration} ms`);
 
       if (!test) {
         if (result.recordCount > 0) {
@@ -219,15 +226,16 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
             updatedStartTime = result.maxInstant;
           }
         } else {
-          this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
+          this.logger.debug(logCtx, `No result found. Request done in ${requestDuration} ms`);
         }
       }
     } else if (response.statusCode === 400) {
+      // No log here: the base class's runTask() already logs this error with this item's context
+      // when it's thrown from the scheduled historyQuery() path; testItem() has no separate logging
+      // for its own errors either, consistent with every other connector.
       const errorMessage = await response.body.text();
-      this.logger.error(`Error occurred when querying remote agent with status ${response.statusCode}: ${errorMessage}`);
       throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}: ${errorMessage}`);
     } else {
-      this.logger.error(`Error occurred when querying remote agent with status ${response.statusCode}`);
       throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}`);
     }
     // For the data stream we only keep the last row as the cached "last value"; the full CSV content

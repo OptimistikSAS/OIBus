@@ -52,7 +52,23 @@ const utilsExports = {
   persistResults: mock.fn(async () => undefined),
   generateReplacementParameters: mock.fn((): unknown => []),
   generateCsvContent: mock.fn(() => ''),
-  generateFilenameForSerialization: mock.fn(() => 'file.csv')
+  generateFilenameForSerialization: mock.fn(() => 'file.csv'),
+  getErrorMessage: mock.fn((error: unknown) => {
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'string') return error;
+    if (error && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
+      return (error as { message: string }).message;
+    }
+    return String(error);
+  }),
+  // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
+  // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
+  workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
+    if (items.length === 0) return {};
+    if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
+    const lead = items[0];
+    return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
+  })
 };
 
 const connectorSettings: SouthSQLiteSettings = {
@@ -183,7 +199,7 @@ describe('SouthSQLite', () => {
     const queryDataMock = mock.method(south, 'queryData', async () => queryDataResults);
     utilsExports.formatInstant = mock.fn(() => '2020-02-01 00:00:00.000');
 
-    const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
+    const result = await south.historyQuery([configuration.items[0]], startTime, testData.constants.dates.FAKE_NOW);
     assert.strictEqual(utilsExports.persistResults.mock.calls.length, 1);
     assert.strictEqual(queryDataMock.mock.calls.length, 1);
     assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [
@@ -195,19 +211,18 @@ describe('SouthSQLite', () => {
       trackedInstant: '2020-03-01T00:00:00.000Z',
       value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
     });
-    assert.strictEqual(
-      (logger.info as ReturnType<typeof mock.fn>).mock.calls.some(
-        (c: { arguments: Array<unknown> }) => c.arguments[1] === `Found 2 results for item ${configuration.items[0].name} in 0 ms`
-      ),
-      true
+    const foundLog = (logger.info as ReturnType<typeof mock.fn>).mock.calls.find(
+      (c: { arguments: Array<unknown> }) => c.arguments[1] === 'Found 2 results in 0 ms'
     );
+    assert.ok(foundLog);
+    assert.deepStrictEqual(foundLog.arguments[0], { itemId: configuration.items[0].id, itemName: configuration.items[0].name });
   });
 
   it('should properly run historyQuery without result', async () => {
     const startTime = testData.constants.dates.DATE_1;
     const queryDataMock = mock.method(south, 'queryData', async () => [] as Array<Record<string, string | number>>);
 
-    const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
+    const result = await south.historyQuery([configuration.items[0]], startTime, testData.constants.dates.FAKE_NOW);
     assert.strictEqual(utilsExports.persistResults.mock.calls.length, 0);
     assert.strictEqual(queryDataMock.mock.calls.length, 1);
     assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [
@@ -216,13 +231,11 @@ describe('SouthSQLite', () => {
       testData.constants.dates.FAKE_NOW
     ]);
     assert.deepStrictEqual(result, { trackedInstant: null, value: null });
-    assert.strictEqual(
-      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
-        (c: { arguments: Array<unknown> }) =>
-          c.arguments[1] === `No result found for item ${configuration.items[0].name}. Request done in 0 ms`
-      ),
-      true
+    const noResultLog = (logger.debug as ReturnType<typeof mock.fn>).mock.calls.find(
+      (c: { arguments: Array<unknown> }) => c.arguments[1] === 'No result found. Request done in 0 ms'
     );
+    assert.ok(noResultLog);
+    assert.deepStrictEqual(noResultLog.arguments[0], { itemId: configuration.items[0].id, itemName: configuration.items[0].name });
   });
 
   it('should get data from sqlite', async () => {
@@ -249,7 +262,8 @@ describe('SouthSQLite', () => {
       configuration.items[0].settings.query,
       DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
       DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
-      logger
+      logger,
+      { itemId: configuration.items[0].id, itemName: configuration.items[0].name }
     ]);
 
     assert.deepStrictEqual(result, [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
@@ -268,7 +282,8 @@ describe('SouthSQLite', () => {
       configuration.items[1].settings.query,
       startTime,
       endTime,
-      logger
+      logger,
+      { itemId: configuration.items[1].id, itemName: configuration.items[1].name }
     ]);
 
     assert.deepStrictEqual(result, [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);

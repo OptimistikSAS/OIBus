@@ -410,6 +410,7 @@ describe('Service utils', () => {
 
       assert.strictEqual(logger.info.mock.calls.length, 1);
       assert.deepStrictEqual(logger.info.mock.calls[0].arguments, [
+        {},
         `Sending "${query}" with @StartTime = 2020-01-01T00:00:00.000Z @EndTime = 2023-01-01T00:00:00.000Z`
       ]);
     });
@@ -425,6 +426,7 @@ describe('Service utils', () => {
 
       assert.strictEqual(logger.info.mock.calls.length, 1);
       assert.deepStrictEqual(logger.info.mock.calls[0].arguments, [
+        {},
         `Sending "${query}" with @StartTime = 1577836800000 @EndTime = 1672531200000`
       ]);
     });
@@ -439,7 +441,7 @@ describe('Service utils', () => {
       );
 
       assert.strictEqual(logger.info.mock.calls.length, 1);
-      assert.deepStrictEqual(logger.info.mock.calls[0].arguments, [`Sending "${query}"`]);
+      assert.deepStrictEqual(logger.info.mock.calls[0].arguments, [{}, `Sending "${query}"`]);
     });
   });
 
@@ -548,9 +550,10 @@ describe('Service utils', () => {
         assert.deepStrictEqual(unlinkMock.mock.calls[0].arguments, [filePath]);
         assert.strictEqual(unlinkMock.mock.calls.length, 1);
         assert.strictEqual(logger.error.mock.calls.length, 1);
-        assert.deepStrictEqual(logger.error.mock.calls[0].arguments, [
-          `Error when deleting CSV file "${filePath}" after caching it. ${new Error('unlink error')}`
-        ]);
+        assert.strictEqual(
+          logger.error.mock.calls[0].arguments[1],
+          `Error when deleting CSV file "${filePath}" after caching it: unlink error`
+        );
       });
 
       it('should properly write results without compression and log unlink errors', async () => {
@@ -583,9 +586,10 @@ describe('Service utils', () => {
         assert.deepStrictEqual(unlinkMock.mock.calls[0].arguments, [filePath]);
         assert.strictEqual(unlinkMock.mock.calls.length, 1);
         assert.strictEqual(logger.error.mock.calls.length, 1);
-        assert.deepStrictEqual(logger.error.mock.calls[0].arguments, [
-          `Error when deleting file "${filePath}" after caching it. ${new Error('unlink error')}`
-        ]);
+        assert.strictEqual(
+          logger.error.mock.calls[0].arguments[1],
+          `Error when deleting file "${filePath}" after caching it: unlink error`
+        );
       });
     });
 
@@ -713,13 +717,10 @@ describe('Service utils', () => {
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
         assert.strictEqual(logger.error.mock.calls.length, 2);
-        const errorMessages = logger.error.mock.calls.map(c => c.arguments[0]);
+        const errorMessages = logger.error.mock.calls.map(c => c.arguments[1]);
+        assert.strictEqual(errorMessages.includes(`Error when deleting CSV file "${filePath}" after compression: unlink error`), true);
         assert.strictEqual(
-          errorMessages.includes(`Error when deleting CSV file "${filePath}" after compression. Error: unlink error`),
-          true
-        );
-        assert.strictEqual(
-          errorMessages.includes(`Error when deleting compressed CSV file "${filePath}.gz" after caching it. Error: unlink error`),
+          errorMessages.includes(`Error when deleting compressed CSV file "${filePath}.gz" after caching it: unlink error`),
           true
         );
         assert.strictEqual(addContent.mock.calls.length, 1);
@@ -751,10 +752,10 @@ describe('Service utils', () => {
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
         assert.strictEqual(logger.error.mock.calls.length, 2);
-        const errorMessages = logger.error.mock.calls.map(c => c.arguments[0]);
-        assert.strictEqual(errorMessages.includes(`Error when deleting file "${filePath}" after compression. Error: unlink error`), true);
+        const errorMessages = logger.error.mock.calls.map(c => c.arguments[1]);
+        assert.strictEqual(errorMessages.includes(`Error when deleting file "${filePath}" after compression: unlink error`), true);
         assert.strictEqual(
-          errorMessages.includes(`Error when deleting compressed file "${filePath}.gz" after caching it. Error: unlink error`),
+          errorMessages.includes(`Error when deleting compressed file "${filePath}.gz" after caching it: unlink error`),
           true
         );
         assert.strictEqual(addContent.mock.calls.length, 1);
