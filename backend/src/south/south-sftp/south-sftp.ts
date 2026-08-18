@@ -49,7 +49,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
       this.reconnectTimeout = null;
     }
     try {
-      this.logger.debug(`Connecting to SFTP server ${this.connector.settings.host}:${this.connector.settings.port}...`);
+      this.logger.debug(`Connecting to SFTP server ${this.connector.settings.host}:${this.connector.settings.port}`);
       const connectionOptions = await this.createConnectionOptions();
       const client = new sftpClient(this.connector.name, {
         error: (error: unknown) => this.handleUnexpectedDisconnect(`SFTP client error: ${getErrorMessage(error)}`),
@@ -125,7 +125,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
     const client = new sftpClient();
     try {
       const connectionOptions = await this.createConnectionOptions();
-      this.logger.debug(`Connecting to SFTP server ${this.connector.settings.host}:${this.connector.settings.port}...`);
+      this.logger.debug(`Connecting to SFTP server ${this.connector.settings.host}:${this.connector.settings.port}`);
       const connectStart = DateTime.now().toMillis();
       await client.connect(connectionOptions);
       this.logger.info(
@@ -156,7 +156,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
     const client = new sftpClient();
     try {
       const connectionOptions = await this.createConnectionOptions();
-      this.logger.debug(`Connecting to SFTP server ${this.connector.settings.host}:${this.connector.settings.port}...`);
+      this.logger.debug(`Connecting to SFTP server ${this.connector.settings.host}:${this.connector.settings.port}`);
       const connectStart = DateTime.now().toMillis();
       await client.connect(connectionOptions);
       const connectionDuration = DateTime.now().toMillis() - connectStart;
@@ -371,7 +371,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
         try {
           await fs.unlink(resultingFile);
         } catch (unlinkError: unknown) {
-          this.logger.error(logCtx, `Error while removing file "${resultingFile}": ${unlinkError}`);
+          this.logger.error(logCtx, `Error while removing file "${resultingFile}": ${getErrorMessage(unlinkError)}`);
         }
       }
     } else {
@@ -379,7 +379,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
       try {
         await fs.unlink(resultingFile);
       } catch (unlinkError: unknown) {
-        this.logger.error(logCtx, `Error while removing file "${resultingFile}": ${unlinkError}`);
+        this.logger.error(logCtx, `Error while removing file "${resultingFile}": ${getErrorMessage(unlinkError)}`);
       }
     }
   }

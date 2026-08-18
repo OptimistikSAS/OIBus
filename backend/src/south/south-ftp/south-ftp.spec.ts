@@ -332,9 +332,12 @@ describe('SouthFTP', () => {
       assert.strictEqual((south as unknown as Record<string, unknown>)['reconnectTimeout'], null);
     });
 
-    it('should treat a listFiles failure during directQuery as a lost connection and reconnect', async () => {
+    it('should treat a listFiles failure as a lost connection and reconnect when the client reports itself closed', async () => {
       await south.connect();
+      // basic-ftp closes the client automatically on a timeout/connection-level error — simulate
+      // that real contract, not just an arbitrary thrown message.
       mockFtpClient.list.mock.mockImplementation(async () => {
+        mockFtpClient.closed = true;
         throw new Error('Client is closed because of a timeout');
       });
 
@@ -344,6 +347,7 @@ describe('SouthFTP', () => {
       assert.strictEqual((south as unknown as Record<string, unknown>)['client'], null);
       assert.strictEqual(mockFtpClient.close.mock.calls.length, 1);
 
+      mockFtpClient.closed = false;
       mockFtpClient.list.mock.mockImplementation(async () => []);
       mock.timers.tick(configuration.settings.retryInterval);
       await Promise.resolve();
@@ -352,7 +356,23 @@ describe('SouthFTP', () => {
       assert.strictEqual(ftpExports.Client.mock.calls.length, 2);
     });
 
-    it('should not reconnect after a directQuery failure while disconnecting', async () => {
+    it('should not disconnect or reconnect when a listFiles failure leaves the client open', async () => {
+      await south.connect();
+      // An ordinary command failure (e.g. a permission-denied on one file) does not close the
+      // client in basic-ftp — the connection is still fine, so nothing should be torn down.
+      mockFtpClient.list.mock.mockImplementation(async () => {
+        throw new Error('550 Permission denied');
+      });
+
+      await assert.rejects(south.directQuery([configuration.items[0]]), new Error('550 Permission denied'));
+
+      assert.notStrictEqual((south as unknown as Record<string, unknown>)['client'], null);
+      assert.strictEqual(mockFtpClient.close.mock.calls.length, 0);
+      mock.timers.tick(configuration.settings.retryInterval);
+      assert.strictEqual(ftpExports.Client.mock.calls.length, 1);
+    });
+
+    it('should not reconnect after a lost-connection directQuery failure while disconnecting', async () => {
       await south.connect();
       // Mock disconnect() so the real implementation's own disconnecting=false reset at the end
       // doesn't mask what we're testing here (mirrors south-modbus.spec.ts's equivalent test).
@@ -360,6 +380,7 @@ describe('SouthFTP', () => {
       south.disconnect = disconnectMock;
       (south as unknown as Record<string, unknown>)['disconnecting'] = true;
       mockFtpClient.list.mock.mockImplementation(async () => {
+        mockFtpClient.closed = true;
         throw new Error('boom');
       });
 

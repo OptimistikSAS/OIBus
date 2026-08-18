@@ -48,7 +48,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
       this.reconnectTimeout = null;
     }
     try {
-      this.logger.debug(`Connecting to FTP server ${this.connector.settings.host}:${this.connector.settings.port}...`);
+      this.logger.debug(`Connecting to FTP server ${this.connector.settings.host}:${this.connector.settings.port}`);
       const client = new FTPClient();
       const connectStart = DateTime.now().toMillis();
       await client.access(await this.createConnectionOptions());
@@ -90,7 +90,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
     // connection that connector is currently using.
     const client = new FTPClient();
     try {
-      this.logger.debug(`Connecting to FTP server ${this.connector.settings.host}:${this.connector.settings.port}...`);
+      this.logger.debug(`Connecting to FTP server ${this.connector.settings.host}:${this.connector.settings.port}`);
       const connectStart = DateTime.now().toMillis();
       await client.access(await this.createConnectionOptions());
       this.logger.info(
@@ -116,7 +116,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
     // Fully local client, opened and closed within this method — see testConnection() above for why.
     const client = new FTPClient();
     try {
-      this.logger.debug(`Connecting to FTP server ${this.connector.settings.host}:${this.connector.settings.port}...`);
+      this.logger.debug(`Connecting to FTP server ${this.connector.settings.host}:${this.connector.settings.port}`);
       const connectStart = DateTime.now().toMillis();
       await client.access(await this.createConnectionOptions());
       const connectionDuration = DateTime.now().toMillis() - connectStart;
@@ -222,16 +222,17 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
       return filesPreserved;
     } catch (error: unknown) {
       // basic-ftp's Client isn't an event emitter — there's no proactive 'close'/'error' event to
-      // react to (unlike net.Socket or mqtt's client). Instead, any operation throwing here is
-      // treated as the connection having been lost (basic-ftp closes the client automatically on
-      // any timeout or connection error), so reconnection is reactive rather than event-driven.
-      this.logger.error(
-        logCtx,
-        `Error while querying FTP server ${this.connector.settings.host}:${this.connector.settings.port}: ${getErrorMessage(error)}`
-      );
-      await this.disconnect();
-      if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
-        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+      // react to (unlike net.Socket or mqtt's client). basic-ftp closes the client automatically
+      // only on a timeout or connection-level error, NOT on an ordinary command failure (e.g. a
+      // permission-denied on a single file) — so only treat this as a lost connection, and schedule
+      // a reconnect, when the client is actually closed; otherwise this was just this file/listing
+      // failing, the connection is still fine, and disconnecting would be needlessly destructive.
+      // No log here: the base class's runTask() already logs this error with this item's context.
+      if (!this.client || this.client.closed) {
+        await this.disconnect();
+        if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
+          this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+        }
       }
       throw error;
     }
