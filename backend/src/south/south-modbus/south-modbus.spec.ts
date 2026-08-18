@@ -688,6 +688,50 @@ describe('South Modbus', () => {
     await assert.rejects(south.directQuery(configuration.items), new Error('Could not read address: Modbus client not set'));
   });
 
+  it('should not keep resetting the reconnect timer when directQuery keeps failing while disconnected', async () => {
+    // Regression test: previously, every failed directQuery call unconditionally called disconnect()
+    // (which clears any pending reconnectTimeout) and then re-armed a brand new timer. If the scan
+    // mode interval is shorter than retryInterval, each subsequent scan tick — now failing fast with
+    // "Modbus client not set" because the connector is already disconnected — kept cancelling and
+    // recreating the timer, so connect() was never actually retried: the query failed forever at
+    // scan-mode rate without ever reconnecting.
+    const readHoldingRegistersMock = mock.fn(async (): Promise<never> => {
+      throw new Error('modbus function error');
+    });
+    (south as unknown as Record<string, unknown>)['socket'] = mockedEmitter;
+    (south as unknown as Record<string, unknown>)['modbusClient'] = { readHoldingRegisters: readHoldingRegistersMock };
+    (south as unknown as Record<string, unknown>)['connector'] = {
+      ...configuration,
+      settings: { ...configuration.settings, batchQuery: true }
+    };
+    south.addContent = mock.fn(async (): Promise<void> => undefined);
+    const disconnectSpy = mock.method(south, 'disconnect');
+
+    // First failure: the connection was actually live (socket/modbusClient set), so disconnect()
+    // runs for real and a reconnect timer is scheduled.
+    await assert.rejects(south.directQuery([configuration.items[1]]), new Error('modbus function error'));
+    assert.strictEqual(disconnectSpy.mock.calls.length, 1);
+    assert.strictEqual((south as unknown as Record<string, unknown>)['modbusClient'], null);
+    assert.notStrictEqual((south as unknown as Record<string, unknown>)['reconnectTimeout'], null);
+
+    // Simulate more scan-mode ticks firing before retryInterval elapses. Each hits the
+    // "Modbus client not set" fast-fail path since the connector is still disconnected/reconnecting —
+    // this must NOT call disconnect() again nor reset the pending reconnect timer.
+    mock.timers.tick(configuration.settings.retryInterval / 2);
+    await assert.rejects(south.directQuery(configuration.items), new Error('Could not read address: Modbus client not set'));
+    mock.timers.tick(configuration.settings.retryInterval / 2 - 1);
+    await assert.rejects(south.directQuery(configuration.items), new Error('Could not read address: Modbus client not set'));
+
+    assert.strictEqual(disconnectSpy.mock.calls.length, 1);
+    // No reconnect attempt yet — the original timer must still be the one counting down
+    assert.strictEqual(socketMock.mock.calls.length, 0);
+
+    // Advance past the *original* retryInterval (started at the first failure): if failed queries had
+    // kept resetting the timer, connect() would still not fire here.
+    mock.timers.tick(2);
+    assert.strictEqual(socketMock.mock.calls.length, 1);
+  });
+
   it('should call readCoil method', async () => {
     const mockedClient = {} as unknown as ModbusTCPClient;
     utilsModbusExports.readCoil = mock.fn(async (): Promise<string | undefined> => '123');
@@ -845,5 +889,51 @@ describe('South Modbus', () => {
         new Error(`${ERROR_CODES[code]}: ${errorMessage}`)
       );
     }
+  });
+
+  it('should close its own local socket on test item success without touching the connector live socket', async () => {
+    // Simulate a running connector with its own live socket/modbusClient
+    const liveSocket = { removeAllListeners: mock.fn(), destroy: mock.fn() };
+    const liveModbusClient = {};
+    (south as unknown as Record<string, unknown>)['socket'] = liveSocket;
+    (south as unknown as Record<string, unknown>)['modbusClient'] = liveModbusClient;
+    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+    south.disconnect = disconnectMock;
+    const destroyMock = mock.method(mockedEmitter, 'destroy');
+
+    await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
+
+    // testItem's own local socket (the mocked net.Socket instance) must be destroyed
+    assert.strictEqual(destroyMock.mock.calls.length, 1);
+    // The connector's own disconnect() must never be invoked by testItem
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    // The connector's live socket/modbusClient must be left untouched
+    assert.strictEqual((south as unknown as Record<string, unknown>)['socket'], liveSocket);
+    assert.strictEqual((south as unknown as Record<string, unknown>)['modbusClient'], liveModbusClient);
+    assert.strictEqual(liveSocket.destroy.mock.calls.length, 0);
+    assert.strictEqual(liveSocket.removeAllListeners.mock.calls.length, 0);
+  });
+
+  it('should close its own local socket on test item failure without touching the connector live socket', async () => {
+    const liveSocket = { removeAllListeners: mock.fn(), destroy: mock.fn() };
+    const liveModbusClient = {};
+    (south as unknown as Record<string, unknown>)['socket'] = liveSocket;
+    (south as unknown as Record<string, unknown>)['modbusClient'] = liveModbusClient;
+    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+    south.disconnect = disconnectMock;
+    const destroyMock = mock.method(mockedEmitter, 'destroy');
+
+    utilsModbusExports.connectSocket = mock.fn(async () => {
+      throw new ModbusError('Error creating connection to socket', 'ECONNREFUSED');
+    });
+
+    await assert.rejects(south.testItem(configuration.items[0], testData.south.itemTestingSettings));
+
+    assert.strictEqual(destroyMock.mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.strictEqual((south as unknown as Record<string, unknown>)['socket'], liveSocket);
+    assert.strictEqual((south as unknown as Record<string, unknown>)['modbusClient'], liveModbusClient);
+    assert.strictEqual(liveSocket.destroy.mock.calls.length, 0);
+    assert.strictEqual(liveSocket.removeAllListeners.mock.calls.length, 0);
   });
 });

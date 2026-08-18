@@ -125,8 +125,8 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     item: SouthConnectorItemEntity<SouthModbusItemSettings>,
     _testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
+    const socket = new net.Socket();
     try {
-      const socket = new net.Socket();
       const modbusClient = new client.TCP(socket, this.connector.settings.slaveId);
       const connectStart = DateTime.now().toMillis();
       await connectSocket(socket, this.connector.settings);
@@ -134,7 +134,6 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       const queryStart = DateTime.now().toMillis();
       const dataValues: Array<OIBusTimeValue> = await this.modbusFunction(modbusClient, item);
       const queryDuration = DateTime.now().toMillis() - queryStart;
-      await this.disconnect();
       return {
         result: {
           type: 'time-values',
@@ -151,6 +150,8 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
         default:
           throw new Error(`Unable to connect to socket: ${(error as Error).message}`);
       }
+    } finally {
+      socket.destroy();
     }
   }
 
@@ -204,9 +205,17 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       this.logger.debug(`Requested ${items.length} items in ${requestDuration} ms`);
       await this.addContent({ type: 'time-values', content: dataValues }, startRequest.toUTC().toISO(), items);
     } catch (error: unknown) {
-      await this.disconnect();
-      if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
-        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+      // Only tear down and (re)schedule a reconnect when this failure happened on a connection that
+      // was actually up (modbusClient/socket still set). Once they are null, a reconnect is already
+      // pending — either scheduled below on a previous tick or by the socket 'close' handler. Calling
+      // disconnect() unconditionally on every subsequent scan-mode tick would clear that pending timer
+      // and immediately re-arm a fresh one, so the retryInterval backoff would never elapse and
+      // connect() would never actually be retried — the query would fail forever at scan-mode rate.
+      if (this.modbusClient || this.socket) {
+        await this.disconnect();
+        if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
+          this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+        }
       }
       throw error;
     }
