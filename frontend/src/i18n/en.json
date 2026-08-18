@@ -1795,7 +1795,8 @@
             "password": "Password",
             "private-key": "Private key",
             "passphrase": "Passphrase",
-            "compression": "Compress files"
+            "compression": "Compress files",
+            "retry-interval": "Retry interval"
           },
           "ftp": {
             "host": "Host",
@@ -1807,7 +1808,8 @@
             },
             "username": "Username",
             "password": "Password",
-            "compression": "Compress files"
+            "compression": "Compress files",
+            "retry-interval": "Retry interval"
           },
           "sqlite": {
             "database-path": "Database path"
