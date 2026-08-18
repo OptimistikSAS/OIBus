@@ -200,47 +200,55 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     _testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
     const options = await createConnectionOptions(this.connector.id, this.connector.settings, this.logger);
-    return new Promise<SouthConnectorItemQueryResult>((resolve, reject) => {
-      (async () => {
-        try {
-          const connectStart = DateTime.now().toMillis();
-          const client = await mqtt.connectAsync(this.connector.settings.url, options);
-          const connectionDuration = DateTime.now().toMillis() - connectStart;
-          const queryStart = DateTime.now().toMillis();
-          client.once('message', async (topic, message, _packet) => {
-            try {
-              const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
-              await client.unsubscribeAsync(item.settings.topic);
-              client.end(true);
-              resolve({
-                result: {
-                  type: 'any-content',
-                  content: JSON.stringify([
-                    {
-                      message: message.toString(),
-                      timestamp: messageTimestamp,
-                      item: { id: item.id, name: item.name, topic: item.settings.topic }
-                    }
-                  ])
-                },
-                connectionDuration,
-                // The "query" here is really "how long we waited for the broker to push a matching
-                // message" — there's no traditional request/response, but this is still the
-                // meaningful span between subscribing and getting data.
-                queryDuration: DateTime.now().toMillis() - queryStart
-              });
-            } catch (error: unknown) {
-              reject(`Error when testing item ${item.settings.topic} (received message "${message}"): ${(error as Error).message}`);
-            }
-          });
-          await client.subscribeAsync(item.settings.topic);
-        } catch (error: unknown) {
-          reject(`Error when testing item ${item.settings.topic}: ${(error as Error).message}`);
-        }
-      })().catch(reject); // Immediately invoke the async IIFE and catch any errors
-    }).finally(async () => {
-      await this.disconnect();
-    });
+    // This is a short-lived local client used only for this one-off test, kept fully separate from
+    // this.client (the connector's persistent, shared subscription connection). It must be closed here,
+    // on every path (success, message-handling error, connect/subscribe error) — never through
+    // this.disconnect(), which would tear down the live connector connection instead.
+    let client: mqtt.MqttClient | undefined;
+    try {
+      return await new Promise<SouthConnectorItemQueryResult>((resolve, reject) => {
+        (async () => {
+          try {
+            const connectStart = DateTime.now().toMillis();
+            client = await mqtt.connectAsync(this.connector.settings.url, options);
+            const connectionDuration = DateTime.now().toMillis() - connectStart;
+            const queryStart = DateTime.now().toMillis();
+            client.once('message', async (topic, message, _packet) => {
+              try {
+                const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
+                await client!.unsubscribeAsync(item.settings.topic);
+                resolve({
+                  result: {
+                    type: 'any-content',
+                    content: JSON.stringify([
+                      {
+                        message: message.toString(),
+                        timestamp: messageTimestamp,
+                        item: { id: item.id, name: item.name, topic: item.settings.topic }
+                      }
+                    ])
+                  },
+                  connectionDuration,
+                  // The "query" here is really "how long we waited for the broker to push a matching
+                  // message" — there's no traditional request/response, but this is still the
+                  // meaningful span between subscribing and getting data.
+                  queryDuration: DateTime.now().toMillis() - queryStart
+                });
+              } catch (error: unknown) {
+                reject(`Error when testing item ${item.settings.topic} (received message "${message}"): ${(error as Error).message}`);
+              }
+            });
+            await client.subscribeAsync(item.settings.topic);
+          } catch (error: unknown) {
+            reject(`Error when testing item ${item.settings.topic}: ${(error as Error).message}`);
+          }
+        })().catch(reject); // Immediately invoke the async IIFE and catch any errors
+      });
+    } finally {
+      // Close only the local test client. Do NOT call this.disconnect() here: it would close
+      // this.client, the connector's own live/persistent connection, as an unintended side effect.
+      client?.end(true);
+    }
   }
 
   async subscribe(items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>>): Promise<void> {
