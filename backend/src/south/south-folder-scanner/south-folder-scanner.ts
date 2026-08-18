@@ -7,7 +7,7 @@ import SouthConnector from '../south-connector';
 import { encryptionService } from '../../service/encryption.service';
 
 const execFile = promisify(execFileCb);
-import { checkAge, compress, sanitizeCommandError } from '../../service/utils';
+import { checkAge, compress, getErrorMessage, sanitizeCommandError, workUnitLogCtx } from '../../service/utils';
 import { SouthDirectQuery } from '../south-interface';
 import { SouthFolderScannerItemSettings, SouthFolderScannerSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
@@ -103,13 +103,13 @@ export default class SouthFolderScanner
     try {
       await fs.access(inputFolder, fs.constants.F_OK);
     } catch (error: unknown) {
-      throw new OIBusTestingError(`Folder "${inputFolder}" does not exist: ${(error as Error).message}`);
+      throw new OIBusTestingError(`Folder "${inputFolder}" does not exist: ${getErrorMessage(error)}`);
     }
 
     try {
       await fs.access(inputFolder, fs.constants.R_OK);
     } catch (error: unknown) {
-      throw new OIBusTestingError(`Read access error on "${inputFolder}": ${(error as Error).message}`);
+      throw new OIBusTestingError(`Read access error on "${inputFolder}": ${getErrorMessage(error)}`);
     }
 
     const stat = await fs.stat(inputFolder);
@@ -197,6 +197,7 @@ export default class SouthFolderScanner
     items: Array<SouthConnectorItemEntity<SouthFolderScannerItemSettings>>
   ): Promise<Array<{ filename: string; modifiedTime: number }>> {
     const item = items[0];
+    const logCtx = workUnitLogCtx(items);
     const itemValue = this.southCacheRepository.getItemLastValue(this.connector.id, item.id);
     let filesPreserved: Array<{ filename: string; modifiedTime: number }> = [];
     if (itemValue && Array.isArray(itemValue.value)) {
@@ -204,7 +205,7 @@ export default class SouthFolderScanner
     }
 
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
-    this.logger.debug(`Reading "${inputFolder}" directory with regex "${item.settings.regex}" and minAge ${item.settings.minAge}`);
+    this.logger.debug(logCtx, `Reading "${inputFolder}" directory with regex "${item.settings.regex}" and minAge ${item.settings.minAge}`);
 
     let fileCount = 0;
     let sizeRetrieved = 0;
@@ -215,7 +216,7 @@ export default class SouthFolderScanner
     const startRequest = DateTime.now();
     const files = await this.listFilesRecursively(inputFolder, '', item);
     const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
-    this.logger.debug(`Found ${files.length} files in ${inputFolder} read in ${requestDuration} ms`);
+    this.logger.debug(logCtx, `Found ${files.length} files in ${inputFolder} read in ${requestDuration} ms`);
 
     const filteredFiles = files.filter(file => file.match(item.settings.regex));
     // Filters file that may still currently being written (based on minimum age)
@@ -230,14 +231,14 @@ export default class SouthFolderScanner
     for (const file of matchedFiles) {
       // Check the file count limit (applies across all items in this scan)
       if (maxFiles > 0 && fileCount >= maxFiles) {
-        this.logger.debug(`Max files limit (${maxFiles}) reached for item ${item.name}, skipping remaining files`);
+        this.logger.debug(logCtx, `Max files limit (${maxFiles}) reached for item ${item.name}, skipping remaining files`);
         break;
       }
 
       // Check size limit (applies across all items in this scan)
       const filePath = path.resolve(inputFolder, file.filename);
       if (maxSize > 0 && sizeRetrieved + file.stats.size > maxSize) {
-        this.logger.debug(`Max size limit (${item.settings.maxSize} MB) reached for item ${item.name}, skipping remaining files`);
+        this.logger.debug(logCtx, `Max size limit (${item.settings.maxSize} MB) reached for item ${item.name}, skipping remaining files`);
         break;
       }
 
@@ -250,10 +251,10 @@ export default class SouthFolderScanner
         try {
           await fs.unlink(filePath);
         } catch (unlinkError) {
-          this.logger.error(`Error while removing "${filePath}": ${unlinkError}`);
+          this.logger.error(logCtx, `Error while removing "${filePath}": ${getErrorMessage(unlinkError)}`);
         }
       } else {
-        this.logger.debug(`Upsert handled file "${file.filename}" with modify time ${file.stats.mtimeMs}`);
+        this.logger.debug(logCtx, `Upsert handled file "${file.filename}" with modify time ${file.stats.mtimeMs}`);
         const existingIndex = filesPreserved.findIndex(f => f.filename === file.filename);
         if (existingIndex >= 0) {
           filesPreserved[existingIndex].modifiedTime = file.stats.mtimeMs;
@@ -269,8 +270,9 @@ export default class SouthFolderScanner
    * Send the file to the Engine.
    */
   async sendFile(item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>, filename: string, queryTime: Instant): Promise<void> {
+    const logCtx = workUnitLogCtx([item]);
     const filePath = path.resolve(this.connector.settings.inputFolder, filename);
-    this.logger.info(`Sending file "${filePath}" to the engine`);
+    this.logger.info(logCtx, `Sending file "${filePath}" to the engine`);
 
     if (this.connector.settings.compression) {
       try {
@@ -285,10 +287,10 @@ export default class SouthFolderScanner
         try {
           await fs.unlink(gzipPath);
         } catch (unlinkError) {
-          this.logger.error(`Error while removing compressed file "${gzipPath}": ${unlinkError}`);
+          this.logger.error(logCtx, `Error while removing compressed file "${gzipPath}": ${getErrorMessage(unlinkError)}`);
         }
       } catch (error: unknown) {
-        this.logger.error(`Error compressing file "${filePath}": ${(error as Error).message}. Sending it raw instead.`);
+        this.logger.error(logCtx, `Error compressing file "${filePath}": ${getErrorMessage(error)}. Sending it raw instead.`);
         await this.addContent({ type: 'any', filePath, filename }, queryTime, [item]);
       }
     } else {

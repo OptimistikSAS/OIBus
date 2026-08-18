@@ -33,6 +33,15 @@ describe('SouthFolderScanner', () => {
     generateIntervals: mock.fn(() => []),
     groupItemsByGroup: mock.fn(() => []),
     validateCronExpression: mock.fn(() => ({ expression: '' })),
+    getErrorMessage: mock.fn((error: unknown) => (error instanceof Error ? error.message : String(error))),
+    // Mirrors the real implementation in service/utils.ts — kept in sync manually since it's a
+    // handful of lines and some tests assert the exact { itemId/itemName } / { groupId/groupName } shape.
+    workUnitLogCtx: mock.fn((items: Array<{ id: string; name: string; group?: { id: string; name: string } | null }>) => {
+      if (items.length === 0) return {};
+      if (items.length === 1) return { itemId: items[0].id, itemName: items[0].name };
+      const lead = items[0];
+      return lead.group ? { groupId: lead.group.id, groupName: lead.group.name } : {};
+    }),
     sanitizeCommandError: mock.fn((error: unknown, secret: string) => {
       const message = (error as Error)?.message ?? 'Unknown error';
       return new Error(secret ? message.split(secret).join('********') : message);
@@ -327,7 +336,7 @@ describe('SouthFolderScanner', () => {
 
       await south.directQuery(configuration.items);
 
-      assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Error while removing')));
+      assert.ok(logger.error.mock.calls.some(c => typeof c.arguments[1] === 'string' && c.arguments[1].includes('Error while removing')));
     });
 
     it('should stop processing if maxFiles limit is reached', async () => {
@@ -336,7 +345,9 @@ describe('SouthFolderScanner', () => {
       await south.directQuery(configuration.items);
 
       assert.strictEqual(sendFileMock.mock.calls.length, 1);
-      assert.ok(logger.debug.mock.calls.some(c => (c.arguments[0] as string).includes('Max files limit (1) reached')));
+      assert.ok(
+        logger.debug.mock.calls.some(c => typeof c.arguments[1] === 'string' && c.arguments[1].includes('Max files limit (1) reached'))
+      );
     });
 
     it('should stop processing if maxSize limit is reached', async () => {
@@ -351,7 +362,9 @@ describe('SouthFolderScanner', () => {
       await south.directQuery(configuration.items);
 
       assert.strictEqual(sendFileMock.mock.calls.length, 1);
-      assert.ok(logger.debug.mock.calls.some(c => (c.arguments[0] as string).includes('Max size limit (1 MB) reached')));
+      assert.ok(
+        logger.debug.mock.calls.some(c => typeof c.arguments[1] === 'string' && c.arguments[1].includes('Max size limit (1 MB) reached'))
+      );
     });
   });
 
@@ -416,7 +429,7 @@ describe('SouthFolderScanner', () => {
 
       await south.sendFile(configuration.items[0], 'file1.csv', mockQueryTime);
 
-      assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Error compressing file')));
+      assert.ok(logger.error.mock.calls.some(c => typeof c.arguments[1] === 'string' && c.arguments[1].includes('Error compressing file')));
       assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
         type: 'any',
         filePath: path.resolve('inputFolder', 'file1.csv'),
@@ -436,7 +449,11 @@ describe('SouthFolderScanner', () => {
 
       await south.sendFile(configuration.items[0], 'file1.csv', mockQueryTime);
 
-      assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Error while removing compressed file')));
+      assert.ok(
+        logger.error.mock.calls.some(
+          c => typeof c.arguments[1] === 'string' && c.arguments[1].includes('Error while removing compressed file')
+        )
+      );
     });
   });
 
@@ -526,7 +543,11 @@ describe('SouthFolderScanner', () => {
           // `net` does not exist on the test runner platform, so execFile rejects and the
           // catch branch (log + rethrow) is exercised.
           await assert.rejects((south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data'));
-          assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Failed to authenticate SMB session')));
+          assert.ok(
+            logger.error.mock.calls.some(
+              c => typeof c.arguments[0] === 'string' && c.arguments[0].includes('Failed to authenticate SMB session')
+            )
+          );
         });
 
         it('should skip SMB mount on Windows when username is empty', async () => {
