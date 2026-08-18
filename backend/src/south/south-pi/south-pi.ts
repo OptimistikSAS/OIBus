@@ -60,14 +60,18 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
+    // Uses an isolated `${this.connector.id}-test` agent session (like testItem()) so a running
+    // connector's own live session is never connected/disconnected by a connection test.
+    const testSessionId = `${this.connector.id}-test`;
     const fetchOptions = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' }
     };
-    const requestUrl = new URL(`/api/pi/${this.connector.id}/connect`, this.connector.settings.agentUrl);
+    const requestUrl = new URL(`/api/pi/${testSessionId}/connect`, this.connector.settings.agentUrl);
     const response = await HTTPRequest(requestUrl, fetchOptions);
     if (response.statusCode === 200) {
-      await HTTPRequest(`${this.connector.settings.agentUrl}/api/pi/${this.connector.id}/disconnect`, { method: 'DELETE' });
+      const disconnectUrl = new URL(`/api/pi/${testSessionId}/disconnect`, this.connector.settings.agentUrl);
+      await HTTPRequest(disconnectUrl, { method: 'DELETE' });
     } else if (response.statusCode === 400) {
       const errorMessage = await response.body.text();
       throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}. ${errorMessage}`);
@@ -77,54 +81,69 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     return { items: [] };
   }
 
+  /**
+   * Test session id used to isolate testItem() from the live `${this.connector.id}` agent session.
+   * This must never touch this.connect()/this.disconnect() nor the live connect/disconnect endpoints,
+   * so a running connector isn't disrupted by a user testing an item from the UI.
+   */
   override async testItem(
     item: SouthConnectorItemEntity<SouthPIItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
-    const connectStart = DateTime.now().toMillis();
-    await this.connect();
-    const connectionDuration = DateTime.now().toMillis() - connectStart;
+    const testSessionId = `${this.connector.id}-test`;
     const content: OIBusContent = { type: 'time-values', content: [] };
-
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
 
-    const fetchOptions = {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        startTime,
-        endTime,
-        items: [
-          {
-            name: item.name,
-            type: item.settings.type === 'point-id' ? 'pointId' : 'pointQuery',
-            piPoint: item.settings.piPoint,
-            piQuery: item.settings.piQuery
-          }
-        ]
-      })
-    };
-    const requestUrl = new URL(`/api/pi/${this.connector.id}/read`, this.connector.settings.agentUrl);
-    const queryStart = DateTime.now().toMillis();
-    const response = await HTTPRequest(requestUrl, fetchOptions);
-    if (response.statusCode === 200) {
-      const result: {
-        recordCount: number;
-        content: Array<OIBusTimeValue>;
-        maxInstantRetrieved: Instant;
-      } = (await response.body.json()) as {
-        recordCount: number;
-        content: Array<OIBusTimeValue>;
-        maxInstantRetrieved: string;
+    try {
+      const connectStart = DateTime.now().toMillis();
+      const connectUrl = new URL(`/api/pi/${testSessionId}/connect`, this.connector.settings.agentUrl);
+      await HTTPRequest(connectUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const connectionDuration = DateTime.now().toMillis() - connectStart;
+
+      const fetchOptions = {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          startTime,
+          endTime,
+          items: [
+            {
+              name: item.name,
+              type: item.settings.type === 'point-id' ? 'pointId' : 'pointQuery',
+              piPoint: item.settings.piPoint,
+              piQuery: item.settings.piQuery
+            }
+          ]
+        })
       };
-      content.content = result.content;
-      const queryDuration = DateTime.now().toMillis() - queryStart;
-      await this.disconnect();
-      return { result: content, connectionDuration, queryDuration };
+      const requestUrl = new URL(`/api/pi/${testSessionId}/read`, this.connector.settings.agentUrl);
+      const queryStart = DateTime.now().toMillis();
+      const response = await HTTPRequest(requestUrl, fetchOptions);
+      if (response.statusCode === 200) {
+        const result: {
+          recordCount: number;
+          content: Array<OIBusTimeValue>;
+          maxInstantRetrieved: Instant;
+        } = (await response.body.json()) as {
+          recordCount: number;
+          content: Array<OIBusTimeValue>;
+          maxInstantRetrieved: string;
+        };
+        content.content = result.content;
+        const queryDuration = DateTime.now().toMillis() - queryStart;
+        return { result: content, connectionDuration, queryDuration };
+      }
+      throw new Error(`Error occurred when sending connect command to remote agent. ${response.statusCode}`);
+    } finally {
+      const disconnectUrl = new URL(`/api/pi/${testSessionId}/disconnect`, this.connector.settings.agentUrl);
+      await HTTPRequest(disconnectUrl, { method: 'DELETE' }).catch(error => {
+        this.logger.error(`Error while sending disconnection HTTP request into agent for test session. ${error}`);
+      });
     }
-    await this.disconnect();
-    throw new Error(`Error occurred when sending connect command to remote agent. ${response.statusCode}`);
   }
 
   /**
