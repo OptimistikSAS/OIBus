@@ -207,9 +207,28 @@ describe('South PI', () => {
     );
   });
 
-  it('should test connection successfully', async () => {
+  it('should test connection successfully using an isolated test session', async () => {
     httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
+    const connectSpy = mock.method(south, 'connect');
+    const disconnectSpy = mock.method(south, 'disconnect');
+
     await assert.doesNotReject(south.testConnection());
+
+    // testConnection() must never call the connector's own live connect()/disconnect() lifecycle methods...
+    assert.strictEqual(connectSpy.mock.calls.length, 0);
+    assert.strictEqual(disconnectSpy.mock.calls.length, 0);
+    // ...nor touch the connector's own connected flag.
+    assert.strictEqual((south as unknown as Record<string, unknown>)['connected'], false);
+
+    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 2);
+    const [connectCall, disconnectCall] = httpRequestExports.HTTPRequest.mock.calls;
+    assertContains(connectCall.arguments[0] as object, {
+      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/connect`
+    });
+    assertContains(disconnectCall.arguments[0] as object, {
+      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/disconnect`
+    });
+    assert.deepStrictEqual(disconnectCall.arguments[1], { method: 'DELETE' });
   });
 
   it('should test connection fail', async () => {
@@ -221,6 +240,30 @@ describe('South PI', () => {
 
     httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(500, 'another error'));
     await assert.rejects(south.testConnection(), new Error('Error occurred when sending connect command to remote agent with status 500'));
+
+    // Only the isolated test session was ever contacted, never the live one.
+    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
+      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/connect`
+    });
+  });
+
+  it('should leave a live connection untouched by testConnection()', async () => {
+    // Establish a real, live connection first.
+    await south.connect();
+    assert.strictEqual((south as unknown as Record<string, unknown>)['connected'], true);
+
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
+
+    await assert.doesNotReject(south.testConnection());
+
+    // The live session survives: connected flag untouched, and none of testConnection's calls hit the live endpoints.
+    assert.strictEqual((south as unknown as Record<string, unknown>)['connected'], true);
+    for (const call of httpRequestExports.HTTPRequest.mock.calls) {
+      const href = (call.arguments[0] as URL).href ?? String(call.arguments[0]);
+      assert.ok(!href.endsWith(`/api/pi/${configuration.id}/connect`), `unexpected live connect call: ${href}`);
+      assert.ok(!href.endsWith(`/api/pi/${configuration.id}/disconnect`), `unexpected live disconnect call: ${href}`);
+      assert.ok(href.includes(`${configuration.id}-test`), `expected test-session call, got: ${href}`);
+    }
   });
 
   it('should get data from Remote agent', async () => {
@@ -333,9 +376,12 @@ describe('South PI', () => {
     await assert.rejects(south.historyQuery(configuration.items, startTime, endTime), new Error('bad request'));
   });
 
-  it('should test item', async () => {
+  it('should test item using an isolated test session, not the live connect/disconnect endpoints', async () => {
+    let callCount = 0;
     httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      mock.timers.tick(25);
+      callCount++;
+      // First call is connect (15 ms), second is read (25 ms), third is disconnect.
+      mock.timers.tick(callCount === 1 ? 15 : callCount === 2 ? 25 : 0);
       return createMockResponse(200, {
         recordCount: 2,
         content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
@@ -343,12 +389,8 @@ describe('South PI', () => {
       });
     });
 
-    const connectMock = mock.fn(async () => {
-      mock.timers.tick(15);
-    });
-    south.connect = connectMock;
-    const disconnectMock2 = mock.fn(async () => undefined);
-    south.disconnect = disconnectMock2;
+    const connectSpy = mock.method(south, 'connect');
+    const disconnectSpy = mock.method(south, 'disconnect');
 
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
     const fetchOptions = {
@@ -369,40 +411,66 @@ describe('South PI', () => {
     };
 
     const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
-    assert.strictEqual(connectMock.mock.calls.length, 1);
-    assert.strictEqual(disconnectMock2.mock.calls.length, 1);
-    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}/read`
+
+    // testItem() must never call the connector's own live connect()/disconnect() lifecycle methods...
+    assert.strictEqual(connectSpy.mock.calls.length, 0);
+    assert.strictEqual(disconnectSpy.mock.calls.length, 0);
+    // ...nor touch the connector's own connected flag.
+    assert.strictEqual((south as unknown as Record<string, unknown>)['connected'], false);
+
+    // Every HTTP call must target the isolated `-test` session id, never the live one.
+    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 3);
+    const [connectCall, readCall, disconnectCall] = httpRequestExports.HTTPRequest.mock.calls;
+    assertContains(connectCall.arguments[0] as object, {
+      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/connect`
     });
-    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], fetchOptions);
+    assert.deepStrictEqual(connectCall.arguments[1], {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    assertContains(readCall.arguments[0] as object, {
+      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/read`
+    });
+    assert.deepStrictEqual(readCall.arguments[1], fetchOptions);
+    assertContains(disconnectCall.arguments[0] as object, {
+      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/disconnect`
+    });
+    assert.deepStrictEqual(disconnectCall.arguments[1], { method: 'DELETE' });
+
     assert.strictEqual(result.connectionDuration, 15);
     assert.strictEqual(result.queryDuration, 25);
 
     await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
-    assert.strictEqual(connectMock.mock.calls.length, 2);
-    assert.strictEqual(disconnectMock2.mock.calls.length, 2);
+    assert.strictEqual(connectSpy.mock.calls.length, 0);
+    assert.strictEqual(disconnectSpy.mock.calls.length, 0);
   });
 
-  it('should test item and throw error if bad status', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(400));
+  it('should test item and throw error if bad status, still disconnecting the test session only', async () => {
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, options?: { method: string }) =>
+      options?.method === 'DELETE' ? createMockResponse(200) : createMockResponse(400)
+    );
 
-    const connectMock3 = mock.fn(async () => undefined);
-    south.connect = connectMock3;
-    const disconnectMock3 = mock.fn(async () => undefined);
-    south.disconnect = disconnectMock3;
+    const connectSpy = mock.method(south, 'connect');
+    const disconnectSpy = mock.method(south, 'disconnect');
 
     await assert.rejects(
       south.testItem(configuration.items[0], testData.south.itemTestingSettings),
       new Error('Error occurred when sending connect command to remote agent. 400')
     );
-    assert.strictEqual(connectMock3.mock.calls.length, 1);
-    assert.strictEqual(disconnectMock3.mock.calls.length, 1);
+
+    // Even on failure, the live connect()/disconnect() lifecycle must never be invoked.
+    assert.strictEqual(connectSpy.mock.calls.length, 0);
+    assert.strictEqual(disconnectSpy.mock.calls.length, 0);
+    assert.strictEqual((south as unknown as Record<string, unknown>)['connected'], false);
 
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
     assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}/read`
+      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/connect`
     });
-    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {
+    assertContains(httpRequestExports.HTTPRequest.mock.calls[1].arguments[0] as object, {
+      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/read`
+    });
+    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[1].arguments[1], {
       method: 'PUT',
       body: JSON.stringify({
         startTime,
@@ -418,5 +486,37 @@ describe('South PI', () => {
       }),
       headers: { 'Content-Type': 'application/json' }
     });
+    // The test session is still torn down even though the read failed.
+    assertContains(httpRequestExports.HTTPRequest.mock.calls[2].arguments[0] as object, {
+      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/disconnect`
+    });
+    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[2].arguments[1], { method: 'DELETE' });
+  });
+
+  it('should leave a live connection untouched by testItem()', async () => {
+    // Establish a real, live connection first.
+    await south.connect();
+    assert.strictEqual((south as unknown as Record<string, unknown>)['connected'], true);
+    const callsAfterConnect = httpRequestExports.HTTPRequest.mock.calls.length;
+
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) =>
+      createMockResponse(200, {
+        recordCount: 1,
+        content: [{ timestamp: '2020-02-01T00:00:00.000Z' }],
+        maxInstantRetrieved: '2020-02-01T00:00:00.000Z'
+      })
+    );
+
+    await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
+
+    // The live session survives: connected flag untouched, and none of testItem's calls hit the live endpoints.
+    assert.strictEqual((south as unknown as Record<string, unknown>)['connected'], true);
+    for (const call of httpRequestExports.HTTPRequest.mock.calls) {
+      const href = (call.arguments[0] as URL).href ?? String(call.arguments[0]);
+      assert.ok(!href.endsWith(`/api/pi/${configuration.id}/connect`), `unexpected live connect call: ${href}`);
+      assert.ok(!href.endsWith(`/api/pi/${configuration.id}/disconnect`), `unexpected live disconnect call: ${href}`);
+      assert.ok(href.includes(`${configuration.id}-test`), `expected test-session call, got: ${href}`);
+    }
+    assert.strictEqual(callsAfterConnect, 1);
   });
 });
