@@ -21,8 +21,10 @@ for it:
 | **SMB domain**   | Domain for the SMB username (optional, e.g. for Active Directory). | `CORP`        |
 
 :::info Windows only
-These fields only appear when OIBus runs on Windows. OIBus registers the credentials for the share via the Windows
-Credential Manager (`cmdkey`) before writing, and removes them when the connector disconnects.
+These fields only appear when OIBus runs on Windows. OIBus authenticates an SMB session against the server (`net use`)
+before writing, and removes it when the connector disconnects. This does not go through the Windows Credential Manager,
+so it also works when OIBus runs as a Windows service, where the interactive-session-only Credential Manager is
+unreliable even under an account that otherwise has access to the share.
 :::
 
 ### File Naming Options

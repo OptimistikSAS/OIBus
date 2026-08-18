@@ -2268,4 +2268,44 @@ describe('Service utils', () => {
       assert.deepStrictEqual(result, { engineName: undefined, adminUsername: undefined, adminPassword: undefined, port: undefined });
     });
   });
+
+  describe('sanitizeCommandError', () => {
+    it('should redact the secret from error.message', () => {
+      const error = new Error('Command failed: cmdkey /add:\\\\server /user:bob /pass:Compteur123');
+
+      const result = utils.sanitizeCommandError(error, 'Compteur123');
+
+      assert.strictEqual(result.message.includes('Compteur123'), false);
+      assert.strictEqual(result.message, 'Command failed: cmdkey /add:\\\\server /user:bob /pass:********');
+    });
+
+    it('should redact the secret from stdout and stderr and append them to the message', () => {
+      const error = Object.assign(new Error('Command failed: cmdkey ...'), {
+        stdout: 'ERROR: Unable to add Compteur123 to the list.',
+        stderr: 'access denied for Compteur123'
+      });
+
+      const result = utils.sanitizeCommandError(error, 'Compteur123');
+
+      assert.strictEqual(result.message.includes('Compteur123'), false);
+      assert.strictEqual(
+        result.message,
+        'Command failed: cmdkey ... (ERROR: Unable to add ******** to the list. | access denied for ********)'
+      );
+    });
+
+    it('should not alter the message when there is no secret to redact', () => {
+      const error = new Error('Command failed: cmdkey /delete:\\\\server');
+
+      const result = utils.sanitizeCommandError(error, '');
+
+      assert.strictEqual(result.message, 'Command failed: cmdkey /delete:\\\\server');
+    });
+
+    it('should fall back to a generic message when the error has none', () => {
+      const result = utils.sanitizeCommandError({}, 'Compteur123');
+
+      assert.strictEqual(result.message, 'Unknown error');
+    });
+  });
 });

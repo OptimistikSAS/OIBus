@@ -32,7 +32,11 @@ describe('SouthFolderScanner', () => {
     delay: mock.fn(async () => undefined),
     generateIntervals: mock.fn(() => []),
     groupItemsByGroup: mock.fn(() => []),
-    validateCronExpression: mock.fn(() => ({ expression: '' }))
+    validateCronExpression: mock.fn(() => ({ expression: '' })),
+    sanitizeCommandError: mock.fn((error: unknown, secret: string) => {
+      const message = (error as Error)?.message ?? 'Unknown error';
+      return new Error(secret ? message.split(secret).join('********') : message);
+    })
   };
 
   before(() => {
@@ -441,7 +445,7 @@ describe('SouthFolderScanner', () => {
       logger.trace.mock.resetCalls();
     });
 
-    describe('non-Windows SMB credential handling', () => {
+    describe('non-Windows SMB session handling', () => {
       let originalPlatform: PropertyDescriptor | undefined;
 
       beforeEach(() => {
@@ -457,24 +461,24 @@ describe('SouthFolderScanner', () => {
         }
       });
 
-      it('should log trace and skip SMB credential store on non-Windows platforms', async () => {
+      it('should log trace and skip SMB session authentication on non-Windows platforms', async () => {
         configuration.settings.username = 'user';
         configuration.settings.inputFolder = '\\\\server\\share\\data';
         south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
         logger.trace.mock.resetCalls();
         type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
         await (south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data');
-        assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB credential store')));
+        assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB session authentication')));
       });
 
-      it('should log trace and skip SMB credential removal on non-Windows platforms', async () => {
+      it('should log trace and skip SMB session removal on non-Windows platforms', async () => {
         configuration.settings.username = 'user';
         configuration.settings.inputFolder = '\\\\server\\share\\data';
         south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
         logger.trace.mock.resetCalls();
         type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
         await (south as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\data');
-        assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB credential removal')));
+        assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB session removal')));
       });
     });
 
@@ -492,12 +496,12 @@ describe('SouthFolderScanner', () => {
     });
 
     describe(
-      'windows SMB credential handling',
+      'windows SMB session handling',
       {
-        // These tests simulate win32 and rely on cmdkey being ABSENT so execFile rejects with
-        // ENOENT — on an actual Windows runner cmdkey is a real command, so skip there instead
-        // of shelling out to it for real (slow/non-deterministic, and can leak into other tests).
-        skip: process.platform === 'win32' ? 'cmdkey is a real command on Windows; nothing to simulate here' : false
+        // These tests simulate win32 and rely on `net` (as invoked here) being ABSENT so execFile
+        // rejects with ENOENT — on an actual Windows runner `net` is a real command, so skip there
+        // instead of shelling out to it for real (slow/non-deterministic, and can leak into other tests).
+        skip: process.platform === 'win32' ? '`net` is a real command on Windows; nothing to simulate here' : false
       },
       () => {
         let originalPlatform: PropertyDescriptor | undefined;
@@ -513,16 +517,16 @@ describe('SouthFolderScanner', () => {
           }
         });
 
-        it('should log error and rethrow when storing SMB credentials fails on Windows', async () => {
+        it('should log error and rethrow when authenticating the SMB session fails on Windows', async () => {
           configuration.settings.username = 'user';
           configuration.settings.password = '';
           configuration.settings.inputFolder = '\\\\server\\share\\data';
           south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
           type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
-          // cmdkey does not exist on the test runner platform, so execFile rejects and the
+          // `net` does not exist on the test runner platform, so execFile rejects and the
           // catch branch (log + rethrow) is exercised.
           await assert.rejects((south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data'));
-          assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Failed to store SMB credentials')));
+          assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Failed to authenticate SMB session')));
         });
 
         it('should skip SMB mount on Windows when username is empty', async () => {
@@ -549,13 +553,13 @@ describe('SouthFolderScanner', () => {
           await assert.doesNotReject((south as unknown as Private)['unmountNetworkShare']('C:\\local\\folder'));
         });
 
-        it('should silently ignore SMB credential removal failures on Windows', async () => {
+        it('should silently ignore SMB session removal failures on Windows', async () => {
           configuration.settings.username = 'user';
           configuration.settings.inputFolder = '\\\\server\\share\\data';
           south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
           type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
-          // cmdkey does not exist on the test runner platform, so execFile rejects, but the
-          // catch block swallows the error (credentials may already be removed).
+          // `net` does not exist on the test runner platform, so execFile rejects, but the
+          // catch block swallows the error (session may already be removed).
           await assert.doesNotReject((south as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\data'));
         });
       }
