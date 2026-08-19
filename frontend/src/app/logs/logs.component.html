@@ -60,7 +60,9 @@
                           (selectItem)="selectScope($event)"
                         />
                       </div>
+                    }
 
+                    @if (showItemSearch()) {
                       <div class="d-flex align-items-center gap-2">
                         <label for="item-ids" class="col-form-label text-nowrap" translate="logs.search.item"></label>
                         <input
@@ -74,7 +76,9 @@
                           (selectItem)="selectItem($event)"
                         />
                       </div>
+                    }
 
+                    @if (showGroupSearch()) {
                       <div class="d-flex align-items-center gap-2">
                         <label for="group-ids" class="col-form-label text-nowrap" translate="logs.search.group"></label>
                         <input
@@ -185,40 +189,47 @@
                           </button>
                         }
                       }
+                    }
 
-                      @if (selectedItems().length > 0) {
-                        <div class="vr mx-2"></div>
-                        <span class="filter-label text-muted" translate="logs.search.item"></span>
-                        @for (scopeGroup of selectedItemsByScope(); track scopeGroup.scopeId) {
+                    @if (showItemSearch() && selectedItems().length > 0) {
+                      <div class="vr mx-2"></div>
+                      <span class="filter-label text-muted" translate="logs.search.item"></span>
+                      @for (scopeGroup of selectedItemsByScope(); track scopeGroup.scopeId) {
+                        <!-- The owning connector/history query name is redundant when the search is already
+                             locked to that single scope (embedded on its own page), so it's only shown on
+                             the standalone logs page where selections can span several connectors. -->
+                        @if (!scopeId()) {
                           <span class="filter-chip-scope-label text-muted small text-nowrap">{{ scopeGroup.scopeName }}:</span>
-                          @for (item of scopeGroup.entries; track item.itemId) {
-                            <button
-                              type="button"
-                              class="filter-chip active d-flex align-items-center gap-1 px-2 py-1"
-                              (click)="removeItem(item)"
-                            >
-                              <span class="filter-chip-label">{{ item.itemName }}</span>
-                              <span class="fa fa-times ms-1 small text-muted"></span>
-                            </button>
-                          }
+                        }
+                        @for (item of scopeGroup.entries; track item.itemId) {
+                          <button
+                            type="button"
+                            class="filter-chip active d-flex align-items-center gap-1 px-2 py-1"
+                            (click)="removeItem(item)"
+                          >
+                            <span class="filter-chip-label">{{ item.itemName }}</span>
+                            <span class="fa fa-times ms-1 small text-muted"></span>
+                          </button>
                         }
                       }
+                    }
 
-                      @if (selectedGroups().length > 0) {
-                        <div class="vr mx-2"></div>
-                        <span class="filter-label text-muted" translate="logs.search.group"></span>
-                        @for (scopeGroup of selectedGroupsByScope(); track scopeGroup.scopeId) {
+                    @if (showGroupSearch() && selectedGroups().length > 0) {
+                      <div class="vr mx-2"></div>
+                      <span class="filter-label text-muted" translate="logs.search.group"></span>
+                      @for (scopeGroup of selectedGroupsByScope(); track scopeGroup.scopeId) {
+                        @if (!scopeId()) {
                           <span class="filter-chip-scope-label text-muted small text-nowrap">{{ scopeGroup.scopeName }}:</span>
-                          @for (group of scopeGroup.entries; track group.groupId) {
-                            <button
-                              type="button"
-                              class="filter-chip active d-flex align-items-center gap-1 px-2 py-1"
-                              (click)="removeGroup(group)"
-                            >
-                              <span class="filter-chip-label">{{ group.groupName }}</span>
-                              <span class="fa fa-times ms-1 small text-muted"></span>
-                            </button>
-                          }
+                        }
+                        @for (group of scopeGroup.entries; track group.groupId) {
+                          <button
+                            type="button"
+                            class="filter-chip active d-flex align-items-center gap-1 px-2 py-1"
+                            (click)="removeGroup(group)"
+                          >
+                            <span class="filter-chip-label">{{ group.groupName }}</span>
+                            <span class="fa fa-times ms-1 small text-muted"></span>
+                          </button>
                         }
                       }
                     }

@@ -566,9 +566,21 @@ describe('LogsComponent', () => {
       expect(tester.component.itemFormatter('some typed text')).toBe('some typed text');
     });
 
+    test('itemFormatter should omit the redundant connector/history name when already locked to a single scope', () => {
+      tester.fixture.componentRef.setInput('scopeId', 's1');
+      const item: Item = { itemId: '1', itemName: 'Temperature', scopeId: 's1', scopeName: 'My South' };
+      expect(tester.component.itemFormatter(item)).toBe('Temperature');
+    });
+
     test('groupFormatter should append the owning connector/history name in parenthesis', () => {
       const group: Group = { groupId: '1', groupName: 'Sensors', scopeId: 's1', scopeName: 'My South' };
       expect(tester.component.groupFormatter(group)).toBe('Sensors (My South)');
+    });
+
+    test('groupFormatter should omit the redundant connector name when already locked to a single scope', () => {
+      tester.fixture.componentRef.setInput('scopeId', 's1');
+      const group: Group = { groupId: '1', groupName: 'Sensors', scopeId: 's1', scopeName: 'My South' };
+      expect(tester.component.groupFormatter(group)).toBe('Sensors');
     });
 
     test('groupFormatter should pass the raw input string through unchanged (e.g. when the field is reset to empty)', () => {
@@ -602,6 +614,54 @@ describe('LogsComponent', () => {
         { scopeId: 's1', scopeName: 'South 1', entries: [a] },
         { scopeId: 's2', scopeName: 'South 2', entries: [b] }
       ]);
+    });
+
+    test('showItemSearch should be true unless embedded on a north connector page', () => {
+      expect(tester.component.showItemSearch()).toBe(true); // standalone logs page (no scope lock)
+
+      tester.fixture.componentRef.setInput('scopeType', 'south');
+      expect(tester.component.showItemSearch()).toBe(true);
+
+      tester.fixture.componentRef.setInput('scopeType', 'history-query');
+      expect(tester.component.showItemSearch()).toBe(true);
+
+      tester.fixture.componentRef.setInput('scopeType', 'north');
+      expect(tester.component.showItemSearch()).toBe(false);
+    });
+
+    test('showGroupSearch should be true only on the standalone page or embedded on a south connector page', () => {
+      expect(tester.component.showGroupSearch()).toBe(true); // standalone logs page (no scope lock)
+
+      tester.fixture.componentRef.setInput('scopeType', 'south');
+      expect(tester.component.showGroupSearch()).toBe(true);
+
+      tester.fixture.componentRef.setInput('scopeType', 'history-query');
+      expect(tester.component.showGroupSearch()).toBe(false);
+
+      tester.fixture.componentRef.setInput('scopeType', 'north');
+      expect(tester.component.showGroupSearch()).toBe(false);
+    });
+
+    test('itemTypeahead should restrict suggestions to the current scope when embedded', () => {
+      vi.useFakeTimers();
+      tester.fixture.componentRef.setInput('scopeId', 'south1');
+      logService.suggestItems.mockReturnValue(of([]));
+
+      tester.component.itemTypeahead(of('foo')).subscribe();
+      vi.advanceTimersByTime(TYPEAHEAD_DEBOUNCE_TIME);
+
+      expect(logService.suggestItems).toHaveBeenCalledWith('foo', 'south1');
+    });
+
+    test('groupTypeahead should restrict suggestions to the current scope when embedded', () => {
+      vi.useFakeTimers();
+      tester.fixture.componentRef.setInput('scopeId', 'south1');
+      logService.suggestGroups.mockReturnValue(of([]));
+
+      tester.component.groupTypeahead(of('foo')).subscribe();
+      vi.advanceTimersByTime(TYPEAHEAD_DEBOUNCE_TIME);
+
+      expect(logService.suggestGroups).toHaveBeenCalledWith('foo', 'south1');
     });
 
     test('getLevelClass should return correct class or fallback', () => {

@@ -97,12 +97,13 @@ export class LogController extends Controller {
   /**
    * Returns a list of item suggestions based on the provided name fragment
    * @summary Get item suggestions
+   * @param scopeId Optional scope ID (e.g. connector or history query ID) to restrict suggestions to that scope only.
    * @returns {Promise<Array<Item>>} Array of matching item objects
    */
   @Get('/items/suggest')
-  suggestItems(@Query() name = '', @Request() request: CustomExpressRequest): Array<Item> {
+  suggestItems(@Query() name = '', @Query() scopeId = '', @Request() request: CustomExpressRequest): Array<Item> {
     const logService = request.services.logService;
-    return logService.suggestItems(name);
+    return logService.suggestItems(name, scopeId || undefined);
   }
 
   /**
@@ -120,12 +121,13 @@ export class LogController extends Controller {
   /**
    * Returns a list of group suggestions based on the provided name fragment
    * @summary Get group suggestions
+   * @param scopeId Optional scope ID (e.g. connector ID) to restrict suggestions to that scope only.
    * @returns {Promise<Array<Group>>} Array of matching group objects
    */
   @Get('/groups/suggest')
-  suggestGroups(@Query() name = '', @Request() request: CustomExpressRequest): Array<Group> {
+  suggestGroups(@Query() name = '', @Query() scopeId = '', @Request() request: CustomExpressRequest): Array<Group> {
     const logService = request.services.logService;
-    return logService.suggestGroups(name);
+    return logService.suggestGroups(name, scopeId || undefined);
   }
 
   /**

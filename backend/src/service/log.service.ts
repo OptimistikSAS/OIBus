@@ -27,8 +27,8 @@ export default class LogService {
     return scope;
   }
 
-  suggestItems(name: string): Array<Item> {
-    return this.logRepository.suggestItems(name);
+  suggestItems(name: string, scopeId?: string): Array<Item> {
+    return this.logRepository.suggestItems(name, scopeId);
   }
 
   getItemById(itemId: string): Item {
@@ -39,8 +39,8 @@ export default class LogService {
     return item;
   }
 
-  suggestGroups(name: string): Array<Group> {
-    return this.logRepository.suggestGroups(name);
+  suggestGroups(name: string, scopeId?: string): Array<Group> {
+    return this.logRepository.suggestGroups(name, scopeId);
   }
 
   getGroupById(groupId: string): Group {

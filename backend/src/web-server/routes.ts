@@ -10588,6 +10588,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsLogController_suggestItems: Record<string, TsoaRoute.ParameterSchema> = {
                 name: {"default":"","in":"query","name":"name","dataType":"string"},
+                scopeId: {"default":"","in":"query","name":"scopeId","dataType":"string"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.get('/api/logs/items/suggest',
@@ -10650,6 +10651,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsLogController_suggestGroups: Record<string, TsoaRoute.ParameterSchema> = {
                 name: {"default":"","in":"query","name":"name","dataType":"string"},
+                scopeId: {"default":"","in":"query","name":"scopeId","dataType":"string"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.get('/api/logs/groups/suggest',

@@ -162,10 +162,10 @@ describe('LogController', () => {
     const name = 'Item';
     logService.suggestItems = mock.fn(() => items);
 
-    const result = await controller.suggestItems(name, mockRequest as CustomExpressRequest);
+    const result = await controller.suggestItems(name, undefined, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(logService.suggestItems.mock.calls.length, 1);
-    assert.deepStrictEqual(logService.suggestItems.mock.calls[0].arguments[0], name);
+    assert.deepStrictEqual(logService.suggestItems.mock.calls[0].arguments, [name, undefined]);
     assert.deepStrictEqual(result, items);
   });
 
@@ -173,10 +173,21 @@ describe('LogController', () => {
     const items: Array<Item> = [{ itemId: 'item-id', itemName: 'Item Name', scopeId: 'scope-id', scopeName: 'Scope Name' }];
     logService.suggestItems = mock.fn(() => items);
 
-    const result = await controller.suggestItems(undefined, mockRequest as CustomExpressRequest);
+    const result = await controller.suggestItems(undefined, undefined, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(logService.suggestItems.mock.calls.length, 1);
-    assert.deepStrictEqual(logService.suggestItems.mock.calls[0].arguments[0], '');
+    assert.deepStrictEqual(logService.suggestItems.mock.calls[0].arguments, ['', undefined]);
+    assert.deepStrictEqual(result, items);
+  });
+
+  it('should suggest items restricted to a scope', async () => {
+    const items: Array<Item> = [{ itemId: 'item-id', itemName: 'Item Name', scopeId: 'scope-id', scopeName: 'Scope Name' }];
+    logService.suggestItems = mock.fn(() => items);
+
+    const result = await controller.suggestItems('Item', 'scope-id', mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(logService.suggestItems.mock.calls.length, 1);
+    assert.deepStrictEqual(logService.suggestItems.mock.calls[0].arguments, ['Item', 'scope-id']);
     assert.deepStrictEqual(result, items);
   });
 
@@ -197,10 +208,10 @@ describe('LogController', () => {
     const name = 'Group';
     logService.suggestGroups = mock.fn(() => groups);
 
-    const result = await controller.suggestGroups(name, mockRequest as CustomExpressRequest);
+    const result = await controller.suggestGroups(name, undefined, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(logService.suggestGroups.mock.calls.length, 1);
-    assert.deepStrictEqual(logService.suggestGroups.mock.calls[0].arguments[0], name);
+    assert.deepStrictEqual(logService.suggestGroups.mock.calls[0].arguments, [name, undefined]);
     assert.deepStrictEqual(result, groups);
   });
 
@@ -208,10 +219,21 @@ describe('LogController', () => {
     const groups: Array<Group> = [{ groupId: 'group-id', groupName: 'Group Name', scopeId: 'scope-id', scopeName: 'Scope Name' }];
     logService.suggestGroups = mock.fn(() => groups);
 
-    const result = await controller.suggestGroups(undefined, mockRequest as CustomExpressRequest);
+    const result = await controller.suggestGroups(undefined, undefined, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(logService.suggestGroups.mock.calls.length, 1);
-    assert.deepStrictEqual(logService.suggestGroups.mock.calls[0].arguments[0], '');
+    assert.deepStrictEqual(logService.suggestGroups.mock.calls[0].arguments, ['', undefined]);
+    assert.deepStrictEqual(result, groups);
+  });
+
+  it('should suggest groups restricted to a scope', async () => {
+    const groups: Array<Group> = [{ groupId: 'group-id', groupName: 'Group Name', scopeId: 'scope-id', scopeName: 'Scope Name' }];
+    logService.suggestGroups = mock.fn(() => groups);
+
+    const result = await controller.suggestGroups('Group', 'scope-id', mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(logService.suggestGroups.mock.calls.length, 1);
+    assert.deepStrictEqual(logService.suggestGroups.mock.calls[0].arguments, ['Group', 'scope-id']);
     assert.deepStrictEqual(result, groups);
   });
 

@@ -37079,6 +37079,16 @@
 							"default": "",
 							"type": "string"
 						}
+					},
+					{
+						"description": "Optional scope ID (e.g. connector or history query ID) to restrict suggestions to that scope only.",
+						"in": "query",
+						"name": "scopeId",
+						"required": false,
+						"schema": {
+							"default": "",
+							"type": "string"
+						}
 					}
 				]
 			}
@@ -37144,6 +37154,16 @@
 					{
 						"in": "query",
 						"name": "name",
+						"required": false,
+						"schema": {
+							"default": "",
+							"type": "string"
+						}
+					},
+					{
+						"description": "Optional scope ID (e.g. connector ID) to restrict suggestions to that scope only.",
+						"in": "query",
+						"name": "scopeId",
 						"required": false,
 						"schema": {
 							"default": "",

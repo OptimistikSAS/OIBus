@@ -192,6 +192,37 @@ describe('Repository with populated database', () => {
       assert.strictEqual(repository.getItemById('bad-id'), null);
     });
 
+    it('should restrict item suggestions to the given scope', () => {
+      repository.saveAll([
+        {
+          msg: 'item log on south-1',
+          scopeType: 'south',
+          scopeId: 'south-1',
+          scopeName: 'South 1',
+          itemId: 'item-abc',
+          itemName: 'Shared Name',
+          time: testData.constants.dates.DATE_1,
+          level: '30'
+        },
+        {
+          msg: 'item log on south-2',
+          scopeType: 'south',
+          scopeId: 'south-2',
+          scopeName: 'South 2',
+          itemId: 'item-def',
+          itemName: 'Shared Name',
+          time: testData.constants.dates.DATE_1,
+          level: '30'
+        }
+      ]);
+
+      const suggestions = repository.suggestItems('Shared', 'south-1');
+      assert.deepStrictEqual(suggestions, [{ itemId: 'item-abc', itemName: 'Shared Name', scopeId: 'south-1', scopeName: 'South 1' }]);
+
+      const unfiltered = repository.suggestItems('Shared');
+      assert.strictEqual(unfiltered.length, 2);
+    });
+
     it('should filter search results by itemIds', () => {
       repository.saveAll([
         {
@@ -304,6 +335,37 @@ describe('Repository with populated database', () => {
       assert.deepStrictEqual(found, { groupId: 'group-abc', groupName: 'Sensors Group', scopeId: 'south-g', scopeName: 'South G' });
 
       assert.strictEqual(repository.getGroupById('bad-id'), null);
+    });
+
+    it('should restrict group suggestions to the given scope', () => {
+      repository.saveAll([
+        {
+          msg: 'group log on south-g',
+          scopeType: 'south',
+          scopeId: 'south-g',
+          scopeName: 'South G',
+          groupId: 'group-abc',
+          groupName: 'Shared Name',
+          time: testData.constants.dates.DATE_1,
+          level: '30'
+        },
+        {
+          msg: 'group log on south-h',
+          scopeType: 'south',
+          scopeId: 'south-h',
+          scopeName: 'South H',
+          groupId: 'group-def',
+          groupName: 'Shared Name',
+          time: testData.constants.dates.DATE_1,
+          level: '30'
+        }
+      ]);
+
+      const suggestions = repository.suggestGroups('Shared', 'south-g');
+      assert.deepStrictEqual(suggestions, [{ groupId: 'group-abc', groupName: 'Shared Name', scopeId: 'south-g', scopeName: 'South G' }]);
+
+      const unfiltered = repository.suggestGroups('Shared');
+      assert.strictEqual(unfiltered.length, 2);
     });
   });
 });
