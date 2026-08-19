@@ -373,6 +373,56 @@ describe('NorthFileWriter', () => {
 
           await assert.rejects(async () => north.testConnection());
         });
+
+        // Windows refuses to add a session for a server that already has one under a different
+        // identity (system error 1219). Clearing any existing session first, unconditionally,
+        // before adding the new one makes mounting self-healing regardless of what left a
+        // previous session dangling (unclean shutdown, a prior failed attempt, a leftover test).
+        it('should clear any existing session before authenticating a new one', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.outputFolder = '\\\\server\\share\\out';
+          north = new NorthFileWriter(configuration, cacheService);
+          const deleteSpy = mock.method(north as unknown as Private, 'deleteNetworkSession', async () => undefined);
+
+          // `net` is missing on the test runner, so the add still rejects with ENOENT — that's
+          // enough to confirm deleteNetworkSession always runs first, before the add is attempted.
+          await assert.rejects(async () => (north as unknown as Private)['mountNetworkShare']('\\\\server\\share\\out'));
+          assert.strictEqual(deleteSpy.mock.calls.length, 1);
+          assert.deepStrictEqual(deleteSpy.mock.calls[0].arguments, ['\\\\server']);
+        });
+
+        // testConnection() is a one-off diagnostic call, not paired with disconnect() — without
+        // tearing its session down itself, it would stay open (and could conflict with the next
+        // mount attempt, see the 1219 error above) until something else happened to clean it up.
+        it('should tear down the SMB session after a successful testConnection', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.outputFolder = '\\\\server\\share\\out';
+          north = new NorthFileWriter(configuration, cacheService);
+          mock.method(north as unknown as Private, 'mountNetworkShare', async () => undefined);
+          const unmountSpy = mock.method(north as unknown as Private, 'unmountNetworkShare', async () => undefined);
+          mock.method(fs, 'writeFile', async () => undefined);
+          mock.method(fs, 'unlink', async () => undefined);
+          mock.method(fs, 'readdir', async () => [] as unknown as Array<string>);
+
+          await north.testConnection();
+
+          assert.strictEqual(unmountSpy.mock.calls.length, 1);
+        });
+
+        it('should tear down the SMB session after a failed testConnection', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.outputFolder = '\\\\server\\share\\out';
+          north = new NorthFileWriter(configuration, cacheService);
+          mock.method(north as unknown as Private, 'mountNetworkShare', async () => undefined);
+          const unmountSpy = mock.method(north as unknown as Private, 'unmountNetworkShare', async () => undefined);
+          mock.method(fs, 'writeFile', async () => {
+            throw new Error('EACCES');
+          });
+
+          await assert.rejects(async () => north.testConnection());
+
+          assert.strictEqual(unmountSpy.mock.calls.length, 1);
+        });
       }
     );
   });

@@ -581,6 +581,83 @@ describe('SouthFolderScanner', () => {
           await assert.doesNotReject((south as unknown as Private)['unmountNetworkShare']('C:\\local\\folder'));
         });
 
+        // Windows refuses to add a session for a server that already has one under a different
+        // identity (system error 1219). Clearing any existing session first, unconditionally,
+        // before adding the new one makes mounting self-healing regardless of what left a
+        // previous session dangling (unclean shutdown, a prior failed attempt, a leftover test).
+        it('should clear any existing session before authenticating a new one', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.inputFolder = '\\\\server\\share\\data';
+          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+          type Private = Record<string, (...args: Array<unknown>) => Promise<unknown>>;
+          const deleteSpy = mock.method(south as unknown as Private, 'deleteNetworkSession', async () => undefined);
+
+          // `net` is missing on the test runner, so the add still rejects with ENOENT — that's
+          // enough to confirm deleteNetworkSession always runs first, before the add is attempted.
+          await assert.rejects(async () => (south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data'));
+          assert.strictEqual(deleteSpy.mock.calls.length, 1);
+          assert.deepStrictEqual(deleteSpy.mock.calls[0].arguments, ['\\\\server']);
+        });
+
+        // testConnection() is a one-off diagnostic call, not paired with disconnect() — without
+        // tearing its session down itself, it would stay open (and could conflict with the next
+        // mount attempt, see the 1219 error above) until something else happened to clean it up.
+        it('should tear down the SMB session after a successful testConnection', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.inputFolder = '\\\\server\\share\\data';
+          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+          type Private = Record<string, (...args: Array<unknown>) => Promise<unknown>>;
+          mock.method(south as unknown as Private, 'mountNetworkShare', async () => undefined);
+          const unmountSpy = mock.method(south as unknown as Private, 'unmountNetworkShare', async () => undefined);
+          mock.method(fs, 'access', async () => undefined);
+          mock.method(fs, 'stat', async () => ({ isDirectory: () => true }));
+          mock.method(fs, 'readdir', async () => [] as unknown as Array<string>);
+
+          await south.testConnection();
+
+          assert.strictEqual(unmountSpy.mock.calls.length, 1);
+        });
+
+        it('should tear down the SMB session after a failed testConnection', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.inputFolder = '\\\\server\\share\\data';
+          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+          type Private = Record<string, (...args: Array<unknown>) => Promise<unknown>>;
+          mock.method(south as unknown as Private, 'mountNetworkShare', async () => undefined);
+          const unmountSpy = mock.method(south as unknown as Private, 'unmountNetworkShare', async () => undefined);
+          mock.method(fs, 'access', async () => {
+            throw new Error('ENOENT');
+          });
+
+          await assert.rejects(async () => south.testConnection());
+
+          assert.strictEqual(unmountSpy.mock.calls.length, 1);
+        });
+
+        // testItem() used to reuse testConnection()'s mounted session for the file listing that
+        // follows it. Now that testConnection() tears its own session down before returning,
+        // testItem() must own its own mount/unmount pair around the whole operation instead of
+        // relying on testConnection() to leave the session up — this locks that in.
+        it('should keep the SMB session up for the whole testItem call, not just testConnection', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.inputFolder = '\\\\server\\share\\data';
+          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+          type Private = Record<string, (...args: Array<unknown>) => Promise<unknown>>;
+          const mountSpy = mock.method(south as unknown as Private, 'mountNetworkShare', async () => undefined);
+          const unmountSpy = mock.method(south as unknown as Private, 'unmountNetworkShare', async () => undefined);
+          mock.method(fs, 'access', async () => undefined);
+          mock.method(fs, 'stat', async () => ({ isDirectory: () => true, mtimeMs: 1600000000000, size: 512 }));
+          mock.method(fs, 'readdir', async () => ['file1.csv']);
+          utilsExports.checkAge = mock.fn(() => true);
+
+          await south.testItem(configuration.items[0], { history: undefined } satisfies SouthConnectorItemTestingSettings);
+
+          // Mounted and unmounted exactly once for the whole call — testConnection() is used
+          // internally for its validation logic only, without mounting/unmounting on its own.
+          assert.strictEqual(mountSpy.mock.calls.length, 1);
+          assert.strictEqual(unmountSpy.mock.calls.length, 1);
+        });
+
         it('should silently ignore SMB session removal failures on Windows', async () => {
           configuration.settings.username = 'user';
           configuration.settings.inputFolder = '\\\\server\\share\\data';

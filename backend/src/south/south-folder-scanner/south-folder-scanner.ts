@@ -60,6 +60,13 @@ export default class SouthFolderScanner
     const user = this.connector.settings.domain
       ? `${this.connector.settings.domain}\\${this.connector.settings.username}`
       : this.connector.settings.username;
+    // Clear any existing session to this server first. Windows refuses to add a new one when a
+    // connection is already active under a different identity (system error 1219: "Multiple
+    // connections to a server or shared resource by the same user, using more than one user
+    // name, are not allowed"). This can happen after an unclean shutdown, a previous failed
+    // mount attempt, or a prior testConnection()/testItem() call that left its session open —
+    // best-effort, there may simply be nothing to remove.
+    await this.deleteNetworkSession(serverRoot);
     let password = '';
     try {
       password = this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : '';
@@ -89,15 +96,36 @@ export default class SouthFolderScanner
     if (!this.connector.settings.username) return;
     const serverRoot = folderPath.match(/^(\\\\[^\\]+)/)?.[1];
     if (!serverRoot) return;
+    await this.deleteNetworkSession(serverRoot);
+  }
+
+  private async deleteNetworkSession(serverRoot: string): Promise<void> {
     try {
       await execFile('net', ['use', `${serverRoot}\\IPC$`, '/delete', '/yes']);
     } catch {
-      // Ignore — session may have already been removed
+      // Ignore — session may not exist
     }
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
     await this.mountNetworkShare(this.connector.settings.inputFolder);
+    try {
+      return await this.checkFolderAccess();
+    } finally {
+      // Tear down the session opened for this one-off test — testConnection() is not paired
+      // with a disconnect() call, so without this a session stays open until the next mount
+      // (which would otherwise be the only thing to clean it up).
+      await this.unmountNetworkShare(this.connector.settings.inputFolder);
+    }
+  }
+
+  /**
+   * Checks that the input folder exists, is readable and is a directory. Assumes any required
+   * SMB session has already been mounted by the caller — does not manage the mount itself, so
+   * it can be reused by both testConnection() (which owns its own mount/unmount pair) and
+   * testItem() (which needs the mount to stay up for the file listing that follows).
+   */
+  private async checkFolderAccess(): Promise<OIBusConnectionTestResult> {
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
 
     try {
@@ -133,31 +161,38 @@ export default class SouthFolderScanner
     item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>,
     _testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
-    const connectStart = DateTime.now().toMillis();
-    await this.testConnection();
-    const connectionDuration = DateTime.now().toMillis() - connectStart;
-    const queryStart = DateTime.now().toMillis();
-    const inputFolder = path.resolve(this.connector.settings.inputFolder);
-    const filesInFolder = await fs.readdir(inputFolder);
-    const filteredFiles = filesInFolder.filter(file => file.match(item.settings.regex));
-    const matchedFiles: Array<{ name: string; modifyTime: Instant }> = [];
-    for (const file of filteredFiles) {
-      const stats = await fs.stat(path.join(inputFolder, file));
-      if (checkAge(item, file, stats.mtimeMs, [], this.logger)) {
-        matchedFiles.push({ name: file, modifyTime: DateTime.fromMillis(stats.mtimeMs).toUTC().toISO()! });
+    // Mount for the whole operation (not via testConnection(), which tears its own session down
+    // before returning) since the file listing below needs the SMB session to still be up.
+    await this.mountNetworkShare(this.connector.settings.inputFolder);
+    try {
+      const connectStart = DateTime.now().toMillis();
+      await this.checkFolderAccess();
+      const connectionDuration = DateTime.now().toMillis() - connectStart;
+      const queryStart = DateTime.now().toMillis();
+      const inputFolder = path.resolve(this.connector.settings.inputFolder);
+      const filesInFolder = await fs.readdir(inputFolder);
+      const filteredFiles = filesInFolder.filter(file => file.match(item.settings.regex));
+      const matchedFiles: Array<{ name: string; modifyTime: Instant }> = [];
+      for (const file of filteredFiles) {
+        const stats = await fs.stat(path.join(inputFolder, file));
+        if (checkAge(item, file, stats.mtimeMs, [], this.logger)) {
+          matchedFiles.push({ name: file, modifyTime: DateTime.fromMillis(stats.mtimeMs).toUTC().toISO()! });
+        }
       }
+      const queryDuration = DateTime.now().toMillis() - queryStart;
+      const values: Array<OIBusTimeValue> = matchedFiles.map(file => ({
+        pointId: item.name,
+        timestamp: file.modifyTime,
+        data: { value: file.name }
+      }));
+      return {
+        result: { type: 'time-values', content: values },
+        connectionDuration,
+        queryDuration
+      };
+    } finally {
+      await this.unmountNetworkShare(this.connector.settings.inputFolder);
     }
-    const queryDuration = DateTime.now().toMillis() - queryStart;
-    const values: Array<OIBusTimeValue> = matchedFiles.map(file => ({
-      pointId: item.name,
-      timestamp: file.modifyTime,
-      data: { value: file.name }
-    }));
-    return {
-      result: { type: 'time-values', content: values },
-      connectionDuration,
-      queryDuration
-    };
   }
 
   /**
