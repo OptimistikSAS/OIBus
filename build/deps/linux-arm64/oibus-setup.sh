@@ -13,6 +13,33 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# The instance name (-n) doubles as the systemd unit name and a registry key filename, so
+# anything outside this safe set could corrupt those commands or collide with an unrelated
+# file. Reject it outright rather than trying to escape it differently for every consumer.
+# (Unlike the JSON engineName default below, this is used as a file/unit name, hence the
+# lowercase "oibus" default and no spaces allowed.)
+service_name="${engine_name:-oibus}"
+if [[ ! "$service_name" =~ ^[A-Za-z0-9._-]+$ ]]; then
+  printf 'ERROR: Instance name "%s" contains characters that are not allowed.\n' "$service_name"
+  printf 'Allowed characters: letters, digits, dots, hyphens and underscores (no spaces).\n'
+  exit 1
+fi
+
+# -port is embedded as a raw (unquoted) JSON number below, so it must be digits only.
+if [[ -n "$oibus_port" ]] && [[ ! "$oibus_port" =~ ^[0-9]+$ ]]; then
+  printf 'ERROR: Port "%s" must contain digits only.\n' "$oibus_port"
+  exit 1
+fi
+
+# The default instance keeps the classic "oibus" unit name (sudo systemctl status oibus,
+# etc.) for a clean upgrade story; any other name gets its own oibus-<name>.service unit so
+# multiple instances can run side by side.
+if [[ "${service_name,,}" == "oibus" ]]; then
+  unit_name="oibus"
+else
+  unit_name="oibus-$service_name"
+fi
+service_file="/etc/systemd/system/$unit_name.service"
 
 if [[ ! "$install_dir" ]]; then
   # Setup work directory
@@ -26,7 +53,6 @@ if [[ ! -d "$install_dir" ]]; then
   fi
 fi
 
-
 if [[ ! "$my_data_directory" ]]; then
   # Setup data directory
   read -rp "Enter the directory in which you want to save all your OIBus related data, caches, and logs (default: ./OIBusData): " my_data_directory
@@ -39,8 +65,38 @@ if [[ ! -d "$my_data_directory" ]]; then
   fi
 fi
 
-# Create env file to store the data directory path, used at OIBus startup
+install_path=$(readlink -m "$install_dir")
 conf_path=$(readlink -m "$my_data_directory")
+
+# Every OIBus instance must have its own binaries folder and its own data folder. Check the
+# machine-wide instance registry before touching anything, so two instances can never end
+# up sharing either one. Reinstalling/upgrading the SAME instance into its own existing
+# folder is fine (an entry matching our own instance name is skipped).
+instances_dir="/etc/oibus/instances"
+if [[ -d "$instances_dir" ]]; then
+  for instance_file in "$instances_dir"/*; do
+    [[ -f "$instance_file" ]] || continue
+    other_name=$(basename "$instance_file")
+    if [[ "${other_name,,}" == "${service_name,,}" ]]; then
+      continue
+    fi
+    mapfile -t other_lines < "$instance_file"
+    other_app_dir="${other_lines[0]}"
+    other_data_dir="${other_lines[1]}"
+    if [[ "$other_app_dir" == "$install_path" ]]; then
+      printf 'ERROR: The installation folder "%s" is already used by OIBus instance "%s".\n' "$install_path" "$other_name"
+      printf 'Each OIBus instance must have its own installation folder and its own data directory.\n'
+      exit 1
+    fi
+    if [[ "$other_data_dir" == "$conf_path" ]]; then
+      printf 'ERROR: The data directory "%s" is already used by OIBus instance "%s".\n' "$conf_path" "$other_name"
+      printf 'Each OIBus instance must have its own installation folder and its own data directory.\n'
+      exit 1
+    fi
+  done
+fi
+
+# Create env file to store the data directory path, used at OIBus startup
 touch "$install_dir/oibus-env"
 printf "ARG1=--config\nARG2=%s" "$conf_path" > "$install_dir/oibus-env"
 
@@ -100,14 +156,15 @@ if [[ ! -f "$conf_path/oibus.db" ]]; then
   chmod 600 "$conf_path/oibus.init.json"
 fi
 
-# Stop OIBus if already installed and running
-if [[ -f "/etc/systemd/system/oibus.service" ]]; then
-  echo 'Stopping OIBus service...'
-  sudo systemctl stop oibus
-  sudo systemctl disable oibus
+# Stop this SAME instance if it is already installed and running. Each instance has its own
+# unit file, so this can never touch a different, still-wanted instance's service.
+if [[ -f "$service_file" ]]; then
+  echo "Stopping $unit_name service..."
+  sudo systemctl stop "$unit_name"
+  sudo systemctl disable "$unit_name"
   sudo systemctl daemon-reload
   sudo systemctl reset-failed
-  echo 'OIBus service has been stopped and disabled.'
+  echo "OIBus service ($unit_name) has been stopped and disabled."
 fi
 
 # Move binary file into install dir
@@ -122,23 +179,22 @@ if ! mv oibus-launcher "$install_dir"; then
 fi
 
 # Installing service file
-echo 'Installing OIBus service...'
-install_path=$(readlink -m "$install_dir")
+echo "Installing $unit_name service..."
 {
   printf "[Unit]\nDescription=OIBus Client\nAfter=network-online.target\n\n"
   printf "[Service]\nWorkingDirectory=%s\nEnvironmentFile=%s/oibus-env\n" "$install_path" "$install_path"
   printf "ExecStart=%s/oibus-launcher %s %s\nRestart=always\nRestartSec=5s\n\n" "$install_path" '$ARG1' '$ARG2'
   printf "[Install]\nWantedBy=default.target"
-} > /etc/systemd/system/oibus.service
+} > "$service_file"
 
 echo 'Service file successfully created. Enabling OIBus service startup on system boot...'
-if ! sudo systemctl enable oibus.service; then
+if ! sudo systemctl enable "$unit_name"; then
   printf "ERROR: Could not enable OIBus service launch on system startup. Terminating installation process."
   exit 1
 fi
 
 echo 'Starting OIBus service...'
-if ! sudo systemctl start oibus.service; then
+if ! sudo systemctl start "$unit_name"; then
   printf "ERROR: Could not launch OIBus. Terminating installation process."
   exit 1
 fi
@@ -146,8 +202,8 @@ fi
 # Creating go.sh file
 {
   printf '#!/bin/bash\n\n'
-  printf "echo 'Stopping OIBus service... To restart it, enter the following command once this script is over: sudo systemctl start oibus'\n"
-  printf 'sudo systemctl stop oibus\n'
+  printf "echo 'Stopping %s service... To restart it, enter the following command once this script is over: sudo systemctl start %s'\n" "$unit_name" "$unit_name"
+  printf 'sudo systemctl stop %s\n' "$unit_name"
   printf "%s/oibus-launcher --config '%s'" "$install_path" "$conf_path"
 } > "$install_path"/go.sh
 
@@ -157,15 +213,28 @@ if ! chmod 755 "$install_path"/go.sh; then
   exit 1
 fi
 
+# Escape a string for safe embedding as a sed replacement with an @ delimiter: backslash,
+# then the delimiter itself, then &  (which sed would otherwise expand to "the whole
+# match"). Without this, a folder/data path containing @, \ or & could corrupt the sed
+# script below - or, via a crafted value ending in the right sequence, make sed execute
+# arbitrary shell commands through its "e" flag.
+sed_escape() {
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//@/\\@}"
+  s="${s//&/\\&}"
+  printf '%s' "$s"
+}
+
 # Updating uninstall script
 if [[ -f './oibus-uninstall.sh' ]]; then
   echo 'Setting oibus-uninstall.sh...'
 
-  service_file="/etc/systemd/system/oibus.service"
-
-  sed -i "s@OIBUS_INSTALL_FLAG_DIR@$install_path@" ./oibus-uninstall.sh
-  sed -i "s@OIBUS_INSTALL_FLAG_DATA_DIR@$conf_path@" ./oibus-uninstall.sh
-  sed -i "s@OIBUS_INSTALL_FLAG_SERVICE_FILE@$service_file@" ./oibus-uninstall.sh
+  sed -i "s@OIBUS_INSTALL_FLAG_DIR@$(sed_escape "$install_path")@" ./oibus-uninstall.sh
+  sed -i "s@OIBUS_INSTALL_FLAG_DATA_DIR@$(sed_escape "$conf_path")@" ./oibus-uninstall.sh
+  sed -i "s@OIBUS_INSTALL_FLAG_SERVICE_FILE@$(sed_escape "$service_file")@" ./oibus-uninstall.sh
+  sed -i "s@OIBUS_INSTALL_FLAG_UNIT_NAME@$(sed_escape "$unit_name")@" ./oibus-uninstall.sh
+  sed -i "s@OIBUS_INSTALL_FLAG_INSTANCE_NAME@$(sed_escape "$service_name")@" ./oibus-uninstall.sh
 
   if ! mv ./oibus-uninstall.sh "$install_dir"/oibus-uninstall.sh; then
     echo 'ERROR: Could not set uninstall script properly. Terminating install process.'
@@ -173,7 +242,13 @@ if [[ -f './oibus-uninstall.sh' ]]; then
   fi
 fi
 
+# Record this instance (name -> binaries/data folder) so future installs (this script or a
+# rerun of it) can detect folder/data clashes against it, and so the uninstaller knows what
+# to remove.
+mkdir -p "$instances_dir"
+printf '%s\n%s\n' "$install_path" "$conf_path" > "$instances_dir/$service_name"
+
 echo 'Installation procedure completed!'
-printf "\nUseful commands:\n\tCheck service status:\tsudo systemctl status oibus\n\tCheck service-logs:\tsudo journalctl -u oibus -n 200 -f\n\n"
+printf "\nUseful commands:\n\tCheck service status:\tsudo systemctl status %s\n\tCheck service-logs:\tsudo journalctl -u %s -n 200 -f\n\n" "$unit_name" "$unit_name"
 
 rm ./oibus-setup.sh
