@@ -144,7 +144,7 @@ All flags are optional; any omitted value falls back to the default declared in 
 :: echo), so anything outside this safe set - especially shell metacharacters like & | > < ^ -
 :: could inject arbitrary commands. Reject it outright rather than trying to quote/escape it
 :: differently at every use site.
-echo %SERVICE_NAME%| findstr /r /v "^[A-Za-z0-9 ._-]*$" >nul
+echo %SERVICE_NAME%| findstr /r /v /c:"^[A-Za-z0-9 ._-]*$" >nul
 if not ERRORLEVEL 1 (
     echo ERROR: Service name "%SERVICE_NAME%" contains characters that are not allowed.
     echo Allowed characters: letters, digits, spaces, dots, hyphens and underscores.
@@ -379,7 +379,7 @@ goto PARSE_PARAMETERS
 :: echo), so anything outside this safe set - especially shell metacharacters like & | > < ^ -
 :: could inject arbitrary commands. Reject it outright rather than trying to quote/escape it
 :: differently at every use site.
-echo %SERVICE_NAME%| findstr /r /v "^[A-Za-z0-9 ._-]*$" >nul
+echo %SERVICE_NAME%| findstr /r /v /c:"^[A-Za-z0-9 ._-]*$" >nul
 if not ERRORLEVEL 1 (
     echo ERROR: Service name "%SERVICE_NAME%" contains characters that are not allowed.
     echo Allowed characters: letters, digits, spaces, dots, hyphens and underscores.
