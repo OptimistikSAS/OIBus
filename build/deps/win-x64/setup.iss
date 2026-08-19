@@ -592,17 +592,25 @@ end;
 
 function DeleteDataDir(DirToDelete: string): Boolean;
 var
-  CacheFolder, LogsFolder, CertsFolder, SettingsFile, CryptoFile: string;
+  CacheFolder, LogsFolder, CertsFolder, ErrorFolder, ArchiveFolder, SettingsFile, CryptoFile: string;
 begin
+    // cache/, error/ and archive/ are independent top-level folders (error/archive are NOT
+    // nested under cache/) - each south/north connector gets its own subfolder under all
+    // three. logs/ already bundles both logs.db and metrics.db, and cache.db lives inside
+    // cache/, so deleting the folders below also removes those database files.
     CacheFolder := AddBackslash(DirToDelete) + 'cache';
     LogsFolder := AddBackslash(DirToDelete) + 'logs';
     CertsFolder := AddBackslash(DirToDelete) + 'certs';
+    ErrorFolder := AddBackslash(DirToDelete) + 'error';
+    ArchiveFolder := AddBackslash(DirToDelete) + 'archive';
     SettingsFile := AddBackslash(DirToDelete) + 'oibus.db';
     CryptoFile := AddBackslash(DirToDelete) + 'crypto.db';
 
     if DirExists(CacheFolder) then DelTree(CacheFolder, True, True, True);
     if DirExists(LogsFolder) then DelTree(LogsFolder, True, True, True);
     if DirExists(CertsFolder) then DelTree(CertsFolder, True, True, True);
+    if DirExists(ErrorFolder) then DelTree(ErrorFolder, True, True, True);
+    if DirExists(ArchiveFolder) then DelTree(ArchiveFolder, True, True, True);
     if FileExists(SettingsFile) then DeleteFile(SettingsFile);
     if FileExists(CryptoFile) then DeleteFile(CryptoFile);
     Result := True;

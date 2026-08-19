@@ -78,16 +78,21 @@ if [[ "$delete_data" == "Y" || "$delete_data" == "y" ]]; then
   if [[ -f "$data_directory/crypto.db" ]]; then
     sudo rm -f "$data_directory/crypto.db"
   fi
+  # cache/error/archive are independent top-level folders (not nested under each other),
+  # and logs/ bundles both logs.db and metrics.db.
   if [[ -d "$data_directory/cache/" ]]; then
     sudo rm -rf "$data_directory/cache/"
+  fi
+  if [[ -d "$data_directory/error/" ]]; then
+    sudo rm -rf "$data_directory/error/"
+  fi
+  if [[ -d "$data_directory/archive/" ]]; then
+    sudo rm -rf "$data_directory/archive/"
   fi
   if [[ -d "$data_directory/logs/" ]]; then
     sudo rm -rf "$data_directory/logs/"
   fi
   if [[ -d "$data_directory/certs/" ]]; then
     sudo rm -rf "$data_directory/certs/"
-  fi
-  if [[ -d "$data_directory/keys/" ]]; then
-    sudo rm -rf "$data_directory/keys/"
   fi
 fi

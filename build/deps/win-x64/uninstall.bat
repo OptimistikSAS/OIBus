@@ -37,8 +37,31 @@ if not ERRORLEVEL 1 (
     exit /b 1
 )
 
+rem Look up the data directory for this service BEFORE removing the service - "nssm remove"
+rem deletes the whole Services\<name> registry key, DataDir value included.
+set "DATA_DIR="
+for /f "tokens=2,*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Services\%SERVICE_NAME%" /v DataDir 2^>nul ^| find "DataDir"') do set "DATA_DIR=%%B"
+
 echo Stopping "%SERVICE_NAME%" service...
 nssm.exe stop "%SERVICE_NAME%"
+
+if defined DATA_DIR (
+    set /p DELETE_DATA=Do you wish to remove all data for service %SERVICE_NAME% (cache, logs...)? (y/N)
+    if /I "%DELETE_DATA%"=="Y" (
+        rem cache/error/archive are independent top-level folders (not nested under each
+        rem other), and logs/ bundles both logs.db and metrics.db.
+        if exist "%DATA_DIR%\cache" rd /s /q "%DATA_DIR%\cache"
+        if exist "%DATA_DIR%\error" rd /s /q "%DATA_DIR%\error"
+        if exist "%DATA_DIR%\archive" rd /s /q "%DATA_DIR%\archive"
+        if exist "%DATA_DIR%\logs" rd /s /q "%DATA_DIR%\logs"
+        if exist "%DATA_DIR%\certs" rd /s /q "%DATA_DIR%\certs"
+        if exist "%DATA_DIR%\oibus.db" del /f /q "%DATA_DIR%\oibus.db"
+        if exist "%DATA_DIR%\crypto.db" del /f /q "%DATA_DIR%\crypto.db"
+        rem Only succeeds if now empty - matches the graphical installer's behavior of
+        rem leaving any other stray file in place rather than force-deleting the folder.
+        rd "%DATA_DIR%" 2>nul
+    )
+)
 
 echo Removing "%SERVICE_NAME%" service...
 nssm.exe remove "%SERVICE_NAME%" confirm
