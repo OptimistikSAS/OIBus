@@ -77,7 +77,16 @@ describe('Log Service', () => {
 
     const result = service.suggestItems('itemName');
 
-    assert.deepStrictEqual(logRepository.suggestItems.mock.calls[0].arguments, ['itemName']);
+    assert.deepStrictEqual(logRepository.suggestItems.mock.calls[0].arguments, ['itemName', undefined]);
+    assert.deepStrictEqual(result, []);
+  });
+
+  it('should suggest items restricted to a scope', () => {
+    logRepository.suggestItems.mock.mockImplementationOnce(() => []);
+
+    const result = service.suggestItems('itemName', 'scopeId');
+
+    assert.deepStrictEqual(logRepository.suggestItems.mock.calls[0].arguments, ['itemName', 'scopeId']);
     assert.deepStrictEqual(result, []);
   });
 
@@ -107,7 +116,16 @@ describe('Log Service', () => {
 
     const result = service.suggestGroups('groupName');
 
-    assert.deepStrictEqual(logRepository.suggestGroups.mock.calls[0].arguments, ['groupName']);
+    assert.deepStrictEqual(logRepository.suggestGroups.mock.calls[0].arguments, ['groupName', undefined]);
+    assert.deepStrictEqual(result, []);
+  });
+
+  it('should suggest groups restricted to a scope', () => {
+    logRepository.suggestGroups.mock.mockImplementationOnce(() => []);
+
+    const result = service.suggestGroups('groupName', 'scopeId');
+
+    assert.deepStrictEqual(logRepository.suggestGroups.mock.calls[0].arguments, ['groupName', 'scopeId']);
     assert.deepStrictEqual(result, []);
   });
 

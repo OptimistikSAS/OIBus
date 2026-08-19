@@ -54,16 +54,18 @@ export class LogService {
     return this.http.get<Scope | null>(`/api/logs/scopes/${id}`);
   }
 
-  suggestItems(name: string): Observable<Array<Item>> {
-    return this.http.get<Array<Item>>('/api/logs/items/suggest', { params: { name } });
+  /** @param scopeId Restricts suggestions to a single connector/history query (e.g. when embedded on its page). */
+  suggestItems(name: string, scopeId?: string): Observable<Array<Item>> {
+    return this.http.get<Array<Item>>('/api/logs/items/suggest', { params: scopeId ? { name, scopeId } : { name } });
   }
 
   getItemById(id: string): Observable<Item | null> {
     return this.http.get<Item | null>(`/api/logs/items/${id}`);
   }
 
-  suggestGroups(name: string): Observable<Array<Group>> {
-    return this.http.get<Array<Group>>('/api/logs/groups/suggest', { params: { name } });
+  /** @param scopeId Restricts suggestions to a single connector (e.g. when embedded on its page). */
+  suggestGroups(name: string, scopeId?: string): Observable<Array<Group>> {
+    return this.http.get<Array<Group>>('/api/logs/groups/suggest', { params: scopeId ? { name, scopeId } : { name } });
   }
 
   getGroupById(id: string): Observable<Group | null> {

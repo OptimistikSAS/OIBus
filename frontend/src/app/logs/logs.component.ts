@@ -78,6 +78,15 @@ export class LogsComponent implements OnInit, OnDestroy {
   readonly scopeType = input<ScopeType | null>(null);
   readonly embedded = input(false);
 
+  // On the standalone logs page (no scope lock), items and groups from every connector are searchable.
+  // Embedded on a south connector's page, both are searchable but restricted to that connector. Embedded
+  // on a history query's page, only items apply (history queries have no group concept). Embedded on a
+  // north connector's page, neither applies (north connectors have no items/groups at all).
+  readonly showItemSearch = computed(
+    () => this.scopeType() === null || this.scopeType() === 'south' || this.scopeType() === 'history-query'
+  );
+  readonly showGroupSearch = computed(() => this.scopeType() === null || this.scopeType() === 'south');
+
   readonly searchForm = inject(NonNullableFormBuilder).group(
     {
       messageContent: null as string | null,
@@ -144,22 +153,30 @@ export class LogsComponent implements OnInit, OnDestroy {
     text$.pipe(
       debounceTime(TYPEAHEAD_DEBOUNCE_TIME),
       distinctUntilChanged(),
-      switchMap(text => this.logService.suggestItems(text))
+      switchMap(text => this.logService.suggestItems(text, this.scopeId() ?? undefined))
     );
   // Show the owning connector/history query name alongside the item name, since the same item name
-  // can appear under several connectors and the plain name alone does not disambiguate them. ngbTypeahead
-  // also calls this formatter with the raw (typed or reset-to-empty) input string, not just a selected
-  // Item, so that case must be passed through unchanged rather than interpolated as "undefined (undefined)".
-  itemFormatter = (item: Item | string) => (typeof item === 'string' ? item : `${item.itemName} (${item.scopeName})`);
+  // can appear under several connectors and the plain name alone does not disambiguate them — except
+  // when the search is already locked to a single scope (embedded on that connector's own page), where
+  // every suggestion shares the same scope and the suffix would just be noise. ngbTypeahead also calls
+  // this formatter with the raw (typed or reset-to-empty) input string, not just a selected Item, so
+  // that case must be passed through unchanged rather than interpolated as "undefined (undefined)".
+  itemFormatter = (item: Item | string) => {
+    if (typeof item === 'string') return item;
+    return this.scopeId() ? item.itemName : `${item.itemName} (${item.scopeName})`;
+  };
 
   groupTypeahead = (text$: Observable<string>) =>
     text$.pipe(
       debounceTime(TYPEAHEAD_DEBOUNCE_TIME),
       distinctUntilChanged(),
-      switchMap(text => this.logService.suggestGroups(text))
+      switchMap(text => this.logService.suggestGroups(text, this.scopeId() ?? undefined))
     );
   // Same rationale and same raw-string caveat as itemFormatter above.
-  groupFormatter = (group: Group | string) => (typeof group === 'string' ? group : `${group.groupName} (${group.scopeName})`);
+  groupFormatter = (group: Group | string) => {
+    if (typeof group === 'string') return group;
+    return this.scopeId() ? group.groupName : `${group.groupName} (${group.scopeName})`;
+  };
 
   /** Signal version of the current selected levels, kept in sync with the form control. */
   readonly activeLevels = toSignal(this.searchForm.controls.levels.valueChanges, {

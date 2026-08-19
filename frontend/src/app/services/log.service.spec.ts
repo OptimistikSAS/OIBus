@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { Page } from '../../../../backend/shared/model/types';
 import { toPage } from '../shared/test-utils';
 import { LogService } from './log.service';
-import { LogDTO, Scope } from '../../../../backend/shared/model/logs.model';
+import { Group, Item, LogDTO, Scope } from '../../../../backend/shared/model/logs.model';
 
 describe('LogService', () => {
   let http: HttpTestingController;
@@ -113,5 +113,65 @@ describe('LogService', () => {
       })
       .flush(scope);
     expect(expectedScope!).toEqual(scope);
+  });
+
+  test('should suggest items by name', () => {
+    let expectedItems: Array<Item> = [];
+    const items: Array<Item> = [{ itemId: 'id1', itemName: 'name', scopeId: 'scopeId', scopeName: 'scopeName' }];
+
+    service.suggestItems('name').subscribe(c => (expectedItems = c));
+
+    http
+      .expectOne({
+        url: '/api/logs/items/suggest?name=name',
+        method: 'GET'
+      })
+      .flush(items);
+    expect(expectedItems!).toEqual(items);
+  });
+
+  test('should suggest items by name restricted to a scope', () => {
+    let expectedItems: Array<Item> = [];
+    const items: Array<Item> = [{ itemId: 'id1', itemName: 'name', scopeId: 'scopeId', scopeName: 'scopeName' }];
+
+    service.suggestItems('name', 'scopeId').subscribe(c => (expectedItems = c));
+
+    http
+      .expectOne({
+        url: '/api/logs/items/suggest?name=name&scopeId=scopeId',
+        method: 'GET'
+      })
+      .flush(items);
+    expect(expectedItems!).toEqual(items);
+  });
+
+  test('should suggest groups by name', () => {
+    let expectedGroups: Array<Group> = [];
+    const groups: Array<Group> = [{ groupId: 'id1', groupName: 'name', scopeId: 'scopeId', scopeName: 'scopeName' }];
+
+    service.suggestGroups('name').subscribe(c => (expectedGroups = c));
+
+    http
+      .expectOne({
+        url: '/api/logs/groups/suggest?name=name',
+        method: 'GET'
+      })
+      .flush(groups);
+    expect(expectedGroups!).toEqual(groups);
+  });
+
+  test('should suggest groups by name restricted to a scope', () => {
+    let expectedGroups: Array<Group> = [];
+    const groups: Array<Group> = [{ groupId: 'id1', groupName: 'name', scopeId: 'scopeId', scopeName: 'scopeName' }];
+
+    service.suggestGroups('name', 'scopeId').subscribe(c => (expectedGroups = c));
+
+    http
+      .expectOne({
+        url: '/api/logs/groups/suggest?name=name&scopeId=scopeId',
+        method: 'GET'
+      })
+      .flush(groups);
+    expect(expectedGroups!).toEqual(groups);
   });
 });

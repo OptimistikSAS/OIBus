@@ -95,11 +95,18 @@ export default class LogRepository {
     return { scopeId: (result as Record<string, string>).scope_id, scopeName: (result as Record<string, string>).scope_name };
   }
 
-  suggestItems(name: string): Array<Item> {
-    const query =
+  // scopeId narrows suggestions to a single connector/history query (e.g. when the search is embedded
+  // on that connector's own page), instead of suggesting items from every connector.
+  suggestItems(name: string, scopeId?: string): Array<Item> {
+    const params: Array<string> = [name];
+    let query =
       `SELECT DISTINCT item_id AS itemId, item_name AS itemName, scope_id AS scopeId, scope_name AS scopeName FROM ${LOG_TABLE}` +
-      ` WHERE item_id IS NOT NULL AND item_name LIKE '%' || ? || '%';`;
-    return this.database.prepare(query).all(name) as Array<Item>;
+      ` WHERE item_id IS NOT NULL AND item_name LIKE '%' || ? || '%'`;
+    if (scopeId) {
+      query += ` AND scope_id = ?`;
+      params.push(scopeId);
+    }
+    return this.database.prepare(`${query};`).all(...params) as Array<Item>;
   }
 
   getItemById(id: string): Item | null {
@@ -109,11 +116,18 @@ export default class LogRepository {
     return { itemId: result.item_id, itemName: result.item_name, scopeId: result.scope_id, scopeName: result.scope_name };
   }
 
-  suggestGroups(name: string): Array<Group> {
-    const query =
+  // scopeId narrows suggestions to a single connector (e.g. when the search is embedded on that
+  // connector's own page), instead of suggesting groups from every connector.
+  suggestGroups(name: string, scopeId?: string): Array<Group> {
+    const params: Array<string> = [name];
+    let query =
       `SELECT DISTINCT group_id AS groupId, group_name AS groupName, scope_id AS scopeId, scope_name AS scopeName FROM ${LOG_TABLE}` +
-      ` WHERE group_id IS NOT NULL AND group_name LIKE '%' || ? || '%';`;
-    return this.database.prepare(query).all(name) as Array<Group>;
+      ` WHERE group_id IS NOT NULL AND group_name LIKE '%' || ? || '%'`;
+    if (scopeId) {
+      query += ` AND scope_id = ?`;
+      params.push(scopeId);
+    }
+    return this.database.prepare(`${query};`).all(...params) as Array<Group>;
   }
 
   getGroupById(id: string): Group | null {
