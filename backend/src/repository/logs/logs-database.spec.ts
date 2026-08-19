@@ -179,13 +179,15 @@ describe('Repository with populated database', () => {
       ]);
 
       const suggestions = repository.suggestItems('Sensor');
-      assert.deepStrictEqual(suggestions, [{ itemId: 'item-abc', itemName: 'Temperature Sensor' }]);
+      assert.deepStrictEqual(suggestions, [
+        { itemId: 'item-abc', itemName: 'Temperature Sensor', scopeId: 'south-1', scopeName: 'South 1' }
+      ]);
 
       const allItems = repository.suggestItems('');
       assert.strictEqual(allItems.length, 2);
 
       const found = repository.getItemById('item-abc');
-      assert.deepStrictEqual(found, { itemId: 'item-abc', itemName: 'Temperature Sensor' });
+      assert.deepStrictEqual(found, { itemId: 'item-abc', itemName: 'Temperature Sensor', scopeId: 'south-1', scopeName: 'South 1' });
 
       assert.strictEqual(repository.getItemById('bad-id'), null);
     });
@@ -221,6 +223,56 @@ describe('Repository with populated database', () => {
       assert.strictEqual(result.content[0].itemName, 'Flow Meter');
     });
 
+    it('should filter search results by itemIds OR groupIds when both are set, since a log row never carries both', () => {
+      repository.saveAll([
+        {
+          msg: 'item only log',
+          scopeType: 'south',
+          scopeId: 'south-combo',
+          scopeName: 'South Combo',
+          itemId: 'item-only',
+          itemName: 'Item Only',
+          time: testData.constants.dates.DATE_1,
+          level: '30'
+        },
+        {
+          msg: 'group only log',
+          scopeType: 'south',
+          scopeId: 'south-combo',
+          scopeName: 'South Combo',
+          groupId: 'group-only',
+          groupName: 'Group Only',
+          time: testData.constants.dates.DATE_1,
+          level: '30'
+        },
+        {
+          msg: 'unrelated log',
+          scopeType: 'south',
+          scopeId: 'south-combo',
+          scopeName: 'South Combo',
+          itemId: 'item-other',
+          itemName: 'Item Other',
+          time: testData.constants.dates.DATE_1,
+          level: '30'
+        }
+      ]);
+
+      const result = repository.search({
+        levels: [],
+        scopeIds: [],
+        scopeTypes: [],
+        itemIds: ['item-only'],
+        groupIds: ['group-only'],
+        messageContent: '',
+        page: 0,
+        start: testData.constants.dates.DATE_1,
+        end: testData.constants.dates.DATE_2
+      });
+
+      assert.strictEqual(result.totalElements, 2);
+      assert.deepStrictEqual(result.content.map(log => log.message).sort(), ['group only log', 'item only log']);
+    });
+
     it('should search groups and find by id', () => {
       repository.saveAll([
         {
@@ -246,10 +298,10 @@ describe('Repository with populated database', () => {
       ]);
 
       const suggestions = repository.suggestGroups('Sensors');
-      assert.deepStrictEqual(suggestions, [{ groupId: 'group-abc', groupName: 'Sensors Group' }]);
+      assert.deepStrictEqual(suggestions, [{ groupId: 'group-abc', groupName: 'Sensors Group', scopeId: 'south-g', scopeName: 'South G' }]);
 
       const found = repository.getGroupById('group-abc');
-      assert.deepStrictEqual(found, { groupId: 'group-abc', groupName: 'Sensors Group' });
+      assert.deepStrictEqual(found, { groupId: 'group-abc', groupName: 'Sensors Group', scopeId: 'south-g', scopeName: 'South G' });
 
       assert.strictEqual(repository.getGroupById('bad-id'), null);
     });

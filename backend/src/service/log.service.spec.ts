@@ -82,12 +82,17 @@ describe('Log Service', () => {
   });
 
   it('should get an item', () => {
-    logRepository.getItemById.mock.mockImplementationOnce(() => ({ itemId: 'itemId', itemName: 'itemName' }));
+    logRepository.getItemById.mock.mockImplementationOnce(() => ({
+      itemId: 'itemId',
+      itemName: 'itemName',
+      scopeId: 'scopeId',
+      scopeName: 'scopeName'
+    }));
 
     const result = service.getItemById('itemId');
 
     assert.deepStrictEqual(logRepository.getItemById.mock.calls[0].arguments, ['itemId']);
-    assert.deepStrictEqual(result, { itemId: 'itemId', itemName: 'itemName' });
+    assert.deepStrictEqual(result, { itemId: 'itemId', itemName: 'itemName', scopeId: 'scopeId', scopeName: 'scopeName' });
   });
 
   it('should throw if item not found', () => {
@@ -107,12 +112,17 @@ describe('Log Service', () => {
   });
 
   it('should get a group', () => {
-    logRepository.getGroupById.mock.mockImplementationOnce(() => ({ groupId: 'groupId', groupName: 'groupName' }));
+    logRepository.getGroupById.mock.mockImplementationOnce(() => ({
+      groupId: 'groupId',
+      groupName: 'groupName',
+      scopeId: 'scopeId',
+      scopeName: 'scopeName'
+    }));
 
     const result = service.getGroupById('groupId');
 
     assert.deepStrictEqual(logRepository.getGroupById.mock.calls[0].arguments, ['groupId']);
-    assert.deepStrictEqual(result, { groupId: 'groupId', groupName: 'groupName' });
+    assert.deepStrictEqual(result, { groupId: 'groupId', groupName: 'groupName', scopeId: 'scopeId', scopeName: 'scopeName' });
   });
 
   it('should throw if group not found', () => {

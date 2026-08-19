@@ -5,7 +5,7 @@ import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { LogService } from '../services/log.service';
 import { DEFAULT_TZ, Page } from '../../../../backend/shared/model/types';
-import { LogDTO, Scope } from '../../../../backend/shared/model/logs.model';
+import { Group, Item, LogDTO, Scope } from '../../../../backend/shared/model/logs.model';
 import { BehaviorSubject, of, Subscription } from 'rxjs';
 import { emptyPage, toPage } from '../shared/test-utils';
 import { DateTime } from 'luxon';
@@ -554,6 +554,54 @@ describe('LogsComponent', () => {
       tester.component.selectedScopes.set([a, b]);
       tester.component.removeScope(a);
       expect(tester.component.selectedScopes()).toEqual([b]);
+    });
+
+    test('itemFormatter should append the owning connector/history name in parenthesis', () => {
+      const item: Item = { itemId: '1', itemName: 'Temperature', scopeId: 's1', scopeName: 'My South' };
+      expect(tester.component.itemFormatter(item)).toBe('Temperature (My South)');
+    });
+
+    test('itemFormatter should pass the raw input string through unchanged (e.g. when the field is reset to empty)', () => {
+      expect(tester.component.itemFormatter('')).toBe('');
+      expect(tester.component.itemFormatter('some typed text')).toBe('some typed text');
+    });
+
+    test('groupFormatter should append the owning connector/history name in parenthesis', () => {
+      const group: Group = { groupId: '1', groupName: 'Sensors', scopeId: 's1', scopeName: 'My South' };
+      expect(tester.component.groupFormatter(group)).toBe('Sensors (My South)');
+    });
+
+    test('groupFormatter should pass the raw input string through unchanged (e.g. when the field is reset to empty)', () => {
+      expect(tester.component.groupFormatter('')).toBe('');
+      expect(tester.component.groupFormatter('some typed text')).toBe('some typed text');
+    });
+
+    test('scopeFormatter should pass the raw input string through unchanged (e.g. when the field is reset to empty)', () => {
+      expect(tester.component.scopeFormatter('')).toBe('');
+      expect(tester.component.scopeFormatter('some typed text')).toBe('some typed text');
+    });
+
+    test('selectedItemsByScope should group selected items by their owning scope, preserving first-seen order', () => {
+      const a: Item = { itemId: 'a', itemName: 'A', scopeId: 's1', scopeName: 'South 1' };
+      const b: Item = { itemId: 'b', itemName: 'B', scopeId: 's2', scopeName: 'South 2' };
+      const c: Item = { itemId: 'c', itemName: 'C', scopeId: 's1', scopeName: 'South 1' };
+      tester.component.selectedItems.set([a, b, c]);
+
+      expect(tester.component.selectedItemsByScope()).toEqual([
+        { scopeId: 's1', scopeName: 'South 1', entries: [a, c] },
+        { scopeId: 's2', scopeName: 'South 2', entries: [b] }
+      ]);
+    });
+
+    test('selectedGroupsByScope should group selected groups by their owning scope, preserving first-seen order', () => {
+      const a: Group = { groupId: 'a', groupName: 'A', scopeId: 's1', scopeName: 'South 1' };
+      const b: Group = { groupId: 'b', groupName: 'B', scopeId: 's2', scopeName: 'South 2' };
+      tester.component.selectedGroups.set([a, b]);
+
+      expect(tester.component.selectedGroupsByScope()).toEqual([
+        { scopeId: 's1', scopeName: 'South 1', entries: [a] },
+        { scopeId: 's2', scopeName: 'South 2', entries: [b] }
+      ]);
     });
 
     test('getLevelClass should return correct class or fallback', () => {
