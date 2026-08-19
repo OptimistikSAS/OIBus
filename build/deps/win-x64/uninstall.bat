@@ -29,7 +29,7 @@ rem raw argument to sc.exe/nssm.exe/reg.exe - so anything outside this safe set 
 rem backslashes, shell metacharacters such as & | > < ^) could corrupt those commands or
 rem break out of their intended argument. Reject it outright rather than trying to escape
 rem it differently for every consumer.
-echo %SERVICE_NAME%| findstr /r /v "^[A-Za-z0-9 ._-]*$" >nul
+echo %SERVICE_NAME%| findstr /r /v /c:"^[A-Za-z0-9 ._-]*$" >nul
 if not ERRORLEVEL 1 (
     echo ERROR: Service name "%SERVICE_NAME%" contains characters that are not allowed.
     echo Allowed characters: letters, digits, spaces, dots, hyphens and underscores.
