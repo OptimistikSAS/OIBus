@@ -160,11 +160,16 @@ import TabItem from '@theme/TabItem';
     uninstall.bat -n "OIBus"
     > Administrator permissions required. Detecting permission...
     > Stopping OIBus service...
+    > Do you wish to remove all data for service OIBus (cache, logs...)? (y/N)
     > Removing OIBus service...
     ````
 
+    You will be asked whether to remove all data (cache, error, archive, logs, certs, and the
+    configuration/credentials databases). Answering anything other than `Y`/`y` leaves the data
+    folder untouched.
+
     :::caution
-    The data folder is **not** automatically removed. Delete it manually if needed.
+    Choosing to remove all data permanently deletes your configuration, credentials, and logs.
     :::
 
   </TabItem>

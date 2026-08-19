@@ -119,13 +119,16 @@ if [[ -f "$my_data_directory/oibus.db" ]]; then
     fi
 
     if [[ "$keep_conf" == "N" ]] || [[ "$keep_conf" == "n" ]]; then
-    #  Remove configuration, cache, logs and certs. They will be created at first OIBus startup
+    #  Remove configuration, cache, error, archive, logs and certs. They will be created at
+    #  first OIBus startup. cache/error/archive are independent top-level folders (not
+    #  nested under each other), and logs/ bundles both logs.db and metrics.db.
       rm "$conf_path/oibus.db"
       rm "$conf_path/crypto.db"
       rm -rf "$conf_path/cache"
+      rm -rf "$conf_path/error"
+      rm -rf "$conf_path/archive"
       rm -rf "$conf_path/logs"
       rm -rf "$conf_path/certs"
-      rm -rf "$conf_path/keys"
     fi
   fi
 fi
