@@ -80,6 +80,12 @@ Source: "..\..\bin\win-x64\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 ; We use the dynamic {code:GetServiceName} to create a unique registry key for this service instance
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Services\{code:GetServiceName}"; ValueType: string; ValueName: "DataDir"; ValueData: "{code:GetDataDir}"; Flags: uninsdeletevalue
 
+; Machine-wide directory of every installed OIBus instance, independent of any single
+; instance's own {app} folder. Used to make sure two instances never end up sharing the
+; same binaries or data folder. Cleaned up automatically when this instance is uninstalled.
+Root: HKLM; Subkey: "SOFTWARE\OIBus\Instances\{code:GetServiceName}"; ValueType: string; ValueName: "AppDir"; ValueData: "{app}"; Flags: uninsdeletevalue uninsdeletekeyifempty
+Root: HKLM; Subkey: "SOFTWARE\OIBus\Instances\{code:GetServiceName}"; ValueType: string; ValueName: "DataDir"; ValueData: "{code:GetDataDir}"; Flags: uninsdeletevalue
+
 [Messages]
 WelcomeLabel2=This will install [name/ver] on your computer.%n%n%nIMPORTANT:%nOIBus requires a modern web browser for configuration (Chrome, Firefox, Edge, Safari, etc.). Internet Explorer is not supported.
 
@@ -143,6 +149,128 @@ begin
   end;
 end;
 
+// --- Instance Isolation ---
+// Every instance gets its own binaries folder AND its own data folder; the two must never
+// be shared between instances. "SOFTWARE\OIBus\Instances\<name>" (written via [Registry])
+// is the machine-wide directory of already-installed instances we check against.
+
+const
+  InstancesRegKey = 'SOFTWARE\OIBus\Instances';
+
+// The service name ends up as a Windows service name, a registry key path segment, and a
+// raw argument to sc.exe/nssm.exe - so anything outside this safe set (quotes, backslashes,
+// ...) could corrupt those commands or break out of their intended argument. Reject it
+// outright rather than trying to escape it differently for every consumer.
+function IsValidServiceName(const S: String): Boolean;
+var
+  I: Integer;
+  C: Char;
+begin
+  Result := Length(S) > 0;
+  if not Result then Exit;
+  for I := 1 to Length(S) do
+  begin
+    C := S[I];
+    if not (((C >= 'A') and (C <= 'Z')) or ((C >= 'a') and (C <= 'z')) or
+            ((C >= '0') and (C <= '9')) or (C = ' ') or (C = '.') or (C = '_') or (C = '-')) then
+    begin
+      Result := False;
+      Exit;
+    end;
+  end;
+end;
+
+// Strips characters that are illegal in a Windows path component, for use when deriving a
+// suggested folder name from a free-text service name.
+function SanitizeDirName(const S: String): String;
+var
+  I: Integer;
+  C: Char;
+  Cleaned: String;
+begin
+  Cleaned := '';
+  for I := 1 to Length(S) do
+  begin
+    C := S[I];
+    if (C = '\') or (C = '/') or (C = ':') or (C = '*') or (C = '?') or (C = '"') or (C = '<') or (C = '>') or (C = '|') then
+      Cleaned := Cleaned + '_'
+    else
+      Cleaned := Cleaned + C;
+  end;
+  Result := Trim(Cleaned);
+end;
+
+// True if some OTHER already-installed instance (any recorded name except IgnoreName) has
+// ValueName equal to CompareValue (path comparison, case-insensitive, trailing-backslash
+// insensitive) under its own SOFTWARE\OIBus\Instances\<name> key. Sets OwnerName to that
+// other instance's service name.
+function FindConflictingInstance(const ValueName, CompareValue, IgnoreName: String; var OwnerName: String): Boolean;
+var
+  Names: TArrayOfString;
+  I: Integer;
+  ExistingValue: String;
+  Normalized: String;
+begin
+  Result := False;
+  Normalized := RemoveBackslashUnlessRoot(CompareValue);
+
+  if not RegGetSubkeyNames(HKLM, InstancesRegKey, Names) then
+    Exit;
+
+  for I := 0 to GetArrayLength(Names) - 1 do
+  begin
+    if CompareText(Names[I], IgnoreName) = 0 then Continue;
+
+    if RegQueryStringValue(HKLM, InstancesRegKey + '\' + Names[I], ValueName, ExistingValue) then
+    begin
+      if CompareText(RemoveBackslashUnlessRoot(ExistingValue), Normalized) = 0 then
+      begin
+        OwnerName := Names[I];
+        Result := True;
+        Exit;
+      end;
+    end;
+  end;
+end;
+
+// --- Multi-Instance Service Manifest ---
+// {app}\service.name lists every service instance (one per line) that shares this
+// installation's binaries folder, so the Uninstaller can find and clean up ALL of them
+// instead of only the one installed most recently.
+
+function GetServiceManifestPath(): String;
+begin
+  Result := ExpandConstant('{app}\service.name');
+end;
+
+// Loads the manifest into Names. Caller must free Names.
+procedure LoadServiceManifest(Names: TStringList);
+begin
+  Names.Clear;
+  if FileExists(GetServiceManifestPath()) then
+    Names.LoadFromFile(GetServiceManifestPath());
+  // Backward compatibility / safety net: very old installs (or a manually cleared file)
+  // may have no manifest at all even though the default service is present.
+  if Names.Count = 0 then
+    Names.Add('OIBus');
+end;
+
+procedure AddServiceNameToManifest(const ServiceName: String);
+var
+  Names: TStringList;
+begin
+  Names := TStringList.Create;
+  try
+    if FileExists(GetServiceManifestPath()) then
+      Names.LoadFromFile(GetServiceManifestPath());
+    if Names.IndexOf(ServiceName) = -1 then
+      Names.Add(ServiceName);
+    Names.SaveToFile(GetServiceManifestPath());
+  finally
+    Names.Free;
+  end;
+end;
+
 // --- UI Logic (Service Name + Data Dir Page) ---
 
 procedure OnBrowseButtonClick(Sender: TObject);
@@ -161,8 +289,10 @@ var
   lblService, lblData, lblAdminUser, lblAdminPass, lblPort: TNewStaticText;
   btnBrowse: TButton;
 begin
-  // Create the Custom Page
-  ConfigPage := CreateCustomPage(wpSelectTasks, 'Service Configuration', 'Configure the Windows Service and Data Storage');
+  // Create the Custom Page. Anchored right after the License page (i.e. BEFORE the native
+  // Select Destination Directory page) so that once the service name is known, we can
+  // suggest a non-colliding default install folder before that page is even shown.
+  ConfigPage := CreateCustomPage(wpLicense, 'Service Configuration', 'Configure the Windows Service and Data Storage');
 
   // 1. Service Name Section
   lblService := TNewStaticText.Create(ConfigPage);
@@ -284,6 +414,7 @@ end;
 function NextButtonClick(CurPageID: Integer): Boolean;
 var
   SettingsFile: string;
+  ConflictOwner: string;
 begin
   Result := True;
 
@@ -301,6 +432,13 @@ begin
       Exit;
     end;
 
+    if not IsValidServiceName(FinalServiceName) then
+    begin
+      MsgBox('The service name may only contain letters, digits, spaces, dots, hyphens and underscores.', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
     if Length(FinalDataDir) = 0 then
     begin
       MsgBox('You must enter a Data Directory.', mbError, MB_OK);
@@ -308,7 +446,28 @@ begin
       Exit;
     end;
 
-    // 3. Overwrite Check
+    // A literal " could break out of the quoted arguments it is later embedded in (nssm
+    // AppParameters, go.bat) - and it is not a legal Windows path character anyway, so
+    // rejecting it costs nothing legitimate.
+    if Pos('"', FinalDataDir) > 0 then
+    begin
+      MsgBox('The data directory must not contain a " character.', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    // 3. Each instance must have its own data directory: reject one already claimed by a
+    // DIFFERENT instance outright, before the generic "found a config, reuse it?" prompt
+    // below gets a chance to offer reusing data that actually belongs to another service.
+    if FindConflictingInstance('DataDir', FinalDataDir, FinalServiceName, ConflictOwner) then
+    begin
+      MsgBox('The data directory "' + FinalDataDir + '" is already used by another OIBus instance ("' + ConflictOwner + '").' + #13#10 +
+             'Each OIBus instance must have its own data directory. Please choose a different one.', mbError, MB_OK);
+      Result := False;
+      Exit;
+    end;
+
+    // 4. Overwrite Check
     SettingsFile := AddBackslash(FinalDataDir) + 'oibus.db';
     if FileExists(SettingsFile) then
     begin
@@ -322,6 +481,30 @@ begin
       end
       else
         OverwriteConfig := False;
+    end;
+
+    // 5. Suggest an install folder that won't collide with another instance. The default
+    // service name keeps the classic path (clean upgrade story); any custom name gets its
+    // own suffixed folder so multiple instances never end up sharing one {app}. This is
+    // only a suggestion on the upcoming Select Destination Directory page - still editable,
+    // and still re-checked for conflicts when that page is left (see below).
+    if CompareText(FinalServiceName, 'OIBus') = 0 then
+      WizardForm.DirEdit.Text := ExpandConstant('{autopf}') + '\OIBus'
+    else
+      WizardForm.DirEdit.Text := ExpandConstant('{autopf}') + '\OIBus - ' + SanitizeDirName(FinalServiceName);
+  end;
+
+  if (CurPageID = wpSelectDir) then
+  begin
+    // Each instance must have its own binaries folder: reject one already claimed by a
+    // DIFFERENT instance. Reinstalling/upgrading the SAME instance into its own existing
+    // folder is fine (FindConflictingInstance ignores the entry matching FinalServiceName).
+    if FindConflictingInstance('AppDir', ExpandConstant('{app}'), FinalServiceName, ConflictOwner) then
+    begin
+      MsgBox('The folder "' + ExpandConstant('{app}') + '" is already used by another OIBus instance ("' + ConflictOwner + '").' + #13#10 +
+             'Each OIBus instance must have its own installation folder. Please choose a different one.', mbError, MB_OK);
+      Result := False;
+      Exit;
     end;
   end;
 
@@ -459,15 +642,26 @@ begin
         end;
      end;
 
-     ExecCmd('sc.exe', 'stop "' + LegacySvcName + '"', '');
-     Sleep(1000);
-     ExecCmd('sc.exe', 'delete "' + LegacySvcName + '"', '');
+     // The binaries folder is shared across instances (multiple named services can point
+     // at it), so the previously recorded service name may belong to a DIFFERENT, still
+     // wanted instance. Only stop/delete it when it's actually the same service being
+     // reinstalled/renamed under the name we are about to (re)create; never touch another
+     // instance's service just because it happens to share this install folder.
+     if CompareText(LegacySvcName, FinalServiceName) = 0 then
+     begin
+       ExecCmd('sc.exe', 'stop "' + LegacySvcName + '"', '');
+       Sleep(1000);
+       ExecCmd('sc.exe', 'delete "' + LegacySvcName + '"', '');
+     end;
   end;
 
   if CurStep = ssPostInstall then
   begin
-    // Save the service name for the Uninstaller!
-    SaveStringToFile(ExpandConstant('{app}\service.name'), FinalServiceName, False);
+    // Record this service name in the shared manifest for the Uninstaller. The binaries
+    // folder is shared across instances, so we APPEND (deduplicated) rather than overwrite:
+    // the uninstaller needs to know about every instance that depends on these files, not
+    // just the one that happened to be installed most recently.
+    AddServiceNameToManifest(FinalServiceName);
 
     if not CreateDataDir then
       MsgBox('ERROR : OIBus data directory Setup failed.', mbCriticalError, MB_OK)
@@ -490,43 +684,71 @@ end;
 
 // --- Uninstallation Logic ---
 
+// Warn upfront (before anything is touched) when this install folder is shared by more
+// than one service instance, since uninstalling removes the binaries ALL of them depend
+// on. Gives the user a chance to back out if they only meant to remove one instance.
+function InitializeUninstall(): Boolean;
+var
+  Names: TStringList;
+  Msg: String;
+  I: Integer;
+begin
+  Result := True;
+  Names := TStringList.Create;
+  try
+    LoadServiceManifest(Names);
+    if Names.Count > 1 then
+    begin
+      Msg := 'This OIBus installation folder is shared by multiple service instances:' + #13#10#13#10;
+      for I := 0 to Names.Count - 1 do
+        Msg := Msg + '   - ' + Names[I] + #13#10;
+      Msg := Msg + #13#10 + 'Uninstalling removes the program files shared by ALL of them: every ' +
+        'instance listed above will be stopped and deleted. Continue?';
+      if MsgBox(Msg, mbConfirmation, MB_YESNO) = IDNO then
+        Result := False;
+    end;
+  finally
+    Names.Free;
+  end;
+end;
+
 procedure CurUninstallStepChanged(RunStep: TUninstallStep);
 var
   DirToDelete, SvcName: string;
-  ServiceNameFile: string;
-  SvcNameAnsi: AnsiString;
+  Names: TStringList;
+  I: Integer;
 begin
   if RunStep = usUninstall then
   begin
-    // 1. Determine Service Name
-    SvcName := 'OIBus'; // Fallback default
+    Names := TStringList.Create;
+    try
+      LoadServiceManifest(Names);
 
-    ServiceNameFile := ExpandConstant('{app}\service.name');
-    if FileExists(ServiceNameFile) then
-    begin
-      // Load into AnsiString buffer first
-      if LoadStringFromFile(ServiceNameFile, SvcNameAnsi) then
+      for I := 0 to Names.Count - 1 do
       begin
-         SvcName := String(SvcNameAnsi);
+        SvcName := Trim(Names[I]);
+        if Length(SvcName) = 0 then Continue;
+
+        // 1. Stop Service
+        ExecCmd('sc.exe', 'stop "' + SvcName + '"', '');
+        Sleep(1000);
+
+        // 2. Data Removal
+        if MsgBox('Do you wish to remove all data for service "' + SvcName + '" (cache, logs...)?', mbInformation, MB_YESNO) = IDYES then
+        begin
+          // Look up data dir in the specific registry key for this service
+          if RegQueryStringValue(HKLM, 'SYSTEM\CurrentControlSet\Services\' + SvcName, 'DataDir', DirToDelete) then
+          begin
+            DeleteDataDir(DirToDelete);
+            RemoveDir(DirToDelete);
+          end;
+        end;
+
+        // 3. Delete Service
+        ExecCmd('sc.exe', 'delete "' + SvcName + '"', '');
       end;
+    finally
+      Names.Free;
     end;
-
-    // 2. Stop Service
-    ExecCmd('sc.exe', 'stop "' + SvcName + '"', '');
-    Sleep(1000);
-
-    // 3. Data Removal
-    if MsgBox('Do you wish to remove all data for service "' + SvcName + '" (cache, logs...)?', mbInformation, MB_YESNO) = IDYES then
-    begin
-      // Look up data dir in the specific registry key for this service
-      if RegQueryStringValue(HKLM, 'SYSTEM\CurrentControlSet\Services\' + SvcName, 'DataDir', DirToDelete) then
-      begin
-        DeleteDataDir(DirToDelete);
-        RemoveDir(DirToDelete);
-      end;
-    end;
-
-    // 4. Delete Service
-    ExecCmd('sc.exe', 'delete "' + SvcName + '"', '');
   end;
 end;
