@@ -136,7 +136,9 @@ export class LogsComponent implements OnInit, OnDestroy {
         this.noLogMatchingWarning.set(scopes.length === 0);
       })
     );
-  scopeFormatter = (scope: Scope) => scope.scopeName;
+  // ngbTypeahead also calls this formatter with the raw (typed or reset-to-empty) input string, not
+  // just with a selected Scope, so it must be able to pass that string straight through unchanged.
+  scopeFormatter = (scope: Scope | string) => (typeof scope === 'string' ? scope : scope.scopeName);
 
   itemTypeahead = (text$: Observable<string>) =>
     text$.pipe(
@@ -144,7 +146,11 @@ export class LogsComponent implements OnInit, OnDestroy {
       distinctUntilChanged(),
       switchMap(text => this.logService.suggestItems(text))
     );
-  itemFormatter = (item: Item) => item.itemName;
+  // Show the owning connector/history query name alongside the item name, since the same item name
+  // can appear under several connectors and the plain name alone does not disambiguate them. ngbTypeahead
+  // also calls this formatter with the raw (typed or reset-to-empty) input string, not just a selected
+  // Item, so that case must be passed through unchanged rather than interpolated as "undefined (undefined)".
+  itemFormatter = (item: Item | string) => (typeof item === 'string' ? item : `${item.itemName} (${item.scopeName})`);
 
   groupTypeahead = (text$: Observable<string>) =>
     text$.pipe(
@@ -152,7 +158,8 @@ export class LogsComponent implements OnInit, OnDestroy {
       distinctUntilChanged(),
       switchMap(text => this.logService.suggestGroups(text))
     );
-  groupFormatter = (group: Group) => group.groupName;
+  // Same rationale and same raw-string caveat as itemFormatter above.
+  groupFormatter = (group: Group | string) => (typeof group === 'string' ? group : `${group.groupName} (${group.scopeName})`);
 
   /** Signal version of the current selected levels, kept in sync with the form control. */
   readonly activeLevels = toSignal(this.searchForm.controls.levels.valueChanges, {
@@ -169,6 +176,12 @@ export class LogsComponent implements OnInit, OnDestroy {
 
   /** True when at least one scope type is selected (i.e. the filter is active). */
   readonly hasActiveScopeTypes = computed(() => this.activeScopeTypes()!.length > 0);
+
+  /** Selected items grouped by their owning connector/history query, for the pills display. */
+  readonly selectedItemsByScope = computed(() => groupByScope(this.selectedItems()));
+
+  /** Selected groups grouped by their owning connector/history query, for the pills display. */
+  readonly selectedGroupsByScope = computed(() => groupByScope(this.selectedGroups()));
 
   ngOnInit(): void {
     const searchParams = this.toSearchParams(this.route);
@@ -391,4 +404,25 @@ export class LogsComponent implements OnInit, OnDestroy {
     this.closeContextMenu();
     this.triggerSearch();
   }
+}
+
+/** A group of scope-owned entries (items or groups) sharing the same owning connector/history query. */
+interface ScopeGroup<T> {
+  scopeId: string;
+  scopeName: string;
+  entries: Array<T>;
+}
+
+/** Groups items/groups that carry a `scopeId`/`scopeName` by their owning connector/history query, preserving first-seen order. */
+function groupByScope<T extends { scopeId: string; scopeName: string }>(entries: Array<T>): Array<ScopeGroup<T>> {
+  const groups = new Map<string, ScopeGroup<T>>();
+  for (const entry of entries) {
+    const existing = groups.get(entry.scopeId);
+    if (existing) {
+      existing.entries.push(entry);
+    } else {
+      groups.set(entry.scopeId, { scopeId: entry.scopeId, scopeName: entry.scopeName, entries: [entry] });
+    }
+  }
+  return Array.from(groups.values());
 }

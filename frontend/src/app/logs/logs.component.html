@@ -189,30 +189,36 @@
                       @if (selectedItems().length > 0) {
                         <div class="vr mx-2"></div>
                         <span class="filter-label text-muted" translate="logs.search.item"></span>
-                        @for (item of selectedItems(); track item.itemId) {
-                          <button
-                            type="button"
-                            class="filter-chip active d-flex align-items-center gap-1 px-2 py-1"
-                            (click)="removeItem(item)"
-                          >
-                            <span class="filter-chip-label">{{ item.itemName }}</span>
-                            <span class="fa fa-times ms-1 small text-muted"></span>
-                          </button>
+                        @for (scopeGroup of selectedItemsByScope(); track scopeGroup.scopeId) {
+                          <span class="filter-chip-scope-label text-muted small text-nowrap">{{ scopeGroup.scopeName }}:</span>
+                          @for (item of scopeGroup.entries; track item.itemId) {
+                            <button
+                              type="button"
+                              class="filter-chip active d-flex align-items-center gap-1 px-2 py-1"
+                              (click)="removeItem(item)"
+                            >
+                              <span class="filter-chip-label">{{ item.itemName }}</span>
+                              <span class="fa fa-times ms-1 small text-muted"></span>
+                            </button>
+                          }
                         }
                       }
 
                       @if (selectedGroups().length > 0) {
                         <div class="vr mx-2"></div>
                         <span class="filter-label text-muted" translate="logs.search.group"></span>
-                        @for (group of selectedGroups(); track group.groupId) {
-                          <button
-                            type="button"
-                            class="filter-chip active d-flex align-items-center gap-1 px-2 py-1"
-                            (click)="removeGroup(group)"
-                          >
-                            <span class="filter-chip-label">{{ group.groupName }}</span>
-                            <span class="fa fa-times ms-1 small text-muted"></span>
-                          </button>
+                        @for (scopeGroup of selectedGroupsByScope(); track scopeGroup.scopeId) {
+                          <span class="filter-chip-scope-label text-muted small text-nowrap">{{ scopeGroup.scopeName }}:</span>
+                          @for (group of scopeGroup.entries; track group.groupId) {
+                            <button
+                              type="button"
+                              class="filter-chip active d-flex align-items-center gap-1 px-2 py-1"
+                              (click)="removeGroup(group)"
+                            >
+                              <span class="filter-chip-label">{{ group.groupName }}</span>
+                              <span class="fa fa-times ms-1 small text-muted"></span>
+                            </button>
+                          }
                         }
                       }
                     }
@@ -251,7 +257,7 @@
                   <td>
                     <span style="display: block" [class]="getLevelClass(log.level)"></span>
                   </td>
-                  <td class="text-nowrap">{{ log.timestamp | datetime: 'mediumWithSeconds' }}</td>
+                  <td class="text-nowrap">{{ log.timestamp | datetime: 'mediumWithMillis' }}</td>
                   @if (!scopeId() && !scopeType()) {
                     <td>{{ log.scopeType | scopeTypesEnum }}</td>
                     <td>

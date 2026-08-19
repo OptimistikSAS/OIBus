@@ -76,6 +76,12 @@
   white-space: nowrap;
 }
 
+// Owning connector/history query name, shown before each sub-group of selected item/group pills
+.filter-chip-scope-label {
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
 // Log row context menu — a transparent full-screen backdrop closes the menu on outside click,
 // and the menu itself is positioned at the click coordinates (viewport-relative, hence "fixed").
 .context-menu-backdrop {

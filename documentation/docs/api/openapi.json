@@ -30026,11 +30026,23 @@
 						"type": "string",
 						"description": "The human-readable name of the item.",
 						"example": "Temperature sensor"
+					},
+					"scopeId": {
+						"type": "string",
+						"description": "The unique identifier of the scope owning this item (e.g., connector ID).",
+						"example": "connector123"
+					},
+					"scopeName": {
+						"type": "string",
+						"description": "The human-readable name of the scope owning this item (e.g., connector or history query name).",
+						"example": "South Connector 1"
 					}
 				},
 				"required": [
 					"itemId",
-					"itemName"
+					"itemName",
+					"scopeId",
+					"scopeName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -30047,11 +30059,23 @@
 						"type": "string",
 						"description": "The human-readable name of the group.",
 						"example": "Temperature sensors"
+					},
+					"scopeId": {
+						"type": "string",
+						"description": "The unique identifier of the scope owning this group (e.g., connector ID).",
+						"example": "connector123"
+					},
+					"scopeName": {
+						"type": "string",
+						"description": "The human-readable name of the scope owning this group (e.g., connector or history query name).",
+						"example": "South Connector 1"
 					}
 				},
 				"required": [
 					"groupId",
-					"groupName"
+					"groupName",
+					"scopeId",
+					"scopeName"
 				],
 				"type": "object",
 				"additionalProperties": false

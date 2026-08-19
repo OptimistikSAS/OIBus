@@ -6819,6 +6819,8 @@ const models: TsoaRoute.Models = {
         "properties": {
             "itemId": {"dataType":"string","required":true},
             "itemName": {"dataType":"string","required":true},
+            "scopeId": {"dataType":"string","required":true},
+            "scopeName": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
     },
@@ -6828,6 +6830,8 @@ const models: TsoaRoute.Models = {
         "properties": {
             "groupId": {"dataType":"string","required":true},
             "groupName": {"dataType":"string","required":true},
+            "scopeId": {"dataType":"string","required":true},
+            "scopeName": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
     },

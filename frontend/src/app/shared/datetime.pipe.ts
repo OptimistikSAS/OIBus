@@ -8,6 +8,7 @@ const FRIENDLY_FORMATS = {
   shortWithSeconds: 'F',
   medium: 'ff',
   mediumWithSeconds: 'FF',
+  mediumWithMillis: "FF'.'SSS",
   mediumWithSecondsLocalized: 'FFF',
   shortDate: 'D',
   mediumDate: 'DD',
@@ -53,6 +54,7 @@ export function formatDateTime(
  * - shortWithSeconds
  * - medium
  * - mediumWithSeconds
+ * - mediumWithMillis
  * - shortDate
  * - mediumDate
  * - shortTime

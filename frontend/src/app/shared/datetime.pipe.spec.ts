@@ -45,11 +45,12 @@ describe('DatetimePipe', () => {
     });
 
     test('should format with friendly formats', () => {
-      const dateTime = DateTime.fromISO('2021-01-12T13:35:07.000', { zone: DEFAULT_TZ });
+      const dateTime = DateTime.fromISO('2021-01-12T13:35:07.123', { zone: DEFAULT_TZ });
       expect(pipe.transform(dateTime, 'short')).toBe('12/01/2021, 13:35');
       expect(pipe.transform(dateTime, 'shortWithSeconds')).toBe('12/01/2021, 13:35:07');
       expect(pipe.transform(dateTime, 'medium')).toBe('12 Jan 2021, 13:35');
       expect(pipe.transform(dateTime, 'mediumWithSeconds')).toBe('12 Jan 2021, 13:35:07');
+      expect(pipe.transform(dateTime, 'mediumWithMillis')).toBe('12 Jan 2021, 13:35:07.123');
       expect(pipe.transform(dateTime, 'shortDate')).toBe('12/01/2021');
       expect(pipe.transform(dateTime, 'mediumDate')).toBe('12 Jan 2021');
       expect(pipe.transform(dateTime, 'time')).toBe('13:35');

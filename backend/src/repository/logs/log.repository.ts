@@ -41,11 +41,16 @@ export default class LogRepository {
       whereClause += ` AND scope_type IN (${searchParams.scopeTypes.map(() => '?')})`;
       queryParams.push(...searchParams.scopeTypes);
     }
-    if (searchParams.itemIds.length > 0) {
+    // A given log row is tagged with either an item or a group, never both, so requiring both
+    // an item filter and a group filter to match on the same row would exclude everything. Combine
+    // them with OR instead: match logs for the selected items, or for the selected groups.
+    if (searchParams.itemIds.length > 0 && searchParams.groupIds.length > 0) {
+      whereClause += ` AND (item_id IN (${searchParams.itemIds.map(() => '?')}) OR group_id IN (${searchParams.groupIds.map(() => '?')}))`;
+      queryParams.push(...searchParams.itemIds, ...searchParams.groupIds);
+    } else if (searchParams.itemIds.length > 0) {
       whereClause += ` AND item_id IN (${searchParams.itemIds.map(() => '?')})`;
       queryParams.push(...searchParams.itemIds);
-    }
-    if (searchParams.groupIds.length > 0) {
+    } else if (searchParams.groupIds.length > 0) {
       whereClause += ` AND group_id IN (${searchParams.groupIds.map(() => '?')})`;
       queryParams.push(...searchParams.groupIds);
     }
@@ -91,27 +96,31 @@ export default class LogRepository {
   }
 
   suggestItems(name: string): Array<Item> {
-    const query = `SELECT DISTINCT item_id AS itemId, item_name AS itemName FROM ${LOG_TABLE} WHERE item_id IS NOT NULL AND item_name LIKE '%' || ? || '%';`;
+    const query =
+      `SELECT DISTINCT item_id AS itemId, item_name AS itemName, scope_id AS scopeId, scope_name AS scopeName FROM ${LOG_TABLE}` +
+      ` WHERE item_id IS NOT NULL AND item_name LIKE '%' || ? || '%';`;
     return this.database.prepare(query).all(name) as Array<Item>;
   }
 
   getItemById(id: string): Item | null {
-    const query = `SELECT item_id, item_name FROM ${LOG_TABLE} WHERE item_id = ? LIMIT 1;`;
-    const result = this.database.prepare(query).get(id);
+    const query = `SELECT item_id, item_name, scope_id, scope_name FROM ${LOG_TABLE} WHERE item_id = ? LIMIT 1;`;
+    const result = this.database.prepare(query).get(id) as Record<string, string> | undefined;
     if (!result) return null;
-    return { itemId: (result as Record<string, string>).item_id, itemName: (result as Record<string, string>).item_name };
+    return { itemId: result.item_id, itemName: result.item_name, scopeId: result.scope_id, scopeName: result.scope_name };
   }
 
   suggestGroups(name: string): Array<Group> {
-    const query = `SELECT DISTINCT group_id AS groupId, group_name AS groupName FROM ${LOG_TABLE} WHERE group_id IS NOT NULL AND group_name LIKE '%' || ? || '%';`;
+    const query =
+      `SELECT DISTINCT group_id AS groupId, group_name AS groupName, scope_id AS scopeId, scope_name AS scopeName FROM ${LOG_TABLE}` +
+      ` WHERE group_id IS NOT NULL AND group_name LIKE '%' || ? || '%';`;
     return this.database.prepare(query).all(name) as Array<Group>;
   }
 
   getGroupById(id: string): Group | null {
-    const query = `SELECT group_id, group_name FROM ${LOG_TABLE} WHERE group_id = ? LIMIT 1;`;
-    const result = this.database.prepare(query).get(id);
+    const query = `SELECT group_id, group_name, scope_id, scope_name FROM ${LOG_TABLE} WHERE group_id = ? LIMIT 1;`;
+    const result = this.database.prepare(query).get(id) as Record<string, string> | undefined;
     if (!result) return null;
-    return { groupId: (result as Record<string, string>).group_id, groupName: (result as Record<string, string>).group_name };
+    return { groupId: result.group_id, groupName: result.group_name, scopeId: result.scope_id, scopeName: result.scope_name };
   }
 
   saveAll = (logsToStore: Array<PinoLog>): void => {

@@ -108,6 +108,18 @@ export interface Item {
    * @example "Temperature sensor"
    */
   itemName: string;
+
+  /**
+   * The unique identifier of the scope owning this item (e.g., connector ID).
+   * @example "connector123"
+   */
+  scopeId: string;
+
+  /**
+   * The human-readable name of the scope owning this item (e.g., connector or history query name).
+   * @example "South Connector 1"
+   */
+  scopeName: string;
 }
 
 /**
@@ -126,6 +138,18 @@ export interface Group {
    * @example "Temperature sensors"
    */
   groupName: string;
+
+  /**
+   * The unique identifier of the scope owning this group (e.g., connector ID).
+   * @example "connector123"
+   */
+  scopeId: string;
+
+  /**
+   * The human-readable name of the scope owning this group (e.g., connector or history query name).
+   * @example "South Connector 1"
+   */
+  scopeName: string;
 }
 
 /**
