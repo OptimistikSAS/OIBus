@@ -59,15 +59,15 @@ The setup script has been tested on **Ubuntu** and **Debian**. For other distrib
 sudo ./oibus-setup.sh [options]
 ```
 
-| Flag    | Description                                                          | Default                         |
-| ------- | -------------------------------------------------------------------- | ------------------------------- |
-| `-b`    | Directory where OIBus binaries are installed                         | prompted if omitted             |
-| `-c`    | Path to the OIBus data folder (cache, logs, configuration)           | prompted if omitted             |
-| `-k`    | Keep existing configuration without prompting (`Y` or `N`)           | prompted if omitted             |
-| `-n`    | Instance name — sets `engineName` in `oibus.init.json` **and** the systemd unit name | `oibus` |
-| `-u`    | Admin username written to `oibus.init.json` on first install         | omitted (OIBus default applies) |
-| `-p`    | Admin password written to `oibus.init.json` on first install         | omitted (OIBus default applies) |
-| `-port` | Port OIBus listens on, written to `oibus.init.json` on first install | omitted (OIBus default applies) |
+| Flag    | Description                                                                          | Default                         |
+| ------- | ------------------------------------------------------------------------------------ | ------------------------------- |
+| `-b`    | Directory where OIBus binaries are installed                                         | prompted if omitted             |
+| `-c`    | Path to the OIBus data folder (cache, logs, configuration)                           | prompted if omitted             |
+| `-k`    | Keep existing configuration without prompting (`Y` or `N`)                           | prompted if omitted             |
+| `-n`    | Instance name — sets `engineName` in `oibus.init.json` **and** the systemd unit name | `oibus`                         |
+| `-u`    | Admin username written to `oibus.init.json` on first install                         | omitted (OIBus default applies) |
+| `-p`    | Admin password written to `oibus.init.json` on first install                         | omitted (OIBus default applies) |
+| `-port` | Port OIBus listens on, written to `oibus.init.json` on first install                 | omitted (OIBus default applies) |
 
 :::info
 `-u`, `-p`, and `-port` are only used when `oibus.db` does not yet exist (i.e. on the very first install).
@@ -149,9 +149,13 @@ Do you wish to remove all OIBus data (cache, logs...)? All data, credentials and
 current OIBus will be permanently erased. (y/N)
 ```
 
+Answering `Y`/`y` removes the `cache`, `error`, `archive`, `logs`, and `certs` folders along with the
+`oibus.db` and `crypto.db` files. This also removes the instance from the machine-wide registry, so
+its folders can be reused by a new instance afterward.
+
 :::caution
 Choosing to remove all data permanently deletes your configuration, credentials, and logs.
-The data folder is **not** removed automatically if you answer **N**.
+The data folder is **not** removed automatically if you answer anything other than **Y**/**y**.
 :::
 
 ## Run in Standalone Mode

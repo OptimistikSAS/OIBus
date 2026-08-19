@@ -5,8 +5,10 @@ import TabItem from '@theme/TabItem';
 
 **Choose the installation method that best fits your needs:**
 
-- Use the **Installer** for a guided, user-friendly setup.
-- Use the **Scripts** method for advanced users or to install multiple OIBus services.
+- Use the **Installer** for a guided, user-friendly setup. It also supports running multiple OIBus
+  instances side by side on the same machine.
+- Use the **Scripts** method for advanced users, or for scripted/unattended deployments (see
+  [Automated Installation](./disk-image.mdx)).
 
 <Tabs>
   <TabItem value="windows-installer" label="Installer" default>
@@ -24,43 +26,95 @@ import TabItem from '@theme/TabItem';
     <h2 id="installation-steps-windows-installer">Installation Steps</h2>
 
     1. **Run the Installer**
+
     Launch the downloaded installer. You will see the welcome screen:
     <div style={{ textAlign: 'center' }}>
       ![Installer welcome screen](../../../static/img/guide/installation/win_installer/1.png)
     </div>
 
     2. **Accept the License**
-    Read and accept the **EU-PL license** to proceed.
 
-    3. **Choose Installation Path**
-    Select the directory where OIBus binaries will be installed:
+    Read and accept the **EU-PL license** to proceed.
     <div style={{ textAlign: 'center' }}>
-      ![Installer binaries path](../../../static/img/guide/installation/win_installer/2.png)
+      ![Installer accept license](../../../static/img/guide/installation/win_installer/2.png)
     </div>
 
-    4. **Set Data Directory**
-    Choose where to store cache, logs, and configuration files:
+    3. **Choose the service name and set Data Directory**
+
+    The **Service Name** identifies this OIBus installation as a Windows service. Keep the default
+    (`OIBus`) for a single installation, or give it a unique name (letters, digits, spaces, dots,
+    hyphens and underscores only) to run several OIBus instances side by side on the same machine.
+    The **Data Directory** is where its configuration, cache, and logs are stored:
     <div style={{ textAlign: 'center' }}>
       ![Installer data folder path](../../../static/img/guide/installation/win_installer/3.png)
     </div>
+
     :::tip
     For data safety, consider placing the data folder on a **separate disk** (e.g., `D:\OIBusData`). This helps prevent
     disk space issues on the system drive and improves reliability.
     :::
 
-    5. **Confirm and Install**
-    Review your settings and confirm to begin the installation:
+    :::info
+    Every OIBus instance needs its own installation folder and its own data directory. If either one
+    is already used by another instance, the installer stops with an error and asks you to choose a
+    different value here (or on the installation path page below).
+    :::
+
+    4. **Set initial variables**
+
+    Set the initial admin username, password, and the port OIBus will listen on. Each instance has
+    its own independent credentials, so the **port** is usually the value you need to change here
+    when installing a second instance alongside an existing one (they can't share the same port):
     <div style={{ textAlign: 'center' }}>
-      ![Installer validation step](../../../static/img/guide/installation/win_installer/4.png)
+      ![Installer initial variables](../../../static/img/guide/installation/win_installer/4.png)
     </div>
 
-    6. **Complete Installation**
+    5. **Choose Installation Path**
+
+    Select the directory where OIBus binaries will be installed. This is pre-filled with a suggestion
+    based on the service name from step 3 (`OIBus` for the default name, `OIBus - <name>` otherwise),
+    but you can still change it — it just needs to be a folder no other instance already uses:
+    <div style={{ textAlign: 'center' }}>
+      ![Installer binaries path](../../../static/img/guide/installation/win_installer/5.png)
+    </div>
+
+    6. **Confirm and Install**
+
+    Review your settings and confirm to begin the installation:
+    <div style={{ textAlign: 'center' }}>
+      ![Installer validation step](../../../static/img/guide/installation/win_installer/6.png)
+    </div>
+
+    7. **Complete Installation**
+
     Once the installation is complete, you'll see a confirmation screen.
+
+    <div style={{ textAlign: 'center' }}>
+      ![Installer complete installation](../../../static/img/guide/installation/win_installer/7.png)
+    </div>
+
+    You can verify that OIBus is running properly as a Windows service.
+    <div style={{ textAlign: 'center' }}>
+      ![Installer result service](../../../static/img/guide/installation/win_installer/8.png)
+    </div>
+
+    The binary folder looks like this:
+    <div style={{ textAlign: 'center' }}>
+      ![Installer result binary folder](../../../static/img/guide/installation/win_installer/9.png)
+    </div>
+
+    And the data folder looks like this:
+    <div style={{ textAlign: 'center' }}>
+      ![Installer result data folder](../../../static/img/guide/installation/win_installer/10.png)
+    </div>
+
     Proceed to the [first access guide](./first-access.mdx) to configure OIBus.
 
     <h2 id="update-oibus-windows-installer">Update OIBus</h2>
 
     - Use the **OIBus Windows Installer** to update.
+    - Use the **same Service Name** as the existing installation you want to upgrade — a different
+      name installs a new, additional instance instead of updating the existing one.
     - Specify the current executable and configuration paths.
     - Choose to **keep** or **replace** your existing configuration.
     - The OIBus service will briefly stop during the update.
@@ -69,14 +123,26 @@ import TabItem from '@theme/TabItem';
     <h2 id="uninstall-oibus-windows-installer">Uninstall OIBus</h2>
 
     1. Navigate to the OIBus binary folder.
-    2. Run `unin000.exe` as an administrator:
+    2. Run `unin000.exe` as an administrator and confirm removal:
     <div style={{ textAlign: 'center' }}>
       ![Uninstaller step 1](../../../static/img/guide/installation/win_uninstall/1.png)
     </div>
-    3. Follow the prompts to remove OIBus:
+    3. You will be asked whether to remove all data (cache, error, archive, logs, certs, and the
+       configuration/credentials databases) for this instance. Answering anything other than **Yes**
+       leaves the data folder untouched:
     <div style={{ textAlign: 'center' }}>
       ![Uninstaller step 2](../../../static/img/guide/installation/win_uninstall/2.png)
     </div>
+
+    :::caution
+    Choosing to remove all data permanently deletes your configuration, credentials, and logs.
+    :::
+
+    :::info Uninstalling a shared installation folder
+    If several OIBus instances were installed into the same binaries folder, uninstalling removes the
+    files all of them depend on. In that case, a warning listing every affected instance appears
+    before anything is touched, and each one is stopped and offered for data removal in turn.
+    :::
 
   </TabItem>
 
@@ -126,6 +192,12 @@ import TabItem from '@theme/TabItem';
     prevent disk space issues on the system drive and improves reliability.
     :::
 
+    :::info
+    Every OIBus instance needs its own installation folder and its own data directory. `install.bat`
+    checks this before installing anything and exits with an error if either one already belongs to a
+    different instance.
+    :::
+
     **Example:**
     ``` commandline title="Example with terminal outputs"
     install.bat -c "D:\OIBusData" -u "admin" -p "password" -port 2223
@@ -152,6 +224,11 @@ import TabItem from '@theme/TabItem';
     3. Replace the old files in the OIBus executable directory with the new ones.
     4. Restart the OIBus service.
     5. On first startup, the `oibus.db` configuration database will be automatically upgraded.
+
+    :::info
+    If you re-run `install.bat` instead to update, use the **same `-n`** value as the existing
+    instance — a different name installs a new, additional instance rather than updating it.
+    :::
 
     <h2 id="uninstall-oibus-windows-scripts">Uninstall OIBus</h2>
 
