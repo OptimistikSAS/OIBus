@@ -60,6 +60,12 @@ South and North configuration, items, and transformers into a new query.
 | **Max read interval** | Maximum sub-query duration in seconds. The full range is split into chunks of this size.       | `3600`                     |
 | **Read delay**        | Pause in milliseconds between consecutive sub-queries, to avoid overloading the source system. | `200`                      |
 
+> For guidance on sizing **Max read interval** and **Read delay** — including the trade-off between them on a
+> large backlog — see [Max read interval](./advanced/history-query-timing.md#max-read-interval-bounding-how-much-a-single-query-asks-for)
+> and [Read delay](./advanced/history-query-timing.md#read-delay-pacing-consecutive-sub-queries) in
+> [Tuning South History Call Settings](./advanced/history-query-timing.md). A history query item has no group,
+> offsets, or recovery strategy, so the rest of that page doesn't apply here.
+
 :::caution SQL connectors
 For SQL-based connectors, your query **must** include both time variables:
 

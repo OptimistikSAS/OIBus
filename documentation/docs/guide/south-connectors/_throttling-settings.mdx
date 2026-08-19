@@ -37,3 +37,10 @@ each individual sub-interval when a large range is split into chunks by Max read
 | Unstable network               | 1800 (30 min)     | 2000       | 0 (none)          |
 | Large historical retrievals    | 7200 (2 hours)    | 1000       | 0 (none)          |
 | Real-time with occasional gaps | 900 (15 min)      | 200        | -15000 (-15 sec)  |
+
+:::tip Going deeper
+For the reasoning behind these numbers — sizing Max read interval against real data volumes, the Read delay /
+Max read interval trade-off on a large backlog, and worked examples of Start vs. End time offset (including the
+batched multi-item case where items don't all flush at once) — see
+[Tuning South History Call Settings](../advanced/history-query-timing.md).
+:::

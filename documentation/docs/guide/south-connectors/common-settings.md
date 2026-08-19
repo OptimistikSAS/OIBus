@@ -101,6 +101,10 @@ Items retrieve data as files or JSON payloads. Each item has the following field
 | **Recovery strategy** | _(History-capable connectors)_ Order in which a backlog of unqueried sub-intervals is caught up: oldest-first (default) or newest-first. | `From oldest to newest` |
 | **Specific settings** | Varies by connector type — see each connector's documentation.                                                                           | —                       |
 
+> For guidance on sizing **Max read interval**, **Read delay**, **Start time offset**, and **End time offset**
+> — with worked examples for large backlogs and sources that don't commit all items at once — see
+> [Tuning South History Call Settings](../advanced/history-query-timing.md).
+
 ### Item Actions
 
 - **Disable/Enable**: Toggle from the item edit form or directly from the connector's display page.
