@@ -9,14 +9,17 @@ if [[ "$dir" == "$check" ]]; then
   exit 1
 fi
 
+unit_name=OIBUS_INSTALL_FLAG_UNIT_NAME
+instance_name=OIBUS_INSTALL_FLAG_INSTANCE_NAME
+
 # Removing OIBus service
 service_file=OIBUS_INSTALL_FLAG_SERVICE_FILE
 if [[ -f "$service_file" ]]; then
-  if ! sudo systemctl stop oibus; then
+  if ! sudo systemctl stop "$unit_name"; then
     printf "ERROR: Could not stop OIBus service. Exiting uninstall process."
     exit 1
   fi
-  if ! sudo systemctl disable oibus; then
+  if ! sudo systemctl disable "$unit_name"; then
     printf "ERROR: Could not disable OIBus service. Exiting uninstall process."
     exit 1
   fi
@@ -34,6 +37,11 @@ else
   echo 'OIBus service does not exist. Exiting uninstall process.'
   exit 1
 fi
+
+# Remove this instance from the machine-wide instance registry, so its folder/data
+# directory becomes available for reuse (this does not touch actual data - only the
+# conflict-tracking registration written by oibus-setup.sh).
+rm -f "/etc/oibus/instances/$instance_name"
 
 # Removing OIBus binary and script
 if [[ -f "$dir/oibus-launcher" ]]; then
