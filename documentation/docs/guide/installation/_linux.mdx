@@ -64,7 +64,7 @@ sudo ./oibus-setup.sh [options]
 | `-b`    | Directory where OIBus binaries are installed                         | prompted if omitted             |
 | `-c`    | Path to the OIBus data folder (cache, logs, configuration)           | prompted if omitted             |
 | `-k`    | Keep existing configuration without prompting (`Y` or `N`)           | prompted if omitted             |
-| `-n`    | OIBus engine name written to `oibus.init.json` on first install      | `OIBus`                         |
+| `-n`    | Instance name — sets `engineName` in `oibus.init.json` **and** the systemd unit name | `oibus` |
 | `-u`    | Admin username written to `oibus.init.json` on first install         | omitted (OIBus default applies) |
 | `-p`    | Admin password written to `oibus.init.json` on first install         | omitted (OIBus default applies) |
 | `-port` | Port OIBus listens on, written to `oibus.init.json` on first install | omitted (OIBus default applies) |
@@ -75,6 +75,29 @@ They are written to an `oibus.init.json` file in the data folder and applied by 
 Omitted flags are not written to the file — OIBus will use its built-in defaults for those values.
 On subsequent installs or updates the file is not recreated, so these flags have no effect.
 :::
+
+### Running Multiple Instances
+
+Passing a custom `-n` lets you run more than one OIBus instance on the same machine, each as its own
+systemd service:
+
+- The default instance (`-n` omitted, or `-n oibus`) keeps the classic `oibus` service name.
+- Any other name creates its own `oibus-<name>` service (letters, digits, dots, hyphens and
+  underscores only — no spaces).
+
+Every instance must have its own binaries directory (`-b`) and its own data directory (`-c`): the
+script checks a machine-wide instance registry (`/etc/oibus/instances`) before installing anything,
+and refuses to proceed if either folder already belongs to a different instance. Reinstalling or
+upgrading the same instance into its own existing folders is unaffected.
+
+```bash
+sudo ./oibus-setup.sh -n test -b ./OIBusTest -c ./OIBusTestData
+```
+
+```bash
+sudo systemctl status oibus-test
+sudo journalctl -u oibus-test -f
+```
 
 3. The script will prompt for any required value not supplied as a flag (`-b` and `-c`).
    On first install it also asks whether to keep an existing configuration if one is found.
@@ -92,6 +115,8 @@ Installation procedure completed!
 
 ### Service Management
 
+Replace `oibus` with `oibus-<name>` below if you installed with a custom `-n`.
+
 ```bash
 sudo systemctl status oibus    # check service status
 sudo systemctl start oibus     # start the service
@@ -103,9 +128,9 @@ sudo journalctl -u oibus -f    # stream live logs
 <h2 id="update-oibus-linux">Update OIBus</h2>
 
 1. Download the latest version and extract it.
-2. Stop the service: `sudo systemctl stop oibus`
+2. Stop the service: `sudo systemctl stop oibus` (or `oibus-<name>` for a named instance)
 3. Replace the binary files in the installation directory with the new ones.
-4. Start the service: `sudo systemctl start oibus`
+4. Start the service: `sudo systemctl start oibus` (or `oibus-<name>` for a named instance)
 
 The `oibus.db` configuration database is upgraded automatically on first startup after an update.
 

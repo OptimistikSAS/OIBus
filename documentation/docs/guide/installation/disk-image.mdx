@@ -49,10 +49,15 @@ automatically.
    username/password), and `-port` (initial HTTP port) — see [Windows installation](./installation.mdx)
    for the full flag reference. If `-c` is omitted it prompts interactively.
 3. Creates the data directory if it does not exist.
-4. Registers the OIBus launcher as a Windows service via NSSM, setting the application path,
+4. Checks a machine-wide registry ledger (`HKLM\SOFTWARE\OIBus\Instances`, shared with the graphical
+   installer) to make sure neither the current binaries folder nor the data directory is already used
+   by another OIBus instance, aborting with an error if so. Each instance — whether installed via this
+   script or the graphical installer — must have its own binaries folder and its own data folder.
+5. Registers the OIBus launcher as a Windows service via NSSM, setting the application path,
    parameters, and working directory.
-5. Starts the service.
-6. Creates a `go.bat` helper script that stops the service and runs OIBus directly in the console —
+6. Starts the service, then records the instance (name, binaries folder, data directory) in the same
+   registry ledger so later installs can detect clashes against it.
+7. Creates a `go.bat` helper script that stops the service and runs OIBus directly in the console —
    useful for debugging.
 
 This script is called by `mass-install.bat` with the appropriate parameters, so no manual interaction
@@ -132,7 +137,39 @@ Each flag overrides its corresponding default:
 
 All flags are optional; any omitted value falls back to the default declared in Phase 1.
 
-### Phase 3 — Administrator check
+### Phase 3 — Input validation
+
+```batch
+:: The service name ends up as a raw, unquoted argument in several commands below (sc.exe,
+:: echo), so anything outside this safe set - especially shell metacharacters like & | > < ^ -
+:: could inject arbitrary commands. Reject it outright rather than trying to quote/escape it
+:: differently at every use site.
+echo %SERVICE_NAME%| findstr /r /v "^[A-Za-z0-9 ._-]*$" >nul
+if not ERRORLEVEL 1 (
+    echo ERROR: Service name "%SERVICE_NAME%" contains characters that are not allowed.
+    echo Allowed characters: letters, digits, spaces, dots, hyphens and underscores.
+    exit /b 1
+)
+
+:: USERNAME, PASSWORD and OIANALYTICS_URL are embedded in curl arguments and JSON bodies
+:: below. Unlike the service name they must accept any character - a real password may
+:: legitimately contain & | " etc. - so escape them for safe embedding instead of rejecting
+:: anything.
+set "ESCAPED_USERNAME=%USERNAME:\=\\%"
+set "ESCAPED_USERNAME=%ESCAPED_USERNAME:"=\"%"
+set "ESCAPED_PASSWORD=%PASSWORD:\=\\%"
+set "ESCAPED_PASSWORD=%ESCAPED_PASSWORD:"=\"%"
+set "ESCAPED_OIANALYTICS_URL=%OIANALYTICS_URL:\=\\%"
+set "ESCAPED_OIANALYTICS_URL=%ESCAPED_OIANALYTICS_URL:"=\"%"
+```
+
+Without this, a maliciously crafted `-n` value could inject arbitrary commands (this script runs as
+Administrator), and a `-u`/`-p`/`-o` value containing `&`, `|`, or `"` — entirely plausible for a real
+password — would corrupt or hijack the `curl` calls in the phases below. From here on, use
+`%ESCAPED_USERNAME%`, `%ESCAPED_PASSWORD%`, and `%ESCAPED_OIANALYTICS_URL%` instead of the raw
+variables wherever they are embedded in a command or a JSON body.
+
+### Phase 4 — Administrator check
 
 ```batch
 net session >nul 2>&1
@@ -145,7 +182,7 @@ if %errorLevel% neq 0 (
 Installing a Windows service requires elevated privileges. If the script is not running as Administrator,
 it exits immediately with a non-zero code so the failure is visible in the scheduler logs.
 
-### Phase 4 — Idempotency guard
+### Phase 5 — Idempotency guard
 
 ```batch
 sc query "%SERVICE_NAME%" >nul 2>&1
@@ -160,7 +197,7 @@ first boot the service does not exist, so installation proceeds. On every subseq
 machine where OIBus was already installed manually) the script exits early without touching the existing
 installation.
 
-### Phase 5 — Network readiness
+### Phase 6 — Network readiness
 
 ```batch
 :WAIT_FOR_NETWORK
@@ -176,7 +213,7 @@ waits until the DNS Client service (`Dnscache`) is `RUNNING` — a reliable indi
 networking is available — before proceeding. This prevents API calls from failing due to a missing
 network.
 
-### Phase 6 — Installation
+### Phase 7 — Installation
 
 ```batch
 if not exist "%DATA_FOLDER_PATH%" mkdir "%DATA_FOLDER_PATH%"
@@ -192,7 +229,7 @@ Creates the data directory if needed, then calls `install.bat` with the configur
 `install.bat` registers the OIBus service via NSSM and starts it. Any failure propagates the exit code
 so the calling scheduler task can detect and report it.
 
-### Phase 7 — Service readiness
+### Phase 8 — Service readiness
 
 ```batch
 :WAIT_FOR_OIBUS
@@ -208,7 +245,7 @@ Polls the service state every 5 seconds until `sc query` reports it as `RUNNING`
 because `nssm.exe start` returns as soon as the service process launches, not when it is fully
 initialized.
 
-### Phase 8 — Web server readiness
+### Phase 9 — Web server readiness
 
 ```batch
 :WAIT_FOR_WEB
@@ -224,24 +261,26 @@ and start listening. This loop polls `/api/status` — an unauthenticated endpoi
 confirm the server is reachable — every 5 seconds until it returns an HTTP 2xx response, at which point
 the API is ready to accept configuration calls.
 
-### Phase 9 — Initial configuration via the API
+### Phase 10 — Initial configuration via the API
 
 With OIBus running and its API reachable, the script creates the initial objects — scan modes,
 connectors, or any other resources needed for your deployment. The example below creates two scan modes
-and a Modbus South connector:
+and a Modbus South connector. Note the quoted `"%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%"` — quoting
+protects against shell metacharacters, and the escaping from Phase 3 protects against a password
+containing `"`:
 
 ```batch
-curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/scan-modes" ^
+curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/scan-modes" ^
 --header "Content-Type: application/json" ^
 --header "Accept: application/json" ^
 --data "{\"name\": \"Every 5 seconds\", \"description\": \"Trigger every 5 seconds\", \"cron\": \"*/5 * * * * *\"}"
 
-curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/scan-modes" ^
+curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/scan-modes" ^
 --header "Content-Type: application/json" ^
 --header "Accept: application/json" ^
 --data "{\"name\": \"Every 2 minutes\", \"description\": \"Trigger every 2 minutes\", \"cron\": \"* */2 * * * *\"}"
 
-curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/south" ^
+curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/south" ^
 --header "Content-Type: application/json" ^
 --header "Accept: application/json" ^
 --data "{\"name\": \"Modbus\", \"type\": \"modbus\", ...}"
@@ -255,12 +294,12 @@ For the full list of available endpoints and their request/response schemas, see
 [API documentation](../../api/index.mdx).
 :::
 
-### Phase 10 — OIAnalytics registration
+### Phase 11 — OIAnalytics registration
 
 ```batch
-curl --location --request POST --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/oianalytics/register" ^
+curl --location --request POST --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/oianalytics/register" ^
 --header "Content-Type: application/json" ^
---data "{\"host\": \"%OIANALYTICS_URL%\", ...}"
+--data "{\"host\": \"%ESCAPED_OIANALYTICS_URL%\", ...}"
 ```
 
 Submits a registration request to OIAnalytics on behalf of this OIBus instance. The registration is
@@ -336,6 +375,28 @@ shift
 goto PARSE_PARAMETERS
 :PARSE_PARAMETERS_DONE
 
+:: The service name ends up as a raw, unquoted argument in several commands below (sc.exe,
+:: echo), so anything outside this safe set - especially shell metacharacters like & | > < ^ -
+:: could inject arbitrary commands. Reject it outright rather than trying to quote/escape it
+:: differently at every use site.
+echo %SERVICE_NAME%| findstr /r /v "^[A-Za-z0-9 ._-]*$" >nul
+if not ERRORLEVEL 1 (
+    echo ERROR: Service name "%SERVICE_NAME%" contains characters that are not allowed.
+    echo Allowed characters: letters, digits, spaces, dots, hyphens and underscores.
+    exit /b 1
+)
+
+:: USERNAME, PASSWORD and OIANALYTICS_URL are embedded in curl arguments and JSON bodies
+:: below. Unlike the service name they must accept any character - a real password may
+:: legitimately contain & | " etc. - so escape them for safe embedding instead of rejecting
+:: anything.
+set "ESCAPED_USERNAME=%USERNAME:\=\\%"
+set "ESCAPED_USERNAME=%ESCAPED_USERNAME:"=\"%"
+set "ESCAPED_PASSWORD=%PASSWORD:\=\\%"
+set "ESCAPED_PASSWORD=%ESCAPED_PASSWORD:"=\"%"
+set "ESCAPED_OIANALYTICS_URL=%OIANALYTICS_URL:\=\\%"
+set "ESCAPED_OIANALYTICS_URL=%ESCAPED_OIANALYTICS_URL:"=\"%"
+
 :: Check if running as Admin
 net session >nul 2>&1
 if %errorLevel% neq 0 (
@@ -393,7 +454,7 @@ echo %SERVICE_NAME% web server is now up.
 
 :: Create scan modes
 echo Creating scan modes...
-curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/scan-modes" ^
+curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/scan-modes" ^
 --header "Content-Type: application/json" ^
 --header "Accept: application/json" ^
 --data "{\"name\": \"Every 5 seconds\", \"description\": \"Trigger every 5 seconds\", \"cron\": \"*/5 * * * * *\"}"
@@ -403,7 +464,7 @@ if %errorlevel% neq 0 (
     exit /b %errorlevel%
 )
 
-curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/scan-modes" ^
+curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/scan-modes" ^
 --header "Content-Type: application/json" ^
 --header "Accept: application/json" ^
 --data "{\"name\": \"Every 2 minutes\", \"description\": \"Trigger every 2 minutes\", \"cron\": \"* */2 * * * *\"}"
@@ -415,7 +476,7 @@ if %errorlevel% neq 0 (
 
 :: Create North connector (OIAnalytics)
 echo Creating North connector...
-curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/north" ^
+curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/north" ^
 --header "Content-Type: application/json" ^
 --header "Accept: application/json" ^
 --data "{\"name\": \"North OIAnalytics\", \"type\": \"oianalytics\", \"description\": \"\", \"enabled\": true, \"settings\": {\"useOiaModule\": true, \"compress\": true, \"timeout\": 60000}, \"caching\": {\"trigger\": {\"scanModeId\": null, \"scanModeName\": \"Every 2 minutes\", \"numberOfElements\": 10000, \"numberOfFiles\": 1}, \"throttling\": {\"runMinDelay\": 200, \"maxSize\": 0, \"maxNumberOfElements\": 50000}, \"error\": {\"retryInterval\": 5000, \"retryCount\": 3, \"retentionDuration\": 0}, \"archive\": {\"enabled\": false, \"retentionDuration\": 72}}, \"transformers\": []}"
@@ -427,7 +488,7 @@ if %errorlevel% neq 0 (
 
 :: Create South connector (Modbus)
 echo Creating South connector...
-curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/south" ^
+curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/south" ^
 --header "Content-Type: application/json" ^
 --header "Accept: application/json" ^
 --data "{\"name\": \"Modbus\", \"type\": \"modbus\", \"description\": \"Modbus South\", \"enabled\": true, \"settings\": {\"host\": \"127.0.0.1\", \"port\": 502, \"connectTimeout\": 10000, \"networkTimeout\": 10000, \"retryInterval\": 10000, \"slaveId\": 1, \"addressOffset\": \"modbus\", \"endianness\": \"big-endian\", \"swapBytesInWords\": false, \"swapWordsInDWords\": false, \"batchQuery\": false, \"groupingGap\": 0}, \"groups\": [], \"items\": []}"
@@ -439,9 +500,9 @@ if %errorlevel% neq 0 (
 
 :: Register OIBus with OIAnalytics
 echo Registering OIBus...
-curl --location --request POST --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/oianalytics/register" ^
+curl --location --request POST --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/oianalytics/register" ^
 --header "Content-Type: application/json" ^
---data "{\"host\": \"%OIANALYTICS_URL%\", \"useProxy\": false, \"proxyUrl\": null, \"proxyUsername\": null, \"proxyPassword\": null, \"useApiGateway\": false, \"apiGatewayHeaderKey\": null, \"apiGatewayHeaderValue\": null, \"apiGatewayBaseEndpoint\": null, \"acceptUnauthorized\": false, \"commandRefreshInterval\": 60, \"commandRetryInterval\": 10, \"messageRetryInterval\": 10, \"commandPermissions\": {\"testCustomTransformer\": true, \"deleteCustomTransformer\": true, \"updateCustomTransformer\": true, \"createCustomTransformer\": true, \"updateNorthCacheContent\": true, \"getNorthCacheFileContent\": true, \"searchNorthCacheContent\": true, \"updateHistoryCacheContent\": true, \"getHistoryCacheFileContent\": true, \"searchHistoryCacheContent\": true, \"setpoint\": true, \"testNorthConnection\": true, \"deleteNorth\": true, \"updateNorth\": true, \"createNorth\": true, \"testSouthItem\": true, \"testSouthConnection\": true, \"createOrUpdateSouthItemsFromCsv\": true, \"deleteSouth\": true, \"updateSouth\": true, \"createSouth\": true, \"testHistorySouthItem\": true, \"testHistorySouthConnection\": true, \"testHistoryNorthConnection\": true, \"createOrUpdateHistoryItemsFromCsv\": true, \"deleteHistoryQuery\": true, \"updateHistoryQuery\": true, \"createHistoryQuery\": true, \"deleteCertificate\": true, \"updateCertificate\": true, \"createCertificate\": true, \"deleteIpFilter\": true, \"updateIpFilter\": true, \"createIpFilter\": true, \"deleteScanMode\": true, \"updateScanMode\": true, \"createScanMode\": true, \"updateRegistrationSettings\": true, \"updateEngineSettings\": true, \"regenerateCipherKeys\": true, \"restartEngine\": true, \"updateVersion\": true}}"
+--data "{\"host\": \"%ESCAPED_OIANALYTICS_URL%\", \"useProxy\": false, \"proxyUrl\": null, \"proxyUsername\": null, \"proxyPassword\": null, \"useApiGateway\": false, \"apiGatewayHeaderKey\": null, \"apiGatewayHeaderValue\": null, \"apiGatewayBaseEndpoint\": null, \"acceptUnauthorized\": false, \"commandRefreshInterval\": 60, \"commandRetryInterval\": 10, \"messageRetryInterval\": 10, \"commandPermissions\": {\"testCustomTransformer\": true, \"deleteCustomTransformer\": true, \"updateCustomTransformer\": true, \"createCustomTransformer\": true, \"updateNorthCacheContent\": true, \"getNorthCacheFileContent\": true, \"searchNorthCacheContent\": true, \"updateHistoryCacheContent\": true, \"getHistoryCacheFileContent\": true, \"searchHistoryCacheContent\": true, \"setpoint\": true, \"testNorthConnection\": true, \"deleteNorth\": true, \"updateNorth\": true, \"createNorth\": true, \"testSouthItem\": true, \"testSouthConnection\": true, \"createOrUpdateSouthItemsFromCsv\": true, \"deleteSouth\": true, \"updateSouth\": true, \"createSouth\": true, \"testHistorySouthItem\": true, \"testHistorySouthConnection\": true, \"testHistoryNorthConnection\": true, \"createOrUpdateHistoryItemsFromCsv\": true, \"deleteHistoryQuery\": true, \"updateHistoryQuery\": true, \"createHistoryQuery\": true, \"deleteCertificate\": true, \"updateCertificate\": true, \"createCertificate\": true, \"deleteIpFilter\": true, \"updateIpFilter\": true, \"createIpFilter\": true, \"deleteScanMode\": true, \"updateScanMode\": true, \"createScanMode\": true, \"updateRegistrationSettings\": true, \"updateEngineSettings\": true, \"regenerateCipherKeys\": true, \"restartEngine\": true, \"updateVersion\": true}}"
 echo.
 if %errorlevel% neq 0 (
     echo Error: Failed to register OIBus.
