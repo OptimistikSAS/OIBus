@@ -49,6 +49,13 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
     const user = this.connector.settings.domain
       ? `${this.connector.settings.domain}\\${this.connector.settings.username}`
       : this.connector.settings.username;
+    // Clear any existing session to this server first. Windows refuses to add a new one when a
+    // connection is already active under a different identity (system error 1219: "Multiple
+    // connections to a server or shared resource by the same user, using more than one user
+    // name, are not allowed"). This can happen after an unclean shutdown, a previous failed
+    // mount attempt, or a prior testConnection() call that left its session open — best-effort,
+    // there may simply be nothing to remove.
+    await this.deleteNetworkSession(serverRoot);
     let password = '';
     try {
       password = this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : '';
@@ -78,35 +85,46 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
     if (!this.connector.settings.username) return;
     const serverRoot = folderPath.match(/^(\\\\[^\\]+)/)?.[1];
     if (!serverRoot) return;
+    await this.deleteNetworkSession(serverRoot);
+  }
+
+  private async deleteNetworkSession(serverRoot: string): Promise<void> {
     try {
       await execFile('net', ['use', `${serverRoot}\\IPC$`, '/delete', '/yes']);
     } catch {
-      // Ignore — session may have already been removed
+      // Ignore — session may not exist
     }
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
     await this.mountNetworkShare(this.connector.settings.outputFolder);
-    const outputFolder = path.resolve(this.connector.settings.outputFolder);
-
-    const testFile = path.join(outputFolder, `.oibus-write-test`);
     try {
-      await fs.writeFile(testFile, '');
-      await fs.unlink(testFile);
-    } catch (error: unknown) {
-      throw new Error(`Write access error on "${outputFolder}": ${(error as Error).message}`);
+      const outputFolder = path.resolve(this.connector.settings.outputFolder);
+
+      const testFile = path.join(outputFolder, `.oibus-write-test`);
+      try {
+        await fs.writeFile(testFile, '');
+        await fs.unlink(testFile);
+      } catch (error: unknown) {
+        throw new Error(`Write access error on "${outputFolder}": ${(error as Error).message}`);
+      }
+
+      const items: Array<{ key: string; value: string }> = [{ key: 'Output Folder', value: outputFolder }];
+
+      try {
+        const files = await fs.readdir(outputFolder);
+        items.push({ key: 'Files', value: String(files.length) });
+      } catch {
+        // File count not critical
+      }
+
+      return { items };
+    } finally {
+      // Tear down the session opened for this one-off test — testConnection() is not paired
+      // with a disconnect() call, so without this a session stays open until the next mount
+      // (which would otherwise be the only thing to clean it up).
+      await this.unmountNetworkShare(this.connector.settings.outputFolder);
     }
-
-    const items: Array<{ key: string; value: string }> = [{ key: 'Output Folder', value: outputFolder }];
-
-    try {
-      const files = await fs.readdir(outputFolder);
-      items.push({ key: 'Files', value: String(files.length) });
-    } catch {
-      // File count not critical
-    }
-
-    return { items };
   }
 
   async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
