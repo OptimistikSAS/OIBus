@@ -217,6 +217,11 @@ export default class SouthFolderScanner
   async directQuery(
     items: Array<SouthConnectorItemEntity<SouthFolderScannerItemSettings>>
   ): Promise<Array<{ filename: string; modifiedTime: number }>> {
+    // Re-authenticate before every scan rather than relying solely on the mount from connect():
+    // this is a no-op most of the time (mountNetworkShare()'s delete-then-add is idempotent), but
+    // self-heals a session that dropped or was replaced since connect() ran, instead of failing
+    // every scan until the connector fully reconnects.
+    await this.mountNetworkShare(this.connector.settings.inputFolder);
     const item = items[0];
     const logCtx = workUnitLogCtx(items);
     const itemValue = this.southCacheRepository.getItemLastValue(this.connector.id, item.id);
