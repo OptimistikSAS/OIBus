@@ -101,34 +101,33 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
+    // Deliberately does NOT unmount afterwards: the SMB session is a single shared OS-level
+    // resource per share, not something owned exclusively by this call. If the connector is
+    // already connected and actively sending data, tearing the session down here would rip it
+    // out from under the live connector, breaking every write until the next connect/reconnect —
+    // mountNetworkShare()'s own delete-then-add already keeps things self-healing on the next
+    // mount, so there is nothing to clean up here.
     await this.mountNetworkShare(this.connector.settings.outputFolder);
+    const outputFolder = path.resolve(this.connector.settings.outputFolder);
+
+    const testFile = path.join(outputFolder, `.oibus-write-test`);
     try {
-      const outputFolder = path.resolve(this.connector.settings.outputFolder);
-
-      const testFile = path.join(outputFolder, `.oibus-write-test`);
-      try {
-        await fs.writeFile(testFile, '');
-        await fs.unlink(testFile);
-      } catch (error: unknown) {
-        throw new Error(`Write access error on "${outputFolder}": ${(error as Error).message}`);
-      }
-
-      const items: Array<{ key: string; value: string }> = [{ key: 'Output Folder', value: outputFolder }];
-
-      try {
-        const files = await fs.readdir(outputFolder);
-        items.push({ key: 'Files', value: String(files.length) });
-      } catch {
-        // File count not critical
-      }
-
-      return { items };
-    } finally {
-      // Tear down the session opened for this one-off test — testConnection() is not paired
-      // with a disconnect() call, so without this a session stays open until the next mount
-      // (which would otherwise be the only thing to clean it up).
-      await this.unmountNetworkShare(this.connector.settings.outputFolder);
+      await fs.writeFile(testFile, '');
+      await fs.unlink(testFile);
+    } catch (error: unknown) {
+      throw new Error(`Write access error on "${outputFolder}": ${(error as Error).message}`);
     }
+
+    const items: Array<{ key: string; value: string }> = [{ key: 'Output Folder', value: outputFolder }];
+
+    try {
+      const files = await fs.readdir(outputFolder);
+      items.push({ key: 'Files', value: String(files.length) });
+    } catch {
+      // File count not critical
+    }
+
+    return { items };
   }
 
   async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {

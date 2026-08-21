@@ -599,10 +599,12 @@ describe('SouthFolderScanner', () => {
           assert.deepStrictEqual(deleteSpy.mock.calls[0].arguments, ['\\\\server\\share']);
         });
 
-        // testConnection() is a one-off diagnostic call, not paired with disconnect() — without
-        // tearing its session down itself, it would stay open (and could conflict with the next
-        // mount attempt, see the 1219 error above) until something else happened to clean it up.
-        it('should tear down the SMB session after a successful testConnection', async () => {
+        // testConnection() must NOT tear the SMB session down afterwards: it's a single shared
+        // OS-level resource per share, not something testConnection() owns exclusively. If the
+        // connector is already connected and actively running, unmounting here would rip the
+        // session out from under it — breaking every read until the next connect/reconnect —
+        // which is exactly what happened when this was tried (see commit history).
+        it('should not tear down the SMB session after a successful testConnection', async () => {
           configuration.settings.username = 'user';
           configuration.settings.inputFolder = '\\\\server\\share\\data';
           south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
@@ -615,10 +617,10 @@ describe('SouthFolderScanner', () => {
 
           await south.testConnection();
 
-          assert.strictEqual(unmountSpy.mock.calls.length, 1);
+          assert.strictEqual(unmountSpy.mock.calls.length, 0);
         });
 
-        it('should tear down the SMB session after a failed testConnection', async () => {
+        it('should not tear down the SMB session after a failed testConnection', async () => {
           configuration.settings.username = 'user';
           configuration.settings.inputFolder = '\\\\server\\share\\data';
           south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
@@ -631,14 +633,13 @@ describe('SouthFolderScanner', () => {
 
           await assert.rejects(async () => south.testConnection());
 
-          assert.strictEqual(unmountSpy.mock.calls.length, 1);
+          assert.strictEqual(unmountSpy.mock.calls.length, 0);
         });
 
-        // testItem() used to reuse testConnection()'s mounted session for the file listing that
-        // follows it. Now that testConnection() tears its own session down before returning,
-        // testItem() must own its own mount/unmount pair around the whole operation instead of
-        // relying on testConnection() to leave the session up — this locks that in.
-        it('should keep the SMB session up for the whole testItem call, not just testConnection', async () => {
+        // testItem() calls testConnection() internally for its validation logic, and neither of
+        // them should tear the session down — same reasoning as above, since testItem() is just
+        // as capable of running against an already-connected, actively-running connector.
+        it('should not tear down the SMB session during testItem', async () => {
           configuration.settings.username = 'user';
           configuration.settings.inputFolder = '\\\\server\\share\\data';
           south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
@@ -652,10 +653,8 @@ describe('SouthFolderScanner', () => {
 
           await south.testItem(configuration.items[0], { history: undefined } satisfies SouthConnectorItemTestingSettings);
 
-          // Mounted and unmounted exactly once for the whole call — testConnection() is used
-          // internally for its validation logic only, without mounting/unmounting on its own.
           assert.strictEqual(mountSpy.mock.calls.length, 1);
-          assert.strictEqual(unmountSpy.mock.calls.length, 1);
+          assert.strictEqual(unmountSpy.mock.calls.length, 0);
         });
 
         it('should silently ignore SMB session removal failures on Windows', async () => {

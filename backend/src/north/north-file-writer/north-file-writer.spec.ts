@@ -391,10 +391,12 @@ describe('NorthFileWriter', () => {
           assert.deepStrictEqual(deleteSpy.mock.calls[0].arguments, ['\\\\server\\share']);
         });
 
-        // testConnection() is a one-off diagnostic call, not paired with disconnect() — without
-        // tearing its session down itself, it would stay open (and could conflict with the next
-        // mount attempt, see the 1219 error above) until something else happened to clean it up.
-        it('should tear down the SMB session after a successful testConnection', async () => {
+        // testConnection() must NOT tear the SMB session down afterwards: it's a single shared
+        // OS-level resource per share, not something testConnection() owns exclusively. If the
+        // connector is already connected and actively running, unmounting here would rip the
+        // session out from under it — breaking every write until the next connect/reconnect —
+        // which is exactly what happened when this was tried (see commit history).
+        it('should not tear down the SMB session after a successful testConnection', async () => {
           configuration.settings.username = 'user';
           configuration.settings.outputFolder = '\\\\server\\share\\out';
           north = new NorthFileWriter(configuration, cacheService);
@@ -406,10 +408,10 @@ describe('NorthFileWriter', () => {
 
           await north.testConnection();
 
-          assert.strictEqual(unmountSpy.mock.calls.length, 1);
+          assert.strictEqual(unmountSpy.mock.calls.length, 0);
         });
 
-        it('should tear down the SMB session after a failed testConnection', async () => {
+        it('should not tear down the SMB session after a failed testConnection', async () => {
           configuration.settings.username = 'user';
           configuration.settings.outputFolder = '\\\\server\\share\\out';
           north = new NorthFileWriter(configuration, cacheService);
@@ -421,7 +423,7 @@ describe('NorthFileWriter', () => {
 
           await assert.rejects(async () => north.testConnection());
 
-          assert.strictEqual(unmountSpy.mock.calls.length, 1);
+          assert.strictEqual(unmountSpy.mock.calls.length, 0);
         });
       }
     );
