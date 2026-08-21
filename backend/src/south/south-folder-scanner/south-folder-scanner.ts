@@ -112,24 +112,13 @@ export default class SouthFolderScanner
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
+    // Deliberately does NOT unmount afterwards: the SMB session is a single shared OS-level
+    // resource per share, not something owned exclusively by this call. If the connector is
+    // already connected and actively running, tearing the session down here would rip it out
+    // from under it, breaking every read until the next connect/reconnect — mountNetworkShare()'s
+    // own delete-then-add already keeps things self-healing on the next mount, so there is
+    // nothing to clean up here.
     await this.mountNetworkShare(this.connector.settings.inputFolder);
-    try {
-      return await this.checkFolderAccess();
-    } finally {
-      // Tear down the session opened for this one-off test — testConnection() is not paired
-      // with a disconnect() call, so without this a session stays open until the next mount
-      // (which would otherwise be the only thing to clean it up).
-      await this.unmountNetworkShare(this.connector.settings.inputFolder);
-    }
-  }
-
-  /**
-   * Checks that the input folder exists, is readable and is a directory. Assumes any required
-   * SMB session has already been mounted by the caller — does not manage the mount itself, so
-   * it can be reused by both testConnection() (which owns its own mount/unmount pair) and
-   * testItem() (which needs the mount to stay up for the file listing that follows).
-   */
-  private async checkFolderAccess(): Promise<OIBusConnectionTestResult> {
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
 
     try {
@@ -165,38 +154,31 @@ export default class SouthFolderScanner
     item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>,
     _testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
-    // Mount for the whole operation (not via testConnection(), which tears its own session down
-    // before returning) since the file listing below needs the SMB session to still be up.
-    await this.mountNetworkShare(this.connector.settings.inputFolder);
-    try {
-      const connectStart = DateTime.now().toMillis();
-      await this.checkFolderAccess();
-      const connectionDuration = DateTime.now().toMillis() - connectStart;
-      const queryStart = DateTime.now().toMillis();
-      const inputFolder = path.resolve(this.connector.settings.inputFolder);
-      const filesInFolder = await fs.readdir(inputFolder);
-      const filteredFiles = filesInFolder.filter(file => file.match(item.settings.regex));
-      const matchedFiles: Array<{ name: string; modifyTime: Instant }> = [];
-      for (const file of filteredFiles) {
-        const stats = await fs.stat(path.join(inputFolder, file));
-        if (checkAge(item, file, stats.mtimeMs, [], this.logger)) {
-          matchedFiles.push({ name: file, modifyTime: DateTime.fromMillis(stats.mtimeMs).toUTC().toISO()! });
-        }
+    const connectStart = DateTime.now().toMillis();
+    await this.testConnection();
+    const connectionDuration = DateTime.now().toMillis() - connectStart;
+    const queryStart = DateTime.now().toMillis();
+    const inputFolder = path.resolve(this.connector.settings.inputFolder);
+    const filesInFolder = await fs.readdir(inputFolder);
+    const filteredFiles = filesInFolder.filter(file => file.match(item.settings.regex));
+    const matchedFiles: Array<{ name: string; modifyTime: Instant }> = [];
+    for (const file of filteredFiles) {
+      const stats = await fs.stat(path.join(inputFolder, file));
+      if (checkAge(item, file, stats.mtimeMs, [], this.logger)) {
+        matchedFiles.push({ name: file, modifyTime: DateTime.fromMillis(stats.mtimeMs).toUTC().toISO()! });
       }
-      const queryDuration = DateTime.now().toMillis() - queryStart;
-      const values: Array<OIBusTimeValue> = matchedFiles.map(file => ({
-        pointId: item.name,
-        timestamp: file.modifyTime,
-        data: { value: file.name }
-      }));
-      return {
-        result: { type: 'time-values', content: values },
-        connectionDuration,
-        queryDuration
-      };
-    } finally {
-      await this.unmountNetworkShare(this.connector.settings.inputFolder);
     }
+    const queryDuration = DateTime.now().toMillis() - queryStart;
+    const values: Array<OIBusTimeValue> = matchedFiles.map(file => ({
+      pointId: item.name,
+      timestamp: file.modifyTime,
+      data: { value: file.name }
+    }));
+    return {
+      result: { type: 'time-values', content: values },
+      connectionDuration,
+      queryDuration
+    };
   }
 
   /**
