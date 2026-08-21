@@ -131,6 +131,11 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
   }
 
   async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
+    // Re-authenticate before every write rather than relying solely on the mount from connect():
+    // this is a no-op most of the time (mountNetworkShare()'s delete-then-add is idempotent), but
+    // self-heals a session that dropped or was replaced since connect() ran, instead of failing
+    // every write until the connector fully reconnects.
+    await this.mountNetworkShare(this.connector.settings.outputFolder);
     const { name, ext } = path.parse(cacheMetadata.contentFile);
     const nowDate = DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
     const prefix = (this.connector.settings.prefix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);

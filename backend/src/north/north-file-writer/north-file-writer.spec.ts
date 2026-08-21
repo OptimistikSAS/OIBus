@@ -425,6 +425,28 @@ describe('NorthFileWriter', () => {
 
           assert.strictEqual(unmountSpy.mock.calls.length, 0);
         });
+
+        // Re-authenticating before every write (rather than relying solely on the mount from
+        // connect()) self-heals a session that dropped or was replaced in the meantime, instead
+        // of failing every write until the connector fully reconnects.
+        it('should re-authenticate the SMB session before every write in handleContent', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.outputFolder = '\\\\server\\share\\out';
+          north = new NorthFileWriter(configuration, cacheService);
+          const mountSpy = mock.method(north as unknown as Private, 'mountNetworkShare', async () => undefined);
+          mock.method(nodeFs, 'createWriteStream', () => mockWriteStream);
+          mock.method(streamPromises, 'pipeline', async () => undefined);
+
+          await north.handleContent({} as ReadStream, {
+            contentFile: 'file.txt',
+            contentSize: 10,
+            numberOfElement: 1,
+            createdAt: '2020-02-02T02:02:02.222Z',
+            contentType: 'any'
+          });
+
+          assert.strictEqual(mountSpy.mock.calls.length, 1);
+        });
       }
     );
   });

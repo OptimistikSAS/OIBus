@@ -657,6 +657,22 @@ describe('SouthFolderScanner', () => {
           assert.strictEqual(unmountSpy.mock.calls.length, 0);
         });
 
+        // Re-authenticating before every scan (rather than relying solely on the mount from
+        // connect()) self-heals a session that dropped or was replaced in the meantime, instead
+        // of failing every scan until the connector fully reconnects.
+        it('should re-authenticate the SMB session before every scan in directQuery', async () => {
+          configuration.settings.username = 'user';
+          configuration.settings.inputFolder = '\\\\server\\share\\data';
+          south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+          type Private = Record<string, (...args: Array<unknown>) => Promise<unknown>>;
+          const mountSpy = mock.method(south as unknown as Private, 'mountNetworkShare', async () => undefined);
+          (south as unknown as Record<string, unknown>)['listFilesRecursively'] = mock.fn(async () => []);
+
+          await south.directQuery(configuration.items);
+
+          assert.strictEqual(mountSpy.mock.calls.length, 1);
+        });
+
         it('should silently ignore SMB session removal failures on Windows', async () => {
           configuration.settings.username = 'user';
           configuration.settings.inputFolder = '\\\\server\\share\\data';
