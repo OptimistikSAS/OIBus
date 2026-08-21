@@ -55,35 +55,39 @@ export default class SouthFolderScanner
       return;
     }
     if (!this.connector.settings.username) return;
-    const serverRoot = folderPath.match(/^(\\\\[^\\]+)/)?.[1];
-    if (!serverRoot) return;
+    const shareRoot = folderPath.match(/^(\\\\[^\\]+\\[^\\]+)/)?.[1];
+    if (!shareRoot) return;
     const user = this.connector.settings.domain
       ? `${this.connector.settings.domain}\\${this.connector.settings.username}`
       : this.connector.settings.username;
-    // Clear any existing session to this server first. Windows refuses to add a new one when a
+    // Clear any existing session to this share first. Windows refuses to add a new one when a
     // connection is already active under a different identity (system error 1219: "Multiple
     // connections to a server or shared resource by the same user, using more than one user
     // name, are not allowed"). This can happen after an unclean shutdown, a previous failed
     // mount attempt, or a prior testConnection()/testItem() call that left its session open —
     // best-effort, there may simply be nothing to remove.
-    await this.deleteNetworkSession(serverRoot);
+    await this.deleteNetworkSession(shareRoot);
     let password = '';
     try {
       password = this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : '';
-      // Authenticate against the server's IPC$ share rather than storing credentials via cmdkey:
-      // `net use` establishes a live, session-scoped SMB session for the calling process's own
-      // logon session, so subsequent UNC access to that server reuses it automatically. This
-      // avoids Windows Credential Manager/DPAPI entirely, which is unreliable when OIBus runs
-      // as a Windows service — cmdkey-stored credentials can silently fail to be usable even
-      // under the exact user account that works fine when run interactively.
-      await execFile('net', ['use', `${serverRoot}\\IPC$`, password, `/user:${user}`, '/persistent:no']);
-      this.logger.debug(`Authenticated SMB session for ${serverRoot} as ${user}`);
+      // Authenticate against the actual target share (not just the server's IPC$ pseudo-share)
+      // rather than storing credentials via cmdkey: `net use` establishes a live, session-scoped
+      // SMB session for the calling process's own logon session, so subsequent UNC access to
+      // that same share reuses it automatically. Targeting the exact share being read/written —
+      // rather than IPC$ — avoids relying on credentials granted at the IPC$ level actually
+      // carrying over to a different tree connect on the same server, which isn't guaranteed on
+      // every SMB server implementation. This also avoids Windows Credential Manager/DPAPI
+      // entirely, which is unreliable when OIBus runs as a Windows service — cmdkey-stored
+      // credentials can silently fail to be usable even under the exact account that works fine
+      // when run interactively.
+      await execFile('net', ['use', shareRoot, password, `/user:${user}`, '/persistent:no']);
+      this.logger.debug(`Authenticated SMB session for ${shareRoot} as ${user}`);
     } catch (error: unknown) {
       // net use is called with the plaintext password as an argument, so the default error message
       // Node builds on failure (and stdout/stderr) can contain it verbatim — sanitize before
       // logging or rethrowing so it never ends up in logs or bubbles up to the UI.
       const sanitizedError = sanitizeCommandError(error, password);
-      this.logger.error(`Failed to authenticate SMB session for ${serverRoot}: ${sanitizedError.message}`);
+      this.logger.error(`Failed to authenticate SMB session for ${shareRoot}: ${sanitizedError.message}`);
       throw sanitizedError;
     }
   }
@@ -94,14 +98,14 @@ export default class SouthFolderScanner
       return;
     }
     if (!this.connector.settings.username) return;
-    const serverRoot = folderPath.match(/^(\\\\[^\\]+)/)?.[1];
-    if (!serverRoot) return;
-    await this.deleteNetworkSession(serverRoot);
+    const shareRoot = folderPath.match(/^(\\\\[^\\]+\\[^\\]+)/)?.[1];
+    if (!shareRoot) return;
+    await this.deleteNetworkSession(shareRoot);
   }
 
-  private async deleteNetworkSession(serverRoot: string): Promise<void> {
+  private async deleteNetworkSession(shareRoot: string): Promise<void> {
     try {
-      await execFile('net', ['use', `${serverRoot}\\IPC$`, '/delete', '/yes']);
+      await execFile('net', ['use', shareRoot, '/delete', '/yes']);
     } catch {
       // Ignore — session may not exist
     }

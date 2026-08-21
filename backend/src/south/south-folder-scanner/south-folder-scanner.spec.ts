@@ -596,7 +596,7 @@ describe('SouthFolderScanner', () => {
           // enough to confirm deleteNetworkSession always runs first, before the add is attempted.
           await assert.rejects(async () => (south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data'));
           assert.strictEqual(deleteSpy.mock.calls.length, 1);
-          assert.deepStrictEqual(deleteSpy.mock.calls[0].arguments, ['\\\\server']);
+          assert.deepStrictEqual(deleteSpy.mock.calls[0].arguments, ['\\\\server\\share']);
         });
 
         // testConnection() is a one-off diagnostic call, not paired with disconnect() — without
