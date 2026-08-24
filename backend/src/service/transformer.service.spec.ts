@@ -344,7 +344,7 @@ describe('Transformer Service', () => {
 
     assert.strictEqual(transformerRepository.save.mock.calls.length, 1);
     assert.strictEqual(engine.removeAndReloadTransformer.mock.calls.length, 1);
-    assert.deepStrictEqual(engine.removeAndReloadTransformer.mock.calls[0].arguments, [testData.transformers.list[0].id]);
+    assert.deepStrictEqual(engine.removeAndReloadTransformer.mock.calls[0].arguments, [testData.transformers.list[0].id, 'userTest']);
     assert.strictEqual(engine.reloadTransformer.mock.calls.length, 0);
   });
 
@@ -364,21 +364,21 @@ describe('Transformer Service', () => {
   it('should delete a transformer', async () => {
     transformerRepository.findById.mock.mockImplementation(() => testData.transformers.list[0]);
 
-    await service.delete(testData.transformers.list[0].id);
+    await service.delete(testData.transformers.list[0].id, 'userTest');
 
     assert.strictEqual(transformerRepository.findById.mock.calls.length, 1);
     assert.deepStrictEqual(transformerRepository.findById.mock.calls[0].arguments, [testData.transformers.list[0].id]);
     assert.strictEqual(engine.removeAndReloadTransformer.mock.calls.length, 1);
-    assert.deepStrictEqual(engine.removeAndReloadTransformer.mock.calls[0].arguments, [testData.transformers.list[0].id]);
+    assert.deepStrictEqual(engine.removeAndReloadTransformer.mock.calls[0].arguments, [testData.transformers.list[0].id, 'userTest']);
     assert.strictEqual(transformerRepository.delete.mock.calls.length, 1);
-    assert.deepStrictEqual(transformerRepository.delete.mock.calls[0].arguments, [testData.transformers.list[0].id]);
+    assert.deepStrictEqual(transformerRepository.delete.mock.calls[0].arguments, [testData.transformers.list[0].id, 'userTest']);
   });
 
   it('should not delete if the transformer is not found', async () => {
     transformerRepository.findById.mock.mockImplementation(() => null);
 
     await assert.rejects(
-      () => service.delete(testData.transformers.list[0].id),
+      () => service.delete(testData.transformers.list[0].id, 'userTest'),
       new Error(`Transformer "${testData.transformers.list[0].id}" not found`)
     );
 
@@ -395,7 +395,7 @@ describe('Transformer Service', () => {
     transformerRepository.findById.mock.mockImplementation(() => standardTransformer);
 
     await assert.rejects(
-      () => service.delete(standardTransformer.id),
+      () => service.delete(standardTransformer.id, 'userTest'),
       new Error(`Cannot delete standard transformer "${standardTransformer.id}"`)
     );
 

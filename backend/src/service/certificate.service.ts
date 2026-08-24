@@ -163,9 +163,9 @@ export default class CertificateService {
     return content;
   }
 
-  delete(certificateId: string): void {
+  delete(certificateId: string, userId: string): void {
     const certificate = this.findById(certificateId);
-    this.certificateRepository.delete(certificate.id);
+    this.certificateRepository.delete(certificate.id, userId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 }

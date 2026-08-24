@@ -101,17 +101,17 @@ describe('IP Filter Service', () => {
     ipFilterRepository.findById.mock.mockImplementationOnce(() => testData.ipFilters.list[0]);
     ipFilterRepository.list.mock.mockImplementationOnce(() => testData.ipFilters.list);
 
-    await service.delete(testData.ipFilters.list[0].id);
+    await service.delete(testData.ipFilters.list[0].id, 'userTest');
 
     assert.deepStrictEqual(ipFilterRepository.findById.mock.calls[0].arguments, [testData.ipFilters.list[0].id]);
-    assert.deepStrictEqual(ipFilterRepository.delete.mock.calls[0].arguments, [testData.ipFilters.list[0].id]);
+    assert.deepStrictEqual(ipFilterRepository.delete.mock.calls[0].arguments, [testData.ipFilters.list[0].id, 'userTest']);
     assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
   });
 
   it('should not delete if the IP filter is not found', () => {
     ipFilterRepository.findById.mock.mockImplementationOnce(() => null);
 
-    assert.throws(() => service.delete(testData.ipFilters.list[0].id), {
+    assert.throws(() => service.delete(testData.ipFilters.list[0].id, 'userTest'), {
       message: `IP filter "${testData.ipFilters.list[0].id}" not found`
     });
 

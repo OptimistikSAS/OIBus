@@ -23,7 +23,7 @@ export default class NorthServiceMock {
     ): Promise<NorthConnectorEntity<NorthSettings>> => ({}) as NorthConnectorEntity<NorthSettings>
   );
   update = mock.fn(async (_northId: string, _command: NorthConnectorCommandDTO, _updatedBy: string): Promise<void> => undefined);
-  delete = mock.fn(async (_northId: string): Promise<void> => undefined);
+  delete = mock.fn(async (_northId: string, _userId: string): Promise<void> => undefined);
   start = mock.fn(async (_northId: string): Promise<void> => undefined);
   stop = mock.fn(async (_northId: string): Promise<void> => undefined);
   getNorthMetric = mock.fn((_northId: string): NorthConnectorMetrics => ({}) as NorthConnectorMetrics);
@@ -31,8 +31,10 @@ export default class NorthServiceMock {
     async (_northId: string, _northType: OIBusNorthType, _settingsToTest: NorthSettings): Promise<OIBusConnectionTestResult> =>
       ({ items: [] }) as unknown as OIBusConnectionTestResult
   );
-  addOrEditTransformer = mock.fn((_northId: string, _transformerWithOptions: NorthTransformerWithOptions): void => undefined);
-  removeTransformer = mock.fn((_northId: string, _northTransformerId: string): void => undefined);
+  addOrEditTransformer = mock.fn(
+    (_northId: string, _transformerWithOptions: NorthTransformerWithOptions, _userId: string): void => undefined
+  );
+  removeTransformer = mock.fn((_northId: string, _northTransformerId: string, _userId: string): void => undefined);
   checkSubscription = mock.fn((): boolean => false);
   subscribeToSouth = mock.fn((): void => undefined);
   unsubscribeFromSouth = mock.fn((): void => undefined);

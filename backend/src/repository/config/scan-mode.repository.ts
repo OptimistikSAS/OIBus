@@ -2,6 +2,7 @@ import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
 import { ScanMode } from '../../model/scan-mode.model';
 import { ActivationWindow, ScanModeInterval, ScanModeType } from '../../../shared/model/scan-mode.model';
+import AuditService from '../../service/audit.service';
 
 const SCAN_MODES_TABLE = 'scan_modes';
 
@@ -58,7 +59,10 @@ const DEFAULT_SCAN_MODES: Array<{ id?: string; name: string; description: string
  * Repository used for scan modes (cron definitions)
  */
 export default class ScanModeRepository {
-  constructor(private readonly database: Database) {
+  constructor(
+    private readonly database: Database,
+    private readonly auditService: AuditService
+  ) {
     this.createDefault();
   }
 
@@ -107,10 +111,13 @@ export default class ScanModeRepository {
         createdBy
       );
     const query = `SELECT ${scanModeColumns()} FROM ${SCAN_MODES_TABLE} WHERE ROWID = ?;`;
-    return toScanMode(this.database.prepare(query).get(result.lastInsertRowid) as Record<string, string>);
+    const created = toScanMode(this.database.prepare(query).get(result.lastInsertRowid) as Record<string, string>);
+    this.auditService.record('scan_mode', created.id, 'CREATE', null, created as unknown as Record<string, unknown>, createdBy);
+    return created;
   }
 
   update(id: string, command: Omit<ScanMode, 'id' | 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt'>, updatedBy: string): void {
+    const before = this.findById(id);
     const query =
       `UPDATE ${SCAN_MODES_TABLE} SET name = ?, description = ?, type = ?, cron = ?, interval = ?, activation_window = ?, ` +
       `updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
@@ -126,11 +133,24 @@ export default class ScanModeRepository {
         updatedBy,
         id
       );
+    const after = this.findById(id);
+    this.auditService.record(
+      'scan_mode',
+      id,
+      'UPDATE',
+      before as unknown as Record<string, unknown>,
+      after as unknown as Record<string, unknown>,
+      updatedBy
+    );
   }
 
-  delete(id: string): void {
+  delete(id: string, deletedBy: string): void {
+    const before = this.findById(id);
     const query = `DELETE FROM ${SCAN_MODES_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(id);
+    if (before) {
+      this.auditService.record('scan_mode', id, 'DELETE', before as unknown as Record<string, unknown>, null, deletedBy);
+    }
   }
 }
 

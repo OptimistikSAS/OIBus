@@ -2,12 +2,13 @@ import { before, after, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { mock } from 'node:test';
 import { Database } from 'better-sqlite3';
-import { emptyDatabase, flushPromises, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, emptyDatabase, flushPromises, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
 import EngineRepository from './engine.repository';
 import { version } from '../../../package.json';
 import argon2 from 'argon2';
 import UserRepository from './user.repository';
+import AuditService from '../../service/audit.service';
 
 const TEST_DB_PATH = 'src/tests/test-config-engine.db';
 
@@ -24,9 +25,11 @@ describe('EngineRepository with populated database', () => {
 
   describe('Engine', () => {
     let repository: EngineRepository;
+    let auditService: AuditService;
 
     beforeEach(() => {
-      repository = new EngineRepository(database, '3.5.0');
+      auditService = createAuditServiceMock();
+      repository = new EngineRepository(database, auditService, '3.5.0');
     });
 
     it('should properly get the engine settings', () => {
@@ -35,11 +38,14 @@ describe('EngineRepository with populated database', () => {
 
     it('should update engine settings', () => {
       const command = { ...testData.engine.command, general: { name: 'updated engine' } };
+      const before = repository.get();
       repository.update(command, testData.users.list[0].id);
-      assert.deepStrictEqual(stripAuditFields(repository.get()), {
+      const after = repository.get();
+      assert.deepStrictEqual(stripAuditFields(after), {
         id: testData.engine.settings.id,
         version: testData.engine.settings.version,
         launcherVersion: testData.engine.settings.launcherVersion,
+        auditRetentionDuration: null,
         general: { name: 'updated engine' },
         webServer: { port: command.webServer.port, authTokenDuration: command.webServer.authTokenDuration },
         proxyServer: {
@@ -56,16 +62,32 @@ describe('EngineRepository with populated database', () => {
         },
         logger: command.logger
       });
+
+      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+      assert.strictEqual(recordMock.mock.calls.length, 1);
+      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['engine', after!.id, 'UPDATE', before, after, testData.users.list[0].id]);
     });
 
     it('should update name only', () => {
+      const before = repository.get();
       repository.updateName('my new name', testData.users.list[0].id);
-      assert.strictEqual(repository.get()!.general.name, 'my new name');
+      const after = repository.get();
+      assert.strictEqual(after!.general.name, 'my new name');
+
+      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+      assert.strictEqual(recordMock.mock.calls.length, 1);
+      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['engine', after!.id, 'UPDATE', before, after, testData.users.list[0].id]);
     });
 
     it('should update web server port only', () => {
+      const before = repository.get();
       repository.updateWebServer(testData.engine.webServerCommand, testData.users.list[0].id);
-      assert.strictEqual(repository.get()!.webServer.port, testData.engine.webServerCommand.port);
+      const after = repository.get();
+      assert.strictEqual(after!.webServer.port, testData.engine.webServerCommand.port);
+
+      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+      assert.strictEqual(recordMock.mock.calls.length, 1);
+      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['engine', after!.id, 'UPDATE', before, after, testData.users.list[0].id]);
     });
 
     it('should update engine settings without a forward proxy (falls back to disabled defaults)', () => {
@@ -84,10 +106,22 @@ describe('EngineRepository with populated database', () => {
 
     it('should update proxy settings with proxy disabled', () => {
       const disabledForward = { enabled: false, url: null, username: null, password: null };
+      const before = repository.get();
       repository.updateProxy({ enabled: false, port: null, forward: disabledForward }, testData.users.list[0].id);
       const result = repository.get()!;
       assert.strictEqual(result.proxyServer.enabled, false);
       assert.strictEqual(result.proxyServer.port, null);
+
+      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+      assert.strictEqual(recordMock.mock.calls.length, 1);
+      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
+        'engine',
+        result.id,
+        'UPDATE',
+        before,
+        result,
+        testData.users.list[0].id
+      ]);
     });
 
     it('should update proxy settings with proxy enabled', () => {
@@ -110,8 +144,20 @@ describe('EngineRepository with populated database', () => {
     });
 
     it('should update logger settings only', () => {
+      const before = repository.get();
       repository.updateLogger(testData.engine.loggerCommand, testData.users.list[0].id);
-      assert.deepStrictEqual(repository.get()!.logger, testData.engine.loggerCommand);
+      const after = repository.get();
+      assert.deepStrictEqual(after!.logger, testData.engine.loggerCommand);
+
+      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+      assert.strictEqual(recordMock.mock.calls.length, 1);
+      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['engine', after!.id, 'UPDATE', before, after, testData.users.list[0].id]);
+    });
+
+    it('should not call the audit service when updating the version', () => {
+      repository.updateVersion('9.9.100', '9.9.100');
+      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+      assert.strictEqual(recordMock.mock.calls.length, 0);
     });
 
     it('should update version', () => {
@@ -133,7 +179,7 @@ describe('EngineRepository with empty database', () => {
 
   describe('Engine', () => {
     it('should properly init engine settings table with default port', () => {
-      const repository = new EngineRepository(database, '3.5.0');
+      const repository = new EngineRepository(database, createAuditServiceMock(), '3.5.0');
       const result = stripAuditFields(repository.get());
 
       assert.ok(result);
@@ -161,7 +207,7 @@ describe('EngineRepository with empty database', () => {
     });
 
     it('should use a custom port when provided', () => {
-      const repository = new EngineRepository(database, '3.5.0', 3000);
+      const repository = new EngineRepository(database, createAuditServiceMock(), '3.5.0', 3000);
       // createDefault is a no-op because the record already exists from the previous test
       assert.strictEqual(repository.get()!.webServer.port, 2223);
     });
@@ -174,7 +220,7 @@ describe('EngineRepository with empty database', () => {
       });
       const consoleErrorMock = mock.method(console, 'error', () => null);
 
-      const repository = new UserRepository(database);
+      const repository = new UserRepository(database, createAuditServiceMock());
 
       await flushPromises();
       assert.strictEqual(repository.list().length, 0);
@@ -186,7 +232,7 @@ describe('EngineRepository with empty database', () => {
     it('should create a default admin user', async () => {
       mock.method(argon2, 'hash', async (password: string) => password);
 
-      const repository = new UserRepository(database);
+      const repository = new UserRepository(database, createAuditServiceMock());
 
       await flushPromises();
 
@@ -217,7 +263,7 @@ describe('EngineRepository with custom default port', () => {
   });
 
   it('should seed engine settings with a custom port', () => {
-    const repository = new EngineRepository(db, '3.5.0', 3000);
+    const repository = new EngineRepository(db, createAuditServiceMock(), '3.5.0', 3000);
     assert.strictEqual(repository.get()!.webServer.port, 3000);
   });
 });

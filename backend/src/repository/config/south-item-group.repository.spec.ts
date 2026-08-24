@@ -4,9 +4,10 @@ import { mock } from 'node:test';
 import { Database } from 'better-sqlite3';
 import SouthItemGroupRepository, { toSouthItemGroup } from './south-item-group.repository';
 import SouthConnectorRepository from './south-connector.repository';
-import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
 import { SouthItemGroupCommand } from '../../model/south-connector.model';
+import AuditService from '../../service/audit.service';
 
 const TEST_DB_PATH = 'src/tests/test-config-south-item-group.db';
 
@@ -23,9 +24,11 @@ describe('South Item Group Repository', () => {
 
   describe('South item group operations', () => {
     let repository: SouthItemGroupRepository;
+    let auditService: AuditService;
 
     beforeEach(() => {
-      repository = new SouthItemGroupRepository(database);
+      auditService = createAuditServiceMock();
+      repository = new SouthItemGroupRepository(database, auditService);
     });
 
     it('should find a group by id', () => {
@@ -146,6 +149,10 @@ describe('South Item Group Repository', () => {
       assert.strictEqual(created.southId, testData.south.list[0].id);
       assert.strictEqual(created.scanMode.id, testData.scanMode.list[0].id);
       assert.strictEqual(created.startTimeOffset, 5);
+
+      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+      assert.strictEqual(recordMock.mock.calls.length, 1);
+      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['south_item_group', created.id, 'CREATE', null, created, 'userTest']);
     });
 
     it('should create a group with custom id', () => {
@@ -212,6 +219,7 @@ describe('South Item Group Repository', () => {
         readDelay: 0
       };
 
+      const before = repository.findById(created.id);
       repository.update(created.id, updateCommand, 'userTest');
 
       const updated = repository.findById(created.id);
@@ -220,6 +228,10 @@ describe('South Item Group Repository', () => {
       assert.strictEqual(updated.scanMode.id, testData.scanMode.list[1].id);
       assert.strictEqual(updated.startTimeOffset, 15);
       assert.strictEqual(updated.southId, testData.south.list[0].id);
+
+      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+      assert.strictEqual(recordMock.mock.calls.length, 2); // create + update
+      assert.deepStrictEqual(recordMock.mock.calls[1].arguments, ['south_item_group', created.id, 'UPDATE', before, updated, 'userTest']);
     });
 
     it('should cascade a group scan mode change to its synced member items', () => {
@@ -308,8 +320,12 @@ describe('South Item Group Repository', () => {
       const created = repository.create(groupToCreate, 'userTest');
       assert.ok(repository.findById(created.id));
 
-      repository.delete(created.id);
+      repository.delete(created.id, 'userTest');
       assert.strictEqual(repository.findById(created.id), null);
+
+      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+      assert.strictEqual(recordMock.mock.calls.length, 2); // create + delete
+      assert.deepStrictEqual(recordMock.mock.calls[1].arguments, ['south_item_group', created.id, 'DELETE', created, null, 'userTest']);
     });
 
     it('should convert database result to SouthItemGroupEntity', () => {

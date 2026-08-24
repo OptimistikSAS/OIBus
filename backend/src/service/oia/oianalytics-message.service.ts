@@ -365,6 +365,7 @@ export default class OIAnalyticsMessageService {
       ignoreIpFilters: info.ignoreIpFilters,
       ignoreRemoteUpdate: info.ignoreRemoteUpdate,
       settings: {
+        auditRetentionDuration: engine.auditRetentionDuration,
         general: {
           name: engine.general.name
         },

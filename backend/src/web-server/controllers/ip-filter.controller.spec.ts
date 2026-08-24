@@ -99,6 +99,6 @@ describe('IPFilterController', () => {
     await controller.delete(ipFilterId, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(ipFilterService.delete.mock.calls.length, 1);
-    assert.deepStrictEqual(ipFilterService.delete.mock.calls[0].arguments[0], ipFilterId);
+    assert.deepStrictEqual(ipFilterService.delete.mock.calls[0].arguments, [ipFilterId, 'test']);
   });
 });

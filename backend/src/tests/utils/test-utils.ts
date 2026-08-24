@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { mock } from 'node:test';
 import Database from 'better-sqlite3';
 import type { CustomExpressRequest } from '../../web-server/express';
 import CertificateServiceMock from '../__mocks__/service/certificate-service.mock';
@@ -50,6 +51,7 @@ import { BaseFolders } from '../../model/types';
 import { Transformer, TransformerSource } from '../../model/transformer.model';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { OIBusSouthType } from '../../../shared/model/south-connector.model';
+import AuditService from '../../service/audit.service';
 
 const CONFIG_TEST_DATABASE = path.resolve('src', 'tests', 'test-config.db');
 const CRYPTO_TEST_DATABASE = path.resolve('src', 'tests', 'test-crypto.db');
@@ -77,6 +79,19 @@ export function createMockServices(overrides: Record<string, unknown> = {}): Cus
     userService: new UserServiceMock() as unknown as CustomExpressRequest['services']['userService'],
     ...overrides
   } as CustomExpressRequest['services'];
+}
+
+/**
+ * Create a lightweight stub AuditService for repositories that require one as a constructor
+ * dependency but are not under test themselves. Each call returns a fresh instance so
+ * mock.fn() call assertions on `record` stay isolated between tests.
+ */
+export function createAuditServiceMock(): AuditService {
+  return {
+    record: mock.fn(),
+    search: mock.fn(),
+    findByEntity: mock.fn()
+  } as unknown as AuditService;
 }
 
 /**

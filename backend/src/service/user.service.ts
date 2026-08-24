@@ -48,10 +48,10 @@ export default class UserService {
     return await this.userRepository.create(command, password, createdBy);
   }
 
-  async update(userId: string, command: UserCommandDTO): Promise<void> {
+  async update(userId: string, command: UserCommandDTO, updatedBy: string): Promise<void> {
     const user = this.findById(userId);
     await this.validator.validate(userSchema, command);
-    this.userRepository.update(user.id, command);
+    this.userRepository.update(user.id, command, updatedBy);
   }
 
   async updatePassword(userId: string, newPassword: string | undefined): Promise<void> {
@@ -62,9 +62,9 @@ export default class UserService {
     await this.userRepository.updatePassword(user.id, newPassword);
   }
 
-  delete(userId: string): void {
+  delete(userId: string, deletedBy: string): void {
     const user = this.findById(userId);
-    this.userRepository.delete(user.id);
+    this.userRepository.delete(user.id, deletedBy);
   }
 
   getUserInfo(userId: string): UserInfo {

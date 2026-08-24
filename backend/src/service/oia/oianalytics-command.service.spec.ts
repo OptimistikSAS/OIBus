@@ -1107,7 +1107,8 @@ describe('OIAnalytics Command Service', () => {
     await service.processNextCommand();
 
     assert.deepStrictEqual(scanModeService.delete.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[6] as OIBusDeleteScanModeCommand).scanModeId
+      (testData.oIAnalytics.commands.oIBusList[6] as OIBusDeleteScanModeCommand).scanModeId,
+      'oianalytics'
     ]);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[6].id,
@@ -1122,7 +1123,8 @@ describe('OIAnalytics Command Service', () => {
     await service.processNextCommand();
 
     assert.deepStrictEqual(southService.delete.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[7] as OIBusDeleteSouthConnectorCommand).southConnectorId
+      (testData.oIAnalytics.commands.oIBusList[7] as OIBusDeleteSouthConnectorCommand).southConnectorId,
+      'oianalytics'
     ]);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[7].id,
@@ -1137,7 +1139,8 @@ describe('OIAnalytics Command Service', () => {
     await service.processNextCommand();
 
     assert.deepStrictEqual(northService.delete.mock.calls[0].arguments, [
-      (testData.oIAnalytics.commands.oIBusList[8] as OIBusDeleteNorthConnectorCommand).northConnectorId
+      (testData.oIAnalytics.commands.oIBusList[8] as OIBusDeleteNorthConnectorCommand).northConnectorId,
+      'oianalytics'
     ]);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[8].id,
@@ -1625,7 +1628,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.processNextCommand();
 
-    assert.deepStrictEqual(oIAnalyticsRegistrationService.updateKeys.mock.calls[0].arguments, ['private key', 'public key']);
+    assert.deepStrictEqual(oIAnalyticsRegistrationService.updateKeys.mock.calls[0].arguments, ['private key', 'public key', 'oianalytics']);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[12].id,
@@ -1684,7 +1687,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.processNextCommand();
 
-    assert.deepStrictEqual(ipFilterService.delete.mock.calls[0].arguments, [command.ipFilterId]);
+    assert.deepStrictEqual(ipFilterService.delete.mock.calls[0].arguments, [command.ipFilterId, 'oianalytics']);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -1746,7 +1749,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.processNextCommand();
 
-    assert.deepStrictEqual(certificateService.delete.mock.calls[0].arguments, [command.certificateId]);
+    assert.deepStrictEqual(certificateService.delete.mock.calls[0].arguments, [command.certificateId, 'oianalytics']);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -1929,7 +1932,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.processNextCommand();
 
-    assert.deepStrictEqual(transformerService.delete.mock.calls[0].arguments, ['transformerId1']);
+    assert.deepStrictEqual(transformerService.delete.mock.calls[0].arguments, ['transformerId1', 'oianalytics']);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -2301,7 +2304,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.processNextCommand();
 
-    assert.deepStrictEqual(historyQueryService.delete.mock.calls[0].arguments, [command.historyQueryId]);
+    assert.deepStrictEqual(historyQueryService.delete.mock.calls[0].arguments, [command.historyQueryId, 'oianalytics']);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,

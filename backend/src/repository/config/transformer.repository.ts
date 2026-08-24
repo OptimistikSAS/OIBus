@@ -20,12 +20,16 @@ import RecordListToCsvTransformer from '../../transformers/any/record-list-to-cs
 import JSONToOIAnalyticsTransformer from '../../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
 import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToTimeValuesTransformer from '../../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
+import AuditService from '../../service/audit.service';
 
 const TRANSFORMERS_TABLE = 'transformers';
 const PAGE_SIZE = 10;
 
 export default class TransformerRepository {
-  constructor(private readonly database: Database) {
+  constructor(
+    private readonly database: Database,
+    private readonly auditService: AuditService
+  ) {
     this.createStandardTransformers();
   }
 
@@ -56,7 +60,17 @@ export default class TransformerRepository {
           transformer.createdBy,
           transformer.updatedBy
         );
+      const created = this.findById(transformer.id);
+      this.auditService.record(
+        'transformer',
+        transformer.id,
+        'CREATE',
+        null,
+        created as unknown as Record<string, unknown>,
+        transformer.createdBy
+      );
     } else {
+      const before = this.findById(transformer.id);
       this.database
         .prepare(
           `UPDATE ${TRANSFORMERS_TABLE} SET name = ?, description = ?, custom_manifest = ?, custom_code = ?, language = ?, timeout = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?`
@@ -71,11 +85,24 @@ export default class TransformerRepository {
           transformer.updatedBy,
           transformer.id
         );
+      const after = this.findById(transformer.id);
+      this.auditService.record(
+        'transformer',
+        transformer.id,
+        'UPDATE',
+        before as unknown as Record<string, unknown>,
+        after as unknown as Record<string, unknown>,
+        transformer.updatedBy
+      );
     }
   }
 
-  delete(id: string): void {
+  delete(id: string, deletedBy: string): void {
+    const before = this.findById(id);
     this.database.prepare(`DELETE FROM ${TRANSFORMERS_TABLE} WHERE id = ?`).run(id);
+    if (before) {
+      this.auditService.record('transformer', id, 'DELETE', before as unknown as Record<string, unknown>, null, deletedBy);
+    }
   }
 
   findById(id: string): Transformer | null {

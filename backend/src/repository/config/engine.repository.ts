@@ -10,6 +10,7 @@ import {
 } from '../../../shared/model/engine.model';
 import { version } from '../../../package.json';
 import { LogLevel } from '../../../shared/model/logs.model';
+import AuditService from '../../service/audit.service';
 
 const ENGINES_TABLE = 'engines';
 
@@ -19,6 +20,7 @@ const DEFAULT_ENGINE_SETTINGS: Omit<
   EngineSettings,
   'id' | 'version' | 'launcherVersion' | 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt'
 > = {
+  auditRetentionDuration: null,
   general: {
     name: 'OIBus'
   },
@@ -77,6 +79,7 @@ const DEFAULT_ENGINE_SETTINGS: Omit<
 export default class EngineRepository {
   constructor(
     private readonly database: Database,
+    private readonly auditService: AuditService,
     launcherVersion: string,
     defaultPort = DEFAULT_ENGINE_SETTINGS.webServer.port,
     defaultName = DEFAULT_ENGINE_SETTINGS.general.name
@@ -111,6 +114,7 @@ export default class EngineRepository {
   }
 
   update(command: EngineSettingsCommandDTO, updatedBy: string): void {
+    const before = this.get();
     const query =
       `UPDATE ${ENGINES_TABLE} SET name = ?, port = ?, auth_token_duration = ?, proxy_enabled = ?, proxy_port = ?, ` +
       'forward_proxy_enabled = ?, forward_proxy_url = ?, forward_proxy_username = ?, forward_proxy_password = ?, proxy_username = ?, proxy_password = ?, ' +
@@ -167,23 +171,53 @@ export default class EngineRepository {
         command.logger.syslog.protocol,
         updatedBy
       );
+    const after = this.get();
+    this.auditService.record(
+      'engine',
+      after!.id,
+      'UPDATE',
+      before as unknown as Record<string, unknown>,
+      after as unknown as Record<string, unknown>,
+      updatedBy
+    );
   }
 
   updateName(name: string, updatedBy: string): void {
+    const before = this.get();
     const query =
       `UPDATE ${ENGINES_TABLE} SET name = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
     this.database.prepare(query).run(name, updatedBy);
+    const after = this.get();
+    this.auditService.record(
+      'engine',
+      after!.id,
+      'UPDATE',
+      before as unknown as Record<string, unknown>,
+      after as unknown as Record<string, unknown>,
+      updatedBy
+    );
   }
 
   updateWebServer(command: EngineWebServerCommandDTO, updatedBy: string): void {
+    const before = this.get();
     const query =
       `UPDATE ${ENGINES_TABLE} SET port = ?, auth_token_duration = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
     this.database.prepare(query).run(command.port, command.authTokenDuration, updatedBy);
+    const after = this.get();
+    this.auditService.record(
+      'engine',
+      after!.id,
+      'UPDATE',
+      before as unknown as Record<string, unknown>,
+      after as unknown as Record<string, unknown>,
+      updatedBy
+    );
   }
 
   updateProxy(command: EngineProxyCommandDTO, updatedBy: string): void {
+    const before = this.get();
     const query =
       `UPDATE ${ENGINES_TABLE} SET proxy_enabled = ?, proxy_port = ?, ` +
       `forward_proxy_enabled = ?, forward_proxy_url = ?, forward_proxy_username = ?, forward_proxy_password = ?, ` +
@@ -203,9 +237,19 @@ export default class EngineRepository {
         command.password,
         updatedBy
       );
+    const after = this.get();
+    this.auditService.record(
+      'engine',
+      after!.id,
+      'UPDATE',
+      before as unknown as Record<string, unknown>,
+      after as unknown as Record<string, unknown>,
+      updatedBy
+    );
   }
 
   updateLogger(command: EngineLoggerCommandDTO, updatedBy: string): void {
+    const before = this.get();
     const query =
       `UPDATE ${ENGINES_TABLE} SET ` +
       'log_console_level = ?, ' +
@@ -249,6 +293,15 @@ export default class EngineRepository {
         command.oia.interval,
         updatedBy
       );
+    const after = this.get();
+    this.auditService.record(
+      'engine',
+      after!.id,
+      'UPDATE',
+      before as unknown as Record<string, unknown>,
+      after as unknown as Record<string, unknown>,
+      updatedBy
+    );
   }
 
   updateVersion(version: string, launcherVersion: string): void {
@@ -317,6 +370,8 @@ export default class EngineRepository {
       id: result.id as string,
       version: result.oibus_version as string,
       launcherVersion: result.oibus_launcher_version as string,
+      // TODO: wire audit_retention_duration through get()/update()/createDefault() once the audit retention feature reads/writes it
+      auditRetentionDuration: null,
       general: {
         name: result.name as string
       },
