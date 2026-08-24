@@ -179,7 +179,7 @@ describe('HistoryQueryController', () => {
     await controller.delete(historyId, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(historyQueryService.delete.mock.calls.length, 1);
-    assert.deepStrictEqual(historyQueryService.delete.mock.calls[0].arguments[0], historyId);
+    assert.deepStrictEqual(historyQueryService.delete.mock.calls[0].arguments, [historyId, 'test']);
   });
 
   it('should start a history query', async () => {
@@ -619,7 +619,7 @@ describe('HistoryQueryController', () => {
     await controller.deleteItems(historyId, { itemIds }, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(historyQueryService.deleteItems.mock.calls.length, 1);
-    assert.deepStrictEqual(historyQueryService.deleteItems.mock.calls[0].arguments, [historyId, itemIds]);
+    assert.deepStrictEqual(historyQueryService.deleteItems.mock.calls[0].arguments, [historyId, itemIds, 'test']);
   });
 
   it('should delete a history query item', async () => {
@@ -630,7 +630,7 @@ describe('HistoryQueryController', () => {
     await controller.deleteItem(historyId, itemId, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(historyQueryService.deleteItem.mock.calls.length, 1);
-    assert.deepStrictEqual(historyQueryService.deleteItem.mock.calls[0].arguments, [historyId, itemId]);
+    assert.deepStrictEqual(historyQueryService.deleteItem.mock.calls[0].arguments, [historyId, itemId, 'test']);
   });
 
   it('should delete all items from a history query', async () => {
@@ -640,7 +640,7 @@ describe('HistoryQueryController', () => {
     await controller.deleteAllItems(historyId, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(historyQueryService.deleteAllItems.mock.calls.length, 1);
-    assert.deepStrictEqual(historyQueryService.deleteAllItems.mock.calls[0].arguments[0], historyId);
+    assert.deepStrictEqual(historyQueryService.deleteAllItems.mock.calls[0].arguments, [historyId, 'test']);
   });
 
   it('should convert items to CSV', async () => {
@@ -884,7 +884,7 @@ describe('HistoryQueryController', () => {
     await controller.addOrEditTransformer(historyId, command, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(historyQueryService.addOrEditTransformer.mock.calls.length, 1);
-    assert.deepStrictEqual(historyQueryService.addOrEditTransformer.mock.calls[0].arguments, [historyId, command]);
+    assert.deepStrictEqual(historyQueryService.addOrEditTransformer.mock.calls[0].arguments, [historyId, command, 'test']);
   });
 
   it('should remove a transformer', async () => {
@@ -895,7 +895,7 @@ describe('HistoryQueryController', () => {
     await controller.removeTransformer(historyId, transformerId, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(historyQueryService.removeTransformer.mock.calls.length, 1);
-    assert.deepStrictEqual(historyQueryService.removeTransformer.mock.calls[0].arguments, [historyId, transformerId]);
+    assert.deepStrictEqual(historyQueryService.removeTransformer.mock.calls[0].arguments, [historyId, transformerId, 'test']);
   });
 
   it('should search cache content with default params', async () => {

@@ -157,7 +157,7 @@ describe('NorthConnectorController', () => {
     await controller.delete(northId, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(northService.delete.mock.calls.length, 1);
-    assert.deepStrictEqual(northService.delete.mock.calls[0].arguments[0], northId);
+    assert.deepStrictEqual(northService.delete.mock.calls[0].arguments, [northId, 'test']);
   });
 
   it('should start a north connector', async () => {
@@ -234,7 +234,7 @@ describe('NorthConnectorController', () => {
     await controller.addOrEditTransformer(northId, transformer, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(northService.addOrEditTransformer.mock.calls.length, 1);
-    assert.deepStrictEqual(northService.addOrEditTransformer.mock.calls[0].arguments, [northId, transformer]);
+    assert.deepStrictEqual(northService.addOrEditTransformer.mock.calls[0].arguments, [northId, transformer, 'test']);
   });
 
   it('should remove a transformer', async () => {
@@ -245,7 +245,7 @@ describe('NorthConnectorController', () => {
     await controller.removeTransformer(northId, transformerId, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(northService.removeTransformer.mock.calls.length, 1);
-    assert.deepStrictEqual(northService.removeTransformer.mock.calls[0].arguments, [northId, transformerId]);
+    assert.deepStrictEqual(northService.removeTransformer.mock.calls[0].arguments, [northId, transformerId, 'test']);
   });
 
   it('should search cache content with default params', async () => {

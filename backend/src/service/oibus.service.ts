@@ -417,6 +417,7 @@ export const toEngineSettingsDTO = (engineSettings: EngineSettings, getUserInfo:
     updatedAt: engineSettings.updatedAt,
     version: engineSettings.version,
     launcherVersion: engineSettings.launcherVersion,
+    auditRetentionDuration: engineSettings.auditRetentionDuration,
     general: {
       name: engineSettings.general.name
     },

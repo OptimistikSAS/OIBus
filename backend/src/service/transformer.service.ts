@@ -68,7 +68,7 @@ import type { ILogger } from '../model/logger.model';
 
 interface TransformerReloadEngine {
   reloadTransformer(transformerId: string): Promise<void>;
-  removeAndReloadTransformer(transformerId: string): Promise<void>;
+  removeAndReloadTransformer(transformerId: string, updatedBy: string): Promise<void>;
   logger: ILogger;
 }
 
@@ -201,19 +201,19 @@ export default class TransformerService {
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
     if (manifestChanged) {
-      await this.engine.removeAndReloadTransformer(transformerId);
+      await this.engine.removeAndReloadTransformer(transformerId, updatedBy);
     } else if (codeChanged) {
       await this.engine.reloadTransformer(transformerId);
     }
   }
 
-  async delete(transformerId: string): Promise<void> {
+  async delete(transformerId: string, userId: string): Promise<void> {
     const transformer = this.findById(transformerId);
     if (transformer.type === 'standard') {
       throw new OIBusValidationError(`Cannot delete standard transformer "${transformerId}"`);
     }
-    await this.engine.removeAndReloadTransformer(transformerId);
-    this.transformerRepository.delete(transformerId);
+    await this.engine.removeAndReloadTransformer(transformerId, userId);
+    this.transformerRepository.delete(transformerId, userId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 

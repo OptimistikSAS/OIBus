@@ -5,6 +5,7 @@ import { AuthTokenDuration } from '../../shared/model/engine.model';
 export interface EngineSettings extends BaseEntity {
   version: string;
   launcherVersion: string;
+  auditRetentionDuration: number | null;
   general: {
     name: string;
   };

@@ -4,13 +4,14 @@ import { User } from '../../../../model/user.model';
 import { UserCommandDTO, UserSearchParam } from '../../../../../shared/model/user.model';
 import { Page } from '../../../../../shared/model/types';
 import UserRepository from '../../../../repository/config/user.repository';
+import { createAuditServiceMock } from '../../../utils/test-utils';
 
 /**
  * Create a mock object for User repository
  */
 export default class UserRepositoryMock extends UserRepository {
   constructor() {
-    super({} as Database);
+    super({} as Database, createAuditServiceMock());
   }
   protected override createDefault(): void {
     return;
@@ -33,7 +34,7 @@ export default class UserRepositoryMock extends UserRepository {
       _createdBy: string
     ): Promise<User> => ({}) as User
   );
-  override update = mock.fn((_id: string, _command: UserCommandDTO): void => undefined);
+  override update = mock.fn((_id: string, _command: UserCommandDTO, _updatedBy: string): void => undefined);
   override updatePassword = mock.fn(async (_id: string, _password: string): Promise<void> => undefined);
-  override delete = mock.fn((_id: string): void => undefined);
+  override delete = mock.fn((_id: string, _deletedBy: string): void => undefined);
 }

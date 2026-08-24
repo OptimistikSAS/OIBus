@@ -818,13 +818,19 @@ describe('DataStreamEngine', () => {
         const spyReloadHistoryQuery = mock.method(engine, 'reloadHistoryQuery', async () => undefined);
         const spyUpdateNorthConfig = mock.method(engine, 'updateNorthConfiguration');
 
-        await engine.removeAndReloadTransformer(transformerId);
+        await engine.removeAndReloadTransformer(transformerId, 'user1');
 
         assert.ok(logger.debug.mock.calls.some(c => (c.arguments[0] as string).includes(transformerId)));
         assert.strictEqual(northConnectorRepository.removeTransformersByTransformerId.mock.calls.length, 1);
-        assert.deepStrictEqual(northConnectorRepository.removeTransformersByTransformerId.mock.calls[0].arguments, [transformerId]);
+        assert.deepStrictEqual(northConnectorRepository.removeTransformersByTransformerId.mock.calls[0].arguments, [
+          transformerId,
+          'user1'
+        ]);
         assert.strictEqual(historyQueryRepository.removeTransformersByTransformerId.mock.calls.length, 1);
-        assert.deepStrictEqual(historyQueryRepository.removeTransformersByTransformerId.mock.calls[0].arguments, [transformerId]);
+        assert.deepStrictEqual(historyQueryRepository.removeTransformersByTransformerId.mock.calls[0].arguments, [
+          transformerId,
+          'user1'
+        ]);
         assert.strictEqual(spyUpdateNorthConfig.mock.calls.length, 1);
         assert.deepStrictEqual(spyUpdateNorthConfig.mock.calls[0].arguments, [testData.north.list[0].id]);
         assert.strictEqual(spyReloadHistoryQuery.mock.calls.length, 1);
@@ -835,16 +841,18 @@ describe('DataStreamEngine', () => {
         const spyReloadHistoryQuery = mock.method(engine, 'reloadHistoryQuery', async () => undefined);
         const spyUpdateNorthConfig = mock.method(engine, 'updateNorthConfiguration');
 
-        await engine.removeAndReloadTransformer('non-existent-transformer-id');
+        await engine.removeAndReloadTransformer('non-existent-transformer-id', 'user1');
 
         assert.strictEqual(logger.debug.mock.calls.length, 0);
         assert.strictEqual(northConnectorRepository.removeTransformersByTransformerId.mock.calls.length, 1);
         assert.deepStrictEqual(northConnectorRepository.removeTransformersByTransformerId.mock.calls[0].arguments, [
-          'non-existent-transformer-id'
+          'non-existent-transformer-id',
+          'user1'
         ]);
         assert.strictEqual(historyQueryRepository.removeTransformersByTransformerId.mock.calls.length, 1);
         assert.deepStrictEqual(historyQueryRepository.removeTransformersByTransformerId.mock.calls[0].arguments, [
-          'non-existent-transformer-id'
+          'non-existent-transformer-id',
+          'user1'
         ]);
         assert.strictEqual(spyUpdateNorthConfig.mock.calls.length, 0);
         assert.strictEqual(spyReloadHistoryQuery.mock.calls.length, 0);

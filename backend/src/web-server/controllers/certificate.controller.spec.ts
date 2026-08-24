@@ -118,7 +118,7 @@ describe('CertificateController', () => {
     await controller.delete(certificateId, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(certificateService.delete.mock.calls.length, 1);
-    assert.deepStrictEqual(certificateService.delete.mock.calls[0].arguments[0], certificateId);
+    assert.deepStrictEqual(certificateService.delete.mock.calls[0].arguments, [certificateId, 'test']);
   });
 
   it('should import a certificate', async () => {

@@ -197,10 +197,10 @@ export default class SouthService {
     await this.engine.reloadSouth(southEntity);
   }
 
-  async delete(southId: string): Promise<void> {
+  async delete(southId: string, userId: string): Promise<void> {
     const southConnector = this.findById(southId);
     await this.engine.deleteSouth(southConnector);
-    this.southConnectorRepository.deleteSouth(southConnector.id);
+    this.southConnectorRepository.deleteSouth(southConnector.id, userId);
     this.logRepository.deleteLogsByScopeId('south', southConnector.id);
     this.southMetricsRepository.removeMetrics(southConnector.id);
     this.southCacheRepository.deleteItemsBySouth(southConnector.id);
@@ -617,10 +617,10 @@ export default class SouthService {
     await this.engine.reloadSouthItems(southConnector);
   }
 
-  async deleteItem(southId: string, itemId: string): Promise<void> {
+  async deleteItem(southId: string, itemId: string, userId: string): Promise<void> {
     const southConnector = this.findById(southId)!;
     const southItem = this.findItemById(southId, itemId);
-    this.southConnectorRepository.deleteItem(southConnector.id, southItem.id);
+    this.southConnectorRepository.deleteItem(southConnector.id, southItem.id, userId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
   }
@@ -636,19 +636,19 @@ export default class SouthService {
     await this.engine.reloadSouthItems(southConnector);
   }
 
-  async deleteItems(southId: string, itemIds: Array<string>): Promise<void> {
+  async deleteItems(southId: string, itemIds: Array<string>, userId: string): Promise<void> {
     const southConnector = this.findById(southId);
     for (const itemId of itemIds) {
       const southItem = this.findItemById(southId, itemId);
-      this.southConnectorRepository.deleteItem(southConnector.id, southItem.id);
+      this.southConnectorRepository.deleteItem(southConnector.id, southItem.id, userId);
     }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
   }
 
-  async deleteAllItems(southId: string): Promise<void> {
+  async deleteAllItems(southId: string, userId: string): Promise<void> {
     const southConnector = this.findById(southId)!;
-    this.southConnectorRepository.deleteAllItemsBySouth(southId);
+    this.southConnectorRepository.deleteAllItemsBySouth(southId, userId);
     this.southCacheRepository.deleteItemsBySouth(southId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
@@ -829,7 +829,7 @@ export default class SouthService {
       itemsToAdd.push(southItemEntity);
     }
 
-    this.southConnectorRepository.saveAllItems(southConnector.id, itemsToAdd, deleteItemsNotPresent);
+    this.southConnectorRepository.saveAllItems(southConnector.id, itemsToAdd, deleteItemsNotPresent, user);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
   }
@@ -920,7 +920,7 @@ export default class SouthService {
     return updated;
   }
 
-  async deleteGroup(southId: string, groupId: string): Promise<void> {
+  async deleteGroup(southId: string, groupId: string, userId: string): Promise<void> {
     const southConnector = this.findById(southId);
     const group = this.southItemGroupRepository.findById(groupId);
     if (!group) {
@@ -933,7 +933,7 @@ export default class SouthService {
     // Fetched before deleteGroupAndUpdateItems() clears item.group / item.syncWithGroup, so we still
     // know which items were synced with this group when seeding their per-item cache below.
     const affectedItems = this.southConnectorRepository.findAllItemsForSouth(southId).filter(item => item.group?.id === groupId);
-    this.southConnectorRepository.deleteGroupAndUpdateItems(southId, group, manifest.modes.history);
+    this.southConnectorRepository.deleteGroupAndUpdateItems(southId, group, manifest.modes.history, userId);
     this.carryOverGroupTrackedInstant(
       southConnector,
       affectedItems.map(item => ({ before: item, afterGroupId: null, afterSyncWithGroup: false }))

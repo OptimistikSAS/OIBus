@@ -13,6 +13,7 @@ import { toTransformer } from './transformer.repository';
 import { ScanMode } from '../../model/scan-mode.model';
 import { scanModeColumns, toScanMode } from './scan-mode.repository';
 import { SouthConnectorItemEntityLight } from '../../model/south-connector.model';
+import AuditService from '../../service/audit.service';
 
 const HISTORY_QUERIES_TABLE = 'history_queries';
 const HISTORY_ITEMS_TABLE = 'history_items';
@@ -23,7 +24,10 @@ const SCAN_MODE = 'scan_modes';
 const PAGE_SIZE = 50;
 
 export default class HistoryQueryRepository {
-  constructor(private readonly database: Database) {}
+  constructor(
+    private readonly database: Database,
+    private readonly auditService: AuditService
+  ) {}
 
   findAllHistoriesLight(): Array<HistoryQueryEntityLight> {
     const query = `SELECT id, name, description, status, start_time, end_time, south_type, north_type, created_by, updated_by, created_at, updated_at FROM ${HISTORY_QUERIES_TABLE};`;
@@ -66,6 +70,11 @@ export default class HistoryQueryRepository {
   }
 
   saveHistory(history: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): void {
+    const isNew = !history.id;
+    const beforeHistory = history.id ? this.findHistoryById(history.id) : null;
+    const beforeItemsById = history.id
+      ? new Map(this.findAllItemsForHistory(history.id).map(i => [i.id, i]))
+      : new Map<string, HistoryQueryItemEntity<SouthItemSettings>>();
     const transaction = this.database.transaction(() => {
       if (!history.id) {
         history.id = generateRandomId(6);
@@ -199,6 +208,15 @@ export default class HistoryQueryRepository {
             }
             item.id = randomId;
             insert.run(item.id, item.name, +item.enabled, history.id, JSON.stringify(item.settings), item.createdBy, item.updatedBy);
+            const created = this.findItemById(history.id, item.id);
+            this.auditService.record(
+              'history_query_item',
+              item.id,
+              'CREATE',
+              null,
+              created as unknown as Record<string, unknown>,
+              item.updatedBy
+            );
           } else {
             const existing = existingItemsById.get(item.id);
             const hasChanged =
@@ -208,7 +226,30 @@ export default class HistoryQueryRepository {
               existing.settings !== JSON.stringify(item.settings);
             if (hasChanged) {
               update.run(item.name, +item.enabled, JSON.stringify(item.settings), item.updatedBy, item.id);
+              const after = this.findItemById(history.id, item.id);
+              this.auditService.record(
+                'history_query_item',
+                item.id,
+                'UPDATE',
+                (beforeItemsById.get(item.id) ?? null) as unknown as Record<string, unknown> | null,
+                after as unknown as Record<string, unknown>,
+                item.updatedBy
+              );
             }
+          }
+        }
+
+        const incomingItemIds = new Set(history.items.filter(item => item.id).map(item => item.id));
+        for (const [removedItemId, removedItem] of beforeItemsById) {
+          if (!incomingItemIds.has(removedItemId)) {
+            this.auditService.record(
+              'history_query_item',
+              removedItemId,
+              'DELETE',
+              removedItem as unknown as Record<string, unknown>,
+              null,
+              history.updatedBy
+            );
           }
         }
       } else {
@@ -222,9 +263,33 @@ export default class HistoryQueryRepository {
           .run(history.id);
 
         this.database.prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`).run(history.id);
+        for (const [removedItemId, removedItem] of beforeItemsById) {
+          this.auditService.record(
+            'history_query_item',
+            removedItemId,
+            'DELETE',
+            removedItem as unknown as Record<string, unknown>,
+            null,
+            history.updatedBy
+          );
+        }
       }
 
       const keepIds = history.northTransformers.filter(t => t.id).map(t => t.id);
+      const removedTransformerIds = (beforeHistory?.northTransformers ?? [])
+        .filter(t => !keepIds.includes(t.id))
+        .map(t => t.id);
+      for (const removedId of removedTransformerIds) {
+        this.auditService.record(
+          'history_query_transformer',
+          removedId,
+          'DELETE',
+          beforeHistory!.northTransformers.find(t => t.id === removedId) as unknown as Record<string, unknown>,
+          null,
+          history.updatedBy
+        );
+      }
+
       if (keepIds.length === 0) {
         this.database
           .prepare(
@@ -259,8 +324,18 @@ export default class HistoryQueryRepository {
         if (transformerWithOptions.id.startsWith('temp_')) {
           transformerWithOptions.id = '';
         }
-        this.addOrEditTransformer(history.id, transformerWithOptions);
+        this.addOrEditTransformer(history.id, transformerWithOptions, history.updatedBy);
       }
+
+      const afterHistory = this.findHistoryById(history.id);
+      this.auditService.record(
+        'history_query',
+        history.id,
+        isNew ? 'CREATE' : 'UPDATE',
+        beforeHistory as unknown as Record<string, unknown> | null,
+        afterHistory as unknown as Record<string, unknown>,
+        history.updatedBy
+      );
     });
     transaction();
   }
@@ -270,7 +345,8 @@ export default class HistoryQueryRepository {
     this.database.prepare(query).run(status, id);
   }
 
-  deleteHistory(id: string): void {
+  deleteHistory(id: string, deletedBy: string): void {
+    const before = this.findHistoryById(id);
     const transaction = this.database.transaction(() => {
       // 1. Delete items
       this.database
@@ -290,11 +366,30 @@ export default class HistoryQueryRepository {
 
       // 4. Delete the history itself
       this.database.prepare(`DELETE FROM ${HISTORY_QUERIES_TABLE} WHERE id = ?;`).run(id);
+
+      if (before) {
+        for (const item of before.items) {
+          this.auditService.record('history_query_item', item.id, 'DELETE', item as unknown as Record<string, unknown>, null, deletedBy);
+        }
+        for (const transformer of before.northTransformers) {
+          this.auditService.record(
+            'history_query_transformer',
+            transformer.id,
+            'DELETE',
+            transformer as unknown as Record<string, unknown>,
+            null,
+            deletedBy
+          );
+        }
+        this.auditService.record('history_query', id, 'DELETE', before as unknown as Record<string, unknown>, null, deletedBy);
+      }
     });
     transaction();
   }
 
-  addOrEditTransformer(historyId: string, transformerWithOptions: HistoryTransformerWithOptions): void {
+  addOrEditTransformer(historyId: string, transformerWithOptions: HistoryTransformerWithOptions, updatedBy: string): void {
+    const wasNew = !transformerWithOptions.id;
+    const before = wasNew ? null : (this.findTransformersForHistory(historyId).find(t => t.id === transformerWithOptions.id) ?? null);
     if (!transformerWithOptions.id) {
       transformerWithOptions.id = generateRandomId(6);
       const query = `INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (id, history_id, transformer_id, options) VALUES (?, ?, ?, ?);`;
@@ -314,17 +409,40 @@ export default class HistoryQueryRepository {
         .prepare(`INSERT INTO ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE} (id, item_id) VALUES (?, ?);`)
         .run(transformerWithOptions.id, item.id);
     }
+
+    const after = this.findTransformersForHistory(historyId).find(t => t.id === transformerWithOptions.id) ?? null;
+    this.auditService.record(
+      'history_query_transformer',
+      transformerWithOptions.id,
+      wasNew ? 'CREATE' : 'UPDATE',
+      before as unknown as Record<string, unknown> | null,
+      after as unknown as Record<string, unknown> | null,
+      updatedBy
+    );
   }
 
-  removeTransformer(id: string): void {
+  removeTransformer(id: string, deletedBy: string): void {
+    const historyId = this.database.prepare(`SELECT history_id FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE id = ?;`).get(id) as
+      | { history_id: string }
+      | undefined;
+    const before = historyId ? (this.findTransformersForHistory(historyId.history_id).find(t => t.id === id) ?? null) : null;
     const transaction = this.database.transaction(() => {
       this.database.prepare(`DELETE FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE} WHERE id = ?;`).run(id);
       this.database.prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE id = ?;`).run(id);
+      if (before) {
+        this.auditService.record('history_query_transformer', id, 'DELETE', before as unknown as Record<string, unknown>, null, deletedBy);
+      }
     });
     transaction();
   }
 
-  removeTransformersByTransformerId(transformerId: string): void {
+  removeTransformersByTransformerId(transformerId: string, deletedBy: string): void {
+    const affected = this.database
+      .prepare(`SELECT id, history_id FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE transformer_id = ?;`)
+      .all(transformerId) as Array<{ id: string; history_id: string }>;
+    const beforeById = new Map(
+      affected.map(row => [row.id, this.findTransformersForHistory(row.history_id).find(t => t.id === row.id) ?? null])
+    );
     const transaction = this.database.transaction(() => {
       this.database
         .prepare(
@@ -332,6 +450,19 @@ export default class HistoryQueryRepository {
         )
         .run(transformerId);
       this.database.prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE transformer_id = ?;`).run(transformerId);
+      for (const row of affected) {
+        const before = beforeById.get(row.id);
+        if (before) {
+          this.auditService.record(
+            'history_query_transformer',
+            row.id,
+            'DELETE',
+            before as unknown as Record<string, unknown>,
+            null,
+            deletedBy
+          );
+        }
+      }
     });
     transaction();
   }
@@ -405,6 +536,8 @@ export default class HistoryQueryRepository {
   }
 
   saveItem<I extends SouthItemSettings>(historyId: string, item: HistoryQueryItemEntity<I>): void {
+    const wasNew = !item.id;
+    const before = wasNew ? null : this.findItemById(historyId, item.id);
     if (!item.id) {
       item.id = generateRandomId(6);
       const insertQuery =
@@ -417,12 +550,27 @@ export default class HistoryQueryRepository {
       const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
       this.database.prepare(query).run(item.name, +item.enabled, JSON.stringify(item.settings), item.updatedBy, item.id);
     }
+
+    const after = this.findItemById(historyId, item.id);
+    this.auditService.record(
+      'history_query_item',
+      item.id,
+      wasNew ? 'CREATE' : 'UPDATE',
+      before as unknown as Record<string, unknown> | null,
+      after as unknown as Record<string, unknown>,
+      item.updatedBy
+    );
   }
 
-  saveAllItems(historyId: string, items: Array<HistoryQueryItemEntity<SouthItemSettings>>, deleteItemsNotPresent: boolean): void {
+  saveAllItems(
+    historyId: string,
+    items: Array<HistoryQueryItemEntity<SouthItemSettings>>,
+    deleteItemsNotPresent: boolean,
+    deletedBy: string
+  ): void {
     const transaction = this.database.transaction(() => {
       if (deleteItemsNotPresent) {
-        this.deleteAllItemsByHistory(historyId);
+        this.deleteAllItemsByHistory(historyId, deletedBy);
       }
       for (const item of items) {
         this.saveItem(historyId, item);
@@ -431,7 +579,8 @@ export default class HistoryQueryRepository {
     transaction();
   }
 
-  deleteItem(historyId: string, itemId: string): void {
+  deleteItem(historyId: string, itemId: string, deletedBy: string): void {
+    const before = this.findItemById(historyId, itemId);
     const transaction = this.database.transaction(() => {
       this.database
         .prepare(
@@ -442,11 +591,15 @@ export default class HistoryQueryRepository {
         )
         .run(historyId, itemId);
       this.database.prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ? AND id = ?;`).run(historyId, itemId);
+      if (before) {
+        this.auditService.record('history_query_item', itemId, 'DELETE', before as unknown as Record<string, unknown>, null, deletedBy);
+      }
     });
     transaction();
   }
 
-  deleteAllItemsByHistory(historyId: string): void {
+  deleteAllItemsByHistory(historyId: string, deletedBy: string): void {
+    const beforeItems = this.findAllItemsForHistory(historyId);
     const transaction = this.database.transaction(() => {
       this.database
         .prepare(
@@ -457,6 +610,9 @@ export default class HistoryQueryRepository {
         )
         .run(historyId);
       this.database.prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`).run(historyId);
+      for (const item of beforeItems) {
+        this.auditService.record('history_query_item', item.id, 'DELETE', item as unknown as Record<string, unknown>, null, deletedBy);
+      }
     });
     transaction();
   }

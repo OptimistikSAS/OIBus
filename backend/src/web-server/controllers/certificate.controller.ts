@@ -207,6 +207,6 @@ export class CertificateController extends Controller {
   @SuccessResponse(204, 'Certificate deleted successfully')
   delete(@Path() certificateId: string, @Request() request: CustomExpressRequest): void {
     const certificateService: CertificateService = request.services.certificateService;
-    certificateService.delete(certificateId);
+    certificateService.delete(certificateId, request.user.id);
   }
 }

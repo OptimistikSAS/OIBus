@@ -676,7 +676,7 @@ export default class DataStreamEngine {
     }
   }
 
-  async removeAndReloadTransformer(transformerId: string): Promise<void> {
+  async removeAndReloadTransformer(transformerId: string, updatedBy: string): Promise<void> {
     const affectedNorthIds: Array<string> = [];
     for (const north of this.northConnectors.values()) {
       if (north.north.connectorConfiguration.transformers.some(t => t.transformer.id === transformerId)) {
@@ -697,8 +697,8 @@ export default class DataStreamEngine {
       );
     }
 
-    this.northConnectorRepository.removeTransformersByTransformerId(transformerId);
-    this.historyQueryRepository.removeTransformersByTransformerId(transformerId);
+    this.northConnectorRepository.removeTransformersByTransformerId(transformerId, updatedBy);
+    this.historyQueryRepository.removeTransformersByTransformerId(transformerId, updatedBy);
 
     for (const northId of affectedNorthIds) {
       this.updateNorthConfiguration(northId);

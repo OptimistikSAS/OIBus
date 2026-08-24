@@ -109,19 +109,19 @@ import { delay, getOIBusInfo, unzip, getErrorMessage } from '../utils';
 interface ICertificateService {
   create(command: CertificateCommandDTO, createdBy: string): Promise<unknown>;
   update(certificateId: string, command: CertificateCommandDTO, updatedBy: string): Promise<void>;
-  delete(certificateId: string): void;
+  delete(certificateId: string, userId: string): void;
 }
 
 interface IIPFilterService {
   create(command: IPFilterCommandDTO, createdBy: string): Promise<IPFilter>;
   update(ipFilterId: string, command: IPFilterCommandDTO, updatedBy: string): Promise<void>;
-  delete(ipFilterId: string): void;
+  delete(ipFilterId: string, userId: string): void;
 }
 
 interface IScanModeService {
   create(command: ScanModeCommandDTO, createdBy: string): Promise<ScanMode>;
   update(scanModeId: string, command: ScanModeCommandDTO, updatedBy: string): Promise<void>;
-  delete(scanModeId: string): void;
+  delete(scanModeId: string, userId: string): void;
 }
 
 interface IOIBusService {
@@ -142,7 +142,7 @@ interface ICommandSouthService {
   findById(southId: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null;
   create(command: SouthConnectorCommandDTO, retrieveSecretsFromSouth: string | null, createdBy: string): Promise<unknown>;
   update(southId: string, command: SouthConnectorCommandDTO, updatedBy: string): Promise<void>;
-  delete(southId: string): Promise<void>;
+  delete(southId: string, userId: string): Promise<void>;
   checkImportItems(
     southType: string,
     fileContent: string,
@@ -165,7 +165,7 @@ interface ICommandNorthService {
   listManifest(): Array<NorthConnectorManifest>;
   create(command: NorthConnectorCommandDTO, retrieveSecretsFromNorth: string | null, createdBy: string): Promise<unknown>;
   update(northId: string, command: NorthConnectorCommandDTO, updatedBy: string): Promise<void>;
-  delete(northId: string): Promise<void>;
+  delete(northId: string, userId: string): Promise<void>;
   testNorth(northId: string, northType: OIBusNorthType, settingsToTest: NorthSettings): Promise<OIBusConnectionTestResult>;
   executeSetpoint(
     northConnectorId: string,
@@ -184,7 +184,7 @@ interface ICommandHistoryQueryService {
     createdBy: string
   ): Promise<unknown>;
   update(historyId: string, command: HistoryQueryCommandDTO, resetCache: boolean, updatedBy: string): Promise<void>;
-  delete(historyId: string): Promise<void>;
+  delete(historyId: string, deletedBy: string): Promise<void>;
   checkImportItems(
     southType: string,
     fileContent: string,
@@ -220,7 +220,7 @@ interface ICommandHistoryQueryService {
 interface ICommandTransformerService {
   create(command: CustomTransformerCommandDTO, createdBy: string): Promise<unknown>;
   update(transformerId: string, command: CustomTransformerCommandDTO, updatedBy: string): Promise<void>;
-  delete(transformerId: string): Promise<void>;
+  delete(transformerId: string, userId: string): Promise<void>;
   test(command: CustomTransformerCommandDTO, testRequest: TransformerTestRequest): Promise<TransformerTestResponse>;
   testTransformer(transformerId: string, options: Record<string, unknown>, inputData: string): Promise<SouthConnectorItemTestResult>;
 }
@@ -802,7 +802,7 @@ export default class OIAnalyticsCommandService {
         format: 'pem' // Output format for the key
       }
     });
-    await this.oIAnalyticsRegistrationService.updateKeys(privateKey, publicKey);
+    await this.oIAnalyticsRegistrationService.updateKeys(privateKey, publicKey, 'oianalytics');
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'OIAnalytics keys reloaded');
   }
@@ -1033,7 +1033,7 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeDeleteScanModeCommand(command: OIBusDeleteScanModeCommand) {
-    await this.scanModeService.delete(command.scanModeId);
+    await this.scanModeService.delete(command.scanModeId, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Scan mode deleted successfully');
   }
 
@@ -1048,7 +1048,7 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeDeleteIPFilterCommand(command: OIBusDeleteIPFilterCommand) {
-    await this.ipFilterService.delete(command.ipFilterId);
+    await this.ipFilterService.delete(command.ipFilterId, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'IP Filter deleted successfully');
   }
 
@@ -1063,7 +1063,7 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeDeleteCertificateCommand(command: OIBusDeleteCertificateCommand) {
-    await this.certificateService.delete(command.certificateId);
+    await this.certificateService.delete(command.certificateId, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Certificate deleted successfully');
   }
 
@@ -1131,7 +1131,7 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeDeleteSouthCommand(command: OIBusDeleteSouthConnectorCommand) {
-    await this.southService.delete(command.southConnectorId);
+    await this.southService.delete(command.southConnectorId, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector deleted successfully');
   }
 
@@ -1227,7 +1227,7 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeDeleteNorthCommand(command: OIBusDeleteNorthConnectorCommand) {
-    await this.northService.delete(command.northConnectorId);
+    await this.northService.delete(command.northConnectorId, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector deleted successfully');
   }
 
@@ -1301,7 +1301,7 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeDeleteHistoryQueryCommand(command: OIBusDeleteHistoryQueryCommand) {
-    await this.historyQueryService.delete(command.historyQueryId);
+    await this.historyQueryService.delete(command.historyQueryId, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'History query deleted successfully');
   }
 
@@ -1411,7 +1411,7 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeDeleteCustomTransformerCommand(command: OIBusDeleteCustomTransformerCommand) {
-    await this.transformerService.delete(command.transformerId);
+    await this.transformerService.delete(command.transformerId, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Transformer deleted successfully');
   }
 
