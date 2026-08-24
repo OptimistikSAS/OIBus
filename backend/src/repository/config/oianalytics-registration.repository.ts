@@ -3,11 +3,15 @@ import { Database } from 'better-sqlite3';
 import { Instant } from '../../../shared/model/types';
 import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
 import { RegistrationStatus } from '../../../shared/model/engine.model';
+import AuditService from '../../service/audit.service';
 
 const REGISTRATIONS_TABLE = 'registrations';
 
 export default class OIAnalyticsRegistrationRepository {
-  constructor(private readonly database: Database) {
+  constructor(
+    private readonly database: Database,
+    private readonly auditService: AuditService
+  ) {
     this.createDefault({
       host: '',
       useProxy: false,
@@ -212,6 +216,7 @@ export default class OIAnalyticsRegistrationRepository {
   }
 
   update(command: Omit<OIAnalyticsRegistrationEditCommand, 'host'>, updatedBy: string): void {
+    const before = this.get();
     const query =
       `UPDATE ${REGISTRATIONS_TABLE} SET ` +
       `use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, use_api_gateway = ?, api_gateway_header_key = ?, api_gateway_header_value = ?, api_gateway_base_endpoint = ?, ` +
@@ -288,11 +293,16 @@ export default class OIAnalyticsRegistrationRepository {
         +command.commandPermissions.testCustomTransformer,
         updatedBy
       );
+    const after = this.get();
+    this.auditService.record('oianalytics_registration', after!.id, 'UPDATE', this.redact(before), this.redact(after), updatedBy);
   }
 
-  updateKeys(privateKey: string, publicKey: string): void {
+  updateKeys(privateKey: string, publicKey: string, updatedBy: string): void {
+    const before = this.get();
     const query = `UPDATE ${REGISTRATIONS_TABLE} SET private_key = ?, public_key = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database.prepare(query).run(privateKey, publicKey);
+    const after = this.get();
+    this.auditService.record('oianalytics_registration', after!.id, 'UPDATE', this.redact(before), this.redact(after), updatedBy);
   }
 
   protected createDefault(command: OIAnalyticsRegistrationEditCommand): void {
@@ -379,6 +389,15 @@ export default class OIAnalyticsRegistrationRepository {
         'system',
         'system'
       );
+  }
+
+  /**
+   * Returns a shallow copy of the registration with the cipher key material redacted, so real key
+   * bytes never end up persisted in the audit trail, even for calls that do not touch the keys.
+   */
+  private redact(registration: OIAnalyticsRegistration | null): Record<string, unknown> | null {
+    if (!registration) return null;
+    return { ...registration, publicCipherKey: '[REDACTED]', privateCipherKey: '[REDACTED]' };
   }
 
   private toOIAnalyticsRegistration(result: Record<string, string | number>): OIAnalyticsRegistration {

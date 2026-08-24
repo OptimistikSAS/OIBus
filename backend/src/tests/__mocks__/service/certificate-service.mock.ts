@@ -22,5 +22,5 @@ export default class CertificateServiceMock {
     })
   );
   exportPrivateKey = mock.fn(async (_certificateId: string, _passphrase: string, _requestedBy: string): Promise<string> => '');
-  delete = mock.fn(async (_certificateId: string): Promise<void> => undefined);
+  delete = mock.fn(async (_certificateId: string, _userId: string): Promise<void> => undefined);
 }

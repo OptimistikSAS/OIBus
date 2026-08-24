@@ -419,10 +419,10 @@ describe('History Query service', () => {
   });
 
   it('should delete history query', async () => {
-    await service.delete(testData.historyQueries.list[0].id);
+    await service.delete(testData.historyQueries.list[0].id, 'userTest');
 
     assert.deepStrictEqual(engine.deleteHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0]]);
-    assert.deepStrictEqual(historyQueryRepository.deleteHistory.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
+    assert.deepStrictEqual(historyQueryRepository.deleteHistory.mock.calls[0].arguments, [testData.historyQueries.list[0].id, 'userTest']);
     assert.deepStrictEqual(historyQueryMetricsRepository.removeMetrics.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
     assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
   });
@@ -726,7 +726,7 @@ describe('History Query service', () => {
   });
 
   it('should delete an item', async () => {
-    await service.deleteItem(testData.historyQueries.list[0].id, testData.historyQueries.list[0].items[0].id);
+    await service.deleteItem(testData.historyQueries.list[0].id, testData.historyQueries.list[0].items[0].id, 'userTest');
 
     assert.deepStrictEqual(historyQueryRepository.findItemById.mock.calls[0].arguments, [
       testData.historyQueries.list[0].id,
@@ -734,7 +734,8 @@ describe('History Query service', () => {
     ]);
     assert.deepStrictEqual(historyQueryRepository.deleteItem.mock.calls[0].arguments, [
       testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items[0].id
+      testData.historyQueries.list[0].items[0].id,
+      'userTest'
     ]);
     assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
     assert.deepStrictEqual(engine.reloadHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0], false]);
@@ -751,24 +752,29 @@ describe('History Query service', () => {
       )
     );
 
-    await service.deleteItems(historyQueryId, itemIds);
+    await service.deleteItems(historyQueryId, itemIds, 'userTest');
 
     assert.deepStrictEqual(historyQueryRepository.deleteItem.mock.calls[0].arguments, [
       testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items[0].id
+      testData.historyQueries.list[0].items[0].id,
+      'userTest'
     ]);
     assert.deepStrictEqual(historyQueryRepository.deleteItem.mock.calls[1].arguments, [
       testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items[1].id
+      testData.historyQueries.list[0].items[1].id,
+      'userTest'
     ]);
     assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
     assert.deepStrictEqual(engine.reloadHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0], false]);
   });
 
   it('should delete all items', async () => {
-    await service.deleteAllItems(testData.historyQueries.list[0].id);
+    await service.deleteAllItems(testData.historyQueries.list[0].id, 'userTest');
 
-    assert.deepStrictEqual(historyQueryRepository.deleteAllItemsByHistory.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
+    assert.deepStrictEqual(historyQueryRepository.deleteAllItemsByHistory.mock.calls[0].arguments, [
+      testData.historyQueries.list[0].id,
+      'userTest'
+    ]);
     assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
     assert.deepStrictEqual(engine.reloadHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0], true]);
   });
@@ -966,21 +972,27 @@ describe('History Query service', () => {
       items: []
     } as HistoryTransformerWithOptions;
 
-    await service.addOrEditTransformer(testData.historyQueries.list[0].id, transformerWithOptions);
+    await service.addOrEditTransformer(testData.historyQueries.list[0].id, transformerWithOptions, 'userTest');
 
     assert.deepStrictEqual(historyQueryRepository.addOrEditTransformer.mock.calls[0].arguments, [
       testData.historyQueries.list[0].id,
-      transformerWithOptions
+      transformerWithOptions,
+      'userTest'
     ]);
     assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
     assert.deepStrictEqual(engine.stopHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
   });
 
   it('should remove transformer', async () => {
-    await service.removeTransformer(testData.historyQueries.list[0].id, testData.historyQueries.list[0].northTransformers[0].id);
+    await service.removeTransformer(
+      testData.historyQueries.list[0].id,
+      testData.historyQueries.list[0].northTransformers[0].id,
+      'userTest'
+    );
 
     assert.deepStrictEqual(historyQueryRepository.removeTransformer.mock.calls[0].arguments, [
-      testData.historyQueries.list[0].northTransformers[0].id
+      testData.historyQueries.list[0].northTransformers[0].id,
+      'userTest'
     ]);
     assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
     assert.deepStrictEqual(engine.stopHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
