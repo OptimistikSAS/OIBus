@@ -157,7 +157,7 @@ export class HistoryQueryListComponent {
    * Open a modal to view the audit history of a history query
    */
   showAudit(historyQuery: HistoryQueryLightDTO) {
-    const modalRef = this.modalService.open(AuditHistoryModalComponent);
+    const modalRef = this.modalService.open(AuditHistoryModalComponent, { size: 'xl' });
     modalRef.componentInstance.prepare('history_query', historyQuery.id);
   }
 
