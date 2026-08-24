@@ -1828,11 +1828,7 @@
             "bucket": "Bucket"
           },
           "odbc": {
-            "remote-agent": "Use remote agent",
-            "agent-url": "Remote agent URL",
             "connection-timeout": "Connection timeout",
-            "retry-interval": "Retry interval",
-            "request-timeout": "Request timeout",
             "connection-string": "Connection string",
             "password": "Password"
           },
@@ -2143,42 +2139,23 @@
             },
             "odbc": {
               "query": "Query",
-              "date-time-fields": {
-                "date-time-field": "Date time fields",
+              "tracking-instant": {
+                "title": "Tracking instant",
+                "track-instant": "Track instant",
                 "field-name": "Field name",
-                "use-as-reference": "Reference field",
-                "type": {
-                  "title": "Type",
-                  "iso-string": "ISO String",
-                  "unix-epoch": "UNIX epoch (s)",
-                  "unix-epoch-ms": "UNIX epoch (ms)",
-                  "string": "String"
-                },
-                "timezone": "Timezone",
-                "format": "Format",
-                "locale": "Locale"
-              },
-              "serialization": {
-                "title": "Serialization",
-                "type": {
-                  "title": "Type",
-                  "csv": "CSV"
-                },
-                "filename": "Filename",
-                "delimiter": {
-                  "title": "Delimiter",
-                  "DOT": "Dot .",
-                  "SEMI_COLON": "Semi colon ;",
-                  "COLON": "Colon :",
-                  "COMMA": "Comma ,",
-                  "SLASH": "Slash /",
-                  "TAB": "Tab",
-                  "NON_BREAKING_SPACE": "Space",
-                  "PIPE": "Pipe |"
-                },
-                "compression": "Compression",
-                "output-timestamp-format": "Output date time format",
-                "output-timezone": "Output timezone"
+                "date-time-input": {
+                  "title": "Date time input",
+                  "type": {
+                    "title": "Type",
+                    "string": "String",
+                    "iso-string": "ISO String",
+                    "unix-epoch": "UNIX epoch (s)",
+                    "unix-epoch-ms": "UNIX epoch (ms)"
+                  },
+                  "timezone": "Timezone",
+                  "format": "Format",
+                  "locale": "Locale"
+                }
               }
             },
             "oianalytics": {

@@ -14,12 +14,6 @@ const HISTORY_ITEMS_TABLE = 'history_items';
 const HISTORY_QUERY_TRANSFORMERS_TABLE = 'history_query_transformers';
 const HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE = 'history_query_transformers_items';
 
-// The SQL-family souths reworked to emit 'record-list' content instead of pre-serialized CSV.
-// south-odbc gets the exact same treatment, but in v3.10.0_3 (bundled there with its own
-// agent-settings cleanup instead of duplicated here). south-oledb is intentionally excluded — its CSV
-// building happens in an external .NET agent, outside this refactor's scope.
-const SQL_SOUTH_TYPES = ['mysql', 'postgresql', 'mssql', 'oracle', 'sqlite'];
-
 interface OldDateTimeField {
   fieldName: string;
   useAsReference: boolean;
@@ -38,71 +32,78 @@ interface OldSerialization {
   outputTimezone: string;
 }
 
-interface OldSqlItemSettings {
+interface OldOdbcItemSettings {
   dateTimeFields?: Array<OldDateTimeField> | null;
   serialization?: OldSerialization;
   [key: string]: unknown;
 }
 
 /**
- * SQL-family souths (mysql/postgresql/mssql/oracle/sqlite) stopped serializing rows into CSV
- * themselves — they now emit `record-list` content (raw rows) and rely on a north-side
- * `record-list-to-csv` transformer to do the CSV encoding that `item.settings.serialization` used
- * to do inline. This migration:
+ * The ODBC south connector no longer supports connecting through the Windows OIBus Agent: it now
+ * always uses the local `odbc` driver, the same code path `remoteAgent: false` already used. The
+ * `remoteAgent`/`agentUrl` toggle is gone, and `retryInterval`/`requestTimeout` go with it since they
+ * only existed to configure the agent's reconnect loop and HTTP read timeout — the local driver path
+ * doesn't use either.
  *
- *  1. Rewrites every affected item's settings: `dateTimeFields` + `serialization` are replaced by a
- *     single `trackingInstant` (mirroring south-rest's own trackingInstant shape), used only to
- *     compute the incremental query cursor. The CSV-rendering config itself (filename, delimiter,
- *     compression, per-column datetime formatting) moves to a transformer.
- *  2. For every north connector — enabled or not, so a currently-disabled one is already correctly
- *     wired up whenever it's re-enabled later; content fans out to every north connector
- *     unconditionally once enabled, see `DataStreamEngine.addContent` — and every affected item,
- *     preserves today's behavior by attaching a `record-list-to-csv` transformer, scoped to that one
- *     item, carrying the old per-item CSV settings as its options — but only where doing so doesn't
- *     override a deliberate user choice:
- *       - No transformer currently resolves for that (north, item) → attach one (today the north
- *         silently receives the pre-built CSV file untouched; after this migration, without a
- *         transformer it would receive a raw JSON dump instead of the SQL south's actual CSV text).
- *       - The resolved transformer is 'iso' (pure passthrough) → attach one anyway: passthrough only
- *         behaved like the old CSV export because the south itself already produced CSV bytes; now
- *         that the south emits raw records, 'iso' alone would leak them through unrendered.
- *       - The resolved transformer is 'ignore' → leave it, it's still a deliberate "drop this" choice.
- *       - Any other transformer (csv-to-mqtt, csv-to-time-values, json-to-csv, custom, ...) → leave it
- *         untouched; it was configured against the old CSV/'any' shape and needs a human to re-check
- *         it against the new record-list shape — an edge case explicitly left for manual follow-up.
- *  3. The same two steps for history queries against `history_items`/`history_query_transformers(_items)`
- *     — history queries route through the exact same transformer resolution machinery (they build a
- *     real `NorthConnector` under the hood), just without a south-item-group concept.
+ * Connectors that had `remoteAgent: true` lose the ability to reach their ODBC agent after this
+ * migration and must be reconfigured with a driver installed locally (or reachable through a locally
+ * configured DSN), same as any other ODBC connector.
  *
- * Not reversible: once dateTimeFields/serialization are folded into per-item transformer rows (or an
- * existing 'iso' row is shadowed by a new item-level one), the original settings shape can't be
- * reconstructed from that state alone.
+ * On top of that, south-odbc gets the same 'record-list' rework the other SQL-family souths already
+ * got in v3.10.0_2 (which explicitly excluded odbc/oledb, deferring odbc to this migration): it stops
+ * serializing rows into CSV itself and now emits `record-list` content, relying on a north-side
+ * `record-list-to-csv` transformer to do the CSV encoding that `item.settings.serialization` used to
+ * do inline. See v3.10.0_2's module doc comment for the full rationale — the same two steps
+ * (item settings rewrite + per-item transformer attachment, for both south connectors and history
+ * queries) are applied here, scoped to odbc only.
+ *
+ * Not reversible: once the agent settings are dropped and dateTimeFields/serialization are folded
+ * into per-item transformer rows (or an existing 'iso' row is shadowed by a new item-level one), the
+ * original settings shape can't be reconstructed from that state alone.
  */
 export async function up(knex: Knex): Promise<void> {
-  const recordListToCsvTransformerId = await ensureRecordListToCsvTransformer(knex);
+  await stripAgentSettings(knex, SOUTH_CONNECTORS_TABLE, 'settings', 'type');
+  await stripAgentSettings(knex, HISTORY_QUERIES_TABLE, 'south_settings', 'south_type');
 
+  const recordListToCsvTransformerId = await ensureRecordListToCsvTransformer(knex);
   const northIds = (await knex(NORTH_CONNECTORS_TABLE).select('id')).map(n => n.id as string);
 
-  for (const southType of SQL_SOUTH_TYPES) {
-    const souths: Array<{ id: string }> = await knex(SOUTH_CONNECTORS_TABLE).select('id').where('type', southType);
-    for (const south of souths) {
-      await migrateSouthConnectorItems(knex, south.id, northIds, recordListToCsvTransformerId);
-    }
+  const souths: Array<{ id: string }> = await knex(SOUTH_CONNECTORS_TABLE).select('id').where('type', 'odbc');
+  for (const south of souths) {
+    await migrateSouthConnectorItems(knex, south.id, northIds, recordListToCsvTransformerId);
   }
 
   await migrateHistoryQueries(knex, recordListToCsvTransformerId);
 }
 
 export async function down(_knex: Knex): Promise<void> {
-  // Not reversible - see the module doc comment above.
   return;
+}
+
+async function stripAgentSettings(knex: Knex, table: string, settingsColumn: string, typeColumn: string): Promise<void> {
+  const rows: Array<{ id: string; settings: string }> = await knex(table)
+    .select('id', `${settingsColumn} as settings`)
+    .where(typeColumn, 'odbc');
+  if (rows.length === 0) return;
+
+  const updates = rows.map(({ id, settings }) => {
+    const {
+      remoteAgent: _remoteAgent,
+      agentUrl: _agentUrl,
+      retryInterval: _retryInterval,
+      requestTimeout: _requestTimeout,
+      ...rest
+    } = JSON.parse(settings) as Record<string, unknown>;
+    return { id, settings: JSON.stringify(rest) };
+  });
+
+  await bulkUpdateSettings(knex, table, settingsColumn, updates);
 }
 
 /**
  * Ensures a single, shared 'record-list-to-csv' row exists in the transformers catalog (same
- * idempotent check-then-insert pattern as `createDefaultTransformers` in 3.8.0's migration) so the
- * `north_transformers`/`history_query_transformers` rows inserted below have something to reference.
- * Can't rely on `TransformerRepository`'s own startup seeding — that runs after migrations.
+ * idempotent check-then-insert pattern as `createDefaultTransformers` in 3.8.0's migration), reusing
+ * the row v3.10.0_2 already created for the other SQL-family souths if this runs after it.
  */
 async function ensureRecordListToCsvTransformer(knex: Knex): Promise<string> {
   const existing = await knex(TRANSFORMERS_TABLE).select('id').where('function_name', 'record-list-to-csv').first();
@@ -125,7 +126,7 @@ async function ensureRecordListToCsvTransformer(knex: Knex): Promise<string> {
  * Converts one item's old settings in place: drops `dateTimeFields`/`serialization`, adds
  * `trackingInstant` derived from whichever dateTimeFields entry (if any) had `useAsReference: true`.
  */
-function toNewItemSettings(oldSettings: OldSqlItemSettings): Record<string, unknown> {
+function toNewItemSettings(oldSettings: OldOdbcItemSettings): Record<string, unknown> {
   const { dateTimeFields: _dateTimeFields, serialization: _serialization, ...rest } = oldSettings;
   const referenceField = oldSettings.dateTimeFields?.find(field => field.useAsReference) ?? null;
   return {
@@ -152,7 +153,7 @@ function toNewItemSettings(oldSettings: OldSqlItemSettings): Record<string, unkn
  * `dataType: 'datetime'`, sharing the item's old `outputTimestampFormat`/`outputTimezone`. Columns
  * with no entry in `fields` pass through unchanged, same as before.
  */
-function buildTransformerOptions(oldSettings: OldSqlItemSettings): Record<string, unknown> {
+function buildTransformerOptions(oldSettings: OldOdbcItemSettings): Record<string, unknown> {
   const serialization = oldSettings.serialization;
   return {
     filename: serialization?.filename ?? '@CurrentDate.csv',
@@ -300,7 +301,7 @@ async function migrateSouthConnectorItems(
   const newTransformerItemLinks: Array<{ id: string; item_id: string }> = [];
 
   for (const item of items) {
-    const oldSettings: OldSqlItemSettings = JSON.parse(item.settings);
+    const oldSettings: OldOdbcItemSettings = JSON.parse(item.settings);
     settingsUpdates.push({ id: item.id, settings: JSON.stringify(toNewItemSettings(oldSettings)) });
 
     const transformerOptions = buildTransformerOptions(oldSettings);
@@ -340,12 +341,12 @@ async function migrateSouthConnectorItems(
 }
 
 /**
- * Same treatment as `migrateSouthConnectorItems`, for history queries. A history query has exactly
- * one implicit south (its own `south_type`/`south_settings`) and no south-item-group concept, so
- * resolution is item-level vs. history-level fallback only - no group level.
+ * Same treatment as `migrateSouthConnectorItems`, for history queries whose south is odbc. A history
+ * query has exactly one implicit south (its own `south_type`/`south_settings`) and no south-item-group
+ * concept, so resolution is item-level vs. history-level fallback only - no group level.
  */
 async function migrateHistoryQueries(knex: Knex, recordListToCsvTransformerId: string): Promise<void> {
-  const historyQueries: Array<{ id: string }> = await knex(HISTORY_QUERIES_TABLE).select('id').whereIn('south_type', SQL_SOUTH_TYPES);
+  const historyQueries: Array<{ id: string }> = await knex(HISTORY_QUERIES_TABLE).select('id').where('south_type', 'odbc');
   if (historyQueries.length === 0) return;
 
   const settingsUpdates: Array<{ id: string; settings: string }> = [];
@@ -389,7 +390,7 @@ async function migrateHistoryQueries(knex: Knex, recordListToCsvTransformerId: s
     }
 
     for (const item of items) {
-      const oldSettings: OldSqlItemSettings = JSON.parse(item.settings);
+      const oldSettings: OldOdbcItemSettings = JSON.parse(item.settings);
       settingsUpdates.push({ id: item.id, settings: JSON.stringify(toNewItemSettings(oldSettings)) });
 
       const resolved = itemLevel.get(item.id) ?? historyLevel;

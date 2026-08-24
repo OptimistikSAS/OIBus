@@ -1,35 +1,23 @@
 import SouthConnector from '../south-connector';
-import {
-  convertDateTimeToInstant,
-  convertDelimiter,
-  extractLastCsvRow,
-  formatInstant,
-  generateCsvContent,
-  generateFilenameForSerialization,
-  getErrorMessage,
-  logQuery,
-  persistResults,
-  workUnitLogCtx
-} from '../../service/utils';
+import { convertDateTimeToInstant, formatInstant, getErrorMessage, logQuery, workUnitLogCtx } from '../../service/utils';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { SouthHistoryQuery } from '../south-interface';
 import { SouthItemSettings, SouthODBCItemSettings, SouthODBCSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent, OIBusRecord } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { loadOdbc } from './odbc-loader';
-import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
 import { encryptionService } from '../../service/encryption.service';
 
 /**
- * Class SouthODBC - Retrieve data from SQL databases with ODBC driver and send them to the cache as CSV files.
+ * Class SouthODBC - Retrieve data from SQL databases with an ODBC driver and send the resulting rows
+ * as record-list content to the cache. Row values are passed through untouched — datetime parsing for
+ * display is the responsibility of the north-side transformer (e.g. record-list-to-csv); the only
+ * datetime handling done here is tracking the incremental cursor via `item.settings.trackingInstant`.
  */
 export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthODBCItemSettings> implements SouthHistoryQuery {
-  private connected = false;
-  private reconnectTimeout: NodeJS.Timeout | null = null;
-
   constructor(
     connector: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings>,
     engineAddContentCallback: (
@@ -44,67 +32,8 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
-  override async connect(): Promise<void> {
-    if (this.connector.settings.remoteAgent) {
-      try {
-        this.connected = false;
-        this.logger.debug(`Connecting to ODBC agent at ${this.connector.settings.agentUrl}`);
-        const connectStart = DateTime.now().toMillis();
-        const fetchOptions: ReqOptions = {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            connectionString: this.connector.settings.connectionString,
-            connectionTimeout: this.connector.settings.connectionTimeout
-          })
-        };
-        const requestUrl = new URL(`/api/odbc/${this.connector.id}/connect`, this.connector.settings.agentUrl);
-        await HTTPRequest(requestUrl, fetchOptions);
-        this.connected = true;
-        this.logger.info(
-          `Connected to ODBC agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - connectStart} ms`
-        );
-        await super.connect();
-      } catch (error) {
-        this.logger.error(
-          `Error while sending connection HTTP request into agent. Reconnecting in ${this.connector.settings.retryInterval} ms. ${getErrorMessage(error)}`
-        );
-        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
-      }
-    } else {
-      await super.connect();
-    }
-  }
-
-  async disconnect(): Promise<void> {
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-    }
-    this.reconnectTimeout = null;
-
-    if (this.connector.settings.remoteAgent && this.connected) {
-      const disconnectStart = DateTime.now().toMillis();
-      try {
-        const fetchOptions: ReqOptions = { method: 'DELETE' };
-        const requestUrl = new URL(`/api/odbc/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
-        await HTTPRequest(requestUrl, fetchOptions);
-        this.logger.info(
-          `Disconnected from ODBC agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - disconnectStart} ms`
-        );
-      } catch (error) {
-        this.logger.error(`Error while sending disconnection HTTP request into agent: ${getErrorMessage(error)}`);
-      }
-    }
-    this.connected = false;
-    await super.disconnect();
-  }
-
   override async testConnection(): Promise<OIBusConnectionTestResult> {
-    if (this.connector.settings.remoteAgent) {
-      await this.testAgentConnection();
-    } else {
-      await this.testOdbcConnection();
-    }
+    await this.testOdbcConnection();
     return { items: [] };
   }
 
@@ -114,52 +43,12 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
   ): Promise<SouthConnectorItemQueryResult> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
-    let result: { trackedInstant: Instant | null; value: unknown | null };
     const queryStart = DateTime.now().toMillis();
-    if (this.connector.settings.remoteAgent) {
-      result = await this.queryRemoteAgentData(item, startTime, endTime, true);
-    } else {
-      const tempResult = await this.queryOdbcData(item, endTime, startTime, true);
-      const formattedResults = (tempResult.value as Array<Record<string, string>>).map(entry => {
-        const formattedEntry: Record<string, string | number> = {};
-        Object.entries(entry).forEach(([key, value]) => {
-          const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key) || null;
-          if (!datetimeField) {
-            formattedEntry[key] = value;
-          } else {
-            const entryDate = convertDateTimeToInstant(value, datetimeField);
-            formattedEntry[key] = formatInstant(entryDate, {
-              type: 'string',
-              format: item.settings.serialization.outputTimestampFormat,
-              timezone: item.settings.serialization.outputTimezone,
-              locale: 'en-En'
-            });
-          }
-        });
-        return formattedEntry;
-      });
-      result = {
-        trackedInstant: tempResult.trackedInstant,
-        value: generateCsvContent(formattedResults, item.settings.serialization.delimiter)
-      };
-    }
+    const result = await this.queryData(item, startTime, endTime);
     const queryDuration = DateTime.now().toMillis() - queryStart;
 
-    let oibusContent: OIBusContent;
-    switch (item.settings.serialization.type) {
-      case 'csv': {
-        const filePath = generateFilenameForSerialization(
-          this.tmpFolder,
-          item.settings.serialization.filename,
-          this.connector.name,
-          item.name
-        );
-        oibusContent = { type: 'any', filePath, content: result.value as string };
-        break;
-      }
-    }
     return {
-      result: oibusContent,
+      result: { type: 'record-list', content: result },
       // Connect + query happen together inside the query call above — splitting them would mean
       // refactoring a method the scheduled query path also uses, so connectionDuration stays 0 and
       // queryDuration covers the whole call.
@@ -210,151 +99,84 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     await connection.close();
   }
 
-  async testAgentConnection(): Promise<void> {
-    const fetchOptions = {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        connectionString: this.connector.settings.connectionString,
-        connectionTimeout: this.connector.settings.connectionTimeout
-      })
-    };
-    const requestUrl = new URL(`/api/odbc/${this.connector.id}/connect`, this.connector.settings.agentUrl);
-    const response = await HTTPRequest(requestUrl, fetchOptions);
-    if (response.statusCode === 200) {
-      const requestUrl = new URL(`/api/odbc/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
-      await HTTPRequest(requestUrl, { method: 'DELETE' });
-    } else if (response.statusCode === 400) {
-      const errorMessage = await response.body.text();
-      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}: ${errorMessage}`);
-    } else {
-      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}`);
-    }
-  }
-
   /**
-   * Get entries from the database between startTime and endTime (if used in the SQL query)
-   * and write them into a CSV file and send it to the engine.
+   * Get entries from the database between startTime and endTime (if used in the SQL query) and send
+   * them to the cache as record-list content.
    */
   async historyQuery(
     items: Array<SouthConnectorItemEntity<SouthODBCItemSettings>>,
     startTime: Instant,
     endTime: Instant
-  ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
+  ): Promise<{ trackedInstant: Instant | null; value: OIBusRecord | null }> {
     const item = items[0];
-    if (this.connector.settings.remoteAgent) {
-      return await this.queryRemoteAgentData(item, startTime, endTime);
-    }
-    return await this.queryOdbcData(item, startTime, endTime);
-  }
+    const logCtx = workUnitLogCtx(items);
 
-  async queryRemoteAgentData(
-    item: SouthConnectorItemEntity<SouthODBCItemSettings>,
-    startTime: Instant,
-    endTime: Instant,
-    test?: boolean
-  ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
-    const logCtx = workUnitLogCtx([item]);
-    let updatedStartTime: Instant | null = null;
     const startRequest = DateTime.now();
+    const result = await this.queryData(item, startTime, endTime);
+    const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
 
-    const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference);
-    const odbcStartTime = referenceTimestampField ? formatInstant(startTime, referenceTimestampField) : startTime;
-    const odbcEndTime = referenceTimestampField ? formatInstant(endTime, referenceTimestampField) : endTime;
-    const adaptedQuery = item.settings.query.replace(/@StartTime/g, `${odbcStartTime}`).replace(/@EndTime/g, `${odbcEndTime}`);
-    logQuery(adaptedQuery, odbcStartTime, odbcEndTime, this.logger, logCtx);
-
-    const fetchOptions: ReqOptions = {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        connectionString: this.connector.settings.connectionString,
-        sql: adaptedQuery,
-        readTimeout: this.connector.settings.requestTimeout,
-        timeColumn: referenceTimestampField?.fieldName,
-        datasourceTimestampFormat: referenceTimestampField?.format,
-        datasourceTimezone: referenceTimestampField?.timezone,
-        delimiter: convertDelimiter(item.settings.serialization.delimiter),
-        outputTimestampFormat: item.settings.serialization.outputTimestampFormat,
-        outputTimezone: item.settings.serialization.outputTimezone
-      })
-    };
-    const requestUrl = new URL(`/api/odbc/${this.connector.id}/read`, this.connector.settings.agentUrl);
-    const response = await HTTPRequest(requestUrl, fetchOptions);
-    let result: { recordCount: number; content: string; maxInstant: Instant };
-    if (response.statusCode === 200) {
-      result = (await response.body.json()) as {
-        recordCount: number;
-        content: string;
-        maxInstant: Instant;
-      };
-      const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
-      this.logger.info(logCtx, `Found ${result.recordCount} results in ${requestDuration} ms`);
-
-      if (!test) {
-        if (result.recordCount > 0) {
-          await persistResults(
-            result.content,
-            { type: 'file', filename: item.settings.serialization.filename, compression: item.settings.serialization.compression },
-            this.connector.name,
-            item,
-            startRequest.toUTC().toISO(),
-            this.tmpFolder,
-            this.addContent.bind(this),
-            this.logger
-          );
-          if (result.maxInstant > startTime) {
-            updatedStartTime = result.maxInstant;
-          }
-        } else {
-          this.logger.debug(logCtx, `No result found. Request done in ${requestDuration} ms`);
-        }
-      }
-    } else if (response.statusCode === 400) {
-      // No log here: the base class's runTask() already logs this error with this item's context
-      // when it's thrown from the scheduled historyQuery() path; testItem() has no separate logging
-      // for its own errors either, consistent with every other connector.
-      const errorMessage = await response.body.text();
-      throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}: ${errorMessage}`);
+    let updatedStartTime: Instant | null = null;
+    if (result.length > 0) {
+      this.logger.info(logCtx, `Found ${result.length} results in ${requestDuration} ms`);
+      updatedStartTime = this.trackMaxInstant(item, result);
+      await this.addContent({ type: 'record-list', content: result }, startRequest.toUTC().toISO(), items);
     } else {
-      throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}`);
+      this.logger.debug(logCtx, `No result found. Request done in ${requestDuration} ms`);
     }
 
-    // For the data stream we only keep the last row as the cached "last value"; the full CSV content
-    // is only needed for the item test, where it is returned to the UI as-is.
-    return {
-      trackedInstant: updatedStartTime,
-      value: test ? result.content : extractLastCsvRow(result.content, convertDelimiter(item.settings.serialization.delimiter))
-    };
+    return { trackedInstant: updatedStartTime, value: result.length > 0 ? result[result.length - 1] : null };
   }
 
-  async queryOdbcData(
+  /**
+   * Scan the rows for the configured tracking field and return the max Instant found, used as the
+   * cursor for the next incremental query. Row values are otherwise left untouched.
+   */
+  private trackMaxInstant(item: SouthConnectorItemEntity<SouthODBCItemSettings>, rows: Array<OIBusRecord>): Instant | null {
+    if (!item.settings.trackingInstant?.trackInstant) return null;
+
+    const fieldName = item.settings.trackingInstant.fieldName!;
+    let updatedStartTime: Instant | null = null;
+    for (const row of rows) {
+      const rawValue = row[fieldName];
+      if (rawValue === null || rawValue === undefined) continue;
+      const instant = convertDateTimeToInstant(rawValue as string | number, item.settings.trackingInstant.dateTimeInput!);
+      if (instant && (!updatedStartTime || instant > updatedStartTime)) {
+        updatedStartTime = instant;
+      }
+    }
+    return updatedStartTime;
+  }
+
+  /**
+   * Apply the SQL query to the target database through the ODBC driver. Rows are returned as-is (no
+   * datetime parsing/formatting) — only `@StartTime`/`@EndTime` placeholders are substituted directly
+   * into the query text, using the tracking field's `dateTimeInput` config so they match the source
+   * column's native representation.
+   */
+  async queryData(
     item: SouthConnectorItemEntity<SouthODBCItemSettings>,
     startTime: Instant,
-    endTime: Instant,
-    test?: boolean
-  ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
+    endTime: Instant
+  ): Promise<Array<OIBusRecord>> {
     const odbc = await loadOdbc();
     if (!odbc) {
       throw new Error('ODBC library not available');
     }
 
     const logCtx = workUnitLogCtx([item]);
-    let updatedStartTime: Instant | null = null;
-    const startRequest = DateTime.now();
-    let result: Array<Record<string, string>> = [];
+    const dateTimeInput = item.settings.trackingInstant?.trackInstant ? item.settings.trackingInstant.dateTimeInput : null;
+    const odbcStartTime = dateTimeInput == null ? startTime : formatInstant(startTime, dateTimeInput);
+    const odbcEndTime = dateTimeInput == null ? endTime : formatInstant(endTime, dateTimeInput);
+    const adaptedQuery = item.settings.query.replace(/@StartTime/g, `${odbcStartTime}`).replace(/@EndTime/g, `${odbcEndTime}`);
+    logQuery(adaptedQuery, odbcStartTime, odbcEndTime, this.logger, logCtx);
+
     let connection;
     try {
       const connectionConfig = await this.createConnectionConfig(this.connector.settings);
       connection = await odbc.connect(connectionConfig);
-
-      const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference);
-      const odbcStartTime = referenceTimestampField ? formatInstant(startTime, referenceTimestampField) : startTime;
-      const odbcEndTime = referenceTimestampField ? formatInstant(endTime, referenceTimestampField) : endTime;
-      const adaptedQuery = item.settings.query.replace(/@StartTime/g, `${odbcStartTime}`).replace(/@EndTime/g, `${odbcEndTime}`);
-      logQuery(adaptedQuery, odbcStartTime, odbcEndTime, this.logger, logCtx);
-      result = await connection.query(adaptedQuery);
+      const result = await connection.query(adaptedQuery);
       await connection.close();
+      return result as Array<OIBusRecord>;
     } catch (error: unknown) {
       if (
         (
@@ -385,50 +207,6 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       }
       throw new Error(getErrorMessage(error));
     }
-    const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
-
-    if (result.length > 0) {
-      this.logger.info(logCtx, `Found ${result.length} results in ${requestDuration} ms`);
-
-      const formattedResult = result.map(entry => {
-        const formattedEntry: Record<string, string | number> = {};
-        Object.entries(entry).forEach(([key, value]) => {
-          const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key);
-          if (!datetimeField) {
-            formattedEntry[key] = value;
-          } else {
-            const entryDate = convertDateTimeToInstant(value, datetimeField);
-            if (datetimeField.useAsReference && entryDate) {
-              if (!updatedStartTime || entryDate > updatedStartTime) {
-                updatedStartTime = entryDate;
-              }
-            }
-            formattedEntry[key] = formatInstant(entryDate, {
-              type: 'string',
-              format: item.settings.serialization.outputTimestampFormat,
-              timezone: item.settings.serialization.outputTimezone,
-              locale: 'en-En'
-            });
-          }
-        });
-        return formattedEntry;
-      });
-      if (!test) {
-        await persistResults(
-          formattedResult,
-          item.settings.serialization,
-          this.connector.name,
-          item,
-          startRequest.toUTC().toISO(),
-          this.tmpFolder,
-          this.addContent.bind(this),
-          this.logger
-        );
-      }
-    } else {
-      this.logger.debug(logCtx, `No result found. Request done in ${requestDuration} ms`);
-    }
-    return { trackedInstant: updatedStartTime, value: result.length > 0 ? result[result.length - 1] : null };
   }
 
   async createConnectionConfig(settings: SouthODBCSettings): Promise<{

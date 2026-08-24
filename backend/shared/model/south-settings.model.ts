@@ -71,23 +71,14 @@ export const SOUTH_MY_S_Q_L_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES
 export type SouthMySQLItemSettingsTrackingInstantDateTimeInputType =
   (typeof SOUTH_MY_S_Q_L_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES)[number];
 
-export const SOUTH_O_D_B_C_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
-export type SouthODBCItemSettingsDateTimeFieldsType = (typeof SOUTH_O_D_B_C_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
-
-export const SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
-export type SouthODBCItemSettingsSerializationType = (typeof SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
-
-export const SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
-  'DOT',
-  'SEMI_COLON',
-  'COLON',
-  'COMMA',
-  'NON_BREAKING_SPACE',
-  'SLASH',
-  'TAB',
-  'PIPE'
+export const SOUTH_O_D_B_C_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES = [
+  'string',
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms'
 ] as const;
-export type SouthODBCItemSettingsSerializationDelimiter = (typeof SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
+export type SouthODBCItemSettingsTrackingInstantDateTimeInputType =
+  (typeof SOUTH_O_D_B_C_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES)[number];
 
 export const SOUTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS = ['basic', 'aad-client-secret', 'aad-certificate'] as const;
 export type SouthOIAnalyticsSettingsSpecificSettingsAuthentication =
@@ -427,11 +418,7 @@ export interface SouthMySQLSettings {
 }
 
 export interface SouthODBCSettings {
-  remoteAgent: boolean;
-  agentUrl?: string;
   connectionTimeout: number;
-  retryInterval: number;
-  requestTimeout?: number;
   connectionString: string;
   password: string | null;
 }
@@ -589,22 +576,17 @@ export interface SouthMySQLItemSettingsTrackingInstant {
   dateTimeInput?: SouthMySQLItemSettingsTrackingInstantDateTimeInput | null;
 }
 
-export interface SouthODBCItemSettingsDateTimeFields {
-  fieldName: string;
-  useAsReference: boolean;
-  type: SouthODBCItemSettingsDateTimeFieldsType;
+export interface SouthODBCItemSettingsTrackingInstantDateTimeInput {
+  type: SouthODBCItemSettingsTrackingInstantDateTimeInputType;
   timezone?: Timezone;
   format?: string;
   locale?: string;
 }
 
-export interface SouthODBCItemSettingsSerialization {
-  type: SouthODBCItemSettingsSerializationType;
-  filename: string;
-  delimiter: SouthODBCItemSettingsSerializationDelimiter;
-  compression: boolean;
-  outputTimestampFormat: string;
-  outputTimezone: Timezone;
+export interface SouthODBCItemSettingsTrackingInstant {
+  trackInstant: boolean;
+  fieldName?: string;
+  dateTimeInput?: SouthODBCItemSettingsTrackingInstantDateTimeInput | null;
 }
 
 export interface SouthOIAnalyticsItemSettingsQueryParams {
@@ -784,8 +766,7 @@ export interface SouthMySQLItemSettings {
 
 export interface SouthODBCItemSettings {
   query: string;
-  dateTimeFields: Array<SouthODBCItemSettingsDateTimeFields> | null;
-  serialization: SouthODBCItemSettingsSerialization;
+  trackingInstant: SouthODBCItemSettingsTrackingInstant | null;
 }
 
 export interface SouthOIAnalyticsItemSettings {
