@@ -1,11 +1,8 @@
 <div class="oib-padded-container">
   <div class="oib-header-container">
     <div class="row mb-3">
-      <div class="col d-flex">
-        <div class="oib-block-title">
-          <span class="fa fa-history fa-2x pt-2"></span>
-        </div>
-        <h1 class="oib-title" translate="audit.title"></h1>
+      <div class="col">
+        <h1 id="title" translate="audit.title"></h1>
       </div>
     </div>
 
@@ -63,7 +60,7 @@
     }
     @if (entries().totalElements !== 0) {
       <div class="table-container">
-        <table class="table table-sm table-hover">
+        <table class="table table-sm table-hover oib-table">
           <thead>
             <tr>
               <th translate="audit.entity-type"></th>
@@ -71,7 +68,7 @@
               <th translate="audit.action"></th>
               <th translate="audit.user"></th>
               <th translate="audit.date"></th>
-              <th style="width: 1%" translate="audit.details"></th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -91,8 +88,14 @@
                 <td>{{ entry.userId }}</td>
                 <td class="text-nowrap">{{ entry.createdAt | datetime: 'ff' }}</td>
                 <td>
-                  <button type="button" class="btn btn-link" id="view-details-button" (click)="showHistory(entry)">
-                    <span class="fa fa-eye"></span>
+                  <button
+                    type="button"
+                    class="btn btn-link"
+                    id="view-details-button"
+                    [ngbTooltip]="'audit.tooltips.view' | translate"
+                    (click)="showHistory(entry)"
+                  >
+                    <span class="fa fa-search"></span>
                   </button>
                 </td>
               </tr>
