@@ -1,21 +1,38 @@
-export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE';
+/**
+ * List of possible audit actions.
+ */
+export const AUDIT_ACTIONS = ['CREATE', 'UPDATE', 'DELETE'] as const;
+/**
+ * Type representing an audit action.
+ * @example 'UPDATE'
+ */
+export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
-export type AuditEntityType =
-  | 'south_connector'
-  | 'south_item'
-  | 'south_item_group'
-  | 'north_connector'
-  | 'north_transformer'
-  | 'history_query'
-  | 'history_query_item'
-  | 'history_query_transformer'
-  | 'scan_mode'
-  | 'ip_filter'
-  | 'certificate'
-  | 'user'
-  | 'transformer'
-  | 'engine'
-  | 'oianalytics_registration';
+/**
+ * List of possible audited entity types.
+ */
+export const AUDIT_ENTITY_TYPES = [
+  'south_connector',
+  'south_item',
+  'south_item_group',
+  'north_connector',
+  'north_transformer',
+  'history_query',
+  'history_query_item',
+  'history_query_transformer',
+  'scan_mode',
+  'ip_filter',
+  'certificate',
+  'user',
+  'transformer',
+  'engine',
+  'oianalytics_registration'
+] as const;
+/**
+ * Type representing an audited entity type.
+ * @example 'south_connector'
+ */
+export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];
 
 /**
  * Data Transfer Object for an audit log entry.

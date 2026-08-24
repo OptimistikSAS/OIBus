@@ -28,6 +28,8 @@ import { EngineController } from './controllers/engine.controller';
 import { ContentController } from './controllers/content.controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { CertificateController } from './controllers/certificate.controller';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { AuditController } from './controllers/audit.controller';
 import type { Request as ExRequest, Response as ExResponse, RequestHandler, Router } from 'express';
 const multer = require('multer');
 
@@ -8172,6 +8174,7 @@ const models: TsoaRoute.Models = {
             "updatedAt": {"ref":"Instant","required":true},
             "version": {"dataType":"string","required":true},
             "launcherVersion": {"dataType":"string","required":true},
+            "auditRetentionDuration": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
             "general": {"dataType":"nestedObjectLiteral","nestedProperties":{"name":{"dataType":"string","required":true}},"required":true},
             "webServer": {"dataType":"nestedObjectLiteral","nestedProperties":{"authTokenDuration":{"ref":"AuthTokenDuration","required":true},"port":{"dataType":"double","required":true}},"required":true},
             "proxyServer": {"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"username":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"forward":{"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"username":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"url":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},"port":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"enabled":{"dataType":"boolean","required":true}},"required":true},
@@ -8196,6 +8199,7 @@ const models: TsoaRoute.Models = {
             "webServer": {"ref":"EngineWebServerCommandDTO","required":true},
             "proxyServer": {"ref":"EngineProxyCommandDTO","required":true},
             "logger": {"ref":"EngineLoggerCommandDTO","required":true},
+            "auditRetentionDuration": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -8247,6 +8251,43 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "passphrase": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AuditEntityType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["south_connector"]},{"dataType":"enum","enums":["south_item"]},{"dataType":"enum","enums":["south_item_group"]},{"dataType":"enum","enums":["north_connector"]},{"dataType":"enum","enums":["north_transformer"]},{"dataType":"enum","enums":["history_query"]},{"dataType":"enum","enums":["history_query_item"]},{"dataType":"enum","enums":["history_query_transformer"]},{"dataType":"enum","enums":["scan_mode"]},{"dataType":"enum","enums":["ip_filter"]},{"dataType":"enum","enums":["certificate"]},{"dataType":"enum","enums":["user"]},{"dataType":"enum","enums":["transformer"]},{"dataType":"enum","enums":["engine"]},{"dataType":"enum","enums":["oianalytics_registration"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AuditAction": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["CREATE"]},{"dataType":"enum","enums":["UPDATE"]},{"dataType":"enum","enums":["DELETE"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AuditLogDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "entityType": {"ref":"AuditEntityType","required":true},
+            "entityId": {"dataType":"string","required":true},
+            "action": {"ref":"AuditAction","required":true},
+            "previousState": {"dataType":"union","subSchemas":[{"ref":"Record_string.unknown_"},{"dataType":"enum","enums":[null]}],"required":true},
+            "newState": {"dataType":"union","subSchemas":[{"ref":"Record_string.unknown_"},{"dataType":"enum","enums":[null]}],"required":true},
+            "userId": {"dataType":"string","required":true},
+            "createdAt": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Page_AuditLogDTO_": {
+        "dataType": "refObject",
+        "properties": {
+            "content": {"dataType":"array","array":{"dataType":"refObject","ref":"AuditLogDTO"},"required":true},
+            "totalElements": {"dataType":"double","required":true},
+            "size": {"dataType":"double","required":true},
+            "number": {"dataType":"double","required":true},
+            "totalPages": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },
@@ -13135,6 +13176,74 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 next,
                 validatedArgs,
                 successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAuditController_search: Record<string, TsoaRoute.ParameterSchema> = {
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+                entityType: {"in":"query","name":"entityType","dataType":"string"},
+                entityId: {"in":"query","name":"entityId","dataType":"string"},
+                action: {"in":"query","name":"action","dataType":"string"},
+                start: {"in":"query","name":"start","dataType":"string"},
+                end: {"in":"query","name":"end","dataType":"string"},
+                page: {"default":0,"in":"query","name":"page","dataType":"double"},
+        };
+        app.get('/api/audit',
+            ...(fetchMiddlewares<RequestHandler>(AuditController)),
+            ...(fetchMiddlewares<RequestHandler>(AuditController.prototype.search)),
+
+            async function AuditController_search(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAuditController_search, request, response });
+
+                const controller = new AuditController();
+
+              await templateService.apiHandler({
+                methodName: 'search',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAuditController_history: Record<string, TsoaRoute.ParameterSchema> = {
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+                entityType: {"in":"path","name":"entityType","required":true,"dataType":"string"},
+                entityId: {"in":"path","name":"entityId","required":true,"dataType":"string"},
+        };
+        app.get('/api/audit/:entityType/:entityId',
+            ...(fetchMiddlewares<RequestHandler>(AuditController)),
+            ...(fetchMiddlewares<RequestHandler>(AuditController.prototype.history)),
+
+            async function AuditController_history(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAuditController_history, request, response });
+
+                const controller = new AuditController();
+
+              await templateService.apiHandler({
+                methodName: 'history',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
               });
             } catch (err) {
                 return next(err);

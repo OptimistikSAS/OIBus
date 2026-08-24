@@ -19,6 +19,7 @@ import { createPageFromArray, Page } from '../../../../../backend/shared/model/t
 import { emptyPage } from '../../shared/test-utils';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 
 type CertificateSortField = 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -142,6 +143,14 @@ export class CertificateListComponent {
         name: certificate.name
       });
     });
+  }
+
+  /**
+   * Open a modal to view the audit history of a certificate
+   */
+  showAudit(certificate: CertificateDTO) {
+    const modalRef = this.modalService.open(AuditHistoryModalComponent);
+    modalRef.componentInstance.prepare('certificate', certificate.id);
   }
 
   deleteCertificate(certificate: CertificateDTO) {

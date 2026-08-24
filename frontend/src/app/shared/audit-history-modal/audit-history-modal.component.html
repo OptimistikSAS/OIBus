@@ -1,0 +1,50 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="audit.history-modal.title"></h4>
+</div>
+<div class="modal-body">
+  @if (loading()) {
+    <div class="text-center">
+      <oib-loading-spinner />
+      <div translate="audit.history-modal.loading"></div>
+    </div>
+  } @else if (history().length === 0) {
+    <div class="oi-details empty" translate="audit.history-modal.none"></div>
+  } @else {
+    <div class="list-group">
+      @for (row of history(); track row.id) {
+        <div class="list-group-item">
+          <div class="d-flex align-items-center justify-content-between audit-history-row">
+            <div class="d-flex align-items-center gap-2">
+              <span
+                class="badge"
+                [class.bg-success]="row.action === 'CREATE'"
+                [class.bg-primary]="row.action === 'UPDATE'"
+                [class.bg-danger]="row.action === 'DELETE'"
+                [translate]="'audit.actions.' + row.action"
+              ></span>
+              <span>{{ row.createdAt | datetime: 'ff' }}</span>
+              <span class="text-muted">{{ row.userId }}</span>
+            </div>
+            <button type="button" class="btn btn-link" [attr.aria-expanded]="expandedRowId() === row.id" (click)="toggleRow(row.id)">
+              @if (expandedRowId() === row.id) {
+                <span class="fa fa-chevron-up"></span>
+              } @else {
+                <span class="fa fa-chevron-down"></span>
+              }
+            </button>
+          </div>
+          @if (expandedRowId() === row.id) {
+            <div class="mt-2">
+              <oib-audit-diff [previousState]="row.previousState" [newState]="row.newState" />
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button type="button" class="btn btn-cancel" (click)="close()" translate="common.close" id="close-button"></button>
+  </div>
+</div>

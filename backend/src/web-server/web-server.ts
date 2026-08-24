@@ -24,6 +24,7 @@ import { Express } from 'express-serve-static-core';
 import IpFilterMiddleware from './middlewares/ip-filter.middleware';
 import { createInjectServicesMiddleware } from './middlewares/services.middleware';
 import { RegisterRoutes } from './routes';
+import AuditService from '../service/audit.service';
 import path from 'path';
 import multer from 'multer';
 import { ValidateError } from 'tsoa';
@@ -48,6 +49,7 @@ export default class WebServer {
   constructor(
     port: number,
     private readonly encryptionService: EncryptionService,
+    private readonly auditService: AuditService,
     private readonly scanModeService: ScanModeService,
     private readonly ipFilterService: IPFilterService,
     private readonly certificateService: CertificateService,
@@ -116,6 +118,7 @@ export default class WebServer {
 
     this.app.use(
       createInjectServicesMiddleware(
+        this.auditService,
         this.certificateService,
         this.historyQueryService,
         this.ipFilterService,

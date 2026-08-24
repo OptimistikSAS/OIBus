@@ -11,10 +11,12 @@ import UserService from '../service/user.service';
 import SouthService from '../service/south.service';
 import NorthService from '../service/north.service';
 import HistoryQueryService from '../service/history-query.service';
+import AuditService from '../service/audit.service';
 
 interface CustomExpressRequest extends Request {
   user: { id: string; login: string };
   services: {
+    auditService: AuditService;
     certificateService: CertificateService;
     historyQueryService: HistoryQueryService;
     ipFilterService: IPFilterService;

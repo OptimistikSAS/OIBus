@@ -397,7 +397,14 @@ export default class OIAnalyticsRegistrationRepository {
    */
   private redact(registration: OIAnalyticsRegistration | null): Record<string, unknown> | null {
     if (!registration) return null;
-    return { ...registration, publicCipherKey: '[REDACTED]', privateCipherKey: '[REDACTED]' };
+    return {
+      ...registration,
+      publicCipherKey: '[REDACTED]',
+      privateCipherKey: '[REDACTED]',
+      token: '[REDACTED]',
+      proxyPassword: '[REDACTED]',
+      apiGatewayHeaderValue: '[REDACTED]'
+    };
   }
 
   private toOIAnalyticsRegistration(result: Record<string, string | number>): OIAnalyticsRegistration {
