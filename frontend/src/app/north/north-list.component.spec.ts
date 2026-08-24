@@ -9,14 +9,16 @@ import { NorthConnectorService } from '../services/north-connector.service';
 import { NotificationService } from '../shared/notification.service';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
-import { provideModalTesting } from '../shared/mock-modal.service.testing';
+import { MockModalService, provideModalTesting } from '../shared/mock-modal.service.testing';
 import { provideRouter } from '@angular/router';
 import testData from '../../../../backend/src/tests/utils/test-data';
 import { NorthConnectorLightDTO } from '../../../../backend/shared/model/north-connector.model';
+import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
 
 describe('NorthListComponent', () => {
   let northConnectorService: MockObject<NorthConnectorService>;
   let notificationService: MockObject<NotificationService>;
+  let modalService: MockModalService<AuditHistoryModalComponent>;
 
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);
@@ -36,6 +38,7 @@ describe('NorthListComponent', () => {
         { provide: NotificationService, useValue: notificationService }
       ]
     });
+    modalService = TestBed.inject(MockModalService);
   });
 
   test('should display the north list', async () => {
@@ -66,5 +69,19 @@ describe('NorthListComponent', () => {
       expect(northConnectorService.start).toHaveBeenCalledWith(north.id);
       expect(notificationService.success).toHaveBeenCalledWith('north.started', { name: north.name });
     }
+  });
+
+  test('should open the audit history modal with the north connector entity type and id', async () => {
+    const fixture = TestBed.createComponent(NorthListComponent);
+    fixture.detectChanges();
+
+    const fakeModalComponent = createMock(AuditHistoryModalComponent);
+    modalService.mockClosedModal(fakeModalComponent);
+
+    const root = page.elementLocator(fixture.nativeElement);
+    await root.getByCss('.show-audit-north').nth(0).click();
+
+    const north = testData.north.list[0] as unknown as NorthConnectorLightDTO;
+    expect(fakeModalComponent.prepare).toHaveBeenCalledWith('north_connector', north.id);
   });
 });

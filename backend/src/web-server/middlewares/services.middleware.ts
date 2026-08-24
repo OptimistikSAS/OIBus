@@ -12,8 +12,10 @@ import UserService from '../../service/user.service';
 import SouthService from '../../service/south.service';
 import HistoryQueryService from '../../service/history-query.service';
 import NorthService from '../../service/north.service';
+import AuditService from '../../service/audit.service';
 
 export function createInjectServicesMiddleware(
+  auditService: AuditService,
   certificateService: CertificateService,
   historyQueryService: HistoryQueryService,
   ipFilterService: IPFilterService,
@@ -29,6 +31,7 @@ export function createInjectServicesMiddleware(
 ) {
   return (req: Request, res: Response, next: NextFunction) => {
     (req as CustomExpressRequest).services = {
+      auditService,
       certificateService,
       historyQueryService,
       ipFilterService,

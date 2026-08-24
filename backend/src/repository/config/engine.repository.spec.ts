@@ -9,6 +9,27 @@ import { version } from '../../../package.json';
 import argon2 from 'argon2';
 import UserRepository from './user.repository';
 import AuditService from '../../service/audit.service';
+import { EngineSettings } from '../../model/engine.model';
+
+/**
+ * Mirrors EngineRepository's private redact(): the audit trail must never carry
+ * proxyServer.password, proxyServer.forward.password or logger.loki.password in the clear.
+ */
+function redactEngineForAudit(settings: EngineSettings | null): unknown {
+  if (!settings) return null;
+  return {
+    ...settings,
+    proxyServer: {
+      ...settings.proxyServer,
+      password: '',
+      forward: { ...settings.proxyServer.forward, password: '' }
+    },
+    logger: {
+      ...settings.logger,
+      loki: { ...settings.logger.loki, password: '' }
+    }
+  };
+}
 
 const TEST_DB_PATH = 'src/tests/test-config-engine.db';
 
@@ -65,7 +86,37 @@ describe('EngineRepository with populated database', () => {
 
       const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
       assert.strictEqual(recordMock.mock.calls.length, 1);
-      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['engine', after!.id, 'UPDATE', before, after, testData.users.list[0].id]);
+      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
+        'engine',
+        after!.id,
+        'UPDATE',
+        redactEngineForAudit(before),
+        redactEngineForAudit(after),
+        testData.users.list[0].id
+      ]);
+      // Password fields must never be persisted in the audit trail
+      const [, , , recordedBefore, recordedAfter] = recordMock.mock.calls[0].arguments as [
+        string,
+        string,
+        string,
+        { proxyServer: { password: string }; logger: { loki: { password: string } } },
+        { proxyServer: { password: string }; logger: { loki: { password: string } } }
+      ];
+      assert.strictEqual(recordedBefore.proxyServer.password, '');
+      assert.strictEqual(recordedBefore.logger.loki.password, '');
+      assert.strictEqual(recordedAfter.proxyServer.password, '');
+      assert.strictEqual(recordedAfter.logger.loki.password, '');
+    });
+
+    it('should round-trip auditRetentionDuration on update', () => {
+      const command = { ...testData.engine.command, auditRetentionDuration: 45 };
+      repository.update(command, testData.users.list[0].id);
+      const after = repository.get();
+      assert.strictEqual(after!.auditRetentionDuration, 45);
+
+      // Reset back to null so subsequent tests relying on the default fixture are unaffected
+      repository.update(testData.engine.command, testData.users.list[0].id);
+      assert.strictEqual(repository.get()!.auditRetentionDuration, null);
     });
 
     it('should update name only', () => {
@@ -76,7 +127,14 @@ describe('EngineRepository with populated database', () => {
 
       const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
       assert.strictEqual(recordMock.mock.calls.length, 1);
-      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['engine', after!.id, 'UPDATE', before, after, testData.users.list[0].id]);
+      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
+        'engine',
+        after!.id,
+        'UPDATE',
+        redactEngineForAudit(before),
+        redactEngineForAudit(after),
+        testData.users.list[0].id
+      ]);
     });
 
     it('should update web server port only', () => {
@@ -87,7 +145,14 @@ describe('EngineRepository with populated database', () => {
 
       const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
       assert.strictEqual(recordMock.mock.calls.length, 1);
-      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['engine', after!.id, 'UPDATE', before, after, testData.users.list[0].id]);
+      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
+        'engine',
+        after!.id,
+        'UPDATE',
+        redactEngineForAudit(before),
+        redactEngineForAudit(after),
+        testData.users.list[0].id
+      ]);
     });
 
     it('should update engine settings without a forward proxy (falls back to disabled defaults)', () => {
@@ -118,8 +183,8 @@ describe('EngineRepository with populated database', () => {
         'engine',
         result.id,
         'UPDATE',
-        before,
-        result,
+        redactEngineForAudit(before),
+        redactEngineForAudit(result),
         testData.users.list[0].id
       ]);
     });
@@ -151,7 +216,40 @@ describe('EngineRepository with populated database', () => {
 
       const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
       assert.strictEqual(recordMock.mock.calls.length, 1);
-      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['engine', after!.id, 'UPDATE', before, after, testData.users.list[0].id]);
+      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
+        'engine',
+        after!.id,
+        'UPDATE',
+        redactEngineForAudit(before),
+        redactEngineForAudit(after),
+        testData.users.list[0].id
+      ]);
+    });
+
+    it('should never persist a real loki password in the audit trail', () => {
+      const loggerCommandWithRealPassword = {
+        ...testData.engine.loggerCommand,
+        loki: { ...testData.engine.loggerCommand.loki, password: 'super-secret-loki-password' }
+      };
+      repository.updateLogger(loggerCommandWithRealPassword, testData.users.list[0].id);
+      const after = repository.get();
+      // The password is genuinely stored (readable back through get())...
+      assert.strictEqual(after!.logger.loki.password, 'super-secret-loki-password');
+
+      // ...but never persisted in clear in the audit trail
+      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+      assert.strictEqual(recordMock.mock.calls.length, 1);
+      const [, , , , recordedAfter] = recordMock.mock.calls[0].arguments as [
+        string,
+        string,
+        string,
+        unknown,
+        { logger: { loki: { password: string } } }
+      ];
+      assert.strictEqual(recordedAfter.logger.loki.password, '');
+
+      // Reset back to the shared fixture so subsequent tests are unaffected
+      repository.updateLogger(testData.engine.loggerCommand, testData.users.list[0].id);
     });
 
     it('should not call the audit service when updating the version', () => {
@@ -186,6 +284,7 @@ describe('EngineRepository with empty database', () => {
       assert.ok(result.id);
       assert.strictEqual(result.version, version);
       assert.strictEqual(result.launcherVersion, '3.5.0');
+      assert.strictEqual(result.auditRetentionDuration, 90);
       assert.strictEqual(result.general.name, 'OIBus');
       assert.strictEqual(result.webServer.port, 2223);
       assert.strictEqual(result.proxyServer.enabled, false);

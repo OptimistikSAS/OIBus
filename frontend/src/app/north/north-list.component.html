@@ -179,6 +179,15 @@
                     >
                       <span class="fa fa-search"></span>
                     </a>
+                    <!-- Audit history button -->
+                    <button
+                      type="button"
+                      class="btn btn-link show-audit-north px-1 py-0"
+                      [ngbTooltip]="'north.tooltips.audit' | translate"
+                      (click)="showAudit(north)"
+                    >
+                      <span class="fa fa-history"></span>
+                    </button>
                     <!-- Edit button -->
                     <a
                       class="btn btn-link edit-north px-1 py-0"

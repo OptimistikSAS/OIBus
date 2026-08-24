@@ -10,6 +10,7 @@ import { createInjectServicesMiddleware } from './middlewares/services.middlewar
 import { RegisterRoutes } from './routes';
 import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model/types';
 
+import AuditServiceMock from '../tests/__mocks__/service/audit-service.mock';
 import CertificateServiceMock from '../tests/__mocks__/service/certificate-service.mock';
 import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
 import IpFilterServiceMock from '../tests/__mocks__/service/ip-filter-service.mock';
@@ -24,6 +25,7 @@ import TransformerServiceMock from '../tests/__mocks__/service/transformer-servi
 import UserServiceMock from '../tests/__mocks__/service/user-service.mock';
 import testData from '../tests/utils/test-data';
 
+import type AuditService from '../service/audit.service';
 import type CertificateService from '../service/certificate.service';
 import type HistoryQueryService from '../service/history-query.service';
 import type IPFilterService from '../service/ip-filter.service';
@@ -94,6 +96,7 @@ describe('routes.ts integration (real RegisterRoutes over HTTP)', () => {
   before(async () => {
     app = express();
 
+    const auditService = new AuditServiceMock();
     const certificateService = new CertificateServiceMock();
     historyQueryService = new HistoryQueryServiceMock();
     const ipFilterService = new IpFilterServiceMock();
@@ -111,6 +114,7 @@ describe('routes.ts integration (real RegisterRoutes over HTTP)', () => {
     // handlers in routes.ts directly, so we mount only service injection + body parsing.
     app.use(
       createInjectServicesMiddleware(
+        auditService as unknown as AuditService,
         certificateService as unknown as CertificateService,
         historyQueryService as unknown as HistoryQueryService,
         ipFilterService as unknown as IPFilterService,
