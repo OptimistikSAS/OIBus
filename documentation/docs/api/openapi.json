@@ -6105,21 +6105,7 @@
 			},
 			"SouthODBCSettings": {
 				"properties": {
-					"remoteAgent": {
-						"type": "boolean"
-					},
-					"agentUrl": {
-						"type": "string"
-					},
 					"connectionTimeout": {
-						"type": "number",
-						"format": "double"
-					},
-					"retryInterval": {
-						"type": "number",
-						"format": "double"
-					},
-					"requestTimeout": {
 						"type": "number",
 						"format": "double"
 					},
@@ -6132,9 +6118,7 @@
 					}
 				},
 				"required": [
-					"remoteAgent",
 					"connectionTimeout",
-					"retryInterval",
 					"connectionString",
 					"password"
 				],

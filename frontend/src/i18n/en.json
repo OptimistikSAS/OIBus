@@ -1828,11 +1828,7 @@
             "bucket": "Bucket"
           },
           "odbc": {
-            "remote-agent": "Use remote agent",
-            "agent-url": "Remote agent URL",
             "connection-timeout": "Connection timeout",
-            "retry-interval": "Retry interval",
-            "request-timeout": "Request timeout",
             "connection-string": "Connection string",
             "password": "Password"
           },

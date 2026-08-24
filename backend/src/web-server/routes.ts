@@ -1649,11 +1649,7 @@ const models: TsoaRoute.Models = {
     "SouthODBCSettings": {
         "dataType": "refObject",
         "properties": {
-            "remoteAgent": {"dataType":"boolean","required":true},
-            "agentUrl": {"dataType":"string"},
             "connectionTimeout": {"dataType":"double","required":true},
-            "retryInterval": {"dataType":"double","required":true},
-            "requestTimeout": {"dataType":"double"},
             "connectionString": {"dataType":"string","required":true},
             "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
         },

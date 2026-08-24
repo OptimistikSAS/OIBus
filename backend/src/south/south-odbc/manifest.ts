@@ -17,54 +17,9 @@ const manifest: SouthConnectorManifest = {
       visible: true,
       wrapInBox: false
     },
-    enablingConditions: [
-      {
-        referralPathFromRoot: 'remoteAgent',
-        targetPathFromRoot: 'agentUrl',
-        values: [true]
-      },
-      {
-        referralPathFromRoot: 'remoteAgent',
-        targetPathFromRoot: 'requestTimeout',
-        values: [true]
-      }
-    ],
+    enablingConditions: [],
     validators: [],
     attributes: [
-      {
-        type: 'boolean',
-        key: 'remoteAgent',
-        translationKey: 'configuration.oibus.manifest.south.odbc.remote-agent',
-        defaultValue: false,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 0,
-          columns: 3,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
-        key: 'agentUrl',
-        translationKey: 'configuration.oibus.manifest.south.odbc.agent-url',
-        defaultValue: 'http://ip-adress-or-host:2224',
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 0,
-          columns: 9,
-          displayInViewMode: false
-        }
-      },
       {
         type: 'number',
         key: 'connectionTimeout',
@@ -83,58 +38,6 @@ const manifest: SouthConnectorManifest = {
           {
             type: 'MAXIMUM',
             arguments: ['30000']
-          }
-        ],
-        displayProperties: {
-          row: 1,
-          columns: 4,
-          displayInViewMode: false
-        }
-      },
-      {
-        type: 'number',
-        key: 'retryInterval',
-        translationKey: 'configuration.oibus.manifest.south.odbc.retry-interval',
-        unit: 'ms',
-        defaultValue: 10000,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          },
-          {
-            type: 'MINIMUM',
-            arguments: ['100']
-          },
-          {
-            type: 'MAXIMUM',
-            arguments: ['30000']
-          }
-        ],
-        displayProperties: {
-          row: 1,
-          columns: 4,
-          displayInViewMode: false
-        }
-      },
-      {
-        type: 'number',
-        key: 'requestTimeout',
-        translationKey: 'configuration.oibus.manifest.south.odbc.request-timeout',
-        unit: 'ms',
-        defaultValue: 15000,
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          },
-          {
-            type: 'MINIMUM',
-            arguments: ['100']
-          },
-          {
-            type: 'MAXIMUM',
-            arguments: ['3600000']
           }
         ],
         displayProperties: {

@@ -1,8 +1,6 @@
 import SouthConnector from '../south-connector';
 import {
   convertDateTimeToInstant,
-  convertDelimiter,
-  extractLastCsvRow,
   formatInstant,
   generateCsvContent,
   generateFilenameForSerialization,
@@ -20,16 +18,12 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { loadOdbc } from './odbc-loader';
-import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
 import { encryptionService } from '../../service/encryption.service';
 
 /**
  * Class SouthODBC - Retrieve data from SQL databases with ODBC driver and send them to the cache as CSV files.
  */
 export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthODBCItemSettings> implements SouthHistoryQuery {
-  private connected = false;
-  private reconnectTimeout: NodeJS.Timeout | null = null;
-
   constructor(
     connector: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings>,
     engineAddContentCallback: (
@@ -44,67 +38,8 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
-  override async connect(): Promise<void> {
-    if (this.connector.settings.remoteAgent) {
-      try {
-        this.connected = false;
-        this.logger.debug(`Connecting to ODBC agent at ${this.connector.settings.agentUrl}`);
-        const connectStart = DateTime.now().toMillis();
-        const fetchOptions: ReqOptions = {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            connectionString: this.connector.settings.connectionString,
-            connectionTimeout: this.connector.settings.connectionTimeout
-          })
-        };
-        const requestUrl = new URL(`/api/odbc/${this.connector.id}/connect`, this.connector.settings.agentUrl);
-        await HTTPRequest(requestUrl, fetchOptions);
-        this.connected = true;
-        this.logger.info(
-          `Connected to ODBC agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - connectStart} ms`
-        );
-        await super.connect();
-      } catch (error) {
-        this.logger.error(
-          `Error while sending connection HTTP request into agent. Reconnecting in ${this.connector.settings.retryInterval} ms. ${getErrorMessage(error)}`
-        );
-        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
-      }
-    } else {
-      await super.connect();
-    }
-  }
-
-  async disconnect(): Promise<void> {
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-    }
-    this.reconnectTimeout = null;
-
-    if (this.connector.settings.remoteAgent && this.connected) {
-      const disconnectStart = DateTime.now().toMillis();
-      try {
-        const fetchOptions: ReqOptions = { method: 'DELETE' };
-        const requestUrl = new URL(`/api/odbc/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
-        await HTTPRequest(requestUrl, fetchOptions);
-        this.logger.info(
-          `Disconnected from ODBC agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - disconnectStart} ms`
-        );
-      } catch (error) {
-        this.logger.error(`Error while sending disconnection HTTP request into agent: ${getErrorMessage(error)}`);
-      }
-    }
-    this.connected = false;
-    await super.disconnect();
-  }
-
   override async testConnection(): Promise<OIBusConnectionTestResult> {
-    if (this.connector.settings.remoteAgent) {
-      await this.testAgentConnection();
-    } else {
-      await this.testOdbcConnection();
-    }
+    await this.testOdbcConnection();
     return { items: [] };
   }
 
@@ -114,35 +49,30 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
   ): Promise<SouthConnectorItemQueryResult> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
-    let result: { trackedInstant: Instant | null; value: unknown | null };
     const queryStart = DateTime.now().toMillis();
-    if (this.connector.settings.remoteAgent) {
-      result = await this.queryRemoteAgentData(item, startTime, endTime, true);
-    } else {
-      const tempResult = await this.queryOdbcData(item, endTime, startTime, true);
-      const formattedResults = (tempResult.value as Array<Record<string, string>>).map(entry => {
-        const formattedEntry: Record<string, string | number> = {};
-        Object.entries(entry).forEach(([key, value]) => {
-          const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key) || null;
-          if (!datetimeField) {
-            formattedEntry[key] = value;
-          } else {
-            const entryDate = convertDateTimeToInstant(value, datetimeField);
-            formattedEntry[key] = formatInstant(entryDate, {
-              type: 'string',
-              format: item.settings.serialization.outputTimestampFormat,
-              timezone: item.settings.serialization.outputTimezone,
-              locale: 'en-En'
-            });
-          }
-        });
-        return formattedEntry;
+    const tempResult = await this.queryOdbcData(item, endTime, startTime, true);
+    const formattedResults = (tempResult.value as Array<Record<string, string>>).map(entry => {
+      const formattedEntry: Record<string, string | number> = {};
+      Object.entries(entry).forEach(([key, value]) => {
+        const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key) || null;
+        if (!datetimeField) {
+          formattedEntry[key] = value;
+        } else {
+          const entryDate = convertDateTimeToInstant(value, datetimeField);
+          formattedEntry[key] = formatInstant(entryDate, {
+            type: 'string',
+            format: item.settings.serialization.outputTimestampFormat,
+            timezone: item.settings.serialization.outputTimezone,
+            locale: 'en-En'
+          });
+        }
       });
-      result = {
-        trackedInstant: tempResult.trackedInstant,
-        value: generateCsvContent(formattedResults, item.settings.serialization.delimiter)
-      };
-    }
+      return formattedEntry;
+    });
+    const result: { trackedInstant: Instant | null; value: unknown | null } = {
+      trackedInstant: tempResult.trackedInstant,
+      value: generateCsvContent(formattedResults, item.settings.serialization.delimiter)
+    };
     const queryDuration = DateTime.now().toMillis() - queryStart;
 
     let oibusContent: OIBusContent;
@@ -210,28 +140,6 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     await connection.close();
   }
 
-  async testAgentConnection(): Promise<void> {
-    const fetchOptions = {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        connectionString: this.connector.settings.connectionString,
-        connectionTimeout: this.connector.settings.connectionTimeout
-      })
-    };
-    const requestUrl = new URL(`/api/odbc/${this.connector.id}/connect`, this.connector.settings.agentUrl);
-    const response = await HTTPRequest(requestUrl, fetchOptions);
-    if (response.statusCode === 200) {
-      const requestUrl = new URL(`/api/odbc/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
-      await HTTPRequest(requestUrl, { method: 'DELETE' });
-    } else if (response.statusCode === 400) {
-      const errorMessage = await response.body.text();
-      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}: ${errorMessage}`);
-    } else {
-      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}`);
-    }
-  }
-
   /**
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
@@ -241,91 +149,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     startTime: Instant,
     endTime: Instant
   ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
-    const item = items[0];
-    if (this.connector.settings.remoteAgent) {
-      return await this.queryRemoteAgentData(item, startTime, endTime);
-    }
-    return await this.queryOdbcData(item, startTime, endTime);
-  }
-
-  async queryRemoteAgentData(
-    item: SouthConnectorItemEntity<SouthODBCItemSettings>,
-    startTime: Instant,
-    endTime: Instant,
-    test?: boolean
-  ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
-    const logCtx = workUnitLogCtx([item]);
-    let updatedStartTime: Instant | null = null;
-    const startRequest = DateTime.now();
-
-    const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference);
-    const odbcStartTime = referenceTimestampField ? formatInstant(startTime, referenceTimestampField) : startTime;
-    const odbcEndTime = referenceTimestampField ? formatInstant(endTime, referenceTimestampField) : endTime;
-    const adaptedQuery = item.settings.query.replace(/@StartTime/g, `${odbcStartTime}`).replace(/@EndTime/g, `${odbcEndTime}`);
-    logQuery(adaptedQuery, odbcStartTime, odbcEndTime, this.logger, logCtx);
-
-    const fetchOptions: ReqOptions = {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        connectionString: this.connector.settings.connectionString,
-        sql: adaptedQuery,
-        readTimeout: this.connector.settings.requestTimeout,
-        timeColumn: referenceTimestampField?.fieldName,
-        datasourceTimestampFormat: referenceTimestampField?.format,
-        datasourceTimezone: referenceTimestampField?.timezone,
-        delimiter: convertDelimiter(item.settings.serialization.delimiter),
-        outputTimestampFormat: item.settings.serialization.outputTimestampFormat,
-        outputTimezone: item.settings.serialization.outputTimezone
-      })
-    };
-    const requestUrl = new URL(`/api/odbc/${this.connector.id}/read`, this.connector.settings.agentUrl);
-    const response = await HTTPRequest(requestUrl, fetchOptions);
-    let result: { recordCount: number; content: string; maxInstant: Instant };
-    if (response.statusCode === 200) {
-      result = (await response.body.json()) as {
-        recordCount: number;
-        content: string;
-        maxInstant: Instant;
-      };
-      const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
-      this.logger.info(logCtx, `Found ${result.recordCount} results in ${requestDuration} ms`);
-
-      if (!test) {
-        if (result.recordCount > 0) {
-          await persistResults(
-            result.content,
-            { type: 'file', filename: item.settings.serialization.filename, compression: item.settings.serialization.compression },
-            this.connector.name,
-            item,
-            startRequest.toUTC().toISO(),
-            this.tmpFolder,
-            this.addContent.bind(this),
-            this.logger
-          );
-          if (result.maxInstant > startTime) {
-            updatedStartTime = result.maxInstant;
-          }
-        } else {
-          this.logger.debug(logCtx, `No result found. Request done in ${requestDuration} ms`);
-        }
-      }
-    } else if (response.statusCode === 400) {
-      // No log here: the base class's runTask() already logs this error with this item's context
-      // when it's thrown from the scheduled historyQuery() path; testItem() has no separate logging
-      // for its own errors either, consistent with every other connector.
-      const errorMessage = await response.body.text();
-      throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}: ${errorMessage}`);
-    } else {
-      throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}`);
-    }
-
-    // For the data stream we only keep the last row as the cached "last value"; the full CSV content
-    // is only needed for the item test, where it is returned to the UI as-is.
-    return {
-      trackedInstant: updatedStartTime,
-      value: test ? result.content : extractLastCsvRow(result.content, convertDelimiter(item.settings.serialization.delimiter))
-    };
+    return await this.queryOdbcData(items[0], startTime, endTime);
   }
 
   async queryOdbcData(
