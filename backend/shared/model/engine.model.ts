@@ -1057,6 +1057,13 @@ export interface EngineProxyCommandDTO {
  */
 export interface EngineLoggerCommandDTO {
   /**
+   * Number of days audit log entries are kept before being pruned. `null` (or 0) means audit logs
+   * are kept forever.
+   * @example 90
+   */
+  auditRetentionDuration: number | null;
+
+  /**
    * Console logging configuration.
    */
   console: {

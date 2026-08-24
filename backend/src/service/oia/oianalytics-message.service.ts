@@ -386,6 +386,7 @@ export default class OIAnalyticsMessageService {
           }
         },
         logger: {
+          auditRetentionDuration: engine.auditRetentionDuration,
           console: {
             level: engine.logger.console.level
           },

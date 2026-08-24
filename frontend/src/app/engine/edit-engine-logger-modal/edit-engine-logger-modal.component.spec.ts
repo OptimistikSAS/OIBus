@@ -12,6 +12,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
 
 const engineSettings = {
+  auditRetentionDuration: 90,
   logger: {
     console: { level: 'silent' },
     file: { level: 'info', maxFileSize: 50, numberOfFiles: 5 },
@@ -29,6 +30,7 @@ class EditEngineLoggerModalTester {
   readonly fileLevelSelect = this.root.getByCss('#file-level');
   readonly databaseLevelSelect = this.root.getByCss('#database-level');
   readonly oiaLevelSelect = this.root.getByCss('#oia-level');
+  readonly auditRetentionDurationInput = this.root.getByCss('#audit-retention-duration');
   readonly saveButton = this.root.getByCss('#save-logger-button');
   readonly cancelButton = this.root.getByCss('#cancel-logger-button');
 }
@@ -60,6 +62,14 @@ describe('EditEngineLoggerModalComponent', () => {
     tester.fixture.componentInstance.initialize(engineSettings);
     tester.fixture.detectChanges();
     await expect.element(tester.consoleLevelSelect).toHaveValue('0: silent');
+    await expect.element(tester.auditRetentionDurationInput).toHaveValue(90);
+  });
+
+  test('should initialize the audit retention duration to 0 when not set', async () => {
+    const tester = new EditEngineLoggerModalTester();
+    tester.fixture.componentInstance.initialize({ ...engineSettings, auditRetentionDuration: null });
+    tester.fixture.detectChanges();
+    await expect.element(tester.auditRetentionDurationInput).toHaveValue(0);
   });
 
   test('should save logger settings and close modal', async () => {
@@ -69,8 +79,17 @@ describe('EditEngineLoggerModalComponent', () => {
     tester.fixture.detectChanges();
     await tester.saveButton.click();
     expect(engineService.updateEngineLogger).toHaveBeenCalled();
+    expect(engineService.updateEngineLogger).toHaveBeenCalledWith(expect.objectContaining({ auditRetentionDuration: 90 }));
     expect(notificationService.success).toHaveBeenCalledWith('engine.updated');
     expect(activeModal.close).toHaveBeenCalled();
+  });
+
+  test('should reject a negative audit retention duration', async () => {
+    const tester = new EditEngineLoggerModalTester();
+    tester.fixture.componentInstance.initialize(engineSettings);
+    tester.fixture.detectChanges();
+    await tester.auditRetentionDurationInput.fill('-1');
+    expect(tester.fixture.componentInstance.form.controls.auditRetentionDuration.valid).toBe(false);
   });
 
   test('should dismiss modal on cancel', async () => {

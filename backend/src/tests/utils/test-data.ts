@@ -1459,6 +1459,7 @@ const engineProxyCommand: EngineProxyCommandDTO = {
   password: null
 };
 const engineLoggerCommand: EngineLoggerCommandDTO = {
+  auditRetentionDuration: 90,
   console: {
     level: 'silent'
   },
