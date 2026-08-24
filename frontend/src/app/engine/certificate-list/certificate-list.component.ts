@@ -149,7 +149,7 @@ export class CertificateListComponent {
    * Open a modal to view the audit history of a certificate
    */
   showAudit(certificate: CertificateDTO) {
-    const modalRef = this.modalService.open(AuditHistoryModalComponent);
+    const modalRef = this.modalService.open(AuditHistoryModalComponent, { size: 'xl' });
     modalRef.componentInstance.prepare('certificate', certificate.id);
   }
 
