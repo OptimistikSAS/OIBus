@@ -16,6 +16,7 @@ import { emptyPage } from '../../shared/test-utils';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
 import { isScanModeWindowExpired, ScanModeSchedulePipe } from '../../shared/scan-mode-schedule.pipe';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 
 type ScanModeSortField = 'name' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -120,6 +121,14 @@ export class ScanModeListComponent {
         )
       )
       .subscribe();
+  }
+
+  /**
+   * Open a modal to view the audit history of a scan mode
+   */
+  showAudit(scanMode: ScanModeDTO) {
+    const modalRef = this.modalService.open(AuditHistoryModalComponent);
+    modalRef.componentInstance.prepare('scan_mode', scanMode.id);
   }
 
   isWindowExpired(scanMode: ScanModeDTO): boolean {

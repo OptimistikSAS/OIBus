@@ -20,7 +20,7 @@ const DEFAULT_ENGINE_SETTINGS: Omit<
   EngineSettings,
   'id' | 'version' | 'launcherVersion' | 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt'
 > = {
-  auditRetentionDuration: null,
+  auditRetentionDuration: 90,
   general: {
     name: 'OIBus'
   },
@@ -96,7 +96,7 @@ export default class EngineRepository {
 
   get(): EngineSettings | null {
     const query =
-      'SELECT id, name, port, auth_token_duration, oibus_version, oibus_launcher_version, proxy_enabled, proxy_port, ' +
+      'SELECT id, name, port, auth_token_duration, audit_retention_duration, oibus_version, oibus_launcher_version, proxy_enabled, proxy_port, ' +
       'forward_proxy_enabled, forward_proxy_url, forward_proxy_username, forward_proxy_password, proxy_username, proxy_password, ' +
       'log_console_level, log_file_level, log_file_max_file_size, log_file_number_of_files, ' +
       'log_database_level, log_database_max_number_of_logs, ' +
@@ -116,7 +116,7 @@ export default class EngineRepository {
   update(command: EngineSettingsCommandDTO, updatedBy: string): void {
     const before = this.get();
     const query =
-      `UPDATE ${ENGINES_TABLE} SET name = ?, port = ?, auth_token_duration = ?, proxy_enabled = ?, proxy_port = ?, ` +
+      `UPDATE ${ENGINES_TABLE} SET name = ?, port = ?, auth_token_duration = ?, audit_retention_duration = ?, proxy_enabled = ?, proxy_port = ?, ` +
       'forward_proxy_enabled = ?, forward_proxy_url = ?, forward_proxy_username = ?, forward_proxy_password = ?, proxy_username = ?, proxy_password = ?, ' +
       'log_console_level = ?, ' +
       'log_file_level = ?, ' +
@@ -144,6 +144,7 @@ export default class EngineRepository {
         command.general.name,
         command.webServer.port,
         command.webServer.authTokenDuration,
+        command.auditRetentionDuration,
         +command.proxyServer.enabled,
         command.proxyServer.port,
         +(command.proxyServer.forward ?? DISABLED_FORWARD).enabled,
@@ -172,14 +173,7 @@ export default class EngineRepository {
         updatedBy
       );
     const after = this.get();
-    this.auditService.record(
-      'engine',
-      after!.id,
-      'UPDATE',
-      before as unknown as Record<string, unknown>,
-      after as unknown as Record<string, unknown>,
-      updatedBy
-    );
+    this.auditService.record('engine', after!.id, 'UPDATE', this.redact(before), this.redact(after), updatedBy);
   }
 
   updateName(name: string, updatedBy: string): void {
@@ -189,14 +183,7 @@ export default class EngineRepository {
       `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
     this.database.prepare(query).run(name, updatedBy);
     const after = this.get();
-    this.auditService.record(
-      'engine',
-      after!.id,
-      'UPDATE',
-      before as unknown as Record<string, unknown>,
-      after as unknown as Record<string, unknown>,
-      updatedBy
-    );
+    this.auditService.record('engine', after!.id, 'UPDATE', this.redact(before), this.redact(after), updatedBy);
   }
 
   updateWebServer(command: EngineWebServerCommandDTO, updatedBy: string): void {
@@ -206,14 +193,7 @@ export default class EngineRepository {
       `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
     this.database.prepare(query).run(command.port, command.authTokenDuration, updatedBy);
     const after = this.get();
-    this.auditService.record(
-      'engine',
-      after!.id,
-      'UPDATE',
-      before as unknown as Record<string, unknown>,
-      after as unknown as Record<string, unknown>,
-      updatedBy
-    );
+    this.auditService.record('engine', after!.id, 'UPDATE', this.redact(before), this.redact(after), updatedBy);
   }
 
   updateProxy(command: EngineProxyCommandDTO, updatedBy: string): void {
@@ -238,14 +218,7 @@ export default class EngineRepository {
         updatedBy
       );
     const after = this.get();
-    this.auditService.record(
-      'engine',
-      after!.id,
-      'UPDATE',
-      before as unknown as Record<string, unknown>,
-      after as unknown as Record<string, unknown>,
-      updatedBy
-    );
+    this.auditService.record('engine', after!.id, 'UPDATE', this.redact(before), this.redact(after), updatedBy);
   }
 
   updateLogger(command: EngineLoggerCommandDTO, updatedBy: string): void {
@@ -294,14 +267,7 @@ export default class EngineRepository {
         updatedBy
       );
     const after = this.get();
-    this.auditService.record(
-      'engine',
-      after!.id,
-      'UPDATE',
-      before as unknown as Record<string, unknown>,
-      after as unknown as Record<string, unknown>,
-      updatedBy
-    );
+    this.auditService.record('engine', after!.id, 'UPDATE', this.redact(before), this.redact(after), updatedBy);
   }
 
   updateVersion(version: string, launcherVersion: string): void {
@@ -318,14 +284,14 @@ export default class EngineRepository {
     }
 
     const query =
-      `INSERT INTO ${ENGINES_TABLE} (id, name, oibus_version, oibus_launcher_version, port, auth_token_duration, proxy_enabled, proxy_port,` +
+      `INSERT INTO ${ENGINES_TABLE} (id, name, oibus_version, oibus_launcher_version, port, auth_token_duration, audit_retention_duration, proxy_enabled, proxy_port,` +
       'forward_proxy_enabled, forward_proxy_url, forward_proxy_username, forward_proxy_password, proxy_username, proxy_password, ' +
       'log_console_level, log_file_level, log_file_max_file_size, log_file_number_of_files, log_database_level, ' +
       'log_database_max_number_of_logs, log_loki_level, log_loki_interval, log_loki_address, ' +
       'log_loki_username, log_loki_password, log_oia_level, log_oia_interval, ' +
       'log_syslog_level, log_syslog_host, log_syslog_port, log_syslog_protocol, ' +
       `created_by, updated_by, created_at, updated_at) ` +
-      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     this.database
       .prepare(query)
       .run(
@@ -335,6 +301,7 @@ export default class EngineRepository {
         launcherVersion,
         command.webServer.port,
         command.webServer.authTokenDuration,
+        command.auditRetentionDuration,
         +command.proxyServer.enabled,
         command.proxyServer.port,
         +command.proxyServer.forward.enabled,
@@ -365,13 +332,34 @@ export default class EngineRepository {
       );
   }
 
+  /**
+   * Returns a shallow-enough copy of the engine settings with password fields redacted, mirroring
+   * toEngineSettingsDTO in oibus.service.ts (which blanks proxyServer.password,
+   * proxyServer.forward.password and logger.loki.password before exposing settings to the frontend),
+   * so real secrets never end up persisted in the audit trail.
+   */
+  private redact(settings: EngineSettings | null): Record<string, unknown> | null {
+    if (!settings) return null;
+    return {
+      ...settings,
+      proxyServer: {
+        ...settings.proxyServer,
+        password: '',
+        forward: { ...settings.proxyServer.forward, password: '' }
+      },
+      logger: {
+        ...settings.logger,
+        loki: { ...settings.logger.loki, password: '' }
+      }
+    };
+  }
+
   private toEngineSettings(result: Record<string, string | number>): EngineSettings {
     return {
       id: result.id as string,
       version: result.oibus_version as string,
       launcherVersion: result.oibus_launcher_version as string,
-      // TODO: wire audit_retention_duration through get()/update()/createDefault() once the audit retention feature reads/writes it
-      auditRetentionDuration: null,
+      auditRetentionDuration: (result.audit_retention_duration as number | null) ?? null,
       general: {
         name: result.name as string
       },

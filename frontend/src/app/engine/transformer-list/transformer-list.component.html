@@ -69,6 +69,15 @@
             </td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
+                <!-- Audit history button -->
+                <button
+                  type="button"
+                  class="btn btn-link show-audit-transformer px-1 py-0"
+                  [ngbTooltip]="'configuration.oibus.manifest.transformers.edit-transformer-modal.tooltips.audit' | translate"
+                  (click)="showAudit(transformer)"
+                >
+                  <span class="fa fa-history"></span>
+                </button>
                 <!-- Edit button -->
                 <button
                   type="button"
