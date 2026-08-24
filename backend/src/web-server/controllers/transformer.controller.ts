@@ -145,7 +145,7 @@ export class TransformerController extends Controller {
   @SuccessResponse(204, 'Transformer deleted successfully')
   async delete(@Path() transformerId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const transformerService = request.services.transformerService;
-    await transformerService.delete(transformerId);
+    await transformerService.delete(transformerId, request.user.id);
   }
 
   /**

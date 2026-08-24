@@ -31,7 +31,7 @@ export default class TransformerServiceMock {
     async (_command: CustomTransformerCommandDTO, _createdBy: string): Promise<CustomTransformer> => ({}) as CustomTransformer
   );
   update = mock.fn(async (_transformerId: string, _command: CustomTransformerCommandDTO, _updatedBy: string): Promise<void> => undefined);
-  delete = mock.fn(async (_transformerId: string): Promise<void> => undefined);
+  delete = mock.fn(async (_transformerId: string, _userId: string): Promise<void> => undefined);
   test = mock.fn(
     async (_command: CustomTransformerCommandDTO, _testRequest: TransformerTestRequest): Promise<TransformerTestResponse> =>
       ({}) as TransformerTestResponse

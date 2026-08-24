@@ -30,7 +30,7 @@ export default class HistoryQueryServiceMock {
   update = mock.fn(
     async (_historyId: string, _command: HistoryQueryCommandDTO, _resetCache: boolean, _updatedBy: string): Promise<void> => undefined
   );
-  delete = mock.fn(async (_historyId: string): Promise<void> => undefined);
+  delete = mock.fn(async (_historyId: string, _deletedBy: string): Promise<void> => undefined);
   start = mock.fn(async (_historyId: string): Promise<void> => undefined);
   pause = mock.fn(async (_historyId: string): Promise<void> => undefined);
   getHistoryMetric = mock.fn((_historyId: string): HistoryQueryMetrics => ({}) as HistoryQueryMetrics);
@@ -66,9 +66,9 @@ export default class HistoryQueryServiceMock {
   disableItem = mock.fn(async (_historyId: string, _itemId: string): Promise<void> => undefined);
   enableItems = mock.fn(async (_historyId: string, _itemIds: Array<string>): Promise<void> => undefined);
   disableItems = mock.fn(async (_historyId: string, _itemIds: Array<string>): Promise<void> => undefined);
-  deleteItem = mock.fn(async (_historyId: string, _itemId: string): Promise<void> => undefined);
-  deleteItems = mock.fn(async (_historyId: string, _itemIds: Array<string>): Promise<void> => undefined);
-  deleteAllItems = mock.fn(async (_historyId: string): Promise<void> => undefined);
+  deleteItem = mock.fn(async (_historyId: string, _itemId: string, _deletedBy: string): Promise<void> => undefined);
+  deleteItems = mock.fn(async (_historyId: string, _itemIds: Array<string>, _deletedBy: string): Promise<void> => undefined);
+  deleteAllItems = mock.fn(async (_historyId: string, _deletedBy: string): Promise<void> => undefined);
   checkImportItems = mock.fn(
     async (
       _southType: string,
@@ -82,8 +82,8 @@ export default class HistoryQueryServiceMock {
   );
   importItems = mock.fn(async (): Promise<void> => undefined);
   addOrEditTransformer = mock.fn(
-    async (_historyId: string, _transformerWithOptions: HistoryTransformerWithOptions): Promise<void> => undefined
+    async (_historyId: string, _transformerWithOptions: HistoryTransformerWithOptions, _userId: string): Promise<void> => undefined
   );
-  removeTransformer = mock.fn(async (_historyId: string, _historyTransformerId: string): Promise<void> => undefined);
+  removeTransformer = mock.fn(async (_historyId: string, _historyTransformerId: string, _userId: string): Promise<void> => undefined);
   retrieveSecrets = mock.fn((): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null => null);
 }

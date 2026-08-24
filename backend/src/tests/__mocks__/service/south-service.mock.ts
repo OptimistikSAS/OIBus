@@ -39,7 +39,7 @@ export default class SouthServiceMock {
     ): Promise<SouthConnectorEntity<SouthSettings, SouthItemSettings>> => ({}) as SouthConnectorEntity<SouthSettings, SouthItemSettings>
   );
   update = mock.fn(async (): Promise<void> => undefined);
-  delete = mock.fn(async (_southId: string): Promise<void> => undefined);
+  delete = mock.fn(async (_southId: string, _userId: string): Promise<void> => undefined);
   start = mock.fn(async (_southId: string): Promise<void> => undefined);
   stop = mock.fn(async (_southId: string): Promise<void> => undefined);
   getSouthMetric = mock.fn((_southId: string): SouthConnectorMetrics => ({}) as SouthConnectorMetrics);
@@ -87,9 +87,9 @@ export default class SouthServiceMock {
   disableItem = mock.fn(async (_southId: string, _itemId: string): Promise<void> => undefined);
   enableItems = mock.fn(async (_southId: string, _itemIds: Array<string>): Promise<void> => undefined);
   disableItems = mock.fn(async (_southId: string, _itemIds: Array<string>): Promise<void> => undefined);
-  deleteItem = mock.fn(async (_southId: string, _itemId: string): Promise<void> => undefined);
-  deleteItems = mock.fn(async (_southId: string, _itemIds: Array<string>): Promise<void> => undefined);
-  deleteAllItems = mock.fn(async (_southId: string): Promise<void> => undefined);
+  deleteItem = mock.fn(async (_southId: string, _itemId: string, _userId: string): Promise<void> => undefined);
+  deleteItems = mock.fn(async (_southId: string, _itemIds: Array<string>, _userId: string): Promise<void> => undefined);
+  deleteAllItems = mock.fn(async (_southId: string, _userId: string): Promise<void> => undefined);
   getItemLastValue = mock.fn((_southId: string, _itemId: string): SouthItemLastValue => ({}) as SouthItemLastValue);
   checkImportItems = mock.fn(
     async (
@@ -118,6 +118,6 @@ export default class SouthServiceMock {
     (_southId: string, _groupId: string, _user: string, _command: SouthItemGroupCommandDTO): SouthItemGroupEntity =>
       ({}) as SouthItemGroupEntity
   );
-  deleteGroup = mock.fn(async (_southId: string, _groupId: string): Promise<void> => undefined);
+  deleteGroup = mock.fn(async (_southId: string, _groupId: string, _userId: string): Promise<void> => undefined);
   moveItemsToGroup = mock.fn(async (_southId: string, _itemIds: Array<string>, _groupId: string | null): Promise<void> => undefined);
 }
