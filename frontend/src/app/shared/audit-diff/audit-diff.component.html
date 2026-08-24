@@ -8,7 +8,7 @@
   </thead>
   <tbody>
     @for (row of rows(); track row.key) {
-      <tr [class.audit-diff-changed]="row.changed" [class.table-warning]="row.changed">
+      <tr [class.table-warning]="row.changed">
         <td>{{ row.key }}</td>
         <td>{{ formatValue(row.before) }}</td>
         <td>{{ formatValue(row.after) }}</td>

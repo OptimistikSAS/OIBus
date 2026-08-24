@@ -156,7 +156,7 @@ describe('AuditListComponent', () => {
 
     await tester.viewDetailsButtons.first().click();
 
-    expect(modalService.open).toHaveBeenCalledWith(AuditHistoryModalComponent);
+    expect(modalService.open).toHaveBeenCalledWith(AuditHistoryModalComponent, { size: 'xl' });
     expect(modalInstance.prepare).toHaveBeenCalledWith('south_connector', 'south1');
   });
 

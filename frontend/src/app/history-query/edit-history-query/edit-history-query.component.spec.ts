@@ -22,6 +22,14 @@ import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
 
+// Deep-cloned: `EditHistoryQueryComponent` deliberately mutates `historyQuery.caching.trigger.scanMode`
+// in place (to align its reference with an entry in the fetched scan mode list for form binding).
+// Passing the shared `testData` fixture directly would permanently corrupt it for every other spec
+// file relying on the same object under Vitest's browser-mode test runner.
+function cloneHistoryQuery(): HistoryQueryDTO {
+  return JSON.parse(JSON.stringify(testData.historyQueries.list[0]));
+}
+
 function configure(activatedRouteValue: object): {
   historyQueryService: MockObject<HistoryQueryService>;
   modalService: MockObject<ModalService>;
@@ -88,7 +96,7 @@ describe('EditHistoryQueryComponent', () => {
       snapshot: { queryParamMap: { get: () => null, getAll: () => [] } }
     });
 
-    historyQueryService.findById.mockReturnValue(of(testData.historyQueries.list[0] as unknown as HistoryQueryDTO));
+    historyQueryService.findById.mockReturnValue(of(cloneHistoryQuery()));
 
     const fixture = TestBed.createComponent(EditHistoryQueryComponent);
     fixture.detectChanges();
@@ -101,7 +109,7 @@ describe('EditHistoryQueryComponent', () => {
       queryParamMap: of({ get: () => null, getAll: () => [] }),
       snapshot: { queryParamMap: { get: () => null, getAll: () => [] } }
     });
-    historyQueryService.findById.mockReturnValue(of(testData.historyQueries.list[0] as unknown as HistoryQueryDTO));
+    historyQueryService.findById.mockReturnValue(of(cloneHistoryQuery()));
 
     const fixture = TestBed.createComponent(EditHistoryQueryComponent);
     fixture.detectChanges();
@@ -116,7 +124,7 @@ describe('EditHistoryQueryComponent', () => {
       queryParamMap: of({ get: () => null, getAll: () => [] }),
       snapshot: { queryParamMap: { get: () => null, getAll: () => [] } }
     });
-    const historyQuery = testData.historyQueries.list[0] as unknown as HistoryQueryDTO;
+    const historyQuery = cloneHistoryQuery();
     historyQueryService.findById.mockReturnValue(of(historyQuery));
     historyQueryService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries: [] }));
     historyQueryService.browseExplore.mockReturnValue(of({ entries: [] }));
