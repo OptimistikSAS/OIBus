@@ -1,0 +1,107 @@
+<div class="oib-padded-container">
+  <div class="oib-header-container">
+    <div class="row mb-3">
+      <div class="col d-flex">
+        <div class="oib-block-title">
+          <span class="fa fa-history fa-2x pt-2"></span>
+        </div>
+        <h1 class="oib-title" translate="audit.title"></h1>
+      </div>
+    </div>
+
+    <form class="p-3 oib-search-form mb-3" id="audit-form" [formGroup]="searchForm" (ngSubmit)="triggerSearch()">
+      <div class="d-flex flex-wrap align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <label for="entity-type" class="col-form-label text-nowrap" translate="audit.search.entity-type"></label>
+          <select class="form-select" id="entity-type" formControlName="entityType">
+            <option [ngValue]="null" translate="audit.search.all-entity-types"></option>
+            @for (entityType of entityTypes; track entityType) {
+              <option [ngValue]="entityType">{{ entityType | auditEntityTypesEnum }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <label for="action" class="col-form-label text-nowrap" translate="audit.search.action"></label>
+          <select class="form-select" id="action" formControlName="action">
+            <option [ngValue]="null" translate="audit.search.all-actions"></option>
+            @for (action of actions; track action) {
+              <option [ngValue]="action">{{ 'audit.actions.' + action | translate }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <label for="start" class="col-form-label text-nowrap" translate="audit.search.start"></label>
+          <oib-datetimepicker formControlName="start" id="start" />
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <label for="end" class="col-form-label text-nowrap" translate="audit.search.end"></label>
+          <div>
+            <oib-datetimepicker formControlName="end" id="end" />
+            <val-errors [control]="searchForm" />
+          </div>
+        </div>
+
+        <div class="search-buttons ms-auto d-flex gap-2 align-items-center flex-shrink-0">
+          <button class="btn btn-primary" id="search-button" [disabled]="loading()">
+            @if (loading()) {
+              <span class="fa fa-spin fa-spinner"></span>
+            } @else {
+              <span translate="common.search"></span>
+            }
+          </button>
+        </div>
+      </div>
+    </form>
+
+    @if (entries().totalElements !== 0) {
+      <div class="d-flex justify-content-end mb-2">
+        <oib-pagination [page]="entries()" [navigate]="true" />
+      </div>
+    }
+    @if (entries().totalElements !== 0) {
+      <div class="table-container">
+        <table class="table table-sm table-hover">
+          <thead>
+            <tr>
+              <th translate="audit.entity-type"></th>
+              <th translate="audit.entity-id"></th>
+              <th translate="audit.action"></th>
+              <th translate="audit.user"></th>
+              <th translate="audit.date"></th>
+              <th style="width: 1%" translate="audit.details"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of entries().content; track entry.id) {
+              <tr class="data">
+                <td>{{ entry.entityType | auditEntityTypesEnum }}</td>
+                <td>{{ entry.entityId }}</td>
+                <td>
+                  <span
+                    class="badge"
+                    [class.bg-success]="entry.action === 'CREATE'"
+                    [class.bg-primary]="entry.action === 'UPDATE'"
+                    [class.bg-danger]="entry.action === 'DELETE'"
+                    [translate]="'audit.actions.' + entry.action"
+                  ></span>
+                </td>
+                <td>{{ entry.userId }}</td>
+                <td class="text-nowrap">{{ entry.createdAt | datetime: 'ff' }}</td>
+                <td>
+                  <button type="button" class="btn btn-link" id="view-details-button" (click)="showHistory(entry)">
+                    <span class="fa fa-eye"></span>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="oi-details empty" translate="audit.none"></div>
+    }
+  </div>
+</div>

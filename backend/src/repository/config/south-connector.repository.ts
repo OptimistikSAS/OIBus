@@ -10,10 +10,13 @@ import {
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { OIBusSouthType, SouthConnectorItemSearchParam, SouthHistoryRecoveryStrategy } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
+import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { ScanMode } from '../../model/scan-mode.model';
 import { scanModeAliasedColumns, scanModeColumns, toScanMode, toScanModeFromPrefixedRow } from './scan-mode.repository';
 import SouthItemGroupRepository from './south-item-group.repository';
 import AuditService from '../../service/audit.service';
+import { encryptionService } from '../../service/encryption.service';
+import { southManifestList } from '../../service/south-manifests';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';
@@ -179,7 +182,7 @@ export default class SouthConnectorRepository {
               'south_item',
               removedItemId,
               'DELETE',
-              removedItem as unknown as Record<string, unknown>,
+              this.redactItem(removedItem, south.type),
               null,
               south.updatedBy
             );
@@ -238,7 +241,7 @@ export default class SouthConnectorRepository {
               item.updatedBy
             );
             const created = this.findItemById(south.id, item.id);
-            this.auditService.record('south_item', item.id, 'CREATE', null, created as unknown as Record<string, unknown>, item.updatedBy);
+            this.auditService.record('south_item', item.id, 'CREATE', null, this.redactItem(created, south.type), item.updatedBy);
           } else {
             const existing = existingItemsById.get(item.id);
             const hasChanged =
@@ -273,8 +276,8 @@ export default class SouthConnectorRepository {
                 'south_item',
                 item.id,
                 'UPDATE',
-                (beforeItemsById.get(item.id) ?? null) as unknown as Record<string, unknown> | null,
-                after as unknown as Record<string, unknown>,
+                this.redactItem(beforeItemsById.get(item.id) ?? null, south.type),
+                this.redactItem(after, south.type),
                 item.updatedBy
               );
             }
@@ -296,14 +299,7 @@ export default class SouthConnectorRepository {
           .run(south.id);
         this.database.prepare(`DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`).run(south.id);
         for (const [removedItemId, removedItem] of beforeItemsById) {
-          this.auditService.record(
-            'south_item',
-            removedItemId,
-            'DELETE',
-            removedItem as unknown as Record<string, unknown>,
-            null,
-            south.updatedBy
-          );
+          this.auditService.record('south_item', removedItemId, 'DELETE', this.redactItem(removedItem, south.type), null, south.updatedBy);
         }
       }
 
@@ -325,8 +321,8 @@ export default class SouthConnectorRepository {
         'south_connector',
         south.id,
         isNewConnector ? 'CREATE' : 'UPDATE',
-        beforeConnector as unknown as Record<string, unknown> | null,
-        afterConnector as unknown as Record<string, unknown>,
+        this.redactConnector(beforeConnector),
+        this.redactConnector(afterConnector),
         south.updatedBy
       );
     });
@@ -351,12 +347,12 @@ export default class SouthConnectorRepository {
       this.database.prepare(`DELETE FROM ${SOUTH_CONNECTORS_TABLE} WHERE id = ?;`).run(id);
       if (before) {
         for (const item of before.items) {
-          this.auditService.record('south_item', item.id, 'DELETE', item as unknown as Record<string, unknown>, null, deletedBy);
+          this.auditService.record('south_item', item.id, 'DELETE', this.redactItem(item, before.type), null, deletedBy);
         }
         for (const group of before.groups) {
           this.auditService.record('south_item_group', group.id, 'DELETE', group as unknown as Record<string, unknown>, null, deletedBy);
         }
-        this.auditService.record('south_connector', id, 'DELETE', before as unknown as Record<string, unknown>, null, deletedBy);
+        this.auditService.record('south_connector', id, 'DELETE', this.redactConnector(before), null, deletedBy);
       }
     });
     transaction();
@@ -488,6 +484,7 @@ export default class SouthConnectorRepository {
   saveItem(southConnectorId: string, southItem: SouthConnectorItemEntity<SouthItemSettings>): void {
     const wasNew = !southItem.id;
     const before = wasNew ? null : this.findItemById(southConnectorId, southItem.id);
+    const southType = this.findSouthById(southConnectorId)?.type;
     if (!southItem.id) {
       southItem.id = generateRandomId(6);
       const insertQuery =
@@ -542,8 +539,8 @@ export default class SouthConnectorRepository {
       'south_item',
       southItem.id,
       wasNew ? 'CREATE' : 'UPDATE',
-      before as unknown as Record<string, unknown> | null,
-      after as unknown as Record<string, unknown>,
+      southType ? this.redactItem(before, southType) : (before as unknown as Record<string, unknown> | null),
+      southType ? this.redactItem(after, southType) : (after as unknown as Record<string, unknown>),
       southItem.updatedBy
     );
   }
@@ -567,6 +564,7 @@ export default class SouthConnectorRepository {
 
   deleteItem(southId: string, id: string, deletedBy: string): void {
     const before = this.findItemById(southId, id);
+    const southType = this.findSouthById(southId)?.type;
     const transaction = this.database.transaction(() => {
       this.database
         .prepare(
@@ -578,7 +576,14 @@ export default class SouthConnectorRepository {
         .run(southId, id);
       this.database.prepare(`DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ? AND id = ?;`).run(southId, id);
       if (before) {
-        this.auditService.record('south_item', id, 'DELETE', before as unknown as Record<string, unknown>, null, deletedBy);
+        this.auditService.record(
+          'south_item',
+          id,
+          'DELETE',
+          southType ? this.redactItem(before, southType) : (before as unknown as Record<string, unknown>),
+          null,
+          deletedBy
+        );
       }
     });
     transaction();
@@ -586,6 +591,7 @@ export default class SouthConnectorRepository {
 
   deleteAllItemsBySouth(southId: string, deletedBy: string): void {
     const beforeItems = this.findAllItemsForSouth(southId);
+    const southType = this.findSouthById(southId)?.type;
     const transaction = this.database.transaction(() => {
       this.database
         .prepare(
@@ -597,7 +603,14 @@ export default class SouthConnectorRepository {
         .run(southId);
       this.database.prepare(`DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`).run(southId);
       for (const item of beforeItems) {
-        this.auditService.record('south_item', item.id, 'DELETE', item as unknown as Record<string, unknown>, null, deletedBy);
+        this.auditService.record(
+          'south_item',
+          item.id,
+          'DELETE',
+          southType ? this.redactItem(item, southType) : (item as unknown as Record<string, unknown>),
+          null,
+          deletedBy
+        );
       }
     });
     transaction();
@@ -650,6 +663,33 @@ export default class SouthConnectorRepository {
       .prepare<[string], Record<string, string | number>>(query)
       .all(southId)
       .map(result => toSouthItemGroupLight(result));
+  }
+
+  /**
+   * Returns a shallow copy of the south connector with its settings' secret fields redacted, using the
+   * same manifest-driven filtering applied before exposing the connector to the frontend (see
+   * toSouthConnectorDTO in south-connector-dto.utils.ts), so real secrets never end up persisted in the
+   * audit trail.
+   */
+  private redactConnector(entity: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null): Record<string, unknown> | null {
+    if (!entity) return null;
+    const manifest = southManifestList.find(element => element.id === entity.type);
+    if (!manifest) return entity as unknown as Record<string, unknown>;
+    return { ...entity, settings: encryptionService.filterSecrets(entity.settings, manifest.settings) };
+  }
+
+  /**
+   * Returns a shallow copy of the south item with its settings' secret fields redacted, using the
+   * same item-level manifest lookup as toSouthConnectorItemDTO in south-connector-dto.utils.ts.
+   */
+  private redactItem(entity: SouthConnectorItemEntity<SouthItemSettings> | null, southType: string): Record<string, unknown> | null {
+    if (!entity) return null;
+    const manifest = southManifestList.find(element => element.id === southType);
+    if (!manifest) return entity as unknown as Record<string, unknown>;
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(attribute => attribute.key === 'settings') as
+      OIBusObjectAttribute | undefined;
+    if (!itemSettingsManifest) return entity as unknown as Record<string, unknown>;
+    return { ...entity, settings: encryptionService.filterSecrets(entity.settings, itemSettingsManifest) };
   }
 
   private toSouthConnector(result: Record<string, string | number>): SouthConnectorEntity<SouthSettings, SouthItemSettings> {
