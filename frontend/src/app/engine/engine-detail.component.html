@@ -154,6 +154,10 @@
                   <span translate="engine.general-settings.oia" [translateParams]="{ level: settings.logger.oia.level }"></span>
                 </td>
               </tr>
+              <tr>
+                <td class="first-column-body" translate="engine.logger.audit-retention-duration"></td>
+                <td class="last-column-body">{{ settings.auditRetentionDuration || 0 }} {{ 'common.unit.days' | translate }}</td>
+              </tr>
             </tbody>
           </table>
         </oib-box>
