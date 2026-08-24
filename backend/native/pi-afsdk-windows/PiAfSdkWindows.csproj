@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Windows-only helper that OIBus's south-pi connector spawns as a local child process (see
+    @oibus/pi-afsdk-windows's PiBridge/PiConnection) and talks to over a newline-delimited JSON
+    protocol on stdin/stdout. It replaces the PI module of OIBusAgentWindows: same OSIsoft AF
+    SDK-based connect/read behavior, ported from Web/PI/PIService.cs and PIController.cs, but
+    bundled and launched by OIBus itself instead of a separately installed Windows Service.
+
+    Targets .NET Framework 4.8, not modern .NET, matching OIBusAgentWindows itself — confirmed by
+    testing directly: OSIsoft.AFSDK.dll throws System.MissingMethodException at runtime under
+    net9.0-windows (DirectoryInfo.GetAccessControl(), an instance method the SDK's binary metadata
+    references, was removed from the BCL in .NET Core/5+; no compatibility NuGet package can restore
+    an instance method binding, only add extension methods, which don't satisfy the SDK's existing
+    compiled IL). System.Data.OleDb (the OLEDB helper's dependency) has no such issue and runs fine
+    on net9.0-windows — this constraint is specific to the AF SDK.
+
+    OSIsoft.AFSDK.dll is vendored under libs/ (same as OIBusAgentWindows does) since it isn't
+    available on NuGet — it ships with the PI System client tools / PI AF SDK installer.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>10.0</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>OIBusPiAfSdkWindows</AssemblyName>
+    <RootNamespace>OIBusPiAfSdkWindows</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="OSIsoft.AFSDK">
+      <HintPath>libs\OSIsoft.AFSDK.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <!-- Not part of .NET Framework's BCL; needed explicitly here (net9.0-windows ships it in-box). -->
+    <PackageReference Include="System.Text.Json" Version="9.0.1" />
+  </ItemGroup>
+
+</Project>

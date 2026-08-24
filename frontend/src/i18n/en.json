@@ -352,7 +352,7 @@
       "opc": "Connect to OIBus Agent to retrieve data from OPC Classic™ (HDA/DA) server",
       "opcua": "Query data from OPC UA™ server (HA/DA)",
       "oracle": "Query data from an Oracle Database™",
-      "osisoft-pi": "Establish a connection with an OIBus Agent to access data from a PI System™",
+      "osisoft-pi": "Access data from a PI System™",
       "postgresql": "Query PostgreSQL databases",
       "rest": "Collect data from REST API endpoints",
       "s7": "Access Siemens S7 PLC data over ISO-on-TCP",
@@ -1931,7 +1931,6 @@
             "password": "Password"
           },
           "osisoft-pi": {
-            "agent-url": "Remote agent URL",
             "retry-interval": "Retry interval"
           },
           "postgresql": {
@@ -2351,13 +2350,7 @@
               }
             },
             "osisoft-pi": {
-              "type": {
-                "title": "Type",
-                "point-id": "PI point",
-                "point-query": "PI query"
-              },
-              "pi-point": "PI point",
-              "pi-query": "PI query"
+              "pi-point": "PI point (exact tag name or wildcard mask, e.g. sinu*)"
             },
             "postgresql": {
               "query": "Query",

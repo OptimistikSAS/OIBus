@@ -19,7 +19,7 @@ describe('OIBusSouthTypeDescriptionEnumPipe', () => {
     expect(pipe.transform('opc')).toBe('Connect to OIBus Agent to retrieve data from OPC Classic™ (HDA/DA) server');
     expect(pipe.transform('opcua')).toBe('Query data from OPC UA™ server (HA/DA)');
     expect(pipe.transform('oracle')).toBe('Query data from an Oracle Database™');
-    expect(pipe.transform('osisoft-pi')).toBe('Establish a connection with an OIBus Agent to access data from a PI System™');
+    expect(pipe.transform('osisoft-pi')).toBe('Access data from a PI System™');
     expect(pipe.transform('postgresql')).toBe('Query PostgreSQL databases');
     expect(pipe.transform('sftp')).toBe('Read files from a remote SFTP server');
     expect(pipe.transform('sqlite')).toBe('Query  SQLite™ databases');

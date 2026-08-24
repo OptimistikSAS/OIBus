@@ -205,9 +205,6 @@ export const SOUTH_ORACLE_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES =
 export type SouthOracleItemSettingsTrackingInstantDateTimeInputType =
   (typeof SOUTH_ORACLE_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES)[number];
 
-export const SOUTH_P_I_ITEM_SETTINGS_TYPES = ['point-id', 'point-query'] as const;
-export type SouthPIItemSettingsType = (typeof SOUTH_P_I_ITEM_SETTINGS_TYPES)[number];
-
 export const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES = [
   'string',
   'iso-string',
@@ -484,7 +481,6 @@ export interface SouthOracleSettings {
 }
 
 export interface SouthPISettings {
-  agentUrl: string;
   retryInterval: number;
 }
 
@@ -820,9 +816,7 @@ export interface SouthOracleItemSettings {
 }
 
 export interface SouthPIItemSettings {
-  type: SouthPIItemSettingsType;
-  piPoint?: string;
-  piQuery?: string;
+  piPoint: string;
 }
 
 export interface SouthPostgreSQLItemSettings {
