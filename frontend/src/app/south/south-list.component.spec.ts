@@ -8,11 +8,12 @@ import { SouthListComponent } from './south-list.component';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
-import { ModalService } from '../shared/modal.service';
+import { Modal, ModalService } from '../shared/modal.service';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
+import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
 
 const southConnectors = testData.south.list as unknown as Array<SouthConnectorLightDTO>;
 
@@ -70,5 +71,21 @@ describe('SouthListComponent', () => {
 
     expect(southConnectorService.start).toHaveBeenCalledWith(southConnectors[1].id);
     expect(notificationService.success).toHaveBeenCalledWith('south.started', { name: southConnectors[1].name });
+  });
+
+  test('should open the audit history modal with the south connector entity type and id', async () => {
+    const fixture = TestBed.createComponent(SouthListComponent);
+    fixture.detectChanges();
+
+    const fakeModalComponent = createMock(AuditHistoryModalComponent);
+    const modalRef = { componentInstance: fakeModalComponent } as unknown as Modal<AuditHistoryModalComponent>;
+    const modalServiceMock = TestBed.inject(ModalService) as unknown as MockObject<ModalService>;
+    modalServiceMock.open.mockReturnValue(modalRef);
+
+    const root = page.elementLocator(fixture.nativeElement);
+    await root.getByCss('.show-audit-south').nth(0).click();
+
+    expect(modalServiceMock.open).toHaveBeenCalledWith(AuditHistoryModalComponent);
+    expect(fakeModalComponent.prepare).toHaveBeenCalledWith('south_connector', southConnectors[0].id);
   });
 });

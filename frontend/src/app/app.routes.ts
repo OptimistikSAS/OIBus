@@ -19,6 +19,7 @@ import { OIARegistrationComponent } from './engine/oia-registration/oia-registra
 import { UnsavedChangesGuard } from './shared/unsaved-changes.guard';
 import { ExploreNorthCacheComponent } from './north/explore-north-cache/explore-north-cache.component';
 import { ExploreHistoryCacheComponent } from './history-query/explore-history-cache/explore-history-cache.component';
+import { AuditListComponent } from './audit/audit-list.component';
 
 export const ROUTES: Routes = [
   { path: 'login', component: LoginComponent },
@@ -103,6 +104,10 @@ export const ROUTES: Routes = [
       {
         path: 'logs',
         component: LogsComponent
+      },
+      {
+        path: 'audit',
+        component: AuditListComponent
       },
       {
         path: 'about',

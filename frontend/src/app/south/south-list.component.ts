@@ -19,6 +19,7 @@ import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 import { FormControlValidationDirective } from '../shared/form/form-control-validation.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AuditInfoComponent } from '../shared/audit-info/audit-info.component';
+import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
 
 type SouthSortField = 'name' | 'type' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -134,6 +135,14 @@ export class SouthListComponent {
   createSouth() {
     const modalRef = this.modalService.open(ChooseSouthConnectorTypeModalComponent, { size: 'xl', backdrop: 'static' });
     modalRef.result.subscribe();
+  }
+
+  /**
+   * Open a modal to view the audit history of a South connector
+   */
+  showAudit(south: SouthConnectorLightDTO) {
+    const modalRef = this.modalService.open(AuditHistoryModalComponent);
+    modalRef.componentInstance.prepare('south_connector', south.id);
   }
 
   toggleSort(field: SouthSortField) {

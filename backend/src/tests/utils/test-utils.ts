@@ -52,6 +52,7 @@ import { Transformer, TransformerSource } from '../../model/transformer.model';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { OIBusSouthType } from '../../../shared/model/south-connector.model';
 import AuditService from '../../service/audit.service';
+import AuditServiceMock from '../__mocks__/service/audit-service.mock';
 
 const CONFIG_TEST_DATABASE = path.resolve('src', 'tests', 'test-config.db');
 const CRYPTO_TEST_DATABASE = path.resolve('src', 'tests', 'test-crypto.db');
@@ -63,6 +64,7 @@ export const flushPromises = () => new Promise(setImmediate);
 
 export function createMockServices(overrides: Record<string, unknown> = {}): CustomExpressRequest['services'] {
   return {
+    auditService: new AuditServiceMock() as unknown as CustomExpressRequest['services']['auditService'],
     certificateService: new CertificateServiceMock() as unknown as CustomExpressRequest['services']['certificateService'],
     historyQueryService: new HistoryQueryServiceMock() as unknown as CustomExpressRequest['services']['historyQueryService'],
     ipFilterService: new IPFilterServiceMock() as unknown as CustomExpressRequest['services']['ipFilterService'],
