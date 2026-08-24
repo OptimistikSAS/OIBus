@@ -87,9 +87,11 @@ describe('HistoryQueryRepository', () => {
       newHistoryId,
       'CREATE',
       null,
-      createdHistoryQuery,
+      { ...createdHistoryQuery, southSettings: { ...createdHistoryQuery.southSettings, password: '' } },
       newHistoryQuery.updatedBy
     ]);
+    // The south settings' secret field must never be persisted in the audit trail
+    assert.strictEqual((historyCreateCalls[0].arguments[4] as { southSettings: { password: string } }).southSettings.password, '');
 
     const newHistoryWithoutTransformer: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
       JSON.stringify(testData.historyQueries.list[0])
@@ -296,10 +298,18 @@ describe('HistoryQueryRepository', () => {
       'history_query',
       newHistoryId,
       'DELETE',
-      beforeHistory,
+      {
+        ...beforeHistory,
+        southSettings: { ...beforeHistory.southSettings, password: '' },
+        northSettings: { ...beforeHistory.northSettings, password: '' }
+      },
       null,
       'deleteUser'
     ]);
+    // The south/north settings' secret fields must never be persisted in the audit trail
+    const redactedBefore = historyDeleteCall!.arguments[3] as { southSettings: { password: string }; northSettings: { password: string } };
+    assert.strictEqual(redactedBefore.southSettings.password, '');
+    assert.strictEqual(redactedBefore.northSettings.password, '');
   });
 
   it('should cascade-delete items and transformers when deleting a history query', () => {
@@ -424,14 +434,7 @@ describe('HistoryQueryRepository', () => {
       call => call.arguments[0] === 'history_query_item' && call.arguments[1] === newItem.id && call.arguments[2] === 'UPDATE'
     );
     assert.strictEqual(updateCalls.length, 1);
-    assert.deepStrictEqual(updateCalls[0].arguments, [
-      'history_query_item',
-      newItem.id,
-      'UPDATE',
-      created,
-      afterUpdate,
-      'updaterUser'
-    ]);
+    assert.deepStrictEqual(updateCalls[0].arguments, ['history_query_item', newItem.id, 'UPDATE', created, afterUpdate, 'updaterUser']);
   });
 
   it('should delete item', () => {
@@ -464,9 +467,7 @@ describe('HistoryQueryRepository', () => {
     repository.deleteAllItemsByHistory(testData.historyQueries.list[0].id, 'deleteAllUser');
     assert.strictEqual(repository.findAllItemsForHistory(testData.historyQueries.list[0].id).length, 0);
 
-    const deleteCalls = recordMock.mock.calls.filter(
-      call => call.arguments[0] === 'history_query_item' && call.arguments[2] === 'DELETE'
-    );
+    const deleteCalls = recordMock.mock.calls.filter(call => call.arguments[0] === 'history_query_item' && call.arguments[2] === 'DELETE');
     assert.strictEqual(deleteCalls.length, beforeItems.length);
     for (const call of deleteCalls) {
       assert.strictEqual(call.arguments[5], 'deleteAllUser');

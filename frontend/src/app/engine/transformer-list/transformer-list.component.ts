@@ -15,6 +15,7 @@ import { createPageFromArray, Page } from '../../../../../backend/shared/model/t
 import { emptyPage } from '../../shared/test-utils';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 
 type TransformerSortField = 'name' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -98,6 +99,14 @@ export class TransformerListComponent {
         this.allTransformers = transformers.filter(element => element.type === 'custom') as Array<CustomTransformerDTO>;
         this.updateList(0);
       });
+  }
+
+  /**
+   * Open a modal to view the audit history of a custom transformer
+   */
+  showAudit(transformer: CustomTransformerDTO) {
+    const modalRef = this.modalService.open(AuditHistoryModalComponent);
+    modalRef.componentInstance.prepare('transformer', transformer.id);
   }
 
   deleteTransformer(transformer: CustomTransformerDTO) {

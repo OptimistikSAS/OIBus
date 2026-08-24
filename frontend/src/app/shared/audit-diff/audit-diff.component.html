@@ -1,0 +1,18 @@
+<table class="table table-sm audit-diff-table">
+  <thead>
+    <tr>
+      <th translate="audit.diff.field"></th>
+      <th translate="audit.diff.before"></th>
+      <th translate="audit.diff.after"></th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of rows(); track row.key) {
+      <tr [class.audit-diff-changed]="row.changed" [class.table-warning]="row.changed">
+        <td>{{ row.key }}</td>
+        <td>{{ formatValue(row.before) }}</td>
+        <td>{{ formatValue(row.after) }}</td>
+      </tr>
+    }
+  </tbody>
+</table>

@@ -16,6 +16,7 @@ import { MockModalService, provideModalTesting } from '../../shared/mock-modal.s
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 
 class CertificateListComponentTester {
   readonly fixture = TestBed.createComponent(CertificateListComponent);
@@ -26,6 +27,7 @@ class CertificateListComponentTester {
   readonly deleteButtons = this.root.getByCss('.delete-certificate');
   readonly editButtons = this.root.getByCss('.edit-certificate');
   readonly exportButtons = this.root.getByCss('.export-certificate');
+  readonly auditButtons = this.root.getByCss('.show-audit-certificate');
   readonly noCertificate = this.root.getByCss('#no-certificate');
   readonly certificates = this.root.getByCss('tbody tr');
 
@@ -39,7 +41,9 @@ describe('CertificateListComponent', () => {
   let certificateService: MockObject<CertificateService>;
   let confirmationService: MockObject<ConfirmationService>;
   let notificationService: MockObject<NotificationService>;
-  let modalService: MockModalService<EditCertificateModalComponent | ImportCertificateModalComponent | ExportCertificateModalComponent>;
+  let modalService: MockModalService<
+    EditCertificateModalComponent | ImportCertificateModalComponent | ExportCertificateModalComponent | AuditHistoryModalComponent
+  >;
 
   beforeEach(() => {
     certificateService = createMock(CertificateService);
@@ -133,6 +137,15 @@ describe('CertificateListComponent', () => {
       await tester.exportButtons.nth(0).click();
 
       expect(fakeExportComponent.prepare).toHaveBeenCalledWith(testData.certificates.list[0]);
+    });
+
+    test('should open the audit history modal with the certificate entity type and id', async () => {
+      const fakeAuditComponent = createMock(AuditHistoryModalComponent);
+      modalService.mockClosedModal(fakeAuditComponent);
+
+      await tester.auditButtons.nth(0).click();
+
+      expect(fakeAuditComponent.prepare).toHaveBeenCalledWith('certificate', testData.certificates.list[0].id);
     });
   });
 

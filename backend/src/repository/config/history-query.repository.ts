@@ -14,6 +14,10 @@ import { ScanMode } from '../../model/scan-mode.model';
 import { scanModeColumns, toScanMode } from './scan-mode.repository';
 import { SouthConnectorItemEntityLight } from '../../model/south-connector.model';
 import AuditService from '../../service/audit.service';
+import { encryptionService } from '../../service/encryption.service';
+import { southManifestList } from '../../service/south-manifests';
+import { northManifestList } from '../../service/north-manifests';
+import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 
 const HISTORY_QUERIES_TABLE = 'history_queries';
 const HISTORY_ITEMS_TABLE = 'history_items';
@@ -214,7 +218,7 @@ export default class HistoryQueryRepository {
               item.id,
               'CREATE',
               null,
-              created as unknown as Record<string, unknown>,
+              this.redactItem(created, history.southType),
               item.updatedBy
             );
           } else {
@@ -231,8 +235,8 @@ export default class HistoryQueryRepository {
                 'history_query_item',
                 item.id,
                 'UPDATE',
-                (beforeItemsById.get(item.id) ?? null) as unknown as Record<string, unknown> | null,
-                after as unknown as Record<string, unknown>,
+                this.redactItem(beforeItemsById.get(item.id) ?? null, history.southType),
+                this.redactItem(after, history.southType),
                 item.updatedBy
               );
             }
@@ -246,7 +250,7 @@ export default class HistoryQueryRepository {
               'history_query_item',
               removedItemId,
               'DELETE',
-              removedItem as unknown as Record<string, unknown>,
+              this.redactItem(removedItem, history.southType),
               null,
               history.updatedBy
             );
@@ -268,7 +272,7 @@ export default class HistoryQueryRepository {
             'history_query_item',
             removedItemId,
             'DELETE',
-            removedItem as unknown as Record<string, unknown>,
+            this.redactItem(removedItem, history.southType),
             null,
             history.updatedBy
           );
@@ -276,9 +280,7 @@ export default class HistoryQueryRepository {
       }
 
       const keepIds = history.northTransformers.filter(t => t.id).map(t => t.id);
-      const removedTransformerIds = (beforeHistory?.northTransformers ?? [])
-        .filter(t => !keepIds.includes(t.id))
-        .map(t => t.id);
+      const removedTransformerIds = (beforeHistory?.northTransformers ?? []).filter(t => !keepIds.includes(t.id)).map(t => t.id);
       for (const removedId of removedTransformerIds) {
         this.auditService.record(
           'history_query_transformer',
@@ -332,8 +334,8 @@ export default class HistoryQueryRepository {
         'history_query',
         history.id,
         isNew ? 'CREATE' : 'UPDATE',
-        beforeHistory as unknown as Record<string, unknown> | null,
-        afterHistory as unknown as Record<string, unknown>,
+        this.redactHistory(beforeHistory),
+        this.redactHistory(afterHistory),
         history.updatedBy
       );
     });
@@ -369,7 +371,7 @@ export default class HistoryQueryRepository {
 
       if (before) {
         for (const item of before.items) {
-          this.auditService.record('history_query_item', item.id, 'DELETE', item as unknown as Record<string, unknown>, null, deletedBy);
+          this.auditService.record('history_query_item', item.id, 'DELETE', this.redactItem(item, before.southType), null, deletedBy);
         }
         for (const transformer of before.northTransformers) {
           this.auditService.record(
@@ -381,7 +383,7 @@ export default class HistoryQueryRepository {
             deletedBy
           );
         }
-        this.auditService.record('history_query', id, 'DELETE', before as unknown as Record<string, unknown>, null, deletedBy);
+        this.auditService.record('history_query', id, 'DELETE', this.redactHistory(before), null, deletedBy);
       }
     });
     transaction();
@@ -423,8 +425,7 @@ export default class HistoryQueryRepository {
 
   removeTransformer(id: string, deletedBy: string): void {
     const historyId = this.database.prepare(`SELECT history_id FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE id = ?;`).get(id) as
-      | { history_id: string }
-      | undefined;
+      { history_id: string } | undefined;
     const before = historyId ? (this.findTransformersForHistory(historyId.history_id).find(t => t.id === id) ?? null) : null;
     const transaction = this.database.transaction(() => {
       this.database.prepare(`DELETE FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE} WHERE id = ?;`).run(id);
@@ -538,6 +539,7 @@ export default class HistoryQueryRepository {
   saveItem<I extends SouthItemSettings>(historyId: string, item: HistoryQueryItemEntity<I>): void {
     const wasNew = !item.id;
     const before = wasNew ? null : this.findItemById(historyId, item.id);
+    const southType = this.findHistoryById(historyId)?.southType;
     if (!item.id) {
       item.id = generateRandomId(6);
       const insertQuery =
@@ -556,8 +558,10 @@ export default class HistoryQueryRepository {
       'history_query_item',
       item.id,
       wasNew ? 'CREATE' : 'UPDATE',
-      before as unknown as Record<string, unknown> | null,
-      after as unknown as Record<string, unknown>,
+      southType
+        ? this.redactItem(before as unknown as HistoryQueryItemEntity<SouthItemSettings> | null, southType)
+        : (before as unknown as Record<string, unknown> | null),
+      southType ? this.redactItem(after, southType) : (after as unknown as Record<string, unknown>),
       item.updatedBy
     );
   }
@@ -581,6 +585,7 @@ export default class HistoryQueryRepository {
 
   deleteItem(historyId: string, itemId: string, deletedBy: string): void {
     const before = this.findItemById(historyId, itemId);
+    const southType = this.findHistoryById(historyId)?.southType;
     const transaction = this.database.transaction(() => {
       this.database
         .prepare(
@@ -592,7 +597,14 @@ export default class HistoryQueryRepository {
         .run(historyId, itemId);
       this.database.prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ? AND id = ?;`).run(historyId, itemId);
       if (before) {
-        this.auditService.record('history_query_item', itemId, 'DELETE', before as unknown as Record<string, unknown>, null, deletedBy);
+        this.auditService.record(
+          'history_query_item',
+          itemId,
+          'DELETE',
+          southType ? this.redactItem(before, southType) : (before as unknown as Record<string, unknown>),
+          null,
+          deletedBy
+        );
       }
     });
     transaction();
@@ -600,6 +612,7 @@ export default class HistoryQueryRepository {
 
   deleteAllItemsByHistory(historyId: string, deletedBy: string): void {
     const beforeItems = this.findAllItemsForHistory(historyId);
+    const southType = this.findHistoryById(historyId)?.southType;
     const transaction = this.database.transaction(() => {
       this.database
         .prepare(
@@ -611,7 +624,14 @@ export default class HistoryQueryRepository {
         .run(historyId);
       this.database.prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`).run(historyId);
       for (const item of beforeItems) {
-        this.auditService.record('history_query_item', item.id, 'DELETE', item as unknown as Record<string, unknown>, null, deletedBy);
+        this.auditService.record(
+          'history_query_item',
+          item.id,
+          'DELETE',
+          southType ? this.redactItem(item, southType) : (item as unknown as Record<string, unknown>),
+          null,
+          deletedBy
+        );
       }
     });
     transaction();
@@ -658,6 +678,39 @@ export default class HistoryQueryRepository {
     const query = `SELECT ${scanModeColumns()} FROM ${SCAN_MODE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(scanModeId) as Record<string, string>;
     return toScanMode(result);
+  }
+
+  /**
+   * Returns a shallow copy of the history query with its south/north settings' secret fields redacted,
+   * using the same manifest-driven filtering applied before exposing the history query to the frontend
+   * (see toHistoryQueryDTO in history-query.service.ts), so real secrets never end up persisted in the
+   * audit trail.
+   */
+  private redactHistory(
+    entity: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null
+  ): Record<string, unknown> | null {
+    if (!entity) return null;
+    const southManifest = southManifestList.find(element => element.id === entity.southType);
+    const northManifest = northManifestList.find(element => element.id === entity.northType);
+    return {
+      ...entity,
+      southSettings: southManifest ? encryptionService.filterSecrets(entity.southSettings, southManifest.settings) : entity.southSettings,
+      northSettings: northManifest ? encryptionService.filterSecrets(entity.northSettings, northManifest.settings) : entity.northSettings
+    };
+  }
+
+  /**
+   * Returns a shallow copy of the history query item with its settings' secret fields redacted, using
+   * the same item-level manifest lookup as toHistoryQueryItemDTO in history-query-item-dto.utils.ts.
+   */
+  private redactItem(entity: HistoryQueryItemEntity<SouthItemSettings> | null, southType: string): Record<string, unknown> | null {
+    if (!entity) return null;
+    const manifest = southManifestList.find(element => element.id === southType);
+    if (!manifest) return entity as unknown as Record<string, unknown>;
+    const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(attribute => attribute.key === 'settings') as
+      OIBusObjectAttribute | undefined;
+    if (!itemSettingsManifest) return entity as unknown as Record<string, unknown>;
+    return { ...entity, settings: encryptionService.filterSecrets(entity.settings, itemSettingsManifest) };
   }
 
   private toHistoryQueryItemEntity(result: Record<string, string>): HistoryQueryItemEntity<SouthItemSettings> {

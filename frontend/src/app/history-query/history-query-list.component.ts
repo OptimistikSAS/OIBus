@@ -23,6 +23,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AuditInfoComponent } from '../shared/audit-info/audit-info.component';
 import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
+import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
 
 type HistorySortField = 'name' | 'interval' | 'southType' | 'northType' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -150,6 +151,14 @@ export class HistoryQueryListComponent {
     modalRef.result.subscribe(queryParams => {
       this.router.navigate(['/history-queries', 'create'], { queryParams });
     });
+  }
+
+  /**
+   * Open a modal to view the audit history of a history query
+   */
+  showAudit(historyQuery: HistoryQueryLightDTO) {
+    const modalRef = this.modalService.open(AuditHistoryModalComponent);
+    modalRef.componentInstance.prepare('history_query', historyQuery.id);
   }
 
   toggleSort(field: HistorySortField) {

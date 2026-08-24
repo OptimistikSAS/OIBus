@@ -16,6 +16,7 @@ import { createPageFromArray, Page } from '../../../../../backend/shared/model/t
 import { emptyPage } from '../../shared/test-utils';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 
 type IpFilterSortField = 'address' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -127,6 +128,14 @@ export class IpFilterListComponent {
           address: ipFilter.address
         });
       });
+  }
+
+  /**
+   * Open a modal to view the audit history of an IP filter
+   */
+  showAudit(ipFilter: IPFilterDTO) {
+    const modalRef = this.modalService.open(AuditHistoryModalComponent);
+    modalRef.componentInstance.prepare('ip_filter', ipFilter.id);
   }
 
   toggleSort(field: IpFilterSortField) {

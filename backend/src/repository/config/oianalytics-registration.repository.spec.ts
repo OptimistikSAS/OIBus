@@ -116,6 +116,18 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
     assert.strictEqual(previousState.privateCipherKey, '[REDACTED]');
     assert.strictEqual(newState.publicCipherKey, '[REDACTED]');
     assert.strictEqual(newState.privateCipherKey, '[REDACTED]');
+    // The token, proxy password and api gateway header value must never be persisted in the audit trail
+    assert.strictEqual(previousState.token, '[REDACTED]');
+    assert.strictEqual(previousState.proxyPassword, '[REDACTED]');
+    assert.strictEqual(previousState.apiGatewayHeaderValue, '[REDACTED]');
+    assert.strictEqual(newState.token, '[REDACTED]');
+    assert.notStrictEqual(newState.proxyPassword, specificCommand.proxyPassword);
+    assert.strictEqual(newState.proxyPassword, '[REDACTED]');
+    assert.strictEqual(newState.apiGatewayHeaderValue, '[REDACTED]');
+    // Unrelated fields pass through unchanged
+    assert.strictEqual(newState.useProxy, specificCommand.useProxy);
+    assert.strictEqual(newState.proxyUrl, specificCommand.proxyUrl);
+    assert.strictEqual(newState.proxyUsername, specificCommand.proxyUsername);
   });
 
   it('should update keys', () => {
