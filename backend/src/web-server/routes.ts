@@ -2341,17 +2341,10 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthPIItemSettingsType": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["point-id"]},{"dataType":"enum","enums":["point-query"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthPIItemSettings": {
         "dataType": "refObject",
         "properties": {
-            "type": {"ref":"SouthPIItemSettingsType","required":true},
-            "piPoint": {"dataType":"string"},
-            "piQuery": {"dataType":"string"},
+            "piPoint": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
     },
@@ -2382,7 +2375,6 @@ const models: TsoaRoute.Models = {
     "SouthPISettings": {
         "dataType": "refObject",
         "properties": {
-            "agentUrl": {"dataType":"string","required":true},
             "retryInterval": {"dataType":"double","required":true},
         },
         "additionalProperties": false,

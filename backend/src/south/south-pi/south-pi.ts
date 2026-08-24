@@ -7,15 +7,25 @@ import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../.
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import { HTTPRequest } from '../../service/http-request.utils';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
+import { PiConnection, PiRawValue } from '@oibus/pi-afsdk-windows';
 
 /**
- * Class SouthPI - Run a PI Agent to connect to a PI server.
- * This connector communicates with the Agent through a HTTP connection
+ * Class SouthPI - Retrieve data from an OSIsoft PI server.
+ *
+ * Windows-only: queries go through `@oibus/pi-afsdk-windows` (backend/native/pi-afsdk-windows), a
+ * local package that spawns and multiplexes a bundled .NET child process wrapping the OSIsoft AF SDK
+ * — see that package's README for why (Windows-only proprietary SDK, no maintained Node bridge, and
+ * not runtime-compatible with modern .NET so it needs its own .NET Framework 4.8 helper, distinct
+ * from the OLE DB helper's modern .NET target). `connection.read()` returns just the raw values it
+ * found, or rejects outright on failure (no `logs`/partial-failure reporting) — building the
+ * `time-values` content, tracking the incremental cursor, and logging a read failure are this class's
+ * job, the same division of responsibility south-oledb.ts uses for rows. The package itself owns
+ * process lifecycle and concurrency; this class only owns the connect/reconnect policy
+ * (`retryInterval`) for its own connection.
  */
 export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItemSettings> implements SouthHistoryQuery {
-  private connected = false;
+  private connection: PiConnection | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
@@ -40,21 +50,15 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     }
 
     try {
-      this.logger.debug(`Connecting to PI agent at ${this.connector.settings.agentUrl}`);
+      this.logger.debug('Connecting to the PI server');
       const connectStart = DateTime.now().toMillis();
-      const fetchOptions = {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' }
-      };
-
-      const requestUrl = new URL(`/api/pi/${this.connector.id}/connect`, this.connector.settings.agentUrl);
-      await HTTPRequest(requestUrl, fetchOptions);
-      this.connected = true;
-      this.logger.info(`Connected to PI agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - connectStart} ms`);
+      this.connection = await PiConnection.connect();
+      const { name, version } = this.connection.serverInfo;
+      this.logger.info(`Connected to the PI server ${name} (v${version}) in ${DateTime.now().toMillis() - connectStart} ms`);
       await super.connect();
     } catch (error: unknown) {
       this.logger.error(
-        `Error while sending connection HTTP request into agent. Reconnecting in ${this.connector.settings.retryInterval} ms. ${getErrorMessage(error)}`
+        `Error while connecting to the PI server. Reconnecting in ${this.connector.settings.retryInterval} ms. ${getErrorMessage(error)}`
       );
       // Guarded together (not just the reschedule): disconnect() resets `disconnecting` to false at
       // its own end, so calling it re-entrantly while an outer disconnect()/stop() is still in
@@ -67,161 +71,90 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
-    // Uses an isolated `${this.connector.id}-test` agent session (like testItem()) so a running
-    // connector's own live session is never connected/disconnected by a connection test.
-    const testSessionId = `${this.connector.id}-test`;
-    this.logger.debug(`Connecting to PI agent at ${this.connector.settings.agentUrl}`);
+    // A throwaway connection, isolated from the live `this.connection` — a running connector's own
+    // session is never touched by a connection test (matches the old agent-based `${id}-test` isolation).
+    this.logger.debug('Testing connection to the PI server');
     const connectStart = DateTime.now().toMillis();
-    const fetchOptions = {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' }
+    const connection = await PiConnection.connect();
+    const { name, version, host, port } = connection.serverInfo;
+    this.logger.info(`Connected to the PI server ${name} (v${version}) in ${DateTime.now().toMillis() - connectStart} ms`);
+    await connection.disconnect();
+    return {
+      items: [
+        { key: 'Name', value: name },
+        { key: 'Version', value: version },
+        { key: 'Host', value: `${host}:${port}` }
+      ]
     };
-    const requestUrl = new URL(`/api/pi/${testSessionId}/connect`, this.connector.settings.agentUrl);
-    const response = await HTTPRequest(requestUrl, fetchOptions);
-    if (response.statusCode === 200) {
-      this.logger.info(`Connected to PI agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - connectStart} ms`);
-      const disconnectUrl = new URL(`/api/pi/${testSessionId}/disconnect`, this.connector.settings.agentUrl);
-      await HTTPRequest(disconnectUrl, { method: 'DELETE' });
-    } else if (response.statusCode === 400) {
-      const errorMessage = await response.body.text();
-      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}. ${errorMessage}`);
-    } else {
-      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}`);
-    }
-    return { items: [] };
   }
 
   /**
-   * Test session id used to isolate testItem() from the live `${this.connector.id}` agent session.
-   * This must never touch this.connect()/this.disconnect() nor the live connect/disconnect endpoints,
-   * so a running connector isn't disrupted by a user testing an item from the UI.
+   * Uses a throwaway connection, isolated from `this.connection` — a running connector's own session
+   * is never touched by testing an item from the UI.
    */
   override async testItem(
     item: SouthConnectorItemEntity<SouthPIItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
   ): Promise<SouthConnectorItemQueryResult> {
-    const testSessionId = `${this.connector.id}-test`;
-    const content: OIBusContent = { type: 'time-values', content: [] };
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
 
-    try {
-      const connectStart = DateTime.now().toMillis();
-      const connectUrl = new URL(`/api/pi/${testSessionId}/connect`, this.connector.settings.agentUrl);
-      await HTTPRequest(connectUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const connectionDuration = DateTime.now().toMillis() - connectStart;
+    const connectStart = DateTime.now().toMillis();
+    const connection = await PiConnection.connect();
+    const connectionDuration = DateTime.now().toMillis() - connectStart;
 
-      const fetchOptions = {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          startTime,
-          endTime,
-          items: [
-            {
-              name: item.name,
-              type: item.settings.type === 'point-id' ? 'pointId' : 'pointQuery',
-              piPoint: item.settings.piPoint,
-              piQuery: item.settings.piQuery
-            }
-          ]
-        })
-      };
-      const requestUrl = new URL(`/api/pi/${testSessionId}/read`, this.connector.settings.agentUrl);
+    try {
       const queryStart = DateTime.now().toMillis();
-      const response = await HTTPRequest(requestUrl, fetchOptions);
-      if (response.statusCode === 200) {
-        const result: {
-          recordCount: number;
-          content: Array<OIBusTimeValue>;
-          maxInstantRetrieved: Instant;
-        } = (await response.body.json()) as {
-          recordCount: number;
-          content: Array<OIBusTimeValue>;
-          maxInstantRetrieved: string;
-        };
-        content.content = result.content;
-        const queryDuration = DateTime.now().toMillis() - queryStart;
-        return { result: content, connectionDuration, queryDuration };
-      }
-      throw new Error(`Error occurred when sending connect command to remote agent. ${response.statusCode}`);
+      const values = await connection.read(startTime, endTime, toPoints([item]));
+      const queryDuration = DateTime.now().toMillis() - queryStart;
+      return { result: { type: 'time-values', content: toTimeValues(values, [item]) }, connectionDuration, queryDuration };
     } finally {
-      const disconnectUrl = new URL(`/api/pi/${testSessionId}/disconnect`, this.connector.settings.agentUrl);
-      await HTTPRequest(disconnectUrl, { method: 'DELETE' }).catch(error => {
-        this.logger.error(`Error while sending disconnection HTTP request into agent for test session. ${error}`);
+      await connection.disconnect().catch(error => {
+        this.logger.error(`Error while disconnecting the test connection: ${getErrorMessage(error)}`);
       });
     }
   }
 
   /**
-   * Get entries from the database between startTime and endTime (if used in the SQL query)
-   * and write them into the cache and send it to the engine.
+   * Get entries from the PI server between startTime and endTime and send them to the cache.
    */
   async historyQuery(
     items: Array<SouthConnectorItemEntity<SouthPIItemSettings>>,
     startTime: Instant,
     endTime: Instant
   ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
+    if (!this.connection) {
+      throw new Error('PI server is not connected');
+    }
     const logCtx = workUnitLogCtx(items);
-    let updatedStartTime: Instant | null = null;
     this.logger.debug(logCtx, `Requesting ${items.length} items between ${startTime} and ${endTime}`);
     const startRequest = DateTime.now();
 
-    const fetchOptions = {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        startTime,
-        endTime,
-        items: items.map(item => ({
-          name: item.name,
-          type: item.settings.type === 'point-id' ? 'pointId' : 'pointQuery',
-          piPoint: item.settings.piPoint,
-          piQuery: item.settings.piQuery
-        }))
-      })
-    };
-    const requestUrl = new URL(`/api/pi/${this.connector.id}/read`, this.connector.settings.agentUrl);
-    const response = await HTTPRequest(requestUrl, fetchOptions);
-    let result: {
-      recordCount: number;
-      content: Array<OIBusTimeValue>;
-      logs: Array<string>;
-      maxInstantRetrieved: Instant;
-    } | null = null;
-    if (response.statusCode === 200) {
-      result = (await response.body.json()) as {
-        recordCount: number;
-        content: Array<OIBusTimeValue>;
-        logs: Array<string>;
-        maxInstantRetrieved: string;
-      };
-      const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
-
-      if (result.logs.length > 0) {
-        for (const log of result.logs) {
-          this.logger.warn(logCtx, log);
-        }
-      }
-      if (result.recordCount > 0) {
-        this.logger.debug(logCtx, `Found ${result.recordCount} results for ${items.length} items in ${requestDuration} ms`);
-        await this.addContent({ type: 'time-values', content: result.content }, startRequest.toUTC().toISO(), items);
-        if (result.maxInstantRetrieved > startTime) {
-          updatedStartTime = result.maxInstantRetrieved;
-        }
-      } else {
-        this.logger.debug(logCtx, `No result found. Request done in ${requestDuration} ms`);
-      }
-    } else if (response.statusCode === 400) {
-      const errorMessage = await response.body.text();
-      throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}: ${errorMessage}`);
-    } else {
-      throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}`);
+    let values: Array<PiRawValue>;
+    try {
+      values = await this.connection.read(startTime, endTime, toPoints(items));
+    } catch (error: unknown) {
+      // The package never logs its own errors — see PiConnection.read's doc comment — so this is the
+      // only place a read failure's message actually reaches the logs, whether historyQuery's caller
+      // does anything further with the rejection or not.
+      this.logger.error(logCtx, `Error while querying the PI server: ${getErrorMessage(error)}`);
+      throw error;
     }
-    return { trackedInstant: updatedStartTime, value: result?.content.length > 0 ? result.content[result.content.length - 1] : null };
+    const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
+
+    const content = toTimeValues(values, items);
+    let updatedStartTime: Instant | null = null;
+    if (content.length > 0) {
+      this.logger.debug(logCtx, `Found ${content.length} results for ${items.length} items in ${requestDuration} ms`);
+      await this.addContent({ type: 'time-values', content }, startRequest.toUTC().toISO(), items);
+      const maxInstant = trackMaxInstant(values, startTime);
+      if (maxInstant && maxInstant > startTime) {
+        updatedStartTime = maxInstant;
+      }
+    } else {
+      this.logger.debug(logCtx, `No result found. Request done in ${requestDuration} ms`);
+    }
+    return { trackedInstant: updatedStartTime, value: content.length > 0 ? content[content.length - 1] : null };
   }
 
   async disconnect(): Promise<void> {
@@ -230,21 +163,68 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
     }
-    if (this.connected) {
+    if (this.connection) {
+      const connection = this.connection;
+      this.connection = null;
       const disconnectStart = DateTime.now().toMillis();
       try {
-        const fetchOptions = { method: 'DELETE' };
-        const requestUrl = new URL(`/api/pi/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
-        await HTTPRequest(requestUrl, fetchOptions);
-        this.logger.info(
-          `Disconnected from PI agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - disconnectStart} ms`
-        );
+        await connection.disconnect();
+        this.logger.info(`Disconnected from the PI server in ${DateTime.now().toMillis() - disconnectStart} ms`);
       } catch (error) {
-        this.logger.error(`Error while sending disconnection HTTP request into agent: ${getErrorMessage(error)}`);
+        this.logger.error(`Error while disconnecting from the PI server: ${getErrorMessage(error)}`);
       }
     }
-    this.connected = false;
     await super.disconnect();
     this.disconnecting = false;
   }
+}
+
+/**
+ * Flattens items down to the raw PI point name mask each one configures — an exact tag name or a
+ * wildcard pattern, `@oibus/pi-afsdk-windows` doesn't distinguish (see `PiConnection.read`'s doc
+ * comment; `PIPoint.FindPIPoints` resolves either kind identically in one bulk call).
+ */
+function toPoints(items: Array<SouthConnectorItemEntity<SouthPIItemSettings>>): Array<string> {
+  return items.map(item => item.settings.piPoint);
+}
+
+/**
+ * The helper returns each value's `pointId` as the raw PI point name resolved by the AF SDK
+ * (`PIPoint.Name`), not the OIBus item name — it doesn't know the item list. For an item whose
+ * `piPoint` is an exact tag name, the resolved name matches it exactly, so the map lookup below finds
+ * it and maps back to the item's own `name`. For a wildcard mask matching several real points, no
+ * resolved name will ever equal the mask string itself, so the lookup naturally misses and the value
+ * keeps its raw PI point name as-is (matching the old agent's own behavior for its equivalent
+ * `point-query` items) — no need to track which items were "exact" vs "wildcard" separately to get
+ * this right.
+ */
+function toTimeValues(values: Array<PiRawValue>, items: Array<SouthConnectorItemEntity<SouthPIItemSettings>>): Array<OIBusTimeValue> {
+  const nameByPiPoint = new Map<string, string>();
+  for (const item of items) {
+    if (item.settings.piPoint) {
+      nameByPiPoint.set(item.settings.piPoint, item.name);
+    }
+  }
+  return values.map(value => ({
+    pointId: nameByPiPoint.get(value.pointId) ?? value.pointId,
+    timestamp: value.timestamp,
+    data: { value: value.value }
+  }));
+}
+
+/**
+ * Scans the raw values for the max timestamp found, bumped by 1ms — mirroring
+ * OIBusAgentWindows/Web/PI/PIController.cs's own `maxInstant.AddMilliseconds(1)`, so the next
+ * incremental query's `@StartTime` (exclusive-by-convention here) doesn't re-fetch the same last
+ * value again.
+ */
+function trackMaxInstant(values: Array<PiRawValue>, fallback: Instant): Instant | null {
+  if (values.length === 0) return null;
+  let max = fallback;
+  for (const value of values) {
+    if (value.timestamp > max) {
+      max = value.timestamp;
+    }
+  }
+  return DateTime.fromISO(max).plus({ milliseconds: 1 }).toUTC().toISO();
 }

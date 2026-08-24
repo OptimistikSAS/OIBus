@@ -8738,27 +8738,14 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthPIItemSettingsType": {
-				"type": "string",
-				"enum": [
-					"point-id",
-					"point-query"
-				]
-			},
 			"SouthPIItemSettings": {
 				"properties": {
-					"type": {
-						"$ref": "#/components/schemas/SouthPIItemSettingsType"
-					},
 					"piPoint": {
-						"type": "string"
-					},
-					"piQuery": {
 						"type": "string"
 					}
 				},
 				"required": [
-					"type"
+					"piPoint"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8888,16 +8875,12 @@
 			},
 			"SouthPISettings": {
 				"properties": {
-					"agentUrl": {
-						"type": "string"
-					},
 					"retryInterval": {
 						"type": "number",
 						"format": "double"
 					}
 				},
 				"required": [
-					"agentUrl",
 					"retryInterval"
 				],
 				"type": "object",

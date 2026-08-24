@@ -1,0 +1,19 @@
+{
+  "name": "@oibus/pi-afsdk-windows",
+  "version": "0.1.0",
+  "description": "Windows-only OSIsoft PI driver for OIBus. Spawns and multiplexes connections over a bundled .NET helper (OSIsoft AF SDK) via a stdio JSON protocol.",
+  "private": true,
+  "license": "EUPL",
+  "os": [
+    "win32"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "runtimes"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  }
+}

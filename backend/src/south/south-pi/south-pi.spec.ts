@@ -2,17 +2,46 @@ import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, assertContains } from '../../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type { SouthItemSettings, SouthPIItemSettings, SouthPISettings } from '../../../shared/model/south-settings.model';
 import type { OIBusContent } from '../../../shared/model/engine.model';
 import type SouthPiClass from './south-pi';
+import type { PiRawValue, PiServerInfo } from '@oibus/pi-afsdk-windows';
 
 const nodeRequire = createRequire(import.meta.url);
+
+const FAKE_SERVER_INFO: PiServerInfo = { name: 'PIServer1', version: '3.4.400.1198', host: 'pi-server', port: 5450 };
+
+/**
+ * Stands in for the real `@oibus/pi-afsdk-windows` package (which spawns a native child process) —
+ * south-pi.ts's own behavior is what's under test here, not the package's process-management or
+ * multi-connection concurrency logic, which has its own dedicated spec
+ * (native/pi-afsdk-windows/src/index.spec.ts).
+ */
+class FakePiConnection {
+  static instances: Array<FakePiConnection> = [];
+  static connectMock = mock.fn(async (): Promise<FakePiConnection> => {
+    const instance = new FakePiConnection();
+    FakePiConnection.instances.push(instance);
+    return instance;
+  });
+
+  serverInfo: PiServerInfo = FAKE_SERVER_INFO;
+  read = mock.fn(async (_startTime: string, _endTime: string, _points: Array<string>): Promise<Array<PiRawValue>> => []);
+  disconnect = mock.fn(async () => undefined);
+
+  static connect(): Promise<FakePiConnection> {
+    return FakePiConnection.connectMock();
+  }
+
+  static latest(): FakePiConnection {
+    return FakePiConnection.instances[FakePiConnection.instances.length - 1];
+  }
+}
 
 describe('South PI', () => {
   let SouthPi: typeof SouthPiClass;
@@ -48,13 +77,9 @@ describe('South PI', () => {
     })
   };
 
-  const httpRequestExports = {
-    HTTPRequest: mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200))
-  };
-
   before(() => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
-    mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
+    mockModule(nodeRequire, '@oibus/pi-afsdk-windows', { PiConnection: FakePiConnection });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}
@@ -70,7 +95,6 @@ describe('South PI', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      agentUrl: 'http://localhost:2224',
       retryInterval: 1000
     },
     groups: [],
@@ -79,7 +103,7 @@ describe('South PI', () => {
         id: 'id1',
         name: 'item1',
         enabled: true,
-        settings: { type: 'point-id', piPoint: 'FACTORY.WORKSHOP.POINT.ID1' },
+        settings: { piPoint: 'FACTORY.WORKSHOP.POINT.ID1' },
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
@@ -96,7 +120,7 @@ describe('South PI', () => {
         id: 'id2',
         name: 'item2',
         enabled: true,
-        settings: { type: 'point-query', piQuery: '*' },
+        settings: { piPoint: 'sinu*' },
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
@@ -117,8 +141,16 @@ describe('South PI', () => {
   };
 
   beforeEach(() => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
+    FakePiConnection.instances = [];
+    FakePiConnection.connectMock = mock.fn(async () => {
+      const instance = new FakePiConnection();
+      FakePiConnection.instances.push(instance);
+      return instance;
+    });
     addContentCallback.mock.resetCalls();
+    for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
+      fn.mock.resetCalls();
+    }
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
     south = new SouthPi(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
@@ -128,47 +160,33 @@ describe('South PI', () => {
     mock.restoreAll();
   });
 
-  it('should properly connect to remote agent and disconnect', async () => {
+  it('connects and disconnects the live connection', async () => {
     await south.connect();
-
-    const connectCall = httpRequestExports.HTTPRequest.mock.calls[0];
-    assertContains(connectCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}/connect`
-    });
-    assert.deepStrictEqual(connectCall.arguments[1], {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' }
-    });
+    assert.strictEqual(FakePiConnection.connectMock.mock.calls.length, 1);
+    const connection = FakePiConnection.latest();
 
     await south.disconnect();
-    const disconnectCall = httpRequestExports.HTTPRequest.mock.calls[1];
-    assertContains(disconnectCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}/disconnect`
-    });
-    assert.deepStrictEqual(disconnectCall.arguments[1], { method: 'DELETE' });
+    assert.strictEqual(connection.disconnect.mock.calls.length, 1);
   });
 
-  it('should properly reconnect when connection fails', async () => {
+  it('reconnects after retryInterval when the connection fails', async () => {
     let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
+    FakePiConnection.connectMock = mock.fn(async () => {
       callCount++;
-      if (callCount === 1) throw new Error('connection failed');
-      return createMockResponse(200);
+      throw new Error('connection failed');
     });
 
     await south.connect();
-
-    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}/connect`
-    });
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+    assert.strictEqual(callCount, 1);
 
     mock.timers.tick(configuration.settings.retryInterval);
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 2);
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.strictEqual(callCount, 2);
   });
 
-  it('should not reconnect when disconnecting', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
+  it('does not reconnect when disconnecting', async () => {
+    FakePiConnection.connectMock = mock.fn(async () => {
       throw new Error('connection failed');
     });
     (south as unknown as Record<string, unknown>)['disconnecting'] = true;
@@ -179,360 +197,198 @@ describe('South PI', () => {
 
     assert.strictEqual(disconnectMock1.mock.calls.length, 0);
     mock.timers.tick(configuration.settings.retryInterval);
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+    await Promise.resolve();
+    assert.strictEqual(FakePiConnection.connectMock.mock.calls.length, 1);
   });
 
-  it('should properly clear reconnect timeout on disconnect when not connected', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
+  it('clears the reconnect timeout on disconnect when never connected', async () => {
+    FakePiConnection.connectMock = mock.fn(async () => {
       throw new Error('connection failed');
     });
 
     await south.connect();
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+    assert.strictEqual(FakePiConnection.connectMock.mock.calls.length, 1);
 
     await south.disconnect();
     mock.timers.tick(configuration.settings.retryInterval);
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+    await Promise.resolve();
+    assert.strictEqual(FakePiConnection.connectMock.mock.calls.length, 1, 'no reconnect attempt after disconnect cleared the timer');
     assert.ok(
       logger.error.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
-          (c.arguments[0] as string).includes('Error while sending connection HTTP request') &&
+          (c.arguments[0] as string).includes('Error while connecting to the PI server') &&
           (c.arguments[0] as string).includes(`${configuration.settings.retryInterval} ms`)
       )
     );
   });
 
-  it('should properly clear reconnect timeout on disconnect when connected', async () => {
-    let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      callCount++;
-      if (callCount === 1) return createMockResponse(200);
+  it('clears the reconnect timeout on disconnect when connected, logging a disconnect failure', async () => {
+    await south.connect();
+    const connection = FakePiConnection.latest();
+    connection.disconnect = mock.fn(async () => {
       throw new Error('disconnection failed');
     });
 
-    await south.connect();
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
-
     await south.disconnect();
     mock.timers.tick(configuration.settings.retryInterval);
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 2);
+    await Promise.resolve();
+    assert.strictEqual(FakePiConnection.connectMock.mock.calls.length, 1, 'no reconnect attempt scheduled by an explicit disconnect');
     assert.ok(
       logger.error.mock.calls.some((c: { arguments: Array<unknown> }) =>
-        (c.arguments[0] as string).includes('Error while sending disconnection HTTP request')
+        (c.arguments[0] as string).includes('Error while disconnecting from the PI server')
       )
     );
   });
 
-  it('should test connection successfully using an isolated test session', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
-    const connectSpy = mock.method(south, 'connect');
-    const disconnectSpy = mock.method(south, 'disconnect');
-
+  it('uses an isolated connection for testConnection, never the live one', async () => {
     await assert.doesNotReject(south.testConnection());
 
-    // testConnection() must never call the connector's own live connect()/disconnect() lifecycle methods...
-    assert.strictEqual(connectSpy.mock.calls.length, 0);
-    assert.strictEqual(disconnectSpy.mock.calls.length, 0);
-    // ...nor touch the connector's own connected flag.
-    assert.strictEqual((south as unknown as Record<string, unknown>)['connected'], false);
-
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 2);
-    const [connectCall, disconnectCall] = httpRequestExports.HTTPRequest.mock.calls;
-    assertContains(connectCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/connect`
-    });
-    assertContains(disconnectCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/disconnect`
-    });
-    assert.deepStrictEqual(disconnectCall.arguments[1], { method: 'DELETE' });
+    assert.strictEqual((south as unknown as Record<string, unknown>)['connection'], null);
+    const connection = FakePiConnection.latest();
+    assert.strictEqual(connection.disconnect.mock.calls.length, 1);
   });
 
-  it('should test connection fail', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(400, 'bad request'));
-    await assert.rejects(
-      south.testConnection(),
-      new Error('Error occurred when sending connect command to remote agent with status 400. bad request')
-    );
+  it('returns PI server info from testConnection', async () => {
+    const result = await south.testConnection();
 
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(500, 'another error'));
-    await assert.rejects(south.testConnection(), new Error('Error occurred when sending connect command to remote agent with status 500'));
-
-    // Only the isolated test session was ever contacted, never the live one.
-    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/connect`
+    assert.deepStrictEqual(result, {
+      items: [
+        { key: 'Name', value: FAKE_SERVER_INFO.name },
+        { key: 'Version', value: FAKE_SERVER_INFO.version },
+        { key: 'Host', value: `${FAKE_SERVER_INFO.host}:${FAKE_SERVER_INFO.port}` }
+      ]
     });
   });
 
-  it('should leave a live connection untouched by testConnection()', async () => {
-    // Establish a real, live connection first.
+  it('propagates a connection failure from testConnection', async () => {
+    FakePiConnection.connectMock = mock.fn(async () => {
+      throw new Error('AF SDK not installed');
+    });
+    await assert.rejects(south.testConnection(), { message: 'AF SDK not installed' });
+  });
+
+  it('leaves a live connection untouched by testConnection()', async () => {
     await south.connect();
-    assert.strictEqual((south as unknown as Record<string, unknown>)['connected'], true);
-
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
+    const liveConnection = FakePiConnection.latest();
 
     await assert.doesNotReject(south.testConnection());
 
-    // The live session survives: connected flag untouched, and none of testConnection's calls hit the live endpoints.
-    assert.strictEqual((south as unknown as Record<string, unknown>)['connected'], true);
-    for (const call of httpRequestExports.HTTPRequest.mock.calls) {
-      const href = (call.arguments[0] as URL).href ?? String(call.arguments[0]);
-      assert.ok(!href.endsWith(`/api/pi/${configuration.id}/connect`), `unexpected live connect call: ${href}`);
-      assert.ok(!href.endsWith(`/api/pi/${configuration.id}/disconnect`), `unexpected live disconnect call: ${href}`);
-      assert.ok(href.includes(`${configuration.id}-test`), `expected test-session call, got: ${href}`);
-    }
+    assert.strictEqual((south as unknown as Record<string, unknown>)['connection'], liveConnection);
+    assert.strictEqual(liveConnection.disconnect.mock.calls.length, 0);
+    // A separate throwaway connection was created and disconnected for the test.
+    assert.strictEqual(FakePiConnection.instances.length, 2);
+    assert.strictEqual(FakePiConnection.instances[1].disconnect.mock.calls.length, 1);
   });
 
-  it('should get data from Remote agent', async () => {
+  it('throws from historyQuery when not connected', async () => {
+    await assert.rejects(south.historyQuery(configuration.items, '2020-01-01', '2020-01-02'), { message: 'PI server is not connected' });
+  });
+
+  it('reads all items in one bulk call and adds time-values content', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
-
+    await south.connect();
+    const connection = FakePiConnection.latest();
     const addContentMock = mock.method(
       south,
       'addContent',
       mock.fn(async () => undefined)
     );
-    let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      callCount++;
-      if (callCount === 1)
-        return createMockResponse(200, {
-          recordCount: 2,
-          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-          logs: ['log1', 'log2'],
-          maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-        });
-      if (callCount === 2)
-        return createMockResponse(200, {
-          recordCount: 1,
-          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }],
-          logs: [],
-          maxInstantRetrieved: '2020-02-01T00:00:00.000Z'
-        });
-      return createMockResponse(200, { recordCount: 0, content: [], logs: [], maxInstantRetrieved: '2020-03-01T00:00:00.000Z' });
-    });
+    connection.read = mock.fn(async () => [
+      // Raw PI point names as the helper returns them — 'FACTORY.WORKSHOP.POINT.ID1' is item1's
+      // configured `piPoint`, mapped back to item1's own `name`; 'query.result.point' has no
+      // configured mapping (it's a wildcard-mask match) and passes through as-is.
+      { pointId: 'FACTORY.WORKSHOP.POINT.ID1', timestamp: '2020-02-01T00:00:00.000Z', value: '1' },
+      { pointId: 'query.result.point', timestamp: '2020-03-01T00:00:00.000Z', value: '2' }
+    ]);
 
     const result = await south.historyQuery(configuration.items, startTime, endTime);
 
-    const firstCall = httpRequestExports.HTTPRequest.mock.calls[0];
-    assertContains(firstCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}/read`
-    });
-    assert.deepStrictEqual(firstCall.arguments[1], {
-      method: 'PUT',
-      body: JSON.stringify({
-        startTime,
-        endTime,
-        items: [
-          { name: 'item1', type: 'pointId', piPoint: 'FACTORY.WORKSHOP.POINT.ID1' },
-          { name: 'item2', type: 'pointQuery', piQuery: '*' }
-        ]
-      }),
-      headers: { 'Content-Type': 'application/json' }
-    });
-
+    assert.strictEqual(connection.read.mock.calls.length, 1);
+    assert.deepStrictEqual(connection.read.mock.calls[0].arguments, [startTime, endTime, ['FACTORY.WORKSHOP.POINT.ID1', 'sinu*']]);
     assert.deepStrictEqual(result, {
-      trackedInstant: '2020-03-01T00:00:00.000Z',
-      value: { timestamp: '2020-03-01T00:00:00.000Z' }
+      trackedInstant: '2020-03-01T00:00:00.001Z',
+      value: { pointId: 'query.result.point', timestamp: '2020-03-01T00:00:00.000Z', data: { value: '2' } }
     });
     assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
       type: 'time-values',
-      content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+      content: [
+        { pointId: 'item1', timestamp: '2020-02-01T00:00:00.000Z', data: { value: '1' } },
+        { pointId: 'query.result.point', timestamp: '2020-03-01T00:00:00.000Z', data: { value: '2' } }
+      ]
     });
     assert.strictEqual(addContentMock.mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
     assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [configuration.items[0], configuration.items[1]]);
-    assert.ok(logger.warn.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[1] === 'log1'));
-    assert.ok(logger.warn.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[1] === 'log2'));
+  });
 
-    const resultNoUpdateInstant = await south.historyQuery(configuration.items, result!.trackedInstant!, endTime);
-    assert.deepStrictEqual(resultNoUpdateInstant, {
-      trackedInstant: null,
-      value: { timestamp: '2020-02-01T00:00:00.000Z' }
-    });
+  it('logs and returns null trackedInstant when no records are found', async () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    const endTime = '2022-01-01T00:00:00.000Z';
+    await south.connect();
+    const connection = FakePiConnection.latest();
+    connection.read = mock.fn(async () => []);
 
-    const noResult = await south.historyQuery(configuration.items, startTime, endTime);
-    assert.deepStrictEqual(noResult, { trackedInstant: null, value: null });
+    const result = await south.historyQuery(configuration.items, startTime, endTime);
+
+    assert.deepStrictEqual(result, { trackedInstant: null, value: null });
     assert.ok(
-      logger.debug.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[1] === 'No result found. Request done in 0 ms')
+      logger.debug.mock.calls.some(
+        (c: { arguments: Array<unknown> }) => typeof c.arguments[1] === 'string' && c.arguments[1].includes('No result found')
+      )
     );
-    assert.strictEqual(logger.warn.mock.calls.length, 2);
   });
 
-  it('should manage query error', async () => {
+  it('propagates a query error from historyQuery', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
-
-    let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      callCount++;
-      if (callCount === 1) return createMockResponse(400, 'bad request');
-      return createMockResponse(500);
+    await south.connect();
+    const connection = FakePiConnection.latest();
+    connection.read = mock.fn(async () => {
+      throw new Error('PI RPC broken');
     });
 
-    await assert.rejects(
-      south.historyQuery(configuration.items, startTime, endTime),
-      new Error('Error occurred when querying remote agent with status 400: bad request')
-    );
-    await assert.rejects(
-      south.historyQuery(configuration.items, startTime, endTime),
-      new Error('Error occurred when querying remote agent with status 500')
+    await assert.rejects(south.historyQuery(configuration.items, startTime, endTime), { message: 'PI RPC broken' });
+    assert.ok(
+      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) =>
+        (c.arguments[1] as string).includes('Error while querying the PI server: PI RPC broken')
+      )
     );
   });
 
-  it('should manage fetch error on connect', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      throw new Error('bad request');
-    });
-
-    await assert.rejects(south.historyQuery(configuration.items, startTime, endTime), new Error('bad request'));
-
-    await south.start();
-    await assert.rejects(south.historyQuery(configuration.items, startTime, endTime), new Error('bad request'));
-  });
-
-  it('should test item using an isolated test session, not the live connect/disconnect endpoints', async () => {
-    let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      callCount++;
-      // First call is connect (15 ms), second is read (25 ms), third is disconnect.
-      mock.timers.tick(callCount === 1 ? 15 : callCount === 2 ? 25 : 0);
-      return createMockResponse(200, {
-        recordCount: 2,
-        content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-        maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-      });
-    });
-
-    const connectSpy = mock.method(south, 'connect');
-    const disconnectSpy = mock.method(south, 'disconnect');
-
+  it('tests an item through an isolated connection, disconnecting it afterward', async () => {
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
-    const fetchOptions = {
-      method: 'PUT',
-      body: JSON.stringify({
-        startTime,
-        endTime,
-        items: [
-          {
-            name: configuration.items[0].name,
-            type: configuration.items[0].settings.type === 'point-id' ? 'pointId' : 'pointQuery',
-            piPoint: configuration.items[0].settings.piPoint,
-            piQuery: configuration.items[0].settings.piQuery
-          }
-        ]
-      }),
-      headers: { 'Content-Type': 'application/json' }
-    };
 
     const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
+    const connection = FakePiConnection.latest();
 
-    // testItem() must never call the connector's own live connect()/disconnect() lifecycle methods...
-    assert.strictEqual(connectSpy.mock.calls.length, 0);
-    assert.strictEqual(disconnectSpy.mock.calls.length, 0);
-    // ...nor touch the connector's own connected flag.
-    assert.strictEqual((south as unknown as Record<string, unknown>)['connected'], false);
-
-    // Every HTTP call must target the isolated `-test` session id, never the live one.
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 3);
-    const [connectCall, readCall, disconnectCall] = httpRequestExports.HTTPRequest.mock.calls;
-    assertContains(connectCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/connect`
-    });
-    assert.deepStrictEqual(connectCall.arguments[1], {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    assertContains(readCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/read`
-    });
-    assert.deepStrictEqual(readCall.arguments[1], fetchOptions);
-    assertContains(disconnectCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/disconnect`
-    });
-    assert.deepStrictEqual(disconnectCall.arguments[1], { method: 'DELETE' });
-
-    assert.strictEqual(result.connectionDuration, 15);
-    assert.strictEqual(result.queryDuration, 25);
-
-    await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
-    assert.strictEqual(connectSpy.mock.calls.length, 0);
-    assert.strictEqual(disconnectSpy.mock.calls.length, 0);
+    assert.strictEqual(connection.read.mock.calls.length, 1);
+    assert.deepStrictEqual(connection.read.mock.calls[0].arguments, [startTime, endTime, ['FACTORY.WORKSHOP.POINT.ID1']]);
+    assert.strictEqual(connection.disconnect.mock.calls.length, 1);
+    assert.deepStrictEqual(result.result, { type: 'time-values', content: [] });
   });
 
-  it('should test item and throw error if bad status, still disconnecting the test session only', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, options?: { method: string }) =>
-      options?.method === 'DELETE' ? createMockResponse(200) : createMockResponse(400)
-    );
-
-    const connectSpy = mock.method(south, 'connect');
-    const disconnectSpy = mock.method(south, 'disconnect');
-
-    await assert.rejects(
-      south.testItem(configuration.items[0], testData.south.itemTestingSettings),
-      new Error('Error occurred when sending connect command to remote agent. 400')
-    );
-
-    // Even on failure, the live connect()/disconnect() lifecycle must never be invoked.
-    assert.strictEqual(connectSpy.mock.calls.length, 0);
-    assert.strictEqual(disconnectSpy.mock.calls.length, 0);
-    assert.strictEqual((south as unknown as Record<string, unknown>)['connected'], false);
-
-    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
-    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/connect`
+  it('still disconnects the isolated connection when the read fails', async () => {
+    FakePiConnection.connectMock = mock.fn(async () => {
+      const instance = new FakePiConnection();
+      instance.read = mock.fn(async () => {
+        throw new Error('bad point');
+      });
+      FakePiConnection.instances.push(instance);
+      return instance;
     });
-    assertContains(httpRequestExports.HTTPRequest.mock.calls[1].arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/read`
-    });
-    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[1].arguments[1], {
-      method: 'PUT',
-      body: JSON.stringify({
-        startTime,
-        endTime,
-        items: [
-          {
-            name: configuration.items[0].name,
-            type: configuration.items[0].settings.type === 'point-id' ? 'pointId' : 'pointQuery',
-            piPoint: configuration.items[0].settings.piPoint,
-            piQuery: configuration.items[0].settings.piQuery
-          }
-        ]
-      }),
-      headers: { 'Content-Type': 'application/json' }
-    });
-    // The test session is still torn down even though the read failed.
-    assertContains(httpRequestExports.HTTPRequest.mock.calls[2].arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}-test/disconnect`
-    });
-    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[2].arguments[1], { method: 'DELETE' });
+
+    await assert.rejects(south.testItem(configuration.items[0], testData.south.itemTestingSettings), { message: 'bad point' });
+    assert.strictEqual(FakePiConnection.latest().disconnect.mock.calls.length, 1);
   });
 
-  it('should leave a live connection untouched by testItem()', async () => {
-    // Establish a real, live connection first.
+  it('leaves a live connection untouched by testItem()', async () => {
     await south.connect();
-    assert.strictEqual((south as unknown as Record<string, unknown>)['connected'], true);
-    const callsAfterConnect = httpRequestExports.HTTPRequest.mock.calls.length;
-
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) =>
-      createMockResponse(200, {
-        recordCount: 1,
-        content: [{ timestamp: '2020-02-01T00:00:00.000Z' }],
-        maxInstantRetrieved: '2020-02-01T00:00:00.000Z'
-      })
-    );
+    const liveConnection = FakePiConnection.latest();
 
     await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
 
-    // The live session survives: connected flag untouched, and none of testItem's calls hit the live endpoints.
-    assert.strictEqual((south as unknown as Record<string, unknown>)['connected'], true);
-    for (const call of httpRequestExports.HTTPRequest.mock.calls) {
-      const href = (call.arguments[0] as URL).href ?? String(call.arguments[0]);
-      assert.ok(!href.endsWith(`/api/pi/${configuration.id}/connect`), `unexpected live connect call: ${href}`);
-      assert.ok(!href.endsWith(`/api/pi/${configuration.id}/disconnect`), `unexpected live disconnect call: ${href}`);
-      assert.ok(href.includes(`${configuration.id}-test`), `expected test-session call, got: ${href}`);
-    }
-    assert.strictEqual(callsAfterConnect, 1);
+    assert.strictEqual((south as unknown as Record<string, unknown>)['connection'], liveConnection);
+    assert.strictEqual(liveConnection.read.mock.calls.length, 0);
+    assert.strictEqual(liveConnection.disconnect.mock.calls.length, 0);
   });
 });
