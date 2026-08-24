@@ -141,7 +141,7 @@ export class SouthListComponent {
    * Open a modal to view the audit history of a South connector
    */
   showAudit(south: SouthConnectorLightDTO) {
-    const modalRef = this.modalService.open(AuditHistoryModalComponent);
+    const modalRef = this.modalService.open(AuditHistoryModalComponent, { size: 'xl' });
     modalRef.componentInstance.prepare('south_connector', south.id);
   }
 

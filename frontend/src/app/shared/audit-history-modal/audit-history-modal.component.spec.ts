@@ -93,6 +93,32 @@ describe('AuditHistoryModalComponent', () => {
     expect(tester.fixture.componentInstance.expandedRowId()).toEqual(null);
   });
 
+  test('should switch the diff view mode when a mode is selected from the dropdown', async () => {
+    auditService.getHistory.mockReturnValue(of(history));
+    tester.fixture.componentInstance.prepare('south_connector', 'entityId1');
+    tester.fixture.detectChanges();
+
+    tester.fixture.componentInstance.toggleRow('id1');
+    tester.fixture.detectChanges();
+    await expect.element(tester.root.getByCss('oib-audit-diff')).toBeInTheDocument();
+
+    tester.fixture.componentInstance.changeMode('json-diff');
+    tester.fixture.detectChanges();
+    await expect.element(tester.root.getByCss('oib-audit-json-diff')).toBeInTheDocument();
+
+    tester.fixture.componentInstance.changeMode('json-side-by-side');
+    tester.fixture.detectChanges();
+    await expect.element(tester.root.getByCss('oib-audit-json-side-by-side')).toBeInTheDocument();
+  });
+
+  test('should not show the mode dropdown when there is no history', async () => {
+    auditService.getHistory.mockReturnValue(of([]));
+    tester.fixture.componentInstance.prepare('south_connector', 'entityId1');
+    tester.fixture.detectChanges();
+
+    await expect.element(tester.root.getByCss('[ngbDropdown]')).not.toBeInTheDocument();
+  });
+
   test('should close the modal', async () => {
     auditService.getHistory.mockReturnValue(of([]));
     tester.fixture.componentInstance.prepare('south_connector', 'entityId1');

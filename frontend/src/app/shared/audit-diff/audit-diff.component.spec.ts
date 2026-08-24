@@ -32,10 +32,10 @@ describe('AuditDiffComponent', () => {
     await expect.element(tester.rows.nth(0)).toHaveTextContent('name');
     await expect.element(tester.rows.nth(0)).toHaveTextContent('old-name');
     await expect.element(tester.rows.nth(0)).toHaveTextContent('new-name');
-    await expect.element(tester.rows.nth(0)).toHaveClass('audit-diff-changed');
+    await expect.element(tester.rows.nth(0)).toHaveClass('table-warning');
 
     await expect.element(tester.rows.nth(1)).toHaveTextContent('settings');
-    await expect.element(tester.rows.nth(1)).not.toHaveClass('audit-diff-changed');
+    await expect.element(tester.rows.nth(1)).not.toHaveClass('table-warning');
   });
 
   test('should render a dash for every "before" cell on CREATE (previousState is null)', async () => {

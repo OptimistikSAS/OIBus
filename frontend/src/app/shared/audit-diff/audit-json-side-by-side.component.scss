@@ -1,0 +1,9 @@
+.audit-json-side-by-side {
+  width: 100%;
+  max-height: 60vh;
+  overflow: auto;
+
+  ::ng-deep .cm-mergeView {
+    height: 100%;
+  }
+}

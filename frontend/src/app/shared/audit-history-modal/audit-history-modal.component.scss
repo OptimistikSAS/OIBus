@@ -1,0 +1,12 @@
+@import '../../../common.scss';
+
+// This button isn't inside an .oib-table (it's a list-group row, not a <tr>), so it doesn't
+// pick up the app-wide "table action icon" color rule (tbody tr .btn { color: $blue }) —
+// apply the same resting color directly so it's visible without hovering.
+.audit-history-row .btn-link {
+  color: $blue;
+
+  &:hover {
+    color: $yellow;
+  }
+}

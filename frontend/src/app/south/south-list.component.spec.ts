@@ -85,7 +85,7 @@ describe('SouthListComponent', () => {
     const root = page.elementLocator(fixture.nativeElement);
     await root.getByCss('.show-audit-south').nth(0).click();
 
-    expect(modalServiceMock.open).toHaveBeenCalledWith(AuditHistoryModalComponent);
+    expect(modalServiceMock.open).toHaveBeenCalledWith(AuditHistoryModalComponent, { size: 'xl' });
     expect(fakeModalComponent.prepare).toHaveBeenCalledWith('south_connector', southConnectors[0].id);
   });
 });
