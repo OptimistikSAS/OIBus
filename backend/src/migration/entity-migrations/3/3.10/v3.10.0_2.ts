@@ -15,8 +15,9 @@ const HISTORY_QUERY_TRANSFORMERS_TABLE = 'history_query_transformers';
 const HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE = 'history_query_transformers_items';
 
 // The SQL-family souths reworked to emit 'record-list' content instead of pre-serialized CSV.
-// south-odbc and south-oledb are intentionally excluded (their CSV building happens in an external
-// .NET agent, outside this refactor's scope).
+// south-odbc gets the exact same treatment, but in v3.10.0_3 (bundled there with its own
+// agent-settings cleanup instead of duplicated here). south-oledb is intentionally excluded — its CSV
+// building happens in an external .NET agent, outside this refactor's scope.
 const SQL_SOUTH_TYPES = ['mysql', 'postgresql', 'mssql', 'oracle', 'sqlite'];
 
 interface OldDateTimeField {
