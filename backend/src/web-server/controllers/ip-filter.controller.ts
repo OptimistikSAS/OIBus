@@ -65,6 +65,6 @@ export class IPFilterController extends Controller {
   @SuccessResponse(204, 'IP filter deleted successfully')
   delete(@Path() ipFilterId: string, @Request() request: CustomExpressRequest): void {
     const ipFilterService = request.services.ipFilterService;
-    ipFilterService.delete(ipFilterId);
+    ipFilterService.delete(ipFilterId, request.user.id);
   }
 }

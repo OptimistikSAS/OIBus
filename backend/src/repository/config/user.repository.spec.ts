@@ -2,12 +2,13 @@ import { before, after, beforeEach, afterEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { mock } from 'node:test';
 import { Database } from 'better-sqlite3';
-import { emptyDatabase, flushPromises, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, emptyDatabase, flushPromises, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
 import UserRepository from './user.repository';
 import { createPageFromArray } from '../../../shared/model/types';
 import { UserCommandDTO } from '../../../shared/model/user.model';
 import argon2 from 'argon2';
+import AuditService from '../../service/audit.service';
 
 const TEST_DB_PATH = 'src/tests/test-config-user.db';
 
@@ -23,11 +24,13 @@ describe('UserRepository', () => {
   });
 
   let repository: UserRepository;
+  let auditService: AuditService;
   let createdId: string;
 
   beforeEach(() => {
     mock.method(argon2, 'hash', async (password: string) => password);
-    repository = new UserRepository(database);
+    auditService = createAuditServiceMock();
+    repository = new UserRepository(database, auditService);
   });
 
   afterEach(() => {
@@ -68,16 +71,25 @@ describe('UserRepository', () => {
     createdId = result.id;
     assert.ok(createdId);
     assert.deepStrictEqual(stripAuditFields(result), stripAuditFields({ ...testData.users.command, id: createdId }));
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['user', result.id, 'CREATE', null, result, testData.users.list[0].id]);
   });
 
   it('should update a user', async () => {
     const newCommand: UserCommandDTO = JSON.parse(JSON.stringify(testData.users.command));
     newCommand.login = 'new login';
     newCommand.timezone = 'UTC';
-    repository.update(createdId, newCommand);
+    const before = repository.findById(createdId);
+    repository.update(createdId, newCommand, 'updaterUser');
     const result = repository.findById(createdId)!;
     assert.strictEqual(result.login, newCommand.login);
     assert.strictEqual(result.timezone, newCommand.timezone);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['user', createdId, 'UPDATE', before, result, 'updaterUser']);
 
     await repository.updatePassword(createdId, 'new password');
 
@@ -86,8 +98,13 @@ describe('UserRepository', () => {
   });
 
   it('should delete a user', () => {
-    repository.delete(testData.users.list[1].id);
+    const before = repository.findById(testData.users.list[1].id);
+    repository.delete(testData.users.list[1].id, 'deleterUser');
     assert.strictEqual(repository.findById(testData.users.list[1].id), null);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['user', testData.users.list[1].id, 'DELETE', before, null, 'deleterUser']);
   });
 });
 
@@ -111,7 +128,7 @@ describe('UserRepository with custom default credentials', () => {
   it('should create a default user with custom login and password', async () => {
     mock.method(argon2, 'hash', async (password: string) => password);
 
-    const repository = new UserRepository(db, 'customuser', 'custompass');
+    const repository = new UserRepository(db, createAuditServiceMock(), 'customuser', 'custompass');
     await flushPromises();
 
     const users = repository.list();
@@ -123,7 +140,7 @@ describe('UserRepository with custom default credentials', () => {
   it('should not recreate the user when the same login already exists', async () => {
     mock.method(argon2, 'hash', async (password: string) => password);
 
-    new UserRepository(db, 'customuser', 'anotherpass');
+    new UserRepository(db, createAuditServiceMock(), 'customuser', 'anotherpass');
     await flushPromises();
 
     // Still only one user; createDefault is a no-op when the same login is already present

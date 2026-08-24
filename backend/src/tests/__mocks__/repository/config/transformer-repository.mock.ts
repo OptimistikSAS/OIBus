@@ -1,5 +1,6 @@
 import { mock } from 'node:test';
 import type { Database } from 'better-sqlite3';
+import { createAuditServiceMock } from '../../../utils/test-utils';
 import { CustomTransformer, Transformer } from '../../../../model/transformer.model';
 import { TransformerSearchParam } from '../../../../../shared/model/transformer.model';
 import { Page } from '../../../../../shared/model/types';
@@ -10,7 +11,7 @@ import TransformerRepository from '../../../../repository/config/transformer.rep
  */
 export default class TransformerRepositoryMock extends TransformerRepository {
   constructor() {
-    super({} as Database);
+    super({} as Database, createAuditServiceMock());
   }
   protected override createStandardTransformers(): void {
     return;
@@ -25,5 +26,5 @@ export default class TransformerRepositoryMock extends TransformerRepository {
   }));
   override save = mock.fn((_transformer: CustomTransformer): void => undefined);
   override findById = mock.fn((_id: string): Transformer | null => null);
-  override delete = mock.fn((_id: string): void => undefined);
+  override delete = mock.fn((_id: string, _deletedBy: string): void => undefined);
 }

@@ -167,7 +167,7 @@ export class HistoryQueryController extends Controller {
   @SuccessResponse(204, 'No Content')
   async delete(@Path() historyId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    await historyQueryService.delete(historyId);
+    await historyQueryService.delete(historyId, request.user.id);
   }
 
   /**
@@ -471,7 +471,7 @@ export class HistoryQueryController extends Controller {
   @SuccessResponse(204, 'No Content')
   async deleteItem(@Path() historyId: string, @Path() itemId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    await historyQueryService.deleteItem(historyId, itemId);
+    await historyQueryService.deleteItem(historyId, itemId, request.user.id);
   }
 
   /**
@@ -486,7 +486,7 @@ export class HistoryQueryController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    await historyQueryService.deleteItems(historyId, command.itemIds);
+    await historyQueryService.deleteItems(historyId, command.itemIds, request.user.id);
   }
 
   /**
@@ -497,7 +497,7 @@ export class HistoryQueryController extends Controller {
   @SuccessResponse(204, 'No Content')
   async deleteAllItems(@Path() historyId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    await historyQueryService.deleteAllItems(historyId);
+    await historyQueryService.deleteAllItems(historyId, request.user.id);
   }
 
   /**
@@ -644,7 +644,7 @@ export class HistoryQueryController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    await historyQueryService.addOrEditTransformer(historyId, command as unknown as HistoryTransformerWithOptions);
+    await historyQueryService.addOrEditTransformer(historyId, command as unknown as HistoryTransformerWithOptions, request.user.id);
   }
 
   /**
@@ -659,7 +659,7 @@ export class HistoryQueryController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    await historyQueryService.removeTransformer(historyId, transformerId);
+    await historyQueryService.removeTransformer(historyId, transformerId, request.user.id);
   }
 
   /**
