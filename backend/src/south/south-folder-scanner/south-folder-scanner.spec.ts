@@ -597,7 +597,11 @@ describe('SouthFolderScanner', () => {
           // catch branch (log + rethrow) is exercised — this still exercises the domain-qualified
           // username ternary branch before the failure.
           await assert.rejects((south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data'));
-          assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Failed to store SMB credentials')));
+          assert.ok(
+            logger.error.mock.calls.some(
+              c => typeof c.arguments[0] === 'string' && c.arguments[0].includes('Failed to authenticate SMB session')
+            )
+          );
         });
 
         it('should skip SMB mount on Windows when username is empty', async () => {
