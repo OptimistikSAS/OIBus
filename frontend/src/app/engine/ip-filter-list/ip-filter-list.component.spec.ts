@@ -14,6 +14,7 @@ import { MockModalService, provideModalTesting } from '../../shared/mock-modal.s
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 
 class IpFilterListComponentTester {
   readonly fixture = TestBed.createComponent(IpFilterListComponent);
@@ -21,6 +22,7 @@ class IpFilterListComponentTester {
   readonly ipFilters = this.root.getByCss('tbody tr');
   readonly deleteButtons = this.root.getByCss('.delete-ip-filter');
   readonly editButtons = this.root.getByCss('.edit-ip-filter');
+  readonly auditButtons = this.root.getByCss('.show-audit-ip-filter');
   readonly addIpFilter = this.root.getByCss('#add-ip-filter');
   readonly noIpFilter = this.root.getByCss('#no-ip-filter');
   readonly disabledMessage = this.root.getByCss('#ip-filter-disabled');
@@ -36,7 +38,7 @@ describe('IpFilterListComponent', () => {
   let engineService: MockObject<EngineService>;
   let confirmationService: MockObject<ConfirmationService>;
   let notificationService: MockObject<NotificationService>;
-  let modalService: MockModalService<EditIpFilterModalComponent>;
+  let modalService: MockModalService<EditIpFilterModalComponent | AuditHistoryModalComponent>;
 
   beforeEach(() => {
     ipFilterService = createMock(IpFilterService);
@@ -107,6 +109,15 @@ describe('IpFilterListComponent', () => {
       expect(fakeEditComponent.prepareForCreation).toHaveBeenCalled();
       expect(ipFilterService.list).toHaveBeenCalledTimes(1);
       expect(notificationService.success).toHaveBeenCalledWith('engine.ip-filter.created', { address: 'new-address' });
+    });
+
+    test('should open the audit history modal with the ip filter entity type and id', async () => {
+      const fakeAuditComponent = createMock(AuditHistoryModalComponent);
+      modalService.mockClosedModal(fakeAuditComponent);
+
+      await tester.auditButtons.nth(0).click();
+
+      expect(fakeAuditComponent.prepare).toHaveBeenCalledWith('ip_filter', testData.ipFilters.list[0].id);
     });
   });
 

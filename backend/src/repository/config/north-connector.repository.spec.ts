@@ -84,9 +84,11 @@ describe('NorthConnectorRepository', () => {
       newNorthConnector.id,
       'CREATE',
       null,
-      createdConnector,
+      { ...createdConnector, settings: { ...createdConnector.settings, password: '' } },
       newNorthConnector.updatedBy
     ]);
+    // The connector's secret settings field must never be persisted in the audit trail
+    assert.strictEqual((connectorCreateCalls[0].arguments[4] as { settings: { password: string } }).settings.password, '');
 
     const newNorthConnectorWithoutTransformer: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
     newNorthConnectorWithoutTransformer.id = '';
@@ -162,41 +164,45 @@ describe('NorthConnectorRepository', () => {
 
     assert.ok(newNorthConnector.id);
 
-    repository.addOrEditTransformer(newNorthConnector.id, {
-      id: '',
-      transformer: testData.transformers.list[0] as Transformer,
-      options: {},
-      source: {
-        type: 'south',
-        south: {
-          id: testData.south.list[0].id,
-          name: testData.south.list[0].name,
-          type: testData.south.list[0].type,
-          description: testData.south.list[0].description,
-          enabled: testData.south.list[0].enabled,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        group: {
-          id: group.id,
-          name: group.name,
-          southId: testData.south.list[0].id,
-          scanMode: testData.scanMode.list[0],
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          maxReadInterval: 3600,
-          readDelay: 200,
-          items: [],
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        items: []
-      }
-    }, 'userTest');
+    repository.addOrEditTransformer(
+      newNorthConnector.id,
+      {
+        id: '',
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        source: {
+          type: 'south',
+          south: {
+            id: testData.south.list[0].id,
+            name: testData.south.list[0].name,
+            type: testData.south.list[0].type,
+            description: testData.south.list[0].description,
+            enabled: testData.south.list[0].enabled,
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
+          },
+          group: {
+            id: group.id,
+            name: group.name,
+            southId: testData.south.list[0].id,
+            scanMode: testData.scanMode.list[0],
+            startTimeOffset: 0,
+            endTimeOffset: null,
+            maxReadInterval: 3600,
+            readDelay: 200,
+            items: [],
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
+          },
+          items: []
+        }
+      },
+      'userTest'
+    );
 
     const connector = repository.findNorthById(newNorthConnector.id)!;
     assert.strictEqual(connector.transformers.length, 1);
@@ -307,10 +313,12 @@ describe('NorthConnectorRepository', () => {
       'north_connector',
       newNorthConnector.id,
       'DELETE',
-      beforeConnector,
+      { ...beforeConnector, settings: { ...beforeConnector.settings, password: '' } },
       null,
       'deleteUser'
     ]);
+    // The connector's secret settings field must never be persisted in the audit trail
+    assert.strictEqual((connectorDeleteCall!.arguments[3] as { settings: { password: string } }).settings.password, '');
   });
 
   it('should save a north connector with a "temp_" transformer id (treated as new)', () => {
@@ -340,28 +348,32 @@ describe('NorthConnectorRepository', () => {
     newNorthConnector.transformers = [];
     repository.saveNorth(newNorthConnector);
 
-    repository.addOrEditTransformer(newNorthConnector.id, {
-      id: '',
-      transformer: testData.transformers.list[0] as Transformer,
-      options: {},
-      source: {
-        type: 'south',
-        south: {
-          id: testData.south.list[0].id,
-          name: testData.south.list[0].name,
-          type: testData.south.list[0].type,
-          description: testData.south.list[0].description,
-          enabled: testData.south.list[0].enabled,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        items: [
-          { id: testData.south.list[0].items[0].id, name: '', enabled: true, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' }
-        ]
-      }
-    }, 'userTest');
+    repository.addOrEditTransformer(
+      newNorthConnector.id,
+      {
+        id: '',
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        source: {
+          type: 'south',
+          south: {
+            id: testData.south.list[0].id,
+            name: testData.south.list[0].name,
+            type: testData.south.list[0].type,
+            description: testData.south.list[0].description,
+            enabled: testData.south.list[0].enabled,
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
+          },
+          items: [
+            { id: testData.south.list[0].items[0].id, name: '', enabled: true, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' }
+          ]
+        }
+      },
+      'userTest'
+    );
 
     let connector = repository.findNorthById(newNorthConnector.id)!;
     assert.strictEqual(connector.transformers.length, 1);
@@ -369,26 +381,30 @@ describe('NorthConnectorRepository', () => {
     const transformerId = connector.transformers[0].id;
 
     // Update the same transformer, still without a group, to hit the update-path false branch too
-    repository.addOrEditTransformer(newNorthConnector.id, {
-      id: transformerId,
-      transformer: testData.transformers.list[0] as Transformer,
-      options: { updated: true },
-      source: {
-        type: 'south',
-        south: {
-          id: testData.south.list[0].id,
-          name: testData.south.list[0].name,
-          type: testData.south.list[0].type,
-          description: testData.south.list[0].description,
-          enabled: testData.south.list[0].enabled,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        items: []
-      }
-    }, 'userTest');
+    repository.addOrEditTransformer(
+      newNorthConnector.id,
+      {
+        id: transformerId,
+        transformer: testData.transformers.list[0] as Transformer,
+        options: { updated: true },
+        source: {
+          type: 'south',
+          south: {
+            id: testData.south.list[0].id,
+            name: testData.south.list[0].name,
+            type: testData.south.list[0].type,
+            description: testData.south.list[0].description,
+            enabled: testData.south.list[0].enabled,
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
+          },
+          items: []
+        }
+      },
+      'userTest'
+    );
     connector = repository.findNorthById(newNorthConnector.id)!;
     assert.strictEqual(connector.transformers.length, 1);
     assert.deepStrictEqual(connector.transformers[0].options, { updated: true });
@@ -415,64 +431,72 @@ describe('NorthConnectorRepository', () => {
     newNorthConnector.transformers = [];
     repository.saveNorth(newNorthConnector);
 
-    repository.addOrEditTransformer(newNorthConnector.id, {
-      id: '',
-      transformer: testData.transformers.list[0] as Transformer,
-      options: {},
-      source: {
-        type: 'south',
-        south: {
-          id: testData.south.list[0].id,
-          name: testData.south.list[0].name,
-          type: testData.south.list[0].type,
-          description: testData.south.list[0].description,
-          enabled: testData.south.list[0].enabled,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        items: []
-      }
-    }, 'userTest');
+    repository.addOrEditTransformer(
+      newNorthConnector.id,
+      {
+        id: '',
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        source: {
+          type: 'south',
+          south: {
+            id: testData.south.list[0].id,
+            name: testData.south.list[0].name,
+            type: testData.south.list[0].type,
+            description: testData.south.list[0].description,
+            enabled: testData.south.list[0].enabled,
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
+          },
+          items: []
+        }
+      },
+      'userTest'
+    );
     const connector = repository.findNorthById(newNorthConnector.id)!;
     const transformerId = connector.transformers[0].id;
 
-    repository.addOrEditTransformer(newNorthConnector.id, {
-      id: transformerId,
-      transformer: testData.transformers.list[0] as Transformer,
-      options: {},
-      source: {
-        type: 'south',
-        south: {
-          id: testData.south.list[0].id,
-          name: testData.south.list[0].name,
-          type: testData.south.list[0].type,
-          description: testData.south.list[0].description,
-          enabled: testData.south.list[0].enabled,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        group: {
-          id: group.id,
-          name: group.name,
-          southId: testData.south.list[0].id,
-          scanMode: testData.scanMode.list[0],
-          startTimeOffset: 0,
-          endTimeOffset: null,
-          maxReadInterval: 3600,
-          readDelay: 200,
-          items: [],
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        items: []
-      }
-    }, 'userTest');
+    repository.addOrEditTransformer(
+      newNorthConnector.id,
+      {
+        id: transformerId,
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        source: {
+          type: 'south',
+          south: {
+            id: testData.south.list[0].id,
+            name: testData.south.list[0].name,
+            type: testData.south.list[0].type,
+            description: testData.south.list[0].description,
+            enabled: testData.south.list[0].enabled,
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
+          },
+          group: {
+            id: group.id,
+            name: group.name,
+            southId: testData.south.list[0].id,
+            scanMode: testData.scanMode.list[0],
+            startTimeOffset: 0,
+            endTimeOffset: null,
+            maxReadInterval: 3600,
+            readDelay: 200,
+            items: [],
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
+          },
+          items: []
+        }
+      },
+      'userTest'
+    );
     const updatedConnector = repository.findNorthById(newNorthConnector.id)!;
     assert.strictEqual((updatedConnector.transformers[0].source as SourceOriginSouth).group?.id, group.id);
   });

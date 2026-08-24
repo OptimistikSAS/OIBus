@@ -57,9 +57,11 @@ describe('CertificateRepository', () => {
       created.id,
       'CREATE',
       null,
-      created,
+      { ...created, privateKey: '' },
       created.createdBy
     ]);
+    // The private key itself must never be persisted in the audit trail
+    assert.notStrictEqual((recordMock.mock.calls[0].arguments[4] as { privateKey: string }).privateKey, created.privateKey);
   });
 
   it('should update a certificate', () => {
@@ -81,10 +83,13 @@ describe('CertificateRepository', () => {
       'certificate',
       updateCertificate.id,
       'UPDATE',
-      before,
-      result,
+      { ...before, privateKey: '' },
+      { ...result, privateKey: '' },
       updateCertificate.updatedBy
     ]);
+    // The private key itself must never be persisted in the audit trail, before or after
+    assert.notStrictEqual((recordMock.mock.calls[0].arguments[3] as { privateKey: string }).privateKey, before!.privateKey);
+    assert.notStrictEqual((recordMock.mock.calls[0].arguments[4] as { privateKey: string }).privateKey, result.privateKey);
   });
 
   it('should update name and description certificate', () => {
@@ -97,7 +102,14 @@ describe('CertificateRepository', () => {
 
     const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
     assert.strictEqual(recordMock.mock.calls.length, 1);
-    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['certificate', 'new id', 'UPDATE', before, result, 'userTest']);
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
+      'certificate',
+      'new id',
+      'UPDATE',
+      { ...before, privateKey: '' },
+      { ...result, privateKey: '' },
+      'userTest'
+    ]);
   });
 
   it('should delete certificate', () => {
@@ -107,6 +119,13 @@ describe('CertificateRepository', () => {
 
     const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
     assert.strictEqual(recordMock.mock.calls.length, 1);
-    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['certificate', 'new id', 'DELETE', before, null, 'userTest']);
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
+      'certificate',
+      'new id',
+      'DELETE',
+      { ...before, privateKey: '' },
+      null,
+      'userTest'
+    ]);
   });
 });

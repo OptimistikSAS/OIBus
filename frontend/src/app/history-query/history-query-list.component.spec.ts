@@ -9,18 +9,21 @@ import { HistoryQueryListComponent } from './history-query-list.component';
 import { HistoryQueryService } from '../services/history-query.service';
 import { NotificationService } from '../shared/notification.service';
 import { ConfirmationService } from '../shared/confirmation.service';
-import { ModalService } from '../shared/modal.service';
+import { Modal, ModalService } from '../shared/modal.service';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { provideModalTesting } from '../shared/mock-modal.service.testing';
 import testData from '../../../../backend/src/tests/utils/test-data';
 import { HistoryQueryLightDTO } from '../../../../backend/shared/model/history-query.model';
+import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
 
 describe('HistoryQueryListComponent', () => {
   let historyQueryService: MockObject<HistoryQueryService>;
+  let modalService: MockObject<ModalService>;
 
   beforeEach(() => {
     historyQueryService = createMock(HistoryQueryService);
+    modalService = createMock(ModalService);
 
     historyQueryService.list.mockReturnValue(of(testData.historyQueries.listLight as unknown as Array<HistoryQueryLightDTO>));
     historyQueryService.start.mockReturnValue(of(undefined));
@@ -35,7 +38,7 @@ describe('HistoryQueryListComponent', () => {
         { provide: HistoryQueryService, useValue: historyQueryService },
         { provide: NotificationService, useValue: createMock(NotificationService) },
         { provide: ConfirmationService, useValue: createMock(ConfirmationService) },
-        { provide: ModalService, useValue: createMock(ModalService) }
+        { provide: ModalService, useValue: modalService }
       ]
     });
   });
@@ -164,5 +167,21 @@ describe('HistoryQueryListComponent', () => {
 
     fixture.componentInstance.toggleSort('southType');
     expect(fixture.componentInstance.sortDirection).toBe('desc');
+  });
+
+  test('should open the audit history modal with the history query entity type and id', async () => {
+    const fixture = TestBed.createComponent(HistoryQueryListComponent);
+    fixture.detectChanges();
+
+    const fakeModalComponent = createMock(AuditHistoryModalComponent);
+    const modalRef = { componentInstance: fakeModalComponent } as unknown as Modal<AuditHistoryModalComponent>;
+    modalService.open.mockReturnValue(modalRef);
+
+    const root = page.elementLocator(fixture.nativeElement);
+    await root.getByCss('.show-audit-history-query').nth(0).click();
+
+    const query = testData.historyQueries.listLight[0] as unknown as HistoryQueryLightDTO;
+    expect(modalService.open).toHaveBeenCalledWith(AuditHistoryModalComponent);
+    expect(fakeModalComponent.prepare).toHaveBeenCalledWith('history_query', query.id);
   });
 });
