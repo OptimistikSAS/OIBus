@@ -105,7 +105,7 @@ export class TransformerListComponent {
    * Open a modal to view the audit history of a custom transformer
    */
   showAudit(transformer: CustomTransformerDTO) {
-    const modalRef = this.modalService.open(AuditHistoryModalComponent);
+    const modalRef = this.modalService.open(AuditHistoryModalComponent, { size: 'xl' });
     modalRef.componentInstance.prepare('transformer', transformer.id);
   }
 

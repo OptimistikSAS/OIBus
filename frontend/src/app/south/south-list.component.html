@@ -179,15 +179,6 @@
                     >
                       <span class="fa fa-search"></span>
                     </a>
-                    <!-- Audit history button -->
-                    <button
-                      type="button"
-                      class="btn btn-link show-audit-south px-1 py-0"
-                      [ngbTooltip]="'south.tooltips.audit' | translate"
-                      (click)="showAudit(south)"
-                    >
-                      <span class="fa fa-history"></span>
-                    </button>
                     <!-- Edit button -->
                     <a
                       class="btn btn-link edit-south px-1 py-0"
@@ -214,6 +205,15 @@
                       (click)="deleteSouth(south)"
                     >
                       <span class="fa fa-trash"></span>
+                    </button>
+                    <!-- Audit history button -->
+                    <button
+                      type="button"
+                      class="btn btn-link show-audit-south px-1 py-0"
+                      [ngbTooltip]="'south.tooltips.audit' | translate"
+                      (click)="showAudit(south)"
+                    >
+                      <span class="fa fa-history"></span>
                     </button>
                   </div>
                 </td>
