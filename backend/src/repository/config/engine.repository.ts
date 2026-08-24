@@ -225,6 +225,7 @@ export default class EngineRepository {
     const before = this.get();
     const query =
       `UPDATE ${ENGINES_TABLE} SET ` +
+      'audit_retention_duration = ?, ' +
       'log_console_level = ?, ' +
       'log_file_level = ?, ' +
       'log_file_max_file_size = ?, ' +
@@ -247,6 +248,7 @@ export default class EngineRepository {
     this.database
       .prepare(query)
       .run(
+        command.auditRetentionDuration,
         command.console.level,
         command.file.level,
         command.file.maxFileSize,

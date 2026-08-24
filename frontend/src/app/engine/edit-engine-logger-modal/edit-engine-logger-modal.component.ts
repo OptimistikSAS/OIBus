@@ -24,6 +24,7 @@ export class EditEngineLoggerModalComponent {
   private fb = inject(NonNullableFormBuilder);
 
   form = this.fb.group({
+    auditRetentionDuration: [0 as number | null, [Validators.required, Validators.min(0)]],
     logParameters: this.fb.group({
       console: this.fb.group({
         level: ['silent' as LogLevel, Validators.required]
@@ -126,7 +127,7 @@ export class EditEngineLoggerModalComponent {
   }
 
   initialize(settings: EngineSettingsDTO) {
-    this.form.patchValue({ logParameters: settings.logger });
+    this.form.patchValue({ auditRetentionDuration: settings.auditRetentionDuration ?? 0, logParameters: settings.logger });
     this.initializeValidators();
   }
 
@@ -191,6 +192,7 @@ export class EditEngineLoggerModalComponent {
     const formValue = this.form.getRawValue();
     this.engineService
       .updateEngineLogger({
+        auditRetentionDuration: formValue.auditRetentionDuration,
         console: { level: formValue.logParameters.console.level },
         file: {
           level: formValue.logParameters.file.level,
