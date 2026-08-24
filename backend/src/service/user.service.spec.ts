@@ -104,17 +104,21 @@ describe('User Service', () => {
   it('should update a user', async () => {
     userRepository.findById.mock.mockImplementationOnce(() => testData.users.list[0]);
 
-    await service.update(testData.users.list[0].id, testData.users.command);
+    await service.update(testData.users.list[0].id, testData.users.command, 'updaterUser');
 
     assert.deepStrictEqual(validator.validate.mock.calls[0].arguments, [userSchema, testData.users.command]);
     assert.deepStrictEqual(userRepository.findById.mock.calls[0].arguments, [testData.users.list[0].id]);
-    assert.deepStrictEqual(userRepository.update.mock.calls[0].arguments, [testData.users.list[0].id, testData.users.command]);
+    assert.deepStrictEqual(userRepository.update.mock.calls[0].arguments, [
+      testData.users.list[0].id,
+      testData.users.command,
+      'updaterUser'
+    ]);
   });
 
   it('should not update if the user is not found', async () => {
     userRepository.findById.mock.mockImplementationOnce(() => null);
 
-    await assert.rejects(() => service.update(testData.users.list[0].id, testData.users.command), {
+    await assert.rejects(() => service.update(testData.users.list[0].id, testData.users.command, 'updaterUser'), {
       message: `User "${testData.users.list[0].id}" (id) not found`
     });
 
@@ -153,16 +157,16 @@ describe('User Service', () => {
   it('should delete a user', async () => {
     userRepository.findById.mock.mockImplementationOnce(() => testData.users.list[0]);
 
-    await service.delete(testData.users.list[0].id);
+    await service.delete(testData.users.list[0].id, 'deleterUser');
 
     assert.deepStrictEqual(userRepository.findById.mock.calls[0].arguments, [testData.users.list[0].id]);
-    assert.deepStrictEqual(userRepository.delete.mock.calls[0].arguments, [testData.users.list[0].id]);
+    assert.deepStrictEqual(userRepository.delete.mock.calls[0].arguments, [testData.users.list[0].id, 'deleterUser']);
   });
 
   it('should not delete if the user is not found', () => {
     userRepository.findById.mock.mockImplementationOnce(() => null);
 
-    assert.throws(() => service.delete(testData.users.list[0].id), {
+    assert.throws(() => service.delete(testData.users.list[0].id, 'deleterUser'), {
       message: `User "${testData.users.list[0].id}" (id) not found`
     });
 

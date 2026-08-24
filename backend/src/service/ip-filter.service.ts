@@ -51,9 +51,9 @@ export default class IPFilterService {
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
-  delete(ipFilterId: string): void {
+  delete(ipFilterId: string, userId: string): void {
     const ipFilter = this.findById(ipFilterId);
-    this.ipFilterRepository.delete(ipFilter.id);
+    this.ipFilterRepository.delete(ipFilter.id, userId);
     this.whiteListEvent.emit(
       'update-white-list',
       this.ipFilterRepository.list().map(ip => ip.address)

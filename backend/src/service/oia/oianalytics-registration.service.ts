@@ -153,8 +153,8 @@ export default class OIAnalyticsRegistrationService {
     this.registrationEvent.emit('updated');
   }
 
-  async updateKeys(privateKey: string, publicKey: string): Promise<void> {
-    this.oIAnalyticsRegistrationRepository.updateKeys(await encryptionService.encryptText(privateKey), publicKey);
+  async updateKeys(privateKey: string, publicKey: string, updatedBy: string): Promise<void> {
+    this.oIAnalyticsRegistrationRepository.updateKeys(await encryptionService.encryptText(privateKey), publicKey, updatedBy);
   }
 
   async testConnection(command: RegistrationSettingsCommandDTO): Promise<void> {
