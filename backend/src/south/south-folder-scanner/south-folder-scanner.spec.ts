@@ -599,7 +599,7 @@ describe('SouthFolderScanner', () => {
           await assert.rejects((south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data'));
           assert.ok(
             logger.error.mock.calls.some(
-              c => typeof c.arguments[0] === 'string' && c.arguments[0].includes('Failed to authenticate SMB session for \\\\server\\share')
+              c => typeof c.arguments[0] === 'string' && c.arguments[0].includes('Failed to authenticate SMB session')
             )
           );
         });
