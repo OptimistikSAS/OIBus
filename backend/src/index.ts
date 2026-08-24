@@ -31,6 +31,7 @@ import CertificateService from './service/certificate.service';
 import UserService from './service/user.service';
 import LogService from './service/log.service';
 import CleanupService from './service/cache/cleanup.service';
+import AuditCleanupService from './service/audit-cleanup.service';
 import TransformerService from './service/transformer.service';
 
 const CONFIG_DATABASE = 'oibus.db';
@@ -268,9 +269,13 @@ export async function bootstrap(): Promise<void> {
   );
   await cleanupService.start();
 
+  const auditCleanupService = new AuditCleanupService(repositoryService.auditRepository, repositoryService.engineRepository);
+  await auditCleanupService.start();
+
   const server = new WebServer(
     oibusSettings.webServer.port,
     encryptionService,
+    repositoryService.auditService,
     scanModeService,
     ipFilterService,
     certificateService,
@@ -300,6 +305,7 @@ export async function bootstrap(): Promise<void> {
     await oIAnalyticsMessageService.stop();
     await server.stop();
     await cleanupService.stop();
+    await auditCleanupService.stop();
     oIAnalyticsRegistrationService.stop();
     await loggerService.stop();
     console.info('OIBus stopped');

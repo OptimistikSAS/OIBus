@@ -283,10 +283,7 @@ describe('AuditRepository', () => {
       repository.deleteOlderThan('2021-06-15T00:00:00.000Z');
 
       const remaining = repository.search({ page: 0 });
-      assert.deepStrictEqual(
-        remaining.content.map(element => element.id).sort(),
-        ['audit2', 'audit3']
-      );
+      assert.deepStrictEqual(remaining.content.map(element => element.id).sort(), ['audit2', 'audit3']);
     });
   });
 });

@@ -13,6 +13,7 @@ import { MockModalService, provideModalTesting } from '../../shared/mock-modal.s
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 
 class ScanModeListComponentTester {
   readonly fixture = TestBed.createComponent(ScanModeListComponent);
@@ -20,6 +21,7 @@ class ScanModeListComponentTester {
   readonly scanModes = this.root.getByCss('tbody tr');
   readonly deleteButtons = this.root.getByCss('.delete-scan-mode');
   readonly editButtons = this.root.getByCss('.edit-scan-mode');
+  readonly auditButtons = this.root.getByCss('.show-audit-scan-mode');
   readonly addScanMode = this.root.getByCss('#add-scan-mode');
   readonly noScanMode = this.root.getByCss('#no-scan-mode');
 
@@ -33,7 +35,7 @@ describe('ScanModeListComponent', () => {
   let scanModeService: MockObject<ScanModeService>;
   let confirmationService: MockObject<ConfirmationService>;
   let notificationService: MockObject<NotificationService>;
-  let modalService: MockModalService<EditScanModeModalComponent>;
+  let modalService: MockModalService<EditScanModeModalComponent | AuditHistoryModalComponent>;
 
   beforeEach(() => {
     scanModeService = createMock(ScanModeService);
@@ -95,6 +97,16 @@ describe('ScanModeListComponent', () => {
 
       expect(fakeEditComponent.prepareForCreation).toHaveBeenCalled();
       expect(notificationService.success).toHaveBeenCalledWith('engine.scan-mode.created', { name: 'new-scan-mode' });
+    });
+
+    test('should open the audit history modal with the scan mode entity type and id', async () => {
+      const nonSubscriptionScanModes = testData.scanMode.list.filter(s => s.id !== 'subscription');
+      const fakeAuditComponent = createMock(AuditHistoryModalComponent);
+      modalService.mockClosedModal(fakeAuditComponent);
+
+      await tester.auditButtons.nth(0).click();
+
+      expect(fakeAuditComponent.prepare).toHaveBeenCalledWith('scan_mode', nonSubscriptionScanModes[0].id);
     });
   });
 
