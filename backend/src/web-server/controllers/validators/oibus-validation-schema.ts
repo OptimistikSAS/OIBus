@@ -82,6 +82,7 @@ const certificatePrivateKeyExportSchema: Joi.ObjectSchema = Joi.object({
 });
 
 const engineLoggerSchema = Joi.object({
+  auditRetentionDuration: Joi.number().integer().min(0).allow(null),
   console: Joi.object({
     level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace')
   }),

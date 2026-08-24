@@ -88,7 +88,8 @@
       "ms": "ms",
       "s": "s",
       "hr": "hr",
-      "MB": "MB"
+      "MB": "MB",
+      "days": "days"
     },
     "tooltips": {
       "help": "Help",
@@ -608,7 +609,9 @@
       "forward-proxy-password": "Password"
     },
     "logger": {
-      "title": "Logger",
+      "title": "Logging and audit",
+      "audit-retention-duration": "Audit log retention",
+      "audit-retention-duration-hint": "Number of days audit log entries are kept before being pruned. 0 = keep forever.",
       "console": {
         "level": "Console level"
       },
