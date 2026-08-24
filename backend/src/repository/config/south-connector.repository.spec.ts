@@ -69,9 +69,14 @@ describe('SouthConnectorRepository', () => {
       newSouthConnector.id,
       'CREATE',
       null,
-      createdConnector,
+      { ...createdConnector, settings: { ...createdConnector.settings, password: '' } },
       newSouthConnector.updatedBy
     ]);
+    // The connector's secret settings field must never be persisted in the audit trail
+    assert.notStrictEqual(
+      (connectorCalls[0].arguments[4] as { settings: { password: string } }).settings.password,
+      (createdConnector.settings as unknown as { password: string }).password
+    );
   });
 
   it('should update a south connector', () => {
@@ -108,10 +113,17 @@ describe('SouthConnectorRepository', () => {
       'south_connector',
       newSouthConnector.id,
       'UPDATE',
-      beforeConnector,
-      updatedConnector,
+      { ...beforeConnector, settings: { ...beforeConnector!.settings, password: '' } },
+      { ...updatedConnector, settings: { ...updatedConnector.settings, password: '' } },
       newSouthConnector.updatedBy
     ]);
+    // The connector's secret settings field must never be persisted in the audit trail, before or after
+    assert.strictEqual((connectorCalls[0].arguments[3] as { settings: { password: string } }).settings.password, '');
+    assert.strictEqual((connectorCalls[0].arguments[4] as { settings: { password: string } }).settings.password, '');
+    assert.notStrictEqual(
+      (connectorCalls[0].arguments[4] as { settings: { password: string } }).settings.password,
+      (updatedConnector.settings as unknown as { password: string }).password
+    );
 
     const itemCreateCalls = recordMock.mock.calls.filter(call => call.arguments[0] === 'south_item' && call.arguments[2] === 'CREATE');
     assert.strictEqual(itemCreateCalls.length, 1);
@@ -169,7 +181,14 @@ describe('SouthConnectorRepository', () => {
       call => call.arguments[0] === 'south_connector' && call.arguments[1] === newSouthConnector.id && call.arguments[2] === 'DELETE'
     );
     assert.ok(deleteCall);
-    assert.deepStrictEqual(deleteCall!.arguments, ['south_connector', newSouthConnector.id, 'DELETE', before, null, 'deleteUser']);
+    assert.deepStrictEqual(deleteCall!.arguments, [
+      'south_connector',
+      newSouthConnector.id,
+      'DELETE',
+      { ...before, settings: { ...before!.settings, password: '' } },
+      null,
+      'deleteUser'
+    ]);
   });
 
   it('should audit deleted items and groups when deleting a south connector', () => {
@@ -327,9 +346,7 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(deleteCalls.length, beforeItems.length);
     for (const item of beforeItems) {
       assert.ok(
-        deleteCalls.some(
-          call => call.arguments[1] === item.id && call.arguments[3] !== null && call.arguments[5] === 'deleteUser'
-        )
+        deleteCalls.some(call => call.arguments[1] === item.id && call.arguments[3] !== null && call.arguments[5] === 'deleteUser')
       );
     }
   });
@@ -542,14 +559,7 @@ describe('SouthConnectorRepository', () => {
 
     const afterUpdate = repository.findItemById(testData.south.list[0].id, item.id);
     assert.strictEqual(recordMock.mock.calls.length, 1);
-    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
-      'south_item',
-      item.id,
-      'UPDATE',
-      beforeUpdate,
-      afterUpdate,
-      'updaterUser'
-    ]);
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['south_item', item.id, 'UPDATE', beforeUpdate, afterUpdate, 'updaterUser']);
   });
 
   it('should save and find item with historian fields', () => {
