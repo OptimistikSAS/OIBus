@@ -613,8 +613,9 @@ describe('South ADS', () => {
       mock.fn(async () => undefined)
     );
     const result = await south.testConnection();
+    // testConnection() must never touch the connector's own disconnect()/this.client
     assert.strictEqual(disconnectMock.mock.calls.length, 0);
-    assert.strictEqual(disconnect.mock.calls.length, 1);
+    assert.strictEqual(disconnect.mock.calls.length, 1); // the local test client was closed instead
     assert.deepStrictEqual(result, {
       items: [
         { key: 'Device name', value: 'TestDevice' },
