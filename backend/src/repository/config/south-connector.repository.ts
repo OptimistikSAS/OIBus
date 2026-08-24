@@ -13,6 +13,7 @@ import { Page } from '../../../shared/model/types';
 import { ScanMode } from '../../model/scan-mode.model';
 import { scanModeAliasedColumns, scanModeColumns, toScanMode, toScanModeFromPrefixedRow } from './scan-mode.repository';
 import SouthItemGroupRepository from './south-item-group.repository';
+import AuditService from '../../service/audit.service';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';
@@ -46,8 +47,11 @@ const ITEM_JOIN_FROM =
 export default class SouthConnectorRepository {
   private groupRepository: SouthItemGroupRepository;
 
-  constructor(private readonly database: Database) {
-    this.groupRepository = new SouthItemGroupRepository(database);
+  constructor(
+    private readonly database: Database,
+    private readonly auditService: AuditService
+  ) {
+    this.groupRepository = new SouthItemGroupRepository(database, auditService);
   }
 
   findAllSouth(): Array<SouthConnectorEntityLight> {
@@ -72,6 +76,11 @@ export default class SouthConnectorRepository {
   }
 
   saveSouth(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>): void {
+    const isNewConnector = !south.id;
+    const beforeConnector = south.id ? this.findSouthById(south.id) : null;
+    const beforeItemsById = south.id
+      ? new Map(this.findAllItemsForSouth(south.id).map(i => [i.id, i]))
+      : new Map<string, SouthConnectorItemEntity<SouthItemSettings>>();
     const transaction = this.database.transaction(() => {
       if (!south.id) {
         south.id = generateRandomId(6);
@@ -119,20 +128,19 @@ export default class SouthConnectorRepository {
       }
 
       // Update existing groups (name, scan mode, history settings may have changed via the connector edit form)
-      const updateGroupStmt = this.database.prepare(
-        `UPDATE ${SOUTH_ITEM_GROUPS_TABLE} SET name = ?, scan_mode_id = ?, start_time_offset = ?, end_time_offset = ?, max_read_interval = ?, read_delay = ?, recovery_strategy = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
-      );
       for (const group of south.groups.filter(g => g.id && !g.id.startsWith('temp_'))) {
-        updateGroupStmt.run(
-          group.name,
-          group.scanMode?.id ?? null,
-          group.startTimeOffset ?? null,
-          group.endTimeOffset ?? null,
-          group.maxReadInterval ?? null,
-          group.readDelay ?? null,
-          group.recoveryStrategy ?? null,
-          south.updatedBy,
-          group.id
+        this.groupRepository.update(
+          group.id,
+          {
+            name: group.name,
+            scanMode: group.scanMode,
+            startTimeOffset: group.startTimeOffset,
+            endTimeOffset: group.endTimeOffset,
+            maxReadInterval: group.maxReadInterval,
+            readDelay: group.readDelay,
+            recoveryStrategy: group.recoveryStrategy
+          },
+          south.updatedBy
         );
       }
 
@@ -163,6 +171,21 @@ export default class SouthConnectorRepository {
             south.id,
             south.items.filter(item => item.id).map(item => item.id)
           );
+
+        const incomingItemIds = new Set(south.items.filter(item => item.id).map(item => item.id));
+        for (const [removedItemId, removedItem] of beforeItemsById) {
+          if (!incomingItemIds.has(removedItemId)) {
+            this.auditService.record(
+              'south_item',
+              removedItemId,
+              'DELETE',
+              removedItem as unknown as Record<string, unknown>,
+              null,
+              south.updatedBy
+            );
+          }
+        }
+
         const insert = this.database.prepare(
           `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, start_time_offset, end_time_offset, recovery_strategy, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`
         );
@@ -214,6 +237,8 @@ export default class SouthConnectorRepository {
               item.createdBy,
               item.updatedBy
             );
+            const created = this.findItemById(south.id, item.id);
+            this.auditService.record('south_item', item.id, 'CREATE', null, created as unknown as Record<string, unknown>, item.updatedBy);
           } else {
             const existing = existingItemsById.get(item.id);
             const hasChanged =
@@ -243,6 +268,15 @@ export default class SouthConnectorRepository {
                 item.updatedBy,
                 item.id
               );
+              const after = this.findItemById(south.id, item.id);
+              this.auditService.record(
+                'south_item',
+                item.id,
+                'UPDATE',
+                (beforeItemsById.get(item.id) ?? null) as unknown as Record<string, unknown> | null,
+                after as unknown as Record<string, unknown>,
+                item.updatedBy
+              );
             }
           }
           // Update groups
@@ -261,22 +295,40 @@ export default class SouthConnectorRepository {
           )
           .run(south.id);
         this.database.prepare(`DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`).run(south.id);
-      }
-      if (south.groups.length > 0) {
-        this.database
-          .prepare(
-            `DELETE FROM ${SOUTH_ITEM_GROUPS_TABLE} WHERE south_id = ? AND id NOT IN (${south.groups
-              .filter(group => group.id)
-              .map(() => '?')
-              .join(', ')});`
-          )
-          .run(
-            south.id,
-            south.groups.filter(group => group.id).map(group => group.id)
+        for (const [removedItemId, removedItem] of beforeItemsById) {
+          this.auditService.record(
+            'south_item',
+            removedItemId,
+            'DELETE',
+            removedItem as unknown as Record<string, unknown>,
+            null,
+            south.updatedBy
           );
-      } else {
-        this.database.prepare(`DELETE FROM ${SOUTH_ITEM_GROUPS_TABLE} WHERE south_id = ?;`).run(south.id);
+        }
       }
+
+      const existingGroups = this.findGroupBySouthId(south.id);
+      if (south.groups.length > 0) {
+        const incomingGroupIds = new Set(south.groups.filter(group => group.id).map(group => group.id));
+        const removedGroupIds = existingGroups.filter(group => !incomingGroupIds.has(group.id)).map(group => group.id);
+        for (const removedGroupId of removedGroupIds) {
+          this.groupRepository.delete(removedGroupId, south.updatedBy);
+        }
+      } else {
+        for (const existingGroup of existingGroups) {
+          this.groupRepository.delete(existingGroup.id, south.updatedBy);
+        }
+      }
+
+      const afterConnector = this.findSouthById(south.id);
+      this.auditService.record(
+        'south_connector',
+        south.id,
+        isNewConnector ? 'CREATE' : 'UPDATE',
+        beforeConnector as unknown as Record<string, unknown> | null,
+        afterConnector as unknown as Record<string, unknown>,
+        south.updatedBy
+      );
     });
     transaction();
   }
@@ -291,11 +343,21 @@ export default class SouthConnectorRepository {
     this.database.prepare(query).run(0, id);
   }
 
-  deleteSouth(id: string): void {
+  deleteSouth(id: string, deletedBy: string): void {
+    const before = this.findSouthById(id);
     const transaction = this.database.transaction(() => {
       this.database.prepare(`DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`).run(id);
       this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_TABLE} WHERE source_south_south_id = ?;`).run(id);
       this.database.prepare(`DELETE FROM ${SOUTH_CONNECTORS_TABLE} WHERE id = ?;`).run(id);
+      if (before) {
+        for (const item of before.items) {
+          this.auditService.record('south_item', item.id, 'DELETE', item as unknown as Record<string, unknown>, null, deletedBy);
+        }
+        for (const group of before.groups) {
+          this.auditService.record('south_item_group', group.id, 'DELETE', group as unknown as Record<string, unknown>, null, deletedBy);
+        }
+        this.auditService.record('south_connector', id, 'DELETE', before as unknown as Record<string, unknown>, null, deletedBy);
+      }
     });
     transaction();
   }
@@ -305,7 +367,7 @@ export default class SouthConnectorRepository {
    * scan mode / history settings (overlap, max read interval, read delay) left empty is filled in with
    * the value the item was inheriting from the group.
    */
-  deleteGroupAndUpdateItems(southId: string, group: SouthItemGroupEntity, applyHistorySettings: boolean): void {
+  deleteGroupAndUpdateItems(southId: string, group: SouthItemGroupEntity, applyHistorySettings: boolean, deletedBy: string): void {
     const items = this.findAllItemsForSouth(southId).filter(item => item.group?.id === group.id);
     const transaction = this.database.transaction(() => {
       for (const item of items) {
@@ -333,7 +395,7 @@ export default class SouthConnectorRepository {
         item.group = null;
         this.saveItem(southId, item);
       }
-      this.groupRepository.delete(group.id);
+      this.groupRepository.delete(group.id, deletedBy);
     });
     transaction();
   }
@@ -424,6 +486,8 @@ export default class SouthConnectorRepository {
   }
 
   saveItem(southConnectorId: string, southItem: SouthConnectorItemEntity<SouthItemSettings>): void {
+    const wasNew = !southItem.id;
+    const before = wasNew ? null : this.findItemById(southConnectorId, southItem.id);
     if (!southItem.id) {
       southItem.id = generateRandomId(6);
       const insertQuery =
@@ -472,16 +536,27 @@ export default class SouthConnectorRepository {
       const insertGroup = this.database.prepare(`INSERT INTO ${GROUP_ITEMS_TABLE} (group_id, item_id) VALUES (?, ?);`);
       insertGroup.run(southItem.group.id, southItem.id);
     }
+
+    const after = this.findItemById(southConnectorId, southItem.id);
+    this.auditService.record(
+      'south_item',
+      southItem.id,
+      wasNew ? 'CREATE' : 'UPDATE',
+      before as unknown as Record<string, unknown> | null,
+      after as unknown as Record<string, unknown>,
+      southItem.updatedBy
+    );
   }
 
   saveAllItems(
     southConnectorId: string,
     southItems: Array<SouthConnectorItemEntity<SouthItemSettings>>,
-    deleteItemsNotPresent: boolean
+    deleteItemsNotPresent: boolean,
+    deletedBy: string
   ): void {
     const transaction = this.database.transaction(() => {
       if (deleteItemsNotPresent) {
-        this.deleteAllItemsBySouth(southConnectorId);
+        this.deleteAllItemsBySouth(southConnectorId, deletedBy);
       }
       for (const item of southItems) {
         this.saveItem(southConnectorId, item);
@@ -490,7 +565,8 @@ export default class SouthConnectorRepository {
     transaction();
   }
 
-  deleteItem(southId: string, id: string): void {
+  deleteItem(southId: string, id: string, deletedBy: string): void {
+    const before = this.findItemById(southId, id);
     const transaction = this.database.transaction(() => {
       this.database
         .prepare(
@@ -501,11 +577,15 @@ export default class SouthConnectorRepository {
         )
         .run(southId, id);
       this.database.prepare(`DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ? AND id = ?;`).run(southId, id);
+      if (before) {
+        this.auditService.record('south_item', id, 'DELETE', before as unknown as Record<string, unknown>, null, deletedBy);
+      }
     });
     transaction();
   }
 
-  deleteAllItemsBySouth(southId: string): void {
+  deleteAllItemsBySouth(southId: string, deletedBy: string): void {
+    const beforeItems = this.findAllItemsForSouth(southId);
     const transaction = this.database.transaction(() => {
       this.database
         .prepare(
@@ -516,6 +596,9 @@ export default class SouthConnectorRepository {
         )
         .run(southId);
       this.database.prepare(`DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`).run(southId);
+      for (const item of beforeItems) {
+        this.auditService.record('south_item', item.id, 'DELETE', item as unknown as Record<string, unknown>, null, deletedBy);
+      }
     });
     transaction();
   }

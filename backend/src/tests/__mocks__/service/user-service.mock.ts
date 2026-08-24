@@ -21,7 +21,7 @@ export default class UserServiceMock {
     totalPages: 0
   }));
   create = mock.fn(async (_command: UserCommandDTO, _password: string | undefined, _createdBy: string): Promise<User> => ({}) as User);
-  update = mock.fn(async (_userId: string, _command: UserCommandDTO): Promise<void> => undefined);
+  update = mock.fn(async (_userId: string, _command: UserCommandDTO, _updatedBy: string): Promise<void> => undefined);
   updatePassword = mock.fn(async (_userId: string, _newPassword: string | undefined): Promise<void> => undefined);
-  delete = mock.fn((_userId: string): void => undefined);
+  delete = mock.fn((_userId: string, _deletedBy: string): void => undefined);
 }

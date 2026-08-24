@@ -8,13 +8,14 @@ import {
   EngineWebServerCommandDTO
 } from '../../../../../shared/model/engine.model';
 import EngineRepository from '../../../../repository/config/engine.repository';
+import { createAuditServiceMock } from '../../../utils/test-utils';
 
 /**
  * Create a mock object for Engine repository
  */
 export default class EngineRepositoryMock extends EngineRepository {
   constructor() {
-    super({} as Database, '');
+    super({} as Database, createAuditServiceMock(), '');
   }
   protected override createDefault(): void {
     return;

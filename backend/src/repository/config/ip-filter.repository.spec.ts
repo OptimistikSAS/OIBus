@@ -1,9 +1,11 @@
 import { before, after, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { mock } from 'node:test';
 import { Database } from 'better-sqlite3';
-import { emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
 import IpFilterRepository from './ip-filter.repository';
+import AuditService from '../../service/audit.service';
 
 const TEST_DB_PATH = 'src/tests/test-config-ip-filter.db';
 
@@ -19,10 +21,12 @@ describe('IpFilterRepository', () => {
   });
 
   let repository: IpFilterRepository;
+  let auditService: AuditService;
   let createdId: string;
 
   beforeEach(() => {
-    repository = new IpFilterRepository(database);
+    auditService = createAuditServiceMock();
+    repository = new IpFilterRepository(database, auditService);
   });
 
   it('findAll() should properly get all IP filters', () => {
@@ -50,18 +54,32 @@ describe('IpFilterRepository', () => {
     assert.strictEqual(created.updatedBy, 'userTest');
     assert.strictEqual(created.address, testData.ipFilters.command.address);
     assert.strictEqual(created.description, testData.ipFilters.command.description);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['ip_filter', created.id, 'CREATE', null, created, 'userTest']);
   });
 
   it('update() should update an IP filter', () => {
+    const before = repository.findById(createdId);
     repository.update(createdId, testData.ipFilters.command, 'userTest');
     const result = repository.findById(createdId)!;
     assert.strictEqual(result.address, testData.ipFilters.command.address);
     assert.strictEqual(result.updatedBy, 'userTest');
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['ip_filter', createdId, 'UPDATE', before, result, 'userTest']);
   });
 
   it('delete() should delete an IP filter', () => {
-    assert.notStrictEqual(repository.findById(createdId), null);
-    repository.delete(createdId);
+    const before = repository.findById(createdId);
+    assert.notStrictEqual(before, null);
+    repository.delete(createdId, 'userTest');
     assert.strictEqual(repository.findById(createdId), null);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['ip_filter', createdId, 'DELETE', before, null, 'userTest']);
   });
 });

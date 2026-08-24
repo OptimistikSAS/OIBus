@@ -175,10 +175,10 @@ describe('Certificate Service', () => {
   it('should delete a certificate', async () => {
     certificateRepository.findById.mock.mockImplementationOnce(() => testData.certificates.list[0]);
 
-    await service.delete(testData.certificates.list[0].id);
+    await service.delete(testData.certificates.list[0].id, 'userTest');
 
     assert.deepStrictEqual(certificateRepository.findById.mock.calls[0].arguments, [testData.certificates.list[0].id]);
-    assert.deepStrictEqual(certificateRepository.delete.mock.calls[0].arguments, [testData.certificates.list[0].id]);
+    assert.deepStrictEqual(certificateRepository.delete.mock.calls[0].arguments, [testData.certificates.list[0].id, 'userTest']);
   });
 
   it('should import a certificate without a CA chain', async () => {

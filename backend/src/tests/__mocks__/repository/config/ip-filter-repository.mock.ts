@@ -1,5 +1,6 @@
 import { mock } from 'node:test';
 import type { Database } from 'better-sqlite3';
+import { createAuditServiceMock } from '../../../utils/test-utils';
 import { IPFilter } from '../../../../model/ip-filter.model';
 import IpFilterRepository from '../../../../repository/config/ip-filter.repository';
 
@@ -8,7 +9,7 @@ import IpFilterRepository from '../../../../repository/config/ip-filter.reposito
  */
 export default class IpFilterRepositoryMock extends IpFilterRepository {
   constructor() {
-    super({} as Database);
+    super({} as Database, createAuditServiceMock());
   }
   override list = mock.fn((): Array<IPFilter> => []);
   override findById = mock.fn((_id: string): IPFilter | null => null);
@@ -20,5 +21,5 @@ export default class IpFilterRepositoryMock extends IpFilterRepository {
     (_id: string, _command: Omit<IPFilter, 'id' | 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt'>, _updatedBy: string): void =>
       undefined
   );
-  override delete = mock.fn((_id: string): void => undefined);
+  override delete = mock.fn((_id: string, _deletedBy: string): void => undefined);
 }

@@ -73,7 +73,7 @@ export class UserController extends Controller {
   @SuccessResponse(204, 'User updated successfully')
   async update(@Path() userId: string, @Body() command: UserCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
     const userService = request.services.userService;
-    await userService.update(userId, command);
+    await userService.update(userId, command, request.user.id);
   }
 
   /**
@@ -99,6 +99,6 @@ export class UserController extends Controller {
   @SuccessResponse(204, 'User deleted successfully')
   delete(@Path() userId: string, @Request() request: CustomExpressRequest): void {
     const userService = request.services.userService;
-    userService.delete(userId);
+    userService.delete(userId, request.user.id);
   }
 }

@@ -21,6 +21,8 @@ import OIAnalyticsCommandRepository from '../repository/config/oianalytics-comma
 import OIAnalyticsMessageRepository from '../repository/config/oianalytics-message.repository';
 import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
 import TransformerRepository from '../repository/config/transformer.repository';
+import AuditRepository from '../repository/config/audit.repository';
+import AuditService from './audit.service';
 
 export default class RepositoryService {
   private readonly oibusDatabase;
@@ -29,6 +31,8 @@ export default class RepositoryService {
   private readonly cryptoDatabase;
   private readonly cacheDatabase;
 
+  private readonly _auditRepository: AuditRepository;
+  private readonly _auditService: AuditService;
   private readonly _engineRepository: EngineRepository;
   private readonly _cryptoRepository: CryptoRepository;
   private readonly _ipFilterRepository: IpFilterRepository;
@@ -76,19 +80,33 @@ export default class RepositoryService {
     this.metricsDatabase.pragma('journal_mode = WAL');
     this.metricsDatabase.pragma('synchronous = NORMAL');
 
-    this._ipFilterRepository = new IpFilterRepository(this.oibusDatabase);
-    this._scanModeRepository = new ScanModeRepository(this.oibusDatabase);
-    this._certificateRepository = new CertificateRepository(this.oibusDatabase);
-    this._engineRepository = new EngineRepository(this.oibusDatabase, launcherVersion, initConfig.port, initConfig.engineName);
-    this._northConnectorRepository = new NorthConnectorRepository(this.oibusDatabase);
-    this._southConnectorRepository = new SouthConnectorRepository(this.oibusDatabase);
-    this._southItemGroupRepository = new SouthItemGroupRepository(this.oibusDatabase);
-    this._historyQueryRepository = new HistoryQueryRepository(this.oibusDatabase);
-    this._userRepository = new UserRepository(this.oibusDatabase, initConfig.adminUsername, initConfig.adminPassword);
-    this._oianalyticsRegistrationRepository = new OIAnalyticsRegistrationRepository(this.oibusDatabase);
+    this._auditRepository = new AuditRepository(this.oibusDatabase);
+    this._auditService = new AuditService(this._auditRepository);
+
+    this._ipFilterRepository = new IpFilterRepository(this.oibusDatabase, this._auditService);
+    this._scanModeRepository = new ScanModeRepository(this.oibusDatabase, this._auditService);
+    this._certificateRepository = new CertificateRepository(this.oibusDatabase, this._auditService);
+    this._engineRepository = new EngineRepository(
+      this.oibusDatabase,
+      this._auditService,
+      launcherVersion,
+      initConfig.port,
+      initConfig.engineName
+    );
+    this._northConnectorRepository = new NorthConnectorRepository(this.oibusDatabase, this._auditService);
+    this._southConnectorRepository = new SouthConnectorRepository(this.oibusDatabase, this._auditService);
+    this._southItemGroupRepository = new SouthItemGroupRepository(this.oibusDatabase, this._auditService);
+    this._historyQueryRepository = new HistoryQueryRepository(this.oibusDatabase, this._auditService);
+    this._userRepository = new UserRepository(
+      this.oibusDatabase,
+      this._auditService,
+      initConfig.adminUsername,
+      initConfig.adminPassword
+    );
+    this._oianalyticsRegistrationRepository = new OIAnalyticsRegistrationRepository(this.oibusDatabase, this._auditService);
     this._oianalyticsCommandRepository = new OIAnalyticsCommandRepository(this.oibusDatabase);
     this._oianalyticsMessageRepository = new OIAnalyticsMessageRepository(this.oibusDatabase);
-    this._transformerRepository = new TransformerRepository(this.oibusDatabase);
+    this._transformerRepository = new TransformerRepository(this.oibusDatabase, this._auditService);
 
     this._cryptoRepository = new CryptoRepository(this.cryptoDatabase);
 
@@ -100,6 +118,14 @@ export default class RepositoryService {
     this._southMetricsRepository = new SouthConnectorMetricsRepository(this.metricsDatabase);
     this._northMetricsRepository = new NorthConnectorMetricsRepository(this.metricsDatabase);
     this._historyQueryMetricsRepository = new HistoryQueryMetricsRepository(this.metricsDatabase);
+  }
+
+  get auditRepository(): AuditRepository {
+    return this._auditRepository;
+  }
+
+  get auditService(): AuditService {
+    return this._auditService;
   }
 
   get cryptoRepository(): CryptoRepository {

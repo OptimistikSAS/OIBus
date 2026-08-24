@@ -99,7 +99,7 @@ describe('ScanModeController', () => {
     await controller.delete(scanModeId, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(scanModeService.delete.mock.calls.length, 1);
-    assert.deepStrictEqual(scanModeService.delete.mock.calls[0].arguments[0], scanModeId);
+    assert.deepStrictEqual(scanModeService.delete.mock.calls[0].arguments, [scanModeId, 'test']);
   });
 
   it('should validate a cron expression', async () => {

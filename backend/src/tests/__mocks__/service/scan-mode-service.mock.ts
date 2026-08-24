@@ -10,6 +10,6 @@ export default class ScanModeServiceMock {
   findById = mock.fn((_scanModeId: string): ScanMode => ({}) as ScanMode);
   create = mock.fn(async (_command: ScanModeCommandDTO, _createdBy: string): Promise<ScanMode> => ({}) as ScanMode);
   update = mock.fn(async (_scanModeId: string, _command: ScanModeCommandDTO, _updatedBy: string): Promise<void> => undefined);
-  delete = mock.fn(async (_scanModeId: string): Promise<void> => undefined);
+  delete = mock.fn(async (_scanModeId: string, _userId: string): Promise<void> => undefined);
   verifyCron = mock.fn(async (_command: { cron: string }): Promise<ValidatedCronExpression> => ({}) as ValidatedCronExpression);
 }

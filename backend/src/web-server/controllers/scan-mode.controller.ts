@@ -63,7 +63,7 @@ export class ScanModeController extends Controller {
   @SuccessResponse(204, 'Scan mode deleted successfully')
   delete(@Path() scanModeId: string, @Request() request: CustomExpressRequest): void {
     const scanModeService: ScanModeService = request.services.scanModeService;
-    scanModeService.delete(scanModeId);
+    scanModeService.delete(scanModeId, request.user.id);
   }
 
   /**

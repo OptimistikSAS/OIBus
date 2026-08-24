@@ -203,10 +203,10 @@ describe('Scan Mode Service', () => {
     };
     southConnectorRepository.findAllItemsForSouth.mock.mockImplementation(() => [mockItem]);
 
-    await service.delete(testData.scanMode.list[0].id);
+    await service.delete(testData.scanMode.list[0].id, 'userTest');
 
     assert.deepStrictEqual(scanModeRepository.findById.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
-    assert.deepStrictEqual(scanModeRepository.delete.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
+    assert.deepStrictEqual(scanModeRepository.delete.mock.calls[0].arguments, [testData.scanMode.list[0].id, 'userTest']);
     assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
     // The engine tears down the scan mode's shared cron
     assert.deepStrictEqual(dataStreamEngine.deleteScanMode.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
@@ -215,7 +215,7 @@ describe('Scan Mode Service', () => {
   it('delete() should not delete if the scan mode is not found', () => {
     scanModeRepository.findById.mock.mockImplementationOnce(() => null);
 
-    assert.throws(() => service.delete(testData.scanMode.list[0].id), {
+    assert.throws(() => service.delete(testData.scanMode.list[0].id, 'userTest'), {
       message: `Scan mode "${testData.scanMode.list[0].id}" not found`
     });
 
