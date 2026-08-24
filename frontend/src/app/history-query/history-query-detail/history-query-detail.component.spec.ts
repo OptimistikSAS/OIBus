@@ -26,7 +26,11 @@ import { NorthConnectorManifest } from '../../../../../backend/shared/model/nort
 import { SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { OIBusInfo } from '../../../../../backend/shared/model/engine.model';
 
-const historyQuery = testData.historyQueries.list[0];
+// Deep-cloned: `testData` fixtures share object references across entities (e.g. multiple
+// connectors point at the same `scanModes[0]` instance), so holding a live reference here makes
+// this suite vulnerable to mutations performed by unrelated spec files sharing the same module
+// instance under Vitest's browser-mode test runner.
+const historyQuery: HistoryQueryDTO = JSON.parse(JSON.stringify(testData.historyQueries.list[0]));
 
 describe('HistoryQueryDetailComponent', () => {
   let historyQueryService: MockObject<HistoryQueryService>;

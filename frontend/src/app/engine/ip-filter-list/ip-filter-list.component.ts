@@ -134,7 +134,7 @@ export class IpFilterListComponent {
    * Open a modal to view the audit history of an IP filter
    */
   showAudit(ipFilter: IPFilterDTO) {
-    const modalRef = this.modalService.open(AuditHistoryModalComponent);
+    const modalRef = this.modalService.open(AuditHistoryModalComponent, { size: 'xl' });
     modalRef.componentInstance.prepare('ip_filter', ipFilter.id);
   }
 

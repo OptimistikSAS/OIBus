@@ -2,6 +2,24 @@
   <h4 class="modal-title" translate="audit.history-modal.title"></h4>
 </div>
 <div class="modal-body">
+  @if (!loading() && history().length > 0) {
+    <div class="d-flex justify-content-end mb-2">
+      <div ngbDropdown class="d-inline-block">
+        <button type="button" class="btn btn-outline-secondary btn-sm" ngbDropdownToggle>
+          <span class="fa {{ modeIcons[mode()] }}"></span>
+          <span class="ms-1">{{ 'audit.history-modal.modes.' + mode() | translate }}</span>
+        </button>
+        <div ngbDropdownMenu>
+          @for (m of modes; track m) {
+            <button ngbDropdownItem [class.active]="mode() === m" (click)="changeMode(m)">
+              <span class="fa {{ modeIcons[m] }}"></span>
+              <span class="ms-1">{{ 'audit.history-modal.modes.' + m | translate }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
   @if (loading()) {
     <div class="text-center">
       <oib-loading-spinner />
@@ -25,7 +43,15 @@
               <span>{{ row.createdAt | datetime: 'ff' }}</span>
               <span class="text-muted">{{ row.userId }}</span>
             </div>
-            <button type="button" class="btn btn-link" [attr.aria-expanded]="expandedRowId() === row.id" (click)="toggleRow(row.id)">
+            <button
+              type="button"
+              class="btn btn-link"
+              [attr.aria-expanded]="expandedRowId() === row.id"
+              [ngbTooltip]="
+                (expandedRowId() === row.id ? 'audit.history-modal.tooltips.collapse' : 'audit.history-modal.tooltips.expand') | translate
+              "
+              (click)="toggleRow(row.id)"
+            >
               @if (expandedRowId() === row.id) {
                 <span class="fa fa-chevron-up"></span>
               } @else {
@@ -35,7 +61,17 @@
           </div>
           @if (expandedRowId() === row.id) {
             <div class="mt-2">
-              <oib-audit-diff [previousState]="row.previousState" [newState]="row.newState" />
+              @switch (mode()) {
+                @case ('json-diff') {
+                  <oib-audit-json-diff [previousState]="row.previousState" [newState]="row.newState" />
+                }
+                @case ('json-side-by-side') {
+                  <oib-audit-json-side-by-side [previousState]="row.previousState" [newState]="row.newState" />
+                }
+                @default {
+                  <oib-audit-diff [previousState]="row.previousState" [newState]="row.newState" />
+                }
+              }
             </div>
           }
         </div>

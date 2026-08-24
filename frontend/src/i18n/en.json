@@ -2889,7 +2889,19 @@
     "history-modal": {
       "title": "Audit history",
       "loading": "Loading audit history…",
-      "none": "No history found"
+      "none": "No history found",
+      "tooltips": {
+        "expand": "Show details",
+        "collapse": "Hide details"
+      },
+      "modes": {
+        "table": "Table",
+        "json-diff": "JSON diff",
+        "json-side-by-side": "JSON side by side"
+      }
+    },
+    "tooltips": {
+      "view": "View audit log details"
     },
     "actions": {
       "CREATE": "Create",
@@ -2913,8 +2925,7 @@
     "entity-id": "Entity ID",
     "action": "Action",
     "user": "User",
-    "date": "Date",
-    "details": "Details"
+    "date": "Date"
   },
   "logs": {
     "title": "Logs",

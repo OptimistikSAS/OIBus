@@ -105,15 +105,6 @@
             </td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
-                <!-- Audit history button -->
-                <button
-                  type="button"
-                  class="btn btn-link show-audit-certificate px-1 py-0"
-                  [ngbTooltip]="'engine.certificate.tooltips.audit' | translate"
-                  (click)="showAudit(certificate)"
-                >
-                  <span class="fa fa-history"></span>
-                </button>
                 <!-- Edit button -->
                 <button
                   type="button"
@@ -131,6 +122,15 @@
                   (click)="deleteCertificate(certificate)"
                 >
                   <span class="fa fa-trash"></span>
+                </button>
+                <!-- Audit history button -->
+                <button
+                  type="button"
+                  class="btn btn-link show-audit-certificate px-1 py-0"
+                  [ngbTooltip]="'engine.certificate.tooltips.audit' | translate"
+                  (click)="showAudit(certificate)"
+                >
+                  <span class="fa fa-history"></span>
                 </button>
               </div>
             </td>
