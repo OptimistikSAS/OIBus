@@ -827,10 +827,7 @@ describe('DataStreamEngine', () => {
           'user1'
         ]);
         assert.strictEqual(historyQueryRepository.removeTransformersByTransformerId.mock.calls.length, 1);
-        assert.deepStrictEqual(historyQueryRepository.removeTransformersByTransformerId.mock.calls[0].arguments, [
-          transformerId,
-          'user1'
-        ]);
+        assert.deepStrictEqual(historyQueryRepository.removeTransformersByTransformerId.mock.calls[0].arguments, [transformerId, 'user1']);
         assert.strictEqual(spyUpdateNorthConfig.mock.calls.length, 1);
         assert.deepStrictEqual(spyUpdateNorthConfig.mock.calls[0].arguments, [testData.north.list[0].id]);
         assert.strictEqual(spyReloadHistoryQuery.mock.calls.length, 1);

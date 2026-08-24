@@ -13,6 +13,7 @@ import { MockModalService, provideModalTesting } from '../../shared/mock-modal.s
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { CustomTransformerDTO, TransformerDTO } from '../../../../../backend/shared/model/transformer.model';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 
 class TransformerListComponentTester {
   readonly fixture = TestBed.createComponent(TransformerListComponent);
@@ -20,6 +21,7 @@ class TransformerListComponentTester {
   readonly transformers = this.root.getByCss('tbody tr');
   readonly deleteButtons = this.root.getByCss('.delete-transformer');
   readonly addTransformer = this.root.getByCss('#add-transformer');
+  readonly auditButtons = this.root.getByCss('.show-audit-transformer');
   readonly noTransformer = this.root.getByCss('#no-transformer');
 
   constructor() {
@@ -32,7 +34,7 @@ describe('TransformerListComponent', () => {
   let transformerService: MockObject<TransformerService>;
   let confirmationService: MockObject<ConfirmationService>;
   let notificationService: MockObject<NotificationService>;
-  let modalService: MockModalService<EditTransformerModalComponent>;
+  let modalService: MockModalService<EditTransformerModalComponent | AuditHistoryModalComponent>;
 
   beforeEach(() => {
     transformerService = createMock(TransformerService);
@@ -89,6 +91,16 @@ describe('TransformerListComponent', () => {
       expect(notificationService.success).toHaveBeenCalledWith('configuration.oibus.manifest.transformers.created', {
         name: newTransformer.name
       });
+    });
+
+    test('should open the audit history modal with the transformer entity type and id', async () => {
+      const transformer = testData.transformers.customList[0] as unknown as CustomTransformerDTO;
+      const fakeAuditComponent = createMock(AuditHistoryModalComponent);
+      modalService.mockClosedModal(fakeAuditComponent);
+
+      await tester.auditButtons.nth(0).click();
+
+      expect(fakeAuditComponent.prepare).toHaveBeenCalledWith('transformer', transformer.id);
     });
   });
 

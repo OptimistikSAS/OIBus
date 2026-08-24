@@ -18,6 +18,7 @@ import { ObservableState } from '../shared/save-button/save-button.component';
 import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AuditInfoComponent } from '../shared/audit-info/audit-info.component';
+import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
 
 type NorthSortField = 'name' | 'type' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -132,6 +133,14 @@ export class NorthListComponent {
   createNorth() {
     const modalRef = this.modalService.open(ChooseNorthConnectorTypeModalComponent, { size: 'xl', backdrop: 'static' });
     modalRef.result.subscribe();
+  }
+
+  /**
+   * Open a modal to view the audit history of a North connector
+   */
+  showAudit(north: NorthConnectorLightDTO) {
+    const modalRef = this.modalService.open(AuditHistoryModalComponent);
+    modalRef.componentInstance.prepare('north_connector', north.id);
   }
 
   toggleSort(field: NorthSortField) {

@@ -162,6 +162,23 @@
       "history-query": "History query",
       "internal": "Internal"
     },
+    "audit-entity-types": {
+      "south_connector": "South connector",
+      "south_item": "South item",
+      "south_item_group": "South item group",
+      "north_connector": "North connector",
+      "north_transformer": "North transformer",
+      "history_query": "History query",
+      "history_query_item": "History query item",
+      "history_query_transformer": "History query transformer",
+      "scan_mode": "Scan mode",
+      "ip_filter": "IP filter",
+      "certificate": "Certificate",
+      "user": "User",
+      "transformer": "Transformer",
+      "engine": "Engine",
+      "oianalytics_registration": "OIAnalytics registration"
+    },
     "internal-scope-ids": {
       "engine": "Engine",
       "web-server": "Web Server",
@@ -371,7 +388,8 @@
     "version": "Version: {{ version }}",
     "account": {
       "logout": "Logout",
-      "settings": "Settings"
+      "settings": "Settings",
+      "audit": "Audit"
     },
     "tooltips": {
       "documentation": "Documentation"
@@ -708,7 +726,8 @@
         "add": "Add a new scan mode",
         "edit": "Edit scan mode",
         "delete": "Delete scan mode",
-        "overnight": "The end time is on the following day"
+        "overnight": "The end time is on the following day",
+        "audit": "View scan mode audit history"
       }
     },
     "certificate": {
@@ -743,7 +762,8 @@
         "edit": "Edit certificate",
         "delete": "Delete certificate",
         "copy-public-key": "Copy public key to clipboard",
-        "copy-certificate": "Copy certificate to clipboard"
+        "copy-certificate": "Copy certificate to clipboard",
+        "audit": "View certificate audit history"
       },
       "import": {
         "button": "Import",
@@ -786,7 +806,8 @@
       "tooltips": {
         "add": "Add a new IP filter",
         "edit": "Edit IP filter",
-        "delete": "Delete IP filter"
+        "delete": "Delete IP filter",
+        "audit": "View IP filter audit history"
       }
     },
     "transformer": {
@@ -1162,7 +1183,8 @@
             "tooltips": {
               "add": "Add a Custom Transformer",
               "edit": "Edit this Custom Transformer",
-              "delete": "Delete this Custom Transformer"
+              "delete": "Delete this Custom Transformer",
+              "audit": "View this Custom Transformer's audit history"
             }
           },
           "test-transformer-modal": {
@@ -2735,7 +2757,8 @@
       "duplicate": "Duplicate south connector",
       "delete": "Delete south connector",
       "view-metrics": "View south connector metrics",
-      "copy-cache-path": "Copy cache path to clipboard"
+      "copy-cache-path": "Copy cache path to clipboard",
+      "audit": "View south connector audit history"
     }
   },
   "north": {
@@ -2853,8 +2876,42 @@
       "duplicate": "Duplicate north connector",
       "delete": "Delete north connector",
       "copy-cache-path": "Copy cache path to clipboard",
-      "view-metrics": "View north connector metrics"
+      "view-metrics": "View north connector metrics",
+      "audit": "View north connector audit history"
     }
+  },
+  "audit": {
+    "title": "Audit",
+    "none": "No audit log found",
+    "history-modal": {
+      "title": "Audit history",
+      "loading": "Loading audit history…",
+      "none": "No history found"
+    },
+    "actions": {
+      "CREATE": "Create",
+      "UPDATE": "Update",
+      "DELETE": "Delete"
+    },
+    "diff": {
+      "field": "Field",
+      "before": "Before",
+      "after": "After"
+    },
+    "search": {
+      "entity-type": "Entity type",
+      "action": "Action",
+      "start": "Start",
+      "end": "End",
+      "all-entity-types": "All entity types",
+      "all-actions": "All actions"
+    },
+    "entity-type": "Entity type",
+    "entity-id": "Entity ID",
+    "action": "Action",
+    "user": "User",
+    "date": "Date",
+    "details": "Details"
   },
   "logs": {
     "title": "Logs",
@@ -3066,7 +3123,8 @@
       "edit": "Edit history query",
       "duplicate": "Duplicate history query",
       "delete": "Delete history query",
-      "copy-cache-path": "Copy cache path to clipboard"
+      "copy-cache-path": "Copy cache path to clipboard",
+      "audit": "View history query audit history"
     }
   },
   "explore-cache": {

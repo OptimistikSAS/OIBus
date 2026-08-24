@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import AuditServiceMock from '../tests/__mocks__/service/audit-service.mock';
 import IpFilterServiceMock from '../tests/__mocks__/service/ip-filter-service.mock';
 import OIBusServiceMock from '../tests/__mocks__/service/oibus-service.mock';
 import ScanModeServiceMock from '../tests/__mocks__/service/scan-mode-service.mock';
@@ -33,6 +34,7 @@ import type TransformerService from '../service/transformer.service';
 import type HistoryQueryService from '../service/history-query.service';
 import type HomeMetricsService from '../service/metrics/home-metrics.service';
 import type EncryptionService from '../service/encryption.service';
+import type AuditService from '../service/audit.service';
 import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model/types';
 import os from 'node:os';
 
@@ -118,6 +120,7 @@ describe('WebServer', () => {
     return new WebServer(
       port,
       encryptionMock as unknown as EncryptionService,
+      new AuditServiceMock() as unknown as AuditService,
       new ScanModeServiceMock() as unknown as ScanModeService,
       ipFilterService as unknown as IPFilterService,
       new CertificateServiceMock() as unknown as CertificateService,
@@ -161,6 +164,7 @@ describe('WebServer', () => {
     const ws = new WebServer(
       TEST_PORT + 1,
       encryptionMock as unknown as EncryptionService,
+      new AuditServiceMock() as unknown as AuditService,
       new ScanModeServiceMock() as unknown as ScanModeService,
       ipFilterService as unknown as IPFilterService,
       new CertificateServiceMock() as unknown as CertificateService,

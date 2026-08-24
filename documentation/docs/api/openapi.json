@@ -34996,6 +34996,13 @@
 						"description": "The version of the launcher.",
 						"example": "3.7.0"
 					},
+					"auditRetentionDuration": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Number of days audit log entries are kept before being pruned. `null` (or 0) means audit logs\nare kept forever.",
+						"example": 90
+					},
 					"general": {
 						"properties": {
 							"name": {
@@ -35280,6 +35287,7 @@
 					"updatedAt",
 					"version",
 					"launcherVersion",
+					"auditRetentionDuration",
 					"general",
 					"webServer",
 					"proxyServer",
@@ -35325,13 +35333,21 @@
 					},
 					"logger": {
 						"$ref": "#/components/schemas/EngineLoggerCommandDTO"
+					},
+					"auditRetentionDuration": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Number of days audit log entries are kept before being pruned. `null` (or 0) means audit logs\nare kept forever.",
+						"example": 90
 					}
 				},
 				"required": [
 					"general",
 					"webServer",
 					"proxyServer",
-					"logger"
+					"logger",
+					"auditRetentionDuration"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -35513,6 +35529,141 @@
 				},
 				"required": [
 					"passphrase"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"AuditEntityType": {
+				"type": "string",
+				"enum": [
+					"south_connector",
+					"south_item",
+					"south_item_group",
+					"north_connector",
+					"north_transformer",
+					"history_query",
+					"history_query_item",
+					"history_query_transformer",
+					"scan_mode",
+					"ip_filter",
+					"certificate",
+					"user",
+					"transformer",
+					"engine",
+					"oianalytics_registration"
+				]
+			},
+			"AuditAction": {
+				"type": "string",
+				"enum": [
+					"CREATE",
+					"UPDATE",
+					"DELETE"
+				]
+			},
+			"AuditLogDTO": {
+				"description": "Data Transfer Object for an audit log entry.\nRepresents a single create/update/delete event recorded against an audited entity.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the audit log entry."
+					},
+					"entityType": {
+						"$ref": "#/components/schemas/AuditEntityType",
+						"description": "The type of entity this audit log entry relates to.",
+						"example": "south_connector"
+					},
+					"entityId": {
+						"type": "string",
+						"description": "The identifier of the entity this audit log entry relates to."
+					},
+					"action": {
+						"$ref": "#/components/schemas/AuditAction",
+						"description": "The kind of change performed on the entity.",
+						"example": "UPDATE"
+					},
+					"previousState": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Record_string.unknown_"
+							}
+						],
+						"nullable": true,
+						"description": "A JSON snapshot of the entity before the change. `null` for `CREATE`."
+					},
+					"newState": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Record_string.unknown_"
+							}
+						],
+						"nullable": true,
+						"description": "A JSON snapshot of the entity after the change. `null` for `DELETE`."
+					},
+					"userId": {
+						"type": "string",
+						"description": "The identifier of the user who performed the change."
+					},
+					"createdAt": {
+						"type": "string",
+						"description": "ISO timestamp of when the change was recorded.",
+						"example": "2026-01-01T00:00:00.000Z"
+					}
+				},
+				"required": [
+					"id",
+					"entityType",
+					"entityId",
+					"action",
+					"previousState",
+					"newState",
+					"userId",
+					"createdAt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Page_AuditLogDTO_": {
+				"description": "Represents a paginated response containing an array of elements.",
+				"properties": {
+					"content": {
+						"items": {
+							"$ref": "#/components/schemas/AuditLogDTO"
+						},
+						"type": "array",
+						"description": "The content of the page - an array of elements."
+					},
+					"totalElements": {
+						"type": "number",
+						"format": "double",
+						"description": "The total number of elements across all pages.",
+						"example": 2
+					},
+					"size": {
+						"type": "number",
+						"format": "double",
+						"description": "The size of the page, i.e., the maximum number of elements per page.",
+						"example": 10
+					},
+					"number": {
+						"type": "number",
+						"format": "double",
+						"description": "The number of the current page, starting at 0.",
+						"example": 0
+					},
+					"totalPages": {
+						"type": "number",
+						"format": "double",
+						"description": "The total number of pages (which can be 0 if there are no elements).",
+						"example": 1
+					}
+				},
+				"required": [
+					"content",
+					"totalElements",
+					"size",
+					"number",
+					"totalPages"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -41276,6 +41427,132 @@
 						}
 					}
 				}
+			}
+		},
+		"/api/audit": {
+			"get": {
+				"operationId": "Search",
+				"responses": {
+					"200": {
+						"description": "Paginated list of audit log entries",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Page_AuditLogDTO_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Searches audit log entries with optional filtering by entity type, entity id, action, and time range.",
+				"summary": "Search audit log entries",
+				"tags": [
+					"Audit"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "Filter by entity type (e.g. `south_connector`).",
+						"in": "query",
+						"name": "entityType",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Filter by the identifier of the audited entity.",
+						"in": "query",
+						"name": "entityId",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Filter by the kind of change performed. Valid values: `CREATE`, `UPDATE`, `DELETE`.",
+						"in": "query",
+						"name": "action",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "ISO 8601 start of the time range.",
+						"in": "query",
+						"name": "start",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "ISO 8601 end of the time range.",
+						"in": "query",
+						"name": "end",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 0,
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/api/audit/{entityType}/{entityId}": {
+			"get": {
+				"operationId": "History",
+				"responses": {
+					"200": {
+						"description": "Array of audit log entries for the entity",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/AuditLogDTO"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"description": "Retrieves the full audit history recorded for a single entity, most recent first.",
+				"summary": "Get audit history for an entity",
+				"tags": [
+					"Audit"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The type of the audited entity (e.g. `south_connector`).",
+						"in": "path",
+						"name": "entityType",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "The identifier of the audited entity.",
+						"in": "path",
+						"name": "entityId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		}
 	},
