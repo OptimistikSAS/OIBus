@@ -93,5 +93,5 @@ export default class DataStreamEngineMock {
   updateNorthTransformerBySouth = mock.fn((_southId: string): void => undefined);
   updateNorthConfiguration = mock.fn((_northId: string): void => undefined);
   reloadTransformer = mock.fn(async (_transformerId: string): Promise<void> => undefined);
-  removeAndReloadTransformer = mock.fn(async (_transformerId: string): Promise<void> => undefined);
+  removeAndReloadTransformer = mock.fn(async (_transformerId: string, _updatedBy: string): Promise<void> => undefined);
 }

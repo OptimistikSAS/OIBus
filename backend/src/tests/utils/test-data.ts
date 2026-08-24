@@ -1383,6 +1383,7 @@ const engineSettings: EngineSettings = {
   id: 'oibusId1',
   version: '3.4.9',
   launcherVersion: '3.4.9',
+  auditRetentionDuration: null,
   general: {
     name: 'OIBus'
   },
@@ -1490,6 +1491,7 @@ const engineLoggerCommand: EngineLoggerCommandDTO = {
 };
 const engineSettingsCommand: EngineSettingsCommandDTO = {
   general: { name: 'updated OIBus' },
+  auditRetentionDuration: null,
   webServer: { port: 2223, authTokenDuration: '7d' },
   proxyServer: {
     enabled: true,

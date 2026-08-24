@@ -730,6 +730,7 @@ describe('OIBus Service', () => {
         updatedAt: engineSettings.updatedAt,
         version: engineSettings.version,
         launcherVersion: engineSettings.launcherVersion,
+        auditRetentionDuration: engineSettings.auditRetentionDuration,
         general: {
           name: engineSettings.general.name
         },

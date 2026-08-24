@@ -1,9 +1,11 @@
 import { before, after, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { mock } from 'node:test';
 import { Database } from 'better-sqlite3';
-import { emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
 import CertificateRepository from './certificate.repository';
+import AuditService from '../../service/audit.service';
 
 const TEST_DB_PATH = 'src/tests/test-config-certificate.db';
 
@@ -19,8 +21,10 @@ describe('CertificateRepository', () => {
   });
 
   let repository: CertificateRepository;
+  let auditService: AuditService;
   beforeEach(() => {
-    repository = new CertificateRepository(database);
+    auditService = createAuditServiceMock();
+    repository = new CertificateRepository(database, auditService);
   });
 
   it('should properly find all certificates', () => {
@@ -43,8 +47,19 @@ describe('CertificateRepository', () => {
   it('should create a certificate', () => {
     const createCertificate = JSON.parse(JSON.stringify(testData.certificates.list[0]));
     createCertificate.id = 'new id';
-    repository.create(createCertificate);
+    const created = repository.create(createCertificate);
     assert.deepStrictEqual(stripAuditFields(repository.findById('new id')), stripAuditFields(createCertificate));
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
+      'certificate',
+      created.id,
+      'CREATE',
+      null,
+      created,
+      created.createdBy
+    ]);
   });
 
   it('should update a certificate', () => {
@@ -53,23 +68,45 @@ describe('CertificateRepository', () => {
     updateCertificate.expiry = testData.constants.dates.DATE_2;
     updateCertificate.publicKey = 'new public key';
     updateCertificate.privateKey = 'new private key';
+    const before = repository.findById(updateCertificate.id);
     repository.update(updateCertificate);
     const result = repository.findById(updateCertificate.id)!;
     assert.strictEqual(result.expiry, updateCertificate.expiry);
     assert.strictEqual(result.publicKey, updateCertificate.publicKey);
     assert.strictEqual(result.privateKey, updateCertificate.privateKey);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
+      'certificate',
+      updateCertificate.id,
+      'UPDATE',
+      before,
+      result,
+      updateCertificate.updatedBy
+    ]);
   });
 
   it('should update name and description certificate', () => {
+    const before = repository.findById('new id');
     repository.updateNameAndDescription('new id', 'new name', 'new description', 'userTest');
     const result = repository.findById('new id')!;
     assert.strictEqual(result.name, 'new name');
     assert.strictEqual(result.description, 'new description');
     assert.strictEqual(result.updatedBy, 'userTest');
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['certificate', 'new id', 'UPDATE', before, result, 'userTest']);
   });
 
   it('should delete certificate', () => {
-    repository.delete('new id');
+    const before = repository.findById('new id');
+    repository.delete('new id', 'userTest');
     assert.strictEqual(repository.findById('new id'), null);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['certificate', 'new id', 'DELETE', before, null, 'userTest']);
   });
 });

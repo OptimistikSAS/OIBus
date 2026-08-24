@@ -1,5 +1,6 @@
 import { mock } from 'node:test';
 import type { Database } from 'better-sqlite3';
+import { createAuditServiceMock } from '../../../utils/test-utils';
 import { Certificate } from '../../../../model/certificate.model';
 import CertificateRepository from '../../../../repository/config/certificate.repository';
 
@@ -8,7 +9,7 @@ import CertificateRepository from '../../../../repository/config/certificate.rep
  */
 export default class CertificateRepositoryMock extends CertificateRepository {
   constructor() {
-    super({} as Database);
+    super({} as Database, createAuditServiceMock());
   }
   override list = mock.fn((): Array<Certificate> => []);
   override findById = mock.fn((_id: string): Certificate | null => null);
@@ -17,5 +18,5 @@ export default class CertificateRepositoryMock extends CertificateRepository {
   override updateNameAndDescription = mock.fn(
     (_certificateId: string, _newName: string, _newDescription: string, _updatedBy: string): void => undefined
   );
-  override delete = mock.fn((_id: string): void => undefined);
+  override delete = mock.fn((_id: string, _deletedBy: string): void => undefined);
 }

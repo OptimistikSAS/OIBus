@@ -202,7 +202,7 @@ describe('TransformerController', () => {
     await controller.delete(transformerId, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(transformerService.delete.mock.calls.length, 1);
-    assert.deepStrictEqual(transformerService.delete.mock.calls[0].arguments[0], transformerId);
+    assert.deepStrictEqual(transformerService.delete.mock.calls[0].arguments, [transformerId, 'test']);
   });
 
   it('should test a transformer', async () => {

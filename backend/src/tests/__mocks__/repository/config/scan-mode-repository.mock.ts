@@ -1,5 +1,6 @@
 import { mock } from 'node:test';
 import type { Database } from 'better-sqlite3';
+import { createAuditServiceMock } from '../../../utils/test-utils';
 import { ScanMode } from '../../../../model/scan-mode.model';
 import ScanModeRepository from '../../../../repository/config/scan-mode.repository';
 
@@ -8,7 +9,7 @@ import ScanModeRepository from '../../../../repository/config/scan-mode.reposito
  */
 export default class ScanModeRepositoryMock extends ScanModeRepository {
   constructor() {
-    super({} as Database);
+    super({} as Database, createAuditServiceMock());
   }
   protected override createDefault(): void {
     return;
@@ -23,5 +24,5 @@ export default class ScanModeRepositoryMock extends ScanModeRepository {
     (_id: string, _command: Omit<ScanMode, 'id' | 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt'>, _updatedBy: string): void =>
       undefined
   );
-  override delete = mock.fn((_id: string): void => undefined);
+  override delete = mock.fn((_id: string, _deletedBy: string): void => undefined);
 }

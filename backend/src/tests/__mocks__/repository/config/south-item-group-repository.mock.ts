@@ -10,5 +10,5 @@ export default class SouthItemGroupRepositoryMock {
   findByNameAndSouthId = mock.fn((_name: string, _southId: string): SouthItemGroupEntity | null => null);
   create = mock.fn((_command: SouthItemGroupCommand, _createdBy: string): SouthItemGroupEntity => ({}) as SouthItemGroupEntity);
   update = mock.fn((_id: string, _command: Omit<SouthItemGroupCommand, 'southId'>, _updatedBy: string): void => undefined);
-  delete = mock.fn((_id: string): void => undefined);
+  delete = mock.fn((_id: string, _deletedBy: string): void => undefined);
 }

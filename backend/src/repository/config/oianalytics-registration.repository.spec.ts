@@ -1,10 +1,11 @@
-import { before, after, beforeEach, describe, it } from 'node:test';
+import { before, after, beforeEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { Database } from 'better-sqlite3';
-import { emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
 import OianalyticsRegistrationRepository from './oianalytics-registration.repository';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
+import AuditService from '../../service/audit.service';
 
 const TEST_DB_PATH = 'src/tests/test-config-registration.db';
 
@@ -20,9 +21,11 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
   });
 
   let repository: OianalyticsRegistrationRepository;
+  let auditService: AuditService;
 
   beforeEach(() => {
-    repository = new OianalyticsRegistrationRepository(database);
+    auditService = createAuditServiceMock();
+    repository = new OianalyticsRegistrationRepository(database, auditService);
   });
 
   it('should properly get the registration settings', () => {
@@ -94,14 +97,52 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
     assert.strictEqual(result.proxyUrl, specificCommand.proxyUrl);
     assert.strictEqual(result.proxyUsername, specificCommand.proxyUsername);
     assert.strictEqual(result.proxyPassword, specificCommand.proxyPassword);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    const [entityType, entityId, action, previousState, newState, userId] = recordMock.mock.calls[0].arguments as [
+      string,
+      string,
+      string,
+      Record<string, unknown>,
+      Record<string, unknown>,
+      string
+    ];
+    assert.strictEqual(entityType, 'oianalytics_registration');
+    assert.strictEqual(entityId, result.id);
+    assert.strictEqual(action, 'UPDATE');
+    assert.strictEqual(userId, testData.users.list[0].id);
+    assert.strictEqual(previousState.publicCipherKey, '[REDACTED]');
+    assert.strictEqual(previousState.privateCipherKey, '[REDACTED]');
+    assert.strictEqual(newState.publicCipherKey, '[REDACTED]');
+    assert.strictEqual(newState.privateCipherKey, '[REDACTED]');
   });
 
   it('should update keys', () => {
-    repository.updateKeys('private key', 'public key');
+    repository.updateKeys('private key', 'public key', testData.users.list[0].id);
 
     const result = repository.get()!;
     assert.strictEqual(result.privateCipherKey, 'private key');
     assert.strictEqual(result.publicCipherKey, 'public key');
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    const [entityType, entityId, action, previousState, newState, userId] = recordMock.mock.calls[0].arguments as [
+      string,
+      string,
+      string,
+      Record<string, unknown>,
+      Record<string, unknown>,
+      string
+    ];
+    assert.strictEqual(entityType, 'oianalytics_registration');
+    assert.strictEqual(entityId, result.id);
+    assert.strictEqual(action, 'UPDATE');
+    assert.strictEqual(userId, testData.users.list[0].id);
+    assert.strictEqual(previousState.publicCipherKey, '[REDACTED]');
+    assert.strictEqual(previousState.privateCipherKey, '[REDACTED]');
+    assert.strictEqual(newState.publicCipherKey, '[REDACTED]');
+    assert.strictEqual(newState.privateCipherKey, '[REDACTED]');
   });
 });
 
@@ -116,7 +157,7 @@ describe('OianalyticsRegistrationRepository with empty database', () => {
   });
 
   it('should properly init registration settings table', () => {
-    const repository = new OianalyticsRegistrationRepository(database);
+    const repository = new OianalyticsRegistrationRepository(database, createAuditServiceMock());
     const result = stripAuditFields(repository.get());
 
     assert.ok(result);
