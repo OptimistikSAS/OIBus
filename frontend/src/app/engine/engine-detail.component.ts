@@ -92,7 +92,7 @@ export class EngineDetailComponent {
   }
 
   openLoggerModal() {
-    const modal = this.modalService.open(EditEngineLoggerModalComponent);
+    const modal = this.modalService.open(EditEngineLoggerModalComponent, { size: 'lg' });
     modal.componentInstance.initialize(this.engineSettings()!);
     modal.result.subscribe(() => this.refresh$.next());
   }
