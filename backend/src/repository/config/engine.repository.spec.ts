@@ -59,6 +59,7 @@ describe('EngineRepository with populated database', () => {
 
     it('should update engine settings', () => {
       const command = { ...testData.engine.command, general: { name: 'updated engine' } };
+      const { auditRetentionDuration: _loggerAuditRetentionDuration, ...loggerOnly } = command.logger;
       const before = repository.get();
       repository.update(command, testData.users.list[0].id);
       const after = repository.get();
@@ -81,7 +82,7 @@ describe('EngineRepository with populated database', () => {
           username: command.proxyServer.username,
           password: command.proxyServer.password
         },
-        logger: command.logger
+        logger: loggerOnly
       });
 
       const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
@@ -212,7 +213,9 @@ describe('EngineRepository with populated database', () => {
       const before = repository.get();
       repository.updateLogger(testData.engine.loggerCommand, testData.users.list[0].id);
       const after = repository.get();
-      assert.deepStrictEqual(after!.logger, testData.engine.loggerCommand);
+      const { auditRetentionDuration, ...loggerOnly } = testData.engine.loggerCommand;
+      assert.deepStrictEqual(after!.logger, loggerOnly);
+      assert.strictEqual(after!.auditRetentionDuration, auditRetentionDuration);
 
       const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
       assert.strictEqual(recordMock.mock.calls.length, 1);
@@ -224,6 +227,16 @@ describe('EngineRepository with populated database', () => {
         redactEngineForAudit(after),
         testData.users.list[0].id
       ]);
+    });
+
+    it('should persist and return the audit retention duration set through updateLogger', () => {
+      const loggerCommandWithRetention = { ...testData.engine.loggerCommand, auditRetentionDuration: 30 };
+      repository.updateLogger(loggerCommandWithRetention, testData.users.list[0].id);
+      const after = repository.get();
+      assert.strictEqual(after!.auditRetentionDuration, 30);
+
+      // Reset back to the shared fixture so subsequent tests are unaffected
+      repository.updateLogger(testData.engine.loggerCommand, testData.users.list[0].id);
     });
 
     it('should never persist a real loki password in the audit trail', () => {

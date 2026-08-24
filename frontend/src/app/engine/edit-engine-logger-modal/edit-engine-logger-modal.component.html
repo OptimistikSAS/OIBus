@@ -3,6 +3,21 @@
 </div>
 <div class="modal-body">
   <form id="engine-logger-form" [formGroup]="form" (ngSubmit)="save()">
+    <!-- Audit trail settings -->
+    <div class="row">
+      <div class="col-4">
+        <div class="form-group">
+          <label class="form-label" for="audit-retention-duration" translate="engine.logger.audit-retention-duration"></label>
+          <div class="input-group">
+            <input type="number" formControlName="auditRetentionDuration" id="audit-retention-duration" class="form-control" />
+            <span class="input-group-text" translate="common.unit.days"></span>
+          </div>
+          <val-errors controlName="auditRetentionDuration" />
+          <div class="form-text" translate="engine.logger.audit-retention-duration-hint"></div>
+        </div>
+      </div>
+    </div>
+
     <div formGroupName="logParameters">
       <!-- OIAnalytics settings -->
       <ng-container formGroupName="oia">
