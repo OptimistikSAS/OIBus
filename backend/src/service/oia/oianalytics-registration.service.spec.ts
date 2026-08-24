@@ -317,11 +317,15 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should update keys', async () => {
-    await service.updateKeys('private key', 'public key');
+    await service.updateKeys('private key', 'public key', testData.users.list[0].id);
 
     assert.strictEqual(mockEncryptionService.encryptionService.encryptText.mock.calls.length, 1);
     assert.deepStrictEqual(mockEncryptionService.encryptionService.encryptText.mock.calls[0].arguments, ['private key']);
-    assert.deepStrictEqual(oIAnalyticsRegistrationRepository.updateKeys.mock.calls[0].arguments, ['private key', 'public key']);
+    assert.deepStrictEqual(oIAnalyticsRegistrationRepository.updateKeys.mock.calls[0].arguments, [
+      'private key',
+      'public key',
+      testData.users.list[0].id
+    ]);
   });
 
   it('should edit registration with proxy', async () => {

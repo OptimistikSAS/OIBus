@@ -104,7 +104,7 @@ describe('UserController', () => {
     await controller.update(userId, command, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(userService.update.mock.calls.length, 1);
-    assert.deepStrictEqual(userService.update.mock.calls[0].arguments, [userId, command]);
+    assert.deepStrictEqual(userService.update.mock.calls[0].arguments, [userId, command, testData.users.list[0].id]);
   });
 
   it('should update user password', async () => {
@@ -128,6 +128,6 @@ describe('UserController', () => {
     await controller.delete(userId, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(userService.delete.mock.calls.length, 1);
-    assert.deepStrictEqual(userService.delete.mock.calls[0].arguments[0], userId);
+    assert.deepStrictEqual(userService.delete.mock.calls[0].arguments, [userId, testData.users.list[0].id]);
   });
 });

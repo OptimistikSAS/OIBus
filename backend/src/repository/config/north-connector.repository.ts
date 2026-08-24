@@ -10,6 +10,7 @@ import { ScanMode } from '../../model/scan-mode.model';
 import { scanModeAliasedColumns, scanModeColumns, toScanMode } from './scan-mode.repository';
 import { OIBusSouthType } from '../../../shared/model/south-connector.model';
 import { toSouthItemGroup } from './south-item-group.repository';
+import AuditService from '../../service/audit.service';
 
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
@@ -22,7 +23,10 @@ const GROUP_ITEMS_TABLE = 'group_items';
 const SCAN_MODE_TABLE = 'scan_modes';
 
 export default class NorthConnectorRepository {
-  constructor(private readonly database: Database) {}
+  constructor(
+    private readonly database: Database,
+    private readonly auditService: AuditService
+  ) {}
 
   findAllNorth(): Array<NorthConnectorEntityLight> {
     const query = `SELECT id, name, type, description, enabled, created_by, updated_by, created_at, updated_at FROM ${NORTH_CONNECTORS_TABLE};`;
@@ -60,6 +64,8 @@ export default class NorthConnectorRepository {
   }
 
   saveNorth(north: NorthConnectorEntity<NorthSettings>): void {
+    const isNewConnector = !north.id;
+    const beforeConnector = north.id ? this.findNorthById(north.id) : null;
     const transaction = this.database.transaction(() => {
       if (!north.id) {
         north.id = generateRandomId(6);
@@ -125,6 +131,20 @@ export default class NorthConnectorRepository {
       }
 
       const keepIds = north.transformers.filter(t => t.id).map(t => t.id);
+      const removedTransformerIds = (beforeConnector?.transformers ?? [])
+        .filter(t => !keepIds.includes(t.id))
+        .map(t => t.id);
+      for (const removedId of removedTransformerIds) {
+        this.auditService.record(
+          'north_transformer',
+          removedId,
+          'DELETE',
+          beforeConnector!.transformers.find(t => t.id === removedId) as unknown as Record<string, unknown>,
+          null,
+          north.updatedBy
+        );
+      }
+
       if (keepIds.length === 0) {
         this.database
           .prepare(
@@ -158,8 +178,18 @@ export default class NorthConnectorRepository {
         if (transformerWithOptions.id.startsWith('temp_')) {
           transformerWithOptions.id = '';
         }
-        this.addOrEditTransformer(north.id, transformerWithOptions);
+        this.addOrEditTransformer(north.id, transformerWithOptions, north.updatedBy);
       }
+
+      const afterConnector = this.findNorthById(north.id);
+      this.auditService.record(
+        'north_connector',
+        north.id,
+        isNewConnector ? 'CREATE' : 'UPDATE',
+        beforeConnector as unknown as Record<string, unknown> | null,
+        afterConnector as unknown as Record<string, unknown>,
+        north.updatedBy
+      );
     });
     transaction();
   }
@@ -174,7 +204,8 @@ export default class NorthConnectorRepository {
     this.database.prepare(query).run(0, id);
   }
 
-  deleteNorth(id: string): void {
+  deleteNorth(id: string, deletedBy: string): void {
+    const before = this.findNorthById(id);
     const transaction = this.database.transaction(() => {
       // 1. Delete items
       this.database
@@ -191,12 +222,28 @@ export default class NorthConnectorRepository {
 
       // 3. Delete the connector itself
       this.database.prepare(`DELETE FROM ${NORTH_CONNECTORS_TABLE} WHERE id = ?;`).run(id);
+
+      if (before) {
+        for (const transformer of before.transformers) {
+          this.auditService.record(
+            'north_transformer',
+            transformer.id,
+            'DELETE',
+            transformer as unknown as Record<string, unknown>,
+            null,
+            deletedBy
+          );
+        }
+        this.auditService.record('north_connector', id, 'DELETE', before as unknown as Record<string, unknown>, null, deletedBy);
+      }
     });
 
     transaction();
   }
 
-  addOrEditTransformer(northId: string, transformerWithOptions: NorthTransformerWithOptions): void {
+  addOrEditTransformer(northId: string, transformerWithOptions: NorthTransformerWithOptions, updatedBy: string): void {
+    const wasNew = !transformerWithOptions.id;
+    const before = wasNew ? null : this.findTransformersForNorth(northId).find(t => t.id === transformerWithOptions.id) ?? null;
     if (!transformerWithOptions.id) {
       transformerWithOptions.id = generateRandomId(6);
       const query = `INSERT INTO ${NORTH_TRANSFORMERS_TABLE} (id, north_id, transformer_id, options, source_type, source_api_data_source_id, source_south_south_id, source_south_group_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
@@ -244,17 +291,40 @@ export default class NorthConnectorRepository {
         }
       }
     }
+
+    const after = this.findTransformersForNorth(northId).find(t => t.id === transformerWithOptions.id) ?? null;
+    this.auditService.record(
+      'north_transformer',
+      transformerWithOptions.id,
+      wasNew ? 'CREATE' : 'UPDATE',
+      before as unknown as Record<string, unknown> | null,
+      after as unknown as Record<string, unknown> | null,
+      updatedBy
+    );
   }
 
-  removeTransformer(id: string): void {
+  removeTransformer(id: string, deletedBy: string): void {
+    const northId = this.database.prepare(`SELECT north_id FROM ${NORTH_TRANSFORMERS_TABLE} WHERE id = ?;`).get(id) as
+      | { north_id: string }
+      | undefined;
+    const before = northId ? (this.findTransformersForNorth(northId.north_id).find(t => t.id === id) ?? null) : null;
     const transaction = this.database.transaction(() => {
       this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE} WHERE id = ?;`).run(id);
       this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_TABLE} WHERE id = ?;`).run(id);
+      if (before) {
+        this.auditService.record('north_transformer', id, 'DELETE', before as unknown as Record<string, unknown>, null, deletedBy);
+      }
     });
     transaction();
   }
 
-  removeTransformersByTransformerId(transformerId: string): void {
+  removeTransformersByTransformerId(transformerId: string, deletedBy: string): void {
+    const affected = this.database
+      .prepare(`SELECT id, north_id FROM ${NORTH_TRANSFORMERS_TABLE} WHERE transformer_id = ?;`)
+      .all(transformerId) as Array<{ id: string; north_id: string }>;
+    const beforeById = new Map(
+      affected.map(row => [row.id, this.findTransformersForNorth(row.north_id).find(t => t.id === row.id) ?? null])
+    );
     const transaction = this.database.transaction(() => {
       this.database
         .prepare(
@@ -262,6 +332,12 @@ export default class NorthConnectorRepository {
         )
         .run(transformerId);
       this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_TABLE} WHERE transformer_id = ?;`).run(transformerId);
+      for (const row of affected) {
+        const before = beforeById.get(row.id);
+        if (before) {
+          this.auditService.record('north_transformer', row.id, 'DELETE', before as unknown as Record<string, unknown>, null, deletedBy);
+        }
+      }
     });
     transaction();
   }

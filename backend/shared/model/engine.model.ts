@@ -43,6 +43,13 @@ export interface EngineSettingsDTO extends BaseEntity {
   launcherVersion: string;
 
   /**
+   * Number of days audit log entries are kept before being pruned. `null` (or 0) means audit logs
+   * are kept forever.
+   * @example 90
+   */
+  auditRetentionDuration: number | null;
+
+  /**
    * General engine settings.
    */
   general: {
@@ -945,6 +952,13 @@ export interface EngineSettingsCommandDTO {
   proxyServer: EngineProxyCommandDTO;
 
   logger: EngineLoggerCommandDTO;
+
+  /**
+   * Number of days audit log entries are kept before being pruned. `null` (or 0) means audit logs
+   * are kept forever.
+   * @example 90
+   */
+  auditRetentionDuration: number | null;
 }
 
 /**

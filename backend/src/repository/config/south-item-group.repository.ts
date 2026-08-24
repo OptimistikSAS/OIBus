@@ -4,6 +4,7 @@ import { SouthItemGroupCommand, SouthItemGroupEntity } from '../../model/south-c
 import { ScanMode } from '../../model/scan-mode.model';
 import { SouthHistoryRecoveryStrategy } from '../../../shared/model/south-connector.model';
 import { scanModeAliasedColumns, toScanModeFromPrefixedRow } from './scan-mode.repository';
+import AuditService from '../../service/audit.service';
 
 const SOUTH_ITEM_GROUPS_TABLE = 'south_item_groups';
 const SOUTH_ITEMS_TABLE = 'south_items';
@@ -14,7 +15,10 @@ const SCAN_MODE_TABLE = 'scan_modes';
  * Repository used for south item groups
  */
 export default class SouthItemGroupRepository {
-  constructor(private readonly database: Database) {}
+  constructor(
+    private readonly database: Database,
+    private readonly auditService: AuditService
+  ) {}
 
   findById(id: string): SouthItemGroupEntity | null {
     const query =
@@ -69,10 +73,12 @@ export default class SouthItemGroupRepository {
     if (!created) {
       throw new Error(`Failed to create south item group with id ${id}`);
     }
+    this.auditService.record('south_item_group', created.id, 'CREATE', null, created as unknown as Record<string, unknown>, createdBy);
     return created;
   }
 
   update(id: string, command: Omit<SouthItemGroupCommand, 'southId'>, updatedBy: string): void {
+    const before = this.findById(id);
     const query = `UPDATE ${SOUTH_ITEM_GROUPS_TABLE}
       SET name = ?, scan_mode_id = ?, start_time_offset = ?, end_time_offset = ?, max_read_interval = ?, read_delay = ?, recovery_strategy = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
       WHERE id = ?;`;
@@ -89,11 +95,24 @@ export default class SouthItemGroupRepository {
         updatedBy,
         id
       );
+    const after = this.findById(id);
+    this.auditService.record(
+      'south_item_group',
+      id,
+      'UPDATE',
+      before as unknown as Record<string, unknown> | null,
+      after as unknown as Record<string, unknown>,
+      updatedBy
+    );
   }
 
-  delete(id: string): void {
+  delete(id: string, deletedBy: string): void {
+    const before = this.findById(id);
     // Delete the group (cascade in group_items is handled by foreign key)
     this.database.prepare(`DELETE FROM ${SOUTH_ITEM_GROUPS_TABLE} WHERE id = ?;`).run(id);
+    if (before) {
+      this.auditService.record('south_item_group', id, 'DELETE', before as unknown as Record<string, unknown>, null, deletedBy);
+    }
   }
 
   findAllItemsForGroup(groupId: string): Array<Record<string, string>> {

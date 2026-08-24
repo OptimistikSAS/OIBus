@@ -1,7 +1,7 @@
-import { before, after, beforeEach, describe, it } from 'node:test';
+import { before, after, beforeEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { Database } from 'better-sqlite3';
-import { emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
 import NorthConnectorRepository from './north-connector.repository';
 import SouthItemGroupRepository from './south-item-group.repository';
@@ -9,6 +9,7 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { SourceOriginSouth, Transformer } from '../../model/transformer.model';
 import TransformerRepository from './transformer.repository';
+import AuditService from '../../service/audit.service';
 
 const TEST_DB_PATH = 'src/tests/test-config-north.db';
 
@@ -24,10 +25,12 @@ describe('NorthConnectorRepository', () => {
   });
 
   let repository: NorthConnectorRepository;
+  let auditService: AuditService;
 
   beforeEach(() => {
-    new TransformerRepository(database); // ensure standard transformers are seeded
-    repository = new NorthConnectorRepository(database);
+    new TransformerRepository(database, createAuditServiceMock()); // ensure standard transformers are seeded
+    auditService = createAuditServiceMock();
+    repository = new NorthConnectorRepository(database, auditService);
   });
 
   it('should properly get north connectors', () => {
@@ -71,6 +74,20 @@ describe('NorthConnectorRepository', () => {
     assert.strictEqual(createdConnector.id, newNorthConnector.id);
     assert.strictEqual(createdConnector.name, 'new connector');
 
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    const connectorCreateCalls = recordMock.mock.calls.filter(
+      call => call.arguments[0] === 'north_connector' && call.arguments[1] === newNorthConnector.id && call.arguments[2] === 'CREATE'
+    );
+    assert.strictEqual(connectorCreateCalls.length, 1);
+    assert.deepStrictEqual(connectorCreateCalls[0].arguments, [
+      'north_connector',
+      newNorthConnector.id,
+      'CREATE',
+      null,
+      createdConnector,
+      newNorthConnector.updatedBy
+    ]);
+
     const newNorthConnectorWithoutTransformer: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
     newNorthConnectorWithoutTransformer.id = '';
     newNorthConnectorWithoutTransformer.name = 'new connector without transformer';
@@ -81,24 +98,48 @@ describe('NorthConnectorRepository', () => {
     const createdConnectorWithoutTransformer = repository.findNorthById(newNorthConnectorWithoutTransformer.id)!;
     assert.deepStrictEqual(createdConnectorWithoutTransformer.transformers, []);
 
-    repository.addOrEditTransformer(newNorthConnectorWithoutTransformer.id, {
-      id: '',
-      transformer: testData.transformers.list[0] as Transformer,
-      options: {},
-      source: { type: 'oianalytics-setpoint' }
-    });
+    recordMock.mock.resetCalls();
+    repository.addOrEditTransformer(
+      newNorthConnectorWithoutTransformer.id,
+      {
+        id: '',
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        source: { type: 'oianalytics-setpoint' }
+      },
+      'transformerUser'
+    );
     const createdConnectorWithTransformer = repository.findNorthById(newNorthConnectorWithoutTransformer.id)!;
     assert.strictEqual(createdConnectorWithTransformer.transformers.length, 1);
     assert.strictEqual(createdConnectorWithTransformer.transformers[0].transformer.id, testData.transformers.list[0].id);
 
     const transformerId = createdConnectorWithTransformer.transformers[0].id;
-    repository.removeTransformer(transformerId);
+    const transformerCreateCalls = recordMock.mock.calls.filter(
+      call => call.arguments[0] === 'north_transformer' && call.arguments[1] === transformerId && call.arguments[2] === 'CREATE'
+    );
+    assert.strictEqual(transformerCreateCalls.length, 1);
+    assert.deepStrictEqual(transformerCreateCalls[0].arguments, [
+      'north_transformer',
+      transformerId,
+      'CREATE',
+      null,
+      createdConnectorWithTransformer.transformers[0],
+      'transformerUser'
+    ]);
+
+    recordMock.mock.resetCalls();
+    repository.removeTransformer(transformerId, 'removeUser');
     const createdConnectorWithRemovedTransformer = repository.findNorthById(newNorthConnectorWithoutTransformer.id)!;
     assert.deepStrictEqual(createdConnectorWithRemovedTransformer.transformers, []);
+    const transformerDeleteCalls = recordMock.mock.calls.filter(
+      call => call.arguments[0] === 'north_transformer' && call.arguments[1] === transformerId && call.arguments[2] === 'DELETE'
+    );
+    assert.strictEqual(transformerDeleteCalls.length, 1);
+    assert.strictEqual(transformerDeleteCalls[0].arguments[5], 'removeUser');
   });
 
   it('should save a north connector transformer with a group', () => {
-    const groupRepository = new SouthItemGroupRepository(database);
+    const groupRepository = new SouthItemGroupRepository(database, createAuditServiceMock());
 
     const group = groupRepository.create(
       {
@@ -155,7 +196,7 @@ describe('NorthConnectorRepository', () => {
         },
         items: []
       }
-    });
+    }, 'userTest');
 
     const connector = repository.findNorthById(newNorthConnector.id)!;
     assert.strictEqual(connector.transformers.length, 1);
@@ -173,27 +214,54 @@ describe('NorthConnectorRepository', () => {
 
     assert.ok(newNorthConnectorWithoutTransformer2.id);
 
-    repository.addOrEditTransformer(newNorthConnectorWithoutTransformer2.id, {
-      id: '',
-      transformer: testData.transformers.list[0] as Transformer,
-      options: {},
-      source: { type: 'oianalytics-setpoint' }
-    });
+    repository.addOrEditTransformer(
+      newNorthConnectorWithoutTransformer2.id,
+      {
+        id: '',
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        source: { type: 'oianalytics-setpoint' }
+      },
+      'userTest'
+    );
     const connectorWithTransformer = repository.findNorthById(newNorthConnectorWithoutTransformer2.id)!;
     assert.strictEqual(connectorWithTransformer.transformers.length, 1);
+    const transformerId = connectorWithTransformer.transformers[0].id;
 
-    repository.removeTransformersByTransformerId(testData.transformers.list[0].id);
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+    repository.removeTransformersByTransformerId(testData.transformers.list[0].id, 'bulkRemoveUser');
     const connectorWithRemovedTransformers = repository.findNorthById(newNorthConnectorWithoutTransformer2.id)!;
     assert.deepStrictEqual(connectorWithRemovedTransformers.transformers, []);
+    const transformerDeleteCalls = recordMock.mock.calls.filter(
+      call => call.arguments[0] === 'north_transformer' && call.arguments[1] === transformerId && call.arguments[2] === 'DELETE'
+    );
+    assert.strictEqual(transformerDeleteCalls.length, 1);
+    assert.strictEqual(transformerDeleteCalls[0].arguments[5], 'bulkRemoveUser');
   });
 
   it('should update a north connector', () => {
     const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[1]));
     newNorthConnector.caching.throttling.maxSize = 999;
+    const beforeConnector = repository.findNorthById(newNorthConnector.id);
     repository.saveNorth(newNorthConnector);
 
     const updatedConnector = repository.findNorthById(newNorthConnector.id)!;
     assert.strictEqual(updatedConnector.caching.throttling.maxSize, 999);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    const connectorUpdateCalls = recordMock.mock.calls.filter(
+      call => call.arguments[0] === 'north_connector' && call.arguments[1] === newNorthConnector.id && call.arguments[2] === 'UPDATE'
+    );
+    assert.strictEqual(connectorUpdateCalls.length, 1);
+    assert.deepStrictEqual(connectorUpdateCalls[0].arguments, [
+      'north_connector',
+      newNorthConnector.id,
+      'UPDATE',
+      beforeConnector,
+      updatedConnector,
+      newNorthConnector.updatedBy
+    ]);
   });
 
   it('should delete a north connector', () => {
@@ -203,9 +271,46 @@ describe('NorthConnectorRepository', () => {
     newNorthConnector.transformers = [];
     repository.saveNorth(newNorthConnector);
 
-    assert.ok(repository.findNorthById(newNorthConnector.id));
-    repository.deleteNorth(newNorthConnector.id);
+    repository.addOrEditTransformer(
+      newNorthConnector.id,
+      {
+        id: '',
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        source: { type: 'oianalytics-setpoint' }
+      },
+      'attachUser'
+    );
+
+    const beforeConnector = repository.findNorthById(newNorthConnector.id)!;
+    assert.ok(beforeConnector);
+    const transformerIds = beforeConnector.transformers.map(t => t.id);
+    assert.ok(transformerIds.length > 0);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+    repository.deleteNorth(newNorthConnector.id, 'deleteUser');
     assert.strictEqual(repository.findNorthById(newNorthConnector.id), null);
+
+    const transformerDeleteCalls = recordMock.mock.calls.filter(
+      call => call.arguments[0] === 'north_transformer' && call.arguments[2] === 'DELETE'
+    );
+    assert.strictEqual(transformerDeleteCalls.length, transformerIds.length);
+    for (const call of transformerDeleteCalls) {
+      assert.strictEqual(call.arguments[5], 'deleteUser');
+    }
+
+    const connectorDeleteCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'north_connector' && call.arguments[1] === newNorthConnector.id && call.arguments[2] === 'DELETE'
+    );
+    assert.deepStrictEqual(connectorDeleteCall!.arguments, [
+      'north_connector',
+      newNorthConnector.id,
+      'DELETE',
+      beforeConnector,
+      null,
+      'deleteUser'
+    ]);
   });
 
   it('should save a north connector with a "temp_" transformer id (treated as new)', () => {
@@ -256,7 +361,7 @@ describe('NorthConnectorRepository', () => {
           { id: testData.south.list[0].items[0].id, name: '', enabled: true, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' }
         ]
       }
-    });
+    }, 'userTest');
 
     let connector = repository.findNorthById(newNorthConnector.id)!;
     assert.strictEqual(connector.transformers.length, 1);
@@ -283,14 +388,14 @@ describe('NorthConnectorRepository', () => {
         },
         items: []
       }
-    });
+    }, 'userTest');
     connector = repository.findNorthById(newNorthConnector.id)!;
     assert.strictEqual(connector.transformers.length, 1);
     assert.deepStrictEqual(connector.transformers[0].options, { updated: true });
   });
 
   it('should update a south transformer to have a group', () => {
-    const groupRepository = new SouthItemGroupRepository(database);
+    const groupRepository = new SouthItemGroupRepository(database, createAuditServiceMock());
     const group = groupRepository.create(
       {
         name: 'Update Transformer Group',
@@ -329,7 +434,7 @@ describe('NorthConnectorRepository', () => {
         },
         items: []
       }
-    });
+    }, 'userTest');
     const connector = repository.findNorthById(newNorthConnector.id)!;
     const transformerId = connector.transformers[0].id;
 
@@ -367,7 +472,7 @@ describe('NorthConnectorRepository', () => {
         },
         items: []
       }
-    });
+    }, 'userTest');
     const updatedConnector = repository.findNorthById(newNorthConnector.id)!;
     assert.strictEqual((updatedConnector.transformers[0].source as SourceOriginSouth).group?.id, group.id);
   });

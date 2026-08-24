@@ -11,6 +11,6 @@ export default class IpFilterServiceMock {
   findById = mock.fn((_ipFilterId: string): IPFilter => ({}) as IPFilter);
   create = mock.fn(async (_command: IPFilterCommandDTO, _createdBy: string): Promise<IPFilter> => ({}) as IPFilter);
   update = mock.fn(async (_ipFilterId: string, _command: IPFilterCommandDTO, _updatedBy: string): Promise<void> => undefined);
-  delete = mock.fn(async (_ipFilterId: string): Promise<void> => undefined);
+  delete = mock.fn(async (_ipFilterId: string, _userId: string): Promise<void> => undefined);
   whiteListEvent = new EventEmitter();
 }

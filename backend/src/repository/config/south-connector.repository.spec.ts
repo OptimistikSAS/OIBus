@@ -1,12 +1,14 @@
 import { before, after, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { Database } from 'better-sqlite3';
-import { emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
 import SouthConnectorRepository, { toItemEntityFromJoinedRow, toSouthItemGroupLight } from './south-connector.repository';
 import SouthItemGroupRepository from './south-item-group.repository';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthItemGroupEntityLight } from '../../model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { mock } from 'node:test';
+import AuditService from '../../service/audit.service';
 
 const TEST_DB_PATH = 'src/tests/test-config-south.db';
 
@@ -22,9 +24,11 @@ describe('SouthConnectorRepository', () => {
   });
 
   let repository: SouthConnectorRepository;
+  let auditService: AuditService;
 
   beforeEach(() => {
-    repository = new SouthConnectorRepository(database);
+    auditService = createAuditServiceMock();
+    repository = new SouthConnectorRepository(database, auditService);
   });
 
   it('should properly get south connectors', () => {
@@ -56,6 +60,18 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(createdConnector.id, newSouthConnector.id);
     assert.strictEqual(createdConnector.name, 'new connector');
     assert.strictEqual(createdConnector.items.length, 0);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    const connectorCalls = recordMock.mock.calls.filter(call => call.arguments[0] === 'south_connector');
+    assert.strictEqual(connectorCalls.length, 1);
+    assert.deepStrictEqual(connectorCalls[0].arguments, [
+      'south_connector',
+      newSouthConnector.id,
+      'CREATE',
+      null,
+      createdConnector,
+      newSouthConnector.updatedBy
+    ]);
   });
 
   it('should update a south connector', () => {
@@ -79,10 +95,27 @@ describe('SouthConnectorRepository', () => {
       recoveryStrategy: null
     };
     newSouthConnector.items = [...testData.south.list[1].items, newItem];
+    const beforeConnector = repository.findSouthById(newSouthConnector.id);
     repository.saveSouth(newSouthConnector);
 
     const updatedConnector = repository.findSouthById(newSouthConnector.id)!;
     assert.strictEqual(updatedConnector.items.length, 3);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    const connectorCalls = recordMock.mock.calls.filter(call => call.arguments[0] === 'south_connector');
+    assert.strictEqual(connectorCalls.length, 1);
+    assert.deepStrictEqual(connectorCalls[0].arguments, [
+      'south_connector',
+      newSouthConnector.id,
+      'UPDATE',
+      beforeConnector,
+      updatedConnector,
+      newSouthConnector.updatedBy
+    ]);
+
+    const itemCreateCalls = recordMock.mock.calls.filter(call => call.arguments[0] === 'south_item' && call.arguments[2] === 'CREATE');
+    assert.strictEqual(itemCreateCalls.length, 1);
+    assert.strictEqual(itemCreateCalls[0].arguments[1], newItem.id);
   });
 
   it('should update a south connector item with non-null historian fields', () => {
@@ -92,6 +125,7 @@ describe('SouthConnectorRepository', () => {
         ? { ...item, maxReadInterval: 3600, readDelay: 200, startTimeOffset: 100, endTimeOffset: null, recoveryStrategy: null }
         : item
     );
+    const beforeItem = repository.findItemById(connector.id, connector.items[0].id);
     repository.saveSouth(connector);
 
     const updatedConnector = repository.findSouthById(connector.id)!;
@@ -99,6 +133,22 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(updatedItem.maxReadInterval, 3600);
     assert.strictEqual(updatedItem.readDelay, 200);
     assert.strictEqual(updatedItem.startTimeOffset, 100);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    const itemUpdateCalls = recordMock.mock.calls.filter(
+      call => call.arguments[0] === 'south_item' && call.arguments[1] === connector.items[0].id && call.arguments[2] === 'UPDATE'
+    );
+    assert.strictEqual(itemUpdateCalls.length, 1);
+    assert.deepStrictEqual(itemUpdateCalls[0].arguments[3], beforeItem);
+
+    // A second save of the same unchanged connector must not re-audit the untouched item
+    recordMock.mock.resetCalls();
+    const resaved: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(updatedConnector));
+    repository.saveSouth(resaved);
+    const secondItemCalls = recordMock.mock.calls.filter(
+      call => call.arguments[0] === 'south_item' && call.arguments[1] === connector.items[0].id
+    );
+    assert.strictEqual(secondItemCalls.length, 0);
   });
 
   it('should delete a south connector', () => {
@@ -110,8 +160,89 @@ describe('SouthConnectorRepository', () => {
     repository.saveSouth(newSouthConnector);
 
     assert.ok(repository.findSouthById(newSouthConnector.id));
-    repository.deleteSouth(newSouthConnector.id);
+    const before = repository.findSouthById(newSouthConnector.id);
+    repository.deleteSouth(newSouthConnector.id, 'deleteUser');
     assert.strictEqual(repository.findSouthById(newSouthConnector.id), null);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    const deleteCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'south_connector' && call.arguments[1] === newSouthConnector.id && call.arguments[2] === 'DELETE'
+    );
+    assert.ok(deleteCall);
+    assert.deepStrictEqual(deleteCall!.arguments, ['south_connector', newSouthConnector.id, 'DELETE', before, null, 'deleteUser']);
+  });
+
+  it('should audit deleted items and groups when deleting a south connector', () => {
+    // First save a bare connector to get a real generated id
+    const newSouthConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+    newSouthConnector.id = '';
+    newSouthConnector.name = 'to be deleted with items and groups';
+    newSouthConnector.groups = [];
+    newSouthConnector.items = [];
+    repository.saveSouth(newSouthConnector);
+
+    // Attach a temp group (created with the correct southId as part of the save) and an item using it
+    const tempGroup: SouthItemGroupEntityLight = {
+      id: 'temp_deleteSouthAudit',
+      name: 'Group For Delete South Audit',
+      scanMode: testData.scanMode.list[0],
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null,
+      maxReadInterval: null,
+      readDelay: 0,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    newSouthConnector.groups = [tempGroup];
+    newSouthConnector.items = [
+      {
+        id: '',
+        name: 'item to delete with south',
+        enabled: true,
+        scanMode: testData.scanMode.list[0],
+        settings: {} as SouthItemSettings,
+        group: { ...tempGroup },
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ];
+    repository.saveSouth(newSouthConnector);
+    const before = repository.findSouthById(newSouthConnector.id)!;
+    assert.strictEqual(before.items.length, 1);
+    assert.strictEqual(before.groups.length, 1);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+
+    repository.deleteSouth(newSouthConnector.id, 'deleteUser');
+
+    const itemDeleteCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'south_item' && call.arguments[1] === before.items[0].id && call.arguments[2] === 'DELETE'
+    );
+    assert.ok(itemDeleteCall);
+    assert.strictEqual(itemDeleteCall!.arguments[5], 'deleteUser');
+
+    const groupDeleteCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'south_item_group' && call.arguments[1] === before.groups[0].id && call.arguments[2] === 'DELETE'
+    );
+    assert.ok(groupDeleteCall);
+    assert.strictEqual(groupDeleteCall!.arguments[5], 'deleteUser');
+
+    const connectorDeleteCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'south_connector' && call.arguments[1] === newSouthConnector.id && call.arguments[2] === 'DELETE'
+    );
+    assert.ok(connectorDeleteCall);
   });
 
   it('should stop south connector', () => {
@@ -170,14 +301,37 @@ describe('SouthConnectorRepository', () => {
   });
 
   it('should delete item', () => {
-    repository.deleteItem(testData.south.list[1].id, testData.south.list[1].items[0].id);
-    repository.deleteItem(testData.south.list[1].id, testData.south.list[1].items[1].id);
+    const before0 = repository.findItemById(testData.south.list[1].id, testData.south.list[1].items[0].id);
+    repository.deleteItem(testData.south.list[1].id, testData.south.list[1].items[0].id, 'deleteUser');
+    repository.deleteItem(testData.south.list[1].id, testData.south.list[1].items[1].id, 'deleteUser');
     assert.strictEqual(repository.findItemById(testData.south.list[1].id, testData.south.list[1].items[0].id), null);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
+      'south_item',
+      testData.south.list[1].items[0].id,
+      'DELETE',
+      before0,
+      null,
+      'deleteUser'
+    ]);
   });
 
   it('should delete all item by south', () => {
-    repository.deleteAllItemsBySouth(testData.south.list[1].id);
+    const beforeItems = repository.findAllItemsForSouth(testData.south.list[1].id);
+    repository.deleteAllItemsBySouth(testData.south.list[1].id, 'deleteUser');
     assert.strictEqual(repository.findAllItemsForSouth(testData.south.list[1].id).length, 0);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    const deleteCalls = recordMock.mock.calls.filter(call => call.arguments[0] === 'south_item' && call.arguments[2] === 'DELETE');
+    assert.strictEqual(deleteCalls.length, beforeItems.length);
+    for (const item of beforeItems) {
+      assert.ok(
+        deleteCalls.some(
+          call => call.arguments[1] === item.id && call.arguments[3] !== null && call.arguments[5] === 'deleteUser'
+        )
+      );
+    }
   });
 
   it('should disable and enable item', () => {
@@ -210,7 +364,7 @@ describe('SouthConnectorRepository', () => {
     itemsToSave.push(newItem);
     itemsToSave[0].name = 'updated name';
 
-    repository.saveAllItems(testData.south.list[0].id, itemsToSave, false);
+    repository.saveAllItems(testData.south.list[0].id, itemsToSave, false, 'userTest');
 
     const results = repository.findAllItemsForSouth(testData.south.list[0].id);
     assert.strictEqual(results.length, 3);
@@ -245,7 +399,7 @@ describe('SouthConnectorRepository', () => {
     };
     itemsToSave.push(newItem);
 
-    repository.saveAllItems(testData.south.list[0].id, itemsToSave, true);
+    repository.saveAllItems(testData.south.list[0].id, itemsToSave, true, 'userTest');
 
     const results = repository.findAllItemsForSouth(testData.south.list[0].id);
     assert.strictEqual(results.length, itemsToSave.length);
@@ -257,7 +411,7 @@ describe('SouthConnectorRepository', () => {
   });
 
   it('should save south connector with items that have groups', () => {
-    const groupRepository = new SouthItemGroupRepository(database);
+    const groupRepository = new SouthItemGroupRepository(database, createAuditServiceMock());
 
     const group = groupRepository.create(
       {
@@ -305,7 +459,7 @@ describe('SouthConnectorRepository', () => {
   });
 
   it('should save item with groups', () => {
-    const groupRepository = new SouthItemGroupRepository(database);
+    const groupRepository = new SouthItemGroupRepository(database, createAuditServiceMock());
 
     const group = groupRepository.create(
       {
@@ -347,6 +501,55 @@ describe('SouthConnectorRepository', () => {
     const savedItem = repository.findItemById(testData.south.list[0].id, itemWithGroup.id);
     assert.ok(savedItem);
     assert.strictEqual(savedItem.group!.id, group.id);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    const createCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'south_item' && call.arguments[1] === itemWithGroup.id && call.arguments[2] === 'CREATE'
+    );
+    assert.ok(createCall);
+    assert.strictEqual(createCall!.arguments[3], null);
+  });
+
+  it('should audit an update via saveItem', () => {
+    const item: SouthConnectorItemEntity<SouthItemSettings> = {
+      id: '',
+      name: 'save-item-update-audit',
+      enabled: true,
+      scanMode: testData.scanMode.list[0],
+      settings: {} as SouthItemSettings,
+      group: null,
+      syncWithGroup: false,
+      maxReadInterval: null,
+      readDelay: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null,
+      createdBy: '',
+      updatedBy: 'creatorUser',
+      createdAt: '',
+      updatedAt: ''
+    };
+    repository.saveItem(testData.south.list[0].id, item);
+    assert.ok(item.id);
+    const beforeUpdate = repository.findItemById(testData.south.list[0].id, item.id);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+
+    item.name = 'save-item-update-audit-renamed';
+    item.updatedBy = 'updaterUser';
+    repository.saveItem(testData.south.list[0].id, item);
+
+    const afterUpdate = repository.findItemById(testData.south.list[0].id, item.id);
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
+      'south_item',
+      item.id,
+      'UPDATE',
+      beforeUpdate,
+      afterUpdate,
+      'updaterUser'
+    ]);
   });
 
   it('should save and find item with historian fields', () => {
@@ -408,7 +611,7 @@ describe('SouthConnectorRepository', () => {
   });
 
   it('should move items to a group', () => {
-    const groupRepository = new SouthItemGroupRepository(database);
+    const groupRepository = new SouthItemGroupRepository(database, createAuditServiceMock());
 
     const group = groupRepository.create(
       {
@@ -438,7 +641,7 @@ describe('SouthConnectorRepository', () => {
   });
 
   it('should remove items from groups when groupId is null', () => {
-    const groupRepository = new SouthItemGroupRepository(database);
+    const groupRepository = new SouthItemGroupRepository(database, createAuditServiceMock());
 
     const group = groupRepository.create(
       {
@@ -526,6 +729,11 @@ describe('SouthConnectorRepository', () => {
     assert.ok(savedItem);
     assert.ok(savedItem.group);
     assert.notStrictEqual(savedItem.group.id, 'temp_newgroup');
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    const groupCreateCall = recordMock.mock.calls.find(call => call.arguments[0] === 'south_item_group' && call.arguments[2] === 'CREATE');
+    assert.ok(groupCreateCall);
+    assert.strictEqual(groupCreateCall!.arguments[1], savedItem.group!.id);
   });
 
   it('should find scan mode for south', () => {
@@ -537,7 +745,7 @@ describe('SouthConnectorRepository', () => {
   });
 
   it('should find groups by south id', () => {
-    const groupRepository = new SouthItemGroupRepository(database);
+    const groupRepository = new SouthItemGroupRepository(database, createAuditServiceMock());
     groupRepository.create(
       {
         name: 'Test Group For Find',
@@ -561,7 +769,7 @@ describe('SouthConnectorRepository', () => {
   });
 
   it('should update existing group properties when saving the south connector', () => {
-    const groupRepository = new SouthItemGroupRepository(database);
+    const groupRepository = new SouthItemGroupRepository(database, createAuditServiceMock());
 
     // Create a real group with the first scan mode
     const group = groupRepository.create(
@@ -604,10 +812,98 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(savedGroup.startTimeOffset, 500);
     assert.strictEqual(savedGroup.maxReadInterval, 3600);
     assert.strictEqual(savedGroup.readDelay, 200);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    const groupUpdateCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'south_item_group' && call.arguments[1] === group.id && call.arguments[2] === 'UPDATE'
+    );
+    assert.ok(groupUpdateCall);
+    assert.strictEqual(groupUpdateCall!.arguments[5], 'updateUser');
+  });
+
+  it('should audit a removed group when saving the south connector without it', () => {
+    const groupRepository = new SouthItemGroupRepository(database, createAuditServiceMock());
+    const group = groupRepository.create(
+      {
+        name: 'Group To Remove Via Save',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
+        maxReadInterval: null,
+        readDelay: 0
+      },
+      'userTest'
+    );
+
+    const south: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+    south.items = [];
+    south.groups = [group];
+    repository.saveSouth(south);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+
+    const southWithoutGroup: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(south));
+    southWithoutGroup.groups = [];
+    southWithoutGroup.updatedBy = 'removeUser';
+    repository.saveSouth(southWithoutGroup);
+
+    assert.strictEqual(groupRepository.findById(group.id), null);
+    const groupDeleteCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'south_item_group' && call.arguments[1] === group.id && call.arguments[2] === 'DELETE'
+    );
+    assert.ok(groupDeleteCall);
+    assert.strictEqual(groupDeleteCall!.arguments[5], 'removeUser');
+  });
+
+  it('should audit a removed item when saving the south connector without it', () => {
+    const south: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+    south.id = '';
+    south.name = 'connector for item removal audit';
+    south.items = [
+      {
+        id: '',
+        name: 'item to be removed',
+        enabled: true,
+        scanMode: testData.scanMode.list[0],
+        settings: {} as SouthItemSettings,
+        group: null,
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ];
+    repository.saveSouth(south);
+    const itemId = south.items[0].id;
+    const beforeItem = repository.findItemById(south.id, itemId);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+
+    const southWithoutItem: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(south));
+    southWithoutItem.items = [];
+    southWithoutItem.updatedBy = 'removeItemUser';
+    repository.saveSouth(southWithoutItem);
+
+    assert.strictEqual(repository.findItemById(south.id, itemId), null);
+    const itemDeleteCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'south_item' && call.arguments[1] === itemId && call.arguments[2] === 'DELETE'
+    );
+    assert.ok(itemDeleteCall);
+    assert.deepStrictEqual(itemDeleteCall!.arguments, ['south_item', itemId, 'DELETE', beforeItem, null, 'removeItemUser']);
   });
 
   it('should delete a group and fill empty scan mode and history fields on its items', () => {
-    const groupRepository = new SouthItemGroupRepository(database);
+    const groupRepository = new SouthItemGroupRepository(database, createAuditServiceMock());
     const group = groupRepository.create(
       {
         name: 'Group To Delete With Fallback',
@@ -642,7 +938,7 @@ describe('SouthConnectorRepository', () => {
     };
     repository.saveItem(testData.south.list[0].id, itemWithEmptyFields);
 
-    repository.deleteGroupAndUpdateItems(testData.south.list[0].id, group, true);
+    repository.deleteGroupAndUpdateItems(testData.south.list[0].id, group, true, 'deleteUser');
 
     assert.strictEqual(groupRepository.findById(group.id), null);
     const savedItem = repository.findItemById(testData.south.list[0].id, itemWithEmptyFields.id)!;
@@ -657,7 +953,7 @@ describe('SouthConnectorRepository', () => {
   });
 
   it('should not overwrite an item own scan mode and history fields when deleting its group', () => {
-    const groupRepository = new SouthItemGroupRepository(database);
+    const groupRepository = new SouthItemGroupRepository(database, createAuditServiceMock());
     const group = groupRepository.create(
       {
         name: 'Group To Delete Without Fallback',
@@ -692,7 +988,7 @@ describe('SouthConnectorRepository', () => {
     };
     repository.saveItem(testData.south.list[0].id, itemWithOwnFields);
 
-    repository.deleteGroupAndUpdateItems(testData.south.list[0].id, group, true);
+    repository.deleteGroupAndUpdateItems(testData.south.list[0].id, group, true, 'deleteUser');
 
     const savedItem = repository.findItemById(testData.south.list[0].id, itemWithOwnFields.id)!;
     assert.strictEqual(savedItem.group, null);
@@ -705,7 +1001,7 @@ describe('SouthConnectorRepository', () => {
   });
 
   it('should not fill history fields when the connector does not support history', () => {
-    const groupRepository = new SouthItemGroupRepository(database);
+    const groupRepository = new SouthItemGroupRepository(database, createAuditServiceMock());
     const group = groupRepository.create(
       {
         name: 'Group To Delete No History',
@@ -740,7 +1036,7 @@ describe('SouthConnectorRepository', () => {
     };
     repository.saveItem(testData.south.list[0].id, itemWithEmptyFields);
 
-    repository.deleteGroupAndUpdateItems(testData.south.list[0].id, group, false);
+    repository.deleteGroupAndUpdateItems(testData.south.list[0].id, group, false, 'deleteUser');
 
     const savedItem = repository.findItemById(testData.south.list[0].id, itemWithEmptyFields.id)!;
     assert.strictEqual(savedItem.scanMode!.id, group.scanMode.id);
@@ -898,7 +1194,7 @@ describe('SouthConnectorRepository', () => {
   });
 
   it('should persist a non-null recovery strategy when updating an existing group', () => {
-    const groupRepository = new SouthItemGroupRepository(database);
+    const groupRepository = new SouthItemGroupRepository(database, createAuditServiceMock());
     const group = groupRepository.create(
       {
         name: 'Group With Recovery Strategy',
@@ -924,7 +1220,7 @@ describe('SouthConnectorRepository', () => {
   });
 
   it('should throw when an existing group is saved without a scan mode (NOT NULL constraint)', () => {
-    const groupRepository = new SouthItemGroupRepository(database);
+    const groupRepository = new SouthItemGroupRepository(database, createAuditServiceMock());
     const group = groupRepository.create(
       {
         name: 'Group Missing Scan Mode',
