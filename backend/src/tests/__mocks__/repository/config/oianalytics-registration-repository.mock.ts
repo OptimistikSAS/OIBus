@@ -1,5 +1,6 @@
 import { mock } from 'node:test';
 import type { Database } from 'better-sqlite3';
+import { createAuditServiceMock } from '../../../utils/test-utils';
 import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../../../model/oianalytics-registration.model';
 import { Instant } from '../../../../../shared/model/types';
 import OIAnalyticsRegistrationRepository from '../../../../repository/config/oianalytics-registration.repository';
@@ -9,7 +10,7 @@ import OIAnalyticsRegistrationRepository from '../../../../repository/config/oia
  */
 export default class OianalyticsRegistrationRepositoryMock extends OIAnalyticsRegistrationRepository {
   constructor() {
-    super({} as Database);
+    super({} as Database, createAuditServiceMock());
   }
   protected override createDefault(): void {
     return;
@@ -27,7 +28,7 @@ export default class OianalyticsRegistrationRepositoryMock extends OIAnalyticsRe
     ): void => undefined
   );
   override update = mock.fn((_command: Omit<OIAnalyticsRegistrationEditCommand, 'host'>, _updatedBy: string): void => undefined);
-  override updateKeys = mock.fn((_privateKey: string, _publicKey: string): void => undefined);
+  override updateKeys = mock.fn((_privateKey: string, _publicKey: string, _updatedBy: string): void => undefined);
   override activate = mock.fn((_activationDate: Instant, _token: string): void => undefined);
   override unregister = mock.fn((): void => undefined);
 }

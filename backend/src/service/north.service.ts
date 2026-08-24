@@ -163,10 +163,10 @@ export default class NorthService {
     await this.engine.reloadNorth(northEntity);
   }
 
-  async delete(northId: string) {
+  async delete(northId: string, userId: string) {
     const northConnector = this.findById(northId);
     await this.engine.deleteNorth(northConnector);
-    this.northConnectorRepository.deleteNorth(northId);
+    this.northConnectorRepository.deleteNorth(northId, userId);
     this.logRepository.deleteLogsByScopeId('north', northConnector.id);
     this.northMetricsRepository.removeMetrics(northConnector.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
@@ -260,16 +260,16 @@ export default class NorthService {
     return await north.testConnection();
   }
 
-  addOrEditTransformer(northId: string, transformerWithOptions: NorthTransformerWithOptions): void {
+  addOrEditTransformer(northId: string, transformerWithOptions: NorthTransformerWithOptions, userId: string): void {
     const northConnector = this.findById(northId);
-    this.northConnectorRepository.addOrEditTransformer(northConnector.id, transformerWithOptions);
+    this.northConnectorRepository.addOrEditTransformer(northConnector.id, transformerWithOptions, userId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     this.engine.updateNorthConfiguration(northConnector.id);
   }
 
-  removeTransformer(northId: string, northTransformerId: string): void {
+  removeTransformer(northId: string, northTransformerId: string, userId: string): void {
     const northConnector = this.findById(northId);
-    this.northConnectorRepository.removeTransformer(northTransformerId);
+    this.northConnectorRepository.removeTransformer(northTransformerId, userId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     this.engine.updateNorthConfiguration(northConnector.id);
   }

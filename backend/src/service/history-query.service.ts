@@ -285,10 +285,10 @@ export default class HistoryQueryService {
     await this.engine.reloadHistoryQuery(historyQuery, resetCache);
   }
 
-  async delete(historyId: string): Promise<void> {
+  async delete(historyId: string, deletedBy: string): Promise<void> {
     const historyQuery = this.findById(historyId);
     await this.engine.deleteHistoryQuery(historyQuery);
-    this.historyQueryRepository.deleteHistory(historyQuery.id);
+    this.historyQueryRepository.deleteHistory(historyQuery.id, deletedBy);
     this.logRepository.deleteLogsByScopeId('history-query', historyQuery.id);
     this.historyQueryMetricsRepository.removeMetrics(historyQuery.id);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
@@ -516,10 +516,10 @@ export default class HistoryQueryService {
     await this.engine.reloadHistoryQuery(historyQuery, false);
   }
 
-  async deleteItem(historyId: string, itemId: string): Promise<void> {
+  async deleteItem(historyId: string, itemId: string, deletedBy: string): Promise<void> {
     const historyQuery = this.findById(historyId);
     const item = this.findItemById(historyId, itemId);
-    this.historyQueryRepository.deleteItem(historyQuery.id, item.id);
+    this.historyQueryRepository.deleteItem(historyQuery.id, item.id, deletedBy);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, false);
   }
@@ -534,19 +534,19 @@ export default class HistoryQueryService {
     await this.engine.reloadHistoryQuery(historyQuery, false);
   }
 
-  async deleteItems(historyId: string, itemIds: Array<string>): Promise<void> {
+  async deleteItems(historyId: string, itemIds: Array<string>, deletedBy: string): Promise<void> {
     const historyQuery = this.findById(historyId);
     for (const itemId of itemIds) {
       const item = this.findItemById(historyId, itemId);
-      this.historyQueryRepository.deleteItem(historyQuery.id, item.id);
+      this.historyQueryRepository.deleteItem(historyQuery.id, item.id, deletedBy);
     }
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, false);
   }
 
-  async deleteAllItems(historyId: string): Promise<void> {
+  async deleteAllItems(historyId: string, deletedBy: string): Promise<void> {
     const historyQuery = this.findById(historyId);
-    this.historyQueryRepository.deleteAllItemsByHistory(historyId);
+    this.historyQueryRepository.deleteAllItemsByHistory(historyId, deletedBy);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, true);
   }
@@ -640,21 +640,21 @@ export default class HistoryQueryService {
       itemsToAdd.push(historyQueryItemEntity);
     }
 
-    this.historyQueryRepository.saveAllItems(historyQuery.id, itemsToAdd, deleteItemsNotPresent);
+    this.historyQueryRepository.saveAllItems(historyQuery.id, itemsToAdd, deleteItemsNotPresent, user);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, false);
   }
 
-  async addOrEditTransformer(historyId: string, transformerWithOptions: HistoryTransformerWithOptions): Promise<void> {
+  async addOrEditTransformer(historyId: string, transformerWithOptions: HistoryTransformerWithOptions, userId: string): Promise<void> {
     const historyQuery = this.findById(historyId);
-    this.historyQueryRepository.addOrEditTransformer(historyQuery.id, transformerWithOptions);
+    this.historyQueryRepository.addOrEditTransformer(historyQuery.id, transformerWithOptions, userId);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.stopHistoryQuery(historyQuery.id);
   }
 
-  async removeTransformer(historyId: string, historyTransformerId: string): Promise<void> {
+  async removeTransformer(historyId: string, historyTransformerId: string, userId: string): Promise<void> {
     const historyQuery = this.findById(historyId);
-    this.historyQueryRepository.removeTransformer(historyTransformerId);
+    this.historyQueryRepository.removeTransformer(historyTransformerId, userId);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.stopHistoryQuery(historyQuery.id);
   }

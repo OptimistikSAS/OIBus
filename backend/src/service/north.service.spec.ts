@@ -476,10 +476,10 @@ describe('North Service', () => {
   });
 
   it('should delete a north connector', async () => {
-    await service.delete(testData.north.list[0].id);
+    await service.delete(testData.north.list[0].id, 'userTest');
 
     assert.deepStrictEqual(engine.deleteNorth.mock.calls[0].arguments, [testData.north.list[0]]);
-    assert.deepStrictEqual(northConnectorRepository.deleteNorth.mock.calls[0].arguments, [testData.north.list[0].id]);
+    assert.deepStrictEqual(northConnectorRepository.deleteNorth.mock.calls[0].arguments, [testData.north.list[0].id, 'userTest']);
     assert.deepStrictEqual(logRepository.deleteLogsByScopeId.mock.calls[0].arguments, ['north', testData.north.list[0].id]);
     assert.deepStrictEqual(northMetricsRepository.removeMetrics.mock.calls[0].arguments, [testData.north.list[0].id]);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
@@ -530,20 +530,24 @@ describe('North Service', () => {
       options: {},
       source: { type: 'oianalytics-setpoint' }
     } as NorthTransformerWithOptions;
-    service.addOrEditTransformer(testData.north.list[0].id, transformerWithOptions);
+    service.addOrEditTransformer(testData.north.list[0].id, transformerWithOptions, 'userTest');
 
     assert.deepStrictEqual(northConnectorRepository.addOrEditTransformer.mock.calls[0].arguments, [
       testData.north.list[0].id,
-      transformerWithOptions
+      transformerWithOptions,
+      'userTest'
     ]);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
     assert.deepStrictEqual(engine.updateNorthConfiguration.mock.calls[0].arguments, [testData.north.list[0].id]);
   });
 
   it('should remove transformer', () => {
-    service.removeTransformer(testData.north.list[0].id, testData.north.list[0].transformers[0].id);
+    service.removeTransformer(testData.north.list[0].id, testData.north.list[0].transformers[0].id, 'userTest');
 
-    assert.deepStrictEqual(northConnectorRepository.removeTransformer.mock.calls[0].arguments, [testData.north.list[0].transformers[0].id]);
+    assert.deepStrictEqual(northConnectorRepository.removeTransformer.mock.calls[0].arguments, [
+      testData.north.list[0].transformers[0].id,
+      'userTest'
+    ]);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
     assert.deepStrictEqual(engine.updateNorthConfiguration.mock.calls[0].arguments, [testData.north.list[0].id]);
   });

@@ -1,10 +1,12 @@
 import { before, after, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { mock } from 'node:test';
 import { Database } from 'better-sqlite3';
-import { emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
 import ScanModeRepository, { scanModeAliasedColumns, scanModeColumns, toScanMode, toScanModeFromPrefixedRow } from './scan-mode.repository';
 import { ActivationWindow, ScanModeInterval } from '../../../shared/model/scan-mode.model';
+import AuditService from '../../service/audit.service';
 
 const TEST_DB_PATH = 'src/tests/test-config-scan-mode.db';
 
@@ -26,10 +28,12 @@ describe('ScanModeRepository with populated database', () => {
   });
 
   let repository: ScanModeRepository;
+  let auditService: AuditService;
   let createdId: string;
 
   beforeEach(() => {
-    repository = new ScanModeRepository(database);
+    auditService = createAuditServiceMock();
+    repository = new ScanModeRepository(database, auditService);
   });
 
   it('should properly get all scan modes', () => {
@@ -56,6 +60,10 @@ describe('ScanModeRepository with populated database', () => {
     assert.strictEqual(created.cron, testData.scanMode.command.cron);
     assert.strictEqual(created.interval, null);
     assert.strictEqual(created.activationWindow, null);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['scan_mode', created.id, 'CREATE', null, created, 'userTest']);
   });
 
   it('should create an interval scan mode, normalizing cron to an empty string', () => {
@@ -93,6 +101,7 @@ describe('ScanModeRepository with populated database', () => {
   });
 
   it('should update a scan mode', () => {
+    const before = repository.findById(createdId);
     repository.update(createdId, testData.scanMode.command, 'userTest');
     const result = repository.findById(createdId)!;
     assert.strictEqual(result.name, testData.scanMode.command.name);
@@ -101,6 +110,10 @@ describe('ScanModeRepository with populated database', () => {
     assert.strictEqual(result.cron, testData.scanMode.command.cron);
     assert.strictEqual(result.interval, null);
     assert.strictEqual(result.activationWindow, null);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['scan_mode', createdId, 'UPDATE', before, result, 'userTest']);
   });
 
   it('should update a scan mode to an interval type and back to cron', () => {
@@ -128,9 +141,14 @@ describe('ScanModeRepository with populated database', () => {
   });
 
   it('should delete a scan mode', () => {
-    assert.notStrictEqual(repository.findById(createdId), null);
-    repository.delete(createdId);
+    const before = repository.findById(createdId);
+    assert.notStrictEqual(before, null);
+    repository.delete(createdId, 'userTest');
     assert.strictEqual(repository.findById(createdId), null);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['scan_mode', createdId, 'DELETE', before, null, 'userTest']);
   });
 });
 
@@ -145,7 +163,7 @@ describe('ScanModeRepository with empty database', () => {
   });
 
   it('should properly init scan mode table with default scan modes', () => {
-    const repository = new ScanModeRepository(database);
+    const repository = new ScanModeRepository(database, createAuditServiceMock());
     // 7 default scan modes are created (6 with generated IDs + 1 with hardcoded 'subscription' id)
     const all = repository.findAll();
     assert.strictEqual(all.length, 7);

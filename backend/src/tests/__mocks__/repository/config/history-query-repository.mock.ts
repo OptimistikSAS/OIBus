@@ -1,5 +1,6 @@
 import { mock } from 'node:test';
 import type { Database } from 'better-sqlite3';
+import { createAuditServiceMock } from '../../../utils/test-utils';
 import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../../../../model/histor-query.model';
 import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../shared/model/north-settings.model';
@@ -13,17 +14,19 @@ import HistoryQueryRepository from '../../../../repository/config/history-query.
  */
 export default class HistoryQueryRepositoryMock extends HistoryQueryRepository {
   constructor() {
-    super({} as Database);
+    super({} as Database, createAuditServiceMock());
   }
   override findAllHistoriesLight = mock.fn((): Array<HistoryQueryEntityLight> => []);
   override findAllHistoriesFull = mock.fn((): Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> => []);
   override findHistoryById = mock.fn((_id: string): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null => null);
   override saveHistory = mock.fn((_history: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): void => undefined);
   override updateHistoryStatus = mock.fn((_id: string, _status: HistoryQueryStatus): void => undefined);
-  override deleteHistory = mock.fn((_id: string): void => undefined);
-  override addOrEditTransformer = mock.fn((_historyId: string, _transformerWithOptions: HistoryTransformerWithOptions): void => undefined);
-  override removeTransformer = mock.fn((_id: string): void => undefined);
-  override removeTransformersByTransformerId = mock.fn((_transformerId: string): void => undefined);
+  override deleteHistory = mock.fn((_id: string, _deletedBy: string): void => undefined);
+  override addOrEditTransformer = mock.fn(
+    (_historyId: string, _transformerWithOptions: HistoryTransformerWithOptions, _updatedBy: string): void => undefined
+  );
+  override removeTransformer = mock.fn((_id: string, _deletedBy: string): void => undefined);
+  override removeTransformersByTransformerId = mock.fn((_transformerId: string, _deletedBy: string): void => undefined);
   override searchItems = mock.fn(
     (_historyId: string, _searchParams: HistoryQueryItemSearchParam): Page<HistoryQueryItemEntity<SouthItemSettings>> => ({
       content: [],
@@ -40,10 +43,15 @@ export default class HistoryQueryRepositoryMock extends HistoryQueryRepository {
   override findItemById = mock.fn((_historyId: string, _itemId: string): HistoryQueryItemEntity<SouthItemSettings> | null => null);
   override saveItem = mock.fn((_historyId: string, _item: HistoryQueryItemEntity<SouthItemSettings>): void => undefined);
   override saveAllItems = mock.fn(
-    (_historyId: string, _items: Array<HistoryQueryItemEntity<SouthItemSettings>>, _deleteItemsNotPresent: boolean): void => undefined
+    (
+      _historyId: string,
+      _items: Array<HistoryQueryItemEntity<SouthItemSettings>>,
+      _deleteItemsNotPresent: boolean,
+      _deletedBy: string
+    ): void => undefined
   );
-  override deleteItem = mock.fn((_historyId: string, _itemId: string): void => undefined);
-  override deleteAllItemsByHistory = mock.fn((_historyId: string): void => undefined);
+  override deleteItem = mock.fn((_historyId: string, _itemId: string, _deletedBy: string): void => undefined);
+  override deleteAllItemsByHistory = mock.fn((_historyId: string, _deletedBy: string): void => undefined);
   override enableItem = mock.fn((_id: string): void => undefined);
   override disableItem = mock.fn((_id: string): void => undefined);
 }

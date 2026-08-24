@@ -178,7 +178,7 @@ export class SouthConnectorController extends Controller {
   @SuccessResponse(204, 'No Content')
   async delete(@Path() southId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const southService = request.services.southService as SouthService;
-    await southService.delete(southId);
+    await southService.delete(southId, request.user.id);
   }
 
   /**
@@ -482,7 +482,7 @@ export class SouthConnectorController extends Controller {
   @SuccessResponse(204, 'No Content')
   async deleteItem(@Path() southId: string, @Path() itemId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const southService = request.services.southService as SouthService;
-    await southService.deleteItem(southId, itemId);
+    await southService.deleteItem(southId, itemId, request.user.id);
   }
 
   /**
@@ -497,7 +497,7 @@ export class SouthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const southService = request.services.southService as SouthService;
-    await southService.deleteItems(southId, command.itemIds);
+    await southService.deleteItems(southId, command.itemIds, request.user.id);
   }
 
   /**
@@ -508,7 +508,7 @@ export class SouthConnectorController extends Controller {
   @SuccessResponse(204, 'No Content')
   async deleteAllItems(@Path() southId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const southService = request.services.southService as SouthService;
-    await southService.deleteAllItems(southId);
+    await southService.deleteAllItems(southId, request.user.id);
   }
 
   /**
@@ -707,7 +707,7 @@ export class SouthConnectorController extends Controller {
   @SuccessResponse(204, 'No Content')
   async deleteGroup(@Path() southId: string, @Path() groupId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const southService = request.services.southService as SouthService;
-    await southService.deleteGroup(southId, groupId);
+    await southService.deleteGroup(southId, groupId, request.user.id);
   }
 
   /**
