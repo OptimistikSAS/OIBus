@@ -656,7 +656,9 @@ describe('SouthRestAPI connector', () => {
     await south.historyQuery([item], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
     assert.strictEqual(addContentCallback.mock.calls.length, 0);
-    assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Error when deleting empty file')));
+    assert.ok(
+      logger.error.mock.calls.some(c => typeof c.arguments[1] === 'string' && c.arguments[1].includes('Error when deleting empty file'))
+    );
   });
 
   // --------------------------------------------------------------------------
