@@ -97,12 +97,7 @@ export default class RepositoryService {
     this._southConnectorRepository = new SouthConnectorRepository(this.oibusDatabase, this._auditService);
     this._southItemGroupRepository = new SouthItemGroupRepository(this.oibusDatabase, this._auditService);
     this._historyQueryRepository = new HistoryQueryRepository(this.oibusDatabase, this._auditService);
-    this._userRepository = new UserRepository(
-      this.oibusDatabase,
-      this._auditService,
-      initConfig.adminUsername,
-      initConfig.adminPassword
-    );
+    this._userRepository = new UserRepository(this.oibusDatabase, this._auditService, initConfig.adminUsername, initConfig.adminPassword);
     this._oianalyticsRegistrationRepository = new OIAnalyticsRegistrationRepository(this.oibusDatabase, this._auditService);
     this._oianalyticsCommandRepository = new OIAnalyticsCommandRepository(this.oibusDatabase);
     this._oianalyticsMessageRepository = new OIAnalyticsMessageRepository(this.oibusDatabase);

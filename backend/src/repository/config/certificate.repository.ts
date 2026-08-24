@@ -86,7 +86,14 @@ export default class CertificateRepository {
                        FROM ${CERTIFICATES_TABLE}
                        WHERE ROWID = ?;`;
     const created = this.toCertificate(this.database.prepare(query).get(result.lastInsertRowid) as Record<string, string>);
-    this.auditService.record('certificate', created.id, 'CREATE', null, created as unknown as Record<string, unknown>, created.createdBy);
+    this.auditService.record(
+      'certificate',
+      created.id,
+      'CREATE',
+      null,
+      this.redact(created) as unknown as Record<string, unknown>,
+      created.createdBy
+    );
     return created;
   }
 
@@ -113,8 +120,8 @@ export default class CertificateRepository {
       'certificate',
       certificate.id,
       'UPDATE',
-      before as unknown as Record<string, unknown>,
-      after as unknown as Record<string, unknown>,
+      this.redact(before) as unknown as Record<string, unknown>,
+      this.redact(after) as unknown as Record<string, unknown>,
       certificate.updatedBy
     );
   }
@@ -133,8 +140,8 @@ export default class CertificateRepository {
       'certificate',
       certificateId,
       'UPDATE',
-      before as unknown as Record<string, unknown>,
-      after as unknown as Record<string, unknown>,
+      this.redact(before) as unknown as Record<string, unknown>,
+      this.redact(after) as unknown as Record<string, unknown>,
       updatedBy
     );
   }
@@ -146,8 +153,17 @@ export default class CertificateRepository {
                        WHERE id = ?;`;
     this.database.prepare(query).run(id);
     if (before) {
-      this.auditService.record('certificate', id, 'DELETE', before as unknown as Record<string, unknown>, null, deletedBy);
+      this.auditService.record('certificate', id, 'DELETE', this.redact(before) as unknown as Record<string, unknown>, null, deletedBy);
     }
+  }
+
+  /**
+   * Returns a shallow copy of the certificate with the private key redacted, so the raw PEM
+   * private key material never ends up persisted in the audit trail.
+   */
+  private redact(certificate: Certificate | null): Record<string, unknown> | null {
+    if (!certificate) return null;
+    return { ...certificate, privateKey: '' };
   }
 
   private toCertificate(result: Record<string, string>): Certificate {

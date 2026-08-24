@@ -11,6 +11,8 @@ import { scanModeAliasedColumns, scanModeColumns, toScanMode } from './scan-mode
 import { OIBusSouthType } from '../../../shared/model/south-connector.model';
 import { toSouthItemGroup } from './south-item-group.repository';
 import AuditService from '../../service/audit.service';
+import { encryptionService } from '../../service/encryption.service';
+import { northManifestList } from '../../service/north-manifests';
 
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
@@ -131,9 +133,7 @@ export default class NorthConnectorRepository {
       }
 
       const keepIds = north.transformers.filter(t => t.id).map(t => t.id);
-      const removedTransformerIds = (beforeConnector?.transformers ?? [])
-        .filter(t => !keepIds.includes(t.id))
-        .map(t => t.id);
+      const removedTransformerIds = (beforeConnector?.transformers ?? []).filter(t => !keepIds.includes(t.id)).map(t => t.id);
       for (const removedId of removedTransformerIds) {
         this.auditService.record(
           'north_transformer',
@@ -186,8 +186,8 @@ export default class NorthConnectorRepository {
         'north_connector',
         north.id,
         isNewConnector ? 'CREATE' : 'UPDATE',
-        beforeConnector as unknown as Record<string, unknown> | null,
-        afterConnector as unknown as Record<string, unknown>,
+        this.redactConnector(beforeConnector),
+        this.redactConnector(afterConnector),
         north.updatedBy
       );
     });
@@ -234,16 +234,28 @@ export default class NorthConnectorRepository {
             deletedBy
           );
         }
-        this.auditService.record('north_connector', id, 'DELETE', before as unknown as Record<string, unknown>, null, deletedBy);
+        this.auditService.record('north_connector', id, 'DELETE', this.redactConnector(before), null, deletedBy);
       }
     });
 
     transaction();
   }
 
+  /**
+   * Returns a shallow copy of the north connector with its settings' secret fields redacted, using the
+   * same manifest-driven filtering applied before exposing the connector to the frontend (see
+   * toNorthConnectorDTO in north.service.ts), so real secrets never end up persisted in the audit trail.
+   */
+  private redactConnector(entity: NorthConnectorEntity<NorthSettings> | null): Record<string, unknown> | null {
+    if (!entity) return null;
+    const manifest = northManifestList.find(element => element.id === entity.type);
+    if (!manifest) return entity as unknown as Record<string, unknown>;
+    return { ...entity, settings: encryptionService.filterSecrets(entity.settings, manifest.settings) };
+  }
+
   addOrEditTransformer(northId: string, transformerWithOptions: NorthTransformerWithOptions, updatedBy: string): void {
     const wasNew = !transformerWithOptions.id;
-    const before = wasNew ? null : this.findTransformersForNorth(northId).find(t => t.id === transformerWithOptions.id) ?? null;
+    const before = wasNew ? null : (this.findTransformersForNorth(northId).find(t => t.id === transformerWithOptions.id) ?? null);
     if (!transformerWithOptions.id) {
       transformerWithOptions.id = generateRandomId(6);
       const query = `INSERT INTO ${NORTH_TRANSFORMERS_TABLE} (id, north_id, transformer_id, options, source_type, source_api_data_source_id, source_south_south_id, source_south_group_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
@@ -305,8 +317,7 @@ export default class NorthConnectorRepository {
 
   removeTransformer(id: string, deletedBy: string): void {
     const northId = this.database.prepare(`SELECT north_id FROM ${NORTH_TRANSFORMERS_TABLE} WHERE id = ?;`).get(id) as
-      | { north_id: string }
-      | undefined;
+      { north_id: string } | undefined;
     const before = northId ? (this.findTransformersForNorth(northId.north_id).find(t => t.id === id) ?? null) : null;
     const transaction = this.database.transaction(() => {
       this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE} WHERE id = ?;`).run(id);
