@@ -396,7 +396,7 @@ describe('SouthOPCUA', () => {
     ]);
     assert.ok(
       (logger.info as ReturnType<typeof mock.fn>).mock.calls.some(
-        c => c.arguments[0] === `OPCUA connector "${configuration.name}" connected`
+        c => typeof c.arguments[0] === 'string' && c.arguments[0].startsWith(`Connected to OPCUA server ${configuration.settings.url}`)
       )
     );
   });
