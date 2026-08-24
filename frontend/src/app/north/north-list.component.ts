@@ -139,7 +139,7 @@ export class NorthListComponent {
    * Open a modal to view the audit history of a North connector
    */
   showAudit(north: NorthConnectorLightDTO) {
-    const modalRef = this.modalService.open(AuditHistoryModalComponent);
+    const modalRef = this.modalService.open(AuditHistoryModalComponent, { size: 'xl' });
     modalRef.componentInstance.prepare('north_connector', north.id);
   }
 

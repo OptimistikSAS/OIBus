@@ -181,7 +181,7 @@ describe('HistoryQueryListComponent', () => {
     await root.getByCss('.show-audit-history-query').nth(0).click();
 
     const query = testData.historyQueries.listLight[0] as unknown as HistoryQueryLightDTO;
-    expect(modalService.open).toHaveBeenCalledWith(AuditHistoryModalComponent);
+    expect(modalService.open).toHaveBeenCalledWith(AuditHistoryModalComponent, { size: 'xl' });
     expect(fakeModalComponent.prepare).toHaveBeenCalledWith('history_query', query.id);
   });
 });

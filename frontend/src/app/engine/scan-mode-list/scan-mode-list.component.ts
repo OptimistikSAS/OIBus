@@ -127,7 +127,7 @@ export class ScanModeListComponent {
    * Open a modal to view the audit history of a scan mode
    */
   showAudit(scanMode: ScanModeDTO) {
-    const modalRef = this.modalService.open(AuditHistoryModalComponent);
+    const modalRef = this.modalService.open(AuditHistoryModalComponent, { size: 'xl' });
     modalRef.componentInstance.prepare('scan_mode', scanMode.id);
   }
 
