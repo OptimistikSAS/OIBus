@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -33,7 +34,8 @@ import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-
     DatetimepickerComponent,
     DatetimePipe,
     AuditEntityTypesEnumPipe,
-    OI_FORM_VALIDATION_DIRECTIVES
+    OI_FORM_VALIDATION_DIRECTIVES,
+    NgbTooltip
   ],
   templateUrl: './audit-list.component.html',
   styleUrl: './audit-list.component.scss',
@@ -123,7 +125,7 @@ export class AuditListComponent implements OnInit, OnDestroy {
   }
 
   showHistory(entry: AuditLogDTO): void {
-    const modalRef = this.modalService.open(AuditHistoryModalComponent);
+    const modalRef = this.modalService.open(AuditHistoryModalComponent, { size: 'xl' });
     modalRef.componentInstance.prepare(entry.entityType, entry.entityId);
   }
 }
