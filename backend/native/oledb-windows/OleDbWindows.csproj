@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Windows-only helper that OIBus's south-oledb connector spawns as a local child process (see
+    backend/src/south/south-oledb/oledb-driver.ts) and talks to over a newline-delimited JSON
+    protocol on stdin/stdout. It replaces the OLE DB module of OIBusAgentWindows: same
+    System.Data.OleDb-based connect/read/disconnect behavior, but bundled and launched by OIBus
+    itself instead of being installed and administered as a separate Windows Service reachable
+    over a configured agentUrl.
+
+    Published as a self-contained single-file executable per architecture, e.g. for win-x64:
+      dotnet publish -c Release -r win-x64 -p:SelfContained=true -p:PublishSingleFile=true
+    (repeat with -r win-x86 and -r win-arm64). The resulting binary is what gets bundled as a pkg
+    asset for the OIBus Windows build (see backend/package.json's pkg.assets).
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>OIBusOleDbWindows</AssemblyName>
+    <RootNamespace>OIBusOleDbWindows</RootNamespace>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Same version as OIBusAgentWindows.csproj's System.Data.OleDb reference, for behavioral parity. -->
+    <PackageReference Include="System.Data.OleDb" Version="9.0.1" />
+  </ItemGroup>
+
+</Project>
