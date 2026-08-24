@@ -435,10 +435,10 @@ describe('South Service', () => {
   });
 
   it('should delete a south connector', async () => {
-    await service.delete(testData.south.list[0].id);
+    await service.delete(testData.south.list[0].id, 'userTest');
 
     assert.deepStrictEqual(engine.deleteSouth.mock.calls[0].arguments, [testData.south.list[0]]);
-    assert.deepStrictEqual(southConnectorRepository.deleteSouth.mock.calls[0].arguments, [testData.south.list[0].id]);
+    assert.deepStrictEqual(southConnectorRepository.deleteSouth.mock.calls[0].arguments, [testData.south.list[0].id, 'userTest']);
     assert.deepStrictEqual(logRepository.deleteLogsByScopeId.mock.calls[0].arguments, ['south', testData.south.list[0].id]);
     assert.deepStrictEqual(southMetricsRepository.removeMetrics.mock.calls[0].arguments, [testData.south.list[0].id]);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
@@ -1261,7 +1261,7 @@ describe('South Service', () => {
   });
 
   it('should delete an item', async () => {
-    await service.deleteItem(testData.south.list[0].id, testData.south.list[0].items[0].id);
+    await service.deleteItem(testData.south.list[0].id, testData.south.list[0].items[0].id, 'userTest');
 
     assert.deepStrictEqual(southConnectorRepository.findItemById.mock.calls[0].arguments, [
       testData.south.list[0].id,
@@ -1269,7 +1269,8 @@ describe('South Service', () => {
     ]);
     assert.deepStrictEqual(southConnectorRepository.deleteItem.mock.calls[0].arguments, [
       testData.south.list[0].id,
-      testData.south.list[0].items[0].id
+      testData.south.list[0].items[0].id,
+      'userTest'
     ]);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
     assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
@@ -1286,24 +1287,29 @@ describe('South Service', () => {
       )
     );
 
-    await service.deleteItems(southConnectorId, itemIds);
+    await service.deleteItems(southConnectorId, itemIds, 'userTest');
 
     assert.deepStrictEqual(southConnectorRepository.deleteItem.mock.calls[0].arguments, [
       testData.south.list[0].id,
-      testData.south.list[0].items[0].id
+      testData.south.list[0].items[0].id,
+      'userTest'
     ]);
     assert.deepStrictEqual(southConnectorRepository.deleteItem.mock.calls[1].arguments, [
       testData.south.list[0].id,
-      testData.south.list[0].items[1].id
+      testData.south.list[0].items[1].id,
+      'userTest'
     ]);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
     assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
   });
 
   it('should delete all items', async () => {
-    await service.deleteAllItems(testData.south.list[0].id);
+    await service.deleteAllItems(testData.south.list[0].id, 'userTest');
 
-    assert.deepStrictEqual(southConnectorRepository.deleteAllItemsBySouth.mock.calls[0].arguments, [testData.south.list[0].id]);
+    assert.deepStrictEqual(southConnectorRepository.deleteAllItemsBySouth.mock.calls[0].arguments, [
+      testData.south.list[0].id,
+      'userTest'
+    ]);
     assert.deepStrictEqual(southCacheRepository.deleteItemsBySouth.mock.calls[0].arguments, [testData.south.list[0].id]);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
     assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
@@ -2653,11 +2659,12 @@ describe('South Service', () => {
       southItemGroupRepository.findById.mock.mockImplementation(() => groupToDelete);
       engine.reloadSouthItems.mock.mockImplementation(async () => undefined);
 
-      await service.deleteGroup(testData.south.list[0].id, 'groupToDelete');
+      await service.deleteGroup(testData.south.list[0].id, 'groupToDelete', 'userTest');
       assert.deepStrictEqual(southConnectorRepository.deleteGroupAndUpdateItems.mock.calls[0].arguments, [
         testData.south.list[0].id,
         groupToDelete,
-        false
+        false,
+        'userTest'
       ]);
       assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
     });
@@ -2700,7 +2707,7 @@ describe('South Service', () => {
       };
       southCacheRepository.getGroupLastValue.mock.mockImplementation(() => groupCache);
 
-      await service.deleteGroup(southConnector.id, 'groupToDelete');
+      await service.deleteGroup(southConnector.id, 'groupToDelete', 'userTest');
 
       assert.deepStrictEqual(southCacheRepository.getGroupLastValue.mock.calls[0].arguments, [southConnector.id, groupToDelete.id]);
       assert.strictEqual(southCacheRepository.saveItemLastValue.mock.calls.length, 1);
@@ -2720,7 +2727,7 @@ describe('South Service', () => {
       southItemGroupRepository.findById.mock.mockImplementation(() => null);
 
       await assert.rejects(
-        async () => service.deleteGroup(testData.south.list[0].id, 'nonExistentGroup'),
+        async () => service.deleteGroup(testData.south.list[0].id, 'nonExistentGroup', 'userTest'),
         new NotFoundError('South item group "nonExistentGroup" not found')
       );
     });
@@ -2746,7 +2753,7 @@ describe('South Service', () => {
       southItemGroupRepository.findById.mock.mockImplementation(() => groupFromDifferentSouth);
 
       await assert.rejects(
-        async () => service.deleteGroup(testData.south.list[0].id, 'groupFromOtherSouth'),
+        async () => service.deleteGroup(testData.south.list[0].id, 'groupFromOtherSouth', 'userTest'),
         new NotFoundError(`South item group "groupFromOtherSouth" does not belong to south connector "${testData.south.list[0].id}"`)
       );
     });

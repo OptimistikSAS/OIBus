@@ -135,7 +135,7 @@ export class NorthConnectorController extends Controller {
   @SuccessResponse(204, 'No Content')
   async delete(@Path() northId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const northService = request.services.northService as NorthService;
-    await northService.delete(northId);
+    await northService.delete(northId, request.user.id);
   }
 
   /**
@@ -202,7 +202,7 @@ export class NorthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): void {
     const northService = request.services.northService as NorthService;
-    northService.addOrEditTransformer(northId, command as unknown as NorthTransformerWithOptions);
+    northService.addOrEditTransformer(northId, command as unknown as NorthTransformerWithOptions, request.user.id);
   }
 
   /**
@@ -213,7 +213,7 @@ export class NorthConnectorController extends Controller {
   @SuccessResponse(204, 'No Content')
   removeTransformer(@Path() northId: string, @Path() transformerId: string, @Request() request: CustomExpressRequest): void {
     const northService = request.services.northService as NorthService;
-    northService.removeTransformer(northId, transformerId);
+    northService.removeTransformer(northId, transformerId, request.user.id);
   }
 
   /**

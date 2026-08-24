@@ -206,7 +206,7 @@ describe('SouthConnectorController', () => {
     await controller.delete(southId, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(southService.delete.mock.calls.length, 1);
-    assert.deepStrictEqual(southService.delete.mock.calls[0].arguments[0], southId);
+    assert.deepStrictEqual(southService.delete.mock.calls[0].arguments, [southId, 'test']);
   });
 
   it('should start a south connector', async () => {
@@ -600,7 +600,7 @@ describe('SouthConnectorController', () => {
     await controller.deleteItems(southId, { itemIds }, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(southService.deleteItems.mock.calls.length, 1);
-    assert.deepStrictEqual(southService.deleteItems.mock.calls[0].arguments, [southId, itemIds]);
+    assert.deepStrictEqual(southService.deleteItems.mock.calls[0].arguments, [southId, itemIds, 'test']);
   });
 
   it('should delete an item', async () => {
@@ -611,7 +611,7 @@ describe('SouthConnectorController', () => {
     await controller.deleteItem(southId, itemId, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(southService.deleteItem.mock.calls.length, 1);
-    assert.deepStrictEqual(southService.deleteItem.mock.calls[0].arguments, [southId, itemId]);
+    assert.deepStrictEqual(southService.deleteItem.mock.calls[0].arguments, [southId, itemId, 'test']);
   });
 
   it('should delete all items from a south connector', async () => {
@@ -621,7 +621,7 @@ describe('SouthConnectorController', () => {
     await controller.deleteAllItems(southId, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(southService.deleteAllItems.mock.calls.length, 1);
-    assert.deepStrictEqual(southService.deleteAllItems.mock.calls[0].arguments[0], southId);
+    assert.deepStrictEqual(southService.deleteAllItems.mock.calls[0].arguments, [southId, 'test']);
   });
 
   it('should convert items to CSV', async () => {
@@ -979,7 +979,7 @@ describe('SouthConnectorController', () => {
     await controller.deleteGroup(southId, groupId, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(southService.deleteGroup.mock.calls.length, 1);
-    assert.deepStrictEqual(southService.deleteGroup.mock.calls[0].arguments, [southId, groupId]);
+    assert.deepStrictEqual(southService.deleteGroup.mock.calls[0].arguments, [southId, groupId, 'test']);
   });
 
   it('should move items to a group', async () => {
