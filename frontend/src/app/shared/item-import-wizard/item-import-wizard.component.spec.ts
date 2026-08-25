@@ -1,0 +1,277 @@
+import { TestBed } from '@angular/core/testing';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+import { ItemImportWizardComponent } from './item-import-wizard.component';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { SouthConnectorExploreEntry, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
+
+function displayProps(row = 0, columns = 4) {
+  return { row, columns, displayInViewMode: true };
+}
+
+function buildManifest(): SouthConnectorManifest {
+  return {
+    items: {
+      rootAttribute: {
+        attributes: [
+          {
+            type: 'string',
+            key: 'name',
+            translationKey: 'common.yes',
+            defaultValue: null,
+            validators: [],
+            displayProperties: displayProps()
+          },
+          {
+            type: 'boolean',
+            key: 'enabled',
+            translationKey: 'common.yes',
+            defaultValue: true,
+            validators: [],
+            displayProperties: displayProps()
+          },
+          {
+            type: 'scan-mode',
+            key: 'scanMode',
+            acceptableType: 'POLL',
+            translationKey: 'common.yes',
+            validators: [],
+            displayProperties: displayProps()
+          },
+          {
+            type: 'object',
+            key: 'settings',
+            translationKey: 'common.yes',
+            displayProperties: { visible: true, wrapInBox: true },
+            enablingConditions: [{ targetPathFromRoot: 'maxAge', referralPathFromRoot: 'mode', values: ['HA'], operator: 'EQUALS' }],
+            validators: [],
+            attributes: [
+              {
+                type: 'string',
+                key: 'nodeId',
+                translationKey: 'common.yes',
+                defaultValue: null,
+                validators: [],
+                displayProperties: displayProps()
+              },
+              {
+                type: 'boolean',
+                key: 'preserveFiles',
+                translationKey: 'common.yes',
+                defaultValue: false,
+                validators: [],
+                displayProperties: displayProps()
+              },
+              {
+                type: 'string-select',
+                key: 'mode',
+                translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.date-time-input.type',
+                selectableValues: ['iso-string', 'unix-epoch'],
+                defaultValue: 'iso-string',
+                validators: [],
+                displayProperties: displayProps()
+              },
+              {
+                type: 'number',
+                key: 'maxAge',
+                translationKey: 'common.yes',
+                defaultValue: 0,
+                unit: null,
+                validators: [],
+                displayProperties: displayProps()
+              }
+            ]
+          }
+        ]
+      }
+    }
+  } as unknown as SouthConnectorManifest;
+}
+
+const nodes: Array<SouthConnectorExploreEntry> = [
+  { id: 'n1', name: 'Node1', metadata: { nodeId: 'ns=1;s=A', dataType: 'Float' }, hasChildren: false },
+  { id: 'n2', name: 'Node2', metadata: { nodeId: 'ns=1;s=B', dataType: 'Int' }, hasChildren: false }
+];
+
+class ItemImportWizardComponentTester {
+  readonly fixture = TestBed.createComponent(ItemImportWizardComponent);
+  readonly component = this.fixture.componentInstance;
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+}
+
+describe('ItemImportWizardComponent', () => {
+  let tester: ItemImportWizardComponentTester;
+  let activeModal: MockObject<NgbActiveModal>;
+
+  beforeEach(() => {
+    activeModal = createMock(NgbActiveModal);
+    TestBed.configureTestingModule({
+      providers: [provideI18nTesting(), { provide: NgbActiveModal, useValue: activeModal }]
+    });
+    tester = new ItemImportWizardComponentTester();
+  });
+
+  test('the name field defaults to mapping the node own name from metadata', () => {
+    tester.component.prepare(buildManifest(), nodes, []);
+
+    const nameMapping = tester.component.mappings.find(mapping => mapping.field === 'name')!;
+
+    expect(nameMapping.source).toBe('metadata');
+    expect(nameMapping.metadataKey).toBe('name');
+  });
+
+  test('required vs optional headers are reflected on the mappings', () => {
+    tester.component.prepare(buildManifest(), nodes, []);
+
+    const required = tester.component.mappings.filter(mapping => mapping.required).map(mapping => mapping.field);
+    const optional = tester.component.mappings.filter(mapping => !mapping.required).map(mapping => mapping.field);
+
+    expect(required).toEqual(['name', 'enabled', 'settings_nodeId', 'settings_preserveFiles', 'settings_mode']);
+    expect(optional).toEqual(['settings_maxAge']);
+  });
+
+  test('buildRows resolves metadata-sourced and constant-sourced fields per node', () => {
+    tester.component.prepare(buildManifest(), nodes, []);
+
+    const nodeIdMapping = tester.component.mappings.find(mapping => mapping.field === 'settings_nodeId')!;
+    nodeIdMapping.source = 'metadata';
+    nodeIdMapping.metadataKey = 'nodeId';
+
+    const preserveFilesMapping = tester.component.mappings.find(mapping => mapping.field === 'settings_preserveFiles')!;
+    preserveFilesMapping.constantValue = true;
+
+    const rows = tester.component.buildRows();
+
+    expect(rows).toEqual([
+      {
+        name: 'Node1',
+        enabled: 'true',
+        settings_nodeId: 'ns=1;s=A',
+        settings_preserveFiles: 'true',
+        settings_mode: 'iso-string',
+        settings_maxAge: '0'
+      },
+      {
+        name: 'Node2',
+        enabled: 'true',
+        settings_nodeId: 'ns=1;s=B',
+        settings_preserveFiles: 'true',
+        settings_mode: 'iso-string',
+        settings_maxAge: '0'
+      }
+    ]);
+  });
+
+  test('buildRows falls back to an empty string when a metadata field has no key selected', () => {
+    tester.component.prepare(buildManifest(), nodes, []);
+
+    const nodeIdMapping = tester.component.mappings.find(mapping => mapping.field === 'settings_nodeId')!;
+    nodeIdMapping.source = 'metadata';
+    nodeIdMapping.metadataKey = null;
+
+    const rows = tester.component.buildRows();
+
+    expect(rows[0]['settings_nodeId']).toBe('');
+  });
+
+  test('buildRows resolves the synthetic id metadata key to the node id', () => {
+    tester.component.prepare(buildManifest(), nodes, []);
+
+    const nodeIdMapping = tester.component.mappings.find(mapping => mapping.field === 'settings_nodeId')!;
+    nodeIdMapping.source = 'metadata';
+    nodeIdMapping.metadataKey = 'id';
+
+    const rows = tester.component.buildRows();
+
+    expect(rows[0]['settings_nodeId']).toBe('n1');
+    expect(rows[1]['settings_nodeId']).toBe('n2');
+  });
+
+  test('matchKeyOptions only includes settings fields that are currently mapped', () => {
+    tester.component.prepare(buildManifest(), nodes, []);
+
+    // settings_nodeId switched to metadata but no key chosen yet -> not usable as a match key
+    const nodeIdMapping = tester.component.mappings.find(mapping => mapping.field === 'settings_nodeId')!;
+    nodeIdMapping.source = 'metadata';
+    nodeIdMapping.metadataKey = null;
+
+    // settings_preserveFiles and settings_mode stay constant-mapped by default -> usable
+    const options = tester.component.matchKeyOptions;
+
+    expect(options).toContain('name');
+    expect(options).toContain('settings_preserveFiles');
+    expect(options).toContain('settings_mode');
+    expect(options).toContain('settings_maxAge');
+    expect(options).not.toContain('settings_nodeId');
+  });
+
+  test('matchKeyOptions includes a metadata-mapped field once a key is chosen', () => {
+    tester.component.prepare(buildManifest(), nodes, []);
+
+    const nodeIdMapping = tester.component.mappings.find(mapping => mapping.field === 'settings_nodeId')!;
+    nodeIdMapping.source = 'metadata';
+    nodeIdMapping.metadataKey = 'nodeId';
+
+    expect(tester.component.matchKeyOptions).toContain('settings_nodeId');
+  });
+
+  test('setSource switches a mapping to metadata and picks a default key', () => {
+    tester.component.prepare(buildManifest(), nodes, []);
+
+    const preserveFilesMapping = tester.component.mappings.find(mapping => mapping.field === 'settings_preserveFiles')!;
+    expect(preserveFilesMapping.metadataKey).toBeNull();
+
+    tester.component.setSource(preserveFilesMapping, 'metadata');
+
+    expect(preserveFilesMapping.source).toBe('metadata');
+    expect(preserveFilesMapping.metadataKey).not.toBeNull();
+  });
+
+  test('renders a boolean control for a boolean settings attribute', async () => {
+    tester.component.prepare(buildManifest(), nodes, []);
+    tester.fixture.detectChanges();
+
+    await expect
+      .element(tester.root.getByCss('.field-mapping-row[data-field="settings_preserveFiles"] oib-oibus-boolean-form-control'))
+      .toBeInTheDocument();
+  });
+
+  test('renders a string-select control for a string-select settings attribute', async () => {
+    tester.component.prepare(buildManifest(), nodes, []);
+    tester.fixture.detectChanges();
+
+    await expect
+      .element(tester.root.getByCss('.field-mapping-row[data-field="settings_mode"] oib-oibus-string-select-form-control'))
+      .toBeInTheDocument();
+  });
+
+  test('renders a string control for a string settings attribute', async () => {
+    tester.component.prepare(buildManifest(), nodes, []);
+    tester.fixture.detectChanges();
+
+    await expect
+      .element(tester.root.getByCss('.field-mapping-row[data-field="settings_nodeId"] oib-oibus-string-form-control'))
+      .toBeInTheDocument();
+  });
+
+  test('getWizardResult exposes mappings, matchKey, and built rows', () => {
+    tester.component.prepare(buildManifest(), nodes, []);
+    tester.component.matchKey = 'name';
+
+    const result = tester.component.getWizardResult();
+
+    expect(result.matchKey).toBe('name');
+    expect(result.mappings).toBe(tester.component.mappings);
+    expect(result.rows.length).toBe(2);
+  });
+
+  test('cancel dismisses the modal', () => {
+    tester.component.prepare(buildManifest(), nodes, []);
+
+    tester.component.cancel();
+
+    expect(activeModal.dismiss).toHaveBeenCalled();
+  });
+});

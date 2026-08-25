@@ -1,0 +1,141 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="south.explore.item-import-wizard.title"></h4>
+</div>
+<div class="modal-body">
+  @if (currentStep === 1) {
+    <table class="table" id="field-mapping-table">
+      <thead>
+        <tr>
+          <th translate="south.explore.item-import-wizard.field"></th>
+          <th translate="south.explore.item-import-wizard.source"></th>
+          <th translate="south.explore.item-import-wizard.value"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (mapping of mappings; track mapping.field) {
+          <tr class="field-mapping-row" [attr.data-field]="mapping.field">
+            <td>
+              <span [class.fw-bold]="mapping.required">{{ mapping.field }}</span>
+              @if (mapping.required) {
+                <span class="text-danger">*</span>
+              }
+            </td>
+            <td>
+              <div class="form-check">
+                <input
+                  type="radio"
+                  class="form-check-input source-metadata-radio"
+                  [id]="'source-metadata-' + mapping.field"
+                  [name]="'source-' + mapping.field"
+                  [checked]="mapping.source === 'metadata'"
+                  (change)="setSource(mapping, 'metadata')"
+                />
+                <label
+                  class="form-check-label"
+                  [for]="'source-metadata-' + mapping.field"
+                  translate="south.explore.item-import-wizard.from-metadata"
+                ></label>
+              </div>
+              <div class="form-check">
+                <input
+                  type="radio"
+                  class="form-check-input source-constant-radio"
+                  [id]="'source-constant-' + mapping.field"
+                  [name]="'source-' + mapping.field"
+                  [checked]="mapping.source === 'constant'"
+                  (change)="setSource(mapping, 'constant')"
+                />
+                <label
+                  class="form-check-label"
+                  [for]="'source-constant-' + mapping.field"
+                  translate="south.explore.item-import-wizard.constant-value"
+                ></label>
+              </div>
+            </td>
+            <td>
+              @if (mapping.source === 'metadata') {
+                <select
+                  class="form-select metadata-key-select"
+                  [value]="mapping.metadataKey ?? ''"
+                  (change)="onMetadataKeyChange(mapping, $event)"
+                >
+                  <option value="" translate="south.explore.item-import-wizard.select-metadata-key"></option>
+                  @for (key of metadataKeyOptions; track key) {
+                    <option [value]="key">{{ key }}</option>
+                  }
+                </select>
+              } @else {
+                @if (mapping.field === 'enabled') {
+                  <input
+                    type="checkbox"
+                    class="form-check-input constant-boolean-input"
+                    [checked]="mapping.constantValue"
+                    (change)="onEnabledConstantChange(mapping, $event)"
+                  />
+                } @else if (mapping.attribute && constantsForm.contains(mapping.field)) {
+                  <div [formGroup]="constantsForm">
+                    <ng-container [formGroupName]="mapping.field">
+                      @switch (mapping.attribute.type) {
+                        @case ('boolean') {
+                          <oib-oibus-boolean-form-control [booleanAttribute]="mapping.attribute" />
+                        }
+                        @case ('string') {
+                          <oib-oibus-string-form-control [stringAttribute]="mapping.attribute" />
+                        }
+                        @case ('code') {
+                          <oib-oibus-code-form-control [codeAttribute]="mapping.attribute" />
+                        }
+                        @case ('string-select') {
+                          <oib-oibus-string-select-form-control [stringSelectAttribute]="mapping.attribute" />
+                        }
+                        @case ('secret') {
+                          <oib-oibus-secret-form-control [secretAttribute]="mapping.attribute" />
+                        }
+                        @case ('number') {
+                          <oib-oibus-number-form-control [numberAttribute]="mapping.attribute" />
+                        }
+                        @case ('instant') {
+                          <oib-oibus-instant-form-control [instantAttribute]="mapping.attribute" />
+                        }
+                        @case ('timezone') {
+                          <oib-oibus-timezone-form-control [timezoneAttribute]="mapping.attribute" />
+                        }
+                        @default {}
+                      }
+                    </ng-container>
+                  </div>
+                } @else {
+                  <input
+                    type="text"
+                    class="form-control constant-text-input"
+                    [value]="mapping.constantValue"
+                    (input)="onTextConstantInput(mapping, $event)"
+                  />
+                }
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  } @else if (currentStep === 2) {
+    <div class="mb-3">
+      <label class="form-label" for="match-key-select" translate="south.explore.item-import-wizard.match-key"></label>
+      <select class="form-select" id="match-key-select" [value]="matchKey ?? ''" (change)="onMatchKeyChange($event)">
+        <option value="" translate="south.explore.item-import-wizard.match-key-none"></option>
+        @for (option of matchKeyOptions; track option) {
+          <option [value]="option">{{ option }}</option>
+        }
+      </select>
+    </div>
+  }
+</div>
+<div class="modal-footer">
+  @if (currentStep > 1) {
+    <button type="button" class="btn btn-cancel" id="back-button" (click)="goBack()" translate="common.back"></button>
+  }
+  @if (currentStep < 2) {
+    <button type="button" class="btn btn-primary" id="next-button" (click)="goNext()" translate="common.next"></button>
+  }
+  <button type="button" class="btn btn-cancel" id="cancel-button" (click)="cancel()" translate="common.cancel"></button>
+</div>

@@ -6,6 +6,7 @@
     "ok": "OK",
     "save": "Save",
     "back": "Back",
+    "next": "Next",
     "cancel": "Cancel",
     "delete": "Delete",
     "close": "Close",
@@ -2593,7 +2594,18 @@
       "button": "Explore",
       "empty": "Nothing to explore",
       "error": "Error while exploring the data source",
-      "create-from-selection": "Create items from selection ({{count}})"
+      "create-from-selection": "Create items from selection ({{count}})",
+      "item-import-wizard": {
+        "title": "Create items from selection",
+        "field": "Field",
+        "source": "Source",
+        "value": "Value",
+        "from-metadata": "From node metadata",
+        "constant-value": "Constant value",
+        "select-metadata-key": "Select a metadata key",
+        "match-key": "Match key",
+        "match-key-none": "None"
+      }
     },
     "test-item": {
       "title": "Testing item",
