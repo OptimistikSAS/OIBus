@@ -22,6 +22,7 @@ import {
 import OIAnalyticsCommandService from './service/oia/oianalytics-command.service';
 import OianalyticsRegistrationService from './service/oia/oianalytics-registration.service';
 import OIAnalyticsMessageService from './service/oia/oianalytics-message.service';
+import ConfigTransferBuilderService from './service/config-transfer/config-transfer-builder.service';
 import JoiValidator from './web-server/controllers/validators/joi.validator';
 import ScanModeService from './service/scan-mode.service';
 import IPFilterService from './service/ip-filter.service';
@@ -116,9 +117,7 @@ export async function bootstrap(): Promise<void> {
   );
   oIAnalyticsRegistrationService.start();
 
-  const oIAnalyticsMessageService = new OIAnalyticsMessageService(
-    repositoryService.oianalyticsMessageRepository,
-    oIAnalyticsRegistrationService,
+  const configTransferBuilderService = new ConfigTransferBuilderService(
     repositoryService.engineRepository,
     repositoryService.scanModeRepository,
     repositoryService.ipFilterRepository,
@@ -128,9 +127,16 @@ export async function bootstrap(): Promise<void> {
     repositoryService.northConnectorRepository,
     repositoryService.historyQueryRepository,
     repositoryService.transformerRepository,
-    oIAnalyticsClient,
+    encryptionService,
     ignoreIpFilters,
     ignoreRemoteUpdate
+  );
+
+  const oIAnalyticsMessageService = new OIAnalyticsMessageService(
+    repositoryService.oianalyticsMessageRepository,
+    oIAnalyticsRegistrationService,
+    oIAnalyticsClient,
+    configTransferBuilderService
   );
 
   const dataStreamEngine = new DataStreamEngine(
