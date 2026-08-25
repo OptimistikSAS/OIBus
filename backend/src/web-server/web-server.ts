@@ -19,6 +19,7 @@ import CertificateService from '../service/certificate.service';
 import UserService from '../service/user.service';
 import LogService from '../service/log.service';
 import TransformerService from '../service/transformer.service';
+import ConfigTransferService from '../service/config-transfer/config-transfer.service';
 import { Express } from 'express-serve-static-core';
 import IpFilterMiddleware from './middlewares/ip-filter.middleware';
 import { createInjectServicesMiddleware } from './middlewares/services.middleware';
@@ -61,6 +62,7 @@ export default class WebServer {
     private readonly northService: NorthService,
     private readonly transformerService: TransformerService,
     private readonly historyQueryService: HistoryQueryService,
+    private readonly configTransferService: ConfigTransferService,
     private readonly ignoreIpFilters: boolean,
     logger: ILogger
   ) {
@@ -118,6 +120,7 @@ export default class WebServer {
       createInjectServicesMiddleware(
         this.auditService,
         this.certificateService,
+        this.configTransferService,
         this.historyQueryService,
         this.ipFilterService,
         this.logService,

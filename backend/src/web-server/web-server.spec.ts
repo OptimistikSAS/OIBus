@@ -18,6 +18,7 @@ import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
 import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
+import ConfigTransferServiceMock from '../tests/__mocks__/service/config-transfer-service.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import { fixTsoaModuleResolution, mockModule, reloadModule } from '../tests/utils/test-utils';
 import type WebServerClass from './web-server';
@@ -33,6 +34,7 @@ import type SouthService from '../service/south.service';
 import type NorthService from '../service/north.service';
 import type TransformerService from '../service/transformer.service';
 import type HistoryQueryService from '../service/history-query.service';
+import type ConfigTransferService from '../service/config-transfer/config-transfer.service';
 import type EncryptionService from '../service/encryption.service';
 import type AuditService from '../service/audit.service';
 import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model/types';
@@ -125,6 +127,7 @@ describe('WebServer', () => {
       new NorthServiceMock() as unknown as NorthService,
       new TransformerServiceMock() as unknown as TransformerService,
       new HistoryQueryServiceMock() as unknown as HistoryQueryService,
+      new ConfigTransferServiceMock() as unknown as ConfigTransferService,
       false,
       loggerMock
     );
@@ -167,6 +170,7 @@ describe('WebServer', () => {
       new NorthServiceMock() as unknown as NorthService,
       new TransformerServiceMock() as unknown as TransformerService,
       new HistoryQueryServiceMock() as unknown as HistoryQueryService,
+      new ConfigTransferServiceMock() as unknown as ConfigTransferService,
       false,
       loggerMock
     );
