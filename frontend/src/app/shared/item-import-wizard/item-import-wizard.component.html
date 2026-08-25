@@ -186,7 +186,7 @@
           <table class="table table-sm table-hover oib-simple-table" id="preview-table">
             <thead class="light">
               <tr>
-                @for (mapping of mappings; track mapping.field) {
+                @for (mapping of previewMappings; track mapping.field) {
                   <th style="min-width: 150px; max-width: 250px">
                     @if (labelFor(mapping); as key) {
                       {{ key | translate }}
@@ -203,7 +203,7 @@
             <tbody>
               @for (row of displayedRows.content; track $index; let rowIndex = $index) {
                 <tr class="preview-row">
-                  @for (mapping of mappings; track mapping.field) {
+                  @for (mapping of previewMappings; track mapping.field) {
                     <td class="text-truncate" style="max-width: 250px">
                       @if (editingRowIndex === displayedRows.number * displayedRows.size + rowIndex) {
                         <input

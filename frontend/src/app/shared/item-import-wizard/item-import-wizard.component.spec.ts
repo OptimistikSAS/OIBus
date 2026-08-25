@@ -360,7 +360,24 @@ describe('ItemImportWizardComponent', () => {
       const firstRowInputs = rows.nth(0).getByCss('.preview-cell-input');
       const secondRowInputs = rows.nth(1).getByCss('.preview-cell-input');
       expect(firstRowInputs.elements().length).toBe(0);
-      expect(secondRowInputs.elements().length).toBe(tester.component.mappings.length);
+      expect(secondRowInputs.elements().length).toBe(tester.component.previewMappings.length);
+    });
+
+    test('previewMappings hides optional fields with no value in any row, but keeps required ones', () => {
+      const checkFn = vi.fn().mockReturnValue(of({ items: [], errors: [] }));
+      prepareWizard(tester.component, nodes, [], checkFn);
+      tester.component.goNext();
+      tester.component.goNext();
+
+      const maxAgeMapping = tester.component.mappings.find(mapping => mapping.field === 'settings_maxAge')!;
+      expect(maxAgeMapping.required).toBe(false);
+      expect(tester.component.previewMappings).toContain(maxAgeMapping);
+
+      tester.component.rows.forEach(row => (row['settings_maxAge'] = ''));
+
+      expect(tester.component.previewMappings).not.toContain(maxAgeMapping);
+      const requiredFields = tester.component.mappings.filter(mapping => mapping.required).map(mapping => mapping.field);
+      expect(tester.component.previewMappings.map(mapping => mapping.field)).toEqual(expect.arrayContaining(requiredFields));
     });
 
     test('editing a cell updates the row and re-triggers the check call', () => {

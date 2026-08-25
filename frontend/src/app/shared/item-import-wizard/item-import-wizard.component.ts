@@ -251,6 +251,16 @@ export class ItemImportWizardComponent {
     return ['name', ...this.mappedSettingsFields];
   }
 
+  /**
+   * Preview-table columns: always show required fields (so the user can see/fix them even when
+   * blank), but hide optional fields nobody gave a value to — otherwise the preview table is
+   * dominated by empty columns (e.g. group/historian fields left unmapped) that push the Resolution,
+   * Error and row-action columns out of view.
+   */
+  get previewMappings(): Array<FieldMapping> {
+    return this.mappings.filter(mapping => mapping.required || this.rows.some(row => !!row[mapping.field]));
+  }
+
   /** Translation key for a mapping's column label, or `null` for the synthetic `name`/`enabled`/`scanMode` fields that fall back to `south.items.*`. */
   labelFor(mapping: FieldMapping): string | null {
     if (!mapping.attribute) return null;
