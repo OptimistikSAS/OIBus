@@ -6,7 +6,6 @@ import { Observable } from 'rxjs';
 import { SouthConnectorExploreEntry, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { OIBusAttribute, OIBusControlAttribute, OIBusObjectAttribute } from '../../../../../backend/shared/model/form.model';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
-import { deriveItemImportFields } from '../form/item-import-fields.util';
 import { createControl } from '../form/dynamic-form.builder';
 import { emptyPage } from '../test-utils';
 import { PaginationComponent } from '../pagination/pagination.component';
@@ -144,6 +143,8 @@ export class ItemImportWizardComponent {
 
   prepare(
     manifest: SouthConnectorManifest,
+    expectedHeaders: Array<string>,
+    optionalHeaders: Array<string>,
     selectedNodes: Array<SouthConnectorExploreEntry>,
     existingItems: Array<ExistingItemForMatch>,
     checkFn: WizardCheckFn
@@ -161,7 +162,6 @@ export class ItemImportWizardComponent {
     this.globalMatchResolution = 'update';
     this.displayedRows = emptyPage();
 
-    const { expectedHeaders, optionalHeaders } = deriveItemImportFields(manifest);
     const settingsAttribute = manifest.items.rootAttribute.attributes.find(attribute => attribute.key === 'settings') as
       OIBusObjectAttribute | undefined;
 

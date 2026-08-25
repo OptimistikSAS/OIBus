@@ -624,6 +624,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     const fromSouthId = this.fromSouthId || null;
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
+    const { expectedHeaders, optionalHeaders } = this.buildItemImportHeaders();
     const checkFn = (rows: Array<Record<string, string>>, matchKey: string | null) =>
       this.historyQueryService
         .checkImportItemsFromRows(this.southManifest!.id, this.inMemoryItems, rows, matchKey ?? undefined)
@@ -653,7 +654,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
         close: sessionId => this.historyQueryService.closeExplore(historyQueryId || 'create', sessionId)
       },
       this.inMemoryItems as unknown as Array<{ id: string; name: string; settings?: object }>,
-      { checkFn, importFn }
+      { expectedHeaders, optionalHeaders, checkFn, importFn }
     );
   }
 
@@ -768,8 +769,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     });
   }
 
-  importItems() {
-    const modalRef = this.modalService.open(ImportHistoryQueryItemsModalComponent, { size: 'xl', backdrop: 'static' });
+  private buildItemImportHeaders(): { expectedHeaders: Array<string>; optionalHeaders: Array<string> } {
     const expectedHeaders = ['name', 'enabled'];
     const optionalHeaders: Array<string> = ['scanMode'];
     const settingsAttribute = this.southManifest!.items.rootAttribute.attributes.find(
@@ -782,6 +782,12 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
         expectedHeaders.push(`settings_${setting.key}`);
       }
     });
+    return { expectedHeaders, optionalHeaders };
+  }
+
+  importItems() {
+    const modalRef = this.modalService.open(ImportHistoryQueryItemsModalComponent, { size: 'xl', backdrop: 'static' });
+    const { expectedHeaders, optionalHeaders } = this.buildItemImportHeaders();
 
     const checkFn = (file: File, delimiter: string, deleteItemsNotPresent: boolean) =>
       this.historyQueryService.checkImportItems(this.southManifest!.id, this.inMemoryItems, file, delimiter, deleteItemsNotPresent);

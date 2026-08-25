@@ -13,6 +13,8 @@ import { page } from 'vitest/browser';
 
 function createItemsApi(): MockObject<CreateItemsApi> & CreateItemsApi {
   return {
+    expectedHeaders: ['name', 'enabled'],
+    optionalHeaders: [],
     checkFn: vi.fn().mockReturnValue(of({ items: [], errors: [] })),
     importFn: vi.fn().mockReturnValue(of(undefined))
   } as unknown as MockObject<CreateItemsApi> & CreateItemsApi;
@@ -457,7 +459,14 @@ describe('SouthExploreModalComponent', () => {
 
     tester.component.createItemsFromSelection();
 
-    expect(wizardPrepare).toHaveBeenCalledWith(manifest, tester.component.selectedNodes, existingItems, api.checkFn);
+    expect(wizardPrepare).toHaveBeenCalledWith(
+      manifest,
+      api.expectedHeaders,
+      api.optionalHeaders,
+      tester.component.selectedNodes,
+      existingItems,
+      api.checkFn
+    );
   });
 
   test('createItemsFromSelection imports the wizard result and closes the explore modal on success', () => {

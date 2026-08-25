@@ -353,9 +353,16 @@ export class HistoryQueryDetailComponent {
     );
   }
 
+  private buildItemImportHeaders(): { expectedHeaders: Array<string>; optionalHeaders: Array<string> } {
+    const { expectedHeaders, optionalHeaders } = deriveItemImportFields(this.southManifest!);
+    optionalHeaders.push('scanMode');
+    return { expectedHeaders, optionalHeaders };
+  }
+
   explore() {
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
+    const { expectedHeaders, optionalHeaders } = this.buildItemImportHeaders();
     const checkFn = (rows: Array<Record<string, string>>, matchKey: string | null) =>
       this.historyQueryService
         .checkImportItemsFromRows(this.southManifest!.id, this.historyQuery!.items, rows, matchKey ?? undefined)
@@ -380,7 +387,7 @@ export class HistoryQueryDetailComponent {
         close: sessionId => this.historyQueryService.closeExplore(this.historyQuery!.id, sessionId)
       },
       this.historyQuery!.items,
-      { checkFn, importFn }
+      { expectedHeaders, optionalHeaders, checkFn, importFn }
     );
   }
 
@@ -516,8 +523,7 @@ export class HistoryQueryDetailComponent {
 
   importItems() {
     const modalRef = this.modalService.open(ImportHistoryQueryItemsModalComponent, { size: 'xl', backdrop: 'static' });
-    const { expectedHeaders, optionalHeaders } = deriveItemImportFields(this.southManifest!);
-    optionalHeaders.push('scanMode');
+    const { expectedHeaders, optionalHeaders } = this.buildItemImportHeaders();
 
     const checkFn = (file: File, delimiter: string, deleteItemsNotPresent: boolean) =>
       this.historyQueryService.checkImportItems(this.southManifest!.id, this.historyQuery!.items, file, delimiter, deleteItemsNotPresent);

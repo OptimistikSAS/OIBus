@@ -144,7 +144,12 @@ describe('HistoryQueryDetailComponent', () => {
       { ...testData.south.manifest, explore: true },
       expect.objectContaining({ start: expect.any(Function), browse: expect.any(Function), close: expect.any(Function) }),
       historyQuery.items,
-      { checkFn: expect.any(Function), importFn: expect.any(Function) }
+      {
+        expectedHeaders: expect.any(Array),
+        optionalHeaders: expect.any(Array),
+        checkFn: expect.any(Function),
+        importFn: expect.any(Function)
+      }
     );
 
     const api = prepare.mock.calls[0][4];

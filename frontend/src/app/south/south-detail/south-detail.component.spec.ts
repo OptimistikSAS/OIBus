@@ -276,7 +276,12 @@ describe('SouthDetailComponent', () => {
       manifest,
       undefined,
       southConnector.items,
-      { checkFn: expect.any(Function), importFn: expect.any(Function) }
+      {
+        expectedHeaders: expect.any(Array),
+        optionalHeaders: expect.any(Array),
+        checkFn: expect.any(Function),
+        importFn: expect.any(Function)
+      }
     );
   });
 

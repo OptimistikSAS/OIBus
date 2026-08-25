@@ -146,7 +146,12 @@ describe('EditHistoryQueryComponent', () => {
       fixture.componentInstance.southManifest,
       expect.objectContaining({ start: expect.any(Function), browse: expect.any(Function), close: expect.any(Function) }),
       fixture.componentInstance.inMemoryItems,
-      { checkFn: expect.any(Function), importFn: expect.any(Function) }
+      {
+        expectedHeaders: expect.any(Array),
+        optionalHeaders: expect.any(Array),
+        checkFn: expect.any(Function),
+        importFn: expect.any(Function)
+      }
     );
 
     const api = prepare.mock.calls[0][4];
@@ -189,7 +194,12 @@ describe('EditHistoryQueryComponent', () => {
       fixture.componentInstance.southManifest,
       expect.objectContaining({ start: expect.any(Function) }),
       fixture.componentInstance.inMemoryItems,
-      { checkFn: expect.any(Function), importFn: expect.any(Function) }
+      {
+        expectedHeaders: expect.any(Array),
+        optionalHeaders: expect.any(Array),
+        checkFn: expect.any(Function),
+        importFn: expect.any(Function)
+      }
     );
     const api = prepare.mock.calls[0][4];
     api.start(southCommand.settings, southCommand.type);

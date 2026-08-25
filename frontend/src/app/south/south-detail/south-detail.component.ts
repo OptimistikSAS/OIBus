@@ -440,11 +440,16 @@ export class SouthDetailComponent {
     });
   }
 
-  importItems() {
-    const modal = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
+  private buildItemImportHeaders(): { expectedHeaders: Array<string>; optionalHeaders: Array<string> } {
     const { expectedHeaders, optionalHeaders } = deriveItemImportFields(this.manifest!);
     expectedHeaders.push('scanMode');
     optionalHeaders.push('group', 'maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'recoveryStrategy', 'syncWithGroup');
+    return { expectedHeaders, optionalHeaders };
+  }
+
+  importItems() {
+    const modal = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
+    const { expectedHeaders, optionalHeaders } = this.buildItemImportHeaders();
 
     const checkFn = (file: File, delimiter: string, deleteItemsNotPresent: boolean) =>
       this.southConnectorService
@@ -844,6 +849,7 @@ export class SouthDetailComponent {
   explore() {
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
+    const { expectedHeaders, optionalHeaders } = this.buildItemImportHeaders();
     const checkFn = (rows: Array<Record<string, string>>, matchKey: string | null) =>
       this.southConnectorService.checkImportItemsFromRows(this.manifest!.id, this.southConnector!.items, rows, matchKey ?? undefined).pipe(
         map(result => ({
@@ -885,7 +891,7 @@ export class SouthDetailComponent {
       this.manifest!,
       undefined,
       this.southConnector!.items,
-      { checkFn, importFn }
+      { expectedHeaders, optionalHeaders, checkFn, importFn }
     );
   }
 

@@ -29,6 +29,8 @@ import {
  * local push into an unsaved connector's in-memory item list.
  */
 export interface CreateItemsApi {
+  expectedHeaders: Array<string>;
+  optionalHeaders: Array<string>;
   checkFn: WizardCheckFn;
   importFn: (items: Array<WizardCheckedItem>, matchKey: string | null) => Observable<void>;
 }
@@ -203,7 +205,14 @@ export class SouthExploreModalComponent implements OnDestroy {
     }
     const createItemsApi = this.createItemsApi;
     const modalRef = this.modalService.open(ItemImportWizardComponent, { size: 'xl', backdrop: 'static' });
-    modalRef.componentInstance.prepare(this.manifest, this.selectedNodes, this.existingItems, createItemsApi.checkFn);
+    modalRef.componentInstance.prepare(
+      this.manifest,
+      createItemsApi.expectedHeaders,
+      createItemsApi.optionalHeaders,
+      this.selectedNodes,
+      this.existingItems,
+      createItemsApi.checkFn
+    );
     modalRef.result.subscribe((result: { items: Array<WizardCheckedItem>; matchKey: string | null } | undefined) => {
       if (!result) {
         return;

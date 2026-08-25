@@ -309,6 +309,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
     }
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
+    const { expectedHeaders, optionalHeaders } = this.buildItemImportHeaders();
     const checkFn = (rows: Array<Record<string, string>>, matchKey: string | null) =>
       this.southConnectorService.checkImportItemsFromRows(this.manifest!.id, this.inMemoryItems, rows, matchKey ?? undefined).pipe(
         map(result => ({
@@ -352,7 +353,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
       this.manifest!,
       undefined,
       this.inMemoryItems as unknown as Array<{ id: string; name: string; settings?: object }>,
-      { checkFn, importFn }
+      { expectedHeaders, optionalHeaders, checkFn, importFn }
     );
   }
 
@@ -481,8 +482,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
     });
   }
 
-  importItems() {
-    const modal = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
+  private buildItemImportHeaders(): { expectedHeaders: Array<string>; optionalHeaders: Array<string> } {
     const expectedHeaders = ['name', 'enabled', 'scanMode'];
     const optionalHeaders: Array<string> = [
       'group',
@@ -503,6 +503,12 @@ export class EditSouthComponent implements CanComponentDeactivate {
         expectedHeaders.push(`settings_${setting.key}`);
       }
     });
+    return { expectedHeaders, optionalHeaders };
+  }
+
+  importItems() {
+    const modal = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
+    const { expectedHeaders, optionalHeaders } = this.buildItemImportHeaders();
 
     const checkFn = (file: File, delimiter: string, deleteItemsNotPresent: boolean) =>
       this.southConnectorService.checkImportItems(this.manifest!.id, this.inMemoryItems, file, delimiter, deleteItemsNotPresent).pipe(
