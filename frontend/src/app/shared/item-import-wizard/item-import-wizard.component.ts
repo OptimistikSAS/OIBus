@@ -258,10 +258,11 @@ export class ItemImportWizardComponent {
   }
 
   /**
-   * Translation key for a synthetic field's label (`name`/`enabled`/`scanMode`), used when `labelFor`
-   * returns `null`. `south.items.enabled` already exists with an unrelated meaning ("South item {{name}}
-   * enabled"), and `scanMode` is keyed as `scan-mode` (kebab-case) rather than the field's own camelCase
-   * name, so those two need an explicit mapping instead of a plain `'south.items.' + field` guess.
+   * Translation key for a synthetic field's label (`name`, `enabled`, `scanMode`, or a non-settings
+   * DTO field like `maxReadInterval` pushed onto the headers by the caller), used when `labelFor`
+   * returns `null`. These fields are keyed under `south.items.*` in kebab-case rather than their own
+   * camelCase field name (and `enabled` collides with an unrelated existing key), so they need an
+   * explicit mapping instead of a plain `'south.items.' + field` guess.
    */
   fallbackLabelKey(field: string): string {
     switch (field) {
@@ -269,6 +270,18 @@ export class ItemImportWizardComponent {
         return 'south.items.enabled-label';
       case 'scanMode':
         return 'south.items.scan-mode';
+      case 'maxReadInterval':
+        return 'south.items.max-read-interval';
+      case 'readDelay':
+        return 'south.items.read-delay';
+      case 'startTimeOffset':
+        return 'south.items.start-time-offset';
+      case 'endTimeOffset':
+        return 'south.items.end-time-offset';
+      case 'recoveryStrategy':
+        return 'south.items.recovery-strategy';
+      case 'syncWithGroup':
+        return 'south.items.sync-with-group';
       default:
         return 'south.items.' + field;
     }
