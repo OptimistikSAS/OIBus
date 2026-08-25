@@ -832,6 +832,38 @@ export const checkGroups = (
   return group;
 };
 
+/**
+ * Resolves a candidate item (from a CSV row or an explore-wizard row) against an existing item, using
+ * `matchKey` to decide the comparison: `'name'` compares names, anything else is treated as a settings
+ * key (accepting either the raw key or its `settings_`-prefixed CSV column form) and compares
+ * `settings[key]`. An empty candidate value never matches, so a row can't accidentally "claim" every
+ * existing item that also has an empty/undefined value for that key.
+ */
+export function resolveMatchedItem<T extends { id: string; name: string; settings?: object }>(
+  existingItems: Array<T>,
+  matchKey: string | undefined,
+  candidate: { name: string; settings: object }
+): T | null {
+  if (!matchKey) {
+    return null;
+  }
+
+  if (matchKey === 'name') {
+    return existingItems.find(existingItem => existingItem.name === candidate.name) || null;
+  }
+
+  const settingsKey = matchKey.startsWith('settings_') ? matchKey.replace('settings_', '') : matchKey;
+  const candidateValue = (candidate.settings as Record<string, unknown>)[settingsKey];
+  if (candidateValue === undefined || candidateValue === null || candidateValue === '') {
+    return null;
+  }
+
+  return (
+    existingItems.find(existingItem => (existingItem.settings as Record<string, unknown> | undefined)?.[settingsKey] === candidateValue) ||
+    null
+  );
+}
+
 export const itemToFlattenedCSV = (
   items: Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
   delimiter: string,

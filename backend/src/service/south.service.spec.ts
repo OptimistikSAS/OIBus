@@ -58,7 +58,33 @@ before(() => {
     checkScanMode: mock.fn(),
     checkGroups: mock.fn(),
     stringToBoolean: mock.fn(() => true),
-    generateRandomId: mock.fn(() => 'exploreSessionId')
+    generateRandomId: mock.fn(() => 'exploreSessionId'),
+    // Real implementation (not a behaviorless mock): checkImportItems/importItems tests rely on its
+    // actual matching semantics (by name or by settings key) to assert id resolution and uniqueness.
+    resolveMatchedItem: mock.fn(
+      <T extends { id: string; name: string; settings?: object }>(
+        existingItems: Array<T>,
+        matchKey: string | undefined,
+        candidate: { name: string; settings: object }
+      ): T | null => {
+        if (!matchKey) {
+          return null;
+        }
+        if (matchKey === 'name') {
+          return existingItems.find(existingItem => existingItem.name === candidate.name) || null;
+        }
+        const settingsKey = matchKey.startsWith('settings_') ? matchKey.replace('settings_', '') : matchKey;
+        const candidateValue = (candidate.settings as Record<string, unknown>)[settingsKey];
+        if (candidateValue === undefined || candidateValue === null || candidateValue === '') {
+          return null;
+        }
+        return (
+          existingItems.find(
+            existingItem => (existingItem.settings as Record<string, unknown> | undefined)?.[settingsKey] === candidateValue
+          ) || null
+        );
+      }
+    )
   };
 
   mockBuildSouth = mock.fn();
@@ -1705,12 +1731,220 @@ describe('South Service', () => {
     );
   });
 
+  it('should resolve an existing item id onto a matching row when matchKey is "name"', async () => {
+    const existingItems = [{ id: 'existingId1', name: 'item1', settings: { regex: 'old-regex' } }];
+    const csvData = [
+      {
+        name: 'item1',
+        enabled: 'true',
+        settings_regex: '*',
+        settings_preserveFiles: 'true',
+        settings_ignoreModifiedDate: 'false',
+        settings_minAge: 100,
+        scanMode: testData.scanMode.list[0].name
+      }
+    ];
+    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
+    if (papaparseMod) {
+      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
+        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
+      );
+    }
+
+    const result = await service.checkImportItems(testData.south.list[0].type, 'file content', ',', existingItems, 'name');
+
+    assert.strictEqual(result.errors.length, 0);
+    assert.strictEqual(result.items.length, 1);
+    assert.strictEqual(result.items[0].id, 'existingId1');
+  });
+
+  it('should resolve an existing item id via a settings-based matchKey', async () => {
+    const existingItems = [{ id: 'existingId2', name: 'a totally different name', settings: { regex: 'match-me' } }];
+    const csvData = [
+      {
+        name: 'newName',
+        enabled: 'true',
+        settings_regex: 'match-me',
+        settings_preserveFiles: 'true',
+        settings_ignoreModifiedDate: 'false',
+        settings_minAge: 100,
+        scanMode: testData.scanMode.list[0].name
+      }
+    ];
+    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
+    if (papaparseMod) {
+      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
+        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
+      );
+    }
+
+    const result = await service.checkImportItems(
+      testData.south.list[0].type,
+      'file content',
+      ',',
+      existingItems,
+      'settings_regex' // CSV column form of the settings key is accepted too
+    );
+
+    assert.strictEqual(result.errors.length, 0);
+    assert.strictEqual(result.items.length, 1);
+    assert.strictEqual(result.items[0].id, 'existingId2');
+  });
+
+  it('should keep id as "" (fresh create) when a matchKey is given but nothing matches', async () => {
+    const existingItems = [{ id: 'existingId3', name: 'unrelated', settings: { regex: 'unrelated-regex' } }];
+    const csvData = [
+      {
+        name: 'brandNewItem',
+        enabled: 'true',
+        settings_regex: 'no-match',
+        settings_preserveFiles: 'true',
+        settings_ignoreModifiedDate: 'false',
+        settings_minAge: 100,
+        scanMode: testData.scanMode.list[0].name
+      }
+    ];
+    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
+    if (papaparseMod) {
+      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
+        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
+      );
+    }
+
+    const result = await service.checkImportItems(testData.south.list[0].type, 'file content', ',', existingItems, 'settings_regex');
+
+    assert.strictEqual(result.errors.length, 0);
+    assert.strictEqual(result.items[0].id, '');
+  });
+
+  it('should not reject a row that matches its own resolved item by name, but should reject a collision with a different item', async () => {
+    const existingItems = [
+      { id: 'idA', name: 'item1', settings: { regex: 'regexA' } },
+      { id: 'idB', name: 'item2', settings: { regex: 'regexB' } }
+    ];
+    const csvData = [
+      // Resolves to idA via matchKey, and its own name also happens to be "item1": must NOT be rejected.
+      {
+        name: 'item1',
+        enabled: 'true',
+        settings_regex: 'regexA',
+        settings_preserveFiles: 'true',
+        settings_ignoreModifiedDate: 'false',
+        settings_minAge: 100,
+        scanMode: testData.scanMode.list[0].name
+      },
+      // Resolves to idB via matchKey (regexB), but its name "item1" collides with a DIFFERENT existing
+      // item (idA): must be rejected as already used.
+      {
+        name: 'item1',
+        enabled: 'true',
+        settings_regex: 'regexB',
+        settings_preserveFiles: 'true',
+        settings_ignoreModifiedDate: 'false',
+        settings_minAge: 100,
+        scanMode: testData.scanMode.list[0].name
+      }
+    ];
+    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
+    if (papaparseMod) {
+      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
+        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
+      );
+    }
+
+    const result = await service.checkImportItems(testData.south.list[0].type, 'file content', ',', existingItems, 'settings_regex');
+
+    assert.strictEqual(result.items.length, 1);
+    assert.strictEqual(result.items[0].id, 'idA');
+    assert.strictEqual(result.errors.length, 1);
+    assert.strictEqual(result.errors[0].error, 'Item name "item1" already used');
+  });
+
+  it('should reject two rows in the same batch sharing the same name', async () => {
+    const csvData = [
+      {
+        name: 'duplicateName',
+        enabled: 'true',
+        settings_regex: '*',
+        settings_preserveFiles: 'true',
+        settings_ignoreModifiedDate: 'false',
+        settings_minAge: 100,
+        scanMode: testData.scanMode.list[0].name
+      },
+      {
+        name: 'duplicateName',
+        enabled: 'true',
+        settings_regex: '**',
+        settings_preserveFiles: 'true',
+        settings_ignoreModifiedDate: 'false',
+        settings_minAge: 100,
+        scanMode: testData.scanMode.list[0].name
+      }
+    ];
+    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
+    if (papaparseMod) {
+      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
+        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
+      );
+    }
+
+    const result = await service.checkImportItems(testData.south.list[0].type, 'file content', ',', []);
+
+    assert.strictEqual(result.items.length, 1);
+    assert.strictEqual(result.errors.length, 1);
+    assert.strictEqual(result.errors[0].error, 'Item name "duplicateName" already used');
+  });
+
+  it('should validate rows the same way through checkImportItemsFromRows (JSON-rows path)', async () => {
+    const existingItems = [{ id: 'jsonRowsId', name: 'jsonRowItem', settings: { regex: 'json-regex' } }];
+    const rows = [
+      {
+        name: 'renamed',
+        enabled: 'true',
+        settings_regex: 'json-regex',
+        settings_preserveFiles: 'true',
+        settings_ignoreModifiedDate: 'false',
+        settings_minAge: 100,
+        scanMode: testData.scanMode.list[0].name
+      }
+    ];
+
+    const result = await service.checkImportItemsFromRows(testData.south.list[0].type, rows, existingItems, 'settings_regex');
+
+    assert.strictEqual(result.errors.length, 0);
+    assert.strictEqual(result.items.length, 1);
+    assert.strictEqual(result.items[0].id, 'jsonRowsId');
+    assert.strictEqual(result.items[0].name, 'renamed');
+  });
+
   it('should import items', async () => {
     await service.importItems(testData.south.list[0].id, [testData.south.itemCommand], 'userTest');
 
     assert.strictEqual(southConnectorRepository.saveAllItems.mock.calls.length, 1);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
     assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
+  });
+
+  it('should skip rows marked "skip" and preserve the id of rows marked "update" when importing with rowResolutions', async () => {
+    const skippedItem: SouthConnectorItemCommandDTO = { ...testData.south.itemCommand, id: '', name: 'Skipped item' };
+    const updatedItem: SouthConnectorItemCommandDTO = { ...testData.south.itemCommand, id: 'existingSouthItemId', name: 'Updated item' };
+    const createdItem: SouthConnectorItemCommandDTO = { ...testData.south.itemCommand, id: '', name: 'Created item' };
+
+    await service.importItems(testData.south.list[0].id, [skippedItem, updatedItem, createdItem], 'userTest', false, {
+      0: 'skip',
+      1: 'update',
+      2: 'create'
+    });
+
+    assert.strictEqual(southConnectorRepository.saveAllItems.mock.calls.length, 1);
+    const savedItems = southConnectorRepository.saveAllItems.mock.calls[0].arguments[1] as Array<{ id: string; name: string }>;
+    assert.strictEqual(savedItems.length, 2);
+    assert.deepStrictEqual(
+      savedItems.map(item => item.name),
+      ['Updated item', 'Created item']
+    );
+    assert.strictEqual(savedItems[0].id, 'existingSouthItemId');
+    assert.strictEqual(savedItems[1].id, '');
   });
 
   it('should import items with groupName and create group when it does not exist', async () => {

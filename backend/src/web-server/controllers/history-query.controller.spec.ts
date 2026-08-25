@@ -720,10 +720,11 @@ describe('HistoryQueryController', () => {
 
     const csvContent = 'id,name\n1,item1';
     const jsonContent = JSON.stringify([{ id: '1', name: 'item1' }]);
+    // The controller reads "currentItems" (JSON) first, then "itemsToImport" (CSV).
     let readCallCount = 0;
     const readFileMock = mock.method(fs, 'readFile', async () => {
       readCallCount++;
-      return readCallCount === 1 ? csvContent : jsonContent;
+      return readCallCount === 1 ? jsonContent : csvContent;
     });
     const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
 
@@ -744,32 +745,161 @@ describe('HistoryQueryController', () => {
     );
 
     assert.strictEqual(readFileMock.mock.calls.length, 2);
-    assert.deepStrictEqual(readFileMock.mock.calls[0].arguments[0], 'myFile.csv');
+    assert.deepStrictEqual(readFileMock.mock.calls[0].arguments[0], 'myFile.json');
     assert.deepStrictEqual(readFileMock.mock.calls[0].arguments[1], 'utf8');
-    assert.deepStrictEqual(readFileMock.mock.calls[1].arguments[0], 'myFile.json');
+    assert.deepStrictEqual(readFileMock.mock.calls[1].arguments[0], 'myFile.csv');
     assert.deepStrictEqual(readFileMock.mock.calls[1].arguments[1], 'utf8');
     assert.strictEqual(historyQueryService.checkImportItems.mock.calls.length, 1);
     assert.deepStrictEqual(historyQueryService.checkImportItems.mock.calls[0].arguments, [
       southType,
       csvContent,
       delimiter,
-      JSON.parse(jsonContent)
+      JSON.parse(jsonContent),
+      undefined
     ]);
     assert.deepStrictEqual(result, mockResult);
     assert.strictEqual(unlinkMock.mock.calls.length, 2);
   });
 
-  it('should throw an error if itemsToImport or currentItems files are missing in checkImportItems', async () => {
+  it('should pass matchKey through to the history query service on check', async () => {
     const southType = testData.historyQueries.list[0].southType;
     const delimiter = ',';
     const itemsToImportFile = {
-      buffer: Buffer.from('id,name\n1,item1')
+      path: 'myFile.csv'
+    } as Express.Multer.File;
+    const currentItemsFile = {
+      path: 'myFile.json'
+    } as Express.Multer.File;
+
+    mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1' }]));
+    mock.method(fs, 'unlink', async () => undefined);
+
+    historyQueryService.checkImportItems = mock.fn(async () => ({ items: [], errors: [] }));
+
+    await controller.checkImportItems(
+      southType,
+      delimiter,
+      'false',
+      itemsToImportFile,
+      currentItemsFile,
+      mockRequest as CustomExpressRequest,
+      'name'
+    );
+
+    assert.strictEqual(historyQueryService.checkImportItems.mock.calls[0].arguments[4], 'name');
+  });
+
+  it('should throw an error if currentItems file is missing in checkImportItems', async () => {
+    const southType = testData.historyQueries.list[0].southType;
+    const delimiter = ',';
+    const itemsToImportFile = {
+      path: 'myFile.csv'
     } as Express.Multer.File;
 
     await assert.rejects(
       controller.checkImportItems(southType, delimiter, 'false', itemsToImportFile, undefined!, mockRequest as CustomExpressRequest),
-      { message: 'Missing "itemsToImport" or "currentItems"' }
+      { message: 'Missing "currentItems"' }
     );
+  });
+
+  it('should throw an error if both itemsToImport (CSV) and itemsToImportJson are provided', async () => {
+    const southType = testData.historyQueries.list[0].southType;
+    const delimiter = ',';
+    const itemsToImportFile = { path: 'myFile.csv' } as Express.Multer.File;
+    const itemsToImportJsonFile = { path: 'myFile.json' } as Express.Multer.File;
+    const currentItemsFile = { path: 'currentItems.json' } as Express.Multer.File;
+
+    mock.method(fs, 'readFile', async () => JSON.stringify([]));
+    mock.method(fs, 'unlink', async () => undefined);
+
+    await assert.rejects(
+      controller.checkImportItems(
+        southType,
+        delimiter,
+        'false',
+        itemsToImportFile,
+        currentItemsFile,
+        mockRequest as CustomExpressRequest,
+        undefined,
+        itemsToImportJsonFile
+      ),
+      { message: 'Exactly one of "itemsToImport" or "itemsToImportJson" must be provided' }
+    );
+  });
+
+  it('should throw an error if neither itemsToImport (CSV) nor itemsToImportJson are provided', async () => {
+    const southType = testData.historyQueries.list[0].southType;
+    const delimiter = ',';
+    const currentItemsFile = { path: 'currentItems.json' } as Express.Multer.File;
+
+    mock.method(fs, 'readFile', async () => JSON.stringify([]));
+    mock.method(fs, 'unlink', async () => undefined);
+
+    await assert.rejects(
+      controller.checkImportItems(southType, delimiter, 'false', undefined!, currentItemsFile, mockRequest as CustomExpressRequest),
+      { message: 'Exactly one of "itemsToImport" or "itemsToImportJson" must be provided' }
+    );
+  });
+
+  it('should reject checkImportItems when both deleteItemsNotPresent and matchKey are provided', async () => {
+    const southType = testData.historyQueries.list[0].southType;
+    const delimiter = ',';
+    const itemsToImportFile = { path: 'myFile.csv' } as Express.Multer.File;
+    const currentItemsFile = { path: 'currentItems.json' } as Express.Multer.File;
+
+    await assert.rejects(
+      controller.checkImportItems(
+        southType,
+        delimiter,
+        'true',
+        itemsToImportFile,
+        currentItemsFile,
+        mockRequest as CustomExpressRequest,
+        'name'
+      ),
+      { message: '"deleteItemsNotPresent" and "matchKey" cannot be used together' }
+    );
+  });
+
+  it('should dispatch to the JSON-rows path when itemsToImportJson is provided', async () => {
+    const southType = testData.historyQueries.list[0].southType;
+    const delimiter = ',';
+    const currentItemsFile = { path: 'currentItems.json' } as Express.Multer.File;
+    const itemsToImportJsonFile = { path: 'myFile.json' } as Express.Multer.File;
+    const rows = [{ name: 'item1' }];
+    const existingItems = [{ id: '1', name: 'item1' }];
+
+    let readCallCount = 0;
+    mock.method(fs, 'readFile', async () => {
+      readCallCount++;
+      return readCallCount === 1 ? JSON.stringify(existingItems) : JSON.stringify(rows);
+    });
+    mock.method(fs, 'unlink', async () => undefined);
+
+    const mockResult = { items: [], errors: [] };
+    historyQueryService.checkImportItemsFromRows = mock.fn(async () => mockResult);
+    historyQueryService.checkImportItems = mock.fn(async () => mockResult);
+
+    const result = await controller.checkImportItems(
+      southType,
+      delimiter,
+      'false',
+      undefined!,
+      currentItemsFile,
+      mockRequest as CustomExpressRequest,
+      undefined,
+      itemsToImportJsonFile
+    );
+
+    assert.strictEqual(historyQueryService.checkImportItemsFromRows.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.checkImportItemsFromRows.mock.calls[0].arguments, [
+      southType,
+      rows,
+      existingItems,
+      undefined
+    ]);
+    assert.strictEqual(historyQueryService.checkImportItems.mock.calls.length, 0);
+    assert.deepStrictEqual(result, mockResult);
   });
 
   it('should check CSV import with an empty existing items list when deleteItemsNotPresent is true', async () => {
@@ -803,7 +933,7 @@ describe('HistoryQueryController', () => {
 
     assert.strictEqual(readFileMock.mock.calls.length, 1);
     assert.strictEqual(historyQueryService.checkImportItems.mock.calls.length, 1);
-    assert.deepStrictEqual(historyQueryService.checkImportItems.mock.calls[0].arguments, [southType, csvContent, delimiter, []]);
+    assert.deepStrictEqual(historyQueryService.checkImportItems.mock.calls[0].arguments, [southType, csvContent, delimiter, [], undefined]);
     assert.deepStrictEqual(result, mockResult);
     assert.strictEqual(unlinkMock.mock.calls.length, 2);
   });
@@ -846,7 +976,8 @@ describe('HistoryQueryController', () => {
       historyId,
       [{ id: '1', name: 'item1', scanModeName: 'scan1' }],
       'test',
-      false
+      false,
+      undefined
     ]);
   });
 
@@ -869,6 +1000,38 @@ describe('HistoryQueryController', () => {
     });
 
     await assert.doesNotReject(controller.importItems('southId', itemsFile, 'false', mockRequest as CustomExpressRequest));
+  });
+
+  it('should reject importItems when both deleteItemsNotPresent and matchKey are provided', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const itemsFile = { path: 'myFile.json' } as Express.Multer.File;
+
+    await assert.rejects(controller.importItems(historyId, itemsFile, 'true', mockRequest as CustomExpressRequest, 'name'), {
+      message: '"deleteItemsNotPresent" and "matchKey" cannot be used together'
+    });
+  });
+
+  it('should forward parsed rowResolutions to the history query service on import', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    const itemsFile = { path: 'myFile.json' } as Express.Multer.File;
+    const items = [{ id: '1', name: 'item1', scanModeName: 'scan1' }];
+    const rowResolutions = { 0: 'update' as const };
+
+    historyQueryService.importItems = mock.fn(async () => undefined);
+    mock.method(fs, 'readFile', async () => JSON.stringify(items));
+    mock.method(fs, 'unlink', async () => undefined);
+
+    await controller.importItems(
+      historyId,
+      itemsFile,
+      'false',
+      mockRequest as CustomExpressRequest,
+      undefined,
+      JSON.stringify(rowResolutions)
+    );
+
+    assert.strictEqual(historyQueryService.importItems.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.importItems.mock.calls[0].arguments, [historyId, items, 'test', false, rowResolutions]);
   });
 
   it('should add or edit a transformer', async () => {

@@ -1472,6 +1472,59 @@ describe('Service utils', () => {
     });
   });
 
+  describe('resolveMatchedItem', () => {
+    const existingItems = [
+      { id: 'id1', name: 'item1', settings: { reference: 'ref1', empty: '' } },
+      { id: 'id2', name: 'item2', settings: { reference: 'ref2' } }
+    ];
+
+    it('should return null when matchKey is undefined', () => {
+      assert.strictEqual(utils.resolveMatchedItem(existingItems, undefined, { name: 'item1', settings: {} }), null);
+    });
+
+    it('should match by name when matchKey is "name"', () => {
+      assert.deepStrictEqual(utils.resolveMatchedItem(existingItems, 'name', { name: 'item2', settings: {} }), existingItems[1]);
+    });
+
+    it('should return null when matchKey is "name" and no existing item matches', () => {
+      assert.strictEqual(utils.resolveMatchedItem(existingItems, 'name', { name: 'unknown', settings: {} }), null);
+    });
+
+    it('should match by a settings key given the raw key', () => {
+      assert.deepStrictEqual(
+        utils.resolveMatchedItem(existingItems, 'reference', { name: 'anything', settings: { reference: 'ref1' } }),
+        existingItems[0]
+      );
+    });
+
+    it('should match by a settings key given the settings_-prefixed CSV column form', () => {
+      assert.deepStrictEqual(
+        utils.resolveMatchedItem(existingItems, 'settings_reference', { name: 'anything', settings: { reference: 'ref2' } }),
+        existingItems[1]
+      );
+    });
+
+    it('should return null when no existing item has a matching settings value', () => {
+      assert.strictEqual(
+        utils.resolveMatchedItem(existingItems, 'reference', { name: 'anything', settings: { reference: 'unknown-ref' } }),
+        null
+      );
+    });
+
+    it('should return null when the candidate settings value is undefined', () => {
+      assert.strictEqual(utils.resolveMatchedItem(existingItems, 'reference', { name: 'anything', settings: {} }), null);
+    });
+
+    it('should return null when the candidate settings value is an empty string', () => {
+      assert.strictEqual(utils.resolveMatchedItem(existingItems, 'reference', { name: 'anything', settings: { reference: '' } }), null);
+    });
+
+    it('should not match an existing item whose settings value for the key is empty', () => {
+      // existingItems[0].settings.empty === '' — a candidate with the same empty value must not match
+      assert.strictEqual(utils.resolveMatchedItem(existingItems, 'empty', { name: 'anything', settings: { empty: '' } }), null);
+    });
+  });
+
   describe('itemToFlattenedCSV', () => {
     beforeEach(() => {
       csvExports.unparse.mock.resetCalls();

@@ -97,13 +97,33 @@ export default class SouthServiceMock {
       _southType: string,
       _fileContent: string,
       _delimiter: string,
-      _existingItems: Array<{ name: string }>
+      _existingItems: Array<{ name: string }>,
+      _matchKey?: string
     ): Promise<{ items: Array<SouthConnectorItemDTO>; errors: Array<{ item: Record<string, string>; error: string }> }> => ({
       items: [],
       errors: []
     })
   );
-  importItems = mock.fn(async (): Promise<void> => undefined);
+  checkImportItemsFromRows = mock.fn(
+    async (
+      _southType: string,
+      _rows: Array<Record<string, string>>,
+      _existingItems: Array<{ name: string }>,
+      _matchKey?: string
+    ): Promise<{ items: Array<SouthConnectorItemDTO>; errors: Array<{ item: Record<string, string>; error: string }> }> => ({
+      items: [],
+      errors: []
+    })
+  );
+  importItems = mock.fn(
+    async (
+      _southId: string,
+      _items: Array<SouthConnectorItemCommandDTO>,
+      _user: string,
+      _deleteItemsNotPresent?: boolean,
+      _rowResolutions?: Record<number, 'create' | 'update' | 'skip'>
+    ): Promise<void> => undefined
+  );
   retrieveSecretsFromSouth = mock.fn(
     (
       _retrieveSecretsFromSouth: string | null,

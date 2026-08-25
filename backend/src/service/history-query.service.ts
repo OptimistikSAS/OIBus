@@ -23,7 +23,7 @@ import { encryptionService } from './encryption.service';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
-import { checkScanMode, stringToBoolean } from './utils';
+import { checkScanMode, resolveMatchedItem, stringToBoolean } from './utils';
 import { toScanModeDTO } from './scan-mode-dto.utils';
 import { toHistoryQueryItemDTO } from './history-query-item-dto.utils';
 import { southManifestList } from './south-manifests';
@@ -551,11 +551,12 @@ export default class HistoryQueryService {
     await this.engine.reloadHistoryQuery(historyQuery, true);
   }
 
-  async checkImportItems(
+  checkImportItems(
     southType: string,
     fileContent: string,
     delimiter: string,
-    existingItems: Array<Omit<HistoryQueryItemDTO, 'createdBy' | 'updatedBy'>>
+    existingItems: Array<{ id: string; name: string; settings?: object }>,
+    matchKey?: string
   ): Promise<{
     items: Array<HistoryQueryItemDTO>;
     errors: Array<{ item: Record<string, string>; error: string }>;
@@ -567,23 +568,41 @@ export default class HistoryQueryService {
         `The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvContent.meta.delimiter}"`
       );
     }
+    return this.validateImportRows(manifest, existingItems, csvContent.data, matchKey);
+  }
 
+  checkImportItemsFromRows(
+    southType: string,
+    rows: Array<Record<string, string>>,
+    existingItems: Array<{ id: string; name: string; settings?: object }>,
+    matchKey?: string
+  ): Promise<{
+    items: Array<HistoryQueryItemDTO>;
+    errors: Array<{ item: Record<string, string>; error: string }>;
+  }> {
+    const manifest = this.southService.getManifest(southType);
+    return this.validateImportRows(manifest, existingItems, rows, matchKey);
+  }
+
+  private async validateImportRows(
+    manifest: SouthConnectorManifest,
+    existingItems: Array<{ id: string; name: string; settings?: object }>,
+    rows: Array<Record<string, string>>,
+    matchKey?: string
+  ): Promise<{
+    items: Array<HistoryQueryItemDTO>;
+    errors: Array<{ item: Record<string, string>; error: string }>;
+  }> {
     const validItems: Array<HistoryQueryItemDTO> = [];
     const errors: Array<{ item: Record<string, string>; error: string }> = [];
-    for (const data of csvContent.data) {
+    const acceptedNames = new Set<string>();
+    for (const data of rows) {
       const item: HistoryQueryItemDTO = {
         id: '',
         name: data.name,
         enabled: stringToBoolean(data.enabled),
         settings: {} as SouthItemSettings
       } as HistoryQueryItemDTO;
-      if (existingItems.find(existingItem => existingItem.name === item.name)) {
-        errors.push({
-          item: data,
-          error: `Item name "${data.name}" already used`
-        });
-        continue;
-      }
 
       let hasSettingsError = false;
       const settings: Record<string, string | object | boolean> = {};
@@ -614,8 +633,25 @@ export default class HistoryQueryService {
       if (hasSettingsError) continue;
       item.settings = settings as unknown as SouthItemSettings;
 
+      const matchedItem = resolveMatchedItem(existingItems, matchKey, { name: item.name, settings: item.settings });
+      if (matchedItem) {
+        item.id = matchedItem.id;
+      }
+
+      if (
+        acceptedNames.has(item.name) ||
+        existingItems.find(existingItem => existingItem.name === item.name && existingItem.id !== matchedItem?.id)
+      ) {
+        errors.push({
+          item: data as Record<string, string>,
+          error: `Item name "${data.name}" already used`
+        });
+        continue;
+      }
+
       try {
         await this.validator.validateSettings(itemSettingsManifest, item.settings);
+        acceptedNames.add(item.name);
         validItems.push(item);
       } catch (itemError: unknown) {
         errors.push({ item: data as Record<string, string>, error: (itemError as Error).message });
@@ -624,14 +660,21 @@ export default class HistoryQueryService {
     return { items: validItems, errors };
   }
 
-  async importItems(historyId: string, items: Array<HistoryQueryItemCommandDTO>, user: string, deleteItemsNotPresent = false) {
+  async importItems(
+    historyId: string,
+    items: Array<HistoryQueryItemCommandDTO>,
+    user: string,
+    deleteItemsNotPresent = false,
+    rowResolutions?: Record<number, 'create' | 'update' | 'skip'>
+  ) {
     const historyQuery = this.findById(historyId);
     const manifest = this.southService.getManifest(historyQuery.southType);
     const itemsToAdd: Array<HistoryQueryItemEntity<SouthItemSettings>> = [];
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
-    for (const itemCommand of items) {
+    const filteredItems = rowResolutions ? items.filter((_, index) => rowResolutions[index] !== 'skip') : items;
+    for (const itemCommand of filteredItems) {
       await this.validator.validateSettings(itemSettingsManifest, itemCommand.settings);
       const historyQueryItemEntity = {} as HistoryQueryItemEntity<SouthItemSettings>;
       await copyHistoryQueryItemCommandToHistoryQueryItemEntity(historyQueryItemEntity, itemCommand, null, historyQuery.southType);

@@ -42,7 +42,7 @@ import { GetUserInfo, Page } from '../../shared/model/types';
 import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
-import { checkGroups, checkScanMode, stringToBoolean } from './utils';
+import { checkGroups, checkScanMode, resolveMatchedItem, stringToBoolean } from './utils';
 import { ScanMode } from '../model/scan-mode.model';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import csv from 'papaparse';
@@ -654,11 +654,12 @@ export default class SouthService {
     await this.engine.reloadSouthItems(southConnector);
   }
 
-  async checkImportItems(
+  checkImportItems(
     southType: string,
     fileContent: string,
     delimiter: string,
-    existingItems: Array<{ name: string }>
+    existingItems: Array<{ id: string; name: string; settings?: object }>,
+    matchKey?: string
   ): Promise<{
     items: Array<SouthConnectorItemDTO>;
     errors: Array<{ item: Record<string, string>; error: string }>;
@@ -671,10 +672,37 @@ export default class SouthService {
       );
     }
     const scanModes = this.scanModeRepository.findAll();
+    return this.validateImportRows(manifest, scanModes, existingItems, csvContent.data, matchKey);
+  }
 
+  checkImportItemsFromRows(
+    southType: string,
+    rows: Array<Record<string, string>>,
+    existingItems: Array<{ id: string; name: string; settings?: object }>,
+    matchKey?: string
+  ): Promise<{
+    items: Array<SouthConnectorItemDTO>;
+    errors: Array<{ item: Record<string, string>; error: string }>;
+  }> {
+    const manifest = this.getManifest(southType);
+    const scanModes = this.scanModeRepository.findAll();
+    return this.validateImportRows(manifest, scanModes, existingItems, rows, matchKey);
+  }
+
+  private async validateImportRows(
+    manifest: SouthConnectorManifest,
+    scanModes: Array<ScanMode>,
+    existingItems: Array<{ id: string; name: string; settings?: object }>,
+    rows: Array<Record<string, string>>,
+    matchKey?: string
+  ): Promise<{
+    items: Array<SouthConnectorItemDTO>;
+    errors: Array<{ item: Record<string, string>; error: string }>;
+  }> {
     const validItems: Array<SouthConnectorItemDTO> = [];
     const errors: Array<{ item: Record<string, string>; error: string }> = [];
-    for (const data of csvContent.data) {
+    const acceptedNames = new Set<string>();
+    for (const data of rows) {
       let scanMode = null;
       if (data.scanMode) {
         const foundScanMode = scanModes.find(scanMode => scanMode.name === data.scanMode);
@@ -709,14 +737,6 @@ export default class SouthService {
         recoveryStrategy: (data.recoveryStrategy ? data.recoveryStrategy : 'oldest') as SouthHistoryRecoveryStrategy
       } as SouthConnectorItemDTO;
 
-      if (existingItems.find(existingItem => existingItem.name === item.name)) {
-        errors.push({
-          item: data,
-          error: `Item name "${data.name}" already used`
-        });
-        continue;
-      }
-
       let hasSettingsError = false;
       const settings: Record<string, string | object | boolean | undefined> = {};
       const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
@@ -746,8 +766,25 @@ export default class SouthService {
       if (hasSettingsError) continue;
       item.settings = settings as unknown as SouthItemSettings;
 
+      const matchedItem = resolveMatchedItem(existingItems, matchKey, { name: item.name, settings: item.settings });
+      if (matchedItem) {
+        item.id = matchedItem.id;
+      }
+
+      if (
+        acceptedNames.has(item.name) ||
+        existingItems.find(existingItem => existingItem.name === item.name && existingItem.id !== matchedItem?.id)
+      ) {
+        errors.push({
+          item: data,
+          error: `Item name "${data.name}" already used`
+        });
+        continue;
+      }
+
       try {
         await this.validator.validateSettings(itemSettingsManifest, item.settings);
+        acceptedNames.add(item.name);
         validItems.push(item);
       } catch (itemError: unknown) {
         errors.push({ item: data, error: (itemError as Error).message });
@@ -756,7 +793,13 @@ export default class SouthService {
     return { items: validItems, errors };
   }
 
-  async importItems(southId: string, items: Array<SouthConnectorItemCommandDTO>, user: string, deleteItemsNotPresent = false) {
+  async importItems(
+    southId: string,
+    items: Array<SouthConnectorItemCommandDTO>,
+    user: string,
+    deleteItemsNotPresent = false,
+    rowResolutions?: Record<number, 'create' | 'update' | 'skip'>
+  ) {
     const southConnector = this.findById(southId);
     const manifest = this.getManifest(southConnector.type);
     const itemsToAdd: Array<SouthConnectorItemEntity<SouthItemSettings>> = [];
@@ -765,8 +808,10 @@ export default class SouthService {
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
 
+    const filteredItems = rowResolutions ? items.filter((_, index) => rowResolutions[index] !== 'skip') : items;
+
     // Normalize group names once so every subsequent comparison/lookup below uses the same trimmed value
-    const normalizedItems = items.map(itemCommand =>
+    const normalizedItems = filteredItems.map(itemCommand =>
       itemCommand.groupName ? { ...itemCommand, groupName: itemCommand.groupName.trim() } : itemCommand
     );
 

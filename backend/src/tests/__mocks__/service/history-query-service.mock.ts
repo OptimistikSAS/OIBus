@@ -76,13 +76,33 @@ export default class HistoryQueryServiceMock {
       _southType: string,
       _fileContent: string,
       _delimiter: string,
-      _existingItems: Array<Omit<HistoryQueryItemDTO, 'createdBy' | 'updatedBy'>>
+      _existingItems: Array<Omit<HistoryQueryItemDTO, 'createdBy' | 'updatedBy'>>,
+      _matchKey?: string
     ): Promise<{ items: Array<HistoryQueryItemDTO>; errors: Array<{ item: Record<string, string>; error: string }> }> => ({
       items: [],
       errors: []
     })
   );
-  importItems = mock.fn(async (): Promise<void> => undefined);
+  checkImportItemsFromRows = mock.fn(
+    async (
+      _southType: string,
+      _rows: Array<Record<string, string>>,
+      _existingItems: Array<Omit<HistoryQueryItemDTO, 'createdBy' | 'updatedBy'>>,
+      _matchKey?: string
+    ): Promise<{ items: Array<HistoryQueryItemDTO>; errors: Array<{ item: Record<string, string>; error: string }> }> => ({
+      items: [],
+      errors: []
+    })
+  );
+  importItems = mock.fn(
+    async (
+      _historyId: string,
+      _items: Array<HistoryQueryItemCommandDTO>,
+      _user: string,
+      _deleteItemsNotPresent?: boolean,
+      _rowResolutions?: Record<number, 'create' | 'update' | 'skip'>
+    ): Promise<void> => undefined
+  );
   addOrEditTransformer = mock.fn(
     async (_historyId: string, _transformerWithOptions: HistoryTransformerWithOptions, _userId: string): Promise<void> => undefined
   );

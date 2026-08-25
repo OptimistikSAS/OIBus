@@ -585,26 +585,49 @@ export class SouthConnectorController extends Controller {
     @FormField() deleteItemsNotPresent: string,
     @UploadedFile('itemsToImport') itemsToImportFile: Express.Multer.File,
     @UploadedFile('currentItems') currentItemsFile: Express.Multer.File,
-    @Request() request: CustomExpressRequest
+    @Request() request: CustomExpressRequest,
+    @FormField() matchKey?: string,
+    @UploadedFile('itemsToImportJson') itemsToImportJsonFile?: Express.Multer.File
   ): Promise<SouthCsvImportResponse> {
     const southService = request.services.southService as SouthService;
 
-    if (!itemsToImportFile || !currentItemsFile || !itemsToImportFile.path || !currentItemsFile.path) {
-      throw new OIBusValidationError('Missing "itemsToImport" or "currentItems"');
+    if (!currentItemsFile || !currentItemsFile.path) {
+      throw new OIBusValidationError('Missing "currentItems"');
+    }
+    if (deleteItemsNotPresent === 'true' && matchKey) {
+      throw new OIBusValidationError('"deleteItemsNotPresent" and "matchKey" cannot be used together');
+    }
+    const hasCsvFile = Boolean(itemsToImportFile && itemsToImportFile.path);
+    const hasJsonFile = Boolean(itemsToImportJsonFile && itemsToImportJsonFile.path);
+    if (hasCsvFile === hasJsonFile) {
+      throw new OIBusValidationError('Exactly one of "itemsToImport" or "itemsToImportJson" must be provided');
     }
 
     try {
-      const itemsToImportContent = await fs.readFile(itemsToImportFile.path, 'utf8');
       const existingItems =
         deleteItemsNotPresent === 'true'
           ? []
           : (JSON.parse(await fs.readFile(currentItemsFile.path, 'utf8')) as Array<SouthConnectorItemDTO>);
-      return await southService.checkImportItems(southType, itemsToImportContent, delimiter, existingItems);
+      if (hasJsonFile) {
+        const rows: Array<Record<string, string>> = JSON.parse(await fs.readFile(itemsToImportJsonFile!.path, 'utf8'));
+        return await southService.checkImportItemsFromRows(southType, rows, existingItems, matchKey);
+      }
+      const itemsToImportContent = await fs.readFile(itemsToImportFile.path, 'utf8');
+      return await southService.checkImportItems(southType, itemsToImportContent, delimiter, existingItems, matchKey);
     } finally {
-      try {
-        await fs.unlink(itemsToImportFile.path);
-      } catch {
-        // catch the error but don't fail the request
+      if (hasCsvFile) {
+        try {
+          await fs.unlink(itemsToImportFile.path);
+        } catch {
+          // catch the error but don't fail the request
+        }
+      }
+      if (hasJsonFile) {
+        try {
+          await fs.unlink(itemsToImportJsonFile!.path);
+        } catch {
+          // catch the error but don't fail the request
+        }
       }
       try {
         await fs.unlink(currentItemsFile.path);
@@ -624,16 +647,24 @@ export class SouthConnectorController extends Controller {
     @Path() southId: string,
     @UploadedFile('items') itemsFile: Express.Multer.File,
     @FormField() deleteItemsNotPresent: string,
-    @Request() request: CustomExpressRequest
+    @Request() request: CustomExpressRequest,
+    @FormField() matchKey?: string,
+    @FormField() rowResolutions?: string
   ): Promise<void> {
     const southService = request.services.southService as SouthService;
     if (!itemsFile || !itemsFile.path) {
       throw new OIBusValidationError('Missing file "items"');
     }
+    if (deleteItemsNotPresent === 'true' && matchKey) {
+      throw new OIBusValidationError('"deleteItemsNotPresent" and "matchKey" cannot be used together');
+    }
     try {
       const fileContent = await fs.readFile(itemsFile.path, 'utf8');
       const items: Array<SouthConnectorItemCommandDTO> = JSON.parse(fileContent);
-      await southService.importItems(southId, items, request.user.id, deleteItemsNotPresent === 'true');
+      const parsedRowResolutions: Record<number, 'create' | 'update' | 'skip'> | undefined = rowResolutions
+        ? JSON.parse(rowResolutions)
+        : undefined;
+      await southService.importItems(southId, items, request.user.id, deleteItemsNotPresent === 'true', parsedRowResolutions);
     } finally {
       try {
         await fs.unlink(itemsFile.path);
