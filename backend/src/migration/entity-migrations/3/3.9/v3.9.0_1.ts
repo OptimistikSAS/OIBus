@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import { addOpcuaMaxParallelRun as applyOpcuaMaxParallelRun } from '../../../../service/config-transfer/settings-upgrades/3.9/v3.9.0';
 
 const ENGINES_TABLE = 'engines';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
@@ -41,6 +42,10 @@ export async function down(knex: Knex): Promise<void> {
  * The OPC UA south settings gained a required maxParallelRun field (how many HA node reads can run
  * concurrently). Existing connectors/history queries never had it, so it's backfilled to 1 — a
  * single sequential read at a time, matching the behavior before this setting existed.
+ *
+ * The actual backfill logic lives in the shared, DB-agnostic settings-upgrade registry
+ * (`applyOpcuaMaxParallelRun`) so the config-import upgrade pipeline can apply the exact same
+ * rewrite to an older exported settings blob instead of duplicating it here.
  */
 async function addOpcuaMaxParallelRun(knex: Knex): Promise<void> {
   const southConnectors: Array<{ id: string; settings: string }> = await knex(SOUTH_CONNECTORS_TABLE)
@@ -50,7 +55,7 @@ async function addOpcuaMaxParallelRun(knex: Knex): Promise<void> {
     const settings = JSON.parse(southConnector.settings);
     await knex(SOUTH_CONNECTORS_TABLE)
       .where('id', southConnector.id)
-      .update({ settings: JSON.stringify({ ...settings, maxParallelRun: 1 }) });
+      .update({ settings: JSON.stringify(applyOpcuaMaxParallelRun(settings)) });
   }
 
   const historyQueries: Array<{ id: string; south_settings: string }> = await knex(HISTORY_QUERIES_TABLE)
@@ -60,10 +65,13 @@ async function addOpcuaMaxParallelRun(knex: Knex): Promise<void> {
     const southSettings = JSON.parse(historyQuery.south_settings);
     await knex(HISTORY_QUERIES_TABLE)
       .where('id', historyQuery.id)
-      .update({ south_settings: JSON.stringify({ ...southSettings, maxParallelRun: 1 }) });
+      .update({ south_settings: JSON.stringify(applyOpcuaMaxParallelRun(southSettings)) });
   }
 }
 
+// down() keeps its own inline inverse rather than calling back into the settings-upgrade
+// registry: the registry is forward-only (import upgrades never need to run backwards, per the
+// issue's "no downgrade support"), so there is no shared "un-apply" function to delegate to here.
 async function removeOpcuaMaxParallelRun(knex: Knex): Promise<void> {
   const southConnectors: Array<{ id: string; settings: string }> = await knex(SOUTH_CONNECTORS_TABLE)
     .select('id', 'settings')
