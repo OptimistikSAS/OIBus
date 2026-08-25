@@ -10084,6 +10084,8 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 itemsToImportFile: {"in":"formData","name":"itemsToImport","required":true,"dataType":"file"},
                 currentItemsFile: {"in":"formData","name":"currentItems","required":true,"dataType":"file"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
+                matchKey: {"in":"formData","name":"matchKey","dataType":"string"},
+                itemsToImportJsonFile: {"in":"formData","name":"itemsToImportJson","dataType":"file"},
         };
         app.post('/api/south/:southType/items/import/check',
             upload.fields([
@@ -10093,6 +10095,10 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 },
                 {
                     name: "currentItems",
+                    maxCount: 1
+                },
+                {
+                    name: "itemsToImportJson",
                     maxCount: 1
                 }
             ]),
@@ -10127,6 +10133,8 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 itemsFile: {"in":"formData","name":"items","required":true,"dataType":"file"},
                 deleteItemsNotPresent: {"in":"formData","name":"deleteItemsNotPresent","required":true,"dataType":"string"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
+                matchKey: {"in":"formData","name":"matchKey","dataType":"string"},
+                rowResolutions: {"in":"formData","name":"rowResolutions","dataType":"string"},
         };
         app.post('/api/south/:southId/items/import',
             upload.fields([
@@ -12534,6 +12542,8 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 itemsToImportFile: {"in":"formData","name":"itemsToImport","required":true,"dataType":"file"},
                 currentItemsFile: {"in":"formData","name":"currentItems","required":true,"dataType":"file"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
+                matchKey: {"in":"formData","name":"matchKey","dataType":"string"},
+                itemsToImportJsonFile: {"in":"formData","name":"itemsToImportJson","dataType":"file"},
         };
         app.post('/api/history/:southType/items/import/check',
             upload.fields([
@@ -12543,6 +12553,10 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 },
                 {
                     name: "currentItems",
+                    maxCount: 1
+                },
+                {
+                    name: "itemsToImportJson",
                     maxCount: 1
                 }
             ]),
@@ -12577,6 +12591,8 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 itemsFile: {"in":"formData","name":"items","required":true,"dataType":"file"},
                 deleteItemsNotPresent: {"in":"formData","name":"deleteItemsNotPresent","required":true,"dataType":"string"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
+                matchKey: {"in":"formData","name":"matchKey","dataType":"string"},
+                rowResolutions: {"in":"formData","name":"rowResolutions","dataType":"string"},
         };
         app.post('/api/history/:historyId/items/import',
             upload.fields([
