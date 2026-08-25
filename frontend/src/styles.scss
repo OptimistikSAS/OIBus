@@ -1142,3 +1142,16 @@ val-errors > div {
     display: none;
   }
 }
+
+// .oib-simple-table tints every body-row .btn with $blue for the small icon/link actions used in
+// list tables. A btn-group segmented toggle in a row is not one of those and must keep its own
+// (legible) button colors instead of inheriting that tint.
+.oib-simple-table tbody tr .btn-group .btn.btn-primary,
+.oib-simple-table tbody tr:hover .btn-group .btn.btn-primary {
+  color: $white;
+}
+
+.oib-simple-table tbody tr .btn-group .btn.btn-outline-secondary,
+.oib-simple-table tbody tr:hover .btn-group .btn.btn-outline-secondary {
+  color: $secondary;
+}

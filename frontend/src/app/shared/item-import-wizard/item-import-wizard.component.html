@@ -158,7 +158,7 @@
                 type="button"
                 class="btn"
                 [class.btn-primary]="globalMatchResolution === 'update'"
-                [class.btn-outline-secondary]="globalMatchResolution !== 'update'"
+                [class.btn-secondary]="globalMatchResolution !== 'update'"
                 [attr.aria-pressed]="globalMatchResolution === 'update'"
                 id="update-all-button"
                 (click)="setGlobalResolution('update')"
@@ -168,7 +168,7 @@
                 type="button"
                 class="btn"
                 [class.btn-primary]="globalMatchResolution === 'skip'"
-                [class.btn-outline-secondary]="globalMatchResolution !== 'skip'"
+                [class.btn-secondary]="globalMatchResolution !== 'skip'"
                 [attr.aria-pressed]="globalMatchResolution === 'skip'"
                 id="skip-all-button"
                 (click)="setGlobalResolution('skip')"
@@ -187,7 +187,7 @@
             <thead class="light">
               <tr>
                 @for (mapping of mappings; track mapping.field) {
-                  <th>
+                  <th style="min-width: 150px; max-width: 250px">
                     @if (labelFor(mapping); as key) {
                       {{ key | translate }}
                     } @else {
@@ -195,9 +195,9 @@
                     }
                   </th>
                 }
-                <th translate="south.explore.item-import-wizard.resolution"></th>
-                <th translate="south.explore.item-import-wizard.error"></th>
-                <th></th>
+                <th style="width: 120px" translate="south.explore.item-import-wizard.resolution"></th>
+                <th style="min-width: 200px" translate="south.explore.item-import-wizard.error"></th>
+                <th style="width: 80px"></th>
               </tr>
             </thead>
             <tbody>
