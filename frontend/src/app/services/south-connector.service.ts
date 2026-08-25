@@ -317,11 +317,53 @@ export class SouthConnectorService {
     }>(`/api/south/${southType}/items/import/check`, formData);
   }
 
-  importItems(southId: string, items: Array<SouthConnectorItemCommandDTO>, deleteItemsNotPresent = false): Observable<void> {
+  /**
+   * Check a set of rows (built from an explore-tree selection, not a CSV file) for import, optionally
+   * resolving each row onto an existing item via `matchKey`.
+   */
+  checkImportItemsFromRows(
+    southType: string,
+    currentItems: Array<SouthConnectorItemDTO> | Array<SouthConnectorItemCommandDTO>,
+    rows: Array<Record<string, string>>,
+    matchKey?: string
+  ): Observable<{
+    items: Array<SouthConnectorItemDTO>;
+    errors: Array<{
+      item: Record<string, string>;
+      error: string;
+    }>;
+  }> {
+    const formData = new FormData();
+    formData.set('itemsToImportJson', new Blob([JSON.stringify(rows)], { type: 'application/json' }), 'itemsToImportJson.json');
+    formData.set('currentItems', new Blob([JSON.stringify(currentItems)], { type: 'application/json' }), 'currentItems.json');
+    formData.set('delimiter', 'COMMA');
+    formData.set('deleteItemsNotPresent', 'false');
+    if (matchKey) {
+      formData.set('matchKey', matchKey);
+    }
+    return this.http.post<{
+      items: Array<SouthConnectorItemDTO>;
+      errors: Array<{ item: Record<string, string>; error: string }>;
+    }>(`/api/south/${southType}/items/import/check`, formData);
+  }
+
+  importItems(
+    southId: string,
+    items: Array<SouthConnectorItemCommandDTO>,
+    deleteItemsNotPresent = false,
+    matchKey?: string,
+    rowResolutions?: Record<number, 'create' | 'update' | 'skip'>
+  ): Observable<void> {
     const formData = new FormData();
     // Convert the string to a Blob and append it as a file
     formData.set('items', new Blob([JSON.stringify(items)], { type: 'application/json' }), 'items.json');
     formData.set('deleteItemsNotPresent', String(deleteItemsNotPresent));
+    if (matchKey) {
+      formData.set('matchKey', matchKey);
+    }
+    if (rowResolutions) {
+      formData.set('rowResolutions', JSON.stringify(rowResolutions));
+    }
 
     return this.http.post<void>(`/api/south/${southId}/items/import`, formData);
   }

@@ -2,10 +2,14 @@ import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { Observable } from 'rxjs';
 import { SouthConnectorExploreEntry, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { OIBusAttribute, OIBusControlAttribute, OIBusObjectAttribute } from '../../../../../backend/shared/model/form.model';
+import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import { deriveItemImportFields } from '../form/item-import-fields.util';
 import { createControl } from '../form/dynamic-form.builder';
+import { emptyPage } from '../test-utils';
+import { PaginationComponent } from '../pagination/pagination.component';
 import { OIBusBooleanFormControlComponent } from '../form/oibus-boolean-form-control/oibus-boolean-form-control.component';
 import { OIBusStringFormControlComponent } from '../form/oibus-string-form-control/oibus-string-form-control.component';
 import { OIBusStringSelectFormControlComponent } from '../form/oibus-string-select-form-control/oibus-string-select-form-control.component';
@@ -14,6 +18,30 @@ import { OIBusSecretFormControlComponent } from '../form/oibus-secret-form-contr
 import { OIBusInstantFormControlComponent } from '../form/oibus-instant-form-control/oibus-instant-form-control.component';
 import { OIBusTimezoneFormControlComponent } from '../form/oibus-timezone-form-control/oibus-timezone-form-control.component';
 import { OIBusCodeFormControlComponent } from '../form/oibus-code-form-control/oibus-code-form-control.component';
+
+const PAGE_SIZE = 20;
+
+/** An item as returned by the check call: shaped like the target item-command DTO, with `id` populated when a match was found. */
+export interface WizardCheckedItem {
+  id: string;
+  name: string;
+  [key: string]: unknown;
+}
+
+export interface WizardCheckResult {
+  items: Array<WizardCheckedItem>;
+  errors: Array<{ item: Record<string, string>; error: string }>;
+}
+
+/**
+ * Backend call used to validate the current rows, kept as a plain port so the wizard isn't tied to
+ * either `SouthConnectorService` or `HistoryQueryService` — each caller adapts its own check endpoint
+ * (and, for South, maps the response's `scanMode`/`group` objects onto `scanModeId`/`groupId` etc.)
+ * into this common shape.
+ */
+export type WizardCheckFn = (rows: Array<Record<string, string>>, matchKey: string | null) => Observable<WizardCheckResult>;
+
+type RowResolution = 'update' | 'skip';
 
 export type ItemImportFieldSource = 'metadata' | 'constant';
 
@@ -72,6 +100,7 @@ const RENDERABLE_CONSTANT_TYPES = new Set(['string', 'code', 'string-select', 's
   imports: [
     TranslateDirective,
     ReactiveFormsModule,
+    PaginationComponent,
     OIBusBooleanFormControlComponent,
     OIBusStringFormControlComponent,
     OIBusStringSelectFormControlComponent,
@@ -99,16 +128,38 @@ export class ItemImportWizardComponent {
   constantsForm: FormGroup = this.fb.group({});
   matchKey: string | null = null;
 
-  /** Step 3 (preview/edit table) is added in a later phase; the type already leaves room for it. */
   currentStep: 1 | 2 | 3 = 1;
 
-  prepare(manifest: SouthConnectorManifest, selectedNodes: Array<SouthConnectorExploreEntry>, existingItems: Array<ExistingItemForMatch>) {
+  /** Editable preview rows for step 3 — a mutable copy of `buildRows()`'s output, seeded on entering the step. */
+  rows: Array<Record<string, string>> = [];
+  checking = false;
+  checkError: string | null = null;
+  checkResult: WizardCheckResult | null = null;
+  /** Per-row-index resolution, only meaningful for rows that the last check matched onto an existing item. */
+  rowResolutions: Record<number, RowResolution> = {};
+  globalMatchResolution: RowResolution = 'update';
+  displayedRows: Page<Record<string, string>> = emptyPage();
+
+  private checkFn: WizardCheckFn | null = null;
+
+  prepare(
+    manifest: SouthConnectorManifest,
+    selectedNodes: Array<SouthConnectorExploreEntry>,
+    existingItems: Array<ExistingItemForMatch>,
+    checkFn: WizardCheckFn
+  ) {
     this.manifest = manifest;
     this.selectedNodes = selectedNodes;
     this.existingItems = existingItems;
+    this.checkFn = checkFn;
     this.currentStep = 1;
     this.matchKey = null;
     this.constantsForm = this.fb.group({});
+    this.rows = [];
+    this.checkResult = null;
+    this.rowResolutions = {};
+    this.globalMatchResolution = 'update';
+    this.displayedRows = emptyPage();
 
     const { expectedHeaders, optionalHeaders } = deriveItemImportFields(manifest);
     const settingsAttribute = manifest.items.rootAttribute.attributes.find(attribute => attribute.key === 'settings') as
@@ -217,11 +268,20 @@ export class ItemImportWizardComponent {
   onMatchKeyChange(event: Event) {
     const value = (event.target as HTMLSelectElement).value;
     this.matchKey = value || null;
+    if (this.currentStep === 3) {
+      this.runCheck();
+    }
   }
 
   goNext() {
-    if (this.currentStep < 2) {
-      this.currentStep = ((this.currentStep as number) + 1) as 1 | 2 | 3;
+    if (this.currentStep === 1) {
+      this.currentStep = 2;
+      return;
+    }
+    if (this.currentStep === 2) {
+      this.currentStep = 3;
+      this.rows = this.buildRows();
+      this.runCheck();
     }
   }
 
@@ -233,6 +293,129 @@ export class ItemImportWizardComponent {
 
   cancel() {
     this.modal.dismiss();
+  }
+
+  /**
+   * Sends the current preview rows (and match key) to the caller's check port and refreshes the
+   * per-row resolution defaults for any newly matched rows.
+   */
+  runCheck() {
+    if (!this.checkFn) {
+      return;
+    }
+    this.checking = true;
+    this.checkError = null;
+    this.checkFn(this.rows, this.matchKey).subscribe({
+      next: result => {
+        this.checkResult = result;
+        this.checking = false;
+        this.refreshRowResolutions();
+        this.changePage(0);
+      },
+      error: httpError => {
+        this.checkError = httpError.error?.message ?? httpError.message;
+        this.checking = false;
+      }
+    });
+  }
+
+  /** Ensures every currently-matched row has a resolution, defaulting to the global toggle. */
+  private refreshRowResolutions() {
+    const resolved: Record<number, RowResolution> = {};
+    this.rows.forEach((row, index) => {
+      const matched = this.matchedItemForRow(row);
+      if (matched) {
+        resolved[index] = this.rowResolutions[index] ?? this.globalMatchResolution;
+      }
+    });
+    this.rowResolutions = resolved;
+  }
+
+  /** Correlates a preview row back to the last check response by item/error name — the one field guaranteed present. */
+  private matchedItemForRow(row: Record<string, string>): WizardCheckedItem | null {
+    if (!this.checkResult) {
+      return null;
+    }
+    return this.checkResult.items.find(item => item.name === row['name'] && item.id) ?? null;
+  }
+
+  errorForRow(row: Record<string, string>): string | null {
+    if (!this.checkResult) {
+      return null;
+    }
+    return this.checkResult.errors.find(error => error.item['name'] === row['name'])?.error ?? null;
+  }
+
+  isMatchedRow(row: Record<string, string>): boolean {
+    return this.matchedItemForRow(row) !== null;
+  }
+
+  resolutionForRow(rowIndex: number): RowResolution {
+    return this.rowResolutions[rowIndex] ?? this.globalMatchResolution;
+  }
+
+  setRowResolution(rowIndex: number, resolution: RowResolution) {
+    this.rowResolutions[rowIndex] = resolution;
+  }
+
+  /** Sets the default applied to every currently-matched row; individual rows can still be overridden afterward. */
+  setGlobalResolution(resolution: RowResolution) {
+    this.globalMatchResolution = resolution;
+    this.rows.forEach((row, index) => {
+      if (this.matchedItemForRow(row)) {
+        this.rowResolutions[index] = resolution;
+      }
+    });
+  }
+
+  onCellInput(rowIndex: number, field: string, event: Event) {
+    this.rows[rowIndex] = { ...this.rows[rowIndex], [field]: (event.target as HTMLInputElement).value };
+    this.runCheck();
+  }
+
+  addRow() {
+    const blankRow: Record<string, string> = {};
+    for (const mapping of this.mappings) {
+      blankRow[mapping.field] = '';
+    }
+    this.rows = [...this.rows, blankRow];
+    this.runCheck();
+  }
+
+  removeRow(rowIndex: number) {
+    this.rows = this.rows.filter((_, index) => index !== rowIndex);
+    this.runCheck();
+  }
+
+  changePage(pageNumber: number) {
+    this.displayedRows = createPageFromArray(this.rows, PAGE_SIZE, pageNumber);
+  }
+
+  /**
+   * Builds the final list of items to import — matched rows resolved to 'skip' are dropped, matched
+   * rows resolved to 'update' keep the `id` returned by the last check, and unmatched rows are
+   * submitted as fresh creates — then closes the modal for the caller to perform the actual import.
+   */
+  submit() {
+    if (!this.checkResult) {
+      return;
+    }
+    const items: Array<WizardCheckedItem> = [];
+    this.rows.forEach((row, index) => {
+      const matched = this.matchedItemForRow(row);
+      if (matched) {
+        if (this.resolutionForRow(index) !== 'skip') {
+          items.push(matched);
+        }
+        return;
+      }
+      const unmatched = this.checkResult!.items.find(item => item.name === row['name'] && !item.id);
+      if (unmatched) {
+        items.push(unmatched);
+      }
+    });
+
+    this.modal.close({ items, matchKey: this.matchKey });
   }
 
   /**

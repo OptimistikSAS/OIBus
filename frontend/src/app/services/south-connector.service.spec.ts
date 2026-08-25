@@ -303,6 +303,61 @@ describe('SouthConnectorService', () => {
     expect(actualImportation).toBe(true);
   });
 
+  test('should check import items from rows', () => {
+    const rows = [{ name: 'item1' }];
+    const expectedFormData = new FormData();
+    expectedFormData.set('itemsToImportJson', new Blob([JSON.stringify(rows)], { type: 'application/json' }), 'itemsToImportJson.json');
+    expectedFormData.set('currentItems', new Blob([JSON.stringify([])], { type: 'application/json' }), 'currentItems.json');
+    expectedFormData.set('delimiter', 'COMMA');
+    expectedFormData.set('deleteItemsNotPresent', 'false');
+    expectedFormData.set('matchKey', 'name');
+    let actualImportation = false;
+
+    service.checkImportItemsFromRows('southType', [], rows, 'name').subscribe(() => {
+      actualImportation = true;
+    });
+
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/south/southType/items/import/check' });
+    expect(testRequest.request.body).toEqual(expectedFormData);
+    testRequest.flush(true);
+
+    expect(actualImportation).toBe(true);
+  });
+
+  test('should check import items from rows without a match key', () => {
+    const rows = [{ name: 'item1' }];
+    let actualImportation = false;
+
+    service.checkImportItemsFromRows('southType', [], rows).subscribe(() => {
+      actualImportation = true;
+    });
+
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/south/southType/items/import/check' });
+    expect(testRequest.request.body.has('matchKey')).toBe(false);
+    testRequest.flush(true);
+
+    expect(actualImportation).toBe(true);
+  });
+
+  test('should import items with a match key and row resolutions', () => {
+    const expectedFormData = new FormData();
+    expectedFormData.set('items', new Blob([JSON.stringify([])], { type: 'application/json' }), 'items.json');
+    expectedFormData.set('deleteItemsNotPresent', 'false');
+    expectedFormData.set('matchKey', 'name');
+    expectedFormData.set('rowResolutions', JSON.stringify({ 0: 'update' }));
+    let actualImportation = false;
+
+    service.importItems('id1', [], false, 'name', { 0: 'update' }).subscribe(() => {
+      actualImportation = true;
+    });
+
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items/import' });
+    expect(testRequest.request.body).toEqual(expectedFormData);
+    testRequest.flush(true);
+
+    expect(actualImportation).toBe(true);
+  });
+
   test('should test a South connector connection', () => {
     let done = false;
     const command = testData.south.command;

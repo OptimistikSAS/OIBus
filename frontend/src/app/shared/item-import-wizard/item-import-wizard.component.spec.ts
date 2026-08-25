@@ -1,11 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
-import { ItemImportWizardComponent } from './item-import-wizard.component';
+import { of } from 'rxjs';
+import { ItemImportWizardComponent, WizardCheckFn, WizardCheckResult } from './item-import-wizard.component';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { SouthConnectorExploreEntry, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
+
+function noopCheckFn(): WizardCheckFn {
+  return () => of({ items: [], errors: [] });
+}
 
 function displayProps(row = 0, columns = 4) {
   return { row, columns, displayInViewMode: true };
@@ -114,7 +119,7 @@ describe('ItemImportWizardComponent', () => {
   });
 
   test('the name field defaults to mapping the node own name from metadata', () => {
-    tester.component.prepare(buildManifest(), nodes, []);
+    tester.component.prepare(buildManifest(), nodes, [], noopCheckFn());
 
     const nameMapping = tester.component.mappings.find(mapping => mapping.field === 'name')!;
 
@@ -123,7 +128,7 @@ describe('ItemImportWizardComponent', () => {
   });
 
   test('required vs optional headers are reflected on the mappings', () => {
-    tester.component.prepare(buildManifest(), nodes, []);
+    tester.component.prepare(buildManifest(), nodes, [], noopCheckFn());
 
     const required = tester.component.mappings.filter(mapping => mapping.required).map(mapping => mapping.field);
     const optional = tester.component.mappings.filter(mapping => !mapping.required).map(mapping => mapping.field);
@@ -133,7 +138,7 @@ describe('ItemImportWizardComponent', () => {
   });
 
   test('buildRows resolves metadata-sourced and constant-sourced fields per node', () => {
-    tester.component.prepare(buildManifest(), nodes, []);
+    tester.component.prepare(buildManifest(), nodes, [], noopCheckFn());
 
     const nodeIdMapping = tester.component.mappings.find(mapping => mapping.field === 'settings_nodeId')!;
     nodeIdMapping.source = 'metadata';
@@ -165,7 +170,7 @@ describe('ItemImportWizardComponent', () => {
   });
 
   test('buildRows falls back to an empty string when a metadata field has no key selected', () => {
-    tester.component.prepare(buildManifest(), nodes, []);
+    tester.component.prepare(buildManifest(), nodes, [], noopCheckFn());
 
     const nodeIdMapping = tester.component.mappings.find(mapping => mapping.field === 'settings_nodeId')!;
     nodeIdMapping.source = 'metadata';
@@ -177,7 +182,7 @@ describe('ItemImportWizardComponent', () => {
   });
 
   test('buildRows resolves the synthetic id metadata key to the node id', () => {
-    tester.component.prepare(buildManifest(), nodes, []);
+    tester.component.prepare(buildManifest(), nodes, [], noopCheckFn());
 
     const nodeIdMapping = tester.component.mappings.find(mapping => mapping.field === 'settings_nodeId')!;
     nodeIdMapping.source = 'metadata';
@@ -190,7 +195,7 @@ describe('ItemImportWizardComponent', () => {
   });
 
   test('matchKeyOptions only includes settings fields that are currently mapped', () => {
-    tester.component.prepare(buildManifest(), nodes, []);
+    tester.component.prepare(buildManifest(), nodes, [], noopCheckFn());
 
     // settings_nodeId switched to metadata but no key chosen yet -> not usable as a match key
     const nodeIdMapping = tester.component.mappings.find(mapping => mapping.field === 'settings_nodeId')!;
@@ -208,7 +213,7 @@ describe('ItemImportWizardComponent', () => {
   });
 
   test('matchKeyOptions includes a metadata-mapped field once a key is chosen', () => {
-    tester.component.prepare(buildManifest(), nodes, []);
+    tester.component.prepare(buildManifest(), nodes, [], noopCheckFn());
 
     const nodeIdMapping = tester.component.mappings.find(mapping => mapping.field === 'settings_nodeId')!;
     nodeIdMapping.source = 'metadata';
@@ -218,7 +223,7 @@ describe('ItemImportWizardComponent', () => {
   });
 
   test('setSource switches a mapping to metadata and picks a default key', () => {
-    tester.component.prepare(buildManifest(), nodes, []);
+    tester.component.prepare(buildManifest(), nodes, [], noopCheckFn());
 
     const preserveFilesMapping = tester.component.mappings.find(mapping => mapping.field === 'settings_preserveFiles')!;
     expect(preserveFilesMapping.metadataKey).toBeNull();
@@ -230,7 +235,7 @@ describe('ItemImportWizardComponent', () => {
   });
 
   test('renders a boolean control for a boolean settings attribute', async () => {
-    tester.component.prepare(buildManifest(), nodes, []);
+    tester.component.prepare(buildManifest(), nodes, [], noopCheckFn());
     tester.fixture.detectChanges();
 
     await expect
@@ -239,7 +244,7 @@ describe('ItemImportWizardComponent', () => {
   });
 
   test('renders a string-select control for a string-select settings attribute', async () => {
-    tester.component.prepare(buildManifest(), nodes, []);
+    tester.component.prepare(buildManifest(), nodes, [], noopCheckFn());
     tester.fixture.detectChanges();
 
     await expect
@@ -248,7 +253,7 @@ describe('ItemImportWizardComponent', () => {
   });
 
   test('renders a string control for a string settings attribute', async () => {
-    tester.component.prepare(buildManifest(), nodes, []);
+    tester.component.prepare(buildManifest(), nodes, [], noopCheckFn());
     tester.fixture.detectChanges();
 
     await expect
@@ -257,7 +262,7 @@ describe('ItemImportWizardComponent', () => {
   });
 
   test('getWizardResult exposes mappings, matchKey, and built rows', () => {
-    tester.component.prepare(buildManifest(), nodes, []);
+    tester.component.prepare(buildManifest(), nodes, [], noopCheckFn());
     tester.component.matchKey = 'name';
 
     const result = tester.component.getWizardResult();
@@ -268,10 +273,148 @@ describe('ItemImportWizardComponent', () => {
   });
 
   test('cancel dismisses the modal', () => {
-    tester.component.prepare(buildManifest(), nodes, []);
+    tester.component.prepare(buildManifest(), nodes, [], noopCheckFn());
 
     tester.component.cancel();
 
     expect(activeModal.dismiss).toHaveBeenCalled();
+  });
+
+  describe('step 3 (preview/check)', () => {
+    function matchedResult(): WizardCheckResult {
+      return {
+        items: [
+          { id: 'existing-1', name: 'Node1', settings: {} },
+          { id: '', name: 'Node2', settings: {} }
+        ],
+        errors: []
+      };
+    }
+
+    test('entering step 3 triggers the check call with the built rows and match key', () => {
+      const checkFn = vi.fn().mockReturnValue(of({ items: [], errors: [] }));
+      tester.component.prepare(buildManifest(), nodes, [], checkFn);
+      tester.component.matchKey = 'name';
+
+      tester.component.goNext();
+      tester.component.goNext();
+
+      expect(tester.component.currentStep).toBe(3);
+      expect(checkFn).toHaveBeenCalledWith(tester.component.rows, 'name');
+      expect(tester.component.rows.length).toBe(2);
+    });
+
+    test('renders the preview table in step 3', async () => {
+      const checkFn = vi.fn().mockReturnValue(of({ items: [], errors: [] }));
+      tester.component.prepare(buildManifest(), nodes, [], checkFn);
+      tester.component.goNext();
+      tester.component.goNext();
+      tester.fixture.detectChanges();
+
+      await expect.element(tester.root.getByCss('#preview-table')).toBeInTheDocument();
+    });
+
+    test('editing a cell updates the row and re-triggers the check call', () => {
+      const checkFn = vi.fn().mockReturnValue(of({ items: [], errors: [] }));
+      tester.component.prepare(buildManifest(), nodes, [], checkFn);
+      tester.component.goNext();
+      tester.component.goNext();
+      checkFn.mockClear();
+
+      tester.component.onCellInput(0, 'name', { target: { value: 'RenamedNode' } } as unknown as Event);
+
+      expect(tester.component.rows[0]['name']).toBe('RenamedNode');
+      expect(checkFn).toHaveBeenCalledTimes(1);
+    });
+
+    test('add row appends a blank row and re-triggers the check call', () => {
+      const checkFn = vi.fn().mockReturnValue(of({ items: [], errors: [] }));
+      tester.component.prepare(buildManifest(), nodes, [], checkFn);
+      tester.component.goNext();
+      tester.component.goNext();
+      checkFn.mockClear();
+
+      tester.component.addRow();
+
+      expect(tester.component.rows.length).toBe(3);
+      expect(tester.component.rows[2]['name']).toBe('');
+      expect(checkFn).toHaveBeenCalledTimes(1);
+    });
+
+    test('remove row removes it and re-triggers the check call', () => {
+      const checkFn = vi.fn().mockReturnValue(of({ items: [], errors: [] }));
+      tester.component.prepare(buildManifest(), nodes, [], checkFn);
+      tester.component.goNext();
+      tester.component.goNext();
+      checkFn.mockClear();
+
+      tester.component.removeRow(0);
+
+      expect(tester.component.rows.length).toBe(1);
+      expect(tester.component.rows[0]['name']).toBe('Node2');
+      expect(checkFn).toHaveBeenCalledTimes(1);
+    });
+
+    test('a matched row defaults its resolution to update, and the global toggle pre-fills matched rows', () => {
+      const checkFn = vi.fn().mockReturnValue(of(matchedResult()));
+      tester.component.prepare(buildManifest(), nodes, [], checkFn);
+      tester.component.goNext();
+      tester.component.goNext();
+
+      expect(tester.component.isMatchedRow(tester.component.rows[0])).toBe(true);
+      expect(tester.component.isMatchedRow(tester.component.rows[1])).toBe(false);
+      expect(tester.component.resolutionForRow(0)).toBe('update');
+
+      tester.component.setGlobalResolution('skip');
+
+      expect(tester.component.resolutionForRow(0)).toBe('skip');
+
+      tester.component.setRowResolution(0, 'update');
+
+      expect(tester.component.resolutionForRow(0)).toBe('update');
+    });
+
+    test('errorForRow surfaces the check error matching a row by name', () => {
+      const checkFn = vi.fn().mockReturnValue(of({ items: [], errors: [{ item: { name: 'Node1' }, error: 'boom' }] }));
+      tester.component.prepare(buildManifest(), nodes, [], checkFn);
+      tester.component.goNext();
+      tester.component.goNext();
+
+      expect(tester.component.errorForRow(tester.component.rows[0])).toBe('boom');
+      expect(tester.component.errorForRow(tester.component.rows[1])).toBeNull();
+    });
+
+    test('submit drops skipped matched rows, keeps the id for updated matches, and includes unmatched rows as creates', () => {
+      const checkFn = vi.fn().mockReturnValue(of(matchedResult()));
+      tester.component.prepare(buildManifest(), nodes, [], checkFn);
+      tester.component.matchKey = 'name';
+      tester.component.goNext();
+      tester.component.goNext();
+      tester.component.setRowResolution(0, 'skip');
+
+      tester.component.submit();
+
+      expect(activeModal.close).toHaveBeenCalledWith({
+        items: [{ id: '', name: 'Node2', settings: {} }],
+        matchKey: 'name'
+      });
+    });
+
+    test('submit keeps a matched row resolved to update', () => {
+      const checkFn = vi.fn().mockReturnValue(of(matchedResult()));
+      tester.component.prepare(buildManifest(), nodes, [], checkFn);
+      tester.component.goNext();
+      tester.component.goNext();
+
+      tester.component.submit();
+
+      expect(activeModal.close).toHaveBeenCalledWith({
+        items: [
+          { id: 'existing-1', name: 'Node1', settings: {} },
+          { id: '', name: 'Node2', settings: {} }
+        ],
+        matchKey: null
+      });
+    });
   });
 });

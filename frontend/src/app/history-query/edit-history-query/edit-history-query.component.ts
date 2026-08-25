@@ -13,7 +13,7 @@ import {
 } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { combineLatest, firstValueFrom, merge, Observable, of, switchMap, tap } from 'rxjs';
+import { combineLatest, firstValueFrom, map, merge, Observable, of, switchMap, tap } from 'rxjs';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import {
@@ -43,6 +43,7 @@ import { DateTime } from 'luxon';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
+import { WizardCheckedItem, WizardCheckResult } from '../../shared/item-import-wizard/item-import-wizard.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-query-modal/reset-cache-history-query-modal.component';
@@ -623,11 +624,37 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     const fromSouthId = this.fromSouthId || null;
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(historyQueryId, this.southConnectorCommand.settings, this.southConnectorCommand.type, this.southManifest!, {
-      start: (settings, type) => this.historyQueryService.startExplore(historyQueryId || 'create', settings, type, fromSouthId),
-      browse: (sessionId, parentId) => this.historyQueryService.browseExplore(historyQueryId || 'create', sessionId, parentId),
-      close: sessionId => this.historyQueryService.closeExplore(historyQueryId || 'create', sessionId)
-    });
+    const checkFn = (rows: Array<Record<string, string>>, matchKey: string | null) =>
+      this.historyQueryService
+        .checkImportItemsFromRows(this.southManifest!.id, this.inMemoryItems, rows, matchKey ?? undefined)
+        .pipe(map(result => result as unknown as WizardCheckResult));
+    // No historyId to import against while the query is unsaved — resolved items are pushed straight
+    // into the in-memory list instead, exactly like the CSV import flow above.
+    const importFn = (items: Array<WizardCheckedItem>) => {
+      for (const item of items as unknown as Array<HistoryQueryItemCommandDTO>) {
+        const existingIndex = item.id ? this.inMemoryItems.findIndex(existing => existing.id === item.id) : -1;
+        if (existingIndex >= 0) {
+          this.inMemoryItems[existingIndex] = item;
+        } else {
+          this.inMemoryItems = [...this.inMemoryItems, item];
+        }
+      }
+      this.resetPage();
+      return of(undefined);
+    };
+    component.prepare(
+      historyQueryId,
+      this.southConnectorCommand.settings,
+      this.southConnectorCommand.type,
+      this.southManifest!,
+      {
+        start: (settings, type) => this.historyQueryService.startExplore(historyQueryId || 'create', settings, type, fromSouthId),
+        browse: (sessionId, parentId) => this.historyQueryService.browseExplore(historyQueryId || 'create', sessionId, parentId),
+        close: sessionId => this.historyQueryService.closeExplore(historyQueryId || 'create', sessionId)
+      },
+      this.inMemoryItems as unknown as Array<{ id: string; name: string; settings?: object }>,
+      { checkFn, importFn }
+    );
   }
 
   get southConnectorCommand() {

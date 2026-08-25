@@ -4,6 +4,7 @@ import { TranslateDirective } from '@ngx-translate/core';
 import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import { Observable } from 'rxjs';
 import { SouthConnectorService } from '../../services/south-connector.service';
+import { ModalService } from '../modal.service';
 import { SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { DatetimePipe } from '../datetime.pipe';
 import { FileSizePipe } from '../file-size.pipe';
@@ -14,6 +15,23 @@ import {
   SouthExploreBrowseResult,
   SouthExploreStartResult
 } from '../../../../../backend/shared/model/south-connector.model';
+import {
+  ExistingItemForMatch,
+  ItemImportWizardComponent,
+  WizardCheckedItem,
+  WizardCheckFn
+} from '../item-import-wizard/item-import-wizard.component';
+
+/**
+ * Backend calls needed to create items from an explore-tree selection: validate the current rows
+ * (`checkFn`, forwarded straight into the item-import wizard) and actually import the resolved items
+ * once the wizard is done (`importFn`) — either a real HTTP import for a persisted connector, or a
+ * local push into an unsaved connector's in-memory item list.
+ */
+export interface CreateItemsApi {
+  checkFn: WizardCheckFn;
+  importFn: (items: Array<WizardCheckedItem>, matchKey: string | null) => Observable<void>;
+}
 
 interface ExploreTreeNode {
   entry: SouthConnectorExploreEntry;
@@ -51,10 +69,13 @@ export interface SouthExploreApi {
 })
 export class SouthExploreModalComponent implements OnDestroy {
   private modal = inject(NgbActiveModal);
+  private modalService = inject(ModalService);
   private southConnectorService = inject(SouthConnectorService);
 
   private api: SouthExploreApi | null = null;
+  private createItemsApi: CreateItemsApi | null = null;
   manifest!: SouthConnectorManifest;
+  existingItems: Array<ExistingItemForMatch> = [];
   loading = false;
   error: string | null = null;
   sessionId: string | null = null;
@@ -72,15 +93,23 @@ export class SouthExploreModalComponent implements OnDestroy {
    * @param api - override the backend calls used to start/browse/close the session — needed when
    *   exploring settings that don't belong to a standalone south connector (e.g. a history query's
    *   south settings). Defaults to the south connector explore endpoints keyed by `connectorId`.
+   * @param existingItems - the connector's current items, used by the item-creation wizard to resolve
+   *   a match key onto an existing item.
+   * @param createItemsApi - the check/import backend calls used by the item-creation wizard triggered
+   *   from the selection. When omitted, "Create items from selection" is disabled.
    */
   prepare(
     connectorId: string | null,
     settingsToExplore: SouthSettings,
     southType: OIBusSouthType,
     manifest: SouthConnectorManifest,
-    api?: SouthExploreApi
+    api?: SouthExploreApi,
+    existingItems: Array<ExistingItemForMatch> = [],
+    createItemsApi?: CreateItemsApi
   ) {
     this.manifest = manifest;
+    this.existingItems = existingItems;
+    this.createItemsApi = createItemsApi ?? null;
     this.api = api ?? this.defaultApi(connectorId || 'create');
     this.loading = true;
     this.api.start(settingsToExplore, southType).subscribe({
@@ -164,8 +193,25 @@ export class SouthExploreModalComponent implements OnDestroy {
     return selected;
   }
 
+  get canCreateItemsFromSelection(): boolean {
+    return this.createItemsApi !== null;
+  }
+
   createItemsFromSelection() {
-    // Wired up in a later phase, once the item-creation wizard exists.
+    if (!this.createItemsApi) {
+      return;
+    }
+    const createItemsApi = this.createItemsApi;
+    const modalRef = this.modalService.open(ItemImportWizardComponent, { size: 'xl', backdrop: 'static' });
+    modalRef.componentInstance.prepare(this.manifest, this.selectedNodes, this.existingItems, createItemsApi.checkFn);
+    modalRef.result.subscribe((result: { items: Array<WizardCheckedItem>; matchKey: string | null } | undefined) => {
+      if (!result) {
+        return;
+      }
+      createItemsApi.importFn(result.items, result.matchKey).subscribe(() => {
+        this.modal.close(result);
+      });
+    });
   }
 
   cancel() {

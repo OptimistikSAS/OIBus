@@ -23,6 +23,7 @@ import { BackNavigationDirective } from '../../shared/back-navigation.directives
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
+import { WizardCheckedItem } from '../../shared/item-import-wizard/item-import-wizard.component';
 import { ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { DocsUrlService } from '../../shared/docs-url.service';
@@ -308,11 +309,50 @@ export class EditSouthComponent implements CanComponentDeactivate {
     }
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
+    const checkFn = (rows: Array<Record<string, string>>, matchKey: string | null) =>
+      this.southConnectorService.checkImportItemsFromRows(this.manifest!.id, this.inMemoryItems, rows, matchKey ?? undefined).pipe(
+        map(result => ({
+          items: result.items.map(item => ({
+            id: item.id,
+            name: item.name,
+            enabled: item.enabled,
+            settings: item.settings,
+            scanModeId: item.scanMode?.id || null,
+            scanModeName: item.scanMode?.name || null,
+            groupId: item.group?.id || null,
+            groupName: item.group?.standardSettings.name ?? null,
+            syncWithGroup: item.syncWithGroup,
+            maxReadInterval: item.maxReadInterval,
+            readDelay: item.readDelay,
+            startTimeOffset: item.startTimeOffset,
+            endTimeOffset: item.endTimeOffset,
+            recoveryStrategy: item.recoveryStrategy
+          })),
+          errors: result.errors
+        }))
+      );
+    // The connector isn't persisted yet — there's no southId to import against, so the resolved
+    // items are pushed straight into the in-memory list, exactly like the CSV import flow above.
+    const importFn = (items: Array<WizardCheckedItem>) => {
+      for (const item of items as unknown as Array<SouthConnectorItemCommandDTO>) {
+        const existingIndex = item.id ? this.inMemoryItems.findIndex(existing => existing.id === item.id) : -1;
+        if (existingIndex >= 0) {
+          this.inMemoryItems[existingIndex] = item;
+        } else {
+          this.inMemoryItems.push(item);
+        }
+      }
+      this.resetPage();
+      return of(undefined);
+    };
     component.prepare(
       this.southConnector?.id || null,
       this.formSouthConnectorCommand.settings,
       this.southType as OIBusSouthType,
-      this.manifest!
+      this.manifest!,
+      undefined,
+      this.inMemoryItems as unknown as Array<{ id: string; name: string; settings?: object }>,
+      { checkFn, importFn }
     );
   }
 

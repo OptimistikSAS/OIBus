@@ -128,14 +128,110 @@
         }
       </select>
     </div>
+  } @else if (currentStep === 3) {
+    @if (checkError) {
+      <div class="alert alert-danger" id="check-error">{{ checkError }}</div>
+    }
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <button
+        type="button"
+        class="btn btn-secondary btn-sm"
+        id="add-row-button"
+        (click)="addRow()"
+        translate="south.explore.item-import-wizard.add-row"
+      ></button>
+      <div class="btn-group">
+        <button
+          type="button"
+          class="btn btn-sm"
+          [class.btn-primary]="globalMatchResolution === 'update'"
+          [class.btn-outline-primary]="globalMatchResolution !== 'update'"
+          id="update-all-button"
+          (click)="setGlobalResolution('update')"
+          translate="south.explore.item-import-wizard.update-all-matches"
+        ></button>
+        <button
+          type="button"
+          class="btn btn-sm"
+          [class.btn-primary]="globalMatchResolution === 'skip'"
+          [class.btn-outline-primary]="globalMatchResolution !== 'skip'"
+          id="skip-all-button"
+          (click)="setGlobalResolution('skip')"
+          translate="south.explore.item-import-wizard.skip-all-matches"
+        ></button>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm" id="preview-table">
+        <thead>
+          <tr>
+            @for (mapping of mappings; track mapping.field) {
+              <th>{{ mapping.field }}</th>
+            }
+            <th translate="south.explore.item-import-wizard.resolution"></th>
+            <th translate="south.explore.item-import-wizard.error"></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of displayedRows.content; track $index) {
+            <tr class="preview-row">
+              @for (mapping of mappings; track mapping.field) {
+                <td>
+                  <input
+                    type="text"
+                    class="form-control form-control-sm preview-cell-input"
+                    [attr.data-field]="mapping.field"
+                    [value]="row[mapping.field]"
+                    (change)="onCellInput(displayedRows.number * displayedRows.size + $index, mapping.field, $event)"
+                  />
+                </td>
+              }
+              <td>
+                @if (isMatchedRow(row)) {
+                  <select
+                    class="form-select form-select-sm row-resolution-select"
+                    [value]="resolutionForRow(displayedRows.number * displayedRows.size + $index)"
+                    (change)="setRowResolution(displayedRows.number * displayedRows.size + $index, $any($event.target).value)"
+                  >
+                    <option value="update" translate="south.explore.item-import-wizard.update"></option>
+                    <option value="skip" translate="south.explore.item-import-wizard.skip"></option>
+                  </select>
+                } @else {
+                  <span class="text-muted" translate="south.explore.item-import-wizard.create"></span>
+                }
+              </td>
+              <td class="text-danger row-error">{{ errorForRow(row) }}</td>
+              <td>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-cancel remove-row-button"
+                  (click)="removeRow(displayedRows.number * displayedRows.size + $index)"
+                >
+                  <i class="fa fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (checking) {
+      <div class="text-center my-2" id="checking-indicator" translate="south.explore.item-import-wizard.checking"></div>
+    }
+    <div class="d-flex flex-row-reverse">
+      <oib-pagination [page]="displayedRows" (pageChanged)="changePage($event)" />
+    </div>
   }
 </div>
 <div class="modal-footer">
   @if (currentStep > 1) {
     <button type="button" class="btn btn-cancel" id="back-button" (click)="goBack()" translate="common.back"></button>
   }
-  @if (currentStep < 2) {
+  @if (currentStep < 3) {
     <button type="button" class="btn btn-primary" id="next-button" (click)="goNext()" translate="common.next"></button>
+  } @else {
+    <button type="button" class="btn btn-primary" id="submit-button" (click)="submit()" translate="common.save"></button>
   }
   <button type="button" class="btn btn-cancel" id="cancel-button" (click)="cancel()" translate="common.cancel"></button>
 </div>

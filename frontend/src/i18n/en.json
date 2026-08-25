@@ -2604,7 +2604,16 @@
         "constant-value": "Constant value",
         "select-metadata-key": "Select a metadata key",
         "match-key": "Match key",
-        "match-key-none": "None"
+        "match-key-none": "None",
+        "update-all-matches": "Update all matches",
+        "skip-all-matches": "Skip all matches",
+        "resolution": "Resolution",
+        "update": "Update",
+        "skip": "Skip",
+        "create": "Create",
+        "error": "Error",
+        "checking": "Checking...",
+        "add-row": "Add row"
       }
     },
     "test-item": {

@@ -25,6 +25,7 @@ import { WindowService } from '../../shared/window.service';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
+import { WizardCheckedItem } from '../../shared/item-import-wizard/item-import-wizard.component';
 import { EngineService } from '../../services/engine.service';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { LogsComponent } from '../../logs/logs.component';
@@ -843,7 +844,49 @@ export class SouthDetailComponent {
   explore() {
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(this.southConnector!.id, this.southConnector!.settings, this.southConnector!.type, this.manifest!);
+    const checkFn = (rows: Array<Record<string, string>>, matchKey: string | null) =>
+      this.southConnectorService.checkImportItemsFromRows(this.manifest!.id, this.southConnector!.items, rows, matchKey ?? undefined).pipe(
+        map(result => ({
+          items: result.items.map(item => ({
+            id: item.id,
+            name: item.name,
+            enabled: item.enabled,
+            settings: item.settings,
+            scanModeId: item.scanMode?.id || null,
+            scanModeName: item.scanMode?.name || null,
+            groupId: item.group?.id || null,
+            groupName: item.group?.standardSettings.name ?? null,
+            syncWithGroup: item.syncWithGroup,
+            maxReadInterval: item.maxReadInterval,
+            readDelay: item.readDelay,
+            startTimeOffset: item.startTimeOffset,
+            endTimeOffset: item.endTimeOffset,
+            recoveryStrategy: item.recoveryStrategy
+          })),
+          errors: result.errors
+        }))
+      );
+    const importFn = (items: Array<WizardCheckedItem>, matchKey: string | null) =>
+      this.southConnectorService
+        .importItems(this.southConnector!.id, items as unknown as Array<SouthConnectorItemCommandDTO>, false, matchKey ?? undefined)
+        .pipe(
+          tap(() => this.notificationService.success('south.items.import.imported')),
+          switchMap(() => this.southConnectorService.findById(this.southConnector!.id)),
+          tap(southConnector => {
+            this.southConnector = southConnector;
+            this.resetPage();
+          }),
+          map(() => undefined)
+        );
+    component.prepare(
+      this.southConnector!.id,
+      this.southConnector!.settings,
+      this.southConnector!.type,
+      this.manifest!,
+      undefined,
+      this.southConnector!.items,
+      { checkFn, importFn }
+    );
   }
 
   toggleConnector(value: boolean) {

@@ -1,14 +1,22 @@
-import { SouthExploreModalComponent } from './south-explore-modal.component';
+import { SouthExploreModalComponent, CreateItemsApi } from './south-explore-modal.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { SouthConnectorService } from '../../services/south-connector.service';
+import { ModalService } from '../modal.service';
 import { NEVER, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { page } from 'vitest/browser';
+
+function createItemsApi(): MockObject<CreateItemsApi> & CreateItemsApi {
+  return {
+    checkFn: vi.fn().mockReturnValue(of({ items: [], errors: [] })),
+    importFn: vi.fn().mockReturnValue(of(undefined))
+  } as unknown as MockObject<CreateItemsApi> & CreateItemsApi;
+}
 
 class SouthExploreModalComponentTester {
   readonly fixture = TestBed.createComponent(SouthExploreModalComponent);
@@ -32,6 +40,7 @@ describe('SouthExploreModalComponent', () => {
   let tester: SouthExploreModalComponentTester;
   let fakeActiveModal: MockObject<NgbActiveModal>;
   let southConnectorService: MockObject<SouthConnectorService>;
+  let modalService: MockObject<ModalService>;
 
   const southConnector = testData.south.list[0];
   const manifest = testData.south.manifest;
@@ -39,12 +48,14 @@ describe('SouthExploreModalComponent', () => {
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
     southConnectorService = createMock(SouthConnectorService);
+    modalService = createMock(ModalService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },
-        { provide: SouthConnectorService, useValue: southConnectorService }
+        { provide: SouthConnectorService, useValue: southConnectorService },
+        { provide: ModalService, useValue: modalService }
       ]
     });
 
@@ -390,11 +401,12 @@ describe('SouthExploreModalComponent', () => {
     expect(selectedIds).toEqual(['root', 'grandchild', 'child-2']);
   });
 
-  test('createItemsFromSelection should not throw (placeholder wired up in a later phase)', () => {
+  test('createItemsFromSelection should do nothing when no create-items api was provided', () => {
     southConnectorService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries: [] }));
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
 
     expect(() => tester.component.createItemsFromSelection()).not.toThrow();
+    expect(modalService.open).not.toHaveBeenCalled();
   });
 
   test('the create-from-selection button should be disabled until a node is selected', async () => {
@@ -407,7 +419,7 @@ describe('SouthExploreModalComponent', () => {
         ]
       })
     );
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest, undefined, [], createItemsApi());
     tester.fixture.detectChanges();
 
     await expect.element(tester.createFromSelectionButton).toBeDisabled();
@@ -417,5 +429,47 @@ describe('SouthExploreModalComponent', () => {
 
     await expect.element(tester.createFromSelectionButton).not.toBeDisabled();
     expect(tester.component.selectedNodes.length).toBe(1);
+  });
+
+  test('the create-from-selection button should stay disabled without a create-items api, even with a selection', async () => {
+    southConnectorService.startExplore.mockReturnValue(
+      of({ sessionId: 'sessionId', entries: [{ id: 'a', name: 'A', metadata: {}, hasChildren: false }] })
+    );
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
+    tester.fixture.detectChanges();
+
+    await tester.checkbox(0).click();
+    tester.fixture.detectChanges();
+
+    await expect.element(tester.createFromSelectionButton).toBeDisabled();
+  });
+
+  test('createItemsFromSelection opens the item-import wizard with the selection, manifest, and existing items', () => {
+    const api = createItemsApi();
+    const existingItems = [{ id: 'existing-1', name: 'Existing', settings: {} }];
+    const wizardPrepare = vi.fn();
+    modalService.open.mockReturnValue({ componentInstance: { prepare: wizardPrepare }, result: of(undefined) } as any);
+    southConnectorService.startExplore.mockReturnValue(
+      of({ sessionId: 'sessionId', entries: [{ id: 'a', name: 'A', metadata: {}, hasChildren: false }] })
+    );
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest, undefined, existingItems, api);
+    tester.component.toggleSelection(tester.component.nodes[0]);
+
+    tester.component.createItemsFromSelection();
+
+    expect(wizardPrepare).toHaveBeenCalledWith(manifest, tester.component.selectedNodes, existingItems, api.checkFn);
+  });
+
+  test('createItemsFromSelection imports the wizard result and closes the explore modal on success', () => {
+    const api = createItemsApi();
+    const wizardResult = { items: [{ id: '', name: 'New' }], matchKey: 'name' };
+    modalService.open.mockReturnValue({ componentInstance: { prepare: vi.fn() }, result: of(wizardResult) } as any);
+    southConnectorService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries: [] }));
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest, undefined, [], api);
+
+    tester.component.createItemsFromSelection();
+
+    expect(api.importFn).toHaveBeenCalledWith(wizardResult.items, wizardResult.matchKey);
+    expect(fakeActiveModal.close).toHaveBeenCalledWith(wizardResult);
   });
 });

@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, DestroyRef, inject, ChangeDetectionStrate
 import { AsyncPipe } from '@angular/common';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { combineLatest, firstValueFrom, merge, of, switchMap } from 'rxjs';
+import { combineLatest, firstValueFrom, map, merge, of, switchMap, tap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
 import { NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -30,6 +30,7 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
+import { WizardCheckedItem, WizardCheckResult } from '../../shared/item-import-wizard/item-import-wizard.component';
 import { LogsComponent } from '../../logs/logs.component';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
@@ -355,11 +356,32 @@ export class HistoryQueryDetailComponent {
   explore() {
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(this.historyQuery!.id, this.historyQuery!.southSettings, this.historyQuery!.southType, this.southManifest!, {
-      start: (settings, type) => this.historyQueryService.startExplore(this.historyQuery!.id, settings, type),
-      browse: (sessionId, parentId) => this.historyQueryService.browseExplore(this.historyQuery!.id, sessionId, parentId),
-      close: sessionId => this.historyQueryService.closeExplore(this.historyQuery!.id, sessionId)
-    });
+    const checkFn = (rows: Array<Record<string, string>>, matchKey: string | null) =>
+      this.historyQueryService
+        .checkImportItemsFromRows(this.southManifest!.id, this.historyQuery!.items, rows, matchKey ?? undefined)
+        .pipe(map(result => result as unknown as WizardCheckResult));
+    const importFn = (items: Array<WizardCheckedItem>, matchKey: string | null) =>
+      this.historyQueryService
+        .importItems(this.historyQuery!.id, items as unknown as Array<HistoryQueryItemCommandDTO>, false, matchKey ?? undefined)
+        .pipe(
+          tap(() => {
+            this.notificationService.success('history-query.items.imported');
+            this.refreshHistoryQuery();
+          })
+        );
+    component.prepare(
+      this.historyQuery!.id,
+      this.historyQuery!.southSettings,
+      this.historyQuery!.southType,
+      this.southManifest!,
+      {
+        start: (settings, type) => this.historyQueryService.startExplore(this.historyQuery!.id, settings, type),
+        browse: (sessionId, parentId) => this.historyQueryService.browseExplore(this.historyQuery!.id, sessionId, parentId),
+        close: sessionId => this.historyQueryService.closeExplore(this.historyQuery!.id, sessionId)
+      },
+      this.historyQuery!.items,
+      { checkFn, importFn }
+    );
   }
 
   get historyQueryFinishedByMetrics() {
