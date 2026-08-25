@@ -269,7 +269,7 @@ describe('SouthDetailComponent', () => {
     fixture.componentInstance.explore();
 
     expect(modalService.open).toHaveBeenCalledWith(SouthExploreModalComponent, { size: 'lg' });
-    expect(prepare).toHaveBeenCalledWith(southConnector.id, southConnector.settings, southConnector.type);
+    expect(prepare).toHaveBeenCalledWith(southConnector.id, southConnector.settings, southConnector.type, manifest);
   });
 
   test('importItems should open the import modal with recoveryStrategy among the optional headers', () => {

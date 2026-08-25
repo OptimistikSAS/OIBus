@@ -141,10 +141,11 @@ describe('HistoryQueryDetailComponent', () => {
       historyQuery.id,
       historyQuery.southSettings,
       historyQuery.southType,
+      { ...testData.south.manifest, explore: true },
       expect.objectContaining({ start: expect.any(Function), browse: expect.any(Function), close: expect.any(Function) })
     );
 
-    const api = prepare.mock.calls[0][3];
+    const api = prepare.mock.calls[0][4];
     api.start(historyQuery.southSettings, historyQuery.southType);
     expect(historyQueryService.startExplore).toHaveBeenCalledWith(historyQuery.id, historyQuery.southSettings, historyQuery.southType);
 

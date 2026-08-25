@@ -51,6 +51,7 @@ import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/im
 import { OIBusAttribute, OIBusObjectAttribute } from '../../../../../backend/shared/model/form.model';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { DocsUrlService } from '../../shared/docs-url.service';
+import { deriveItemImportFields } from '../../shared/form/item-import-fields.util';
 
 const PAGE_SIZE = 20;
 
@@ -354,7 +355,7 @@ export class HistoryQueryDetailComponent {
   explore() {
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(this.historyQuery!.id, this.historyQuery!.southSettings, this.historyQuery!.southType, {
+    component.prepare(this.historyQuery!.id, this.historyQuery!.southSettings, this.historyQuery!.southType, this.southManifest!, {
       start: (settings, type) => this.historyQueryService.startExplore(this.historyQuery!.id, settings, type),
       browse: (sessionId, parentId) => this.historyQueryService.browseExplore(this.historyQuery!.id, sessionId, parentId),
       close: sessionId => this.historyQueryService.closeExplore(this.historyQuery!.id, sessionId)
@@ -493,19 +494,8 @@ export class HistoryQueryDetailComponent {
 
   importItems() {
     const modalRef = this.modalService.open(ImportHistoryQueryItemsModalComponent, { size: 'xl', backdrop: 'static' });
-    const expectedHeaders = ['name', 'enabled'];
-    const optionalHeaders: Array<string> = ['scanMode'];
-
-    const settingsAttribute = this.southManifest!.items.rootAttribute.attributes.find(
-      attribute => attribute.key === 'settings'
-    )! as OIBusObjectAttribute;
-    settingsAttribute.attributes.forEach(setting => {
-      if (settingsAttribute.enablingConditions.find(element => element.targetPathFromRoot === setting.key)) {
-        optionalHeaders.push(`settings_${setting.key}`);
-      } else {
-        expectedHeaders.push(`settings_${setting.key}`);
-      }
-    });
+    const { expectedHeaders, optionalHeaders } = deriveItemImportFields(this.southManifest!);
+    optionalHeaders.push('scanMode');
 
     const checkFn = (file: File, delimiter: string, deleteItemsNotPresent: boolean) =>
       this.historyQueryService.checkImportItems(this.southManifest!.id, this.historyQuery!.items, file, delimiter, deleteItemsNotPresent);

@@ -21,6 +21,11 @@ class SouthExploreModalComponentTester {
   readonly cancel = this.root.getByRole('button', { name: 'Close' });
   readonly typeBadges = this.root.getByCss('.explore-metadata');
   readonly metadataValues = this.root.getByCss('.explore-metadata-value');
+  readonly createFromSelectionButton = this.root.getByCss('#create-from-selection-button');
+
+  checkbox(index: number) {
+    return this.root.getByCss(`.explore-checkbox`).nth(index);
+  }
 }
 
 describe('SouthExploreModalComponent', () => {
@@ -29,6 +34,7 @@ describe('SouthExploreModalComponent', () => {
   let southConnectorService: MockObject<SouthConnectorService>;
 
   const southConnector = testData.south.list[0];
+  const manifest = testData.south.manifest;
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
@@ -48,7 +54,7 @@ describe('SouthExploreModalComponent', () => {
 
   test('should be loading', async () => {
     southConnectorService.startExplore.mockReturnValue(NEVER);
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
     tester.fixture.detectChanges();
     await expect.element(tester.spinner).toBeInTheDocument();
   });
@@ -57,7 +63,7 @@ describe('SouthExploreModalComponent', () => {
     southConnectorService.startExplore.mockReturnValue(
       of({ sessionId: 'sessionId', entries: [{ id: 'ns=0;i=85', name: 'Objects', metadata: { type: 'Object' }, hasChildren: true }] })
     );
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
     tester.fixture.detectChanges();
 
     expect(southConnectorService.startExplore).toHaveBeenCalledWith(southConnector.id, southConnector.settings, southConnector.type);
@@ -76,7 +82,7 @@ describe('SouthExploreModalComponent', () => {
         ]
       })
     );
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
     tester.fixture.detectChanges();
     await expect.element(tester.tree).toBeInTheDocument();
 
@@ -94,7 +100,7 @@ describe('SouthExploreModalComponent', () => {
       })
     );
     southConnectorService.browseExplore.mockReturnValue(of({ entries: [] }));
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
 
     tester.component.toggle(tester.component.nodes[0]);
 
@@ -117,7 +123,7 @@ describe('SouthExploreModalComponent', () => {
         ]
       })
     );
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
     tester.fixture.detectChanges();
     await expect.element(tester.tree).toBeInTheDocument();
 
@@ -141,7 +147,7 @@ describe('SouthExploreModalComponent', () => {
         ]
       })
     );
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
     tester.fixture.detectChanges();
     await expect.element(tester.tree).toBeInTheDocument();
 
@@ -156,7 +162,7 @@ describe('SouthExploreModalComponent', () => {
         entries: [{ id: 'a', name: 'a-folder', metadata: { type: 'folder', files: 3 }, hasChildren: true }]
       })
     );
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
     tester.fixture.detectChanges();
     await expect.element(tester.tree).toBeInTheDocument();
 
@@ -166,7 +172,7 @@ describe('SouthExploreModalComponent', () => {
 
   test('should default the connector id to create', () => {
     southConnectorService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries: [] }));
-    tester.component.prepare(null, southConnector.settings, southConnector.type);
+    tester.component.prepare(null, southConnector.settings, southConnector.type, manifest);
     tester.fixture.detectChanges();
 
     expect(southConnectorService.startExplore).toHaveBeenCalledWith('create', southConnector.settings, southConnector.type);
@@ -174,7 +180,7 @@ describe('SouthExploreModalComponent', () => {
 
   test('should display an empty message when there is nothing to explore', async () => {
     southConnectorService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries: [] }));
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
     tester.fixture.detectChanges();
 
     await expect.element(tester.empty).toBeInTheDocument();
@@ -182,7 +188,7 @@ describe('SouthExploreModalComponent', () => {
 
   test('should display an error', async () => {
     southConnectorService.startExplore.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'boom' } })));
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
     tester.fixture.detectChanges();
 
     await expect.element(tester.error).toHaveTextContent('boom');
@@ -195,7 +201,7 @@ describe('SouthExploreModalComponent', () => {
     southConnectorService.browseExplore.mockReturnValue(
       of({ entries: [{ id: 'child', name: 'Child', metadata: { type: 'file' }, hasChildren: false }] })
     );
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
 
     tester.component.toggle(tester.component.nodes[0]);
 
@@ -211,7 +217,7 @@ describe('SouthExploreModalComponent', () => {
     southConnectorService.browseExplore.mockReturnValue(
       of({ entries: [{ id: 'child', name: 'Child', metadata: { type: 'file' }, hasChildren: false }] })
     );
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
 
     tester.component.toggle(tester.component.nodes[0]);
     tester.component.toggle(tester.component.nodes[0]);
@@ -228,7 +234,7 @@ describe('SouthExploreModalComponent', () => {
     southConnectorService.browseExplore.mockReturnValue(
       of({ entries: [{ id: 'child', name: 'Child', metadata: { type: 'file' }, hasChildren: false }] })
     );
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
 
     tester.component.toggle(tester.component.nodes[0]);
     tester.component.toggle(tester.component.nodes[0]);
@@ -242,7 +248,7 @@ describe('SouthExploreModalComponent', () => {
     southConnectorService.startExplore.mockReturnValue(
       of({ sessionId: 'sessionId', entries: [{ id: 'leaf', name: 'Leaf', metadata: { type: 'file' }, hasChildren: false }] })
     );
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
 
     tester.component.toggle(tester.component.nodes[0]);
 
@@ -254,7 +260,7 @@ describe('SouthExploreModalComponent', () => {
       of({ sessionId: 'sessionId', entries: [{ id: 'parent', name: 'Parent', metadata: { type: 'Object' }, hasChildren: true }] })
     );
     southConnectorService.browseExplore.mockReturnValue(throwError(() => new HttpErrorResponse({ error: { message: 'nope' } })));
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
 
     tester.component.toggle(tester.component.nodes[0]);
 
@@ -267,7 +273,7 @@ describe('SouthExploreModalComponent', () => {
       of({ sessionId: 'sessionId', entries: [{ id: 'parent', name: 'Parent', metadata: { type: 'Object' }, hasChildren: true }] })
     );
     southConnectorService.browseExplore.mockReturnValue(of({ entries: [] }));
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
 
     tester.component.toggle(tester.component.nodes[0]);
 
@@ -276,7 +282,7 @@ describe('SouthExploreModalComponent', () => {
 
   test('should dismiss on cancel', async () => {
     southConnectorService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries: [] }));
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
     tester.fixture.detectChanges();
 
     await tester.cancel.click();
@@ -286,7 +292,7 @@ describe('SouthExploreModalComponent', () => {
 
   test('should close the session when the modal is destroyed (ESC/backdrop/close)', () => {
     southConnectorService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries: [] }));
-    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
     tester.fixture.detectChanges();
 
     tester.fixture.destroy();
@@ -307,7 +313,7 @@ describe('SouthExploreModalComponent', () => {
       close: vi.fn().mockReturnValue(of(undefined))
     };
 
-    tester.component.prepare('historyId', southConnector.settings, southConnector.type, customApi);
+    tester.component.prepare('historyId', southConnector.settings, southConnector.type, manifest, customApi);
     tester.fixture.detectChanges();
 
     expect(customApi.start).toHaveBeenCalledWith(southConnector.settings, southConnector.type);
@@ -316,5 +322,100 @@ describe('SouthExploreModalComponent', () => {
     tester.fixture.destroy();
     expect(customApi.close).toHaveBeenCalledWith('sessionId');
     expect(southConnectorService.closeExplore).not.toHaveBeenCalled();
+  });
+
+  test('toggleSelection should flip a node selected flag', () => {
+    southConnectorService.startExplore.mockReturnValue(
+      of({ sessionId: 'sessionId', entries: [{ id: 'a', name: 'A', metadata: {}, hasChildren: false }] })
+    );
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
+
+    const node = tester.component.nodes[0];
+    expect(node.selected).toBe(false);
+
+    tester.component.toggleSelection(node);
+    expect(node.selected).toBe(true);
+
+    tester.component.toggleSelection(node);
+    expect(node.selected).toBe(false);
+  });
+
+  test('selectedNodes should be empty when nothing is selected', () => {
+    southConnectorService.startExplore.mockReturnValue(
+      of({ sessionId: 'sessionId', entries: [{ id: 'a', name: 'A', metadata: {}, hasChildren: false }] })
+    );
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
+
+    expect(tester.component.selectedNodes).toEqual([]);
+  });
+
+  test('selectedNodes should aggregate selected entries across a nested tree', () => {
+    southConnectorService.startExplore.mockReturnValue(
+      of({
+        sessionId: 'sessionId',
+        entries: [{ id: 'root', name: 'Root', metadata: {}, hasChildren: true }]
+      })
+    );
+    southConnectorService.browseExplore.mockReturnValue(
+      of({
+        entries: [
+          { id: 'child-1', name: 'Child1', metadata: {}, hasChildren: true },
+          { id: 'child-2', name: 'Child2', metadata: {}, hasChildren: false }
+        ]
+      })
+    );
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
+
+    const root = tester.component.nodes[0];
+    tester.component.toggle(root); // expands and loads child-1, child-2
+    const [child1, child2] = root.children;
+    child1.children = [
+      {
+        entry: { id: 'grandchild', name: 'Grandchild', metadata: {}, hasChildren: false },
+        depth: 2,
+        expanded: false,
+        loading: false,
+        loaded: false,
+        error: null,
+        selected: true,
+        children: []
+      }
+    ];
+
+    // Select the root, child-2, and leave child-1 unselected but with a selected grandchild.
+    tester.component.toggleSelection(root);
+    tester.component.toggleSelection(child2);
+
+    const selectedIds = tester.component.selectedNodes.map(entry => entry.id);
+    expect(selectedIds).toEqual(['root', 'grandchild', 'child-2']);
+  });
+
+  test('createItemsFromSelection should not throw (placeholder wired up in a later phase)', () => {
+    southConnectorService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries: [] }));
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
+
+    expect(() => tester.component.createItemsFromSelection()).not.toThrow();
+  });
+
+  test('the create-from-selection button should be disabled until a node is selected', async () => {
+    southConnectorService.startExplore.mockReturnValue(
+      of({
+        sessionId: 'sessionId',
+        entries: [
+          { id: 'a', name: 'A', metadata: {}, hasChildren: false },
+          { id: 'b', name: 'B', metadata: {}, hasChildren: false }
+        ]
+      })
+    );
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
+    tester.fixture.detectChanges();
+
+    await expect.element(tester.createFromSelectionButton).toBeDisabled();
+
+    await tester.checkbox(0).click();
+    tester.fixture.detectChanges();
+
+    await expect.element(tester.createFromSelectionButton).not.toBeDisabled();
+    expect(tester.component.selectedNodes.length).toBe(1);
   });
 });

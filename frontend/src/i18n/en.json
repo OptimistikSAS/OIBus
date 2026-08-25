@@ -2592,7 +2592,8 @@
       "title": "Explore data source",
       "button": "Explore",
       "empty": "Nothing to explore",
-      "error": "Error while exploring the data source"
+      "error": "Error while exploring the data source",
+      "create-from-selection": "Create items from selection ({{count}})"
     },
     "test-item": {
       "title": "Testing item",

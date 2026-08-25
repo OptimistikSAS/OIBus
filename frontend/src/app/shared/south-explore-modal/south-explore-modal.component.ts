@@ -10,6 +10,7 @@ import { FileSizePipe } from '../file-size.pipe';
 import {
   OIBusSouthType,
   SouthConnectorExploreEntry,
+  SouthConnectorManifest,
   SouthExploreBrowseResult,
   SouthExploreStartResult
 } from '../../../../../backend/shared/model/south-connector.model';
@@ -21,6 +22,7 @@ interface ExploreTreeNode {
   loading: boolean;
   loaded: boolean;
   error: string | null;
+  selected: boolean;
   children: Array<ExploreTreeNode>;
 }
 
@@ -52,6 +54,7 @@ export class SouthExploreModalComponent implements OnDestroy {
   private southConnectorService = inject(SouthConnectorService);
 
   private api: SouthExploreApi | null = null;
+  manifest!: SouthConnectorManifest;
   loading = false;
   error: string | null = null;
   sessionId: string | null = null;
@@ -64,11 +67,20 @@ export class SouthExploreModalComponent implements OnDestroy {
    *   own settings; pass `null` for unsaved settings (create/edit forms)
    * @param settingsToExplore - the south settings to explore
    * @param southType - the south connector type
+   * @param manifest - the south connector manifest, used by the item-creation wizard triggered from
+   *   the selection
    * @param api - override the backend calls used to start/browse/close the session — needed when
    *   exploring settings that don't belong to a standalone south connector (e.g. a history query's
    *   south settings). Defaults to the south connector explore endpoints keyed by `connectorId`.
    */
-  prepare(connectorId: string | null, settingsToExplore: SouthSettings, southType: OIBusSouthType, api?: SouthExploreApi) {
+  prepare(
+    connectorId: string | null,
+    settingsToExplore: SouthSettings,
+    southType: OIBusSouthType,
+    manifest: SouthConnectorManifest,
+    api?: SouthExploreApi
+  ) {
+    this.manifest = manifest;
     this.api = api ?? this.defaultApi(connectorId || 'create');
     this.loading = true;
     this.api.start(settingsToExplore, southType).subscribe({
@@ -131,7 +143,29 @@ export class SouthExploreModalComponent implements OnDestroy {
   }
 
   private createNode(entry: SouthConnectorExploreEntry, depth: number): ExploreTreeNode {
-    return { entry, depth, expanded: false, loading: false, loaded: false, error: null, children: [] };
+    return { entry, depth, expanded: false, loading: false, loaded: false, error: null, selected: false, children: [] };
+  }
+
+  toggleSelection(node: ExploreTreeNode) {
+    node.selected = !node.selected;
+  }
+
+  get selectedNodes(): Array<SouthConnectorExploreEntry> {
+    const selected: Array<SouthConnectorExploreEntry> = [];
+    const collect = (nodes: Array<ExploreTreeNode>) => {
+      for (const node of nodes) {
+        if (node.selected) {
+          selected.push(node.entry);
+        }
+        collect(node.children);
+      }
+    };
+    collect(this.nodes);
+    return selected;
+  }
+
+  createItemsFromSelection() {
+    // Wired up in a later phase, once the item-creation wizard exists.
   }
 
   cancel() {

@@ -308,7 +308,12 @@ export class EditSouthComponent implements CanComponentDeactivate {
     }
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(this.southConnector?.id || null, this.formSouthConnectorCommand.settings, this.southType as OIBusSouthType);
+    component.prepare(
+      this.southConnector?.id || null,
+      this.formSouthConnectorCommand.settings,
+      this.southType as OIBusSouthType,
+      this.manifest!
+    );
   }
 
   addItem() {

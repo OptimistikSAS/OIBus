@@ -143,10 +143,11 @@ describe('EditHistoryQueryComponent', () => {
       historyQuery.id,
       southCommand.settings,
       southCommand.type,
+      fixture.componentInstance.southManifest,
       expect.objectContaining({ start: expect.any(Function), browse: expect.any(Function), close: expect.any(Function) })
     );
 
-    const api = prepare.mock.calls[0][3];
+    const api = prepare.mock.calls[0][4];
     api.start(southCommand.settings, southCommand.type);
     expect(historyQueryService.startExplore).toHaveBeenCalledWith(historyQuery.id, southCommand.settings, southCommand.type, null);
 
@@ -183,9 +184,10 @@ describe('EditHistoryQueryComponent', () => {
       null,
       southCommand.settings,
       southCommand.type,
+      fixture.componentInstance.southManifest,
       expect.objectContaining({ start: expect.any(Function) })
     );
-    const api = prepare.mock.calls[0][3];
+    const api = prepare.mock.calls[0][4];
     api.start(southCommand.settings, southCommand.type);
     expect(historyQueryService.startExplore).toHaveBeenCalledWith('create', southCommand.settings, southCommand.type, southConnector.id);
   });

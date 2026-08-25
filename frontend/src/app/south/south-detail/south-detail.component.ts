@@ -49,6 +49,7 @@ import { SelectGroupModalComponent } from '../south-items/select-group-modal/sel
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
 import { ViewItemValueModalComponent } from '../south-items/view-item-value-modal/view-item-value-modal.component';
 import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
+import { deriveItemImportFields } from '../../shared/form/item-import-fields.util';
 
 const PAGE_SIZE = 20;
 
@@ -440,26 +441,9 @@ export class SouthDetailComponent {
 
   importItems() {
     const modal = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
-    const expectedHeaders = ['name', 'enabled', 'scanMode'];
-    const optionalHeaders: Array<string> = [
-      'group',
-      'maxReadInterval',
-      'readDelay',
-      'startTimeOffset',
-      'endTimeOffset',
-      'recoveryStrategy',
-      'syncWithGroup'
-    ];
-    const settingsAttribute = this.manifest!.items.rootAttribute.attributes.find(
-      attribute => attribute.key === 'settings'
-    )! as OIBusObjectAttribute;
-    settingsAttribute.attributes.forEach(setting => {
-      if (settingsAttribute.enablingConditions.find(element => element.targetPathFromRoot === setting.key)) {
-        optionalHeaders.push(`settings_${setting.key}`);
-      } else {
-        expectedHeaders.push(`settings_${setting.key}`);
-      }
-    });
+    const { expectedHeaders, optionalHeaders } = deriveItemImportFields(this.manifest!);
+    expectedHeaders.push('scanMode');
+    optionalHeaders.push('group', 'maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'recoveryStrategy', 'syncWithGroup');
 
     const checkFn = (file: File, delimiter: string, deleteItemsNotPresent: boolean) =>
       this.southConnectorService
@@ -859,7 +843,7 @@ export class SouthDetailComponent {
   explore() {
     const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
     const component: SouthExploreModalComponent = modalRef.componentInstance;
-    component.prepare(this.southConnector!.id, this.southConnector!.settings, this.southConnector!.type);
+    component.prepare(this.southConnector!.id, this.southConnector!.settings, this.southConnector!.type, this.manifest!);
   }
 
   toggleConnector(value: boolean) {
