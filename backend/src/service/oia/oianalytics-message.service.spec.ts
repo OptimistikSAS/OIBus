@@ -6,30 +6,16 @@ import { flushPromises, mockModule, reloadModule, seq } from '../../tests/utils/
 import type OIAnalyticsMessageServiceType from './oianalytics-message.service';
 import type LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
 import OIAnalyticsMessageRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-message-repository.mock';
-import EngineRepositoryMock from '../../tests/__mocks__/repository/config/engine-repository.mock';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
-import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
 import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
-import IpFilterRepositoryMock from '../../tests/__mocks__/repository/config/ip-filter-repository.mock';
-import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
-import UserRepositoryMock from '../../tests/__mocks__/repository/config/user-repository.mock';
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
-import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
-import TransformerRepositoryMock from '../../tests/__mocks__/repository/config/transformer-repository.mock';
+import ConfigTransferBuilderServiceMock from '../../tests/__mocks__/service/config-transfer/config-transfer-builder-service.mock';
 import { OIAnalyticsMessageHistoryQueries } from '../../model/oianalytics-message.model';
-import { StandardTransformer } from '../../model/transformer.model';
-import IsoTransformer from '../../transformers/iso-transformer';
+import { OIBusFullConfigurationCommandDTO, OIBusHistoryQueriesCommandDTO } from './oianalytics.model';
 import DeferredPromise from '../deferred-promise';
 import { DateTime } from 'luxon';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import { getErrorMessage } from '../utils';
 
 const nodeRequire = createRequire(import.meta.url);
 
-// Mocked module exports — mutated in-place between tests
-let mockUtils: Record<string, unknown>;
-let mockEncryptionService: { encryptionService: EncryptionServiceMock };
 // Shared logger reference updated by each beforeEach so the loggerService mock returns the active logger
 let activeLogger: LoggerMock | null = null;
 
@@ -38,18 +24,6 @@ let OIAnalyticsMessageService: new (
 ) => InstanceType<typeof OIAnalyticsMessageServiceType>;
 
 before(() => {
-  mockUtils = {
-    getOIBusInfo: mock.fn(() => testData.engine.oIBusInfo),
-    createFolder: mock.fn(),
-    filesExists: mock.fn(),
-    getErrorMessage
-  };
-  mockEncryptionService = {
-    encryptionService: new EncryptionServiceMock('', '')
-  };
-
-  mockModule(nodeRequire, '../utils', mockUtils);
-  mockModule(nodeRequire, '../encryption.service', mockEncryptionService);
   mockModule(nodeRequire, '../logger/logger.service', {
     loggerService: { createChildLogger: mock.fn(() => activeLogger) },
     default: class {}
@@ -63,26 +37,10 @@ before(() => {
   OIAnalyticsMessageService = mod.default;
 });
 
-const standardTransformer: StandardTransformer = {
-  id: IsoTransformer.transformerName,
-  type: 'standard',
-  functionName: IsoTransformer.transformerName,
-  inputType: 'any',
-  outputType: 'any'
-};
-
 describe('OIAnalytics Message Service', () => {
   let oIAnalyticsMessageRepository: OIAnalyticsMessageRepositoryMock;
   let oIAnalyticsRegistrationService: OIAnalyticsRegistrationServiceMock;
-  let engineRepository: EngineRepositoryMock;
-  let ipFilterRepository: IpFilterRepositoryMock;
-  let certificateRepository: CertificateRepositoryMock;
-  let userRepository: UserRepositoryMock;
-  let scanModeRepository: ScanModeRepositoryMock;
-  let southRepository: SouthConnectorRepositoryMock;
-  let northRepository: NorthConnectorRepositoryMock;
-  let historyQueryRepository: HistoryQueryRepositoryMock;
-  let transformerRepository: TransformerRepositoryMock;
+  let configTransferBuilderService: ConfigTransferBuilderServiceMock;
   let oIAnalyticsClient: OianalyticsClientMock;
   let logger: LoggerMock;
   let service: InstanceType<typeof OIAnalyticsMessageServiceType>;
@@ -90,52 +48,22 @@ describe('OIAnalytics Message Service', () => {
   beforeEach(() => {
     oIAnalyticsMessageRepository = new OIAnalyticsMessageRepositoryMock();
     oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
-    engineRepository = new EngineRepositoryMock();
-    ipFilterRepository = new IpFilterRepositoryMock();
-    certificateRepository = new CertificateRepositoryMock();
-    userRepository = new UserRepositoryMock();
-    scanModeRepository = new ScanModeRepositoryMock();
-    southRepository = new SouthConnectorRepositoryMock();
-    northRepository = new NorthConnectorRepositoryMock();
-    historyQueryRepository = new HistoryQueryRepositoryMock();
-    transformerRepository = new TransformerRepositoryMock();
+    configTransferBuilderService = new ConfigTransferBuilderServiceMock();
     oIAnalyticsClient = new OianalyticsClientMock();
     logger = new (nodeRequire('../../tests/__mocks__/service/logger/logger.mock') as { default: new () => LoggerMock }).default();
     activeLogger = logger;
 
-    mockUtils.getOIBusInfo = mock.fn(() => testData.engine.oIBusInfo);
-
     oIAnalyticsMessageRepository.list = mock.fn(() => testData.oIAnalytics.messages.oIBusList);
     oIAnalyticsMessageRepository.create = mock.fn(() => testData.oIAnalytics.messages.oIBusList[0]);
     oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(() => testData.oIAnalytics.registration.completed);
-    engineRepository.get = mock.fn(() => testData.engine.settings);
-    scanModeRepository.findAll = mock.fn(() => testData.scanMode.list);
-    ipFilterRepository.list = mock.fn(() => testData.ipFilters.list);
-    certificateRepository.list = mock.fn(() => testData.certificates.list);
-    userRepository.list = mock.fn(() => testData.users.list);
-    southRepository.findAllSouth = mock.fn(() => testData.south.list);
-    southRepository.findSouthById = mock.fn((id: string) => testData.south.list.find(element => element.id === id) ?? null);
-    northRepository.findAllNorth = mock.fn(() => testData.north.list);
-    northRepository.findNorthById = mock.fn((id: string) => testData.north.list.find(element => element.id === id) ?? null);
-    transformerRepository.list = mock.fn(() => [...testData.transformers.list, standardTransformer]);
 
     mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
     service = new OIAnalyticsMessageService(
       oIAnalyticsMessageRepository,
       oIAnalyticsRegistrationService,
-      engineRepository,
-      scanModeRepository,
-      ipFilterRepository,
-      certificateRepository,
-      userRepository,
-      southRepository,
-      northRepository,
-      historyQueryRepository,
-      transformerRepository,
       oIAnalyticsClient,
-      false,
-      false
+      configTransferBuilderService
     );
   });
 
@@ -209,7 +137,11 @@ describe('OIAnalytics Message Service', () => {
     );
   });
 
-  it('should properly send message', async () => {
+  it('should properly build and send the full configuration from the config transfer builder', async () => {
+    const builtConfiguration = {
+      engine: { settings: { general: { name: 'my oibus' } } }
+    } as unknown as OIBusFullConfigurationCommandDTO;
+    configTransferBuilderService.buildFullConfiguration = mock.fn(() => builtConfiguration);
     oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(() => ({
       ...testData.oIAnalytics.registration.completed,
       publicCipherKey: null
@@ -218,142 +150,11 @@ describe('OIAnalytics Message Service', () => {
     service.start(); // trigger a runProgress
     assert.strictEqual(oIAnalyticsClient.sendConfiguration.mock.calls.length, 1);
 
+    assert.deepStrictEqual(configTransferBuilderService.buildFullConfiguration.mock.calls[0].arguments, [
+      { ...testData.oIAnalytics.registration.completed, publicCipherKey: null }
+    ]);
     const sentConfiguration = JSON.parse(oIAnalyticsClient.sendConfiguration.mock.calls[0].arguments[1] as string);
-    assert.deepStrictEqual(sentConfiguration.engine.settings.logger.file, {
-      level: testData.engine.settings.logger.file.level,
-      maxFileSize: testData.engine.settings.logger.file.maxFileSize,
-      numberOfFiles: testData.engine.settings.logger.file.numberOfFiles
-    });
-    assert.deepStrictEqual(sentConfiguration.engine.settings.logger.database, {
-      level: testData.engine.settings.logger.database.level,
-      maxNumberOfLogs: testData.engine.settings.logger.database.maxNumberOfLogs
-    });
-  });
-
-  it('should properly build south connector groups, item scanMode/group ids and north transformer south group id', async () => {
-    const customSouth = {
-      ...testData.south.list[0],
-      items: [
-        {
-          ...testData.south.list[0].items[0],
-          scanMode: null,
-          group: { id: 'groupId1' }
-        }
-      ],
-      groups: [
-        {
-          id: 'groupId1',
-          name: 'My Group',
-          scanMode: testData.scanMode.list[0],
-          startTimeOffset: 1,
-          endTimeOffset: 2,
-          maxReadInterval: 3,
-          readDelay: 4,
-          recoveryStrategy: 'oldest'
-        }
-      ]
-    };
-    southRepository.findAllSouth = mock.fn(() => [customSouth] as unknown as typeof testData.south.list);
-    southRepository.findSouthById = mock.fn(() => customSouth as unknown as (typeof testData.south.list)[0]);
-
-    const originalNorthSource = testData.north.list[0].transformers[0].source as { south: unknown };
-    const customNorth = {
-      ...testData.north.list[0],
-      transformers: [
-        {
-          ...testData.north.list[0].transformers[0],
-          source: {
-            type: 'south',
-            south: originalNorthSource.south,
-            group: { id: 'northGroupId1' },
-            items: []
-          }
-        }
-      ]
-    };
-    northRepository.findAllNorth = mock.fn(() => [customNorth] as unknown as typeof testData.north.list);
-    northRepository.findNorthById = mock.fn(() => customNorth as unknown as (typeof testData.north.list)[0]);
-
-    oIAnalyticsClient.sendConfiguration = mock.fn(() => Promise.resolve());
-    service.start();
-
-    const sentConfiguration = JSON.parse(oIAnalyticsClient.sendConfiguration.mock.calls[0].arguments[1] as string);
-    const southSettings = sentConfiguration.southConnectors[0].settings;
-    assert.strictEqual(southSettings.items[0].scanModeId, null);
-    assert.strictEqual(southSettings.items[0].groupId, 'groupId1');
-    assert.deepStrictEqual(southSettings.groups[0], {
-      id: 'groupId1',
-      standardSettings: {
-        name: 'My Group',
-        scanModeId: testData.scanMode.list[0].id
-      },
-      historySettings: {
-        startTimeOffset: 1,
-        endTimeOffset: 2,
-        maxReadInterval: 3,
-        readDelay: 4,
-        recoveryStrategy: 'oldest'
-      }
-    });
-
-    const northTransformer = sentConfiguration.northConnectors[0].settings.transformers[0];
-    assert.strictEqual(northTransformer.source.groupId, 'northGroupId1');
-  });
-
-  it('should properly send scan mode settings with type, interval and activationWindow for a cron scan mode', async () => {
-    oIAnalyticsClient.sendConfiguration = mock.fn(() => Promise.resolve());
-    service.start(); // trigger a runProgress
-
-    const sentConfiguration = JSON.parse(oIAnalyticsClient.sendConfiguration.mock.calls[0].arguments[1] as string);
-    assert.deepStrictEqual(
-      sentConfiguration.scanModes.map((scanMode: { settings: unknown }) => scanMode.settings),
-      testData.scanMode.list.map(scanMode => ({
-        name: scanMode.name,
-        description: scanMode.description,
-        type: scanMode.type,
-        cron: scanMode.cron,
-        interval: scanMode.interval,
-        activationWindow: scanMode.activationWindow
-      }))
-    );
-    for (const scanMode of sentConfiguration.scanModes) {
-      assert.strictEqual(scanMode.settings.type, 'cron');
-      assert.strictEqual(scanMode.settings.interval, null);
-      assert.strictEqual(scanMode.settings.activationWindow, null);
-    }
-  });
-
-  it('should properly send scan mode settings with type, interval and activationWindow for an interval scan mode', async () => {
-    const intervalScanMode = {
-      id: 'scanModeIdInterval',
-      name: 'interval scan mode',
-      description: 'my interval scanMode',
-      type: 'interval' as const,
-      cron: '',
-      interval: { value: 30, unit: 's' as const },
-      activationWindow: {
-        dateRange: { start: '2026-08-01T00:00:00.000Z', end: '2026-08-31T00:00:00.000Z' },
-        recurring: { timezone: 'Europe/Paris', daysOfWeek: [6, 0], timeOfDay: { start: '22:00', end: '02:00' } }
-      },
-      createdBy: 'admin',
-      updatedBy: 'admin',
-      createdAt: testData.constants.dates.DATE_1,
-      updatedAt: testData.constants.dates.DATE_2
-    };
-    scanModeRepository.findAll = mock.fn(() => [intervalScanMode]);
-    oIAnalyticsClient.sendConfiguration = mock.fn(() => Promise.resolve());
-    service.start(); // trigger a runProgress
-
-    const sentConfiguration = JSON.parse(oIAnalyticsClient.sendConfiguration.mock.calls[0].arguments[1] as string);
-    assert.strictEqual(sentConfiguration.scanModes.length, 1);
-    assert.deepStrictEqual(sentConfiguration.scanModes[0].settings, {
-      name: intervalScanMode.name,
-      description: intervalScanMode.description,
-      type: 'interval',
-      cron: intervalScanMode.cron,
-      interval: intervalScanMode.interval,
-      activationWindow: intervalScanMode.activationWindow
-    });
+    assert.deepStrictEqual(sentConfiguration, builtConfiguration);
   });
 
   it('should properly send message and trigger timeout', async () => {
@@ -481,15 +282,7 @@ describe('OIAnalytics Message Service', () => {
 describe('OIAnalytics message service without message', () => {
   let oIAnalyticsMessageRepository: OIAnalyticsMessageRepositoryMock;
   let oIAnalyticsRegistrationService: OIAnalyticsRegistrationServiceMock;
-  let engineRepository: EngineRepositoryMock;
-  let ipFilterRepository: IpFilterRepositoryMock;
-  let certificateRepository: CertificateRepositoryMock;
-  let userRepository: UserRepositoryMock;
-  let scanModeRepository: ScanModeRepositoryMock;
-  let southRepository: SouthConnectorRepositoryMock;
-  let northRepository: NorthConnectorRepositoryMock;
-  let historyQueryRepository: HistoryQueryRepositoryMock;
-  let transformerRepository: TransformerRepositoryMock;
+  let configTransferBuilderService: ConfigTransferBuilderServiceMock;
   let oIAnalyticsClient: OianalyticsClientMock;
   let logger: LoggerMock;
   let service: InstanceType<typeof OIAnalyticsMessageServiceType>;
@@ -497,15 +290,7 @@ describe('OIAnalytics message service without message', () => {
   beforeEach(() => {
     oIAnalyticsMessageRepository = new OIAnalyticsMessageRepositoryMock();
     oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
-    engineRepository = new EngineRepositoryMock();
-    ipFilterRepository = new IpFilterRepositoryMock();
-    certificateRepository = new CertificateRepositoryMock();
-    userRepository = new UserRepositoryMock();
-    scanModeRepository = new ScanModeRepositoryMock();
-    southRepository = new SouthConnectorRepositoryMock();
-    northRepository = new NorthConnectorRepositoryMock();
-    historyQueryRepository = new HistoryQueryRepositoryMock();
-    transformerRepository = new TransformerRepositoryMock();
+    configTransferBuilderService = new ConfigTransferBuilderServiceMock();
     oIAnalyticsClient = new OianalyticsClientMock();
     const LoggerMockCtor = (nodeRequire('../../tests/__mocks__/service/logger/logger.mock') as { default: new () => LoggerMock }).default;
     logger = new LoggerMockCtor();
@@ -517,18 +302,8 @@ describe('OIAnalytics message service without message', () => {
     service = new OIAnalyticsMessageService(
       oIAnalyticsMessageRepository,
       oIAnalyticsRegistrationService,
-      engineRepository,
-      scanModeRepository,
-      ipFilterRepository,
-      certificateRepository,
-      userRepository,
-      southRepository,
-      northRepository,
-      historyQueryRepository,
-      transformerRepository,
       oIAnalyticsClient,
-      false,
-      false
+      configTransferBuilderService
     );
   });
 
@@ -549,15 +324,7 @@ describe('OIAnalytics message service without message', () => {
 describe('OIAnalytics message service without completed registration', () => {
   let oIAnalyticsMessageRepository: OIAnalyticsMessageRepositoryMock;
   let oIAnalyticsRegistrationService: OIAnalyticsRegistrationServiceMock;
-  let engineRepository: EngineRepositoryMock;
-  let ipFilterRepository: IpFilterRepositoryMock;
-  let certificateRepository: CertificateRepositoryMock;
-  let userRepository: UserRepositoryMock;
-  let scanModeRepository: ScanModeRepositoryMock;
-  let southRepository: SouthConnectorRepositoryMock;
-  let northRepository: NorthConnectorRepositoryMock;
-  let historyQueryRepository: HistoryQueryRepositoryMock;
-  let transformerRepository: TransformerRepositoryMock;
+  let configTransferBuilderService: ConfigTransferBuilderServiceMock;
   let oIAnalyticsClient: OianalyticsClientMock;
   let logger: LoggerMock;
   let service: InstanceType<typeof OIAnalyticsMessageServiceType>;
@@ -565,15 +332,7 @@ describe('OIAnalytics message service without completed registration', () => {
   beforeEach(() => {
     oIAnalyticsMessageRepository = new OIAnalyticsMessageRepositoryMock();
     oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
-    engineRepository = new EngineRepositoryMock();
-    ipFilterRepository = new IpFilterRepositoryMock();
-    certificateRepository = new CertificateRepositoryMock();
-    userRepository = new UserRepositoryMock();
-    scanModeRepository = new ScanModeRepositoryMock();
-    southRepository = new SouthConnectorRepositoryMock();
-    northRepository = new NorthConnectorRepositoryMock();
-    historyQueryRepository = new HistoryQueryRepositoryMock();
-    transformerRepository = new TransformerRepositoryMock();
+    configTransferBuilderService = new ConfigTransferBuilderServiceMock();
     oIAnalyticsClient = new OianalyticsClientMock();
     logger = new (nodeRequire('../../tests/__mocks__/service/logger/logger.mock') as { default: new () => LoggerMock }).default();
     activeLogger = logger;
@@ -584,18 +343,8 @@ describe('OIAnalytics message service without completed registration', () => {
     service = new OIAnalyticsMessageService(
       oIAnalyticsMessageRepository,
       oIAnalyticsRegistrationService,
-      engineRepository,
-      scanModeRepository,
-      ipFilterRepository,
-      certificateRepository,
-      userRepository,
-      southRepository,
-      northRepository,
-      historyQueryRepository,
-      transformerRepository,
       oIAnalyticsClient,
-      false,
-      false
+      configTransferBuilderService
     );
   });
 
@@ -676,6 +425,8 @@ describe('OIAnalytics message service without completed registration', () => {
       createdAt: '',
       updatedAt: ''
     };
+    const builtHistoryQueries = { historyQueries: [{ oIBusInternalId: 'hist1' }] } as unknown as OIBusHistoryQueriesCommandDTO;
+    configTransferBuilderService.buildHistoryQueriesConfiguration = mock.fn(() => builtHistoryQueries);
     oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(() => testData.oIAnalytics.registration.pending);
     oIAnalyticsMessageRepository.list = mock.fn(() => []);
     service.start();
@@ -688,12 +439,13 @@ describe('OIAnalytics message service without completed registration', () => {
       )
     );
     oIAnalyticsMessageRepository.list = mock.fn(() => []);
-    historyQueryRepository.findAllHistoriesFull = mock.fn(() => testData.historyQueries.list);
     oIAnalyticsMessageRepository.create = mock.fn(() => saveHistoryQueryMessage);
     service.createFullHistoryQueriesMessageIfNotPending();
 
     assert.deepStrictEqual(oIAnalyticsMessageRepository.create.mock.calls[0].arguments, [{ type: 'history-queries' }]);
     assert.strictEqual(oIAnalyticsClient.sendHistoryQuery.mock.calls.length, 1);
     assert.strictEqual(oIAnalyticsClient.sendHistoryQuery.mock.calls[0].arguments[0], testData.oIAnalytics.registration.completed);
+    const sentHistoryQueries = JSON.parse(oIAnalyticsClient.sendHistoryQuery.mock.calls[0].arguments[1] as string);
+    assert.deepStrictEqual(sentHistoryQueries, builtHistoryQueries);
   });
 });
