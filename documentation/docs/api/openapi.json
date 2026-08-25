@@ -38543,6 +38543,13 @@
 									"currentItems": {
 										"type": "string",
 										"format": "binary"
+									},
+									"matchKey": {
+										"type": "string"
+									},
+									"itemsToImportJson": {
+										"type": "string",
+										"format": "binary"
 									}
 								},
 								"required": [
@@ -38593,6 +38600,12 @@
 										"format": "binary"
 									},
 									"deleteItemsNotPresent": {
+										"type": "string"
+									},
+									"matchKey": {
+										"type": "string"
+									},
+									"rowResolutions": {
 										"type": "string"
 									}
 								},
@@ -41508,6 +41521,13 @@
 									"currentItems": {
 										"type": "string",
 										"format": "binary"
+									},
+									"matchKey": {
+										"type": "string"
+									},
+									"itemsToImportJson": {
+										"type": "string",
+										"format": "binary"
 									}
 								},
 								"required": [
@@ -41558,6 +41578,12 @@
 										"format": "binary"
 									},
 									"deleteItemsNotPresent": {
+										"type": "string"
+									},
+									"matchKey": {
+										"type": "string"
+									},
+									"rowResolutions": {
 										"type": "string"
 									}
 								},
