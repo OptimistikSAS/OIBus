@@ -5,9 +5,9 @@ const HISTORY_QUERIES_TABLE = 'history_queries';
 
 /**
  * The OPC Classic (DA/HDA) south connector no longer talks to the Windows OIBus Agent over HTTP: it
- * now spawns its own local `OIBusOpcClassicWindows` child process (via the
- * `@oibus/opc-classic-windows` package) instead of a separately installed Windows Service reachable
- * over `agentUrl` — that setting is dropped from both south connectors and history queries.
+ * now spawns its own local `OIBusOpcClassicWindows` child process (via the `@oibus/opc-classic`
+ * package) instead of a separately installed Windows Service reachable over `agentUrl` — that
+ * setting is dropped from both south connectors and history queries.
  * `host`/`serverName`/`mode`/`retryInterval` are untouched: they're still meaningful for the
  * connector's own target and reconnect policy around the new local connection. Item settings
  * (`nodeId`/`aggregate`/`resampling`) are unchanged by this port — the DA/HDA/browse fork lives

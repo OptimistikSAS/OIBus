@@ -10,17 +10,17 @@ import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model
 import type { SouthItemSettings, SouthOPCItemSettings, SouthOPCSettings } from '../../../shared/model/south-settings.model';
 import type { OIBusContent } from '../../../shared/model/engine.model';
 import type SouthOpcClass from './south-opc';
-import type { OpcHdaReadOptions, OpcRawValue, OpcServerInfo } from '@oibus/opc-classic-windows';
+import type { OpcHdaReadOptions, OpcRawValue, OpcServerInfo } from '@oibus/opc-classic';
 
 const nodeRequire = createRequire(import.meta.url);
 
 const FAKE_SERVER_INFO: OpcServerInfo = { vendorInfo: 'Matrikon Inc', productVersion: '1.9.8629', serverState: 'running' };
 
 /**
- * Stands in for the real `@oibus/opc-classic-windows` package (which spawns a native child process)
+ * Stands in for the real `@oibus/opc-classic` package (which spawns a native child process)
  * — south-opc.ts's own behavior is what's under test here, not the package's process-management or
- * multi-connection concurrency logic, which has its own dedicated spec
- * (native/opc-classic-windows/src/index.spec.ts).
+ * multi-connection concurrency logic, which has its own dedicated spec in that package's own repo
+ * (https://github.com/OptimistikSAS/opc-classic).
  */
 class FakeOpcConnection {
   static instances: Array<FakeOpcConnection> = [];
@@ -81,7 +81,7 @@ describe('South OPC', () => {
 
   before(() => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
-    mockModule(nodeRequire, '@oibus/opc-classic-windows', { OpcConnection: FakeOpcConnection });
+    mockModule(nodeRequire, '@oibus/opc-classic', { OpcConnection: FakeOpcConnection });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}

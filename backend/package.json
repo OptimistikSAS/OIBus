@@ -52,7 +52,7 @@
     "@azure/storage-file-datalake": "12.31.0",
     "@influxdata/influxdb-client": "1.35.0",
     "@influxdata/influxdb3-client": "2.3.0",
-    "@oibus/opc-classic-windows": "file:native/opc-classic-windows",
+    "@oibus/opc-classic": "0.1.0",
     "@smithy/node-http-handler": "4.11.3",
     "@st-one-io/nodes7": "1.1.2",
     "ads-client": "2.2.0",
@@ -157,6 +157,7 @@
       "node_modules/isolated-vm/prebuilds/**/*.node",
       "node_modules/isolated-vm/build/Release/*.node",
       "node_modules/odbc/**/*.node",
+      "node_modules/@oibus/opc-classic/runtimes/**/*",
       "node_modules/luxon/build/global/luxon.min.js",
       "node_modules/jsonpath-plus/dist/index-browser-umd.min.cjs",
       "node_modules/papaparse/papaparse.min.js"

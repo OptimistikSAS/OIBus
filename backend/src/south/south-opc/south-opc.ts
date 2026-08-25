@@ -8,7 +8,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
-import { OpcConnection, OpcRawValue } from '@oibus/opc-classic-windows';
+import { OpcConnection, OpcRawValue } from '@oibus/opc-classic';
 
 const MAX_READ_VALUES = 3600;
 const INTERVAL_READ_DELAY_MS = 200;
@@ -16,11 +16,11 @@ const INTERVAL_READ_DELAY_MS = 200;
 /**
  * Class SouthOPC - Retrieve data from an OPC Classic (DA/HDA) server.
  *
- * Windows-only: queries go through `@oibus/opc-classic-windows` (backend/native/opc-classic-windows),
- * a local package that spawns and multiplexes a bundled .NET child process wrapping the
+ * Windows-only: queries go through `@oibus/opc-classic` (https://github.com/OptimistikSAS/opc-classic),
+ * a standalone package that spawns and multiplexes a bundled .NET child process wrapping the
  * Quick.OpcNetApi/OpcComRcw DCOM interop libraries — see that package's README for why (DCOM/COM
- * interop is Windows-only, no maintained Node bridge). Unlike PI, each connection here gets its own
- * real OPC server object on the helper side (see the package's `OpcConnection`), since different OPC
+ * interop is Windows-only, no maintained Node bridge). Each connection gets its own real OPC server
+ * object on the helper side (see the package's `OpcConnection`), since different OPC
  * connectors can genuinely target different hosts/servers/modes. `connection.read()` returns just
  * the raw values found, or rejects outright on failure — building the `time-values` content, tracking
  * the incremental cursor, and logging a read failure are this class's job, the same division of

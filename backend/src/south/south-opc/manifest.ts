@@ -276,7 +276,7 @@ const manifest: SouthConnectorManifest = {
               // artifact from the 'aggregate' field above it). No migration needed for existing
               // items with the old default already stored: the helper's own resample-interval
               // mapping already treats any unrecognized value (including 'raw') as "no resampling"
-              // — see @oibus/opc-classic-windows's Program.cs GetResampleInterval.
+              // — see @oibus/opc-classic's Program.cs GetResampleInterval.
               type: 'string-select',
               key: 'resampling',
               translationKey: 'configuration.oibus.manifest.south.items.opc.resampling',
