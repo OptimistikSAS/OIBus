@@ -53,6 +53,7 @@ import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { OIBusSouthType } from '../../../shared/model/south-connector.model';
 import AuditService from '../../service/audit.service';
 import AuditServiceMock from '../__mocks__/service/audit-service.mock';
+import ConfigTransferServiceMock from '../__mocks__/service/config-transfer-service.mock';
 
 const CONFIG_TEST_DATABASE = path.resolve('src', 'tests', 'test-config.db');
 const CRYPTO_TEST_DATABASE = path.resolve('src', 'tests', 'test-crypto.db');
@@ -66,6 +67,7 @@ export function createMockServices(overrides: Record<string, unknown> = {}): Cus
   return {
     auditService: new AuditServiceMock() as unknown as CustomExpressRequest['services']['auditService'],
     certificateService: new CertificateServiceMock() as unknown as CustomExpressRequest['services']['certificateService'],
+    configTransferService: new ConfigTransferServiceMock() as unknown as CustomExpressRequest['services']['configTransferService'],
     historyQueryService: new HistoryQueryServiceMock() as unknown as CustomExpressRequest['services']['historyQueryService'],
     ipFilterService: new IPFilterServiceMock() as unknown as CustomExpressRequest['services']['ipFilterService'],
     logService: new LogServiceMock() as unknown as CustomExpressRequest['services']['logService'],
