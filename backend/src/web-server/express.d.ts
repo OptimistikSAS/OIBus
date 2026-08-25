@@ -12,12 +12,14 @@ import SouthService from '../service/south.service';
 import NorthService from '../service/north.service';
 import HistoryQueryService from '../service/history-query.service';
 import AuditService from '../service/audit.service';
+import ConfigTransferService from '../service/config-transfer/config-transfer.service';
 
 interface CustomExpressRequest extends Request {
   user: { id: string; login: string };
   services: {
     auditService: AuditService;
     certificateService: CertificateService;
+    configTransferService: ConfigTransferService;
     historyQueryService: HistoryQueryService;
     ipFilterService: IPFilterService;
     logService: LogService;

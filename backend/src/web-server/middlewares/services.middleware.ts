@@ -13,10 +13,12 @@ import SouthService from '../../service/south.service';
 import HistoryQueryService from '../../service/history-query.service';
 import NorthService from '../../service/north.service';
 import AuditService from '../../service/audit.service';
+import ConfigTransferService from '../../service/config-transfer/config-transfer.service';
 
 export function createInjectServicesMiddleware(
   auditService: AuditService,
   certificateService: CertificateService,
+  configTransferService: ConfigTransferService,
   historyQueryService: HistoryQueryService,
   ipFilterService: IPFilterService,
   logService: LogService,
@@ -33,6 +35,7 @@ export function createInjectServicesMiddleware(
     (req as CustomExpressRequest).services = {
       auditService,
       certificateService,
+      configTransferService,
       historyQueryService,
       ipFilterService,
       logService,
