@@ -67,6 +67,10 @@
       {
         "name": "Transformers",
         "description": "Endpoints for managing data transformers used to convert data between different formats"
+      },
+      {
+        "name": "Config Transfer",
+        "description": "Endpoints for exporting and importing a full, secret-free snapshot of the OIBus configuration"
       }
     ],
     "servers": ["localhost:2223"]
