@@ -369,7 +369,7 @@
       "odbc": "Query SQL databases with an ODBC driver",
       "oianalytics": "Query time values from OIAnalytics®",
       "oledb": "Query SQL databases with OLEDB",
-      "opc": "Connect to OIBus Agent to retrieve data from OPC Classic™ (HDA/DA) server",
+      "opc": "Retrieve data from OPC Classic™ (HDA/DA) server",
       "opcua": "Query data from OPC UA™ server (HA/DA)",
       "oracle": "Query data from an Oracle Database™",
       "osisoft-pi": "Establish a connection with an OIBus Agent to access data from a PI System™",
@@ -1923,9 +1923,8 @@
             "password": "Password"
           },
           "opc": {
-            "agent-url": "Remote agent URL",
             "retry-interval": "Retry interval",
-            "host": "Server URL (from the agent)",
+            "host": "Server host",
             "server-name": "Server name",
             "mode": {
               "title": "Mode",

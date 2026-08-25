@@ -16,7 +16,7 @@ describe('OIBusSouthTypeDescriptionEnumPipe', () => {
     expect(pipe.transform('odbc')).toBe('Query SQL databases with an ODBC driver');
     expect(pipe.transform('oianalytics')).toBe('Query time values from OIAnalytics®');
     expect(pipe.transform('oledb')).toBe('Query SQL databases with OLEDB');
-    expect(pipe.transform('opc')).toBe('Connect to OIBus Agent to retrieve data from OPC Classic™ (HDA/DA) server');
+    expect(pipe.transform('opc')).toBe('Retrieve data from OPC Classic™ (HDA/DA) server');
     expect(pipe.transform('opcua')).toBe('Query data from OPC UA™ server (HA/DA)');
     expect(pipe.transform('oracle')).toBe('Query data from an Oracle Database™');
     expect(pipe.transform('osisoft-pi')).toBe('Establish a connection with an OIBus Agent to access data from a PI System™');

@@ -21,23 +21,6 @@ const manifest: SouthConnectorManifest = {
     validators: [],
     attributes: [
       {
-        type: 'string',
-        key: 'agentUrl',
-        translationKey: 'configuration.oibus.manifest.south.opc.agent-url',
-        defaultValue: 'http://ip-adress-or-host:2224',
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 0,
-          columns: 9,
-          displayInViewMode: false
-        }
-      },
-      {
         type: 'number',
         key: 'retryInterval',
         translationKey: 'configuration.oibus.manifest.south.opc.retry-interval',
@@ -289,10 +272,15 @@ const manifest: SouthConnectorManifest = {
               }
             },
             {
+              // Fixed from a stale 'raw' default (not a valid resampling value — copy-paste
+              // artifact from the 'aggregate' field above it). No migration needed for existing
+              // items with the old default already stored: the helper's own resample-interval
+              // mapping already treats any unrecognized value (including 'raw') as "no resampling"
+              // — see @oibus/opc-classic-windows's Program.cs GetResampleInterval.
               type: 'string-select',
               key: 'resampling',
               translationKey: 'configuration.oibus.manifest.south.items.opc.resampling',
-              defaultValue: 'raw',
+              defaultValue: 'none',
               selectableValues: ['none', '1s', '10s', '30s', '1min', '1h', '1d'],
               validators: [
                 {

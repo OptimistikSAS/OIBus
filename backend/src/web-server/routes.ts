@@ -2296,7 +2296,6 @@ const models: TsoaRoute.Models = {
     "SouthOPCSettings": {
         "dataType": "refObject",
         "properties": {
-            "agentUrl": {"dataType":"string","required":true},
             "retryInterval": {"dataType":"double","required":true},
             "host": {"dataType":"string","required":true},
             "serverName": {"dataType":"string","required":true},

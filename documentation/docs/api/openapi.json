@@ -9259,9 +9259,6 @@
 			},
 			"SouthOPCSettings": {
 				"properties": {
-					"agentUrl": {
-						"type": "string"
-					},
 					"retryInterval": {
 						"type": "number",
 						"format": "double"
@@ -9277,7 +9274,6 @@
 					}
 				},
 				"required": [
-					"agentUrl",
 					"retryInterval",
 					"host",
 					"serverName",
