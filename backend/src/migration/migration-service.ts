@@ -1,34 +1,7 @@
 import knex, { Knex } from 'knex';
 import path from 'node:path';
 import { readdirSync } from 'node:fs';
-
-/**
- * Compares two directory names component-by-component as dot-separated numbers
- * (e.g. "3.10" vs "3.9") instead of as plain strings, so "3.10" sorts after "3.9"
- * rather than before it (a plain string compare puts "3.10" right after "3.1",
- * since '0' < '2' at the first differing character). Any non-numeric component
- * falls back to a string comparison so unexpected directory names still sort
- * deterministically instead of throwing.
- */
-function compareVersionDirNames(a: string, b: string): number {
-  const aParts = a.split('.');
-  const bParts = b.split('.');
-  const length = Math.max(aParts.length, bParts.length);
-  for (let i = 0; i < length; i++) {
-    const aPart = aParts[i] ?? '';
-    const bPart = bParts[i] ?? '';
-    const aNum = Number(aPart);
-    const bNum = Number(bPart);
-    if (aPart !== '' && bPart !== '' && Number.isFinite(aNum) && Number.isFinite(bNum)) {
-      if (aNum !== bNum) {
-        return aNum - bNum;
-      }
-    } else if (aPart !== bPart) {
-      return aPart > bPart ? 1 : -1;
-    }
-  }
-  return 0;
-}
+import { compareVersions as compareVersionDirNames } from '../service/config-transfer/settings-upgrades/version-compare';
 
 /**
  * Recursively finds all leaf directories under `base` (i.e. directories that
