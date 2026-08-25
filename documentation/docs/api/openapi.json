@@ -42118,6 +42118,23 @@
 				}
 			}
 		},
+		"/api/config-transfer/export": {
+			"get": {
+				"operationId": "ExportConfiguration",
+				"responses": {
+					"200": {
+						"description": "Configuration exported successfully"
+					}
+				},
+				"description": "Exports the full OIBus configuration (engine, scan modes, ip filters, certificates, south and\nnorth connectors, history queries, transformers and users) as a single, secret-free,\nversion-stamped JSON file",
+				"summary": "Export configuration",
+				"tags": [
+					"Config Transfer"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
 		"/api/certificates": {
 			"get": {
 				"operationId": "List",
@@ -42607,6 +42624,10 @@
 		{
 			"name": "Transformers",
 			"description": "Endpoints for managing data transformers used to convert data between different formats"
+		},
+		{
+			"name": "Config Transfer",
+			"description": "Endpoints for exporting and importing a full, secret-free snapshot of the OIBus configuration"
 		}
 	]
 }
