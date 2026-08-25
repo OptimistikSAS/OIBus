@@ -702,6 +702,7 @@ export default class SouthService {
     const validItems: Array<SouthConnectorItemDTO> = [];
     const errors: Array<{ item: Record<string, string>; error: string }> = [];
     const acceptedNames = new Set<string>();
+    const claimedMatchIds = new Set<string>();
     for (const data of rows) {
       let scanMode = null;
       if (data.scanMode) {
@@ -767,6 +768,13 @@ export default class SouthService {
       item.settings = settings as unknown as SouthItemSettings;
 
       const matchedItem = resolveMatchedItem(existingItems, matchKey, { name: item.name, settings: item.settings });
+      if (matchedItem && claimedMatchIds.has(matchedItem.id)) {
+        errors.push({
+          item: data,
+          error: `Item "${data.name}" matches an existing item already claimed by another row in this import`
+        });
+        continue;
+      }
       if (matchedItem) {
         item.id = matchedItem.id;
       }
@@ -785,6 +793,9 @@ export default class SouthService {
       try {
         await this.validator.validateSettings(itemSettingsManifest, item.settings);
         acceptedNames.add(item.name);
+        if (matchedItem) {
+          claimedMatchIds.add(matchedItem.id);
+        }
         validItems.push(item);
       } catch (itemError: unknown) {
         errors.push({ item: data, error: (itemError as Error).message });

@@ -1895,6 +1895,44 @@ describe('South Service', () => {
     assert.strictEqual(result.errors[0].error, 'Item name "duplicateName" already used');
   });
 
+  it('should reject a second row in the same batch that resolves to the same existing item via a settings-based matchKey', async () => {
+    const existingItems = [{ id: 'sharedId', name: 'existingName', settings: { regex: 'shared-regex' } }];
+    const csvData = [
+      {
+        name: 'firstName',
+        enabled: 'true',
+        settings_regex: 'shared-regex',
+        settings_preserveFiles: 'true',
+        settings_ignoreModifiedDate: 'false',
+        settings_minAge: 100,
+        scanMode: testData.scanMode.list[0].name
+      },
+      {
+        name: 'secondName',
+        enabled: 'true',
+        settings_regex: 'shared-regex',
+        settings_preserveFiles: 'true',
+        settings_ignoreModifiedDate: 'false',
+        settings_minAge: 100,
+        scanMode: testData.scanMode.list[0].name
+      }
+    ];
+    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
+    if (papaparseMod) {
+      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
+        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
+      );
+    }
+
+    const result = await service.checkImportItems(testData.south.list[0].type, 'file content', ',', existingItems, 'settings_regex');
+
+    assert.strictEqual(result.items.length, 1);
+    assert.strictEqual(result.items[0].id, 'sharedId');
+    assert.strictEqual(result.items[0].name, 'firstName');
+    assert.strictEqual(result.errors.length, 1);
+    assert.strictEqual(result.errors[0].error, 'Item "secondName" matches an existing item already claimed by another row in this import');
+  });
+
   it('should validate rows the same way through checkImportItemsFromRows (JSON-rows path)', async () => {
     const existingItems = [{ id: 'jsonRowsId', name: 'jsonRowItem', settings: { regex: 'json-regex' } }];
     const rows = [
