@@ -125,6 +125,29 @@ Items retrieve data as files or JSON payloads. Each item has the following field
   template with the correct column names.
   > **Note**: The system validates for duplicates and correct formatting before applying the import.
 
+### Creating Items from Explore
+
+Connectors that support browsing their address space (e.g. OPC UA, Folder Scanner) expose an **Explore**
+button that opens a read-only tree of the source's available nodes/files. From that tree you can select
+one or more entries with the checkboxes and click **Create items from selection** to turn them directly
+into items, instead of typing them by hand or building a CSV file:
+
+1. **Map fields**: for each item field (the same set the CSV importer expects — `name`, `enabled`,
+   `scanMode`, `group`, and one `settings_*` per connector-specific setting), choose whether its value
+   comes from a metadata attribute of the browsed node (e.g. its `nodeId`) or a fixed constant applied to
+   every selected node (e.g. forcing `settings_mode` to `da` for the whole batch). Constant values are
+   validated the same way as the regular item settings form.
+2. **Match key** _(optional)_: pick a mapped field — typically a `settings_*` field such as `nodeId` — used
+   to detect that a row actually corresponds to an item that already exists. Leave it unset to always
+   create new items.
+3. **Preview**: review one row per selected node in an editable, paginated table. Edit any cell, remove a
+   row, or add a manually-entered row — each change is re-validated live using the same checks as CSV
+   import. Rows matched via the match key show an Update/Skip choice (with a shortcut to apply the same
+   choice to every matched row), letting you update existing items' settings — or even their name — instead
+   of only creating new ones.
+4. **Submit**: the reviewed rows are sent through the same import pipeline as a CSV upload — the same
+   uniqueness, settings validation, and group/scan-mode resolution apply.
+
 ---
 
 ## Max Instant Tracking {#max-instant-tracking}
