@@ -2594,9 +2594,15 @@
       "button": "Explore",
       "empty": "Nothing to explore",
       "error": "Error while exploring the data source",
-      "create-from-selection": "Create items from selection ({{count}})",
+      "select-all": "Select all",
+      "unselect-all": "Unselect all",
+      "create-from-selection": "Create items from selection",
       "item-import-wizard": {
         "title": "Create items from selection",
+        "step": "Step {{current}} of {{total}}",
+        "step1-title": "Field mapping",
+        "step2-title": "Match existing items",
+        "step3-title": "Preview",
         "field": "Field",
         "source": "Source",
         "value": "Value",
@@ -2605,6 +2611,7 @@
         "select-metadata-key": "Select a metadata key",
         "match-key": "Match key",
         "match-key-none": "None",
+        "match-key-hint": "Rows whose selected field matches an existing item can be updated instead of creating a duplicate.",
         "update-all-matches": "Update all matches",
         "skip-all-matches": "Skip all matches",
         "resolution": "Resolution",
@@ -2612,8 +2619,10 @@
         "skip": "Skip",
         "create": "Create",
         "error": "Error",
+        "check-error": "Check failed: {{error}}",
         "checking": "Checking...",
-        "add-row": "Add row"
+        "add-row": "Add row",
+        "no-rows": "No rows to preview."
       }
     },
     "test-item": {

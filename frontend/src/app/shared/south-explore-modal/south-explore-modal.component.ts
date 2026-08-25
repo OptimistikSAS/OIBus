@@ -181,6 +181,38 @@ export class SouthExploreModalComponent implements OnDestroy {
     node.selected = !node.selected;
   }
 
+  get totalLoadedNodeCount(): number {
+    let count = 0;
+    const walk = (nodes: Array<ExploreTreeNode>) => {
+      for (const node of nodes) {
+        count++;
+        walk(node.children);
+      }
+    };
+    walk(this.nodes);
+    return count;
+  }
+
+  selectAll() {
+    const walk = (nodes: Array<ExploreTreeNode>) => {
+      for (const node of nodes) {
+        node.selected = true;
+        walk(node.children);
+      }
+    };
+    walk(this.nodes);
+  }
+
+  unselectAll() {
+    const walk = (nodes: Array<ExploreTreeNode>) => {
+      for (const node of nodes) {
+        node.selected = false;
+        walk(node.children);
+      }
+    };
+    walk(this.nodes);
+  }
+
   get selectedNodes(): Array<SouthConnectorExploreEntry> {
     const selected: Array<SouthConnectorExploreEntry> = [];
     const collect = (nodes: Array<ExploreTreeNode>) => {

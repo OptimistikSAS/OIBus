@@ -1,6 +1,6 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from '@ngx-translate/core';
+import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { SouthConnectorExploreEntry, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
@@ -17,6 +17,7 @@ import { OIBusSecretFormControlComponent } from '../form/oibus-secret-form-contr
 import { OIBusInstantFormControlComponent } from '../form/oibus-instant-form-control/oibus-instant-form-control.component';
 import { OIBusTimezoneFormControlComponent } from '../form/oibus-timezone-form-control/oibus-timezone-form-control.component';
 import { OIBusCodeFormControlComponent } from '../form/oibus-code-form-control/oibus-code-form-control.component';
+import { BoxComponent, BoxTitleDirective } from '../box/box.component';
 
 const PAGE_SIZE = 20;
 
@@ -94,12 +95,15 @@ const RENDERABLE_CONSTANT_TYPES = new Set(['string', 'code', 'string-select', 's
 @Component({
   selector: 'oib-item-import-wizard',
   templateUrl: './item-import-wizard.component.html',
-  styleUrl: './item-import-wizard.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     TranslateDirective,
+    TranslatePipe,
     ReactiveFormsModule,
     PaginationComponent,
+    NgbTooltip,
+    BoxComponent,
+    BoxTitleDirective,
     OIBusBooleanFormControlComponent,
     OIBusStringFormControlComponent,
     OIBusStringSelectFormControlComponent,
@@ -138,6 +142,8 @@ export class ItemImportWizardComponent {
   rowResolutions: Record<number, RowResolution> = {};
   globalMatchResolution: RowResolution = 'update';
   displayedRows: Page<Record<string, string>> = emptyPage();
+  /** Index (within `rows`, not the displayed page) of the preview row currently rendering inputs instead of a read-only cell. */
+  editingRowIndex: number | null = null;
 
   private checkFn: WizardCheckFn | null = null;
 
@@ -243,6 +249,33 @@ export class ItemImportWizardComponent {
 
   get matchKeyOptions(): Array<string> {
     return ['name', ...this.mappedSettingsFields];
+  }
+
+  /** Translation key for a mapping's column label, or `null` for the synthetic `name`/`enabled`/`scanMode` fields that fall back to `south.items.*`. */
+  labelFor(mapping: FieldMapping): string | null {
+    if (!mapping.attribute) return null;
+    return mapping.attribute.type === 'string-select' ? mapping.attribute.translationKey + '.title' : mapping.attribute.translationKey;
+  }
+
+  /**
+   * Translation key for a synthetic field's label (`name`/`enabled`/`scanMode`), used when `labelFor`
+   * returns `null`. `south.items.enabled` already exists with an unrelated meaning ("South item {{name}}
+   * enabled"), and `scanMode` is keyed as `scan-mode` (kebab-case) rather than the field's own camelCase
+   * name, so those two need an explicit mapping instead of a plain `'south.items.' + field` guess.
+   */
+  fallbackLabelKey(field: string): string {
+    switch (field) {
+      case 'enabled':
+        return 'south.items.enabled-label';
+      case 'scanMode':
+        return 'south.items.scan-mode';
+      default:
+        return 'south.items.' + field;
+    }
+  }
+
+  toggleRowEditing(rowIndex: number) {
+    this.editingRowIndex = this.editingRowIndex === rowIndex ? null : rowIndex;
   }
 
   setSource(mapping: FieldMapping, source: ItemImportFieldSource) {

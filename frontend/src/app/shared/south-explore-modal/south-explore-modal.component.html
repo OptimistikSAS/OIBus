@@ -15,7 +15,31 @@
   } @else if (nodes.length === 0) {
     <div class="alert alert-info" id="explore-empty" translate="south.explore.empty"></div>
   } @else {
-    <div class="explore-tree" id="explore-tree">
+    <div class="d-flex justify-content-between align-items-center my-2">
+      <div class="d-flex align-items-center selection-controls">
+        <button
+          type="button"
+          class="btn btn-secondary btn-sm"
+          (click)="selectAll()"
+          [disabled]="selectedNodes.length === totalLoadedNodeCount"
+          id="select-all-button"
+        >
+          <span class="fa fa-check-square me-1"></span>
+          <span translate="south.explore.select-all"></span>
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary btn-sm"
+          (click)="unselectAll()"
+          [disabled]="selectedNodes.length === 0"
+          id="unselect-all-button"
+        >
+          <span class="fa fa-square-o me-1"></span>
+          <span translate="south.explore.unselect-all"></span>
+        </button>
+      </div>
+    </div>
+    <div class="explore-tree oib-south-items" id="explore-tree">
       @for (node of nodes; track node.entry.id) {
         <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: node }" />
       }
@@ -31,7 +55,9 @@
       (click)="createItemsFromSelection()"
       id="create-from-selection-button"
     >
-      <span translate="south.explore.create-from-selection" [translateParams]="{ count: selectedNodes.length }"></span>
+      <span class="fa fa-plus me-1"></span>
+      <span translate="south.explore.create-from-selection"></span>
+      <span class="badge bg-secondary ms-1">{{ selectedNodes.length }}</span>
     </button>
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.close" id="cancel-button"></button>
   </div>
@@ -46,6 +72,7 @@
         [checked]="node.selected"
         (click)="$event.stopPropagation()"
         (change)="toggleSelection(node)"
+        style="width: 16px; height: 16px; cursor: pointer"
       />
       @if (node.entry.hasChildren) {
         <button type="button" class="btn btn-link p-0 w-100 text-start d-flex align-items-center explore-toggle" (click)="toggle(node)">

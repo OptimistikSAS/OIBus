@@ -1,237 +1,299 @@
 <div class="modal-header">
   <h4 class="modal-title" translate="south.explore.item-import-wizard.title"></h4>
+  <span
+    class="badge bg-secondary ms-2"
+    translate="south.explore.item-import-wizard.step"
+    [translateParams]="{ current: currentStep, total: 3 }"
+  ></span>
 </div>
 <div class="modal-body">
   @if (currentStep === 1) {
-    <table class="table" id="field-mapping-table">
-      <thead>
-        <tr>
-          <th translate="south.explore.item-import-wizard.field"></th>
-          <th translate="south.explore.item-import-wizard.source"></th>
-          <th translate="south.explore.item-import-wizard.value"></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (mapping of mappings; track mapping.field) {
-          <tr class="field-mapping-row" [attr.data-field]="mapping.field">
-            <td>
-              <span [class.fw-bold]="mapping.required">{{ mapping.field }}</span>
-              @if (mapping.required) {
-                <span class="text-danger">*</span>
-              }
-            </td>
-            <td>
-              <div class="form-check">
-                <input
-                  type="radio"
-                  class="form-check-input source-metadata-radio"
-                  [id]="'source-metadata-' + mapping.field"
-                  [name]="'source-' + mapping.field"
-                  [checked]="mapping.source === 'metadata'"
-                  (change)="setSource(mapping, 'metadata')"
-                />
-                <label
-                  class="form-check-label"
-                  [for]="'source-metadata-' + mapping.field"
-                  translate="south.explore.item-import-wizard.from-metadata"
-                ></label>
-              </div>
-              <div class="form-check">
-                <input
-                  type="radio"
-                  class="form-check-input source-constant-radio"
-                  [id]="'source-constant-' + mapping.field"
-                  [name]="'source-' + mapping.field"
-                  [checked]="mapping.source === 'constant'"
-                  (change)="setSource(mapping, 'constant')"
-                />
-                <label
-                  class="form-check-label"
-                  [for]="'source-constant-' + mapping.field"
-                  translate="south.explore.item-import-wizard.constant-value"
-                ></label>
-              </div>
-            </td>
-            <td>
-              @if (mapping.source === 'metadata') {
-                <select
-                  class="form-select metadata-key-select"
-                  [value]="mapping.metadataKey ?? ''"
-                  (change)="onMetadataKeyChange(mapping, $event)"
-                >
-                  <option value="" translate="south.explore.item-import-wizard.select-metadata-key"></option>
-                  @for (key of metadataKeyOptions; track key) {
-                    <option [value]="key">{{ key }}</option>
-                  }
-                </select>
-              } @else {
-                @if (mapping.field === 'enabled') {
-                  <input
-                    type="checkbox"
-                    class="form-check-input constant-boolean-input"
-                    [checked]="mapping.constantValue"
-                    (change)="onEnabledConstantChange(mapping, $event)"
-                  />
-                } @else if (mapping.attribute && constantsForm.contains(mapping.field)) {
-                  <div [formGroup]="constantsForm">
-                    <ng-container [formGroupName]="mapping.field">
-                      @switch (mapping.attribute.type) {
-                        @case ('boolean') {
-                          <oib-oibus-boolean-form-control [booleanAttribute]="mapping.attribute" />
-                        }
-                        @case ('string') {
-                          <oib-oibus-string-form-control [stringAttribute]="mapping.attribute" />
-                        }
-                        @case ('code') {
-                          <oib-oibus-code-form-control [codeAttribute]="mapping.attribute" />
-                        }
-                        @case ('string-select') {
-                          <oib-oibus-string-select-form-control [stringSelectAttribute]="mapping.attribute" />
-                        }
-                        @case ('secret') {
-                          <oib-oibus-secret-form-control [secretAttribute]="mapping.attribute" />
-                        }
-                        @case ('number') {
-                          <oib-oibus-number-form-control [numberAttribute]="mapping.attribute" />
-                        }
-                        @case ('instant') {
-                          <oib-oibus-instant-form-control [instantAttribute]="mapping.attribute" />
-                        }
-                        @case ('timezone') {
-                          <oib-oibus-timezone-form-control [timezoneAttribute]="mapping.attribute" />
-                        }
-                        @default {}
-                      }
-                    </ng-container>
-                  </div>
-                } @else {
-                  <input
-                    type="text"
-                    class="form-control constant-text-input"
-                    [value]="mapping.constantValue"
-                    (input)="onTextConstantInput(mapping, $event)"
-                  />
-                }
-              }
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  } @else if (currentStep === 2) {
-    <div class="mb-3">
-      <label class="form-label" for="match-key-select" translate="south.explore.item-import-wizard.match-key"></label>
-      <select class="form-select" id="match-key-select" [value]="matchKey ?? ''" (change)="onMatchKeyChange($event)">
-        <option value="" translate="south.explore.item-import-wizard.match-key-none"></option>
-        @for (option of matchKeyOptions; track option) {
-          <option [value]="option">{{ option }}</option>
-        }
-      </select>
-    </div>
-  } @else if (currentStep === 3) {
-    @if (checkError) {
-      <div class="alert alert-danger" id="check-error">{{ checkError }}</div>
-    }
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <button
-        type="button"
-        class="btn btn-secondary btn-sm"
-        id="add-row-button"
-        (click)="addRow()"
-        translate="south.explore.item-import-wizard.add-row"
-      ></button>
-      <div class="btn-group">
-        <button
-          type="button"
-          class="btn btn-sm"
-          [class.btn-primary]="globalMatchResolution === 'update'"
-          [class.btn-outline-primary]="globalMatchResolution !== 'update'"
-          id="update-all-button"
-          (click)="setGlobalResolution('update')"
-          translate="south.explore.item-import-wizard.update-all-matches"
-        ></button>
-        <button
-          type="button"
-          class="btn btn-sm"
-          [class.btn-primary]="globalMatchResolution === 'skip'"
-          [class.btn-outline-primary]="globalMatchResolution !== 'skip'"
-          id="skip-all-button"
-          (click)="setGlobalResolution('skip')"
-          translate="south.explore.item-import-wizard.skip-all-matches"
-        ></button>
-      </div>
-    </div>
-    <div class="table-responsive">
-      <table class="table table-sm" id="preview-table">
-        <thead>
+    <oib-box boxTitle="south.explore.item-import-wizard.step1-title">
+      <table class="mb-2 table table-sm table-hover oib-simple-table" id="field-mapping-table">
+        <thead class="light">
           <tr>
-            @for (mapping of mappings; track mapping.field) {
-              <th>{{ mapping.field }}</th>
-            }
-            <th translate="south.explore.item-import-wizard.resolution"></th>
-            <th translate="south.explore.item-import-wizard.error"></th>
-            <th></th>
+            <th style="width: 200px" translate="south.explore.item-import-wizard.field"></th>
+            <th style="width: 280px" translate="south.explore.item-import-wizard.source"></th>
+            <th translate="south.explore.item-import-wizard.value"></th>
           </tr>
         </thead>
         <tbody>
-          @for (row of displayedRows.content; track $index) {
-            <tr class="preview-row">
-              @for (mapping of mappings; track mapping.field) {
-                <td>
-                  <input
-                    type="text"
-                    class="form-control form-control-sm preview-cell-input"
-                    [attr.data-field]="mapping.field"
-                    [value]="row[mapping.field]"
-                    (change)="onCellInput(displayedRows.number * displayedRows.size + $index, mapping.field, $event)"
-                  />
-                </td>
-              }
-              <td>
-                @if (isMatchedRow(row)) {
-                  <select
-                    class="form-select form-select-sm row-resolution-select"
-                    [value]="resolutionForRow(displayedRows.number * displayedRows.size + $index)"
-                    (change)="setRowResolution(displayedRows.number * displayedRows.size + $index, $any($event.target).value)"
-                  >
-                    <option value="update" translate="south.explore.item-import-wizard.update"></option>
-                    <option value="skip" translate="south.explore.item-import-wizard.skip"></option>
-                  </select>
+          @for (mapping of mappings; track mapping.field) {
+            <tr class="field-mapping-row" [attr.data-field]="mapping.field">
+              <td class="text-truncate">
+                @if (labelFor(mapping); as key) {
+                  <span [class.fw-bold]="mapping.required">{{ key | translate }}</span>
                 } @else {
-                  <span class="text-muted" translate="south.explore.item-import-wizard.create"></span>
+                  <span [class.fw-bold]="mapping.required" [translate]="fallbackLabelKey(mapping.field)"></span>
                 }
               </td>
-              <td class="text-danger row-error">{{ errorForRow(row) }}</td>
               <td>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-cancel remove-row-button"
-                  (click)="removeRow(displayedRows.number * displayedRows.size + $index)"
-                >
-                  <i class="fa fa-trash"></i>
-                </button>
+                <div class="btn-group btn-group-sm" role="group" [attr.aria-label]="'south.explore.item-import-wizard.source' | translate">
+                  <button
+                    type="button"
+                    class="btn source-metadata-radio"
+                    [class.btn-primary]="mapping.source === 'metadata'"
+                    [class.btn-outline-secondary]="mapping.source !== 'metadata'"
+                    [attr.aria-pressed]="mapping.source === 'metadata'"
+                    (click)="setSource(mapping, 'metadata')"
+                    translate="south.explore.item-import-wizard.from-metadata"
+                  ></button>
+                  <button
+                    type="button"
+                    class="btn source-constant-radio"
+                    [class.btn-primary]="mapping.source === 'constant'"
+                    [class.btn-outline-secondary]="mapping.source !== 'constant'"
+                    [attr.aria-pressed]="mapping.source === 'constant'"
+                    (click)="setSource(mapping, 'constant')"
+                    translate="south.explore.item-import-wizard.constant-value"
+                  ></button>
+                </div>
+              </td>
+              <td>
+                @if (mapping.source === 'metadata') {
+                  <select
+                    class="form-select metadata-key-select"
+                    [value]="mapping.metadataKey ?? ''"
+                    (change)="onMetadataKeyChange(mapping, $event)"
+                  >
+                    <option value="" translate="south.explore.item-import-wizard.select-metadata-key"></option>
+                    @for (key of metadataKeyOptions; track key) {
+                      <option [value]="key">{{ key }}</option>
+                    }
+                  </select>
+                } @else {
+                  @if (mapping.field === 'enabled') {
+                    <div class="form-check form-switch">
+                      <input
+                        type="checkbox"
+                        class="form-check-input constant-boolean-input"
+                        [checked]="mapping.constantValue"
+                        (change)="onEnabledConstantChange(mapping, $event)"
+                      />
+                    </div>
+                  } @else if (mapping.attribute && constantsForm.contains(mapping.field)) {
+                    <div [formGroup]="constantsForm" class="wizard-inline-control">
+                      <ng-container [formGroupName]="mapping.field">
+                        @switch (mapping.attribute.type) {
+                          @case ('boolean') {
+                            <oib-oibus-boolean-form-control [booleanAttribute]="mapping.attribute" />
+                          }
+                          @case ('string') {
+                            <oib-oibus-string-form-control [stringAttribute]="mapping.attribute" />
+                          }
+                          @case ('code') {
+                            <oib-oibus-code-form-control [codeAttribute]="mapping.attribute" />
+                          }
+                          @case ('string-select') {
+                            <oib-oibus-string-select-form-control [stringSelectAttribute]="mapping.attribute" />
+                          }
+                          @case ('secret') {
+                            <oib-oibus-secret-form-control [secretAttribute]="mapping.attribute" />
+                          }
+                          @case ('number') {
+                            <oib-oibus-number-form-control [numberAttribute]="mapping.attribute" />
+                          }
+                          @case ('instant') {
+                            <oib-oibus-instant-form-control [instantAttribute]="mapping.attribute" />
+                          }
+                          @case ('timezone') {
+                            <oib-oibus-timezone-form-control [timezoneAttribute]="mapping.attribute" />
+                          }
+                          @default {}
+                        }
+                      </ng-container>
+                    </div>
+                  } @else {
+                    <div class="form-group mb-0">
+                      <input
+                        type="text"
+                        class="form-control constant-text-input"
+                        [value]="mapping.constantValue"
+                        (input)="onTextConstantInput(mapping, $event)"
+                      />
+                    </div>
+                  }
+                }
               </td>
             </tr>
           }
         </tbody>
       </table>
-    </div>
-    @if (checking) {
-      <div class="text-center my-2" id="checking-indicator" translate="south.explore.item-import-wizard.checking"></div>
+    </oib-box>
+  } @else if (currentStep === 2) {
+    <oib-box boxTitle="south.explore.item-import-wizard.step2-title">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label" for="match-key-select" translate="south.explore.item-import-wizard.match-key"></label>
+            <select class="form-select" id="match-key-select" [value]="matchKey ?? ''" (change)="onMatchKeyChange($event)">
+              <option value="" translate="south.explore.item-import-wizard.match-key-none"></option>
+              @for (option of matchKeyOptions; track option) {
+                <option [value]="option">{{ option }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="text-muted" translate="south.explore.item-import-wizard.match-key-hint"></div>
+    </oib-box>
+  } @else if (currentStep === 3) {
+    @if (checkError) {
+      <div class="alert alert-danger" role="alert" id="check-error">
+        <i class="fa fa-solid fa-exclamation-triangle me-2"></i>
+        <span translate="south.explore.item-import-wizard.check-error" [translateParams]="{ error: checkError }"></span>
+      </div>
     }
-    <div class="d-flex flex-row-reverse">
-      <oib-pagination [page]="displayedRows" (pageChanged)="changePage($event)" />
-    </div>
+    <oib-box>
+      <ng-template oibBoxTitle>
+        <div class="d-flex justify-content-between align-items-center">
+          <span translate="south.explore.item-import-wizard.step3-title"></span>
+          <div class="ms-auto py-2 d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-primary btn-sm oib-box-btn" id="add-row-button" (click)="addRow()">
+              <i class="fa fa-plus me-1"></i>
+              <span translate="south.explore.item-import-wizard.add-row"></span>
+            </button>
+            <div class="btn-group btn-group-sm" role="group" [attr.aria-label]="'south.explore.item-import-wizard.resolution' | translate">
+              <button
+                type="button"
+                class="btn"
+                [class.btn-primary]="globalMatchResolution === 'update'"
+                [class.btn-outline-secondary]="globalMatchResolution !== 'update'"
+                [attr.aria-pressed]="globalMatchResolution === 'update'"
+                id="update-all-button"
+                (click)="setGlobalResolution('update')"
+                translate="south.explore.item-import-wizard.update-all-matches"
+              ></button>
+              <button
+                type="button"
+                class="btn"
+                [class.btn-primary]="globalMatchResolution === 'skip'"
+                [class.btn-outline-secondary]="globalMatchResolution !== 'skip'"
+                [attr.aria-pressed]="globalMatchResolution === 'skip'"
+                id="skip-all-button"
+                (click)="setGlobalResolution('skip')"
+                translate="south.explore.item-import-wizard.skip-all-matches"
+              ></button>
+            </div>
+          </div>
+        </div>
+      </ng-template>
+
+      @if (!checking && displayedRows.totalElements === 0) {
+        <div class="oib-grey-container" translate="south.explore.item-import-wizard.no-rows"></div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-sm table-hover oib-simple-table" id="preview-table">
+            <thead class="light">
+              <tr>
+                @for (mapping of mappings; track mapping.field) {
+                  <th>
+                    @if (labelFor(mapping); as key) {
+                      {{ key | translate }}
+                    } @else {
+                      <span [translate]="fallbackLabelKey(mapping.field)"></span>
+                    }
+                  </th>
+                }
+                <th translate="south.explore.item-import-wizard.resolution"></th>
+                <th translate="south.explore.item-import-wizard.error"></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of displayedRows.content; track $index; let rowIndex = $index) {
+                <tr class="preview-row">
+                  @for (mapping of mappings; track mapping.field) {
+                    <td class="text-truncate" style="max-width: 250px">
+                      @if (editingRowIndex === displayedRows.number * displayedRows.size + rowIndex) {
+                        <input
+                          type="text"
+                          class="form-control form-control-sm preview-cell-input"
+                          [attr.data-field]="mapping.field"
+                          [value]="row[mapping.field]"
+                          (change)="onCellInput(displayedRows.number * displayedRows.size + rowIndex, mapping.field, $event)"
+                        />
+                      } @else {
+                        <span [ngbTooltip]="row[mapping.field]">{{ row[mapping.field] }}</span>
+                      }
+                    </td>
+                  }
+                  <td>
+                    @if (isMatchedRow(row)) {
+                      <select
+                        class="form-select form-select-sm row-resolution-select"
+                        [value]="resolutionForRow(displayedRows.number * displayedRows.size + rowIndex)"
+                        (change)="setRowResolution(displayedRows.number * displayedRows.size + rowIndex, $any($event.target).value)"
+                      >
+                        <option value="update" translate="south.explore.item-import-wizard.update"></option>
+                        <option value="skip" translate="south.explore.item-import-wizard.skip"></option>
+                      </select>
+                    } @else {
+                      <span class="badge bg-secondary" translate="south.explore.item-import-wizard.create"></span>
+                    }
+                  </td>
+                  <td class="text-truncate text-danger row-error" style="max-width: 300px" [title]="errorForRow(row)">
+                    @if (errorForRow(row)) {
+                      <i class="fa fa-solid fa-times me-1"></i>
+                    }
+                    {{ errorForRow(row) }}
+                  </td>
+                  <td class="text-nowrap action-buttons">
+                    <div class="pull-right">
+                      <button
+                        type="button"
+                        class="btn btn-link px-1 py-0"
+                        [ngbTooltip]="'common.edit' | translate"
+                        (click)="toggleRowEditing(displayedRows.number * displayedRows.size + rowIndex)"
+                      >
+                        <i class="fa fa-pencil"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-link remove-row-button px-1 py-0"
+                        [ngbTooltip]="'common.delete' | translate"
+                        (click)="removeRow(displayedRows.number * displayedRows.size + $index)"
+                      >
+                        <i class="fa fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+      @if (checking) {
+        <div class="text-center my-3" id="checking-indicator">
+          <span translate="south.explore.item-import-wizard.checking"></span>
+        </div>
+      }
+      <div class="d-flex flex-row-reverse">
+        <div [class]="displayedRows.totalPages > 1 ? 'ms-2' : ''">
+          <oib-pagination [page]="displayedRows" (pageChanged)="changePage($event)" />
+        </div>
+      </div>
+    </oib-box>
   }
 </div>
 <div class="modal-footer">
-  @if (currentStep > 1) {
-    <button type="button" class="btn btn-cancel" id="back-button" (click)="goBack()" translate="common.back"></button>
-  }
-  @if (currentStep < 3) {
-    <button type="button" class="btn btn-primary" id="next-button" (click)="goNext()" translate="common.next"></button>
-  } @else {
-    <button type="button" class="btn btn-primary" id="submit-button" (click)="submit()" translate="common.save"></button>
-  }
-  <button type="button" class="btn btn-cancel" id="cancel-button" (click)="cancel()" translate="common.cancel"></button>
+  <div class="btn-group">
+    @if (currentStep < 3) {
+      <button type="button" class="btn btn-primary" id="next-button" (click)="goNext()" translate="common.next"></button>
+    } @else {
+      <button
+        type="button"
+        class="btn btn-primary"
+        id="submit-button"
+        [disabled]="!checkResult || checking"
+        (click)="submit()"
+        translate="common.save"
+      ></button>
+    }
+    @if (currentStep > 1) {
+      <button type="button" class="btn btn-secondary" id="back-button" (click)="goBack()" translate="common.back"></button>
+    }
+    <button type="button" class="btn btn-cancel" id="cancel-button" (click)="cancel()" translate="common.cancel"></button>
+  </div>
 </div>

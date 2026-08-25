@@ -316,6 +316,25 @@ describe('ItemImportWizardComponent', () => {
       expect(tester.component.rows.length).toBe(2);
     });
 
+    test('toggleRowEditing sets the editing row index and toggles it back off', () => {
+      const checkFn = vi.fn().mockReturnValue(of({ items: [], errors: [] }));
+      prepareWizard(tester.component, nodes, [], checkFn);
+      tester.component.goNext();
+      tester.component.goNext();
+
+      expect(tester.component.editingRowIndex).toBeNull();
+
+      tester.component.toggleRowEditing(1);
+      expect(tester.component.editingRowIndex).toBe(1);
+
+      tester.component.toggleRowEditing(1);
+      expect(tester.component.editingRowIndex).toBeNull();
+
+      tester.component.toggleRowEditing(1);
+      tester.component.toggleRowEditing(0);
+      expect(tester.component.editingRowIndex).toBe(0);
+    });
+
     test('renders the preview table in step 3', async () => {
       const checkFn = vi.fn().mockReturnValue(of({ items: [], errors: [] }));
       prepareWizard(tester.component, nodes, [], checkFn);
@@ -324,6 +343,24 @@ describe('ItemImportWizardComponent', () => {
       tester.fixture.detectChanges();
 
       await expect.element(tester.root.getByCss('#preview-table')).toBeInTheDocument();
+    });
+
+    test('the edit toggle gates inputs on its own row only, not on a shared column index', async () => {
+      const checkFn = vi.fn().mockReturnValue(of({ items: [], errors: [] }));
+      prepareWizard(tester.component, nodes, [], checkFn);
+      tester.component.goNext();
+      tester.component.goNext();
+      tester.fixture.detectChanges();
+
+      const rows = tester.root.getByCss('.preview-row');
+      const secondRowEditButton = rows.nth(1).getByCss('.fa-pencil');
+      await secondRowEditButton.click();
+      tester.fixture.detectChanges();
+
+      const firstRowInputs = rows.nth(0).getByCss('.preview-cell-input');
+      const secondRowInputs = rows.nth(1).getByCss('.preview-cell-input');
+      expect(firstRowInputs.elements().length).toBe(0);
+      expect(secondRowInputs.elements().length).toBe(tester.component.mappings.length);
     });
 
     test('editing a cell updates the row and re-triggers the check call', () => {

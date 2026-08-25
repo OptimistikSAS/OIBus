@@ -32,6 +32,8 @@ class SouthExploreModalComponentTester {
   readonly typeBadges = this.root.getByCss('.explore-metadata');
   readonly metadataValues = this.root.getByCss('.explore-metadata-value');
   readonly createFromSelectionButton = this.root.getByCss('#create-from-selection-button');
+  readonly selectAllButton = this.root.getByCss('#select-all-button');
+  readonly unselectAllButton = this.root.getByCss('#unselect-all-button');
 
   checkbox(index: number) {
     return this.root.getByCss(`.explore-checkbox`).nth(index);
@@ -401,6 +403,82 @@ describe('SouthExploreModalComponent', () => {
 
     const selectedIds = tester.component.selectedNodes.map(entry => entry.id);
     expect(selectedIds).toEqual(['root', 'grandchild', 'child-2']);
+  });
+
+  test('selectAll should select every node across nested levels, and totalLoadedNodeCount should reflect the total', () => {
+    southConnectorService.startExplore.mockReturnValue(
+      of({
+        sessionId: 'sessionId',
+        entries: [{ id: 'root', name: 'Root', metadata: {}, hasChildren: true }]
+      })
+    );
+    southConnectorService.browseExplore.mockReturnValue(
+      of({
+        entries: [
+          { id: 'child-1', name: 'Child1', metadata: {}, hasChildren: false },
+          { id: 'child-2', name: 'Child2', metadata: {}, hasChildren: false }
+        ]
+      })
+    );
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
+
+    const root = tester.component.nodes[0];
+    tester.component.toggle(root); // expands and loads child-1, child-2
+
+    expect(tester.component.totalLoadedNodeCount).toBe(3);
+
+    tester.component.selectAll();
+
+    const selectedIds = tester.component.selectedNodes.map(entry => entry.id).sort();
+    expect(selectedIds).toEqual(['child-1', 'child-2', 'root']);
+  });
+
+  test('unselectAll should clear every selection across nested levels', () => {
+    southConnectorService.startExplore.mockReturnValue(
+      of({
+        sessionId: 'sessionId',
+        entries: [{ id: 'root', name: 'Root', metadata: {}, hasChildren: true }]
+      })
+    );
+    southConnectorService.browseExplore.mockReturnValue(
+      of({
+        entries: [{ id: 'child-1', name: 'Child1', metadata: {}, hasChildren: false }]
+      })
+    );
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
+
+    const root = tester.component.nodes[0];
+    tester.component.toggle(root);
+    tester.component.selectAll();
+    expect(tester.component.selectedNodes.length).toBe(2);
+
+    tester.component.unselectAll();
+
+    expect(tester.component.selectedNodes).toEqual([]);
+  });
+
+  test('clicking select-all/unselect-all buttons updates the selection through the template', async () => {
+    southConnectorService.startExplore.mockReturnValue(
+      of({
+        sessionId: 'sessionId',
+        entries: [
+          { id: 'a', name: 'A', metadata: {}, hasChildren: false },
+          { id: 'b', name: 'B', metadata: {}, hasChildren: false }
+        ]
+      })
+    );
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type, manifest);
+    tester.fixture.detectChanges();
+
+    await tester.selectAllButton.click();
+    tester.fixture.detectChanges();
+
+    expect(tester.component.selectedNodes.length).toBe(2);
+
+    await tester.unselectAllButton.click();
+    tester.fixture.detectChanges();
+
+    expect(tester.component.selectedNodes.length).toBe(0);
   });
 
   test('createItemsFromSelection should do nothing when no create-items api was provided', () => {

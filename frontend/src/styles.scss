@@ -1130,3 +1130,15 @@ val-errors > div {
     }
   }
 }
+
+// oibus-*-form-control components each render their own .form-group + label; inside the
+// item-import-wizard's mapping table the field name is already the row's first column, so the
+// nested label is redundant and its margin breaks row alignment.
+.wizard-inline-control {
+  .form-group {
+    margin-bottom: 0;
+  }
+  .form-label {
+    display: none;
+  }
+}
