@@ -19,6 +19,7 @@ import UserService from '../service/user.service';
 import LogService from '../service/log.service';
 import TransformerService from '../service/transformer.service';
 import ConfigTransferService from '../service/config-transfer/config-transfer.service';
+import ConfigImportService, { ConfigImportError } from '../service/config-transfer/config-import.service';
 import { Express } from 'express-serve-static-core';
 import IpFilterMiddleware from './middlewares/ip-filter.middleware';
 import { createInjectServicesMiddleware } from './middlewares/services.middleware';
@@ -62,6 +63,7 @@ export default class WebServer {
     private readonly transformerService: TransformerService,
     private readonly historyQueryService: HistoryQueryService,
     private readonly configTransferService: ConfigTransferService,
+    private readonly configImportService: ConfigImportService,
     private readonly ignoreIpFilters: boolean,
     logger: ILogger
   ) {
@@ -119,6 +121,7 @@ export default class WebServer {
       createInjectServicesMiddleware(
         this.auditService,
         this.certificateService,
+        this.configImportService,
         this.configTransferService,
         this.historyQueryService,
         this.ipFilterService,
@@ -207,6 +210,14 @@ export default class WebServer {
         // Validation Error trigger by OIBus at the service layer
         return res.status(400).json({
           message: err.message
+        });
+      }
+      if (err instanceof ConfigImportError) {
+        // Config import rejected the file (malformed, too new, or failed post-upgrade validation) —
+        // nothing was written in any of these cases.
+        return res.status(400).json({
+          message: err.message,
+          validationErrors: err.validationErrors
         });
       }
       if (err instanceof ValidateError) {

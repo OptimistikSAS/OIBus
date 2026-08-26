@@ -12,6 +12,8 @@ import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model
 
 import AuditServiceMock from '../tests/__mocks__/service/audit-service.mock';
 import CertificateServiceMock from '../tests/__mocks__/service/certificate-service.mock';
+import ConfigImportServiceMock from '../tests/__mocks__/service/config-import-service.mock';
+import ConfigTransferServiceMock from '../tests/__mocks__/service/config-transfer-service.mock';
 import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
 import IpFilterServiceMock from '../tests/__mocks__/service/ip-filter-service.mock';
 import LogServiceMock from '../tests/__mocks__/service/log-service.mock';
@@ -26,6 +28,8 @@ import UserServiceMock from '../tests/__mocks__/service/user-service.mock';
 
 import type AuditService from '../service/audit.service';
 import type CertificateService from '../service/certificate.service';
+import type ConfigImportService from '../service/config-transfer/config-import.service';
+import type ConfigTransferService from '../service/config-transfer/config-transfer.service';
 import type HistoryQueryService from '../service/history-query.service';
 import type IPFilterService from '../service/ip-filter.service';
 import type LogService from '../service/log.service';
@@ -95,6 +99,8 @@ describe('routes.ts integration (real RegisterRoutes over HTTP)', () => {
 
     const auditService = new AuditServiceMock();
     const certificateService = new CertificateServiceMock();
+    const configImportService = new ConfigImportServiceMock();
+    const configTransferService = new ConfigTransferServiceMock();
     const historyQueryService = new HistoryQueryServiceMock();
     const ipFilterService = new IpFilterServiceMock();
     const logService = new LogServiceMock();
@@ -113,6 +119,8 @@ describe('routes.ts integration (real RegisterRoutes over HTTP)', () => {
       createInjectServicesMiddleware(
         auditService as unknown as AuditService,
         certificateService as unknown as CertificateService,
+        configImportService as unknown as ConfigImportService,
+        configTransferService as unknown as ConfigTransferService,
         historyQueryService as unknown as HistoryQueryService,
         ipFilterService as unknown as IPFilterService,
         logService as unknown as LogService,
