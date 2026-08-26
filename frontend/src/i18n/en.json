@@ -820,6 +820,24 @@
       "created-at": "Created on",
       "updated-at": "Updated on"
     },
+    "config-transfer": {
+      "export": "Export configuration",
+      "import": {
+        "button": "Import configuration",
+        "title": "Import configuration",
+        "warning": "This replaces all connectors, history queries, scan modes, ip filters, transformers, certificates and users on this instance and cannot be undone.",
+        "confirm-message": "This replaces all connectors, history queries, scan modes, ip filters, transformers, certificates and users on this instance and cannot be undone. Are you sure you want to continue?",
+        "file": "Configuration file",
+        "file-too-large": "The selected file is too large. Maximum size is 10 MB",
+        "success": "Configuration successfully imported.",
+        "applied-upgrades": "Applied upgrades",
+        "no-upgrades": "No settings upgrade was necessary.",
+        "warnings": "Warnings",
+        "no-warnings": "No warnings.",
+        "reload-hint": "The page will reload to reflect the new configuration once you close this dialog.",
+        "close-and-reload": "Close and reload"
+      }
+    },
     "tooltips": {
       "edit": "Edit engine settings"
     }
