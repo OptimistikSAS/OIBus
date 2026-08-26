@@ -121,6 +121,19 @@ services:
     restart: unless-stopped
     profiles: [ "database" ]
 
+  mongo:
+    image: mongo:latest
+    container_name: oibus_mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: oibus
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-pass}
+    networks:
+      - oibus-network
+    restart: unless-stopped
+    profiles: [ "database" ]
+
   oibus:
     image: ghcr.io/optimistiksas/oibus:latest
     container_name: oibus_runtime
