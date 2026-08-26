@@ -1812,6 +1812,7 @@
 					"folder-scanner",
 					"ftp",
 					"influxdb",
+					"mongodb",
 					"mssql",
 					"mysql",
 					"odbc",
@@ -4521,6 +4522,458 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthMongoDBItemSettingsQueryType": {
+				"type": "string",
+				"enum": [
+					"find",
+					"aggregation"
+				]
+			},
+			"SouthMongoDBItemSettingsTrackingInstantDateTimeInputType": {
+				"type": "string",
+				"enum": [
+					"string",
+					"timestamp",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms"
+				]
+			},
+			"SouthMongoDBItemSettingsTrackingInstantDateTimeInput": {
+				"properties": {
+					"type": {
+						"$ref": "#/components/schemas/SouthMongoDBItemSettingsTrackingInstantDateTimeInputType"
+					},
+					"timezone": {
+						"$ref": "#/components/schemas/Timezone"
+					},
+					"format": {
+						"type": "string"
+					},
+					"locale": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthMongoDBItemSettingsTrackingInstant": {
+				"properties": {
+					"trackInstant": {
+						"type": "boolean"
+					},
+					"jsonPath": {
+						"type": "string"
+					},
+					"dateTimeInput": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthMongoDBItemSettingsTrackingInstantDateTimeInput"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"trackInstant"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthMongoDBItemSettings": {
+				"properties": {
+					"collection": {
+						"type": "string"
+					},
+					"queryType": {
+						"$ref": "#/components/schemas/SouthMongoDBItemSettingsQueryType"
+					},
+					"query": {
+						"type": "string"
+					},
+					"sort": {
+						"type": "string"
+					},
+					"trackingInstant": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthMongoDBItemSettingsTrackingInstant"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"collection",
+					"queryType",
+					"query",
+					"sort",
+					"trackingInstant"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorMongoDBItemDTO": {
+				"description": "South connector item DTO for MongoDB.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item is enabled and should be collected.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthMongoDBItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanMode": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"startTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"enabled",
+					"settings",
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"startTimeOffset",
+					"endTimeOffset",
+					"recoveryStrategy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthMongoDBSettings": {
+				"properties": {
+					"connectionString": {
+						"type": "string"
+					},
+					"connectionTimeout": {
+						"type": "number",
+						"format": "double"
+					},
+					"username": {
+						"type": "string",
+						"nullable": true
+					},
+					"password": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"connectionString",
+					"connectionTimeout",
+					"username",
+					"password"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorItemTypedDTO_SouthMongoDBItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item is enabled and should be collected.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthMongoDBItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanMode": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"startTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"enabled",
+					"settings",
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"startTimeOffset",
+					"endTimeOffset",
+					"recoveryStrategy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorMongoDBDTO": {
+				"description": "South connector configuration for MongoDB.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the South connector.",
+						"example": "Production Data Files"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"mongodb"
+						],
+						"nullable": false,
+						"description": "The type of the South connector.",
+						"example": "folder-scanner"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the South connector's purpose.",
+						"example": "Scans production data CSV files"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the South connector is enabled and active.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthMongoDBSettings",
+						"description": "Configuration settings specific to this South connector type."
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorMongoDBItemDTO"
+						},
+						"type": "array",
+						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"items",
+					"groups"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthMQTTItemSettings": {
 				"properties": {
 					"topic": {
@@ -4959,14 +5412,14 @@
 				"type": "string",
 				"enum": [
 					"string",
+					"iso-string",
+					"unix-epoch",
+					"unix-epoch-ms",
 					"date",
 					"date-time",
 					"date-time-2",
 					"date-time-offset",
-					"small-date-time",
-					"iso-string",
-					"unix-epoch",
-					"unix-epoch-ms"
+					"small-date-time"
 				]
 			},
 			"SouthMSSQLItemSettingsTrackingInstantDateTimeInput": {
@@ -5423,10 +5876,10 @@
 				"type": "string",
 				"enum": [
 					"string",
-					"date-time",
 					"iso-string",
 					"unix-epoch",
-					"unix-epoch-ms"
+					"unix-epoch-ms",
+					"date-time"
 				]
 			},
 			"SouthMySQLItemSettingsTrackingInstantDateTimeInput": {
@@ -8288,10 +8741,10 @@
 				"type": "string",
 				"enum": [
 					"string",
-					"date-time",
 					"iso-string",
 					"unix-epoch",
-					"unix-epoch-ms"
+					"unix-epoch-ms",
+					"date-time"
 				]
 			},
 			"SouthOracleItemSettingsTrackingInstantDateTimeInput": {
@@ -9115,10 +9568,10 @@
 				"type": "string",
 				"enum": [
 					"string",
+					"timestamp",
 					"iso-string",
 					"unix-epoch",
 					"unix-epoch-ms",
-					"timestamp",
 					"timestamptz"
 				]
 			},
@@ -11592,6 +12045,9 @@
 						"$ref": "#/components/schemas/SouthConnectorModbusDTO"
 					},
 					{
+						"$ref": "#/components/schemas/SouthConnectorMongoDBDTO"
+					},
+					{
 						"$ref": "#/components/schemas/SouthConnectorMQTTDTO"
 					},
 					{
@@ -13087,6 +13543,283 @@
 					"items": {
 						"items": {
 							"$ref": "#/components/schemas/SouthConnectorModbusItemCommandDTO"
+						},
+						"type": "array",
+						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
+					}
+				},
+				"required": [
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"items",
+					"groups"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorMongoDBItemCommandDTO": {
+				"description": "South connector item command for MongoDB.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the item (null when creating a new item).",
+						"example": null
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item should be enabled.",
+						"example": true
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthMongoDBItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanModeId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the scan mode to use for this item.\nNull when the scan mode should be determined by the system.",
+						"example": "periodic-5min"
+					},
+					"scanModeName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
+						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"startTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
+					}
+				},
+				"required": [
+					"id",
+					"enabled",
+					"name",
+					"settings",
+					"scanModeId",
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"startTimeOffset",
+					"endTimeOffset",
+					"recoveryStrategy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorItemCommandTypedDTO_SouthMongoDBItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the item (null when creating a new item).",
+						"example": null
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item should be enabled.",
+						"example": true
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthMongoDBItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanModeId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the scan mode to use for this item.\nNull when the scan mode should be determined by the system.",
+						"example": "periodic-5min"
+					},
+					"scanModeName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
+						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"startTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
+					}
+				},
+				"required": [
+					"id",
+					"enabled",
+					"name",
+					"settings",
+					"scanModeId",
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"startTimeOffset",
+					"endTimeOffset",
+					"recoveryStrategy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorMongoDBCommandDTO": {
+				"description": "South connector command for MongoDB.",
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "The name of the South connector.",
+						"example": "Production Data Files"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"mongodb"
+						],
+						"nullable": false,
+						"description": "The type of the South connector.",
+						"example": "folder-scanner"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the South connector's purpose.",
+						"example": "Scans production data CSV files"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the South connector should be enabled.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthMongoDBSettings",
+						"description": "Configuration settings specific to this South connector type."
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorMongoDBItemCommandDTO"
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
@@ -17284,6 +18017,9 @@
 						"$ref": "#/components/schemas/SouthConnectorModbusCommandDTO"
 					},
 					{
+						"$ref": "#/components/schemas/SouthConnectorMongoDBCommandDTO"
+					},
+					{
 						"$ref": "#/components/schemas/SouthConnectorMQTTCommandDTO"
 					},
 					{
@@ -17376,6 +18112,9 @@
 						"$ref": "#/components/schemas/SouthModbusSettings"
 					},
 					{
+						"$ref": "#/components/schemas/SouthMongoDBSettings"
+					},
+					{
 						"$ref": "#/components/schemas/SouthMQTTSettings"
 					},
 					{
@@ -17438,6 +18177,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthModbusItemSettings"
+					},
+					{
+						"$ref": "#/components/schemas/SouthMongoDBItemSettings"
 					},
 					{
 						"$ref": "#/components/schemas/SouthMQTTItemSettings"
@@ -17572,6 +18314,22 @@
 				"type": "object",
 				"description": "Construct a type with a set of properties K of type T"
 			},
+			"SouthConnectorExploreFieldKind": {
+				"type": "string",
+				"enum": [
+					"instant",
+					"size"
+				],
+				"description": "How a {@link SouthConnectorExploreEntry.metadata} field should be displayed — see\n{@link SouthConnectorExploreEntry.metadataKinds}."
+			},
+			"Partial_Record_string.SouthConnectorExploreFieldKind__": {
+				"properties": {},
+				"additionalProperties": {
+					"$ref": "#/components/schemas/SouthConnectorExploreFieldKind"
+				},
+				"type": "object",
+				"description": "Make all properties in T optional"
+			},
 			"SouthConnectorExploreEntry": {
 				"description": "A single entry returned while exploring/discovering a South connector's data source.\nRepresents an OPC-UA node or a file-system entry. Kept intentionally generic and\nextensible so item creation and item synchronisation can build on it later.",
 				"properties": {
@@ -17586,6 +18344,10 @@
 					"metadata": {
 						"$ref": "#/components/schemas/Record_string.string-or-number_",
 						"description": "Additional data linked to the entry"
+					},
+					"metadataKinds": {
+						"$ref": "#/components/schemas/Partial_Record_string.SouthConnectorExploreFieldKind__",
+						"description": "Optional per-field rendering hint for {@link metadata} — a `metadata` key listed here should be\ndisplayed with the matching format (e.g. a localized date/time, a human-readable byte size) instead\nof as plain text. A key with no entry here (the common case — units, counts, types, ...) just\nrenders as-is."
 					},
 					"hasChildren": {
 						"type": "boolean",
@@ -17671,6 +18433,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorModbusItemDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorMongoDBItemDTO"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorMQTTItemDTO"
@@ -17841,6 +18606,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorModbusItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorMongoDBItemCommandDTO"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorMQTTItemCommandDTO"
@@ -19404,6 +20172,13 @@
 			"EngineLoggerCommandDTO": {
 				"description": "Engine logger command Data Transfer Object.\nUsed as the request body for updating only the logging parameters.\nThe log category objects are top-level (no wrapper key).",
 				"properties": {
+					"auditRetentionDuration": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Number of days audit log entries are kept before being pruned. `null` (or 0) means audit logs\nare kept forever.",
+						"example": 90
+					},
 					"console": {
 						"properties": {
 							"level": {
@@ -19555,6 +20330,7 @@
 					}
 				},
 				"required": [
+					"auditRetentionDuration",
 					"console",
 					"file",
 					"database",
@@ -24935,6 +25711,85 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryQueryMongoDBItemCommandDTO": {
+				"description": "History query item command for MongoDB.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthMongoDBItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQueryItemCommandTypedDTO_SouthMongoDBItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthMongoDBItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQueryMongoDBSouthCommandDTO": {
+				"description": "History query south command for MongoDB.",
+				"properties": {
+					"southType": {
+						"type": "string",
+						"enum": [
+							"mongodb"
+						],
+						"nullable": false
+					},
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthMongoDBSettings"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/HistoryQueryMongoDBItemCommandDTO"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"southType",
+					"southSettings",
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQueryMQTTItemCommandDTO": {
 				"description": "History query item command for MQTT.",
 				"properties": {
@@ -26374,6 +27229,9 @@
 								"$ref": "#/components/schemas/HistoryQueryModbusSouthCommandDTO"
 							},
 							{
+								"$ref": "#/components/schemas/HistoryQueryMongoDBSouthCommandDTO"
+							},
+							{
 								"$ref": "#/components/schemas/HistoryQueryMQTTSouthCommandDTO"
 							},
 							{
@@ -26895,6 +27753,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryModbusItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/HistoryQueryMongoDBItemCommandDTO"
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryMQTTItemCommandDTO"
@@ -32561,6 +33422,131 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryQueryMongoDBItemDTO": {
+				"description": "History query item DTO for MongoDB.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthMongoDBItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQueryItemTypedDTO_SouthMongoDBItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthMongoDBItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQueryMongoDBSouthDTO": {
+				"description": "History query south DTO for MongoDB.",
+				"properties": {
+					"southType": {
+						"type": "string",
+						"enum": [
+							"mongodb"
+						],
+						"nullable": false
+					},
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthMongoDBSettings"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/HistoryQueryMongoDBItemDTO"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"southType",
+					"southSettings",
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQueryMQTTItemDTO": {
 				"description": "History query item DTO for MQTT.",
 				"properties": {
@@ -34693,6 +35679,9 @@
 								"$ref": "#/components/schemas/HistoryQueryModbusSouthDTO"
 							},
 							{
+								"$ref": "#/components/schemas/HistoryQueryMongoDBSouthDTO"
+							},
+							{
 								"$ref": "#/components/schemas/HistoryQueryMQTTSouthDTO"
 							},
 							{
@@ -34817,6 +35806,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryModbusItemDTO"
+					},
+					{
+						"$ref": "#/components/schemas/HistoryQueryMongoDBItemDTO"
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryMQTTItemDTO"
@@ -35536,6 +36528,7 @@
 			"AuditEntityType": {
 				"type": "string",
 				"enum": [
+					"certificate",
 					"south_connector",
 					"south_item",
 					"south_item_group",
@@ -35546,20 +36539,21 @@
 					"history_query_transformer",
 					"scan_mode",
 					"ip_filter",
-					"certificate",
 					"user",
 					"transformer",
 					"engine",
 					"oianalytics_registration"
-				]
+				],
+				"description": "Type representing an audited entity type."
 			},
 			"AuditAction": {
 				"type": "string",
 				"enum": [
+					"DELETE",
 					"CREATE",
-					"UPDATE",
-					"DELETE"
-				]
+					"UPDATE"
+				],
+				"description": "Type representing an audit action."
 			},
 			"AuditLogDTO": {
 				"description": "Data Transfer Object for an audit log entry.\nRepresents a single create/update/delete event recorded against an audited entity.",
