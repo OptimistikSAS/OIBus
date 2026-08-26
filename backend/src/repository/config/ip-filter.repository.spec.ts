@@ -60,6 +60,12 @@ describe('IpFilterRepository', () => {
     assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['ip_filter', created.id, 'CREATE', null, created, 'userTest']);
   });
 
+  it('create() should preserve a caller-supplied id (config import)', () => {
+    const created = repository.create({ ...testData.ipFilters.command, address: '10.0.0.1' }, 'importUser', 'preserved-ip-filter-id');
+    assert.strictEqual(created.id, 'preserved-ip-filter-id');
+    assert.deepStrictEqual(repository.findById('preserved-ip-filter-id'), created);
+  });
+
   it('update() should update an IP filter', () => {
     const before = repository.findById(createdId);
     repository.update(createdId, testData.ipFilters.command, 'userTest');
