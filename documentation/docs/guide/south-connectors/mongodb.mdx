@@ -1,0 +1,143 @@
+---
+sidebar_position: 20
+---
+
+# MongoDB
+
+Query MongoDB document databases with OIBus.
+
+:::info Compatibility Notes
+
+- Supports MongoDB 4.4 and later
+
+:::
+
+## Specific Settings
+
+| Setting            | Description                                                                                                       | Example Value                                                                            |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Connection string  | MongoDB connection string, including hosts, database, and any query parameters (e.g. `replicaSet`, `authSource`). | `mongodb://host1:27017,host2:27017,host3:27017/database?replicaSet=rs0&authSource=admin` |
+| Connection timeout | Maximum time in milliseconds to establish connection. Default: `10000`.                                           | `10000`                                                                                  |
+| Username           | Authentication username. Optional.                                                                                | `db_user`                                                                                |
+| Password           | Authentication password.                                                                                          | `••••••••`                                                                               |
+
+:::tip Security Best Practices
+
+- Credentials are never embedded in the connection string. When a username is set, OIBus authenticates using the
+  driver's native `auth` option, sending the username and (decrypted) password separately from the connection
+  string.
+- Use a read-only MongoDB user/role restricted to the collections OIBus needs to read.
+
+:::
+
+:::note Connection string parameters
+OIBus does not derive or append connection options on your behalf. If your deployment requires `authSource`,
+`replicaSet`, or other parameters, include them directly in the **Connection string** field.
+:::
+
+## Item Settings
+
+Each item queries a single MongoDB collection and is scheduled independently via its own scan mode.
+
+| Setting           | Description                                                                     | Example Value         |
+| ----------------- | ------------------------------------------------------------------------------- | --------------------- |
+| **Collection**    | Name of the MongoDB collection to query.                                        | `sensor_readings`     |
+| **Query type**    | `find` for a filter document, or `aggregation` for a pipeline.                  | `find`, `aggregation` |
+| **Query**         | JSON filter document (`find`) or JSON array of pipeline stages (`aggregation`). | see below             |
+| **Sort**          | JSON sort specification, applied to `find` queries only.                        | `{ "timestamp": 1 }`  |
+| **Track instant** | Enables incremental cursor tracking via a JSONPath expression (see below).      | on/off                |
+
+### Query
+
+The **Query** field is JSON text, parsed differently depending on **Query type**:
+
+- **find**: a single JSON object used as the filter document passed to
+  [`collection.find()`](https://www.mongodb.com/docs/manual/reference/method/db.collection.find/).
+
+```json
+{
+  "timestamp": { "$gt": "@StartTime", "$lte": "@EndTime" }
+}
+```
+
+- **aggregation**: a JSON array of pipeline stages passed to
+  [`collection.aggregate()`](https://www.mongodb.com/docs/manual/reference/method/db.collection.aggregate/).
+
+```json
+[
+  { "$match": { "timestamp": { "$gt": "@StartTime", "$lte": "@EndTime" } } },
+  { "$group": { "_id": "$deviceId", "value": { "$avg": "$value" }, "timestamp": { "$max": "$timestamp" } } }
+]
+```
+
+:::note Aggregation pipelines are not auto-sorted
+In `aggregation` mode, OIBus does **not** append a `$sort` stage built from the **Sort** setting — **Sort**
+applies to `find` queries only. A bolted-on sort could reference a field that no longer exists once a `$group`
+(or similar reshaping) stage has run, so include your own `$sort` stage in the pipeline if query results need to
+be sorted.
+:::
+
+#### `@StartTime` / `@EndTime` placeholders
+
+`@StartTime` and `@EndTime` work the same way as in OIBus's SQL-based connectors, with one MongoDB-specific
+requirement: they must appear as **quoted JSON string literals** inside the query text, e.g.
+`"@StartTime"`. Before the query runs, OIBus substitutes each placeholder and converts it to a native BSON
+`Date` — the string literal in the JSON source becomes a `Date` value in the query actually sent to MongoDB, not
+a string.
+
+| Setting      | Description                                                                              | Example Value              |
+| ------------ | ---------------------------------------------------------------------------------------- | -------------------------- |
+| `@StartTime` | Initialized to first execution time, then updated to the most recent tracked field value | `2024-01-15T10:00:00.000Z` |
+| `@EndTime`   | Set to current time (`now()`) or sub-interval end when queries are split                 | `2024-01-15T11:00:00.000Z` |
+
+### Sort
+
+The **Sort** field is a JSON object in MongoDB's native sort-spec shape (e.g. `{ "timestamp": 1 }`), passed
+directly to `.sort()` in `find` mode. Compound sorts (multiple keys) are supported. It has no effect in
+`aggregation` mode and is unrelated to incremental cursor tracking — see **Tracking instant** below.
+
+### Tracking instant
+
+Enabling **Track instant** lets OIBus advance its cursor between scheduled queries, so the next query only picks
+up documents newer than the last one already collected. When disabled (the default), OIBus does not track a
+cursor field — configure the item's **Query** to bound each execution some other way.
+
+| Setting                    | Description                                                                                                                                                         | Example Value                                                            |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **Track instant**          | Enables cursor tracking.                                                                                                                                            | on/off                                                                   |
+| **JSON path**              | A [JSONPath](https://github.com/JSONPath-Plus/JSONPath) expression evaluated against the raw array of documents returned by the query — reaches into nested fields. | `$[*].timestamp`, `$[*].metadata.recordedAt`                             |
+| **Date time input → Type** | How the extracted raw value should be interpreted before comparison.                                                                                                | `Timestamp`, `ISO String`, `UNIX epoch (s)`, `UNIX epoch (ms)`, `String` |
+
+`$[*]` matches every document in the batch; the path after it points at the field to compare. After each query,
+OIBus evaluates the JSONPath, converts every matched value to an instant according to **Type**, and keeps the
+maximum as the next `@StartTime`.
+
+**Type** should match the field's actual shape as returned by the MongoDB driver — most commonly `Timestamp`
+for a native BSON `Date` field. Choose `ISO String`, `UNIX epoch (s)`, or `UNIX epoch (ms)` for fields stored as
+text or numbers; `String` additionally requires a **Format**, **Timezone**, and **Locale** for parsing a custom
+text representation.
+
+### Document Flattening
+
+Documents are sent downstream as record-list content, one entry per document, flattened to their **top-level
+fields only**:
+
+| Source value                                       | Sent value                         |
+| -------------------------------------------------- | ---------------------------------- |
+| `Date`                                             | ISO 8601 string (`.toISOString()`) |
+| `ObjectId`                                         | Hex string (`.toHexString()`)      |
+| String, number, boolean                            | Sent as-is                         |
+| `null` / `undefined`                               | `null`                             |
+| Nested object, array, `Decimal128`, `Binary`, etc. | JSON-stringified                   |
+
+To render this data as CSV (or another format), attach a compatible transformer — e.g. **record-list-to-csv** —
+to the North connector or history query. See [Transformers](../engine/transformers.mdx) for details.
+
+:::tip Best Practices
+
+1. Choose a tracked field with consistent, increasing values (e.g. an inserted-at timestamp).
+2. Add an index on the tracked field, and on any field used in **Sort**, for query performance.
+3. Prefer `find` mode for straightforward time-range queries; use `aggregation` mode only when reshaping or
+   aggregating documents server-side, and include an explicit `$sort` stage if ordering matters.
+
+:::

@@ -339,6 +339,7 @@
       "ftp": "FTP",
       "influxdb": "InfluxDB",
       "modbus": "Modbus",
+      "mongodb": "MongoDB",
       "mqtt": "MQTT",
       "mssql": "Microsoft SQL Server™",
       "mysql": "MySQL® / MariaDB™",
@@ -361,6 +362,7 @@
       "ftp": "Read files from a remote FTP server",
       "influxdb": "Query InfluxDB time series databases (v1, v2, v3)",
       "modbus": "Access Modbus registers on a PLC",
+      "mongodb": "Query MongoDB document databases",
       "mqtt": "Subscribe to MQTT broker topics",
       "mssql": "Query Microsoft SQL Server™ databases",
       "mysql": "Query MySQL® or MariaDB™ databases",
@@ -1830,6 +1832,12 @@
             "username": "Username",
             "password": "Password"
           },
+          "mongodb": {
+            "connection-string": "Connection string",
+            "connection-timeout": "Connection timeout",
+            "username": "Username",
+            "password": "Password"
+          },
           "influxdb": {
             "version": {
               "title": "Version",
@@ -2139,6 +2147,35 @@
                     "unix-epoch": "UNIX epoch (s)",
                     "unix-epoch-ms": "UNIX epoch (ms)",
                     "date-time": "DateTime"
+                  },
+                  "timezone": "Timezone",
+                  "format": "Format",
+                  "locale": "Locale"
+                }
+              }
+            },
+            "mongodb": {
+              "collection": "Collection",
+              "query-type": {
+                "title": "Query type",
+                "find": "Find",
+                "aggregation": "Aggregation"
+              },
+              "query": "Query",
+              "sort": "Sort",
+              "tracking-instant": {
+                "title": "Tracking instant",
+                "track-instant": "Track instant",
+                "json-path": "JSON path",
+                "date-time-input": {
+                  "title": "Date time input",
+                  "type": {
+                    "title": "Type",
+                    "timestamp": "Timestamp",
+                    "iso-string": "ISO String",
+                    "unix-epoch": "UNIX epoch (s)",
+                    "unix-epoch-ms": "UNIX epoch (ms)",
+                    "string": "String"
                   },
                   "timezone": "Timezone",
                   "format": "Format",

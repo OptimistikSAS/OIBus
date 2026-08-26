@@ -16,6 +16,7 @@ export const getAssociatedInputType = (southType: OIBusSouthType): InputType => 
     case 'mssql':
     case 'oracle':
     case 'sqlite':
+    case 'mongodb':
       return 'record-list';
     default:
       return 'any';

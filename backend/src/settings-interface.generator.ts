@@ -383,6 +383,8 @@ export function buildSouthInterfaceName(connectorId: string, itemInterface: bool
       return `SouthInfluxDB${prefix}Settings`;
     case 'modbus':
       return `SouthModbus${prefix}Settings`;
+    case 'mongodb':
+      return `SouthMongoDB${prefix}Settings`;
     case 'mqtt':
       return `SouthMQTT${prefix}Settings`;
     case 'mssql':
