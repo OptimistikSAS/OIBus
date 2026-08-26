@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import Database, { Database as DatabaseType } from 'better-sqlite3';
 
 import { OIBusInitConfig } from '../model/oibus-init-config.model';
 import EngineRepository from '../repository/config/engine.repository';
@@ -113,6 +113,17 @@ export default class RepositoryService {
     this._southMetricsRepository = new SouthConnectorMetricsRepository(this.metricsDatabase);
     this._northMetricsRepository = new NorthConnectorMetricsRepository(this.metricsDatabase);
     this._historyQueryMetricsRepository = new HistoryQueryMetricsRepository(this.metricsDatabase);
+  }
+
+  /**
+   * The raw config database handle, exposed so a caller that needs to span several repositories in
+   * one atomic operation (config import's transactional wipe+recreate) can wrap them in a single
+   * `database.transaction()` — nested `.transaction()` calls made by the individual repository
+   * methods then run as SAVEPOINTs against this same connection instead of their own top-level
+   * transaction, so a failure partway through still rolls back everything.
+   */
+  get oibusConfigDatabase(): DatabaseType {
+    return this.oibusDatabase;
   }
 
   get auditRepository(): AuditRepository {

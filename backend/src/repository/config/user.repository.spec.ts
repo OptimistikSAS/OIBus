@@ -77,6 +77,22 @@ describe('UserRepository', () => {
     assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['user', result.id, 'CREATE', null, result, testData.users.list[0].id]);
   });
 
+  it('should preserve a caller-supplied id when creating a user (config import)', async () => {
+    const importedCommand: UserCommandDTO = JSON.parse(JSON.stringify(testData.users.command));
+    importedCommand.login = 'imported-login';
+    const result = await repository.create(importedCommand, 'password', 'importUser', 'preserved-user-id');
+    assert.strictEqual(result.id, 'preserved-user-id');
+    assert.deepStrictEqual(repository.findById('preserved-user-id'), result);
+  });
+
+  it('should create a user with an already-hashed password (config import)', async () => {
+    const importedCommand: UserCommandDTO = JSON.parse(JSON.stringify(testData.users.command));
+    importedCommand.login = 'imported-login-2';
+    const result = repository.createWithHashedPassword(importedCommand, 'already-hashed-value', 'importUser', 'preserved-user-id-2');
+    assert.strictEqual(result.id, 'preserved-user-id-2');
+    assert.strictEqual(repository.getHashedPasswordByLogin('imported-login-2'), 'already-hashed-value');
+  });
+
   it('should update a user', async () => {
     const newCommand: UserCommandDTO = JSON.parse(JSON.stringify(testData.users.command));
     newCommand.login = 'new login';

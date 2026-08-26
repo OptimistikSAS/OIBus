@@ -5,12 +5,13 @@ import { createMockServices } from '../../tests/utils/test-utils';
 import type { CustomExpressRequest } from '../express';
 
 describe('createInjectServicesMiddleware', () => {
-  it('should inject all 14 services into req.services and call next()', () => {
+  it('should inject all 15 services into req.services and call next()', () => {
     const services = createMockServices();
     type LooseMiddlewareFn = (req: CustomExpressRequest, res: unknown, next: () => void) => void;
     const middleware = createInjectServicesMiddleware(
       services.auditService,
       services.certificateService,
+      services.configImportService,
       services.configTransferService,
       services.historyQueryService,
       services.ipFilterService,
@@ -34,6 +35,7 @@ describe('createInjectServicesMiddleware', () => {
     assert.strictEqual(nextCalled, true);
     assert.strictEqual(req.services.auditService, services.auditService);
     assert.strictEqual(req.services.certificateService, services.certificateService);
+    assert.strictEqual(req.services.configImportService, services.configImportService);
     assert.strictEqual(req.services.configTransferService, services.configTransferService);
     assert.strictEqual(req.services.historyQueryService, services.historyQueryService);
     assert.strictEqual(req.services.ipFilterService, services.ipFilterService);

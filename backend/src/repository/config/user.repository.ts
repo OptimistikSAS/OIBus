@@ -90,23 +90,43 @@ export default class UserRepository {
     return result.password;
   }
 
+  /**
+   * Creates a user. `id` may be supplied to preserve a specific id for the new row (used by config
+   * import, which recreates users under their originally exported id) instead of always minting a
+   * fresh one.
+   */
   async create(
     command: Omit<User, 'id' | 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt'>,
     password: string,
-    createdBy: string
+    createdBy: string,
+    id = generateRandomId(6)
   ): Promise<User> {
-    const id = generateRandomId(6);
+    const hash = await argon2.hash(password);
+    return this.createWithHashedPassword(command, hash, createdBy, id);
+  }
+
+  /**
+   * Same as `create`, but takes an already-hashed password instead of hashing one itself. Used by
+   * config import: hashing must happen before the enclosing wipe+recreate transaction starts,
+   * because `better-sqlite3` transactions run their callback synchronously and cannot `await` the
+   * asynchronous `argon2.hash` call in the middle of it.
+   */
+  createWithHashedPassword(
+    command: Omit<User, 'id' | 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt'>,
+    hashedPassword: string,
+    createdBy: string,
+    id = generateRandomId(6)
+  ): User {
     const insertQuery =
       `INSERT INTO ${USERS_TABLE} (id, login, password, first_name, last_name, email, language, timezone, created_by, updated_by, created_at, updated_at) ` +
       `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
 
-    const hash = await argon2.hash(password);
     const insertResult = this.database
       .prepare(insertQuery)
       .run(
         id,
         command.login,
-        hash,
+        hashedPassword,
         command.firstName,
         command.lastName,
         command.email,
