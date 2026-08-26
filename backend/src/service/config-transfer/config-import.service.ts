@@ -3,6 +3,7 @@ import argon2 from 'argon2';
 import crypto from 'node:crypto';
 import { Database } from 'better-sqlite3';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
+import { scanModeSchema, ipFilterSchema, userSchema } from '../../web-server/controllers/validators/oibus-validation-schema';
 import { getUpgradesNewerThan, SettingsUpgradeEntry } from './settings-upgrades/registry';
 import { CONFIG_EXPORT_FORMAT_VERSION } from './config-transfer.service';
 import { ConfigExportEnvelopeDTO, ConfigImportResponseDTO } from '../../../shared/model/config-transfer.model';
@@ -42,6 +43,14 @@ import { TransformerSourceCommandDTO } from '../../../shared/model/transformer.m
  */
 export const SUPPORTED_FORMAT_VERSION = CONFIG_EXPORT_FORMAT_VERSION;
 
+/**
+ * The reserved scan mode id push-driven south connectors (MQTT, OPC-UA DA subscriptions, …) and the
+ * engine special-case by id. `ScanModeRepository` only reseeds it (and the other defaults) when the
+ * table is completely empty at construction time — never after an import — so it must never be
+ * deleted here, or it is gone for the life of the process.
+ */
+const RESERVED_SCAN_MODE_ID = 'subscription';
+
 export interface AppliedUpgrade {
   scope: string;
   version: string;
@@ -71,6 +80,54 @@ export class ConfigImportError extends Error {
   }
 }
 
+/**
+ * `oIBusInternalId` plus a `settings` sub-schema, matching the `BaseAuditFields & { settings: T }`
+ * shape every non-manifest-driven section of the envelope uses. South/north connectors and history
+ * queries are NOT covered by this helper — those get full manifest-driven validation in
+ * `validateEnvelope` once settings-upgrades have had a chance to run, so a bare shape check here
+ * would be redundant. Every other section (scan modes, ip filters, certificates, users) never goes
+ * through manifest validation at all, so this is the only check standing between a malformed entry
+ * and an unhandled exception mid-transaction in `recreateConfiguration` — hence `settings.required()`
+ * with the real per-type schema, not just `Joi.object()`.
+ */
+const auditedEntrySchema = (settingsSchema: Joi.Schema): Joi.ObjectSchema =>
+  Joi.object({
+    oIBusInternalId: Joi.string().required(),
+    settings: settingsSchema.required()
+  }).unknown(true);
+
+const CERTIFICATE_SETTINGS_SCHEMA = Joi.object({
+  name: Joi.string().required(),
+  description: Joi.string().required().allow(null, ''),
+  publicKey: Joi.string().required().allow(''),
+  certificate: Joi.string().required().allow(''),
+  certificateChain: Joi.string().required().allow(null, ''),
+  expiry: Joi.string().required().allow(null, '')
+}).unknown(true);
+
+/**
+ * The reserved `'subscription'` scan mode is seeded with `type: 'cron'` but an empty `cron` string
+ * (nothing ever schedules it — it's referenced by id, not run) — a shape `scanModeSchema`'s cron
+ * validator, built for real user-submitted scan modes, rejects. Its envelope entry is only ever
+ * matched back to the local reserved row by id (see `recreateConfiguration`), so its `settings` are
+ * not meaningfully validated here regardless of what an export happens to contain for it.
+ */
+const SCAN_MODE_ENTRY_SCHEMA = Joi.object({
+  oIBusInternalId: Joi.string().required(),
+  settings: Joi.when('oIBusInternalId', {
+    is: RESERVED_SCAN_MODE_ID,
+    then: Joi.object().unknown(true).required(),
+    otherwise: scanModeSchema.required()
+  })
+}).unknown(true);
+
+const TRANSFORMER_ENTRY_SCHEMA = Joi.object({
+  oIBusInternalId: Joi.string().required(),
+  type: Joi.string().valid('custom', 'standard').required(),
+  settings: Joi.object().required(),
+  manifest: Joi.object().required()
+}).unknown(true);
+
 const ENVELOPE_SHAPE_SCHEMA = Joi.object({
   formatVersion: Joi.number().integer().required(),
   oibusVersion: Joi.string().required(),
@@ -78,13 +135,13 @@ const ENVELOPE_SHAPE_SCHEMA = Joi.object({
   fullConfiguration: Joi.object({
     engine: Joi.object().required(),
     registration: Joi.object().required(),
-    scanModes: Joi.array().required(),
-    ipFilters: Joi.array().required(),
-    certificates: Joi.array().required(),
+    scanModes: Joi.array().items(SCAN_MODE_ENTRY_SCHEMA).required(),
+    ipFilters: Joi.array().items(auditedEntrySchema(ipFilterSchema)).required(),
+    certificates: Joi.array().items(auditedEntrySchema(CERTIFICATE_SETTINGS_SCHEMA)).required(),
     southConnectors: Joi.array().required(),
     northConnectors: Joi.array().required(),
-    users: Joi.array().required(),
-    transformers: Joi.array().required()
+    users: Joi.array().items(auditedEntrySchema(userSchema)).required(),
+    transformers: Joi.array().items(TRANSFORMER_ENTRY_SCHEMA).required()
   })
     .required()
     .unknown(true),
@@ -128,9 +185,11 @@ function parseScope(scope: string): ParsedScope {
     case 'transformer':
       return { kind: 'transformer', functionName: suffix };
     default:
-      // Unreachable given SettingsUpgradeScope, but keeps this function total rather than
-      // throwing on a future scope variant no one updated this switch for.
-      return { kind: 'envelope' };
+      // A scope prefix the registry declares but this switch was never updated for. Throwing here
+      // (rather than silently falling back to envelope-scope, which would `Object.assign` the
+      // upgrade's return value onto the whole envelope) turns a registry/code drift bug into a
+      // loud, nothing-written rejection instead of silent top-level corruption.
+      throw new Error(`Unknown settings-upgrade scope "${scope}"`);
   }
 }
 
@@ -205,7 +264,18 @@ export default class ConfigImportService {
     const applied: Array<AppliedUpgrade> = [];
 
     for (const upgrade of upgrades) {
-      const scope = parseScope(upgrade.scope);
+      let scope: ParsedScope;
+      try {
+        scope = parseScope(upgrade.scope);
+      } catch (error: unknown) {
+        // A registry entry this build's `parseScope` doesn't understand is a code/registry drift
+        // bug, not bad user input — but it must still fail the whole import loudly (nothing
+        // written) rather than silently mis-applying the upgrade, per the "registry gap fails
+        // import loudly" requirement.
+        throw new ConfigImportError(
+          `Invalid settings-upgrade registry entry "${upgrade.scope}@${upgrade.version}": ${(error as Error).message}`
+        );
+      }
 
       switch (scope.kind) {
         case 'envelope': {
@@ -222,66 +292,109 @@ export default class ConfigImportService {
         }
 
         case 'south': {
-          for (const south of envelope.fullConfiguration.southConnectors) {
-            if (south.type !== scope.connectorType) continue;
-            south.settings.settings = upgrade.apply(
-              south.settings.settings as unknown as Record<string, unknown>
-            ) as unknown as typeof south.settings.settings;
-            applied.push({ scope: upgrade.scope, version: upgrade.version, entityId: south.oIBusInternalId });
-          }
+          const connectorType = scope.connectorType;
+          applied.push(
+            ...this.applyToMatchingEntities(
+              envelope.fullConfiguration.southConnectors,
+              south => south.type === connectorType,
+              south => south.settings.settings,
+              (south, settings) => (south.settings.settings = settings as unknown as typeof south.settings.settings),
+              south => south.oIBusInternalId,
+              upgrade
+            )
+          );
           break;
         }
 
         case 'north': {
-          for (const north of envelope.fullConfiguration.northConnectors) {
-            if (north.type !== scope.connectorType) continue;
-            north.settings.settings = upgrade.apply(
-              north.settings.settings as unknown as Record<string, unknown>
-            ) as unknown as typeof north.settings.settings;
-            applied.push({ scope: upgrade.scope, version: upgrade.version, entityId: north.oIBusInternalId });
-          }
+          const connectorType = scope.connectorType;
+          applied.push(
+            ...this.applyToMatchingEntities(
+              envelope.fullConfiguration.northConnectors,
+              north => north.type === connectorType,
+              north => north.settings.settings,
+              (north, settings) => (north.settings.settings = settings as unknown as typeof north.settings.settings),
+              north => north.oIBusInternalId,
+              upgrade
+            )
+          );
           break;
         }
 
         case 'historyQuerySouth': {
-          for (const historyQuery of envelope.historyQueries.historyQueries) {
-            if (historyQuery.settings.southType !== scope.connectorType) continue;
-            historyQuery.settings.southSettings = upgrade.apply(
-              historyQuery.settings.southSettings as unknown as Record<string, unknown>
-            ) as unknown as typeof historyQuery.settings.southSettings;
-            applied.push({ scope: upgrade.scope, version: upgrade.version, entityId: historyQuery.oIBusInternalId });
-          }
+          const connectorType = scope.connectorType;
+          applied.push(
+            ...this.applyToMatchingEntities(
+              envelope.historyQueries.historyQueries,
+              historyQuery => historyQuery.settings.southType === connectorType,
+              historyQuery => historyQuery.settings.southSettings,
+              (historyQuery, settings) =>
+                (historyQuery.settings.southSettings = settings as unknown as typeof historyQuery.settings.southSettings),
+              historyQuery => historyQuery.oIBusInternalId,
+              upgrade
+            )
+          );
           break;
         }
 
         case 'historyQueryNorth': {
-          for (const historyQuery of envelope.historyQueries.historyQueries) {
-            if (historyQuery.settings.northType !== scope.connectorType) continue;
-            historyQuery.settings.northSettings = upgrade.apply(
-              historyQuery.settings.northSettings as unknown as Record<string, unknown>
-            ) as unknown as typeof historyQuery.settings.northSettings;
-            applied.push({ scope: upgrade.scope, version: upgrade.version, entityId: historyQuery.oIBusInternalId });
-          }
+          const connectorType = scope.connectorType;
+          applied.push(
+            ...this.applyToMatchingEntities(
+              envelope.historyQueries.historyQueries,
+              historyQuery => historyQuery.settings.northType === connectorType,
+              historyQuery => historyQuery.settings.northSettings,
+              (historyQuery, settings) =>
+                (historyQuery.settings.northSettings = settings as unknown as typeof historyQuery.settings.northSettings),
+              historyQuery => historyQuery.oIBusInternalId,
+              upgrade
+            )
+          );
           break;
         }
 
         case 'transformer': {
-          for (const transformer of envelope.fullConfiguration.transformers) {
-            if (
-              transformer.type !== 'standard' ||
-              (transformer.settings as unknown as { functionName: string }).functionName !== scope.functionName
+          const functionName = scope.functionName;
+          applied.push(
+            ...this.applyToMatchingEntities(
+              envelope.fullConfiguration.transformers,
+              transformer =>
+                transformer.type === 'standard' &&
+                (transformer.settings as unknown as { functionName: string }).functionName === functionName,
+              transformer => transformer.settings,
+              (transformer, settings) => (transformer.settings = settings as unknown as typeof transformer.settings),
+              transformer => transformer.oIBusInternalId,
+              upgrade
             )
-              continue;
-            transformer.settings = upgrade.apply(
-              transformer.settings as unknown as Record<string, unknown>
-            ) as unknown as typeof transformer.settings;
-            applied.push({ scope: upgrade.scope, version: upgrade.version, entityId: transformer.oIBusInternalId });
-          }
+          );
           break;
         }
       }
     }
 
+    return applied;
+  }
+
+  /**
+   * Shared by every type-keyed `applyUpgrades` branch (south, north, historyQuerySouth,
+   * historyQueryNorth, transformer): filters `entities` down to the ones this upgrade's scope
+   * matches, runs `upgrade.apply` on the one settings field `getSettings`/`setSettings` read and
+   * write, and records one `AppliedUpgrade` per matching entity.
+   */
+  private applyToMatchingEntities<T>(
+    entities: Array<T>,
+    matches: (entity: T) => boolean,
+    getSettings: (entity: T) => unknown,
+    setSettings: (entity: T, settings: Record<string, unknown>) => void,
+    getEntityId: (entity: T) => string,
+    upgrade: SettingsUpgradeEntry
+  ): Array<AppliedUpgrade> {
+    const applied: Array<AppliedUpgrade> = [];
+    for (const entity of entities) {
+      if (!matches(entity)) continue;
+      setSettings(entity, upgrade.apply(getSettings(entity) as Record<string, unknown>));
+      applied.push({ scope: upgrade.scope, version: upgrade.version, entityId: getEntityId(entity) });
+    }
     return applied;
   }
 
@@ -429,6 +542,14 @@ export default class ConfigImportService {
    * imported south and north connector is therefore forced `enabled: false` here regardless of the
    * exported value; the response's `warnings` says so once, not per connector, so the caller must
    * re-enter credentials and re-enable each connector manually before it runs again.
+   *
+   * Two sections get special handling so the import can never lock its own caller out or delete a
+   * reserved id nothing reseeds after startup:
+   *  - The user calling this (`importedBy`) is never deleted or recreated, and any envelope user
+   *    sharing their login is skipped, so the account used to run the import always keeps working
+   *    with its existing password.
+   *  - The reserved `'subscription'` scan mode (used by push-driven south connectors) is never
+   *    deleted; if the envelope also describes it, it is updated in place instead of recreated.
    */
   async importConfiguration(rawInput: unknown, importedBy: string): Promise<ConfigImportResponseDTO> {
     const { envelope, appliedUpgrades } = await this.validateAndUpgrade(rawInput);
@@ -446,13 +567,26 @@ export default class ConfigImportService {
       throw new Error('ConfigImportService was constructed without the repositories required to write an import');
     }
 
+    const currentUser = this.userRepository.findById(importedBy);
+    if (!currentUser) {
+      throw new Error('Config import must be run by an authenticated, existing user');
+    }
+
     const warnings: Array<string> = [];
+
+    const usersToImport = envelope.fullConfiguration.users.filter(user => user.settings.login !== currentUser.login);
+    if (usersToImport.length < envelope.fullConfiguration.users.length) {
+      warnings.push(
+        `The account you are signed in with ("${currentUser.login}") was preserved with its existing password and was not ` +
+          `overwritten by the import, so you are not locked out.`
+      );
+    }
 
     // Passwords must be hashed (argon2, genuinely async) before the synchronous transaction below
     // starts — better-sqlite3 transaction callbacks cannot await anything without letting the
     // transaction commit/roll back around the awaited gap.
     const hashedUserPasswords = await Promise.all(
-      envelope.fullConfiguration.users.map(async user => ({
+      usersToImport.map(async user => ({
         user,
         hashedPassword: await argon2.hash(crypto.randomBytes(24).toString('hex'))
       }))
@@ -464,8 +598,16 @@ export default class ConfigImportService {
       );
     }
 
+    const importedConnectorCount = envelope.fullConfiguration.southConnectors.length + envelope.fullConfiguration.northConnectors.length;
+    if (importedConnectorCount > 0) {
+      warnings.push(
+        `${importedConnectorCount} south/north connector(s) were imported without credentials (secrets are never exported) and have ` +
+          `been disabled; re-enter their settings and re-enable each one manually before they run again.`
+      );
+    }
+
     const runImport = this.database.transaction(() => {
-      this.wipeConfiguration(importedBy);
+      this.wipeConfiguration(importedBy, currentUser.id);
       this.recreateConfiguration(envelope, importedBy, hashedUserPasswords, warnings);
     });
     runImport();
@@ -482,9 +624,14 @@ export default class ConfigImportService {
    * existing per-id `delete*` methods inside the enclosing transaction rather than adding new bulk
    * `deleteAll` repository methods, per the plan's default (only add one if looping proves
    * insufficient — it hasn't).
+   *
+   * `preserveUserId` is never deleted (the account running the import must keep working), and the
+   * reserved `'subscription'` scan mode is never deleted (nothing reseeds it after process startup,
+   * so once gone it stays gone).
    */
-  private wipeConfiguration(deletedBy: string): void {
+  private wipeConfiguration(deletedBy: string, preserveUserId: string): void {
     for (const user of this.userRepository!.list()) {
+      if (user.id === preserveUserId) continue;
       this.userRepository!.delete(user.id, deletedBy);
     }
     for (const historyQuery of this.historyQueryRepository!.findAllHistoriesLight()) {
@@ -508,6 +655,7 @@ export default class ConfigImportService {
       this.ipFilterRepository!.delete(ipFilter.id, deletedBy);
     }
     for (const scanMode of this.scanModeRepository!.findAll()) {
+      if (scanMode.id === RESERVED_SCAN_MODE_ID) continue;
       this.scanModeRepository!.delete(scanMode.id, deletedBy);
     }
   }
@@ -525,7 +673,13 @@ export default class ConfigImportService {
     warnings: Array<string>
   ): void {
     for (const scanMode of envelope.fullConfiguration.scanModes) {
-      this.scanModeRepository!.create(scanMode.settings, importedBy, scanMode.oIBusInternalId);
+      // The reserved scan mode was never deleted by `wipeConfiguration`, so it must be updated in
+      // place rather than (re)created, or the insert would collide with the still-existing row.
+      if (scanMode.oIBusInternalId === RESERVED_SCAN_MODE_ID) {
+        this.scanModeRepository!.update(RESERVED_SCAN_MODE_ID, scanMode.settings, importedBy);
+      } else {
+        this.scanModeRepository!.create(scanMode.settings, importedBy, scanMode.oIBusInternalId);
+      }
     }
 
     for (const ipFilter of envelope.fullConfiguration.ipFilters) {
@@ -695,13 +849,14 @@ export default class ConfigImportService {
     const command = entry.settings;
     const transformers: Array<NorthTransformerWithOptions> = [];
     for (const transformerWithOptions of command.transformers) {
-      const localTransformerId = transformerIdMap.get(transformerWithOptions.transformerId);
-      if (!localTransformerId) {
-        warnings.push(
-          `Skipped a transformer link on north connector "${command.name}": referenced transformer "${transformerWithOptions.transformerId}" could not be matched locally.`
-        );
-        continue;
-      }
+      const localTransformerId = this.resolveTransformerLink(
+        transformerWithOptions.transformerId,
+        transformerIdMap,
+        'north connector',
+        command.name,
+        warnings
+      );
+      if (!localTransformerId) continue;
       transformers.push({
         id: transformerWithOptions.id,
         transformer: { id: localTransformerId } as Transformer,
@@ -716,21 +871,63 @@ export default class ConfigImportService {
       description: command.description,
       enabled: false,
       settings: command.settings as unknown as NorthSettings,
-      caching: {
-        trigger: {
-          scanMode: { id: command.caching.trigger.scanModeId } as ScanMode,
-          numberOfElements: command.caching.trigger.numberOfElements,
-          numberOfFiles: command.caching.trigger.numberOfFiles
-        },
-        throttling: { ...command.caching.throttling },
-        error: { ...command.caching.error },
-        archive: { ...command.caching.archive }
-      },
+      caching: this.buildCachingEntity(command.caching),
       transformers,
       createdBy: importedBy,
       updatedBy: importedBy,
       createdAt: '',
       updatedAt: ''
+    };
+  }
+
+  /**
+   * Resolves an exported transformer link's `transformerId` to the id it should be referenced by
+   * locally (see `recreateTransformers`), pushing a skip warning and returning `null` if the linked
+   * transformer couldn't be matched — shared by `buildNorthEntity` and `buildHistoryEntity`, whose
+   * transformer-link resolution is otherwise identical.
+   */
+  private resolveTransformerLink(
+    transformerId: string,
+    transformerIdMap: Map<string, string>,
+    ownerKind: 'north connector' | 'history query',
+    ownerName: string,
+    warnings: Array<string>
+  ): string | null {
+    const localTransformerId = transformerIdMap.get(transformerId);
+    if (!localTransformerId) {
+      warnings.push(
+        `Skipped a transformer link on ${ownerKind} "${ownerName}": referenced transformer "${transformerId}" could not be matched locally.`
+      );
+      return null;
+    }
+    return localTransformerId;
+  }
+
+  /**
+   * Builds the entity-shape `caching` field (a `ScanMode` id stand-in plus throttling/error/archive)
+   * from its exported command shape — shared by `buildNorthEntity` and `buildHistoryEntity`, whose
+   * north/history query `caching` command shapes are otherwise identical.
+   */
+  private buildCachingEntity(caching: {
+    trigger: { scanModeId: string; numberOfElements: number; numberOfFiles: number };
+    throttling: { runMinDelay: number; maxSize: number; maxNumberOfElements: number };
+    error: { retryInterval: number; retryCount: number; retentionDuration: number };
+    archive: { enabled: boolean; retentionDuration: number };
+  }): {
+    trigger: { scanMode: ScanMode; numberOfElements: number; numberOfFiles: number };
+    throttling: { runMinDelay: number; maxSize: number; maxNumberOfElements: number };
+    error: { retryInterval: number; retryCount: number; retentionDuration: number };
+    archive: { enabled: boolean; retentionDuration: number };
+  } {
+    return {
+      trigger: {
+        scanMode: { id: caching.trigger.scanModeId } as ScanMode,
+        numberOfElements: caching.trigger.numberOfElements,
+        numberOfFiles: caching.trigger.numberOfFiles
+      },
+      throttling: { ...caching.throttling },
+      error: { ...caching.error },
+      archive: { ...caching.archive }
     };
   }
 
@@ -775,13 +972,14 @@ export default class ConfigImportService {
     }));
     const northTransformers: Array<HistoryTransformerWithOptions> = [];
     for (const transformerWithOptions of command.northTransformers) {
-      const localTransformerId = transformerIdMap.get(transformerWithOptions.transformerId);
-      if (!localTransformerId) {
-        warnings.push(
-          `Skipped a transformer link on history query "${command.name}": referenced transformer "${transformerWithOptions.transformerId}" could not be matched locally.`
-        );
-        continue;
-      }
+      const localTransformerId = this.resolveTransformerLink(
+        transformerWithOptions.transformerId,
+        transformerIdMap,
+        'history query',
+        command.name,
+        warnings
+      );
+      if (!localTransformerId) continue;
       northTransformers.push({
         id: transformerWithOptions.id,
         transformer: { id: localTransformerId } as Transformer,
@@ -807,16 +1005,7 @@ export default class ConfigImportService {
       queryTimeRange: { ...command.queryTimeRange },
       northType: command.northType,
       northSettings: command.northSettings,
-      caching: {
-        trigger: {
-          scanMode: { id: command.caching.trigger.scanModeId } as ScanMode,
-          numberOfElements: command.caching.trigger.numberOfElements,
-          numberOfFiles: command.caching.trigger.numberOfFiles
-        },
-        throttling: { ...command.caching.throttling },
-        error: { ...command.caching.error },
-        archive: { ...command.caching.archive }
-      },
+      caching: this.buildCachingEntity(command.caching),
       items,
       northTransformers,
       createdBy: importedBy,
