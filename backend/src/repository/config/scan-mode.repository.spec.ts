@@ -66,6 +66,12 @@ describe('ScanModeRepository with populated database', () => {
     assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['scan_mode', created.id, 'CREATE', null, created, 'userTest']);
   });
 
+  it('should preserve a caller-supplied id when creating a scan mode (config import)', () => {
+    const created = repository.create({ ...testData.scanMode.command, name: 'imported scan mode' }, 'importUser', 'preserved-scan-mode-id');
+    assert.strictEqual(created.id, 'preserved-scan-mode-id');
+    assert.deepStrictEqual(repository.findById('preserved-scan-mode-id'), created);
+  });
+
   it('should create an interval scan mode, normalizing cron to an empty string', () => {
     const created = repository.create(
       { ...testData.scanMode.command, name: 'interval scan mode', type: 'interval', cron: '* * * * * *', interval: intervalCommand },

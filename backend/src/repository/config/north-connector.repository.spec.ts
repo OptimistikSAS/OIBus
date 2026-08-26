@@ -67,6 +67,10 @@ describe('NorthConnectorRepository', () => {
     const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
     newNorthConnector.id = '';
     newNorthConnector.name = 'new connector';
+    // The cloned fixture's transformer links carry real ids belonging to the *other*, still-existing
+    // north connector they were cloned from — a real "new" connector (as the UI always sends) never
+    // reuses ids like that, so start this one without any rather than accidentally colliding with them.
+    newNorthConnector.transformers = [];
     repository.saveNorth(newNorthConnector);
 
     assert.ok(newNorthConnector.id);
@@ -138,6 +142,28 @@ describe('NorthConnectorRepository', () => {
     );
     assert.strictEqual(transformerDeleteCalls.length, 1);
     assert.strictEqual(transformerDeleteCalls[0].arguments[5], 'removeUser');
+  });
+
+  it('should preserve caller-supplied ids for the connector and its transformer link (config import)', () => {
+    const northConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
+    northConnector.id = 'preserved-north-id';
+    northConnector.name = 'preserved north connector';
+    northConnector.transformers = [
+      {
+        id: 'preserved-north-transformer-id',
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        source: { type: 'oianalytics-setpoint' }
+      }
+    ];
+
+    repository.saveNorth(northConnector);
+
+    assert.strictEqual(northConnector.id, 'preserved-north-id');
+    const created = repository.findNorthById('preserved-north-id');
+    assert.ok(created);
+    assert.strictEqual(created.transformers.length, 1);
+    assert.strictEqual(created.transformers[0].id, 'preserved-north-transformer-id');
   });
 
   it('should save a north connector transformer with a group', () => {

@@ -39,9 +39,20 @@ export default class TransformerRepository {
     return result.map(element => toTransformer(element as Record<string, string>));
   }
 
+  /**
+   * Inserts or updates a custom transformer. Whether a given `transformer.id` is treated as
+   * "create" or "update" is decided by whether a row for that id already exists — not merely by
+   * whether `id` is set — so a caller (e.g. config import) can preserve a specific id for a
+   * brand-new row instead of always getting a freshly generated one. Every normal caller only ever
+   * passes either no id (new transformer from the UI) or the id of a transformer it just read back
+   * from this repository, so this is not a behavior change for them.
+   */
   save(transformer: CustomTransformer): void {
-    if (!transformer.id) {
-      transformer.id = generateRandomId(6);
+    const isNew = !transformer.id || !this.findById(transformer.id);
+    if (isNew) {
+      if (!transformer.id) {
+        transformer.id = generateRandomId(6);
+      }
       this.database
         .prepare(
           `INSERT INTO ${TRANSFORMERS_TABLE} (id, type, input_type, output_type, name, description, custom_manifest, custom_code, language, timeout, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))`

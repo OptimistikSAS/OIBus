@@ -65,12 +65,22 @@ export default class NorthConnectorRepository {
     return this.toNorthConnector(result as Record<string, string | number>);
   }
 
+  /**
+   * Inserts or updates a north connector. Whether a given `north.id` is treated as "create" or
+   * "update" is decided by whether a row for that id already exists — not merely by whether `id` is
+   * set — so a caller (e.g. config import) can preserve a specific id for a brand-new row instead of
+   * always getting a freshly generated one. Every normal caller only ever passes either no id (new
+   * connector from the UI) or the id of a connector it just read back from this repository, so this
+   * is not a behavior change for them.
+   */
   saveNorth(north: NorthConnectorEntity<NorthSettings>): void {
-    const isNewConnector = !north.id;
     const beforeConnector = north.id ? this.findNorthById(north.id) : null;
+    const isNewConnector = !beforeConnector;
     const transaction = this.database.transaction(() => {
-      if (!north.id) {
-        north.id = generateRandomId(6);
+      if (isNewConnector) {
+        if (!north.id) {
+          north.id = generateRandomId(6);
+        }
         const insertQuery =
           `INSERT INTO ${NORTH_CONNECTORS_TABLE} (id, name, type, description, enabled, settings, ` +
           `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
@@ -253,11 +263,20 @@ export default class NorthConnectorRepository {
     return { ...entity, settings: encryptionService.filterSecrets(entity.settings, manifest.settings) };
   }
 
+  /**
+   * Inserts or updates a north connector's link to a transformer. As with `saveNorth`, whether a
+   * given `transformerWithOptions.id` is treated as "create" or "update" is decided by whether a row
+   * for that id already exists, so config import can preserve the original link id.
+   */
   addOrEditTransformer(northId: string, transformerWithOptions: NorthTransformerWithOptions, updatedBy: string): void {
-    const wasNew = !transformerWithOptions.id;
-    const before = wasNew ? null : (this.findTransformersForNorth(northId).find(t => t.id === transformerWithOptions.id) ?? null);
-    if (!transformerWithOptions.id) {
-      transformerWithOptions.id = generateRandomId(6);
+    const before = transformerWithOptions.id
+      ? (this.findTransformersForNorth(northId).find(t => t.id === transformerWithOptions.id) ?? null)
+      : null;
+    const wasNew = !before;
+    if (wasNew) {
+      if (!transformerWithOptions.id) {
+        transformerWithOptions.id = generateRandomId(6);
+      }
       const query = `INSERT INTO ${NORTH_TRANSFORMERS_TABLE} (id, north_id, transformer_id, options, source_type, source_api_data_source_id, source_south_south_id, source_south_group_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
       this.database
         .prepare(query)
