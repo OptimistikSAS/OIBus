@@ -78,15 +78,25 @@ export default class SouthConnectorRepository {
     return this.toSouthConnector(result as Record<string, string | number>);
   }
 
+  /**
+   * Inserts or updates a south connector. Whether a given `south.id` is treated as "create" or
+   * "update" is decided by whether a row for that id already exists — not merely by whether `id` is
+   * set — so a caller (e.g. config import) can preserve a specific id for a brand-new row instead of
+   * always getting a freshly generated one. Every normal caller only ever passes either no id (new
+   * connector from the UI) or the id of a connector it just read back from this repository, so this
+   * is not a behavior change for them.
+   */
   saveSouth(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>): void {
-    const isNewConnector = !south.id;
     const beforeConnector = south.id ? this.findSouthById(south.id) : null;
+    const isNewConnector = !beforeConnector;
     const beforeItemsById = south.id
       ? new Map(this.findAllItemsForSouth(south.id).map(i => [i.id, i]))
       : new Map<string, SouthConnectorItemEntity<SouthItemSettings>>();
     const transaction = this.database.transaction(() => {
-      if (!south.id) {
-        south.id = generateRandomId(6);
+      if (isNewConnector) {
+        if (!south.id) {
+          south.id = generateRandomId(6);
+        }
         const insertQuery = `INSERT INTO ${SOUTH_CONNECTORS_TABLE} (id, name, type, description, enabled, settings, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
         this.database
           .prepare(insertQuery)
@@ -107,8 +117,18 @@ export default class SouthConnectorRepository {
           .run(south.name, south.description, +south.enabled, JSON.stringify(south.settings), south.updatedBy, south.id);
       }
 
-      const groupsToCreate = south.groups.filter(group => group.id?.startsWith('temp_'));
+      // Captured before any create/update below, so a group whose id was just preserved into a
+      // freshly created row (import case, see below) is correctly excluded from the "update
+      // existing" pass that follows.
+      const existingGroupIds = new Set(this.findGroupBySouthId(south.id).map(group => group.id));
+
+      // A group is "to create" if it has no id yet (brand-new from the UI, which always mints a
+      // `temp_`-prefixed id client-side for a not-yet-persisted group), or if it carries an id that
+      // does not correspond to any existing row — the latter is how config import preserves a
+      // group's original id across a wipe+recreate instead of always minting a new one.
+      const groupsToCreate = south.groups.filter(group => !group.id || group.id.startsWith('temp_') || !existingGroupIds.has(group.id));
       for (const groupToCreate of groupsToCreate) {
+        const preservedId = groupToCreate.id && !groupToCreate.id.startsWith('temp_') ? groupToCreate.id : undefined;
         const newGroup = this.groupRepository.create(
           {
             name: groupToCreate.name,
@@ -120,7 +140,8 @@ export default class SouthConnectorRepository {
             readDelay: groupToCreate.readDelay,
             recoveryStrategy: groupToCreate.recoveryStrategy
           },
-          south.updatedBy
+          south.updatedBy,
+          preservedId
         );
         for (const item of south.items) {
           if (item.group?.id === groupToCreate.id) {
@@ -131,7 +152,7 @@ export default class SouthConnectorRepository {
       }
 
       // Update existing groups (name, scan mode, history settings may have changed via the connector edit form)
-      for (const group of south.groups.filter(g => g.id && !g.id.startsWith('temp_'))) {
+      for (const group of south.groups.filter(g => g.id && existingGroupIds.has(g.id))) {
         this.groupRepository.update(
           group.id,
           {
@@ -222,8 +243,10 @@ export default class SouthConnectorRepository {
         );
 
         for (const item of south.items) {
-          if (!item.id) {
-            item.id = generateRandomId(6);
+          if (!item.id || !existingItemsById.has(item.id)) {
+            if (!item.id) {
+              item.id = generateRandomId(6);
+            }
             insert.run(
               item.id,
               item.name,

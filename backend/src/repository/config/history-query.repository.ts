@@ -73,15 +73,25 @@ export default class HistoryQueryRepository {
     return this.toHistoryQueryEntity(result as Record<string, string | number>);
   }
 
+  /**
+   * Inserts or updates a history query. Whether a given `history.id` is treated as "create" or
+   * "update" is decided by whether a row for that id already exists — not merely by whether `id` is
+   * set — so a caller (e.g. config import) can preserve a specific id for a brand-new row instead of
+   * always getting a freshly generated one. Every normal caller only ever passes either no id (new
+   * history query from the UI) or the id of a history query it just read back from this repository,
+   * so this is not a behavior change for them.
+   */
   saveHistory(history: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): void {
-    const isNew = !history.id;
     const beforeHistory = history.id ? this.findHistoryById(history.id) : null;
+    const isNew = !beforeHistory;
     const beforeItemsById = history.id
       ? new Map(this.findAllItemsForHistory(history.id).map(i => [i.id, i]))
       : new Map<string, HistoryQueryItemEntity<SouthItemSettings>>();
     const transaction = this.database.transaction(() => {
-      if (!history.id) {
-        history.id = generateRandomId(6);
+      if (isNew) {
+        if (!history.id) {
+          history.id = generateRandomId(6);
+        }
         const insertQuery =
           `INSERT INTO ${HISTORY_QUERIES_TABLE} (id, name, description, status, ` +
           `start_time, end_time, south_type, north_type, south_settings, north_settings, ` +
@@ -200,17 +210,20 @@ export default class HistoryQueryRepository {
         );
 
         for (const item of history.items) {
-          if (!item.id || item.id.startsWith('temp_')) {
-            const randomId = generateRandomId(6);
+          // A real (non-`temp_`) id that does not correspond to any existing row is how config
+          // import preserves an item's original id across a wipe+recreate, instead of always
+          // minting a new one.
+          if (!item.id || item.id.startsWith('temp_') || !existingItemsById.has(item.id)) {
+            const preservedId = item.id && !item.id.startsWith('temp_') ? item.id : generateRandomId(6);
             if (item.id.startsWith('temp_')) {
               for (const transformer of history.northTransformers) {
                 const transformerItemIndex = transformer.items.findIndex(element => element.id === item.id);
                 if (transformerItemIndex > -1) {
-                  transformer.items[transformerItemIndex].id = randomId;
+                  transformer.items[transformerItemIndex].id = preservedId;
                 }
               }
             }
-            item.id = randomId;
+            item.id = preservedId;
             insert.run(item.id, item.name, +item.enabled, history.id, JSON.stringify(item.settings), item.createdBy, item.updatedBy);
             const created = this.findItemById(history.id, item.id);
             this.auditService.record(
@@ -389,11 +402,20 @@ export default class HistoryQueryRepository {
     transaction();
   }
 
+  /**
+   * Inserts or updates a history query's link to a transformer. As with `saveHistory`, whether a
+   * given `transformerWithOptions.id` is treated as "create" or "update" is decided by whether a row
+   * for that id already exists, so config import can preserve the original link id.
+   */
   addOrEditTransformer(historyId: string, transformerWithOptions: HistoryTransformerWithOptions, updatedBy: string): void {
-    const wasNew = !transformerWithOptions.id;
-    const before = wasNew ? null : (this.findTransformersForHistory(historyId).find(t => t.id === transformerWithOptions.id) ?? null);
-    if (!transformerWithOptions.id) {
-      transformerWithOptions.id = generateRandomId(6);
+    const before = transformerWithOptions.id
+      ? (this.findTransformersForHistory(historyId).find(t => t.id === transformerWithOptions.id) ?? null)
+      : null;
+    const wasNew = !before;
+    if (wasNew) {
+      if (!transformerWithOptions.id) {
+        transformerWithOptions.id = generateRandomId(6);
+      }
       const query = `INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (id, history_id, transformer_id, options) VALUES (?, ?, ?, ?);`;
       this.database
         .prepare(query)

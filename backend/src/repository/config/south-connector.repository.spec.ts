@@ -79,6 +79,59 @@ describe('SouthConnectorRepository', () => {
     );
   });
 
+  it('should preserve caller-supplied ids for the connector, its groups and its items (config import)', () => {
+    const southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+    southConnector.id = 'preserved-south-id';
+    southConnector.name = 'preserved south connector';
+    southConnector.groups = [
+      {
+        id: 'preserved-group-id',
+        name: 'preserved group',
+        scanMode: testData.scanMode.list[0],
+        startTimeOffset: null,
+        endTimeOffset: null,
+        maxReadInterval: null,
+        readDelay: 0,
+        recoveryStrategy: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ];
+    southConnector.items = [
+      {
+        id: 'preserved-item-id',
+        name: 'preserved item',
+        enabled: true,
+        scanMode: testData.scanMode.list[0],
+        settings: {} as SouthItemSettings,
+        group: { id: 'preserved-group-id' } as SouthItemGroupEntityLight,
+        syncWithGroup: true,
+        maxReadInterval: null,
+        readDelay: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ];
+
+    repository.saveSouth(southConnector);
+
+    assert.strictEqual(southConnector.id, 'preserved-south-id');
+    const created = repository.findSouthById('preserved-south-id');
+    assert.ok(created);
+    assert.strictEqual(created.groups.length, 1);
+    assert.strictEqual(created.groups[0].id, 'preserved-group-id');
+    assert.strictEqual(created.items.length, 1);
+    assert.strictEqual(created.items[0].id, 'preserved-item-id');
+    assert.strictEqual(created.items[0].group!.id, 'preserved-group-id');
+  });
+
   it('should update a south connector', () => {
     const newSouthConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[1]));
     const newItem: SouthConnectorItemEntity<SouthItemSettings> = {
