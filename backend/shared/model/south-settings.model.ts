@@ -41,6 +41,19 @@ export type SouthModbusItemSettingsDataDataType = (typeof SOUTH_MODBUS_ITEM_SETT
 export const SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES = ['coil', 'discrete-input', 'input-register', 'holding-register'] as const;
 export type SouthModbusItemSettingsModbusType = (typeof SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES)[number];
 
+export const SOUTH_MONGO_D_B_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES = [
+  'timestamp',
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms',
+  'string'
+] as const;
+export type SouthMongoDBItemSettingsTrackingInstantDateTimeInputType =
+  (typeof SOUTH_MONGO_D_B_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES)[number];
+
+export const SOUTH_MONGO_D_B_ITEM_SETTINGS_QUERY_TYPES = ['find', 'aggregation'] as const;
+export type SouthMongoDBItemSettingsQueryType = (typeof SOUTH_MONGO_D_B_ITEM_SETTINGS_QUERY_TYPES)[number];
+
 export const SOUTH_M_Q_T_T_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const;
 export type SouthMQTTSettingsAuthenticationType = (typeof SOUTH_M_Q_T_T_SETTINGS_AUTHENTICATION_TYPES)[number];
 
@@ -392,6 +405,13 @@ export interface SouthModbusSettings {
   groupingGap?: number;
 }
 
+export interface SouthMongoDBSettings {
+  connectionString: string;
+  connectionTimeout: number;
+  username: string | null;
+  password: string | null;
+}
+
 export interface SouthMQTTSettings {
   url: string;
   qos: SouthMQTTSettingsQos;
@@ -541,6 +561,7 @@ export type SouthSettings =
   | SouthFTPSettings
   | SouthInfluxDBSettings
   | SouthModbusSettings
+  | SouthMongoDBSettings
   | SouthMQTTSettings
   | SouthMSSQLSettings
   | SouthMySQLSettings
@@ -561,6 +582,19 @@ export interface SouthModbusItemSettingsData {
   dataType: SouthModbusItemSettingsDataDataType;
   bitIndex?: number;
   multiplierCoefficient: number;
+}
+
+export interface SouthMongoDBItemSettingsTrackingInstantDateTimeInput {
+  type: SouthMongoDBItemSettingsTrackingInstantDateTimeInputType;
+  timezone?: Timezone;
+  format?: string;
+  locale?: string;
+}
+
+export interface SouthMongoDBItemSettingsTrackingInstant {
+  trackInstant: boolean;
+  jsonPath?: string;
+  dateTimeInput?: SouthMongoDBItemSettingsTrackingInstantDateTimeInput | null;
 }
 
 export interface SouthMSSQLItemSettingsTrackingInstantDateTimeInput {
@@ -767,6 +801,14 @@ export interface SouthModbusItemSettings {
   data?: SouthModbusItemSettingsData | null;
 }
 
+export interface SouthMongoDBItemSettings {
+  collection: string;
+  queryType: SouthMongoDBItemSettingsQueryType;
+  query: string;
+  sort: string;
+  trackingInstant: SouthMongoDBItemSettingsTrackingInstant | null;
+}
+
 export interface SouthMQTTItemSettings {
   topic: string;
 }
@@ -866,6 +908,7 @@ export type SouthItemSettings =
   | SouthFTPItemSettings
   | SouthInfluxDBItemSettings
   | SouthModbusItemSettings
+  | SouthMongoDBItemSettings
   | SouthMQTTItemSettings
   | SouthMSSQLItemSettings
   | SouthMySQLItemSettings
