@@ -17,6 +17,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import { Instant, OIBusTestingError } from '../../model/types';
 import {
   SouthConnectorExploreEntry,
+  SouthConnectorExploreFieldKind,
   SouthConnectorItemQueryResult,
   SouthConnectorItemTestingSettings
 } from '../../../shared/model/south-connector.model';
@@ -212,15 +213,21 @@ export default class SouthFolderScanner
           const isDirectory = entry.isDirectory();
           const entryPath = path.join(target, entry.name);
           const metadata: Record<string, string | number> = { type: isDirectory ? 'folder' : 'file' };
+          // Tells the UI to render ctime/mtime as a localized date/time and size as a human-readable
+          // byte count, instead of showing the raw ISO string / byte number as plain text.
+          const metadataKinds: Partial<Record<string, SouthConnectorExploreFieldKind>> = {};
 
           // Best-effort: a stat/readdir failure on one entry (permission denied, a broken symlink, ...)
           // shouldn't stop the rest of the level from being explorable.
           try {
             const stats = await fs.stat(entryPath);
             metadata.ctime = DateTime.fromMillis(stats.ctimeMs).toUTC().toISO()!;
+            metadataKinds.ctime = 'instant';
             if (!isDirectory) {
               metadata.size = stats.size;
+              metadataKinds.size = 'size';
               metadata.mtime = DateTime.fromMillis(stats.mtimeMs).toUTC().toISO()!;
+              metadataKinds.mtime = 'instant';
             }
           } catch {
             // leave ctime/size/mtime out for this entry
@@ -239,6 +246,7 @@ export default class SouthFolderScanner
             id: path.join(relative, entry.name),
             name: entry.name,
             metadata,
+            metadataKinds,
             hasChildren: isDirectory
           };
         })
