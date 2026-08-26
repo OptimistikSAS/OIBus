@@ -1,0 +1,84 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="engine.config-transfer.import.title"></h4>
+</div>
+<div class="modal-body">
+  @if (!result()) {
+    @if (error()) {
+      <div class="alert alert-danger">{{ error() }}</div>
+    }
+    <div class="alert alert-warning" translate="engine.config-transfer.import.warning"></div>
+
+    <div class="form-group">
+      <label class="form-label" for="import-file" translate="engine.config-transfer.import.file"></label>
+      <button
+        type="button"
+        class="btn btn-secondary w-100"
+        id="import-file-button"
+        (click)="importFileInput.click()"
+        (drop)="onDrop($event)"
+        (dragover)="onDragOver($event)"
+      >
+        <span>{{ file.name }}</span>
+      </button>
+    </div>
+
+    @if (fileError()) {
+      <div class="alert alert-danger" role="alert" translate="engine.config-transfer.import.file-too-large"></div>
+    }
+  } @else {
+    <div class="alert alert-success" translate="engine.config-transfer.import.success"></div>
+
+    <h6 translate="engine.config-transfer.import.applied-upgrades"></h6>
+    @if (result()!.appliedUpgrades.length > 0) {
+      <ul id="applied-upgrades-list">
+        @for (upgrade of result()!.appliedUpgrades; track upgrade.scope + upgrade.version + (upgrade.entityId || '')) {
+          <li>
+            {{ upgrade.scope }} &rarr; {{ upgrade.version }}
+            @if (upgrade.entityId) {
+              ({{ upgrade.entityId }})
+            }
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="text-muted" translate="engine.config-transfer.import.no-upgrades"></p>
+    }
+
+    <h6 translate="engine.config-transfer.import.warnings"></h6>
+    @if (result()!.warnings.length > 0) {
+      <ul id="warnings-list">
+        @for (warning of result()!.warnings; track warning) {
+          <li>{{ warning }}</li>
+        }
+      </ul>
+    } @else {
+      <p class="text-muted" translate="engine.config-transfer.import.no-warnings"></p>
+    }
+
+    <div class="alert alert-info" translate="engine.config-transfer.import.reload-hint"></div>
+  }
+</div>
+<input #importFileInput id="import-file" type="file" class="d-none" accept=".json" (change)="onInputChange($event)" />
+<div class="modal-footer">
+  @if (!result()) {
+    <div class="btn-group">
+      <button
+        [oib-save-button]="state"
+        id="import-button"
+        [forceDisabled]="!canImport"
+        translationKey="engine.config-transfer.import.button"
+        iconClass="fa-upload"
+        (click)="import()"
+      ></button>
+      <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+    </div>
+  } @else {
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="close()"
+      translate="engine.config-transfer.import.close-and-reload"
+      id="close-button"
+    ></button>
+  }
+</div>
