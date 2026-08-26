@@ -171,6 +171,21 @@ describe('TransformerRepository', () => {
     ]);
   });
 
+  it('should preserve a caller-supplied id when creating a transformer (config import)', () => {
+    const importedTransformer: CustomTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
+    importedTransformer.id = 'preserved-transformer-id';
+    importedTransformer.name = 'imported transformer';
+    repository.save(importedTransformer);
+
+    assert.strictEqual(importedTransformer.id, 'preserved-transformer-id');
+    const found = repository.findById('preserved-transformer-id');
+    assert.ok(found);
+    assert.strictEqual((found as CustomTransformer).name, 'imported transformer');
+
+    // Clean up so later count/pagination assertions in this suite are unaffected.
+    repository.delete('preserved-transformer-id', 'importUser');
+  });
+
   it('should update a transformer', () => {
     const existing = repository.findById(createdTransformerId);
     assert.ok(existing, 'Transformer should exist from previous create test');
