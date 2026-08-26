@@ -11,6 +11,8 @@ import {
   SouthInfluxDBSettings,
   SouthModbusItemSettings,
   SouthModbusSettings,
+  SouthMongoDBItemSettings,
+  SouthMongoDBSettings,
   SouthMQTTItemSettings,
   SouthMQTTSettings,
   SouthMSSQLItemSettings,
@@ -74,6 +76,7 @@ export const OIBUS_SOUTH_TYPES = [
   'ftp', // FTP file transfer protocol
   'influxdb', // InfluxDB time series database
   'modbus', // Modbus industrial protocol
+  'mongodb', // MongoDB document database
   'mqtt', // MQTT messaging protocol
   'mssql', // Microsoft SQL Server database
   'mysql', // MySQL database
@@ -515,6 +518,10 @@ export interface SouthConnectorInfluxDBDTO extends SouthConnectorTypedDTO<'influ
 export interface SouthConnectorModbusDTO extends SouthConnectorTypedDTO<'modbus', SouthModbusSettings, SouthModbusItemSettings> {
   items: Array<SouthConnectorModbusItemDTO>;
 }
+/** South connector configuration for MongoDB. */
+export interface SouthConnectorMongoDBDTO extends SouthConnectorTypedDTO<'mongodb', SouthMongoDBSettings, SouthMongoDBItemSettings> {
+  items: Array<SouthConnectorMongoDBItemDTO>;
+}
 /** South connector configuration for MQTT. */
 export interface SouthConnectorMQTTDTO extends SouthConnectorTypedDTO<'mqtt', SouthMQTTSettings, SouthMQTTItemSettings> {
   items: Array<SouthConnectorMQTTItemDTO>;
@@ -594,6 +601,7 @@ export type SouthConnectorDTO =
   | SouthConnectorFTPDTO
   | SouthConnectorInfluxDBDTO
   | SouthConnectorModbusDTO
+  | SouthConnectorMongoDBDTO
   | SouthConnectorMQTTDTO
   | SouthConnectorMSSQLDTO
   | SouthConnectorMySQLDTO
@@ -804,6 +812,14 @@ export interface SouthConnectorModbusCommandDTO extends SouthConnectorCommandTyp
 > {
   items: Array<SouthConnectorModbusItemCommandDTO>;
 }
+/** South connector command for MongoDB. */
+export interface SouthConnectorMongoDBCommandDTO extends SouthConnectorCommandTypedDTO<
+  'mongodb',
+  SouthMongoDBSettings,
+  SouthMongoDBItemSettings
+> {
+  items: Array<SouthConnectorMongoDBItemCommandDTO>;
+}
 /** South connector command for MQTT. */
 export interface SouthConnectorMQTTCommandDTO extends SouthConnectorCommandTypedDTO<'mqtt', SouthMQTTSettings, SouthMQTTItemSettings> {
   items: Array<SouthConnectorMQTTItemCommandDTO>;
@@ -895,6 +911,7 @@ export type SouthConnectorCommandDTO =
   | SouthConnectorFTPCommandDTO
   | SouthConnectorInfluxDBCommandDTO
   | SouthConnectorModbusCommandDTO
+  | SouthConnectorMongoDBCommandDTO
   | SouthConnectorMQTTCommandDTO
   | SouthConnectorMSSQLCommandDTO
   | SouthConnectorMySQLCommandDTO
@@ -922,6 +939,8 @@ export interface SouthConnectorFTPItemDTO extends SouthConnectorItemTypedDTO<Sou
 export interface SouthConnectorInfluxDBItemDTO extends SouthConnectorItemTypedDTO<SouthInfluxDBItemSettings> {}
 /** South connector item DTO for Modbus. */
 export interface SouthConnectorModbusItemDTO extends SouthConnectorItemTypedDTO<SouthModbusItemSettings> {}
+/** South connector item DTO for MongoDB. */
+export interface SouthConnectorMongoDBItemDTO extends SouthConnectorItemTypedDTO<SouthMongoDBItemSettings> {}
 /** South connector item DTO for MQTT. */
 export interface SouthConnectorMQTTItemDTO extends SouthConnectorItemTypedDTO<SouthMQTTItemSettings> {}
 /** South connector item DTO for Microsoft SQL Server. */
@@ -963,6 +982,7 @@ export type SouthConnectorItemDTO =
   | SouthConnectorFTPItemDTO
   | SouthConnectorInfluxDBItemDTO
   | SouthConnectorModbusItemDTO
+  | SouthConnectorMongoDBItemDTO
   | SouthConnectorMQTTItemDTO
   | SouthConnectorMSSQLItemDTO
   | SouthConnectorMySQLItemDTO
@@ -990,6 +1010,8 @@ export interface SouthConnectorFTPItemCommandDTO extends SouthConnectorItemComma
 export interface SouthConnectorInfluxDBItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthInfluxDBItemSettings> {}
 /** South connector item command for Modbus. */
 export interface SouthConnectorModbusItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthModbusItemSettings> {}
+/** South connector item command for MongoDB. */
+export interface SouthConnectorMongoDBItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthMongoDBItemSettings> {}
 /** South connector item command for MQTT. */
 export interface SouthConnectorMQTTItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthMQTTItemSettings> {}
 /** South connector item command for Microsoft SQL Server. */
@@ -1031,6 +1053,7 @@ export type SouthConnectorItemCommandDTO =
   | SouthConnectorFTPItemCommandDTO
   | SouthConnectorInfluxDBItemCommandDTO
   | SouthConnectorModbusItemCommandDTO
+  | SouthConnectorMongoDBItemCommandDTO
   | SouthConnectorMQTTItemCommandDTO
   | SouthConnectorMSSQLItemCommandDTO
   | SouthConnectorMySQLItemCommandDTO

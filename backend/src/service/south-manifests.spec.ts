@@ -8,7 +8,7 @@ describe('southManifestList', () => {
   });
 
   it('contains one manifest per registered south connector', () => {
-    assert.equal(southManifestList.length, 20);
+    assert.equal(southManifestList.length, 21);
   });
 
   it('contains only manifests with a non-empty unique id', () => {

@@ -15,6 +15,8 @@ import {
   SouthItemSettings,
   SouthModbusItemSettings,
   SouthModbusSettings,
+  SouthMongoDBItemSettings,
+  SouthMongoDBSettings,
   SouthMQTTItemSettings,
   SouthMQTTSettings,
   SouthMSSQLItemSettings,
@@ -50,6 +52,7 @@ import {
 import SouthADS from '../south/south-ads/south-ads';
 import SouthFolderScanner from '../south/south-folder-scanner/south-folder-scanner';
 import SouthModbus from '../south/south-modbus/south-modbus';
+import SouthMongoDB from '../south/south-mongodb/south-mongodb';
 import SouthS7 from '../south/south-s7/south-s7';
 import SouthMQTT from '../south/south-mqtt/south-mqtt';
 import SouthMSSQL from '../south/south-mssql/south-mssql';
@@ -104,6 +107,13 @@ export const buildSouth = (
     case 'modbus':
       return new SouthModbus(
         settings as SouthConnectorEntity<SouthModbusSettings, SouthModbusItemSettings>,
+        addContent,
+        southCacheRepository,
+        southCacheFolder
+      );
+    case 'mongodb':
+      return new SouthMongoDB(
+        settings as SouthConnectorEntity<SouthMongoDBSettings, SouthMongoDBItemSettings>,
         addContent,
         southCacheRepository,
         southCacheFolder
