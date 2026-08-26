@@ -31,6 +31,18 @@ import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.mode
 import { Language } from '../../../shared/model/types';
 
 /**
+ * The shape `NorthConnectorEntity['caching']` and `HistoryQueryEntity['caching']` both share —
+ * used by `buildCachingCommand` so the north-connector and history-query builders don't each hand-map
+ * the same four fields out of a `caching` entity.
+ */
+interface CachingEntity {
+  trigger: { scanMode: { id: string }; numberOfElements: number; numberOfFiles: number };
+  throttling: { runMinDelay: number; maxSize: number; maxNumberOfElements: number };
+  error: { retryInterval: number; retryCount: number; retentionDuration: number };
+  archive: { enabled: boolean; retentionDuration: number };
+}
+
+/**
  * Builds the full-configuration and history-queries DTOs used both by the OIAnalytics sync
  * message service and by the config export/import feature. This service has no OIAnalytics
  * connectivity of its own — it only reads from the local repositories.
@@ -94,28 +106,7 @@ export default class ConfigTransferBuilderService {
             },
             northType: historyQuery.northType,
             northSettings: this.encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings),
-            caching: {
-              trigger: {
-                scanModeId: historyQuery.caching.trigger.scanMode.id,
-                scanModeName: null,
-                numberOfElements: historyQuery.caching.trigger.numberOfElements,
-                numberOfFiles: historyQuery.caching.trigger.numberOfFiles
-              },
-              throttling: {
-                runMinDelay: historyQuery.caching.throttling.runMinDelay,
-                maxSize: historyQuery.caching.throttling.maxSize,
-                maxNumberOfElements: historyQuery.caching.throttling.maxNumberOfElements
-              },
-              error: {
-                retryInterval: historyQuery.caching.error.retryInterval,
-                retryCount: historyQuery.caching.error.retryCount,
-                retentionDuration: historyQuery.caching.error.retentionDuration
-              },
-              archive: {
-                enabled: historyQuery.caching.archive.enabled,
-                retentionDuration: historyQuery.caching.archive.retentionDuration
-              }
-            },
+            caching: this.buildCachingCommand(historyQuery.caching),
             items: historyQuery.items.map(item => ({
               id: item.id,
               oIBusCreatedBy: item.createdBy,
@@ -311,6 +302,26 @@ export default class ConfigTransferBuilderService {
     }));
   }
 
+  /** Shared by `buildHistoryQueriesConfiguration` and `createNorthConnectorsCommand` — see `CachingEntity`. */
+  private buildCachingCommand(caching: CachingEntity): {
+    trigger: { scanModeId: string; scanModeName: null; numberOfElements: number; numberOfFiles: number };
+    throttling: { runMinDelay: number; maxSize: number; maxNumberOfElements: number };
+    error: { retryInterval: number; retryCount: number; retentionDuration: number };
+    archive: { enabled: boolean; retentionDuration: number };
+  } {
+    return {
+      trigger: {
+        scanModeId: caching.trigger.scanMode.id,
+        scanModeName: null,
+        numberOfElements: caching.trigger.numberOfElements,
+        numberOfFiles: caching.trigger.numberOfFiles
+      },
+      throttling: { ...caching.throttling },
+      error: { ...caching.error },
+      archive: { ...caching.archive }
+    };
+  }
+
   private createSouthConnectorsCommand(): Array<OIAnalyticsSouthCommandDTO> {
     const souths = this.southRepository.findAllSouth();
     return souths.map(southLight => {
@@ -374,9 +385,10 @@ export default class ConfigTransferBuilderService {
   }
 
   private createNorthConnectorsCommand(): Array<OIAnalyticsNorthCommandDTO> {
-    const norths = this.northRepository.findAllNorth();
-    return norths.map(northLight => {
-      const north = this.northRepository.findNorthById(northLight.id)!;
+    // `findAllNorthFull` fetches every column (including caching/transformers) in the same query
+    // instead of a light list re-hydrated one `findNorthById` round-trip per connector.
+    const norths = this.northRepository.findAllNorthFull();
+    return norths.map(north => {
       const manifest = northManifestList.find(manifest => manifest.id === north.type)!;
       const result = {
         oIBusInternalId: north.id,
@@ -391,28 +403,7 @@ export default class ConfigTransferBuilderService {
           description: north.description,
           enabled: north.enabled,
           settings: this.encryptionService.filterSecrets(north.settings, manifest.settings),
-          caching: {
-            trigger: {
-              scanModeId: north.caching.trigger.scanMode.id,
-              scanModeName: null,
-              numberOfElements: north.caching.trigger.numberOfElements,
-              numberOfFiles: north.caching.trigger.numberOfFiles
-            },
-            throttling: {
-              runMinDelay: north.caching.throttling.runMinDelay,
-              maxSize: north.caching.throttling.maxSize,
-              maxNumberOfElements: north.caching.throttling.maxNumberOfElements
-            },
-            error: {
-              retryInterval: north.caching.error.retryInterval,
-              retryCount: north.caching.error.retryCount,
-              retentionDuration: north.caching.error.retentionDuration
-            },
-            archive: {
-              enabled: north.caching.archive.enabled,
-              retentionDuration: north.caching.archive.retentionDuration
-            }
-          },
+          caching: this.buildCachingCommand(north.caching),
           transformers: north.transformers.map(transformerWithOptions => ({
             id: transformerWithOptions.id,
             transformerId: transformerWithOptions.transformer.id,
