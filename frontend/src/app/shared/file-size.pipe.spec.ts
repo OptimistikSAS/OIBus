@@ -11,4 +11,11 @@ describe('FileSizePipe', () => {
     expect(pipe.transform(1025)).toBe('1.0 kB');
     expect(pipe.transform(10)).toBe('10 B');
   });
+
+  test('should also accept a stringified size (e.g. from a loosely-typed source like explore metadata)', () => {
+    TestBed.configureTestingModule({ providers: [provideI18nTesting()] });
+    const pipe = TestBed.runInInjectionContext(() => new FileSizePipe());
+    expect(pipe.transform('10')).toBe('10 B');
+    expect(pipe.transform('1025')).toBe('1.0 kB');
+  });
 });

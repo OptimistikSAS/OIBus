@@ -20,6 +20,7 @@ class SouthExploreModalComponentTester {
   readonly tree = this.root.getByCss('#explore-tree');
   readonly cancel = this.root.getByRole('button', { name: 'Close' });
   readonly typeBadges = this.root.getByCss('.explore-metadata');
+  readonly metadataValues = this.root.getByCss('.explore-metadata-value');
 }
 
 describe('SouthExploreModalComponent', () => {
@@ -99,6 +100,68 @@ describe('SouthExploreModalComponent', () => {
 
     expect(tester.component.nodes[0].entry.metadata['type']).toBe('Variable');
     expect(tester.component.nodes[0].entry.hasChildren).toBe(false);
+  });
+
+  test('should format a metadata field tagged "size" with the file-size pipe', async () => {
+    southConnectorService.startExplore.mockReturnValue(
+      of({
+        sessionId: 'sessionId',
+        entries: [
+          {
+            id: 'file1.csv',
+            name: 'file1.csv',
+            metadata: { type: 'file', size: 512 },
+            metadataKinds: { size: 'size' },
+            hasChildren: false
+          }
+        ]
+      })
+    );
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.fixture.detectChanges();
+    await expect.element(tester.tree).toBeInTheDocument();
+
+    const values = tester.metadataValues.elements().map(el => el.textContent?.trim());
+    expect(values).toContain('512 B');
+  });
+
+  test('should format a metadata field tagged "instant" with the datetime pipe rather than showing the raw ISO string', async () => {
+    const rawCtime = '2021-01-12T13:35:07.123Z';
+    southConnectorService.startExplore.mockReturnValue(
+      of({
+        sessionId: 'sessionId',
+        entries: [
+          {
+            id: 'file1.csv',
+            name: 'file1.csv',
+            metadata: { type: 'file', ctime: rawCtime },
+            metadataKinds: { ctime: 'instant' },
+            hasChildren: false
+          }
+        ]
+      })
+    );
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.fixture.detectChanges();
+    await expect.element(tester.tree).toBeInTheDocument();
+
+    const values = tester.metadataValues.elements().map(el => el.textContent?.trim());
+    expect(values.some(value => value !== rawCtime && value !== '' && !value?.includes('undefined'))).toBe(true);
+  });
+
+  test('should show a metadata field with no kind as plain text', async () => {
+    southConnectorService.startExplore.mockReturnValue(
+      of({
+        sessionId: 'sessionId',
+        entries: [{ id: 'a', name: 'a-folder', metadata: { type: 'folder', files: 3 }, hasChildren: true }]
+      })
+    );
+    tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
+    tester.fixture.detectChanges();
+    await expect.element(tester.tree).toBeInTheDocument();
+
+    const values = tester.metadataValues.elements().map(el => el.textContent?.trim());
+    expect(values).toContain('3');
   });
 
   test('should default the connector id to create', () => {

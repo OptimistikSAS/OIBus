@@ -38,23 +38,13 @@
           <i class="fa {{ node.expanded ? 'fa-caret-down' : 'fa-caret-right' }} explore-caret-icon me-1"></i>
         }
         <span class="explore-name me-1">{{ node.entry.name }}</span>
-        @for (metadataEntry of node.entry.metadata | keyvalue; track metadataEntry.key) {
-          <span class="explore-metadata me-1">
-            <span class="explore-metadata-key">{{ metadataEntry.key }}</span>
-            <span class="explore-metadata-value">{{ metadataEntry.value }}</span>
-          </span>
-        }
+        <ng-container *ngTemplateOutlet="metadataList; context: { $implicit: node.entry }" />
       </button>
     } @else {
       <div class="d-flex align-items-center">
         <span class="explore-leaf-spacer me-1"></span>
         <span class="explore-name me-1">{{ node.entry.name }}</span>
-        @for (metadataEntry of node.entry.metadata | keyvalue; track metadataEntry.key) {
-          <span class="explore-metadata me-1">
-            <span class="explore-metadata-key">{{ metadataEntry.key }}</span>
-            <span class="explore-metadata-value">{{ metadataEntry.value }}</span>
-          </span>
-        }
+        <ng-container *ngTemplateOutlet="metadataList; context: { $implicit: node.entry }" />
       </div>
     }
   </div>
@@ -65,5 +55,26 @@
     @for (child of node.children; track child.entry.id) {
       <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: child }" />
     }
+  }
+</ng-template>
+
+<ng-template #metadataList let-entry>
+  @for (metadataEntry of entry.metadata | keyvalue; track metadataEntry.key) {
+    <span class="explore-metadata me-1">
+      <span class="explore-metadata-key">{{ metadataEntry.key }}</span>
+      <span class="explore-metadata-value">
+        @switch (entry.metadataKinds?.[metadataEntry.key]) {
+          @case ('instant') {
+            {{ metadataEntry.value | datetime: 'mediumWithMillis' }}
+          }
+          @case ('size') {
+            {{ metadataEntry.value | fileSize }}
+          }
+          @default {
+            {{ metadataEntry.value }}
+          }
+        }
+      </span>
+    </span>
   }
 </ng-template>
