@@ -6,12 +6,26 @@ import SouthConnector from '../south-connector';
 import { convertDateTimeToInstant, formatInstant, logQuery, workUnitLogCtx } from '../../service/utils';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { SouthHistoryQuery } from '../south-interface';
+import { SouthExplore, SouthHistoryQuery } from '../south-interface';
 import { SouthItemSettings, SouthSQLiteItemSettings, SouthSQLiteSettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent, OIBusRecord } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import {
+  SouthConnectorExploreEntry,
+  SouthConnectorItemQueryResult,
+  SouthConnectorItemTestingSettings
+} from '../../../shared/model/south-connector.model';
+
+/**
+ * Wraps a SQL identifier (table/column name) in double quotes for safe interpolation into PRAGMA and
+ * COUNT statements, neither of which can be parameterized with a bind variable in SQLite — the name
+ * itself has to be part of the SQL text. Embedded double quotes are doubled per the standard SQL
+ * identifier-escaping rule, so a maliciously/oddly named table can't break out of the quoting.
+ */
+function quoteIdentifier(identifier: string): string {
+  return `"${identifier.replace(/"/g, '""')}"`;
+}
 
 /**
  * Class SouthSQLite - Retrieve data from SQLite databases and send the resulting rows as record-list
@@ -19,7 +33,10 @@ import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from
  * the responsibility of the north-side transformer (e.g. record-list-to-csv); the only datetime
  * handling done here is tracking the incremental cursor via `item.settings.trackingInstant`.
  */
-export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, SouthSQLiteItemSettings> implements SouthHistoryQuery {
+export default class SouthSQLite
+  extends SouthConnector<SouthSQLiteSettings, SouthSQLiteItemSettings>
+  implements SouthHistoryQuery, SouthExplore
+{
   constructor(
     connector: SouthConnectorEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>,
     engineAddContentCallback: (
@@ -106,6 +123,85 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
       connectionDuration: 0,
       queryDuration
     };
+  }
+
+  /**
+   * Browse the database for the interactive explore feature: the root level lists every table with its
+   * column and row counts; expanding a table lists its columns with their declared type, nullability,
+   * primary-key membership and default value (whatever `PRAGMA table_info` reports — SQLite is
+   * dynamically typed, so `type` can be blank for a column that was never given one).
+   * @param parentId - a table name to list columns for, or null to list every table in the database
+   */
+  // better-sqlite3 is fully synchronous, so this never actually awaits anything — but it still needs to
+  // be declared `async`, not just typed `Promise<...>`, so that a thrown error (e.g. a missing/locked
+  // database file) is caught and turned into a rejected promise like every other SouthExplore
+  // implementation, rather than throwing synchronously out of the call and breaking callers' `await`.
+  // eslint-disable-next-line require-await
+  async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
+    const dbPath = path.resolve(this.connector.settings.databasePath);
+    const database = db(dbPath, { readonly: true, fileMustExist: true });
+    try {
+      if (parentId === null) {
+        const tables = database
+          .prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name`)
+          .all() as Array<{ name: string }>;
+
+        return tables.map(table => {
+          const columnCount = (database.prepare(`PRAGMA table_info(${quoteIdentifier(table.name)})`).all() as Array<unknown>).length;
+          // A table can exist without being queryable (e.g. a broken virtual table) — a row count that
+          // can't be read shouldn't stop the rest of the tree from being explorable.
+          let rowCount: number | null = null;
+          try {
+            const countResult = database.prepare(`SELECT COUNT(*) AS count FROM ${quoteIdentifier(table.name)}`).all() as Array<{
+              count: number;
+            }>;
+            rowCount = countResult[0]?.count ?? null;
+          } catch {
+            // leave rowCount unset
+          }
+
+          const metadata: Record<string, string | number> = { columns: columnCount };
+          if (rowCount !== null) {
+            metadata.rows = rowCount;
+          }
+          return {
+            id: table.name,
+            name: table.name,
+            metadata,
+            hasChildren: columnCount > 0
+          };
+        });
+      }
+
+      const columns = database.prepare(`PRAGMA table_info(${quoteIdentifier(parentId)})`).all() as Array<{
+        name: string;
+        type: string;
+        notnull: number;
+        dflt_value: string | null;
+        pk: number;
+      }>;
+
+      return columns.map(column => {
+        const metadata: Record<string, string | number> = { nullable: column.notnull === 0 ? 'yes' : 'no' };
+        if (column.type) {
+          metadata.type = column.type;
+        }
+        if (column.pk > 0) {
+          metadata.primaryKey = 'yes';
+        }
+        if (column.dflt_value !== null) {
+          metadata.default = column.dflt_value;
+        }
+        return {
+          id: `${parentId}.${column.name}`,
+          name: column.name,
+          metadata,
+          hasChildren: false
+        };
+      });
+    } finally {
+      database.close();
+    }
   }
 
   /**
