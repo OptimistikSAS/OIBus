@@ -5,6 +5,8 @@ import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import { Observable } from 'rxjs';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { DatetimePipe } from '../datetime.pipe';
+import { FileSizePipe } from '../file-size.pipe';
 import {
   OIBusSouthType,
   SouthConnectorExploreEntry,
@@ -43,7 +45,7 @@ export interface SouthExploreApi {
   templateUrl: './south-explore-modal.component.html',
   styleUrl: './south-explore-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [TranslateDirective, NgTemplateOutlet, KeyValuePipe]
+  imports: [TranslateDirective, NgTemplateOutlet, KeyValuePipe, DatetimePipe, FileSizePipe]
 })
 export class SouthExploreModalComponent implements OnDestroy {
   private modal = inject(NgbActiveModal);
