@@ -1,41 +1,12 @@
-import { HttpClient, HttpErrorResponse, HttpParams, HttpStatusCode } from '@angular/common/http';
-import { BehaviorSubject, from, map, Observable, shareReplay, switchMap, throwError } from 'rxjs';
+import { HttpClient, HttpParams, HttpStatusCode } from '@angular/common/http';
+import { BehaviorSubject, map, Observable, shareReplay, switchMap } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { Service, inject } from '@angular/core';
 import { CertificateCommandDTO, CertificateDTO, CertificateExportFormat } from '../../../../backend/shared/model/certificate.model';
 import { DownloadService } from './download.service';
-import { getMessageFromHttpErrorResponse, ignoreErrorIfStatusIs } from '../shared/error-interceptor.service';
+import { ignoreErrorIfStatusIs, rethrowServerMessage } from '../shared/error-interceptor.service';
 
 const ENDPOINT = '/api/certificates';
-
-const messageFromBody = (body: unknown): string | undefined => {
-  if (!body || typeof body !== 'object') return undefined;
-  const { message, error } = body as { message?: unknown; error?: unknown };
-  // tsoa ValidateError puts a field map (not a string) in `message`
-  if (typeof message === 'string') return message;
-  if (typeof error === 'string') return error;
-  return undefined;
-};
-
-/** Rethrows the message the backend put in the error body, falling back to the generic HTTP description. */
-const rethrowServerMessage = (errorResponse: HttpErrorResponse): Observable<never> => {
-  const fallback = getMessageFromHttpErrorResponse(errorResponse);
-  if (errorResponse.error instanceof Blob) {
-    // blob responseType: the JSON error body arrives unparsed
-    return from(errorResponse.error.text()).pipe(
-      switchMap(text => {
-        let parsed: unknown;
-        try {
-          parsed = JSON.parse(text);
-        } catch {
-          parsed = undefined;
-        }
-        return throwError(() => messageFromBody(parsed) ?? fallback);
-      })
-    );
-  }
-  return throwError(() => messageFromBody(errorResponse.error) ?? fallback);
-};
 
 /**
  * Service used to interact with the backend for CRUD operations on Certificates

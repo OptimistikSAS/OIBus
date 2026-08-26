@@ -38,6 +38,11 @@ export class ConfigTransferController extends Controller {
    * OIAnalytics registration are never touched. Older exports are brought forward with the
    * settings-upgrade registry before being applied; nothing is written if the file is malformed, too
    * new for this OIBus version, or fails validation after any upgrades.
+   *
+   * On success, OIBus restarts itself so the running engine picks up the newly written configuration
+   * — the wipe+recreate only touches the database, and the in-memory south/north connectors and
+   * history queries the engine is already running would otherwise keep operating against rows that
+   * no longer exist.
    * @summary Import configuration
    * @param file The configuration export file (JSON) to import
    */
@@ -59,7 +64,9 @@ export class ConfigTransferController extends Controller {
       } catch {
         throw new OIBusValidationError('Uploaded file is not valid JSON');
       }
-      return await configImportService.importConfiguration(parsed, request.user.id);
+      const response = await configImportService.importConfiguration(parsed, request.user.id);
+      request.services.oIBusService.restart();
+      return response;
     } finally {
       try {
         await fs.unlink(file.path);
