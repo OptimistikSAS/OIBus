@@ -8,7 +8,7 @@ import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component
 import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
 import { NotificationService } from '../shared/notification.service';
 import { ConfirmationService } from '../shared/confirmation.service';
-import { BehaviorSubject, switchMap } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, switchMap } from 'rxjs';
 import { ObservableState } from '../shared/save-button/save-button.component';
 import { BoxComponent, BoxTitleDirective } from '../shared/box/box.component';
 import { EngineMetricsComponent } from './engine-metrics/engine-metrics.component';
@@ -23,6 +23,8 @@ import { EditEngineWebServerModalComponent } from './edit-engine-web-server-moda
 import { EditEngineProxyModalComponent } from './edit-engine-proxy-modal/edit-engine-proxy-modal.component';
 import { EditEngineLoggerModalComponent } from './edit-engine-logger-modal/edit-engine-logger-modal.component';
 import { AuthTokenDuration } from '../../../../backend/shared/model/engine.model';
+import { ConfigTransferService } from '../services/config-transfer.service';
+import { ImportConfigModalComponent } from './config-transfer/import-config-modal/import-config-modal.component';
 
 @Component({
   selector: 'oib-engine-detail',
@@ -50,6 +52,7 @@ export class EngineDetailComponent {
   private notificationService = inject(NotificationService);
   private confirmationService = inject(ConfirmationService);
   private modalService = inject(ModalService);
+  private configTransferService = inject(ConfigTransferService);
   private destroyRef = inject(DestroyRef);
 
   private readonly refresh$ = new BehaviorSubject<void>(undefined);
@@ -57,6 +60,7 @@ export class EngineDetailComponent {
   readonly engineSettings = toSignal(this.refresh$.pipe(switchMap(() => this.engineService.getEngineSettings())));
   metrics = signal<EngineMetrics | null>(null);
   restarting = new ObservableState();
+  exporting = new ObservableState();
 
   constructor() {
     const token = this.windowService.getStorageItem('oibus-token');
@@ -110,5 +114,31 @@ export class EngineDetailComponent {
       .subscribe(() => {
         this.notificationService.success('engine.restart-complete');
       });
+  }
+
+  exportConfig() {
+    this.configTransferService
+      .export()
+      .pipe(this.exporting.pendingUntilFinalization())
+      .subscribe({
+        error: (message: string) => this.notificationService.errorMessage(message)
+      });
+  }
+
+  openImportConfigModal() {
+    const modalRef = this.modalService.open(ImportConfigModalComponent, {
+      size: 'lg',
+      beforeDismiss: () => {
+        const component: ImportConfigModalComponent = modalRef.componentInstance;
+        const result = component.canDismiss();
+        return typeof result === 'boolean' ? result : firstValueFrom(result);
+      }
+    });
+    modalRef.result.subscribe(() => {
+      // the import wipes and recreates most of the local configuration; a full reload is the
+      // safest way to refresh every affected part of the app (scan modes, certificates, ip
+      // filters, transformers, connectors, ...) rather than granularly refreshing each of them
+      this.windowService.reload();
+    });
   }
 }
