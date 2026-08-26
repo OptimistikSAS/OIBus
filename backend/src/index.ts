@@ -24,6 +24,7 @@ import OianalyticsRegistrationService from './service/oia/oianalytics-registrati
 import OIAnalyticsMessageService from './service/oia/oianalytics-message.service';
 import ConfigTransferBuilderService from './service/config-transfer/config-transfer-builder.service';
 import ConfigTransferService from './service/config-transfer/config-transfer.service';
+import ConfigImportService from './service/config-transfer/config-import.service';
 import JoiValidator from './web-server/controllers/validators/joi.validator';
 import ScanModeService from './service/scan-mode.service';
 import IPFilterService from './service/ip-filter.service';
@@ -143,6 +144,19 @@ export async function bootstrap(): Promise<void> {
     configTransferBuilderService,
     repositoryService.engineRepository,
     oIAnalyticsRegistrationService
+  );
+
+  const configImportService = new ConfigImportService(
+    new JoiValidator(),
+    repositoryService.oibusConfigDatabase,
+    repositoryService.scanModeRepository,
+    repositoryService.ipFilterRepository,
+    repositoryService.certificateRepository,
+    repositoryService.transformerRepository,
+    repositoryService.southConnectorRepository,
+    repositoryService.northConnectorRepository,
+    repositoryService.historyQueryRepository,
+    repositoryService.userRepository
   );
 
   const dataStreamEngine = new DataStreamEngine(
@@ -299,6 +313,7 @@ export async function bootstrap(): Promise<void> {
     transformerService,
     historyQueryService,
     configTransferService,
+    configImportService,
     ignoreIpFilters,
     loggerService.createChildLogger('internal', 'web-server')
   );
