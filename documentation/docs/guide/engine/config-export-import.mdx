@@ -1,0 +1,103 @@
+---
+sidebar_position: 6
+---
+
+# Export / Import Configuration
+
+OIBus can export its entire configuration as a single, portable JSON file, and later import that
+file — on the same instance or a different one — to recreate the configuration from scratch. This
+is useful for backups, disaster recovery, or cloning a configuration onto a new instance.
+
+Both actions are available from **Engine > Settings**, via the **Export configuration** and
+**Import configuration** buttons.
+
+## What gets exported
+
+The export file (`oibus-config-export.json`) is a versioned envelope containing:
+
+- Scan modes
+- IP filters
+- Certificates
+- Transformers
+- South connectors (including items and groups)
+- North connectors
+- History queries
+- Users
+- The OIAnalytics registration settings (for informational purposes only — see
+  [Registration](#registration-is-not-imported) below)
+
+The engine's own settings (name, port, proxy server, authentication duration, etc.) are **not**
+included in the export and are never touched by an import.
+
+### Secrets are always stripped
+
+No secret is ever written to the export file — not in plaintext, not encrypted. This applies to
+every secret-shaped field across the configuration: connector credentials (passwords, API keys,
+tokens), proxy passwords, the Loki logging password, certificate private keys, and user passwords.
+An exported file can therefore be shared or stored without exposing any credential, but it also
+means those fields must be re-entered manually after an import — see
+[Manual steps after import](#manual-steps-after-import).
+
+## Import is a full replace, not a merge
+
+Importing a configuration file **wipes every in-scope section of the target instance's local
+configuration and recreates it from the file**, preserving each entity's original internal ID.
+This is destructive and cannot be undone: every south connector, north connector, history query,
+scan mode, IP filter, transformer, certificate and user currently on the instance is deleted before
+the imported ones are created. The UI requires an explicit confirmation, restating this, before an
+import is submitted.
+
+The engine's own settings and the OIAnalytics registration are never wiped or overwritten by an
+import — see [Registration](#registration-is-not-imported).
+
+If the uploaded file is malformed, or is rejected for any of the reasons below, **nothing is
+written**: the import is all-or-nothing.
+
+## Supported versions
+
+Every export file is stamped with a `formatVersion` (an integer describing the shape of the file
+itself) and the `oibusVersion` of the instance that produced it.
+
+- **Format version**: an import is rejected outright if the file's `formatVersion` is newer than
+  the highest format version the importing OIBus build knows how to read. There is no lower bound —
+  an older format version is always accepted for processing.
+- **OIBus version**: there is no minimum supported `oibusVersion`. Before validating the file, OIBus
+  looks up every settings-upgrade step registered for a version newer than the file's `oibusVersion`
+  and applies the matching ones (per south/north connector type, history query side, or transformer)
+  to bring older settings shapes forward to what the current connector manifests expect. The
+  response lists every upgrade that was applied.
+
+After any such upgrades, every settings blob in the file is validated against the current connector
+manifests. If any entity fails validation, the whole import is rejected with a per-entity list of
+errors and, again, nothing is written.
+
+## Manual steps after import
+
+Because secrets are never exported, an imported configuration is not immediately usable as-is:
+
+- **South and north connectors are imported with `enabled: false`**, regardless of their exported
+  value. Their settings otherwise import as exported, but with every secret-shaped field empty, so
+  leaving them enabled would either fail to connect with empty credentials or — for a write-capable
+  protocol — connect with no meaningful settings. Credentials must be re-entered and each connector
+  re-enabled manually before it will run again.
+- **Certificates are imported without their private key.** The certificate entry itself (name,
+  public key, certificate, certificate chain, expiry) is recreated under its original ID so anything
+  referencing it keeps resolving, but the private key must be re-imported manually before the
+  certificate can be used for TLS.
+- **Users are recreated with a random password**, since passwords are never exported. Every
+  imported user must have their password reset before they can sign in again.
+- **Standard transformers are matched by function name**, not recreated — they are seeded once when
+  OIBus starts and matched to the imported configuration by their `functionName`. If the target
+  instance doesn't have a standard transformer with a matching function name (for example, an older
+  or newer OIBus build), links to it are skipped and reported as a warning. Custom transformers are
+  always recreated under their original ID.
+
+The import response (and the corresponding UI panel) lists every upgrade that was applied and every
+warning raised during the import — including the ones above — so this stays visible after the
+import completes rather than in a toast that disappears.
+
+### Registration is not imported
+
+The OIAnalytics registration settings are included in the export for informational/reference
+purposes only. Importing a file never writes registration state — registering the target instance
+with OIAnalytics (or re-registering it) must be done manually, the same way as on a fresh instance.
