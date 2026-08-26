@@ -1215,10 +1215,24 @@ export interface SouthConnectorExploreEntry {
   metadata: Record<string, string | number>;
 
   /**
+   * Optional per-field rendering hint for {@link metadata} — a `metadata` key listed here should be
+   * displayed with the matching format (e.g. a localized date/time, a human-readable byte size) instead
+   * of as plain text. A key with no entry here (the common case — units, counts, types, ...) just
+   * renders as-is.
+   */
+  metadataKinds?: Partial<Record<string, SouthConnectorExploreFieldKind>>;
+
+  /**
    * Whether the entry can be expanded to reveal children in the explore tree.
    */
   hasChildren: boolean;
 }
+
+/**
+ * How a {@link SouthConnectorExploreEntry.metadata} field should be displayed — see
+ * {@link SouthConnectorExploreEntry.metadataKinds}.
+ */
+export type SouthConnectorExploreFieldKind = 'instant' | 'size';
 
 /**
  * Result of starting an explore session.
