@@ -565,6 +565,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     items: [
       {
         id: 'southItemId1',
+        createdByWorkflowId: null,
+        disabledReason: null,
         name: 'item1',
         enabled: true,
         settings: {} as SouthItemSettings,
@@ -589,6 +591,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
       },
       {
         id: 'southItemId2',
+        createdByWorkflowId: null,
+        disabledReason: null,
         name: 'item2',
         enabled: true,
         settings: {} as SouthItemSettings,
@@ -639,6 +643,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     items: [
       {
         id: 'southItemId3',
+        createdByWorkflowId: null,
+        disabledReason: null,
         name: 'item3',
         enabled: true,
         settings: {} as SouthItemSettings,
@@ -663,6 +669,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
       },
       {
         id: 'southItemId4',
+        createdByWorkflowId: null,
+        disabledReason: null,
         name: 'item4',
         enabled: true,
         settings: {} as SouthItemSettings,
@@ -715,6 +723,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     items: [
       {
         id: 'southItemId5',
+        createdByWorkflowId: null,
+        disabledReason: null,
         name: 'opcua ha',
         enabled: true,
         settings: {
@@ -741,6 +751,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
       },
       {
         id: 'southItemId6',
+        createdByWorkflowId: null,
+        disabledReason: null,
         name: 'opcua sub',
         enabled: true,
         settings: {
@@ -779,6 +791,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
       },
       {
         id: 'southItemId7',
+        createdByWorkflowId: null,
+        disabledReason: null,
         name: 'opcua da',
         enabled: true,
         settings: {
@@ -805,6 +819,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
       },
       {
         id: 'southItemId8',
+        createdByWorkflowId: null,
+        disabledReason: null,
         name: 'opcua ha 2',
         enabled: true,
         settings: {
