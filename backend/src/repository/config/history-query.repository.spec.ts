@@ -67,6 +67,11 @@ describe('HistoryQueryRepository', () => {
     );
     newHistoryQuery.id = '';
     newHistoryQuery.name = 'new history query';
+    // The cloned fixture's items/transformers carry real ids belonging to the *other*, still-existing
+    // history query it was cloned from — a real "new" object (as the UI always sends) never reuses ids
+    // like that, so start this one empty rather than accidentally colliding with them.
+    newHistoryQuery.items = [];
+    newHistoryQuery.northTransformers = [];
     repository.saveHistory(newHistoryQuery);
 
     assert.ok(newHistoryQuery.id);
@@ -99,7 +104,7 @@ describe('HistoryQueryRepository', () => {
     newHistoryWithoutTransformer.id = '';
     newHistoryWithoutTransformer.name = 'new history query without transformer';
     newHistoryWithoutTransformer.northTransformers = [];
-    newHistoryQuery.items = [];
+    newHistoryWithoutTransformer.items = [];
     repository.saveHistory(newHistoryWithoutTransformer);
 
     assert.ok(newHistoryWithoutTransformer.id);
@@ -139,6 +144,44 @@ describe('HistoryQueryRepository', () => {
     );
     assert.strictEqual(transformerDeleteCalls.length, 1);
     assert.strictEqual(transformerDeleteCalls[0].arguments[5], 'removeUser');
+  });
+
+  it('should preserve caller-supplied ids for the history query, its items and its transformer link (config import)', () => {
+    const historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+      JSON.stringify(testData.historyQueries.list[0])
+    );
+    historyQuery.id = 'preserved-history-id';
+    historyQuery.name = 'preserved history query';
+    historyQuery.items = [
+      {
+        id: 'preserved-history-item-id',
+        name: 'preserved item',
+        enabled: true,
+        settings: {} as SouthItemSettings,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ];
+    historyQuery.northTransformers = [
+      {
+        id: 'preserved-history-transformer-id',
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        items: []
+      }
+    ];
+
+    repository.saveHistory(historyQuery);
+
+    assert.strictEqual(historyQuery.id, 'preserved-history-id');
+    const created = repository.findHistoryById('preserved-history-id');
+    assert.ok(created);
+    assert.strictEqual(created.items.length, 1);
+    assert.strictEqual(created.items[0].id, 'preserved-history-item-id');
+    assert.strictEqual(created.northTransformers.length, 1);
+    assert.strictEqual(created.northTransformers[0].id, 'preserved-history-transformer-id');
   });
 
   it('should remove all transformers for a history query by transformer id', () => {

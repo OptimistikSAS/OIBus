@@ -8485,6 +8485,15 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ConfigImportResponseDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "appliedUpgrades": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"entityId":{"dataType":"string"},"version":{"dataType":"string","required":true},"scope":{"dataType":"string","required":true}}},"required":true},
+            "warnings": {"dataType":"array","array":{"dataType":"string"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "CertificateDTO": {
         "dataType": "refObject",
         "properties": {
@@ -13192,6 +13201,43 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'exportConfiguration',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsConfigTransferController_importConfiguration: Record<string, TsoaRoute.ParameterSchema> = {
+                file: {"in":"formData","name":"file","required":true,"dataType":"file"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/config-transfer/import',
+            upload.fields([
+                {
+                    name: "file",
+                    maxCount: 1
+                }
+            ]),
+            ...(fetchMiddlewares<RequestHandler>(ConfigTransferController)),
+            ...(fetchMiddlewares<RequestHandler>(ConfigTransferController.prototype.importConfiguration)),
+
+            async function ConfigTransferController_importConfiguration(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsConfigTransferController_importConfiguration, request, response });
+
+                const controller = new ConfigTransferController();
+
+              await templateService.apiHandler({
+                methodName: 'importConfiguration',
                 controller,
                 response,
                 next,
