@@ -494,3 +494,107 @@ describe('SouthSQLite test connection', () => {
     await assert.rejects(south.testConnection(), { message: `Database "${dbPath}" has no tables` });
   });
 });
+
+describe('SouthSQLite explore', () => {
+  let south: SouthSQLiteClass;
+  const configuration = buildSouthEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>('sqlite', connectorSettings, itemSettings);
+
+  before(() => {
+    // SouthSQLite is already loaded by the first describe block's before(); module is shared.
+  });
+
+  beforeEach(() => {
+    mockDatabase.close = mock.fn();
+    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
+  });
+
+  it('should list every table at the root, with its column and row counts', async () => {
+    let prepareCallCount = 0;
+    mockDatabase.prepare = mock.fn(() => {
+      prepareCallCount++;
+      switch (prepareCallCount) {
+        case 1: // list tables
+          return { all: mock.fn(() => [{ name: 'sensors' }, { name: 'events' }]) };
+        case 2: // PRAGMA table_info("sensors")
+          return { all: mock.fn(() => [{ name: 'id' }, { name: 'value' }, { name: 'timestamp' }]) };
+        case 3: // SELECT COUNT(*) FROM "sensors"
+          return { all: mock.fn(() => [{ count: 128 }]) };
+        case 4: // PRAGMA table_info("events")
+          return { all: mock.fn(() => [{ name: 'id' }]) };
+        default: // SELECT COUNT(*) FROM "events"
+          return { all: mock.fn(() => [{ count: 0 }]) };
+      }
+    });
+
+    const entries = await south.explore(null);
+
+    assert.deepStrictEqual(entries, [
+      { id: 'sensors', name: 'sensors', metadata: { columns: 3, rows: 128 }, hasChildren: true },
+      { id: 'events', name: 'events', metadata: { columns: 1, rows: 0 }, hasChildren: true }
+    ]);
+    assert.strictEqual(mockDatabase.close.mock.calls.length, 1);
+  });
+
+  it('should list columns with their type, nullability, primary-key flag and default when expanding a table', async () => {
+    mockDatabase.prepare = mock.fn(() => ({
+      all: mock.fn(() => [
+        { name: 'id', type: 'INTEGER', notnull: 1, dflt_value: null, pk: 1 },
+        { name: 'label', type: 'TEXT', notnull: 0, dflt_value: "'unknown'", pk: 0 },
+        { name: 'untyped', type: '', notnull: 0, dflt_value: null, pk: 0 }
+      ])
+    }));
+
+    const entries = await south.explore('sensors');
+
+    assert.deepStrictEqual(entries, [
+      {
+        id: 'sensors.id',
+        name: 'id',
+        metadata: { nullable: 'no', type: 'INTEGER', primaryKey: 'yes' },
+        hasChildren: false
+      },
+      {
+        id: 'sensors.label',
+        name: 'label',
+        metadata: { nullable: 'yes', type: 'TEXT', default: "'unknown'" },
+        hasChildren: false
+      },
+      // SQLite is dynamically typed — a column can have no declared type at all, and this one has
+      // never been given a default, so both are omitted rather than shown as blank/null.
+      { id: 'sensors.untyped', name: 'untyped', metadata: { nullable: 'yes' }, hasChildren: false }
+    ]);
+  });
+
+  it('should still list a table when its row count cannot be read (e.g. a broken table)', async () => {
+    let prepareCallCount = 0;
+    mockDatabase.prepare = mock.fn(() => {
+      prepareCallCount++;
+      if (prepareCallCount === 1) return { all: mock.fn(() => [{ name: 'broken' }]) };
+      if (prepareCallCount === 2) return { all: mock.fn(() => [{ name: 'col' }]) };
+      return {
+        all: mock.fn(() => {
+          throw new Error('database disk image is malformed');
+        })
+      };
+    });
+
+    const entries = await south.explore(null);
+
+    assert.deepStrictEqual(entries, [{ id: 'broken', name: 'broken', metadata: { columns: 1 }, hasChildren: true }]);
+  });
+
+  it('should close the database even when listing columns fails', async () => {
+    mockDatabase.prepare = mock.fn(() => ({
+      all: mock.fn(() => {
+        throw new Error('no such table: missing');
+      })
+    }));
+
+    await assert.rejects(south.explore('missing'), { message: 'no such table: missing' });
+    assert.strictEqual(mockDatabase.close.mock.calls.length, 1);
+  });
+});
