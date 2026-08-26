@@ -14,6 +14,25 @@
               <span class="fa fa-gear me-1" role="status" aria-hidden="true"></span>
               <span translate="engine.oianalytics"></span>
             </a>
+            <button
+              (click)="exportConfig()"
+              type="button"
+              [disabled]="exporting.isPending | async"
+              class="btn btn-secondary me-2"
+              id="export-config"
+            >
+              @if (exporting.isPending | async) {
+                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              }
+              @if ((exporting.isPending | async) === false) {
+                <span class="fa fa-download me-1" role="status" aria-hidden="true"></span>
+              }
+              <span translate="engine.config-transfer.export"></span>
+            </button>
+            <button (click)="openImportConfigModal()" type="button" class="btn btn-secondary me-2" id="import-config">
+              <span class="fa fa-upload me-1" role="status" aria-hidden="true"></span>
+              <span translate="engine.config-transfer.import.button"></span>
+            </button>
             <button (click)="restart()" type="button" [disabled]="restarting.isPending | async" class="btn btn-danger" id="restart">
               @if (restarting.isPending | async) {
                 <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
