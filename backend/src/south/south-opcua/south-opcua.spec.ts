@@ -2513,4 +2513,136 @@ describe('SouthOPCUA', () => {
 
     await assert.rejects(() => south.explore(null), { message: 'some other error' });
   });
+
+  it('explore should attach current value, unit and range for variables that expose them', async () => {
+    const browse = mock.fn(async (arg: unknown) => {
+      if (typeof arg === 'string') {
+        return {
+          references: [
+            {
+              nodeId: 'ns=1;s=Temperature',
+              displayName: { text: 'Temperature' },
+              browseName: { toString: () => 'Temperature' },
+              nodeClass: NodeClass.Variable
+            },
+            {
+              nodeId: 'ns=1;s=Flag',
+              displayName: { text: 'Flag' },
+              browseName: { toString: () => 'Flag' },
+              nodeClass: NodeClass.Variable
+            }
+          ],
+          continuationPoint: null
+        };
+      }
+      // batched property-discovery browse: one BrowseResult per requested variable, same order
+      return (arg as Array<string>).map(nodeId =>
+        nodeId === 'ns=1;s=Temperature'
+          ? {
+              references: [
+                { nodeId: 'ns=1;s=Temperature.EU', browseName: { name: 'EngineeringUnits' }, nodeClass: NodeClass.Variable },
+                { nodeId: 'ns=1;s=Temperature.Range', browseName: { name: 'EURange' }, nodeClass: NodeClass.Variable }
+              ]
+            }
+          : { references: [] }
+      );
+    });
+    const read = mock.fn(async (arg: unknown) => {
+      const valuesByNodeId: Record<string, unknown> = {
+        'ns=1;s=Temperature': { statusCode: { value: 0 }, value: { value: 21.5, dataType: DataType.Double } },
+        'ns=1;s=Flag': { statusCode: { value: 0 }, value: { value: true, dataType: DataType.Boolean } },
+        'ns=1;s=Temperature.EU': { statusCode: { value: 0 }, value: { value: { displayName: { text: '°C' } } } },
+        'ns=1;s=Temperature.Range': { statusCode: { value: 0 }, value: { value: { low: -20, high: 120 } } }
+      };
+      return (arg as Array<{ nodeId: string }>).map(({ nodeId }) => valuesByNodeId[nodeId]);
+    });
+    const mockedClient = { close: mock.fn(async () => undefined), browse, read };
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    await south.connect();
+    // parseOPCUAValue itself is unit-tested separately (utils-opcua.spec.ts) and mocked here — just
+    // prove explore() wires the read DataValue through to it and uses whatever it returns, in order
+    // (Temperature is read before Flag, matching the browsed reference order).
+    const parsedValues = ['21.5', 'true'];
+    let parseCallIndex = 0;
+    utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation((): string | null => parsedValues[parseCallIndex++]);
+
+    const entries = await south.explore(null);
+
+    assert.deepStrictEqual(entries, [
+      {
+        id: 'ns=1;s=Temperature',
+        name: 'Temperature',
+        metadata: { nodeId: 'ns=1;s=Temperature', type: 'Variable', value: '21.5', unit: '°C', min: -20, max: 120 },
+        hasChildren: true
+      },
+      {
+        id: 'ns=1;s=Flag',
+        name: 'Flag',
+        metadata: { nodeId: 'ns=1;s=Flag', type: 'Variable', value: 'true' },
+        hasChildren: true
+      }
+    ]);
+    // 1 top-level browse + 1 batched property-discovery browse (never one browse per variable)
+    assert.strictEqual(browse.mock.calls.length, 2);
+    // 1 batched value read + 1 batched property-value read (never one read per variable)
+    assert.strictEqual(read.mock.calls.length, 2);
+    assert.strictEqual((read.mock.calls[0].arguments[0] as Array<unknown>).length, 2);
+  });
+
+  it('explore should skip value/unit reads entirely when the browsed level has no variables', async () => {
+    const browse = mock.fn(async () => ({
+      references: [
+        { nodeId: 'ns=1;s=Folder', displayName: { text: 'Folder' }, browseName: { toString: () => 'Folder' }, nodeClass: NodeClass.Object }
+      ],
+      continuationPoint: null
+    }));
+    const read = mock.fn(async () => []);
+    const mockedClient = { close: mock.fn(async () => undefined), browse, read };
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    await south.connect();
+
+    const entries = await south.explore(null);
+
+    assert.deepStrictEqual(entries, [
+      { id: 'ns=1;s=Folder', name: 'Folder', metadata: { nodeId: 'ns=1;s=Folder', type: 'Object' }, hasChildren: true }
+    ]);
+    assert.strictEqual(browse.mock.calls.length, 1); // only the top-level browse — no property-discovery browse
+    assert.strictEqual(read.mock.calls.length, 0);
+  });
+
+  it('explore should return plain entries when reading value/unit fails (server does not support it)', async () => {
+    const browse = mock.fn(async (arg: unknown) => {
+      if (typeof arg === 'string') {
+        return {
+          references: [
+            {
+              nodeId: 'ns=1;s=Temperature',
+              displayName: { text: 'Temperature' },
+              browseName: { toString: () => 'Temperature' },
+              nodeClass: NodeClass.Variable
+            }
+          ],
+          continuationPoint: null
+        };
+      }
+      throw new Error('BadNotSupported');
+    });
+    const read = mock.fn(async () => {
+      throw new Error('BadNotSupported');
+    });
+    const mockedClient = { close: mock.fn(async () => undefined), browse, read };
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    await south.connect();
+
+    const entries = await south.explore(null);
+
+    assert.deepStrictEqual(entries, [
+      {
+        id: 'ns=1;s=Temperature',
+        name: 'Temperature',
+        metadata: { nodeId: 'ns=1;s=Temperature', type: 'Variable' },
+        hasChildren: true
+      }
+    ]);
+  });
 });
