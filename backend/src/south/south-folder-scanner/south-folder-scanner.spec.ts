@@ -734,7 +734,12 @@ describe('SouthFolderScanner', () => {
   });
 
   describe('explore', () => {
-    it('should list folders and files at the root', async () => {
+    const CTIME_MS = 1700000000000;
+    const CTIME_ISO = DateTime.fromMillis(CTIME_MS).toUTC().toISO()!;
+    const MTIME_MS = 1650000000000;
+    const MTIME_ISO = DateTime.fromMillis(MTIME_MS).toUTC().toISO()!;
+
+    it('should list folders and files at the root, with ctime for both, mtime for files only, and a file count for folders', async () => {
       const mockDirents = [
         { name: 'subfolder', isDirectory: () => true, isFile: () => false },
         { name: 'file1.csv', isDirectory: () => false, isFile: () => true },
@@ -743,15 +748,34 @@ describe('SouthFolderScanner', () => {
       const readdirMock = mock.method(
         fs,
         'readdir',
-        mock.fn(async () => mockDirents)
+        mock.fn(async (dir: unknown) => {
+          // The top-level listing and the subfolder's own file-count listing share this mock — only the
+          // top-level call is for the root, everything else is the nested per-folder readdir.
+          if (String(dir) === path.resolve('inputFolder')) return mockDirents;
+          return [
+            { name: 'nested1.csv', isDirectory: () => false, isFile: () => true },
+            { name: 'nested2.csv', isDirectory: () => false, isFile: () => true },
+            { name: 'nested-subdir', isDirectory: () => true, isFile: () => false }
+          ];
+        })
+      );
+      mock.method(
+        fs,
+        'stat',
+        mock.fn(async () => ({ ctimeMs: CTIME_MS, mtimeMs: MTIME_MS, size: 512 }))
       );
 
       const entries = await south.explore(null);
 
       assert.strictEqual(String(readdirMock.mock.calls[0].arguments[0]), path.resolve('inputFolder'));
       assert.deepStrictEqual(entries, [
-        { id: 'subfolder', name: 'subfolder', metadata: { type: 'folder' }, hasChildren: true },
-        { id: 'file1.csv', name: 'file1.csv', metadata: { type: 'file' }, hasChildren: false }
+        { id: 'subfolder', name: 'subfolder', metadata: { type: 'folder', ctime: CTIME_ISO, files: 2 }, hasChildren: true },
+        {
+          id: 'file1.csv',
+          name: 'file1.csv',
+          metadata: { type: 'file', ctime: CTIME_ISO, size: 512, mtime: MTIME_ISO },
+          hasChildren: false
+        }
       ]);
     });
 
@@ -762,17 +786,92 @@ describe('SouthFolderScanner', () => {
         'readdir',
         mock.fn(async () => mockDirents)
       );
+      mock.method(
+        fs,
+        'stat',
+        mock.fn(async () => ({ ctimeMs: CTIME_MS, mtimeMs: MTIME_MS, size: 42 }))
+      );
 
       const entries = await south.explore('subfolder');
 
       assert.strictEqual(String(readdirMock.mock.calls[0].arguments[0]), path.resolve('inputFolder', 'subfolder'));
       assert.deepStrictEqual(entries, [
-        { id: path.join('subfolder', 'nested.csv'), name: 'nested.csv', metadata: { type: 'file' }, hasChildren: false }
+        {
+          id: path.join('subfolder', 'nested.csv'),
+          name: 'nested.csv',
+          metadata: { type: 'file', ctime: CTIME_ISO, size: 42, mtime: MTIME_ISO },
+          hasChildren: false
+        }
+      ]);
+    });
+
+    it('should still list a file with whatever stat fields resolved before a later one throws (e.g. an unexpectedly malformed Stats object)', async () => {
+      mock.method(
+        fs,
+        'readdir',
+        mock.fn(async () => [{ name: 'odd.csv', isDirectory: () => false, isFile: () => true }])
+      );
+      // ctime/size are read before mtime — if mtimeMs is ever missing (never happens with a real
+      // fs.Stats, but worth pinning down), the earlier fields already assigned to `metadata` must
+      // survive rather than being silently discarded along with the one that failed.
+      mock.method(
+        fs,
+        'stat',
+        mock.fn(async () => ({ ctimeMs: CTIME_MS, size: 7 }))
+      );
+
+      const entries = await south.explore(null);
+
+      assert.deepStrictEqual(entries, [
+        { id: 'odd.csv', name: 'odd.csv', metadata: { type: 'file', ctime: CTIME_ISO, size: 7 }, hasChildren: false }
       ]);
     });
 
     it('should reject a path outside of the input folder', async () => {
       await assert.rejects(() => south.explore('../../etc'), /path is outside of the input folder/);
+    });
+
+    it('should still list an entry when stat fails, just without ctime/size', async () => {
+      mock.method(
+        fs,
+        'readdir',
+        mock.fn(async () => [{ name: 'locked.csv', isDirectory: () => false, isFile: () => true }])
+      );
+      mock.method(
+        fs,
+        'stat',
+        mock.fn(async () => {
+          throw new Error('EACCES: permission denied');
+        })
+      );
+
+      const entries = await south.explore(null);
+
+      assert.deepStrictEqual(entries, [{ id: 'locked.csv', name: 'locked.csv', metadata: { type: 'file' }, hasChildren: false }]);
+    });
+
+    it('should still list a folder without a file count when it cannot be listed (readable enough to stat, not to browse)', async () => {
+      let readdirCallCount = 0;
+      mock.method(
+        fs,
+        'readdir',
+        mock.fn(async () => {
+          readdirCallCount++;
+          if (readdirCallCount === 1) return [{ name: 'restricted', isDirectory: () => true, isFile: () => false }];
+          throw new Error('EACCES: permission denied');
+        })
+      );
+      mock.method(
+        fs,
+        'stat',
+        mock.fn(async () => ({ ctimeMs: CTIME_MS }))
+      );
+
+      const entries = await south.explore(null);
+
+      assert.deepStrictEqual(entries, [
+        { id: 'restricted', name: 'restricted', metadata: { type: 'folder', ctime: CTIME_ISO }, hasChildren: true }
+      ]);
     });
   });
 });
