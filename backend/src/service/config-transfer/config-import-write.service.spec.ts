@@ -132,6 +132,17 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
 
   const cloneEnvelope = (): ConfigExportEnvelopeDTO => structuredClone(baselineEnvelope);
 
+  /**
+   * `importConfiguration` requires `importedBy` to be an existing user id (the account running the
+   * import is preserved rather than wiped — see the self-lockout protection in `wipeConfiguration`),
+   * so tests import as the fixture's real seeded admin user rather than an arbitrary label.
+   */
+  const importerId = (): string => {
+    const admin = userRepository.findByLogin('admin');
+    assert.ok(admin, 'expected the fixture to seed an "admin" user');
+    return admin.id;
+  };
+
   it('wipes and recreates every in-scope section, preserving every id', async () => {
     const envelope = cloneEnvelope();
     const beforeScanModeIds = scanModeRepository
@@ -159,7 +170,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     assert.ok(beforeNorthIds.length > 0, 'expected the fixture to seed at least one north connector');
     assert.ok(beforeUserIds.length > 0, 'expected the fixture to seed at least one user');
 
-    const result = await service.importConfiguration(envelope, 'importUser');
+    const result = await service.importConfiguration(envelope, importerId());
 
     assert.ok(
       result.warnings.some(warning => /random password/i.test(warning)),
@@ -217,7 +228,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     const customEntry = envelope.fullConfiguration.transformers.find(transformer => transformer.type === 'custom');
     assert.ok(customEntry, 'expected the fixture to include a custom transformer');
 
-    await service.importConfiguration(envelope, 'importUser');
+    await service.importConfiguration(envelope, importerId());
 
     const recreated = transformerRepository.findById(customEntry.oIBusInternalId);
     assert.ok(recreated, 'expected the custom transformer to be recreated under its original id');
@@ -229,7 +240,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     assert.ok(envelope.fullConfiguration.certificates.length > 0, 'expected the fixture to include a certificate');
     const certificateEntry = envelope.fullConfiguration.certificates[0];
 
-    const result = await service.importConfiguration(envelope, 'importUser');
+    const result = await service.importConfiguration(envelope, importerId());
 
     const recreated = certificateRepository.findById(certificateEntry.oIBusInternalId);
     assert.ok(recreated);
@@ -242,8 +253,59 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
 
   it('does not touch the engine settings or the OIAnalytics registration', async () => {
     const beforeEngine = engineRepository.get();
-    await service.importConfiguration(cloneEnvelope(), 'importUser');
+    await service.importConfiguration(cloneEnvelope(), importerId());
     assert.deepStrictEqual(engineRepository.get(), beforeEngine);
+  });
+
+  it('preserves the account running the import, so it is never locked out of its own session', async () => {
+    const admin = userRepository.findByLogin('admin');
+    assert.ok(admin);
+    const passwordBefore = userRepository.getHashedPasswordByLogin('admin');
+
+    const result = await service.importConfiguration(cloneEnvelope(), admin.id);
+
+    assert.strictEqual(userRepository.getHashedPasswordByLogin('admin'), passwordBefore);
+    assert.ok(userRepository.findById(admin.id), 'expected the importing admin user to still exist under the same id');
+    assert.ok(
+      result.warnings.some(warning => /account you are signed in with/i.test(warning)),
+      `expected a warning explaining the importer's own account was preserved, got ${JSON.stringify(result.warnings)}`
+    );
+  });
+
+  it('preserves the reserved "subscription" scan mode even when the envelope omits it', async () => {
+    const envelope = cloneEnvelope();
+    envelope.fullConfiguration.scanModes = envelope.fullConfiguration.scanModes.filter(
+      scanMode => scanMode.oIBusInternalId !== 'subscription'
+    );
+
+    await service.importConfiguration(envelope, importerId());
+
+    assert.ok(scanModeRepository.findById('subscription'), 'expected the reserved "subscription" scan mode to still exist');
+  });
+
+  it('updates the reserved "subscription" scan mode in place when the envelope does describe it', async () => {
+    const envelope = cloneEnvelope();
+    const subscriptionEntry = envelope.fullConfiguration.scanModes.find(scanMode => scanMode.oIBusInternalId === 'subscription');
+    assert.ok(subscriptionEntry, 'expected the fixture to include the reserved "subscription" scan mode');
+    subscriptionEntry.settings.description = 'updated via import';
+
+    await service.importConfiguration(envelope, importerId());
+
+    const recreated = scanModeRepository.findById('subscription');
+    assert.ok(recreated);
+    assert.strictEqual(recreated.description, 'updated via import');
+  });
+
+  it('warns that every imported south/north connector was disabled', async () => {
+    const envelope = cloneEnvelope();
+    assert.ok(envelope.fullConfiguration.southConnectors.length > 0 || envelope.fullConfiguration.northConnectors.length > 0);
+
+    const result = await service.importConfiguration(envelope, importerId());
+
+    assert.ok(
+      result.warnings.some(warning => /disabled/i.test(warning)),
+      `expected a warning about connectors being disabled, got ${JSON.stringify(result.warnings)}`
+    );
   });
 
   it('rejects an unsupported/malformed import without writing anything', async () => {
@@ -252,7 +314,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
       .map(scanMode => scanMode.id)
       .sort();
 
-    await assert.rejects(() => service.importConfiguration({ formatVersion: 1 }, 'importUser'));
+    await assert.rejects(() => service.importConfiguration({ formatVersion: 1 }, importerId()));
 
     assert.deepStrictEqual(
       scanModeRepository
@@ -282,7 +344,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
       throw new Error('injected config import fault');
     });
 
-    await assert.rejects(() => service.importConfiguration(envelope, 'importUser'), /injected config import fault/);
+    await assert.rejects(() => service.importConfiguration(envelope, importerId()), /injected config import fault/);
 
     assert.deepStrictEqual(scanModeRepository.findAll(), beforeScanModes);
     assert.deepStrictEqual(ipFilterRepository.list(), beforeIpFilters);

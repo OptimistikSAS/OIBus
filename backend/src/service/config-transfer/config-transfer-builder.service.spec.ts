@@ -58,6 +58,7 @@ describe('Config Transfer Builder Service', () => {
     southRepository.findSouthById = (id: string) => testData.south.list.find(element => element.id === id) ?? null;
     northRepository.findAllNorth = () => testData.north.list;
     northRepository.findNorthById = (id: string) => testData.north.list.find(element => element.id === id) ?? null;
+    northRepository.findAllNorthFull = () => testData.north.list;
     historyQueryRepository.findAllHistoriesFull = () => testData.historyQueries.list;
     transformerRepository.list = () => [...testData.transformers.list, standardTransformer];
 
@@ -205,6 +206,7 @@ describe('Config Transfer Builder Service', () => {
     };
     northRepository.findAllNorth = () => [customNorth] as unknown as typeof testData.north.list;
     northRepository.findNorthById = () => customNorth as unknown as (typeof testData.north.list)[0];
+    northRepository.findAllNorthFull = () => [customNorth] as unknown as typeof testData.north.list;
 
     const configuration = service.buildFullConfiguration(testData.oIAnalytics.registration.completed);
 

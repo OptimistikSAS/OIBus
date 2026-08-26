@@ -6,6 +6,7 @@ import { CustomExpressRequest } from '../express';
 import { fixTsoaModuleResolution, reloadModule, createMockServices } from '../../tests/utils/test-utils';
 import ConfigTransferServiceMock from '../../tests/__mocks__/service/config-transfer-service.mock';
 import ConfigImportServiceMock from '../../tests/__mocks__/service/config-import-service.mock';
+import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import { ConfigExportEnvelopeDTO, ConfigImportResponseDTO } from '../../../shared/model/config-transfer.model';
 import { ConfigImportError } from '../../service/config-transfer/config-import.service';
 import type { ConfigTransferController as ConfigTransferControllerShape } from './config-transfer.controller';
@@ -24,6 +25,7 @@ describe('ConfigTransferController', () => {
   let controller: ConfigTransferControllerShape;
   let configTransferService: ConfigTransferServiceMock;
   let configImportService: ConfigImportServiceMock;
+  let oIBusService: OIBusServiceMock;
   let mockRequest: Partial<CustomExpressRequest>;
   let mockRes: {
     attachment: ReturnType<typeof mock.fn>;
@@ -36,6 +38,7 @@ describe('ConfigTransferController', () => {
     controller = new ConfigTransferController();
     configTransferService = new ConfigTransferServiceMock();
     configImportService = new ConfigImportServiceMock();
+    oIBusService = new OIBusServiceMock();
     mockRes = {
       attachment: mock.fn(),
       contentType: mock.fn(),
@@ -44,7 +47,7 @@ describe('ConfigTransferController', () => {
     };
     mockRes.status = mock.fn(() => mockRes);
     mockRequest = {
-      services: createMockServices({ configTransferService, configImportService }),
+      services: createMockServices({ configTransferService, configImportService, oIBusService }),
       user: { id: 'test', login: 'testUser' },
       res: mockRes as unknown as import('express').Response // partial mock of express.Response — only used properties are defined
     } as Partial<CustomExpressRequest>;
@@ -86,6 +89,9 @@ describe('ConfigTransferController', () => {
       assert.strictEqual(unlinkMock.mock.calls.length, 1);
       assert.deepStrictEqual(unlinkMock.mock.calls[0].arguments, ['importPath']);
       assert.deepStrictEqual(result, response);
+      // The engine must restart on a successful import so the running south/north connectors and
+      // history queries pick up the newly wiped+recreated configuration.
+      assert.strictEqual(oIBusService.restart.mock.calls.length, 1);
     });
 
     it('should reject with a validation error when the file is missing', async () => {
@@ -118,6 +124,8 @@ describe('ConfigTransferController', () => {
 
       await assert.rejects(controller.importConfiguration(file, mockRequest as CustomExpressRequest), importError);
       assert.strictEqual(unlinkMock.mock.calls.length, 1);
+      // Nothing was written, so the engine must not restart.
+      assert.strictEqual(oIBusService.restart.mock.calls.length, 0);
     });
 
     it('should still unlink the temp file when import fails for a reason other than ConfigImportError', async () => {
