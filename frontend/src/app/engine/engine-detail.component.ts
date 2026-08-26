@@ -7,11 +7,12 @@ import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component
 import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
 import { NotificationService } from '../shared/notification.service';
 import { ConfirmationService } from '../shared/confirmation.service';
-import { BehaviorSubject, switchMap } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, switchMap } from 'rxjs';
 import { ObservableState } from '../shared/save-button/save-button.component';
 import { BoxComponent, BoxTitleDirective } from '../shared/box/box.component';
 import { EngineMetricsComponent } from './engine-metrics/engine-metrics.component';
 import { pollMetrics } from '../shared/polling';
+import { WindowService } from '../shared/window.service';
 import { RouterLink } from '@angular/router';
 import { CertificateListComponent } from './certificate-list/certificate-list.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -22,6 +23,8 @@ import { EditEngineWebServerModalComponent } from './edit-engine-web-server-moda
 import { EditEngineProxyModalComponent } from './edit-engine-proxy-modal/edit-engine-proxy-modal.component';
 import { EditEngineLoggerModalComponent } from './edit-engine-logger-modal/edit-engine-logger-modal.component';
 import { AuthTokenDuration } from '../../../../backend/shared/model/engine.model';
+import { ConfigTransferService } from '../services/config-transfer.service';
+import { ImportConfigModalComponent } from './config-transfer/import-config-modal/import-config-modal.component';
 
 @Component({
   selector: 'oib-engine-detail',
@@ -45,9 +48,12 @@ import { AuthTokenDuration } from '../../../../backend/shared/model/engine.model
 })
 export class EngineDetailComponent {
   private engineService = inject(EngineService);
+  private windowService = inject(WindowService);
   private notificationService = inject(NotificationService);
   private confirmationService = inject(ConfirmationService);
   private modalService = inject(ModalService);
+  private configTransferService = inject(ConfigTransferService);
+  private destroyRef = inject(DestroyRef);
 
   private readonly refresh$ = new BehaviorSubject<void>(undefined);
 
@@ -57,7 +63,19 @@ export class EngineDetailComponent {
     { initialValue: null }
   );
   restarting = new ObservableState();
+  exporting = new ObservableState();
   dumpingMemory = new ObservableState();
+
+  constructor() {
+    const token = this.windowService.getStorageItem('oibus-token');
+    const stream = new EventSource(`/sse/engine?token=${token}`, { withCredentials: true });
+    stream.onmessage = (event: MessageEvent) => {
+      if (event && event.data) {
+        this.metrics.set(JSON.parse(event.data));
+      }
+    };
+    this.destroyRef.onDestroy(() => stream.close());
+  }
 
   openNameModal() {
     const modal = this.modalService.open(EditEngineNameModalComponent);
@@ -112,5 +130,31 @@ export class EngineDetailComponent {
       .subscribe(result => {
         this.notificationService.success('engine.memory-dump-complete', { filename: result.filename });
       });
+  }
+
+  exportConfig() {
+    this.configTransferService
+      .export()
+      .pipe(this.exporting.pendingUntilFinalization())
+      .subscribe({
+        error: (message: string) => this.notificationService.errorMessage(message)
+      });
+  }
+
+  openImportConfigModal() {
+    const modalRef = this.modalService.open(ImportConfigModalComponent, {
+      size: 'lg',
+      beforeDismiss: () => {
+        const component: ImportConfigModalComponent = modalRef.componentInstance;
+        const result = component.canDismiss();
+        return typeof result === 'boolean' ? result : firstValueFrom(result);
+      }
+    });
+    modalRef.result.subscribe(() => {
+      // the import wipes and recreates most of the local configuration; a full reload is the
+      // safest way to refresh every affected part of the app (scan modes, certificates, ip
+      // filters, transformers, connectors, ...) rather than granularly refreshing each of them
+      this.windowService.reload();
+    });
   }
 }
