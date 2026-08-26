@@ -1,5 +1,5 @@
 import { inject } from '@angular/core';
-import { tap } from 'rxjs';
+import { from, Observable, switchMap, tap, throwError } from 'rxjs';
 import { HttpContext, HttpContextToken, HttpErrorResponse, HttpInterceptorFn, HttpStatusCode } from '@angular/common/http';
 import { NotificationService } from './notification.service';
 import { WindowService } from './window.service';
@@ -35,6 +35,39 @@ export function getMessageFromHttpErrorResponse(errorResponse: HttpErrorResponse
   }
   return message.trim();
 }
+
+const messageFromBody = (body: unknown): string | undefined => {
+  if (!body || typeof body !== 'object') return undefined;
+  const { message, error } = body as { message?: unknown; error?: unknown };
+  // tsoa ValidateError puts a field map (not a string) in `message`
+  if (typeof message === 'string') return message;
+  if (typeof error === 'string') return error;
+  return undefined;
+};
+
+/**
+ * Rethrows the message the backend put in the error body, falling back to the generic HTTP
+ * description. Used by services that make blob/file requests (`responseType: 'blob'` or
+ * `'text'`), where the JSON error body arrives unparsed inside a `Blob` instead of already parsed
+ * onto `errorResponse.error` the way a normal JSON request gets it.
+ */
+export const rethrowServerMessage = (errorResponse: HttpErrorResponse): Observable<never> => {
+  const fallback = getMessageFromHttpErrorResponse(errorResponse);
+  if (errorResponse.error instanceof Blob) {
+    return from(errorResponse.error.text()).pipe(
+      switchMap(text => {
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          parsed = undefined;
+        }
+        return throwError(() => messageFromBody(parsed) ?? fallback);
+      })
+    );
+  }
+  return throwError(() => messageFromBody(errorResponse.error) ?? fallback);
+};
 
 /**
  * An HTTP interceptor that detects error responses and emits them,
