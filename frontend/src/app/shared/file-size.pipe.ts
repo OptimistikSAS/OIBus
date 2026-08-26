@@ -11,7 +11,10 @@ import { TranslateService } from '@ngx-translate/core';
 export class FileSizePipe implements PipeTransform {
   private translateService = inject(TranslateService);
 
-  transform(size: number): string {
+  // Accepts a string as well as a number so callers with a loosely-typed source (e.g. explore
+  // metadata, which is a generic string | number bag) don't need to cast before piping.
+  transform(rawSize: number | string): string {
+    const size = typeof rawSize === 'string' ? Number(rawSize) : rawSize;
     const ONE_KB = 1024;
     const ONE_MB = 1024 * ONE_KB;
 
