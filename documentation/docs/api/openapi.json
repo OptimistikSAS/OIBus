@@ -36429,6 +36429,43 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ConfigImportResponseDTO": {
+				"properties": {
+					"appliedUpgrades": {
+						"items": {
+							"properties": {
+								"entityId": {
+									"type": "string"
+								},
+								"version": {
+									"type": "string"
+								},
+								"scope": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"version",
+								"scope"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"warnings": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"appliedUpgrades",
+					"warnings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"CertificateDTO": {
 				"description": "Data Transfer Object for a certificate.\nRepresents a certificate with its metadata, public key, and expiry information.",
 				"properties": {
@@ -42133,6 +42170,50 @@
 				],
 				"security": [],
 				"parameters": []
+			}
+		},
+		"/api/config-transfer/import": {
+			"post": {
+				"operationId": "ImportConfiguration",
+				"responses": {
+					"200": {
+						"description": "Configuration imported successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ConfigImportResponseDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Imports a previously exported configuration file, transactionally wiping and recreating every\nin-scope section of the local configuration (scan modes, ip filters, certificates, transformers,\nsouth and north connectors, history queries and users) from it, preserving each entity's original\nid. This is a full replace, not a merge, and cannot be undone. The engine's own settings and the\nOIAnalytics registration are never touched. Older exports are brought forward with the\nsettings-upgrade registry before being applied; nothing is written if the file is malformed, too\nnew for this OIBus version, or fails validation after any upgrades.",
+				"summary": "Import configuration",
+				"tags": [
+					"Config Transfer"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"file": {
+										"type": "string",
+										"format": "binary",
+										"description": "The configuration export file (JSON) to import"
+									}
+								},
+								"required": [
+									"file"
+								]
+							}
+						}
+					}
+				}
 			}
 		},
 		"/api/certificates": {
