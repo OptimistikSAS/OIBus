@@ -3,6 +3,7 @@ import oianalyticsManifest from '../south/south-oianalytics/manifest';
 import opcuaManifest from '../south/south-opcua/manifest';
 import mqttManifest from '../south/south-mqtt/manifest';
 import modbusManifest from '../south/south-modbus/manifest';
+import mongodbManifest from '../south/south-mongodb/manifest';
 import folderScannerManifest from '../south/south-folder-scanner/manifest';
 import adsManifest from '../south/south-ads/manifest';
 import mssqlManifest from '../south/south-mssql/manifest';
@@ -34,6 +35,7 @@ export const southManifestList: Array<SouthConnectorManifest> = [
   sqliteManifest,
   adsManifest,
   modbusManifest,
+  mongodbManifest,
   oianalyticsManifest,
   piManifest,
   restManifest,
