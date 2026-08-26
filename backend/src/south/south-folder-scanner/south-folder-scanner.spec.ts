@@ -769,11 +769,18 @@ describe('SouthFolderScanner', () => {
 
       assert.strictEqual(String(readdirMock.mock.calls[0].arguments[0]), path.resolve('inputFolder'));
       assert.deepStrictEqual(entries, [
-        { id: 'subfolder', name: 'subfolder', metadata: { type: 'folder', ctime: CTIME_ISO, files: 2 }, hasChildren: true },
+        {
+          id: 'subfolder',
+          name: 'subfolder',
+          metadata: { type: 'folder', ctime: CTIME_ISO, files: 2 },
+          metadataKinds: { ctime: 'instant' },
+          hasChildren: true
+        },
         {
           id: 'file1.csv',
           name: 'file1.csv',
           metadata: { type: 'file', ctime: CTIME_ISO, size: 512, mtime: MTIME_ISO },
+          metadataKinds: { ctime: 'instant', size: 'size', mtime: 'instant' },
           hasChildren: false
         }
       ]);
@@ -800,6 +807,7 @@ describe('SouthFolderScanner', () => {
           id: path.join('subfolder', 'nested.csv'),
           name: 'nested.csv',
           metadata: { type: 'file', ctime: CTIME_ISO, size: 42, mtime: MTIME_ISO },
+          metadataKinds: { ctime: 'instant', size: 'size', mtime: 'instant' },
           hasChildren: false
         }
       ]);
@@ -823,7 +831,13 @@ describe('SouthFolderScanner', () => {
       const entries = await south.explore(null);
 
       assert.deepStrictEqual(entries, [
-        { id: 'odd.csv', name: 'odd.csv', metadata: { type: 'file', ctime: CTIME_ISO, size: 7 }, hasChildren: false }
+        {
+          id: 'odd.csv',
+          name: 'odd.csv',
+          metadata: { type: 'file', ctime: CTIME_ISO, size: 7 },
+          metadataKinds: { ctime: 'instant', size: 'size' },
+          hasChildren: false
+        }
       ]);
     });
 
@@ -847,7 +861,9 @@ describe('SouthFolderScanner', () => {
 
       const entries = await south.explore(null);
 
-      assert.deepStrictEqual(entries, [{ id: 'locked.csv', name: 'locked.csv', metadata: { type: 'file' }, hasChildren: false }]);
+      assert.deepStrictEqual(entries, [
+        { id: 'locked.csv', name: 'locked.csv', metadata: { type: 'file' }, metadataKinds: {}, hasChildren: false }
+      ]);
     });
 
     it('should still list a folder without a file count when it cannot be listed (readable enough to stat, not to browse)', async () => {
@@ -870,7 +886,13 @@ describe('SouthFolderScanner', () => {
       const entries = await south.explore(null);
 
       assert.deepStrictEqual(entries, [
-        { id: 'restricted', name: 'restricted', metadata: { type: 'folder', ctime: CTIME_ISO }, hasChildren: true }
+        {
+          id: 'restricted',
+          name: 'restricted',
+          metadata: { type: 'folder', ctime: CTIME_ISO },
+          metadataKinds: { ctime: 'instant' },
+          hasChildren: true
+        }
       ]);
     });
   });
