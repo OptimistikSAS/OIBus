@@ -13,6 +13,8 @@ import {
   SouthInfluxDBSettings,
   SouthModbusItemSettings,
   SouthModbusSettings,
+  SouthMongoDBItemSettings,
+  SouthMongoDBSettings,
   SouthMQTTItemSettings,
   SouthMQTTSettings,
   SouthMSSQLItemSettings,
@@ -355,6 +357,10 @@ export interface HistoryQueryInfluxDBSouthDTO extends HistoryQuerySouthTypedDTO<
 export interface HistoryQueryModbusSouthDTO extends HistoryQuerySouthTypedDTO<'modbus', SouthModbusSettings, SouthModbusItemSettings> {
   items: Array<HistoryQueryModbusItemDTO>;
 }
+/** History query south DTO for MongoDB. */
+export interface HistoryQueryMongoDBSouthDTO extends HistoryQuerySouthTypedDTO<'mongodb', SouthMongoDBSettings, SouthMongoDBItemSettings> {
+  items: Array<HistoryQueryMongoDBItemDTO>;
+}
 /** History query south DTO for MQTT. */
 export interface HistoryQueryMQTTSouthDTO extends HistoryQuerySouthTypedDTO<'mqtt', SouthMQTTSettings, SouthMQTTItemSettings> {
   items: Array<HistoryQueryMQTTItemDTO>;
@@ -459,6 +465,7 @@ export type HistoryQueryDTO = BaseEntity &
     | HistoryQueryFTPSouthDTO
     | HistoryQueryInfluxDBSouthDTO
     | HistoryQueryModbusSouthDTO
+    | HistoryQueryMongoDBSouthDTO
     | HistoryQueryMQTTSouthDTO
     | HistoryQueryMSSQLSouthDTO
     | HistoryQueryMySQLSouthDTO
@@ -573,6 +580,14 @@ export interface HistoryQueryModbusSouthCommandDTO extends HistoryQuerySouthComm
   SouthModbusItemSettings
 > {
   items: Array<HistoryQueryModbusItemCommandDTO>;
+}
+/** History query south command for MongoDB. */
+export interface HistoryQueryMongoDBSouthCommandDTO extends HistoryQuerySouthCommandTypedDTO<
+  'mongodb',
+  SouthMongoDBSettings,
+  SouthMongoDBItemSettings
+> {
+  items: Array<HistoryQueryMongoDBItemCommandDTO>;
 }
 /** History query south command for MQTT. */
 export interface HistoryQueryMQTTSouthCommandDTO extends HistoryQuerySouthCommandTypedDTO<
@@ -725,6 +740,7 @@ export type HistoryQueryCommandDTO = HistoryQueryCommandCommonDTO &
     | HistoryQueryFTPSouthCommandDTO
     | HistoryQueryInfluxDBSouthCommandDTO
     | HistoryQueryModbusSouthCommandDTO
+    | HistoryQueryMongoDBSouthCommandDTO
     | HistoryQueryMQTTSouthCommandDTO
     | HistoryQueryMSSQLSouthCommandDTO
     | HistoryQueryMySQLSouthCommandDTO
@@ -766,6 +782,8 @@ export interface HistoryQueryFTPItemDTO extends HistoryQueryItemTypedDTO<SouthFT
 export interface HistoryQueryInfluxDBItemDTO extends HistoryQueryItemTypedDTO<SouthInfluxDBItemSettings> {}
 /** History query item DTO for Modbus. */
 export interface HistoryQueryModbusItemDTO extends HistoryQueryItemTypedDTO<SouthModbusItemSettings> {}
+/** History query item DTO for MongoDB. */
+export interface HistoryQueryMongoDBItemDTO extends HistoryQueryItemTypedDTO<SouthMongoDBItemSettings> {}
 /** History query item DTO for MQTT. */
 export interface HistoryQueryMQTTItemDTO extends HistoryQueryItemTypedDTO<SouthMQTTItemSettings> {}
 /** History query item DTO for Microsoft SQL Server. */
@@ -807,6 +825,7 @@ export type HistoryQueryItemDTO =
   | HistoryQueryFTPItemDTO
   | HistoryQueryInfluxDBItemDTO
   | HistoryQueryModbusItemDTO
+  | HistoryQueryMongoDBItemDTO
   | HistoryQueryMQTTItemDTO
   | HistoryQueryMSSQLItemDTO
   | HistoryQueryMySQLItemDTO
@@ -834,6 +853,8 @@ export interface HistoryQueryFTPItemCommandDTO extends HistoryQueryItemCommandTy
 export interface HistoryQueryInfluxDBItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthInfluxDBItemSettings> {}
 /** History query item command for Modbus. */
 export interface HistoryQueryModbusItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthModbusItemSettings> {}
+/** History query item command for MongoDB. */
+export interface HistoryQueryMongoDBItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthMongoDBItemSettings> {}
 /** History query item command for MQTT. */
 export interface HistoryQueryMQTTItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthMQTTItemSettings> {}
 /** History query item command for Microsoft SQL Server. */
@@ -875,6 +896,7 @@ export type HistoryQueryItemCommandDTO =
   | HistoryQueryFTPItemCommandDTO
   | HistoryQueryInfluxDBItemCommandDTO
   | HistoryQueryModbusItemCommandDTO
+  | HistoryQueryMongoDBItemCommandDTO
   | HistoryQueryMQTTItemCommandDTO
   | HistoryQueryMSSQLItemCommandDTO
   | HistoryQueryMySQLItemCommandDTO
