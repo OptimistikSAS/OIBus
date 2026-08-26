@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { EMPTY, of, Subject } from 'rxjs';
+import { EMPTY, of, Subject, throwError } from 'rxjs';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { provideRouter } from '@angular/router';
@@ -14,6 +14,9 @@ import { ScanModeService } from '../services/scan-mode.service';
 import { IpFilterService } from '../services/ip-filter.service';
 import { CertificateService } from '../services/certificate.service';
 import { TransformerService } from '../services/transformer.service';
+import { ConfigTransferService } from '../services/config-transfer.service';
+import { ImportConfigModalComponent } from './config-transfer/import-config-modal/import-config-modal.component';
+import { MockModalService, provideModalTesting } from '../shared/mock-modal.service.testing';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { EngineSettingsDTO } from '../../../../backend/shared/model/engine.model';
@@ -24,8 +27,9 @@ class EngineDetailComponentTester {
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly generalSettings = this.root.getByCss('table tr');
   readonly restartButton = this.root.getByCss('#restart');
+  readonly exportConfigButton = this.root.getByCss('#export-config');
+  readonly importConfigButton = this.root.getByCss('#import-config');
   readonly memoryDumpButton = this.root.getByCss('#memory-dump');
-  readonly engineMetrics = this.root.getByCss('oib-engine-metrics');
 }
 
 const engineSettings: EngineSettingsDTO = {
@@ -52,6 +56,8 @@ describe('EngineDetailComponent', () => {
   let ipFilterService: MockObject<IpFilterService>;
   let certificateService: MockObject<CertificateService>;
   let transformerService: MockObject<TransformerService>;
+  let configTransferService: MockObject<ConfigTransferService>;
+  let modalService: MockModalService<ImportConfigModalComponent>;
 
   beforeEach(() => {
     engineService = createMock(EngineService);
@@ -62,6 +68,7 @@ describe('EngineDetailComponent', () => {
     ipFilterService = createMock(IpFilterService);
     certificateService = createMock(CertificateService);
     transformerService = createMock(TransformerService);
+    configTransferService = createMock(ConfigTransferService);
 
     engineService.getEngineSettings.mockReturnValue(of(engineSettings));
     engineService.getInfo.mockReturnValue(of(testData.engine.oIBusInfo));
@@ -76,6 +83,7 @@ describe('EngineDetailComponent', () => {
         provideI18nTesting(),
         provideRouter([]),
         provideHttpClientTesting(),
+        provideModalTesting(),
         { provide: EngineService, useValue: engineService },
         { provide: WindowService, useValue: windowService },
         { provide: ConfirmationService, useValue: confirmationService },
@@ -83,9 +91,11 @@ describe('EngineDetailComponent', () => {
         { provide: ScanModeService, useValue: scanModeService },
         { provide: IpFilterService, useValue: ipFilterService },
         { provide: CertificateService, useValue: certificateService },
-        { provide: TransformerService, useValue: transformerService }
+        { provide: TransformerService, useValue: transformerService },
+        { provide: ConfigTransferService, useValue: configTransferService }
       ]
     });
+    modalService = TestBed.inject(MockModalService);
   });
 
   test('should display engine settings', async () => {
@@ -153,5 +163,39 @@ describe('EngineDetailComponent', () => {
     await tester.memoryDumpButton.click();
 
     expect(engineService.dumpMemory).not.toHaveBeenCalled();
+  });
+
+  test('should export the configuration', async () => {
+    configTransferService.export.mockReturnValue(of(undefined));
+
+    const tester = new EngineDetailComponentTester();
+    tester.fixture.detectChanges();
+
+    await tester.exportConfigButton.click();
+
+    expect(configTransferService.export).toHaveBeenCalled();
+  });
+
+  test('should show an error notification when the export fails', async () => {
+    configTransferService.export.mockReturnValue(throwError(() => 'boom'));
+
+    const tester = new EngineDetailComponentTester();
+    tester.fixture.detectChanges();
+
+    await tester.exportConfigButton.click();
+
+    expect(notificationService.errorMessage).toHaveBeenCalledWith('boom');
+  });
+
+  test('should open the import config modal and reload the page once it closes with a result', async () => {
+    const fakeImportComponent = createMock(ImportConfigModalComponent);
+    modalService.mockClosedModal(fakeImportComponent, { appliedUpgrades: [], warnings: [] });
+
+    const tester = new EngineDetailComponentTester();
+    tester.fixture.detectChanges();
+
+    await tester.importConfigButton.click();
+
+    expect(windowService.reload).toHaveBeenCalled();
   });
 });
