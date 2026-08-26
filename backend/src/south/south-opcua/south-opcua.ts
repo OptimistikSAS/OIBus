@@ -28,7 +28,7 @@ import {
   TimestampsToReturn,
   UserTokenType
 } from 'node-opcua';
-import { HistoryDataOptions, HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
+import { EUInformation, HistoryDataOptions, HistoryReadValueIdOptions, Range } from 'node-opcua-types/source/_generated_opcua_types';
 import { createSessionConfigs, getHistoryReadRequest, getTimestamp, logMessages, parseOPCUAValue } from '../../service/utils-opcua';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
 
@@ -400,7 +400,10 @@ export default class SouthOPCUA
   }
 
   /**
-   * Browse the OPC-UA address space one level at a time for the interactive explore feature.
+   * Browse the OPC-UA address space one level at a time for the interactive explore feature. For every
+   * Variable found in the level, also fetches its current value and, when the server exposes them (the
+   * OPC-UA "AnalogItem" convention), its engineering unit and acceptable range — done eagerly, before
+   * returning, so the tree shows this metadata immediately rather than requiring a separate step.
    * @param parentId - the node id to expand, or null to browse the Objects folder root (ns=0;i=85)
    */
   async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
@@ -422,15 +425,25 @@ export default class SouthOPCUA
         references.push(...(nextResult.references ?? []));
         continuationPoint = nextResult.continuationPoint;
       }
-      return references.map(reference => ({
-        id: reference.nodeId.toString(),
-        name: reference.displayName?.text ?? reference.browseName?.toString() ?? reference.nodeId.toString(),
-        metadata: {
-          nodeId: reference.nodeId.toString(),
-          type: NodeClass[reference.nodeClass] ?? String(reference.nodeClass)
-        },
-        hasChildren: reference.nodeClass === NodeClass.Object || reference.nodeClass === NodeClass.Variable
-      }));
+
+      const liveData = await this.readVariableLiveData(
+        session,
+        references.filter(reference => reference.nodeClass === NodeClass.Variable)
+      );
+
+      return references.map(reference => {
+        const nodeIdString = reference.nodeId.toString();
+        return {
+          id: nodeIdString,
+          name: reference.displayName?.text ?? reference.browseName?.toString() ?? nodeIdString,
+          metadata: {
+            nodeId: nodeIdString,
+            type: NodeClass[reference.nodeClass] ?? String(reference.nodeClass),
+            ...liveData.get(nodeIdString)
+          },
+          hasChildren: reference.nodeClass === NodeClass.Object || reference.nodeClass === NodeClass.Variable
+        };
+      });
     } catch (error) {
       if (isSessionError(error)) {
         // The session is dead: release it so a later browse reconnects instead of
@@ -440,6 +453,94 @@ export default class SouthOPCUA
       }
       throw error;
     }
+  }
+
+  /**
+   * For every browsed Variable, batch-fetch its current value plus, when present, its unit and
+   * acceptable range. Units/ranges are not plain node attributes in OPC-UA: they only exist as child
+   * "EngineeringUnits"/"EURange" Property nodes on servers that model the variable as an AnalogItem, so
+   * finding them costs one extra browse (batched over every variable in the level) before the values
+   * themselves can be read. Regardless of how many variables are in the level, this is at most 3 requests
+   * total (1 value read + 1 property browse, run in parallel, then 1 property-value read) — never a
+   * per-node round trip.
+   *
+   * Best-effort: a server that doesn't support one of these reads/browses degrades to plain entries
+   * rather than failing the whole explore step.
+   */
+  private async readVariableLiveData(
+    session: ClientSession,
+    variableReferences: Array<ReferenceDescription>
+  ): Promise<Map<string, { value?: string; unit?: string; min?: number; max?: number }>> {
+    const result = new Map<string, { value?: string; unit?: string; min?: number; max?: number }>();
+    if (variableReferences.length === 0) {
+      return result;
+    }
+    const variableNodeIds = variableReferences.map(reference => reference.nodeId.toString());
+
+    try {
+      const [valueDataValues, propertyBrowseResults] = await Promise.all([
+        session.read(variableNodeIds.map(nodeId => ({ nodeId, attributeId: AttributeIds.Value }))),
+        session.browse(variableNodeIds)
+      ]);
+
+      variableReferences.forEach((reference, index) => {
+        const dataValue = valueDataValues[index];
+        const entry: { value?: string; unit?: string; min?: number; max?: number } = {};
+        if (dataValue && dataValue.statusCode.value === StatusCodes.Good.value && dataValue.value?.value != null) {
+          const parsedValue = parseOPCUAValue(reference.displayName?.text ?? variableNodeIds[index], dataValue.value, this.logger);
+          if (parsedValue) {
+            entry.value = parsedValue;
+          }
+        }
+        result.set(variableNodeIds[index], entry);
+      });
+
+      // EngineeringUnits/EURange live as child Property nodes (HasProperty), not as attributes of the
+      // variable itself — locate them per variable from the batched browse above before they can be read.
+      const propertyLookups: Array<{ variableNodeId: string; kind: 'unit' | 'range'; propertyNodeId: string }> = [];
+      propertyBrowseResults.forEach((propertyBrowseResult, index) => {
+        for (const propertyReference of propertyBrowseResult.references ?? []) {
+          const propertyName = propertyReference.browseName?.name;
+          if (propertyName === 'EngineeringUnits' || propertyName === 'EURange') {
+            propertyLookups.push({
+              variableNodeId: variableNodeIds[index],
+              kind: propertyName === 'EngineeringUnits' ? 'unit' : 'range',
+              propertyNodeId: propertyReference.nodeId.toString()
+            });
+          }
+        }
+      });
+
+      if (propertyLookups.length > 0) {
+        const propertyDataValues = await session.read(
+          propertyLookups.map(lookup => ({ nodeId: lookup.propertyNodeId, attributeId: AttributeIds.Value }))
+        );
+        propertyLookups.forEach((lookup, index) => {
+          const dataValue = propertyDataValues[index];
+          if (!dataValue || dataValue.statusCode.value !== StatusCodes.Good.value || dataValue.value?.value == null) {
+            return;
+          }
+          const entry = result.get(lookup.variableNodeId) ?? {};
+          if (lookup.kind === 'unit') {
+            const euInformation = dataValue.value.value as EUInformation;
+            if (euInformation.displayName?.text) {
+              entry.unit = euInformation.displayName.text;
+            }
+          } else {
+            const range = dataValue.value.value as Range;
+            entry.min = range.low;
+            entry.max = range.high;
+          }
+          result.set(lookup.variableNodeId, entry);
+        });
+      }
+    } catch (error) {
+      // Never let a value/unit read failure (unsupported server, timeout, ...) fail the browse itself —
+      // the caller falls back to plain entries.
+      this.logger.debug(`Could not read value/unit while exploring: ${getErrorMessage(error)}`);
+    }
+
+    return result;
   }
 
   /**
