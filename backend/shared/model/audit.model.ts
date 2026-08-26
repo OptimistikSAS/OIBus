@@ -15,6 +15,7 @@ export const AUDIT_ENTITY_TYPES = [
   'south_connector',
   'south_item',
   'south_item_group',
+  'configuration_workflow',
   'north_connector',
   'north_transformer',
   'history_query',

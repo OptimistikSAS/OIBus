@@ -167,6 +167,7 @@
       "south_connector": "South connector",
       "south_item": "South item",
       "south_item_group": "South item group",
+      "configuration_workflow": "Configuration workflow",
       "north_connector": "North connector",
       "north_transformer": "North transformer",
       "history_query": "History query",
