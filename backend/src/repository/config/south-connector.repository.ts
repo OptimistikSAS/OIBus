@@ -34,6 +34,7 @@ const PAGE_SIZE = 50;
 const ITEM_JOIN_SELECT =
   `SELECT si.id, si.name, si.enabled, si.scan_mode_id, si.settings, si.sync_with_group, ` +
   `si.max_read_interval, si.read_delay, si.start_time_offset, si.end_time_offset, si.recovery_strategy, si.created_by, si.updated_by, si.created_at, si.updated_at, ` +
+  `si.created_by_workflow_id, si.disabled_reason, ` +
   `${scanModeAliasedColumns('sm', 'sm_')}, ` +
   `g.id AS g_id, g.name AS g_name, g.start_time_offset AS g_start_time_offset, g.end_time_offset AS g_end_time_offset, g.max_read_interval AS g_max_read_interval, ` +
   `g.read_delay AS g_read_delay, g.recovery_strategy AS g_recovery_strategy, g.created_by AS g_created_by, g.updated_by AS g_updated_by, ` +
@@ -616,14 +617,65 @@ export default class SouthConnectorRepository {
     transaction();
   }
 
+  // Both clear disabled_reason: whatever workflow-diagnosed reason an item may have carried, a
+  // person's own manual enable/disable is not that — see disableItemWithReason() below for the one
+  // that sets it.
   enableItem(id: string): void {
-    const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET enabled = 1 WHERE id = ?;`;
+    const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET enabled = 1, disabled_reason = NULL WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
   disableItem(id: string): void {
-    const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET enabled = 0 WHERE id = ?;`;
+    const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET enabled = 0, disabled_reason = NULL WHERE id = ?;`;
     this.database.prepare(query).run(id);
+  }
+
+  /**
+   * Claims ownership of an item for a self-scoping Configuration Workflow, right after the workflow
+   * creates it — the only way `created_by_workflow_id` is ever set (never part of the normal item
+   * create/update path).
+   */
+  claimItemForWorkflow(southConnectorId: string, itemId: string, workflowId: string, updatedBy: string): void {
+    const southType = this.findSouthById(southConnectorId)?.type;
+    const before = this.findItemById(southConnectorId, itemId);
+    this.database
+      .prepare(
+        `UPDATE ${SOUTH_ITEMS_TABLE} SET created_by_workflow_id = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
+      )
+      .run(workflowId, updatedBy, itemId);
+    const after = this.findItemById(southConnectorId, itemId);
+    this.auditService.record(
+      'south_item',
+      itemId,
+      'UPDATE',
+      southType ? this.redactItem(before, southType) : (before as unknown as Record<string, unknown> | null),
+      southType ? this.redactItem(after, southType) : (after as unknown as Record<string, unknown> | null),
+      updatedBy
+    );
+  }
+
+  /**
+   * Auto-disables an item because a Configuration Workflow's discovery no longer finds the entry it
+   * corresponds to — distinct from a person's manual disableItem(), which leaves disabled_reason null
+   * so the two are never confused.
+   */
+  disableItemWithReason(southConnectorId: string, itemId: string, reason: string, updatedBy: string): void {
+    const southType = this.findSouthById(southConnectorId)?.type;
+    const before = this.findItemById(southConnectorId, itemId);
+    this.database
+      .prepare(
+        `UPDATE ${SOUTH_ITEMS_TABLE} SET enabled = 0, disabled_reason = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
+      )
+      .run(reason, updatedBy, itemId);
+    const after = this.findItemById(southConnectorId, itemId);
+    this.auditService.record(
+      'south_item',
+      itemId,
+      'UPDATE',
+      southType ? this.redactItem(before, southType) : (before as unknown as Record<string, unknown> | null),
+      southType ? this.redactItem(after, southType) : (after as unknown as Record<string, unknown> | null),
+      updatedBy
+    );
   }
 
   moveItemsToGroup(itemIds: Array<string>, groupId: string | null): void {
@@ -750,7 +802,9 @@ export function toItemEntityFromJoinedRow(row: Record<string, string | number | 
     createdBy: row.created_by as string,
     updatedBy: row.updated_by as string,
     createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string
+    updatedAt: row.updated_at as string,
+    createdByWorkflowId: (row.created_by_workflow_id as string | null) ?? null,
+    disabledReason: (row.disabled_reason as string | null) ?? null
   };
 }
 
