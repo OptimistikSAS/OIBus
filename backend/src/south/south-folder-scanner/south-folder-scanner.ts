@@ -186,17 +186,13 @@ export default class SouthFolderScanner
   }
 
   /**
-   * List files under {@link dirPath}, walking into subdirectories when `item.settings.recursive`
-   * is enabled. Returns paths **relative to the original input folder** — i.e. a bare basename
-   * for files at the top level, `subdir/name` for files nested one level down, and so on.
-   *
-   * The input folder itself is never included in the returned strings: top-level files keep the
-   * exact basename that `fs.readdir` would have produced (matching the pre-recursive behaviour),
-   * and nested files just get their relative subdir path prepended.
-   *
-   */
-  /**
-   * Browse the input folder one level at a time for the interactive explore feature.
+   * Browse the input folder one level at a time for the interactive explore feature. For every entry,
+   * also fetches `ctime` (last inode/metadata change — not creation time, despite the name: that's
+   * `birthtime`, which some filesystems don't track at all, unlike `ctime`). Files additionally get
+   * their `size` and `mtime` (last content change); folders instead get `files`, a count of the files
+   * directly inside them (one extra `readdir`, not recursive) — `size`/`mtime` are deliberately left off
+   * folders: a directory's own size is its inode size on disk, not the size of its contents, and its
+   * mtime only reflects an entry being added/removed inside it, not a change to any file's content.
    * @param parentId - a folder path relative to the input folder, or null to browse the input folder root
    */
   async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
@@ -209,19 +205,44 @@ export default class SouthFolderScanner
     }
 
     const entries = await fs.readdir(target, { withFileTypes: true });
-    return entries
-      .filter(entry => entry.isDirectory() || entry.isFile())
-      .map(entry => {
-        const isDirectory = entry.isDirectory();
-        return {
-          id: path.join(relative, entry.name),
-          name: entry.name,
-          metadata: {
-            type: isDirectory ? 'folder' : 'file'
-          },
-          hasChildren: isDirectory
-        };
-      });
+    return Promise.all(
+      entries
+        .filter(entry => entry.isDirectory() || entry.isFile())
+        .map(async entry => {
+          const isDirectory = entry.isDirectory();
+          const entryPath = path.join(target, entry.name);
+          const metadata: Record<string, string | number> = { type: isDirectory ? 'folder' : 'file' };
+
+          // Best-effort: a stat/readdir failure on one entry (permission denied, a broken symlink, ...)
+          // shouldn't stop the rest of the level from being explorable.
+          try {
+            const stats = await fs.stat(entryPath);
+            metadata.ctime = DateTime.fromMillis(stats.ctimeMs).toUTC().toISO()!;
+            if (!isDirectory) {
+              metadata.size = stats.size;
+              metadata.mtime = DateTime.fromMillis(stats.mtimeMs).toUTC().toISO()!;
+            }
+          } catch {
+            // leave ctime/size/mtime out for this entry
+          }
+
+          if (isDirectory) {
+            try {
+              const children = await fs.readdir(entryPath, { withFileTypes: true });
+              metadata.files = children.filter(child => child.isFile()).length;
+            } catch {
+              // leave files count out — e.g. readable enough to stat but not to list
+            }
+          }
+
+          return {
+            id: path.join(relative, entry.name),
+            name: entry.name,
+            metadata,
+            hasChildren: isDirectory
+          };
+        })
+    );
   }
 
   private async listFilesRecursively(
