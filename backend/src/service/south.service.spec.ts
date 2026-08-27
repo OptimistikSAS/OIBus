@@ -792,10 +792,9 @@ describe('South Service', () => {
     };
     southConnectorRepository.findSouthById.mock.mockImplementationOnce(() => southConnector);
     southConnectorRepository.findItemById.mock.mockImplementationOnce(() => groupedItem);
+    // southConnector.type is 'opcua' (IoT-family), so the item's own last value comes from the
+    // dedicated caching-strategy cache (getItemCachedValue), not the legacy getItemLastValue.
     const itemCached = {
-      itemId: groupedItem.id,
-      groupId: null,
-      queryTime: '2024-03-01T00:00:00.000Z',
       value: { temperature: 99 },
       trackedInstant: '2024-03-01T00:01:00.000Z'
     };
@@ -806,12 +805,12 @@ describe('South Service', () => {
       value: { temperature: 100 },
       trackedInstant: '2024-03-01T00:03:00.000Z'
     };
-    southCacheRepository.getItemLastValue.mock.mockImplementationOnce(() => itemCached);
+    southCacheRepository.getItemCachedValue.mock.mockImplementationOnce(() => itemCached);
     southCacheRepository.getGroupLastValue.mock.mockImplementationOnce(() => groupCached);
 
     const result = service.getItemLastValue(southId, groupedItem.id);
 
-    assert.deepStrictEqual(southCacheRepository.getItemLastValue.mock.calls[0].arguments, [southId, groupedItem.id]);
+    assert.deepStrictEqual(southCacheRepository.getItemCachedValue.mock.calls[0].arguments, [southId, groupedItem.id]);
     assert.deepStrictEqual(southCacheRepository.getGroupLastValue.mock.calls[0].arguments, [southId, groupId]);
     assert.deepStrictEqual(result, {
       itemLastValue: {
@@ -819,7 +818,7 @@ describe('South Service', () => {
         groupName: 'My Group',
         itemId: groupedItem.id,
         itemName: groupedItem.name,
-        queryTime: itemCached.queryTime,
+        queryTime: itemCached.trackedInstant,
         value: itemCached.value,
         trackedInstant: itemCached.trackedInstant
       },
@@ -3081,6 +3080,66 @@ describe('South Service', () => {
           assert.strictEqual(southItemEntity.maxReadInterval, 3600);
           assert.strictEqual(southItemEntity.readDelay, 200);
           assert.strictEqual(southItemEntity.startTimeOffset, 100);
+        });
+
+        it('should copy the caching-strategy fields from the command onto the entity', async () => {
+          const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
+          const command: SouthConnectorItemCommandDTO = {
+            ...testData.south.itemCommand,
+            id: 'testItemId',
+            cachingStrategy: 'threshold',
+            thresholdType: 'percentage',
+            threshold: 5,
+            rangeLow: 0,
+            rangeHigh: 100,
+            maxCachingInterval: 60_000
+          };
+
+          await copySouthItemCommandToSouthItemEntity(southItemEntity, command, null, 'modbus', testData.scanMode.list, [], false);
+
+          assert.strictEqual(southItemEntity.cachingStrategy, 'threshold');
+          assert.strictEqual(southItemEntity.thresholdType, 'percentage');
+          assert.strictEqual(southItemEntity.threshold, 5);
+          assert.strictEqual(southItemEntity.rangeLow, 0);
+          assert.strictEqual(southItemEntity.rangeHigh, 100);
+          assert.strictEqual(southItemEntity.maxCachingInterval, 60_000);
+        });
+
+        it('should default all caching-strategy fields to null when not provided by the command', async () => {
+          const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
+          const command: SouthConnectorItemCommandDTO = {
+            ...testData.south.itemCommand,
+            id: 'testItemId',
+            cachingStrategy: null,
+            thresholdType: null,
+            threshold: null,
+            rangeLow: null,
+            rangeHigh: null,
+            maxCachingInterval: null
+          };
+
+          await copySouthItemCommandToSouthItemEntity(southItemEntity, command, null, 'modbus', testData.scanMode.list, [], false);
+
+          assert.strictEqual(southItemEntity.cachingStrategy, null);
+          assert.strictEqual(southItemEntity.thresholdType, null);
+          assert.strictEqual(southItemEntity.threshold, null);
+          assert.strictEqual(southItemEntity.rangeLow, null);
+          assert.strictEqual(southItemEntity.rangeHigh, null);
+          assert.strictEqual(southItemEntity.maxCachingInterval, null);
+        });
+
+        it('should reject cachingStrategy "threshold" on an MQTT item', async () => {
+          const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
+          const command: SouthConnectorItemCommandDTO = {
+            ...testData.south.itemCommand,
+            id: 'testItemId',
+            cachingStrategy: 'threshold'
+          };
+
+          await assert.rejects(
+            () => copySouthItemCommandToSouthItemEntity(southItemEntity, command, null, 'mqtt', testData.scanMode.list, [], false),
+            OIBusValidationError
+          );
         });
 
         it('should set syncWithGroup to false when command.syncWithGroup is explicitly false', async () => {
