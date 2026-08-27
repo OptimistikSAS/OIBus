@@ -10,6 +10,7 @@ import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from
 import { AdsEnumInfoEntry } from 'ads-client/dist/types/ads-protocol-types';
 import { SouthDirectQuery } from '../south-interface';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
+import { shouldCacheValue } from '../../service/south-caching-strategy.service';
 
 interface ADSOptions {
   targetAmsNetId: string;
@@ -215,7 +216,10 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
 
   async directQuery(items: Array<SouthConnectorItemEntity<SouthADSItemSettings>>): Promise<OIBusTimeValue | null> {
     const logCtx = workUnitLogCtx(items);
-    const contentResult: Array<OIBusTimeValue> = [];
+    // Values are collected paired with the item that produced them, and grouped per top-level item
+    // (a struct/array item parses into several OIBusTimeValues) since caching-strategy filtering below
+    // treats each top-level item as a single caching unit rather than filtering sub-fields separately.
+    const valuePairs: Array<{ item: SouthConnectorItemEntity<SouthADSItemSettings>; values: Array<OIBusTimeValue> }> = [];
     try {
       await this.buildSymbolCache(items, logCtx);
 
@@ -239,11 +243,11 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
             const item = chunk[i];
             if (!result.success) {
               this.logger.error(logCtx, `Failed to read "${item.settings.address}" (${item.name}): ${result.errorStr}`);
-              return [];
+              return { item, values: [] as Array<OIBusTimeValue> };
             }
             const { dataType } = this.symbolCache.get(item.settings.address)!;
             const value = await this.client!.convertFromRaw(result.value!, dataType);
-            return this.parseValues(
+            const values = this.parseValues(
               `${this.connector.settings.plcName}${item.name}`,
               dataType.type,
               value,
@@ -251,18 +255,55 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
               dataType.subItems,
               dataType.enumInfos
             );
+            return { item, values };
           })
         );
-        contentResult.push(...converted.flat());
+        valuePairs.push(...converted);
       }
 
-      const uncachedResults = await Promise.all(uncachedItems.map(item => this.readAdsSymbol(item, timestamp)));
-      contentResult.push(...uncachedResults.flat());
+      const uncachedResults = await Promise.all(
+        uncachedItems.map(async item => ({ item, values: await this.readAdsSymbol(item, timestamp) }))
+      );
+      valuePairs.push(...uncachedResults);
 
       const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
       this.logger.debug(logCtx, `Requested ${items.length} items in ${requestDuration} ms`);
 
-      await this.addContent({ type: 'time-values', content: contentResult }, startRequest.toUTC().toISO(), items);
+      // Batch-read the previous cached state once for this cycle, then decide per item whether the
+      // newly parsed value(s) should be cached, based on the item's (already group-resolved) caching
+      // strategy. A struct/array item's parsed sub-values are compared/cached as one unit.
+      const lastValues = this.southCacheRepository.getItemsLastValues(
+        this.connector.id,
+        items.map(item => item.id)
+      );
+      const itemsToCache: Array<SouthConnectorItemEntity<SouthADSItemSettings>> = [];
+      const cachedEntries: Array<{ itemId: string; value: unknown; instant: string }> = [];
+      const filteredContent: Array<OIBusTimeValue> = [];
+      for (const { item, values } of valuePairs) {
+        if (values.length === 0) continue;
+        const previous = lastValues.get(item.id) ?? null;
+        const comparableValue = values.map(v => v.data.value);
+        const shouldCache = shouldCacheValue({
+          cachingStrategy: item.cachingStrategy ?? 'allValues',
+          thresholdType: item.thresholdType,
+          threshold: item.threshold,
+          rangeLow: item.rangeLow,
+          rangeHigh: item.rangeHigh,
+          maxCachingInterval: item.maxCachingInterval,
+          previousCachedValue: previous?.value ?? null,
+          previousCachedInstant: previous?.trackedInstant ?? null,
+          newValue: comparableValue,
+          newQueryTime: timestamp
+        });
+        if (shouldCache) {
+          filteredContent.push(...values);
+          itemsToCache.push(item);
+          cachedEntries.push({ itemId: item.id, value: comparableValue, instant: timestamp });
+        }
+      }
+
+      await this.addContent({ type: 'time-values', content: filteredContent }, startRequest.toUTC().toISO(), itemsToCache);
+      this.southCacheRepository.saveItemsLastValues(this.connector.id, cachedEntries);
     } catch (error: unknown) {
       if (getErrorMessage(error).includes('Client is not connected')) {
         // This branch handles the error itself (reconnect scheduled) rather than rethrowing, so —
@@ -275,7 +316,8 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
         throw error;
       }
     }
-    return contentResult.length > 0 ? contentResult[contentResult.length - 1] : null;
+    const allValues = valuePairs.flatMap(pair => pair.values);
+    return allValues.length > 0 ? allValues[allValues.length - 1] : null;
   }
 
   async readAdsSymbol(
