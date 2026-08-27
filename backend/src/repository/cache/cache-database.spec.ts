@@ -118,5 +118,132 @@ describe('Repository with populated database', () => {
       assert.strictEqual(repository.getItemLastValue('southA', 'i2'), null);
       assert.ok(repository.getItemLastValue('southB', 'i1'));
     });
+
+    describe('saveItemsLastValues', () => {
+      it('should do nothing when values is empty', () => {
+        assert.doesNotThrow(() => repository.saveItemsLastValues('southId', []));
+      });
+
+      it('should batch-insert more than 100 items across multiple internal chunks', () => {
+        const values = Array.from({ length: 250 }, (_, i) => ({ itemId: `item${i}`, value: i, instant: `2023-01-01T00:00:${i}Z` }));
+        repository.saveItemsLastValues('southId', values);
+
+        for (const value of values) {
+          const result = repository.getItemLastValue('southId', value.itemId);
+          assert.ok(result, `expected a row for ${value.itemId}`);
+          assert.strictEqual(result!.value, value.value);
+          assert.strictEqual(result!.trackedInstant, value.instant);
+          assert.strictEqual(result!.groupId, null);
+        }
+
+        const total = database.prepare('SELECT COUNT(*) as count FROM south_item_cache WHERE south_id = ?').get('southId') as {
+          count: number;
+        };
+        assert.strictEqual(total.count, 250);
+      });
+
+      it('should update existing rows instead of creating duplicates (upsert semantics)', () => {
+        repository.saveItemsLastValues('southId', [{ itemId: 'item1', value: 'v1', instant: 'ts1' }]);
+        repository.saveItemsLastValues('southId', [{ itemId: 'item1', value: 'v2', instant: 'ts2' }]);
+
+        const result = repository.getItemLastValue('southId', 'item1');
+        assert.strictEqual(result!.value, 'v2');
+        assert.strictEqual(result!.trackedInstant, 'ts2');
+
+        const total = database
+          .prepare('SELECT COUNT(*) as count FROM south_item_cache WHERE south_id = ? AND item_id = ?')
+          .get('southId', 'item1') as { count: number };
+        assert.strictEqual(total.count, 1);
+      });
+
+      it('should not collide with an existing group-keyed row (item_id IS NULL) for the same group', () => {
+        repository.saveGroupLastValue('southId', 'group1', { value: 'group-value', queryTime: 'gt', trackedInstant: 'gts' });
+        repository.saveItemsLastValues('southId', [{ itemId: 'item1', value: 'item-value', instant: 'its' }]);
+
+        const groupResult = repository.getGroupLastValue('southId', 'group1');
+        assert.ok(groupResult);
+        assert.strictEqual(groupResult!.value, 'group-value');
+        assert.strictEqual(groupResult!.itemId, null);
+
+        const itemResult = repository.getItemLastValue('southId', 'item1');
+        assert.ok(itemResult);
+        assert.strictEqual(itemResult!.value, 'item-value');
+
+        const total = database.prepare('SELECT COUNT(*) as count FROM south_item_cache WHERE south_id = ?').get('southId') as {
+          count: number;
+        };
+        assert.strictEqual(total.count, 2);
+      });
+
+      it('should overwrite a row saved with a duplicate itemId within the same batch (last one wins)', () => {
+        repository.saveItemsLastValues('southId', [
+          { itemId: 'item1', value: 'first', instant: 'ts1' },
+          { itemId: 'item1', value: 'second', instant: 'ts2' }
+        ]);
+
+        const result = repository.getItemLastValue('southId', 'item1');
+        assert.strictEqual(result!.value, 'second');
+        const total = database
+          .prepare('SELECT COUNT(*) as count FROM south_item_cache WHERE south_id = ? AND item_id = ?')
+          .get('southId', 'item1') as { count: number };
+        assert.strictEqual(total.count, 1);
+      });
+    });
+
+    describe('getItemsLastValues', () => {
+      it('should return an empty map when itemIds is empty', () => {
+        const result = repository.getItemsLastValues('southId', []);
+        assert.strictEqual(result.size, 0);
+      });
+
+      it('should return an empty map when southId has no matching rows', () => {
+        const result = repository.getItemsLastValues('nonexistent', ['item1', 'item2']);
+        assert.strictEqual(result.size, 0);
+      });
+
+      it('should return a map keyed by itemId for the requested ids only', () => {
+        repository.saveItemLastValue('southId', { itemId: 'item1', groupId: null, value: 'v1', queryTime: 'q', trackedInstant: 't1' });
+        repository.saveItemLastValue('southId', { itemId: 'item2', groupId: null, value: 'v2', queryTime: 'q', trackedInstant: 't2' });
+        repository.saveItemLastValue('southId', { itemId: 'item3', groupId: null, value: 'v3', queryTime: 'q', trackedInstant: 't3' });
+
+        const result = repository.getItemsLastValues('southId', ['item1', 'item3', 'not-there']);
+        assert.strictEqual(result.size, 2);
+        assert.strictEqual(result.get('item1')!.value, 'v1');
+        assert.strictEqual(result.get('item3')!.value, 'v3');
+        assert.strictEqual(result.has('item2'), false);
+      });
+
+      it('should batch-read more than 100 items across multiple internal chunks', () => {
+        const values = Array.from({ length: 250 }, (_, i) => ({ itemId: `item${i}`, value: i, instant: `ts${i}` }));
+        repository.saveItemsLastValues('southId', values);
+
+        const result = repository.getItemsLastValues(
+          'southId',
+          values.map(v => v.itemId)
+        );
+        assert.strictEqual(result.size, 250);
+        for (const value of values) {
+          assert.strictEqual(result.get(value.itemId)!.value, value.value);
+        }
+      });
+
+      it('should not include group-keyed rows (item_id IS NULL) in the result', () => {
+        repository.saveGroupLastValue('southId', 'group1', { value: 'group-value', queryTime: 'gt', trackedInstant: 'gts' });
+        repository.saveItemLastValue('southId', { itemId: 'item1', groupId: 'group1', value: 'v1', queryTime: 'q', trackedInstant: 't1' });
+
+        const result = repository.getItemsLastValues('southId', ['item1', 'group1']);
+        assert.strictEqual(result.size, 1);
+        assert.strictEqual(result.get('item1')!.value, 'v1');
+      });
+
+      it('should scope results to the requested connector', () => {
+        repository.saveItemLastValue('southA', { itemId: 'item1', groupId: null, value: 'A', queryTime: 'q', trackedInstant: 't' });
+        repository.saveItemLastValue('southB', { itemId: 'item1', groupId: null, value: 'B', queryTime: 'q', trackedInstant: 't' });
+
+        const result = repository.getItemsLastValues('southA', ['item1']);
+        assert.strictEqual(result.size, 1);
+        assert.strictEqual(result.get('item1')!.value, 'A');
+      });
+    });
   });
 });

@@ -567,8 +567,14 @@ describe('Transformer Service', () => {
         maxElements?: number
       ) => Promise<Array<{ output: Buffer; metadata: unknown }>>;
     const buildTransformer = () => ({
-      transformInMemory: mock.fn(async () => ({ output: Buffer.from('imem'), metadata })),
-      transform: mock.fn(async () => ({ output: Buffer.from('stream'), metadata }))
+      transformInMemory: mock.fn(async (_data: unknown, _source: unknown, _filename: string | null) => ({
+        output: Buffer.from('imem'),
+        metadata
+      })),
+      transform: mock.fn(async (_data: unknown, _source: unknown, _filename: string | null) => ({
+        output: Buffer.from('stream'),
+        metadata
+      }))
     });
 
     it('runs a single batch for time-values without chunking', async () => {
@@ -606,7 +612,7 @@ describe('Transformer Service', () => {
     it('streams any file content through transform', async () => {
       const fsModule = nodeRequire('node:fs') as Record<string, unknown>;
       const orig = fsModule['createReadStream'];
-      const createReadStreamMock = mock.fn(() => 'stream');
+      const createReadStreamMock = mock.fn((_path: string) => 'stream');
       fsModule['createReadStream'] = createReadStreamMock;
       try {
         const t = buildTransformer();
@@ -697,7 +703,10 @@ describe('Transformer Service', () => {
       } as StandardTransformer;
       transformerRepository.findById.mock.mockImplementation(() => standardTransformer);
 
-      const content = { type: 'time-values' as const, content: [{ pointId: 'p1', timestamp: '2024-01-01T00:00:00.000Z', data: {} }] };
+      const content = {
+        type: 'time-values' as const,
+        content: [{ pointId: 'p1', timestamp: '2024-01-01T00:00:00.000Z', data: { value: '1' } }]
+      };
       const result = await service.runTransformer('std-json', {}, content);
 
       assert.strictEqual(transformerRepository.findById.mock.calls[0].arguments[0], 'std-json');

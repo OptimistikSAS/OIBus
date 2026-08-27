@@ -51,7 +51,7 @@ describe('NorthAzureDataExplorer', () => {
   // Kusto ingest client mock
   const ingestResourceManagerKustoClient = { axiosInstance: { defaults: {} as Record<string, unknown> } };
   const ingestClientInstance = {
-    ingestFromFile: mock.fn(async () => undefined),
+    ingestFromFile: mock.fn(async (_filePath: string, _ingestionProperties?: Record<string, unknown>) => undefined),
     close: mock.fn(),
     resourceManager: { kustoClient: ingestResourceManagerKustoClient }
   };

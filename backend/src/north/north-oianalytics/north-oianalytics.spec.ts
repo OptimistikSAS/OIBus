@@ -29,7 +29,7 @@ describe('NorthOIAnalytics', () => {
   const oIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock() as unknown as OIAnalyticsRegistrationRepository;
 
   const mockGzipStream = { pipe: mock.fn() };
-  const readStreamPipeMock = mock.fn(() => mockGzipStream);
+  const readStreamPipeMock = mock.fn((_destination: unknown) => mockGzipStream);
   const mockReadStream = {
     pipe: readStreamPipeMock,
     on: mock.fn(),

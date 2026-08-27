@@ -4,7 +4,6 @@ import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { mockModule, reloadModule } from '../tests/utils/test-utils';
-import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import type { SouthConnectorEntity } from '../model/south-connector.model';
 import type { OIBusContent } from '../../shared/model/engine.model';
 import type { Instant } from '../../shared/model/types';
@@ -65,7 +64,6 @@ import type {
 const nodeRequire = createRequire(import.meta.url);
 
 describe('South Connector Factory', () => {
-  const mockLogger = new PinoLogger();
   const mockAddContent = mock.fn(
     async (_southId: string, _data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
       undefined
@@ -169,7 +167,6 @@ describe('South Connector Factory', () => {
     buildSouth(
       settings,
       mockAddContent,
-      mockLogger,
       mockSouthCacheFolder,
       mockSouthCacheRepository,
       mockCertificateRepository,

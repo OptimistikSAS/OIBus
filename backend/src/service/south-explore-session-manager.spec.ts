@@ -19,8 +19,8 @@ const utilsExports = {
 
 const buildSouth = (): SouthConnector<SouthSettings, SouthItemSettings> => {
   const south = new SouthConnectorMock(testData.south.list[0]) as unknown as SouthConnectorMock;
-  south.hasExplore.mock.mockImplementation(() => true);
-  south.explore.mock.mockImplementation(async () => [{ id: 'node1', name: 'Node 1', type: 'Object', hasChildren: true }]);
+  (south.hasExplore as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => true);
+  south.explore.mock.mockImplementation(async () => [{ id: 'node1', name: 'Node 1', metadata: { type: 'Object' }, hasChildren: true }]);
   return south as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
 };
 
@@ -61,7 +61,7 @@ describe('SouthExploreSessionManager', () => {
 
     const entries = await manager.browse(sessionId, 'parent');
 
-    assert.deepStrictEqual(entries, [{ id: 'node1', name: 'Node 1', type: 'Object', hasChildren: true }]);
+    assert.deepStrictEqual(entries, [{ id: 'node1', name: 'Node 1', metadata: { type: 'Object' }, hasChildren: true }]);
     assert.strictEqual((south as unknown as SouthConnectorMock).explore.mock.calls[0].arguments[0], 'parent');
   });
 
@@ -73,7 +73,7 @@ describe('SouthExploreSessionManager', () => {
   it('should throw when the connector does not support exploration', async () => {
     const manager = new SouthExploreSessionManager();
     const south = new SouthConnectorMock(testData.south.list[0]);
-    south.hasExplore.mock.mockImplementation(() => false);
+    (south.hasExplore as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => false);
     const sessionId = await manager.start(south as unknown as SouthConnector<SouthSettings, SouthItemSettings>);
 
     await assert.rejects(() => manager.browse(sessionId, null), /does not support exploration/);

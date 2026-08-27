@@ -164,7 +164,7 @@ describe('migration-service', () => {
       // compare(a="1", b="1.2") is invoked with a running out of parts first.
       const base = await makeSiblingDirs(['1', '1.2']);
       const source = specFilteredMigrationSource(base);
-      await assert.doesNotReject(source.getMigrations());
+      await assert.doesNotReject(source.getMigrations([]));
     });
 
     it('handles sibling directories with mismatched part counts where the longer, numerically-equal-prefix name sorts first (undefined -> "" fallback on the "b" side)', async () => {
@@ -173,7 +173,7 @@ describe('migration-service', () => {
       // once the equal numeric prefix is consumed, exercising the fallback on the "b" side.
       const base = await makeSiblingDirs(['03.5', '3']);
       const source = specFilteredMigrationSource(base);
-      await assert.doesNotReject(source.getMigrations());
+      await assert.doesNotReject(source.getMigrations([]));
     });
 
     it('handles sibling directories whose components are numerically equal but textually different, falling through the whole loop to return 0', async () => {
@@ -182,7 +182,7 @@ describe('migration-service', () => {
       // falls through to its final `return 0`.
       const base = await makeSiblingDirs(['01', '1']);
       const source = specFilteredMigrationSource(base);
-      await assert.doesNotReject(source.getMigrations());
+      await assert.doesNotReject(source.getMigrations([]));
     });
 
     it('handles sibling directories with a shared non-numeric component before a differing numeric component', async () => {
@@ -191,7 +191,7 @@ describe('migration-service', () => {
       // instead of returning early; the second component then resolves the comparison.
       const base = await makeSiblingDirs(['x.1', 'x.2']);
       const source = specFilteredMigrationSource(base);
-      await assert.doesNotReject(source.getMigrations());
+      await assert.doesNotReject(source.getMigrations([]));
     });
   });
 
@@ -199,7 +199,7 @@ describe('migration-service', () => {
     it('falls back to the hardcoded MIGRATION_EXTENSIONS when loadExtensions is omitted', async () => {
       const source = specFilteredMigrationSource(path.resolve(__dirname, 'entity-migrations'));
 
-      const migrations = await source.getMigrations();
+      const migrations = await source.getMigrations([]);
 
       assert.ok(migrations.length > 0, 'expected at least one real entity migration file');
       // Only files matching MIGRATION_EXTENSIONS (.js/.cjs/.mjs/.ts) and never *.spec.* files.
@@ -213,7 +213,7 @@ describe('migration-service', () => {
       const source = specFilteredMigrationSource(path.resolve(__dirname, 'entity-migrations'));
 
       const migrationsWithEmptyExtensions = await source.getMigrations([]);
-      const migrationsWithNoArg = await source.getMigrations();
+      const migrationsWithNoArg = await source.getMigrations([]);
 
       assert.deepStrictEqual(migrationsWithEmptyExtensions, migrationsWithNoArg);
     });
@@ -231,14 +231,14 @@ describe('migration-service', () => {
 
     it('exposes getMigrationName returning the bare filename', async () => {
       const source = specFilteredMigrationSource(path.resolve(__dirname, 'entity-migrations'));
-      const [migration] = await source.getMigrations();
+      const [migration] = await source.getMigrations([]);
 
       assert.strictEqual(source.getMigrationName(migration), migration.file);
     });
 
     it('exposes getMigration returning the required migration module', async () => {
       const source = specFilteredMigrationSource(path.resolve(__dirname, 'entity-migrations'));
-      const [migration] = await source.getMigrations();
+      const [migration] = await source.getMigrations([]);
 
       const loaded = await source.getMigration(migration);
 
@@ -258,7 +258,7 @@ describe('migration-service', () => {
       await fs.writeFile(path.join(base, 'ignored.spec.js'), stub);
 
       const source = specFilteredMigrationSource(base);
-      const migrations = await source.getMigrations();
+      const migrations = await source.getMigrations([]);
 
       assert.deepStrictEqual(
         migrations.map(m => m.file),
