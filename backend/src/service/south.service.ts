@@ -3,8 +3,10 @@ import { encryptionService } from './encryption.service';
 
 // South imports
 import {
+  IOT_FAMILY_SOUTH_TYPES,
   OIBusSouthType,
   SOUTH_SINGLE_ITEMS,
+  SouthCachingStrategy,
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
@@ -473,28 +475,50 @@ export default class SouthService {
 
   getItemLastValue(southId: string, itemId: string): SouthItemLastValueResponse {
     // Verify south connector and item exist
-    this.findById(southId);
+    const southConnector = this.findById(southId);
     const item = this.findItemById(southId, itemId);
 
-    // The item's own last cached value/instant, always keyed by item ID (Phase 5 now reliably
-    // populates item-keyed south_item_cache rows for all six IoT connectors, so this is never a
-    // dead lookup for them any more).
-    const ownLastValue = this.southCacheRepository.getItemLastValue(southId, itemId);
-    const itemLastValue: SouthItemLastValue | null = ownLastValue
-      ? {
-          groupId: item.group?.id || null,
-          itemId,
-          itemName: item.name,
-          groupName: item.group?.name || '',
-          queryTime: ownLastValue.queryTime,
-          value: ownLastValue.value,
-          trackedInstant: ownLastValue.trackedInstant
-        }
-      : null;
+    // The item's own last value/instant. IoT-family connectors persist their own per-item
+    // caching-strategy state in the dedicated cached_value/cached_instant columns (via
+    // saveItemsLastValues/getItemCachedValue), kept separate from the legacy value/tracked_instant
+    // columns used by the pre-existing "show a raw last value in the UI" mechanism on other
+    // direct-query connectors — read from whichever mechanism this south type actually populates.
+    let itemLastValue: SouthItemLastValue | null = null;
+    if (IOT_FAMILY_SOUTH_TYPES.includes(southConnector.type)) {
+      const cachedValue = this.southCacheRepository.getItemCachedValue(southId, itemId);
+      itemLastValue = cachedValue
+        ? {
+            groupId: item.group?.id || null,
+            itemId,
+            itemName: item.name,
+            groupName: item.group?.name || '',
+            queryTime: cachedValue.trackedInstant,
+            value: cachedValue.value,
+            trackedInstant: cachedValue.trackedInstant
+          }
+        : null;
+    } else {
+      const ownLastValue = this.southCacheRepository.getItemLastValue(southId, itemId);
+      itemLastValue = ownLastValue
+        ? {
+            groupId: item.group?.id || null,
+            itemId,
+            itemName: item.name,
+            groupName: item.group?.name || '',
+            queryTime: ownLastValue.queryTime,
+            value: ownLastValue.value,
+            trackedInstant: ownLastValue.trackedInstant
+          }
+        : null;
+    }
 
-    // When the item belongs to a group, also surface the group's own last tracked instant
-    // (group-keyed row, shared across the whole group) alongside the item's own value.
-    const groupLastValueEntry = item.group ? this.southCacheRepository.getGroupLastValue(southId, item.group.id) : null;
+    // When the item is actually synced with its group, also surface the group's own last tracked
+    // instant (group-keyed row, shared across the whole group) alongside the item's own value.
+    // An item merely belonging to a group without being synced to it (syncWithGroup: false) never
+    // reads or writes through that group's shared cache row, so showing it here would attribute an
+    // unrelated group value to this item.
+    const groupLastValueEntry =
+      item.group && item.syncWithGroup ? this.southCacheRepository.getGroupLastValue(southId, item.group.id) : null;
     const groupLastValue: SouthItemLastValue | null = groupLastValueEntry
       ? {
           groupId: item.group!.id,
@@ -592,12 +616,19 @@ export default class SouthService {
   ): void {
     if (SOUTH_SINGLE_ITEMS.includes(southConnector.type)) return;
 
+    // Many affected items can share the same group (e.g. deleting a group with hundreds of synced
+    // items) — cache each group's row per call instead of re-reading it once per item.
+    const groupCacheById = new Map<string, ReturnType<SouthCacheRepository['getGroupLastValue']>>();
     for (const { before, afterGroupId, afterSyncWithGroup } of items) {
       const wasUsingSharedGroupCache = !!(before.group && before.syncWithGroup);
       const willUseOwnCacheGoingForward = !afterSyncWithGroup || afterGroupId === null;
       if (!wasUsingSharedGroupCache || !willUseOwnCacheGoingForward) continue;
 
-      const groupCache = this.southCacheRepository.getGroupLastValue(southConnector.id, before.group!.id);
+      const groupId = before.group!.id;
+      if (!groupCacheById.has(groupId)) {
+        groupCacheById.set(groupId, this.southCacheRepository.getGroupLastValue(southConnector.id, groupId));
+      }
+      const groupCache = groupCacheById.get(groupId);
       if (!groupCache?.trackedInstant) continue;
 
       this.southCacheRepository.saveItemLastValue(southConnector.id, {
@@ -884,6 +915,8 @@ export default class SouthService {
 
     const southConnector = this.findById(southId);
 
+    assertCachingStrategyValidForType(southConnector.type, command.historySettings.cachingStrategy ?? null);
+
     const groupEntity: SouthItemGroupCommand = {
       name: command.standardSettings.name,
       southId: southConnector.id,
@@ -923,6 +956,7 @@ export default class SouthService {
     const readDelay = command.historySettings.readDelay != null ? command.historySettings.readDelay : 0;
     const recoveryStrategy = command.historySettings.recoveryStrategy ?? null;
     const cachingStrategy = command.historySettings.cachingStrategy ?? null;
+    assertCachingStrategyValidForType(southConnector.type, cachingStrategy);
     const groupEntity: Omit<SouthItemGroupCommand, 'southId'> = {
       name: command.standardSettings.name,
       scanMode,
@@ -1058,6 +1092,19 @@ const copySouthConnectorCommandToSouthEntity = async (
   });
 };
 
+/**
+ * MQTT's `any-content` payload is arbitrary JSON, not a guaranteed scalar, so the 'threshold'
+ * caching strategy is never valid on an MQTT south connector's items or groups (only
+ * 'allValues'/'onChange' are). The frontend already hides/rejects this combination in both the
+ * item and group edit modals; this is the defense-in-depth backend guard for any other path that
+ * can set it (API calls, OIAnalytics-pushed config, imports, …).
+ */
+const assertCachingStrategyValidForType = (southType: string, cachingStrategy: SouthCachingStrategy | null): void => {
+  if (southType === 'mqtt' && cachingStrategy === 'threshold') {
+    throw new OIBusValidationError(`Caching strategy "threshold" is not supported by MQTT south items or groups`);
+  }
+};
+
 const copyGroupCommandToGroupEntity = (
   groupEntity: SouthItemGroupEntityLight,
   command: SouthItemGroupCommandDTO,
@@ -1083,6 +1130,7 @@ export const copySouthItemCommandToSouthItemEntity = async (
   groups: Array<SouthItemGroupEntity>,
   retrieveSecretsFromSouth = false
 ): Promise<void> => {
+  assertCachingStrategyValidForType(southType, command.cachingStrategy ?? null);
   const manifest = southManifestList.find(element => element.id === southType)!;
   const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
     attribute => attribute.key === 'settings'
@@ -1101,6 +1149,12 @@ export const copySouthItemCommandToSouthItemEntity = async (
   southItemEntity.startTimeOffset = command.startTimeOffset != null ? command.startTimeOffset : null;
   southItemEntity.endTimeOffset = command.endTimeOffset != null ? command.endTimeOffset : null;
   southItemEntity.recoveryStrategy = command.recoveryStrategy ?? null;
+  southItemEntity.cachingStrategy = command.cachingStrategy ?? null;
+  southItemEntity.thresholdType = command.thresholdType ?? null;
+  southItemEntity.threshold = command.threshold ?? null;
+  southItemEntity.rangeLow = command.rangeLow ?? null;
+  southItemEntity.rangeHigh = command.rangeHigh ?? null;
+  southItemEntity.maxCachingInterval = command.maxCachingInterval ?? null;
   southItemEntity.scanMode =
     command.scanModeId || command.scanModeName ? checkScanMode(scanModes, command.scanModeId, command.scanModeName) : null;
   southItemEntity.group = command.groupId || command.groupName ? checkGroups(groups, command.groupId, command.groupName) : null;

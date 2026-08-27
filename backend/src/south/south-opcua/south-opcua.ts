@@ -752,13 +752,7 @@ export default class SouthOPCUA
                       // Keep the shadow up to date so a later value within the same round-trip for
                       // the same item is compared against the value that was actually cached, not
                       // the stale pre-cycle state.
-                      lastValues.set(associatedItem.id, {
-                        itemId: associatedItem.id,
-                        groupId: null,
-                        queryTime: timeValue.timestamp,
-                        value,
-                        trackedInstant: timeValue.timestamp
-                      });
+                      lastValues.set(associatedItem.id, { value, trackedInstant: timeValue.timestamp });
                     }
                     if (selectedTimestampMs > lastValueTimestampMs) {
                       lastValue = timeValue;
@@ -897,39 +891,21 @@ export default class SouthOPCUA
     // join back to the full entities here (item name is unique within a direct-query batch) and
     // apply the caching strategy in a single post-processing step before addContent.
     const itemsByName = new Map(items.map(item => [item.name, item]));
-    const lastValues = this.southCacheRepository.getItemsLastValues(
-      this.connector.id,
-      items.map(item => item.id)
-    );
-    const itemsToCache: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>> = [];
-    const cachedEntries: Array<{ itemId: string; value: unknown; instant: string }> = [];
-    const filteredContent = content.filter(timeValue => {
+    const candidates = content.flatMap(timeValue => {
       const item = itemsByName.get(timeValue.pointId);
-      if (!item) {
-        return false;
-      }
-      const previous = lastValues.get(item.id) ?? null;
-      const shouldCache = shouldCacheValue({
-        cachingStrategy: item.cachingStrategy ?? 'allValues',
-        thresholdType: item.thresholdType,
-        threshold: item.threshold,
-        rangeLow: item.rangeLow,
-        rangeHigh: item.rangeHigh,
-        maxCachingInterval: item.maxCachingInterval,
-        previousCachedValue: previous?.value ?? null,
-        previousCachedInstant: previous?.trackedInstant ?? null,
-        newValue: timeValue.data.value,
-        newQueryTime: timeValue.timestamp
-      });
-      if (shouldCache) {
-        itemsToCache.push(item);
-        cachedEntries.push({ itemId: item.id, value: timeValue.data.value, instant: timeValue.timestamp });
-      }
-      return shouldCache;
+      return item ? [{ item, value: timeValue }] : [];
     });
+    const cachedPairs = this.applyCachingStrategy(candidates, ({ item, value }) => ({
+      item,
+      value: value.data.value,
+      timestamp: value.timestamp
+    }));
 
-    await this.addContent({ type: 'time-values', content: filteredContent }, queryTime, itemsToCache);
-    this.southCacheRepository.saveItemsLastValues(this.connector.id, cachedEntries);
+    await this.addContent(
+      { type: 'time-values', content: cachedPairs.map(({ value }) => value) },
+      queryTime,
+      cachedPairs.map(({ item }) => item)
+    );
     return content && content.length > 0 ? content[content.length - 1] : null;
   }
 
