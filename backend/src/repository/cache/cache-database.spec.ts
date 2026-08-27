@@ -129,11 +129,10 @@ describe('Repository with populated database', () => {
         repository.saveItemsLastValues('southId', values);
 
         for (const value of values) {
-          const result = repository.getItemLastValue('southId', value.itemId);
+          const result = repository.getItemCachedValue('southId', value.itemId);
           assert.ok(result, `expected a row for ${value.itemId}`);
           assert.strictEqual(result!.value, value.value);
           assert.strictEqual(result!.trackedInstant, value.instant);
-          assert.strictEqual(result!.groupId, null);
         }
 
         const total = database.prepare('SELECT COUNT(*) as count FROM south_item_cache WHERE south_id = ?').get('southId') as {
@@ -146,7 +145,7 @@ describe('Repository with populated database', () => {
         repository.saveItemsLastValues('southId', [{ itemId: 'item1', value: 'v1', instant: 'ts1' }]);
         repository.saveItemsLastValues('southId', [{ itemId: 'item1', value: 'v2', instant: 'ts2' }]);
 
-        const result = repository.getItemLastValue('southId', 'item1');
+        const result = repository.getItemCachedValue('southId', 'item1');
         assert.strictEqual(result!.value, 'v2');
         assert.strictEqual(result!.trackedInstant, 'ts2');
 
@@ -165,7 +164,7 @@ describe('Repository with populated database', () => {
         assert.strictEqual(groupResult!.value, 'group-value');
         assert.strictEqual(groupResult!.itemId, null);
 
-        const itemResult = repository.getItemLastValue('southId', 'item1');
+        const itemResult = repository.getItemCachedValue('southId', 'item1');
         assert.ok(itemResult);
         assert.strictEqual(itemResult!.value, 'item-value');
 
@@ -181,7 +180,7 @@ describe('Repository with populated database', () => {
           { itemId: 'item1', value: 'second', instant: 'ts2' }
         ]);
 
-        const result = repository.getItemLastValue('southId', 'item1');
+        const result = repository.getItemCachedValue('southId', 'item1');
         assert.strictEqual(result!.value, 'second');
         const total = database
           .prepare('SELECT COUNT(*) as count FROM south_item_cache WHERE south_id = ? AND item_id = ?')
@@ -202,9 +201,11 @@ describe('Repository with populated database', () => {
       });
 
       it('should return a map keyed by itemId for the requested ids only', () => {
-        repository.saveItemLastValue('southId', { itemId: 'item1', groupId: null, value: 'v1', queryTime: 'q', trackedInstant: 't1' });
-        repository.saveItemLastValue('southId', { itemId: 'item2', groupId: null, value: 'v2', queryTime: 'q', trackedInstant: 't2' });
-        repository.saveItemLastValue('southId', { itemId: 'item3', groupId: null, value: 'v3', queryTime: 'q', trackedInstant: 't3' });
+        repository.saveItemsLastValues('southId', [
+          { itemId: 'item1', value: 'v1', instant: 't1' },
+          { itemId: 'item2', value: 'v2', instant: 't2' },
+          { itemId: 'item3', value: 'v3', instant: 't3' }
+        ]);
 
         const result = repository.getItemsLastValues('southId', ['item1', 'item3', 'not-there']);
         assert.strictEqual(result.size, 2);
@@ -229,7 +230,7 @@ describe('Repository with populated database', () => {
 
       it('should not include group-keyed rows (item_id IS NULL) in the result', () => {
         repository.saveGroupLastValue('southId', 'group1', { value: 'group-value', queryTime: 'gt', trackedInstant: 'gts' });
-        repository.saveItemLastValue('southId', { itemId: 'item1', groupId: 'group1', value: 'v1', queryTime: 'q', trackedInstant: 't1' });
+        repository.saveItemsLastValues('southId', [{ itemId: 'item1', value: 'v1', instant: 't1' }]);
 
         const result = repository.getItemsLastValues('southId', ['item1', 'group1']);
         assert.strictEqual(result.size, 1);
@@ -237,12 +238,48 @@ describe('Repository with populated database', () => {
       });
 
       it('should scope results to the requested connector', () => {
-        repository.saveItemLastValue('southA', { itemId: 'item1', groupId: null, value: 'A', queryTime: 'q', trackedInstant: 't' });
-        repository.saveItemLastValue('southB', { itemId: 'item1', groupId: null, value: 'B', queryTime: 'q', trackedInstant: 't' });
+        repository.saveItemsLastValues('southA', [{ itemId: 'item1', value: 'A', instant: 't' }]);
+        repository.saveItemsLastValues('southB', [{ itemId: 'item1', value: 'B', instant: 't' }]);
 
         const result = repository.getItemsLastValues('southA', ['item1']);
         assert.strictEqual(result.size, 1);
         assert.strictEqual(result.get('item1')!.value, 'A');
+      });
+    });
+
+    describe('getItemCachedValue / saveItemsLastValues column separation', () => {
+      it('returns null when no cached value has ever been saved for the item', () => {
+        assert.strictEqual(repository.getItemCachedValue('southId', 'item1'), null);
+      });
+
+      it('does not touch the legacy value/tracked_instant columns used by getItemLastValue', () => {
+        repository.saveItemLastValue('southId', {
+          itemId: 'item1',
+          groupId: null,
+          value: 'legacy',
+          queryTime: 'q',
+          trackedInstant: 'legacy-ts'
+        });
+        repository.saveItemsLastValues('southId', [{ itemId: 'item1', value: 'cached', instant: 'cached-ts' }]);
+
+        assert.strictEqual(repository.getItemLastValue('southId', 'item1')!.value, 'legacy');
+        assert.strictEqual(repository.getItemLastValue('southId', 'item1')!.trackedInstant, 'legacy-ts');
+        assert.strictEqual(repository.getItemCachedValue('southId', 'item1')!.value, 'cached');
+        assert.strictEqual(repository.getItemCachedValue('southId', 'item1')!.trackedInstant, 'cached-ts');
+      });
+
+      it('does not touch the dedicated cached_value/cached_instant columns when using the legacy saveItemLastValue', () => {
+        repository.saveItemsLastValues('southId', [{ itemId: 'item1', value: 'cached', instant: 'cached-ts' }]);
+        repository.saveItemLastValue('southId', {
+          itemId: 'item1',
+          groupId: null,
+          value: 'legacy',
+          queryTime: 'q',
+          trackedInstant: 'legacy-ts'
+        });
+
+        assert.strictEqual(repository.getItemCachedValue('southId', 'item1')!.value, 'cached');
+        assert.strictEqual(repository.getItemLastValue('southId', 'item1')!.value, 'legacy');
       });
     });
   });
