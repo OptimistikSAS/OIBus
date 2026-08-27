@@ -2,16 +2,7 @@ import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { DatePipe, JsonPipe } from '@angular/common';
-import { OIBusSouthType, SOUTH_SINGLE_ITEMS } from '../../../../../../backend/shared/model/south-connector.model';
-
-interface SouthItemLastValueDTO {
-  itemId: string;
-  itemName: string;
-  groupName?: string;
-  queryTime: string | null;
-  value: unknown;
-  trackedInstant: string | null;
-}
+import { OIBusSouthType, SouthItemLastValue, SouthItemLastValueResponse } from '../../../../../../backend/shared/model/south-connector.model';
 
 @Component({
   selector: 'oib-view-item-value-modal',
@@ -24,22 +15,30 @@ interface SouthItemLastValueDTO {
 export class ViewItemValueModalComponent {
   private modal = inject(NgbActiveModal);
 
-  itemLastValue: SouthItemLastValueDTO | null = null;
+  /** The item's own last cached value/instant, or null when nothing has been cached yet for it. */
+  itemLastValue: SouthItemLastValue | null = null;
+  /** The group's last tracked value/instant when the item belongs to a group, otherwise null. */
+  groupLastValue: SouthItemLastValue | null = null;
+  itemName = '';
+  groupName = '';
   southType: OIBusSouthType | null = null;
   loading = true;
   error: string | null = null;
 
   /**
    * Call immediately after opening the modal (before the HTTP response).
-   * Stores the connector type so the group-value notice can be shown once data arrives.
+   * Stores the connector type and item/group name so the header can render before data arrives.
    */
-  prepare(southType: OIBusSouthType): void {
+  prepare(southType: OIBusSouthType, itemName: string, groupName: string): void {
     this.southType = southType;
+    this.itemName = itemName;
+    this.groupName = groupName;
   }
 
   /** Call when the HTTP response arrives. Clears the spinner and displays the value. */
-  setData(itemLastValue: SouthItemLastValueDTO, groupName: string): void {
-    this.itemLastValue = { ...itemLastValue, groupName };
+  setData(response: SouthItemLastValueResponse): void {
+    this.itemLastValue = response.itemLastValue;
+    this.groupLastValue = response.groupLastValue;
     this.loading = false;
   }
 
@@ -47,11 +46,6 @@ export class ViewItemValueModalComponent {
   setError(message: string): void {
     this.error = message;
     this.loading = false;
-  }
-
-  /** True when the connector groups items — meaning the displayed value may come from any item in the group. */
-  get isGroupedConnector(): boolean {
-    return this.southType !== null && !SOUTH_SINGLE_ITEMS.includes(this.southType);
   }
 
   close() {
