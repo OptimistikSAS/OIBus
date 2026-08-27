@@ -12,7 +12,6 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { createConnectionOptions, getItem } from '../../service/utils-mqtt';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
-import { shouldCacheValue } from '../../service/south-caching-strategy.service';
 
 /**
  * Class SouthMQTT - Subscribe to a data topic from a MQTT broker
@@ -139,33 +138,44 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
             item: { id: element.item.id, name: element.item.name, topic: element.item.settings.topic }
           });
         }
-        const lastValues = this.southCacheRepository.getItemsLastValues(this.connector.id, Array.from(messagesByItem.keys()));
-        const cachedEntries: Array<{ itemId: string; value: unknown; instant: string }> = [];
-
+        // The caching decision is made per buffered message, not once for the whole batch —
+        // several messages for the same item can arrive within one flush window, and deciding
+        // from only the last one would either drop an entire batch containing a real intermediate
+        // change (if the batch ends back at the previously-cached value) or forward duplicate
+        // messages unfiltered (if the batch ends on a genuine change). applyCachingStrategy keeps
+        // its own in-call shadow up to date as messages are accepted, comparing the raw message
+        // string (not JSON-parsed — MQTT payloads aren't guaranteed JSON) against the item's last
+        // *cached* value, not the stale pre-flush state.
+        const flatEntries: Array<{
+          item: SouthConnectorItemEntity<SouthMQTTItemSettings>;
+          payload: { message: string; timestamp: Instant; item: { id: string; name: string; topic: string } };
+        }> = [];
         for (const { item, payload } of messagesByItem.values()) {
-          // The caching decision is made per item, once per flush cycle, comparing the most recent
-          // buffered message's raw string against the item's previously cached value.
-          const latestMessage = payload[payload.length - 1];
-          const previous = lastValues.get(item.id) ?? null;
-          const shouldCache = shouldCacheValue({
-            cachingStrategy: item.cachingStrategy ?? 'allValues',
-            thresholdType: item.thresholdType,
-            threshold: item.threshold,
-            rangeLow: item.rangeLow,
-            rangeHigh: item.rangeHigh,
-            maxCachingInterval: item.maxCachingInterval,
-            previousCachedValue: previous?.value ?? null,
-            previousCachedInstant: previous?.trackedInstant ?? null,
-            newValue: latestMessage.message,
-            newQueryTime: latestMessage.timestamp
-          });
-          if (!shouldCache) {
-            continue;
+          for (const entry of payload) {
+            flatEntries.push({ item, payload: entry });
           }
-          await this.addContent({ type: 'any-content', content: JSON.stringify(payload) }, DateTime.now().toUTC().toISO(), [item]);
-          cachedEntries.push({ itemId: item.id, value: latestMessage.message, instant: latestMessage.timestamp });
         }
-        this.southCacheRepository.saveItemsLastValues(this.connector.id, cachedEntries);
+        const cachedFlatEntries = this.applyCachingStrategy(flatEntries, ({ item, payload }) => ({
+          item,
+          value: payload.message,
+          timestamp: payload.timestamp
+        }));
+
+        const cachedPayloadsByItem = new Map<
+          string,
+          { item: SouthConnectorItemEntity<SouthMQTTItemSettings>; payloads: Array<(typeof flatEntries)[number]['payload']> }
+        >();
+        for (const { item, payload } of cachedFlatEntries) {
+          let entry = cachedPayloadsByItem.get(item.id);
+          if (!entry) {
+            entry = { item, payloads: [] };
+            cachedPayloadsByItem.set(item.id, entry);
+          }
+          entry.payloads.push(payload);
+        }
+        for (const { item, payloads } of cachedPayloadsByItem.values()) {
+          await this.addContent({ type: 'any-content', content: JSON.stringify(payloads) }, DateTime.now().toUTC().toISO(), [item]);
+        }
       } catch (error: unknown) {
         this.logger.error(`Error when flushing messages: ${getErrorMessage(error)}`);
       }
