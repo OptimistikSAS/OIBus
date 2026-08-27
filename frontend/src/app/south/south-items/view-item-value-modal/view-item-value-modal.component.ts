@@ -2,7 +2,11 @@ import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { DatePipe, JsonPipe } from '@angular/common';
-import { OIBusSouthType, SouthItemLastValue, SouthItemLastValueResponse } from '../../../../../../backend/shared/model/south-connector.model';
+import {
+  OIBusSouthType,
+  SouthItemLastValue,
+  SouthItemLastValueResponse
+} from '../../../../../../backend/shared/model/south-connector.model';
 
 @Component({
   selector: 'oib-view-item-value-modal',
