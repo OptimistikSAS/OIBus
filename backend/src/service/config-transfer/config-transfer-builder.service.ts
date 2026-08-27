@@ -323,9 +323,11 @@ export default class ConfigTransferBuilderService {
   }
 
   private createSouthConnectorsCommand(): Array<OIAnalyticsSouthCommandDTO> {
-    const souths = this.southRepository.findAllSouth();
-    return souths.map(southLight => {
-      const south = this.southRepository.findSouthById(southLight.id)!;
+    // `findAllSouthFull` fetches every connector's base row in one query instead of a light list
+    // re-hydrated one `findSouthById` round-trip per connector (mirrors `createNorthConnectorsCommand`
+    // below).
+    const souths = this.southRepository.findAllSouthFull();
+    return souths.map(south => {
       const manifest = southManifestList.find(manifest => manifest.id === south.type)!;
       const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
         attribute => attribute.key === 'settings'

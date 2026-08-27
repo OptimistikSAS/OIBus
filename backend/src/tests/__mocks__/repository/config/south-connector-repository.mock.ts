@@ -22,6 +22,7 @@ export default class SouthConnectorRepositoryMock extends SouthConnectorReposito
     super({} as Database, createAuditServiceMock());
   }
   override findAllSouth = mock.fn((): Array<SouthConnectorEntityLight> => []);
+  override findAllSouthFull = mock.fn((): Array<SouthConnectorEntity<SouthSettings, SouthItemSettings>> => []);
   override findSouthById = mock.fn((_id: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null => null);
   override saveSouth = mock.fn((_south: SouthConnectorEntity<SouthSettings, SouthItemSettings>): void => undefined);
   override start = mock.fn((_id: string): void => undefined);
