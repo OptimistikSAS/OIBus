@@ -842,10 +842,10 @@ export class SouthDetailComponent {
   viewItemLastValue(item: SouthConnectorItemDTO) {
     const modalRef = this.modalService.open(ViewItemValueModalComponent, { size: 'lg' });
     const component: ViewItemValueModalComponent = modalRef.componentInstance;
-    component.prepare(this.southConnector!.type);
+    component.prepare(this.southConnector!.type, item.name, this.getGroupName(item));
 
     this.southConnectorService.getItemLastValue(this.southConnector!.id, item.id!).subscribe({
-      next: lastValue => component.setData(lastValue, this.getGroupName(item)),
+      next: response => component.setData(response),
       error: error => component.setError(error.message)
     });
   }
@@ -919,7 +919,13 @@ export class SouthDetailComponent {
         readDelay: item.readDelay,
         startTimeOffset: item.startTimeOffset,
         endTimeOffset: item.endTimeOffset,
-        recoveryStrategy: item.recoveryStrategy
+        recoveryStrategy: item.recoveryStrategy,
+        cachingStrategy: item.cachingStrategy,
+        thresholdType: item.thresholdType,
+        threshold: item.threshold,
+        rangeLow: item.rangeLow,
+        rangeHigh: item.rangeHigh,
+        maxCachingInterval: item.maxCachingInterval
       })),
       groups: this.southConnector!.groups.map(group => ({
         id: group.id,
@@ -932,7 +938,8 @@ export class SouthDetailComponent {
           readDelay: group.historySettings.readDelay,
           startTimeOffset: group.historySettings.startTimeOffset,
           endTimeOffset: group.historySettings.endTimeOffset,
-          recoveryStrategy: group.historySettings.recoveryStrategy
+          recoveryStrategy: group.historySettings.recoveryStrategy,
+          cachingStrategy: group.historySettings.cachingStrategy
         }
       }))
     } as SouthConnectorCommandDTO;
