@@ -36,7 +36,7 @@ before(async () => {
     if (cb) cb();
   });
   mockTransportEnd = mock.fn();
-  pinoTransportMock = mock.fn(() => ({ flush: mockTransportFlush, end: mockTransportEnd }));
+  pinoTransportMock = mock.fn((_options: { targets: Array<{ target: string }> }) => ({ flush: mockTransportFlush, end: mockTransportEnd }));
   (pinoMock as unknown as { transport: typeof pinoTransportMock }).transport = pinoTransportMock;
 
   // Replace pino in require cache with the mock
@@ -420,7 +420,8 @@ describe('Logger', () => {
 
     await service.start(specificSettings, null);
 
-    const targets: Array<{ target: string }> = pinoTransportMock.mock.calls[0].arguments[0].targets;
+    const targets: Array<{ target: string }> = (pinoTransportMock.mock.calls[0].arguments[0] as { targets: Array<{ target: string }> })
+      .targets;
     const syslogTarget = targets.find(t => t.target === path.join(__dirname, 'syslog-transport.js'));
     assert.ok(syslogTarget !== undefined, 'syslog-transport.js target should be present');
   });
@@ -433,7 +434,8 @@ describe('Logger', () => {
 
     await service.start(specificSettings, null);
 
-    const targets: Array<{ target: string }> = pinoTransportMock.mock.calls[0].arguments[0].targets;
+    const targets: Array<{ target: string }> = (pinoTransportMock.mock.calls[0].arguments[0] as { targets: Array<{ target: string }> })
+      .targets;
     const syslogTarget = targets.find(t => t.target === path.join(__dirname, 'syslog-transport.js'));
     assert.strictEqual(syslogTarget, undefined, 'syslog-transport.js target should not be present');
   });
@@ -447,7 +449,8 @@ describe('Logger', () => {
 
     await service.start(specificSettings, null);
 
-    const targets: Array<{ target: string }> = pinoTransportMock.mock.calls[0].arguments[0].targets;
+    const targets: Array<{ target: string }> = (pinoTransportMock.mock.calls[0].arguments[0] as { targets: Array<{ target: string }> })
+      .targets;
     const syslogTarget = targets.find(t => t.target === path.join(__dirname, 'syslog-transport.js'));
     assert.strictEqual(syslogTarget, undefined, 'syslog-transport.js target should not be present');
   });

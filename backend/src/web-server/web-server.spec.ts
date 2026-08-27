@@ -306,7 +306,7 @@ describe('WebServer', () => {
 
       const syntaxErr = new SyntaxError('bad json') as SyntaxError & { body: string };
       syntaxErr.body = '{}';
-      const mockRes = { status: mock.fn(() => mockRes), json: mock.fn() };
+      const mockRes = { status: mock.fn((_code: number) => mockRes), json: mock.fn() };
 
       // SyntaxError with body → 422
       handleBodyParserErrors.call(webServer, syntaxErr, {}, mockRes as never, mock.fn());
@@ -329,7 +329,7 @@ describe('WebServer', () => {
         next: unknown
       ) => void;
       const errMiddleware = (webServer as unknown as Record<string, SetupFn>).setupErrorHandling.call(webServer);
-      const mockRes = { status: mock.fn(() => mockRes), json: mock.fn() };
+      const mockRes = { status: mock.fn((_code: number) => mockRes), json: mock.fn() };
 
       // err.name === 'ValidationError' → 400
       const valErr = new Error('validation');

@@ -1414,7 +1414,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.processNextCommand();
 
-    assert.deepStrictEqual(southService.importItems.mock.calls[0].arguments[1], [
+    assert.deepStrictEqual((southService.importItems.mock.calls[0].arguments as Array<unknown>)[1], [
       {
         id: itemWithoutScanMode.id,
         enabled: itemWithoutScanMode.enabled,
