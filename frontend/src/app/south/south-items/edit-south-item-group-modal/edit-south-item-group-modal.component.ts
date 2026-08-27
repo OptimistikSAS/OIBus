@@ -13,6 +13,8 @@ import {
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective } from '@ngx-translate/core';
 import {
+  IOT_FAMILY_SOUTH_TYPES,
+  SouthCachingStrategy,
   SouthConnectorManifest,
   SouthHistoryRecoveryStrategy,
   SouthItemGroupCommandDTO,
@@ -49,6 +51,12 @@ export class EditSouthItemGroupModalComponent {
     { value: 'newest', labelKey: 'south.groups.recovery-strategy-newest' }
   ];
 
+  readonly cachingStrategies: Array<{ value: SouthCachingStrategy; labelKey: string }> = [
+    { value: 'allValues', labelKey: 'south.groups.caching-strategy-all-values' },
+    { value: 'onChange', labelKey: 'south.groups.caching-strategy-on-change' },
+    { value: 'threshold', labelKey: 'south.groups.caching-strategy-threshold' }
+  ];
+
   form: FormGroup<{
     name: FormControl<string>;
     scanModeId: FormControl<string | null>;
@@ -57,10 +65,19 @@ export class EditSouthItemGroupModalComponent {
     maxReadInterval: FormControl<number>;
     readDelay: FormControl<number>;
     recoveryStrategy: FormControl<SouthHistoryRecoveryStrategy>;
+    cachingStrategy: FormControl<SouthCachingStrategy>;
   }> | null = null;
 
   get hasHistorianCapabilities(): boolean {
     return this.manifest?.modes?.history;
+  }
+
+  /**
+   * True for the six "IoT family" south types (OPC UA, Modbus, ADS, OPC classic, S7, MQTT). There is no
+   * manifest capability flag for this family, so it's checked directly against the connector type string.
+   */
+  get isIotFamilySouthType(): boolean {
+    return IOT_FAMILY_SOUTH_TYPES.includes(this.manifest?.id as (typeof IOT_FAMILY_SOUTH_TYPES)[number]);
   }
 
   prepareForCreation(
@@ -110,7 +127,8 @@ export class EditSouthItemGroupModalComponent {
       endTimeOffset: this.fb.control<number | null>(0, [Validators.min(-2147483648), Validators.max(2147483647)]),
       maxReadInterval: [3600, [Validators.min(0)]],
       readDelay: [200, [Validators.required, Validators.min(0)]],
-      recoveryStrategy: this.fb.control<SouthHistoryRecoveryStrategy>('oldest')
+      recoveryStrategy: this.fb.control<SouthHistoryRecoveryStrategy>('oldest'),
+      cachingStrategy: this.fb.control<SouthCachingStrategy>('allValues')
     });
 
     if (this.group) {
@@ -123,7 +141,8 @@ export class EditSouthItemGroupModalComponent {
         endTimeOffset: this.group.historySettings.endTimeOffset ?? 0,
         maxReadInterval: this.group.historySettings.maxReadInterval ?? 3600,
         readDelay: this.group.historySettings.readDelay ?? 200,
-        recoveryStrategy: this.group.historySettings.recoveryStrategy ?? 'oldest'
+        recoveryStrategy: this.group.historySettings.recoveryStrategy ?? 'oldest',
+        cachingStrategy: this.group.historySettings.cachingStrategy ?? 'allValues'
       });
     }
   }
@@ -156,7 +175,8 @@ export class EditSouthItemGroupModalComponent {
         endTimeOffset: formValue.endTimeOffset ?? null,
         maxReadInterval: formValue.maxReadInterval! ?? null,
         readDelay: formValue.readDelay! ?? null,
-        recoveryStrategy: formValue.recoveryStrategy! ?? null
+        recoveryStrategy: formValue.recoveryStrategy! ?? null,
+        cachingStrategy: formValue.cachingStrategy! ?? null
       }
     };
     this.modal.close({ mode: this.mode, group: command });
