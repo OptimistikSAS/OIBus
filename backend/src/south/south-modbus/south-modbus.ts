@@ -23,7 +23,6 @@ import {
 } from '../../service/utils-modbus';
 import { Instant } from '../../model/types';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
-import { shouldCacheValue } from '../../service/south-caching-strategy.service';
 
 // Modbus Application Protocol limits (spec v1.1b3, §6.1 / §6.2 / §6.3 / §6.4)
 const MAX_COIL_READ_COUNT = 2000; // FC01 / FC02
@@ -227,36 +226,17 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
       this.logger.debug(logCtx, `Requested ${items.length} items in ${requestDuration} ms`);
 
-      const lastValues = this.southCacheRepository.getItemsLastValues(
-        this.connector.id,
-        items.map(item => item.id)
-      );
-      const itemsToCache: Array<SouthConnectorItemEntity<SouthModbusItemSettings>> = [];
-      const cachedEntries: Array<{ itemId: string; value: unknown; instant: string }> = [];
-      const filteredDataValues: Array<OIBusTimeValue> = [];
-      for (const { item, value: dataValue } of valuePairs) {
-        const previous = lastValues.get(item.id) ?? null;
-        const shouldCache = shouldCacheValue({
-          cachingStrategy: item.cachingStrategy ?? 'allValues',
-          thresholdType: item.thresholdType,
-          threshold: item.threshold,
-          rangeLow: item.rangeLow,
-          rangeHigh: item.rangeHigh,
-          maxCachingInterval: item.maxCachingInterval,
-          previousCachedValue: previous?.value ?? null,
-          previousCachedInstant: previous?.trackedInstant ?? null,
-          newValue: dataValue.data.value,
-          newQueryTime: dataValue.timestamp
-        });
-        if (shouldCache) {
-          filteredDataValues.push(dataValue);
-          itemsToCache.push(item);
-          cachedEntries.push({ itemId: item.id, value: dataValue.data.value, instant: dataValue.timestamp });
-        }
-      }
+      const cachedPairs = this.applyCachingStrategy(valuePairs, ({ item, value }) => ({
+        item,
+        value: value.data.value,
+        timestamp: value.timestamp
+      }));
 
-      await this.addContent({ type: 'time-values', content: filteredDataValues }, startRequest.toUTC().toISO(), itemsToCache);
-      this.southCacheRepository.saveItemsLastValues(this.connector.id, cachedEntries);
+      await this.addContent(
+        { type: 'time-values', content: cachedPairs.map(({ value }) => value) },
+        startRequest.toUTC().toISO(),
+        cachedPairs.map(({ item }) => item)
+      );
     } catch (error: unknown) {
       // Only tear down and (re)schedule a reconnect when this failure happened on a connection that
       // was actually up (modbusClient/socket still set). Once they are null, a reconnect is already
