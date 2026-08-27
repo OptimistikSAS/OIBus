@@ -1,5 +1,6 @@
 import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
+import { NotFoundError } from '../../model/types';
 import {
   SouthConnectorEntity,
   SouthConnectorEntityLight,
@@ -86,10 +87,18 @@ export default class SouthConnectorRepository {
    * connector from the UI) or the id of a connector it just read back from this repository, so this
    * is not a behavior change for them.
    */
-  saveSouth(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>): void {
-    const beforeConnector = south.id ? this.findSouthById(south.id) : null;
-    const isNewConnector = !beforeConnector;
-    const beforeItemsById = south.id
+  saveSouth(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>, isNewConnector: boolean): void {
+    const beforeConnector = isNewConnector ? null : this.findSouthById(south.id);
+    if (!isNewConnector && !beforeConnector) {
+      // The caller believes this is an update of an existing connector, but a fresh check right
+      // before writing shows it's gone — most likely deleted by another request during this
+      // request's own (awaited) validation. Failing loudly here is the only thing standing between
+      // that race and silently resurrecting a deleted connector: `isNewConnector` used to be inferred
+      // from this same existence check, which made "doesn't exist" indistinguishable from "is
+      // legitimately new" and took the CREATE branch below instead.
+      throw new NotFoundError(`South connector "${south.id}" not found`);
+    }
+    const beforeItemsById = beforeConnector
       ? new Map(this.findAllItemsForSouth(south.id).map(i => [i.id, i]))
       : new Map<string, SouthConnectorItemEntity<SouthItemSettings>>();
     const transaction = this.database.transaction(() => {
