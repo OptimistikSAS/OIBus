@@ -176,6 +176,12 @@ describe('SouthOPCUA', () => {
         startTimeOffset: 0,
         endTimeOffset: null,
         recoveryStrategy: 'oldest',
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -201,6 +207,12 @@ describe('SouthOPCUA', () => {
         startTimeOffset: 0,
         endTimeOffset: null,
         recoveryStrategy: 'oldest',
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -226,6 +238,12 @@ describe('SouthOPCUA', () => {
         startTimeOffset: 0,
         endTimeOffset: null,
         recoveryStrategy: 'oldest',
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -248,6 +266,12 @@ describe('SouthOPCUA', () => {
         startTimeOffset: 0,
         endTimeOffset: null,
         recoveryStrategy: 'oldest',
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -270,6 +294,12 @@ describe('SouthOPCUA', () => {
         startTimeOffset: 0,
         endTimeOffset: null,
         recoveryStrategy: 'oldest',
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -292,6 +322,12 @@ describe('SouthOPCUA', () => {
         startTimeOffset: 0,
         endTimeOffset: null,
         recoveryStrategy: 'oldest',
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -340,6 +376,10 @@ describe('SouthOPCUA', () => {
     nodeOPCUAMock.resolveNodeId.mock.mockImplementation((nodeId: unknown) => nodeId);
     nodeOPCUAMock.OPCUAClient.create.mock.resetCalls();
     nodeOPCUAMock.OPCUAClient.create.mock.mockImplementation(() => null as unknown);
+    (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
+    (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => new Map());
+    (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
+    (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => undefined);
 
     mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
     south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
@@ -853,7 +893,7 @@ describe('SouthOPCUA', () => {
     // disconnect() sets `disconnecting = true` synchronously as its first statement, so
     // triggerReconnect()'s guard means only the first call actually closes the session — the
     // second call's triggerReconnect() is a synchronous no-op.
-    assert.strictEqual((failedSession.close as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((failedSession.close as unknown as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
   it('should skip HA group without reconnect on device/PLC error (e.g. BadNoCommunication)', async () => {
@@ -2146,7 +2186,21 @@ describe('SouthOPCUA', () => {
   });
 
   it('should carry group identity in the HA device error log context when items belong to a synced group', async () => {
-    const group = { id: 'groupId1', name: 'group 1', scanMode: configuration.items[0].scanMode! };
+    const group = {
+      id: 'groupId1',
+      name: 'group 1',
+      scanMode: configuration.items[0].scanMode!,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      maxReadInterval: null,
+      readDelay: null,
+      recoveryStrategy: null,
+      cachingStrategy: null,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
     const groupedItems = Array.from({ length: 3 }, (_, i) => ({
       ...configuration.items[0],
       id: `id${i}`,
@@ -2465,7 +2519,7 @@ describe('SouthOPCUA', () => {
   it('explore should browse the root and map references', async () => {
     const mockedClient = {
       close: mock.fn(async () => undefined),
-      browse: mock.fn(async () => ({
+      browse: mock.fn(async (_nodeId: string) => ({
         references: [
           { nodeId: 'ns=0;i=85', displayName: { text: 'Objects' }, browseName: { toString: () => 'Objects' }, nodeClass: NodeClass.Object },
           {
@@ -2495,7 +2549,7 @@ describe('SouthOPCUA', () => {
   });
 
   it('explore should browse a given parent and follow continuation points', async () => {
-    const browse = mock.fn(async () => ({
+    const browse = mock.fn(async (_nodeId: string) => ({
       references: [{ nodeId: 'ns=1;s=A', displayName: { text: 'A' }, browseName: { toString: () => 'A' }, nodeClass: NodeClass.Variable }],
       continuationPoint: Buffer.from([1])
     }));
@@ -2676,5 +2730,441 @@ describe('SouthOPCUA', () => {
         hasChildren: true
       }
     ]);
+  });
+
+  describe('caching strategy filtering', () => {
+    const buildDaItem = (
+      id: string,
+      name: string,
+      overrides: Partial<SouthConnectorItemEntity<SouthOPCUAItemSettings>> = {}
+    ): SouthConnectorItemEntity<SouthOPCUAItemSettings> => ({
+      ...configuration.items[3],
+      id,
+      name,
+      settings: { ...configuration.items[3].settings, nodeId: `ns=3;s=${name}` },
+      cachingStrategy: 'allValues',
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
+      ...overrides
+    });
+
+    const buildHaItem = (
+      id: string,
+      name: string,
+      overrides: Partial<SouthConnectorItemEntity<SouthOPCUAItemSettings>> = {}
+    ): SouthConnectorItemEntity<SouthOPCUAItemSettings> => ({
+      ...configuration.items[0],
+      id,
+      name,
+      settings: { ...configuration.items[0].settings, nodeId: `ns=3;s=${name}` },
+      cachingStrategy: 'allValues',
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
+      ...overrides
+    });
+
+    describe('direct/DA query path (directQuery)', () => {
+      it('should suppress a no-change value under cachingStrategy=onChange', async () => {
+        south['session'] = {} as unknown as ClientSession;
+        const item = buildDaItem('daId1', 'daItem1', { cachingStrategy: 'onChange' });
+        south.getDAValues = mock.fn(async () => [
+          { pointId: 'daItem1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: 42, quality: 'Good' } }
+        ]);
+        const addContentMock = mock.fn(
+          async (_data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> =>
+            undefined
+        );
+        south.addContent = addContentMock;
+        (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+          () =>
+            new Map([
+              [
+                'daId1',
+                {
+                  itemId: 'daId1',
+                  groupId: null,
+                  queryTime: testData.constants.dates.DATE_1,
+                  value: 42,
+                  trackedInstant: testData.constants.dates.DATE_1
+                }
+              ]
+            ])
+        );
+
+        await south.directQuery([item]);
+
+        assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], { type: 'time-values', content: [] });
+        assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], []);
+        assert.deepStrictEqual(
+          (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments,
+          ['southId', []]
+        );
+      });
+
+      it('should cache a threshold-exceeding change', async () => {
+        south['session'] = {} as unknown as ClientSession;
+        const item = buildDaItem('daId1', 'daItem1', { cachingStrategy: 'threshold', thresholdType: 'absolute', threshold: 5 });
+        south.getDAValues = mock.fn(async () => [
+          { pointId: 'daItem1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: 42, quality: 'Good' } }
+        ]);
+        const addContentMock = mock.fn(
+          async (_data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> =>
+            undefined
+        );
+        south.addContent = addContentMock;
+        (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+          () =>
+            new Map([
+              [
+                'daId1',
+                {
+                  itemId: 'daId1',
+                  groupId: null,
+                  queryTime: testData.constants.dates.DATE_1,
+                  value: 30,
+                  trackedInstant: testData.constants.dates.DATE_1
+                }
+              ]
+            ])
+        );
+
+        await south.directQuery([item]);
+
+        assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
+          type: 'time-values',
+          content: [{ pointId: 'daItem1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: 42, quality: 'Good' } }]
+        });
+        assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [item]);
+        assert.deepStrictEqual(
+          (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
+          [{ itemId: 'daId1', value: 42, instant: testData.constants.dates.FAKE_NOW }]
+        );
+      });
+
+      it('should compute a percentage-of-span threshold correctly, caching one item and suppressing another', async () => {
+        south['session'] = {} as unknown as ClientSession;
+        // rangeLow=0, rangeHigh=100 -> span=100; threshold=10% -> 10 absolute units
+        const overItem = buildDaItem('daId1', 'daItem1', {
+          cachingStrategy: 'threshold',
+          thresholdType: 'percentage',
+          threshold: 10,
+          rangeLow: 0,
+          rangeHigh: 100
+        });
+        const underItem = buildDaItem('daId2', 'daItem2', {
+          cachingStrategy: 'threshold',
+          thresholdType: 'percentage',
+          threshold: 10,
+          rangeLow: 0,
+          rangeHigh: 100
+        });
+        south.getDAValues = mock.fn(async () => [
+          { pointId: 'daItem1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: 42, quality: 'Good' } },
+          { pointId: 'daItem2', timestamp: testData.constants.dates.FAKE_NOW, data: { value: 25, quality: 'Good' } }
+        ]);
+        const addContentMock = mock.fn(
+          async (_data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> =>
+            undefined
+        );
+        south.addContent = addContentMock;
+        (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+          () =>
+            new Map([
+              [
+                'daId1',
+                {
+                  itemId: 'daId1',
+                  groupId: null,
+                  queryTime: testData.constants.dates.DATE_1,
+                  value: 20,
+                  trackedInstant: testData.constants.dates.DATE_1
+                }
+              ],
+              [
+                'daId2',
+                {
+                  itemId: 'daId2',
+                  groupId: null,
+                  queryTime: testData.constants.dates.DATE_1,
+                  value: 20,
+                  trackedInstant: testData.constants.dates.DATE_1
+                }
+              ]
+            ])
+        );
+
+        await south.directQuery([overItem, underItem]);
+
+        assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
+          type: 'time-values',
+          content: [{ pointId: 'daItem1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: 42, quality: 'Good' } }]
+        });
+        assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [overItem]);
+      });
+
+      it('should cache when maxCachingInterval elapses even without a qualifying change', async () => {
+        south['session'] = {} as unknown as ClientSession;
+        const item = buildDaItem('daId1', 'daItem1', { cachingStrategy: 'onChange', maxCachingInterval: 1000 });
+        south.getDAValues = mock.fn(async () => [
+          { pointId: 'daItem1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: 42, quality: 'Good' } }
+        ]);
+        const addContentMock = mock.fn(
+          async (_data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> =>
+            undefined
+        );
+        south.addContent = addContentMock;
+        // Identical value (no onChange-qualifying diff), but the cached instant is far in the past.
+        (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+          () =>
+            new Map([
+              [
+                'daId1',
+                {
+                  itemId: 'daId1',
+                  groupId: null,
+                  queryTime: testData.constants.dates.DATE_1,
+                  value: 42,
+                  trackedInstant: testData.constants.dates.DATE_1
+                }
+              ]
+            ])
+        );
+
+        await south.directQuery([item]);
+
+        assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
+          type: 'time-values',
+          content: [{ pointId: 'daItem1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: 42, quality: 'Good' } }]
+        });
+      });
+
+      it('should always cache the very first read for an item regardless of strategy', async () => {
+        south['session'] = {} as unknown as ClientSession;
+        const item = buildDaItem('daId1', 'daItem1', { cachingStrategy: 'onChange' });
+        south.getDAValues = mock.fn(async () => [
+          { pointId: 'daItem1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: 42, quality: 'Good' } }
+        ]);
+        const addContentMock = mock.fn(
+          async (_data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> =>
+            undefined
+        );
+        south.addContent = addContentMock;
+        // getItemsLastValues default mock returns an empty Map (no prior cached state)
+
+        await south.directQuery([item]);
+
+        assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
+          type: 'time-values',
+          content: [{ pointId: 'daItem1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: 42, quality: 'Good' } }]
+        });
+      });
+
+      it('should call saveItemsLastValues with exactly the items actually cached in the cycle', async () => {
+        south['session'] = {} as unknown as ClientSession;
+        const suppressedItem = buildDaItem('daId1', 'daItem1', { cachingStrategy: 'onChange' });
+        const cachedItem = buildDaItem('daId2', 'daItem2', { cachingStrategy: 'onChange' });
+        south.getDAValues = mock.fn(async () => [
+          { pointId: 'daItem1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: 42, quality: 'Good' } },
+          { pointId: 'daItem2', timestamp: testData.constants.dates.FAKE_NOW, data: { value: 7, quality: 'Good' } }
+        ]);
+        const addContentMock = mock.fn(
+          async (_data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> =>
+            undefined
+        );
+        south.addContent = addContentMock;
+        (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+          () =>
+            new Map([
+              [
+                'daId1',
+                {
+                  itemId: 'daId1',
+                  groupId: null,
+                  queryTime: testData.constants.dates.DATE_1,
+                  value: 42,
+                  trackedInstant: testData.constants.dates.DATE_1
+                }
+              ],
+              [
+                'daId2',
+                {
+                  itemId: 'daId2',
+                  groupId: null,
+                  queryTime: testData.constants.dates.DATE_1,
+                  value: 1,
+                  trackedInstant: testData.constants.dates.DATE_1
+                }
+              ]
+            ])
+        );
+
+        await south.directQuery([suppressedItem, cachedItem]);
+
+        assert.deepStrictEqual(
+          (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments,
+          ['southId', [{ itemId: 'daId2', value: 7, instant: testData.constants.dates.FAKE_NOW }]]
+        );
+      });
+    });
+
+    describe('polling/HA query path (getHAValues)', () => {
+      const singleRoundTripHistoryRead = (pointValue: string) =>
+        mock.fn(() => ({
+          responseHeader: { serviceResult: StatusCodes.Good },
+          results: [
+            {
+              historyData: {
+                dataValues: [
+                  {
+                    sourceTimestamp: new Date(testData.constants.dates.FAKE_NOW),
+                    value: { value: pointValue, dataType: DataType.String },
+                    statusCode: StatusCodes.Good
+                  }
+                ]
+              },
+              statusCode: StatusCodes.Good,
+              continuationPoint: false
+            }
+          ]
+        }));
+
+      it('should suppress a no-change value under cachingStrategy=onChange', async () => {
+        const item = buildHaItem('haId1', 'haItem1', { cachingStrategy: 'onChange' });
+        const client = { historyRead: singleRoundTripHistoryRead('42') } as unknown as ClientSession;
+        utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation((): string | null => '42');
+        const addContentMock = mock.fn(
+          async (_data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> =>
+            undefined
+        );
+        south.addContent = addContentMock;
+        (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+          () =>
+            new Map([
+              [
+                'haId1',
+                {
+                  itemId: 'haId1',
+                  groupId: null,
+                  queryTime: testData.constants.dates.DATE_1,
+                  value: '42',
+                  trackedInstant: testData.constants.dates.DATE_1
+                }
+              ]
+            ])
+        );
+
+        await south.getHAValues([item], testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, client, false);
+
+        assert.strictEqual(addContentMock.mock.calls.length, 1);
+        assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], { type: 'time-values', content: [] });
+        assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], []);
+        assert.deepStrictEqual(
+          (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments,
+          ['southId', []]
+        );
+      });
+
+      it('should always cache the very first read for an item regardless of strategy', async () => {
+        const item = buildHaItem('haId1', 'haItem1', { cachingStrategy: 'onChange' });
+        const client = { historyRead: singleRoundTripHistoryRead('42') } as unknown as ClientSession;
+        utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation((): string | null => '42');
+        const addContentMock = mock.fn(
+          async (_data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> =>
+            undefined
+        );
+        south.addContent = addContentMock;
+        // getItemsLastValues default mock returns an empty Map (no prior cached state)
+
+        await south.getHAValues([item], testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, client, false);
+
+        const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
+        assert.strictEqual((content.content as Array<unknown>).length, 1);
+        assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [item]);
+      });
+    });
+
+    describe('subscription path (never wrote to south_item_cache before this feature)', () => {
+      it('should suppress a no-change value at push time (never buffered, addContent not called for it)', async () => {
+        const stream = new CustomStream();
+        stream.terminate = mock.fn();
+        const monitorFn = mock.fn(() => stream);
+        const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
+        south['session'] = { createSubscription2: mock.fn(async () => subscriptionEmitter) } as unknown as ClientSession;
+        const item = buildHaItem('subId1', 'subItem1', { cachingStrategy: 'onChange' });
+        (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+          () =>
+            new Map([
+              [
+                'subId1',
+                {
+                  itemId: 'subId1',
+                  groupId: null,
+                  queryTime: testData.constants.dates.DATE_1,
+                  value: 'parsedValue',
+                  trackedInstant: testData.constants.dates.DATE_1
+                }
+              ]
+            ])
+        );
+
+        await south.subscribe([item]);
+        utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation((): string | null => 'parsedValue');
+        stream.emit('changed', {
+          value: { value: 1, dataType: DataType.Null },
+          sourceTimestamp: DateTime.now(),
+          statusCode: StatusCodes.Good
+        });
+
+        assert.deepStrictEqual(south['bufferedValues'], []);
+      });
+
+      it('should cache a changed value at push time and persist it via saveItemsLastValues on flush', async () => {
+        const stream = new CustomStream();
+        stream.terminate = mock.fn();
+        const monitorFn = mock.fn(() => stream);
+        const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
+        south['session'] = { createSubscription2: mock.fn(async () => subscriptionEmitter) } as unknown as ClientSession;
+        const item = buildHaItem('subId1', 'subItem1', { cachingStrategy: 'onChange' });
+        // No prior cached state: first value is always cached regardless of strategy.
+
+        // A prior test in this suite (`south['connector'].settings.maxNumberOfMessages = 1`) mutates
+        // the shared `configuration` object in place — `south['connector']` is that same reference,
+        // not a clone — so reset it explicitly rather than depend on suite ordering: a threshold of 1
+        // would auto-trigger flushMessages() synchronously at push time and empty bufferedValues
+        // before this test can observe the buffered (not-yet-flushed) state.
+        south['connector'].settings.maxNumberOfMessages = 1000;
+
+        await south.subscribe([item]);
+        utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation((): string | null => 'parsedValue');
+        stream.emit('changed', {
+          value: { value: 1, dataType: DataType.Null },
+          sourceTimestamp: DateTime.now(),
+          statusCode: StatusCodes.Good
+        });
+
+        assert.strictEqual(south['bufferedValues'].length, 1);
+        assert.strictEqual(south['bufferedValues'][0].item, item);
+
+        const addContentMock = mock.fn(
+          async (_data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> =>
+            undefined
+        );
+        south.addContent = addContentMock;
+        await south.flushMessages();
+
+        assert.strictEqual(addContentMock.mock.calls.length, 1);
+        assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [item]);
+        assert.deepStrictEqual(
+          (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments,
+          ['southId', [{ itemId: 'subId1', value: 'parsedValue', instant: testData.constants.dates.FAKE_NOW }]]
+        );
+      });
+    });
   });
 });
