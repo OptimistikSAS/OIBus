@@ -1490,6 +1490,23 @@ export interface SouthItemLastValue {
 }
 
 /**
+ * Response for the item last-value endpoint.
+ * Carries the item's own last cached value/instant, plus, when the item belongs to a group,
+ * the group's last tracked instant. Both parts reuse {@link SouthItemLastValue} unchanged.
+ */
+export interface SouthItemLastValueResponse {
+  /**
+   * The item's own last cached value/instant, or null when nothing has been cached yet for it.
+   */
+  itemLastValue: SouthItemLastValue | null;
+
+  /**
+   * The group's last tracked value/instant when the item belongs to a group, otherwise null.
+   */
+  groupLastValue: SouthItemLastValue | null;
+}
+
+/**
  * Search parameters for South connector items.
  * Used for filtering and paginating item lists.
  */

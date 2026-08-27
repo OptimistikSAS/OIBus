@@ -20,7 +20,7 @@ describe('ViewItemValueModalComponent', () => {
 
   test('should display loading state after prepare', async () => {
     const fixture = TestBed.createComponent(ViewItemValueModalComponent);
-    fixture.componentInstance.prepare('folder-scanner');
+    fixture.componentInstance.prepare('folder-scanner', 'item1', 'GroupA');
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
@@ -31,11 +31,11 @@ describe('ViewItemValueModalComponent', () => {
 
   test('should display value after setData', async () => {
     const fixture = TestBed.createComponent(ViewItemValueModalComponent);
-    fixture.componentInstance.prepare('folder-scanner');
-    fixture.componentInstance.setData(
-      { itemId: 'id1', itemName: 'item1', queryTime: null, value: 'test-value', trackedInstant: null },
-      'GroupA'
-    );
+    fixture.componentInstance.prepare('folder-scanner', 'item1', 'GroupA');
+    fixture.componentInstance.setData({
+      itemLastValue: { itemId: 'id1', itemName: 'item1', groupId: null, groupName: '', queryTime: null, value: 'test-value', trackedInstant: null },
+      groupLastValue: null
+    });
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
@@ -43,9 +43,39 @@ describe('ViewItemValueModalComponent', () => {
     expect(fixture.componentInstance.loading).toBe(false);
   });
 
+  test('should display the group section when the item belongs to a group', async () => {
+    const fixture = TestBed.createComponent(ViewItemValueModalComponent);
+    fixture.componentInstance.prepare('opcua', 'item1', 'GroupA');
+    fixture.componentInstance.setData({
+      itemLastValue: {
+        itemId: 'id1',
+        itemName: 'item1',
+        groupId: 'group1',
+        groupName: 'GroupA',
+        queryTime: '2024-01-01T00:00:00.000Z',
+        value: 42,
+        trackedInstant: '2024-01-01T00:00:00.000Z'
+      },
+      groupLastValue: {
+        itemId: 'id1',
+        itemName: 'item1',
+        groupId: 'group1',
+        groupName: 'GroupA',
+        queryTime: '2024-01-02T00:00:00.000Z',
+        value: null,
+        trackedInstant: '2024-01-02T00:00:00.000Z'
+      }
+    });
+    fixture.detectChanges();
+
+    const root = page.elementLocator(fixture.nativeElement);
+    await expect.element(root.getByCss('.modal-body')).toBeInTheDocument();
+    expect(fixture.componentInstance.groupLastValue).not.toBeNull();
+  });
+
   test('should dismiss on close', () => {
     const fixture = TestBed.createComponent(ViewItemValueModalComponent);
-    fixture.componentInstance.prepare('folder-scanner');
+    fixture.componentInstance.prepare('folder-scanner', 'item1', 'GroupA');
     fixture.detectChanges();
 
     fixture.componentInstance.close();
