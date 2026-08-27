@@ -99,6 +99,17 @@
             }
           </div>
         </div>
+
+        <div class="row">
+          <div class="col-md-4 fw-bold" translate="south.items.last-value-modal.value"></div>
+          <div class="col-md-8">
+            @if (!groupHasValue) {
+              <div class="text-muted" translate="south.items.last-value-modal.no-value"></div>
+            } @else {
+              <pre class="bg-light p-2 rounded">{{ groupLastValue.value | json }}</pre>
+            }
+          </div>
+        </div>
       }
     </div>
   }
