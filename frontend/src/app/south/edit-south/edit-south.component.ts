@@ -224,7 +224,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
                 endTimeOffset: group.historySettings.endTimeOffset,
                 maxReadInterval: group.historySettings.maxReadInterval,
                 readDelay: group.historySettings.readDelay,
-                recoveryStrategy: group.historySettings.recoveryStrategy
+                recoveryStrategy: group.historySettings.recoveryStrategy,
+                cachingStrategy: group.historySettings.cachingStrategy
               }
             }));
           }
