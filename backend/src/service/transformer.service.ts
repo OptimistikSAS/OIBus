@@ -172,7 +172,7 @@ export default class TransformerService {
 
     const transformer = { type: 'custom', createdBy, updatedBy: createdBy } as CustomTransformer;
     await copyTransformerCommandToTransformerEntity(transformer, command);
-    this.transformerRepository.save(transformer);
+    this.transformerRepository.save(transformer, true);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     return transformer;
   }
@@ -197,7 +197,7 @@ export default class TransformerService {
     const codeChanged = command.customCode !== customTransformer.customCode;
     customTransformer.updatedBy = updatedBy;
     await copyTransformerCommandToTransformerEntity(customTransformer, command);
-    this.transformerRepository.save(customTransformer);
+    this.transformerRepository.save(customTransformer, false);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
     if (manifestChanged) {

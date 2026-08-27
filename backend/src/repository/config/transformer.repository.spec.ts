@@ -150,7 +150,7 @@ describe('TransformerRepository', () => {
     const createTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
     createTransformer.id = '';
     createTransformer.name = 'new name';
-    repository.save(createTransformer);
+    repository.save(createTransformer, true);
     createdTransformerId = createTransformer.id;
     assert.ok(createdTransformerId);
 
@@ -175,7 +175,7 @@ describe('TransformerRepository', () => {
     const importedTransformer: CustomTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
     importedTransformer.id = 'preserved-transformer-id';
     importedTransformer.name = 'imported transformer';
-    repository.save(importedTransformer);
+    repository.save(importedTransformer, true);
 
     assert.strictEqual(importedTransformer.id, 'preserved-transformer-id');
     const found = repository.findById('preserved-transformer-id');
@@ -186,6 +186,38 @@ describe('TransformerRepository', () => {
     repository.delete('preserved-transformer-id', 'importUser');
   });
 
+  it('should reject a create whose id collides with an existing row, instead of silently overwriting it', () => {
+    // Standard and custom transformers share one id space (see createStandardTransformers), so a
+    // config-import create under a preserved id that happens to collide with any existing row —
+    // standard or custom — must fail loudly (a real INSERT constraint error) rather than being
+    // reinterpreted as "must be an update" and silently overwriting that unrelated row's columns.
+    const original: CustomTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
+    original.id = 'colliding-transformer-id';
+    original.name = 'original transformer';
+    repository.save(original, true);
+
+    const colliding: CustomTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
+    colliding.id = 'colliding-transformer-id';
+    colliding.name = 'a completely different transformer';
+
+    assert.throws(() => repository.save(colliding, true));
+
+    // The original row must be untouched — not silently overwritten by the failed "create".
+    const stillOriginal = repository.findById('colliding-transformer-id') as CustomTransformer;
+    assert.strictEqual(stillOriginal.name, 'original transformer');
+
+    repository.delete('colliding-transformer-id', 'importUser');
+  });
+
+  it('should reject an update whose target id does not exist, instead of silently creating it', () => {
+    const ghost: CustomTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
+    ghost.id = 'transformer-id-that-does-not-exist';
+    ghost.name = 'ghost transformer';
+
+    assert.throws(() => repository.save(ghost, false));
+    assert.strictEqual(repository.findById('transformer-id-that-does-not-exist'), null);
+  });
+
   it('should update a transformer', () => {
     const existing = repository.findById(createdTransformerId);
     assert.ok(existing, 'Transformer should exist from previous create test');
@@ -193,7 +225,7 @@ describe('TransformerRepository', () => {
     const updateTransformer = JSON.parse(JSON.stringify(existing));
     updateTransformer.name = 'new name updated';
     updateTransformer.description = 'new description updated';
-    repository.save(updateTransformer);
+    repository.save(updateTransformer, false);
 
     const result = repository.findById(updateTransformer.id)!;
     assert.strictEqual((result as CustomTransformer).name, 'new name updated');
