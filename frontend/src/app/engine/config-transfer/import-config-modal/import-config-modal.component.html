@@ -4,7 +4,19 @@
 <div class="modal-body">
   @if (!result()) {
     @if (error()) {
-      <div class="alert alert-danger">{{ error() }}</div>
+      <div class="alert alert-danger">
+        {{ error() }}
+        @if (validationErrors().length > 0) {
+          <ul id="validation-errors-list" class="mb-0">
+            @for (validationError of validationErrors(); track validationError.scope + (validationError.entityId || '')) {
+              <li>
+                <strong>{{ validationError.entityName || validationError.entityId || validationError.scope }}</strong>
+                ({{ validationError.scope }}): {{ validationError.message }}
+              </li>
+            }
+          </ul>
+        }
+      </div>
     }
     <div class="alert alert-warning" translate="engine.config-transfer.import.warning"></div>
 

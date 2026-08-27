@@ -5,7 +5,7 @@ import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { ImportConfigModalComponent } from './import-config-modal.component';
-import { ConfigTransferService } from '../../../services/config-transfer.service';
+import { ConfigImportFailure, ConfigTransferService } from '../../../services/config-transfer.service';
 import { ConfirmationService } from '../../../shared/confirmation.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { ConfigImportResponseDTO } from '../../../../../../backend/shared/model/config-transfer.model';
@@ -18,6 +18,7 @@ class ImportConfigModalComponentTester {
   readonly importButton = this.root.getByCss('#import-button');
   readonly cancel = this.root.getByCss('#cancel-button');
   readonly error = this.root.getByCss('.alert-danger');
+  readonly validationErrorsList = this.root.getByCss('#validation-errors-list');
   readonly closeButton = this.root.getByCss('#close-button');
 
   constructor() {
@@ -113,6 +114,31 @@ describe('ImportConfigModalComponent', () => {
 
     expect(tester.componentInstance.error()).toBe('boom');
     await expect.element(tester.error).toHaveTextContent('boom');
+  });
+
+  test('should show the per-entity validation errors when the import fails validation', async () => {
+    confirmationService.confirm.mockReturnValue(of(undefined));
+    configTransferService.import.mockReturnValue(
+      throwError(
+        () =>
+          new ConfigImportFailure('Imported configuration failed validation after applying settings upgrades; nothing was imported', [
+            { scope: 'south:sqlite:item', entityId: 'SC1', entityName: 'All logs', message: 'must be a string' }
+          ])
+      )
+    );
+
+    const file = new File(['{}'], 'export.json');
+    tester.componentInstance.onFileSelected(file);
+    tester.fixture.detectChanges();
+
+    await tester.importButton.click();
+    tester.fixture.detectChanges();
+
+    expect(tester.componentInstance.validationErrors()).toEqual([
+      { scope: 'south:sqlite:item', entityId: 'SC1', entityName: 'All logs', message: 'must be a string' }
+    ]);
+    await expect.element(tester.validationErrorsList).toHaveTextContent('All logs');
+    await expect.element(tester.validationErrorsList).toHaveTextContent('must be a string');
   });
 
   test('should reject a file that is too large', () => {

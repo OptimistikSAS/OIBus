@@ -3,8 +3,8 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective } from '@ngx-translate/core';
-import { ConfigImportResponseDTO } from '../../../../../../backend/shared/model/config-transfer.model';
-import { ConfigTransferService } from '../../../services/config-transfer.service';
+import { ConfigImportEntityValidationError, ConfigImportResponseDTO } from '../../../../../../backend/shared/model/config-transfer.model';
+import { ConfigImportFailure, ConfigTransferService } from '../../../services/config-transfer.service';
 import { ConfirmationService } from '../../../shared/confirmation.service';
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
@@ -23,6 +23,7 @@ export class ImportConfigModalComponent {
 
   state = new ObservableState();
   error = signal<string | null>(null);
+  validationErrors = signal<Array<ConfigImportEntityValidationError>>([]);
   fileError = signal<string | null>(null);
   result = signal<ConfigImportResponseDTO | null>(null);
 
@@ -78,6 +79,7 @@ export class ImportConfigModalComponent {
     }
 
     this.error.set(null);
+    this.validationErrors.set([]);
     this.confirmationService
       .confirm({
         messageKey: 'engine.config-transfer.import.confirm-message'
@@ -85,7 +87,14 @@ export class ImportConfigModalComponent {
       .pipe(switchMap(() => this.configTransferService.import(this.file).pipe(this.state.pendingUntilFinalization())))
       .subscribe({
         next: (response: ConfigImportResponseDTO) => this.result.set(response),
-        error: (message: string) => this.error.set(message)
+        error: (err: ConfigImportFailure | string) => {
+          if (err instanceof ConfigImportFailure) {
+            this.error.set(err.message);
+            this.validationErrors.set(err.validationErrors);
+          } else {
+            this.error.set(err);
+          }
+        }
       });
   }
 

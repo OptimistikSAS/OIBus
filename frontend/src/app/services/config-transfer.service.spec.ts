@@ -2,8 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { ConfigTransferService } from './config-transfer.service';
-import { ConfigImportResponseDTO } from '../../../../backend/shared/model/config-transfer.model';
+import { ConfigImportFailure, ConfigTransferService } from './config-transfer.service';
+import { ConfigImportEntityValidationError, ConfigImportResponseDTO } from '../../../../backend/shared/model/config-transfer.model';
 import { DownloadService } from './download.service';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 
@@ -76,14 +76,35 @@ describe('ConfigTransferService', () => {
   });
 
   test('should surface the backend message when importing fails', () => {
-    let receivedMessage: string | null = null;
+    let receivedError: ConfigImportFailure | null = null;
     const configFile = new File(['{}'], 'oibus-config-export.json');
 
-    service.import(configFile).subscribe({ error: message => (receivedMessage = message) });
+    service.import(configFile).subscribe({ error: (err: ConfigImportFailure) => (receivedError = err) });
 
     const testRequest = http.expectOne({ url: '/api/config-transfer/import', method: 'POST' });
     testRequest.flush({ message: 'boom' }, { status: 400, statusText: 'Bad Request' });
 
-    expect(receivedMessage!).toBe('boom');
+    expect(receivedError!).toBeInstanceOf(ConfigImportFailure);
+    expect(receivedError!.message).toBe('boom');
+    expect(receivedError!.validationErrors).toEqual([]);
+  });
+
+  test('should surface per-entity validation errors when importing fails validation', () => {
+    let receivedError: ConfigImportFailure | null = null;
+    const configFile = new File(['{}'], 'oibus-config-export.json');
+    const validationErrors: Array<ConfigImportEntityValidationError> = [
+      { scope: 'south:sqlite:item', entityId: 'SC1', entityName: 'All logs', message: 'must be a string' }
+    ];
+
+    service.import(configFile).subscribe({ error: (err: ConfigImportFailure) => (receivedError = err) });
+
+    const testRequest = http.expectOne({ url: '/api/config-transfer/import', method: 'POST' });
+    testRequest.flush(
+      { message: 'Imported configuration failed validation after applying settings upgrades; nothing was imported', validationErrors },
+      { status: 400, statusText: 'Bad Request' }
+    );
+
+    expect(receivedError!).toBeInstanceOf(ConfigImportFailure);
+    expect(receivedError!.validationErrors).toEqual(validationErrors);
   });
 });
