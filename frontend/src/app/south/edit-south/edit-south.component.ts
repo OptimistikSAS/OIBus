@@ -210,7 +210,13 @@ export class EditSouthComponent implements CanComponentDeactivate {
                   readDelay: item.readDelay,
                   startTimeOffset: item.startTimeOffset,
                   endTimeOffset: item.endTimeOffset,
-                  recoveryStrategy: item.recoveryStrategy
+                  recoveryStrategy: item.recoveryStrategy,
+                  cachingStrategy: item.cachingStrategy,
+                  thresholdType: item.thresholdType,
+                  threshold: item.threshold,
+                  rangeLow: item.rangeLow,
+                  rangeHigh: item.rangeHigh,
+                  maxCachingInterval: item.maxCachingInterval
                 }) as SouthConnectorItemCommandDTO
             );
             this.inMemoryGroups = southConnector.groups.map(group => ({
@@ -479,7 +485,13 @@ export class EditSouthComponent implements CanComponentDeactivate {
                 readDelay: item.readDelay,
                 startTimeOffset: item.startTimeOffset,
                 endTimeOffset: item.endTimeOffset,
-                recoveryStrategy: item.recoveryStrategy
+                recoveryStrategy: item.recoveryStrategy,
+                cachingStrategy: item.cachingStrategy,
+                thresholdType: item.thresholdType,
+                threshold: item.threshold,
+                rangeLow: item.rangeLow,
+                rangeHigh: item.rangeHigh,
+                maxCachingInterval: item.maxCachingInterval
               }) as SouthConnectorItemCommandDTO
           ),
           errors: result.errors

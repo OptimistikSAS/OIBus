@@ -267,7 +267,13 @@ export class SouthDetailComponent {
             readDelay: command.readDelay,
             startTimeOffset: command.startTimeOffset,
             endTimeOffset: command.endTimeOffset,
-            recoveryStrategy: command.recoveryStrategy
+            recoveryStrategy: command.recoveryStrategy,
+            cachingStrategy: command.cachingStrategy,
+            thresholdType: command.thresholdType,
+            threshold: command.threshold,
+            rangeLow: command.rangeLow,
+            rangeHigh: command.rangeHigh,
+            maxCachingInterval: command.maxCachingInterval
           } as SouthConnectorItemCommandDTO);
         }),
         switchMap(() => {
@@ -314,7 +320,13 @@ export class SouthDetailComponent {
             readDelay: command.readDelay,
             startTimeOffset: command.startTimeOffset,
             endTimeOffset: command.endTimeOffset,
-            recoveryStrategy: command.recoveryStrategy
+            recoveryStrategy: command.recoveryStrategy,
+            cachingStrategy: command.cachingStrategy,
+            thresholdType: command.thresholdType,
+            threshold: command.threshold,
+            rangeLow: command.rangeLow,
+            rangeHigh: command.rangeHigh,
+            maxCachingInterval: command.maxCachingInterval
           } as SouthConnectorItemCommandDTO);
         }),
         switchMap(() => {
@@ -371,7 +383,13 @@ export class SouthDetailComponent {
             readDelay: command.readDelay,
             startTimeOffset: command.startTimeOffset,
             endTimeOffset: command.endTimeOffset,
-            recoveryStrategy: command.recoveryStrategy
+            recoveryStrategy: command.recoveryStrategy,
+            cachingStrategy: command.cachingStrategy,
+            thresholdType: command.thresholdType,
+            threshold: command.threshold,
+            rangeLow: command.rangeLow,
+            rangeHigh: command.rangeHigh,
+            maxCachingInterval: command.maxCachingInterval
           } as SouthConnectorItemCommandDTO);
         }),
         switchMap(() => {
@@ -482,7 +500,13 @@ export class SouthDetailComponent {
                   readDelay: item.readDelay,
                   startTimeOffset: item.startTimeOffset,
                   endTimeOffset: item.endTimeOffset,
-                  recoveryStrategy: item.recoveryStrategy
+                  recoveryStrategy: item.recoveryStrategy,
+                  cachingStrategy: item.cachingStrategy,
+                  thresholdType: item.thresholdType,
+                  threshold: item.threshold,
+                  rangeLow: item.rangeLow,
+                  rangeHigh: item.rangeHigh,
+                  maxCachingInterval: item.maxCachingInterval
                 }) as SouthConnectorItemCommandDTO
             ),
             errors: result.errors
