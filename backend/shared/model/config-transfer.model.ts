@@ -19,3 +19,15 @@ export interface ConfigImportResponseDTO {
   appliedUpgrades: Array<{ scope: string; version: string; entityId?: string }>;
   warnings: Array<string>;
 }
+
+/**
+ * One entity/field that failed post-upgrade manifest validation during a config import. Shared
+ * between the backend (which builds these inside `ConfigImportError`) and the frontend (which
+ * renders them so a rejected import is actionable instead of a single opaque message).
+ */
+export interface ConfigImportEntityValidationError {
+  scope: string;
+  entityId?: string;
+  entityName?: string;
+  message: string;
+}
