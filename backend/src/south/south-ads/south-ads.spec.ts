@@ -35,10 +35,13 @@ describe('South ADS', () => {
   const readValue = mock.fn(async (): Promise<unknown> => undefined);
   const getSymbols = mock.fn(async () => ({}));
   const getDataType = mock.fn(async () => ({ type: 'INT', subItems: [], enumInfos: [] }));
-  const readRawMulti = mock.fn(async () => [] as Array<unknown>);
-  const convertFromRaw = mock.fn(async () => 0 as unknown);
+  const readRawMulti = mock.fn(async (_commands: Array<unknown>) => [] as Array<unknown>);
+  const convertFromRaw = mock.fn(async (_data: unknown, _dataType: unknown) => 0 as unknown);
   const readDeviceInfo = mock.fn(async () => ({ deviceName: 'TestDevice', majorVersion: 3, minorVersion: 1, versionBuild: 4000 }));
-  const readState = mock.fn(async () => ({ adsState: 5, adsStateStr: 'Run', deviceState: 0 }));
+  const readState = mock.fn(async () => ({ adsState: 5, adsStateStr: 'Run' as string | undefined, deviceState: 0 }));
+  const getSymbol = mock.fn(async (_address: string): Promise<unknown> => {
+    throw new Error('getSymbol not implemented');
+  });
   const adsInstance = {
     connection: { connected: true },
     connect,
@@ -49,7 +52,8 @@ describe('South ADS', () => {
     readRawMulti,
     convertFromRaw,
     readDeviceInfo,
-    readState
+    readState,
+    getSymbol
   };
 
   const adsExports: Record<string, unknown> = {
@@ -104,6 +108,13 @@ describe('South ADS', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -123,6 +134,13 @@ describe('South ADS', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -167,6 +185,10 @@ describe('South ADS', () => {
     readState.mock.resetCalls();
     readState.mock.mockImplementation(async () => ({ adsState: 5, adsStateStr: 'Run', deviceState: 0 }));
     addContentCallback.mock.resetCalls();
+    (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
+    (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => new Map());
+    (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
+    (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => undefined);
     adsExports.Client = mock.fn(function () {
       return adsInstance;
     });
@@ -503,18 +525,26 @@ describe('South ADS', () => {
       mock.fn(async () => undefined)
     );
     mock.method(
-      south as unknown as Record<string, unknown>,
+      south as unknown as { buildSymbolCache: () => Promise<void> },
       'buildSymbolCache',
       mock.fn(async () => undefined)
     );
     mock.method(
       south,
       'readAdsSymbol',
-      mock.fn(async () => [1])
+      // Shaped like an actual OIBusTimeValue (rather than a bare `[1]`) since caching-strategy
+      // filtering now reads `.data.value` off each produced value to compare against the cache.
+      mock.fn(async () => [{ pointId: 'p', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '1' } }])
     );
     await south.directQuery(configuration.items);
     assert.strictEqual(addContentMock.mock.calls.length, 1);
-    assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], { type: 'time-values', content: [1, 1] });
+    assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
+      type: 'time-values',
+      content: [
+        { pointId: 'p', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '1' } },
+        { pointId: 'p', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '1' } }
+      ]
+    });
     assert.strictEqual(addContentMock.mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
     assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [configuration.items[0], configuration.items[1]]);
   });
@@ -526,7 +556,7 @@ describe('South ADS', () => {
       mock.fn(async () => undefined)
     );
     mock.method(
-      south as unknown as Record<string, unknown>,
+      south as unknown as { buildSymbolCache: () => Promise<void> },
       'buildSymbolCache',
       mock.fn(async () => undefined)
     );
@@ -569,7 +599,7 @@ describe('South ADS', () => {
       mock.fn(async () => undefined)
     );
     mock.method(
-      south as unknown as Record<string, unknown>,
+      south as unknown as { buildSymbolCache: () => Promise<void> },
       'buildSymbolCache',
       mock.fn(async () => undefined)
     );
@@ -1087,5 +1117,288 @@ describe('South ADS', () => {
     // Third query — cache was cleared, getSymbols is called again
     await south.directQuery(configuration.items);
     assert.strictEqual(getSymbols.mock.calls.length, 2);
+  });
+
+  describe('caching strategy filtering', () => {
+    // Forces every item down the readAdsSymbol fallback path (buildSymbolCache no-op keeps the symbol
+    // cache empty), which keeps these tests independent of the readRawMulti batching mechanics above.
+    const buildItem = (
+      id: string,
+      name: string,
+      overrides: Partial<SouthConnectorItemEntity<SouthADSItemSettings>> = {}
+    ): SouthConnectorItemEntity<SouthADSItemSettings> => ({
+      ...configuration.items[0],
+      id,
+      name,
+      settings: { address: name },
+      cachingStrategy: 'allValues',
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
+      ...overrides
+    });
+
+    beforeEach(() => {
+      mock.method(
+        south as unknown as { buildSymbolCache: () => Promise<void> },
+        'buildSymbolCache',
+        mock.fn(async () => undefined)
+      );
+    });
+
+    it('should suppress a no-change value under cachingStrategy=onChange', async () => {
+      const addContentMock = mock.method(
+        south,
+        'addContent',
+        mock.fn(async () => undefined)
+      );
+      mock.method(
+        south,
+        'readAdsSymbol',
+        mock.fn(async () => [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }])
+      );
+      const item = buildItem('id1', 'Var1', { cachingStrategy: 'onChange' });
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () =>
+          new Map([
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: ['42'],
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ]
+          ])
+      );
+
+      await south.directQuery([item]);
+
+      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
+      assert.deepStrictEqual(content.content, []);
+      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], []);
+      assert.deepStrictEqual(
+        (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
+        []
+      );
+    });
+
+    it('should cache a threshold-exceeding change', async () => {
+      const addContentMock = mock.method(
+        south,
+        'addContent',
+        mock.fn(async () => undefined)
+      );
+      mock.method(
+        south,
+        'readAdsSymbol',
+        mock.fn(async () => [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }])
+      );
+      const item = buildItem('id1', 'Var1', { cachingStrategy: 'threshold', thresholdType: 'absolute', threshold: 5 });
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () =>
+          new Map([
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: ['30'],
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ]
+          ])
+      );
+
+      await south.directQuery([item]);
+
+      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
+      assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
+      assert.deepStrictEqual(
+        (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
+        [{ itemId: 'id1', value: ['42'], instant: testData.constants.dates.FAKE_NOW }]
+      );
+    });
+
+    it('should compute a percentage-of-span threshold correctly, caching the value above it and suppressing the one below it', async () => {
+      const addContentMock = mock.method(
+        south,
+        'addContent',
+        mock.fn(async () => undefined)
+      );
+      // rangeLow=0, rangeHigh=100 -> span=100; threshold=10% -> 10 absolute units
+      mock.method(
+        south,
+        'readAdsSymbol',
+        mock.fn(async (item: SouthConnectorItemEntity<SouthADSItemSettings>) => {
+          if (item.name === 'Var1') {
+            // diff from 20 = 22 > 10
+            return [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }];
+          }
+          // diff from 20 = 5 < 10
+          return [{ pointId: 'Var2', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '25' } }];
+        })
+      );
+      const overItem = buildItem('id1', 'Var1', {
+        cachingStrategy: 'threshold',
+        thresholdType: 'percentage',
+        threshold: 10,
+        rangeLow: 0,
+        rangeHigh: 100
+      });
+      const underItem = buildItem('id2', 'Var2', {
+        cachingStrategy: 'threshold',
+        thresholdType: 'percentage',
+        threshold: 10,
+        rangeLow: 0,
+        rangeHigh: 100
+      });
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () =>
+          new Map([
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: ['20'],
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ],
+            [
+              'id2',
+              {
+                itemId: 'id2',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: ['20'],
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ]
+          ])
+      );
+
+      await south.directQuery([overItem, underItem]);
+
+      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
+      assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
+      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [overItem]);
+    });
+
+    it('should cache when maxCachingInterval elapses even without a qualifying change', async () => {
+      const addContentMock = mock.method(
+        south,
+        'addContent',
+        mock.fn(async () => undefined)
+      );
+      mock.method(
+        south,
+        'readAdsSymbol',
+        mock.fn(async () => [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }])
+      );
+      const item = buildItem('id1', 'Var1', { cachingStrategy: 'onChange', maxCachingInterval: 1000 });
+      // previous cached value is identical (no onChange-qualifying diff), but well over an hour has
+      // elapsed since trackedInstant
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () =>
+          new Map([
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T22:00:00.000Z',
+                value: ['42'],
+                trackedInstant: '2021-01-01T22:00:00.000Z'
+              }
+            ]
+          ])
+      );
+
+      await south.directQuery([item]);
+
+      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
+      assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
+    });
+
+    it('should always cache the very first read for an item regardless of strategy', async () => {
+      const addContentMock = mock.method(
+        south,
+        'addContent',
+        mock.fn(async () => undefined)
+      );
+      mock.method(
+        south,
+        'readAdsSymbol',
+        mock.fn(async () => [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }])
+      );
+      const item = buildItem('id1', 'Var1', { cachingStrategy: 'onChange' });
+      // getItemsLastValues default mock (set in beforeEach) returns an empty Map — no prior cached state
+
+      await south.directQuery([item]);
+
+      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
+      assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
+    });
+
+    it('should call saveItemsLastValues with exactly the items actually cached in the cycle', async () => {
+      mock.method(
+        south,
+        'addContent',
+        mock.fn(async () => undefined)
+      );
+      mock.method(
+        south,
+        'readAdsSymbol',
+        mock.fn(async (item: SouthConnectorItemEntity<SouthADSItemSettings>) => {
+          if (item.name === 'Var1') {
+            // unchanged from previous -> suppressed
+            return [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }];
+          }
+          // changed from previous -> cached
+          return [{ pointId: 'Var2', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '7' } }];
+        })
+      );
+      const suppressedItem = buildItem('id1', 'Var1', { cachingStrategy: 'onChange' });
+      const cachedItem = buildItem('id2', 'Var2', { cachingStrategy: 'onChange' });
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () =>
+          new Map([
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: ['42'],
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ],
+            [
+              'id2',
+              {
+                itemId: 'id2',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: ['1'],
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ]
+          ])
+      );
+
+      await south.directQuery([suppressedItem, cachedItem]);
+
+      assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        'southId',
+        [{ itemId: 'id2', value: ['7'], instant: testData.constants.dates.FAKE_NOW }]
+      ]);
+    });
   });
 });
