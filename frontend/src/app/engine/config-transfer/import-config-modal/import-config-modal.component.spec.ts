@@ -116,7 +116,7 @@ describe('ImportConfigModalComponent', () => {
   });
 
   test('should reject a file that is too large', () => {
-    const bigFile = new File([new Uint8Array(10 * 1024 * 1024 + 1)], 'big.json');
+    const bigFile = new File([new Uint8Array(100 * 1024 * 1024 + 1)], 'big.json');
 
     tester.componentInstance.onFileSelected(bigFile);
 
