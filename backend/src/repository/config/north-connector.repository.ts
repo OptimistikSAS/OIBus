@@ -1,5 +1,6 @@
 import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
+import { NotFoundError } from '../../model/types';
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../../model/north-connector.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { SouthConnectorEntityLight, SouthConnectorItemEntityLight, SouthItemGroupEntity } from '../../model/south-connector.model';
@@ -73,9 +74,13 @@ export default class NorthConnectorRepository {
    * connector from the UI) or the id of a connector it just read back from this repository, so this
    * is not a behavior change for them.
    */
-  saveNorth(north: NorthConnectorEntity<NorthSettings>): void {
-    const beforeConnector = north.id ? this.findNorthById(north.id) : null;
-    const isNewConnector = !beforeConnector;
+  saveNorth(north: NorthConnectorEntity<NorthSettings>, isNewConnector: boolean): void {
+    const beforeConnector = isNewConnector ? null : this.findNorthById(north.id);
+    if (!isNewConnector && !beforeConnector) {
+      // See the identical guard in SouthConnectorRepository.saveSouth: an update whose target was
+      // deleted by another request in the meantime must fail loudly, not silently resurrect it.
+      throw new NotFoundError(`North connector "${north.id}" not found`);
+    }
     const transaction = this.database.transaction(() => {
       if (isNewConnector) {
         if (!north.id) {

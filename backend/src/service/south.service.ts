@@ -145,7 +145,7 @@ export default class SouthService {
       item.createdBy = createdBy;
       item.updatedBy = createdBy;
     }
-    this.southConnectorRepository.saveSouth(southEntity);
+    this.southConnectorRepository.saveSouth(southEntity, true);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.createSouth(southEntity.id);
     if (southEntity.enabled) {
@@ -191,7 +191,7 @@ export default class SouthService {
       }
       item.updatedBy = updatedBy;
     }
-    this.southConnectorRepository.saveSouth(southEntity);
+    this.southConnectorRepository.saveSouth(southEntity, false);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouth(southEntity);
   }
