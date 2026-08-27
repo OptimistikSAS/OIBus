@@ -8,8 +8,10 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type SouthMQTTClass from './south-mqtt';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import type { SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/south-settings.model';
-import type { SouthConnectorEntity } from '../../model/south-connector.model';
+import type { SouthItemSettings, SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/south-settings.model';
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import type { OIBusContent } from '../../../shared/model/engine.model';
+import type { Instant } from '../../../shared/model/types';
 import type { MqttClient } from 'mqtt';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -93,7 +95,13 @@ describe('SouthMQTT', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null
       },
       {
         id: 'id2',
@@ -118,7 +126,13 @@ describe('SouthMQTT', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null
       },
       {
         id: 'id3',
@@ -143,7 +157,13 @@ describe('SouthMQTT', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null
       },
       {
         id: 'id4',
@@ -168,7 +188,13 @@ describe('SouthMQTT', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null
       },
       {
         id: 'id5',
@@ -193,7 +219,13 @@ describe('SouthMQTT', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null
       },
       {
         id: 'id6',
@@ -248,6 +280,10 @@ describe('SouthMQTT', () => {
     utilsMqttExports.createConnectionOptions = mock.fn(async () => ({}));
     utilsMqttExports.getItem = mock.fn(() => undefined as unknown);
     addContentCallback.mock.resetCalls();
+    (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
+    (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => new Map());
+    (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
+    (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => undefined);
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
     south = new SouthMQTT(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
@@ -463,6 +499,190 @@ describe('SouthMQTT', () => {
         (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Error when flushing messages: add content error'
       )
     );
+  });
+
+  describe('caching strategy filtering', () => {
+    const buildItem = (
+      id: string,
+      name: string,
+      overrides: Partial<SouthConnectorItemEntity<SouthMQTTItemSettings>> = {}
+    ): SouthConnectorItemEntity<SouthMQTTItemSettings> => ({
+      ...configuration.items[0],
+      id,
+      name,
+      cachingStrategy: 'allValues',
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
+      ...overrides
+    });
+
+    it('should suppress a no-change value under cachingStrategy=onChange', async () => {
+      const priv = south as unknown as Record<string, unknown>;
+      const addContentMock = mock.fn(
+        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+          undefined
+      );
+      south.addContent = addContentMock;
+      const item = buildItem('id1', 'item1', { cachingStrategy: 'onChange' });
+      priv['bufferedMessages'] = [{ topic: item.settings.topic, message: '42', item, timestamp: testData.constants.dates.FAKE_NOW }];
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () =>
+          new Map([
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: '42',
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ]
+          ])
+      );
+
+      await south.flushMessages();
+
+      assert.strictEqual(addContentMock.mock.calls.length, 0);
+      assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        'southId',
+        []
+      ]);
+    });
+
+    it('should cache a threshold-exceeding change', async () => {
+      const priv = south as unknown as Record<string, unknown>;
+      const addContentMock = mock.fn(
+        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+          undefined
+      );
+      south.addContent = addContentMock;
+      const item = buildItem('id1', 'item1', { cachingStrategy: 'threshold', thresholdType: 'absolute', threshold: 5 });
+      priv['bufferedMessages'] = [{ topic: item.settings.topic, message: '42', item, timestamp: testData.constants.dates.FAKE_NOW }];
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () =>
+          new Map([
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: '30',
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ]
+          ])
+      );
+
+      await south.flushMessages();
+
+      assert.strictEqual(addContentMock.mock.calls.length, 1);
+      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [item]);
+      assert.deepStrictEqual(
+        (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
+        [{ itemId: 'id1', value: '42', instant: testData.constants.dates.FAKE_NOW }]
+      );
+    });
+
+    it('should cache when maxCachingInterval elapses even without a qualifying change', async () => {
+      const priv = south as unknown as Record<string, unknown>;
+      const addContentMock = mock.fn(
+        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+          undefined
+      );
+      south.addContent = addContentMock;
+      const item = buildItem('id1', 'item1', { cachingStrategy: 'onChange', maxCachingInterval: 1000 });
+      priv['bufferedMessages'] = [{ topic: item.settings.topic, message: '42', item, timestamp: testData.constants.dates.FAKE_NOW }];
+      // previous cached value is identical (no onChange-qualifying diff), but 2h have elapsed since trackedInstant
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () =>
+          new Map([
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T22:00:00.000Z',
+                value: '42',
+                trackedInstant: '2021-01-01T22:00:00.000Z'
+              }
+            ]
+          ])
+      );
+
+      await south.flushMessages();
+
+      assert.strictEqual(addContentMock.mock.calls.length, 1);
+      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [item]);
+    });
+
+    it('should always cache the very first read for an item regardless of strategy', async () => {
+      const priv = south as unknown as Record<string, unknown>;
+      const addContentMock = mock.fn(
+        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+          undefined
+      );
+      south.addContent = addContentMock;
+      const item = buildItem('id1', 'item1', { cachingStrategy: 'onChange' });
+      priv['bufferedMessages'] = [{ topic: item.settings.topic, message: '42', item, timestamp: testData.constants.dates.FAKE_NOW }];
+      // getItemsLastValues default mock (set in beforeEach) returns an empty Map — no prior cached state
+
+      await south.flushMessages();
+
+      assert.strictEqual(addContentMock.mock.calls.length, 1);
+      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [item]);
+    });
+
+    it('should call saveItemsLastValues with exactly the items actually cached in the cycle', async () => {
+      const priv = south as unknown as Record<string, unknown>;
+      const addContentMock = mock.fn(
+        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+          undefined
+      );
+      south.addContent = addContentMock;
+      const suppressedItem = buildItem('id1', 'item1', { cachingStrategy: 'onChange' });
+      const cachedItem = buildItem('id2', 'item2', { cachingStrategy: 'onChange' });
+      priv['bufferedMessages'] = [
+        { topic: suppressedItem.settings.topic, message: '42', item: suppressedItem, timestamp: testData.constants.dates.FAKE_NOW },
+        { topic: cachedItem.settings.topic, message: '7', item: cachedItem, timestamp: testData.constants.dates.FAKE_NOW }
+      ];
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () =>
+          new Map([
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: '42',
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ],
+            [
+              'id2',
+              {
+                itemId: 'id2',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: '1',
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ]
+          ])
+      );
+
+      await south.flushMessages();
+
+      assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        'southId',
+        [{ itemId: 'id2', value: '7', instant: testData.constants.dates.FAKE_NOW }]
+      ]);
+    });
   });
 
   it('should properly connect and manage intentional close event', async () => {
