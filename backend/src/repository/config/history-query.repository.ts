@@ -5,7 +5,7 @@ import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } f
 import { Page } from '../../../shared/model/types';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { Instant } from '../../model/types';
+import { Instant, NotFoundError } from '../../model/types';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { OIBusSouthType } from '../../../shared/model/south-connector.model';
 import { HistoryTransformerWithOptions } from '../../model/transformer.model';
@@ -74,17 +74,18 @@ export default class HistoryQueryRepository {
   }
 
   /**
-   * Inserts or updates a history query. Whether a given `history.id` is treated as "create" or
-   * "update" is decided by whether a row for that id already exists — not merely by whether `id` is
-   * set — so a caller (e.g. config import) can preserve a specific id for a brand-new row instead of
-   * always getting a freshly generated one. Every normal caller only ever passes either no id (new
-   * history query from the UI) or the id of a history query it just read back from this repository,
-   * so this is not a behavior change for them.
+   * Inserts or updates a history query. Whether `history.id` is treated as "create" or "update" is
+   * decided by the explicit `isNew` the caller passes — never inferred from whether a row for that
+   * id happens to exist — so a caller (e.g. config import) can preserve a specific id for a
+   * brand-new row, and an update whose target was deleted by another request in the meantime fails
+   * loudly (`NotFoundError`) instead of being silently reinterpreted as a create that resurrects it.
    */
-  saveHistory(history: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): void {
-    const beforeHistory = history.id ? this.findHistoryById(history.id) : null;
-    const isNew = !beforeHistory;
-    const beforeItemsById = history.id
+  saveHistory(history: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>, isNew: boolean): void {
+    const beforeHistory = isNew ? null : this.findHistoryById(history.id);
+    if (!isNew && !beforeHistory) {
+      throw new NotFoundError(`History query "${history.id}" not found`);
+    }
+    const beforeItemsById = beforeHistory
       ? new Map(this.findAllItemsForHistory(history.id).map(i => [i.id, i]))
       : new Map<string, HistoryQueryItemEntity<SouthItemSettings>>();
     const transaction = this.database.transaction(() => {

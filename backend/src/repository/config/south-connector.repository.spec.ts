@@ -9,6 +9,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity, SouthItemGroupEntityLig
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { mock } from 'node:test';
 import AuditService from '../../service/audit.service';
+import { NotFoundError } from '../../model/types';
 
 const TEST_DB_PATH = 'src/tests/test-config-south.db';
 
@@ -48,12 +49,24 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(repository.findSouthById('badId'), null);
   });
 
+  it('should reject an update whose target id does not exist, instead of silently creating it', () => {
+    // Simulates the race this repository is meant to close: a caller believes it's updating an
+    // existing connector (isNewConnector: false), but the row is gone — e.g. deleted by another
+    // request during this caller's own earlier async validation. This must fail loudly rather than
+    // resurrecting the connector under `isNewConnector`'s old "does a row exist" inference.
+    const ghost: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+    ghost.id = 'south-id-that-does-not-exist';
+
+    assert.throws(() => repository.saveSouth(ghost, false), NotFoundError);
+    assert.strictEqual(repository.findSouthById('south-id-that-does-not-exist'), null);
+  });
+
   it('should save a new south connector', () => {
     const newSouthConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
     newSouthConnector.id = '';
     newSouthConnector.name = 'new connector';
     newSouthConnector.items = [];
-    repository.saveSouth(newSouthConnector);
+    repository.saveSouth(newSouthConnector, true);
 
     assert.ok(newSouthConnector.id);
     const createdConnector = repository.findSouthById(newSouthConnector.id)!;
@@ -120,7 +133,7 @@ describe('SouthConnectorRepository', () => {
       }
     ];
 
-    repository.saveSouth(southConnector);
+    repository.saveSouth(southConnector, true);
 
     assert.strictEqual(southConnector.id, 'preserved-south-id');
     const created = repository.findSouthById('preserved-south-id');
@@ -154,7 +167,7 @@ describe('SouthConnectorRepository', () => {
     };
     newSouthConnector.items = [...testData.south.list[1].items, newItem];
     const beforeConnector = repository.findSouthById(newSouthConnector.id);
-    repository.saveSouth(newSouthConnector);
+    repository.saveSouth(newSouthConnector, false);
 
     const updatedConnector = repository.findSouthById(newSouthConnector.id)!;
     assert.strictEqual(updatedConnector.items.length, 3);
@@ -191,7 +204,7 @@ describe('SouthConnectorRepository', () => {
         : item
     );
     const beforeItem = repository.findItemById(connector.id, connector.items[0].id);
-    repository.saveSouth(connector);
+    repository.saveSouth(connector, false);
 
     const updatedConnector = repository.findSouthById(connector.id)!;
     const updatedItem = updatedConnector.items.find(item => item.id === connector.items[0].id)!;
@@ -209,7 +222,7 @@ describe('SouthConnectorRepository', () => {
     // A second save of the same unchanged connector must not re-audit the untouched item
     recordMock.mock.resetCalls();
     const resaved: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(updatedConnector));
-    repository.saveSouth(resaved);
+    repository.saveSouth(resaved, false);
     const secondItemCalls = recordMock.mock.calls.filter(
       call => call.arguments[0] === 'south_item' && call.arguments[1] === connector.items[0].id
     );
@@ -222,7 +235,7 @@ describe('SouthConnectorRepository', () => {
     newSouthConnector.id = '';
     newSouthConnector.name = 'to be deleted';
     newSouthConnector.items = [];
-    repository.saveSouth(newSouthConnector);
+    repository.saveSouth(newSouthConnector, true);
 
     assert.ok(repository.findSouthById(newSouthConnector.id));
     const before = repository.findSouthById(newSouthConnector.id);
@@ -251,7 +264,7 @@ describe('SouthConnectorRepository', () => {
     newSouthConnector.name = 'to be deleted with items and groups';
     newSouthConnector.groups = [];
     newSouthConnector.items = [];
-    repository.saveSouth(newSouthConnector);
+    repository.saveSouth(newSouthConnector, true);
 
     // Attach a temp group (created with the correct southId as part of the save) and an item using it
     const tempGroup: SouthItemGroupEntityLight = {
@@ -289,7 +302,7 @@ describe('SouthConnectorRepository', () => {
         updatedAt: ''
       }
     ];
-    repository.saveSouth(newSouthConnector);
+    repository.saveSouth(newSouthConnector, false);
     const before = repository.findSouthById(newSouthConnector.id)!;
     assert.strictEqual(before.items.length, 1);
     assert.strictEqual(before.groups.length, 1);
@@ -519,7 +532,7 @@ describe('SouthConnectorRepository', () => {
     southWithGroups.items = [itemWithGroup];
     southWithGroups.groups = [group];
 
-    repository.saveSouth(southWithGroups);
+    repository.saveSouth(southWithGroups, false);
 
     // itemWithGroup.id is set after save
     assert.ok(itemWithGroup.id);
@@ -782,7 +795,7 @@ describe('SouthConnectorRepository', () => {
     south.groups = [tempGroup];
     south.items = [itemWithTempGroup];
 
-    repository.saveSouth(south);
+    repository.saveSouth(south, false);
 
     // After save, the temp group ID is replaced with a real generated ID
     assert.ok(!itemWithTempGroup.group!.id.startsWith('temp_'));
@@ -866,7 +879,7 @@ describe('SouthConnectorRepository', () => {
     south.groups = [updatedGroup];
     south.updatedBy = 'updateUser';
 
-    repository.saveSouth(south);
+    repository.saveSouth(south, false);
 
     const savedGroup = groupRepository.findById(group.id);
     assert.ok(savedGroup, 'Group should still exist after saveSouth');
@@ -903,7 +916,7 @@ describe('SouthConnectorRepository', () => {
     const south: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
     south.items = [];
     south.groups = [group];
-    repository.saveSouth(south);
+    repository.saveSouth(south, false);
 
     const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
     recordMock.mock.resetCalls();
@@ -911,7 +924,7 @@ describe('SouthConnectorRepository', () => {
     const southWithoutGroup: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(south));
     southWithoutGroup.groups = [];
     southWithoutGroup.updatedBy = 'removeUser';
-    repository.saveSouth(southWithoutGroup);
+    repository.saveSouth(southWithoutGroup, false);
 
     assert.strictEqual(groupRepository.findById(group.id), null);
     const groupDeleteCall = recordMock.mock.calls.find(
@@ -945,7 +958,7 @@ describe('SouthConnectorRepository', () => {
         updatedAt: ''
       }
     ];
-    repository.saveSouth(south);
+    repository.saveSouth(south, true);
     const itemId = south.items[0].id;
     const beforeItem = repository.findItemById(south.id, itemId);
 
@@ -955,7 +968,7 @@ describe('SouthConnectorRepository', () => {
     const southWithoutItem: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(south));
     southWithoutItem.items = [];
     southWithoutItem.updatedBy = 'removeItemUser';
-    repository.saveSouth(southWithoutItem);
+    repository.saveSouth(southWithoutItem, false);
 
     assert.strictEqual(repository.findItemById(south.id, itemId), null);
     const itemDeleteCall = recordMock.mock.calls.find(
@@ -1134,13 +1147,13 @@ describe('SouthConnectorRepository', () => {
         updatedAt: ''
       }
     ];
-    repository.saveSouth(newSouthConnector);
+    repository.saveSouth(newSouthConnector, true);
     const itemId = newSouthConnector.items[0].id;
 
     database.prepare(`UPDATE south_items SET updated_at = '2000-01-01T00:00:00Z' WHERE id = ?;`).run(itemId);
 
     const resavedSouthConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(newSouthConnector));
-    repository.saveSouth(resavedSouthConnector);
+    repository.saveSouth(resavedSouthConnector, false);
 
     const row = database.prepare(`SELECT updated_at FROM south_items WHERE id = ?;`).get(itemId) as { updated_at: string };
     assert.strictEqual(row.updated_at, '2000-01-01T00:00:00Z');
@@ -1170,14 +1183,14 @@ describe('SouthConnectorRepository', () => {
         updatedAt: ''
       }
     ];
-    repository.saveSouth(newSouthConnector);
+    repository.saveSouth(newSouthConnector, true);
     const itemId = newSouthConnector.items[0].id;
 
     database.prepare(`UPDATE south_items SET updated_at = '2000-01-01T00:00:00Z' WHERE id = ?;`).run(itemId);
 
     const changedSouthConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(newSouthConnector));
     changedSouthConnector.items[0].name = 'renamed item';
-    repository.saveSouth(changedSouthConnector);
+    repository.saveSouth(changedSouthConnector, false);
 
     const row = database.prepare(`SELECT updated_at FROM south_items WHERE id = ?;`).get(itemId) as { updated_at: string };
     assert.notStrictEqual(row.updated_at, '2000-01-01T00:00:00Z');
@@ -1207,7 +1220,7 @@ describe('SouthConnectorRepository', () => {
         updatedAt: ''
       }
     ];
-    repository.saveSouth(newSouthConnector);
+    repository.saveSouth(newSouthConnector, true);
     const itemId = newSouthConnector.items[0].id;
     assert.ok(itemId);
     let saved = repository.findItemById(newSouthConnector.id, itemId)!;
@@ -1216,13 +1229,13 @@ describe('SouthConnectorRepository', () => {
     // Now update it to have a scan mode (changes hasChanged/update.run branch), then clear it again
     const withScanMode: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(newSouthConnector));
     withScanMode.items[0].scanMode = testData.scanMode.list[0];
-    repository.saveSouth(withScanMode);
+    repository.saveSouth(withScanMode, false);
     saved = repository.findItemById(newSouthConnector.id, itemId)!;
     assert.strictEqual(saved.scanMode!.id, testData.scanMode.list[0].id);
 
     const backToNull: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(withScanMode));
     backToNull.items[0].scanMode = null;
-    repository.saveSouth(backToNull);
+    repository.saveSouth(backToNull, false);
     saved = repository.findItemById(newSouthConnector.id, itemId)!;
     assert.strictEqual(saved.scanMode, null);
   });
@@ -1276,7 +1289,7 @@ describe('SouthConnectorRepository', () => {
     const south: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
     south.items = [];
     south.groups = [group];
-    repository.saveSouth(south);
+    repository.saveSouth(south, false);
 
     const savedGroup = groupRepository.findById(group.id)!;
     assert.strictEqual(savedGroup.recoveryStrategy, 'newest');
@@ -1302,7 +1315,7 @@ describe('SouthConnectorRepository', () => {
     south.items = [];
     south.groups = [{ ...group, scanMode: undefined as unknown as typeof group.scanMode }];
 
-    assert.throws(() => repository.saveSouth(south));
+    assert.throws(() => repository.saveSouth(south, false));
   });
 });
 

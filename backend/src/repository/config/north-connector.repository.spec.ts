@@ -10,6 +10,7 @@ import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { SourceOriginSouth, Transformer } from '../../model/transformer.model';
 import TransformerRepository from './transformer.repository';
 import AuditService from '../../service/audit.service';
+import { NotFoundError } from '../../model/types';
 
 const TEST_DB_PATH = 'src/tests/test-config-north.db';
 
@@ -63,6 +64,14 @@ describe('NorthConnectorRepository', () => {
     assert.strictEqual(repository.findNorthById('badId'), null);
   });
 
+  it('should reject an update whose target id does not exist, instead of silently creating it', () => {
+    const ghost: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
+    ghost.id = 'north-id-that-does-not-exist';
+
+    assert.throws(() => repository.saveNorth(ghost, false), NotFoundError);
+    assert.strictEqual(repository.findNorthById('north-id-that-does-not-exist'), null);
+  });
+
   it('should save a new north connector', () => {
     const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
     newNorthConnector.id = '';
@@ -71,7 +80,7 @@ describe('NorthConnectorRepository', () => {
     // north connector they were cloned from — a real "new" connector (as the UI always sends) never
     // reuses ids like that, so start this one without any rather than accidentally colliding with them.
     newNorthConnector.transformers = [];
-    repository.saveNorth(newNorthConnector);
+    repository.saveNorth(newNorthConnector, true);
 
     assert.ok(newNorthConnector.id);
     const createdConnector = repository.findNorthById(newNorthConnector.id)!;
@@ -98,7 +107,7 @@ describe('NorthConnectorRepository', () => {
     newNorthConnectorWithoutTransformer.id = '';
     newNorthConnectorWithoutTransformer.name = 'new connector without transformer';
     newNorthConnectorWithoutTransformer.transformers = [];
-    repository.saveNorth(newNorthConnectorWithoutTransformer);
+    repository.saveNorth(newNorthConnectorWithoutTransformer, true);
 
     assert.ok(newNorthConnectorWithoutTransformer.id);
     const createdConnectorWithoutTransformer = repository.findNorthById(newNorthConnectorWithoutTransformer.id)!;
@@ -157,7 +166,7 @@ describe('NorthConnectorRepository', () => {
       }
     ];
 
-    repository.saveNorth(northConnector);
+    repository.saveNorth(northConnector, true);
 
     assert.strictEqual(northConnector.id, 'preserved-north-id');
     const created = repository.findNorthById('preserved-north-id');
@@ -186,7 +195,7 @@ describe('NorthConnectorRepository', () => {
     newNorthConnector.id = '';
     newNorthConnector.name = 'north with group transformer';
     newNorthConnector.transformers = [];
-    repository.saveNorth(newNorthConnector);
+    repository.saveNorth(newNorthConnector, true);
 
     assert.ok(newNorthConnector.id);
 
@@ -242,7 +251,7 @@ describe('NorthConnectorRepository', () => {
     newNorthConnectorWithoutTransformer2.id = '';
     newNorthConnectorWithoutTransformer2.name = 'new connector without transformer 2';
     newNorthConnectorWithoutTransformer2.transformers = [];
-    repository.saveNorth(newNorthConnectorWithoutTransformer2);
+    repository.saveNorth(newNorthConnectorWithoutTransformer2, true);
 
     assert.ok(newNorthConnectorWithoutTransformer2.id);
 
@@ -276,7 +285,7 @@ describe('NorthConnectorRepository', () => {
     const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[1]));
     newNorthConnector.caching.throttling.maxSize = 999;
     const beforeConnector = repository.findNorthById(newNorthConnector.id);
-    repository.saveNorth(newNorthConnector);
+    repository.saveNorth(newNorthConnector, false);
 
     const updatedConnector = repository.findNorthById(newNorthConnector.id)!;
     assert.strictEqual(updatedConnector.caching.throttling.maxSize, 999);
@@ -301,7 +310,7 @@ describe('NorthConnectorRepository', () => {
     newNorthConnector.id = '';
     newNorthConnector.name = 'to be deleted north';
     newNorthConnector.transformers = [];
-    repository.saveNorth(newNorthConnector);
+    repository.saveNorth(newNorthConnector, true);
 
     repository.addOrEditTransformer(
       newNorthConnector.id,
@@ -359,7 +368,7 @@ describe('NorthConnectorRepository', () => {
         source: { type: 'oianalytics-setpoint' }
       }
     ];
-    repository.saveNorth(newNorthConnector);
+    repository.saveNorth(newNorthConnector, true);
 
     assert.ok(newNorthConnector.id);
     const created = repository.findNorthById(newNorthConnector.id)!;
@@ -372,7 +381,7 @@ describe('NorthConnectorRepository', () => {
     newNorthConnector.id = '';
     newNorthConnector.name = 'north with south items transformer';
     newNorthConnector.transformers = [];
-    repository.saveNorth(newNorthConnector);
+    repository.saveNorth(newNorthConnector, true);
 
     repository.addOrEditTransformer(
       newNorthConnector.id,
@@ -455,7 +464,7 @@ describe('NorthConnectorRepository', () => {
     newNorthConnector.id = '';
     newNorthConnector.name = 'north with updated group transformer';
     newNorthConnector.transformers = [];
-    repository.saveNorth(newNorthConnector);
+    repository.saveNorth(newNorthConnector, true);
 
     repository.addOrEditTransformer(
       newNorthConnector.id,
