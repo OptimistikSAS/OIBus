@@ -9,6 +9,7 @@ import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-se
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { Transformer } from '../../model/transformer.model';
 import AuditService from '../../service/audit.service';
+import { NotFoundError } from '../../model/types';
 
 const TEST_DB_PATH = 'src/tests/test-config-history-query.db';
 
@@ -61,6 +62,16 @@ describe('HistoryQueryRepository', () => {
     assert.strictEqual(repository.findHistoryById('badId'), null);
   });
 
+  it('should reject an update whose target id does not exist, instead of silently creating it', () => {
+    const ghost: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+      JSON.stringify(testData.historyQueries.list[0])
+    );
+    ghost.id = 'history-id-that-does-not-exist';
+
+    assert.throws(() => repository.saveHistory(ghost, false), NotFoundError);
+    assert.strictEqual(repository.findHistoryById('history-id-that-does-not-exist'), null);
+  });
+
   it('should save a new history query', () => {
     const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
       JSON.stringify(testData.historyQueries.list[0])
@@ -72,7 +83,7 @@ describe('HistoryQueryRepository', () => {
     // like that, so start this one empty rather than accidentally colliding with them.
     newHistoryQuery.items = [];
     newHistoryQuery.northTransformers = [];
-    repository.saveHistory(newHistoryQuery);
+    repository.saveHistory(newHistoryQuery, true);
 
     assert.ok(newHistoryQuery.id);
     newHistoryId = newHistoryQuery.id;
@@ -105,7 +116,7 @@ describe('HistoryQueryRepository', () => {
     newHistoryWithoutTransformer.name = 'new history query without transformer';
     newHistoryWithoutTransformer.northTransformers = [];
     newHistoryWithoutTransformer.items = [];
-    repository.saveHistory(newHistoryWithoutTransformer);
+    repository.saveHistory(newHistoryWithoutTransformer, true);
 
     assert.ok(newHistoryWithoutTransformer.id);
     newHistoryWithoutTransformerId = newHistoryWithoutTransformer.id;
@@ -173,7 +184,7 @@ describe('HistoryQueryRepository', () => {
       }
     ];
 
-    repository.saveHistory(historyQuery);
+    repository.saveHistory(historyQuery, true);
 
     assert.strictEqual(historyQuery.id, 'preserved-history-id');
     const created = repository.findHistoryById('preserved-history-id');
@@ -192,7 +203,7 @@ describe('HistoryQueryRepository', () => {
     newHistoryWithoutTransformer2.name = 'new history without transformer 2';
     newHistoryWithoutTransformer2.northTransformers = [];
     newHistoryWithoutTransformer2.items = [];
-    repository.saveHistory(newHistoryWithoutTransformer2);
+    repository.saveHistory(newHistoryWithoutTransformer2, true);
 
     assert.ok(newHistoryWithoutTransformer2.id);
 
@@ -262,7 +273,7 @@ describe('HistoryQueryRepository', () => {
 
     const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
     recordMock.mock.resetCalls();
-    repository.saveHistory(newHistoryQuery);
+    repository.saveHistory(newHistoryQuery, false);
 
     const updatedHistoryQuery = repository.findHistoryById(newHistoryQuery.id)!;
     assert.strictEqual(updatedHistoryQuery.items.length, 3);
@@ -301,7 +312,7 @@ describe('HistoryQueryRepository', () => {
         items: []
       }
     ];
-    repository.saveHistory(newHistoryQuery);
+    repository.saveHistory(newHistoryQuery, true);
 
     assert.ok(newHistoryQuery.id);
     const created = repository.findHistoryById(newHistoryQuery.id)!;
@@ -318,7 +329,7 @@ describe('HistoryQueryRepository', () => {
     newHistoryQuery.name = 'new history query';
     newHistoryQuery.items = [];
     newHistoryQuery.northTransformers = [];
-    repository.saveHistory(newHistoryQuery);
+    repository.saveHistory(newHistoryQuery, false);
 
     const updatedHistoryQuery = repository.findHistoryById(newHistoryId)!;
     assert.strictEqual(updatedHistoryQuery.items.length, 0);
@@ -374,7 +385,7 @@ describe('HistoryQueryRepository', () => {
         updatedAt: ''
       }
     ];
-    repository.saveHistory(newHistoryQuery);
+    repository.saveHistory(newHistoryQuery, true);
     repository.addOrEditTransformer(
       newHistoryQuery.id,
       {
@@ -614,7 +625,7 @@ describe('HistoryQueryRepository', () => {
         updatedAt: ''
       }
     ];
-    repository.saveHistory(historyQuery);
+    repository.saveHistory(historyQuery, true);
     const itemId = historyQuery.items[0].id;
 
     database.prepare(`UPDATE history_items SET updated_at = '2000-01-01T00:00:00Z' WHERE id = ?;`).run(itemId);
@@ -624,7 +635,7 @@ describe('HistoryQueryRepository', () => {
     );
     const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
     recordMock.mock.resetCalls();
-    repository.saveHistory(resavedHistoryQuery);
+    repository.saveHistory(resavedHistoryQuery, false);
 
     const row = database.prepare(`SELECT updated_at FROM history_items WHERE id = ?;`).get(itemId) as { updated_at: string };
     assert.strictEqual(row.updated_at, '2000-01-01T00:00:00Z');
@@ -652,7 +663,7 @@ describe('HistoryQueryRepository', () => {
         updatedAt: ''
       }
     ];
-    repository.saveHistory(historyQuery);
+    repository.saveHistory(historyQuery, true);
     const itemId = historyQuery.items[0].id;
 
     database.prepare(`UPDATE history_items SET updated_at = '2000-01-01T00:00:00Z' WHERE id = ?;`).run(itemId);
@@ -661,7 +672,7 @@ describe('HistoryQueryRepository', () => {
       JSON.stringify(historyQuery)
     );
     changedHistoryQuery.items[0].name = 'renamed item';
-    repository.saveHistory(changedHistoryQuery);
+    repository.saveHistory(changedHistoryQuery, false);
 
     const row = database.prepare(`SELECT updated_at FROM history_items WHERE id = ?;`).get(itemId) as { updated_at: string };
     assert.notStrictEqual(row.updated_at, '2000-01-01T00:00:00Z');
