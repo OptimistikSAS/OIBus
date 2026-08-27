@@ -16,21 +16,14 @@
     </div>
   } @else {
     <div class="container-fluid">
-      @if (isGroupedConnector) {
-        <div class="alert alert-info d-flex align-items-center gap-2 mb-3" role="alert">
-          <span class="icon-info-circle fs-5" aria-hidden="true"></span>
-          <span translate="south.items.last-value-modal.group-value-notice"></span>
-        </div>
-      }
-
       <div class="row mb-3">
         <div class="col-md-4 fw-bold" translate="south.items.last-value-modal.item-name"></div>
-        <div class="col-md-8">{{ itemLastValue?.itemName }}</div>
+        <div class="col-md-8">{{ itemName }}</div>
       </div>
 
       <div class="row mb-3">
         <div class="col-md-4 fw-bold" translate="south.items.group"></div>
-        <div class="col-md-8">{{ itemLastValue?.groupName }}</div>
+        <div class="col-md-8">{{ groupName }}</div>
       </div>
 
       <div class="row mb-3">
@@ -91,6 +84,22 @@
           }
         </div>
       </div>
+
+      @if (groupLastValue) {
+        <hr />
+        <h6 translate="south.items.last-value-modal.group-section-title"></h6>
+
+        <div class="row mb-3">
+          <div class="col-md-4 fw-bold" translate="south.items.last-value-modal.tracked-instant"></div>
+          <div class="col-md-8">
+            @if (groupLastValue.trackedInstant) {
+              <span>{{ groupLastValue.trackedInstant | date: 'medium' }}</span>
+            } @else {
+              <span class="text-muted">-</span>
+            }
+          </div>
+        </div>
+      }
     </div>
   }
 </div>
