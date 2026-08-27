@@ -21,6 +21,7 @@ import JSONToOIAnalyticsTransformer from '../../transformers/any/json-to-oianaly
 import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToTimeValuesTransformer from '../../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
 import AuditService from '../../service/audit.service';
+import { NotFoundError } from '../../model/types';
 
 const TRANSFORMERS_TABLE = 'transformers';
 const PAGE_SIZE = 10;
@@ -40,15 +41,17 @@ export default class TransformerRepository {
   }
 
   /**
-   * Inserts or updates a custom transformer. Whether a given `transformer.id` is treated as
-   * "create" or "update" is decided by whether a row for that id already exists — not merely by
-   * whether `id` is set — so a caller (e.g. config import) can preserve a specific id for a
-   * brand-new row instead of always getting a freshly generated one. Every normal caller only ever
-   * passes either no id (new transformer from the UI) or the id of a transformer it just read back
-   * from this repository, so this is not a behavior change for them.
+   * Inserts or updates a custom transformer. Whether `transformer.id` is treated as "create" or
+   * "update" is decided by the explicit `isNew` the caller passes — never inferred from whether a
+   * row for that id happens to exist. This matters in two directions: an update whose target was
+   * deleted by another request in the meantime fails loudly (`NotFoundError`) instead of being
+   * silently reinterpreted as a create that resurrects it; and a create under a preserved id (config
+   * import) always INSERTs rather than falling into the UPDATE branch on a collision — standard and
+   * custom transformers share one id space (see `createStandardTransformers`), so treating a
+   * collision as "must be an update" would silently overwrite an unrelated standard transformer's
+   * columns instead of failing with a constraint error the caller can react to.
    */
-  save(transformer: CustomTransformer): void {
-    const isNew = !transformer.id || !this.findById(transformer.id);
+  save(transformer: CustomTransformer, isNew: boolean): void {
     if (isNew) {
       if (!transformer.id) {
         transformer.id = generateRandomId(6);
@@ -82,6 +85,11 @@ export default class TransformerRepository {
       );
     } else {
       const before = this.findById(transformer.id);
+      if (!before) {
+        // The caller believes this is an update of an existing transformer, but it's gone —
+        // most likely deleted by another request during this request's own (awaited) validation.
+        throw new NotFoundError(`Transformer "${transformer.id}" not found`);
+      }
       this.database
         .prepare(
           `UPDATE ${TRANSFORMERS_TABLE} SET name = ?, description = ?, custom_manifest = ?, custom_code = ?, language = ?, timeout = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?`
