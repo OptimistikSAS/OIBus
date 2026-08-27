@@ -9,7 +9,13 @@ import {
   SouthItemGroupEntityLight
 } from '../../model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { OIBusSouthType, SouthConnectorItemSearchParam, SouthHistoryRecoveryStrategy } from '../../../shared/model/south-connector.model';
+import {
+  OIBusSouthType,
+  SouthCachingStrategy,
+  SouthCachingThresholdType,
+  SouthConnectorItemSearchParam,
+  SouthHistoryRecoveryStrategy
+} from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { ScanMode } from '../../model/scan-mode.model';
@@ -34,10 +40,13 @@ const PAGE_SIZE = 50;
  */
 const ITEM_JOIN_SELECT =
   `SELECT si.id, si.name, si.enabled, si.scan_mode_id, si.settings, si.sync_with_group, ` +
-  `si.max_read_interval, si.read_delay, si.start_time_offset, si.end_time_offset, si.recovery_strategy, si.created_by, si.updated_by, si.created_at, si.updated_at, ` +
+  `si.max_read_interval, si.read_delay, si.start_time_offset, si.end_time_offset, si.recovery_strategy, ` +
+  `si.caching_strategy, si.threshold_type, si.threshold, si.range_low, si.range_high, si.max_caching_interval, ` +
+  `si.created_by, si.updated_by, si.created_at, si.updated_at, ` +
   `${scanModeAliasedColumns('sm', 'sm_')}, ` +
   `g.id AS g_id, g.name AS g_name, g.start_time_offset AS g_start_time_offset, g.end_time_offset AS g_end_time_offset, g.max_read_interval AS g_max_read_interval, ` +
-  `g.read_delay AS g_read_delay, g.recovery_strategy AS g_recovery_strategy, g.created_by AS g_created_by, g.updated_by AS g_updated_by, ` +
+  `g.read_delay AS g_read_delay, g.recovery_strategy AS g_recovery_strategy, g.caching_strategy AS g_caching_strategy, ` +
+  `g.created_by AS g_created_by, g.updated_by AS g_updated_by, ` +
   `g.created_at AS g_created_at, g.updated_at AS g_updated_at, ` +
   `${scanModeAliasedColumns('gsm', 'gsm_')}`;
 
@@ -162,7 +171,8 @@ export default class SouthConnectorRepository {
             endTimeOffset: groupToCreate.endTimeOffset,
             maxReadInterval: groupToCreate.maxReadInterval,
             readDelay: groupToCreate.readDelay,
-            recoveryStrategy: groupToCreate.recoveryStrategy
+            recoveryStrategy: groupToCreate.recoveryStrategy,
+            cachingStrategy: groupToCreate.cachingStrategy
           },
           south.updatedBy,
           preservedId
@@ -186,7 +196,8 @@ export default class SouthConnectorRepository {
             endTimeOffset: group.endTimeOffset,
             maxReadInterval: group.maxReadInterval,
             readDelay: group.readDelay,
-            recoveryStrategy: group.recoveryStrategy
+            recoveryStrategy: group.recoveryStrategy,
+            cachingStrategy: group.cachingStrategy
           },
           south.updatedBy
         );
@@ -235,10 +246,10 @@ export default class SouthConnectorRepository {
         }
 
         const insert = this.database.prepare(
-          `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, start_time_offset, end_time_offset, recovery_strategy, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`
+          `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, start_time_offset, end_time_offset, recovery_strategy, caching_strategy, threshold_type, threshold, range_low, range_high, max_caching_interval, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`
         );
         const update = this.database.prepare(
-          `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, start_time_offset = ?, end_time_offset = ?, recovery_strategy = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
+          `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, start_time_offset = ?, end_time_offset = ?, recovery_strategy = ?, caching_strategy = ?, threshold_type = ?, threshold = ?, range_low = ?, range_high = ?, max_caching_interval = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
         );
         const insertGroup = this.database.prepare(`INSERT INTO ${GROUP_ITEMS_TABLE} (group_id, item_id) VALUES (?, ?);`);
         const deleteGroups = this.database.prepare(`DELETE FROM ${GROUP_ITEMS_TABLE} WHERE item_id = ?;`);
@@ -258,9 +269,15 @@ export default class SouthConnectorRepository {
                 start_time_offset: number | null;
                 end_time_offset: number | null;
                 recovery_strategy: string | null;
+                caching_strategy: string | null;
+                threshold_type: string | null;
+                threshold: number | null;
+                range_low: number | null;
+                range_high: number | null;
+                max_caching_interval: number | null;
               }
             >(
-              `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, start_time_offset, end_time_offset, recovery_strategy FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`
+              `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, start_time_offset, end_time_offset, recovery_strategy, caching_strategy, threshold_type, threshold, range_low, range_high, max_caching_interval FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`
             )
             .all(south.id)
             .map(row => [row.id, row])
@@ -284,6 +301,12 @@ export default class SouthConnectorRepository {
               item.startTimeOffset ?? null,
               item.endTimeOffset ?? null,
               item.recoveryStrategy ?? null,
+              item.cachingStrategy ?? null,
+              item.thresholdType ?? null,
+              item.threshold ?? null,
+              item.rangeLow ?? null,
+              item.rangeHigh ?? null,
+              item.maxCachingInterval ?? null,
               item.createdBy,
               item.updatedBy
             );
@@ -302,7 +325,13 @@ export default class SouthConnectorRepository {
               existing.read_delay !== (item.readDelay ?? null) ||
               existing.start_time_offset !== (item.startTimeOffset ?? null) ||
               existing.end_time_offset !== (item.endTimeOffset ?? null) ||
-              existing.recovery_strategy !== (item.recoveryStrategy ?? null);
+              existing.recovery_strategy !== (item.recoveryStrategy ?? null) ||
+              existing.caching_strategy !== (item.cachingStrategy ?? null) ||
+              existing.threshold_type !== (item.thresholdType ?? null) ||
+              existing.threshold !== (item.threshold ?? null) ||
+              existing.range_low !== (item.rangeLow ?? null) ||
+              existing.range_high !== (item.rangeHigh ?? null) ||
+              existing.max_caching_interval !== (item.maxCachingInterval ?? null);
             if (hasChanged) {
               update.run(
                 item.name,
@@ -315,6 +344,12 @@ export default class SouthConnectorRepository {
                 item.startTimeOffset ?? null,
                 item.endTimeOffset ?? null,
                 item.recoveryStrategy ?? null,
+                item.cachingStrategy ?? null,
+                item.thresholdType ?? null,
+                item.threshold ?? null,
+                item.rangeLow ?? null,
+                item.rangeHigh ?? null,
+                item.maxCachingInterval ?? null,
                 item.updatedBy,
                 item.id
               );
@@ -433,6 +468,9 @@ export default class SouthConnectorRepository {
           if (item.recoveryStrategy == null) {
             item.recoveryStrategy = group.recoveryStrategy;
           }
+          if (item.cachingStrategy == null) {
+            item.cachingStrategy = group.cachingStrategy;
+          }
         }
         item.syncWithGroup = false;
         item.group = null;
@@ -535,8 +573,8 @@ export default class SouthConnectorRepository {
     if (!southItem.id) {
       southItem.id = generateRandomId(6);
       const insertQuery =
-        `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, start_time_offset, end_time_offset, recovery_strategy, created_by, updated_by, created_at, updated_at) ` +
-        `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+        `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, start_time_offset, end_time_offset, recovery_strategy, caching_strategy, threshold_type, threshold, range_low, range_high, max_caching_interval, created_by, updated_by, created_at, updated_at) ` +
+        `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
       this.database
         .prepare(insertQuery)
         .run(
@@ -552,11 +590,17 @@ export default class SouthConnectorRepository {
           southItem.startTimeOffset ?? null,
           southItem.endTimeOffset ?? null,
           southItem.recoveryStrategy ?? null,
+          southItem.cachingStrategy ?? null,
+          southItem.thresholdType ?? null,
+          southItem.threshold ?? null,
+          southItem.rangeLow ?? null,
+          southItem.rangeHigh ?? null,
+          southItem.maxCachingInterval ?? null,
           southItem.createdBy,
           southItem.updatedBy
         );
     } else {
-      const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, start_time_offset = ?, end_time_offset = ?, recovery_strategy = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
+      const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, start_time_offset = ?, end_time_offset = ?, recovery_strategy = ?, caching_strategy = ?, threshold_type = ?, threshold = ?, range_low = ?, range_high = ?, max_caching_interval = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
       this.database
         .prepare(query)
         .run(
@@ -570,6 +614,12 @@ export default class SouthConnectorRepository {
           southItem.startTimeOffset ?? null,
           southItem.endTimeOffset ?? null,
           southItem.recoveryStrategy ?? null,
+          southItem.cachingStrategy ?? null,
+          southItem.thresholdType ?? null,
+          southItem.threshold ?? null,
+          southItem.rangeLow ?? null,
+          southItem.rangeHigh ?? null,
+          southItem.maxCachingInterval ?? null,
           southItem.updatedBy,
           southItem.id
         );
@@ -703,7 +753,7 @@ export default class SouthConnectorRepository {
   findGroupBySouthId(southId: string): Array<SouthItemGroupEntityLight> {
     const query =
       `SELECT g.id, g.created_at, g.updated_at, g.created_by, g.updated_by, g.name, ` +
-      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, g.recovery_strategy, ` +
+      `g.scan_mode_id, g.start_time_offset, g.end_time_offset, g.max_read_interval, g.read_delay, g.recovery_strategy, g.caching_strategy, ` +
       `${scanModeAliasedColumns('s', 'sm_')} ` +
       `FROM ${SOUTH_ITEM_GROUPS_TABLE} g JOIN ${SCAN_MODE_TABLE} s ON g.scan_mode_id = s.id WHERE g.south_id = ? ORDER BY g.name;`;
     return this.database
@@ -774,6 +824,7 @@ export function toItemEntityFromJoinedRow(row: Record<string, string | number | 
         maxReadInterval: row.g_max_read_interval !== null && row.g_max_read_interval !== undefined ? Number(row.g_max_read_interval) : null,
         readDelay: row.g_read_delay !== null && row.g_read_delay !== undefined ? Number(row.g_read_delay) : null,
         recoveryStrategy: (row.g_recovery_strategy as SouthHistoryRecoveryStrategy) || null,
+        cachingStrategy: (row.g_caching_strategy as SouthCachingStrategy) || null,
         createdBy: row.g_created_by as string,
         updatedBy: row.g_updated_by as string,
         createdAt: row.g_created_at as string,
@@ -794,6 +845,20 @@ export function toItemEntityFromJoinedRow(row: Record<string, string | number | 
     startTimeOffset: row.start_time_offset !== null && row.start_time_offset !== undefined ? Number(row.start_time_offset) : null,
     endTimeOffset: row.end_time_offset !== null && row.end_time_offset !== undefined ? Number(row.end_time_offset) : null,
     recoveryStrategy: (row.recovery_strategy as SouthHistoryRecoveryStrategy) || null,
+    // cachingStrategy falls back to the group's value when the item is synced with its group, mirroring
+    // the recovery_strategy / g_recovery_strategy group-prefixed column convention. The five params below
+    // (thresholdType, threshold, rangeLow, rangeHigh, maxCachingInterval) are item-only and have no
+    // group-prefixed counterpart, so they are mapped directly from the item's own row.
+    cachingStrategy:
+      row.sync_with_group && group
+        ? (row.caching_strategy as SouthCachingStrategy) || group.cachingStrategy
+        : (row.caching_strategy as SouthCachingStrategy) || null,
+    thresholdType: (row.threshold_type as SouthCachingThresholdType) || null,
+    threshold: row.threshold !== null && row.threshold !== undefined ? Number(row.threshold) : null,
+    rangeLow: row.range_low !== null && row.range_low !== undefined ? Number(row.range_low) : null,
+    rangeHigh: row.range_high !== null && row.range_high !== undefined ? Number(row.range_high) : null,
+    maxCachingInterval:
+      row.max_caching_interval !== null && row.max_caching_interval !== undefined ? Number(row.max_caching_interval) : null,
     createdBy: row.created_by as string,
     updatedBy: row.updated_by as string,
     createdAt: row.created_at as string,
@@ -828,6 +893,7 @@ export const toSouthItemGroupLight = (result: Record<string, string | number>): 
       result.max_read_interval !== null && result.max_read_interval !== undefined ? (result.max_read_interval as number) : null,
     readDelay: (result.read_delay as number) || 0,
     recoveryStrategy: (result.recovery_strategy as SouthHistoryRecoveryStrategy) || null,
+    cachingStrategy: (result.caching_strategy as SouthCachingStrategy) || null,
     createdBy: result.created_by as string,
     updatedBy: result.updated_by as string,
     createdAt: result.created_at as string,

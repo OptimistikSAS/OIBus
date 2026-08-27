@@ -175,7 +175,13 @@ describe('SouthConnectorRepository', () => {
       readDelay: null,
       startTimeOffset: null,
       endTimeOffset: null,
-      recoveryStrategy: null
+      recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null
     };
     newSouthConnector.items = [...testData.south.list[1].items, newItem];
     const beforeConnector = repository.findSouthById(newSouthConnector.id);
@@ -286,6 +292,7 @@ describe('SouthConnectorRepository', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
       maxReadInterval: null,
       readDelay: 0,
       createdBy: '',
@@ -308,6 +315,12 @@ describe('SouthConnectorRepository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -453,7 +466,13 @@ describe('SouthConnectorRepository', () => {
       readDelay: null,
       startTimeOffset: null,
       endTimeOffset: null,
-      recoveryStrategy: null
+      recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null
     };
     const itemsToSave: Array<SouthConnectorItemEntity<SouthItemSettings>> = JSON.parse(JSON.stringify(testData.south.list[0].items));
     itemsToSave.push(newItem);
@@ -490,7 +509,13 @@ describe('SouthConnectorRepository', () => {
       readDelay: null,
       startTimeOffset: null,
       endTimeOffset: null,
-      recoveryStrategy: null
+      recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null
     };
     itemsToSave.push(newItem);
 
@@ -516,6 +541,7 @@ describe('SouthConnectorRepository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -536,6 +562,12 @@ describe('SouthConnectorRepository', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -564,6 +596,7 @@ describe('SouthConnectorRepository', () => {
         startTimeOffset: 10,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -583,6 +616,12 @@ describe('SouthConnectorRepository', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -619,6 +658,12 @@ describe('SouthConnectorRepository', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
       createdBy: '',
       updatedBy: 'creatorUser',
       createdAt: '',
@@ -654,6 +699,12 @@ describe('SouthConnectorRepository', () => {
       startTimeOffset: 100,
       endTimeOffset: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -670,6 +721,134 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(savedItem.startTimeOffset, 100);
   });
 
+  it('should save and find an item with caching strategy fields', () => {
+    const itemWithCachingStrategy: SouthConnectorItemEntity<SouthItemSettings> = {
+      id: '',
+      name: 'item-with-caching-strategy',
+      enabled: true,
+      scanMode: testData.scanMode.list[0],
+      settings: {} as SouthItemSettings,
+      group: null,
+      syncWithGroup: false,
+      maxReadInterval: null,
+      readDelay: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null,
+      cachingStrategy: 'threshold',
+      thresholdType: 'percentage',
+      threshold: 5,
+      rangeLow: 0,
+      rangeHigh: 100,
+      maxCachingInterval: 60000,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+
+    repository.saveItem(testData.south.list[0].id, itemWithCachingStrategy);
+
+    assert.ok(itemWithCachingStrategy.id);
+    const savedItem = repository.findItemById(testData.south.list[0].id, itemWithCachingStrategy.id);
+    assert.ok(savedItem);
+    assert.strictEqual(savedItem.cachingStrategy, 'threshold');
+    assert.strictEqual(savedItem.thresholdType, 'percentage');
+    assert.strictEqual(savedItem.threshold, 5);
+    assert.strictEqual(savedItem.rangeLow, 0);
+    assert.strictEqual(savedItem.rangeHigh, 100);
+    assert.strictEqual(savedItem.maxCachingInterval, 60000);
+
+    // Updating the item's caching strategy fields must be persisted too
+    savedItem.cachingStrategy = 'onChange';
+    savedItem.thresholdType = null;
+    savedItem.threshold = null;
+    savedItem.rangeLow = null;
+    savedItem.rangeHigh = null;
+    savedItem.maxCachingInterval = null;
+    repository.saveItem(testData.south.list[0].id, savedItem);
+
+    const updatedItem = repository.findItemById(testData.south.list[0].id, itemWithCachingStrategy.id)!;
+    assert.strictEqual(updatedItem.cachingStrategy, 'onChange');
+    assert.strictEqual(updatedItem.thresholdType, null);
+    assert.strictEqual(updatedItem.threshold, null);
+    assert.strictEqual(updatedItem.rangeLow, null);
+    assert.strictEqual(updatedItem.rangeHigh, null);
+    assert.strictEqual(updatedItem.maxCachingInterval, null);
+  });
+
+  it('should fall back to the group cachingStrategy when the item is synced with its group', () => {
+    const groupRepository = new SouthItemGroupRepository(database, createAuditServiceMock());
+    const group = groupRepository.create(
+      {
+        name: 'Group With Caching Strategy',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        startTimeOffset: null,
+        endTimeOffset: null,
+        maxReadInterval: null,
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: 'onChange'
+      },
+      'userTest'
+    );
+
+    const syncedItem: SouthConnectorItemEntity<SouthItemSettings> = {
+      id: '',
+      name: 'item-synced-with-group-caching-strategy',
+      enabled: true,
+      scanMode: testData.scanMode.list[0],
+      settings: {} as SouthItemSettings,
+      group,
+      syncWithGroup: true,
+      maxReadInterval: null,
+      readDelay: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    repository.saveItem(testData.south.list[0].id, syncedItem);
+
+    const savedSyncedItem = repository.findItemById(testData.south.list[0].id, syncedItem.id)!;
+    // The item's own column is null, so it falls back to the group's cachingStrategy
+    assert.strictEqual(savedSyncedItem.cachingStrategy, 'onChange');
+
+    // An item with its own cachingStrategy set keeps it even when synced with a group
+    const itemWithOwnStrategy: SouthConnectorItemEntity<SouthItemSettings> = {
+      ...syncedItem,
+      id: '',
+      name: 'item-synced-but-with-own-caching-strategy',
+      cachingStrategy: 'threshold',
+      thresholdType: 'absolute',
+      threshold: 1
+    };
+    repository.saveItem(testData.south.list[0].id, itemWithOwnStrategy);
+    const savedItemWithOwnStrategy = repository.findItemById(testData.south.list[0].id, itemWithOwnStrategy.id)!;
+    assert.strictEqual(savedItemWithOwnStrategy.cachingStrategy, 'threshold');
+
+    // An item not synced with the group never falls back, even if its own value is null
+    const unsyncedItem: SouthConnectorItemEntity<SouthItemSettings> = {
+      ...syncedItem,
+      id: '',
+      name: 'item-not-synced-with-group',
+      syncWithGroup: false
+    };
+    repository.saveItem(testData.south.list[0].id, unsyncedItem);
+    const savedUnsyncedItem = repository.findItemById(testData.south.list[0].id, unsyncedItem.id)!;
+    assert.strictEqual(savedUnsyncedItem.cachingStrategy, null);
+  });
+
   it('should save item with empty groups array', () => {
     const itemWithEmptyGroups: SouthConnectorItemEntity<SouthItemSettings> = {
       id: '',
@@ -684,6 +863,12 @@ describe('SouthConnectorRepository', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -709,6 +894,7 @@ describe('SouthConnectorRepository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -739,6 +925,7 @@ describe('SouthConnectorRepository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -777,6 +964,7 @@ describe('SouthConnectorRepository', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
       maxReadInterval: null,
       readDelay: 0,
       createdBy: '',
@@ -798,6 +986,12 @@ describe('SouthConnectorRepository', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -842,6 +1036,7 @@ describe('SouthConnectorRepository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -868,6 +1063,7 @@ describe('SouthConnectorRepository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -885,6 +1081,7 @@ describe('SouthConnectorRepository', () => {
       startTimeOffset: 500,
       endTimeOffset: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
       maxReadInterval: 3600,
       readDelay: 200
     };
@@ -919,6 +1116,7 @@ describe('SouthConnectorRepository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -964,6 +1162,12 @@ describe('SouthConnectorRepository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1001,7 +1205,8 @@ describe('SouthConnectorRepository', () => {
         endTimeOffset: 50,
         maxReadInterval: 3600,
         readDelay: 200,
-        recoveryStrategy: 'oldest'
+        recoveryStrategy: 'oldest',
+        cachingStrategy: 'onChange'
       },
       'userTest'
     );
@@ -1019,6 +1224,12 @@ describe('SouthConnectorRepository', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -1038,6 +1249,7 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(savedItem.maxReadInterval, 3600);
     assert.strictEqual(savedItem.readDelay, 200);
     assert.strictEqual(savedItem.recoveryStrategy, 'oldest');
+    assert.strictEqual(savedItem.cachingStrategy, 'onChange');
   });
 
   it('should not overwrite an item own scan mode and history fields when deleting its group', () => {
@@ -1051,7 +1263,8 @@ describe('SouthConnectorRepository', () => {
         endTimeOffset: 50,
         maxReadInterval: 3600,
         readDelay: 200,
-        recoveryStrategy: 'oldest'
+        recoveryStrategy: 'oldest',
+        cachingStrategy: 'onChange'
       },
       'userTest'
     );
@@ -1069,6 +1282,12 @@ describe('SouthConnectorRepository', () => {
       startTimeOffset: 10,
       endTimeOffset: 20,
       recoveryStrategy: 'newest',
+      cachingStrategy: 'threshold',
+      thresholdType: 'absolute',
+      threshold: 5,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -1086,6 +1305,7 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(savedItem.startTimeOffset, 10);
     assert.strictEqual(savedItem.endTimeOffset, 20);
     assert.strictEqual(savedItem.recoveryStrategy, 'newest');
+    assert.strictEqual(savedItem.cachingStrategy, 'threshold');
   });
 
   it('should not fill history fields when the connector does not support history', () => {
@@ -1099,7 +1319,8 @@ describe('SouthConnectorRepository', () => {
         endTimeOffset: 50,
         maxReadInterval: 3600,
         readDelay: 200,
-        recoveryStrategy: 'oldest'
+        recoveryStrategy: 'oldest',
+        cachingStrategy: null
       },
       'userTest'
     );
@@ -1117,6 +1338,12 @@ describe('SouthConnectorRepository', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -1153,6 +1380,12 @@ describe('SouthConnectorRepository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1189,6 +1422,12 @@ describe('SouthConnectorRepository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1226,6 +1465,12 @@ describe('SouthConnectorRepository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1266,6 +1511,12 @@ describe('SouthConnectorRepository', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -1291,6 +1542,7 @@ describe('SouthConnectorRepository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: 'newest',
+        cachingStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -1317,6 +1569,7 @@ describe('SouthConnectorRepository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
