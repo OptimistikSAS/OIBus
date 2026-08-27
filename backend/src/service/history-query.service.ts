@@ -198,7 +198,7 @@ export default class HistoryQueryService {
       };
     });
 
-    this.historyQueryRepository.saveHistory(historyQuery);
+    this.historyQueryRepository.saveHistory(historyQuery, true);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
 
     await this.engine.createHistoryQuery(historyQuery.id);
@@ -280,7 +280,7 @@ export default class HistoryQueryService {
       };
     });
 
-    this.historyQueryRepository.saveHistory(historyQuery);
+    this.historyQueryRepository.saveHistory(historyQuery, false);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, resetCache);
   }

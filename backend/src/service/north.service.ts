@@ -117,7 +117,7 @@ export default class NorthService {
         source: this.transformerSourceFromCommand(transformerWithOptions.source)
       };
     });
-    this.northConnectorRepository.saveNorth(northEntity);
+    this.northConnectorRepository.saveNorth(northEntity, true);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
     await this.engine.createNorth(northEntity.id);
@@ -158,7 +158,7 @@ export default class NorthService {
       };
     });
 
-    this.northConnectorRepository.saveNorth(northEntity);
+    this.northConnectorRepository.saveNorth(northEntity, false);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadNorth(northEntity);
   }

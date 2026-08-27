@@ -725,16 +725,21 @@ export default class ConfigImportService {
 
     const transformerIdMap = this.recreateTransformers(envelope, importedBy, warnings);
 
+    // Always a create: `wipeConfiguration` has already deleted every row this loop could otherwise
+    // collide with. Passing `isNew: true` explicitly (rather than letting the repository infer it
+    // from existence) means a genuine id collision — e.g. two envelope entries sharing an id —
+    // surfaces as a real INSERT constraint error instead of silently taking the UPDATE branch; the
+    // caller (`importConfiguration`) turns that into a clean `ConfigImportError`.
     for (const south of envelope.fullConfiguration.southConnectors) {
-      this.southConnectorRepository!.saveSouth(this.buildSouthEntity(south, importedBy));
+      this.southConnectorRepository!.saveSouth(this.buildSouthEntity(south, importedBy), true);
     }
 
     for (const north of envelope.fullConfiguration.northConnectors) {
-      this.northConnectorRepository!.saveNorth(this.buildNorthEntity(north, importedBy, transformerIdMap, warnings));
+      this.northConnectorRepository!.saveNorth(this.buildNorthEntity(north, importedBy, transformerIdMap, warnings), true);
     }
 
     for (const historyQuery of envelope.historyQueries.historyQueries) {
-      this.historyQueryRepository!.saveHistory(this.buildHistoryEntity(historyQuery, importedBy, transformerIdMap, warnings));
+      this.historyQueryRepository!.saveHistory(this.buildHistoryEntity(historyQuery, importedBy, transformerIdMap, warnings), true);
     }
 
     for (const { user, hashedPassword } of hashedUserPasswords) {
@@ -801,7 +806,11 @@ export default class ConfigImportService {
         createdAt: '',
         updatedAt: ''
       };
-      this.transformerRepository!.save(customTransformer);
+      // Always a create: `wipeConfiguration` already deleted every custom transformer. `isNew: true`
+      // means a preserved id that collides with an existing row (e.g. a locally-generated standard
+      // transformer sharing the same 6-char id space) INSERTs and fails on the constraint, instead of
+      // silently taking the UPDATE branch and overwriting that unrelated row's columns.
+      this.transformerRepository!.save(customTransformer, true);
       transformerIdMap.set(transformer.oIBusInternalId, customTransformer.id);
     }
 
