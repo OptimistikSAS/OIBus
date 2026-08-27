@@ -6,7 +6,11 @@ import JoiValidator from '../../web-server/controllers/validators/joi.validator'
 import { scanModeSchema, ipFilterSchema, userSchema } from '../../web-server/controllers/validators/oibus-validation-schema';
 import { getUpgradesNewerThan, SettingsUpgradeEntry } from './settings-upgrades/registry';
 import { CONFIG_EXPORT_FORMAT_VERSION } from './config-transfer.service';
-import { ConfigExportEnvelopeDTO, ConfigImportResponseDTO } from '../../../shared/model/config-transfer.model';
+import {
+  ConfigExportEnvelopeDTO,
+  ConfigImportEntityValidationError,
+  ConfigImportResponseDTO
+} from '../../../shared/model/config-transfer.model';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { southManifestList } from '../south-manifests';
 import { northManifestList } from '../north-manifests';
@@ -55,13 +59,6 @@ export interface AppliedUpgrade {
   scope: string;
   version: string;
   entityId?: string;
-}
-
-export interface ConfigImportEntityValidationError {
-  scope: string;
-  entityId?: string;
-  entityName?: string;
-  message: string;
 }
 
 /**
