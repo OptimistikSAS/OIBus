@@ -169,6 +169,87 @@
         </div>
       }
 
+      <!-- Caching strategy fields (for IoT-family connectors: OPC UA, Modbus, ADS, OPC classic, S7, MQTT) -->
+      @if (isIotFamilySouthType) {
+        <div class="row">
+          <!-- Caching Strategy -->
+          <div class="col-2">
+            <div class="form-group">
+              <label class="form-label" for="caching-strategy" translate="south.items.caching-strategy"></label>
+              <select class="form-select" id="caching-strategy" formControlName="cachingStrategy">
+                @for (strategy of cachingStrategies; track strategy.value) {
+                  @if (strategy.value !== 'threshold' || isThresholdAvailable) {
+                    <option [value]="strategy.value" [translate]="strategy.labelKey"></option>
+                  }
+                }
+              </select>
+              <val-errors controlName="cachingStrategy" />
+            </div>
+          </div>
+
+          @if (form.controls.cachingStrategy.value === 'threshold') {
+            <!-- Threshold Type -->
+            <div class="col-2">
+              <div class="form-group">
+                <label class="form-label" for="threshold-type" translate="south.items.threshold-type"></label>
+                <select class="form-select" id="threshold-type" formControlName="thresholdType">
+                  @for (type of thresholdTypes; track type.value) {
+                    <option [value]="type.value" [translate]="type.labelKey"></option>
+                  }
+                </select>
+                <val-errors controlName="thresholdType" />
+              </div>
+            </div>
+            <!-- Threshold -->
+            <div class="col-2">
+              <div class="form-group">
+                <label class="form-label" for="threshold" translate="south.items.threshold"></label>
+                <input formControlName="threshold" id="threshold" type="number" class="form-control" />
+                <val-errors controlName="threshold" />
+              </div>
+            </div>
+            @if (form.controls.thresholdType.value === 'percentage') {
+              <!-- Range Low -->
+              <div class="col-2">
+                <div class="form-group">
+                  <label class="form-label" for="range-low" translate="south.items.range-low"></label>
+                  <input formControlName="rangeLow" id="range-low" type="number" class="form-control" />
+                  <val-errors controlName="rangeLow" />
+                </div>
+              </div>
+              <!-- Range High -->
+              <div class="col-2">
+                <div class="form-group">
+                  <label class="form-label" for="range-high" translate="south.items.range-high"></label>
+                  <input formControlName="rangeHigh" id="range-high" type="number" class="form-control" />
+                  <val-errors controlName="rangeHigh" />
+                </div>
+              </div>
+            }
+          }
+
+          @if (form.controls.cachingStrategy.value !== 'allValues') {
+            <!-- Max Caching Interval -->
+            <div class="col-2">
+              <div class="form-group">
+                <label class="form-label" for="max-caching-interval" translate="south.items.max-caching-interval"></label>
+                <div class="input-group">
+                  <input
+                    formControlName="maxCachingInterval"
+                    id="max-caching-interval"
+                    type="number"
+                    class="form-control"
+                    min="0"
+                  />
+                  <span class="input-group-text" translate="common.unit.ms"></span>
+                </div>
+                <val-errors controlName="maxCachingInterval" />
+              </div>
+            </div>
+          }
+        </div>
+      }
+
       <ng-container formGroupName="settings">
         <oib-oibus-object-form-control
           [scanModes]="scanModes"
