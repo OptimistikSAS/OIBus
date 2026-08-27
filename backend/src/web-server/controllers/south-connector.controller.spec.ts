@@ -7,6 +7,8 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
+  SouthExploreBrowseResult,
+  SouthExploreStartResult,
   SouthItemGroupCommandDTO
 } from '../../../shared/model/south-connector.model';
 import type { SouthItemGroupEntity } from '../../model/south-connector.model';
@@ -337,7 +339,10 @@ describe('SouthConnectorController', () => {
     const southId = testData.south.list[0].id;
     const southType = testData.south.command.type;
     const settings = testData.south.command.settings;
-    const startResult = { sessionId: 'sessionId', entries: [{ id: 'n1', name: 'N1', type: 'Object', hasChildren: true }] };
+    const startResult: SouthExploreStartResult = {
+      sessionId: 'sessionId',
+      entries: [{ id: 'n1', name: 'N1', metadata: { type: 'Object' }, hasChildren: true }]
+    };
     southService.startExplore = mock.fn(async () => startResult);
 
     const result = await controller.startExplore(southId, southType, settings, mockRequest as CustomExpressRequest);
@@ -367,7 +372,9 @@ describe('SouthConnectorController', () => {
   });
 
   it('should browse a south explore session', async () => {
-    const browseResult = { entries: [{ id: 'child', name: 'Child', type: 'file', hasChildren: false }] };
+    const browseResult: SouthExploreBrowseResult = {
+      entries: [{ id: 'child', name: 'Child', metadata: { type: 'file' }, hasChildren: false }]
+    };
     southService.browseExplore = mock.fn(async () => browseResult);
 
     const result = await controller.browseExplore(
@@ -502,13 +509,16 @@ describe('SouthConnectorController', () => {
     const southId = testData.south.list[0].id;
     const itemId = testData.south.list[0].items[0].id;
     const mockLastValue = {
-      itemId,
-      itemName: testData.south.list[0].items[0].name,
-      groupId: null,
-      groupName: '',
-      queryTime: '2024-01-01T00:00:00.000Z',
-      value: { temperature: 42 },
-      trackedInstant: '2024-01-02T00:00:00.000Z'
+      itemLastValue: {
+        itemId,
+        itemName: testData.south.list[0].items[0].name,
+        groupId: null,
+        groupName: '',
+        queryTime: '2024-01-01T00:00:00.000Z',
+        value: { temperature: 42 },
+        trackedInstant: '2024-01-02T00:00:00.000Z'
+      },
+      groupLastValue: null
     };
     southService.getItemLastValue = mock.fn(() => mockLastValue);
 
@@ -869,6 +879,8 @@ describe('SouthConnectorController', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null,
         items: []
       }
     ];
@@ -897,6 +909,8 @@ describe('SouthConnectorController', () => {
       endTimeOffset: null,
       maxReadInterval: null,
       readDelay: 0,
+      recoveryStrategy: null,
+      cachingStrategy: null,
       items: []
     };
     southService.getGroup = mock.fn(() => mockGroup);
@@ -920,7 +934,9 @@ describe('SouthConnectorController', () => {
         startTimeOffset: 5,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       }
     };
     const mockCreatedGroup: SouthItemGroupEntity = {
@@ -936,6 +952,8 @@ describe('SouthConnectorController', () => {
       endTimeOffset: null,
       maxReadInterval: null,
       readDelay: 0,
+      recoveryStrategy: null,
+      cachingStrategy: null,
       items: []
     };
     southService.createGroup = mock.fn(() => mockCreatedGroup);
@@ -960,7 +978,9 @@ describe('SouthConnectorController', () => {
         startTimeOffset: 10,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       }
     };
     southService.updateGroup = mock.fn(() => ({}) as SouthItemGroupEntity);
