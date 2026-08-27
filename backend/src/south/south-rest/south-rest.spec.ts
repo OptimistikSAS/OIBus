@@ -125,6 +125,13 @@ describe('SouthRestAPI connector', () => {
     readDelay: 5,
     startTimeOffset: 10,
     endTimeOffset: null,
+    recoveryStrategy: null,
+    cachingStrategy: null,
+    thresholdType: null,
+    threshold: null,
+    rangeLow: null,
+    rangeHigh: null,
+    maxCachingInterval: null,
     settings: {
       endpoint: '/data',
       method: 'GET',

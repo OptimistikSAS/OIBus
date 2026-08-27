@@ -156,7 +156,7 @@ describe('SandboxService', () => {
 
       const result = await sandboxService.execute('hello world', defaultSource, 'test.txt', transformer, { myVar: 42 }, logger);
 
-      const parsedOutput = JSON.parse(result.output);
+      const parsedOutput = JSON.parse(result.output as string);
       assert.strictEqual(parsedOutput.originalContent, 'hello world');
       assert.strictEqual(parsedOutput.passedOption, 42);
       assert.strictEqual(result.metadata.contentFile, 'out_test.txt');
@@ -210,7 +210,7 @@ describe('SandboxService', () => {
         {},
         logger
       );
-      const parsedOutput = JSON.parse(result.output);
+      const parsedOutput = JSON.parse(result.output as string);
       assert.strictEqual(parsedOutput.response, 'TYPESCRIPT WORKS');
     });
 
@@ -245,7 +245,7 @@ describe('SandboxService', () => {
       } as CustomTransformer;
 
       const result = await sandboxService.execute('2026-01-01', defaultSource, 'test.txt', transformer, {}, logger);
-      assert.strictEqual(JSON.parse(result.output).year, 2026);
+      assert.strictEqual(JSON.parse(result.output as string).year, 2026);
     });
 
     it('should successfully require and use JSONPath-Plus', async () => {
@@ -262,7 +262,7 @@ describe('SandboxService', () => {
       } as CustomTransformer;
 
       const result = await sandboxService.execute('{}', defaultSource, 'test.txt', transformer, {}, logger);
-      assert.deepStrictEqual(JSON.parse(result.output), ['Nigel Rees', 'Evelyn Waugh']);
+      assert.deepStrictEqual(JSON.parse(result.output as string), ['Nigel Rees', 'Evelyn Waugh']);
     });
 
     it('should successfully require and use PapaParse', async () => {
@@ -279,7 +279,7 @@ describe('SandboxService', () => {
       } as CustomTransformer;
 
       const result = await sandboxService.execute('', defaultSource, 'test.txt', transformer, {}, logger);
-      assert.deepStrictEqual(JSON.parse(result.output), [
+      assert.deepStrictEqual(JSON.parse(result.output as string), [
         { name: 'Alice', age: '30' },
         { name: 'Bob', age: '25' }
       ]);
@@ -437,7 +437,7 @@ describe('SandboxService', () => {
 
       const result = await sandboxService.execute('', defaultSource, 'arr.txt', transformer, {}, logger);
       assert.strictEqual(typeof result.output, 'string');
-      assert.deepStrictEqual(JSON.parse(result.output), [{ a: 1 }, { b: 2 }]);
+      assert.deepStrictEqual(JSON.parse(result.output as string), [{ a: 1 }, { b: 2 }]);
     });
 
     it('should fail with a clear error when data cannot be serialized to a string (function)', async () => {
@@ -461,7 +461,7 @@ describe('SandboxService', () => {
       } as CustomTransformer;
 
       const result = await sandboxService.execute('', defaultSource, 'bin.txt', transformer, {}, logger);
-      assert.deepStrictEqual([...Buffer.from(result.output)], [72, 105, 0, 255]);
+      assert.deepStrictEqual([...Buffer.from(result.output as ArrayBuffer)], [72, 105, 0, 255]);
     });
 
     it('should preserve the exact bytes of a non-uint8 typed array', async () => {
@@ -473,7 +473,7 @@ describe('SandboxService', () => {
       } as CustomTransformer;
 
       const result = await sandboxService.execute('', defaultSource, 'bin.txt', transformer, {}, logger);
-      assert.deepStrictEqual([...Buffer.from(result.output)], [0, 1, 1, 0]);
+      assert.deepStrictEqual([...Buffer.from(result.output as ArrayBuffer)], [0, 1, 1, 0]);
     });
 
     it('should write an ArrayBuffer data as raw bytes', async () => {
@@ -484,7 +484,7 @@ describe('SandboxService', () => {
       } as CustomTransformer;
 
       const result = await sandboxService.execute('', defaultSource, 'bin.txt', transformer, {}, logger);
-      assert.deepStrictEqual([...Buffer.from(result.output)], [1, 2, 3]);
+      assert.deepStrictEqual([...Buffer.from(result.output as ArrayBuffer)], [1, 2, 3]);
     });
 
     it('should fail with a clear error when data is a circular structure', async () => {

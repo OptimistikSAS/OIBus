@@ -331,7 +331,7 @@ describe('OIBus Service', () => {
     engineRepository.get.mock.mockImplementation(() => {
       getCallCount++;
       if (getCallCount === 1) return testData.engine.settings;
-      return { ...testData.engine.settings, ...specificTestCommand };
+      return { ...testData.engine.settings, ...specificTestCommand } as EngineSettings;
     });
 
     const result = await service.updateEngineSettings(specificTestCommand, testData.users.list[0].id);

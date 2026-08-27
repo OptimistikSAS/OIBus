@@ -556,9 +556,9 @@ describe('DataStreamEngine', () => {
     it('should reload south connector and update cache/cron/subs', async () => {
       const southEntity = testData.south.list[0];
 
-      mockedSouth1.hasHistoryQuery = mock.fn(() => true);
-      mockedSouth1.hasDirectQuery = mock.fn(() => true);
-      mockedSouth1.hasSubscription = mock.fn(() => true);
+      mockedSouth1.hasHistoryQuery = mock.fn(() => true) as unknown as typeof mockedSouth1.hasHistoryQuery;
+      mockedSouth1.hasDirectQuery = mock.fn(() => true) as unknown as typeof mockedSouth1.hasDirectQuery;
+      mockedSouth1.hasSubscription = mock.fn(() => true) as unknown as typeof mockedSouth1.hasSubscription;
       mockedSouth1.isEnabled = mock.fn(() => true);
 
       const spyStop = mock.method(engine, 'stopSouth');
@@ -574,7 +574,7 @@ describe('DataStreamEngine', () => {
     it('should reload south connector and not update cache history', async () => {
       const southEntity = testData.south.list[0];
 
-      mockedSouth1.hasHistoryQuery = mock.fn(() => false);
+      mockedSouth1.hasHistoryQuery = mock.fn(() => false) as unknown as typeof mockedSouth1.hasHistoryQuery;
 
       const spyStop = mock.method(engine, 'stopSouth');
       const spyStart = mock.method(engine, 'startSouth');
@@ -589,10 +589,11 @@ describe('DataStreamEngine', () => {
       engine.getSouth = mock.fn((_southId: string) => ({ south: mockedSouth1, metrics: southConnectorMetricsService }));
 
       let hasSubscriptionCall = 0;
-      mockedSouth1.hasSubscription = mock.fn(() => {
+      const hasSubscriptionMock = mock.fn(() => {
         hasSubscriptionCall++;
         return hasSubscriptionCall % 2 === 0; // false on 1st call, true on 2nd
       });
+      mockedSouth1.hasSubscription = hasSubscriptionMock as unknown as typeof mockedSouth1.hasSubscription;
 
       await engine.startSouth(testData.south.list[0].id);
 
@@ -602,13 +603,13 @@ describe('DataStreamEngine', () => {
       mockedSouth1.connectedEvent.emit('connected');
       assert.strictEqual(mockedSouth1.updateSubscriptions.mock.calls.length, 1);
 
-      assert.strictEqual(mockedSouth1.hasSubscription.mock.calls.length, 2);
+      assert.strictEqual(hasSubscriptionMock.mock.calls.length, 2);
     });
 
     it('should reload south items', async () => {
       const southEntity = testData.south.list[0];
 
-      mockedSouth1.hasSubscription = mock.fn(() => true);
+      mockedSouth1.hasSubscription = mock.fn(() => true) as unknown as typeof mockedSouth1.hasSubscription;
       mockedSouth1.isEnabled = mock.fn(() => true);
 
       await engine.reloadSouthItems(southEntity);
@@ -619,7 +620,7 @@ describe('DataStreamEngine', () => {
     it('should reload south items and manage connector type', async () => {
       const southEntity = testData.south.list[0];
 
-      mockedSouth1.hasSubscription = mock.fn(() => false);
+      mockedSouth1.hasSubscription = mock.fn(() => false) as unknown as typeof mockedSouth1.hasSubscription;
       mockedSouth1.isEnabled = mock.fn(() => true);
 
       await engine.reloadSouthItems(southEntity);

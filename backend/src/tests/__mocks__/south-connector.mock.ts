@@ -55,9 +55,12 @@ export default class SouthConnectorMock extends SouthConnector<SouthSettings, So
   override connectedEvent = new EventEmitter();
   override metricsEvent = new EventEmitter();
 
-  hasHistoryQuery = mock.fn((): boolean => false);
-  hasDirectQuery = mock.fn((): boolean => false);
-  hasSubscription = mock.fn((): boolean => false);
-  hasExplore = mock.fn((): boolean => false);
+  // Cast needed: mock.fn()'s inferred () => boolean isn't structurally assignable to the base
+  // class's `this is X` type-predicate signatures, even though the runtime behavior (a boolean
+  // return) is identical — the predicate narrowing only matters to callers, not this mock's body.
+  hasHistoryQuery = mock.fn((): boolean => false) as unknown as SouthConnector<SouthSettings, SouthItemSettings>['hasHistoryQuery'];
+  hasDirectQuery = mock.fn((): boolean => false) as unknown as SouthConnector<SouthSettings, SouthItemSettings>['hasDirectQuery'];
+  hasSubscription = mock.fn((): boolean => false) as unknown as SouthConnector<SouthSettings, SouthItemSettings>['hasSubscription'];
+  hasExplore = mock.fn((): boolean => false) as unknown as SouthConnector<SouthSettings, SouthItemSettings>['hasExplore'];
   explore = mock.fn(async (_parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> => []);
 }
