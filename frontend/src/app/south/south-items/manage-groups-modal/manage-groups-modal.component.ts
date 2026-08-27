@@ -271,7 +271,8 @@ export default class ManageGroupsModalComponent {
           endTimeOffset: row['endTimeOffset'] ? Number(row['endTimeOffset']) : null,
           maxReadInterval: Number(row['maxReadInterval']) || 3600,
           readDelay: Number(row['readDelay']) || 200,
-          recoveryStrategy
+          recoveryStrategy,
+          cachingStrategy: null
         }
       } as SouthItemGroupCommandDTO);
     });
