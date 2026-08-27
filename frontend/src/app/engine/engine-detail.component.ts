@@ -128,10 +128,19 @@ export class EngineDetailComponent {
   openImportConfigModal() {
     const modalRef = this.modalService.open(ImportConfigModalComponent, {
       size: 'lg',
-      beforeDismiss: () => {
+      beforeDismiss: async () => {
         const component: ImportConfigModalComponent = modalRef.componentInstance;
-        const result = component.canDismiss();
-        return typeof result === 'boolean' ? result : firstValueFrom(result);
+        const canDismissResult = component.canDismiss();
+        const canDismiss = typeof canDismissResult === 'boolean' ? canDismissResult : await firstValueFrom(canDismissResult);
+        if (canDismiss && component.result()) {
+          // A successful import was already showing when the user dismissed via Escape or the
+          // backdrop instead of clicking "Close and reload": `modalRef.result` below only reloads
+          // on an explicit close(), and a dismissal never reaches it (see ModalService), so without
+          // this the backend would have already wiped and recreated the configuration while the SPA
+          // keeps displaying stale pre-import data until the user thinks to refresh manually.
+          this.windowService.reload();
+        }
+        return canDismiss;
       }
     });
     modalRef.result.subscribe(() => {
