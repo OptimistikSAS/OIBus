@@ -186,7 +186,9 @@ describe('NorthConnectorRepository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       },
       'userTest'
     );
@@ -227,6 +229,8 @@ describe('NorthConnectorRepository', () => {
             endTimeOffset: null,
             maxReadInterval: 3600,
             readDelay: 200,
+            recoveryStrategy: null,
+            cachingStrategy: null,
             items: [],
             createdBy: '',
             updatedBy: '',
@@ -455,7 +459,9 @@ describe('NorthConnectorRepository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       },
       'userTest'
     );
@@ -521,6 +527,8 @@ describe('NorthConnectorRepository', () => {
             endTimeOffset: null,
             maxReadInterval: 3600,
             readDelay: 200,
+            recoveryStrategy: null,
+            cachingStrategy: null,
             items: [],
             createdBy: '',
             updatedBy: '',

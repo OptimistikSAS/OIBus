@@ -141,7 +141,7 @@ describe('Repository with populated database', () => {
           msg: 'engine log',
           scopeType: 'internal',
           scopeId: 'engine',
-          scopeName: undefined,
+          scopeName: null,
           time: testData.constants.dates.DATE_1,
           level: '30'
         }

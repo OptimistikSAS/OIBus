@@ -454,6 +454,7 @@ describe('SouthConnector', () => {
         maxReadInterval: null,
         readDelay: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -480,6 +481,7 @@ describe('SouthConnector', () => {
         maxReadInterval: null,
         readDelay: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -548,7 +550,17 @@ describe('SouthConnector', () => {
       const interval = { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
       utilsExports.generateIntervals = mock.fn(() => [interval]);
 
-      const historyQueryMock = mock.fn(async () => ({ trackedInstant: '2021-02-02T02:02:02.222Z', value: null }));
+      const historyQueryMock = mock.fn(
+        async (
+          _items: Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>,
+          _startTime?: Instant,
+          _endTime?: Instant,
+          _startTimeFromCache?: Instant
+        ) => ({
+          trackedInstant: '2021-02-02T02:02:02.222Z',
+          value: null
+        })
+      );
       south.historyQuery = historyQueryMock;
 
       const itemStartListener = mock.fn();
@@ -618,8 +630,8 @@ describe('SouthConnector', () => {
       // saveItemLastValue must be called with each item's own id
       const saveCalls = (southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
       assert.strictEqual(saveCalls.length, 2);
-      assert.strictEqual(saveCalls[0].arguments[1].itemId, items[0].id);
-      assert.strictEqual(saveCalls[1].arguments[1].itemId, items[1].id);
+      assert.strictEqual((saveCalls[0].arguments[1] as { itemId: string }).itemId, items[0].id);
+      assert.strictEqual((saveCalls[1].arguments[1] as { itemId: string }).itemId, items[1].id);
     });
 
     it('should defer cache update to end of run with newest recovery strategy', async () => {
@@ -637,7 +649,7 @@ describe('SouthConnector', () => {
       const saveCalls = (southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
       // Must be called exactly once (at end, not per interval)
       assert.strictEqual(saveCalls.length, 1);
-      assert.strictEqual(saveCalls[0].arguments[1].trackedInstant, endTime);
+      assert.strictEqual((saveCalls[0].arguments[1] as { trackedInstant: string }).trackedInstant, endTime);
     });
 
     it('should not save trackedInstant when stopped mid newest run', async () => {
@@ -772,7 +784,21 @@ describe('SouthConnector', () => {
       });
       south.directQuery = directQueryMock;
 
-      const group = { id: 'groupId1', name: 'group 1', scanMode: testData.scanMode.list[0], maxReadInterval: 3600 };
+      const group = {
+        id: 'groupId1',
+        name: 'group 1',
+        scanMode: testData.scanMode.list[0],
+        startTimeOffset: null,
+        endTimeOffset: null,
+        maxReadInterval: 3600,
+        readDelay: null,
+        recoveryStrategy: null,
+        cachingStrategy: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
       const baseItem = testData.south.list[2].items[0] as SouthConnectorItemEntity<SouthOPCUAItemSettings>;
       const items = [
         { ...baseItem, id: 'groupedItem1', group, syncWithGroup: true, settings: { ...baseItem.settings, mode: 'da' as const } },
@@ -1158,6 +1184,7 @@ describe('SouthConnector', () => {
         startTimeOffset: 50,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1184,7 +1211,7 @@ describe('SouthConnector', () => {
     });
 
     it("should size the initial lookback window from the item's own maxReadInterval, not the group's, when the item is not synced with its group", async () => {
-      const historyQueryHandlerMock = mock.fn(async () => undefined);
+      const historyQueryHandlerMock = mock.fn(async (_items: unknown, _startTime?: Instant, _endTime?: Instant) => undefined);
       south.historyQueryHandler = historyQueryHandlerMock;
       south.directQuery = mock.fn(async (): Promise<null> => null);
 
@@ -1197,6 +1224,7 @@ describe('SouthConnector', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1230,6 +1258,7 @@ describe('SouthConnector', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1274,6 +1303,7 @@ describe('SouthConnector', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1352,11 +1382,20 @@ describe('SouthConnector', () => {
             startTimeOffset: null,
             endTimeOffset: null,
             recoveryStrategy: null,
+            cachingStrategy: null,
+            thresholdType: null,
+            threshold: null,
+            rangeLow: null,
+            rangeHigh: null,
+            maxCachingInterval: null,
             scanMode: {
               id: 'subscription',
               name: 'subscription',
               description: '',
+              type: 'cron',
               cron: '',
+              interval: null,
+              activationWindow: null,
               createdBy: '',
               updatedBy: '',
               createdAt: '',
@@ -1381,11 +1420,20 @@ describe('SouthConnector', () => {
             startTimeOffset: null,
             endTimeOffset: null,
             recoveryStrategy: null,
+            cachingStrategy: null,
+            thresholdType: null,
+            threshold: null,
+            rangeLow: null,
+            rangeHigh: null,
+            maxCachingInterval: null,
             scanMode: {
               id: 'subscription',
               name: 'subscription',
               description: '',
+              type: 'cron',
               cron: '',
+              interval: null,
+              activationWindow: null,
               createdBy: '',
               updatedBy: '',
               createdAt: '',
@@ -1443,9 +1491,12 @@ describe('SouthConnector', () => {
               id: 'group1',
               name: 'Group 1',
               scanMode: testData.scanMode.list[2], // 'subscription'
-              overlap: null,
+              startTimeOffset: null,
+              endTimeOffset: null,
               maxReadInterval: null,
               readDelay: null,
+              recoveryStrategy: null,
+              cachingStrategy: null,
               createdBy: '',
               updatedBy: '',
               createdAt: '',
@@ -1454,7 +1505,15 @@ describe('SouthConnector', () => {
             syncWithGroup: true,
             maxReadInterval: null,
             readDelay: null,
-            overlap: null,
+            startTimeOffset: null,
+            endTimeOffset: null,
+            recoveryStrategy: null,
+            cachingStrategy: null,
+            thresholdType: null,
+            threshold: null,
+            rangeLow: null,
+            rangeHigh: null,
+            maxCachingInterval: null,
             createdBy: '',
             updatedBy: '',
             createdAt: '',
@@ -1469,7 +1528,9 @@ describe('SouthConnector', () => {
 
       assert.strictEqual((south.subscribe as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
       assert.deepStrictEqual(
-        (south.subscribe as Mock<(...args: Array<unknown>) => unknown>).mock.calls[0].arguments[0].map((item: { id: string }) => item.id),
+        ((south.subscribe as Mock<(...args: Array<unknown>) => unknown>).mock.calls[0].arguments[0] as Array<{ id: string }>).map(
+          item => item.id
+        ),
         ['southItemGroupSub']
       );
     });
@@ -1492,9 +1553,12 @@ describe('SouthConnector', () => {
               id: 'group1',
               name: 'Group 1',
               scanMode: testData.scanMode.list[0], // not 'subscription'
-              overlap: null,
+              startTimeOffset: null,
+              endTimeOffset: null,
               maxReadInterval: null,
               readDelay: null,
+              recoveryStrategy: null,
+              cachingStrategy: null,
               createdBy: '',
               updatedBy: '',
               createdAt: '',
@@ -1503,7 +1567,15 @@ describe('SouthConnector', () => {
             syncWithGroup: true,
             maxReadInterval: null,
             readDelay: null,
-            overlap: null,
+            startTimeOffset: null,
+            endTimeOffset: null,
+            recoveryStrategy: null,
+            cachingStrategy: null,
+            thresholdType: null,
+            threshold: null,
+            rangeLow: null,
+            rangeHigh: null,
+            maxCachingInterval: null,
             createdBy: '',
             updatedBy: '',
             createdAt: '',
@@ -1536,9 +1608,12 @@ describe('SouthConnector', () => {
               id: 'group1',
               name: 'Group 1',
               scanMode: testData.scanMode.list[2], // 'subscription'
-              overlap: null,
+              startTimeOffset: null,
+              endTimeOffset: null,
               maxReadInterval: null,
               readDelay: null,
+              recoveryStrategy: null,
+              cachingStrategy: null,
               createdBy: '',
               updatedBy: '',
               createdAt: '',
@@ -1547,7 +1622,15 @@ describe('SouthConnector', () => {
             syncWithGroup: true,
             maxReadInterval: null,
             readDelay: null,
-            overlap: null,
+            startTimeOffset: null,
+            endTimeOffset: null,
+            recoveryStrategy: null,
+            cachingStrategy: null,
+            thresholdType: null,
+            threshold: null,
+            rangeLow: null,
+            rangeHigh: null,
+            maxCachingInterval: null,
             createdBy: '',
             updatedBy: '',
             createdAt: '',
@@ -1574,9 +1657,12 @@ describe('SouthConnector', () => {
           id: 'group1',
           name: 'Group 1',
           scanMode: testData.scanMode.list[0], // group scan mode changed away from subscription
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
           readDelay: null,
+          recoveryStrategy: null,
+          cachingStrategy: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -1585,7 +1671,15 @@ describe('SouthConnector', () => {
         syncWithGroup: true,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
+        cachingStrategy: null,
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',

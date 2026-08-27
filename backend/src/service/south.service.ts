@@ -20,7 +20,8 @@ import {
   SouthHistoryRecoveryStrategy,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO,
-  SouthItemLastValue
+  SouthItemLastValue,
+  SouthItemLastValueResponse
 } from '../../shared/model/south-connector.model';
 
 import { southManifestList } from './south-manifests';
@@ -386,6 +387,12 @@ export default class SouthService {
       startTimeOffset: null,
       endTimeOffset: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -464,31 +471,43 @@ export default class SouthService {
     return item;
   }
 
-  getItemLastValue(southId: string, itemId: string): SouthItemLastValue {
+  getItemLastValue(southId: string, itemId: string): SouthItemLastValueResponse {
     // Verify south connector and item exist
-    const southConnector = this.findById(southId);
+    this.findById(southId);
     const item = this.findItemById(southId, itemId);
 
-    // When the item is synced with its group AND the connector can actually batch grouped items
-    // into one query, the cache entry is shared across the whole group (saved once, keyed by the
-    // group rather than any one item) — look it up by group ID so every item in the group returns
-    // the same cached value. Connectors in SOUTH_SINGLE_ITEMS never batch, so even a synced item
-    // there always queries (and is cached) on its own; looking it up by group would incorrectly
-    // return nothing, since no such connector ever writes a group-keyed row.
-    const usesSharedGroupCache = item.syncWithGroup && item.group && !SOUTH_SINGLE_ITEMS.includes(southConnector.type);
-    const lastValue = usesSharedGroupCache
-      ? this.southCacheRepository.getGroupLastValue(southId, item.group!.id)
-      : this.southCacheRepository.getItemLastValue(southId, itemId);
+    // The item's own last cached value/instant, always keyed by item ID (Phase 5 now reliably
+    // populates item-keyed south_item_cache rows for all six IoT connectors, so this is never a
+    // dead lookup for them any more).
+    const ownLastValue = this.southCacheRepository.getItemLastValue(southId, itemId);
+    const itemLastValue: SouthItemLastValue | null = ownLastValue
+      ? {
+          groupId: item.group?.id || null,
+          itemId,
+          itemName: item.name,
+          groupName: item.group?.name || '',
+          queryTime: ownLastValue.queryTime,
+          value: ownLastValue.value,
+          trackedInstant: ownLastValue.trackedInstant
+        }
+      : null;
 
-    return {
-      groupId: item.group?.id || null,
-      itemId,
-      itemName: item.name,
-      groupName: item.group?.name || '',
-      queryTime: lastValue?.queryTime || null,
-      value: lastValue?.value || null,
-      trackedInstant: lastValue?.trackedInstant || null
-    };
+    // When the item belongs to a group, also surface the group's own last tracked instant
+    // (group-keyed row, shared across the whole group) alongside the item's own value.
+    const groupLastValueEntry = item.group ? this.southCacheRepository.getGroupLastValue(southId, item.group.id) : null;
+    const groupLastValue: SouthItemLastValue | null = groupLastValueEntry
+      ? {
+          groupId: item.group!.id,
+          itemId,
+          itemName: item.name,
+          groupName: item.group!.name,
+          queryTime: groupLastValueEntry.queryTime,
+          value: groupLastValueEntry.value,
+          trackedInstant: groupLastValueEntry.trackedInstant
+        }
+      : null;
+
+    return { itemLastValue, groupLastValue };
   }
 
   async createItem(
@@ -798,7 +817,8 @@ export default class SouthService {
           endTimeOffset: itemWithGroup.endTimeOffset,
           maxReadInterval: itemWithGroup.maxReadInterval,
           readDelay: itemWithGroup.readDelay,
-          recoveryStrategy: itemWithGroup.recoveryStrategy
+          recoveryStrategy: itemWithGroup.recoveryStrategy,
+          cachingStrategy: itemWithGroup.cachingStrategy
         };
         group = this.southItemGroupRepository.create(groupEntity, user);
         // Newly created groups aren't in the `groups` snapshot taken above; without this, checkGroups()
@@ -872,7 +892,8 @@ export default class SouthService {
       endTimeOffset: command.historySettings.endTimeOffset,
       maxReadInterval: command.historySettings.maxReadInterval,
       readDelay: command.historySettings.readDelay,
-      recoveryStrategy: command.historySettings.recoveryStrategy ?? null
+      recoveryStrategy: command.historySettings.recoveryStrategy ?? null,
+      cachingStrategy: command.historySettings.cachingStrategy ?? null
     };
     return this.southItemGroupRepository.create(groupEntity, user);
   }
@@ -901,6 +922,7 @@ export default class SouthService {
     const maxReadInterval = command.historySettings.maxReadInterval != null ? command.historySettings.maxReadInterval : null;
     const readDelay = command.historySettings.readDelay != null ? command.historySettings.readDelay : 0;
     const recoveryStrategy = command.historySettings.recoveryStrategy ?? null;
+    const cachingStrategy = command.historySettings.cachingStrategy ?? null;
     const groupEntity: Omit<SouthItemGroupCommand, 'southId'> = {
       name: command.standardSettings.name,
       scanMode,
@@ -908,7 +930,8 @@ export default class SouthService {
       endTimeOffset,
       maxReadInterval,
       readDelay,
-      recoveryStrategy
+      recoveryStrategy,
+      cachingStrategy
     };
     this.southItemGroupRepository.update(groupId, groupEntity, user);
     const updated = this.southItemGroupRepository.findById(groupId);
@@ -1047,6 +1070,7 @@ const copyGroupCommandToGroupEntity = (
   groupEntity.maxReadInterval = command.historySettings.maxReadInterval;
   groupEntity.readDelay = command.historySettings.readDelay;
   groupEntity.recoveryStrategy = command.historySettings.recoveryStrategy ?? null;
+  groupEntity.cachingStrategy = command.historySettings.cachingStrategy ?? null;
   groupEntity.scanMode = checkScanMode(scanModes, command.standardSettings.scanModeId, null)!;
 };
 
@@ -1125,7 +1149,8 @@ export const toSouthConnectorDTO = (
         endTimeOffset: group.endTimeOffset,
         maxReadInterval: group.maxReadInterval,
         readDelay: group.readDelay,
-        recoveryStrategy: group.recoveryStrategy
+        recoveryStrategy: group.recoveryStrategy,
+        cachingStrategy: group.cachingStrategy
       }
     })),
     createdBy: getUserInfo(southEntity.createdBy),

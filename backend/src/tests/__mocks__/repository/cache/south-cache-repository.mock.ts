@@ -13,4 +13,6 @@ export default class SouthCacheRepositoryMock {
   );
   deleteItemValue = mock.fn((_connectorId: string, _itemId: string): void => undefined);
   deleteItemsBySouth = mock.fn((_connectorId: string): void => undefined);
+  saveItemsLastValues = mock.fn((_southId: string, _values: Array<{ itemId: string; value: unknown; instant: string }>): void => undefined);
+  getItemsLastValues = mock.fn((_southId: string, _itemIds: Array<string>): Map<string, SouthCacheEntry> => new Map());
 }
