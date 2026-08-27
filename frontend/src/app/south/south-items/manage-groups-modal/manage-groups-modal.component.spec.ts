@@ -23,7 +23,14 @@ const buildGroup = (id: string, name: string, scanMode: ScanModeDTO): SouthItemG
   createdBy: { id: '', friendlyName: '' },
   updatedBy: { id: '', friendlyName: '' },
   standardSettings: { name, scanMode },
-  historySettings: { startTimeOffset: 0, endTimeOffset: 0, maxReadInterval: 3600, readDelay: 200, recoveryStrategy: null }
+  historySettings: {
+    startTimeOffset: 0,
+    endTimeOffset: 0,
+    maxReadInterval: 3600,
+    readDelay: 200,
+    recoveryStrategy: null,
+    cachingStrategy: null
+  }
 });
 
 describe('ManageGroupsModalComponent', () => {
@@ -112,7 +119,14 @@ describe('ManageGroupsModalComponent', () => {
     const createdGroup: SouthItemGroupCommandDTO = {
       id: 'group3',
       standardSettings: { name: 'Gamma', scanModeId: scanModes[0].id },
-      historySettings: { startTimeOffset: 0, endTimeOffset: 0, maxReadInterval: 3600, readDelay: 200, recoveryStrategy: null }
+      historySettings: {
+        startTimeOffset: 0,
+        endTimeOffset: 0,
+        maxReadInterval: 3600,
+        readDelay: 200,
+        recoveryStrategy: null,
+        cachingStrategy: null
+      }
     };
     const fakeModal = {
       componentInstance: { directSave: false, prepareForCreation: vi.fn() },
@@ -132,7 +146,14 @@ describe('ManageGroupsModalComponent', () => {
     const updatedGroup: SouthItemGroupCommandDTO = {
       id: 'group1',
       standardSettings: { name: 'Alpha renamed', scanModeId: scanModes[0].id },
-      historySettings: { startTimeOffset: 0, endTimeOffset: 0, maxReadInterval: 3600, readDelay: 200, recoveryStrategy: null }
+      historySettings: {
+        startTimeOffset: 0,
+        endTimeOffset: 0,
+        maxReadInterval: 3600,
+        readDelay: 200,
+        recoveryStrategy: null,
+        cachingStrategy: null
+      }
     };
     const fakeModal = {
       componentInstance: { directSave: false, prepareForEdition: vi.fn() },
@@ -195,7 +216,14 @@ describe('ManageGroupsModalComponent', () => {
       group: {
         id: null,
         standardSettings: { name: 'Gamma', scanModeId: scanModes[0].id },
-        historySettings: { startTimeOffset: -1000, endTimeOffset: 0, maxReadInterval: 3600, readDelay: 200, recoveryStrategy: 'newest' }
+        historySettings: {
+          startTimeOffset: -1000,
+          endTimeOffset: 0,
+          maxReadInterval: 3600,
+          readDelay: 200,
+          recoveryStrategy: 'newest',
+          cachingStrategy: null
+        }
       }
     });
     expect(fixture.componentInstance.importSuccessCount).toBe(1);
