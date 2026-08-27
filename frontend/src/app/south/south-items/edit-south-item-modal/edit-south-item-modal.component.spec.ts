@@ -32,7 +32,14 @@ const buildGroup = (id: string, name: string, scanMode: ScanModeDTO): SouthItemG
   createdBy: { id: '', friendlyName: '' },
   updatedBy: { id: '', friendlyName: '' },
   standardSettings: { name, scanMode },
-  historySettings: { startTimeOffset: 0, endTimeOffset: 0, maxReadInterval: 3600, readDelay: 200, recoveryStrategy: 'oldest' }
+  historySettings: {
+    startTimeOffset: 0,
+    endTimeOffset: 0,
+    maxReadInterval: 3600,
+    readDelay: 200,
+    recoveryStrategy: 'oldest',
+    cachingStrategy: null
+  }
 });
 
 describe('EditSouthItemModalComponent', () => {
@@ -188,7 +195,8 @@ describe('EditSouthItemModalComponent', () => {
       endTimeOffset: null,
       maxReadInterval: null,
       readDelay: null,
-      recoveryStrategy: null
+      recoveryStrategy: null,
+      cachingStrategy: null
     };
     const fixture = TestBed.createComponent(EditSouthItemModalComponent);
     fixture.componentInstance.prepareForCreation(
