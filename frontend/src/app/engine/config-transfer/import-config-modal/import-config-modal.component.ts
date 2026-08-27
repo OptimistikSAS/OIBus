@@ -7,7 +7,7 @@ import { ConfigImportResponseDTO } from '../../../../../../backend/shared/model/
 import { ConfigTransferService } from '../../../services/config-transfer.service';
 import { ConfirmationService } from '../../../shared/confirmation.service';
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
 
 @Component({
   selector: 'oib-import-config-modal',
