@@ -30,7 +30,7 @@ import {
   SouthExploreStartResult,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO,
-  SouthItemLastValue,
+  SouthItemLastValueResponse,
   SouthType
 } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
@@ -378,12 +378,12 @@ export class SouthConnectorController extends Controller {
   }
 
   /**
-   * Retrieves the last cached value for a specific item
+   * Retrieves the last cached value for a specific item, and its group's last tracked value when grouped
    * @summary Get item last value
-   * @returns {Promise<SouthItemLastValue>} The item's last cached value
+   * @returns {Promise<SouthItemLastValueResponse>} The item's own last cached value, plus the group's last value when grouped
    */
   @Get('/{southId}/items/{itemId}/last-value')
-  getItemLastValue(@Path() southId: string, @Path() itemId: string, @Request() request: CustomExpressRequest): SouthItemLastValue {
+  getItemLastValue(@Path() southId: string, @Path() itemId: string, @Request() request: CustomExpressRequest): SouthItemLastValueResponse {
     const southService = request.services.southService as SouthService;
     return southService.getItemLastValue(southId, itemId);
   }
