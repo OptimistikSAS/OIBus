@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { Database } from 'better-sqlite3';
 import { createAuditServiceMock, emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
-import ConfigImportService from './config-import.service';
+import ConfigImportService, { ConfigImportError } from './config-import.service';
 import ConfigTransferService from './config-transfer.service';
 import ConfigTransferBuilderService from './config-transfer-builder.service';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
@@ -353,5 +353,91 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     assert.deepStrictEqual(northConnectorRepository.findAllNorth(), beforeNorths);
     assert.deepStrictEqual(userRepository.list(), beforeUsers);
     assert.deepStrictEqual(transformerRepository.list(), beforeTransformers);
+  });
+
+  it('rejects a write-time id collision (e.g. a duplicate id within the envelope) as a clean ConfigImportError, not a raw DB error', async () => {
+    const envelope = cloneEnvelope();
+    // Deliberately NOT the reserved "subscription" entry: that one is always `update()`d in place
+    // (idempotent, see recreateConfiguration), so duplicating it wouldn't reproduce the collision —
+    // every other scan mode goes through `create()`, which does collide on a repeated id.
+    const original = envelope.fullConfiguration.scanModes.find(scanMode => scanMode.oIBusInternalId !== 'subscription');
+    assert.ok(original, 'expected the fixture to include a non-reserved scan mode');
+    const beforeScanModeIds = scanModeRepository
+      .findAll()
+      .map(scanMode => scanMode.id)
+      .sort();
+
+    // Nothing in `validateAndUpgrade` checks id uniqueness within a section, so a hand-edited/corrupted
+    // file with two entries sharing an id passes validation cleanly and only fails once
+    // `recreateConfiguration` tries to insert the second one under an id the first one just took.
+    envelope.fullConfiguration.scanModes.push(structuredClone(original));
+
+    await assert.rejects(
+      () => service.importConfiguration(envelope, importerId()),
+      (error: unknown) => error instanceof ConfigImportError && /writing the new configuration/.test(error.message)
+    );
+
+    assert.deepStrictEqual(
+      scanModeRepository
+        .findAll()
+        .map(scanMode => scanMode.id)
+        .sort(),
+      beforeScanModeIds,
+      'expected the write-time failure to roll back and leave scan modes untouched'
+    );
+  });
+
+  it('rejects a malformed reserved "subscription" scan mode entry as a clean ConfigImportError, not a raw DB error', async () => {
+    const envelope = cloneEnvelope();
+    const subscriptionEntry = envelope.fullConfiguration.scanModes.find(scanMode => scanMode.oIBusInternalId === 'subscription');
+    assert.ok(subscriptionEntry, 'expected the fixture to include the reserved "subscription" scan mode');
+    const beforeSubscription = scanModeRepository.findById('subscription');
+    assert.ok(beforeSubscription);
+
+    // The reserved entry is deliberately validated with a shape-less schema (see SCAN_MODE_ENTRY_SCHEMA),
+    // so a missing `name` passes validation and only fails at the NOT NULL column when written.
+    delete (subscriptionEntry.settings as { name?: string }).name;
+
+    await assert.rejects(
+      () => service.importConfiguration(envelope, importerId()),
+      (error: unknown) => error instanceof ConfigImportError && /writing the new configuration/.test(error.message)
+    );
+
+    assert.deepStrictEqual(
+      scanModeRepository.findById('subscription'),
+      beforeSubscription,
+      'expected the write-time failure to roll back and leave the reserved scan mode untouched'
+    );
+  });
+
+  it('preserves the importer even when the envelope describes their account under a different (e.g. renamed-since-export) login', async () => {
+    const admin = userRepository.findByLogin('admin');
+    assert.ok(admin);
+    const passwordBefore = userRepository.getHashedPasswordByLogin('admin');
+    const beforeUserIds = userRepository
+      .list()
+      .map(user => user.id)
+      .sort();
+
+    const envelope = cloneEnvelope();
+    const adminEntry = envelope.fullConfiguration.users.find(user => user.oIBusInternalId === admin.id);
+    assert.ok(adminEntry, "expected the envelope to include the importing admin's own user entry");
+    // Simulates the envelope having been exported before the importer's login changed: same id,
+    // different login. Matching only by login (not id) would fail to exclude this entry from
+    // recreation, and `createWithHashedPassword` would then collide on the still-live primary key.
+    adminEntry.settings.login = 'renamed-admin';
+
+    await service.importConfiguration(envelope, admin.id);
+
+    assert.strictEqual(userRepository.getHashedPasswordByLogin('admin'), passwordBefore);
+    assert.ok(userRepository.findById(admin.id), 'expected the importing admin user to still exist under the same id');
+    assert.strictEqual(userRepository.findByLogin('renamed-admin'), null, 'expected no second user to have been created');
+    assert.deepStrictEqual(
+      userRepository
+        .list()
+        .map(user => user.id)
+        .sort(),
+      beforeUserIds
+    );
   });
 });

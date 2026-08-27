@@ -571,7 +571,15 @@ export default class ConfigImportService {
 
     const warnings: Array<string> = [];
 
-    const usersToImport = envelope.fullConfiguration.users.filter(user => user.settings.login !== currentUser.login);
+    // Excluded on EITHER match, not just login: `wipeConfiguration` below preserves the local row
+    // by `id` (it's the only stable key across a login rename), so an envelope entry whose id
+    // matches the importer's own id must never be recreated — that row was never deleted, and
+    // re-inserting it would collide on the primary key. The login match is kept alongside it for
+    // the (rarer, but `login` is UNIQUE at the DB level too) case of an envelope entry describing a
+    // different id but the same login as the importer.
+    const usersToImport = envelope.fullConfiguration.users.filter(
+      user => user.oIBusInternalId !== currentUser.id && user.settings.login !== currentUser.login
+    );
     if (usersToImport.length < envelope.fullConfiguration.users.length) {
       warnings.push(
         `The account you are signed in with ("${currentUser.login}") was preserved with its existing password and was not ` +
@@ -607,7 +615,20 @@ export default class ConfigImportService {
       this.wipeConfiguration(importedBy, currentUser.id);
       this.recreateConfiguration(envelope, importedBy, hashedUserPasswords, warnings);
     });
-    runImport();
+    try {
+      runImport();
+    } catch (error: unknown) {
+      // Nothing that reaches this point was caught by `validateAndUpgrade`'s manifest validation —
+      // e.g. two envelope entries sharing an id, or a malformed reserved scan mode entry — so it
+      // surfaces here as a raw repository/SQLite error instead. better-sqlite3's `transaction()`
+      // wrapper has already rolled back everything (including `wipeConfiguration`) by the time this
+      // catch runs, so the local configuration is guaranteed untouched; this only replaces an
+      // unhandled 500 with the same clean, structured rejection every other failure mode in this
+      // pipeline produces.
+      throw new ConfigImportError(
+        `Config import failed while writing the new configuration: ${(error as Error).message}. The local configuration was not modified.`
+      );
+    }
 
     return {
       appliedUpgrades: appliedUpgrades.map(upgrade => ({ scope: upgrade.scope, version: upgrade.version, entityId: upgrade.entityId })),
