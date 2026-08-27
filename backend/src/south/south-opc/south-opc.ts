@@ -9,6 +9,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
+import { shouldCacheValue } from '../../service/south-caching-strategy.service';
 
 /**
  * Class SouthOPC - Run an OPC agent to connect to an OPC server.
@@ -217,6 +218,13 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
 
       for (const [aggregate, aggregatedItems] of itemsByAggregates.entries()) {
         for (const [resampling, resampledItems] of aggregatedItems.entries()) {
+          // OPC classic's HTTP agent returns values keyed only by pointId/name (result.content),
+          // decoupled from the full item entity, so the item lookup is rebuilt here per sub-batch
+          // from resampledItems' {nodeId, item} tuples (the one place in this method that still has
+          // the full entity) and used to join values back to items just before addContent.
+          const itemByName = new Map<string, SouthConnectorItemEntity<SouthOPCItemSettings>>();
+          resampledItems.forEach(({ item }) => itemByName.set(item.name, item));
+
           this.logger.debug(
             logCtx,
             `Requesting ${resampledItems.length} items with aggregate ${aggregate} and resampling ${resampling} between ${startTime} and ${endTime}`
@@ -254,11 +262,50 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
                 logCtx,
                 `Found ${result.recordCount} results for ${resampledItems.length} items in ${requestDuration} ms. Max instant retrieved: ${result.maxInstantRetrieved}`
               );
-              await this.addContent(
-                { type: 'time-values', content: result.content },
-                startRequest.toUTC().toISO(),
-                resampledItems.map(item => item.item)
+
+              // Join each returned value back to its item through the name-keyed map, then apply the
+              // item's per-item caching strategy against its last cached state (batch-read once per
+              // sub-batch, not per value) before the existing addContent call. Only items that are
+              // actually cached this cycle are passed to saveItemsLastValues below, so "last cached"
+              // is anchored correctly rather than reset on every raw reading.
+              const valuePairs: Array<{ item: SouthConnectorItemEntity<SouthOPCItemSettings>; value: OIBusTimeValue }> = [];
+              for (const value of result.content) {
+                const item = itemByName.get(value.pointId);
+                if (item) {
+                  valuePairs.push({ item, value });
+                }
+              }
+
+              const lastValues = this.southCacheRepository.getItemsLastValues(
+                this.connector.id,
+                resampledItems.map(({ item }) => item.id)
               );
+              const itemsToCache: Array<SouthConnectorItemEntity<SouthOPCItemSettings>> = [];
+              const cachedEntries: Array<{ itemId: string; value: unknown; instant: string }> = [];
+              const filteredContent: Array<OIBusTimeValue> = [];
+              for (const { item, value } of valuePairs) {
+                const previous = lastValues.get(item.id) ?? null;
+                const shouldCache = shouldCacheValue({
+                  cachingStrategy: item.cachingStrategy ?? 'allValues',
+                  thresholdType: item.thresholdType,
+                  threshold: item.threshold,
+                  rangeLow: item.rangeLow,
+                  rangeHigh: item.rangeHigh,
+                  maxCachingInterval: item.maxCachingInterval,
+                  previousCachedValue: previous?.value ?? null,
+                  previousCachedInstant: previous?.trackedInstant ?? null,
+                  newValue: value.data.value,
+                  newQueryTime: value.timestamp
+                });
+                if (shouldCache) {
+                  filteredContent.push(value);
+                  itemsToCache.push(item);
+                  cachedEntries.push({ itemId: item.id, value: value.data.value, instant: value.timestamp });
+                }
+              }
+
+              await this.addContent({ type: 'time-values', content: filteredContent }, startRequest.toUTC().toISO(), itemsToCache);
+              this.southCacheRepository.saveItemsLastValues(this.connector.id, cachedEntries);
               if (result.maxInstantRetrieved > startTime) {
                 // 1ms is added to the maxInstantRetrieved, so it does not take the last retrieve value on the last run
                 updatedStartTime = DateTime.fromISO(result.maxInstantRetrieved).plus({ millisecond: 1 }).toUTC().toISO()!;
