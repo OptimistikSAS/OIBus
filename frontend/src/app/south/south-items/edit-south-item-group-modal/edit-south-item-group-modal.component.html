@@ -100,6 +100,18 @@
           </select>
         </div>
       }
+
+      <!-- Caching Strategy (only for IoT-family connectors: OPC UA, Modbus, ADS, OPC classic, S7, MQTT) -->
+      @if (isIotFamilySouthType) {
+        <div class="form-group">
+          <label class="form-label" for="group-caching-strategy" translate="south.groups.caching-strategy"></label>
+          <select class="form-select" id="group-caching-strategy" formControlName="cachingStrategy">
+            @for (strategy of cachingStrategies; track strategy.value) {
+              <option [value]="strategy.value" [translate]="strategy.labelKey"></option>
+            }
+          </select>
+        </div>
+      }
     </form>
   </div>
 }

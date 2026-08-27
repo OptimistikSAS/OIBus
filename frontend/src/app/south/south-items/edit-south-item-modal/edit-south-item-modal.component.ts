@@ -13,6 +13,9 @@ import {
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import {
+  IOT_FAMILY_SOUTH_TYPES,
+  SouthCachingStrategy,
+  SouthCachingThresholdType,
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
@@ -93,6 +96,17 @@ class EditSouthItemModalComponent {
     { value: 'oldest', labelKey: 'south.items.recovery-strategy-oldest' }
   ];
 
+  readonly cachingStrategies: Array<{ value: SouthCachingStrategy; labelKey: string }> = [
+    { value: 'allValues', labelKey: 'south.items.caching-strategy-all-values' },
+    { value: 'onChange', labelKey: 'south.items.caching-strategy-on-change' },
+    { value: 'threshold', labelKey: 'south.items.caching-strategy-threshold' }
+  ];
+
+  readonly thresholdTypes: Array<{ value: SouthCachingThresholdType; labelKey: string }> = [
+    { value: 'absolute', labelKey: 'south.items.threshold-type-absolute' },
+    { value: 'percentage', labelKey: 'south.items.threshold-type-percentage' }
+  ];
+
   form: FormGroup<{
     name: FormControl<string>;
     groupId: FormControl<string | null>;
@@ -104,11 +118,33 @@ class EditSouthItemModalComponent {
     startTimeOffset: FormControl<number | null>;
     endTimeOffset: FormControl<number | null>;
     recoveryStrategy: FormControl<SouthHistoryRecoveryStrategy | null>;
+    cachingStrategy: FormControl<SouthCachingStrategy | null>;
+    thresholdType: FormControl<SouthCachingThresholdType | null>;
+    threshold: FormControl<number | null>;
+    rangeLow: FormControl<number | null>;
+    rangeHigh: FormControl<number | null>;
+    maxCachingInterval: FormControl<number | null>;
     settings: FormGroup;
   }> | null = null;
 
   get hasHistorianCapabilities(): boolean {
     return this.manifest?.modes?.history;
+  }
+
+  /**
+   * True for the six "IoT family" south types (OPC UA, Modbus, ADS, OPC classic, S7, MQTT). There is no
+   * manifest capability flag for this family, so it's checked directly against the connector type string.
+   */
+  get isIotFamilySouthType(): boolean {
+    return IOT_FAMILY_SOUTH_TYPES.includes(this.manifest?.id as (typeof IOT_FAMILY_SOUTH_TYPES)[number]);
+  }
+
+  /**
+   * True for IoT-family types minus MQTT, which does not support the 'threshold' caching strategy (MQTT
+   * payloads aren't guaranteed numeric).
+   */
+  get isThresholdAvailable(): boolean {
+    return this.isIotFamilySouthType && this.manifest?.id !== 'mqtt';
   }
 
   private getExistingMqttTopics(): Array<string> {
@@ -260,6 +296,8 @@ class EditSouthItemModalComponent {
       recoveryStrategy: this.form!.controls.recoveryStrategy.value,
       syncWithGroup: this.form!.controls.syncWithGroup.value
     };
+    // Caching strategy params (thresholdType/threshold/rangeLow/rangeHigh/maxCachingInterval) are always
+    // item-local, so their raw values are read separately below and never nulled/disabled by group sync.
 
     const scanModeAttribute = this.getScanModeAttribute(this.manifest!);
 
@@ -283,7 +321,23 @@ class EditSouthItemModalComponent {
       readDelay: syncWithGroup ? null : (rawHistorianValues.readDelay ?? null),
       startTimeOffset: syncWithGroup ? null : (rawHistorianValues.startTimeOffset ?? null),
       endTimeOffset: syncWithGroup ? null : (rawHistorianValues.endTimeOffset ?? null),
-      recoveryStrategy: syncWithGroup ? null : (rawHistorianValues.recoveryStrategy ?? null)
+      recoveryStrategy: syncWithGroup ? null : (rawHistorianValues.recoveryStrategy ?? null),
+      // cachingStrategy follows the same inherit-from-group-when-synced rule as the other historian fields.
+      cachingStrategy: syncWithGroup ? null : (this.form!.controls.cachingStrategy.value ?? null),
+      // Deliberate deviation: unlike the historian fields above, the caching-strategy params are never
+      // group-shareable (there is no group source for them), so they are always sent from the form's own
+      // current value regardless of syncWithGroup, and are never nulled out or disabled by group sync.
+      thresholdType: this.form!.controls.thresholdType.value,
+      threshold: this.form!.controls.threshold.value,
+      rangeLow: this.form!.controls.rangeLow.value,
+      rangeHigh: this.form!.controls.rangeHigh.value,
+      maxCachingInterval: this.form!.controls.maxCachingInterval.value
+    };
+  }
+
+  private mqttCachingStrategyValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      return control.value === 'threshold' ? { mqttThresholdNotAvailable: true } : null;
     };
   }
 
@@ -322,6 +376,12 @@ class EditSouthItemModalComponent {
       startTimeOffset: [0 as number | null, [Validators.min(-2147483648), Validators.max(2147483647)]],
       endTimeOffset: [0 as number | null, [Validators.min(-2147483648), Validators.max(2147483647)]],
       recoveryStrategy: ['oldest' as SouthHistoryRecoveryStrategy | null],
+      cachingStrategy: ['allValues' as SouthCachingStrategy | null],
+      thresholdType: [null as SouthCachingThresholdType | null],
+      threshold: [null as number | null],
+      rangeLow: [null as number | null],
+      rangeHigh: [null as number | null],
+      maxCachingInterval: [null as number | null, [Validators.min(0)]],
       settings: this.fb.group({})
     });
     this.previousGroupId = null;
@@ -334,6 +394,8 @@ class EditSouthItemModalComponent {
     }
     if (this.manifest.id === 'mqtt') {
       createMqttValidator(this.form.controls.settings, this.getExistingMqttTopics());
+      // Defense in depth alongside hiding the 'threshold' option in the template for MQTT items.
+      this.form.controls.cachingStrategy.addValidators(this.mqttCachingStrategyValidator());
     }
 
     const scanModeAttribute = this.getScanModeAttribute(this.manifest!);
@@ -357,6 +419,12 @@ class EditSouthItemModalComponent {
         startTimeOffset: this.item.startTimeOffset ?? 0,
         endTimeOffset: this.item.endTimeOffset ?? 0,
         recoveryStrategy: this.item.recoveryStrategy ?? 'oldest',
+        cachingStrategy: this.item.cachingStrategy ?? 'allValues',
+        thresholdType: this.item.thresholdType ?? null,
+        threshold: this.item.threshold ?? null,
+        rangeLow: this.item.rangeLow ?? null,
+        rangeHigh: this.item.rangeHigh ?? null,
+        maxCachingInterval: this.item.maxCachingInterval ?? null,
         settings: this.item.settings
       });
 
@@ -390,6 +458,7 @@ class EditSouthItemModalComponent {
       this.form!.controls.startTimeOffset.enable();
       this.form!.controls.endTimeOffset.enable();
       this.form!.controls.recoveryStrategy.enable();
+      this.form!.controls.cachingStrategy.enable();
     } else {
       const selectedGroup = this.groups.find(g => g.id === groupId)!;
       this.applySyncLogicWhenSelectingGroup(selectedGroup, wasUnassigned);
@@ -487,24 +556,31 @@ class EditSouthItemModalComponent {
       this.form!.controls.startTimeOffset.enable();
       this.form!.controls.endTimeOffset.enable();
       this.form!.controls.recoveryStrategy.enable();
+      this.form!.controls.cachingStrategy.enable();
       return;
     }
 
     if (syncWithGroup) {
-      // Sync enabled: disable fields and show group values
+      // Sync enabled: disable fields and show group values.
+      // Note: only cachingStrategy is disabled/patched from the group here. The five caching-strategy
+      // params (thresholdType/threshold/rangeLow/rangeHigh/maxCachingInterval) have no group-shared
+      // counterpart, so they are deliberately left enabled and user-editable at all times, even while
+      // cachingStrategy itself is synced with the group.
       const groupValues = this.getSelectedGroupValues();
       this.form!.controls.maxReadInterval.disable();
       this.form!.controls.readDelay.disable();
       this.form!.controls.startTimeOffset.disable();
       this.form!.controls.endTimeOffset.disable();
       this.form!.controls.recoveryStrategy.disable();
+      this.form!.controls.cachingStrategy.disable();
       this.form!.patchValue(
         {
           maxReadInterval: groupValues.maxReadInterval,
           readDelay: groupValues.readDelay,
           startTimeOffset: groupValues.startTimeOffset,
           endTimeOffset: groupValues.endTimeOffset,
-          recoveryStrategy: groupValues.recoveryStrategy
+          recoveryStrategy: groupValues.recoveryStrategy,
+          cachingStrategy: groupValues.cachingStrategy
         },
         { emitEvent: false }
       );
@@ -515,6 +591,7 @@ class EditSouthItemModalComponent {
       this.form!.controls.startTimeOffset.enable();
       this.form!.controls.endTimeOffset.enable();
       this.form!.controls.recoveryStrategy.enable();
+      this.form!.controls.cachingStrategy.enable();
       // Don't patch values here - keep user's values
     }
   }
@@ -525,6 +602,7 @@ class EditSouthItemModalComponent {
     startTimeOffset: number | null;
     endTimeOffset: number | null;
     recoveryStrategy: SouthHistoryRecoveryStrategy | null;
+    cachingStrategy: SouthCachingStrategy | null;
   } {
     const groupId = this.form?.controls.groupId.value;
     const group = groupId ? this.groups.find(g => g.id === groupId) : null;
@@ -533,7 +611,9 @@ class EditSouthItemModalComponent {
       readDelay: group?.historySettings.readDelay ?? 200,
       startTimeOffset: group?.historySettings.startTimeOffset ?? 0,
       endTimeOffset: group?.historySettings.endTimeOffset ?? 0,
-      recoveryStrategy: group?.historySettings.recoveryStrategy ?? 'oldest'
+      recoveryStrategy: group?.historySettings.recoveryStrategy ?? 'oldest',
+      // No group source for the caching-strategy params: only cachingStrategy itself is group-fallback.
+      cachingStrategy: group?.historySettings.cachingStrategy ?? 'allValues'
     };
   }
 
