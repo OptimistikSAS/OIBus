@@ -261,7 +261,13 @@ export default class HistoryQuery {
         readDelay: this.historyConfiguration.queryTimeRange.readDelay,
         startTimeOffset: null,
         endTimeOffset: null,
-        recoveryStrategy: null
+        recoveryStrategy: null,
+        cachingStrategy: null,
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null
       }));
   }
 

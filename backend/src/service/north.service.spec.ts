@@ -705,6 +705,8 @@ describe('North Service', () => {
       endTimeOffset: null,
       maxReadInterval: null,
       readDelay: 0,
+      recoveryStrategy: null,
+      cachingStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
