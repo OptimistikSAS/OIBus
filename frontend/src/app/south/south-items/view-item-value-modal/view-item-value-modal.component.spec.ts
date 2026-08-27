@@ -33,7 +33,15 @@ describe('ViewItemValueModalComponent', () => {
     const fixture = TestBed.createComponent(ViewItemValueModalComponent);
     fixture.componentInstance.prepare('folder-scanner', 'item1', 'GroupA');
     fixture.componentInstance.setData({
-      itemLastValue: { itemId: 'id1', itemName: 'item1', groupId: null, groupName: '', queryTime: null, value: 'test-value', trackedInstant: null },
+      itemLastValue: {
+        itemId: 'id1',
+        itemName: 'item1',
+        groupId: null,
+        groupName: '',
+        queryTime: null,
+        value: 'test-value',
+        trackedInstant: null
+      },
       groupLastValue: null
     });
     fixture.detectChanges();
