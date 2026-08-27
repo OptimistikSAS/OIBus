@@ -365,13 +365,10 @@ describe('South OPC', () => {
     });
     assert.strictEqual(addContentMock.mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
     assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [configuration.items[0], configuration.items[1]]);
-    assert.deepStrictEqual(
-      (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
-      [
-        { itemId: 'id1', value: 10, instant: '2020-02-01T00:00:00.000Z' },
-        { itemId: 'id2', value: 20, instant: '2020-03-01T00:00:00.000Z' }
-      ]
-    );
+    assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], [
+      { itemId: 'id1', value: 10, instant: '2020-02-01T00:00:00.000Z' },
+      { itemId: 'id2', value: 20, instant: '2020-03-01T00:00:00.000Z' }
+    ]);
 
     assert.ok(
       logger.debug.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[1] === 'No result found. Request done in 0 ms')
@@ -437,9 +434,19 @@ describe('South OPC', () => {
     it('suppresses a no-change value under the onChange strategy', async () => {
       const item = buildItem({ id: 'id1', name: 'item1', cachingStrategy: 'onChange' });
       south = new SouthOpc(singleItemConfiguration(item), addContentCallback, southCacheRepository, 'cacheFolder');
-      const addContentMock = mock.method(south, 'addContent', mock.fn(async () => undefined));
+      const addContentMock = mock.method(
+        south,
+        'addContent',
+        mock.fn(async () => undefined)
+      );
       (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementationOnce(
-        () => new Map([['id1', { itemId: 'id1', groupId: null, queryTime: '2020-01-01T00:00:00.000Z', value: 10, trackedInstant: '2020-01-01T00:00:00.000Z' }]])
+        () =>
+          new Map([
+            [
+              'id1',
+              { itemId: 'id1', groupId: null, queryTime: '2020-01-01T00:00:00.000Z', value: 10, trackedInstant: '2020-01-01T00:00:00.000Z' }
+            ]
+          ])
       );
 
       mockSingleValueResponse('item1', 10, '2020-01-01T00:01:00.000Z');
@@ -448,7 +455,10 @@ describe('South OPC', () => {
       assert.strictEqual(addContentMock.mock.calls.length, 1);
       assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], { type: 'time-values', content: [] });
       assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], []);
-      assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], []);
+      assert.deepStrictEqual(
+        (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
+        []
+      );
     });
 
     it('caches a threshold-exceeding change under the threshold (absolute) strategy', async () => {
@@ -460,9 +470,19 @@ describe('South OPC', () => {
         threshold: 5
       });
       south = new SouthOpc(singleItemConfiguration(item), addContentCallback, southCacheRepository, 'cacheFolder');
-      const addContentMock = mock.method(south, 'addContent', mock.fn(async () => undefined));
+      const addContentMock = mock.method(
+        south,
+        'addContent',
+        mock.fn(async () => undefined)
+      );
       (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementationOnce(
-        () => new Map([['id1', { itemId: 'id1', groupId: null, queryTime: '2020-01-01T00:00:00.000Z', value: 10, trackedInstant: '2020-01-01T00:00:00.000Z' }]])
+        () =>
+          new Map([
+            [
+              'id1',
+              { itemId: 'id1', groupId: null, queryTime: '2020-01-01T00:00:00.000Z', value: 10, trackedInstant: '2020-01-01T00:00:00.000Z' }
+            ]
+          ])
       );
 
       // |20 - 10| = 10 > 5 → cached
@@ -475,9 +495,10 @@ describe('South OPC', () => {
         content: [{ pointId: 'item1', timestamp: '2020-01-01T00:01:00.000Z', data: { value: 20 } }]
       });
       assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [item]);
-      assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], [
-        { itemId: 'id1', value: 20, instant: '2020-01-01T00:01:00.000Z' }
-      ]);
+      assert.deepStrictEqual(
+        (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
+        [{ itemId: 'id1', value: 20, instant: '2020-01-01T00:01:00.000Z' }]
+      );
     });
 
     it('computes the threshold (percentage-of-span) strategy correctly', async () => {
@@ -492,11 +513,21 @@ describe('South OPC', () => {
         rangeHigh: 100
       });
       south = new SouthOpc(singleItemConfiguration(item), addContentCallback, southCacheRepository, 'cacheFolder');
-      const addContentMock = mock.method(south, 'addContent', mock.fn(async () => undefined));
+      const addContentMock = mock.method(
+        south,
+        'addContent',
+        mock.fn(async () => undefined)
+      );
 
       // |15 - 10| = 5, not > 10 → suppressed
       (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementationOnce(
-        () => new Map([['id1', { itemId: 'id1', groupId: null, queryTime: '2020-01-01T00:00:00.000Z', value: 10, trackedInstant: '2020-01-01T00:00:00.000Z' }]])
+        () =>
+          new Map([
+            [
+              'id1',
+              { itemId: 'id1', groupId: null, queryTime: '2020-01-01T00:00:00.000Z', value: 10, trackedInstant: '2020-01-01T00:00:00.000Z' }
+            ]
+          ])
       );
       mockSingleValueResponse('item1', 15, '2020-01-01T00:01:00.000Z');
       await south.historyQuery([item], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z');
@@ -504,7 +535,13 @@ describe('South OPC', () => {
 
       // |25 - 10| = 15 > 10 → cached
       (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementationOnce(
-        () => new Map([['id1', { itemId: 'id1', groupId: null, queryTime: '2020-01-01T00:00:00.000Z', value: 10, trackedInstant: '2020-01-01T00:00:00.000Z' }]])
+        () =>
+          new Map([
+            [
+              'id1',
+              { itemId: 'id1', groupId: null, queryTime: '2020-01-01T00:00:00.000Z', value: 10, trackedInstant: '2020-01-01T00:00:00.000Z' }
+            ]
+          ])
       );
       mockSingleValueResponse('item1', 25, '2020-01-01T00:02:00.000Z');
       await south.historyQuery([item], '2020-01-01T00:01:00.000Z', '2022-01-01T00:00:00.000Z');
@@ -523,25 +560,40 @@ describe('South OPC', () => {
         maxCachingInterval: 1000
       });
       south = new SouthOpc(singleItemConfiguration(item), addContentCallback, southCacheRepository, 'cacheFolder');
-      const addContentMock = mock.method(south, 'addContent', mock.fn(async () => undefined));
+      const addContentMock = mock.method(
+        south,
+        'addContent',
+        mock.fn(async () => undefined)
+      );
       // Same value as previous, but 2000ms have elapsed (> maxCachingInterval of 1000ms)
       (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementationOnce(
-        () => new Map([['id1', { itemId: 'id1', groupId: null, queryTime: '2020-01-01T00:00:00.000Z', value: 10, trackedInstant: '2020-01-01T00:00:00.000Z' }]])
+        () =>
+          new Map([
+            [
+              'id1',
+              { itemId: 'id1', groupId: null, queryTime: '2020-01-01T00:00:00.000Z', value: 10, trackedInstant: '2020-01-01T00:00:00.000Z' }
+            ]
+          ])
       );
 
       mockSingleValueResponse('item1', 10, '2020-01-01T00:00:02.000Z');
       await south.historyQuery([item], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z');
 
       assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [item]);
-      assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], [
-        { itemId: 'id1', value: 10, instant: '2020-01-01T00:00:02.000Z' }
-      ]);
+      assert.deepStrictEqual(
+        (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
+        [{ itemId: 'id1', value: 10, instant: '2020-01-01T00:00:02.000Z' }]
+      );
     });
 
     it('always caches the very first read for an item, regardless of strategy', async () => {
       const item = buildItem({ id: 'id1', name: 'item1', cachingStrategy: 'onChange' });
       south = new SouthOpc(singleItemConfiguration(item), addContentCallback, southCacheRepository, 'cacheFolder');
-      const addContentMock = mock.method(south, 'addContent', mock.fn(async () => undefined));
+      const addContentMock = mock.method(
+        south,
+        'addContent',
+        mock.fn(async () => undefined)
+      );
       // No prior cached state for this item
       (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementationOnce(() => new Map());
 
@@ -549,9 +601,10 @@ describe('South OPC', () => {
       await south.historyQuery([item], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z');
 
       assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [item]);
-      assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], [
-        { itemId: 'id1', value: 10, instant: '2020-01-01T00:00:00.000Z' }
-      ]);
+      assert.deepStrictEqual(
+        (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
+        [{ itemId: 'id1', value: 10, instant: '2020-01-01T00:00:00.000Z' }]
+      );
     });
 
     it('calls saveItemsLastValues with exactly the cached subset, excluding suppressed items', async () => {
@@ -560,13 +613,23 @@ describe('South OPC', () => {
       const config = singleItemConfiguration(cachedItem);
       config.items = [cachedItem, suppressedItem];
       south = new SouthOpc(config, addContentCallback, southCacheRepository, 'cacheFolder');
-      const addContentMock = mock.method(south, 'addContent', mock.fn(async () => undefined));
+      const addContentMock = mock.method(
+        south,
+        'addContent',
+        mock.fn(async () => undefined)
+      );
 
       (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementationOnce(
         () =>
           new Map([
-            ['id1', { itemId: 'id1', groupId: null, queryTime: '2020-01-01T00:00:00.000Z', value: 1, trackedInstant: '2020-01-01T00:00:00.000Z' }],
-            ['id2', { itemId: 'id2', groupId: null, queryTime: '2020-01-01T00:00:00.000Z', value: 2, trackedInstant: '2020-01-01T00:00:00.000Z' }]
+            [
+              'id1',
+              { itemId: 'id1', groupId: null, queryTime: '2020-01-01T00:00:00.000Z', value: 1, trackedInstant: '2020-01-01T00:00:00.000Z' }
+            ],
+            [
+              'id2',
+              { itemId: 'id2', groupId: null, queryTime: '2020-01-01T00:00:00.000Z', value: 2, trackedInstant: '2020-01-01T00:00:00.000Z' }
+            ]
           ])
       );
       httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) =>
@@ -583,9 +646,10 @@ describe('South OPC', () => {
       await south.historyQuery(config.items, '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z');
 
       assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [cachedItem]);
-      assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], [
-        { itemId: 'id1', value: 99, instant: '2020-01-01T00:01:00.000Z' }
-      ]);
+      assert.deepStrictEqual(
+        (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
+        [{ itemId: 'id1', value: 99, instant: '2020-01-01T00:01:00.000Z' }]
+      );
     });
   });
 

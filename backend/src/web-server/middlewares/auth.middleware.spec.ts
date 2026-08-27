@@ -279,7 +279,7 @@ describe('authMiddleware', () => {
     });
 
     it('should return 401 when SSE token user has no stored hashed password', async () => {
-      userService.getHashedPasswordByLogin = mock.fn(() => undefined);
+      userService.getHashedPasswordByLogin = mock.fn((_login: string) => null);
       mock.method(jwt, 'verify', () => ({ login: 'alice', password: HASHED }));
 
       const req = { ...makeReq('/sse/engine'), url: '/sse/engine?token=abc', query: { token: 'abc' } };

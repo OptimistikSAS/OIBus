@@ -7,8 +7,10 @@ import {
   SouthConnectorItemSearchParam,
   SouthConnectorItemTestResult,
   SouthConnectorManifest,
+  SouthExploreBrowseResult,
+  SouthExploreStartResult,
   SouthItemGroupCommandDTO,
-  SouthItemLastValue
+  SouthItemLastValueResponse
 } from '../../../../shared/model/south-connector.model';
 import {
   SouthConnectorEntity,
@@ -54,11 +56,13 @@ export default class SouthServiceMock {
     connectionDuration: 0,
     queryDuration: 0
   }));
-  startExplore = mock.fn(async (_southId: string, _southType: OIBusSouthType, _settingsToTest: SouthSettings) => ({
-    sessionId: 'sessionId',
-    entries: []
-  }));
-  browseExplore = mock.fn(async (_sessionId: string, _parentId: string | null) => ({ entries: [] }));
+  startExplore = mock.fn(
+    async (_southId: string, _southType: OIBusSouthType, _settingsToTest: SouthSettings): Promise<SouthExploreStartResult> => ({
+      sessionId: 'sessionId',
+      entries: []
+    })
+  );
+  browseExplore = mock.fn(async (_sessionId: string, _parentId: string | null): Promise<SouthExploreBrowseResult> => ({ entries: [] }));
   closeExplore = mock.fn(async (_sessionId: string): Promise<void> => undefined);
   closeAllExploreSessions = mock.fn(async (): Promise<void> => undefined);
   listItems = mock.fn((_southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> => []);
@@ -91,7 +95,10 @@ export default class SouthServiceMock {
   deleteItem = mock.fn(async (_southId: string, _itemId: string, _userId: string): Promise<void> => undefined);
   deleteItems = mock.fn(async (_southId: string, _itemIds: Array<string>, _userId: string): Promise<void> => undefined);
   deleteAllItems = mock.fn(async (_southId: string, _userId: string): Promise<void> => undefined);
-  getItemLastValue = mock.fn((_southId: string, _itemId: string): SouthItemLastValue => ({}) as SouthItemLastValue);
+  getItemLastValue = mock.fn((_southId: string, _itemId: string): SouthItemLastValueResponse => ({
+    itemLastValue: null,
+    groupLastValue: null
+  }));
   checkImportItems = mock.fn(
     async (
       _southType: string,
