@@ -65,7 +65,10 @@ export class ImportConfigModalComponent {
   }
 
   canDismiss(): Observable<boolean> | boolean {
-    // once the import has completed, dismissing simply closes the modal without triggering a reload
+    // Always allowed to dismiss (e.g. via Escape or the backdrop), including after the import has
+    // completed — the caller (EngineDetailComponent) checks `result()` itself when a dismissal goes
+    // through and reloads just as it would for the explicit "Close and reload" button, so this only
+    // ever needs to say whether dismissing is permitted at all, not whether it should reload.
     return true;
   }
 
