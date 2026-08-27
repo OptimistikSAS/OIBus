@@ -60,6 +60,10 @@ export class ViewItemValueModalComponent {
     return this.itemLastValue !== null && this.itemLastValue.value !== null;
   }
 
+  get groupHasValue(): boolean {
+    return this.groupLastValue !== null && this.groupLastValue.value !== null;
+  }
+
   get isFileArray(): boolean {
     if (!this.hasValue) return false;
     return (

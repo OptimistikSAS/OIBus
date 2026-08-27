@@ -341,6 +341,44 @@ class EditSouthItemModalComponent {
     };
   }
 
+  /** rangeHigh must be strictly greater than rangeLow, or a percentage-threshold span of 0 (or negative) silently disables the comparison. */
+  private rangeHighAboveRangeLowValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const rangeLow = this.form?.controls.rangeLow.value;
+      if (control.value === null || rangeLow === null || rangeLow === undefined) return null;
+      return control.value <= rangeLow ? { rangeHighNotAboveRangeLow: true } : null;
+    };
+  }
+
+  /**
+   * threshold/rangeLow/rangeHigh are only relevant once 'threshold' (and, for the range fields,
+   * 'percentage') is selected, but need real `required` validators in those cases — otherwise the
+   * form can be saved with a 'threshold' strategy that has no actual threshold configured.
+   */
+  private updateThresholdValidators(): void {
+    if (!this.form) return;
+    const strategy = this.form.controls.cachingStrategy.value;
+    const thresholdType = this.form.controls.thresholdType.value;
+
+    if (strategy === 'threshold') {
+      this.form.controls.threshold.setValidators([Validators.required]);
+      if (thresholdType === 'percentage') {
+        this.form.controls.rangeLow.setValidators([Validators.required]);
+        this.form.controls.rangeHigh.setValidators([Validators.required, this.rangeHighAboveRangeLowValidator()]);
+      } else {
+        this.form.controls.rangeLow.clearValidators();
+        this.form.controls.rangeHigh.clearValidators();
+      }
+    } else {
+      this.form.controls.threshold.clearValidators();
+      this.form.controls.rangeLow.clearValidators();
+      this.form.controls.rangeHigh.clearValidators();
+    }
+    this.form.controls.threshold.updateValueAndValidity({ emitEvent: false });
+    this.form.controls.rangeLow.updateValueAndValidity({ emitEvent: false });
+    this.form.controls.rangeHigh.updateValueAndValidity({ emitEvent: false });
+  }
+
   private checkUniqueness(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       let names!: Array<string>;
@@ -397,6 +435,15 @@ class EditSouthItemModalComponent {
       // Defense in depth alongside hiding the 'threshold' option in the template for MQTT items.
       this.form.controls.cachingStrategy.addValidators(this.mqttCachingStrategyValidator());
     }
+
+    // threshold/rangeLow/rangeHigh are only meaningful (and only shown, see the template) once
+    // 'threshold' / 'percentage' is selected, but they still need real validators for those cases —
+    // otherwise a user can save a 'threshold' strategy with a null threshold, or a 'percentage'
+    // threshold type with rangeLow/rangeHigh both null, which silently degrades the percentage-span
+    // comparison to `diff > 0` (span defaults to 0) instead of surfacing a validation error.
+    this.form.controls.cachingStrategy.valueChanges.subscribe(() => this.updateThresholdValidators());
+    this.form.controls.thresholdType.valueChanges.subscribe(() => this.updateThresholdValidators());
+    this.updateThresholdValidators();
 
     const scanModeAttribute = this.getScanModeAttribute(this.manifest!);
     if (scanModeAttribute.acceptableType === 'SUBSCRIPTION') {
