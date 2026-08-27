@@ -418,6 +418,21 @@ describe('SouthConnector', () => {
         )
       );
     });
+
+    it('should still save the legacy per-item "last value" cache row via directQueryHandler for a non-IoT-family connector', async () => {
+      // Unlike the six IoT-family types (see the companion test in south-connector.spec.ts's
+      // "SouthConnector with history and subscription" describe block), folder-scanner never writes
+      // its own caching-strategy state, so directQueryHandler's legacy write must still run for it.
+      south.directQuery = mock.fn(async () => [{ filename: 'a.txt', modifiedTime: 1 }]);
+
+      const items = testData.south.list[0].items as Array<SouthConnectorItemEntity<SouthFolderScannerItemSettings>>;
+      await south.directQueryHandler(items);
+
+      const saveCalls = (southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      assert.strictEqual(saveCalls.length, 1);
+      assert.strictEqual(saveCalls[0].arguments[0], south.connectorConfiguration.id);
+      assert.strictEqual((saveCalls[0].arguments[1] as { itemId: string }).itemId, items[0].id);
+    });
   });
 
   describe('SouthConnector disabled', () => {
@@ -1315,7 +1330,13 @@ describe('SouthConnector', () => {
       assert.strictEqual((saveCalls[0].arguments[2] as { trackedInstant: string }).trackedInstant, '2021-02-02T02:02:02.222Z');
     });
 
-    it('should save a shared group cache row for a synced group on a batching connector via directQueryHandler', async () => {
+    it('should skip the legacy group/item cache write entirely for an IoT-family connector via directQueryHandler', async () => {
+      // south.connector.type here is 'opcua' (IoT-family, see testData.south.list[2]) — these
+      // connectors persist their own per-item caching-strategy state directly inside directQuery()
+      // via southCacheRepository.saveItemsLastValues(), gated by each item's cachingStrategy. The
+      // legacy write below (saveGroupLastValue/saveItemLastValue, used by non-IoT direct-query
+      // connectors to show a raw "last value" in the UI) would just clobber that dedicated state
+      // with an unrelated single value, so directQueryHandler must skip it for these types.
       const group = {
         id: 'group2',
         name: 'Group 2',
@@ -1345,10 +1366,7 @@ describe('SouthConnector', () => {
 
       await south.directQueryHandler([itemA, itemB]);
 
-      const saveGroupCalls = (southCacheRepository.saveGroupLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
-      assert.strictEqual(saveGroupCalls.length, 1);
-      assert.strictEqual(saveGroupCalls[0].arguments[0], south.connectorConfiguration.id);
-      assert.strictEqual(saveGroupCalls[0].arguments[1], group.id);
+      assert.strictEqual((southCacheRepository.saveGroupLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
       assert.strictEqual((southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
     });
 

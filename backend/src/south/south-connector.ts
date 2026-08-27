@@ -2,6 +2,7 @@ import { EventEmitter } from 'node:events';
 import { delay, generateIntervals, getErrorMessage, groupItemsByGroup, workUnitLogCtx } from '../service/utils';
 
 import {
+  IOT_FAMILY_SOUTH_TYPES,
   SOUTH_SINGLE_ITEMS,
   SouthConnectorItemQueryResult,
   SouthConnectorItemTestingSettings,
@@ -53,6 +54,7 @@ import SouthCacheRepository, { SouthCacheEntry } from '../repository/cache/south
 import { ScanMode } from '../model/scan-mode.model';
 import type { ILogger } from '../model/logger.model';
 import { loggerService } from '../service/logger/logger.service';
+import { shouldCacheValue } from '../service/south-caching-strategy.service';
 
 /**
  * Base class for every South connector.
@@ -497,6 +499,17 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     // @ts-expect-error
     const lastValue = await this.directQuery(items);
 
+    // IoT-family connectors (opcua/modbus/ads/opc/s7/mqtt) already persist their own per-item
+    // last-*cached*-value rows via southCacheRepository.saveItemsLastValues() inside directQuery(),
+    // gated by each item's cachingStrategy, into the dedicated cached_value/cached_instant columns.
+    // The write below targets the legacy value/tracked_instant columns, used only for the
+    // pre-existing "show a raw last value in the UI" concern on non-IoT direct-query connectors —
+    // skip it entirely here so it isn't spent writing a single raw "last item read" value that has
+    // nothing to do with the per-item caching-strategy decision.
+    if (IOT_FAMILY_SOUTH_TYPES.includes(this.connector.type)) {
+      return;
+    }
+
     const lead = items[0];
     if (lead.group && lead.syncWithGroup && !SOUTH_SINGLE_ITEMS.includes(this.connector.type)) {
       // Batched, synced group: one shared row keyed by the group, not by whichever item happens to
@@ -930,6 +943,65 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         };
       })
     };
+  }
+
+  /**
+   * Shared caching-strategy filter+persist step for the six IoT-family connectors
+   * (opcua/modbus/ads/opc/s7/mqtt) — the one thing this base class can't do for subclasses via a
+   * default no-op hook (like `filterHistoryItems`/`filterDirectItems` below), since each connector
+   * pairs a newly-read value with its item at a different point in its own read path. Call this
+   * once per poll/flush cycle with every value read that's a caching-strategy candidate:
+   *
+   *  1. Batch-reads every involved item's last-*cached*-value/instant in one call.
+   *  2. Applies `shouldCacheValue` per entry, gated by each item's own `cachingStrategy`/params —
+   *     updating an in-call shadow as entries are accepted, so multiple entries for the *same* item
+   *     within one `entries` array (a resampled OPC batch, several buffered MQTT messages for one
+   *     item, …) compare against each other correctly instead of a stale pre-call snapshot.
+   *  3. Batch-persists the accepted entries' new last-cached-value/instant in one call.
+   *  4. Returns only the entries that passed, in their original order, for the caller to forward to
+   *     `addContent(...)`.
+   *
+   * Writes to the dedicated `cached_value`/`cached_instant` columns via
+   * `southCacheRepository.saveItemsLastValues` — never the `value`/`tracked_instant` columns used by
+   * the windowed-history cursor or the legacy direct-query "last value" write, so this never
+   * collides with either of those pre-existing mechanisms.
+   */
+  protected applyCachingStrategy<T>(
+    entries: Array<T>,
+    extract: (entry: T) => { item: SouthConnectorItemEntity<I>; value: unknown; timestamp: Instant }
+  ): Array<T> {
+    const itemIds = Array.from(new Set(entries.map(entry => extract(entry).item.id)));
+    const lastValues = this.southCacheRepository.getItemsLastValues(this.connector.id, itemIds);
+    const cachedEntries: Array<{ itemId: string; value: unknown; instant: Instant }> = [];
+    const accepted: Array<T> = [];
+
+    for (const entry of entries) {
+      const { item, value, timestamp } = extract(entry);
+      const previous = lastValues.get(item.id) ?? null;
+      const shouldCache = shouldCacheValue({
+        cachingStrategy: item.cachingStrategy ?? 'allValues',
+        thresholdType: item.thresholdType,
+        threshold: item.threshold,
+        rangeLow: item.rangeLow,
+        rangeHigh: item.rangeHigh,
+        maxCachingInterval: item.maxCachingInterval,
+        previousCachedValue: previous?.value ?? null,
+        previousCachedInstant: previous?.trackedInstant ?? null,
+        newValue: value,
+        newQueryTime: timestamp
+      });
+      if (shouldCache) {
+        accepted.push(entry);
+        cachedEntries.push({ itemId: item.id, value, instant: timestamp });
+        lastValues.set(item.id, { value, trackedInstant: timestamp });
+      }
+    }
+
+    // Always call, even with an empty array — callers/tests rely on one saveItemsLastValues call
+    // per cycle to mark that the caching-strategy decision ran; the repository itself already
+    // no-ops cheaply on an empty array.
+    this.southCacheRepository.saveItemsLastValues(this.connector.id, cachedEntries);
+    return accepted;
   }
 
   /**
