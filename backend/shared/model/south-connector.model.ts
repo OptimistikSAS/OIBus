@@ -109,6 +109,27 @@ export type OIBusSouthType = (typeof OIBUS_SOUTH_TYPES)[number];
 export type SouthHistoryRecoveryStrategy = 'oldest' | 'newest';
 
 /**
+ * Per-item caching strategy for IoT-family south connectors.
+ * - 'allValues': every value read/received is cached (default behaviour).
+ * - 'onChange': a value is only cached when it differs from the last cached value.
+ * - 'threshold': a value is only cached when it differs from the last cached value by more than a threshold.
+ */
+export type SouthCachingStrategy = 'allValues' | 'onChange' | 'threshold';
+
+/**
+ * The kind of threshold used by the 'threshold' caching strategy.
+ * - 'absolute': the threshold is an absolute numeric difference.
+ * - 'percentage': the threshold is a percentage of the value's configured range (rangeHigh - rangeLow).
+ */
+export type SouthCachingThresholdType = 'absolute' | 'percentage';
+
+/**
+ * South connector types belonging to the "IoT family" (OPC UA, Modbus, ADS, OPC classic, S7, MQTT), for
+ * which per-item caching strategy is available.
+ */
+export const IOT_FAMILY_SOUTH_TYPES: Array<OIBusSouthType> = ['opcua', 'modbus', 'ads', 'opc', 's7', 'mqtt'];
+
+/**
  * Represents the type metadata for a South connector.
  * Describes the basic characteristics and capabilities of a South connector type.
  */
@@ -331,6 +352,58 @@ export interface SouthConnectorItemTypedDTO<IS> extends BaseEntity {
    * @example "oldest"
    */
   recoveryStrategy: SouthHistoryRecoveryStrategy | null;
+
+  /**
+   * Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,
+   * S7, MQTT).
+   * When null and item is in a group, inherits from group settings.
+   *
+   * @example "onChange"
+   */
+  cachingStrategy: SouthCachingStrategy | null;
+
+  /**
+   * The kind of threshold used by the 'threshold' caching strategy. Only applicable when cachingStrategy is
+   * 'threshold'.
+   * Always item-local, never inherited from a group.
+   *
+   * @example "absolute"
+   */
+  thresholdType: SouthCachingThresholdType | null;
+
+  /**
+   * Threshold value used by the 'threshold' caching strategy. Interpreted as an absolute difference or a
+   * percentage of the configured range depending on thresholdType.
+   * Always item-local, never inherited from a group.
+   *
+   * @example 1
+   */
+  threshold: number | null;
+
+  /**
+   * Lower bound of the value's expected range, used to compute percentage thresholds.
+   * Always item-local, never inherited from a group.
+   *
+   * @example 0
+   */
+  rangeLow: number | null;
+
+  /**
+   * Upper bound of the value's expected range, used to compute percentage thresholds.
+   * Always item-local, never inherited from a group.
+   *
+   * @example 100
+   */
+  rangeHigh: number | null;
+
+  /**
+   * Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a
+   * stable point still produces periodic proof-of-life data.
+   * Always item-local, never inherited from a group.
+   *
+   * @example 3600000
+   */
+  maxCachingInterval: number | null;
 }
 
 export interface ItemLightDTO extends BaseEntity {
@@ -422,6 +495,14 @@ export interface SouthItemGroupDTO extends BaseEntity {
      * @example "oldest"
      */
     recoveryStrategy: SouthHistoryRecoveryStrategy | null;
+
+    /**
+     * Per-item caching strategy inherited by items in this group when they sync with it. Only applicable for
+     * IoT-family connectors (OPC UA, Modbus, ADS, OPC classic, S7, MQTT).
+     *
+     * @example "onChange"
+     */
+    cachingStrategy: SouthCachingStrategy | null;
   };
 }
 
@@ -490,6 +571,14 @@ export interface SouthItemGroupCommandDTO {
      * @example "oldest"
      */
     recoveryStrategy: SouthHistoryRecoveryStrategy | null;
+
+    /**
+     * Per-item caching strategy inherited by items in this group when they sync with it. Only applicable for
+     * IoT-family connectors (OPC UA, Modbus, ADS, OPC classic, S7, MQTT).
+     *
+     * @example "onChange"
+     */
+    cachingStrategy: SouthCachingStrategy | null;
   };
 }
 
@@ -777,6 +866,58 @@ export interface SouthConnectorItemCommandTypedDTO<IS> {
    * @example "oldest"
    */
   recoveryStrategy: SouthHistoryRecoveryStrategy | null;
+
+  /**
+   * Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,
+   * S7, MQTT).
+   * When null and item is in a group, inherits from group settings.
+   *
+   * @example "onChange"
+   */
+  cachingStrategy: SouthCachingStrategy | null;
+
+  /**
+   * The kind of threshold used by the 'threshold' caching strategy. Only applicable when cachingStrategy is
+   * 'threshold'.
+   * Always item-local, never inherited from a group.
+   *
+   * @example "absolute"
+   */
+  thresholdType: SouthCachingThresholdType | null;
+
+  /**
+   * Threshold value used by the 'threshold' caching strategy. Interpreted as an absolute difference or a
+   * percentage of the configured range depending on thresholdType.
+   * Always item-local, never inherited from a group.
+   *
+   * @example 1
+   */
+  threshold: number | null;
+
+  /**
+   * Lower bound of the value's expected range, used to compute percentage thresholds.
+   * Always item-local, never inherited from a group.
+   *
+   * @example 0
+   */
+  rangeLow: number | null;
+
+  /**
+   * Upper bound of the value's expected range, used to compute percentage thresholds.
+   * Always item-local, never inherited from a group.
+   *
+   * @example 100
+   */
+  rangeHigh: number | null;
+
+  /**
+   * Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a
+   * stable point still produces periodic proof-of-life data.
+   * Always item-local, never inherited from a group.
+   *
+   * @example 3600000
+   */
+  maxCachingInterval: number | null;
 }
 
 // ── Named command variants (tsoa uses these as schema names) ──────────────
