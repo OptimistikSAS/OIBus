@@ -10,7 +10,6 @@ import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from
 import { AdsEnumInfoEntry } from 'ads-client/dist/types/ads-protocol-types';
 import { SouthDirectQuery } from '../south-interface';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
-import { shouldCacheValue } from '../../service/south-caching-strategy.service';
 
 interface ADSOptions {
   targetAmsNetId: string;
@@ -269,41 +268,19 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
       const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
       this.logger.debug(logCtx, `Requested ${items.length} items in ${requestDuration} ms`);
 
-      // Batch-read the previous cached state once for this cycle, then decide per item whether the
-      // newly parsed value(s) should be cached, based on the item's (already group-resolved) caching
-      // strategy. A struct/array item's parsed sub-values are compared/cached as one unit.
-      const lastValues = this.southCacheRepository.getItemsLastValues(
-        this.connector.id,
-        items.map(item => item.id)
+      // Decide per item whether the newly parsed value(s) should be cached, based on the item's
+      // (already group-resolved) caching strategy. A struct/array item's parsed sub-values are
+      // compared/cached as one unit (the array of each sub-value), not filtered individually.
+      const cachedPairs = this.applyCachingStrategy(
+        valuePairs.filter(pair => pair.values.length > 0),
+        ({ item, values }) => ({ item, value: values.map(v => v.data.value), timestamp })
       );
-      const itemsToCache: Array<SouthConnectorItemEntity<SouthADSItemSettings>> = [];
-      const cachedEntries: Array<{ itemId: string; value: unknown; instant: string }> = [];
-      const filteredContent: Array<OIBusTimeValue> = [];
-      for (const { item, values } of valuePairs) {
-        if (values.length === 0) continue;
-        const previous = lastValues.get(item.id) ?? null;
-        const comparableValue = values.map(v => v.data.value);
-        const shouldCache = shouldCacheValue({
-          cachingStrategy: item.cachingStrategy ?? 'allValues',
-          thresholdType: item.thresholdType,
-          threshold: item.threshold,
-          rangeLow: item.rangeLow,
-          rangeHigh: item.rangeHigh,
-          maxCachingInterval: item.maxCachingInterval,
-          previousCachedValue: previous?.value ?? null,
-          previousCachedInstant: previous?.trackedInstant ?? null,
-          newValue: comparableValue,
-          newQueryTime: timestamp
-        });
-        if (shouldCache) {
-          filteredContent.push(...values);
-          itemsToCache.push(item);
-          cachedEntries.push({ itemId: item.id, value: comparableValue, instant: timestamp });
-        }
-      }
 
-      await this.addContent({ type: 'time-values', content: filteredContent }, startRequest.toUTC().toISO(), itemsToCache);
-      this.southCacheRepository.saveItemsLastValues(this.connector.id, cachedEntries);
+      await this.addContent(
+        { type: 'time-values', content: cachedPairs.flatMap(pair => pair.values) },
+        startRequest.toUTC().toISO(),
+        cachedPairs.map(pair => pair.item)
+      );
     } catch (error: unknown) {
       if (getErrorMessage(error).includes('Client is not connected')) {
         // This branch handles the error itself (reconnect scheduled) rather than rethrowing, so —
