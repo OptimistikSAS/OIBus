@@ -368,7 +368,7 @@ describe('Joi validator', () => {
           .when('driver', {
             is: Joi.any().valid('SQLite'),
             then: Joi.string().required(),
-            otherwise: Joi.string().allow('').optional()
+            otherwise: Joi.string().allow(null, '').optional()
           }),
         query: Joi.string().allow(null, '')
       })
@@ -685,21 +685,21 @@ describe('Joi validator', () => {
                 .when('type', {
                   is: Joi.any().valid('string'),
                   then: Joi.string().required(),
-                  otherwise: Joi.string().allow('').optional()
+                  otherwise: Joi.string().allow(null, '').optional()
                 }),
               format: Joi.string()
                 .required()
                 .when('type', {
                   is: Joi.any().valid('string'),
                   then: Joi.string().required(),
-                  otherwise: Joi.string().allow('').optional()
+                  otherwise: Joi.string().allow(null, '').optional()
                 }),
               locale: Joi.string()
                 .required()
                 .when('type', {
                   is: Joi.any().valid('string'),
                   then: Joi.string().required(),
-                  otherwise: Joi.string().allow('').optional()
+                  otherwise: Joi.string().allow(null, '').optional()
                 })
             })
           )
