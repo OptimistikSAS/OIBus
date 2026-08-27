@@ -23,7 +23,8 @@ export const toSouthItemGroupDTO = (entity: SouthItemGroupEntityLight, getUserIn
       endTimeOffset: entity.endTimeOffset,
       maxReadInterval: entity.maxReadInterval,
       readDelay: entity.readDelay,
-      recoveryStrategy: entity.recoveryStrategy
+      recoveryStrategy: entity.recoveryStrategy,
+      cachingStrategy: entity.cachingStrategy
     }
   };
 };
@@ -53,7 +54,13 @@ export const toSouthConnectorItemDTO = (
     readDelay: entity.readDelay,
     startTimeOffset: entity.startTimeOffset,
     endTimeOffset: entity.endTimeOffset,
-    recoveryStrategy: entity.recoveryStrategy
+    recoveryStrategy: entity.recoveryStrategy,
+    cachingStrategy: entity.cachingStrategy,
+    thresholdType: entity.thresholdType,
+    threshold: entity.threshold,
+    rangeLow: entity.rangeLow,
+    rangeHigh: entity.rangeHigh,
+    maxCachingInterval: entity.maxCachingInterval
   };
 };
 

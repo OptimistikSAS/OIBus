@@ -755,7 +755,7 @@ describe('ProxyServer', () => {
     await proxyServer['handleHttpRequest'](mockReq, mockRes);
 
     assert.strictEqual(mockWeb.mock.calls.length, 1);
-    assert.strictEqual((mockRes.writeHead as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual((mockRes.writeHead as unknown as ReturnType<typeof mock.fn>).mock.calls.length, 0);
   });
 
   it('should allow http request with valid proxy credentials', async () => {
@@ -776,7 +776,7 @@ describe('ProxyServer', () => {
     await proxyServer['handleHttpRequest'](mockReq, mockRes);
 
     assert.strictEqual(mockWeb.mock.calls.length, 1);
-    assert.strictEqual((mockRes.writeHead as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual((mockRes.writeHead as unknown as ReturnType<typeof mock.fn>).mock.calls.length, 0);
   });
 
   it('should block http request with missing Proxy-Authorization header', async () => {

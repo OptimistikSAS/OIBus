@@ -1055,7 +1055,13 @@ export const buildSouthEntity = <T extends SouthSettings, I extends SouthItemSet
       readDelay: 200,
       startTimeOffset: 0,
       endTimeOffset: null,
-      recoveryStrategy: null
+      recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null
     });
   }
   return {
