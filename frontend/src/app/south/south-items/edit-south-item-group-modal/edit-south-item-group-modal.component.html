@@ -107,9 +107,12 @@
           <label class="form-label" for="group-caching-strategy" translate="south.groups.caching-strategy"></label>
           <select class="form-select" id="group-caching-strategy" formControlName="cachingStrategy">
             @for (strategy of cachingStrategies; track strategy.value) {
-              <option [value]="strategy.value" [translate]="strategy.labelKey"></option>
+              @if (strategy.value !== 'threshold' || isThresholdAvailable) {
+                <option [value]="strategy.value" [translate]="strategy.labelKey"></option>
+              }
             }
           </select>
+          <val-errors controlName="cachingStrategy" />
         </div>
       }
     </form>
