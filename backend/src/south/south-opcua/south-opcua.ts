@@ -31,6 +31,7 @@ import {
 import { EUInformation, HistoryDataOptions, HistoryReadValueIdOptions, Range } from 'node-opcua-types/source/_generated_opcua_types';
 import { createSessionConfigs, getHistoryReadRequest, getTimestamp, logMessages, parseOPCUAValue } from '../../service/utils-opcua';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
+import { shouldCacheValue } from '../../service/south-caching-strategy.service';
 
 // OPC-UA status codes that indicate a device/PLC-level failure. The OPC-UA session
 // itself is still alive — only the device behind the server is unreachable. Do NOT
@@ -100,6 +101,15 @@ export default class SouthOPCUA
     value: number | string;
     quality: string;
   }> = [];
+  // In-memory shadow of the last *cached* value per item for subscription-mode items, keyed by
+  // item id. The subscription handler fires far more often than the flush cycle, so caching
+  // strategy decisions can't afford a database read per event: this shadow is hydrated once from
+  // `south_item_cache` (via getItemsLastValues) whenever subscribe() (re)registers items — never
+  // created empty — and kept up to date optimistically at push time so it stays correct across
+  // several changed-events between flush cycles. The database row itself (the durable "last
+  // cached" state, e.g. for maxCachingInterval to survive a restart) is only written in
+  // flushMessages(), via saveItemsLastValues, once a value has actually made it into addContent.
+  private lastCachedValuesByItem = new Map<string, { value: unknown; instant: Instant }>();
   // Single persistent session shared by ad hoc DA/HA queries (directQuery/historyQuery) and, when
   // this connector has subscription-mode items, the OPC-UA subscription itself (see subscribe()).
   // One physical session — rather than a pool sized to getMaxParallelRun() plus a second dedicated
@@ -591,6 +601,13 @@ export default class SouthOPCUA
       Map<Resampling | undefined, Array<{ nodeId: NodeId; item: SouthConnectorItemEntity<SouthOPCUAItemSettings> }>>
     >();
 
+    // Batch-read previous cached state once for the whole work-unit (not once per round-trip) so
+    // per-value comparisons below don't hit the database repeatedly.
+    const lastValues = this.southCacheRepository.getItemsLastValues(
+      this.connector.id,
+      items.map(item => item.id)
+    );
+
     for (const item of items) {
       let nodeId;
       try {
@@ -646,8 +663,6 @@ export default class SouthOPCUA
           item
         }));
         const totalNodes = resampledItems.length;
-        // Hoist once instead of rebuilding per continuation-point round-trip
-        const resampledItemsAsItems = resampledItems.map(({ item }) => item);
         this.logger.trace(logCtx, `Reading ${totalNodes} items with aggregate ${aggregate} and resampling ${resampling}`);
         // Accumulated across every continuation-point round-trip below so we can log one debug
         // summary per sub-batch instead of one line per round-trip (a wide HA backfill can need many).
@@ -657,6 +672,11 @@ export default class SouthOPCUA
         do {
           roundTripCount++;
           const batchValues: Array<OIBusTimeValue> = [];
+          // A Set, not an array: a single item can produce several history values in one round-trip
+          // (multiple timestamps for the same node), and each must only appear once in the item list
+          // passed to addContent — same "one entry per item" shape as resampledItemsAsItems before.
+          const itemsToCacheSet = new Set<SouthConnectorItemEntity<SouthOPCUAItemSettings>>();
+          const cachedEntries: Array<{ itemId: string; value: unknown; instant: string }> = [];
           const startRequest = DateTime.now();
           const request = getHistoryReadRequest(
             startTime,
@@ -725,7 +745,34 @@ export default class SouthOPCUA
                         quality: historyValue.statusCode.name
                       }
                     };
-                    batchValues.push(timeValue);
+                    const previous = lastValues.get(associatedItem.id) ?? null;
+                    const shouldCache = shouldCacheValue({
+                      cachingStrategy: associatedItem.cachingStrategy ?? 'allValues',
+                      thresholdType: associatedItem.thresholdType,
+                      threshold: associatedItem.threshold,
+                      rangeLow: associatedItem.rangeLow,
+                      rangeHigh: associatedItem.rangeHigh,
+                      maxCachingInterval: associatedItem.maxCachingInterval,
+                      previousCachedValue: previous?.value ?? null,
+                      previousCachedInstant: previous?.trackedInstant ?? null,
+                      newValue: value,
+                      newQueryTime: timeValue.timestamp
+                    });
+                    if (shouldCache) {
+                      batchValues.push(timeValue);
+                      itemsToCacheSet.add(associatedItem);
+                      cachedEntries.push({ itemId: associatedItem.id, value, instant: timeValue.timestamp });
+                      // Keep the shadow up to date so a later value within the same round-trip for
+                      // the same item is compared against the value that was actually cached, not
+                      // the stale pre-cycle state.
+                      lastValues.set(associatedItem.id, {
+                        itemId: associatedItem.id,
+                        groupId: null,
+                        queryTime: timeValue.timestamp,
+                        value,
+                        trackedInstant: timeValue.timestamp
+                      });
+                    }
                     if (selectedTimestampMs > lastValueTimestampMs) {
                       lastValue = timeValue;
                       lastValueTimestampMs = selectedTimestampMs;
@@ -756,7 +803,12 @@ export default class SouthOPCUA
               // addContent errors (cache/disk) must not propagate: they are unrelated
               // to the OPC-UA session and would trigger a needless disconnect+reconnect.
               try {
-                await this.addContent({ type: 'time-values', content: batchValues }, startRequest.toUTC().toISO(), resampledItemsAsItems);
+                await this.addContent(
+                  { type: 'time-values', content: batchValues },
+                  startRequest.toUTC().toISO(),
+                  Array.from(itemsToCacheSet)
+                );
+                this.southCacheRepository.saveItemsLastValues(this.connector.id, cachedEntries);
               } catch (addError: unknown) {
                 this.logger.error(logCtx, `Error saving HA values to cache: ${getErrorMessage(addError)}`);
               }
@@ -853,7 +905,44 @@ export default class SouthOPCUA
       this.triggerReconnect();
       throw error;
     }
-    await this.addContent({ type: 'time-values', content }, queryTime, items);
+
+    // getDAValues doesn't carry the full item entity at push time (only nodeId/name/settings), so
+    // join back to the full entities here (item name is unique within a direct-query batch) and
+    // apply the caching strategy in a single post-processing step before addContent.
+    const itemsByName = new Map(items.map(item => [item.name, item]));
+    const lastValues = this.southCacheRepository.getItemsLastValues(
+      this.connector.id,
+      items.map(item => item.id)
+    );
+    const itemsToCache: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>> = [];
+    const cachedEntries: Array<{ itemId: string; value: unknown; instant: string }> = [];
+    const filteredContent = content.filter(timeValue => {
+      const item = itemsByName.get(timeValue.pointId);
+      if (!item) {
+        return false;
+      }
+      const previous = lastValues.get(item.id) ?? null;
+      const shouldCache = shouldCacheValue({
+        cachingStrategy: item.cachingStrategy ?? 'allValues',
+        thresholdType: item.thresholdType,
+        threshold: item.threshold,
+        rangeLow: item.rangeLow,
+        rangeHigh: item.rangeHigh,
+        maxCachingInterval: item.maxCachingInterval,
+        previousCachedValue: previous?.value ?? null,
+        previousCachedInstant: previous?.trackedInstant ?? null,
+        newValue: timeValue.data.value,
+        newQueryTime: timeValue.timestamp
+      });
+      if (shouldCache) {
+        itemsToCache.push(item);
+        cachedEntries.push({ itemId: item.id, value: timeValue.data.value, instant: timeValue.timestamp });
+      }
+      return shouldCache;
+    });
+
+    await this.addContent({ type: 'time-values', content: filteredContent }, queryTime, itemsToCache);
+    this.southCacheRepository.saveItemsLastValues(this.connector.id, cachedEntries);
     return content && content.length > 0 ? content[content.length - 1] : null;
   }
 
@@ -912,6 +1001,21 @@ export default class SouthOPCUA
     if (!items.length) {
       return;
     }
+    // Hydrate the in-memory shadow from the persisted table for any of these items not already
+    // known in-memory, so maxCachingInterval's clock correctly resumes across restarts instead of
+    // starting from a cold, empty shadow.
+    const itemsToHydrate = items.filter(item => !this.lastCachedValuesByItem.has(item.id));
+    if (itemsToHydrate.length > 0) {
+      const lastValues = this.southCacheRepository.getItemsLastValues(
+        this.connector.id,
+        itemsToHydrate.map(item => item.id)
+      );
+      for (const [itemId, entry] of lastValues) {
+        if (entry.trackedInstant) {
+          this.lastCachedValuesByItem.set(itemId, { value: entry.value, instant: entry.trackedInstant });
+        }
+      }
+    }
     if (!this.subscription) {
       this.subscription = await this.session!.createSubscription2({
         requestedPublishingInterval: 150,
@@ -964,9 +1068,27 @@ export default class SouthOPCUA
         this.resetSubscriptionWatchdog();
         const parsedValue = parseOPCUAValue(item.name, dataValue.value, this.logger);
         if (parsedValue) {
+          const timestamp = DateTime.now().toUTC().toISO();
+          const previous = this.lastCachedValuesByItem.get(item.id) ?? null;
+          const shouldCache = shouldCacheValue({
+            cachingStrategy: item.cachingStrategy ?? 'allValues',
+            thresholdType: item.thresholdType,
+            threshold: item.threshold,
+            rangeLow: item.rangeLow,
+            rangeHigh: item.rangeHigh,
+            maxCachingInterval: item.maxCachingInterval,
+            previousCachedValue: previous?.value ?? null,
+            previousCachedInstant: previous?.instant ?? null,
+            newValue: parsedValue,
+            newQueryTime: timestamp
+          });
+          if (!shouldCache) {
+            return;
+          }
+          this.lastCachedValuesByItem.set(item.id, { value: parsedValue, instant: timestamp });
           this.bufferedValues.push({
             item: item,
-            timestamp: DateTime.now().toUTC().toISO(),
+            timestamp,
             value: parsedValue,
             quality: dataValue.statusCode.name
           });
@@ -998,6 +1120,10 @@ export default class SouthOPCUA
       try {
         const content = new Array<OIBusTimeValue>(valuesToSend.length);
         const uniqueItems = new Set<SouthConnectorItemEntity<SouthOPCUAItemSettings>>();
+        // Every buffered value already passed shouldCacheValue at push time (see subscribe()), so
+        // the whole flushed batch is what actually gets cached this cycle. Dedupe to one row per
+        // item (keeping the most recent value/instant) since south_item_cache is keyed by item id.
+        const cachedEntriesByItem = new Map<string, { itemId: string; value: unknown; instant: string }>();
         for (let i = 0; i < valuesToSend.length; i++) {
           const element = valuesToSend[i];
           content[i] = {
@@ -1006,8 +1132,12 @@ export default class SouthOPCUA
             data: { value: element.value, quality: element.quality }
           };
           uniqueItems.add(element.item);
+          cachedEntriesByItem.set(element.item.id, { itemId: element.item.id, value: element.value, instant: element.timestamp });
         }
         await this.addContent({ type: 'time-values', content }, DateTime.now().toUTC().toISO(), Array.from(uniqueItems));
+        // Subscription mode never wrote to south_item_cache before this feature: this is the first
+        // path that persists the per-item "last cached" row for push-based items.
+        this.southCacheRepository.saveItemsLastValues(this.connector.id, Array.from(cachedEntriesByItem.values()));
       } catch (error: unknown) {
         this.logger.error(`Error when flushing messages: ${getErrorMessage(error)}`);
       }
