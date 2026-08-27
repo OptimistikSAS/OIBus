@@ -66,6 +66,21 @@ export default class SouthConnectorRepository {
       .map(result => toSouthConnectorLight(result as Record<string, string>));
   }
 
+  /**
+   * Returns every south connector fully hydrated (settings, items, groups) in one call — for a
+   * bulk read (e.g. config export) that would otherwise re-fetch each connector's base row one at a
+   * time via `findSouthById`, mirroring `NorthConnectorRepository.findAllNorthFull`. Each
+   * connector's items/groups are still fetched per-row inside `toSouthConnector` (same as north
+   * still fetches transformers per-row) — only the redundant base-row re-fetch is eliminated here.
+   */
+  findAllSouthFull(): Array<SouthConnectorEntity<SouthSettings, SouthItemSettings>> {
+    const query = `SELECT id, name, type, description, enabled, settings, created_by, updated_by, created_at, updated_at FROM ${SOUTH_CONNECTORS_TABLE};`;
+    return this.database
+      .prepare(query)
+      .all()
+      .map(result => this.toSouthConnector(result as Record<string, string | number>));
+  }
+
   findSouthById(id: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null {
     const query = `
         SELECT id, name, type, description, enabled, settings, created_by, updated_by, created_at, updated_at
