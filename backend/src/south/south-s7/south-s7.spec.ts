@@ -493,17 +493,26 @@ describe('South S7', () => {
     it('should suppress a no-change value under cachingStrategy=onChange', async () => {
       (south as unknown as Record<string, unknown>)['endpoint'] = { isConnected: true };
       const addContentMock = mock.fn(
-        async (
-          _data: OIBusContent,
-          _queryTime: Instant,
-          _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
-        ): Promise<void> => undefined
+        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+          undefined
       );
       south.addContent = addContentMock;
       readAllItemsResult = { Var1: 42 };
       const item = buildItem('id1', 'Var1', 'DB1,REAL0', { cachingStrategy: 'onChange' });
       (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
-        () => new Map([['id1', { itemId: 'id1', groupId: null, queryTime: '2021-01-01T00:00:00.000Z', value: '42', trackedInstant: '2021-01-01T00:00:00.000Z' }]])
+        () =>
+          new Map([
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: '42',
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ]
+          ])
       );
 
       await south.directQuery([item]);
@@ -511,42 +520,52 @@ describe('South S7', () => {
       const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
       assert.deepStrictEqual(content.content, []);
       assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], []);
-      assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], []);
+      assert.deepStrictEqual(
+        (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
+        []
+      );
     });
 
     it('should cache a threshold-exceeding change', async () => {
       (south as unknown as Record<string, unknown>)['endpoint'] = { isConnected: true };
       const addContentMock = mock.fn(
-        async (
-          _data: OIBusContent,
-          _queryTime: Instant,
-          _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
-        ): Promise<void> => undefined
+        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+          undefined
       );
       south.addContent = addContentMock;
       readAllItemsResult = { Var1: 42 };
       const item = buildItem('id1', 'Var1', 'DB1,REAL0', { cachingStrategy: 'threshold', thresholdType: 'absolute', threshold: 5 });
       (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
-        () => new Map([['id1', { itemId: 'id1', groupId: null, queryTime: '2021-01-01T00:00:00.000Z', value: '30', trackedInstant: '2021-01-01T00:00:00.000Z' }]])
+        () =>
+          new Map([
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: '30',
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ]
+          ])
       );
 
       await south.directQuery([item]);
 
       const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
       assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
-      assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], [
-        { itemId: 'id1', value: '42', instant: testData.constants.dates.FAKE_NOW }
-      ]);
+      assert.deepStrictEqual(
+        (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
+        [{ itemId: 'id1', value: '42', instant: testData.constants.dates.FAKE_NOW }]
+      );
     });
 
     it('should cache a percentage-of-span threshold-exceeding change and suppress one below it', async () => {
       (south as unknown as Record<string, unknown>)['endpoint'] = { isConnected: true };
       const addContentMock = mock.fn(
-        async (
-          _data: OIBusContent,
-          _queryTime: Instant,
-          _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
-        ): Promise<void> => undefined
+        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+          undefined
       );
       south.addContent = addContentMock;
       // rangeLow=0, rangeHigh=100 -> span=100; threshold=10% -> 10 absolute units
@@ -568,8 +587,26 @@ describe('South S7', () => {
       (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
         () =>
           new Map([
-            ['id1', { itemId: 'id1', groupId: null, queryTime: '2021-01-01T00:00:00.000Z', value: '20', trackedInstant: '2021-01-01T00:00:00.000Z' }],
-            ['id2', { itemId: 'id2', groupId: null, queryTime: '2021-01-01T00:00:00.000Z', value: '20', trackedInstant: '2021-01-01T00:00:00.000Z' }]
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: '20',
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ],
+            [
+              'id2',
+              {
+                itemId: 'id2',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: '20',
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ]
           ])
       );
 
@@ -582,18 +619,27 @@ describe('South S7', () => {
     it('should cache when maxCachingInterval elapses even without a qualifying change', async () => {
       (south as unknown as Record<string, unknown>)['endpoint'] = { isConnected: true };
       const addContentMock = mock.fn(
-        async (
-          _data: OIBusContent,
-          _queryTime: Instant,
-          _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
-        ): Promise<void> => undefined
+        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+          undefined
       );
       south.addContent = addContentMock;
       readAllItemsResult = { Var1: 42 };
       const item = buildItem('id1', 'Var1', 'DB1,REAL0', { cachingStrategy: 'onChange', maxCachingInterval: 1000 });
       // previous cached value is identical (no onChange-qualifying diff), but 2h have elapsed since trackedInstant
       (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
-        () => new Map([['id1', { itemId: 'id1', groupId: null, queryTime: '2020-12-31T22:00:00.000Z', value: '42', trackedInstant: '2020-12-31T22:00:00.000Z' }]])
+        () =>
+          new Map([
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2020-12-31T22:00:00.000Z',
+                value: '42',
+                trackedInstant: '2020-12-31T22:00:00.000Z'
+              }
+            ]
+          ])
       );
 
       await south.directQuery([item]);
@@ -605,11 +651,8 @@ describe('South S7', () => {
     it('should always cache the very first read for an item regardless of strategy', async () => {
       (south as unknown as Record<string, unknown>)['endpoint'] = { isConnected: true };
       const addContentMock = mock.fn(
-        async (
-          _data: OIBusContent,
-          _queryTime: Instant,
-          _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
-        ): Promise<void> => undefined
+        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+          undefined
       );
       south.addContent = addContentMock;
       readAllItemsResult = { Var1: 42 };
@@ -625,11 +668,8 @@ describe('South S7', () => {
     it('should call saveItemsLastValues with exactly the items actually cached in the cycle', async () => {
       (south as unknown as Record<string, unknown>)['endpoint'] = { isConnected: true };
       const addContentMock = mock.fn(
-        async (
-          _data: OIBusContent,
-          _queryTime: Instant,
-          _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
-        ): Promise<void> => undefined
+        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+          undefined
       );
       south.addContent = addContentMock;
       readAllItemsResult = { Var1: 42, Var2: 7 };
@@ -638,8 +678,26 @@ describe('South S7', () => {
       (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
         () =>
           new Map([
-            ['id1', { itemId: 'id1', groupId: null, queryTime: '2021-01-01T00:00:00.000Z', value: '42', trackedInstant: '2021-01-01T00:00:00.000Z' }],
-            ['id2', { itemId: 'id2', groupId: null, queryTime: '2021-01-01T00:00:00.000Z', value: '1', trackedInstant: '2021-01-01T00:00:00.000Z' }]
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: '42',
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ],
+            [
+              'id2',
+              {
+                itemId: 'id2',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: '1',
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ]
           ])
       );
 

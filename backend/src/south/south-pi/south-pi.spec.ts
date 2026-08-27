@@ -87,6 +87,13 @@ describe('South PI', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: null,
+        cachingStrategy: null,
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -104,6 +111,13 @@ describe('South PI', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: null,
+        cachingStrategy: null,
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -462,8 +476,8 @@ describe('South PI', () => {
   });
 
   it('should test item and throw error if bad status, still disconnecting the test session only', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, options?: { method: string }) =>
-      options?.method === 'DELETE' ? createMockResponse(200) : createMockResponse(400)
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, options?: unknown) =>
+      (options as { method?: string })?.method === 'DELETE' ? createMockResponse(200) : createMockResponse(400)
     );
 
     const connectSpy = mock.method(south, 'connect');
