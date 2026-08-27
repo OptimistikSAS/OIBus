@@ -80,6 +80,15 @@ export class EditSouthItemGroupModalComponent {
     return IOT_FAMILY_SOUTH_TYPES.includes(this.manifest?.id as (typeof IOT_FAMILY_SOUTH_TYPES)[number]);
   }
 
+  /**
+   * True for IoT-family types minus MQTT, which does not support the 'threshold' caching strategy (MQTT
+   * payloads aren't guaranteed numeric). Mirrors the item modal's `isThresholdAvailable` — a group's
+   * cachingStrategy is inherited by every synced item, so MQTT groups must not offer it either.
+   */
+  get isThresholdAvailable(): boolean {
+    return this.isIotFamilySouthType && this.manifest?.id !== 'mqtt';
+  }
+
   prepareForCreation(
     scanModes: Array<ScanModeDTO>,
     existingGroups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
@@ -130,6 +139,14 @@ export class EditSouthItemGroupModalComponent {
       recoveryStrategy: this.fb.control<SouthHistoryRecoveryStrategy>('oldest'),
       cachingStrategy: this.fb.control<SouthCachingStrategy>('allValues')
     });
+
+    if (this.manifest?.id === 'mqtt') {
+      // Defense in depth alongside hiding the 'threshold' option in the template for MQTT groups —
+      // matches the item modal's mqttCachingStrategyValidator.
+      this.form.controls.cachingStrategy.addValidators(control =>
+        control.value === 'threshold' ? { mqttThresholdNotAvailable: true } : null
+      );
+    }
 
     if (this.group) {
       this.form.patchValue({
