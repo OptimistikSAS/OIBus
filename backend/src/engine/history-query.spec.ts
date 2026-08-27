@@ -114,7 +114,13 @@ describe('HistoryQuery enabled', () => {
         readDelay: 200,
         startTimeOffset: null,
         endTimeOffset: null,
-        recoveryStrategy: null
+        recoveryStrategy: null,
+        cachingStrategy: null,
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null
       }))
     );
     assert.deepStrictEqual(
@@ -169,7 +175,13 @@ describe('HistoryQuery enabled', () => {
         readDelay: 200,
         startTimeOffset: null,
         endTimeOffset: null,
-        recoveryStrategy: null
+        recoveryStrategy: null,
+        cachingStrategy: null,
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null
       }))
     );
 
