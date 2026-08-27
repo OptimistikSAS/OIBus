@@ -162,7 +162,7 @@ export default class JoiValidator {
         subSchema[formControl.key] = subSchema[formControl.key].when(enablingCondition.referralPathFromRoot, {
           is: Joi.any().valid(...enablingCondition.values),
           then: subSchema[formControl.key].required(),
-          otherwise: subSchema[formControl.key].allow('').optional()
+          otherwise: subSchema[formControl.key].allow(null, '').optional()
         });
       }
       subSchema[formControl.key] = this.relaxIfDisabledOnPlatform(subSchema[formControl.key], formControl, platform);
@@ -211,7 +211,7 @@ export default class JoiValidator {
         subSchema[subControl.key] = subSchema[subControl.key].when(enablingCondition.referralPathFromRoot, {
           is: Joi.any().valid(...enablingCondition.values),
           then: subSchema[subControl.key].required(),
-          otherwise: subSchema[subControl.key].allow('').optional()
+          otherwise: subSchema[subControl.key].allow(null, '').optional()
         });
       }
       subSchema[subControl.key] = this.relaxIfDisabledOnPlatform(subSchema[subControl.key], subControl, platform);
