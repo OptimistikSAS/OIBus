@@ -23,6 +23,7 @@ import {
 } from '../../service/utils-modbus';
 import { Instant } from '../../model/types';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
+import { shouldCacheValue } from '../../service/south-caching-strategy.service';
 
 // Modbus Application Protocol limits (spec v1.1b3, §6.1 / §6.2 / §6.3 / §6.4)
 const MAX_COIL_READ_COUNT = 2000; // FC01 / FC02
@@ -174,7 +175,10 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
 
   async directQuery(items: Array<SouthConnectorItemEntity<SouthModbusItemSettings>>): Promise<OIBusTimeValue | null> {
     const logCtx = workUnitLogCtx(items);
-    const dataValues: Array<OIBusTimeValue> = [];
+    // Values are collected paired with the item that produced them (rather than plain OIBusTimeValue,
+    // which is only tagged with pointId=item.name) so caching-strategy filtering below can key off the
+    // item's id even when several items share the same name.
+    const valuePairs: Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; value: OIBusTimeValue }> = [];
     try {
       if (!this.modbusClient) {
         throw new Error('Could not read address: Modbus client not set');
@@ -202,9 +206,9 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
         for (const [type, group] of groups) {
           group.sort((a, b) => a.address - b.address);
           if (type === 'coil' || type === 'discrete-input') {
-            dataValues.push(...(await this.queryBitsGrouped(type as 'coil' | 'discrete-input', group, timestamp, groupingGap, logCtx)));
+            valuePairs.push(...(await this.queryBitsGrouped(type as 'coil' | 'discrete-input', group, timestamp, groupingGap, logCtx)));
           } else if (type === 'input-register' || type === 'holding-register') {
-            dataValues.push(
+            valuePairs.push(
               ...(await this.queryRegistersGrouped(type as 'input-register' | 'holding-register', group, timestamp, groupingGap, logCtx))
             );
           }
@@ -215,14 +219,44 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
           this.logger.trace(logCtx, `Reading item "${item.name}" (${item.settings.modbusType} at address ${item.settings.address})`);
           const values = await this.modbusFunction(this.modbusClient, item);
           for (const v of values) {
-            dataValues.push({ ...v, timestamp });
+            valuePairs.push({ item, value: { ...v, timestamp } });
           }
         }
       }
 
       const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
       this.logger.debug(logCtx, `Requested ${items.length} items in ${requestDuration} ms`);
-      await this.addContent({ type: 'time-values', content: dataValues }, startRequest.toUTC().toISO(), items);
+
+      const lastValues = this.southCacheRepository.getItemsLastValues(
+        this.connector.id,
+        items.map(item => item.id)
+      );
+      const itemsToCache: Array<SouthConnectorItemEntity<SouthModbusItemSettings>> = [];
+      const cachedEntries: Array<{ itemId: string; value: unknown; instant: string }> = [];
+      const filteredDataValues: Array<OIBusTimeValue> = [];
+      for (const { item, value: dataValue } of valuePairs) {
+        const previous = lastValues.get(item.id) ?? null;
+        const shouldCache = shouldCacheValue({
+          cachingStrategy: item.cachingStrategy ?? 'allValues',
+          thresholdType: item.thresholdType,
+          threshold: item.threshold,
+          rangeLow: item.rangeLow,
+          rangeHigh: item.rangeHigh,
+          maxCachingInterval: item.maxCachingInterval,
+          previousCachedValue: previous?.value ?? null,
+          previousCachedInstant: previous?.trackedInstant ?? null,
+          newValue: dataValue.data.value,
+          newQueryTime: dataValue.timestamp
+        });
+        if (shouldCache) {
+          filteredDataValues.push(dataValue);
+          itemsToCache.push(item);
+          cachedEntries.push({ itemId: item.id, value: dataValue.data.value, instant: dataValue.timestamp });
+        }
+      }
+
+      await this.addContent({ type: 'time-values', content: filteredDataValues }, startRequest.toUTC().toISO(), itemsToCache);
+      this.southCacheRepository.saveItemsLastValues(this.connector.id, cachedEntries);
     } catch (error: unknown) {
       // Only tear down and (re)schedule a reconnect when this failure happened on a connection that
       // was actually up (modbusClient/socket still set). Once they are null, a reconnect is already
@@ -238,7 +272,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       }
       throw error;
     }
-    return dataValues.length > 0 ? dataValues[dataValues.length - 1] : null;
+    return valuePairs.length > 0 ? valuePairs[valuePairs.length - 1].value : null;
   }
 
   /**
@@ -253,8 +287,8 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     timestamp: string,
     groupingGap: number,
     logCtx: Record<string, string>
-  ): Promise<Array<OIBusTimeValue>> {
-    const results: Array<OIBusTimeValue> = [];
+  ): Promise<Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; value: OIBusTimeValue }>> {
+    const results: Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; value: OIBusTimeValue }> = [];
     let i = 0;
     while (i < sortedItems.length) {
       // Find the end of a run where every gap between adjacent items is ≤ groupingGap
@@ -279,7 +313,10 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
             : await this.modbusClient!.readDiscreteInputs(chunk[0].address, count);
         const values = response.body.valuesAsArray;
         for (const { item, address } of chunk) {
-          results.push({ pointId: item.name, timestamp, data: { value: values[address - chunk[0].address].toString() } });
+          results.push({
+            item,
+            value: { pointId: item.name, timestamp, data: { value: values[address - chunk[0].address].toString() } }
+          });
         }
         c = chunkEnd;
       }
@@ -301,8 +338,8 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     timestamp: string,
     groupingGap: number,
     logCtx: Record<string, string>
-  ): Promise<Array<OIBusTimeValue>> {
-    const results: Array<OIBusTimeValue> = [];
+  ): Promise<Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; value: OIBusTimeValue }>> {
+    const results: Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; value: OIBusTimeValue }> = [];
     let i = 0;
     while (i < sortedItems.length) {
       // Find the end of a run where every gap between adjacent items is ≤ groupingGap
@@ -346,18 +383,21 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
           // adjacent items' data in the shared response buffer.
           const slice = Buffer.from(fullBuffer.subarray(wordOffset * 2, (wordOffset + numWords) * 2));
           results.push({
-            pointId: item.name,
-            timestamp,
-            data: {
-              value: getValueFromBuffer(
-                slice,
-                item.settings.data!.multiplierCoefficient!,
-                item.settings.data!.dataType!,
-                this.connector.settings.swapWordsInDWords,
-                this.connector.settings.swapBytesInWords,
-                this.connector.settings.endianness,
-                item.settings.data!.bitIndex
-              )
+            item,
+            value: {
+              pointId: item.name,
+              timestamp,
+              data: {
+                value: getValueFromBuffer(
+                  slice,
+                  item.settings.data!.multiplierCoefficient!,
+                  item.settings.data!.dataType!,
+                  this.connector.settings.swapWordsInDWords,
+                  this.connector.settings.swapBytesInWords,
+                  this.connector.settings.endianness,
+                  item.settings.data!.bitIndex
+                )
+              }
             }
           });
         }
