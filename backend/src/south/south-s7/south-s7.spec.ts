@@ -123,6 +123,13 @@ describe('South S7', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -140,6 +147,13 @@ describe('South S7', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -157,6 +171,13 @@ describe('South S7', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -189,6 +210,10 @@ describe('South S7', () => {
       return latestGroup;
     });
     addContentCallback.mock.resetCalls();
+    (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
+    (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => new Map());
+    (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
+    (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => undefined);
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
     south = new SouthS7(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
@@ -443,6 +468,188 @@ describe('South S7', () => {
 
     const result = await south.directQuery([]);
     assert.strictEqual(result, null);
+  });
+
+  describe('caching strategy filtering', () => {
+    const buildItem = (
+      id: string,
+      name: string,
+      address: string,
+      overrides: Partial<SouthConnectorItemEntity<SouthS7ItemSettings>> = {}
+    ): SouthConnectorItemEntity<SouthS7ItemSettings> => ({
+      ...configuration.items[0],
+      id,
+      name,
+      settings: { address },
+      cachingStrategy: 'allValues',
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
+      ...overrides
+    });
+
+    it('should suppress a no-change value under cachingStrategy=onChange', async () => {
+      (south as unknown as Record<string, unknown>)['endpoint'] = { isConnected: true };
+      const addContentMock = mock.fn(
+        async (
+          _data: OIBusContent,
+          _queryTime: Instant,
+          _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+        ): Promise<void> => undefined
+      );
+      south.addContent = addContentMock;
+      readAllItemsResult = { Var1: 42 };
+      const item = buildItem('id1', 'Var1', 'DB1,REAL0', { cachingStrategy: 'onChange' });
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () => new Map([['id1', { itemId: 'id1', groupId: null, queryTime: '2021-01-01T00:00:00.000Z', value: '42', trackedInstant: '2021-01-01T00:00:00.000Z' }]])
+      );
+
+      await south.directQuery([item]);
+
+      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
+      assert.deepStrictEqual(content.content, []);
+      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], []);
+      assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], []);
+    });
+
+    it('should cache a threshold-exceeding change', async () => {
+      (south as unknown as Record<string, unknown>)['endpoint'] = { isConnected: true };
+      const addContentMock = mock.fn(
+        async (
+          _data: OIBusContent,
+          _queryTime: Instant,
+          _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+        ): Promise<void> => undefined
+      );
+      south.addContent = addContentMock;
+      readAllItemsResult = { Var1: 42 };
+      const item = buildItem('id1', 'Var1', 'DB1,REAL0', { cachingStrategy: 'threshold', thresholdType: 'absolute', threshold: 5 });
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () => new Map([['id1', { itemId: 'id1', groupId: null, queryTime: '2021-01-01T00:00:00.000Z', value: '30', trackedInstant: '2021-01-01T00:00:00.000Z' }]])
+      );
+
+      await south.directQuery([item]);
+
+      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
+      assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
+      assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], [
+        { itemId: 'id1', value: '42', instant: testData.constants.dates.FAKE_NOW }
+      ]);
+    });
+
+    it('should cache a percentage-of-span threshold-exceeding change and suppress one below it', async () => {
+      (south as unknown as Record<string, unknown>)['endpoint'] = { isConnected: true };
+      const addContentMock = mock.fn(
+        async (
+          _data: OIBusContent,
+          _queryTime: Instant,
+          _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+        ): Promise<void> => undefined
+      );
+      south.addContent = addContentMock;
+      // rangeLow=0, rangeHigh=100 -> span=100; threshold=10% -> 10 absolute units
+      readAllItemsResult = { Var1: 42, Var2: 25 };
+      const overItem = buildItem('id1', 'Var1', 'DB1,REAL0', {
+        cachingStrategy: 'threshold',
+        thresholdType: 'percentage',
+        threshold: 10,
+        rangeLow: 0,
+        rangeHigh: 100
+      });
+      const underItem = buildItem('id2', 'Var2', 'DB1,INT2', {
+        cachingStrategy: 'threshold',
+        thresholdType: 'percentage',
+        threshold: 10,
+        rangeLow: 0,
+        rangeHigh: 100
+      });
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () =>
+          new Map([
+            ['id1', { itemId: 'id1', groupId: null, queryTime: '2021-01-01T00:00:00.000Z', value: '20', trackedInstant: '2021-01-01T00:00:00.000Z' }],
+            ['id2', { itemId: 'id2', groupId: null, queryTime: '2021-01-01T00:00:00.000Z', value: '20', trackedInstant: '2021-01-01T00:00:00.000Z' }]
+          ])
+      );
+
+      await south.directQuery([overItem, underItem]);
+
+      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
+      assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
+    });
+
+    it('should cache when maxCachingInterval elapses even without a qualifying change', async () => {
+      (south as unknown as Record<string, unknown>)['endpoint'] = { isConnected: true };
+      const addContentMock = mock.fn(
+        async (
+          _data: OIBusContent,
+          _queryTime: Instant,
+          _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+        ): Promise<void> => undefined
+      );
+      south.addContent = addContentMock;
+      readAllItemsResult = { Var1: 42 };
+      const item = buildItem('id1', 'Var1', 'DB1,REAL0', { cachingStrategy: 'onChange', maxCachingInterval: 1000 });
+      // previous cached value is identical (no onChange-qualifying diff), but 2h have elapsed since trackedInstant
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () => new Map([['id1', { itemId: 'id1', groupId: null, queryTime: '2020-12-31T22:00:00.000Z', value: '42', trackedInstant: '2020-12-31T22:00:00.000Z' }]])
+      );
+
+      await south.directQuery([item]);
+
+      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
+      assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
+    });
+
+    it('should always cache the very first read for an item regardless of strategy', async () => {
+      (south as unknown as Record<string, unknown>)['endpoint'] = { isConnected: true };
+      const addContentMock = mock.fn(
+        async (
+          _data: OIBusContent,
+          _queryTime: Instant,
+          _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+        ): Promise<void> => undefined
+      );
+      south.addContent = addContentMock;
+      readAllItemsResult = { Var1: 42 };
+      const item = buildItem('id1', 'Var1', 'DB1,REAL0', { cachingStrategy: 'onChange' });
+      // getItemsLastValues default mock returns an empty Map (no prior cached state)
+
+      await south.directQuery([item]);
+
+      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
+      assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
+    });
+
+    it('should call saveItemsLastValues with exactly the items actually cached in the cycle', async () => {
+      (south as unknown as Record<string, unknown>)['endpoint'] = { isConnected: true };
+      const addContentMock = mock.fn(
+        async (
+          _data: OIBusContent,
+          _queryTime: Instant,
+          _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+        ): Promise<void> => undefined
+      );
+      south.addContent = addContentMock;
+      readAllItemsResult = { Var1: 42, Var2: 7 };
+      const suppressedItem = buildItem('id1', 'Var1', 'DB1,REAL0', { cachingStrategy: 'onChange' });
+      const cachedItem = buildItem('id2', 'Var2', 'DB1,INT2', { cachingStrategy: 'onChange' });
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () =>
+          new Map([
+            ['id1', { itemId: 'id1', groupId: null, queryTime: '2021-01-01T00:00:00.000Z', value: '42', trackedInstant: '2021-01-01T00:00:00.000Z' }],
+            ['id2', { itemId: 'id2', groupId: null, queryTime: '2021-01-01T00:00:00.000Z', value: '1', trackedInstant: '2021-01-01T00:00:00.000Z' }]
+          ])
+      );
+
+      await south.directQuery([suppressedItem, cachedItem]);
+
+      assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        'southId',
+        [{ itemId: 'id2', value: '7', instant: testData.constants.dates.FAKE_NOW }]
+      ]);
+    });
   });
 
   it('should disconnect and schedule reconnect on directQuery error when not disconnecting', async () => {

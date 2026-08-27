@@ -14,6 +14,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { Instant } from '../../model/types';
+import { shouldCacheValue } from '../../service/south-caching-strategy.service';
 
 const CONNECTION_TYPE_SRC_TSAP: Record<SouthS7SettingsConnectionType, number> = {
   PG: 0x0100,
@@ -198,11 +199,37 @@ export default class SouthS7 extends SouthConnector<SouthS7Settings, SouthS7Item
       const values = await group.readAllItems();
       group.destroy();
 
+      const lastValues = this.southCacheRepository.getItemsLastValues(
+        this.connector.id,
+        items.map(item => item.id)
+      );
+      const itemsToCache: Array<SouthConnectorItemEntity<SouthS7ItemSettings>> = [];
+      const cachedEntries: Array<{ itemId: string; value: unknown; instant: string }> = [];
+
       for (const item of items) {
-        dataValues.push({ pointId: item.name, timestamp, data: { value: String(values[item.name]) } });
+        const value = String(values[item.name]);
+        const previous = lastValues.get(item.id) ?? null;
+        const shouldCache = shouldCacheValue({
+          cachingStrategy: item.cachingStrategy ?? 'allValues',
+          thresholdType: item.thresholdType,
+          threshold: item.threshold,
+          rangeLow: item.rangeLow,
+          rangeHigh: item.rangeHigh,
+          maxCachingInterval: item.maxCachingInterval,
+          previousCachedValue: previous?.value ?? null,
+          previousCachedInstant: previous?.trackedInstant ?? null,
+          newValue: value,
+          newQueryTime: timestamp!
+        });
+        if (shouldCache) {
+          dataValues.push({ pointId: item.name, timestamp, data: { value } });
+          itemsToCache.push(item);
+          cachedEntries.push({ itemId: item.id, value, instant: timestamp! });
+        }
       }
 
-      await this.addContent({ type: 'time-values', content: dataValues }, startRequest.toUTC().toISO(), items);
+      await this.addContent({ type: 'time-values', content: dataValues }, startRequest.toUTC().toISO(), itemsToCache);
+      this.southCacheRepository.saveItemsLastValues(this.connector.id, cachedEntries);
     } catch (error: unknown) {
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
