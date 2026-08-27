@@ -78,7 +78,7 @@ describe('FileCleanupService', () => {
       ])
     ) as ReturnType<typeof mock.fn>;
 
-    const unlinkMock = mock.fn(async () => undefined);
+    const unlinkMock = mock.fn(async (_path: string) => undefined);
     mock.method(fs, 'unlink', unlinkMock);
 
     await fileCleanupService.cleanUpLogFiles();
@@ -104,7 +104,7 @@ describe('FileCleanupService', () => {
       mock.fn(async () => ['journal.1.log', 'journal.2.log'])
     ) as ReturnType<typeof mock.fn>;
 
-    const unlinkMock = mock.fn(async () => undefined);
+    const unlinkMock = mock.fn(async (_path: string) => undefined);
     mock.method(fs, 'unlink', unlinkMock);
 
     await fileCleanupService.cleanUpLogFiles();
@@ -146,7 +146,7 @@ describe('FileCleanupService', () => {
       'readdir',
       mock.fn(async () => Object.keys(mtimes))
     );
-    const unlinkMock = mock.fn(async () => undefined);
+    const unlinkMock = mock.fn(async (_path: string) => undefined);
     mock.method(fs, 'unlink', unlinkMock);
 
     await fileCleanupService.cleanUpLogFiles();

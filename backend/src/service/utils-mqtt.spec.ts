@@ -12,7 +12,10 @@ const scanMode = {
   id: 'subscription',
   name: 'subscription',
   description: '',
+  type: 'cron' as const,
   cron: '',
+  interval: null,
+  activationWindow: null,
   createdBy: '',
   updatedBy: '',
   createdAt: '',
@@ -31,7 +34,15 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
-    overlap: null
+    startTimeOffset: null,
+    endTimeOffset: null,
+    recoveryStrategy: null,
+    cachingStrategy: null,
+    thresholdType: null,
+    threshold: null,
+    rangeLow: null,
+    rangeHigh: null,
+    maxCachingInterval: null
   },
   {
     id: 'id2',
@@ -44,7 +55,15 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
-    overlap: null
+    startTimeOffset: null,
+    endTimeOffset: null,
+    recoveryStrategy: null,
+    cachingStrategy: null,
+    thresholdType: null,
+    threshold: null,
+    rangeLow: null,
+    rangeHigh: null,
+    maxCachingInterval: null
   },
   {
     id: 'id3',
@@ -57,7 +76,15 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
-    overlap: null
+    startTimeOffset: null,
+    endTimeOffset: null,
+    recoveryStrategy: null,
+    cachingStrategy: null,
+    thresholdType: null,
+    threshold: null,
+    rangeLow: null,
+    rangeHigh: null,
+    maxCachingInterval: null
   },
   {
     id: 'id4',
@@ -70,7 +97,15 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
-    overlap: null
+    startTimeOffset: null,
+    endTimeOffset: null,
+    recoveryStrategy: null,
+    cachingStrategy: null,
+    thresholdType: null,
+    threshold: null,
+    rangeLow: null,
+    rangeHigh: null,
+    maxCachingInterval: null
   },
   {
     id: 'id5',
@@ -83,7 +118,15 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
-    overlap: null
+    startTimeOffset: null,
+    endTimeOffset: null,
+    recoveryStrategy: null,
+    cachingStrategy: null,
+    thresholdType: null,
+    threshold: null,
+    rangeLow: null,
+    rangeHigh: null,
+    maxCachingInterval: null
   },
   {
     id: 'id6',
@@ -96,7 +139,15 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
-    overlap: null
+    startTimeOffset: null,
+    endTimeOffset: null,
+    recoveryStrategy: null,
+    cachingStrategy: null,
+    thresholdType: null,
+    threshold: null,
+    rangeLow: null,
+    rangeHigh: null,
+    maxCachingInterval: null
   },
   {
     id: 'id7',
@@ -109,7 +160,15 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
-    overlap: null
+    startTimeOffset: null,
+    endTimeOffset: null,
+    recoveryStrategy: null,
+    cachingStrategy: null,
+    thresholdType: null,
+    threshold: null,
+    rangeLow: null,
+    rangeHigh: null,
+    maxCachingInterval: null
   },
   {
     id: 'id8',
@@ -122,7 +181,15 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
-    overlap: null
+    startTimeOffset: null,
+    endTimeOffset: null,
+    recoveryStrategy: null,
+    cachingStrategy: null,
+    thresholdType: null,
+    threshold: null,
+    rangeLow: null,
+    rangeHigh: null,
+    maxCachingInterval: null
   },
   {
     id: 'id9',
@@ -135,7 +202,15 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
-    overlap: null
+    startTimeOffset: null,
+    endTimeOffset: null,
+    recoveryStrategy: null,
+    cachingStrategy: null,
+    thresholdType: null,
+    threshold: null,
+    rangeLow: null,
+    rangeHigh: null,
+    maxCachingInterval: null
   },
   {
     id: 'id10',
@@ -148,7 +223,15 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
-    overlap: null
+    startTimeOffset: null,
+    endTimeOffset: null,
+    recoveryStrategy: null,
+    cachingStrategy: null,
+    thresholdType: null,
+    threshold: null,
+    rangeLow: null,
+    rangeHigh: null,
+    maxCachingInterval: null
   }
 ];
 
@@ -163,7 +246,15 @@ const bareHashItem: SouthConnectorItemEntity<SouthMQTTItemSettings> = {
   syncWithGroup: false,
   maxReadInterval: null,
   readDelay: null,
-  overlap: null
+  startTimeOffset: null,
+  endTimeOffset: null,
+  recoveryStrategy: null,
+  cachingStrategy: null,
+  thresholdType: null,
+  threshold: null,
+  rangeLow: null,
+  rangeHigh: null,
+  maxCachingInterval: null
 };
 
 describe('Service utils MQTT', () => {

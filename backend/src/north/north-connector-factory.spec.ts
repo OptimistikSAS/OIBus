@@ -111,7 +111,19 @@ describe('North Connector Factory', () => {
     updatedAt: '',
     caching: {
       trigger: {
-        scanMode: { id: 'manual', name: 'Manual', description: '', cron: '', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
+        scanMode: {
+          id: 'manual',
+          name: 'Manual',
+          description: '',
+          type: 'cron' as const,
+          cron: '',
+          interval: null,
+          activationWindow: null,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
         numberOfElements: 100,
         numberOfFiles: 10
       },

@@ -231,6 +231,7 @@ describe('South Service', () => {
       endTimeOffset: null,
       maxReadInterval: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
       readDelay: 0,
       createdBy: '',
       updatedBy: '',
@@ -277,6 +278,7 @@ describe('South Service', () => {
       endTimeOffset: null,
       maxReadInterval: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
       readDelay: 0,
       createdBy: '',
       updatedBy: '',
@@ -374,7 +376,8 @@ describe('South Service', () => {
         endTimeOffset: 10,
         maxReadInterval: 3600,
         readDelay: 200,
-        recoveryStrategy: 'oldest'
+        recoveryStrategy: 'oldest',
+        cachingStrategy: null
       }
     };
     command.groups = [groupCommand];
@@ -397,6 +400,7 @@ describe('South Service', () => {
       maxReadInterval: 3600,
       readDelay: 200,
       recoveryStrategy: 'oldest',
+      cachingStrategy: null,
       scanMode: testData.scanMode.list[0]
     });
   });
@@ -515,7 +519,7 @@ describe('South Service', () => {
 
   it('should test a south connector against the live instance when its settings already match', async () => {
     engine.hasSouth.mock.mockImplementationOnce(() => true);
-    engine.getSouth.mock.mockImplementationOnce(() => ({ south: mockedSouth1, metrics: {} as never }));
+    engine.getSouth.mock.mockImplementationOnce(() => ({ south: mockedSouth1, metrics: {} }) as never);
 
     await service.testSouth(testData.south.list[0].id, testData.south.command.type, testData.south.list[0].settings);
 
@@ -539,7 +543,7 @@ describe('South Service', () => {
 
   it('should test an item against the live instance when connector settings already match', async () => {
     engine.hasSouth.mock.mockImplementationOnce(() => true);
-    engine.getSouth.mock.mockImplementationOnce(() => ({ south: mockedSouth1, metrics: {} as never }));
+    engine.getSouth.mock.mockImplementationOnce(() => ({ south: mockedSouth1, metrics: {} }) as never);
 
     await service.testItem(
       testData.south.list[0].id,
@@ -612,8 +616,8 @@ describe('South Service', () => {
   });
 
   it('should start an explore session', async () => {
-    mockedSouth1.hasExplore.mock.mockImplementation(() => true);
-    mockedSouth1.explore.mock.mockImplementation(async () => [{ id: 'n1', name: 'N1', type: 'Object', hasChildren: true }]);
+    (mockedSouth1.hasExplore as unknown as Mock<() => boolean>).mock.mockImplementation(() => true);
+    mockedSouth1.explore.mock.mockImplementation(async () => [{ id: 'n1', name: 'N1', metadata: { type: 'Object' }, hasChildren: true }]);
 
     const result = await service.startExplore('create', testData.south.command.type, testData.south.command.settings);
 
@@ -621,12 +625,12 @@ describe('South Service', () => {
     assert.strictEqual(mockedSouth1.connect.mock.calls.length, 1);
     assert.deepStrictEqual(result, {
       sessionId: 'exploreSessionId',
-      entries: [{ id: 'n1', name: 'N1', type: 'Object', hasChildren: true }]
+      entries: [{ id: 'n1', name: 'N1', metadata: { type: 'Object' }, hasChildren: true }]
     });
   });
 
   it('should throw when starting explore on an unsupported connector', async () => {
-    mockedSouth1.hasExplore.mock.mockImplementation(() => false);
+    (mockedSouth1.hasExplore as unknown as Mock<() => boolean>).mock.mockImplementation(() => false);
 
     await assert.rejects(
       () => service.startExplore('create', testData.south.command.type, testData.south.command.settings),
@@ -636,7 +640,7 @@ describe('South Service', () => {
   });
 
   it('should stop the connector if connect fails during explore', async () => {
-    mockedSouth1.hasExplore.mock.mockImplementation(() => true);
+    (mockedSouth1.hasExplore as unknown as Mock<() => boolean>).mock.mockImplementation(() => true);
     mockedSouth1.connect.mock.mockImplementation(async () => {
       throw new Error('connect failed');
     });
@@ -649,7 +653,7 @@ describe('South Service', () => {
   });
 
   it('should close the session if the initial browse fails', async () => {
-    mockedSouth1.hasExplore.mock.mockImplementation(() => true);
+    (mockedSouth1.hasExplore as unknown as Mock<() => boolean>).mock.mockImplementation(() => true);
     mockedSouth1.explore.mock.mockImplementation(async () => {
       throw new Error('browse failed');
     });
@@ -662,18 +666,20 @@ describe('South Service', () => {
   });
 
   it('should browse an explore session', async () => {
-    mockedSouth1.hasExplore.mock.mockImplementation(() => true);
-    mockedSouth1.explore.mock.mockImplementation(async () => [{ id: 'child', name: 'Child', type: 'file', hasChildren: false }]);
+    (mockedSouth1.hasExplore as unknown as Mock<() => boolean>).mock.mockImplementation(() => true);
+    mockedSouth1.explore.mock.mockImplementation(async () => [
+      { id: 'child', name: 'Child', metadata: { type: 'file' }, hasChildren: false }
+    ]);
     const { sessionId } = await service.startExplore('create', testData.south.command.type, testData.south.command.settings);
 
     const result = await service.browseExplore(sessionId, 'parent');
 
-    assert.deepStrictEqual(result, { entries: [{ id: 'child', name: 'Child', type: 'file', hasChildren: false }] });
+    assert.deepStrictEqual(result, { entries: [{ id: 'child', name: 'Child', metadata: { type: 'file' }, hasChildren: false }] });
     assert.strictEqual(mockedSouth1.explore.mock.calls[1].arguments[0], 'parent');
   });
 
   it('should close an explore session', async () => {
-    mockedSouth1.hasExplore.mock.mockImplementation(() => true);
+    (mockedSouth1.hasExplore as unknown as Mock<() => boolean>).mock.mockImplementation(() => true);
     const { sessionId } = await service.startExplore('create', testData.south.command.type, testData.south.command.settings);
 
     await service.closeExplore(sessionId);
@@ -682,7 +688,7 @@ describe('South Service', () => {
   });
 
   it('should close all explore sessions', async () => {
-    mockedSouth1.hasExplore.mock.mockImplementation(() => true);
+    (mockedSouth1.hasExplore as unknown as Mock<() => boolean>).mock.mockImplementation(() => true);
     await service.startExplore('create', testData.south.command.type, testData.south.command.settings);
 
     await service.closeAllExploreSessions();
@@ -741,14 +747,18 @@ describe('South Service', () => {
     assert.deepStrictEqual(southConnectorRepository.findSouthById.mock.calls[0].arguments, [southId]);
     assert.deepStrictEqual(southConnectorRepository.findItemById.mock.calls[0].arguments, [southId, itemId]);
     assert.deepStrictEqual(southCacheRepository.getItemLastValue.mock.calls[0].arguments, [southId, itemId]);
+    assert.strictEqual(southCacheRepository.getGroupLastValue.mock.calls.length, 0);
     assert.deepStrictEqual(result, {
-      groupId: null,
-      groupName: '',
-      itemId,
-      itemName: testData.south.list[0].items[0].name,
-      queryTime: cached.queryTime,
-      value: cached.value,
-      trackedInstant: cached.trackedInstant
+      itemLastValue: {
+        groupId: null,
+        groupName: '',
+        itemId,
+        itemName: testData.south.list[0].items[0].name,
+        queryTime: cached.queryTime,
+        value: cached.value,
+        trackedInstant: cached.trackedInstant
+      },
+      groupLastValue: null
     });
   });
 
@@ -760,20 +770,10 @@ describe('South Service', () => {
     const result = service.getItemLastValue(southId, itemId);
 
     assert.deepStrictEqual(southCacheRepository.getItemLastValue.mock.calls[0].arguments, [southId, itemId]);
-    assert.deepStrictEqual(result, {
-      groupId: null,
-      groupName: '',
-      itemId,
-      itemName: testData.south.list[0].items[0].name,
-      queryTime: null,
-      value: null,
-      trackedInstant: null
-    });
+    assert.deepStrictEqual(result, { itemLastValue: null, groupLastValue: null });
   });
 
-  it('should get item last value from group cache when item is synced with a group on a connector that can batch', () => {
-    // opcua (testData.south.list[2]) is NOT in SOUTH_SINGLE_ITEMS: a synced group there is queried
-    // in one batched call and cached under a single group-keyed row.
+  it('should get both the item last value and the group last value when the item belongs to a group', () => {
     const southConnector = testData.south.list[2];
     const southId = southConnector.id;
     const groupId = 'group-123';
@@ -789,6 +789,7 @@ describe('South Service', () => {
         maxReadInterval: null,
         readDelay: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -797,77 +798,57 @@ describe('South Service', () => {
     };
     southConnectorRepository.findSouthById.mock.mockImplementationOnce(() => southConnector);
     southConnectorRepository.findItemById.mock.mockImplementationOnce(() => groupedItem);
-    const cached = {
-      itemId: null,
-      groupId,
-      queryTime: '2024-03-01T00:00:00.000Z',
-      value: { temperature: 99 },
-      trackedInstant: '2024-03-01T00:01:00.000Z'
-    };
-    southCacheRepository.getGroupLastValue.mock.mockImplementationOnce(() => cached);
-
-    const result = service.getItemLastValue(southId, groupedItem.id);
-
-    assert.strictEqual(southCacheRepository.getItemLastValue.mock.calls.length, 0);
-    assert.deepStrictEqual(southCacheRepository.getGroupLastValue.mock.calls[0].arguments, [southId, groupId]);
-    assert.deepStrictEqual(result, {
-      groupId,
-      groupName: 'My Group',
-      itemId: groupedItem.id,
-      itemName: groupedItem.name,
-      queryTime: cached.queryTime,
-      value: cached.value,
-      trackedInstant: cached.trackedInstant
-    });
-  });
-
-  it("should get the item's own cache, not the group cache, when the connector cannot batch even if the item is synced with a group", () => {
-    // folder-scanner (testData.south.list[0]) IS in SOUTH_SINGLE_ITEMS: every item — synced or not —
-    // is always queried and cached on its own, so the group cache must never be consulted for it.
-    const southConnector = testData.south.list[0];
-    const southId = southConnector.id;
-    const groupedItem = {
-      ...southConnector.items[0],
-      syncWithGroup: true,
-      group: {
-        id: 'group-456',
-        name: 'My Group',
-        scanMode: testData.scanMode.list[0],
-        startTimeOffset: null,
-        endTimeOffset: null,
-        maxReadInterval: null,
-        readDelay: null,
-        recoveryStrategy: null,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      }
-    };
-    southConnectorRepository.findSouthById.mock.mockImplementationOnce(() => southConnector);
-    southConnectorRepository.findItemById.mock.mockImplementationOnce(() => groupedItem);
-    const cached = {
+    const itemCached = {
       itemId: groupedItem.id,
       groupId: null,
       queryTime: '2024-03-01T00:00:00.000Z',
       value: { temperature: 99 },
       trackedInstant: '2024-03-01T00:01:00.000Z'
     };
-    southCacheRepository.getItemLastValue.mock.mockImplementationOnce(() => cached);
+    const groupCached = {
+      itemId: null,
+      groupId,
+      queryTime: '2024-03-01T00:02:00.000Z',
+      value: { temperature: 100 },
+      trackedInstant: '2024-03-01T00:03:00.000Z'
+    };
+    southCacheRepository.getItemLastValue.mock.mockImplementationOnce(() => itemCached);
+    southCacheRepository.getGroupLastValue.mock.mockImplementationOnce(() => groupCached);
 
     const result = service.getItemLastValue(southId, groupedItem.id);
 
-    assert.strictEqual(southCacheRepository.getGroupLastValue.mock.calls.length, 0);
     assert.deepStrictEqual(southCacheRepository.getItemLastValue.mock.calls[0].arguments, [southId, groupedItem.id]);
+    assert.deepStrictEqual(southCacheRepository.getGroupLastValue.mock.calls[0].arguments, [southId, groupId]);
     assert.deepStrictEqual(result, {
-      groupId: 'group-456',
-      groupName: 'My Group',
-      itemId: groupedItem.id,
-      itemName: groupedItem.name,
-      queryTime: cached.queryTime,
-      value: cached.value,
-      trackedInstant: cached.trackedInstant
+      itemLastValue: {
+        groupId,
+        groupName: 'My Group',
+        itemId: groupedItem.id,
+        itemName: groupedItem.name,
+        queryTime: itemCached.queryTime,
+        value: itemCached.value,
+        trackedInstant: itemCached.trackedInstant
+      },
+      groupLastValue: {
+        groupId,
+        groupName: 'My Group',
+        itemId: groupedItem.id,
+        itemName: groupedItem.name,
+        queryTime: groupCached.queryTime,
+        value: groupCached.value,
+        trackedInstant: groupCached.trackedInstant
+      }
     });
+  });
+
+  it('should not call getGroupLastValue when the item does not belong to a group', () => {
+    const southId = testData.south.list[0].id;
+    const itemId = testData.south.list[0].items[0].id;
+    southCacheRepository.getItemLastValue.mock.mockImplementationOnce(() => null);
+
+    service.getItemLastValue(southId, itemId);
+
+    assert.strictEqual(southCacheRepository.getGroupLastValue.mock.calls.length, 0);
   });
 
   it('should create an item', async () => {
@@ -902,6 +883,7 @@ describe('South Service', () => {
       endTimeOffset: null,
       maxReadInterval: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
       items: [],
       readDelay: 0,
       createdBy: '',
@@ -972,6 +954,7 @@ describe('South Service', () => {
       endTimeOffset: null,
       maxReadInterval: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
       items: [],
       readDelay: 0,
       createdBy: '',
@@ -1021,6 +1004,7 @@ describe('South Service', () => {
       maxReadInterval: null,
       readDelay: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
       items: [],
       createdBy: '',
       updatedBy: '',
@@ -1078,6 +1062,7 @@ describe('South Service', () => {
       maxReadInterval: null,
       readDelay: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
       items: [],
       createdBy: '',
       updatedBy: '',
@@ -1135,6 +1120,7 @@ describe('South Service', () => {
       maxReadInterval: null,
       readDelay: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
       items: [],
       createdBy: '',
       updatedBy: '',
@@ -1180,6 +1166,7 @@ describe('South Service', () => {
       maxReadInterval: null,
       readDelay: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
       items: [],
       createdBy: '',
       updatedBy: '',
@@ -1734,6 +1721,7 @@ describe('South Service', () => {
       endTimeOffset: null,
       maxReadInterval: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
       items: [],
       readDelay: 0,
       createdBy: '',
@@ -1782,6 +1770,7 @@ describe('South Service', () => {
       items: [],
       readDelay: 200,
       recoveryStrategy: 'oldest',
+      cachingStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -1801,7 +1790,8 @@ describe('South Service', () => {
       endTimeOffset: 20,
       maxReadInterval: 3600,
       readDelay: 200,
-      recoveryStrategy: 'oldest'
+      recoveryStrategy: 'oldest',
+      cachingStrategy: null
     };
     const secondItemWithGroupName: SouthConnectorItemCommandDTO = {
       ...testData.south.itemCommand,
@@ -1812,7 +1802,8 @@ describe('South Service', () => {
       endTimeOffset: 999,
       maxReadInterval: 999,
       readDelay: 999,
-      recoveryStrategy: 'newest'
+      recoveryStrategy: 'newest',
+      cachingStrategy: null
     };
 
     await service.importItems(testData.south.list[0].id, [firstItemWithGroupName, secondItemWithGroupName], 'userTest');
@@ -1826,7 +1817,8 @@ describe('South Service', () => {
       endTimeOffset: 20,
       maxReadInterval: 3600,
       readDelay: 200,
-      recoveryStrategy: 'oldest'
+      recoveryStrategy: 'oldest',
+      cachingStrategy: null
     });
   });
 
@@ -1842,6 +1834,7 @@ describe('South Service', () => {
       items: [],
       readDelay: 0,
       recoveryStrategy: null,
+      cachingStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -1885,6 +1878,7 @@ describe('South Service', () => {
       endTimeOffset: null,
       maxReadInterval: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
       items: [],
       readDelay: 0,
       createdBy: '',
@@ -1982,6 +1976,7 @@ describe('South Service', () => {
       maxReadInterval: 3600,
       readDelay: 200,
       recoveryStrategy: null,
+      cachingStrategy: null,
       items: [],
       createdBy: 'user1',
       updatedBy: 'user1',
@@ -2004,7 +1999,8 @@ describe('South Service', () => {
         endTimeOffset: group.endTimeOffset,
         maxReadInterval: group.maxReadInterval,
         readDelay: group.readDelay,
-        recoveryStrategy: group.recoveryStrategy
+        recoveryStrategy: group.recoveryStrategy,
+        cachingStrategy: group.cachingStrategy
       },
       createdBy: getUserInfo(group.createdBy),
       updatedBy: getUserInfo(group.updatedBy),
@@ -2025,6 +2021,7 @@ describe('South Service', () => {
           endTimeOffset: null,
           maxReadInterval: null,
           recoveryStrategy: null,
+          cachingStrategy: null,
           readDelay: 0,
           items: [],
           createdBy: '',
@@ -2041,6 +2038,7 @@ describe('South Service', () => {
           endTimeOffset: null,
           maxReadInterval: null,
           recoveryStrategy: null,
+          cachingStrategy: null,
           readDelay: 0,
           items: [],
           createdBy: '',
@@ -2069,6 +2067,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2105,6 +2104,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2133,6 +2133,7 @@ describe('South Service', () => {
           endTimeOffset: null,
           maxReadInterval: null,
           recoveryStrategy: null,
+          cachingStrategy: null,
           readDelay: 0
         }
       };
@@ -2146,6 +2147,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2175,6 +2177,7 @@ describe('South Service', () => {
           endTimeOffset: null,
           maxReadInterval: null,
           recoveryStrategy: null,
+          cachingStrategy: null,
           readDelay: 0
         }
       };
@@ -2188,6 +2191,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2218,6 +2222,7 @@ describe('South Service', () => {
           endTimeOffset: null,
           maxReadInterval: 3600,
           recoveryStrategy: null,
+          cachingStrategy: null,
           readDelay: 200
         }
       };
@@ -2231,6 +2236,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: 3600,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 200,
         items: [],
         createdBy: '',
@@ -2265,6 +2271,7 @@ describe('South Service', () => {
           endTimeOffset: null,
           maxReadInterval: null,
           recoveryStrategy: null,
+          cachingStrategy: null,
           readDelay: 0
         }
       };
@@ -2278,6 +2285,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2306,6 +2314,7 @@ describe('South Service', () => {
           endTimeOffset: null,
           maxReadInterval: 3600,
           recoveryStrategy: null,
+          cachingStrategy: null,
           readDelay: 200
         }
       };
@@ -2319,6 +2328,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2367,6 +2377,7 @@ describe('South Service', () => {
           endTimeOffset: null,
           maxReadInterval: null,
           recoveryStrategy: null,
+          cachingStrategy: null,
           readDelay: 0
         }
       };
@@ -2380,6 +2391,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2433,6 +2445,7 @@ describe('South Service', () => {
           endTimeOffset: 30,
           maxReadInterval: null,
           recoveryStrategy: null,
+          cachingStrategy: null,
           readDelay: null
         }
       };
@@ -2446,6 +2459,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2487,6 +2501,7 @@ describe('South Service', () => {
           endTimeOffset: null,
           maxReadInterval: null,
           recoveryStrategy: null,
+          cachingStrategy: null,
           readDelay: 0
         }
       };
@@ -2511,6 +2526,7 @@ describe('South Service', () => {
           endTimeOffset: null,
           maxReadInterval: null,
           recoveryStrategy: null,
+          cachingStrategy: null,
           readDelay: 0
         }
       };
@@ -2524,6 +2540,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2552,6 +2569,7 @@ describe('South Service', () => {
           endTimeOffset: null,
           maxReadInterval: null,
           recoveryStrategy: null,
+          cachingStrategy: null,
           readDelay: 0
         }
       };
@@ -2565,6 +2583,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2599,6 +2618,7 @@ describe('South Service', () => {
           endTimeOffset: null,
           maxReadInterval: null,
           recoveryStrategy: null,
+          cachingStrategy: null,
           readDelay: 0
         }
       };
@@ -2612,6 +2632,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2629,6 +2650,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2656,6 +2678,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2692,6 +2715,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2750,6 +2774,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2776,6 +2801,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2807,6 +2833,7 @@ describe('South Service', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2895,6 +2922,7 @@ describe('South Service', () => {
           endTimeOffset: null,
           maxReadInterval: null,
           recoveryStrategy: null,
+          cachingStrategy: null,
           readDelay: 0,
           items: [],
           createdBy: '',
@@ -2920,6 +2948,7 @@ describe('South Service', () => {
           endTimeOffset: null,
           maxReadInterval: null,
           recoveryStrategy: null,
+          cachingStrategy: null,
           readDelay: 0,
           items: [],
           createdBy: '',
@@ -2942,6 +2971,7 @@ describe('South Service', () => {
           endTimeOffset: null,
           maxReadInterval: null,
           recoveryStrategy: null,
+          cachingStrategy: null,
           readDelay: 0,
           items: [],
           createdBy: '',
@@ -2962,6 +2992,12 @@ describe('South Service', () => {
           syncWithGroup: false,
           maxReadInterval: null,
           recoveryStrategy: null,
+          cachingStrategy: null,
+          thresholdType: null,
+          threshold: null,
+          rangeLow: null,
+          rangeHigh: null,
+          maxCachingInterval: null,
           readDelay: null,
           startTimeOffset: null,
           endTimeOffset: null,
@@ -2988,6 +3024,12 @@ describe('South Service', () => {
           syncWithGroup: false,
           maxReadInterval: null,
           recoveryStrategy: null,
+          cachingStrategy: null,
+          thresholdType: null,
+          threshold: null,
+          rangeLow: null,
+          rangeHigh: null,
+          maxCachingInterval: null,
           readDelay: null,
           startTimeOffset: null,
           endTimeOffset: null,

@@ -74,10 +74,10 @@ describe('EngineRepository with populated database', () => {
           enabled: command.proxyServer.enabled,
           port: command.proxyServer.port,
           forward: {
-            enabled: command.proxyServer.forward.enabled,
-            url: command.proxyServer.forward.url,
-            username: command.proxyServer.forward.username,
-            password: command.proxyServer.forward.password
+            enabled: command.proxyServer.forward!.enabled,
+            url: command.proxyServer.forward!.url,
+            username: command.proxyServer.forward!.username,
+            password: command.proxyServer.forward!.password
           },
           username: command.proxyServer.username,
           password: command.proxyServer.password

@@ -8,7 +8,7 @@ import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import type { SouthConnectorEntity } from '../../model/south-connector.model';
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type { SouthFTPItemSettings, SouthFTPSettings } from '../../../shared/model/south-settings.model';
 import { DateTime } from 'luxon';
 import type { AccessOptions, FileInfo } from 'basic-ftp';
@@ -43,7 +43,15 @@ describe('SouthFTP', () => {
   };
 
   const utilsExports = {
-    checkAge: mock.fn(() => true),
+    checkAge: mock.fn(
+      (
+        _item: SouthConnectorItemEntity<SouthFTPItemSettings>,
+        _filename: string,
+        _mtimeMs: number,
+        _filesPreserved: Array<{ filename: string; modifiedTime: number }>,
+        _logger: unknown
+      ) => true
+    ),
     compress: mock.fn(async (_input: string, _output: string) => undefined),
     delay: mock.fn(async () => undefined),
     generateIntervals: mock.fn(() => []),
@@ -124,6 +132,12 @@ describe('SouthFTP', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -151,6 +165,12 @@ describe('SouthFTP', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -178,6 +198,12 @@ describe('SouthFTP', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         recoveryStrategy: null,
+        cachingStrategy: null,
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
