@@ -167,4 +167,43 @@ describe('EngineDetailComponent', () => {
 
     expect(windowService.reload).toHaveBeenCalled();
   });
+
+  test('should reload the page when the import modal is dismissed (e.g. Escape/backdrop) after a successful import', async () => {
+    const fakeImportComponent = createMock(ImportConfigModalComponent);
+    fakeImportComponent.canDismiss.mockReturnValue(true);
+    // `result` is a signal field, not a prototype method, so createMock (which only mocks prototype
+    // methods) never touches it — stub it by hand the same way the real component's signal getter behaves.
+    (fakeImportComponent as unknown as { result: () => unknown }).result = () => ({ appliedUpgrades: [], warnings: [] });
+    // A dismissal (unlike an explicit close) resolves with no value, so `modalRef.result.subscribe`'s
+    // next handler never fires — isolating this test to the `beforeDismiss` reload path being added.
+    modalService.mockDismissedModal(fakeImportComponent);
+    const openSpy = vi.spyOn(modalService, 'open');
+
+    const tester = new EngineDetailComponentTester();
+    tester.fixture.detectChanges();
+    await tester.importConfigButton.click();
+
+    const beforeDismiss = openSpy.mock.calls[0][1]?.beforeDismiss as () => Promise<boolean>;
+    const canDismiss = await beforeDismiss();
+
+    expect(canDismiss).toBe(true);
+    expect(windowService.reload).toHaveBeenCalled();
+  });
+
+  test('should not reload the page when the import modal is dismissed before any import has completed', async () => {
+    const fakeImportComponent = createMock(ImportConfigModalComponent);
+    fakeImportComponent.canDismiss.mockReturnValue(true);
+    (fakeImportComponent as unknown as { result: () => unknown }).result = () => null;
+    modalService.mockDismissedModal(fakeImportComponent);
+    const openSpy = vi.spyOn(modalService, 'open');
+
+    const tester = new EngineDetailComponentTester();
+    tester.fixture.detectChanges();
+    await tester.importConfigButton.click();
+
+    const beforeDismiss = openSpy.mock.calls[0][1]?.beforeDismiss as () => Promise<boolean>;
+    await beforeDismiss();
+
+    expect(windowService.reload).not.toHaveBeenCalled();
+  });
 });
