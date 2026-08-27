@@ -97,6 +97,65 @@ export default class SouthCacheRepository {
     this.deleteAllBySouthStmt.run(connectorId);
   }
 
+  /**
+   * Batched upsert of item-keyed last-value rows (`group_id` always NULL — see the class doc: a
+   * "last cached" row is always keyed by `item_id`, never falls back to the group-shared row, even
+   * when the item is synced with its group). Reuses the same `INSERT OR REPLACE` statement as
+   * {@link saveItemLastValue}, looped inside a single `better-sqlite3` transaction so the whole batch
+   * commits atomically in one call. Chunked at 100 rows, defensively matching the repo-wide
+   * ~100-row batching convention used elsewhere for SQLite compound-select limits, even though a
+   * plain looped `INSERT` has no such limit.
+   */
+  saveItemsLastValues(southId: string, values: Array<{ itemId: string; value: unknown; instant: string }>): void {
+    if (values.length === 0) return;
+
+    const runChunk = this._database.transaction((chunk: Array<{ itemId: string; value: unknown; instant: string }>) => {
+      for (const entry of chunk) {
+        const valueStr = entry.value !== null && entry.value !== undefined ? JSON.stringify(entry.value) : null;
+        this.upsertStmt.run(southId, null, entry.itemId, entry.instant, valueStr, entry.instant);
+      }
+    });
+
+    for (const chunk of this.chunkArray(values, 100)) {
+      runChunk(chunk);
+    }
+  }
+
+  /**
+   * Batched read of item-keyed last-value rows. `better-sqlite3` has no array binding, so the
+   * `IN (...)` clause is built with a dynamically-sized list of placeholders per call; `itemIds` is
+   * chunked at 100 per query (same SQLite compound-select convention as {@link saveItemsLastValues}),
+   * and the results of every chunk are merged into a single `Map` keyed by `itemId`.
+   */
+  getItemsLastValues(southId: string, itemIds: Array<string>): Map<string, SouthCacheEntry> {
+    const results = new Map<string, SouthCacheEntry>();
+    if (itemIds.length === 0) return results;
+
+    for (const chunk of this.chunkArray(itemIds, 100)) {
+      const placeholders = chunk.map(() => '?').join(', ');
+      const stmt = this._database.prepare(
+        'SELECT south_id, group_id, item_id, query_time, value, tracked_instant ' +
+          `FROM south_item_cache WHERE south_id = ? AND item_id IN (${placeholders});`
+      );
+      const rows = stmt.all(southId, ...chunk) as Array<Record<string, string>>;
+      for (const row of rows) {
+        const entry = this.toSouthCacheEntry(row);
+        if (entry.itemId) {
+          results.set(entry.itemId, entry);
+        }
+      }
+    }
+    return results;
+  }
+
+  private chunkArray<T>(array: Array<T>, size: number): Array<Array<T>> {
+    const chunks: Array<Array<T>> = [];
+    for (let i = 0; i < array.length; i += size) {
+      chunks.push(array.slice(i, i + size));
+    }
+    return chunks;
+  }
+
   private toSouthCacheEntry(result: Record<string, string>): SouthCacheEntry {
     let parsedValue: unknown = null;
     if (result.value) {
