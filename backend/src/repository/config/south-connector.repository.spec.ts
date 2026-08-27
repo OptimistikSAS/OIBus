@@ -44,6 +44,18 @@ describe('SouthConnectorRepository', () => {
     }
   });
 
+  it('should properly get full south connectors in a single bulk call', () => {
+    // Exercises findAllSouthFull (used by config export instead of findAllSouth + one
+    // findSouthById round-trip per connector) and confirms it returns exactly what
+    // findSouthById would for every connector, items/groups included.
+    const result = repository.findAllSouthFull();
+    for (const element of testData.south.list) {
+      const found = result.find(r => r.id === element.id);
+      assert.ok(found, `South connector ${element.id} not found`);
+      assert.deepStrictEqual(stripAuditFields(found), stripAuditFields(repository.findSouthById(element.id)));
+    }
+  });
+
   it('should properly get a south connector', () => {
     assert.deepStrictEqual(stripAuditFields(repository.findSouthById(testData.south.list[0].id)), stripAuditFields(testData.south.list[0]));
     assert.strictEqual(repository.findSouthById('badId'), null);

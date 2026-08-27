@@ -56,6 +56,7 @@ describe('Config Transfer Builder Service', () => {
     userRepository.list = () => testData.users.list;
     southRepository.findAllSouth = () => testData.south.list;
     southRepository.findSouthById = (id: string) => testData.south.list.find(element => element.id === id) ?? null;
+    southRepository.findAllSouthFull = () => testData.south.list;
     northRepository.findAllNorth = () => testData.north.list;
     northRepository.findNorthById = (id: string) => testData.north.list.find(element => element.id === id) ?? null;
     northRepository.findAllNorthFull = () => testData.north.list;
@@ -108,6 +109,42 @@ describe('Config Transfer Builder Service', () => {
         activationWindow: scanMode.activationWindow
       }))
     );
+  });
+
+  it('should build the scan modes command for an interval scan mode, including activationWindow', () => {
+    // `testData.scanMode.list` (used by the test above) is exclusively cron-type scan modes
+    // (interval/activationWindow both null), so it never exercises the interval-type shape — this
+    // restores the dedicated coverage that existed before scan-mode command building was extracted
+    // out of oianalytics-message.service.ts into this service.
+    const intervalScanMode = {
+      id: 'scanModeIdInterval',
+      name: 'interval scan mode',
+      description: 'my interval scanMode',
+      type: 'interval' as const,
+      cron: '',
+      interval: { value: 30, unit: 's' as const },
+      activationWindow: {
+        dateRange: { start: '2026-08-01T00:00:00.000Z', end: '2026-08-31T00:00:00.000Z' },
+        recurring: { timezone: 'Europe/Paris', daysOfWeek: [6, 0], timeOfDay: { start: '22:00', end: '02:00' } }
+      },
+      createdBy: 'admin',
+      updatedBy: 'admin',
+      createdAt: testData.constants.dates.DATE_1,
+      updatedAt: testData.constants.dates.DATE_2
+    };
+    scanModeRepository.findAll = () => [intervalScanMode];
+
+    const configuration = service.buildFullConfiguration(testData.oIAnalytics.registration.completed);
+
+    assert.strictEqual(configuration.scanModes.length, 1);
+    assert.deepStrictEqual(configuration.scanModes[0].settings, {
+      name: intervalScanMode.name,
+      description: intervalScanMode.description,
+      type: 'interval',
+      cron: intervalScanMode.cron,
+      interval: intervalScanMode.interval,
+      activationWindow: intervalScanMode.activationWindow
+    });
   });
 
   it('should build the ip filters command', () => {
@@ -188,6 +225,7 @@ describe('Config Transfer Builder Service', () => {
     };
     southRepository.findAllSouth = () => [customSouth] as unknown as typeof testData.south.list;
     southRepository.findSouthById = () => customSouth as unknown as (typeof testData.south.list)[0];
+    southRepository.findAllSouthFull = () => [customSouth] as unknown as typeof testData.south.list;
 
     const originalNorthSource = testData.north.list[0].transformers[0].source as { south: unknown };
     const customNorth = {
