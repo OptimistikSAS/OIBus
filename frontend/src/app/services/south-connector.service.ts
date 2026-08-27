@@ -16,6 +16,7 @@ import {
   SouthExploreStartResult,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO,
+  SouthItemLastValueResponse,
   SouthType
 } from '../../../../backend/shared/model/south-connector.model';
 import { Page } from '../../../../backend/shared/model/types';
@@ -177,12 +178,12 @@ export class SouthConnectorService {
   }
 
   /**
-   * Get the last cached value for a South connector item
+   * Get the last cached value for a South connector item, and its group's last tracked value when grouped
    * @param southId - the ID of the South connector
    * @param itemId - the ID of the South connector item
    */
-  getItemLastValue(southId: string, itemId: string): Observable<any> {
-    return this.http.get(`/api/south/${southId}/items/${itemId}/last-value`);
+  getItemLastValue(southId: string, itemId: string): Observable<SouthItemLastValueResponse> {
+    return this.http.get<SouthItemLastValueResponse>(`/api/south/${southId}/items/${itemId}/last-value`);
   }
 
   /**
