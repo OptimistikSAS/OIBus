@@ -39,7 +39,9 @@ describe('South Item Group Repository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       };
       const created = repository.create(groupToCreate, 'userTest');
 
@@ -65,7 +67,9 @@ describe('South Item Group Repository', () => {
         startTimeOffset: 10,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       };
       const group2: SouthItemGroupCommand = {
         name: 'Group B',
@@ -74,7 +78,9 @@ describe('South Item Group Repository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       };
 
       repository.create(group1, 'userTest');
@@ -100,7 +106,9 @@ describe('South Item Group Repository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       };
       const created = repository.create(groupToCreate, 'userTest');
 
@@ -124,7 +132,9 @@ describe('South Item Group Repository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       };
       repository.create(groupToCreate, 'userTest');
 
@@ -140,7 +150,9 @@ describe('South Item Group Repository', () => {
         startTimeOffset: 5,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       };
 
       const created = repository.create(groupToCreate, 'userTest');
@@ -155,6 +167,44 @@ describe('South Item Group Repository', () => {
       assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['south_item_group', created.id, 'CREATE', null, created, 'userTest']);
     });
 
+    it('should persist and update a non-null cachingStrategy on a group', () => {
+      const groupToCreate: SouthItemGroupCommand = {
+        name: 'Group With Caching Strategy',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        startTimeOffset: null,
+        endTimeOffset: null,
+        maxReadInterval: null,
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: 'onChange'
+      };
+
+      const created = repository.create(groupToCreate, 'userTest');
+      assert.strictEqual(created.cachingStrategy, 'onChange');
+
+      const found = repository.findById(created.id);
+      assert.strictEqual(found!.cachingStrategy, 'onChange');
+
+      repository.update(
+        created.id,
+        {
+          name: created.name,
+          scanMode: created.scanMode,
+          startTimeOffset: created.startTimeOffset,
+          endTimeOffset: created.endTimeOffset,
+          maxReadInterval: created.maxReadInterval,
+          readDelay: created.readDelay,
+          recoveryStrategy: created.recoveryStrategy,
+          cachingStrategy: 'threshold'
+        },
+        'userTest'
+      );
+
+      const updated = repository.findById(created.id);
+      assert.strictEqual(updated!.cachingStrategy, 'threshold');
+    });
+
     it('should create a group with custom id', () => {
       const customId = 'customGroupId';
       const groupToCreate: SouthItemGroupCommand = {
@@ -164,7 +214,9 @@ describe('South Item Group Repository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       };
 
       const created = repository.create(groupToCreate, 'userTest', customId);
@@ -186,7 +238,9 @@ describe('South Item Group Repository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       };
 
       assert.throws(
@@ -205,7 +259,9 @@ describe('South Item Group Repository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       };
 
       const created = repository.create(groupToCreate, 'userTest');
@@ -216,7 +272,9 @@ describe('South Item Group Repository', () => {
         startTimeOffset: 15,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       };
 
       const before = repository.findById(created.id);
@@ -285,7 +343,9 @@ describe('South Item Group Repository', () => {
         startTimeOffset: 10,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       };
 
       const created = repository.create(groupToCreate, 'userTest');
@@ -296,7 +356,9 @@ describe('South Item Group Repository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       };
 
       repository.update(created.id, updateCommand, 'userTest');
@@ -314,7 +376,9 @@ describe('South Item Group Repository', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        recoveryStrategy: null,
+        cachingStrategy: null
       };
 
       const created = repository.create(groupToCreate, 'userTest');

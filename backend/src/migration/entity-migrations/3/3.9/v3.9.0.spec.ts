@@ -13,6 +13,7 @@ import {
   SouthSettings
 } from '../../../../../shared/model/south-settings.model';
 import { NorthFileWriterSettings, NorthSettings } from '../../../../../shared/model/north-settings.model';
+import { HistoryQueryEntity } from '../../../../model/histor-query.model';
 
 const ENTITY_MIGRATIONS_ROOT = path.resolve(__dirname, '..', '..');
 
@@ -684,7 +685,7 @@ describe('Entity migration v3.9.0', () => {
 
     it('backfills south_settings for a history query with a folder-scanner south', async () => {
       await insertScanMode(db, testData.historyQueries.list[0].caching.trigger.scanMode.id);
-      const historyQuery = {
+      const historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = {
         ...testData.historyQueries.list[0],
         id: 'history-folder-scanner',
         southType: 'folder-scanner',
@@ -709,7 +710,7 @@ describe('Entity migration v3.9.0', () => {
 
     it('backfills north_settings for a history query with a file-writer north', async () => {
       await insertScanMode(db, testData.historyQueries.list[0].caching.trigger.scanMode.id);
-      const historyQuery = {
+      const historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = {
         ...testData.historyQueries.list[0],
         id: 'history-file-writer',
         northType: 'file-writer',
