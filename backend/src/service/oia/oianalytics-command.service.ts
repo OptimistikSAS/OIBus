@@ -1096,7 +1096,13 @@ export default class OIAnalyticsCommandService {
         readDelay: item.readDelay,
         recoveryStrategy: item.recoveryStrategy,
         startTimeOffset: item.startTimeOffset,
-        endTimeOffset: item.endTimeOffset
+        endTimeOffset: item.endTimeOffset,
+        cachingStrategy: item.cachingStrategy,
+        thresholdType: item.thresholdType,
+        threshold: item.threshold,
+        rangeLow: item.rangeLow,
+        rangeHigh: item.rangeHigh,
+        maxCachingInterval: item.maxCachingInterval
       }))
     )) as typeof command.commandContent.items;
   }
