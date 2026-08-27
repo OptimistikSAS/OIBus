@@ -1,6 +1,11 @@
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { BaseEntity } from './types';
-import { OIBusSouthType, SouthHistoryRecoveryStrategy } from '../../shared/model/south-connector.model';
+import {
+  OIBusSouthType,
+  SouthCachingStrategy,
+  SouthCachingThresholdType,
+  SouthHistoryRecoveryStrategy
+} from '../../shared/model/south-connector.model';
 import { ScanMode } from './scan-mode.model';
 
 export interface SouthConnectorEntityLight extends BaseEntity {
@@ -23,6 +28,7 @@ export interface SouthItemGroupEntityLight extends BaseEntity {
   maxReadInterval: number | null;
   readDelay: number | null;
   recoveryStrategy: SouthHistoryRecoveryStrategy | null;
+  cachingStrategy: SouthCachingStrategy | null;
 }
 
 export interface SouthItemGroupEntity extends BaseEntity {
@@ -34,6 +40,7 @@ export interface SouthItemGroupEntity extends BaseEntity {
   maxReadInterval: number | null;
   readDelay: number | null;
   recoveryStrategy: SouthHistoryRecoveryStrategy | null;
+  cachingStrategy: SouthCachingStrategy | null;
   items: Array<SouthConnectorItemEntityLight>;
 }
 
@@ -46,6 +53,7 @@ export interface SouthItemGroupCommand {
   maxReadInterval: number | null;
   readDelay: number | null;
   recoveryStrategy: SouthHistoryRecoveryStrategy | null;
+  cachingStrategy: SouthCachingStrategy | null;
 }
 
 export interface SouthConnectorEntity<S extends SouthSettings, I extends SouthItemSettings> extends BaseEntity {
@@ -70,4 +78,10 @@ export interface SouthConnectorItemEntity<I extends SouthItemSettings> extends B
   startTimeOffset: number | null;
   endTimeOffset: number | null;
   recoveryStrategy: SouthHistoryRecoveryStrategy | null;
+  cachingStrategy: SouthCachingStrategy | null;
+  thresholdType: SouthCachingThresholdType | null;
+  threshold: number | null;
+  rangeLow: number | null;
+  rangeHigh: number | null;
+  maxCachingInterval: number | null;
 }
