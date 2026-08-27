@@ -36,7 +36,7 @@ export function getMessageFromHttpErrorResponse(errorResponse: HttpErrorResponse
   return message.trim();
 }
 
-const messageFromBody = (body: unknown): string | undefined => {
+export const messageFromBody = (body: unknown): string | undefined => {
   if (!body || typeof body !== 'object') return undefined;
   const { message, error } = body as { message?: unknown; error?: unknown };
   // tsoa ValidateError puts a field map (not a string) in `message`
