@@ -194,6 +194,13 @@ describe('South Modbus', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -218,6 +225,13 @@ describe('South Modbus', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -242,6 +256,13 @@ describe('South Modbus', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -262,6 +283,13 @@ describe('South Modbus', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -282,6 +310,13 @@ describe('South Modbus', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -307,6 +342,13 @@ describe('South Modbus', () => {
         readDelay: null,
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
+        cachingStrategy: 'allValues',
+        thresholdType: null,
+        threshold: null,
+        rangeLow: null,
+        rangeHigh: null,
+        maxCachingInterval: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -340,6 +382,10 @@ describe('South Modbus', () => {
     utilsModbusExports.readInputRegister = mock.fn(async (): Promise<string | undefined> => undefined);
     utilsModbusExports.getValueFromBuffer = mock.fn((): string => '42');
     addContentCallback.mock.resetCalls();
+    (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
+    (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => new Map());
+    (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
+    (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => undefined);
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
     south = new SouthModbus(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
@@ -552,7 +598,13 @@ describe('South Modbus', () => {
     assert.strictEqual(addContentMock.mock.calls[0].arguments[0].content!.length, 6);
     // Single shared timestamp for the whole scan cycle
     assert.strictEqual(addContentMock.mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
-    assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], configuration.items);
+    // Item order now follows the grouped-read order (caching-strategy filtering builds itemsToCache
+    // alongside the values as they're produced), not the original items array order — compare as a set.
+    const cachedItems = addContentMock.mock.calls[0].arguments[2] as Array<SouthConnectorItemEntity<SouthItemSettings>>;
+    assert.deepStrictEqual(
+      [...cachedItems].sort((a, b) => a.id.localeCompare(b.id)),
+      [...configuration.items].sort((a, b) => a.id.localeCompare(b.id))
+    );
   });
 
   it('should query each item individually when batchQuery is false', async () => {
@@ -618,6 +670,13 @@ describe('South Modbus', () => {
       readDelay: null,
       startTimeOffset: null,
       endTimeOffset: null,
+      recoveryStrategy: null,
+      cachingStrategy: 'allValues' as const,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -849,6 +908,13 @@ describe('South Modbus', () => {
       readDelay: null,
       startTimeOffset: null,
       endTimeOffset: null,
+      recoveryStrategy: null,
+      cachingStrategy: 'allValues' as const,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -980,6 +1046,13 @@ describe('South Modbus', () => {
       readDelay: null,
       startTimeOffset: null,
       endTimeOffset: null,
+      recoveryStrategy: null,
+      cachingStrategy: 'allValues' as const,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -1018,6 +1091,13 @@ describe('South Modbus', () => {
       readDelay: null,
       startTimeOffset: null,
       endTimeOffset: null,
+      recoveryStrategy: null,
+      cachingStrategy: 'allValues' as const,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -1058,6 +1138,13 @@ describe('South Modbus', () => {
       readDelay: null,
       startTimeOffset: null,
       endTimeOffset: null,
+      recoveryStrategy: null,
+      cachingStrategy: 'allValues' as const,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -1083,5 +1170,250 @@ describe('South Modbus', () => {
     assert.strictEqual(readHoldingRegistersMock.mock.calls.length, 2);
     assert.deepStrictEqual(readHoldingRegistersMock.mock.calls[0].arguments, [0, 1]);
     assert.deepStrictEqual(readHoldingRegistersMock.mock.calls[1].arguments, [200, 1]);
+  });
+
+  describe('caching strategy filtering', () => {
+    const buildItem = (
+      id: string,
+      name: string,
+      overrides: Partial<SouthConnectorItemEntity<SouthModbusItemSettings>> = {}
+    ): SouthConnectorItemEntity<SouthModbusItemSettings> => ({
+      ...configuration.items[0],
+      id,
+      name,
+      cachingStrategy: 'allValues',
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null,
+      ...overrides
+    });
+
+    it('should suppress a no-change value under cachingStrategy=onChange', async () => {
+      (south as unknown as Record<string, unknown>)['modbusClient'] = {};
+      utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string> => '42');
+      const addContentMock = mock.fn(
+        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+          undefined
+      );
+      south.addContent = addContentMock;
+      const item = buildItem('id1', 'Var1', { cachingStrategy: 'onChange' });
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () =>
+          new Map([
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: '42',
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ]
+          ])
+      );
+
+      await south.directQuery([item]);
+
+      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
+      assert.deepStrictEqual(content.content, []);
+      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], []);
+      assert.deepStrictEqual(
+        (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
+        []
+      );
+    });
+
+    it('should cache a threshold-exceeding change', async () => {
+      (south as unknown as Record<string, unknown>)['modbusClient'] = {};
+      utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string> => '42');
+      const addContentMock = mock.fn(
+        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+          undefined
+      );
+      south.addContent = addContentMock;
+      const item = buildItem('id1', 'Var1', { cachingStrategy: 'threshold', thresholdType: 'absolute', threshold: 5 });
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () =>
+          new Map([
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: '30',
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ]
+          ])
+      );
+
+      await south.directQuery([item]);
+
+      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
+      assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
+      assert.deepStrictEqual(
+        (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
+        [{ itemId: 'id1', value: '42', instant: testData.constants.dates.FAKE_NOW }]
+      );
+    });
+
+    it('should compute a percentage-of-span threshold correctly, caching the value above it and suppressing the one below it', async () => {
+      (south as unknown as Record<string, unknown>)['modbusClient'] = {};
+      // rangeLow=0, rangeHigh=100 -> span=100; threshold=10% -> 10 absolute units
+      utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string> => '42'); // diff from 20 = 22 > 10
+      utilsModbusExports.readInputRegister = mock.fn(async (): Promise<string> => '25'); // diff from 20 = 5 < 10
+      const addContentMock = mock.fn(
+        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+          undefined
+      );
+      south.addContent = addContentMock;
+      const overItem = buildItem('id1', 'Var1', {
+        cachingStrategy: 'threshold',
+        thresholdType: 'percentage',
+        threshold: 10,
+        rangeLow: 0,
+        rangeHigh: 100
+      });
+      const underItem = buildItem('id2', 'Var2', {
+        settings: { address: '0x3E81', modbusType: 'input-register', data: { dataType: 'uint16', multiplierCoefficient: 1 } },
+        cachingStrategy: 'threshold',
+        thresholdType: 'percentage',
+        threshold: 10,
+        rangeLow: 0,
+        rangeHigh: 100
+      });
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () =>
+          new Map([
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: '20',
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ],
+            [
+              'id2',
+              {
+                itemId: 'id2',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: '20',
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ]
+          ])
+      );
+
+      await south.directQuery([overItem, underItem]);
+
+      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
+      assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
+      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [overItem]);
+    });
+
+    it('should cache when maxCachingInterval elapses even without a qualifying change', async () => {
+      (south as unknown as Record<string, unknown>)['modbusClient'] = {};
+      utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string> => '42');
+      const addContentMock = mock.fn(
+        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+          undefined
+      );
+      south.addContent = addContentMock;
+      const item = buildItem('id1', 'Var1', { cachingStrategy: 'onChange', maxCachingInterval: 1000 });
+      // previous cached value is identical (no onChange-qualifying diff), but 2h have elapsed since trackedInstant
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () =>
+          new Map([
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T22:00:00.000Z',
+                value: '42',
+                trackedInstant: '2021-01-01T22:00:00.000Z'
+              }
+            ]
+          ])
+      );
+
+      await south.directQuery([item]);
+
+      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
+      assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
+    });
+
+    it('should always cache the very first read for an item regardless of strategy', async () => {
+      (south as unknown as Record<string, unknown>)['modbusClient'] = {};
+      utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string> => '42');
+      const addContentMock = mock.fn(
+        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+          undefined
+      );
+      south.addContent = addContentMock;
+      const item = buildItem('id1', 'Var1', { cachingStrategy: 'onChange' });
+      // getItemsLastValues default mock (set in beforeEach) returns an empty Map — no prior cached state
+
+      await south.directQuery([item]);
+
+      const content = addContentMock.mock.calls[0].arguments[0] as OIBusContent;
+      assert.deepStrictEqual(content.content, [{ pointId: 'Var1', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '42' } }]);
+    });
+
+    it('should call saveItemsLastValues with exactly the items actually cached in the cycle', async () => {
+      (south as unknown as Record<string, unknown>)['modbusClient'] = {};
+      utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string> => '42'); // unchanged from previous -> suppressed
+      utilsModbusExports.readInputRegister = mock.fn(async (): Promise<string> => '7'); // changed from previous -> cached
+      const addContentMock = mock.fn(
+        async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+          undefined
+      );
+      south.addContent = addContentMock;
+      const suppressedItem = buildItem('id1', 'Var1', { cachingStrategy: 'onChange' });
+      const cachedItem = buildItem('id2', 'Var2', {
+        settings: { address: '0x3E81', modbusType: 'input-register', data: { dataType: 'uint16', multiplierCoefficient: 1 } },
+        cachingStrategy: 'onChange'
+      });
+      (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(
+        () =>
+          new Map([
+            [
+              'id1',
+              {
+                itemId: 'id1',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: '42',
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ],
+            [
+              'id2',
+              {
+                itemId: 'id2',
+                groupId: null,
+                queryTime: '2021-01-01T00:00:00.000Z',
+                value: '1',
+                trackedInstant: '2021-01-01T00:00:00.000Z'
+              }
+            ]
+          ])
+      );
+
+      await south.directQuery([suppressedItem, cachedItem]);
+
+      assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        'southId',
+        [{ itemId: 'id2', value: '7', instant: testData.constants.dates.FAKE_NOW }]
+      ]);
+    });
   });
 });
