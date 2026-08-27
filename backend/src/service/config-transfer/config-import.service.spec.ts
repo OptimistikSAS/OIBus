@@ -42,6 +42,7 @@ describe('Config Import Service', () => {
     userRepository.list = () => testData.users.list;
     southRepository.findAllSouth = () => testData.south.list;
     southRepository.findSouthById = (id: string) => testData.south.list.find(element => element.id === id) ?? null;
+    southRepository.findAllSouthFull = () => testData.south.list;
     northRepository.findAllNorth = () => testData.north.list;
     northRepository.findNorthById = (id: string) => testData.north.list.find(element => element.id === id) ?? null;
     historyQueryRepository.findAllHistoriesFull = () => testData.historyQueries.list;
