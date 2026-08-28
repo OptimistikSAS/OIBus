@@ -1,0 +1,73 @@
+---
+sidebar_position: 3
+---
+
+import ItemSettings from './_south-record-list-item-settings.mdx';
+
+# Microsoft SQL Server™
+
+使用 OIBus 连接并查询 Microsoft SQL Server™（MSSQL）数据库。
+
+该连接器通常用于从将数据存储在 SQL Server 中的工业平台提取过程数据和历史数据，例如 **AVEVA™ Historian**（前身为 Wonderware® InSQL）或 **Inductive Automation Ignition®**。
+
+:::info 兼容性说明
+
+- 支持 SQL Server 2012 及更高版本
+- 要求在 SQL Server 上启用 TCP/IP 协议
+
+:::
+
+## 特定设置 {#specific-settings}
+
+| 设置                  | 描述                                                            | 示例值    |
+| ------------------------ | ---------------------------------------------------------------------- | ---------------- |
+| Host                     | SQL Server 实例的 IP 地址或主机名。                     | `192.168.1.10`   |
+| Port                     | SQL Server 端口号。默认值：`1433`。                               | `1433`           |
+| Connection timeout       | 建立连接的最长时间（毫秒）。默认值：`5000`。 | `5000`           |
+| Database                 | 要连接的数据库名称。                                    | `production`     |
+| Use encryption           | 在 OIBus 与数据库之间启用数据加密。                 | 启用/禁用 |
+| Trust server certificate | 接受自签名或已过期的证书。请谨慎使用。          | 启用/禁用 |
+| Username                 | 认证用户名。                                               | `sa`             |
+| Password                 | 认证密码。                                               | `••••••••`       |
+| Domain                   | 用于域认证的 Active Directory 域（可选）。          | `CORP`           |
+| Request timeout          | 单个 SQL 查询的最长执行时间（毫秒）。     | `15000`          |
+
+### 安全最佳实践 {#security-best-practices}
+
+- **用户权限**：始终使用只读数据库用户
+- **证书验证**：仅在开发/测试环境中信任服务器证书
+- **加密**：对敏感数据、不受信任的网络或合规性要求启用加密
+
+### 性能考量 {#performance-considerations}
+
+**查询优化**：
+
+- 在 WHERE 子句中使用带索引的列
+- 限制结果集（避免使用 `SELECT *`）
+- 优先使用参数化查询
+
+**资源管理**：
+
+- 加密会增加 CPU 开销
+- 为长时间运行的查询增加超时时间
+- 为大型结果集实现分页
+- 尽可能复用连接
+
+<ItemSettings />
+
+:::note MSSQL 日期时间字段类型
+以下**类型**值可用于 Microsoft SQL Server 中跟踪时刻的日期时间字段：
+
+| Type            | Description                                            |
+| --------------- | ------------------------------------------------------ |
+| String          | 使用自定义格式解析的字符串表示形式      |
+| Date            | SQL `DATE` 列（仅日期，无时间）                 |
+| DateTime        | SQL `DATETIME` 列                                  |
+| DateTime2       | SQL `DATETIME2` 列（更高精度）              |
+| DateTime Offset | SQL `DATETIMEOFFSET` 列（包含时区偏移量） |
+| Small DateTime  | SQL `SMALLDATETIME` 列（分钟精度）          |
+| ISO String      | ISO 8601 字符串（例如 `2024-01-15T10:30:00.000Z`）      |
+| UNIX epoch (s)  | 以秒为单位的 Unix 时间戳                              |
+| UNIX epoch (ms) | 以毫秒为单位的 Unix 时间戳                        |
+
+:::
