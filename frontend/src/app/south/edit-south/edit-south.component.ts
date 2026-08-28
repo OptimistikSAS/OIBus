@@ -25,6 +25,7 @@ import { TestConnectionResultModalComponent } from '../../shared/test-connection
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { DocsUrlService } from '../../shared/docs-url.service';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { formDirectives } from '../../shared/form/form-directives';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
@@ -104,6 +105,14 @@ export class EditSouthComponent implements CanComponentDeactivate {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private docsUrlService = inject(DocsUrlService);
+
+  readonly generalSettingsHelpUrl = this.docsUrlService.resolve('guide/south-connectors/common-settings');
+  readonly itemSectionHelpUrl = this.docsUrlService.resolve('guide/south-connectors/common-settings#item-section');
+
+  get southTypeHelpUrl(): string {
+    return this.docsUrlService.resolve('guide/south-connectors/' + this.southType);
+  }
 
   mode: 'create' | 'edit' = 'create';
   southConnector: SouthConnectorDTO | null = null;
