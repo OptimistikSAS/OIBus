@@ -7,7 +7,10 @@ const docsBuildTarget = process.env.DOCS_BUILD_TARGET === 'embedded' ? 'embedded
 export default {
   title: 'OIBus',
   url: 'https://oibus.optimistik.com/',
-  baseUrl: '/',
+  // The embedded build is served by the OIBus backend under the '/documentation' path prefix
+  // (see backend/src/web-server/web-server.ts), so root-absolute asset/link references need that
+  // prefix baked in - otherwise they'd resolve against the OIBus app's own root instead.
+  baseUrl: docsBuildTarget === 'embedded' ? '/documentation/' : '/',
   favicon: 'img/favicon.ico',
   tagline: 'Open source industrial data collection — OPC UA, Modbus, SQL, MQTT and more',
   onBrokenLinks: 'warn',
