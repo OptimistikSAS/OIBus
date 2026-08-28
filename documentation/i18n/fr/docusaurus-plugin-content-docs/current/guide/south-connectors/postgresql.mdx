@@ -1,0 +1,62 @@
+---
+sidebar_position: 14
+---
+
+import ItemSettings from './_south-record-list-item-settings.mdx';
+
+# PostgreSQL
+
+Connectez-vous à des bases de données PostgreSQL et interrogez-les avec OIBus.
+
+:::info Notes de compatibilité
+
+- Prend en charge PostgreSQL 9.6 et versions ultérieures
+
+:::
+
+## Paramètres spécifiques {#specific-settings}
+
+| Paramètre          | Description                                                              | Exemple de valeur |
+| -------------------- | ---------------------------------------------------------------------- | ------------------ |
+| Hôte                | Adresse IP ou nom d'hôte du serveur PostgreSQL.                          | `192.168.1.10`   |
+| Port                | Numéro de port du serveur. Par défaut : `5432`.                          | `5432`           |
+| SSL                 | Active la connexion chiffrée. Recommandé en production.                  | Activé/Désactivé |
+| Base de données     | Nom de la base de données à laquelle se connecter.                       | `production`     |
+| Délai de connexion  | Temps maximal en millisecondes pour établir la connexion. Par défaut : `10000`. | `10000`     |
+| Délai de requête    | Temps d'exécution maximal en millisecondes pour chaque requête SQL.      | `15000`          |
+| Nom d'utilisateur   | Nom d'utilisateur d'authentification.                                    | `db_user`        |
+| Mot de passe        | Mot de passe d'authentification.                                         | `••••••••`       |
+
+:::tip Bonnes pratiques de sécurité
+
+- Utiliser un utilisateur de base de données en lecture seule
+
+:::
+
+### Considérations de performance {#performance-considerations}
+
+**Optimisation des requêtes** :
+
+- Utiliser des colonnes indexées dans les clauses WHERE
+- Limiter les jeux de résultats (éviter `SELECT *`)
+
+**Gestion des ressources** :
+
+- Le chiffrement SSL ajoute une surcharge minimale
+- Augmenter les délais pour les jeux de données volumineux ou les requêtes complexes
+
+<ItemSettings />
+
+:::note Types de champ datetime pour PostgreSQL
+Les valeurs de **Type** suivantes sont disponibles pour le champ datetime de l'instant de suivi :
+
+| Type                        | Description                                                |
+| ----------------------------- | ----------------------------------------------------------- |
+| String                      | Représentation sous forme de chaîne analysée avec un format personnalisé |
+| Timestamp                   | Colonne PostgreSQL `TIMESTAMP` (sans fuseau horaire)         |
+| Timestamp with timezone     | Colonne PostgreSQL `TIMESTAMPTZ` (avec fuseau horaire)       |
+| ISO String                  | Chaîne ISO 8601 (par exemple `2024-01-15T10:30:00.000Z`)     |
+| UNIX epoch (s)               | Horodatage Unix en secondes                                  |
+| UNIX epoch (ms)              | Horodatage Unix en millisecondes                              |
+
+:::

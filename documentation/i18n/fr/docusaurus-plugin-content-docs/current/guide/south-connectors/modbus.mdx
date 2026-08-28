@@ -1,0 +1,119 @@
+---
+sidebar_position: 4
+---
+
+import ModbusDataFormatTester from '../../../../../../src/components/ModbusDataFormatTester/index';
+
+# Modbus
+
+Modbus est un protocole de communication utilisé dans les réseaux d'automates programmables (PLC). Développé à l'origine pour des interfaces série comme RS232,
+RS422 et RS485, il a ensuite été étendu pour inclure le mode TCP. OIBus utilise
+la bibliothèque [jsmodbus](https://github.com/Cloud-Automation/node-modbus) **en mode TCP uniquement**.
+
+## Paramètres spécifiques {#specific-settings}
+
+### Configuration de la connexion {#connection-configuration}
+
+| Paramètre                | Description                                                                                                                                                                          | Exemple de valeur |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| **Host**                    | Adresse IP ou nom d'hôte de la machine serveur Modbus.                                                                                                                                | `192.168.1.100` |
+| **Port**                    | Port à utiliser pour la connexion (502 par défaut).                                                                                                                                   | `502`           |
+| **Connection timeout**      | Temps maximal d'attente pour une connexion (en millisecondes).                                                                                                                        | `10000`         |
+| **Retry interval**          | Temps d'attente (en millisecondes) entre les reconnexions après un échec de connexion.                                                                                               | `10000`         |
+| **Network timeout**         | Délai (en millisecondes) avant l'envoi des sondes de maintien de connexion TCP (keepalive) sur une connexion inactive. Maintient la connexion active à travers les pare-feux et les dispositifs NAT qui ferment les sockets inactifs. | `15000`         |
+| **Slave ID**                | Identifie la machine source Modbus (1 par défaut).                                                                                                                                    | `1`             |
+| **Address offset**          | Pour la plupart des automates, il n'y a pas de décalage (option Modbus). Certains automates peuvent démarrer la plage d'adresses à 1 au lieu de 0 (option JBus)                       | `Modbus`        |
+
+### Options de format de données {#data-format-options}
+
+| Paramètre        | Description                                                    | Exemple de valeur    |
+| -------------------- | ------------------------------------------------------------------ | ---------------- |
+| **Endianness**       | Type d'encodage des bits.                                          | `Big Endian`     |
+| **Swap Bytes**       | Indique si les octets au sein d'un mot de 16 bits doivent être échangés. | Activé/Désactivé |
+| **Swap Words**       | Indique si les mots de 16 bits doivent être échangés au sein d'un groupe de 32 bits. | Activé/Désactivé |
+
+Utilisez le testeur ci-dessous pour voir comment ces trois paramètres affectent la valeur décodée pour un ensemble donné de valeurs de registre.
+
+<ModbusDataFormatTester />
+
+### Optimisation des requêtes {#query-optimisation}
+
+| Paramètre                     | Description                                                                                                                                                                                                                                                 | Exemple de valeur    |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| **Group batch queries?**          | Active la fusion des éléments du même type Modbus en aussi peu de requêtes que possible, au lieu d'émettre une requête par élément. Désactivé par défaut.                                                                                                    | Activé/Désactivé |
+| **Grouping gap**                  | _(Affiché uniquement lorsque **Group batch queries?** est activé)_ Écart d'adresse maximal (en registres) autorisé lors de la fusion d'éléments non consécutifs du même type en une seule requête Modbus. Réglez sur `0` pour ne regrouper que les adresses strictement consécutives (par défaut). | `0` – `100`       |
+
+Avec **Group batch queries?** désactivé (par défaut), OIBus émet une requête Modbus par élément — aucune fusion.
+En l'activant, OIBus regroupe les éléments du même type Modbus (bobine, entrée discrète, registre d'entrée, registre de maintien)
+dont les adresses sont consécutives en une seule requête, réduisant les allers-retours vers l'appareil.
+
+Avec un **écart de regroupement > 0**, les éléments presque — mais pas tout à fait — consécutifs sont également fusionnés. Par exemple, trois registres de maintien aux adresses 1, 3 et 5 nécessiteraient normalement trois requêtes distinctes. Avec un écart de regroupement de 2, les trois sont lus en une seule requête (les deux registres de remplissage intermédiaires sont récupérés puis ignorés).
+
+:::tip Quand augmenter l'écart de regroupement
+
+Un écart plus important échange une petite quantité de données supplémentaires sur le réseau (registres de remplissage) contre moins d'allers-retours TCP. Cela est généralement bénéfique lorsque l'appareil est lent à répondre ou lorsque la latence réseau est élevée. Gardez-le à `0` si la minimisation du trafic est plus importante que la minimisation des allers-retours.
+
+:::
+
+:::info Limites du protocole
+
+Quel que soit l'écart de regroupement, OIBus ne dépasse jamais les limites de la spécification Modbus par requête :
+
+- **Bobines / Entrées discrètes (FC01 / FC02) :** 2 000 bits maximum.
+- **Registres d'entrée / Registres de maintien (FC03 / FC04) :** 125 mots maximum.
+
+Les plages qui dépassent ces limites sont automatiquement divisées en plusieurs requêtes.
+
+:::
+
+## Paramètres des éléments {#item-settings}
+
+| Paramètre                | Description                                                                                                                                                                              | Exemple de valeur    |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| Address                      | Adresse du registre au sein de l'appareil, sans le chiffre de type de données en tête. Accepte un nombre décimal simple (ex. `1`) ou un nombre hexadécimal préfixé par `0x` (ex. `0x0001`). | `0x0001`            |
+| Modbus type                  | Précise s'il s'agit d'une _coil_, _discrete input_, _input register_, ou _holding register_ (par défaut).                                                                                | `Holding Register`  |
+| Data type                    | Pertinent pour les _holding registers_ ou _input registers_. Définit le type de données récupéré depuis le registre (Bit, UInt16, Int16, UInt32, Int32, Big UInt64, Big Int64, Float, Double). | `UInt16`            |
+| Bit index                    | (_Type de données Bit uniquement_) L'index du bit à récupérer depuis la valeur lue (0 à 15).                                                                                              | `0` à `15`          |
+| Multiplier Coefficient       | Multiplie la valeur récupérée (1 par défaut).                                                                                                                                             | `1`                 |
+
+:::info À propos des adresses Modbus
+
+La documentation des automates utilise généralement la **notation par convention Modicon (MCN)** : un nombre décimal dont le **chiffre de tête encode le type de données** et dont les chiffres restants sont le numéro de registre.
+
+| Chiffre de tête | Type de données   |
+| ------------------- | -------------------- |
+| `0`                  | Coil                  |
+| `1`                  | Discrete Input        |
+| `3`                  | Input Register        |
+| `4`                  | Holding Register      |
+
+OIBus attend l'adresse **sans le chiffre de type en tête**, saisie en tant que nombre décimal simple ou nombre hexadécimal préfixé par `0x`. Le type de données est déclaré séparément via le champ **Modbus type**.
+
+**Convertir une adresse MCN en adresse OIBus :**
+
+1. Retirez le chiffre de type en tête de l'adresse MCN.
+2. Saisissez le nombre restant directement. Le format décimal et le format hexadécimal préfixé par `0x` sont tous deux acceptés.
+
+**Exemples :**
+
+| Adresse MCN | Chiffre de type retiré | Adresse OIBus       | Type Modbus       |
+| -------------- | -------------------------- | -------------------- | ------------------- |
+| `40001`        | `0001`                      | `1` ou `0x0001`      | Holding Register     |
+| `40100`        | `0100`                      | `100` ou `0x0064`    | Holding Register     |
+| `30005`        | `0005`                      | `5` ou `0x0005`      | Input Register       |
+| `00157`        | `0157`                      | `157` ou `0x009D`    | Coil                 |
+
+**Plages d'adresses MCN :**
+
+| Type              | Standard (5 chiffres) | Étendu (6 chiffres) |
+| -------------------- | ------------------------ | ---------------------- |
+| Coil                 | 00001 – 09999             | 000001 – 065535         |
+| Discrete Input       | 10001 – 19999             | 100001 – 165535         |
+| Input Register       | 30001 – 39999             | 300001 – 365535         |
+| Holding Register     | 40001 – 49999             | 400001 – 465535         |
+
+**Décalage d'adresse :** Le paramètre **Address offset** contrôle si la numérotation des registres commence à 0 (Modbus) ou à 1 (JBus). La plupart des automates utilisent la convention Modbus (aucun décalage). Vérifiez la documentation de votre appareil si les valeurs semblent décalées d'une unité.
+
+:::
+
+Pour plus de détails, consultez la [notation par convention Modicon (MCN)](https://www.modbus.org/docs/PI_MBUS_300.pdf).
