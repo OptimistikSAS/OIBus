@@ -10,6 +10,7 @@
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
     "build": "docusaurus build && node update-agent-version.js",
+    "build:embedded": "cross-env DOCS_BUILD_TARGET=embedded docusaurus build && node update-agent-version.js",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus build && node update-agent-version.js && gh-pages -d build",
     "clear": "docusaurus clear",
@@ -22,6 +23,7 @@
   "dependencies": {
     "@docusaurus/core": "3.10.2",
     "@docusaurus/preset-classic": "3.10.2",
+    "@easyops-cn/docusaurus-search-local": "0.55.3",
     "@mdx-js/react": "3.1.1",
     "clsx": "2.1.1",
     "cronstrue": "3.24.0",
@@ -33,6 +35,7 @@
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.10.2",
+    "cross-env": "10.1.0",
     "eslint": "9.39.5",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-mdx": "3.8.1",
