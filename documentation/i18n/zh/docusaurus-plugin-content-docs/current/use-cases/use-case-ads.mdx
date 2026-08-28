@@ -1,0 +1,78 @@
+---
+displayed_sidebar: useCasesSidebar
+sidebar_position: 3
+---
+
+import NorthOIAnalytics from './_north_oianalytics.mdx';
+
+# ADS / TwinCAT® → OIAnalytics®
+
+## 前提条件 {#beforehand}
+
+有关完整的配置详情，请参阅[北向 OIAnalytics](../guide/north-connectors/oianalytics.md)和[南向 ADS](../guide/south-connectors/ads.mdx)连接器页面。
+
+在配置 ADS 连接器之前，请先阅读[连接器专属的网络设置](../guide/south-connectors/ads.mdx#specific-settings) — 所需参数取决于 OIBus 相对于 ADS 路由器的部署方式。
+
+以下描述了两种部署场景。
+
+## 南向 ADS {#south-ads}
+
+### 本地 ADS {#local-ads}
+
+OIBus 安装在与 ADS 路由器相同的机器上。
+
+<div style={{ textAlign: 'center' }}>
+
+![Twincat 本地 -> OIA](../../static/img/use-cases/twincat-local-oia.svg)
+
+</div>
+
+只需指定 **Net ID**（此处为 `127.0.0.1.1.1`）。
+
+<div style={{ textAlign: 'center' }}>
+
+![Twincat 本地设置](../../static/img/use-cases/twincat-local-settings.png)
+
+</div>
+
+### 远程 ADS {#remote-ads}
+
+OIBus 部署在另一台机器上，需要通过网络连接到 ADS 路由器。
+
+<div style={{ textAlign: 'center' }}>
+
+![Twincat 远程 -> OIA](../../static/img/use-cases/twincat-remote-oia.svg)
+
+</div>
+
+- **路由器地址**：`10.0.0.1`，端口 `48898`
+- **AMS Net ID**：必须与 AMS 服务器上配置的静态路由相匹配。前四段通常对应 OIBus 所在机器的 IP 地址（例如 `193.164.196.201.1.1`）
+- **ADS 客户端端口**：一个未被占用的本地端口，用于通过路由器连接到 PLC（例如 `48899`）
+
+<div style={{ textAlign: 'center' }}>
+
+![Twincat 远程设置](../../static/img/use-cases/twincat-remote-settings.png)
+
+</div>
+
+:::tip 测试连接
+点击**测试设置**以在保存前验证连接。
+:::
+
+### 项目 {#items}
+
+添加需要读取的地址。请向 PLC 管理员咨询可用地址。选择一个[扫描模式](../guide/engine/scan-modes.mdx)来控制采集间隔。
+
+<div style={{ textAlign: 'center' }}>
+
+![ADS 项目设置](../../static/img/use-cases/twincat-item.png)
+
+</div>
+
+:::tip 批量导入
+点击**导出**下载带有正确列的 CSV 模板，每行填写一个项目，然后将其导入回来。项目名称必须唯一。
+:::
+
+当需要从多个共享相同地址命名空间的 PLC 采集数据时，可从一个 ADS 连接器导出项目，再将其导入到另一个连接器中。由于项目名称将会相同，请使用连接器设置中的 **PLC 名称**字段（例如 `PLC001`）— OIBus 会将其添加到每个项目名称前，以保持名称唯一。
+
+<NorthOIAnalytics></NorthOIAnalytics>
