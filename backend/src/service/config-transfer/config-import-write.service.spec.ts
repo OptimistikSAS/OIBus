@@ -235,6 +235,46 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     assert.strictEqual(recreated.type, 'custom');
   });
 
+  it('skips a north connector transformer link that cannot be matched locally, and warns about it', async () => {
+    const envelope = cloneEnvelope();
+    const north = envelope.fullConfiguration.northConnectors.find(candidate => candidate.settings.transformers.length > 0);
+    assert.ok(north, 'expected the fixture to include a north connector with at least one transformer');
+    const transformerEntry = north.settings.transformers[0];
+    transformerEntry.transformerId = 'does-not-exist-locally';
+
+    const result = await service.importConfiguration(envelope, importerId());
+
+    assert.ok(
+      result.warnings.some(
+        warning =>
+          warning.includes(north.settings.name) && /could not be matched locally/.test(warning) && warning.includes('north connector')
+      ),
+      `expected a warning about a skipped transformer link, got ${JSON.stringify(result.warnings)}`
+    );
+    const recreated = northConnectorRepository.findNorthById(north.oIBusInternalId);
+    assert.ok(recreated);
+    assert.ok(
+      !recreated.transformers.some(transformer => transformer.id === transformerEntry.id),
+      'expected the unresolved transformer link to have been skipped entirely, not recreated with a null transformer'
+    );
+  });
+
+  it('recreates a north connector transformer sourced from oianalytics-setpoint', async () => {
+    const envelope = cloneEnvelope();
+    const north = envelope.fullConfiguration.northConnectors.find(candidate => candidate.settings.transformers.length > 0);
+    assert.ok(north, 'expected the fixture to include a north connector with at least one transformer');
+    const transformerEntry = north.settings.transformers[0];
+    transformerEntry.source = { type: 'oianalytics-setpoint' };
+
+    await service.importConfiguration(envelope, importerId());
+
+    const recreated = northConnectorRepository.findNorthById(north.oIBusInternalId);
+    assert.ok(recreated);
+    const recreatedTransformer = recreated.transformers.find(transformer => transformer.id === transformerEntry.id);
+    assert.ok(recreatedTransformer, 'expected the transformer link to have been recreated');
+    assert.deepStrictEqual(recreatedTransformer.source, { type: 'oianalytics-setpoint' });
+  });
+
   it('imports a certificate under its original id but with an empty private key, and warns about it', async () => {
     const envelope = cloneEnvelope();
     assert.ok(envelope.fullConfiguration.certificates.length > 0, 'expected the fixture to include a certificate');
