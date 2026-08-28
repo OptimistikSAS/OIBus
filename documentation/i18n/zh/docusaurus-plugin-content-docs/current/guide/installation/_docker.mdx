@@ -1,0 +1,127 @@
+import CodeBlock from '@theme/CodeBlock';
+import packageInfo from '../../../../../../package.json';
+
+## 拉取镜像 {#pull-the-image}
+
+<CodeBlock language="bash">{`docker pull ghcr.io/optimistiksas/oibus:v${packageInfo.version}`}</CodeBlock>
+
+## 运行容器 {#run-the-container}
+
+<CodeBlock language="bash">
+  {`docker run -d \\
+  --name oibus-container \\
+  -p 2223:2223 \\
+  -v ./OIBusData:/app/OIBus/OIBusData \\
+  --restart unless-stopped \\
+  ghcr.io/optimistiksas/oibus:v${packageInfo.version}`}
+</CodeBlock>
+
+:::tip 持久化数据卷
+生产环境中**必须**使用 `-v` 挂载。如果不使用，容器停止或被替换时，所有配置、缓存和日志都会丢失。
+:::
+
+:::danger 不要从 OIBus 内部更改 HTTP 端口
+在 Docker 中运行时，不要从 Web 界面更改 OIBus 的 HTTP 端口（2223）。容器只对外暴露了 2223 端口——在内部更改它会导致界面不可访问。
+:::
+
+在浏览器中打开 `http://localhost:2223`，然后按照[首次访问指南](./first-access.mdx)操作。
+
+## 初始配置（首次运行）{#initial-configuration-first-run}
+
+在 OIBus 首次启动前，在容器上设置以下环境变量以配置管理员账户、端口和引擎名称——相当于 Windows 和 Linux 安装程序所使用的 `-u`/`-p`/`-port`/`-n` 参数。
+
+| 变量              | 说明                                                                                                                          | 默认值                         |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
+| `ENGINE_NAME`         | 赋予 OIBus 引擎的名称                                                                                                       | 省略（应用 OIBus 默认值） |
+| `ADMIN_USERNAME`      | 管理员用户名                                                                                                                       | 省略（应用 OIBus 默认值） |
+| `ADMIN_PASSWORD`      | 管理员密码                                                                                                                       | 省略（应用 OIBus 默认值） |
+| `ADMIN_USERNAME_FILE` | 容器内保存管理员用户名的文件路径——用于 Docker Secrets；设置后优先于 `ADMIN_USERNAME` | 省略                         |
+| `ADMIN_PASSWORD_FILE` | 容器内保存管理员密码的文件路径——用于 Docker Secrets；设置后优先于 `ADMIN_PASSWORD` | 省略                         |
+| `DEFAULT_PORT`        | OIBus 在容器内监听的端口                                                                                                           | 省略（应用 OIBus 默认值） |
+
+<CodeBlock language="bash">
+  {`docker run -d \\
+  --name oibus-container \\
+  -p 2223:2223 \\
+  -v ./OIBusData:/app/OIBus/OIBusData \\
+  -e ENGINE_NAME=MyOIBus \\
+  -e ADMIN_USERNAME=admin \\
+  -e ADMIN_PASSWORD=changeme \\
+  --restart unless-stopped \\
+  ghcr.io/optimistiksas/oibus:v${packageInfo.version}`}
+</CodeBlock>
+
+:::info
+这些变量仅在数据文件夹尚未包含 `oibus.db` 时才会被应用——即仅在首次启动时生效。在此后的任何一次启动中（包括更新之后），它们都不再起作用；此时 OIBus 已经拥有配置数据库，会使用其中存储的值。
+:::
+
+:::caution 更改暴露的端口
+`DEFAULT_PORT` 只会更改 OIBus 在**容器内部**监听的端口。你仍然需要在宿主机上发布相同的端口，例如 `-p 8080:8080 -e DEFAULT_PORT=8080`，并且出于上述同样的原因，必须在首次运行时设置它。
+:::
+
+## Docker Compose {#docker-compose}
+
+<CodeBlock language="yaml">
+  {`services:
+  oibus:
+    image: ghcr.io/optimistiksas/oibus:v${packageInfo.version}
+    container_name: oibus-container
+    ports:
+      - '2223:2223'
+    volumes:
+      - ./OIBusData:/app/OIBus/OIBusData
+    restart: unless-stopped
+    environment:
+      - TZ=UTC
+    # Uncomment to apply resource limits:
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '2'
+    #       memory: 2G
+`}
+</CodeBlock>
+
+## 端口配置 {#port-configuration}
+
+| 端口       | 用途             | 如何暴露                                   |
+| ---------- | ------------------- | ----------------------------------------------- |
+| `2223`     | OIBus Web 界面 | `-p 2223:2223`（默认已包含，见上文）      |
+| _（自定义）_ | OIBus 代理服务器  | 按需添加 `-p <HOST_PORT>:<CONTAINER_PORT>` |
+
+要在暴露 Web 界面的同时暴露代理服务器端口（例如 `9000`）：
+
+<CodeBlock language="bash">
+  {`docker run -d \\
+  --name oibus-container \\
+  -p 2223:2223 \\
+  -p 9000:9000 \\
+  -v ./OIBusData:/app/OIBus/OIBusData \\
+  --restart unless-stopped \\
+  ghcr.io/optimistiksas/oibus:v${packageInfo.version}`}
+</CodeBlock>
+
+<h2 id="update-oibus-docker">更新 OIBus</h2>
+
+拉取新镜像，然后重新创建容器。数据卷会被保留：
+
+<CodeBlock language="bash">
+  {`docker pull ghcr.io/optimistiksas/oibus:v${packageInfo.version}
+docker stop oibus-container
+docker rm oibus-container
+docker run -d \\
+  --name oibus-container \\
+  -p 2223:2223 \\
+  -v ./OIBusData:/app/OIBus/OIBusData \\
+  --restart unless-stopped \\
+  ghcr.io/optimistiksas/oibus:v${packageInfo.version}`}
+</CodeBlock>
+
+使用 Docker Compose：
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+更新后首次启动时，`oibus.db` 配置数据库会自动升级。

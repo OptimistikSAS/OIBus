@@ -1,0 +1,33 @@
+### CSV 序列化 {#csv-serialization}
+
+OIBus 提供了灵活的选项，可将检索到的数据序列化为 CSV 格式，并支持自定义输出设置。
+
+#### 文件配置 {#file-configuration}
+
+| 设置     | 描述                                       | 示例值                                                                                                     |
+| ----------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Filename    | 输出文件的名称模式。                    | `data_@ConnectorName_@CurrentDate.csv`                                                                            |
+| Delimiter   | 用于在 CSV 文件中分隔各值的字符 | `COMMA` (,), `SEMI_COLON` (;), `DOT` (.), `COLON` (:), `PIPE` (\|), `SLASH` (/), `TAB` (\t), `NON_BREAKING_SPACE` |
+| Compression | 是否对输出文件启用 gzip 压缩          | 启用/禁用                                                                                                  |
+
+:::info 文件名变量
+以下变量可用于文件名模式：
+
+- `@ConnectorName`：自动替换为连接器的名称
+- `@CurrentDate`：以固定的 `yyyy_MM_dd_HH_mm_ss_SSS` 格式插入当前时间戳
+  :::
+
+#### 时间数据处理 {#temporal-data-handling}
+
+| 设置                | 描述                                                                                 | 示例值           |
+| ---------------------- | ------------------------------------------------------------------------------------------- | ----------------------- |
+| Output datetime format | CSV 中日期时间字段的格式模式（不影响文件名中的 `@CurrentDate`） | `yyyy-MM-dd HH:mm:ss`   |
+| Output timezone        | CSV 中日期时间值所使用的时区                                                | `UTC` 或 `Europe/Paris` |
+
+:::info 重要说明
+
+1. 文件名中的 `@CurrentDate` 变量始终使用固定格式（`yyyy_MM_dd_HH_mm_ss_SSS`），与日期时间格式设置无关
+2. 只有在你的配置中指定的[日期时间字段](#datetime-field-configuration)才会按照这些设置进行格式化
+3. 时区转换仅应用于 CSV 内容中的日期时间值，不影响文件名中的时间戳
+
+:::
