@@ -1,0 +1,111 @@
+---
+sidebar_position: 2
+---
+
+import CronTester from '../../../../../../src/components/CronTester/index';
+
+# Modes de scrutation
+
+OIBus utilise des **modes de scrutation** pour planifier le moment où les
+[connecteurs Sud](../../guide/south-connectors/common-settings.md) récupèrent des données ou où les
+[connecteurs Nord](../../guide/north-connectors/common-settings.md) en envoient. Les modes de scrutation vous
+permettent d'automatiser les opérations sur les données à des dates et intervalles précis.
+
+Un mode de scrutation est soit **basé sur cron**, soit **basé sur un intervalle**, et peut éventuellement être
+restreint à une **fenêtre d'activation**.
+
+## Modes de scrutation par défaut {#default-scan-modes}
+
+OIBus fournit six modes de scrutation intégrés pour les besoins de planification courants :
+
+| Mode de scrutation | Expression cron    | Description                                            |
+| -------------------- | ----------------- | ------------------------------------------------------- |
+| Every second          | `* * * * * *`    | S'exécute toutes les secondes.                          |
+| Every 10 seconds       | `*/10 * * * * *` | S'exécute toutes les 10 secondes.                       |
+| Every minute           | `0 * * * * *`    | S'exécute chaque minute, à la marque des 0 seconde.     |
+| Every 10 minutes       | `0 */10 * * * *` | S'exécute toutes les 10 minutes, à la marque des 0 seconde. |
+| Every hour             | `0 0 * * * *`    | S'exécute chaque heure, à la marque des 0 minute, 0 seconde. |
+| Every 24 hours         | `0 0 0 * * *`    | S'exécute quotidiennement à minuit (00:00:00).           |
+
+Un septième mode de scrutation, non modifiable, **Subscription**, existe également (sans expression cron) pour les
+connecteurs Sud qui poussent les données à leur arrivée plutôt que selon une planification (par ex. MQTT, OPC UA DA).
+Il n'apparaît pas dans la liste des modes de scrutation car il ne peut pas être déclenché ou modifié comme les
+autres.
+
+## Modes de scrutation personnalisés {#custom-scan-modes}
+
+Vous pouvez créer des **modes de scrutation personnalisés** pour répondre à vos besoins spécifiques de planification.
+Chacun possède un **type**, soit `Cron`, soit `Interval`.
+
+## Modes de scrutation par intervalle {#interval-scan-modes}
+
+Pour le cas courant « interroger simplement toutes les N secondes », un intervalle est plus simple qu'une expression
+cron. Choisissez un nombre entier positif et une unité — millisecondes, secondes, minutes ou heures.
+
+- L'intervalle minimal accepté est de **10 ms**.
+- En dessous d'1 seconde, OIBus affiche un avertissement : de tels intervalles peuvent ne pas être réalisables en
+  pratique, selon la source de données et la capacité du réseau et du système. Il ne s'agit que d'un avertissement et
+  cela n'empêche pas l'enregistrement.
+
+Contrairement à une expression cron, qui est réancrée sur l'horloge murale à chaque exécution, un intervalle attend
+simplement le délai configuré entre les exécutions et peut légèrement dériver en cas de forte charge.
+
+## Fenêtre d'activation {#activation-window}
+
+Indépendamment de son type, un mode de scrutation peut être restreint à une **fenêtre d'activation**. Lorsqu'une
+exécution planifiée tombe en dehors de la fenêtre, elle est ignorée silencieusement : rien n'est mis en file
+d'attente et rien n'est reporté à la réouverture de la fenêtre, et aucune erreur n'est levée.
+
+Une fenêtre combine deux critères optionnels, qui doivent tous deux être satisfaits :
+
+- **Plage de dates** — une date et heure de début et/ou de fin absolues. Chaque côté est indépendamment optionnel,
+  ce qui vous permet d'exprimer « à partir de maintenant », « jusqu'à la fin du mois », ou une plage fermée. Ce sont
+  des instants absolus, stockés en UTC et affichés dans le fuseau horaire de votre compte.
+- **Règle récurrente** — un filtre optionnel de jour de la semaine (aucun jour sélectionné signifie tous les jours)
+  et une plage horaire optionnelle (non définie signifie toute la journée).
+
+Comme une règle récurrente est exprimée en heure civile plutôt qu'en décalage fixe — « jeudi 12:00 » se décale d'une
+heure lors d'un changement d'heure — elle est enregistrée avec le fuseau horaire pris des paramètres de votre compte,
+et réévaluée dans ce fuseau horaire à chaque exécution.
+
+### Fenêtres nocturnes {#overnight-windows}
+
+Si l'heure de fin est antérieure à l'heure de début, la fenêtre s'étend sur le jour suivant ; le formulaire indique
+cela avec un **+1** à côté de l'heure de fin. Le filtre de jour de la semaine s'applique alors au jour où la fenêtre
+s'*ouvre* : « vendredi, 22:00–02:00 » reste active du vendredi 22:00 au samedi 02:00, même si samedi n'est pas
+lui-même sélectionné.
+
+### Exemples {#examples}
+
+- *Ne collecter que pendant les heures de travail* : pas de plage de dates, jours lundi à vendredi, plage horaire
+  08:00–18:00.
+- *Interroger uniquement le week-end pendant le mois à venir* : plage de dates d'aujourd'hui à aujourd'hui + 1 mois,
+  jours samedi et dimanche, pas de restriction horaire.
+
+Tester manuellement un élément depuis la page du connecteur Sud **ignore** la fenêtre d'activation, de sorte qu'une
+exécution de test n'est jamais une opération silencieusement sans effet.
+
+Si une fenêtre ne peut plus jamais se déclencher — par exemple si sa date de fin est déjà passée — OIBus affiche un
+avertissement dans la liste des modes de scrutation et sur chaque élément utilisant ce mode de scrutation.
+
+### Astuces pour les expressions cron {#tips-for-cron-expressions}
+
+- **Format** : les expressions cron sont composées de six champs :
+  `[secondes] [minutes] [heures] [jour du mois] [mois] [jour de la semaine]`. Un 7ème champ (année, comme utilisé par
+  Quartz cron) n'est pas pris en charge et sera rejeté.
+- **Caractères génériques** : utilisez `*` pour correspondre à toute valeur (par ex. `* * * * * *` pour chaque
+  seconde).
+- **Intervalles** : utilisez `*/` pour spécifier des intervalles (par ex. `*/10` pour toutes les 10 secondes).
+- **Précision** : pour un comportement prévisible, spécifiez des secondes ou minutes exactes (par ex. `0` pour le
+  début de la minute/heure).
+- **Caractères non standards** : `L`, `W`, `#`, `?` et `H` ne sont pas pris en charge et seront rejetés.
+
+#### Exemples d'expressions cron {#example-cron-expressions}
+
+- `30 * * * * *` : s'exécute à la marque des 30 secondes de chaque minute.
+- `0 15 10 * * *` : s'exécute quotidiennement à 10:15:00.
+- `0 0 22 * * 1` : s'exécute chaque lundi à 22:00:00.
+
+### Testez votre expression cron {#test-your-cron-expression}
+
+<CronTester />
