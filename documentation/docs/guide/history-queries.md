@@ -8,7 +8,7 @@ History queries let you retrieve data from a past time range using the same Sout
 infrastructure as real-time streaming. They are useful for back-filling data from before your live
 setup was active, or for re-exporting a specific period.
 
-## Compatible South Connectors
+## Compatible South Connectors {#compatible-south-connectors}
 
 Only South connectors with historian capabilities support history queries:
 
@@ -28,7 +28,7 @@ Only South connectors with historian capabilities support history queries:
 | [REST](./south-connectors/rest.mdx)                     |
 | [SQLite™](./south-connectors/sqlite.mdx)                |
 
-## Create a History Query
+## Create a History Query {#create-a-history-query}
 
 From the **History** page, click **+**. The South and North sides are configured independently, each with
 its own **From existing connector** switch:
@@ -42,16 +42,16 @@ Any combination is allowed — for example, a brand-new South connector paired w
 You can also **duplicate** an existing history query from the history query list — this copies the full
 South and North configuration, items, and transformers into a new query.
 
-## Settings
+## Settings {#settings}
 
-### General
+### General {#general}
 
 | Setting         | Description                         | Example Value            |
 | --------------- | ----------------------------------- | ------------------------ |
 | **Name**        | Unique label for the history query. | `Backfill Jan 2024`      |
 | **Description** | Optional context for the query.     | `Re-export after outage` |
 
-### Time Range
+### Time Range {#time-range}
 
 | Setting               | Description                                                                                    | Example Value              |
 | --------------------- | ---------------------------------------------------------------------------------------------- | -------------------------- |
@@ -77,7 +77,7 @@ AND timestamp <= @EndTime
 
 :::
 
-### South and North Configuration
+### South and North Configuration {#south-and-north-configuration}
 
 A history query embeds a full South connector and a full North connector. The North side (settings,
 caching, transformers) is configured exactly like a live North connector. The South side's connection
@@ -85,7 +85,7 @@ settings are configured the same way too, but items are simplified: a history qu
 **name**, an **enabled** flag, and its type-specific settings — there is no per-item scan mode, group, or
 throttling override. Every item shares the single **Time Range** settings above instead.
 
-## Execution Controls
+## Execution Controls {#execution-controls}
 
 | Control     | Description                                                                                                                                        |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -100,7 +100,7 @@ Editing an existing history query also prompts you to reset the cache when you s
 clears all tracked progress so the next run restarts from Start time; answering **No** keeps the current
 progress.
 
-## Monitoring
+## Monitoring {#monitoring}
 
 The display page shows real-time metrics for both the South and North sides of the query:
 
@@ -122,7 +122,7 @@ The display page shows real-time metrics for both the South and North sides of t
 - Last content sent
 - Last run start time and duration
 
-## Automatic Recovery
+## Automatic Recovery {#automatic-recovery}
 
 Each item (or synced group) tracks its own last-retrieved timestamp independently, so the query can resume
 after a failure or restart without re-fetching already-retrieved data. Progress is preserved across OIBus

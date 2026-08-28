@@ -6,15 +6,15 @@ sidebar_position: 4
 
 Send HTTP queries to connect to an ODBC driver and read data through SQL queries.
 
-## HTTP API
+## HTTP API {#http-api}
 
-### Status
+### Status {#status}
 
 ```
 curl --location 'http://localhost:2224/api/ole/id/status'
 ```
 
-### Connection
+### Connection {#connection}
 
 ```
 curl --location --request PUT 'http://localhost:2224/api/ole/id/connect' \
@@ -25,7 +25,7 @@ curl --location --request PUT 'http://localhost:2224/api/ole/id/connect' \
 }'
 ```
 
-### Read
+### Read {#read}
 
 ```
 curl --location --request PUT 'http://localhost:2224/api/ole/id/read' \
@@ -43,7 +43,7 @@ curl --location --request PUT 'http://localhost:2224/api/ole/id/read' \
 }'
 ```
 
-### Disconnection
+### Disconnection {#disconnection}
 
 ```
 curl --location --request DELETE 'http://localhost:2224/api/ole/id/disconnect'

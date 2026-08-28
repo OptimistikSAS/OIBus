@@ -10,11 +10,11 @@ the controller.
 
 OIBus uses the [ads-client](https://github.com/jisotalo/ads-client) library to communicate with TwinCAT® systems.
 
-## Specific Settings
+## Specific Settings {#specific-settings}
 
-### Connection
+### Connection {#connection}
 
-#### Local AMS Server (TwinCAT Runtime)
+#### Local AMS Server (TwinCAT Runtime) {#local-ams-server-twincat-runtime}
 
 Use this configuration if TwinCAT is installed on the same machine and network as OIBus.
 
@@ -28,7 +28,7 @@ Use this configuration if TwinCAT is installed on the same machine and network a
 > **Note**: When using a local AMS server, you do not need to specify the Router address, Router TCP port, Client AMS
 > Net ID, or Client ADS port.
 
-#### Remote AMS Server
+#### Remote AMS Server {#remote-ams-server}
 
 Use this configuration if TwinCAT is installed on a remote machine.
 
@@ -57,7 +57,7 @@ OIBus supports only **one remote ADS connector at a time**. To connect to multip
 simultaneously, use a local AMS server.
 :::
 
-### Advanced Settings
+### Advanced Settings {#advanced-settings}
 
 **Advanced Settings**
 
@@ -68,7 +68,7 @@ simultaneously, use a local AMS server.
 | Enumeration Value | Choose to serialize enumerations as integers or text.                                                                                           | `text`        |
 | Boolean Value     | Choose to serialize booleans as integers or text.                                                                                               | `integer`     |
 
-#### Structure Filtering
+#### Structure Filtering {#structure-filtering}
 
 | Setting        | Description                                                                               | Example Value     |
 | -------------- | ----------------------------------------------------------------------------------------- | ----------------- |
@@ -85,7 +85,7 @@ simultaneously, use a local AMS server.
 Set **Fields to Keep** to `*` to keep all fields of the structure instead of listing them individually.
 :::
 
-## Item Settings
+## Item Settings {#item-settings}
 
 | Setting | Description                           | Example Value     |
 | ------- | ------------------------------------- | ----------------- |

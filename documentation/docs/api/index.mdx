@@ -10,7 +10,7 @@ import openApi from './openapi.json';
 
 The OIBus REST API lets you automate every aspect of an OIBus instance: configure connectors and scan modes, push data directly into North connector caches, search logs, manage users, and monitor engine health — all over HTTP.
 
-## Base URL
+## Base URL {#base-url}
 
 ```
 http://<oibus-host>:2223
@@ -18,7 +18,7 @@ http://<oibus-host>:2223
 
 The default port is `2223`. Replace `<oibus-host>` with the hostname or IP address of the machine running OIBus.
 
-## Authentication
+## Authentication {#authentication}
 
 Every request must be authenticated. OIBus supports two methods:
 
@@ -27,7 +27,7 @@ Every request must be authenticated. OIBus supports two methods:
 | **JWT (Bearer token)** | Interactive sessions. Obtain a token by `POST /api/users/authenticate` with `{ login, password }`. Pass it as `Authorization: Bearer <token>`. Tokens are valid for 7 days and are invalidated if the password changes. |
 | **HTTP Basic Auth**    | Scripts and automation. Pass credentials as `Authorization: Basic <base64(login:password)>`. Prefer running scripts on the OIBus host (`localhost`) so credentials are not transmitted over the network in cleartext.   |
 
-## Common patterns
+## Common patterns {#common-patterns}
 
 **Pagination** — list endpoints that return `Page<T>` accept a `page` query parameter (zero-based). The response includes `totalElements`, `totalPages`, `size`, and `number`.
 

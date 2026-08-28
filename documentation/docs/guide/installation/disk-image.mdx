@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # Automated OIBus Installation
 
-## Objective
+## Objective {#objective}
 
 This procedure enables efficient, large-scale OIBus deployments by combining silent installation with
 standardized initial configuration applied on first launch.
@@ -16,7 +16,7 @@ standardized initial configuration applied on first launch.
 - **Immediate remote management** via [OIAnalytics](./oianalytics.mdx) registration
 - **Reduced manual effort** and minimized setup errors
 
-## How it works
+## How it works {#how-it-works}
 
 The approach relies on two scripts working together:
 
@@ -30,7 +30,7 @@ The guard at the top of `mass-install.bat` checks whether the OIBus Windows serv
 does, the script exits immediately — so cloned machines that have already been initialized are never
 re-configured accidentally.
 
-## Disk Image Preparation
+## Disk Image Preparation {#disk-image-preparation}
 
 1. Extract the OIBus installation ZIP to `C:\Program Files\OIBus`.
 2. Add `mass-install.bat` to this directory.
@@ -40,7 +40,7 @@ re-configured accidentally.
 When a machine boots from this image for the first time, the script installs and configures everything
 automatically.
 
-## The `install.bat` Script
+## The `install.bat` Script {#the-installbat-script}
 
 `install.bat` is the low-level service installer bundled with OIBus. It:
 
@@ -64,11 +64,11 @@ This script is called by `mass-install.bat` with the appropriate parameters, so 
 is needed in a disk-image context. `mass-install.bat` only passes `-c` and `-n` — it relies on OIBus's
 default admin credentials (see Phase 1 below) rather than setting them via `-u`/`-p`.
 
-## The `mass-install.bat` Script
+## The `mass-install.bat` Script {#the-mass-installbat-script}
 
 `mass-install.bat` orchestrates the full bootstrap sequence on first boot. Each phase is described below.
 
-### Phase 1 — Configuration variables
+### Phase 1 — Configuration variables {#phase-1--configuration-variables}
 
 ```batch
 set INSTALL_SCRIPT_PATH=%~dp0install.bat
@@ -87,7 +87,7 @@ to `install.bat` in the same folder regardless of where the script is launched f
 All five variables are defaults. Every one of them can be overridden at call time via a command-line
 parameter (see Phase 2). The default credentials (`admin` / `pass`) match a fresh OIBus installation.
 
-### Phase 2 — Parameter parsing
+### Phase 2 — Parameter parsing {#phase-2--parameter-parsing}
 
 ```batch
 :PARSE_PARAMETERS
@@ -137,7 +137,7 @@ Each flag overrides its corresponding default:
 
 All flags are optional; any omitted value falls back to the default declared in Phase 1.
 
-### Phase 3 — Input validation
+### Phase 3 — Input validation {#phase-3--input-validation}
 
 ```batch
 :: The service name ends up as a raw, unquoted argument in several commands below (sc.exe,
@@ -169,7 +169,7 @@ password — would corrupt or hijack the `curl` calls in the phases below. From 
 `%ESCAPED_USERNAME%`, `%ESCAPED_PASSWORD%`, and `%ESCAPED_OIANALYTICS_URL%` instead of the raw
 variables wherever they are embedded in a command or a JSON body.
 
-### Phase 4 — Administrator check
+### Phase 4 — Administrator check {#phase-4--administrator-check}
 
 ```batch
 net session >nul 2>&1
@@ -182,7 +182,7 @@ if %errorLevel% neq 0 (
 Installing a Windows service requires elevated privileges. If the script is not running as Administrator,
 it exits immediately with a non-zero code so the failure is visible in the scheduler logs.
 
-### Phase 5 — Idempotency guard
+### Phase 5 — Idempotency guard {#phase-5--idempotency-guard}
 
 ```batch
 sc query "%SERVICE_NAME%" >nul 2>&1
@@ -197,7 +197,7 @@ first boot the service does not exist, so installation proceeds. On every subseq
 machine where OIBus was already installed manually) the script exits early without touching the existing
 installation.
 
-### Phase 6 — Network readiness
+### Phase 6 — Network readiness {#phase-6--network-readiness}
 
 ```batch
 :WAIT_FOR_NETWORK
@@ -213,7 +213,7 @@ waits until the DNS Client service (`Dnscache`) is `RUNNING` — a reliable indi
 networking is available — before proceeding. This prevents API calls from failing due to a missing
 network.
 
-### Phase 7 — Installation
+### Phase 7 — Installation {#phase-7--installation}
 
 ```batch
 if not exist "%DATA_FOLDER_PATH%" mkdir "%DATA_FOLDER_PATH%"
@@ -229,7 +229,7 @@ Creates the data directory if needed, then calls `install.bat` with the configur
 `install.bat` registers the OIBus service via NSSM and starts it. Any failure propagates the exit code
 so the calling scheduler task can detect and report it.
 
-### Phase 8 — Service readiness
+### Phase 8 — Service readiness {#phase-8--service-readiness}
 
 ```batch
 :WAIT_FOR_OIBUS
@@ -245,7 +245,7 @@ Polls the service state every 5 seconds until `sc query` reports it as `RUNNING`
 because `nssm.exe start` returns as soon as the service process launches, not when it is fully
 initialized.
 
-### Phase 9 — Web server readiness
+### Phase 9 — Web server readiness {#phase-9--web-server-readiness}
 
 ```batch
 :WAIT_FOR_WEB
@@ -261,7 +261,7 @@ and start listening. This loop polls `/api/status` — an unauthenticated endpoi
 confirm the server is reachable — every 5 seconds until it returns an HTTP 2xx response, at which point
 the API is ready to accept configuration calls.
 
-### Phase 10 — Initial configuration via the API
+### Phase 10 — Initial configuration via the API {#phase-10--initial-configuration-via-the-api}
 
 With OIBus running and its API reachable, the script creates the initial objects — scan modes,
 connectors, or any other resources needed for your deployment. The example below creates two scan modes
@@ -294,7 +294,7 @@ For the full list of available endpoints and their request/response schemas, see
 [API documentation](../../api/index.mdx).
 :::
 
-### Phase 11 — OIAnalytics registration
+### Phase 11 — OIAnalytics registration {#phase-11--oianalytics-registration}
 
 ```batch
 curl --location --request POST --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/oianalytics/register" ^
@@ -320,7 +320,7 @@ For the full registration flow, network requirements, and security model, see th
 
 If you do not use OIAnalytics, omit this step.
 
-## Full Script
+## Full Script {#full-script}
 
 ```batch
 @echo off
@@ -512,7 +512,7 @@ if %errorlevel% neq 0 (
 :END
 ```
 
-### Usage
+### Usage {#usage}
 
 ```batch
 .\mass-install.bat -n "OIBus" -c "C:\OIBusData" -u "admin" -p "pass" -o "https://instance.optimistik.fr/"
