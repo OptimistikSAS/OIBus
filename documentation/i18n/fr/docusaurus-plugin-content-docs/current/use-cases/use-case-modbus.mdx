@@ -1,0 +1,70 @@
+---
+displayed_sidebar: useCasesSidebar
+sidebar_position: 4
+---
+
+# Modbus → File Writer
+
+## Préalable {#beforehand}
+
+Ce cas d'usage est un bon point de départ pour tester OIBus — vous pouvez utiliser un simulateur Modbus pour l'essayer sans matériel réel.
+
+Consultez les pages des connecteurs [North File Writer](../guide/north-connectors/file-writer.md) et [South Modbus](../guide/south-connectors/modbus.mdx) pour tous les détails de configuration. L'exemple utilise le réseau fictif suivant.
+
+<div style={{ textAlign: 'center' }}>
+
+![Modbus -> File writer](../../static/img/use-cases/modbus-file-writer.svg)
+
+</div>
+
+## South Modbus {#south-modbus}
+
+Vous avez besoin de l'adresse IP (ou du nom d'hôte) et du port du serveur Modbus (le port 502 est celui par défaut). Si le serveur possède plusieurs esclaves, vous avez également besoin de l'ID de l'esclave cible — utilisez `1` s'il n'y a qu'un seul esclave.
+
+Dans cet exemple, l'adresse IP est `10.0.0.1` et le port est `502`.
+
+Sélectionnez le décalage d'adresse **JBus** ou **Modbus** selon que les adresses de registre commencent à 0 ou à 1 sur votre automate. Vérifiez également l'endianness, l'inversion d'octets et l'inversion de mots avec la documentation de l'automate ou son administrateur.
+
+<div style={{ textAlign: 'center' }}>
+
+![Paramètres Modbus](../../static/img/use-cases/modbus-settings.png)
+
+</div>
+
+:::tip Test de la connexion
+Cliquez sur **Tester les paramètres** pour vérifier la connexion avant d'enregistrer.
+:::
+
+### Éléments {#items}
+
+Ajoutez les adresses de registre que vous souhaitez lire. Demandez à l'administrateur du serveur Modbus les adresses disponibles, leur type Modbus, leur type de donnée et leur coefficient multiplicateur. Sélectionnez un [mode de scrutation](../guide/engine/scan-modes.mdx) pour contrôler l'intervalle de collecte.
+
+<div style={{ textAlign: 'center' }}>
+
+![Paramètres d'élément Modbus](../../static/img/use-cases/modbus-item.png)
+
+</div>
+
+:::tip Import en masse
+Cliquez sur **Exporter** pour télécharger un modèle CSV avec les colonnes appropriées, renseignez une ligne par élément, puis importez-le à nouveau. Les noms d'éléments doivent être uniques.
+:::
+
+## North File Writer {#north-file-writer}
+
+Vous avez besoin du chemin du dossier de sortie, et le compte de service OIBus doit disposer des droits d'écriture sur celui-ci (par exemple `D:\Data`).
+
+:::info Utilisateur système OIBus sous Windows
+Lorsque OIBus s'exécute en tant que service Windows, le compte par défaut est **SYSTEM**. Modifiez-le via le gestionnaire de services Windows si vous avez besoin d'accéder à des partages réseau ou à des dossiers réservés à un utilisateur spécifique. Redémarrez le service après avoir modifié le compte. Notez que le compte **SYSTEM** n'a pas accès aux chemins distants (UNC) par défaut.
+:::
+
+OIBus peut écrire les données sous forme de fichiers bruts ou de fichiers JSON. Les fichiers reçus des connecteurs South sont écrits tels quels ; les valeurs JSON sont sérialisées en fichiers JSON. Vous pouvez également ajouter un préfixe et un suffixe à chaque nom de fichier écrit dans le dossier de sortie.
+
+<div style={{ textAlign: 'center' }}>
+
+![Paramètres File Writer](../../static/img/use-cases/file-writer-settings.png)
+
+</div>
+
+:::tip Test de la connexion
+Cliquez sur **Tester les paramètres** pour vérifier la connexion avant d'enregistrer.
+:::

@@ -1,0 +1,40 @@
+---
+hide_table_of_contents: true
+sidebar: false
+---
+
+import RedocWrapper from '../../../../../src/components/Redoc/index';
+import openApi from './openapi.json';
+
+# Référence de l'API OIBus
+
+L'API REST OIBus vous permet d'automatiser tous les aspects d'une instance OIBus : configurer les connecteurs et les modes de scan, envoyer des données directement dans les caches des connecteurs North, rechercher dans les logs, gérer les utilisateurs et surveiller l'état de santé du moteur — le tout via HTTP.
+
+## URL de base {#base-url}
+
+```
+http://<oibus-host>:2223
+```
+
+Le port par défaut est `2223`. Remplacez `<oibus-host>` par le nom d'hôte ou l'adresse IP de la machine sur laquelle OIBus s'exécute.
+
+## Authentification {#authentication}
+
+Chaque requête doit être authentifiée. OIBus prend en charge deux méthodes :
+
+| Méthode                 | Quand l'utiliser                                                                                                                                                                                                             |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **JWT (Bearer token)** | Sessions interactives. Obtenez un token via `POST /api/users/authenticate` avec `{ login, password }`. Passez-le en tant que `Authorization: Bearer <token>`. Les tokens sont valides pendant 7 jours et sont invalidés si le mot de passe change. |
+| **HTTP Basic Auth**    | Scripts et automatisation. Passez les identifiants en tant que `Authorization: Basic <base64(login:password)>`. Privilégiez l'exécution des scripts sur l'hôte OIBus (`localhost`) afin que les identifiants ne soient pas transmis en clair sur le réseau.   |
+
+## Modèles courants {#common-patterns}
+
+**Pagination** — les points de terminaison de liste qui renvoient `Page<T>` acceptent un paramètre de requête `page` (indexé à partir de zéro). La réponse inclut `totalElements`, `totalPages`, `size` et `number`.
+
+**Valeurs multiples séparées par des virgules** — certains paramètres de requête (par ex. `northId`, `levels`, `types`, `status`) acceptent plusieurs valeurs sous forme de chaîne séparée par des virgules : `?levels=error,warn`.
+
+**204 No Content** — les opérations `PUT` et `DELETE` renvoient `204` en cas de succès avec un corps vide.
+
+---
+
+<RedocWrapper spec={openApi} />
