@@ -1,0 +1,76 @@
+---
+displayed_sidebar: useCasesSidebar
+sidebar_position: 5
+---
+
+# Aspen InfoPlus.21® (IP21) → Amazon S3™
+
+## Préalable {#beforehand}
+
+AspenTech IP21 est un historien de données temps réel qui collecte, stocke et analyse les données de séries temporelles issues des processus industriels. OIBus se connecte à IP21 via ODBC.
+
+Consultez les pages des connecteurs [North Amazon S3](../guide/north-connectors/aws-s3.md) et [South ODBC](../guide/south-connectors/odbc) pour tous les détails de configuration.
+
+Ce cas d'usage nécessite un [OIBus Agent](../guide/oibus-agent/installation). L'exemple utilise le réseau fictif suivant.
+
+<div style={{ textAlign: 'center' }}>
+
+![IP21 -> AWS S3](../../static/img/use-cases/ip21-aws.svg)
+
+</div>
+
+:::caution Installez l'Agent à proximité d'IP21
+Le pilote Aspen SQLplus est sensible à la latence réseau. Installez l'OIBus Agent sur le serveur IP21, ou au moins sur le même réseau local. Des sauts réseau ou pare-feu supplémentaires entre l'Agent et l'historien peuvent provoquer des problèmes de collecte de données et une dégradation des performances.
+:::
+
+## South ODBC {#south-odbc}
+
+Les connexions ODBC peuvent être gérées de deux manières :
+
+- Le pilote JavaScript interne [node-odbc](https://github.com/markdirish/node-odbc).
+- L'[OIBus Agent](../guide/oibus-agent/installation) avec son implémentation ODBC en C#.
+
+:::info
+Ce cas d'usage utilise l'OIBus Agent — l'approche recommandée pour IP21.
+:::
+
+Installez l'OIBus Agent sur la machine IP21, activez **Utiliser un agent distant** dans les paramètres du connecteur, et saisissez `http://192.169.0.2:2224` comme **URL de l'agent distant**.
+
+:::tip Port de l'OIBus Agent
+Le port 2224 est celui par défaut. Vous pouvez le modifier lors de l'installation. Assurez-vous que le port choisi est ouvert pour les connexions HTTP entrantes dans votre pare-feu.
+:::
+
+La chaîne de connexion suit le format ODBC standard. Le pilote ODBC **AspenTech SQLplus** doit être installé sur la machine exécutant l'OIBus Agent.
+
+<div style={{ textAlign: 'center' }}>
+
+![Paramètres ODBC](../../static/img/use-cases/odbc-settings.png)
+
+</div>
+
+:::tip Test de la connexion
+Cliquez sur **Tester les paramètres** pour vérifier la connexion avant d'enregistrer.
+:::
+
+### Éléments {#items}
+
+Le connecteur ODBC accepte les requêtes SQL. Consultez la [documentation des éléments MSSQL](./use-case-mssql#sql-queries) pour des conseils sur l'écriture de requêtes avec les variables `@StartTime` et `@EndTime`.
+
+## North Amazon S3 {#north-amazon-s3}
+
+Vous avez besoin des éléments suivants avant de renseigner les paramètres du connecteur :
+
+- Bucket : `oibus-test`
+- Région : `eu-west-3`
+- Dossier : `north-local-oib` (laisser vide pour stocker les fichiers à la racine du bucket)
+- Clé d'accès et clé secrète générées dans Amazon S3
+
+<div style={{ textAlign: 'center' }}>
+
+![Paramètres AWS S3](../../static/img/use-cases/aws-s3-settings.png)
+
+</div>
+
+:::tip Test de la connexion
+Cliquez sur **Tester les paramètres** pour vérifier la connexion avant d'enregistrer.
+:::

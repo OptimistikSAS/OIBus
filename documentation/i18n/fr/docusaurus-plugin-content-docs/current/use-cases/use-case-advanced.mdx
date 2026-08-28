@@ -1,0 +1,81 @@
+---
+displayed_sidebar: useCasesSidebar
+sidebar_position: 7
+---
+
+# Configuration réseau avancée multi-sites
+
+## Vue d'ensemble {#overview}
+
+Ce cas d'usage présente un réseau hétérogène avec deux zones isolées :
+
+- **Réseau OT** — le réseau industriel hébergeant les automates
+- **Réseau IT** — le réseau d'entreprise avec les bases de données et la connectivité cloud
+
+<div style={{ textAlign: 'center' }}>
+
+![Intégration complexe](../../static/img/use-cases/advanced-integration.svg)
+
+</div>
+
+Deux instances OIBus sont déployées : **OIBus OT** et **OIBus IT**. Cela limite l'ouverture de pare-feu entre les deux zones à une seule connexion : OIBus OT envoie les données à OIAnalytics via le serveur proxy fonctionnant sur OIBus IT.
+
+Configurez d'abord **OIBus IT** — configurez son serveur proxy et les règles de pare-feu requises avant de configurer OIBus OT.
+
+## OIBus IT {#oibus-it}
+
+### Connecteurs South {#south-connectors}
+
+#### MSSQL {#mssql}
+
+Consultez le [cas d'usage MSSQL](./use-case-mssql) et la [documentation du connecteur](../guide/south-connectors/mssql) pour les instructions de configuration.
+
+#### MQTT {#mqtt}
+
+Abonnez-vous aux sujets MQTT comme décrit dans la [page du connecteur MQTT](../guide/south-connectors/mqtt).
+
+#### Folder Scanner {#folder-scanner}
+
+OIBus peut surveiller un dossier et récupérer les fichiers correspondant à une expression régulière — utile lorsqu'un script ou un autre outil dépose des fichiers CSV qu'OIBus ne peut pas interroger directement. Consultez la [page du connecteur Folder Scanner](../guide/south-connectors/folder-scanner).
+
+#### ODBC (avec OIBus Agent) {#odbc-with-oibus-agent}
+
+Le [connecteur ODBC](../guide/south-connectors/odbc) utilise un [OIBus Agent](../guide/oibus-agent/installation) installé sur la machine IP21. Consultez le [cas d'usage IP21](./use-case-ip21) pour les détails de configuration.
+
+#### OSIsoft PI (avec OIBus Agent) {#osisoft-pi-with-oibus-agent}
+
+Le [connecteur OSIsoft PI](../guide/south-connectors/osisoft-pi) utilise un [OIBus Agent](../guide/oibus-agent/installation) installé sur ou à proximité du serveur PI. Consultez le [cas d'usage OSIsoft PI](./use-case-pi) pour les détails de configuration.
+
+### Connecteurs North {#north-connectors}
+
+#### OIAnalytics {#oianalytics}
+
+[Enregistrez OIBus auprès d'OIAnalytics](../guide/installation/oianalytics) d'abord, puis activez l'enregistrement dans le [connecteur North OIAnalytics](../guide/north-connectors/oianalytics).
+
+### Serveur proxy {#proxy-server}
+
+Activez le [serveur proxy](../guide/engine/engine-settings#proxy-server) sur OIBus IT et assurez-vous que le port choisi est disponible et ouvert pour les connexions entrantes dans le pare-feu.
+
+## OIBus OT {#oibus-ot}
+
+OIBus OT collecte les données des automates du réseau industriel et les transmet à OIAnalytics via le proxy d'OIBus IT.
+
+### Connecteurs South {#south-connectors-1}
+
+#### TwinCAT ADS {#twincat-ads}
+
+Consultez le [cas d'usage TwinCAT ADS](./use-case-ads) — le serveur ADS est distant dans ce scénario.
+
+#### OPC UA {#opc-ua}
+
+Consultez le [cas d'usage OPC UA](./use-case-opcua).
+
+#### Modbus {#modbus}
+
+Consultez le [cas d'usage Modbus](./use-case-modbus).
+
+### Connecteurs North {#north-connectors-1}
+
+#### OIAnalytics {#oianalytics-1}
+
+[Enregistrez OIBus OT auprès d'OIAnalytics](../guide/installation/oianalytics) et configurez le proxy (le serveur proxy d'OIBus IT) dans les paramètres d'enregistrement. Activez l'enregistrement dans le [connecteur North OIAnalytics](../guide/north-connectors/oianalytics) et vérifiez que le pare-feu autorise la connexion d'OIBus OT vers OIBus IT.
