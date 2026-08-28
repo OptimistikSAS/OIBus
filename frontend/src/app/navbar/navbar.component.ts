@@ -6,6 +6,7 @@ import { of, switchMap } from 'rxjs';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CurrentUserService } from '../shared/current-user.service';
 import { EngineService } from '../services/engine.service';
+import { DocsUrlService } from '../shared/docs-url.service';
 import { PageTitleDirective } from '../services/page-title.directive';
 
 @Component({
@@ -18,6 +19,9 @@ import { PageTitleDirective } from '../services/page-title.directive';
 export class NavbarComponent {
   private readonly currentUserService = inject(CurrentUserService);
   private readonly engineService = inject(EngineService);
+  private readonly docsUrlService = inject(DocsUrlService);
+
+  readonly docsHomeUrl = this.docsUrlService.resolve('');
 
   private readonly user$ = this.currentUserService.get();
   readonly user = toSignal(this.user$, { initialValue: null });
