@@ -219,7 +219,8 @@ describe('Config Transfer Builder Service', () => {
           endTimeOffset: 2,
           maxReadInterval: 3,
           readDelay: 4,
-          recoveryStrategy: 'oldest'
+          recoveryStrategy: 'oldest',
+          cachingStrategy: 'onChange'
         }
       ]
     };
@@ -262,7 +263,8 @@ describe('Config Transfer Builder Service', () => {
         endTimeOffset: 2,
         maxReadInterval: 3,
         readDelay: 4,
-        recoveryStrategy: 'oldest'
+        recoveryStrategy: 'oldest',
+        cachingStrategy: 'onChange'
       }
     });
 
