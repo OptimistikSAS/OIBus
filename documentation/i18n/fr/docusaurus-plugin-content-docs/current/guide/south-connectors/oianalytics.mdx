@@ -1,0 +1,129 @@
+---
+sidebar_position: 8
+---
+
+import ThrottlingSettings from './_throttling-settings.mdx';
+
+# OIAnalytics®
+
+Interroger des données de séries temporelles depuis l'application SaaS [OIAnalytics®](https://optimistik.com/oianalytics/).
+
+## Paramètres de connexion {#connection-settings}
+
+### Configuration principale {#main-configuration}
+
+| Setting                      | Description                                                                                                                | Example Value    |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| Use OIAnalytics registration | Utiliser les paramètres de connexion préconfigurés depuis l'[enregistrement OIAnalytics](../installation/oianalytics.mdx). Par défaut : activé. | Enabled/Disabled |
+| Timeout                      | Durée en secondes avant qu'un échec de connexion soit signalé. Par défaut : `30`.                                          | `30`             |
+
+### Configuration manuelle (lorsque l'enregistrement n'est pas utilisé) {#manual-configuration-when-registration-not-used}
+
+| Setting                             | Description                                                              | Example Value                        |
+| ------------------------------------ | ------------------------------------------------------------------------ | ------------------------------------- |
+| **Host**                            | Nom d'hôte de l'application SaaS OIAnalytics®.                           | `https://optimistik.oianalytics.com` |
+| **Accept unauthorized certificate** | Activer si les requêtes HTTP passent par un pare-feu qui supprime les certificats. | Enabled/Disabled                     |
+
+#### Paramètres d'authentification {#authentication-settings}
+
+| Setting               | Description                                                                                                 | Example Value                                                             |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Authentication method | Type d'authentification pour la connexion.                                                                  | `Access key/Secret`, `Azure AD (Client Secret)`, `Azure AD (Certificate)` |
+| Access key             | Clé d'accès pour l'authentification Access key/Secret.                                                       | `my_access_key`                                                           |
+| Secret                 | Secret pour l'authentification Access key/Secret.                                                            | `••••••••`                                                                |
+| Tenant ID              | Identifiant du tenant Azure AD (pour les méthodes Azure AD).                                                 | `tenant-id-uuid`                                                          |
+| Client ID              | Identifiant client Azure AD (pour les méthodes Azure AD).                                                    | `client-id-uuid`                                                          |
+| Client Secret          | Secret client Azure AD (pour la méthode Azure AD Client Secret).                                             | `••••••••`                                                                |
+| Certificate            | Certificat sélectionné depuis la page Certificats d'OIBus (pour la méthode Azure AD Certificate), et non un chemin de fichier brut. | (sélectionné dans la liste)                                               |
+| Scope                  | Portée OAuth (pour la méthode Azure AD Certificate).                                                         | `https://resource/.default`                                               |
+
+#### Configuration du proxy {#proxy-configuration}
+
+| Setting            | Description                                      | Example Value                   |
+| ------------------- | ------------------------------------------------- | -------------------------------- |
+| **Use proxy**      | Acheminer les requêtes via un serveur proxy.      | Enabled/Disabled                |
+| **Proxy URL**      | URL du serveur proxy.                             | `http://proxy.example.com:8080` |
+| **Proxy username** | Nom d'utilisateur pour l'authentification proxy (si requis). | `proxy_user`                    |
+| **Proxy password** | Mot de passe pour l'authentification proxy (si requis).      | `••••••••`                      |
+
+## Paramètres de groupe {#group-settings}
+
+Les éléments peuvent être organisés en groupes. Chaque groupe définit une planification de collecte partagée et des
+paramètres de limitation (throttling) par défaut. Les éléments d'un même groupe sont toujours récupérés **un à la
+fois** en séquence — le groupe fournit simplement des valeurs par défaut communes que les éléments individuels
+peuvent surcharger.
+
+| Setting        | Description                                                                                                                                       | Example Value             |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| **Name**       | Libellé unique du groupe au sein de ce connecteur.                                                                                                 | `Group A`                  |
+| **Scan mode**  | Planification utilisée pour collecter tous les éléments du groupe.                                                                                | `Every 1 min`               |
+| **Throttling** | Valeurs de limitation par défaut (Max read interval, Read delay, Start time offset, End time offset, Recovery strategy) héritées par les éléments du groupe. | `3600, 200, 0, 0, oldest`  |
+
+## Paramètres d'élément {#item-settings}
+
+Chaque élément peut être configuré individuellement. Les éléments héritent de leur mode de scan et de leurs valeurs
+de limitation par défaut du groupe, mais chaque paramètre peut être remplacé au niveau de l'élément en désactivant
+**Sync with group**.
+
+<ThrottlingSettings />
+
+### Paramètres du point de terminaison {#endpoint-settings}
+
+| Setting  | Description                              | Example Value                  |
+| -------- | ----------------------------------------- | ------------------------------- |
+| Endpoint | Point de terminaison API pour les requêtes HTTP | `/api/oianalytics/data/values` |
+
+### Paramètres de requête {#query-parameters}
+
+**Variables de requête** :
+
+- `@StartTime` : Heure d'exécution initiale, mise à jour avec l'horodatage le plus récent des résultats
+- `@EndTime` : Heure actuelle (`now()`) ou fin de sous-intervalle lorsque les requêtes sont fractionnées
+
+:::info Fractionnement des requêtes
+Les grands intervalles de temps sont automatiquement divisés en plus petits blocs à l'aide de :
+
+- **Max read interval** (voir les [paramètres de limitation](#throttling-settings))
+- Réduit la charge sur le serveur et le réseau
+- Améliore la résilience du flux de données
+  :::
+
+:::tip Clés répétées
+Ajouter plusieurs fois la même clé l'envoie sous forme de tableau de valeurs dans la requête, au lieu d'écraser la
+valeur précédente. Ceci est utile pour les points de terminaison acceptant plusieurs valeurs pour un même paramètre,
+comme `data-reference` ci-dessous.
+:::
+
+#### Exemple : interroger des valeurs de données {#example-querying-data-values}
+
+Pour récupérer les valeurs brutes de plusieurs références de données sur une fenêtre temporelle, configurez l'élément
+avec le point de terminaison `/api/oianalytics/data/values` et les paramètres de requête suivants :
+
+| Key            | Value                           |
+| -------------- | -------------------------------- |
+| from           | `@StartTime`                    |
+| to             | `@EndTime`                      |
+| aggregation    | `RAW_VALUES`                    |
+| data-reference | `CIP_Line_1_Acid_Tank_Level`    |
+| data-reference | `CIP_Line_1_Caustic_Tank_Level` |
+
+Comme `data-reference` est répété, il est envoyé sous la forme `data-reference=CIP_Line_1_Acid_Tank_Level&data-reference=CIP_Line_1_Caustic_Tank_Level`,
+ce qui permet au point de terminaison de renvoyer les valeurs des deux niveaux de réservoir en une seule requête.
+
+## Options de sérialisation CSV {#csv-serialization-options}
+
+| Setting                | Description                                                              | Example Value                                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| Filename                | Modèle de nom de fichier de sortie avec les variables : `@ConnectorName`, `@CurrentDate` | `data_@ConnectorName.csv`                                                                                         |
+| Delimiter               | Caractère séparateur de champs                                          | `COMMA` (,), `SEMI_COLON` (;), `DOT` (.), `COLON` (:), `PIPE` (\|), `SLASH` (/), `TAB` (\t), `NON_BREAKING_SPACE` |
+| Compression             | Activer la compression gzip                                             | Enabled/Disabled                                                                                                  |
+| Output datetime format | Format des champs datetime dans le CSV                                  | `yyyy-MM-dd HH:mm:ss`                                                                                             |
+| Output timezone        | Fuseau horaire pour les valeurs datetime                                | `UTC` or `Europe/Paris`                                                                                           |
+
+:::info Variables du nom de fichier
+
+- `@ConnectorName` : Nom du connecteur
+- `@CurrentDate` : Horodatage actuel au format `yyyy_MM_dd_HH_mm_ss_SSS` (format fixe)
+- Le paramètre de format datetime n'affecte pas l'horodatage du nom de fichier
+
+:::

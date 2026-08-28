@@ -1,0 +1,141 @@
+---
+sidebar_position: 1
+---
+
+import DownloadButton from '@site/src/components/DownloadButton';
+
+# Agent OIBus : présentation et installation
+
+L'agent OIBus est un service Windows léger qui permet la collecte de données spécifique à un protocole pour les technologies nécessitant une intégration native à Windows.
+
+## Fonctionnalités clés {#key-features}
+
+| Fonctionnalité                | Protocoles pris en charge         | Avantages                                       |
+| ------------------------------ | ---------------------------------- | ------------------------------------------------ |
+| Accès natif Windows            | OPC Classic™, OLEDB, OSIsoft PI™  | Intégration directe avec les technologies Windows |
+| Intégration au service         | Gestionnaire des services Windows  | Fonctionnement en arrière-plan fiable             |
+| Multi-architecture              | x64, x86, ARM64                    | Prend en charge tous les systèmes Windows modernes |
+
+## Téléchargement {#download}
+
+<div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '1rem' }}>
+  <DownloadButton link={`https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/oibus-agent-win_x64-__VERSION__.zip`}>
+    <div>Windows (x64)</div>
+  </DownloadButton>
+  <DownloadButton link={`https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/oibus-agent-win_x86-__VERSION__.zip`}>
+    <div>Windows (x86)</div>
+  </DownloadButton>
+  <DownloadButton
+    link={`https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/oibus-agent-win_arm64-__VERSION__.zip`}
+  >
+    <div>Windows (ARM64)</div>
+  </DownloadButton>
+</div>
+
+## Configuration requise {#system-requirements}
+
+| Configuration requise | Spécification                       |
+| ---------------------- | ------------------------------------ |
+| Système d'exploitation | Windows 10/11, Windows Server 2016+  |
+| Architecture            | x64, x86 ou ARM64                    |
+| .NET Framework          | 4.8 ou ultérieur                     |
+| Espace disque           | 50 Mo minimum                        |
+| Mémoire                 | 128 Mo minimum                       |
+
+## Installation {#installation}
+
+### Contenu du package {#package-contents}
+
+Lorsque vous décompressez l'archive téléchargée, vous trouverez les fichiers suivants :
+
+| Fichier                | But                                   |
+| ----------------------- | -------------------------------------- |
+| `OIBusAgent.exe`        | Exécutable principal                   |
+| `install-agent.bat`     | Script d'installation du service       |
+| `uninstall-agent.bat`   | Script de suppression du service       |
+
+### Méthodes d'installation {#installation-methods}
+
+#### 1. En tant que service Windows (recommandé) {#1-as-a-windows-service-recommended}
+
+```bash
+# Default installation (port 2224, service name "OIBusAgent")
+install-agent.bat
+
+# Custom installation
+install-agent.bat -n="CustomServiceName" -p=2225
+```
+
+| Paramètre | Description        | Valeur par défaut |
+| --------- | ------------------- | ------------------- |
+| `-n`      | Nom du service       | "OIBusAgent"        |
+| `-p`      | Port HTTP            | 2224                 |
+
+#### 2. Exécution manuelle {#2-manual-execution}
+
+```bash
+# Default port (2224)
+OIBusAgent.exe
+
+# Custom port
+OIBusAgent.exe -p 2225
+```
+
+### Procédure de mise à jour {#update-procedure}
+
+1. Arrêter le service existant (s'il est en cours d'exécution)
+2. Extraire les fichiers de la nouvelle version
+3. Remplacer les anciens fichiers par les nouveaux
+4. Redémarrer le service
+
+### Désinstallation {#uninstallation}
+
+```bash
+# Default service name
+uninstall-agent.bat
+
+# Custom service name
+uninstall-agent.bat -n="CustomServiceName"
+```
+
+## Modes d'utilisation {#usage-modes}
+
+### 1. Intégré à OIBus {#1-integrated-with-oibus}
+
+- Fait office de pont de protocole pour les connecteurs Sud d'OIBus
+- Gère les protocoles spécifiques à Windows de manière transparente
+- Gestion automatique du service via l'interface OIBus
+
+### 2. Mode autonome {#2-standalone-mode}
+
+- Accès direct via l'API HTTP
+- Fonctionnement indépendant d'OIBus
+- Adapté aux intégrations personnalisées
+
+## Après l'installation {#post-installation}
+
+1. **Vérifier l'installation** :
+
+```bash
+sc query "OIBusAgent"
+```
+
+(ou le nom personnalisé de votre service)
+
+2. **Vérifier l'état du service** :
+
+- Ouvrir le Gestionnaire des services (`services.msc`)
+- Rechercher "OIBusAgent" (ou votre nom personnalisé)
+- Vérifier que l'état est "En cours d'exécution"
+
+3. **Tester la connectivité** :
+
+```bash
+curl http://localhost:2224/api/status
+```
+
+Devrait retourner :
+
+```json
+{ "status": "running", "version": "__VERSION__" }
+```

@@ -1,0 +1,74 @@
+---
+sidebar_position: 12
+---
+
+import ItemSettings from './_south-record-list-item-settings.mdx';
+
+# Oracle Database™
+
+Connectez-vous à Oracle Database™ et interrogez-le avec OIBus, avec la prise en charge des modes de connexion thin et thick.
+
+## Compatibilité des versions {#version-compatibility}
+
+| Version d'Oracle DB | Mode Thin | Mode Thick | Remarques                              |
+| ----------------- | --------- | ---------- | ---------------------------------- |
+| 19c+              | ✅        | ✅         | Recommandé                        |
+| 12.2 (12c R2)     | ✅        | ✅         | Minimum pour le mode thin              |
+| 12.1 (12c R1)     | ⚠️        | ✅         | Mode thin non officiellement pris en charge |
+| 11.2 (11g R2)     | ❌        | ✅         | Minimum pour le mode thick             |
+| 10g ou antérieur      | ❌        | ❌         | Non compatible                     |
+
+## Paramètres spécifiques {#specific-settings}
+
+| Paramètre               | Description                                                                                                                        | Exemple de valeur                  |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| Mode thick            | Utiliser la bibliothèque cliente Oracle pour l'accès à la base de données. Nécessite l'installation d'Instant Client.                             | Activé/Désactivé               |
+| Bibliothèque cliente Oracle | Chemin vers Oracle Instant Client. Requis quand le mode thick est activé.                                                                  | `C:\oracle\instantclient_23_5` |
+| Hôte                  | Adresse IP ou nom d'hôte du serveur Oracle.                                                                                       | `192.168.1.10`                 |
+| Port                  | Port du serveur. Par défaut : `1521`.                                                                                                      | `1521`                         |
+| Délai de connexion    | Temps maximal en millisecondes pour établir la connexion. Par défaut : `15000`.                                                            | `15000`                        |
+| Base de données              | Nom du service de la base de données cible (format Oracle Easy Connect : `host:port/service_name` ; la forme SID classique n'est pas prise en charge). | `ORCL`                         |
+| Nom d'utilisateur              | Nom d'utilisateur d'authentification.                                                                                                           | `db_user`                      |
+| Mot de passe              | Mot de passe d'authentification.                                                                                                           | `••••••••`                     |
+
+### Modes de connexion {#connection-modes}
+
+| Mode  | Description                    | Exigences         | Avantages                       |
+| ----- | ------------------------------ | -------------------- | ------------------------------- |
+| Thin  | Implémentation JavaScript pure | Aucune                 | Configuration facile, aucun binaire natif |
+| Thick | Utilise la bibliothèque cliente Oracle     | Instant Client 18.5+ | Prise en charge complète des fonctionnalités           |
+
+:::info Oracle Instant Client
+
+- **Requis uniquement pour le mode thick**
+- Version minimale : 18.5.0.0.0
+- Prend en charge Oracle Database 11.2+
+- Téléchargement : [Oracle Instant Client](https://www.oracle.com/database/technologies/instant-client.html)
+  :::
+
+:::tip Bonnes pratiques de sécurité
+
+- Utilisez un utilisateur de base de données en lecture seule
+- Préférez le mode thin si possible pour un déploiement plus simple
+
+:::
+
+<ItemSettings />
+
+:::note Types de champ datetime Oracle
+Les valeurs de **Type** suivantes sont disponibles pour le champ datetime de l'instant de suivi :
+
+| Type            | Description                                       |
+| --------------- | ------------------------------------------------- |
+| String          | Représentation sous forme de chaîne analysée avec un format personnalisé |
+| DateTime        | Colonne Oracle `DATE` ou `TIMESTAMP`               |
+| ISO String      | Chaîne ISO 8601 (ex. `2024-01-15T10:30:00.000Z`) |
+| UNIX epoch (s)  | Horodatage Unix en secondes                         |
+| UNIX epoch (ms) | Horodatage Unix en millisecondes                    |
+
+:::
+
+:::note Délai d'expiration de la requête Oracle
+Chaque élément Oracle dispose d'un champ **Délai d'expiration de la requête** supplémentaire (en millisecondes) qui définit la durée d'exécution maximale
+pour cette requête spécifique.
+:::
