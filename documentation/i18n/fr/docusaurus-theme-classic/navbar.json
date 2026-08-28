@@ -1,0 +1,30 @@
+{
+  "title": {
+    "message": "OIBus",
+    "description": "The title in the navbar"
+  },
+  "logo.alt": {
+    "message": "Logo OIBus",
+    "description": "The alt text of navbar logo"
+  },
+  "item.label.Documentation": {
+    "message": "Documentation",
+    "description": "Navbar item with label Documentation"
+  },
+  "item.label.Use cases": {
+    "message": "Cas d'usage",
+    "description": "Navbar item with label Use cases"
+  },
+  "item.label.Developer": {
+    "message": "Développeur",
+    "description": "Navbar item with label Developer"
+  },
+  "item.label.API": {
+    "message": "API",
+    "description": "Navbar item with label API"
+  },
+  "item.label.GitHub": {
+    "message": "GitHub",
+    "description": "Navbar item with label GitHub"
+  }
+}
