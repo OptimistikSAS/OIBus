@@ -1,0 +1,66 @@
+---
+displayed_sidebar: useCasesSidebar
+sidebar_position: 1
+---
+
+import NorthOIAnalytics from './_north_oianalytics.mdx';
+
+# OPC UA™ → OIAnalytics®
+
+## Préalable {#beforehand}
+
+Consultez les pages des connecteurs [North OIAnalytics®](../guide/north-connectors/oianalytics.md) et [South OPC UA™](../guide/south-connectors/opcua.mdx) pour tous les détails de configuration.
+
+Assurez-vous de sélectionner OPC UA comme protocole — il est entièrement différent d'[OPC Classic™](../guide/south-connectors/opc.mdx). L'exemple utilise le réseau fictif suivant.
+
+<div style={{ textAlign: 'center' }}>
+
+![Cas d'usage OPC UA -> OIAnalytics](../../static/img/use-cases/opcua-oia.svg)
+
+</div>
+
+## South OPC UA {#south-opc-ua}
+
+L'URL du serveur OPC UA suit cette structure :
+
+```
+opc.tcp://<host>:<port>/<name>
+```
+
+- `host` — nom d'hôte ou adresse IP du serveur (par exemple `10.0.0.1`)
+- `port` — port sur lequel le serveur écoute (par exemple `53530`)
+- `name` — nom attribué au serveur OPC UA (par exemple `OPCUA/SimulationServer`)
+
+Exemple : `opc.tcp://10.0.0.1:53530/OPCUA/SimulationServer`
+
+Définissez le mode de sécurité requis par votre serveur. S'il diffère de **None**, précisez également la politique de sécurité. Évitez **None** en production — utilisez-le uniquement pour les tests. Obtenez les identifiants ou certificats auprès de votre équipe informatique ou de l'administrateur du serveur OPC UA.
+
+<div style={{ textAlign: 'center' }}>
+
+![Paramètres OPC UA](../../static/img/use-cases/opcua-settings.png)
+
+</div>
+
+:::tip Test de la connexion
+Cliquez sur **Tester les paramètres** pour vérifier la connexion avant d'enregistrer.
+:::
+
+### Éléments {#items}
+
+Ajoutez les identifiants de nœud (node IDs) que vous souhaitez lire. Demandez à l'administrateur du serveur OPC UA la liste des nœuds disponibles.
+
+Choisissez le **mode** d'accès (DA ou HA). En mode HA, OIBus récupère toutes les valeurs enregistrées depuis la dernière requête et peut les agréger ou les rééchantillonner — vérifiez avec l'administrateur du serveur quels agrégats sont pris en charge. En cas de doute, utilisez l'agrégat **Raw**. En mode DA, OIBus interroge une valeur par élément à chaque scrutation — sauf si l'élément se voit attribuer le mode de scrutation intégré **Subscription**, auquel cas OIBus reçoit à la place les changements de valeur envoyés par le serveur en temps réel.
+
+Sélectionnez un [mode de scrutation](../guide/engine/scan-modes.mdx) pour contrôler l'intervalle de collecte.
+
+<div style={{ textAlign: 'center' }}>
+
+![Paramètres d'élément OPC UA](../../static/img/use-cases/opcua-item.png)
+
+</div>
+
+:::tip Import en masse
+Cliquez sur **Exporter** pour télécharger un modèle CSV avec les colonnes appropriées, renseignez une ligne par élément, puis importez-le à nouveau. Les noms d'éléments doivent être uniques.
+:::
+
+<NorthOIAnalytics></NorthOIAnalytics>
