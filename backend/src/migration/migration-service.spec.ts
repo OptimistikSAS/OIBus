@@ -1,6 +1,7 @@
 import { describe, it, before, after, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import Database from 'better-sqlite3';
@@ -243,6 +244,58 @@ describe('migration-service', () => {
       const loaded = await source.getMigration(migration);
 
       assert.strictEqual(typeof loaded.up, 'function');
+    });
+
+    it('falls through the file-name sort comparator when two directory entries compare equal', async () => {
+      // No real directory can contain two files with the same name, so the comparator's `a === b`
+      // fallthrough (returning 0) can only be forced by stubbing readdirSync to report a duplicate.
+      const base = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-migration-sort-equal-'));
+      const originalReaddirSync = fsSync.readdirSync;
+      const readdirMock = mock.method(fsSync, 'readdirSync', ((dir: string, options?: unknown) => {
+        if (dir === base && !options) {
+          return ['migration.js', 'migration.js'];
+        }
+        return (originalReaddirSync as (...args: Array<unknown>) => unknown)(dir, options);
+      }) as typeof fsSync.readdirSync);
+
+      try {
+        const source = specFilteredMigrationSource(base);
+        const migrations = await source.getMigrations();
+
+        assert.deepStrictEqual(
+          migrations.map(m => m.file),
+          ['migration.js', 'migration.js']
+        );
+      } finally {
+        readdirMock.mock.restore();
+      }
+    });
+
+    it('takes the file-name sort comparator\'s "a < b" branch for a pair given in reverse order', async () => {
+      // A 2-element array only triggers a single comparator call, comparator(arr[1], arr[0]) — so
+      // supplying [larger, smaller] from readdir is what's needed to land on a < b (unlike the
+      // larger, readdir-order-dependent array in the "regardless of the order" test below, which
+      // happens to never land on a < b in practice).
+      const base = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-migration-sort-reverse-'));
+      const originalReaddirSync = fsSync.readdirSync;
+      const readdirMock = mock.method(fsSync, 'readdirSync', ((dir: string, options?: unknown) => {
+        if (dir === base && !options) {
+          return ['b_migration.js', 'a_migration.js'];
+        }
+        return (originalReaddirSync as (...args: Array<unknown>) => unknown)(dir, options);
+      }) as typeof fsSync.readdirSync);
+
+      try {
+        const source = specFilteredMigrationSource(base);
+        const migrations = await source.getMigrations();
+
+        assert.deepStrictEqual(
+          migrations.map(m => m.file),
+          ['a_migration.js', 'b_migration.js']
+        );
+      } finally {
+        readdirMock.mock.restore();
+      }
     });
 
     it('sorts migration files within a directory regardless of the order returned by the filesystem', async () => {

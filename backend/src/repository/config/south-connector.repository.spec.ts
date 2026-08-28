@@ -282,6 +282,51 @@ describe('SouthConnectorRepository', () => {
     ]);
   });
 
+  it('should redact an unknown south connector type by returning it as-is (no manifest match)', () => {
+    const newSouthConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+    newSouthConnector.id = '';
+    newSouthConnector.name = 'south with unknown type';
+    newSouthConnector.type = 'not-a-real-south-type' as typeof newSouthConnector.type;
+    newSouthConnector.items = [];
+    repository.saveSouth(newSouthConnector, true);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+    repository.deleteSouth(newSouthConnector.id, 'deleteUser');
+
+    const deleteCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'south_connector' && call.arguments[1] === newSouthConnector.id && call.arguments[2] === 'DELETE'
+    );
+    assert.ok(deleteCall);
+    // With no manifest for this type, redactConnector must return the entity untouched rather than filtering secrets.
+    assert.strictEqual((deleteCall!.arguments[3] as { type: string }).type, 'not-a-real-south-type');
+  });
+
+  it('should redact an item under an unknown south connector type by returning it as-is (no manifest match)', () => {
+    const newSouthConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[1]));
+    newSouthConnector.id = '';
+    newSouthConnector.name = 'south with unknown type and an item';
+    newSouthConnector.type = 'not-a-real-south-type' as typeof newSouthConnector.type;
+    newSouthConnector.items = [
+      { ...(testData.south.list[1].items[0] as SouthConnectorItemEntity<SouthItemSettings>), id: '', name: 'unknown-type-item' }
+    ];
+    repository.saveSouth(newSouthConnector, true);
+
+    const created = repository.findSouthById(newSouthConnector.id)!;
+    assert.strictEqual(created.items.length, 1);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+    repository.deleteItem(newSouthConnector.id, created.items[0].id, 'deleteUser');
+
+    const deleteCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'south_item' && call.arguments[1] === created.items[0].id && call.arguments[2] === 'DELETE'
+    );
+    assert.ok(deleteCall);
+    // With no manifest for this type, redactItem must return the entity untouched rather than filtering secrets.
+    assert.strictEqual((deleteCall!.arguments[3] as { name: string }).name, 'unknown-type-item');
+  });
+
   it('should audit deleted items and groups when deleting a south connector', () => {
     // First save a bare connector to get a real generated id
     const newSouthConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
@@ -690,6 +735,88 @@ describe('SouthConnectorRepository', () => {
     const afterUpdate = repository.findItemById(testData.south.list[0].id, item.id);
     assert.strictEqual(recordMock.mock.calls.length, 1);
     assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['south_item', item.id, 'UPDATE', beforeUpdate, afterUpdate, 'updaterUser']);
+  });
+
+  it('should redact without a manifest (raw before/after) when saveItem is given a southConnectorId whose connector does not exist', () => {
+    // saveItem's UPDATE query matches by item id alone (not connector_id), so passing a
+    // southConnectorId that doesn't resolve to a real connector still updates the row while making
+    // findSouthById(...)?.type resolve to undefined — the only way to reach the "no southType" side
+    // of saveItem's audit redaction without breaking referential integrity.
+    const item: SouthConnectorItemEntity<SouthItemSettings> = {
+      id: '',
+      name: 'save-item-unknown-connector',
+      enabled: true,
+      scanMode: testData.scanMode.list[0],
+      settings: {} as SouthItemSettings,
+      group: null,
+      syncWithGroup: false,
+      maxReadInterval: null,
+      readDelay: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null,
+      createdBy: '',
+      updatedBy: 'creatorUser',
+      createdAt: '',
+      updatedAt: ''
+    };
+    repository.saveItem(testData.south.list[0].id, item);
+    assert.ok(item.id);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+
+    item.name = 'save-item-unknown-connector-renamed';
+    item.updatedBy = 'updaterUser';
+    repository.saveItem('south-connector-id-that-does-not-exist', item);
+
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    const [, , , before, after] = recordMock.mock.calls[0].arguments as [string, string, string, unknown, unknown];
+    // No connector resolves for this (wrong) southConnectorId => no southType => no manifest lookup;
+    // findItemById(...) itself can't find the row via that same wrong id either, so both sides of the
+    // audit entry come back null — the "no southType" ternary branch is what this test targets.
+    assert.strictEqual(before, null);
+    assert.strictEqual(after, null);
+  });
+
+  it('should redact without a manifest (null "before") when the pre-transaction item snapshot cannot resolve an updated item', () => {
+    // beforeItemsById is captured via findAllItemsForSouth() *before* saveSouth's transaction opens;
+    // the update-path lookup inside the transaction re-queries existingItemsById independently. The
+    // only way to desynchronize the two without breaking referential integrity is to stub the
+    // pre-transaction snapshot call so it reports no items despite the DB still holding one.
+    const freshConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+    freshConnector.id = '';
+    freshConnector.name = 'south for desynced-before-items-snapshot test';
+    freshConnector.items = [
+      { ...(testData.south.list[0].items[0] as SouthConnectorItemEntity<SouthItemSettings>), id: '', name: 'item-to-desync' }
+    ];
+    repository.saveSouth(freshConnector, true);
+    const southId = freshConnector.id;
+
+    const existingItem = repository.findAllItemsForSouth(southId)[0];
+    assert.ok(existingItem);
+
+    const connector = repository.findSouthById(southId)!;
+    const updatedConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(connector));
+    const targetItem = updatedConnector.items.find(i => i.id === existingItem.id)!;
+    targetItem.name = 'desynced-before-items-snapshot';
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+
+    const originalFindAllItemsForSouth = repository.findAllItemsForSouth.bind(repository);
+    repository.findAllItemsForSouth = () => [];
+    try {
+      repository.saveSouth(updatedConnector, false);
+    } finally {
+      repository.findAllItemsForSouth = originalFindAllItemsForSouth;
+    }
+
+    const updateCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'south_item' && call.arguments[1] === existingItem.id && call.arguments[2] === 'UPDATE'
+    );
+    assert.ok(updateCall, 'expected an UPDATE audit entry for the desynced item');
+    assert.strictEqual(updateCall!.arguments[3], null);
   });
 
   it('should save and find item with historian fields', () => {
