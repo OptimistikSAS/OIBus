@@ -58,6 +58,16 @@ const frontendIndexDir = path.join(path.dirname(fileURLToPath(import.meta.url)),
 const frontendIndexPath = path.join(frontendIndexDir, 'index.html');
 let createdFrontendIndex = false;
 
+// The embedded documentation site is served statically from this same relative location
+// (mirroring the frontend's dist layout). Unlike frontend/browser, this relative path resolves
+// to the repo's real top-level `documentation/` directory when tests run from source (not dist),
+// so the placeholder MUST be a uniquely-named file we only ever create/delete by exact filename -
+// never mkdir/rmSync the directory itself, since that directory already exists for real.
+const documentationDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../../documentation');
+const documentationMarkerPath = path.join(documentationDir, '__oibus_test_placeholder__.html');
+const documentationMarker = '<!doctype html><html><body>documentation placeholder</body></html>';
+let createdDocumentationMarker = false;
+
 interface HomeMetricsMockType {
   getHomeMetrics: ReturnType<typeof mock.fn>;
 }
@@ -93,6 +103,14 @@ describe('WebServer', () => {
       createdFrontendIndex = true;
     }
 
+    if (!fs.existsSync(documentationMarkerPath)) {
+      // Never recursive/removed: this directory is the repo's real documentation/ folder when
+      // running from source, so only ever touch our own uniquely-named marker file below.
+      fs.mkdirSync(documentationDir, { recursive: true });
+      fs.writeFileSync(documentationMarkerPath, documentationMarker);
+      createdDocumentationMarker = true;
+    }
+
     fixTsoaModuleResolution(nodeRequire);
     ValidateError = (nodeRequire('tsoa') as { ValidateError: typeof import('tsoa').ValidateError }).ValidateError;
 
@@ -113,6 +131,11 @@ describe('WebServer', () => {
   after(() => {
     if (createdFrontendIndex) {
       fs.rmSync(frontendIndexDir, { recursive: true, force: true });
+    }
+    if (createdDocumentationMarker) {
+      // Only remove the single marker file we created - never rmSync the directory, which is
+      // the repo's real documentation/ folder when tests run from source.
+      fs.rmSync(documentationMarkerPath, { force: true });
     }
   });
 
@@ -244,6 +267,31 @@ describe('WebServer', () => {
     } finally {
       process.env.NODE_ENV = origEnv;
     }
+  });
+
+  describe('embedded documentation static mount', () => {
+    it('serves files under /documentation via the static middleware, not the Angular fallback', async () => {
+      await webServer.init();
+      const res = await fetch(`http://localhost:${TEST_PORT}/documentation/__oibus_test_placeholder__.html`);
+      assert.equal(res.status, 200);
+      const body = await res.text();
+      assert.equal(body, documentationMarker);
+    });
+
+    it('still serves the Angular index.html fallback for an unknown, non-documentation route', async () => {
+      await webServer.init();
+      const res = await fetch(`http://localhost:${TEST_PORT}/some-angular-route`);
+      assert.equal(res.status, 200);
+      const body = await res.text();
+      assert.equal(body, '<!doctype html><html><body>test placeholder</body></html>');
+    });
+
+    it('leaves /api/ routes handled as API routes, unaffected by the /documentation static mount', async () => {
+      await webServer.init();
+      const res = await fetch(`http://localhost:${TEST_PORT}/api/engine`);
+      // Unauthenticated API call: rejected by auth middleware, never reaches static/Angular handling.
+      assert.equal(res.status, 401);
+    });
   });
 
   describe('error handling middleware', () => {
