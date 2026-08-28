@@ -40,6 +40,7 @@ import type HomeMetricsService from '../service/metrics/home-metrics.service';
 import type EncryptionService from '../service/encryption.service';
 import type AuditService from '../service/audit.service';
 import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model/types';
+import { ConfigImportError } from '../service/config-transfer/config-import.service';
 import os from 'node:os';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -122,6 +123,10 @@ describe('WebServer', () => {
         app.get('/test-oibus-testing', (_req, _res, next) => next(new OIBusTestingError('test')));
         app.get('/test-validate-error', (_req, _res, next) => next(new ValidateError({ f: { message: 'b', value: 'x' } }, 'v')));
         app.get('/test-generic-error', (_req, _res, next) => next(new Error('generic')));
+        app.get('/test-config-import-error', (_req, _res, next) =>
+          next(new ConfigImportError('import failed', [{ scope: 'south', entityId: 'id1', message: 'bad' }]))
+        );
+        app.get('/test-non-error-throw', (_req, _res, next) => next('a plain string, not an Error instance'));
         app.get('/test-null-err', (_req, _res, next) => next(null));
       }
     });
@@ -393,6 +398,17 @@ describe('WebServer', () => {
 
       const r5 = await fetch(`${base}/test-generic-error`);
       assert.equal(r5.status, 500);
+
+      const r5b = await fetch(`${base}/test-config-import-error`);
+      assert.equal(r5b.status, 400);
+      const configImportBody = (await r5b.json()) as { message: string; validationErrors: Array<{ scope: string }> };
+      assert.equal(configImportBody.message, 'import failed');
+      assert.deepEqual(configImportBody.validationErrors, [{ scope: 'south', entityId: 'id1', message: 'bad' }]);
+
+      const r5c = await fetch(`${base}/test-non-error-throw`);
+      assert.equal(r5c.status, 500);
+      const nonErrorBody = (await r5c.json()) as { error: string };
+      assert.equal(nonErrorBody.error, 'Internal Server Error');
 
       // null error → next() is called → Angular fallback serves index.html (file not found = 500 from sendFile)
       const r6 = await fetch(`${base}/test-null-err`);

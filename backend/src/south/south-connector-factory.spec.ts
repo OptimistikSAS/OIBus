@@ -27,6 +27,8 @@ import type {
   SouthMQTTSettings,
   SouthMSSQLItemSettings,
   SouthMSSQLSettings,
+  SouthMongoDBItemSettings,
+  SouthMongoDBSettings,
   SouthMySQLItemSettings,
   SouthMySQLSettings,
   SouthODBCItemSettings,
@@ -88,6 +90,7 @@ describe('South Connector Factory', () => {
   const MockSouthADS = makeMock('ads');
   const MockSouthFolderScanner = makeMock('folder-scanner');
   const MockSouthModbus = makeMock('modbus');
+  const MockSouthMongoDB = makeMock('mongodb');
   const MockSouthMQTT = makeMock('mqtt');
   const MockSouthMSSQL = makeMock('mssql');
   const MockSouthMySQL = makeMock('mysql');
@@ -113,6 +116,7 @@ describe('South Connector Factory', () => {
     mockModule(nodeRequire, '../south/south-ads/south-ads', { __esModule: true, default: MockSouthADS });
     mockModule(nodeRequire, '../south/south-folder-scanner/south-folder-scanner', { __esModule: true, default: MockSouthFolderScanner });
     mockModule(nodeRequire, '../south/south-modbus/south-modbus', { __esModule: true, default: MockSouthModbus });
+    mockModule(nodeRequire, '../south/south-mongodb/south-mongodb', { __esModule: true, default: MockSouthMongoDB });
     mockModule(nodeRequire, '../south/south-mqtt/south-mqtt', { __esModule: true, default: MockSouthMQTT });
     mockModule(nodeRequire, '../south/south-mssql/south-mssql', { __esModule: true, default: MockSouthMSSQL });
     mockModule(nodeRequire, '../south/south-mysql/south-mysql', { __esModule: true, default: MockSouthMySQL });
@@ -202,6 +206,15 @@ describe('South Connector Factory', () => {
       >);
       assert.strictEqual(ctorCalls['modbus'], 1);
       assert.ok(result instanceof MockSouthModbus);
+    });
+
+    it('should create SouthMongoDB for type "mongodb"', () => {
+      const result = callBuildSouth({ ...baseSettings, type: 'mongodb', settings: {} as SouthMongoDBSettings } as SouthConnectorEntity<
+        SouthMongoDBSettings,
+        SouthMongoDBItemSettings
+      >);
+      assert.strictEqual(ctorCalls['mongodb'], 1);
+      assert.ok(result instanceof MockSouthMongoDB);
     });
 
     it('should create SouthMQTT for type "mqtt"', () => {
