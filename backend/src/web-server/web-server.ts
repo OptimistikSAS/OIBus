@@ -171,7 +171,7 @@ export default class WebServer {
 
     // Create a function to check if a path is a static file
     const isStaticFile = (path: string) => {
-      return path.startsWith('/assets/') || path === '/favicon.ico' || path.startsWith('/documentation');
+      return path.startsWith('/assets/') || path === '/favicon.ico' || path === '/documentation' || path.startsWith('/documentation/');
     };
 
     // Rate limiting for configuration API endpoints
