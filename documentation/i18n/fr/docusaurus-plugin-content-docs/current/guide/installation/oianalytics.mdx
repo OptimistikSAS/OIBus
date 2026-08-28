@@ -66,8 +66,8 @@ simplifiées — le tout sans nécessiter d'accès entrant vers la machine OIBus
 
 ## Utilisation de l'enregistrement dans les connecteurs {#using-the-registration-in-connectors}
 
-Une fois enregistrés, le [connecteur Sud OIAnalytics](../south-connectors/oianalytics.mdx),
-le [connecteur Nord OIAnalytics](../north-connectors/oianalytics.md), ainsi que les requêtes d'historique peuvent
+Une fois enregistrés, le [connecteur South OIAnalytics](../south-connectors/oianalytics.mdx),
+le [connecteur North OIAnalytics](../north-connectors/oianalytics.md), ainsi que les requêtes d'historique peuvent
 réutiliser les paramètres d'enregistrement au lieu de nécessiter des paramètres de connexion séparés :
 
 1. Ouvrez la configuration du connecteur ou de la requête d'historique.
@@ -107,15 +107,15 @@ requise.
 | **Update engine settings**       | Appliquer une nouvelle configuration du moteur (journalisation, proxy…).                                                                                     |
 | **Update registration settings** | Appliquer de nouveaux paramètres d'enregistrement OIAnalytics (réseau, temporisation, permissions…).                                                        |
 | **Regenerate cipher keys**       | Générer une nouvelle paire de clés RSA pour le chiffrement des secrets.                                                                                      |
-| **Scan mode management**         | Créer, mettre à jour ou supprimer des modes de scrutation.                                                                                                   |
-| **North connector**              | Créer, mettre à jour, supprimer ou tester des connecteurs Nord.                                                                                              |
-| **North connector cache**        | Rechercher, récupérer, déplacer ou supprimer du contenu mis en cache dans le cache d'un connecteur Nord. Déplacer inclut le fait de réessayer un fichier en erreur (retour vers le cache) ou de l'archiver. |
-| **South connector**              | Créer, mettre à jour, supprimer ou tester des connecteurs Sud et leurs éléments.                                                                             |
+| **Scan mode management**         | Créer, mettre à jour ou supprimer des modes de scan.                                                                                                   |
+| **North connector**              | Créer, mettre à jour, supprimer ou tester des connecteurs North.                                                                                              |
+| **North connector cache**        | Rechercher, récupérer, déplacer ou supprimer du contenu mis en cache dans le cache d'un connecteur North. Déplacer inclut le fait de réessayer un fichier en erreur (retour vers le cache) ou de l'archiver. |
+| **South connector**              | Créer, mettre à jour, supprimer ou tester des connecteurs South et leurs éléments.                                                                             |
 | **History query**                | Créer, mettre à jour, supprimer ou tester des requêtes d'historique et leurs éléments.                                                                       |
 | **History query cache**          | Rechercher, récupérer, déplacer ou supprimer du contenu mis en cache dans le cache d'une requête d'historique. Déplacer inclut le fait de réessayer un fichier en erreur (retour vers le cache) ou de l'archiver. |
 | **Custom transformer**           | Créer, mettre à jour, supprimer ou tester des transformateurs personnalisés.                                                                                 |
-| **Test transformer**             | Tester n'importe quel transformateur (standard ou personnalisé) contre un véritable élément Sud ou des données collées — distinct du test du code propre d'un transformateur personnalisé. |
-| **Setpoint**                     | Recevoir des valeurs de consigne depuis OIAnalytics et les transmettre aux connecteurs Nord.                                                                 |
+| **Test transformer**             | Tester n'importe quel transformateur (standard ou personnalisé) contre un véritable élément South ou des données collées — distinct du test du code propre d'un transformateur personnalisé. |
+| **Setpoint**                     | Recevoir des valeurs de consigne depuis OIAnalytics et les transmettre aux connecteurs North.                                                                 |
 
 ### Processus de mise à niveau de version {#version-upgrade-process}
 

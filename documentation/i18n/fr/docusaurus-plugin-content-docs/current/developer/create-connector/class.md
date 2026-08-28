@@ -192,7 +192,7 @@ interface SouthDirectQuery {
 }
 ```
 
-La classe de base appelle `directQuery()` à chaque tick du mode de scrutation. Poussez les lectures réelles vers le
+La classe de base appelle `directQuery()` à chaque tick du mode de scan. Poussez les lectures réelles vers le
 moteur via `this.addContent(...)` avant de retourner, et retournez la dernière valeur afin que l'interface puisse
 l'afficher.
 
@@ -242,7 +242,7 @@ La classe de base appelle `subscribe()` et `unsubscribe()` chaque fois que l'ens
 de l'ensemble actuellement abonné. Lorsque des données arrivent, poussez-les via `this.addContent(...)` directement
 depuis votre gestionnaire d'événements.
 
-Les items d'abonnement sont identifiés par leur identifiant de mode de scrutation réservé `'subscription'`. Le
+Les items d'abonnement sont identifiés par leur identifiant de mode de scan réservé `'subscription'`. Le
 manifeste doit autoriser `'SUBSCRIPTION'` ou `'SUBSCRIPTION_AND_POLL'` sur le `scanMode` de l'item pour que
 l'interface permette aux opérateurs de le sélectionner.
 
