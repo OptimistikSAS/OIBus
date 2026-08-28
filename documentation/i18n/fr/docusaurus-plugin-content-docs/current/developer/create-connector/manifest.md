@@ -11,7 +11,7 @@ déclare :
 - **Ce qu'est le connecteur** — id, catégorie, modes pris en charge (South) ou types de contenu (North)
 - **Les paramètres que l'opérateur peut configurer** — URL de connexion, identifiants, options spécifiques au
   protocole
-- **Pour South : à quoi ressemble un item** — quelle valeur interroger, l'acceptabilité du mode de scrutation,
+- **Pour South : à quoi ressemble un item** — quelle valeur interroger, l'acceptabilité du mode de scan,
   les paramètres spécifiques à l'item
 
 Le frontend restitue le manifeste sous forme de formulaire ; le générateur de types du backend produit les
@@ -95,7 +95,7 @@ contenir d'autres attributs — l'imbrication est illimitée.
 | `'code'`          | Éditeur Codemirror          | `string \| null`          | `contentType: 'sql' \| 'json'`, `defaultValue`                                  |
 | `'instant'`       | Sélecteur de date + heure    | `Instant \| null`         | —                                                                               |
 | `'timezone'`      | Sélection de fuseau horaire  | `string \| null`          | `defaultValue`                                                                  |
-| `'scan-mode'`     | Sélection de mode de scrutation | `ScanMode`                | `acceptableType: 'POLL' \| 'SUBSCRIPTION' \| 'SUBSCRIPTION_AND_POLL'`           |
+| `'scan-mode'`     | Sélection de mode de scan | `ScanMode`                | `acceptableType: 'POLL' \| 'SUBSCRIPTION' \| 'SUBSCRIPTION_AND_POLL'`           |
 | `'certificate'`   | Sélecteur de certificat      | `string \| null`          | —                                                                               |
 | `'object'`        | Conteneur de groupe          | objet imbriqué             | `attributes`, `displayProperties: { visible, wrapInBox }`, `enablingConditions` |
 | `'array'`         | Lignes répétables            | `Array<T>`                | `paginate`, `numberOfElementPerPage`, `rootAttribute`                           |

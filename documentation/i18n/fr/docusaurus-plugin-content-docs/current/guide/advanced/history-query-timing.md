@@ -213,7 +213,7 @@ maintenant.
 
 ### Exemple : un retard de validation de 2 secondes, visualisé {#example-a-2-second-commit-lag-visualized}
 
-Exemple simplifié : une source valide les valeurs 2 secondes après leur horodatage, et un mode de scrutation
+Exemple simplifié : une source valide les valeurs 2 secondes après leur horodatage, et un mode de scan
 l'interroge toutes les 5 secondes — un ratio exagéré, uniquement pour rendre le motif visible. Chaque fenêtre
 d'exécution se termine 2 secondes dans des données que la source n'a pas encore validées : cette tranche
 finale (marquée `███` ci-dessous) est la « zone à risque ». Ce qui diffère entre les trois approches, c'est
@@ -329,7 +329,7 @@ cours de rattrapage réexécute l'intégralité du retard — elle basculerait `
   fin effectifs — une frontière de sous-intervalle au milieu d'une fenêtre découpée n'est jamais décalée
   indépendamment.
 - **Un `Décalage de l'heure de fin` qui est systématiquement plus grand que l'intervalle de scrutation.** Si
-  le mode de scrutation se déclenche plus souvent que le décalage ne réduit la fenêtre, certaines exécutions
+  le mode de scan se déclenche plus souvent que le décalage ne réduit la fenêtre, certaines exécutions
   calculent une fin qui n'est pas postérieure au début et sont entièrement ignorées — visible comme une
   exécution qui enregistre une requête ignorée sans donnée collectée.
 - **Modifier ces réglages sur un connecteur ayant un instant suivi déjà établi.** La toute prochaine
