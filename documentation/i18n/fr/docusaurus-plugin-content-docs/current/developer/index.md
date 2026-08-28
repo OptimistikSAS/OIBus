@@ -438,7 +438,7 @@ travail accessible :
 Démarrez la pile avec `docker compose up -d` (certains services se trouvent derrière les profils Docker
 Compose `testing` / `oibus` — voir le fichier pour plus de détails). Configurez ensuite OIBus pour qu'il
 pointe vers les simulateurs et observez le comportement à mesure que vous augmentez le nombre d'éléments,
-la fréquence des modes de scrutation, ou la taille des lots.
+la fréquence des modes de scan, ou la taille des lots.
 
 Tous les détails sur chaque service, son image, les signaux simulés, et les options de configuration se
 trouvent dans la page [Pile de test locale](./local-test-stack.md).
