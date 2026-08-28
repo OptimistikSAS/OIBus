@@ -1,0 +1,215 @@
+---
+displayed_sidebar: developerSidebar
+sidebar_position: 5
+---
+
+# GitHub 发布流程
+
+OIBus 的发布通过 GitHub Actions 实现端到端自动化：贡献者只需提交符合
+Conventional Commits 规范的 PR，其余工作——版本号提升、变更日志、多平台二进制
+文件、Docker 镜像、文档部署——都会在向 `stable` 分支推送一次代码后自动运行。
+
+本页介绍了各个环节的运作方式，方便您追踪正在进行中的发布、准备用于测试的
+预发布版本，或者更新发布流水线本身。
+
+:::info Releases are maintained by the Optimistik team
+OIBus 的正式发布——无论是稳定版还是预发布版——**只**由 Optimistik 团队在
+`OptimistikSAS/OIBus` 仓库上进行。该团队负责发布计划、签名密钥以及发布渠道
+（GitHub Releases、`ghcr.io`、文档站点）。外部贡献者不会直接触发发布——您的
+更改会在维护者下一次将 `main` 提升到 `stable` 时随之发布。本页是参考资料——
+用于理解您的 PR 落地之后会发生什么，或供维护者操作该流水线时参考。
+:::
+
+## 分支模型 {#branching-model}
+
+| 分支     | 用途                                                             |
+| -------- | ------------------------------------------------------------------ |
+| `main`   | 日常开发——每个 PR 都在此进行 squash-merge。始终保持绿色；从不直接发布。 |
+| `stable` | 发布分支——定期接收来自 `main` 的更新，推送后触发发布工作流。            |
+
+发布是通过将 **`stable` 快进（fast-forward）到 `main`** 来启动的（通常是通过一个
+从 `main` 发起的 PR）。除此之外不需要任何其他手动步骤——其余流程都由 Actions
+自动完成。
+
+## 流水线概览 {#the-pipeline-at-a-glance}
+
+```
+  ◇ PR squash-merged to main      ← daily contributions (Conventional Commits)
+            │
+  ◇ main fast-forwarded to stable ← release trigger (manual)
+            │
+            ▼
+  .github/workflows/new_release.yml         (on: push → stable)
+    └── googleapis/release-please-action
+          ├─ Opens a "release PR" against stable
+          │  (bumps every package.json + lockfile + openapi.json + Dockerfile
+          │   + docker.mdx, regenerates the CHANGELOG)
+          └─ When that PR is merged → tags + publishes a GitHub Release
+            │
+            ▼
+  .github/workflows/build.yml   (on: release published — or manual workflow_dispatch)
+    ├── prepare              → resolve release info + generate the SBOM (once)
+    ├── build (5-platform matrix) → build · sign (Windows) · package · upload to the release
+    ├── snyk                 → monitor the SBOM                         (stable only)
+    ├── docker               → build & push the multi-arch image to ghcr.io
+    ├── deploy-documentation → build & publish the documentation site   (stable only)
+    └── slack                → notification → #oibus-ci
+```
+
+所有引用到的文件都位于 `.github/` 下：
+
+- [`workflows/new_release.yml`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/workflows/new_release.yml) — 在每次向 `stable` 推送时运行 release-please
+- [`workflows/build.yml`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/workflows/build.yml) — 在 Release 发布后运行的所有内容（二进制文件、Docker、文档）
+- [`release-please-config.json`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/release-please-config.json)
+- [`release-please-manifest.json`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/release-please-manifest.json)
+
+## 📦 release-please {#-release-please}
+
+[release-please](https://github.com/googleapis/release-please) 是唯一会更改版本号的
+工具。它会读取自上一个 tag 以来的所有提交，决定版本提升幅度，并将变更写入一个
+供维护者审查的 PR 中。
+
+### 版本提升规则 {#version-bump-rules}
+
+完全由提交类型驱动——与
+[Conventional Commits](https://www.conventionalcommits.org/) 相同：
+
+| 提交类型                                | 版本提升幅度      | 示例                                    |
+| ---------------------------------------- | ----------------- | ---------------------------------------- |
+| `fix:`                                   | 补丁版 — `0.0.x`  | `fix(cache): correct chunk write`        |
+| `feat:`                                  | 次版本 — `0.x.0`  | `feat(north): add SFTP retry`            |
+| `feat!:` 或脚注 `BREAKING CHANGE:`       | 主版本 — `x.0.0`  | `feat(north)!: replace handleValues`     |
+
+其他类型（`docs`、`chore`、`refactor`、`perf`、`test`、`style`、`build`、`ci`）**不会**
+提升版本号——它们会被记录在变更日志的相应章节中，但不会触发发布。
+
+### release-please 会重写哪些内容 {#what-release-please-rewrites}
+
+当一个 release PR 被合并时，release-please 会更新以下文件中的版本字段：
+
+| 文件                                        | 字段 / 方式                          |
+| ------------------------------------------- | ------------------------------------- |
+| `backend/package.json`                      | `version`                             |
+| `backend/package-lock.json`                 | `version` + `packages[""].version`    |
+| `frontend/package.json`                     | `version`                             |
+| `frontend/package-lock.json`                | `version` + `packages[""].version`    |
+| `launcher/package.json`                     | `version`                             |
+| `launcher/package-lock.json`                | `version` + `packages[""].version`    |
+| `documentation/package.json`                | `version`                             |
+| `documentation/package-lock.json`           | `version` + `packages[""].version`    |
+| `documentation/docs/api/openapi.json`       | `$.info.version`                      |
+| `build/docker/Dockerfile`                   | 版本字符串（`generic` 替换器）         |
+| `documentation/docs/developer/docker.mdx`   | 版本字符串（`generic` 替换器）         |
+| `CHANGELOG.md`                              | 新增一条记录，添加在最前面              |
+
+JSON 文件由 `jsonpath` 更新；`Dockerfile` 和 `docker.mdx` 使用 release-please 的
+`generic` 替换器（它会重写标注了 `x-release-please-version` 标记的行上的版本号）。
+具体规则位于
+[`release-please-config.json`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/release-please-config.json)
+的 `extra-files` 下——如果您新增了一个包，或者需要追踪发布版本号的其他文件，请
+扩展该列表。
+
+## 🛠 发布工作流实际产出的内容 {#-what-the-release-workflow-actually-produces}
+
+`build.yml` 在 `release: types: [published]` 时运行——即**仅在 release-please 的
+release PR 被合并、且 GitHub Release 对象被创建之后。**（也可以通过
+**workflow_dispatch** 手动触发，可选传入 `tag` 输入参数，以重新构建某个特定的
+发布版本。）它是一个由多个协同工作的 job 组成的单一工作流：
+
+### `prepare` {#prepare}
+
+只运行一次。解析发布信息（`tag_name`、`release_name`、是否为 `prerelease`），并
+**只生成一次 SBOM**（`cdxgen` → `oibus-sbom.json`），将其上传为工作流产物——对于
+非预发布版本，还会将其附加到 GitHub Release 上。矩阵构建会下载这一份产物，而
+不是各自重新生成。
+
+### `build`（5 平台矩阵，`needs: prepare`） {#build-5-platform-matrix-needs-prepare}
+
+| 友好名称     | 运行系统            | 平台目标        |
+| ------------ | -------------------- | ---------------- |
+| macOS arm64  | `macos-15`            | `macos-arm64`    |
+| macOS x64    | `macos-15-intel`      | `macos-x64`      |
+| Windows x64  | `windows-2025`        | `win-x64`        |
+| Linux x64    | `ubuntu-24.04`        | `linux-x64`      |
+| Linux arm64  | `ubuntu-24.04-arm`    | `linux-arm64`    |
+
+每个矩阵行（`fail-fast: false`，因此一个平台失败不会取消其他平台）：
+
+1. 为其平台**构建**前端、launcher 和后端。
+2. 通过 Google Cloud KMS + Sectigo 时间戳服务**签名** Windows 二进制文件
+   （`oibus.exe`、`oibus-launcher.exe`）（仅在 Windows 行运行）。
+3. 通过调用 `oibus-launcher --version true` 对运行时进行**健全性检查**。
+4. 将 `prepare` 中的 SBOM **打包**进产物中，然后**打包**成一个 zip 文件
+   （`oibus-<platform>-<tag>.zip`），并上传到 GitHub Release。
+5. **仅 Windows**：构建 Inno Setup 安装程序（`oibus-win_x64-setup-<tag>.exe`）
+   并上传。
+
+### `snyk`、`docker`、`deploy-documentation`、`slack`（`needs: build`） {#snyk-docker-deploy-documentation-slack-needs-build}
+
+| Job                     | 运行条件           | 作用                                                                                             |
+| ----------------------- | ------------------ | -------------------------------------------------------------------------------------------------- |
+| `snyk`                  | **仅稳定版**        | 使用 Snyk 监控 SBOM（`snyk monitor`，目标引用为 `OIBus-<tag>`）。                                    |
+| `docker`                | 始终运行            | 构建并推送多架构镜像（`linux/amd64,linux/arm64`）到 `ghcr.io/optimistiksas/oibus`。                  |
+| `deploy-documentation`  | **仅稳定版**        | 构建 Docusaurus 站点并发布到 GitHub Pages（`needs: [build, docker]`）。                              |
+| `slack`                 | 始终运行（`always()`）| 将 `docker` job 的结果通知到 `#oibus-ci`（`needs: [snyk, docker, deploy-documentation]`）。          |
+
+Docker 镜像标签取决于发布类型：
+
+- **稳定版发布**同时获得 `latest` 标签**和**版本标签。
+- **预发布版**同时获得 `beta` 标签**和**版本标签。
+
+## 🆕 创建预发布版本 {#-creating-a-pre-release}
+
+当您需要在正式切出稳定版之前发布用于测试的产物时，预发布版本非常有用——通常
+仅限维护者（`OptimistikSAS/OIBus` 的运营者）使用。
+
+预发布版本运行**相同的** `build.yml` 矩阵，但会跳过 Snyk 监控、SBOM 的发布产物
+上传以及文档部署，并且 Docker 镜像会打上 `beta` 标签而不是 `latest`。（SBOM 仍会
+在 `prepare` 中生成并打包进每个 zip 中——只是单独的发布产物上传步骤被跳过。）
+
+### 步骤 {#steps}
+
+1. 在 [GitHub → Releases](https://github.com/OptimistikSAS/OIBus/releases) 页面，
+   点击**起草新版本（Draft a new release）**。
+
+   <div style={{ textAlign: 'center' }}>
+     <div>![Draft a GitHub release](../../static/img/developer/draft-release.png)</div>
+   </div>
+
+2. 填写表单：
+   - **Tag**：`vX.Y.Z-<suffix>.N`（semver 预发布后缀 — `alpha.1`、`beta.1`、`rc.1`）。
+   - **Target**：您希望从中构建的分支或提交（通常是 `main`）。
+   - **Title**：`vX.Y.Z-<suffix>.N (Pre-release)`。
+   - **Description**：自上一个（预）发布版本以来的变更内容、已知问题，以及针对
+     将要使用它的人员的测试说明。
+   - **Set as a pre-release**：✅ **勾选它。**
+   - **Set as the latest release**：❌ 保持不勾选——预发布版本不能成为默认下载
+     版本。
+
+3. 点击**发布版本（Publish release）**。发布事件会触发 `build.yml`；几分钟后即可
+   获得二进制文件和打上 `beta` 标签的 Docker 镜像，同时还会收到一条 Slack 通知。
+
+:::tip Pre-release naming
+坚持使用标准的 semver 后缀（`-alpha`、`-beta`、`-rc`）加数字计数器。它们能够与
+未来的稳定版本正确排序（`v3.8.0-rc.1` < `v3.8.0`），并且 Docker 的 `beta` 标签会
+自动识别它们。
+:::
+
+## 故障排查 {#troubleshooting}
+
+| 症状                                          | 排查方法                                                                                                                                                                                              |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 推送到 `stable` 后没有出现 release PR          | release-please 只有在自上一个 tag 以来存在会触发版本提升的提交时才会打开 PR。仅有 `chore:` / `docs:` 不会触发提升。                                                                                    |
+| Release PR 已打开，但版本号不对                | 检查提交标题——任何位置的 `feat!:` 都会导致主版本提升。如需手动修正下一个版本号，请编辑 `release-please-manifest.json`。                                                                                |
+| `build.yml` 没有触发                           | 确认确实创建了一个 GitHub **Release** 对象（而不仅仅是一个 tag）。`build.yml` 监听 `release: types: [published]`（或者通过 workflow_dispatch 手动运行）。                                             |
+| Windows 二进制文件未签名                       | KMS 身份验证步骤需要为正在运行的仓库 / fork 配置 `GCP_SERVICE_ACCOUNT_JSON` 和 `CERT` 密钥——这些在贡献者的 fork 上不可用。                                                                             |
+| Docker 镜像未打上 `latest` 标签                | 该发布被标记为预发布版。稳定版发布会获得 `latest`；预发布版获得 `beta`。参见 `build.yml` 中的 `docker` job。                                                                                          |
+| 文档站点没有更新                               | `deploy-documentation` job（在 `build.yml` 中）**仅针对非预发布版本**运行，且依赖 `needs: [build, docker]`——请确认该发布不是预发布版本，并且 build 和 docker job 均已成功。                            |
+| 单个平台失败，但其他平台已成功发布              | 这是预期行为——`build` 矩阵设置了 `fail-fast: false`。可以只重新运行失败的 job，或者通过 workflow_dispatch 针对该 tag 重新运行 `build.yml`。                                                            |
+
+:::info Running on a fork
+发布工作流需要 `REPO_ACCESS_TOKEN`、`GCP_SERVICE_ACCOUNT_JSON`、`CERT`、
+`SNYK_TOKEN` 和 `SLACK_BOT_TOKEN` 这些密钥。Fork 默认不会拥有这些密钥；工作流
+会跳过它无法完成身份验证的部分，但您得到的产物集合会不完整。该流水线的设计
+初衷就是从 `OptimistikSAS/OIBus` 本身运行。
+:::
