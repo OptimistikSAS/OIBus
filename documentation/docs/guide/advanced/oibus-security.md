@@ -4,15 +4,15 @@ sidebar_position: 3
 
 # OIBus Security
 
-## Credential Storage
+## Credential Storage {#credential-storage}
 
-### Login Passwords
+### Login Passwords {#login-passwords}
 
 User passwords are hashed with **Argon2** before being stored in `oibus.db`. The plaintext password is
 never persisted — only the hash. Argon2 is a memory-hard hashing function designed to resist brute-force
 and GPU-accelerated attacks.
 
-### Connector Secrets
+### Connector Secrets {#connector-secrets}
 
 Passwords, tokens, and API keys configured in South and North connectors are encrypted at rest using
 **AES-256-CBC**:
@@ -29,7 +29,7 @@ If `crypto.db` is deleted or lost, OIBus can no longer decrypt any connector sec
 be re-entered after restarting OIBus. Treat `crypto.db` with the same care as a private key file.
 :::
 
-### Database Layout
+### Database Layout {#database-layout}
 
 OIBus uses five SQLite databases:
 
@@ -43,11 +43,11 @@ OIBus uses five SQLite databases:
 
 Backing up both `oibus.db` and `crypto.db` together is necessary for a complete, restorable snapshot.
 
-## Web Interface Authentication
+## Web Interface Authentication {#web-interface-authentication}
 
 The OIBus web interface supports two authentication methods:
 
-### JWT (Primary)
+### JWT (Primary) {#jwt-primary}
 
 After a successful login, OIBus issues a **JWT signed with RS256** (RSA-SHA256). The token:
 
@@ -57,7 +57,7 @@ After a successful login, OIBus issues a **JWT signed with RS256** (RSA-SHA256).
 - Contains the user's login and a hash of their password — the token is automatically invalidated if the
   password changes.
 
-### Basic Auth (API / CLI)
+### Basic Auth (API / CLI) {#basic-auth-api--cli}
 
 HTTP Basic Authentication is also accepted on every API endpoint except the public status endpoints
 (`/api/status`, `/api/engine/status`), which require no authentication. It is used by curl-based automation scripts
@@ -68,7 +68,7 @@ For scripted access, prefer a dedicated API approach and always run scripts on t
 (`localhost`) so credentials are not transmitted over the network unencrypted.
 :::
 
-## IP Filtering
+## IP Filtering {#ip-filtering}
 
 OIBus enforces IP-based access control at the HTTP request level. Requests from unlisted addresses
 receive an HTTP 401 response before any authentication is attempted.
@@ -85,7 +85,7 @@ Key behaviours:
 
 See [IP Filters](../engine/ip-filters.mdx) for configuration details.
 
-## OIAnalytics Secret Exchange
+## OIAnalytics Secret Exchange {#oianalytics-secret-exchange}
 
 When secrets are entered or updated through OIAnalytics, they are encrypted **in the browser** before
 being transmitted, using OIBus's RSA public key (RSA-OAEP, 4096-bit). This means:
@@ -104,7 +104,7 @@ Separately, OIBus generates its own 4096-bit RSA certificate/key pair at startup
 the certificate presented for OPC UA connections. It is a distinct key pair from the one used for
 OIAnalytics secret exchange.
 
-## Network Security
+## Network Security {#network-security}
 
 OIBus does **not** support HTTPS natively. The web interface runs on plain HTTP (port 2223 by default).
 
@@ -115,7 +115,7 @@ For production environments where the interface is accessed remotely:
 3. Use [IP filters](../engine/ip-filters.mdx) to prevent direct access on port 2223 from outside the host.
 4. For external access, prefer a **VPN** over exposing the reverse proxy to the public internet.
 
-## Data Source Access
+## Data Source Access {#data-source-access}
 
 Apply the principle of least privilege for every system OIBus connects to:
 
@@ -125,7 +125,7 @@ Apply the principle of least privilege for every system OIBus connects to:
 - Prefer **key-based or token-based authentication** over passwords where the protocol supports it.
 - Rotate credentials periodically and update them in OIBus connector settings.
 
-## Software Integrity
+## Software Integrity {#software-integrity}
 
 - **Open source**: The full source code is publicly available on
   [GitHub](https://github.com/OptimistikSAS/OIBus). All commits go through team review before merging.

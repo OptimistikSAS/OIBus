@@ -7,21 +7,19 @@ import NorthOIAnalytics from './_north_oianalytics.mdx';
 
 # OPC UA™ → OIAnalytics®
 
-## Beforehand
+## Beforehand {#beforehand}
 
 See the [North OIAnalytics®](../guide/north-connectors/oianalytics.md) and [South OPC UA™](../guide/south-connectors/opcua.mdx) connector pages for full configuration details.
 
 Make sure to select OPC UA as your protocol — it is entirely different from [OPC Classic™](../guide/south-connectors/opc.mdx). The example uses the following fictional network.
 
 <div style={{ textAlign: 'center' }}>
-  <div>
 
-    ![OPC UA -> OIAnalytics use case](../../static/img/use-cases/opcua-oia.svg)
+![OPC UA -> OIAnalytics use case](../../static/img/use-cases/opcua-oia.svg)
 
-  </div>
 </div>
 
-## South OPC UA
+## South OPC UA {#south-opc-ua}
 
 The OPC UA server URL follows this structure:
 
@@ -38,18 +36,16 @@ Example: `opc.tcp://10.0.0.1:53530/OPCUA/SimulationServer`
 Set the security mode your server requires. If it differs from **None**, also specify the security policy. Avoid **None** in production — use it only for testing. Obtain credentials or certificates from your IT team or the OPC UA server administrator.
 
 <div style={{ textAlign: 'center' }}>
-  <div>
 
-    ![OPC UA settings](../../static/img/use-cases/opcua-settings.png)
+![OPC UA settings](../../static/img/use-cases/opcua-settings.png)
 
-  </div>
 </div>
 
 :::tip Testing connection
 Click **Test settings** to verify the connection before saving.
 :::
 
-### Items
+### Items {#items}
 
 Add the node IDs you want to read. Ask the OPC UA server administrator for the list of available nodes.
 
@@ -58,11 +54,9 @@ Choose the access **mode** (DA or HA). In HA mode, OIBus retrieves all values re
 Select a [scan mode](../guide/engine/scan-modes.mdx) to control the collection interval.
 
 <div style={{ textAlign: 'center' }}>
-  <div>
 
-    ![OPC UA item settings](../../static/img/use-cases/opcua-item.png)
+![OPC UA item settings](../../static/img/use-cases/opcua-item.png)
 
-  </div>
 </div>
 
 :::tip Bulk import

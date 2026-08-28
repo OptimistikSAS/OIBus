@@ -8,7 +8,7 @@ import DownloadButton from '@site/src/components/DownloadButton';
 
 The OIBus Agent is a lightweight Windows service that enables protocol-specific data collection for technologies that require native Windows integration.
 
-## Key Features
+## Key Features {#key-features}
 
 | Feature               | Supported Protocols              | Benefits                                     |
 | --------------------- | -------------------------------- | -------------------------------------------- |
@@ -16,7 +16,7 @@ The OIBus Agent is a lightweight Windows service that enables protocol-specific 
 | Service integration   | Windows Service Manager          | Reliable background operation                |
 | Cross-architecture    | x64, x86, ARM64                  | Supports all modern Windows systems          |
 
-## Download
+## Download {#download}
 
 <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '1rem' }}>
   <DownloadButton link={`https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/oibus-agent-win_x64-__VERSION__.zip`}>
@@ -32,7 +32,7 @@ The OIBus Agent is a lightweight Windows service that enables protocol-specific 
   </DownloadButton>
 </div>
 
-## System Requirements
+## System Requirements {#system-requirements}
 
 | Requirement      | Specification                       |
 | ---------------- | ----------------------------------- |
@@ -42,9 +42,9 @@ The OIBus Agent is a lightweight Windows service that enables protocol-specific 
 | Disk Space       | 50 MB minimum                       |
 | Memory           | 128 MB minimum                      |
 
-## Installation
+## Installation {#installation}
 
-### Package Contents
+### Package Contents {#package-contents}
 
 When you unzip the downloaded archive, you'll find these files:
 
@@ -54,9 +54,9 @@ When you unzip the downloaded archive, you'll find these files:
 | `install-agent.bat`   | Service installation script |
 | `uninstall-agent.bat` | Service removal script      |
 
-### Installation Methods
+### Installation Methods {#installation-methods}
 
-#### 1. As a Windows Service (Recommended)
+#### 1. As a Windows Service (Recommended) {#1-as-a-windows-service-recommended}
 
 ```bash
 # Default installation (port 2224, service name "OIBusAgent")
@@ -71,7 +71,7 @@ install-agent.bat -n="CustomServiceName" -p=2225
 | `-n`      | Service name | "OIBusAgent"  |
 | `-p`      | HTTP port    | 2224          |
 
-#### 2. Manual Execution
+#### 2. Manual Execution {#2-manual-execution}
 
 ```bash
 # Default port (2224)
@@ -81,14 +81,14 @@ OIBusAgent.exe
 OIBusAgent.exe -p 2225
 ```
 
-### Update Procedure
+### Update Procedure {#update-procedure}
 
 1. Stop the existing service (if running)
 2. Extract the new version files
 3. Replace the old files with the new ones
 4. Restart the service
 
-### Uninstallation
+### Uninstallation {#uninstallation}
 
 ```bash
 # Default service name
@@ -98,21 +98,21 @@ uninstall-agent.bat
 uninstall-agent.bat -n="CustomServiceName"
 ```
 
-## Usage Modes
+## Usage Modes {#usage-modes}
 
-### 1. Integrated with OIBus
+### 1. Integrated with OIBus {#1-integrated-with-oibus}
 
 - Acts as a protocol bridge for OIBus South connectors
 - Handles Windows-specific protocols transparently
 - Automatic service management through OIBus interface
 
-### 2. Standalone Mode
+### 2. Standalone Mode {#2-standalone-mode}
 
 - Direct HTTP API access
 - Independent operation from OIBus
 - Suitable for custom integrations
 
-## Post-Installation
+## Post-Installation {#post-installation}
 
 1. **Verify Installation**:
 

@@ -8,14 +8,14 @@ A **South connector** fetches data from a specific source (e.g., MQTT broker, MS
 North caches. Each connector manages one or more **items** — the individual data points or queries to collect.
 Items can optionally be organised into **groups** to share a common schedule and throttling configuration.
 
-## Adding a South Connector
+## Adding a South Connector {#adding-a-south-connector}
 
 1. Navigate to the **South** page.
 2. Click the **+** button.
 3. Select a connector type and configure its settings.
 4. Monitor or adjust settings from the connector's display page.
 
-## General Settings
+## General Settings {#general-settings}
 
 | Setting         | Description                                                                   | Example Value         |
 | --------------- | ----------------------------------------------------------------------------- | --------------------- |
@@ -23,17 +23,17 @@ Items can optionally be organised into **groups** to share a common schedule and
 | **Description** | Optional context (connection details, access rights, unique characteristics). | `Production database` |
 | **Enabled**     | Enable/disable the connector from the list or its display page.               | Enabled/Disabled      |
 
-## Specific Section
+## Specific Section {#specific-section}
 
 Refer to each connector's documentation for type-specific settings.
 
-### Testing Connection
+### Testing Connection {#testing-connection}
 
 Use the **Test settings** button to verify your connection configuration.
 
 ---
 
-## Groups
+## Groups {#groups}
 
 A group bundles items that share the same collection schedule. Each group has:
 
@@ -59,14 +59,14 @@ sequentially. The group provides a shared schedule and default throttling settin
 runs its own independent query.
 :::
 
-### Group Actions
+### Group Actions {#group-actions}
 
 Groups can be created, edited, and deleted directly from the item edit form or from the group dropdown
 in the item list. Deleting a group does not delete its items — they become unassigned.
 
 ---
 
-## Concurrent Execution
+## Concurrent Execution {#concurrent-execution}
 
 By default, a South connector processes one item (or item group) at a time: even if several scan modes
 fire at once, only a single query runs at any given moment, and the rest wait their turn.
@@ -83,7 +83,7 @@ for details. For every other connector type, execution stays fully sequential an
 
 ---
 
-## Items
+## Items {#items}
 
 Items retrieve data as files or JSON payloads. Each item has the following fields:
 
@@ -105,7 +105,7 @@ Items retrieve data as files or JSON payloads. Each item has the following field
 > — with worked examples for large backlogs and sources that don't commit all items at once — see
 > [Tuning South History Call Settings](../advanced/history-query-timing.md).
 
-### Item Actions
+### Item Actions {#item-actions}
 
 - **Disable/Enable**: Toggle from the item edit form or directly from the connector's display page.
 - **Test**: Verify item settings and preview results from the create/edit modal. You can also run the
@@ -116,7 +116,7 @@ Items retrieve data as files or JSON payloads. Each item has the following field
   [Inspecting the last retrieved value](#inspecting-the-last-retrieved-value) for details.
 - **Move to group**: Select multiple items and use the mass-action menu to reassign them to a group at once.
 
-### Import/Export Items
+### Import/Export Items {#importexport-items}
 
 - **Export**: Download all items as a CSV. Columns include `name`, `enabled`, `scanMode`, `group`,
   `syncWithGroup`, `maxReadInterval`, `readDelay`, `startTimeOffset`, `endTimeOffset`, `recoveryStrategy`, and
@@ -127,7 +127,7 @@ Items retrieve data as files or JSON payloads. Each item has the following field
 
 ---
 
-## Max Instant Tracking
+## Max Instant Tracking {#max-instant-tracking}
 
 History-capable South connectors track the last successfully retrieved timestamp (the _max instant_) so
 that each run only fetches new data. Whether that instant is tracked per item or shared across a group
@@ -149,7 +149,7 @@ re-populated on its next standalone query. Moving directly from one synced group
 trigger this: the item keeps consulting a shared instant throughout, just under the new group.
 :::
 
-### Behaviour when configuration changes
+### Behaviour when configuration changes {#behaviour-when-configuration-changes}
 
 | Action                   | Effect on max instant                                                                                                                                                                                                                              |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -165,7 +165,7 @@ will use the new parameters from the current tracked instant. A significantly di
 gaps or duplicates at the boundary.
 :::
 
-### Inspecting the last retrieved value
+### Inspecting the last retrieved value {#inspecting-the-last-retrieved-value}
 
 Click the **🔍** icon on any item row to open the **Last retrieved value** panel. It shows:
 

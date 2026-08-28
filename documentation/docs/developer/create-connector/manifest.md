@@ -16,9 +16,9 @@ declares:
 The frontend renders the manifest as a form; the backend type-generator produces the corresponding TypeScript
 interfaces (`South<Type>Settings`, `South<Type>ItemSettings`, `North<Type>Settings`).
 
-## Top-level shape
+## Top-level shape {#top-level-shape}
 
-### South
+### South {#south}
 
 ```typescript title="backend/src/south/south-folder-scanner/manifest.ts (excerpt)"
 import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
@@ -44,7 +44,7 @@ The `modes` flags are _advisory_ — they tell the UI which actions to expose (e
 interfaces from `south-interface.ts` the class implements; see
 [the class doc](./class.md#capability-interfaces-south-only).
 
-### North
+### North {#north}
 
 ```typescript title="backend/src/north/north-console/manifest.ts"
 import { NorthConnectorManifest } from '../../../shared/model/north-connector.model';
@@ -62,7 +62,7 @@ export default manifest;
 North doesn't have `items`. The `types` array MUST agree with what the class returns from
 `supportedTypes()` — the engine checks at runtime and routes unsupported types to the error folder.
 
-## The settings object
+## The settings object {#the-settings-object}
 
 `settings` is always an `OIBusObjectAttribute`:
 
@@ -81,7 +81,7 @@ North doesn't have `items`. The `types` array MUST agree with what the class ret
 Each child in `attributes` is one form control. Containers (`object`, `array`) can themselves contain more
 attributes — nesting is unlimited.
 
-### Attribute types
+### Attribute types {#attribute-types}
 
 | `type`            | UI element              | Generated TypeScript type | Extra fields                                                                    |
 | ----------------- | ----------------------- | ------------------------- | ------------------------------------------------------------------------------- |
@@ -107,7 +107,7 @@ Every leaf attribute carries the same common fields:
 | `validators`        | Array of `{ type, arguments }` — see below                                                         |
 | `displayProperties` | `{ row, columns, displayInViewMode }` for leaf attributes, or `{ visible, wrapInBox }` for objects |
 
-### A concrete example
+### A concrete example {#a-concrete-example}
 
 ```typescript title="One simple string attribute"
 {
@@ -150,7 +150,7 @@ Every leaf attribute carries the same common fields:
 }
 ```
 
-### Validators
+### Validators {#validators}
 
 ```typescript
 validators: [
@@ -171,7 +171,7 @@ Validator arguments are always strings; the frontend parses them per validator t
 Hidden fields (see [enabling conditions](#enabling-conditions)) skip their validators — a required-but-hidden
 field won't block form submission.
 
-### Enabling conditions
+### Enabling conditions {#enabling-conditions}
 
 Show or hide attributes based on the value of another field. Declared on the **parent object**, not on each
 attribute:
@@ -206,7 +206,7 @@ attribute:
 
 Paths are dotted, relative to the **enclosing object's root** (not the form root).
 
-## Items (South only)
+## Items (South only) {#items-south-only}
 
 `items` describes the per-item sub-form. It's an `OIBusArrayAttribute` whose `rootAttribute` is the
 `OIBusObjectAttribute` defining one row:
@@ -266,7 +266,7 @@ The `scanMode.acceptableType` controls what the operator can pick:
 
 A complete real example is `backend/src/south/south-folder-scanner/manifest.ts`.
 
-## Generating the TypeScript types
+## Generating the TypeScript types {#generating-the-typescript-types}
 
 After editing the manifest, regenerate the typed settings interfaces from `backend/`:
 

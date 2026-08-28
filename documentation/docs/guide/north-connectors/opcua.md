@@ -10,9 +10,9 @@ the [OPC UA South Connector](../south-connectors/opcua.mdx) which reads data fro
 - **Process Control**: Write setpoints to PLCs
 - **Configuration Management**: Update device parameters from centralized systems
 
-## Specific Settings
+## Specific Settings {#specific-settings}
 
-### Connection Configuration
+### Connection Configuration {#connection-configuration}
 
 | Setting                | Description                              | Example Value              |
 | ---------------------- | ---------------------------------------- | -------------------------- |
@@ -20,7 +20,7 @@ the [OPC UA South Connector](../south-connectors/opcua.mdx) which reads data fro
 | **Keep session alive** | Keep the session alive between messages. | Enabled/Disabled           |
 | **Retry Interval**     | Delay between retries (in milliseconds). | `5000`                     |
 
-### Security Settings
+### Security Settings {#security-settings}
 
 | Setting             | Description                                                                                                                                                                  | Example Value                                       |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
@@ -45,7 +45,7 @@ the [OPC UA South Connector](../south-connectors/opcua.mdx) which reads data fro
 
 :::
 
-### Authentication
+### Authentication {#authentication}
 
 | Setting            | Description                                                            | Example Value                              |
 | ------------------ | ---------------------------------------------------------------------- | ------------------------------------------ |

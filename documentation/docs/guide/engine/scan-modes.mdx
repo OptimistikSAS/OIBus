@@ -14,7 +14,7 @@ data operations at specific dates and intervals.
 A scan mode is either **cron-based** or **interval-based**, and can optionally be restricted to an
 **activation window**.
 
-## Default Scan Modes
+## Default Scan Modes {#default-scan-modes}
 
 OIBus provides six built-in scan modes for common scheduling needs:
 
@@ -31,12 +31,12 @@ A seventh, non-editable **Subscription** scan mode also exists (with no cron exp
 that push data as it arrives rather than on a schedule (e.g. MQTT, OPC UA DA). It is not displayed in the scan
 mode list since it cannot be triggered or edited like the others.
 
-## Custom Scan Modes
+## Custom Scan Modes {#custom-scan-modes}
 
 You can create **custom scan modes** to fit your specific scheduling requirements. Each one has a
 **type**, either `Cron` or `Interval`.
 
-## Interval Scan Modes
+## Interval Scan Modes {#interval-scan-modes}
 
 For the common "just poll every N seconds" case, an interval is simpler than a cron expression. Pick a
 positive whole number and a unit — milliseconds, seconds, minutes or hours.
@@ -48,7 +48,7 @@ positive whole number and a unit — milliseconds, seconds, minutes or hours.
 Unlike a cron expression, which is re-anchored to the wall clock on every run, an interval simply waits
 the configured delay between runs and may drift slightly under heavy load.
 
-## Activation Window
+## Activation Window {#activation-window}
 
 Independently of its type, a scan mode can be restricted to an **activation window**. When a scheduled
 run falls outside the window it is skipped silently: nothing is queued and nothing is deferred to when
@@ -66,14 +66,14 @@ Because a recurring rule is expressed in civil time rather than as a fixed offse
 shifts by an hour across a daylight-saving change — it is saved together with the timezone taken from
 your account settings, and re-evaluated in that timezone on every run.
 
-### Overnight Windows
+### Overnight Windows {#overnight-windows}
 
 If the end time is earlier than the start time, the window spans into the next day; the form marks this
 with a **+1** next to the end time. The day-of-week filter then applies to the day the window *opened*:
 "Friday, 22:00–02:00" stays active from Friday 22:00 through Saturday 02:00, even though Saturday is not
 itself selected.
 
-### Examples
+### Examples {#examples}
 
 - *Only collect during working hours*: no date range, days Monday to Friday, time of day 08:00–18:00.
 - *Only query on weekends for the next month*: date range from today to today + 1 month, days Saturday
@@ -85,7 +85,7 @@ is never a silent no-op.
 If a window can never trigger again — for instance its end date is already past — OIBus displays a
 warning on the scan mode list and on every item using that scan mode.
 
-### Tips for Cron Expressions
+### Tips for Cron Expressions {#tips-for-cron-expressions}
 
 - **Format**: Cron expressions consist of six fields:
   `[seconds] [minutes] [hours] [day of month] [month] [day of week]`. A 7th field (year, as used by Quartz cron)
@@ -95,12 +95,12 @@ warning on the scan mode list and on every item using that scan mode.
 - **Precision**: For predictable behavior, specify exact seconds or minutes (e.g., `0` for the top of the minute/hour).
 - **Non-standard characters**: `L`, `W`, `#`, `?`, and `H` are not supported and will be rejected.
 
-#### Example Cron Expressions
+#### Example Cron Expressions {#example-cron-expressions}
 
 - `30 * * * * *`: Runs at the 30-second mark of every minute.
 - `0 15 10 * * *`: Runs daily at 10:15:00 AM.
 - `0 0 22 * * 1`: Runs every Monday at 10:00:00 PM.
 
-### Test Your Cron Expression
+### Test Your Cron Expression {#test-your-cron-expression}
 
 <CronTester />

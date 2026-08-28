@@ -7,14 +7,14 @@ sidebar_position: 0
 A **North connector** sends data from OIBus to a target application. This page explains how to configure and manage
 North connectors.
 
-## Adding a North Connector
+## Adding a North Connector {#adding-a-north-connector}
 
 1. Navigate to the **North** page.
 2. Click the **+** button.
 3. Select a connector type and configure its settings.
 4. Monitor or adjust settings from the connector's display page.
 
-## General Settings
+## General Settings {#general-settings}
 
 | Setting         | Description                                                                      | Example Value       |
 | --------------- | -------------------------------------------------------------------------------- | ------------------- |
@@ -26,17 +26,17 @@ North connectors.
 A disabled North connector **will not cache any data**.
 :::
 
-## Specific Section
+## Specific Section {#specific-section}
 
 Refer to each connector’s documentation for type-specific settings.
 
-### Testing Connection
+### Testing Connection {#testing-connection}
 
 Use the **Test settings** button to verify your connection configuration.
 
-## Cache Settings
+## Cache Settings {#cache-settings}
 
-### Trigger Conditions
+### Trigger Conditions {#trigger-conditions}
 
 Configure when data is sent to the target application:
 
@@ -46,7 +46,7 @@ Configure when data is sent to the target application:
 | **Number of elements** | (JSON payloads) Send data when the specified number of elements is reached, bypassing the schedule. | `1000`        |
 | **Number of files**    | (Files) Send data when the specified number of files is reached, bypassing the schedule.            | `10`          |
 
-### Throttling
+### Throttling {#throttling}
 
 Control data transmission to avoid overwhelming the target or network:
 
@@ -56,7 +56,7 @@ Control data transmission to avoid overwhelming the target or network:
 | **Maximum number of elements**          | Maximum number of elements sent in a single transmission.                                             | `10000`       |
 | **Maximum storage size**                | Maximum size (in MB) for cache + error + archive. Excess data is discarded once the limit is reached. | `1000`        |
 
-### Errors
+### Errors {#errors}
 
 Manage how OIBus handles transmission failures:
 
@@ -73,7 +73,7 @@ error responses (e.g. authentication or rate-limiting errors) that are expected 
 a misconfigured API key, a temporary outage — is fixed, rather than moving the data to the error folder.
 :::
 
-### Archive
+### Archive {#archive}
 
 Enable archiving to retain transmitted data:
 
@@ -86,7 +86,7 @@ Enable archiving to retain transmitted data:
 If files are retained indefinitely, manually clear the archive folder periodically to avoid excessive disk usage.
 :::
 
-## Transformers
+## Transformers {#transformers}
 
 Transformers run **before data is cached** — they process incoming data from South connectors and determine what
 actually enters the North connector's cache. You can apply one or more transformers to a North connector to:
@@ -115,7 +115,7 @@ Your custom transformer will then be available for selection in the North connec
 
 :::
 
-## Data Filtering
+## Data Filtering {#data-filtering}
 
 Transformers are also the mechanism for filtering which data a North connector receives. By selecting a specific
 source type when adding a transformer, you control what kinds of data are accepted into the cache.

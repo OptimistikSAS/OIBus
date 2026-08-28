@@ -1,7 +1,7 @@
 import SerializationSettings from './_south-serialization-settings.mdx';
 import ThrottlingSettings from './_throttling-settings.mdx';
 
-## Group Settings
+## Group Settings {#group-settings}
 
 Items can be organised into groups. Each group defines a shared collection schedule and default throttling
 settings. Items in the same group are still fetched **one at a time** in sequence — the group simply
@@ -13,19 +13,19 @@ provides common defaults that individual items can override.
 | **Scan mode**  | Schedule used to collect all items in the group.                                                                                                  | `Every 1 min`             |
 | **Throttling** | Default throttling values (Max read interval, Read delay, Start time offset, End time offset, Recovery strategy) inherited by items in the group. | `3600, 200, 0, 0, oldest` |
 
-## Item Settings
+## Item Settings {#item-settings}
 
 Each item can be individually configured with its own query parameters and datetime handling.
 Items inherit their scan mode and throttling defaults from their group, but each setting can be
 overridden per item by disabling **Sync with group**.
 
 <ThrottlingSettings />
-### Query Configuration
+### Query Configuration {#query-configuration}
 
 The query field accepts standard SQL syntax with support for internal variables that enhance data retrieval
 resilience and performance optimization.
 
-#### Query Variables
+#### Query Variables {#query-variables}
 
 | Setting      | Description                                                                                         | Example Value              |
 | ------------ | --------------------------------------------------------------------------------------------------- | -------------------------- |
@@ -47,7 +47,7 @@ For handling large datasets, queries can be automatically divided into smaller t
 **Max read interval** throttling setting.
 :::
 
-### Datetime Field Configuration
+### Datetime Field Configuration {#datetime-field-configuration}
 
 | Setting             | Description                                                                                                    | Example Value               |
 | ------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------- |
@@ -80,7 +80,7 @@ WHERE CONVERT(datetime, string_field) > @StartTime
 
 :::
 
-### Data Flow Process
+### Data Flow Process {#data-flow-process}
 
 1. OIBus executes each configured query sequentially.
 2. Results are consolidated into structured output.

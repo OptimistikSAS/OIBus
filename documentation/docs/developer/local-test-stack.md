@@ -12,7 +12,7 @@ servers and simulators so you can develop and test OIBus connectors without acce
 equipment. This page documents every service, what it simulates, how to configure it, and how to bring
 it up.
 
-## Quick Start
+## Quick Start {#quick-start}
 
 The easiest way to start the stack is via the npm scripts defined in `backend/package.json`.
 Run them from the `backend/` directory:
@@ -75,9 +75,9 @@ OIBus running outside Docker (i.e. `npm start` in the `backend/` directory) can 
 
 ---
 
-## Services
+## Services {#services}
 
-### OPC UA Server — `opcua-server`
+### OPC UA Server — `opcua-server` {#opc-ua-server--opcua-server}
 
 | Property   | Value                                                                                                     |
 | ---------- | --------------------------------------------------------------------------------------------------------- |
@@ -135,7 +135,7 @@ the usernames `oibus` and `admin` respectively (set in `docker-compose.yml`).
 
 ---
 
-### Modbus Server — `modbus-server`
+### Modbus Server — `modbus-server` {#modbus-server--modbus-server}
 
 | Property   | Value                                                               |
 | ---------- | ------------------------------------------------------------------- |
@@ -191,7 +191,7 @@ values are static and come from `server_config.json`. Holding registers and coil
 
 ---
 
-### MQTT Broker — `mqtt-broker`
+### MQTT Broker — `mqtt-broker` {#mqtt-broker--mqtt-broker}
 
 | Property   | Value                                                             |
 | ---------- | ----------------------------------------------------------------- |
@@ -223,7 +223,7 @@ are meant for `any-content` / custom-transformer testing, not point-value items)
 
 ---
 
-### Syslog Server — `syslog-server` _(profile: `logging`)_
+### Syslog Server — `syslog-server` _(profile: `logging`)_ {#syslog-server--syslog-server-_profile-logging_}
 
 | Property   | Value                                                 |
 | ---------- | ----------------------------------------------------- |
@@ -244,7 +244,7 @@ docker compose logs -f syslog-server
 
 ---
 
-### Squid Proxy — `squid-proxy` _(profile: `proxy`)_
+### Squid Proxy — `squid-proxy` _(profile: `proxy`)_ {#squid-proxy--squid-proxy-_profile-proxy_}
 
 | Property   | Value                                                         |
 | ---------- | ------------------------------------------------------------- |
@@ -268,7 +268,7 @@ to confirm.
 
 ---
 
-### PostgreSQL — `postgres`
+### PostgreSQL — `postgres` {#postgresql--postgres}
 
 | Property  | Value                                           |
 | --------- | ----------------------------------------------- |
@@ -301,7 +301,7 @@ CREATE TABLE IF NOT EXISTS sensor_readings (
 
 ---
 
-### InfluxDB — `influxdb`
+### InfluxDB — `influxdb` {#influxdb--influxdb}
 
 | Property  | Value                                             |
 | --------- | ------------------------------------------------- |
@@ -372,7 +372,7 @@ from(bucket: "oibus-bucket")
 
 ---
 
-### FTP Server — `ftp-server` _(profile: `ftp`)_
+### FTP Server — `ftp-server` _(profile: `ftp`)_ {#ftp-server--ftp-server-_profile-ftp_}
 
 | Property  | Value                                                     |
 | --------- | --------------------------------------------------------- |
@@ -384,7 +384,7 @@ land in `docker/ftp/data/`.
 
 ---
 
-### SFTP Server — `sftp-server` _(profile: `ftp`)_
+### SFTP Server — `sftp-server` _(profile: `ftp`)_ {#sftp-server--sftp-server-_profile-ftp_}
 
 | Property  | Value                                               |
 | --------- | --------------------------------------------------- |
@@ -396,7 +396,7 @@ Upload directory: `docker/sftp/data/`.
 
 ---
 
-### OIBus Runtime — `oibus` _(profile: `oibus`)_
+### OIBus Runtime — `oibus` _(profile: `oibus`)_ {#oibus-runtime--oibus-_profile-oibus_}
 
 | Property  | Value                                                                                        |
 | --------- | -------------------------------------------------------------------------------------------- |
@@ -409,7 +409,7 @@ the backend with `npm start`. See [Docker Image](./docker.mdx) for details about
 
 ---
 
-### Nginx — `nginx` _(profile: `oibus`)_
+### Nginx — `nginx` _(profile: `oibus`)_ {#nginx--nginx-_profile-oibus_}
 
 | Property   | Value                                     |
 | ---------- | ----------------------------------------- |
@@ -422,7 +422,7 @@ certificates in `docker/nginx/certs/`. Only needed when testing the full TLS / r
 
 ---
 
-### Unified Simulator — `simulator`
+### Unified Simulator — `simulator` {#unified-simulator--simulator}
 
 | Property      | Value                                                                |
 | ------------- | -------------------------------------------------------------------- |
@@ -434,7 +434,7 @@ A single Python script that drives the Modbus server, the MQTT broker, InfluxDB 
 one daemon thread per source, each with its own independent retry loop so a failure in one source does
 not affect the others.
 
-#### Modbus thread
+#### Modbus thread {#modbus-thread}
 
 Writes to the Modbus server every `MODBUS_UPDATE_INTERVAL` seconds (default 2 s). All values are
 sinusoidal with 5 % random noise unless stated otherwise.
@@ -486,7 +486,7 @@ simulator accounts for this by writing the **low 16-bit word before the high 16-
 `endianness: big-endian`).
 :::
 
-#### MQTT thread
+#### MQTT thread {#mqtt-thread}
 
 Publishes to the MQTT broker every `MQTT_UPDATE_INTERVAL` seconds (default 2 s). Each publish cycle
 sends **two families** of topics:
@@ -495,7 +495,7 @@ sends **two families** of topics:
 - **JSON topics** (under `<workshop>/json/<shape>`) — structured payloads of different shapes. OIBus's
   MQTT south ingests these as `any-content`, which makes them ideal for exercising custom transformers.
 
-##### Scalar topics
+##### Scalar topics {#scalar-topics}
 
 Topics follow the pattern `<workshop>/<sensor>/<type>` and carry a bare number (e.g. `23.5`). All
 values are sinusoidal with 5 % random noise.
@@ -511,7 +511,7 @@ values are sinusoidal with 5 % random noise.
 | `workshop2/sensor3/pressure`    |   990.0 |      40.0 |  210 s |
 | `workshop2/sensor4/vibration`   |     4.0 |       4.0 |   45 s |
 
-##### JSON topics
+##### JSON topics {#json-topics}
 
 Each topic publishes a different JSON **shape**, so connectors and custom transformers can be tested
 against the full range of payloads OIBus may receive over MQTT. Numeric values vary every cycle
@@ -574,7 +574,7 @@ field — returning a non-string value there must never reach the metrics databa
 make that edge case easy to reproduce.
 :::
 
-#### InfluxDB thread
+#### InfluxDB thread {#influxdb-thread}
 
 Writes to InfluxDB every `INFLUXDB_UPDATE_INTERVAL` seconds (default **10 s**). Each write cycle
 writes one point per sensor, each tagged with `workshop` and `sensor_id` and carrying a single `value`
@@ -590,7 +590,7 @@ measurements/tags to query against:
 | vibration   | workshop2 | sensor2   |    3.0 |       2.0 |   40 s |
 | co2         | workshop2 | sensor3   |  500.0 |     150.0 |  200 s |
 
-#### PostgreSQL thread
+#### PostgreSQL thread {#postgresql-thread}
 
 Writes to PostgreSQL every `POSTGRES_UPDATE_INTERVAL` seconds (default **10 s**), inserting one row per
 sensor into the `sensor_readings` table (see [PostgreSQL](#postgresql--postgres) above). It uses the
@@ -598,7 +598,7 @@ exact same sensor list as the InfluxDB thread, with `workshop`/`sensor_id`/`meas
 standing in for InfluxDB's tags — so both databases end up with the same data, shaped for their
 respective query models (Flux/InfluxQL tags vs a SQL `WHERE` clause).
 
-#### Environment variables
+#### Environment variables {#environment-variables}
 
 | Variable                   | Default                | Description                                             |
 | -------------------------- | ---------------------- | ------------------------------------------------------- |
@@ -626,7 +626,7 @@ respective query models (Flux/InfluxQL tags vs a SQL `WHERE` clause).
 
 ---
 
-## Passwords and Secrets
+## Passwords and Secrets {#passwords-and-secrets}
 
 Every service uses the same default credentials, `oibus` / `pass`, so there's a single pair to
 remember when connecting OIBus to any of them. The one exception is InfluxDB, whose password must be
@@ -651,7 +651,7 @@ DOMAIN=oibus.example.com
 
 ---
 
-## Useful Commands
+## Useful Commands {#useful-commands}
 
 ```bash
 # Start the recommended development stack (IoT servers + simulator + database)

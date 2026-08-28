@@ -6,15 +6,15 @@ sidebar_position: 5
 
 The OIBus agent can receive the following [HTTP calls](#http-api). The agent run a local PI module through an inter-process communication.
 
-## HTTP API
+## HTTP API {#http-api}
 
-### Status
+### Status {#status}
 
 ```
 curl --location 'http://localhost:2224/api/pi/id/status'
 ```
 
-### Connection
+### Connection {#connection}
 
 ```
 curl --location --request PUT 'http://localhost:2224/api/pi/id/connect' \
@@ -22,7 +22,7 @@ curl --location --request PUT 'http://localhost:2224/api/pi/id/connect' \
 --data '{}'
 ```
 
-### Read
+### Read {#read}
 
 ```
 curl --location --request PUT 'http://localhost:2224/api/pi/id/read' \
@@ -45,7 +45,7 @@ curl --location --request PUT 'http://localhost:2224/api/pi/id/read' \
 }'
 ```
 
-### Disconnection
+### Disconnection {#disconnection}
 
 ```
 curl --location --request DELETE 'http://localhost:2224/api/pi/id/disconnect'
