@@ -4,13 +4,13 @@ sidebar_position: 4
 
 # Transformateurs
 
-Un **Transformateur** se situe entre une source de données et un connecteur Nord. Il convertit les données entrantes
-dans le format attendu par le connecteur Nord avant qu'elles ne soient placées dans le cache du connecteur. Au-delà de
+Un **Transformateur** se situe entre une source de données et un connecteur North. Il convertit les données entrantes
+dans le format attendu par le connecteur North avant qu'elles ne soient placées dans le cache du connecteur. Au-delà de
 la conversion de format, les transformateurs sont également le mécanisme de **filtrage** des données qu'un connecteur
-Nord reçoit — voir [Filtrage des données](../north-connectors/common-settings.md#data-filtering) pour plus de
+North reçoit — voir [Filtrage des données](../north-connectors/common-settings.md#data-filtering) pour plus de
 détails.
 
-Les transformateurs sont configurés **sur le connecteur Nord**, dans la section **Transformateurs** de sa page de
+Les transformateurs sont configurés **sur le connecteur North**, dans la section **Transformateurs** de sa page de
 paramètres.
 
 ---
@@ -26,35 +26,35 @@ Choisissez d'où proviennent les données.
 
 | Source                   | Description                                                                                                                    |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Connecteur Sud**       | Données collectées par l'un des connecteurs Sud configurés                                                                    |
+| **Connecteur South**       | Données collectées par l'un des connecteurs South configurés                                                                    |
 | **API OIBus**            | Données envoyées à OIBus via l'API REST. Nécessite une chaîne **Data Source ID** pour identifier le système d'origine        |
 | **Consigne OIAnalytics** | Commandes d'écriture (write-back) envoyées depuis OIAnalytics                                                                 |
 
-### 2 — Portée des éléments (connecteurs Sud uniquement) {#2--item-scope-south-connectors-only}
+### 2 — Portée des éléments (connecteurs South uniquement) {#2--item-scope-south-connectors-only}
 
-Lorsque la source est un connecteur Sud, vous pouvez restreindre les éléments auxquels le transformateur s'applique.
+Lorsque la source est un connecteur South, vous pouvez restreindre les éléments auxquels le transformateur s'applique.
 
 | Portée                | Description                                                                       |
 | ---------------------- | ---------------------------------------------------------------------------------- |
-| **Tous les éléments**  | Chaque élément du connecteur Sud sélectionné passe par ce transformateur          |
+| **Tous les éléments**  | Chaque élément du connecteur South sélectionné passe par ce transformateur          |
 | **Par groupe**         | Seuls les éléments appartenant à un groupe spécifique sont traités                |
 | **Éléments spécifiques** | Sélectionnez individuellement des éléments dans la liste de recherche           |
 
 :::tip
-Un même connecteur Nord peut avoir **plusieurs transformateurs** avec des sources et des portées différentes. Cela
-vous permet d'appliquer des conversions différentes à différentes parties du même connecteur Sud — par exemple, un
+Un même connecteur North peut avoir **plusieurs transformateurs** avec des sources et des portées différentes. Cela
+vous permet d'appliquer des conversions différentes à différentes parties du même connecteur South — par exemple, un
 transformateur pour un groupe de capteurs de température et un autre pour des débitmètres. Lorsqu'un lot entrant
 mélange des éléments couverts par différents transformateurs, OIBus le divise automatiquement pour que chaque partie
 soit traitée par le transformateur qui la cible réellement.
 :::
 
 Si plusieurs transformateurs peuvent correspondre au même élément (par exemple, l'un ciblant un groupe et l'autre
-« Tous les éléments » du même connecteur Sud), OIBus résout cela avec cette priorité, du plus spécifique au moins
+« Tous les éléments » du même connecteur South), OIBus résout cela avec cette priorité, du plus spécifique au moins
 spécifique :
 
 1. Un transformateur ciblant cet **élément spécifique**.
 2. Un transformateur ciblant le **groupe** de l'élément.
-3. Un transformateur ciblant **tous les éléments** du connecteur Sud (aucun groupe, aucun élément spécifique
+3. Un transformateur ciblant **tous les éléments** du connecteur South (aucun groupe, aucun élément spécifique
    sélectionné) — le repli par défaut.
 
 Le premier transformateur configuré qui correspond, dans cet ordre, est utilisé ; les égalités au sein d'un même
@@ -63,9 +63,9 @@ niveau sont départagées par la position du transformateur dans la liste.
 ### 3 — Transformateur {#3--transformer}
 
 Une fois une source sélectionnée, la liste est automatiquement filtrée pour n'afficher que les transformateurs
-compatibles. Les choix disponibles dépendent du type de connecteur Sud choisi :
+compatibles. Les choix disponibles dépendent du type de connecteur South choisi :
 
-| Type de connecteur Sud                                                          | Transformateurs standard compatibles                                                        |
+| Type de connecteur South                                                          | Transformateurs standard compatibles                                                        |
 | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | **OPC UA, OPC Classic, Modbus, ADS, OSIsoft PI, OIAnalytics** (automate / historien) | CSV, JSON, payloads MQTT, valeurs Modbus, OIAnalytics (sélection de la précision temporelle), valeurs OPCUA |
 | **MQTT, REST, SFTP, FTP, Folder Scanner, ODBC, OLEDB** (fichier / requête)        | Time Values (depuis CSV), payloads MQTT (depuis CSV), CSV (depuis JSON), OIAnalytics (depuis JSON) |
@@ -93,12 +93,12 @@ nécessitent aucune configuration.
 
 | Transformateur    | Comportement                                                                                                                                                                                                       |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Ignore**         | Rejette les données. Rien n'est mis en cache et rien n'est envoyé au connecteur Nord. Utile pour faire taire une partie de la sortie d'un connecteur Sud pour un Nord donné (via la portée élément/groupe) sans désactiver l'élément lui-même. |
-| **No transform**   | Met en cache les données exactement telles que reçues, sans aucune conversion. Utilisez ceci lorsque le connecteur Nord accepte déjà le type de contenu natif du Sud.                                          |
+| **Ignore**         | Rejette les données. Rien n'est mis en cache et rien n'est envoyé au connecteur North. Utile pour faire taire une partie de la sortie d'un connecteur South pour un North donné (via la portée élément/groupe) sans désactiver l'élément lui-même. |
+| **No transform**   | Met en cache les données exactement telles que reçues, sans aucune conversion. Utilisez ceci lorsque le connecteur North accepte déjà le type de contenu natif du South.                                          |
 
 ---
 
-### Pour les connecteurs Sud automate et historien {#for-plc-and-historian-south-connectors}
+### Pour les connecteurs South automate et historien {#for-plc-and-historian-south-connectors}
 
 Ces transformateurs traitent les tableaux structurés **time-value** produits par des connecteurs tels que OPC UA, OPC
 Classic, Modbus, TwinCAT ADS et OSIsoft PI.
@@ -121,7 +121,7 @@ JavaScript facultatives par colonne permettent de transformer les valeurs indivi
 
 | Paramètre               | Description                                                                                                                                                                                        |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Filename**           | Nom du fichier de sortie ; prend en charge `@CurrentDate` (horodatage UTC courant), et, pour un contenu provenant d'une requête historique Sud, `@QueryStartTime`/`@QueryEndTime` (la fenêtre temporelle interrogée, vide sinon) |
+| **Filename**           | Nom du fichier de sortie ; prend en charge `@CurrentDate` (horodatage UTC courant), et, pour un contenu provenant d'une requête historique South, `@QueryStartTime`/`@QueryEndTime` (la fenêtre temporelle interrogée, vide sinon) |
 | **Encoding**           | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, ou `UTF_16_LE`                                                                                                                                                    |
 | **Header**             | Inclure ou non la ligne d'en-tête des colonnes                                                                                                                                                     |
 | **Delimiter**          | Séparateur de colonnes                                                                                                                                                                             |
@@ -171,14 +171,14 @@ pressure1;2024-01-15T10:00:00.000Z;102,1
 #### JSON {#json}
 
 Un passage direct transparent qui resérialise le tableau de time-values en fichier JSON. Utilisez ceci lorsque le
-connecteur Nord attend un fichier JSON générique plutôt que le format interne time-values (par exemple un Nord basé
+connecteur North attend un fichier JSON générique plutôt que le format interne time-values (par exemple un North basé
 fichier comme Azure Blob ou File Writer).
 
 Ce transformateur n'a **aucune option de configuration**.
 
 ##### Exemple {#example-1}
 
-**Entrée** — n'importe quel tableau de time-values provenant d'un connecteur Sud OPC UA ou Modbus.
+**Entrée** — n'importe quel tableau de time-values provenant d'un connecteur South OPC UA ou Modbus.
 
 **Sortie** — le contenu JSON identique, enregistré sous forme de fichier `.json`.
 
@@ -259,7 +259,7 @@ Mapping : `plant/valve1 → 0x0010 (coil)`, `plant/speed → 0x0020 (register)`
 
 #### OIAnalytics (select time precision) {#oianalytics-select-time-precision}
 
-Prépare les lectures pour le connecteur Nord OIAnalytics. Les horodatages peuvent être tronqués à une précision
+Prépare les lectures pour le connecteur North OIAnalytics. Les horodatages peuvent être tronqués à une précision
 choisie pour réduire l'empreinte de stockage. Seuls les champs `pointId`, `timestamp`, et `data.value` sont
 transmis — les champs de qualité supplémentaires sont supprimés.
 
@@ -320,7 +320,7 @@ Mapping : `plant/temp1 → ns=1;s=Temperature`, `plant/valve1 → ns=1;s=Valve1`
 
 ---
 
-### Pour les connecteurs Sud fichier et basés requête {#for-file-and-query-based-south-connectors}
+### Pour les connecteurs South fichier et basés requête {#for-file-and-query-based-south-connectors}
 
 Ces transformateurs traitent des fichiers ou des payloads JSON produits par des connecteurs tels que REST, SFTP, FTP,
 Folder Scanner, ODBC et OLEDB, ainsi que des données injectées via l'**API OIBus**.
@@ -347,8 +347,8 @@ d'horodatage brute en ISO-8601 selon le format configuré.
 
 ##### Exemple {#example-5}
 
-Ce transformateur est utile lorsqu'un connecteur Sud REST récupère des exports CSV depuis une API, ou lorsqu'un
-connecteur Sud Folder Scanner récupère des fichiers CSV déposés par un autre système.
+Ce transformateur est utile lorsqu'un connecteur South REST récupère des exports CSV depuis une API, ou lorsqu'un
+connecteur South Folder Scanner récupère des fichiers CSV déposés par un autre système.
 
 **CSV en entrée** (récupéré par un élément REST)
 
@@ -369,7 +369,7 @@ tag/pressure1,2024-01-15T10:00:00.000Z,102.1
 ]
 ```
 
-Ces time-values peuvent ensuite être transmises à tout connecteur Nord acceptant des lectures structurées
+Ces time-values peuvent ensuite être transmises à tout connecteur North acceptant des lectures structurées
 (OIAnalytics, MQTT, OPC UA…).
 
 ---
@@ -447,7 +447,7 @@ expressions JavaScript de post-traitement facultatives par champ.
 
 | Paramètre               | Description                                                                                                                                                                                        |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Filename**           | Nom du fichier de sortie ; prend en charge `@CurrentDate` (horodatage UTC courant), et, pour un contenu provenant d'une requête historique Sud, `@QueryStartTime`/`@QueryEndTime` (la fenêtre temporelle interrogée, vide sinon) |
+| **Filename**           | Nom du fichier de sortie ; prend en charge `@CurrentDate` (horodatage UTC courant), et, pour un contenu provenant d'une requête historique South, `@QueryStartTime`/`@QueryEndTime` (la fenêtre temporelle interrogée, vide sinon) |
 | **Encoding**           | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, ou `UTF_16_LE`                                                                                                                                                    |
 | **Header**             | Inclure ou non la ligne d'en-tête des colonnes                                                                                                                                                     |
 | **Delimiter**          | Séparateur de colonnes                                                                                                                                                                             |
@@ -470,8 +470,8 @@ Chaque entrée de **field** :
 
 ##### Exemple {#example-6}
 
-Un connecteur Sud REST récupère un rapport JSON depuis une API. Le transformateur **CSV (from JSON)** extrait les
-champs pertinents et les reformate pour un connecteur Nord File Writer.
+Un connecteur South REST récupère un rapport JSON depuis une API. Le transformateur **CSV (from JSON)** extrait les
+champs pertinents et les reformate pour un connecteur North File Writer.
 
 **JSON en entrée** (retourné par l'élément REST)
 
@@ -501,7 +501,7 @@ Timestamp,Tag,Value,OK
 
 :::info Chaînes JSON imbriquées
 Les transformateurs **CSV (from JSON)** et **OIAnalytics (from JSON)** (ci-dessous) peuvent tous deux analyser
-automatiquement des nœuds intermédiaires sérialisés en JSON — par exemple un connecteur Sud MQTT dont les messages
+automatiquement des nœuds intermédiaires sérialisés en JSON — par exemple un connecteur South MQTT dont les messages
 transportent un payload JSON sous forme de chaîne brute. Si un segment de chemin résout vers une chaîne contenant
 elle-même du JSON, le reste du chemin est résolu par rapport à la valeur analysée. Cela s'applique également au
 **row iterator path** lui-même : il peut traverser cette frontière de chaîne et produire quand même une ligne par
@@ -515,13 +515,13 @@ Voir l'exemple [OIAnalytics (from JSON)](#oianalytics-from-json) ci-dessous pour
 
 Extrait l'identifiant de point, la valeur et l'horodatage d'une structure JSON arbitraire via des expressions
 JSONPath et produit un tableau de time-values OIBus standard — la même forme que celle produite par les connecteurs
-Sud automate/historien. Un **row iterator path** identifie quelle partie du payload devient une ligne (une
+South automate/historien. Un **row iterator path** identifie quelle partie du payload devient une ligne (une
 time-value) par correspondance ; les chemins d'identifiant de point, de valeur et d'horodatage sont ensuite résolus
 par rapport à cette ligne.
 
-C'est le transformateur à privilégier lorsqu'un connecteur Sud (typiquement MQTT, REST, ou Folder Scanner) fournit du
+C'est le transformateur à privilégier lorsqu'un connecteur South (typiquement MQTT, REST, ou Folder Scanner) fournit du
 JSON brut qui ne correspond pas déjà à la forme interne time-values d'OIBus, et que vous souhaitez l'envoyer
-directement à un connecteur Nord OIAnalytics sans écrire de transformateur personnalisé.
+directement à un connecteur North OIAnalytics sans écrire de transformateur personnalisé.
 
 ##### Paramètres {#settings-8}
 
@@ -539,7 +539,7 @@ directement à un connecteur Nord OIAnalytics sans écrire de transformateur per
 
 ##### Exemple — Messages MQTT avec un payload sérialisé en JSON {#example--mqtt-messages-with-a-json-stringified-payload}
 
-Un connecteur Sud MQTT fournit chaque message sous la forme `{ message, timestamp, item }`, où `message` est la
+Un connecteur South MQTT fournit chaque message sous la forme `{ message, timestamp, item }`, où `message` est la
 **chaîne de payload MQTT brute**. Un seul message peut transporter plusieurs métriques ; le row iterator utilise donc
 **deux** jokers — l'un pour le tableau externe de messages, l'autre pour les métriques à l'intérieur du payload
 (sérialisé en JSON) de chaque message — et produit une ligne par métrique, qu'un message donné contienne une seule
@@ -581,9 +581,9 @@ multiples.
 
 ---
 
-### Pour les connecteurs Sud de base de données SQL {#for-sql-database-south-connectors}
+### Pour les connecteurs South de base de données SQL {#for-sql-database-south-connectors}
 
-Les connecteurs Sud MySQL, PostgreSQL, MSSQL, Oracle, et SQLite ne sérialisent pas eux-mêmes le résultat de leurs
+Les connecteurs South MySQL, PostgreSQL, MSSQL, Oracle, et SQLite ne sérialisent pas eux-mêmes le résultat de leurs
 requêtes — chaque ligne est envoyée en aval exactement telle que la base de données l'a retournée, sous forme de
 contenu **record-list** (un tableau d'objets de ligne plats). Le rendu de ces données dans toute autre forme, y
 compris le CSV, est le travail du transformateur.
@@ -662,7 +662,7 @@ sensor-1,23.8,2024-01-15 11:01:00
 ### Pour les consignes OIAnalytics (Setpoints) {#for-oianalytics-setpoints}
 
 Ces transformateurs convertissent les commandes d'écriture (write-back) envoyées par OIAnalytics dans le format
-attendu par le connecteur Nord actionneur cible.
+attendu par le connecteur North actionneur cible.
 
 Chaque commande de consigne a cette forme :
 
@@ -771,20 +771,20 @@ Mapping : `pump1/speed → ns=1;s=PumpSpeed`
 
 ---
 
-## Tester un transformateur avec un élément Sud réel {#testing-a-transformer-against-a-real-south-item}
+## Tester un transformateur avec un élément South réel {#testing-a-transformer-against-a-real-south-item}
 
 Au-delà de tester le code d'un transformateur personnalisé de manière isolée (voir ci-dessous), vous pouvez
 prévisualiser n'importe quel transformateur — standard ou personnalisé — de bout en bout avec des données réelles,
-fraîchement collectées, depuis la fenêtre **Test** de l'élément Sud (décrite dans [Éléments de connecteur
-Sud](../south-connectors/common-settings.md#item-actions)) :
+fraîchement collectées, depuis la fenêtre **Test** de l'élément South (décrite dans [Éléments de connecteur
+South](../south-connectors/common-settings.md#item-actions)) :
 
-1. Choisissez l'un des connecteurs Nord associés à l'élément (ou, pour un élément de History Query, l'un des
+1. Choisissez l'un des connecteurs North associés à l'élément (ou, pour un élément de History Query, l'un des
    transformateurs propres à la requête, directement).
-2. Choisissez l'un des transformateurs configurés de ce Nord et ajustez ses options pour cette exécution de test
+2. Choisissez l'un des transformateurs configurés de ce North et ajustez ses options pour cette exécution de test
    uniquement — la configuration enregistrée n'est pas modifiée.
 3. Lancez le test. La fenêtre affiche le pipeline complet : **Résultat brut → Transformateur (+ options) → Sortie
    transformée**, ce qui vous permet de valider un transformateur avec les données réelles de l'élément avant
-   qu'elles n'atteignent le cache du Nord.
+   qu'elles n'atteignent le cache du North.
 
 ---
 
@@ -795,7 +795,7 @@ personnalisé** en JavaScript ou TypeScript. Le code personnalisé s'exécute da
 sécurisé, sans accès au système de fichiers hôte, aux modules Node.js, ni au réseau.
 
 Les transformateurs personnalisés sont créés dans la page **Engine → Transformers** et sont ensuite disponibles dans
-la liste de sélection des transformateurs de tout connecteur Nord.
+la liste de sélection des transformateurs de tout connecteur North.
 
 ### Fonction Transform {#transform-function}
 
@@ -822,24 +822,24 @@ export function transform(
 | Champ de retour     | Description                                                                                        |
 | ----------------- | ------------------------------------------------------------------------------------------------------ |
 | `data`             | Le contenu écrit dans le fichier de cache (voir ci-dessous) : une chaîne, du binaire brut, ou toute autre valeur |
-| `filename`         | Le nom de fichier utilisé lorsque la sortie est stockée dans le cache du Nord                          |
+| `filename`         | Le nom de fichier utilisé lorsque la sortie est stockée dans le cache du North                          |
 | `numberOfElement`  | Comptage facultatif des enregistrements traités, affiché dans les journaux et les métriques            |
 
-La sortie du transformateur est **écrite dans le fichier de cache telle quelle**, puis relue par le Nord selon son
+La sortie du transformateur est **écrite dans le fichier de cache telle quelle**, puis relue par le North selon son
 type de contenu. `data` est traité selon son type :
 
 | `data` retourné                               | Stocké comme                     | À utiliser avec                                          |
 | --------------------------------------------- | --------------------------------- | ---------------------------------------------------------- |
 | une **chaîne (string)**                       | la chaîne telle quelle (UTF-8)    | tout type de sortie — vous contrôlez le texte exact         |
-| un **`Uint8Array` / `ArrayBuffer`** (binaire)  | les octets bruts, tels quels      | le type de sortie **`any`** uniquement (Nords fichier)      |
+| un **`Uint8Array` / `ArrayBuffer`** (binaire)  | les octets bruts, tels quels      | le type de sortie **`any`** uniquement (North fichier)      |
 | toute **autre valeur** (objet, tableau, nombre…) | `JSON.stringify(data)`         | les sorties typées (`time-values`, `mqtt`, …) qui lisent du JSON |
 
 :::caution Faire correspondre `data` au type de sortie ; garder `filename` en chaîne
 
-- Pour les types de sortie **typés** (`time-values`, `mqtt`, `oianalytics`, `modbus`, `opcua`), le Nord lit le
+- Pour les types de sortie **typés** (`time-values`, `mqtt`, `oianalytics`, `modbus`, `opcua`), le North lit le
   fichier de cache comme du **JSON** — retournez une chaîne ou un objet/tableau (qu'OIBus sérialise en JSON). Le
   retour de binaire ici ne sera pas analysé.
-- La sortie **binaire** (`Uint8Array`/`ArrayBuffer`) est destinée au type de sortie **`any`**, où les Nords fichier
+- La sortie **binaire** (`Uint8Array`/`ArrayBuffer`) est destinée au type de sortie **`any`**, où les North fichier
   (File Writer, S3, Azure, envoi de fichier OIAnalytics) écrivent/téléversent les octets sans modification.
 - Une valeur non-chaîne, non-binaire, que `JSON.stringify` rejette (une structure circulaire, un `BigInt`) ou
   ignore (une fonction) fait échouer la transformation avec une erreur claire plutôt que d'être mise en cache.
@@ -883,8 +883,8 @@ journal (logger) d'OIBus. Tous les messages apparaissent préfixés par `CUSTOM 
 
 #### Exemple 1 — Reformater un tableau JSON en CSV (JavaScript) {#example-1--reformat-a-json-array-to-csv-javascript}
 
-Un connecteur Sud REST retourne un tableau JSON. Ce transformateur le convertit en fichier CSV délimité par des
-points-virgules pour un connecteur Nord File Writer.
+Un connecteur South REST retourne un tableau JSON. Ce transformateur le convertit en fichier CSV délimité par des
+points-virgules pour un connecteur North File Writer.
 
 **Entrée (`content`)**
 
@@ -1088,7 +1088,7 @@ export function transform(content, _source, _filename, _options) {
 
 #### Exemple 5 — Normaliser des messages JSON MQTT en time-values (JavaScript) {#example-5--normalize-mqtt-json-messages-to-time-values-javascript}
 
-Un connecteur **Sud MQTT** fournit chaque lot de messages reçus sous la forme d'un unique payload `any-content` :
+Un connecteur **South MQTT** fournit chaque lot de messages reçus sous la forme d'un unique payload `any-content` :
 un tableau JSON de `{ message, timestamp, item: { id, name, topic } }`, où `message` est la **chaîne de payload MQTT
 brute**. Ce payload brut peut avoir n'importe quelle forme — un simple nombre, une chaîne JSON, un objet plat, ou un
 tableau de lectures (voir les [topics JSON](../../developer/local-test-stack.md#json-topics) publiés par la pile de
@@ -1174,7 +1174,7 @@ export function transform(content, _source, _filename, _options) {
 
 :::tip Générer ces payloads localement
 La [pile de test locale](../../developer/local-test-stack.md#json-topics) publie exactement ces formes JSON MQTT
-(`flat`, `nested`, `array`, `mixed`, `string`, `number`), afin que vous puissiez pointer un connecteur Sud MQTT
+(`flat`, `nested`, `array`, `mixed`, `string`, `number`), afin que vous puissiez pointer un connecteur South MQTT
 vers elle et exercer un transformateur personnalisé sur chaque cas.
 :::
 

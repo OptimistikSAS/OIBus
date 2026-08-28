@@ -4,21 +4,21 @@ sidebar_position: 2
 
 import CronTester from '../../../../../../src/components/CronTester/index';
 
-# Modes de scrutation
+# Modes de scan
 
-OIBus utilise des **modes de scrutation** pour planifier le moment où les
-[connecteurs Sud](../../guide/south-connectors/common-settings.md) récupèrent des données ou où les
-[connecteurs Nord](../../guide/north-connectors/common-settings.md) en envoient. Les modes de scrutation vous
+OIBus utilise des **modes de scan** pour planifier le moment où les
+[connecteurs South](../../guide/south-connectors/common-settings.md) récupèrent des données ou où les
+[connecteurs North](../../guide/north-connectors/common-settings.md) en envoient. Les modes de scan vous
 permettent d'automatiser les opérations sur les données à des dates et intervalles précis.
 
-Un mode de scrutation est soit **basé sur cron**, soit **basé sur un intervalle**, et peut éventuellement être
+Un mode de scan est soit **basé sur cron**, soit **basé sur un intervalle**, et peut éventuellement être
 restreint à une **fenêtre d'activation**.
 
-## Modes de scrutation par défaut {#default-scan-modes}
+## Modes de scan par défaut {#default-scan-modes}
 
-OIBus fournit six modes de scrutation intégrés pour les besoins de planification courants :
+OIBus fournit six modes de scan intégrés pour les besoins de planification courants :
 
-| Mode de scrutation | Expression cron    | Description                                            |
+| Mode de scan | Expression cron    | Description                                            |
 | -------------------- | ----------------- | ------------------------------------------------------- |
 | Every second          | `* * * * * *`    | S'exécute toutes les secondes.                          |
 | Every 10 seconds       | `*/10 * * * * *` | S'exécute toutes les 10 secondes.                       |
@@ -27,17 +27,17 @@ OIBus fournit six modes de scrutation intégrés pour les besoins de planificati
 | Every hour             | `0 0 * * * *`    | S'exécute chaque heure, à la marque des 0 minute, 0 seconde. |
 | Every 24 hours         | `0 0 0 * * *`    | S'exécute quotidiennement à minuit (00:00:00).           |
 
-Un septième mode de scrutation, non modifiable, **Subscription**, existe également (sans expression cron) pour les
-connecteurs Sud qui poussent les données à leur arrivée plutôt que selon une planification (par ex. MQTT, OPC UA DA).
-Il n'apparaît pas dans la liste des modes de scrutation car il ne peut pas être déclenché ou modifié comme les
+Un septième mode de scan, non modifiable, **Subscription**, existe également (sans expression cron) pour les
+connecteurs South qui poussent les données à leur arrivée plutôt que selon une planification (par ex. MQTT, OPC UA DA).
+Il n'apparaît pas dans la liste des modes de scan car il ne peut pas être déclenché ou modifié comme les
 autres.
 
-## Modes de scrutation personnalisés {#custom-scan-modes}
+## Modes de scan personnalisés {#custom-scan-modes}
 
-Vous pouvez créer des **modes de scrutation personnalisés** pour répondre à vos besoins spécifiques de planification.
+Vous pouvez créer des **modes de scan personnalisés** pour répondre à vos besoins spécifiques de planification.
 Chacun possède un **type**, soit `Cron`, soit `Interval`.
 
-## Modes de scrutation par intervalle {#interval-scan-modes}
+## Modes de scan par intervalle {#interval-scan-modes}
 
 Pour le cas courant « interroger simplement toutes les N secondes », un intervalle est plus simple qu'une expression
 cron. Choisissez un nombre entier positif et une unité — millisecondes, secondes, minutes ou heures.
@@ -52,7 +52,7 @@ simplement le délai configuré entre les exécutions et peut légèrement déri
 
 ## Fenêtre d'activation {#activation-window}
 
-Indépendamment de son type, un mode de scrutation peut être restreint à une **fenêtre d'activation**. Lorsqu'une
+Indépendamment de son type, un mode de scan peut être restreint à une **fenêtre d'activation**. Lorsqu'une
 exécution planifiée tombe en dehors de la fenêtre, elle est ignorée silencieusement : rien n'est mis en file
 d'attente et rien n'est reporté à la réouverture de la fenêtre, et aucune erreur n'est levée.
 
@@ -82,11 +82,11 @@ lui-même sélectionné.
 - *Interroger uniquement le week-end pendant le mois à venir* : plage de dates d'aujourd'hui à aujourd'hui + 1 mois,
   jours samedi et dimanche, pas de restriction horaire.
 
-Tester manuellement un élément depuis la page du connecteur Sud **ignore** la fenêtre d'activation, de sorte qu'une
+Tester manuellement un élément depuis la page du connecteur South **ignore** la fenêtre d'activation, de sorte qu'une
 exécution de test n'est jamais une opération silencieusement sans effet.
 
 Si une fenêtre ne peut plus jamais se déclencher — par exemple si sa date de fin est déjà passée — OIBus affiche un
-avertissement dans la liste des modes de scrutation et sur chaque élément utilisant ce mode de scrutation.
+avertissement dans la liste des modes de scan et sur chaque élément utilisant ce mode de scan.
 
 ### Astuces pour les expressions cron {#tips-for-cron-expressions}
 

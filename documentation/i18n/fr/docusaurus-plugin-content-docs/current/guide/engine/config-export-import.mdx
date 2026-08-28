@@ -15,12 +15,12 @@ Les deux actions sont disponibles depuis **Engine > Settings**, via les boutons 
 
 Le fichier d'export (`oibus-config-export.json`) est une enveloppe versionnée contenant :
 
-- Les modes de scrutation
+- Les modes de scan
 - Les filtres IP
 - Les certificats
 - Les transformateurs
-- Les connecteurs Sud (y compris les éléments et les groupes)
-- Les connecteurs Nord
+- Les connecteurs South (y compris les éléments et les groupes)
+- Les connecteurs North
 - Les requêtes d'historique
 - Les utilisateurs
 - Les paramètres d'enregistrement OIAnalytics (à titre informatif uniquement — voir
@@ -41,8 +41,8 @@ doivent être ressaisis manuellement après un import — voir [Étapes manuelle
 
 Importer un fichier de configuration **efface toutes les sections concernées de la configuration locale de
 l'instance cible et les recrée à partir du fichier**, en conservant l'ID interne d'origine de chaque entité. Cette
-opération est destructrice et ne peut pas être annulée : chaque connecteur Sud, connecteur Nord, requête
-d'historique, mode de scrutation, filtre IP, transformateur, certificat et utilisateur actuellement présent sur
+opération est destructrice et ne peut pas être annulée : chaque connecteur South, connecteur North, requête
+d'historique, mode de scan, filtre IP, transformateur, certificat et utilisateur actuellement présent sur
 l'instance est supprimé avant que les éléments importés ne soient créés. L'interface exige une confirmation
 explicite, rappelant ce point, avant qu'un import ne soit soumis.
 
@@ -62,7 +62,7 @@ l'`oibusVersion` de l'instance qui l'a produit.
   inférieure — une version de format plus ancienne est toujours acceptée pour traitement.
 - **Version d'OIBus** : il n'y a pas d'`oibusVersion` minimale prise en charge. Avant de valider le fichier, OIBus
   recherche chaque étape de mise à niveau de paramètres enregistrée pour une version plus récente que l'`oibusVersion`
-  du fichier et applique celles qui correspondent (par type de connecteur Sud/Nord, côté de requête d'historique, ou
+  du fichier et applique celles qui correspondent (par type de connecteur South/North, côté de requête d'historique, ou
   transformateur) pour amener les anciennes structures de paramètres au format attendu par les manifestes de
   connecteurs actuels. La réponse liste chaque mise à niveau appliquée.
 
@@ -75,7 +75,7 @@ entité et, là encore, rien n'est écrit.
 Comme les secrets ne sont jamais exportés, une configuration importée n'est pas immédiatement utilisable telle
 quelle :
 
-- **Les connecteurs Sud et Nord sont importés avec `enabled: false`**, quelle que soit leur valeur exportée. Leurs
+- **Les connecteurs South et North sont importés avec `enabled: false`**, quelle que soit leur valeur exportée. Leurs
   paramètres sont importés tels qu'exportés par ailleurs, mais avec chaque champ de type secret vide, de sorte que
   les laisser activés échouerait soit à se connecter avec des identifiants vides, soit — pour un protocole
   d'écriture — se connecterait avec des paramètres dépourvus de sens. Les identifiants doivent être ressaisis et
