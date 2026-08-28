@@ -10,16 +10,17 @@ import { WindowService } from './window.service';
 const DOCUMENTATION_BASE_PATH = '/documentation';
 
 /**
- * Docusaurus doesn't prefix the default locale in its generated URLs. 'fr' docs are now bundled
- * (documentation/docusaurus.config.js's i18n.locales includes 'fr', with translated content under
- * documentation/i18n/fr/), so French UI users get French docs. Chinese docs translation is
- * tracked as a separate, follow-up issue - any UI language without a bundled docs locale here
- * falls back to the default (no prefix) segment below until its docs are bundled the same way
- * 'fr' just was.
+ * Docusaurus doesn't prefix the default locale in its generated URLs. 'fr' and 'zh' docs are both
+ * bundled (documentation/docusaurus.config.js's i18n.locales includes both, with translated
+ * content under documentation/i18n/fr/ and documentation/i18n/zh/), so French and Chinese UI
+ * users get docs in their own language. Any future UI language without a bundled docs locale
+ * here falls back to the default (no prefix) segment below until its docs are bundled the same
+ * way.
  */
 const LOCALE_SEGMENTS: Partial<Record<Language, string>> = {
   en: '',
-  fr: 'fr'
+  fr: 'fr',
+  zh: 'zh'
 };
 const DEFAULT_LOCALE_SEGMENT = '';
 
