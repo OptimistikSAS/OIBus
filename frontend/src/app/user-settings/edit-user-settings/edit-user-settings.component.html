@@ -32,6 +32,15 @@
               <input id="timezone" class="form-control" formControlName="timezone" [ngbTypeahead]="timezoneTypeahead" [editable]="false" />
               <val-errors controlName="timezone" />
             </div>
+            <div class="form-group">
+              <label class="form-label" for="language" translate="user-settings.edit-user-settings.language"></label>
+              <select formControlName="language" class="form-select" id="language">
+                @for (lang of languages; track lang) {
+                  <option [value]="lang">{{ languageDisplayName(lang) }}</option>
+                }
+              </select>
+              <val-errors controlName="language" />
+            </div>
           </form>
           <div class="form-group text-end">
             <button [oib-save-button]="state" form="form"></button>

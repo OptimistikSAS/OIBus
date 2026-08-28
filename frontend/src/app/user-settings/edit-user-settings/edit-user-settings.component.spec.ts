@@ -20,6 +20,7 @@ class EditUserSettingsComponentTester {
   readonly firstName = this.root.getByCss('#first-name');
   readonly lastName = this.root.getByCss('#last-name');
   readonly timezone = this.root.getByCss('#timezone');
+  readonly language = this.root.getByCss('#language');
   readonly saveButton = this.root.getByCss('#save-button');
   readonly changePasswordButton = this.root.getByCss('#open-change-password-modal-button');
 }
@@ -70,6 +71,7 @@ describe('EditUserSettingsComponent', () => {
     await expect.element(tester.firstName).toHaveValue('Admin');
     await expect.element(tester.lastName).toHaveValue('Admin');
     await expect.element(tester.timezone).toHaveValue('Europe/Paris');
+    await expect.element(tester.language).toHaveValue('en');
   });
 
   test('should save without reloading if language and timezone are not changed', () => {
@@ -120,6 +122,37 @@ describe('EditUserSettingsComponent', () => {
       };
       expect(userSettingsService.update).toHaveBeenCalledWith(userSettings.id, expectedCommand);
       expect(windowService.storeTimezone).toHaveBeenCalledWith('Asia/Tokyo');
+      expect(windowService.reload).toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('should save and reload if language is changed', () => {
+    vi.useFakeTimers();
+    try {
+      userSettingsService.update.mockReturnValue(of(undefined));
+      userSettingsService.currentUser.mockReturnValue(of({ ...userSettings, language: 'fr' }));
+      const tester = new EditUserSettingsComponentTester();
+      tester.fixture.detectChanges();
+
+      tester.fixture.componentInstance.form.controls.language.setValue('fr');
+      tester.fixture.detectChanges();
+
+      tester.fixture.componentInstance.save();
+
+      vi.advanceTimersByTime(500);
+
+      const expectedCommand: UserCommandDTO = {
+        login: 'admin',
+        firstName: 'Admin',
+        lastName: 'Admin',
+        language: 'fr',
+        timezone: 'Europe/Paris',
+        email: 'email@mail.fr'
+      };
+      expect(userSettingsService.update).toHaveBeenCalledWith(userSettings.id, expectedCommand);
+      expect(windowService.storeLanguage).toHaveBeenCalledWith('fr');
       expect(windowService.reload).toHaveBeenCalled();
     } finally {
       vi.useRealTimers();
