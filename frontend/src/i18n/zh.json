@@ -1,0 +1,3260 @@
+{
+  "configuration": {
+    "oibus": {
+      "secret": {
+        "placeholder": "留空以保留现有密钥"
+      },
+      "edit-array-element-modal": {
+        "title": {
+          "create": "创建元素",
+          "edit": "编辑元素"
+        },
+        "tooltips": {
+          "add": "添加元素",
+          "edit": "编辑元素",
+          "copy": "复制元素",
+          "delete": "删除元素"
+        }
+      },
+      "manifest": {
+        "north": {
+          "settings": "North 设置",
+          "aws-s3": {
+            "bucket": "存储桶",
+            "region": "区域",
+            "folder": "文件夹",
+            "access-key": "访问密钥",
+            "secret-key": "秘密密钥",
+            "use-proxy": "使用代理",
+            "proxy-url": "代理 URL",
+            "proxy-username": "代理用户名",
+            "proxy-password": "代理密码"
+          },
+          "azure-blob": {
+            "use-adls": "Azure Data Lake Storage",
+            "use-custom-url": "使用自定义 URL",
+            "account": "账户",
+            "custom-url": "自定义 URL",
+            "container": "容器",
+            "path": "路径",
+            "authentication": {
+              "title": "认证",
+              "access-key": "访问密钥",
+              "sas-token": "SAS 令牌",
+              "aad": "AAD - Application Active Directory",
+              "external": "外部"
+            },
+            "access-key": "访问密钥",
+            "sas-token": "共享访问签名令牌",
+            "tenant-id": "租户 ID",
+            "client-id": "客户端 ID",
+            "client-secret": "客户端密钥",
+            "use-proxy": "使用代理",
+            "proxy-url": "代理 URL",
+            "proxy-username": "代理用户名",
+            "proxy-password": "代理密码"
+          },
+          "azure-data-explorer": {
+            "cluster-url": "集群 URL",
+            "database": "数据库",
+            "table": "表",
+            "authentication": {
+              "title": "认证",
+              "aad-app-secret": "AAD 应用程序密钥",
+              "aad-app-certificate": "AAD 应用程序证书",
+              "managed-identity": "托管标识"
+            },
+            "tenant-id": "租户 ID",
+            "client-id": "客户端 ID",
+            "client-secret": "客户端密钥",
+            "certificate-id": "证书",
+            "data-format": {
+              "title": "数据格式",
+              "csv": "CSV",
+              "json": "JSON",
+              "multijson": "多行 JSON"
+            },
+            "ingestion-mapping-name": "摄取映射名称",
+            "use-proxy": "使用代理",
+            "proxy-url": "代理 URL",
+            "proxy-username": "代理用户名",
+            "proxy-password": "代理密码"
+          },
+          "console": {
+            "verbose": "详细"
+          },
+          "file-writer": {
+            "output-folder": "输出文件夹",
+            "prefix": "前缀",
+            "suffix": "后缀",
+            "smb-username": "SMB 用户名",
+            "smb-password": "SMB 密码",
+            "smb-domain": "SMB 域"
+          },
+          "modbus": {
+            "host": "主机",
+            "port": "端口",
+            "connect-timeout": "连接超时",
+            "retry-interval": "重试间隔",
+            "slave-id": "从站 ID",
+            "address-offset": {
+              "title": "地址偏移",
+              "modbus": "Modbus",
+              "jbus": "JBus"
+            },
+            "endianness": {
+              "title": "字节序",
+              "big-endian": "大端",
+              "little-endian": "小端"
+            },
+            "swap-bytes-in-words": "交换字节？",
+            "swap-words-in-dwords": "交换字？",
+            "grouping-gap": "最大分组间隔（地址）"
+          },
+          "mqtt": {
+            "url": "URL",
+            "qos": {
+              "0": "0",
+              "1": "1",
+              "2": "2",
+              "title": "QoS"
+            },
+            "persistent": "持久化",
+            "authentication": {
+              "title": "认证",
+              "none": "无",
+              "basic": "用户名/密码",
+              "cert": "证书",
+              "username": "用户名",
+              "password": "密码",
+              "cert-file-path": "证书文件路径",
+              "key-file-path": "密钥文件路径",
+              "ca-file-path": "CA 文件路径"
+            },
+            "reject-unauthorized": "拒绝未授权连接",
+            "reconnect-period": "重连周期",
+            "connect-timeout": "连接超时"
+          },
+          "oianalytics": {
+            "use-oianalytics-module": "使用 OIAnalytics 注册",
+            "timeout": "超时",
+            "compress": "压缩",
+            "specific-settings": {
+              "host": "URL",
+              "accept-unauthorized": "接受未授权",
+              "authentication": {
+                "title": "认证",
+                "basic": "访问密钥/密钥",
+                "aad-client-secret": "带客户端密钥的 Azure Active Directory",
+                "aad-certificate": "带证书的 Azure Active Directory"
+              },
+              "access-key": "访问密钥",
+              "secret-key": "密钥",
+              "tenant-id": "租户 ID",
+              "client-id": "客户端 ID",
+              "client-secret": "客户端密钥",
+              "certificate-id": "证书",
+              "scope": "作用域",
+              "use-proxy": "使用代理",
+              "proxy-url": "代理 URL",
+              "proxy-username": "代理用户名",
+              "proxy-password": "代理密码"
+            }
+          },
+          "opcua": {
+            "url": "URL",
+            "keep-session-alive": "保持会话活动",
+            "retry-interval": "重试间隔",
+            "security-mode": {
+              "title": "安全模式",
+              "none": "无",
+              "sign": "签名",
+              "sign-and-encrypt": "签名并加密"
+            },
+            "security-policy": {
+              "title": "安全策略",
+              "none": "无",
+              "basic128": "Basic128",
+              "basic192": "Basic192",
+              "basic256": "Basic256（已弃用）",
+              "basic128-rsa15": "Basic128-RSA15（已弃用）",
+              "basic192-rsa15": "Basic192-RSA15",
+              "basic256-rsa15": "Basic256-RSA15",
+              "basic256-sha256": "Basic256-SHA256",
+              "aes128-sha256-rsa-oaep": "AES128-SHA256-RSA-OAEP",
+              "pub-sub-aes-128-ctr": "PubSub AES-128-CTR",
+              "pub-sub-aes-256-ctr": "PubSub AES-256-CTR"
+            },
+            "authentication": {
+              "title": "认证",
+              "none": "无",
+              "basic": "用户名/密码",
+              "cert": "证书"
+            },
+            "username": "用户名",
+            "password": "密码",
+            "cert-file-path": "证书文件路径",
+            "key-file-path": "密钥文件路径"
+          },
+          "rest": {
+            "host": "主机",
+            "accept-unauthorized": "接受未授权证书",
+            "authentication": {
+              "title": "认证",
+              "type": {
+                "title": "类型",
+                "none": "无",
+                "basic": "基本（用户名/密码）",
+                "bearer": "Bearer 令牌",
+                "api-key": "API 密钥"
+              },
+              "username": "用户名",
+              "password": "密码",
+              "token": "Bearer 令牌",
+              "api-key": "API 密钥",
+              "api-value": "API 值",
+              "add-to": {
+                "title": "添加到",
+                "header": "请求头",
+                "query-params": "查询参数"
+              }
+            },
+            "send-as": {
+              "title": "发送有效载荷方式",
+              "file": "文件",
+              "body": "正文"
+            },
+            "test": {
+              "title": "连接测试",
+              "endpoint": "测试端点",
+              "method": {
+                "title": "方法",
+                "GET": "GET",
+                "POST": "POST",
+                "PUT": "PUT"
+              },
+              "body": "正文",
+              "success-code": "预期成功代码"
+            },
+            "proxy": {
+              "title": "代理",
+              "use-proxy": "使用代理",
+              "url": "代理 URL",
+              "username": "代理用户名",
+              "password": "代理密码"
+            },
+            "timeout": "请求超时",
+            "method": {
+              "title": "方法",
+              "GET": "GET",
+              "POST": "POST",
+              "PUT": "PUT",
+              "PATCH": "PATCH",
+              "DELETE": "DELETE"
+            },
+            "endpoint": "端点",
+            "query-params": {
+              "title": "查询参数",
+              "query-param": "查询参数",
+              "key": "键",
+              "value": "值"
+            },
+            "headers": {
+              "title": "请求头",
+              "header": "请求头",
+              "key": "HTTP 请求头键名",
+              "value": "HTTP 请求头值"
+            },
+            "success-code": "预期成功代码"
+          },
+          "sftp": {
+            "host": "主机",
+            "port": "端口",
+            "authentication": {
+              "title": "认证",
+              "password": "用户名/密码",
+              "private-key": "私钥"
+            },
+            "remote-folder": "远程文件夹",
+            "prefix": "前缀",
+            "suffix": "后缀",
+            "username": "用户名",
+            "password": "密码",
+            "private-key": "私钥",
+            "passphrase": "密码短语"
+          }
+        },
+        "transformers": {
+          "title": "转换有效载荷",
+          "source-simple": "来源：{{ source }}",
+          "source": "来源：{{ name }} ({{ type }})",
+          "source-disabled": "来源：{{ name }} ({{ type }}) - 已暂停",
+          "output": "输出",
+          "api-data-source": "API 数据源",
+          "items": "项",
+          "one-item-selected": "1 项",
+          "several-items-selected": "{{ numberOfItems }} 项",
+          "all-items-selected": "全部项",
+          "oibus-api-selected": "OIBus API（数据源 ID：{{ dataSourceId }}）",
+          "oianalytics-setpoint-selected": "OIAnalytics 设定点",
+          "all-items": "全部项",
+          "specific-items": "特定项",
+          "search-items": "搜索项...",
+          "no-items-found": "未找到项",
+          "search-results-count": "{{ count }} 个结果",
+          "showing-first-n": "（显示前 {{ limit }} 个）",
+          "select-all-results": "选择所有结果",
+          "remove-all": "全部移除",
+          "options": "选项",
+          "transformer": "转换器",
+          "add": "添加转换器",
+          "list": "自定义转换器",
+          "none": "无自定义转换器",
+          "created": "转换器 {{ name }} 已创建",
+          "updated": "转换器 {{ name }} 已更新",
+          "edited": "转换器 {{ name }} 已编辑",
+          "confirm-deletion": "确定要删除自定义转换器 {{ name }} 吗？所有使用它的 North 连接器和历史查询将立即受到影响。",
+          "confirm-edit": "确定要更新自定义转换器 {{ name }} 吗？所有使用它的 North 连接器和历史查询将被重新加载。",
+          "deleted": "转换器 {{ name }} 已删除",
+          "standard": {
+            "csv-to-mqtt": "MQTT 有效载荷（来自 CSV）",
+            "csv-to-time-values": "时间值（来自 CSV）",
+            "ignore": "忽略",
+            "iso": "不转换",
+            "json-to-csv": "CSV（来自 JSON）",
+            "json-to-oianalytics": "OIAnalytics（来自 JSON）",
+            "record-list-to-csv": "CSV（来自记录列表）",
+            "time-values-to-csv": "CSV",
+            "time-values-to-json": "JSON",
+            "time-values-to-modbus": "Modbus 值",
+            "time-values-to-mqtt": "MQTT 有效载荷",
+            "time-values-to-oianalytics": "OIAnalytics（选择时间精度）",
+            "time-values-to-opcua": "OPCUA 值",
+            "setpoint-to-modbus": "Modbus 值",
+            "setpoint-to-mqtt": "MQTT 有效载荷",
+            "setpoint-to-opcua": "OPCUA 值"
+          },
+          "choose-transformer-modal": {
+            "title": "选择如何处理有效载荷",
+            "transformer": "要应用的转换器",
+            "options": "选项"
+          },
+          "copy-from-existing": {
+            "mode-new": "新建",
+            "mode-from-north": "从 North 连接器",
+            "mode-from-history": "从历史查询",
+            "select-source": "选择来源",
+            "select-transformer": "要复制的转换器",
+            "no-compatible-transformer": "未找到与此来源兼容的转换器"
+          },
+          "edit-transformer-modal": {
+            "create-title": "创建自定义转换器",
+            "edit-title": "编辑自定义转换器",
+            "input-type": "输入",
+            "output-type": "输出",
+            "name": "名称",
+            "description": "描述",
+            "custom-code": "代码",
+            "language": "语言",
+            "custom-manifest": "选项",
+            "timeout": "执行超时",
+            "select-language": "请先选择一种编程语言。",
+            "test": "测试",
+            "tooltips": {
+              "add": "添加自定义转换器",
+              "edit": "编辑此自定义转换器",
+              "delete": "删除此自定义转换器",
+              "audit": "查看此自定义转换器的审计历史"
+            }
+          },
+          "test-transformer-modal": {
+            "title": "测试自定义转换器",
+            "transformer": "转换器",
+            "input-type": "输入类型",
+            "input-data": "输入数据",
+            "options": "选项",
+            "output": "输出",
+            "results": "结果",
+            "success": "测试成功完成",
+            "test": "运行测试",
+            "content-file": "文件：",
+            "content-size": "大小：",
+            "created-at": "创建于：",
+            "number-of-elements": "元素数量：",
+            "csv-delimiter": "分隔符",
+            "csv-delimiter-dot": "点 .",
+            "csv-delimiter-semicolon": "分号 ;",
+            "csv-delimiter-colon": "冒号 :",
+            "csv-delimiter-comma": "逗号 ,",
+            "csv-delimiter-slash": "斜杠 /",
+            "csv-delimiter-tab": "制表符",
+            "csv-delimiter-non-breaking-space": "空格",
+            "csv-delimiter-pipe": "竖线 |"
+          },
+          "attributes": {
+            "attribute": "属性",
+            "sub-attribute": "子属性",
+            "root-attribute": "根属性",
+            "root-attribute-item": "根属性项",
+            "key": "键",
+            "type": {
+              "title": "类型",
+              "string": "字符串",
+              "number": "数字",
+              "instant": "时间戳",
+              "string-select": "字符串选择",
+              "secret": "密钥",
+              "code": "代码",
+              "boolean": "布尔值",
+              "scan-mode": "扫描模式",
+              "certificate": "证书",
+              "timezone": "时区",
+              "array": "数组",
+              "object": "对象"
+            },
+            "translation-key": "翻译键",
+            "visible": "可见",
+            "wrap-in-box": "以框显示",
+            "attributes": "属性",
+            "add": "添加属性",
+            "none": "未定义属性",
+            "default-value": "默认值",
+            "unit": "单位",
+            "selectable-values": "可选值",
+            "selectable-values-help": "以逗号分隔的值列表",
+            "content-type": {
+              "title": "内容类型",
+              "json": "JSON",
+              "sql": "SQL"
+            },
+            "acceptable-type": {
+              "title": "可接受类型",
+              "POLL": "轮询",
+              "SUBSCRIPTION": "订阅",
+              "SUBSCRIPTION_AND_POLL": "订阅和轮询"
+            },
+            "paginate": "分页",
+            "number-of-elements-per-page": "每页元素数量",
+            "display-properties": {
+              "visible": "可见",
+              "wrap-in-box": "以框显示"
+            },
+            "row": "行",
+            "columns": "列",
+            "display-in-view-mode": "在查看模式下显示",
+            "nested-attributes": "嵌套属性",
+            "nested-context": "嵌套属性 — {{ path }}",
+            "secret-info": "密钥字段用于敏感数据",
+            "instant-info": "时间戳字段用于时间戳值",
+            "certificate-info": "证书字段用于 SSL 证书",
+            "edit-transformer-modal": {
+              "create-title": "创建属性",
+              "edit-title": "编辑属性"
+            }
+          },
+          "csv-to-mqtt": {
+            "delimiter": {
+              "title": "CSV 分隔符",
+              "DOT": "点 .",
+              "SEMI_COLON": "分号 ;",
+              "COLON": "冒号 :",
+              "COMMA": "逗号 ,",
+              "SLASH": "斜杠 /",
+              "TAB": "制表符",
+              "NON_BREAKING_SPACE": "空格",
+              "PIPE": "竖线 |"
+            },
+            "has-header": "包含表头",
+            "topic-column": "主题列",
+            "payload-type": {
+              "title": "有效载荷类型",
+              "string": "字符串",
+              "number": "数字",
+              "boolean": "布尔值",
+              "datetime": "日期时间",
+              "object": "对象"
+            },
+            "value-column": "值列",
+            "datetime-settings": {
+              "title": "日期时间设置",
+              "input-type": {
+                "title": "时间戳输入类型",
+                "string": "字符串",
+                "iso-string": "ISO 字符串",
+                "unix-epoch": "Unix 纪元（秒）",
+                "unix-epoch-ms": "Unix 纪元（毫秒）"
+              },
+              "output-type": {
+                "title": "时间戳输出类型",
+                "string": "字符串",
+                "iso-string": "ISO 字符串",
+                "unix-epoch": "Unix 纪元（秒）",
+                "unix-epoch-ms": "Unix 纪元（毫秒）"
+              },
+              "timezone": "时区",
+              "format": "格式",
+              "locale": "区域设置"
+            },
+            "object-fields": {
+              "title": "对象字段",
+              "item": {
+                "title": "字段配置"
+              },
+              "key": "键",
+              "column": "列",
+              "data-type": {
+                "title": "数据类型",
+                "string": "字符串",
+                "number": "数字",
+                "boolean": "布尔值",
+                "datetime": "日期时间",
+                "array": "数组",
+                "object": "对象"
+              }
+            }
+          },
+          "csv-to-time-values": {
+            "delimiter": {
+              "title": "CSV 分隔符",
+              "DOT": "点 .",
+              "SEMI_COLON": "分号 ;",
+              "COLON": "冒号 :",
+              "COMMA": "逗号 ,",
+              "SLASH": "斜杠 /",
+              "TAB": "制表符",
+              "NON_BREAKING_SPACE": "空格",
+              "PIPE": "竖线 |"
+            },
+            "has-header": "包含表头",
+            "point-id-column": "点位 ID 列",
+            "timestamp-column": "时间戳列",
+            "value-column": "值列",
+            "timestamp-settings": {
+              "title": "时间戳设置",
+              "type": {
+                "title": "时间戳类型",
+                "string": "字符串",
+                "iso-string": "ISO 字符串",
+                "unix-epoch": "Unix 纪元（秒）",
+                "unix-epoch-ms": "Unix 纪元（毫秒）"
+              },
+              "timezone": "时区",
+              "format": "格式",
+              "locale": "区域设置"
+            }
+          },
+          "json-to-csv": {
+            "filename": "输出文件名",
+            "delimiter": {
+              "title": "CSV 分隔符",
+              "DOT": "点 .",
+              "SEMI_COLON": "分号 ;",
+              "COLON": "冒号 :",
+              "COMMA": "逗号 ,",
+              "SLASH": "斜杠 /",
+              "TAB": "制表符",
+              "NON_BREAKING_SPACE": "空格",
+              "PIPE": "竖线 |"
+            },
+            "encoding": {
+              "title": "编码",
+              "UTF_8": "UTF-8",
+              "UTF_8_BOM": "UTF-8 BOM",
+              "LATIN_1": "Latin-1（ISO-8859-1）",
+              "UTF_16_LE": "UTF-16 LE"
+            },
+            "quote-char": {
+              "title": "引号字符",
+              "DOUBLE_QUOTE": "双引号（\"）",
+              "SINGLE_QUOTE": "单引号（'）",
+              "NONE": "无"
+            },
+            "escape-char": {
+              "title": "转义字符",
+              "BACKSLASH": "反斜杠（\\）",
+              "DOUBLE_QUOTE": "双引号（\"）"
+            },
+            "newline": {
+              "title": "行分隔符",
+              "DEFAULT": "默认（\\r、\\n 或 \\r\\n）",
+              "CRLF": "CRLF（\\r\\n）",
+              "LF": "LF（\\n）",
+              "CR": "CR（\\r）"
+            },
+            "null-value": "空值",
+            "header": "第一行作为表头",
+            "row-iterator-path": "行迭代器 JSONPath",
+            "fields": {
+              "title": "字段映射",
+              "item": {
+                "title": "字段配置"
+              },
+              "column-name": "列名",
+              "json-path": "JSONPath",
+              "data-type": {
+                "title": "数据类型",
+                "string": "字符串",
+                "number": "数字",
+                "boolean": "布尔值",
+                "datetime": "日期时间",
+                "array": "数组",
+                "object": "对象"
+              },
+              "field-process": "字段处理（JS 表达式，例如 value.toUpperCase()）",
+              "datetime-settings": {
+                "title": "日期时间设置",
+                "input-type": {
+                  "title": "时间戳输入类型",
+                  "string": "字符串",
+                  "iso-string": "ISO 字符串",
+                  "unix-epoch": "Unix 纪元（秒）",
+                  "unix-epoch-ms": "Unix 纪元（毫秒）"
+                },
+                "output-type": {
+                  "title": "时间戳输出类型",
+                  "string": "字符串",
+                  "iso-string": "ISO 字符串",
+                  "unix-epoch": "Unix 纪元（秒）",
+                  "unix-epoch-ms": "Unix 纪元（毫秒）"
+                },
+                "timezone": "时区",
+                "format": "格式",
+                "locale": "区域设置"
+              }
+            }
+          },
+          "record-list-to-csv": {
+            "filename": "文件名",
+            "encoding": {
+              "title": "编码",
+              "UTF_8": "UTF-8",
+              "UTF_8_BOM": "UTF-8 BOM",
+              "LATIN_1": "Latin-1（ISO-8859-1）",
+              "UTF_16_LE": "UTF-16 LE"
+            },
+            "header": "第一行作为表头",
+            "compression": "压缩文件",
+            "delimiter": {
+              "title": "分隔符",
+              "DOT": "点 .",
+              "SEMI_COLON": "分号 ;",
+              "COLON": "冒号 :",
+              "COMMA": "逗号 ,",
+              "SLASH": "斜杠 /",
+              "TAB": "制表符",
+              "NON_BREAKING_SPACE": "空格",
+              "PIPE": "竖线 |"
+            },
+            "newline": {
+              "title": "换行符",
+              "CRLF": "CRLF（\\r\\n）",
+              "LF": "LF（\\n）",
+              "CR": "CR（\\r）"
+            },
+            "quote-char": {
+              "title": "引号字符",
+              "DOUBLE_QUOTE": "双引号（\"）",
+              "SINGLE_QUOTE": "单引号（'）",
+              "NONE": "无"
+            },
+            "escape-char": {
+              "title": "转义字符",
+              "BACKSLASH": "反斜杠（\\）",
+              "DOUBLE_QUOTE": "双引号（\"）"
+            },
+            "null-value": "空值",
+            "fields": {
+              "title": "字段映射",
+              "item": {
+                "title": "字段配置"
+              },
+              "field-name": "字段名",
+              "column-name": "列名",
+              "data-type": {
+                "title": "数据类型",
+                "string": "字符串",
+                "number": "数字",
+                "boolean": "布尔值",
+                "datetime": "日期时间",
+                "array": "数组",
+                "object": "对象"
+              },
+              "field-process": "字段处理（JS 表达式，例如 value.toUpperCase()）",
+              "datetime-settings": {
+                "title": "日期时间设置",
+                "input-type": {
+                  "title": "时间戳输入类型",
+                  "string": "字符串",
+                  "iso-string": "ISO 字符串",
+                  "unix-epoch": "Unix 纪元（秒）",
+                  "unix-epoch-ms": "Unix 纪元（毫秒）"
+                },
+                "output-type": {
+                  "title": "时间戳输出类型",
+                  "string": "字符串",
+                  "iso-string": "ISO 字符串",
+                  "unix-epoch": "Unix 纪元（秒）",
+                  "unix-epoch-ms": "Unix 纪元（毫秒）"
+                },
+                "timezone": "时区",
+                "format": "格式",
+                "locale": "区域设置"
+              }
+            }
+          },
+          "setpoint-to-modbus": {
+            "mapping": {
+              "title": "映射表",
+              "point-id": "点位 ID（引用）",
+              "reference": "引用",
+              "address": "Modbus 地址",
+              "modbus-type": {
+                "title": "Modbus 类型",
+                "coil": "线圈",
+                "register": "寄存器"
+              }
+            }
+          },
+          "setpoint-to-mqtt": {
+            "mapping": {
+              "title": "映射表",
+              "point-id": "点位 ID（引用）",
+              "reference": "引用",
+              "topic": "MQTT 主题"
+            }
+          },
+          "setpoint-to-opcua": {
+            "mapping": {
+              "title": "映射表",
+              "point-id": "点位 ID（引用）",
+              "reference": "引用",
+              "node-id": "OPCUA 节点 ID",
+              "data-type": {
+                "title": "数据类型",
+                "boolean": "布尔值",
+                "s-byte": "SByte",
+                "byte": "Byte",
+                "int16": "Int16",
+                "uint16": "UInt16",
+                "int32": "Int32",
+                "uint32": "UInt32",
+                "int64": "Int64",
+                "uint64": "UInt64",
+                "float": "Float",
+                "double": "Double",
+                "string": "字符串",
+                "date-time": "日期时间"
+              }
+            }
+          },
+          "time-values-to-csv": {
+            "filename": "文件名",
+            "encoding": {
+              "title": "编码",
+              "UTF_8": "UTF-8",
+              "UTF_8_BOM": "UTF-8 BOM",
+              "LATIN_1": "Latin-1（ISO-8859-1）",
+              "UTF_16_LE": "UTF-16 LE"
+            },
+            "header": "第一行作为表头",
+            "delimiter": {
+              "title": "分隔符",
+              "DOT": "点 .",
+              "SEMI_COLON": "分号 ;",
+              "COLON": "冒号 :",
+              "COMMA": "逗号 ,",
+              "SLASH": "斜杠 /",
+              "TAB": "制表符",
+              "NON_BREAKING_SPACE": "空格",
+              "PIPE": "竖线 |"
+            },
+            "newline": {
+              "title": "换行符",
+              "DEFAULT": "默认",
+              "CRLF": "CRLF（\\r\\n）",
+              "LF": "LF（\\n）",
+              "CR": "CR（\\r）"
+            },
+            "quote-char": {
+              "title": "引号字符",
+              "DOUBLE_QUOTE": "双引号（\"）",
+              "SINGLE_QUOTE": "单引号（'）",
+              "NONE": "无"
+            },
+            "escape-char": {
+              "title": "转义字符",
+              "BACKSLASH": "反斜杠（\\）",
+              "DOUBLE_QUOTE": "双引号（\"）"
+            },
+            "compression": "压缩文件",
+            "point-id": "点位 ID（引用）的列名",
+            "value": "值的列名",
+            "timestamp": "时间戳的列名",
+            "timestamp-type": {
+              "title": "时间戳输出类型",
+              "string": "字符串",
+              "iso-string": "ISO 字符串",
+              "unix-epoch": "Unix 纪元（秒）",
+              "unix-epoch-ms": "Unix 纪元（毫秒）"
+            },
+            "timestamp-format": "时间戳输出格式",
+            "timezone": "输出时区",
+            "point-id-process": "点位 ID 处理（JS 表达式，例如 value.toUpperCase()）"
+          },
+          "time-values-to-modbus": {
+            "mapping": {
+              "title": "映射表",
+              "point-id": "点位 ID（引用）",
+              "address": "Modbus 地址",
+              "modbus-type": {
+                "title": "Modbus 类型",
+                "coil": "线圈",
+                "register": "寄存器"
+              }
+            }
+          },
+          "time-values-to-mqtt": {
+            "mapping": {
+              "title": "映射表",
+              "point-id": "点位 ID（引用）",
+              "topic": "MQTT 主题"
+            }
+          },
+          "json-to-oianalytics": {
+            "row-iterator-path": "行迭代器 JSONPath",
+            "point-id": "点位 ID JSONPath",
+            "value": "值 JSONPath",
+            "timestamp": "时间戳 JSONPath",
+            "datetime-settings": {
+              "title": "日期时间设置",
+              "input-type": {
+                "title": "时间戳输入类型",
+                "string": "字符串",
+                "iso-string": "ISO 字符串",
+                "unix-epoch": "Unix 纪元（秒）",
+                "unix-epoch-ms": "Unix 纪元（毫秒）"
+              },
+              "timezone": "时区",
+              "format": "格式",
+              "locale": "区域设置",
+              "output-precision": {
+                "title": "时间戳精度",
+                "ms": "毫秒",
+                "s": "秒",
+                "min": "分钟",
+                "hr": "小时"
+              }
+            }
+          },
+          "time-values-to-oianalytics": {
+            "precision": {
+              "title": "时间戳精度",
+              "ms": "毫秒",
+              "s": "秒",
+              "min": "分钟",
+              "hr": "小时"
+            }
+          },
+          "time-values-to-opcua": {
+            "mapping": {
+              "title": "映射表",
+              "point-id": "点位 ID（引用）",
+              "node-id": "OPCUA 节点 ID",
+              "data-type": {
+                "title": "数据类型",
+                "boolean": "布尔值",
+                "s-byte": "SByte",
+                "byte": "Byte",
+                "int16": "Int16",
+                "uint16": "UInt16",
+                "int32": "Int32",
+                "uint32": "UInt32",
+                "int64": "Int64",
+                "uint64": "UInt64",
+                "float": "Float",
+                "double": "Double",
+                "string": "字符串",
+                "date-time": "日期时间"
+              }
+            }
+          },
+          "by-group": "按组",
+          "select-group": "选择一个组...",
+          "no-groups": "无可用组",
+          "group-selected": "组：{{ groupName }}",
+          "tooltip-overflow": "...（还有 {{ count }} 个）"
+        },
+        "south": {
+          "tooltips": {
+            "create": "创建新项",
+            "edit": "编辑项",
+            "copy": "复制项",
+            "delete": "删除项"
+          },
+          "settings": "South 设置",
+          "ads": {
+            "net-id": "Net ID",
+            "port": "端口",
+            "router-address": "路由器地址",
+            "router-tcp-port": "路由器 TCP 端口",
+            "client-ams-net-id": "AMS Net ID",
+            "client-ads-port": "ADS 客户端端口",
+            "retry-interval": "重试间隔",
+            "plc-name": "PLC 名称",
+            "enum-as-text": {
+              "title": "枚举值",
+              "text": "文本",
+              "integer": "整数"
+            },
+            "bool-as-text": {
+              "title": "布尔值",
+              "text": "文本",
+              "integer": "整数"
+            },
+            "structure-filtering": {
+              "structure": "结构过滤",
+              "name": "结构名称",
+              "fields": "要保留的字段（以逗号分隔）"
+            }
+          },
+          "folder-scanner": {
+            "input-folder": "输入文件夹",
+            "compression": "启用压缩",
+            "smb-username": "SMB 用户名",
+            "smb-password": "SMB 密码",
+            "smb-domain": "SMB 域"
+          },
+          "modbus": {
+            "host": "主机",
+            "port": "端口",
+            "connect-timeout": "连接超时",
+            "network-timeout": "网络超时",
+            "retry-interval": "重试间隔",
+            "slave-id": "从站 ID",
+            "address-offset": {
+              "title": "地址偏移",
+              "modbus": "Modbus",
+              "jbus": "JBus"
+            },
+            "endianness": {
+              "title": "字节序",
+              "big-endian": "大端",
+              "little-endian": "小端"
+            },
+            "swap-bytes-in-words": "交换字节？",
+            "swap-words-in-dwords": "交换字？",
+            "grouping-gap": "最大分组间隔（地址）",
+            "batch-query": "分组批量查询？"
+          },
+          "s7": {
+            "host": "主机",
+            "port": "端口",
+            "rack": "机架",
+            "slot": "插槽",
+            "connection-type": {
+              "title": "连接类型",
+              "PG": "PG",
+              "OP": "OP",
+              "S7Basic": "S7 Basic"
+            },
+            "connect-timeout": "连接超时",
+            "request-timeout": "请求超时",
+            "retry-interval": "重试间隔"
+          },
+          "mqtt": {
+            "url": "URL",
+            "qos": {
+              "0": "0",
+              "1": "1",
+              "2": "2",
+              "title": "QoS"
+            },
+            "persistent": "持久化",
+            "authentication": {
+              "title": "认证",
+              "none": "无",
+              "basic": "用户名/密码",
+              "cert": "证书",
+              "username": "用户名",
+              "password": "密码",
+              "cert-file-path": "证书文件路径",
+              "key-file-path": "密钥文件路径",
+              "ca-file-path": "CA 文件路径"
+            },
+            "reject-unauthorized": "拒绝未授权连接",
+            "reconnect-period": "重连周期",
+            "connect-timeout": "连接超时",
+            "flush-message-timeout": "刷新间隔",
+            "max-number-of-messages": "刷新前的消息数量"
+          },
+          "mssql": {
+            "host": "主机",
+            "port": "端口",
+            "connection-timeout": "连接超时",
+            "database": "数据库",
+            "username": "用户名",
+            "password": "密码",
+            "domain": "域",
+            "encryption": "使用加密",
+            "trust-server-certificate": "信任服务器证书",
+            "request-timeout": "请求超时"
+          },
+          "mysql": {
+            "host": "主机",
+            "port": "端口",
+            "connection-timeout": "连接超时",
+            "database": "数据库",
+            "username": "用户名",
+            "password": "密码"
+          },
+          "mongodb": {
+            "connection-string": "连接字符串",
+            "connection-timeout": "连接超时",
+            "username": "用户名",
+            "password": "密码"
+          },
+          "influxdb": {
+            "version": {
+              "1": "v1（InfluxDB 1.x – InfluxQL）",
+              "2": "v2（InfluxDB 2.x – Flux）",
+              "3": "v3（InfluxDB 3.x – SQL）",
+              "title": "版本"
+            },
+            "host": "主机",
+            "port": "端口",
+            "protocol": {
+              "title": "协议",
+              "http": "HTTP",
+              "https": "HTTPS"
+            },
+            "database": "数据库",
+            "username": "用户名",
+            "password": "密码",
+            "url": "URL",
+            "token": "API 令牌",
+            "organisation": "组织",
+            "bucket": "存储桶"
+          },
+          "odbc": {
+            "remote-agent": "使用远程代理",
+            "agent-url": "远程代理 URL",
+            "connection-timeout": "连接超时",
+            "retry-interval": "重试间隔",
+            "request-timeout": "请求超时",
+            "connection-string": "连接字符串",
+            "password": "密码"
+          },
+          "oianalytics": {
+            "use-oia-module": "使用 OIAnalytics 注册",
+            "timeout": "超时",
+            "specific-settings": {
+              "title": "特定设置",
+              "host": "主机",
+              "accept-unauthorized": "接受未授权证书",
+              "authentication": {
+                "title": "认证",
+                "basic": "访问密钥/密钥",
+                "aad-client-secret": "带客户端密钥的 Azure Active Directory",
+                "aad-certificate": "带证书的 Azure Active Directory"
+              },
+              "access-key": "访问密钥",
+              "secret-key": "密钥",
+              "tenant-id": "租户 ID",
+              "client-id": "客户端 ID",
+              "client-secret": "客户端密钥",
+              "certificate-id": "证书",
+              "scope": "作用域",
+              "use-proxy": "使用代理",
+              "proxy-url": "代理 URL",
+              "proxy-username": "代理用户名",
+              "proxy-password": "代理密码"
+            }
+          },
+          "oledb": {
+            "agent-url": "远程代理 URL",
+            "connection-timeout": "连接超时",
+            "retry-interval": "重试间隔",
+            "request-timeout": "请求超时",
+            "connection-string": "连接字符串",
+            "password": "密码"
+          },
+          "opc": {
+            "agent-url": "远程代理 URL",
+            "retry-interval": "重试间隔",
+            "host": "服务器 URL（来自代理）",
+            "server-name": "服务器名称",
+            "mode": {
+              "title": "模式",
+              "hda": "HDA",
+              "da": "DA"
+            }
+          },
+          "opcua": {
+            "url": "URL",
+            "keep-session-alive": "保持会话活动",
+            "read-timeout": "读取超时",
+            "retry-interval": "重试间隔",
+            "max-parallel-run": "最大并行查询数",
+            "flush-message-timeout": "刷新间隔",
+            "max-number-of-messages": "刷新前的消息数量",
+            "security-mode": {
+              "title": "安全模式",
+              "none": "无",
+              "sign": "签名",
+              "sign-and-encrypt": "签名并加密"
+            },
+            "security-policy": {
+              "title": "安全策略",
+              "none": "无",
+              "basic128": "Basic128",
+              "basic192": "Basic192",
+              "basic256": "Basic256（已弃用）",
+              "basic128-rsa15": "Basic128-RSA15（已弃用）",
+              "basic192-rsa15": "Basic192-RSA15",
+              "basic256-rsa15": "Basic256-RSA15",
+              "basic256-sha256": "Basic256-SHA256",
+              "aes128-sha256-rsa-oaep": "AES128-SHA256-RSA-OAEP",
+              "pub-sub-aes-128-ctr": "PubSub AES-128-CTR",
+              "pub-sub-aes-256-ctr": "PubSub AES-256-CTR"
+            },
+            "authentication": {
+              "title": "认证",
+              "none": "无",
+              "basic": "用户名/密码",
+              "cert": "证书"
+            },
+            "username": "用户名",
+            "password": "密码",
+            "cert-file-path": "证书文件路径",
+            "key-file-path": "密钥文件路径"
+          },
+          "oracle": {
+            "thick-mode": "厚模式",
+            "oracle-client": "Oracle 客户端库",
+            "host": "主机",
+            "port": "端口",
+            "connection-timeout": "连接超时",
+            "database": "数据库",
+            "username": "用户名",
+            "password": "密码"
+          },
+          "osisoft-pi": {
+            "agent-url": "远程代理 URL",
+            "retry-interval": "重试间隔"
+          },
+          "postgresql": {
+            "host": "主机",
+            "port": "端口",
+            "ssl-mode": "SSL",
+            "connection-timeout": "连接超时",
+            "request-timeout": "请求超时",
+            "database": "数据库",
+            "username": "用户名",
+            "password": "密码"
+          },
+          "rest": {
+            "host": "主机",
+            "accept-unauthorized": "接受未授权证书",
+            "authentication": {
+              "title": "认证",
+              "type": {
+                "title": "类型",
+                "none": "无",
+                "basic": "基本（用户名/密码）",
+                "bearer": "Bearer 令牌",
+                "api-key": "API 密钥"
+              },
+              "username": "用户名",
+              "password": "密码",
+              "token": "Bearer 令牌",
+              "api-key": "API 密钥",
+              "api-value": "API 值",
+              "add-to": {
+                "title": "添加到",
+                "header": "请求头",
+                "query-params": "查询参数"
+              }
+            },
+            "test": {
+              "title": "连接测试",
+              "endpoint": "测试端点",
+              "method": {
+                "title": "方法",
+                "GET": "GET",
+                "POST": "POST",
+                "PUT": "PUT"
+              },
+              "body": "正文",
+              "success-code": "预期成功代码"
+            },
+            "proxy": {
+              "title": "代理",
+              "use-proxy": "使用代理",
+              "url": "代理 URL",
+              "username": "代理用户名",
+              "password": "代理密码"
+            },
+            "timeout": "请求超时"
+          },
+          "sftp": {
+            "host": "主机",
+            "port": "端口",
+            "authentication": {
+              "title": "认证",
+              "password": "用户名/密码",
+              "private-key": "私钥"
+            },
+            "username": "用户名",
+            "password": "密码",
+            "private-key": "私钥",
+            "passphrase": "密码短语",
+            "compression": "压缩文件",
+            "retry-interval": "重试间隔"
+          },
+          "ftp": {
+            "host": "主机",
+            "port": "端口",
+            "authentication": {
+              "title": "认证",
+              "none": "无",
+              "password": "用户名/密码"
+            },
+            "username": "用户名",
+            "password": "密码",
+            "compression": "压缩文件",
+            "retry-interval": "重试间隔"
+          },
+          "sqlite": {
+            "database-path": "数据库路径"
+          },
+          "items": {
+            "title": "项",
+            "name": "名称",
+            "enabled": "已启用",
+            "disabled": "已禁用",
+            "scan-mode": "计划",
+            "settings": "设置",
+            "no-items": "无项",
+            "item": "项",
+            "ads": {
+              "address": "地址"
+            },
+            "folder-scanner": {
+              "regex": "用于匹配文件的正则表达式",
+              "min-age": "最小时长",
+              "preserve-files": "保留文件",
+              "ignore-modified-date": "忽略修改日期",
+              "max-files": "每次扫描的最大文件数（0 = 无限制）",
+              "max-size": "每次扫描的最大大小（0 = 无限制）",
+              "recursive": "扫描子文件夹"
+            },
+            "modbus": {
+              "address": "地址",
+              "modbus-type": {
+                "title": "Modbus 类型",
+                "coil": "线圈",
+                "discrete-input": "离散输入",
+                "input-register": "输入寄存器",
+                "holding-register": "保持寄存器"
+              },
+              "data": {
+                "data-type": {
+                  "title": "数据类型",
+                  "uint16": "UInt16",
+                  "int16": "Int16",
+                  "uint32": "UInt32",
+                  "int32": "Int32",
+                  "big-uint64": "Big UInt64",
+                  "big-int64": "Big Int64",
+                  "float": "Float",
+                  "double": "Double",
+                  "bit": "位"
+                },
+                "bit-index": "位索引",
+                "multiplier-coefficient": "乘数系数"
+              }
+            },
+            "s7": {
+              "address": "地址"
+            },
+            "mqtt": {
+              "topic": "主题"
+            },
+            "mssql": {
+              "query": "查询",
+              "tracking-instant": {
+                "title": "跟踪时间戳",
+                "track-instant": "跟踪时间戳",
+                "field-name": "字段名",
+                "date-time-input": {
+                  "title": "日期时间输入",
+                  "type": {
+                    "title": "类型",
+                    "string": "字符串",
+                    "date": "日期",
+                    "date-time": "DateTime",
+                    "date-time-2": "DateTime2",
+                    "date-time-offset": "DateTime Offset",
+                    "small-date-time": "Small DateTime",
+                    "iso-string": "ISO 字符串",
+                    "unix-epoch": "UNIX 纪元（秒）",
+                    "unix-epoch-ms": "UNIX 纪元（毫秒）"
+                  },
+                  "timezone": "时区",
+                  "format": "格式",
+                  "locale": "区域设置"
+                }
+              }
+            },
+            "mysql": {
+              "query": "查询",
+              "request-timeout": "请求超时",
+              "tracking-instant": {
+                "title": "跟踪时间戳",
+                "track-instant": "跟踪时间戳",
+                "field-name": "字段名",
+                "date-time-input": {
+                  "title": "日期时间输入",
+                  "type": {
+                    "title": "类型",
+                    "string": "字符串",
+                    "iso-string": "ISO 字符串",
+                    "unix-epoch": "UNIX 纪元（秒）",
+                    "unix-epoch-ms": "UNIX 纪元（毫秒）",
+                    "date-time": "DateTime"
+                  },
+                  "timezone": "时区",
+                  "format": "格式",
+                  "locale": "区域设置"
+                }
+              }
+            },
+            "mongodb": {
+              "collection": "集合",
+              "query-type": {
+                "title": "查询类型",
+                "find": "查找",
+                "aggregation": "聚合"
+              },
+              "query": "查询",
+              "sort": "排序",
+              "tracking-instant": {
+                "title": "跟踪时间戳",
+                "track-instant": "跟踪时间戳",
+                "json-path": "JSON 路径",
+                "date-time-input": {
+                  "title": "日期时间输入",
+                  "type": {
+                    "title": "类型",
+                    "timestamp": "时间戳",
+                    "iso-string": "ISO 字符串",
+                    "unix-epoch": "UNIX 纪元（秒）",
+                    "unix-epoch-ms": "UNIX 纪元（毫秒）",
+                    "string": "字符串"
+                  },
+                  "timezone": "时区",
+                  "format": "格式",
+                  "locale": "区域设置"
+                }
+              }
+            },
+            "influxdb": {
+              "query": "查询",
+              "request-timeout": "请求超时",
+              "track-max-instant": "跟踪最大时间戳",
+              "date-time": {
+                "track-instant": "跟踪时间戳",
+                "json-path": "JSON 路径",
+                "type": {
+                  "title": "类型",
+                  "iso-string": "ISO 字符串",
+                  "unix-epoch": "UNIX 纪元（秒）",
+                  "unix-epoch-ms": "UNIX 纪元（毫秒）",
+                  "string": "字符串"
+                },
+                "timezone": "时区",
+                "format": "格式",
+                "locale": "区域设置"
+              },
+              "date-time-input": "日期时间输入"
+            },
+            "odbc": {
+              "query": "查询",
+              "date-time-fields": {
+                "date-time-field": "日期时间字段",
+                "field-name": "字段名",
+                "use-as-reference": "参考字段",
+                "type": {
+                  "title": "类型",
+                  "iso-string": "ISO 字符串",
+                  "unix-epoch": "UNIX 纪元（秒）",
+                  "unix-epoch-ms": "UNIX 纪元（毫秒）",
+                  "string": "字符串"
+                },
+                "timezone": "时区",
+                "format": "格式",
+                "locale": "区域设置"
+              },
+              "serialization": {
+                "title": "序列化",
+                "type": {
+                  "title": "类型",
+                  "csv": "CSV"
+                },
+                "filename": "文件名",
+                "delimiter": {
+                  "title": "分隔符",
+                  "DOT": "点 .",
+                  "SEMI_COLON": "分号 ;",
+                  "COLON": "冒号 :",
+                  "COMMA": "逗号 ,",
+                  "SLASH": "斜杠 /",
+                  "TAB": "制表符",
+                  "NON_BREAKING_SPACE": "空格",
+                  "PIPE": "竖线 |"
+                },
+                "compression": "压缩",
+                "output-timestamp-format": "输出日期时间格式",
+                "output-timezone": "输出时区"
+              }
+            },
+            "oianalytics": {
+              "endpoint": "端点",
+              "query-params": {
+                "query-param": "查询参数",
+                "key": "键",
+                "value": "值"
+              },
+              "serialization": {
+                "title": "序列化",
+                "type": {
+                  "title": "类型",
+                  "csv": "CSV"
+                },
+                "filename": "文件名",
+                "delimiter": {
+                  "title": "分隔符",
+                  "DOT": "点 .",
+                  "SEMI_COLON": "分号 ;",
+                  "COLON": "冒号 :",
+                  "COMMA": "逗号 ,",
+                  "SLASH": "斜杠 /",
+                  "TAB": "制表符",
+                  "NON_BREAKING_SPACE": "空格",
+                  "PIPE": "竖线 |"
+                },
+                "compression": "压缩",
+                "output-timestamp-format": "输出日期时间格式",
+                "output-timezone": "输出时区"
+              }
+            },
+            "oledb": {
+              "query": "查询",
+              "date-time-fields": {
+                "date-time-field": "日期时间字段",
+                "field-name": "字段名",
+                "use-as-reference": "参考字段",
+                "type": {
+                  "title": "类型",
+                  "iso-string": "ISO 字符串",
+                  "unix-epoch": "UNIX 纪元（秒）",
+                  "unix-epoch-ms": "UNIX 纪元（毫秒）",
+                  "string": "字符串"
+                },
+                "timezone": "时区",
+                "format": "格式",
+                "locale": "区域设置"
+              },
+              "serialization": {
+                "title": "序列化",
+                "type": {
+                  "title": "类型",
+                  "csv": "CSV"
+                },
+                "filename": "文件名",
+                "delimiter": {
+                  "title": "分隔符",
+                  "DOT": "点 .",
+                  "SEMI_COLON": "分号 ;",
+                  "COLON": "冒号 :",
+                  "COMMA": "逗号 ,",
+                  "SLASH": "斜杠 /",
+                  "TAB": "制表符",
+                  "NON_BREAKING_SPACE": "空格",
+                  "PIPE": "竖线 |"
+                },
+                "compression": "压缩",
+                "output-timestamp-format": "输出日期时间格式",
+                "output-timezone": "输出时区"
+              }
+            },
+            "opc": {
+              "node-id": "节点 ID",
+              "aggregate": {
+                "title": "聚合",
+                "raw": "原始",
+                "interpolative": "插值",
+                "total": "总计",
+                "average": "平均值",
+                "time-average": "时间平均值",
+                "count": "计数",
+                "stdev": "STDEV",
+                "minimum-actual-time": "最小值实际时间",
+                "minimum": "最小值",
+                "maximum-actual-time": "最大值实际时间",
+                "maximum": "最大值",
+                "start": "起始",
+                "end": "结束",
+                "delta": "差值",
+                "reg-slope": "回归斜率",
+                "reg-const": "回归常数",
+                "reg-dev": "回归偏差",
+                "variance": "方差",
+                "range": "范围",
+                "duration-good": "良好时长",
+                "duration-bad": "不良时长",
+                "percent-good": "良好百分比",
+                "percent-bad": "不良百分比",
+                "worst-quality": "最差质量",
+                "annotations": "注释"
+              },
+              "resampling": {
+                "title": "重采样",
+                "none": "无",
+                "1s": "1 秒",
+                "10s": "10 秒",
+                "30s": "30 秒",
+                "1min": "1 分钟",
+                "1h": "1 小时",
+                "1d": "1 天"
+              }
+            },
+            "opcua": {
+              "node-id": "节点 ID",
+              "mode": {
+                "title": "模式",
+                "ha": "HA",
+                "da": "DA"
+              },
+              "ha-mode": {
+                "title": "HA 模式",
+                "aggregate": {
+                  "title": "聚合",
+                  "raw": "原始",
+                  "average": "平均值",
+                  "minimum": "最小值",
+                  "maximum": "最大值",
+                  "count": "计数"
+                },
+                "resampling": {
+                  "title": "重采样",
+                  "none": "无",
+                  "1s": "1 秒",
+                  "10s": "10 秒",
+                  "30s": "30 秒",
+                  "1min": "1 分钟",
+                  "1h": "1 小时",
+                  "1d": "1 天"
+                }
+              },
+              "timestamp-origin": {
+                "title": "时间戳来源",
+                "oibus": "OIBus",
+                "point": "点位",
+                "server": "服务器"
+              }
+            },
+            "oracle": {
+              "query": "查询",
+              "request-timeout": "请求超时",
+              "tracking-instant": {
+                "title": "跟踪时间戳",
+                "track-instant": "跟踪时间戳",
+                "field-name": "字段名",
+                "date-time-input": {
+                  "title": "日期时间输入",
+                  "type": {
+                    "title": "类型",
+                    "iso-string": "ISO 字符串",
+                    "unix-epoch": "UNIX 纪元（秒）",
+                    "unix-epoch-ms": "UNIX 纪元（毫秒）",
+                    "string": "字符串",
+                    "date-time": "DateTime"
+                  },
+                  "timezone": "时区",
+                  "format": "格式",
+                  "locale": "区域设置"
+                }
+              }
+            },
+            "osisoft-pi": {
+              "type": {
+                "title": "类型",
+                "point-id": "PI 点位",
+                "point-query": "PI 查询"
+              },
+              "pi-point": "PI 点位",
+              "pi-query": "PI 查询"
+            },
+            "postgresql": {
+              "query": "查询",
+              "tracking-instant": {
+                "title": "跟踪时间戳",
+                "track-instant": "跟踪时间戳",
+                "field-name": "字段名",
+                "date-time-input": {
+                  "title": "日期时间输入",
+                  "type": {
+                    "title": "类型",
+                    "string": "字符串",
+                    "iso-string": "ISO 字符串",
+                    "unix-epoch": "UNIX 纪元（秒）",
+                    "unix-epoch-ms": "UNIX 纪元（毫秒）",
+                    "timestamp": "时间戳",
+                    "timestamptz": "带时区的时间戳"
+                  },
+                  "timezone": "时区",
+                  "format": "格式",
+                  "locale": "区域设置"
+                }
+              }
+            },
+            "rest": {
+              "method": {
+                "title": "方法",
+                "GET": "GET",
+                "POST": "POST",
+                "PUT": "PUT",
+                "PATCH": "PATCH",
+                "DELETE": "DELETE"
+              },
+              "endpoint": "端点",
+              "query-params": {
+                "title": "查询参数",
+                "query-param": "查询参数",
+                "key": "键",
+                "value": "值"
+              },
+              "body": {
+                "title": "请求正文（JSON）",
+                "content": "内容"
+              },
+              "headers": {
+                "title": "请求头",
+                "header": "请求头",
+                "key": "HTTP 请求头键名",
+                "value": "HTTP 请求头值"
+              },
+              "return-type": {
+                "title": "返回类型",
+                "body": "正文（JSON / XML）",
+                "file": "文件（Content-Disposition）"
+              },
+              "date-time-input": "日期时间输入格式",
+              "track-max-instant": "跟踪最大时间戳",
+              "date-time": {
+                "json-path": "JSON 路径",
+                "type": {
+                  "title": "类型",
+                  "iso-string": "ISO 字符串",
+                  "unix-epoch": "Unix 纪元（秒）",
+                  "unix-epoch-ms": "Unix 纪元（毫秒）",
+                  "string": "字符串"
+                },
+                "timezone": "时区",
+                "format": "格式",
+                "locale": "区域设置"
+              }
+            },
+            "sftp": {
+              "remote-folder": "远程文件夹",
+              "regex": "用于匹配文件的正则表达式",
+              "min-age": "最小时长",
+              "preserve-files": "保留文件",
+              "ignore-modified-date": "忽略修改日期",
+              "max-files": "每次扫描的最大文件数（0 = 无限制）",
+              "max-size": "每次扫描的最大大小（0 = 无限制）",
+              "recursive": "扫描子文件夹"
+            },
+            "ftp": {
+              "remote-folder": "远程文件夹",
+              "regex": "用于匹配文件的正则表达式",
+              "min-age": "最小时长",
+              "preserve-files": "保留文件",
+              "ignore-modified-date": "忽略修改日期",
+              "max-files": "每次扫描的最大文件数（0 = 无限制）",
+              "max-size": "每次扫描的最大大小（0 = 无限制）",
+              "recursive": "扫描子文件夹"
+            },
+            "sqlite": {
+              "query": "查询",
+              "tracking-instant": {
+                "title": "跟踪时间戳",
+                "track-instant": "跟踪时间戳",
+                "field-name": "字段名",
+                "date-time-input": {
+                  "title": "日期时间输入",
+                  "type": {
+                    "title": "类型",
+                    "string": "字符串",
+                    "iso-string": "ISO 字符串",
+                    "unix-epoch": "UNIX 纪元（秒）",
+                    "unix-epoch-ms": "UNIX 纪元（毫秒）"
+                  },
+                  "timezone": "时区",
+                  "format": "格式",
+                  "locale": "区域设置"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "south": {
+    "title": "South {{ name }}",
+    "list": "South 列表",
+    "type-title": "South 类型",
+    "type-error": "您必须选择一个 South 类型",
+    "create-title": "创建 {{ type }} south 连接器",
+    "edit-title": "编辑 {{ name }}",
+    "confirm-deletion": "您确定要删除 south 连接器 {{ name }} 吗？",
+    "updated": "South 连接器 {{ name }} 已成功更新",
+    "created": "South 连接器 {{ name }} 已成功创建",
+    "deleted": "South 连接器 {{ name }} 已删除",
+    "search-by-name": "名称",
+    "edit": "编辑",
+    "none": "没有与搜索匹配的 south 连接器",
+    "name": "名称",
+    "description": "描述",
+    "copy-cache-path": "复制缓存路径（{{ id }}）",
+    "status": "状态",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "started": "South 连接器 {{ name }} 已启动",
+    "stopped": "South 连接器 {{ name }} 已停止",
+    "cache-path-copy": {
+      "success": "缓存路径已复制到剪贴板",
+      "error": "复制缓存路径到剪贴板时出错"
+    },
+    "test-connection": {
+      "title": "测试设置",
+      "button": "测试设置",
+      "success": "连接测试成功",
+      "error": "测试设置时出错"
+    },
+    "explore": {
+      "title": "浏览数据源",
+      "button": "浏览",
+      "empty": "没有可浏览的内容",
+      "error": "浏览数据源时出错"
+    },
+    "test-item": {
+      "title": "测试项",
+      "test-button": "运行测试",
+      "cancel-button": "取消",
+      "query-start": "从此处查询数据",
+      "query-end": "查询数据直到",
+      "connection-duration": "连接：{{duration}} 毫秒",
+      "query-duration": "查询：{{duration}} 毫秒",
+      "transformer": "转换器",
+      "transformer-raw": "原始（无转换器）",
+      "transformer-options": "转换器选项",
+      "edit-options": "编辑选项",
+      "north": "North",
+      "transformer-run-first": "先运行一次测试以加载与此项输出匹配的转换器。",
+      "transformer-none-compatible": "没有配置的转换器与此项的输出类型匹配。",
+      "hide-settings": "隐藏设置",
+      "pipeline": {
+        "raw": "原始结果",
+        "output": "转换器输出"
+      },
+      "status-message": {
+        "initial": "测试结果将显示在此处",
+        "item-error": "测试项时出错",
+        "display-result-error": "显示项时出错，请尝试其他查看模式",
+        "cancel": "测试已取消"
+      },
+      "view": {
+        "any": "原始视图",
+        "table": "表格视图",
+        "json": "JSON 视图"
+      },
+      "table": {
+        "timestamp": "时间戳",
+        "pointId": "点位 Id",
+        "value": "值",
+        "other": "其他",
+        "no-values": "没有可显示的值"
+      }
+    },
+    "type": "类型",
+    "created-by": "创建者",
+    "created-at": "创建时间",
+    "updated-at": "更新时间",
+    "general-settings": "常规设置",
+    "specific-settings": "{{ type }} 设置",
+    "edit-item-modal": {
+      "create-title": "向 south 连接器添加新项",
+      "edit-title": "编辑项",
+      "copy-title": "向 south 连接器添加新项"
+    },
+    "items": {
+      "title": "项",
+      "export": {
+        "button": "导出",
+        "title": "导出列表",
+        "element-name": "名称",
+        "export-filename": "文件名"
+      },
+      "import": {
+        "button": "导入",
+        "imported": "项已导入",
+        "title": "导入验证",
+        "error-title": "这些项存在错误，将不会被导入",
+        "error": "错误",
+        "valid-title": "将创建以下项",
+        "csv-file": "CSV 文件",
+        "format-error-title": "CSV 格式错误",
+        "select-file": "选择文件",
+        "format-error-description": "所选 CSV 文件的格式与预期格式不匹配",
+        "missing-columns": "缺少的列：",
+        "extra-columns": "多余的列：",
+        "expected-format": "预期格式：",
+        "actual-format": "实际格式：",
+        "mqtt-topic-overlap-title": "MQTT 主题重叠错误",
+        "mqtt-topic-overlap-description": "该 CSV 文件包含会产生重叠订阅的 MQTT 主题。必须先解决这些冲突才能导入。",
+        "erase-existing": "清除现有元素",
+        "checking": "正在检查文件……",
+        "check-error": "检查文件时出错：{{ error }}"
+      },
+      "search-placeholder": "输入文本以筛选项",
+      "save-before-adding-items": "请先保存连接器，然后才能添加新项",
+      "name": "名称",
+      "status": "状态",
+      "confirm-deletion": "您确定要删除此 South 连接器项吗？",
+      "confirm-delete-all": "您确定要删除此 South 连接器的所有项吗？",
+      "updated": "South 连接器项已成功更新",
+      "created": "South 连接器项已成功创建",
+      "deleted": "South 连接器项已删除",
+      "view-last-value": "查看最新值",
+      "last-value-error": "获取最新值时出错：{{ error }}",
+      "last-value-not-available-in-create-mode": "创建模式下无法查看最新值",
+      "last-value-modal": {
+        "title": "项的最新缓存值",
+        "item-name": "项名称",
+        "query-time": "最近查询时间",
+        "tracked-instant": "跟踪的时刻",
+        "value": "缓存值",
+        "no-value": "无缓存值",
+        "filename": "文件名",
+        "modified-time": "修改时间",
+        "group-value-notice": "此连接器按组查询项。此处显示的值反映的是该项所属组的最近结果，而非仅针对该项。",
+        "error-title": "无法获取最新缓存值"
+      },
+      "all-deleted": "South 连接器项已删除",
+      "delete-all": "全部删除",
+      "edit": "编辑",
+      "none": "此连接器尚未定义任何项",
+      "none-match": "没有与搜索条件匹配的项",
+      "scan-mode": "计划",
+      "select-scan-mode": "选择一个计划",
+      "enabled": "South 项 {{name}} 已启用",
+      "disabled": "South 项 {{name}} 已禁用",
+      "enabled-label": "已启用",
+      "disabled-label": "已禁用",
+      "enabled-multiple": "已启用 {{count}} 个 south 项",
+      "disabled-multiple": "已禁用 {{count}} 个 south 项",
+      "deleted-multiple": "已删除 {{count}} 个 south 项",
+      "enable-selected": "启用所选项",
+      "disable-selected": "禁用所选项",
+      "delete-selected": "删除所选项",
+      "select-all": "全选",
+      "unselect-all": "取消全选",
+      "selected-items": "已选择 {{count}} 项",
+      "selected-count": "已选择 {{count}} 项",
+      "delete-multiple-message": "您确定要删除所选的 {{count}} 项吗？",
+      "enable-error": "启用项时出错：{{error}}",
+      "disable-error": "禁用项时出错：{{error}}",
+      "delete-error": "删除项时出错：{{error}}",
+      "group": "组",
+      "group-and-schedule": "组（计划）",
+      "group-none": "无",
+      "all-groups": "所有组",
+      "all-scan-modes": "所有计划",
+      "all-statuses": "所有状态",
+      "created-at": "创建时间",
+      "updated-at": "更新时间",
+      "create-new-group": "创建新组……",
+      "mass-actions": "批量操作（{{count}} 项）",
+      "move-to-group": "移动到组",
+      "move-to-group-title": "将项移动到组",
+      "select-group": "选择组",
+      "moved-to-group": "已将 {{count}} 项移动到组",
+      "enable": "启用",
+      "disable": "禁用",
+      "delete": "删除",
+      "search": {
+        "name": "名称"
+      },
+      "max-read-interval": "最大读取间隔",
+      "read-delay": "读取延迟",
+      "start-time-offset": "起始时间偏移",
+      "end-time-offset": "结束时间偏移",
+      "recovery-strategy": "恢复策略",
+      "recovery-strategy-oldest": "从最旧到最新",
+      "recovery-strategy-newest": "从最新到最旧",
+      "scan-mode-change-warning": "在禁用每项最大即时值的情况下更改计划，可能会导致数据重复或丢失。",
+      "sync-with-group": "与组同步",
+      "not-synced-notice": "此项使用其自身的历史查询设置（未与组同步）"
+    },
+    "groups": {
+      "create-title": "创建新组",
+      "edit-title": "编辑组",
+      "name": "组名称",
+      "start-time-offset": "默认起始时间偏移",
+      "end-time-offset": "默认结束时间偏移",
+      "max-read-interval": "最大读取间隔",
+      "read-delay": "读取延迟",
+      "recovery-strategy": "恢复策略",
+      "recovery-strategy-oldest": "从最旧到最新",
+      "recovery-strategy-newest": "从最新到最旧",
+      "confirm-deletion": "您确定要删除组“{{name}}”吗？该组中的项将被移回“无”。",
+      "created": "组已创建",
+      "updated": "组已更新",
+      "deleted": "组已删除",
+      "delete-error": "删除组时出错：{{error}}",
+      "manage-title": "组（{{count}}）",
+      "manage-button": "管理组",
+      "item-count": "项",
+      "none": "未配置任何组",
+      "export": {
+        "button": "导出"
+      },
+      "import": {
+        "button": "导入",
+        "in-progress": "正在导入组……",
+        "success": "已导入 {{count}} 个组",
+        "errors-title": "{{count}} 行无法导入",
+        "row": "第 {{row}} 行",
+        "errors": {
+          "missing-name": "组名称为必填项",
+          "duplicate-name": "名为“{{name}}”的组已存在",
+          "unknown-scan-mode": "未找到计划“{{scanMode}}”"
+        }
+      },
+      "search-placeholder": "按名称搜索组",
+      "none-match": "没有与当前筛选条件匹配的组"
+    },
+    "monitoring": {
+      "title": "{{ name }} 指标",
+      "since": "自 {{ date }} 起",
+      "reset-metrics": "重置指标",
+      "metrics-reset": "指标已成功重置",
+      "metrics-title": "South 指标",
+      "metrics-start": "指标于 {{ start }} 开始统计",
+      "number-of-values": "已检索的值的数量",
+      "number-of-files": "已检索的文件数量",
+      "last-connection": "最近一次连接",
+      "last-file": "最近检索的文件",
+      "last-value": "最近检索的值",
+      "last-value-content": "{{ pointId }} 于 {{ timestamp }}，内容为 {{ data }}",
+      "last-run-start": "最近一次运行",
+      "last-run-duration": "最近一次运行时长"
+    },
+    "tooltips": {
+      "add": "创建新的 south 连接器",
+      "start": "启动 south 连接器",
+      "stop": "停止 south 连接器",
+      "view": "查看 south 连接器详情",
+      "edit": "编辑 south 连接器",
+      "duplicate": "复制 south 连接器",
+      "delete": "删除 south 连接器",
+      "view-metrics": "查看 south 连接器指标",
+      "copy-cache-path": "将缓存路径复制到剪贴板",
+      "audit": "查看 south 连接器审计历史"
+    }
+  },
+  "scan-mode": {
+    "subscription": "订阅"
+  },
+  "engine": {
+    "title": "引擎",
+    "edit": "编辑设置",
+    "edit-title": "编辑引擎设置",
+    "oianalytics": "OIAnalytics",
+    "shutdown-complete": "OIBus 已关闭",
+    "restart": "重启",
+    "restart-complete": "OIBus 已重启",
+    "confirm-restart": "确定要重启 OIBus 引擎吗？",
+    "updated": "引擎设置已更新",
+    "port-changed": {
+      "title": "端口已更改",
+      "message": "Web 服务器端口已更改为 {{ port }}。您将在 {{ seconds }} 秒后自动跳转。",
+      "redirect-now": "立即跳转"
+    },
+    "general-settings": {
+      "title": "常规设置",
+      "name": "名称",
+      "port": "端口",
+      "log-levels": "日志级别",
+      "console": "控制台：{{ level }}",
+      "file": "文件：{{ level }}",
+      "database": "数据库：{{ level }}",
+      "loki": "Loki：{{ level }}",
+      "oia": "OIAnalytics：{{ level }}",
+      "syslog": "Syslog：{{ level }}"
+    },
+    "web-server-settings": {
+      "title": "Web 服务器",
+      "auth-token-duration": "身份验证有效期",
+      "auth-token-duration-options": {
+        "1h": "1 小时",
+        "6h": "6 小时",
+        "1d": "1 天",
+        "3d": "3 天",
+        "7d": "7 天",
+        "14d": "14 天",
+        "30d": "30 天"
+      }
+    },
+    "proxy-settings": {
+      "title": "代理服务器",
+      "proxy-enabled": "已启用",
+      "enabled-details": "已在端口 {{ port }} 上启用",
+      "disabled-details": "已禁用",
+      "proxy-port": "端口",
+      "proxy-username": "用户名",
+      "proxy-password": "密码",
+      "forward-proxy-enabled": "转发到上游代理",
+      "forward-proxy-url": "URL",
+      "forward-proxy-username": "用户名",
+      "forward-proxy-password": "密码"
+    },
+    "logger": {
+      "title": "日志与审计",
+      "audit-retention-duration": "审计日志保留期",
+      "audit-retention-duration-hint": "审计日志条目在被清除前保留的天数。0 表示永久保留。",
+      "console": {
+        "level": "控制台级别"
+      },
+      "file": {
+        "level": "文件级别",
+        "max-file-size": "最大文件大小",
+        "number-of-files": "文件数量"
+      },
+      "database": {
+        "title": "数据库",
+        "level": "数据库级别",
+        "max-number-of-logs": "最大日志数量"
+      },
+      "loki": {
+        "level": "Loki 级别",
+        "interval": "Loki 间隔",
+        "address": "Loki 地址",
+        "username": "Loki 用户名",
+        "password": "Loki 密码"
+      },
+      "oia": {
+        "level": "OIAnalytics 级别",
+        "interval": "OIAnalytics 间隔"
+      },
+      "syslog": {
+        "level": "Syslog 级别",
+        "host": "Syslog 主机",
+        "port": "Syslog 端口",
+        "protocol": "Syslog 协议"
+      }
+    },
+    "monitoring": {
+      "title": "指标",
+      "metrics-reset": "指标已成功重置",
+      "cpu-usage-instant": "CPU 使用率（最近一秒）",
+      "cpu-usage-average": "CPU 使用率（平均）",
+      "uptime": "运行时间",
+      "free-memory": "可用内存",
+      "rss": "内存使用（最小 / 当前 / 最大）",
+      "heap-total": "堆总量（最小 / 当前 / 最大）",
+      "heap-used": "已用堆（最小 / 当前 / 最大）",
+      "external": "外部内存（最小 / 当前 / 最大）",
+      "array-buffer": "数组缓冲区（最小 / 当前 / 最大）",
+      "reset-metrics": "重置指标",
+      "since": "自 {{ date }} 起",
+      "tooltips": {
+        "view-metrics": "查看引擎指标"
+      }
+    },
+    "scan-mode": {
+      "list": "扫描模式",
+      "title-create": "创建扫描模式",
+      "title-edit": "编辑扫描模式",
+      "confirm-deletion": "确定要删除扫描模式 {{ name }} 吗？请提前确认它未被使用。",
+      "updated": "扫描模式 {{ name }} 已成功更新",
+      "created": "扫描模式 {{ name }} 已成功创建",
+      "deleted": "扫描模式 {{ name }} 已删除",
+      "none": "无扫描模式",
+      "name": "名称",
+      "description": "描述",
+      "cron": "Cron",
+      "schedule": "计划",
+      "schedule-every": "每 {{ value }} {{ unit }}",
+      "type": "类型",
+      "type-cron": "Cron",
+      "type-interval": "间隔",
+      "interval": "每隔",
+      "interval-unit": {
+        "ms": "毫秒",
+        "s": "秒",
+        "min": "分钟",
+        "hour": "小时"
+      },
+      "interval-unit-short": {
+        "ms": "毫秒",
+        "s": "秒",
+        "min": "分",
+        "hour": "时"
+      },
+      "sub-second-warning": "根据数据源和网络能力的不同，小于 1 秒的间隔可能无法实现。",
+      "restrict-activation-window": "限制激活时间段",
+      "date-range": "日期范围",
+      "date-range-hint": "（两端均可选）",
+      "date-range-from": "从",
+      "date-range-to": "到",
+      "clear-bound": "清除",
+      "days-of-week": "星期几",
+      "days-of-week-hint": "（未选择 = 每天）",
+      "time-of-day": "每日时间",
+      "time-of-day-hint": "（可选）",
+      "time-start": "开始",
+      "time-end": "结束",
+      "live-summary": "实时摘要",
+      "window-restricted": "受限的激活时间段",
+      "window-never-fires": "此激活时间段将永远不会再次触发",
+      "timezone-changed-warning": "此激活时间段是以时区 {{ persisted }} 保存的。现在保存将重新以您当前的时区 {{ current }} 为基准。",
+      "summary": {
+        "always": "已激活",
+        "from-date": "自 {{ start }} 起激活",
+        "until-date": "激活至 {{ end }}",
+        "between-dates": "激活期间 {{ start }} - {{ end }}",
+        "on-days": "在 {{ days }}",
+        "all-day": "全天",
+        "between-times": "在 {{ start }} 至 {{ end }} 之间（{{ timezone }}）",
+        "between-times-overnight": "在 {{ start }} 至 {{ end }} 之间（+1 天）（{{ timezone }}）",
+        "separator": "、",
+        "day-separator": "、"
+      },
+      "created-by": "创建者",
+      "created-at": "创建于",
+      "updated-at": "更新于",
+      "cron-meaning": "Cron 含义：",
+      "cron-next-occurrences": "接下来的执行时间：",
+      "tooltips": {
+        "add": "添加新的扫描模式",
+        "edit": "编辑扫描模式",
+        "delete": "删除扫描模式",
+        "overnight": "结束时间在次日",
+        "audit": "查看扫描模式审计历史"
+      }
+    },
+    "certificate": {
+      "list": "证书",
+      "title-create": "创建证书",
+      "title-edit": "编辑证书",
+      "confirm-deletion": "确定要删除证书 {{ name }} 吗？请提前确认它未被使用。",
+      "updated": "证书 {{ name }} 已成功更新",
+      "created": "证书 {{ name }} 已成功创建",
+      "imported": "证书 {{ name }} 已成功导入",
+      "deleted": "证书 {{ name }} 已删除",
+      "none": "无证书",
+      "name": "名称",
+      "description": "描述",
+      "expiry": "过期时间",
+      "public-key": "公钥",
+      "certificate": "证书",
+      "created-by": "创建者",
+      "created-at": "创建于",
+      "updated-at": "更新于",
+      "regenerate-certificate": "重新生成证书",
+      "common-name": "通用名称",
+      "country-name": "国家名称",
+      "state-or-province-name": "省/州名称",
+      "locality-name": "地区名称",
+      "organization-name": "组织名称",
+      "key-size": "密钥长度",
+      "days-before-expiry": "距过期天数",
+      "tooltips": {
+        "add": "添加新证书",
+        "export": "导出证书",
+        "edit": "编辑证书",
+        "delete": "删除证书",
+        "copy-public-key": "复制公钥到剪贴板",
+        "copy-certificate": "复制证书到剪贴板",
+        "audit": "查看证书审计历史"
+      },
+      "import": {
+        "button": "导入",
+        "title": "导入证书",
+        "certificate-file": "证书文件",
+        "private-key-file": "私钥文件",
+        "certificate-chain-file": "证书链文件（可选）",
+        "private-key-passphrase": "私钥密码",
+        "file-too-large": "所选文件过大。最大大小为 1 MB",
+        "hint": "支持的格式：PEM、CRT、CER、DER。仅当上传的私钥文件已加密时才需要密码。"
+      },
+      "export": {
+        "title": "导出证书",
+        "format": "格式",
+        "include-chain": "包含 CA 链",
+        "include-chain-der-hint": "以 DER 格式导出时无法包含 CA 链",
+        "include-private-key": "包含私钥",
+        "private-key-warning": "私钥将使用下方密码以加密的 PKCS#8 文件形式导出。此密码不会被保存，也无法找回，请妥善保管。",
+        "passphrase": "密码",
+        "passphrase-confirmation": "确认密码",
+        "passphrases-not-identical": "两次输入的密码不一致"
+      }
+    },
+    "ip-filter": {
+      "list": "IP 过滤器",
+      "title-create": "创建 IP 过滤器",
+      "title-edit": "编辑 IP 过滤器",
+      "confirm-deletion": "确定要删除 IP 过滤器 {{ address }} 吗？请提前确认它未被使用。",
+      "updated": "IP 过滤器 {{ address }} 已成功更新",
+      "created": "IP 过滤器 {{ address }} 已成功创建",
+      "deleted": "IP 过滤器 {{ address }} 已删除",
+      "none": "无 IP 过滤器",
+      "disabled": "此 OIBus 已禁用 IP 过滤（以 --ignoreIpFilters 启动）。现有的 IP 过滤器不会生效，也无法在此处配置。",
+      "name": "名称",
+      "description": "描述",
+      "address": "地址",
+      "created-by": "创建者",
+      "created-at": "创建于",
+      "updated-at": "更新于",
+      "tooltips": {
+        "add": "添加新的 IP 过滤器",
+        "edit": "编辑 IP 过滤器",
+        "delete": "删除 IP 过滤器",
+        "audit": "查看 IP 过滤器审计历史"
+      }
+    },
+    "transformer": {
+      "created-by": "创建者",
+      "created-at": "创建于",
+      "updated-at": "更新于"
+    },
+    "config-transfer": {
+      "export": "导出配置",
+      "import": {
+        "button": "导入配置",
+        "title": "导入配置",
+        "warning": "这将替换此实例上的所有连接器、历史查询、扫描模式、IP 过滤器、转换器、证书和用户，且无法撤销。",
+        "confirm-message": "这将替换此实例上的所有连接器、历史查询、扫描模式、IP 过滤器、转换器、证书和用户，且无法撤销。确定要继续吗？",
+        "file": "配置文件",
+        "file-too-large": "所选文件过大。最大大小为 10 MB",
+        "success": "配置已成功导入。",
+        "applied-upgrades": "已应用的升级",
+        "no-upgrades": "无需进行设置升级。",
+        "warnings": "警告",
+        "no-warnings": "没有警告。",
+        "reload-hint": "关闭此对话框后，页面将重新加载以反映新配置。",
+        "close-and-reload": "关闭并重新加载"
+      }
+    },
+    "tooltips": {
+      "edit": "编辑引擎设置"
+    }
+  },
+  "enums": {
+    "boolean": {
+      "true": "是",
+      "false": "否"
+    },
+    "log-levels": {
+      "silent": "静默",
+      "error": "错误",
+      "warn": "警告",
+      "info": "信息",
+      "debug": "调试",
+      "trace": "跟踪"
+    },
+    "scope-types": {
+      "south": "South",
+      "north": "North",
+      "history-query": "历史查询",
+      "internal": "内部"
+    },
+    "audit-entity-types": {
+      "south_connector": "South 连接器",
+      "south_item": "South 项",
+      "south_item_group": "South 项组",
+      "north_connector": "North 连接器",
+      "north_transformer": "North 转换器",
+      "history_query": "历史查询",
+      "history_query_item": "历史查询项",
+      "history_query_transformer": "历史查询转换器",
+      "scan_mode": "扫描模式",
+      "ip_filter": "IP 过滤器",
+      "certificate": "证书",
+      "user": "用户",
+      "transformer": "转换器",
+      "engine": "引擎",
+      "oianalytics_registration": "OIAnalytics 注册"
+    },
+    "internal-scope-ids": {
+      "engine": "引擎",
+      "web-server": "Web 服务器",
+      "node-opcua": "Node OPC-UA"
+    },
+    "categories": {
+      "api": "API",
+      "database": "数据库",
+      "debug": "调试",
+      "file": "文件",
+      "iot": "物联网",
+      "oi": "OI"
+    },
+    "certificate-export-format": {
+      "PEM": "PEM (.pem)",
+      "DER": "DER (.cer)"
+    },
+    "csv-character": {
+      "DOT": "点 .",
+      "SEMI_COLON": "分号 ;",
+      "COLON": "冒号 :",
+      "COMMA": "逗号 ,",
+      "SLASH": "斜杠 /",
+      "TAB": "制表符",
+      "NON_BREAKING_SPACE": "空格",
+      "PIPE": "竖线 |"
+    },
+    "status": {
+      "PENDING": "待处理",
+      "PAUSED": "已暂停",
+      "FINISHED": "已完成",
+      "RUNNING": "运行中",
+      "ERRORED": "出错"
+    },
+    "oibus-command-status": {
+      "RETRIEVED": "待处理",
+      "ERRORED": "出错",
+      "CANCELLED": "已取消",
+      "COMPLETED": "已完成",
+      "RUNNING": "运行中"
+    },
+    "oibus-command-type": {
+      "update-version": "升级版本",
+      "restart-engine": "重启",
+      "regenerate-cipher-keys": "重新生成密钥",
+      "update-engine-general": "更新引擎常规设置",
+      "update-engine-web-server": "更新引擎 Web 服务器设置",
+      "update-engine-proxy": "更新引擎代理设置",
+      "update-engine-logger": "更新引擎日志设置",
+      "update-registration-settings": "更新注册设置",
+      "create-scan-mode": "创建扫描模式",
+      "update-scan-mode": "更新扫描模式",
+      "delete-scan-mode": "删除扫描模式",
+      "create-ip-filter": "创建 IP 过滤器",
+      "update-ip-filter": "更新 IP 过滤器",
+      "delete-ip-filter": "删除 IP 过滤器",
+      "create-certificate": "创建证书",
+      "update-certificate": "更新证书",
+      "delete-certificate": "删除证书",
+      "create-south": "创建 South 连接器",
+      "update-south": "更新 South 连接器",
+      "delete-south": "删除 South 连接器",
+      "test-south-connection": "测试 South 连接",
+      "test-south-item": "测试 South 项",
+      "create-or-update-south-items-from-csv": "从 CSV 加载 South 项",
+      "create-north": "创建 North 连接器",
+      "update-north": "更新 North 连接器",
+      "delete-north": "删除 North 连接器",
+      "test-north-connection": "测试 North 连接",
+      "create-history-query": "创建历史查询",
+      "update-history-query": "更新历史查询",
+      "delete-history-query": "删除历史查询",
+      "test-history-query-north-connection": "测试 North 连接",
+      "test-history-query-south-connection": "测试 South 连接",
+      "test-history-query-south-item": "测试 South 项",
+      "create-or-update-history-query-south-items-from-csv": "从 CSV 加载 South 项",
+      "update-history-query-status": "更新历史查询状态",
+      "setpoint": "设定值",
+      "search-north-cache-content": "搜索缓存内容",
+      "search-history-cache-content": "搜索缓存内容",
+      "get-north-cache-file-content": "获取缓存文件",
+      "get-history-cache-file-content": "获取缓存文件",
+      "update-north-cache-content": "编辑缓存",
+      "update-history-cache-content": "编辑缓存",
+      "create-custom-transformer": "创建转换器",
+      "update-custom-transformer": "更新转换器",
+      "delete-custom-transformer": "删除转换器",
+      "test-custom-transformer": "测试转换器",
+      "test-transformer": "测试转换器"
+    },
+    "oibus-data-source-type": {
+      "oianalytics-setpoint": "OIAnalytics 设定值",
+      "oibus-api": "OIBus API 数据源",
+      "oibus-south": "South 连接器"
+    },
+    "oibus-input-data-type": {
+      "any": "文件（适用于所有数据源）",
+      "setpoint": "设定值（适用于所有数据源）",
+      "time-values": "OIBus 时间值（适用于所有数据源）",
+      "any-content": "任意内容",
+      "record-list": "记录列表（类 SQL 数据源）"
+    },
+    "oibus-output-data-type": {
+      "any": "任意",
+      "mqtt": "MQTT",
+      "modbus": "Modbus",
+      "oianalytics": "OIAnalytics 优化时间值",
+      "opcua": "OPCUA",
+      "time-values": "OIBus 时间值"
+    },
+    "oibus-transformer-language": {
+      "javascript": "JavaScript",
+      "typescript": "TypeScript"
+    },
+    "oibus-north-category": {
+      "debug": "调试",
+      "file": "文件",
+      "api": "API",
+      "iot": "物联网",
+      "database": "数据库"
+    },
+    "oibus-north-type": {
+      "aws-s3": "Amazon S3™",
+      "azure-blob": "Azure Blob Storage™",
+      "azure-data-explorer": "Azure Data Explorer™",
+      "console": "控制台",
+      "file-writer": "文件写入器",
+      "modbus": "Modbus",
+      "mqtt": "MQTT",
+      "oianalytics": "OIAnalytics®",
+      "opcua": "OPC UA™",
+      "rest": "REST API",
+      "sftp": "SFTP"
+    },
+    "oibus-north-type-description": {
+      "aws-s3": "将文件存储到 Amazon S3™（简单存储服务）",
+      "azure-blob": "将文件存储到 Microsoft Azure Blob Storage™",
+      "azure-data-explorer": "将数据写入 Azure Data Explorer™（Kusto）表",
+      "console": "在控制台中显示文件名或数值（用于调试）",
+      "file-writer": "将文件和数据写入输出文件夹",
+      "modbus": "写入 PLC 上的 Modbus 寄存器",
+      "mqtt": "发布到 MQTT 代理主题",
+      "oianalytics": "将文件和数值发送到 OIAnalytics®",
+      "opcua": "将数据写入 OPC UA™ 服务器",
+      "rest": "将数据上传到 REST 端点",
+      "sftp": "将文件和数据上传到 SFTP 服务器"
+    },
+    "oibus-south-category": {
+      "iot": "物联网",
+      "database": "数据库",
+      "file": "文件",
+      "api": "API"
+    },
+    "oibus-south-type": {
+      "ads": "ADS - TwinCAT®",
+      "folder-scanner": "文件夹扫描器",
+      "ftp": "FTP",
+      "influxdb": "InfluxDB",
+      "modbus": "Modbus",
+      "mongodb": "MongoDB",
+      "mqtt": "MQTT",
+      "mssql": "Microsoft SQL Server™",
+      "mysql": "MySQL® / MariaDB™",
+      "odbc": "ODBC",
+      "oianalytics": "OIAnalytics®",
+      "oledb": "OLEDB",
+      "opc": "OPC Classic™",
+      "opcua": "OPC UA™",
+      "oracle": "Oracle Database™",
+      "osisoft-pi": "OSIsoft PI System™",
+      "postgresql": "PostgreSQL",
+      "rest": "REST API",
+      "s7": "Siemens S7",
+      "sftp": "SFTP",
+      "sqlite": "SQLite™"
+    },
+    "oibus-south-type-description": {
+      "ads": "TwinCAT® 系统中使用的 ADS 协议",
+      "folder-scanner": "从本地或远程文件夹读取文件",
+      "ftp": "从远程 FTP 服务器读取文件",
+      "influxdb": "查询 InfluxDB 时序数据库（v1、v2、v3）",
+      "modbus": "访问 PLC 上的 Modbus 寄存器",
+      "mongodb": "查询 MongoDB 文档数据库",
+      "mqtt": "订阅 MQTT 代理主题",
+      "mssql": "查询 Microsoft SQL Server™ 数据库",
+      "mysql": "查询 MySQL® 或 MariaDB™ 数据库",
+      "odbc": "使用 ODBC 驱动程序查询 SQL 数据库",
+      "oianalytics": "从 OIAnalytics® 查询时间值",
+      "oledb": "使用 OLEDB 查询 SQL 数据库",
+      "opc": "连接到 OIBus Agent 以从 OPC Classic™（HDA/DA）服务器获取数据",
+      "opcua": "从 OPC UA™ 服务器（HA/DA）查询数据",
+      "oracle": "从 Oracle Database™ 查询数据",
+      "osisoft-pi": "与 OIBus Agent 建立连接以访问 PI System™ 数据",
+      "postgresql": "查询 PostgreSQL 数据库",
+      "rest": "从 REST API 端点采集数据",
+      "s7": "通过 ISO-on-TCP 访问 Siemens S7 PLC 数据",
+      "sftp": "从远程 SFTP 服务器读取文件",
+      "sqlite": "查询 SQLite™ 数据库"
+    }
+  },
+  "history-query": {
+    "list": "历史查询",
+    "title": "历史查询 {{ name }}",
+    "search-by-name": "名称",
+    "confirm-deletion": "确定要删除历史查询 {{ name }} 吗？",
+    "updated": "历史查询 {{ name }} 更新成功",
+    "created": "历史查询 {{ name }} 创建成功",
+    "deleted": "历史查询 {{ name }} 已删除",
+    "create-title": "创建新的历史查询",
+    "edit-title": "编辑 {{ name }}",
+    "general-settings": "常规设置",
+    "add": "添加",
+    "from-existing-south": "从现有 South 创建",
+    "from-existing-north": "从现有 North 创建",
+    "edit": "编辑",
+    "none": "无历史查询",
+    "name": "名称",
+    "description": "描述",
+    "status": "状态",
+    "south-type": "South 类型",
+    "north-type": "North 类型",
+    "interval": "间隔",
+    "item-progress": "{{ current }}/{{ total }} 个项目",
+    "query-time-range": {
+      "start": "开始",
+      "end": "结束",
+      "max-read-interval": "最大读取间隔",
+      "read-delay": "读取延迟"
+    },
+    "created-by": "创建者",
+    "created-at": "创建时间",
+    "updated-at": "更新时间",
+    "started": "历史查询 {{ name }} 已启动",
+    "paused": "历史查询 {{ name }} 已暂停",
+    "cache-path-copy": {
+      "success": "缓存路径已复制到剪贴板",
+      "error": "复制缓存路径到剪贴板时出错"
+    },
+    "modal": {
+      "title": "创建新的历史查询",
+      "create-details": "导入现有连接器配置或从头创建一个新的"
+    },
+    "north": {
+      "specific-settings": "{{ type }} 设置"
+    },
+    "south": {
+      "specific-settings": "{{ type }} 设置"
+    },
+    "transformers": {
+      "title": "转换负载",
+      "input-type": "源类型",
+      "output-type": "目标类型",
+      "transformer": "转换器",
+      "add": "添加转换器",
+      "none": "无转换器",
+      "choose-transformer-modal": {
+        "title": "选择如何处理负载"
+      },
+      "added": "转换器已添加",
+      "edited": "转换器选项已编辑",
+      "confirm-deletion": "确定要从此历史查询中删除此转换器吗？",
+      "removed": "转换器已移除"
+    },
+    "items": {
+      "title": "项目",
+      "name": "名称",
+      "status": "状态",
+      "confirm-deletion": "确定要删除此项目吗？",
+      "confirm-delete-all": "确定要删除所有这些项目吗？",
+      "updated": "历史查询项目更新成功",
+      "created": "历史查询项目创建成功",
+      "deleted": "历史查询项目已删除",
+      "all-deleted": "历史查询项目已删除",
+      "delete-all": "全部删除",
+      "add": "添加",
+      "edit": "编辑",
+      "none": "无历史查询项目",
+      "scan-mode": "计划",
+      "export": "导出项目",
+      "import": "导入项目",
+      "imported": "项目已导入",
+      "enabled": "历史项目 {{ name }} 已启用",
+      "disabled": "历史项目 {{ name }} 已禁用",
+      "enabled-label": "已启用",
+      "disabled-label": "已禁用",
+      "enabled-multiple": "{{count}} 个历史项目已启用",
+      "disabled-multiple": "{{count}} 个历史项目已禁用",
+      "deleted-multiple": "{{count}} 个历史项目已删除",
+      "enable-selected": "启用所选项",
+      "disable-selected": "禁用所选项",
+      "delete-selected": "删除所选项",
+      "select-all": "全选",
+      "unselect-all": "取消全选",
+      "selected-items": "已选择 {{count}} 项",
+      "selected-count": "已选择 {{count}} 项",
+      "delete-multiple-message": "确定要删除所选的 {{count}} 个项目吗？",
+      "enable-error": "启用项目时出错：{{error}}",
+      "disable-error": "禁用项目时出错：{{error}}",
+      "delete-error": "删除项目时出错：{{error}}",
+      "all-statuses": "所有状态",
+      "created-at": "创建时间",
+      "updated-at": "更新时间",
+      "mass-actions": "批量操作（{{count}} 个项目）",
+      "enable": "启用",
+      "disable": "禁用",
+      "delete": "删除",
+      "none-match": "没有符合搜索条件的项目",
+      "search": {},
+      "tooltips": {
+        "add": "添加新项目",
+        "edit": "编辑项目",
+        "duplicate": "复制项目",
+        "delete": "删除项目"
+      }
+    },
+    "monitoring": {
+      "title": "{{ name }} 指标",
+      "north": {
+        "title": "North 指标",
+        "reset-metrics": "重置指标",
+        "metrics-reset": "指标重置成功",
+        "metrics-start": "指标于 {{ start }} 开始统计",
+        "cache-size-title": "缓存大小",
+        "cache-size-value": "当前大小：{{ currentSize }} / 已缓存总量：{{ totalCached }} / 已发送总量：{{ totalSent }}",
+        "error-size-title": "错误大小",
+        "error-size-value": "当前大小：{{ currentSize }} / 出错总量：{{ totalSize }}",
+        "archive-size-title": "归档大小",
+        "archive-size-value": "当前大小：{{ currentSize }} / 已归档总量：{{ totalSize }}",
+        "last-content-sent": "上次发送内容",
+        "last-connection": "上次连接",
+        "last-run-start": "上次运行",
+        "last-run-duration": "上次运行时长",
+        "data-sent": "已发送数据"
+      },
+      "south": {
+        "title": "South 指标",
+        "reset-metrics": "重置指标",
+        "metrics-reset": "指标重置成功",
+        "metrics-start": "指标于 {{ start }} 开始统计",
+        "number-of-values": "已获取的数值数量",
+        "number-of-files": "已获取的文件数量",
+        "last-connection": "上次连接",
+        "last-file": "上次获取的文件",
+        "last-value": "上次获取的数值",
+        "last-value-content": "{{ pointId }}，时间 {{ timestamp }}，内容为 {{ data }}",
+        "last-run-start": "上次运行",
+        "last-run-duration": "上次运行时长",
+        "data-retrieved": "已获取数据",
+        "interval-progress": "区间进度",
+        "current-item": "当前项目：{{ name }}（{{ current }} / {{ total }}）",
+        "item-progress": "已处理项目",
+        "item-interval-progress": "当前项目进度",
+        "values-per-second": "每秒数值/文件数",
+        "eta": "预计剩余时间",
+        "items-status": {
+          "title": "项目状态",
+          "name": "名称",
+          "status": "状态",
+          "last-value": "上次获取的数值",
+          "records": "已获取记录数",
+          "pending": "待处理",
+          "running": "运行中",
+          "done": "已完成"
+        }
+      }
+    },
+    "tooltips": {
+      "add": "创建新的历史查询",
+      "start": "启动历史查询",
+      "pause": "暂停历史查询",
+      "resume": "恢复历史查询",
+      "restart": "重启历史查询",
+      "view": "查看历史查询详情",
+      "edit": "编辑历史查询",
+      "duplicate": "复制历史查询",
+      "delete": "删除历史查询",
+      "copy-cache-path": "复制缓存路径到剪贴板",
+      "audit": "查看历史查询审计历史"
+    }
+  },
+  "explore-cache": {
+    "title": "{{ name }} 的缓存",
+    "search": {
+      "start": "从",
+      "end": "到",
+      "filename-contains": "文件名包含",
+      "max-number-of-files-returned": "最大文件数"
+    },
+    "snapshot-warning": "所显示的数据是 {{ snapshotDate }} 时的快照。自搜索以来，OIBus 中的缓存状态可能已发生变化。",
+    "unsaved-changes": "您有未保存的更改。",
+    "save-changes": "保存更改",
+    "cache-updated": "缓存已更新",
+    "select-all": "全选",
+    "unselect-all": "取消全选",
+    "selected-files": "已选择 {{ count }} 个",
+    "file-date": "创建日期",
+    "filename": "文件名",
+    "file-size": "大小",
+    "cache": {
+      "title": "缓存文件夹",
+      "title-empty": "缓存文件夹（空）",
+      "none": "缓存文件夹中没有文件"
+    },
+    "error": {
+      "title": "错误文件夹",
+      "title-empty": "错误文件夹（空）",
+      "none": "错误文件夹中没有文件"
+    },
+    "archive": {
+      "title": "归档文件夹",
+      "title-empty": "归档文件夹（空）",
+      "none": "归档文件夹中没有文件"
+    },
+    "error-content-action": "错误内容",
+    "archive-content-action": "归档内容",
+    "retry-content-action": "重试内容",
+    "replay-content-action": "重放内容",
+    "view-content-action": "查看内容",
+    "remove-content-action": "移除内容",
+    "remove-selected-content": "移除所选内容",
+    "replay-selected-content": "重放所选内容",
+    "archive-selected-content": "归档所选内容",
+    "retry-selected-content": "重试所选内容",
+    "error-selected-content": "将所选内容标记为错误",
+    "view-content": {
+      "title": "文件 {{ contentFilename }} 的内容（{{ filename }}）",
+      "truncated": "内容已被截断。实际大小：{{ realSize }}。已获取大小：{{ currentSize }}",
+      "file-size": "内容大小：{{ contentSize }}",
+      "content-type": "内容类型：{{ contentType }}",
+      "content-type-truncated": "内容类型：{{ contentType }}。由于内容被截断，以纯文本形式显示"
+    }
+  },
+  "audit": {
+    "title": "审计",
+    "none": "未找到审计日志",
+    "history-modal": {
+      "title": "审计历史",
+      "loading": "正在加载审计历史……",
+      "none": "未找到历史记录",
+      "tooltips": {
+        "expand": "显示详情",
+        "collapse": "隐藏详情"
+      },
+      "modes": {
+        "table": "表格",
+        "json-diff": "JSON 差异",
+        "json-side-by-side": "JSON 并排对比"
+      }
+    },
+    "tooltips": {
+      "view": "查看审计日志详情"
+    },
+    "actions": {
+      "CREATE": "创建",
+      "UPDATE": "更新",
+      "DELETE": "删除"
+    },
+    "diff": {
+      "field": "字段",
+      "before": "之前",
+      "after": "之后"
+    },
+    "search": {
+      "entity-type": "实体类型",
+      "action": "操作",
+      "start": "开始",
+      "end": "结束",
+      "all-entity-types": "所有实体类型",
+      "all-actions": "所有操作"
+    },
+    "entity-type": "实体类型",
+    "entity-id": "实体 ID",
+    "action": "操作",
+    "user": "用户",
+    "date": "日期"
+  },
+  "logs": {
+    "title": "日志",
+    "auto-reload": {},
+    "search": {
+      "start": "开始",
+      "end": "结束",
+      "message-content": "日志包含",
+      "scope-type": "类型",
+      "scope": "范围",
+      "item": "项目",
+      "group": "分组",
+      "levels": "级别"
+    },
+    "date": "日期",
+    "level": "级别",
+    "scope-type": "类型",
+    "scope": "范围",
+    "item": "项目",
+    "group": "分组",
+    "message": "消息",
+    "none": "未找到日志",
+    "tooltips": {
+      "pause-auto-reload": "暂停自动刷新",
+      "resume-auto-reload": "恢复自动刷新"
+    },
+    "context-menu": {
+      "title": "在此日志附近搜索",
+      "1-minute": "± 1 分钟",
+      "5-minutes": "± 5 分钟",
+      "15-minutes": "± 15 分钟",
+      "30-minutes": "± 30 分钟",
+      "1-hour": "± 1 小时"
+    }
+  },
+  "north": {
+    "title": "North {{ name }}",
+    "list": "North 列表",
+    "search-by-name": "名称",
+    "choose-north-type-title": "选择 North 的类型",
+    "type-error": "您必须选择一个 North 类型",
+    "create-title": "创建 {{ type }} North 连接器",
+    "edit-title": "编辑 {{ name }}",
+    "confirm-deletion": "您确定要删除 North 连接器 {{ name }} 吗？",
+    "updated": "North 连接器 {{ name }} 更新成功",
+    "created": "North 连接器 {{ name }} 创建成功",
+    "deleted": "North 连接器 {{ name }} 已删除",
+    "none": "没有匹配搜索条件的 North 连接器",
+    "name": "名称",
+    "description": "描述",
+    "copy-cache-path": "复制缓存路径（{{ id }}）",
+    "status": "状态",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "started": "North 连接器 {{ name }} 已启动",
+    "stopped": "North 连接器 {{ name }} 已停止",
+    "cache-path-copy": {
+      "success": "缓存路径已复制到剪贴板",
+      "error": "复制缓存路径到剪贴板时出错"
+    },
+    "test-connection": {
+      "title": "测试设置",
+      "button": "测试设置",
+      "success": "连接测试成功",
+      "error": "测试设置时出错"
+    },
+    "type": "类型",
+    "created-by": "创建者",
+    "created-at": "创建时间",
+    "updated-at": "更新时间",
+    "general-settings": "常规设置",
+    "specific-settings": "{{ type }} 设置",
+    "caching": {
+      "title": "缓存设置",
+      "trigger": {
+        "title": "触发条件",
+        "schedule": "计划",
+        "number-of-elements": "元素数量",
+        "number-of-files": "文件数量",
+        "value": "计划：{{ scanMode }} / 元素：{{ numberOfElements }} / 文件：{{ numberOfFiles }}"
+      },
+      "throttling": {
+        "title": "限流",
+        "run-min-delay": "两次发送之间的最小延迟",
+        "max-size": "最大存储大小（缓存 + 错误 + 归档）",
+        "max-number-of-elements": "最大元素数量",
+        "value": "最小运行延迟：{{ runMinDelay }} 毫秒 / 最大缓存大小：{{ maxSize }} MB / 最大元素数量：{{ maxNumberOfElements }}"
+      },
+      "error": {
+        "title": "错误",
+        "retry-interval": "出错后重试前的等待延迟",
+        "retry-count": "重试次数",
+        "retention-duration": "错误数据的保留时长",
+        "value": "重试间隔：{{ retryInterval }} 毫秒 / 重试次数：{{ retryCount }} / 保留时长：{{ retentionDuration }} 小时"
+      },
+      "archive": {
+        "title": "归档",
+        "enabled": "已启用",
+        "retention-duration": "归档数据的保留时长",
+        "value": "已启用：{{ enabled }} / 保留时长：{{ retentionDuration }} 小时"
+      },
+      "explore-cache": "浏览缓存"
+    },
+    "transformers": {
+      "title": "转换负载",
+      "source": "来源",
+      "output": "输出",
+      "add": "添加转换器",
+      "none": "无转换器",
+      "choose-transformer-modal": {
+        "title": "选择如何处理负载"
+      },
+      "added": "转换器已添加",
+      "edited": "转换器选项已编辑",
+      "confirm-deletion": "您确定要从此 North 连接器中删除此转换器吗？",
+      "removed": "转换器已移除",
+      "test": {
+        "title": "测试转换器",
+        "run": "运行测试",
+        "source-paste": "粘贴数据",
+        "source-item": "来自源项",
+        "item": "项"
+      }
+    },
+    "monitoring": {
+      "title": "{{ name }} 指标",
+      "since": "自 {{ date }} 起",
+      "reset-metrics": "重置指标",
+      "metrics-reset": "指标重置成功",
+      "metrics-start": "指标于 {{ start }} 开始统计",
+      "last-connection": "上次连接",
+      "last-content-sent": "上次发送内容",
+      "last-run": "上次运行",
+      "last-run-value": "{{ lastRunStart }}（耗时 {{ lastRunDuration }}）",
+      "cache-size-title": "缓存大小",
+      "cache-size-value": "当前大小：{{ currentSize }} / 已缓存总量：{{ totalCached }} / 已发送总量：{{ totalSent }}",
+      "error-size-title": "错误大小",
+      "error-size-value": "当前大小：{{ currentSize }} / 错误总量：{{ totalSize }}",
+      "archive-size-title": "归档大小",
+      "archive-size-value": "当前大小：{{ currentSize }} / 归档总量：{{ totalSize }}"
+    },
+    "tooltips": {
+      "add": "创建新的 North 连接器",
+      "start": "启动 North 连接器",
+      "stop": "停止 North 连接器",
+      "view": "查看 North 连接器详情",
+      "edit": "编辑 North 连接器",
+      "duplicate": "复制 North 连接器",
+      "delete": "删除 North 连接器",
+      "copy-cache-path": "复制缓存路径到剪贴板",
+      "view-metrics": "查看 North 连接器指标",
+      "audit": "查看 North 连接器审计历史"
+    }
+  },
+  "oia-module": {
+    "title": "OIAnalytics 注册",
+    "registration": {
+      "title": "注册 OIBus",
+      "host": "主机",
+      "accept-unauthorized": "接受未经授权的证书",
+      "use-proxy": "使用代理",
+      "proxy-url": "代理 URL",
+      "proxy-username": "代理用户名",
+      "proxy-password": "代理密码",
+      "use-api-gateway": "使用 API 网关",
+      "api-gateway-header-key": "标头键",
+      "api-gateway-header-value": "密钥标头值",
+      "api-gateway-base-endpoint": "基础端点",
+      "register": "注册",
+      "saved": "注册设置已保存",
+      "unregister": "取消注册",
+      "confirm-unregistration": "您确定要取消注册此 OIBus 吗？",
+      "unregistered": "OIBus 已取消注册",
+      "not-registered": "OIBus 尚未注册到 OIAnalytics。点击下方按钮进行注册。",
+      "pending": "注册待处理。请在 OIAnalytics 上使用以下激活码进行激活",
+      "expiration-date": "过期时间",
+      "registered": "OIBus 已于 {{ activationDate }} 注册",
+      "enable-all": "全部启用",
+      "disable-all": "全部禁用",
+      "remote-update-disabled": "此 OIBus 已禁用远程更新（以 --ignoreRemoteUpdate 启动），因此无法启用 upgrade-version 命令。",
+      "test-connection": "测试连接",
+      "test-connection-success": "连接成功",
+      "test-connection-error": "测试连接时出错"
+    },
+    "commands": {
+      "title": "命令列表",
+      "creation-date": "创建日期",
+      "completion-date": "完成日期",
+      "status": "状态",
+      "type": "类型",
+      "command": "命令（id）",
+      "none": "无命令",
+      "refresh-interval": "命令获取间隔（来自 OIAnalytics）",
+      "command-retry-interval": "命令（来自 OIAnalytics）重试间隔",
+      "message-retry-interval": "消息（发往 OIAnalytics）重试间隔",
+      "permissions": "OIAnalytics 命令权限",
+      "update-engine-settings-permission": "更新引擎设置（名称、Web 服务器、代理、日志记录器）",
+      "engine": "引擎",
+      "registration": "注册",
+      "scan-mode": "扫描模式",
+      "ip-filter": "IP 过滤器",
+      "certificate": "证书",
+      "north-connector": "North 连接器",
+      "transformers": "自定义转换器",
+      "south-connector": "South 连接器",
+      "test-connector": "测试连接器",
+      "history-query": "历史查询",
+      "test-history-query": "测试历史查询",
+      "north-cache": "North 缓存管理",
+      "history-cache": "历史缓存管理",
+      "setpoint": "设定点",
+      "details-modal": {
+        "title": "命令 {{ type }}",
+        "success-info": "命令执行成功",
+        "error-info": "命令执行失败",
+        "command-message": "命令消息",
+        "command-content": {
+          "title": "命令内容",
+          "retrieved-date": "获取日期：{{ retrievedDate }}",
+          "update-version": {
+            "version": "更新到版本：{{ version }}",
+            "asset-id": "要下载的资源：{{ assetId }}",
+            "update-launcher": "更新启动器：{{ updateLauncher }}",
+            "backup-folders-patterns": "按照以下模式备份文件夹：{{ backupFoldersPattern }}"
+          },
+          "update-engine-settings": {
+            "command-content": "JSON 内容"
+          },
+          "update-registration-settings": {
+            "command-content": "JSON 内容"
+          },
+          "scan-mode": {
+            "command-content": "JSON 内容",
+            "scan-mode-id": "扫描模式 ID：{{ scanModeId }}"
+          },
+          "south": {
+            "command-content": "JSON 内容",
+            "south-id": "South 连接器 ID：{{ southConnectorId }}",
+            "delete-items-not-present": "删除不存在的项：{{ deleteItemsNotPresent }}",
+            "delimiter": "分隔符：{{ delimiter }}",
+            "csv-content": "CSV 内容：{{ csvContent }}"
+          },
+          "north": {
+            "command-content": "JSON 内容",
+            "north-id": "North 连接器 ID：{{ northConnectorId }}"
+          }
+        }
+      },
+      "details-tooltip": "命令详情",
+      "confirm-delete": "您确定要删除此命令吗？",
+      "delete-tooltip": "删除命令",
+      "deleted": "命令已删除"
+    }
+  },
+  "version-update": {
+    "title": "有可用更新",
+    "message": "检测到 OIBus 的新版本。页面将在 {{ seconds }} 秒后自动重新加载以应用更新。",
+    "reload-now": "立即重新加载"
+  },
+  "about": {
+    "official-site": "官方网站",
+    "version": "版本",
+    "launcher-version": "启动器版本",
+    "license": "许可证",
+    "executable": "可执行文件",
+    "hostname": "主机名",
+    "data-folder": "数据文件夹",
+    "operating-system": "操作系统",
+    "architecture": "架构",
+    "process-id": "进程 ID",
+    "copyright": "版权所有 (c) 2018-{{nowYear}} Optimistik SAS。本软件依据 EUPL-1.2 许可证条款分发。"
+  },
+  "home": {
+    "south": {
+      "title": "已启用的 South"
+    },
+    "north": {
+      "title": "已启用的 North"
+    },
+    "engine": {
+      "title": "引擎"
+    },
+    "history-query": {
+      "title": "历史查询",
+      "name": "名称",
+      "status": "状态"
+    }
+  },
+  "common": {
+    "yes": "是",
+    "no": "否",
+    "beta": "测试版",
+    "ok": "确定",
+    "save": "保存",
+    "back": "返回",
+    "cancel": "取消",
+    "delete": "删除",
+    "close": "关闭",
+    "search": "搜索",
+    "clear": "清除",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "colon-separator": ": ",
+    "audit": {
+      "created-on": "创建时间",
+      "created-by": "创建者",
+      "updated-on": "更新时间",
+      "updated-by": "更新者"
+    },
+    "forbidden": "您没有此实体的访问权限。\n{{ url }}",
+    "not-found": "该实体似乎不存在。\n{{ url }}",
+    "confirmation-modal-title": "确认",
+    "date-hour-format": "yyyy-MM-dd HH:mm",
+    "delimiter": "分隔符",
+    "file": "文件",
+    "drop-file-here": "将文件拖放到此处",
+    "item": "项目",
+    "nested": "嵌套",
+    "root": "根",
+    "unsaved-changes": "未保存的更改",
+    "unsaved-changes-message": "您有未保存的更改。确定要离开而不保存吗？",
+    "leave-without-saving": "离开且不保存",
+    "continue-editing": "继续编辑",
+    "validation-errors": {
+      "this-field": "此字段",
+      "required": "{{ label }} 是必填项",
+      "invalid-date": "{{ label }} 不是有效日期",
+      "minlength": "{{ label }} 长度必须至少为 {{ requiredLength }} 个字符",
+      "maxlength": "{{ label }} 长度最多为 {{ requiredLength }} 个字符",
+      "pattern": "{{ label }} 的格式不符合要求",
+      "email": "{{ label }} 必须是有效的电子邮件地址",
+      "min": "{{ label }} 必须至少为 {{ min }}",
+      "max": "{{ label }} 必须最多为 {{ max }}",
+      "end-must-be-after-start": "结束日期必须晚于开始日期",
+      "descending-limits-error": "限制值必须按降序排列",
+      "invalid-period": "该周期无效",
+      "invalid-positive-integer": "该数字必须为正整数",
+      "null-period-error": "周期不能为空",
+      "invalid-regex": "正则表达式无效",
+      "invalid-json": "JSON 无效",
+      "all-access-control-tag-keys-must-be-valued": "用于访问控制的所有标签键都必须有值。缺少的标签键：{{ missingTagKeys }}。",
+      "parsing-processor-error": "解析处理器无效。{{ error }}",
+      "must-be-unique": "必须唯一",
+      "resolve-pending-changes": "保存前请先验证或放弃待处理的更改",
+      "bad-start-date-range": "开始时间必须早于结束时间",
+      "bad-end-date-range": "结束时间必须晚于开始时间",
+      "date-range-required": "日期范围为必填项",
+      "invalid-date-range": "所选日期范围无效",
+      "duplicate-field-names": "检测到重复的字段名称",
+      "only-one-reference": "只能将一个元素标记为参考",
+      "mqtt-topic-overlap": "MQTT 主题订阅不能重叠。冲突的主题：{{ conflictingTopics }}",
+      "interval-too-small": "间隔必须至少为 {{ min }} 毫秒",
+      "time-of-day-incomplete": "开始时间和结束时间必须同时设置，或都不设置",
+      "time-of-day-empty": "开始时间和结束时间必须不同"
+    },
+    "period": {
+      "none": "无",
+      "years": "年",
+      "quarters": "季",
+      "months": "月",
+      "weeks": "周",
+      "days": "天",
+      "hours": "时",
+      "minutes": "分",
+      "seconds": "秒",
+      "milliseconds": "毫秒",
+      "custom": "自定义"
+    },
+    "size": {
+      "B": "B",
+      "kB": "kB",
+      "MB": "MB"
+    },
+    "unit": {
+      "ms": "ms",
+      "s": "s",
+      "hr": "hr",
+      "MB": "MB",
+      "days": "天"
+    },
+    "tooltips": {
+      "help": "帮助",
+      "save": "保存更改",
+      "discard": "放弃更改",
+      "remove": "移除"
+    },
+    "export-success": "导出成功",
+    "export-error": "导出失败",
+    "import-success": "导入成功",
+    "import-error": "导入失败",
+    "create": "创建",
+    "edit": "编辑",
+    "cache": "缓存"
+  },
+  "duration-pipe": {
+    "long": {
+      "hour": "{{ hours }} 小时",
+      "hours": "{{ hours }} 小时",
+      "minute": "{{ minutes }} 分钟",
+      "minutes": "{{ minutes }} 分钟",
+      "second": "{{ seconds }} 秒",
+      "seconds": "{{ seconds }} 秒"
+    },
+    "short": {
+      "hour": "{{ hours }} 时",
+      "hours": "{{ hours }} 时",
+      "minute": "{{ minutes }} 分",
+      "minutes": "{{ minutes }} 分",
+      "second": "{{ seconds }} 秒",
+      "seconds": "{{ seconds }} 秒"
+    },
+    "hours-and-minutes": "{{ hours }}，{{ minutes }}",
+    "hours-and-seconds": "{{ hours }}，{{ seconds }}",
+    "hours-and-minutes-and-seconds": "{{ hours }}，{{ minutes }}，{{ seconds }}",
+    "minutes-and-seconds": "{{ minutes }}，{{ seconds }}"
+  },
+  "date-range": {
+    "range-type": "日期范围",
+    "last-minute": "最近一分钟",
+    "last-10-minutes": "最近 10 分钟",
+    "last-hour": "最近一小时",
+    "last-day": "最近一天",
+    "custom": "自定义"
+  },
+  "datepicker": {
+    "parse-pattern": "d/M/yyyy",
+    "format-pattern": "dd/MM/yyyy",
+    "tooltips": {
+      "open-calendar": "打开日历"
+    }
+  },
+  "nav": {
+    "home": "首页",
+    "engine": "引擎",
+    "north-list": "North",
+    "south-list": "South",
+    "history-queries": "历史查询",
+    "logs": "日志",
+    "about": "关于",
+    "version": "版本：{{ version }}",
+    "account": {
+      "logout": "注销",
+      "settings": "设置",
+      "audit": "审计"
+    },
+    "tooltips": {
+      "documentation": "文档"
+    }
+  },
+  "login": {
+    "title": "登录",
+    "login": "登录",
+    "password": "密码",
+    "login-button": "登录",
+    "login-error": "用户名或密码无效"
+  },
+  "user-settings": {
+    "edit-user-settings": {
+      "login": "登录名：{{ login }}",
+      "first-name": "名字",
+      "last-name": "姓氏",
+      "timezone": "时区",
+      "language": "语言",
+      "change-password": "修改密码",
+      "saved": "用户设置已保存"
+    },
+    "change-password": {
+      "title": "修改密码",
+      "current-password": "当前密码",
+      "new-password": "新密码",
+      "new-password-confirmation": "确认新密码",
+      "passwords-not-identical": "新密码与确认密码必须一致",
+      "password-changed": "密码修改成功",
+      "error": "密码未修改。请确保输入了正确的当前密码。",
+      "lowercase-character-required": "至少需要一个小写字母",
+      "uppercase-character-required": "至少需要一个大写字母",
+      "numeric-character-required": "至少需要一个数字",
+      "special-character-required": "至少需要一个特殊字符"
+    }
+  },
+  "enabled": "运行中",
+  "disabled": "已暂停"
+}
