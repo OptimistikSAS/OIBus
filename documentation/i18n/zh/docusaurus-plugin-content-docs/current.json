@@ -1,0 +1,62 @@
+{
+  "version.label": {
+    "message": "下一版本",
+    "description": "The label for version current"
+  },
+  "sidebar.guideSidebar.category.Getting started": {
+    "message": "快速入门",
+    "description": "The label for category 'Getting started' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Getting started.link.generated-index.description": {
+    "message": "在 2 分钟内完成 OIBus 的安装和启动。",
+    "description": "The generated-index page description for category 'Getting started' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Engine": {
+    "message": "引擎",
+    "description": "The label for category 'Engine' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Engine.link.generated-index.description": {
+    "message": "了解如何配置 OIBus 引擎。",
+    "description": "The generated-index page description for category 'Engine' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.North connectors": {
+    "message": "North 连接器",
+    "description": "The label for category 'North connectors' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.North connectors.link.generated-index.description": {
+    "message": "了解如何使用和配置 North 连接器。",
+    "description": "The generated-index page description for category 'North connectors' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.South connectors": {
+    "message": "South 连接器",
+    "description": "The label for category 'South connectors' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.South connectors.link.generated-index.description": {
+    "message": "了解如何使用和配置 South 连接器。",
+    "description": "The generated-index page description for category 'South connectors' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Advanced": {
+    "message": "高级",
+    "description": "The label for category 'Advanced' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.Advanced.link.generated-index.description": {
+    "message": "了解一些 OIBus 的高级概念。",
+    "description": "The generated-index page description for category 'Advanced' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.OIBus Agent": {
+    "message": "OIBus 代理",
+    "description": "The label for category 'OIBus Agent' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.OIBus Agent.link.generated-index.description": {
+    "message": "了解如何安装 OIBus 代理并与其通信。",
+    "description": "The generated-index page description for category 'OIBus Agent' in sidebar 'guideSidebar'"
+  },
+  "sidebar.developerSidebar.category.Create a connector": {
+    "message": "创建连接器",
+    "description": "The label for category 'Create a connector' in sidebar 'developerSidebar'"
+  },
+  "sidebar.developerSidebar.category.Create a connector.link.generated-index.description": {
+    "message": "了解如何开发新的 OIBus 连接器。",
+    "description": "The generated-index page description for category 'Create a connector' in sidebar 'developerSidebar'"
+  }
+}
