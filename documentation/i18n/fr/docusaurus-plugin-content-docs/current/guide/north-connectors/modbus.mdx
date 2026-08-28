@@ -1,0 +1,48 @@
+import ModbusDataFormatTester from '../../../../../../src/components/ModbusDataFormatTester/index';
+
+# Modbus
+
+Le **connecteur North Modbus** permet à OIBus d'**écrire des données vers des appareils compatibles Modbus**, ce qui
+permet une intégration transparente avec les automates (PLC), les RTU et d'autres équipements industriels prenant en
+charge le protocole Modbus.
+
+**Exemples de cas d'usage**
+
+- **Contrôle de processus** : écrire des consignes et des valeurs de contrôle vers les automates
+- **Gestion de la configuration** : mettre à jour à distance les paramètres des appareils
+- **Intégration système** : relier les données OIBus aux équipements compatibles Modbus
+
+## Paramètres spécifiques {#specific-settings}
+
+### Configuration de la connexion {#connection-configuration}
+
+| Paramètre                | Description                                                                                                                    | Exemple de valeur |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
+| **Hôte**                   | Adresse IP ou nom d'hôte de la machine serveur Modbus.                                                                              | `192.168.1.100`     |
+| **Port**                   | Port à utiliser pour la connexion (502 par défaut).                                                                                 | `502`                |
+| **Délai d'expiration de connexion** | Temps maximal d'attente d'une connexion (en millisecondes).                                                                  | `10000`              |
+| **Intervalle de nouvelle tentative** | Temps à attendre (en millisecondes) avant de se reconnecter, que ce soit après un échec de connexion ou après l'échec d'une commande d'écriture. | `10000`              |
+| **ID esclave**             | Identifie la machine source Modbus (1 par défaut).                                                                                  | `1`                  |
+| **Décalage d'adresse**     | Pour la plupart des automates, il n'y a pas de décalage (option Modbus). Certains automates peuvent démarrer la plage d'adresses à 1 au lieu de 0 (option JBus) | `Modbus`             |
+
+### Options de format des données {#data-format-options}
+
+| Paramètre         | Description                                                    | Exemple de valeur |
+| -------------------- | -------------------------------------------------------------------- | -------------------- |
+| **Boutisme**         | Type d'encodage des bits.                                             | `Big endian`         |
+| **Inverser les octets** | Indique si les octets au sein d'un mot de 16 bits doivent être inversés. | Activé/Désactivé   |
+| **Inverser les mots**  | Indique si les mots de 16 bits doivent être inversés au sein d'un groupe de 32 bits. | Activé/Désactivé   |
+
+Utilisez le testeur ci-dessous pour prévisualiser comment différents paramètres de boutisme et d'inversion affectent la
+disposition des octets d'une valeur écrite dans un registre Modbus :
+
+<ModbusDataFormatTester />
+
+:::caution Les paramètres de boutisme et d'inversion n'ont actuellement aucun effet sur les écritures
+Ce connecteur écrit uniquement des registres ou des bobines simples de 16 bits (`writeSingleCoil` /
+`writeSingleRegister`) — il ne dispose d'aucune voie d'écriture multi-registres, si bien que **Boutisme**,
+**Inverser les octets** et **Inverser les mots** ne sont actuellement pas appliqués lors de l'envoi de données. Les
+modifier n'a aucun effet sur ce qui est écrit. Le testeur ci-dessus illustre le concept de disposition des octets
+(partagé avec le connecteur South Modbus, où ces paramètres _sont_ appliqués lors de la lecture), et non le
+comportement réel de ce connecteur.
+:::

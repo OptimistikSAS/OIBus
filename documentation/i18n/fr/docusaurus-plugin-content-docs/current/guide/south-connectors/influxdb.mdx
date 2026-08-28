@@ -1,0 +1,193 @@
+---
+sidebar_position: 19
+---
+
+import ThrottlingSettings from './_throttling-settings.mdx';
+
+# InfluxDB
+
+Connectez-vous et interrogez les bases de données de séries temporelles [InfluxDB](https://www.influxdata.com/) avec OIBus. Les
+trois principales versions de l'API InfluxDB sont prises en charge : InfluxDB v1 (InfluxQL), InfluxDB v2 (Flux), et
+InfluxDB v3 (SQL / Flight SQL).
+
+:::info Aperçu de la technologie
+
+- Base de données de séries temporelles conçue par [InfluxData](https://www.influxdata.com/)
+- Connecteur historique uniquement : interroge une plage de temps à chaque cycle de scrutation
+- Trois versions d'API distinctes, chacune avec un langage de requête et un schéma d'authentification différents
+
+:::
+
+## Versions de l'API {#api-versions}
+
+InfluxDB a connu trois révisions majeures de son API qui **ne sont pas rétrocompatibles**. Sélectionnez la
+version correspondant à votre serveur avant de configurer les autres paramètres.
+
+| Version | Langage de requête            | Authentification                  | Déploiement typique                     |
+| ------- | ----------------------------- | ---------------------------------- | ---------------------------------------- |
+| **v1**  | InfluxQL (proche du SQL)      | Nom d'utilisateur / Mot de passe  | InfluxDB 1.x auto-hébergé                |
+| **v2**  | Flux (pipeline fonctionnel)   | Jeton API + Organisation + Bucket | InfluxDB 2.x, InfluxDB Cloud (TSM)       |
+| **v3**  | SQL (Apache Arrow Flight SQL) | Jeton API                         | InfluxDB 3.x, InfluxDB Cloud Serverless  |
+
+## Paramètres spécifiques {#specific-settings}
+
+### Commun {#common}
+
+| Paramètre   | Description                                    |
+| ----------- | ----------------------------------------------- |
+| **Version** | Version de l'API InfluxDB à utiliser : `1`, `2`, `3`. |
+
+### InfluxDB v1 {#influxdb-v1}
+
+| Paramètre        | Description                                          | Exemple de valeur |
+| ----------------- | ----------------------------------------------------- | ------------- |
+| **Host**          | Nom d'hôte ou adresse IP du serveur InfluxDB.         | `localhost`   |
+| **Port**          | Port du serveur. Par défaut : `8086`.                 | `8086`        |
+| **Protocol**      | Protocole de transport : `http` ou `https`.           | `http`        |
+| **Database**      | Nom de la base de données InfluxDB à interroger.      | `telegraf`    |
+| **Username**      | Optionnel. Nom d'utilisateur pour l'authentification. | `reader`      |
+| **Password**      | Optionnel. Mot de passe pour l'authentification.      | `••••••••`    |
+
+### InfluxDB v2 {#influxdb-v2}
+
+| Paramètre        | Description                                                | Exemple de valeur       |
+| ----------------- | ------------------------------------------------------------ | ------------------------ |
+| **URL**           | URL complète de l'instance InfluxDB v2.                     | `http://localhost:8086` |
+| **Token**         | Jeton API avec accès en lecture au bucket cible.             | `••••••••`               |
+| **Organisation**  | Nom de l'organisation InfluxDB propriétaire du bucket.       | `my-org`                 |
+| **Bucket**        | Nom du bucket à interroger.                                  | `sensors`                |
+
+### InfluxDB v3 {#influxdb-v3}
+
+| Paramètre        | Description                                                             | Exemple de valeur                              |
+| ----------------- | -------------------------------------------------------------------------- | ------------------------------------------------ |
+| **URL**           | URL complète du point de terminaison InfluxDB v3 / Cloud Serverless.      | `https://us-east-1-1.aws.cloud2.influxdata.com` |
+| **Token**         | Jeton API avec accès en lecture à la base de données cible.               | `••••••••`                                       |
+| **Database**      | Nom de la base de données (équivalent d'une base v1 ou d'un bucket v2).   | `sensors`                                        |
+
+:::tip Utiliser un jeton en lecture seule
+Créez un jeton ou un utilisateur dédié en lecture seule pour OIBus. Sur InfluxDB v1, accordez uniquement le
+privilège `READ` sur la base de données cible ; sur v2/v3, limitez la portée du jeton au bucket ou à la base de données spécifique.
+:::
+
+## Paramètres des éléments {#item-settings}
+
+Chaque élément représente une requête exécutée contre le serveur InfluxDB à chaque cycle de scrutation. Les éléments ont
+leur propre mode de scrutation et leurs propres paramètres de limitation de débit (il n'y a pas de groupes dans le connecteur InfluxDB).
+
+| Paramètre       | Description                                    | Exemple de valeur |
+| ---------------- | ------------------------------------------------ | ------------- |
+| **Scan mode**    | Planification utilisée pour déclencher la requête. | `Every 1 min` |
+
+<ThrottlingSettings />
+
+### Requête {#query}
+
+| Paramètre              | Description                                                                              | Exemple de valeur |
+| ------------------------ | ------------------------------------------------------------------------------------------- | ------------- |
+| **Query**                | La requête à exécuter. Prend en charge les emplacements `@StartTime` et `@EndTime`.         | Voir ci-dessous |
+| **Request timeout**      | Temps d'exécution maximal en millisecondes avant l'abandon de la requête. (v1 uniquement)   | `15000`       |
+
+#### Exemples de requêtes par version {#query-examples-by-version}
+
+**v1 — InfluxQL**
+
+```sql
+SELECT mean("temperature"), mean("pressure")
+FROM "sensors"
+WHERE time > '@StartTime' AND time <= '@EndTime'
+GROUP BY time(1m), "device_id"
+```
+
+**v2 — Flux**
+
+```flux
+from(bucket: "sensors")
+  |> range(start: @StartTime, stop: @EndTime)
+  |> filter(fn: (r) => r["_measurement"] == "temperature")
+  |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)
+```
+
+:::tip Exclure le début de la plage
+Le `range()` de Flux inclut `start` et exclut `stop` (`start <= _time < stop`). Puisque le
+[suivi de l'horodatage](#timestamp-tracking) fixe le `@StartTime` du prochain scan sur le `_time` maximum
+retourné par le précédent, un point tombant exactement sur cette limite serait sinon retourné
+deux fois. Ajoutez un filtre explicite sur `_time` pour rendre le début exclusif également :
+
+```flux
+from(bucket: "sensors")
+  |> range(start: @StartTime, stop: @EndTime)
+  |> filter(fn: (r) => r._time > @StartTime)
+  |> filter(fn: (r) => r["_measurement"] == "temperature")
+```
+
+Les exemples InfluxQL (v1) et SQL (v3) ci-dessus n'en ont pas besoin — ils utilisent déjà une comparaison stricte
+`time > '@StartTime'`.
+:::
+
+**v3 — SQL**
+
+```sql
+SELECT time, device_id, temperature, pressure
+FROM sensors
+WHERE time > '@StartTime' AND time <= '@EndTime'
+ORDER BY time
+```
+
+## Variables temporelles {#time-variables}
+
+Les emplacements suivants peuvent être utilisés n'importe où dans la chaîne de requête et sont remplacés par OIBus avant
+l'envoi de la requête au serveur :
+
+| Variable     | Valeur injectée                                                                                                  | Exemple                    |
+| ------------ | -------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| `@StartTime` | Début de l'intervalle de requête actuel. Initialisé à l'heure du premier scan, puis avancé par le mécanisme de suivi. | `2024-01-15T10:00:00.000Z` |
+| `@EndTime`   | Fin de l'intervalle de requête actuel, plafonnée à l'heure actuelle ou à la fin du sous-intervalle.                   | `2024-01-15T11:00:00.000Z` |
+
+La substitution est un **remplacement de texte brut** — encadrez les emplacements de guillemets si le langage de la
+requête nécessite des littéraux de chaîne (InfluxQL, SQL). Dans Flux, `range(start:, stop:)` accepte directement les
+chaînes RFC 3339 sans guillemets environnants.
+
+:::info Fractionnement des requêtes
+Lorsqu'une grande plage de temps est demandée, OIBus la divise en sous-intervalles plus petits selon le paramètre de limitation de débit
+**Max read interval**. Chaque sous-intervalle obtient sa propre paire `@StartTime` / `@EndTime`.
+:::
+
+## Suivi de l'horodatage {#timestamp-tracking}
+
+Après chaque requête réussie, OIBus prend l'horodatage de la **dernière ligne** du jeu de résultats et l'utilise comme
+`@StartTime` du prochain cycle de scrutation. Aucune configuration n'est requise.
+
+:::caution Les résultats de la requête doivent être en ordre chronologique croissant
+OIBus ne parcourt pas tout le jeu de résultats pour trouver le véritable maximum — il suppose qu'InfluxDB retourne les lignes en ordre
+chronologique croissant (son comportement par défaut) et lit simplement la dernière ligne. Les requêtes qui ne garantissent pas cet
+ordre — par exemple une requête `GROUP BY` multi-séries sans `ORDER BY time` explicite — peuvent retourner une dernière ligne qui n'est pas
+réellement le dernier horodatage, ce qui peut entraîner des données omises ou récupérées à nouveau. Ajoutez un `ORDER BY time` explicite
+(ou équivalent) à votre requête si elle regroupe ou réordonne les résultats.
+:::
+
+Le nom de la colonne d'horodatage est déterminé par la version de l'API :
+
+| Version | Colonne d'horodatage | Format                                                                            |
+| ------- | ---------------------- | ------------------------------------------------------------------------------------ |
+| v1      | `time`                  | Chaîne ISO 8601 — OIBus normalise l'`INanoDate` brut retourné par le client          |
+| v2      | `_time`                 | Chaîne RFC 3339 retournée directement par l'API de requête Flux                      |
+| v3      | `time`                  | Chaîne ISO 8601 retournée par le client Arrow Flight                                 |
+
+Si aucun résultat n'est retourné, `@StartTime` n'est pas avancé et le prochain scan retente le même intervalle.
+
+## Flux de données {#data-flow}
+
+1. OIBus substitue `@StartTime` et `@EndTime` dans la chaîne de requête.
+2. La requête est envoyée au serveur InfluxDB via la bibliothèque cliente appropriée pour la version configurée.
+3. Les résultats sont collectés sous forme de tableau JSON d'objets ligne.
+4. OIBus extrait la valeur maximale de la colonne d'horodatage (`time` pour v1/v3, `_time` pour v2) et
+   la stocke comme `@StartTime` pour le prochain cycle de scrutation.
+5. Le tableau JSON est écrit dans un fichier et transmis aux connecteurs North configurés en tant que
+   charge utile JSON brute.
+
+:::note Format de sortie
+Contrairement aux connecteurs SQL (qui produisent des fichiers CSV), le connecteur InfluxDB produit toujours un fichier
+**JSON**. Utilisez un connecteur North qui accepte les charges utiles de fichiers brutes — OIAnalytics, Azure Blob, S3, File
+Writer — ou ajoutez un transformateur JSON-to-CSV si votre système en aval requiert du CSV.
+:::

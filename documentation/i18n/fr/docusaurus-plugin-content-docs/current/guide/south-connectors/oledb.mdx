@@ -1,0 +1,42 @@
+---
+sidebar_position: 9
+---
+
+import ItemSettings from './_south-sql-item-settings.mdx';
+
+# OLEDB
+
+Connectez-vous à des sources de données OLEDB via un [OIBus Agent](../oibus-agent/oledb.md) distant. Particulièrement utile pour des systèmes comme OSIsoft PI System™ et d'autres applications compatibles OLEDB.
+
+:::info Notes de compatibilité
+
+- Nécessite l'installation d'OIBus Agent sur la machine cible
+- Prend en charge toutes les sources de données compatibles OLEDB
+- Optimisé pour les connexions OSIsoft PI System™
+
+:::
+
+## Paramètres spécifiques {#specific-settings}
+
+| Paramètre           | Description                                                                                                                                                                                                          | Exemple de valeur                           |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| URL de l'agent distant | URL du point de terminaison de l'agent. Requis pour toutes les connexions.                                                                                                                                        | `http://192.168.1.100:2224`                 |
+| Délai de connexion  | Temps maximal en millisecondes pour établir la connexion. Par défaut : `15000`.                                                                                                                                      | `15000`                                     |
+| Intervalle de nouvelle tentative | Temps en millisecondes à attendre avant de retenter la connexion. Par défaut : `10000`.                                                                                                                 | `10000`                                     |
+| Délai de requête    | Temps d'exécution maximal en millisecondes pour chaque requête. Par défaut : `15000`.                                                                                                                               | `15000`                                     |
+| Chaîne de connexion | Chaîne de connexion OLEDB au format propre au fournisseur.                                                                                                                                                           | `Provider=OraOLEDB.Oracle;Data Source=mydb` |
+| Mot de passe        | Mot de passe d'authentification (stocké de manière sécurisée). Toujours ajouté sous la forme `Password=<password>;` — si votre chaîne de connexion contient déjà sa propre entrée `Password=`, retirez-la ici ou de la chaîne pour éviter un doublon. | `••••••••`                                  |
+
+<ItemSettings />
+
+:::note Types de champ datetime pour OLEDB
+Les valeurs de **Type** suivantes sont disponibles pour la configuration du champ datetime :
+
+| Type            | Description                                                |
+| ---------------- | ----------------------------------------------------------- |
+| String          | Représentation sous forme de chaîne analysée avec un format personnalisé |
+| ISO String      | Chaîne ISO 8601 (par exemple `2024-01-15T10:30:00.000Z`)    |
+| UNIX epoch (s)  | Horodatage Unix en secondes                                 |
+| UNIX epoch (ms) | Horodatage Unix en millisecondes                             |
+
+:::

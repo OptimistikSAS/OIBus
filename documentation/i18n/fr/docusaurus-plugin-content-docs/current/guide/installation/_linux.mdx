@@ -1,0 +1,171 @@
+import CodeBlock from '@theme/CodeBlock';
+import DownloadButton from '../../../../../../src/components/DownloadButton';
+import packageInfo from '../../../../../../package.json';
+
+<h2 id="download-linux">Téléchargement</h2>
+
+<div style={{ display: 'flex', justifyContent: 'space-around' }}>
+  <DownloadButton
+    link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-linux_x64-v${packageInfo.version}.zip`}
+  >
+    <div>
+      <div>{`OIBus v${packageInfo.version}`}</div>
+      <div>Linux (x64)</div>
+    </div>
+  </DownloadButton>
+  <DownloadButton
+    link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-linux_arm64-v${packageInfo.version}.zip`}
+  >
+    <div>
+      <div>{`OIBus v${packageInfo.version}`}</div>
+      <div>Linux (ARM64)</div>
+    </div>
+  </DownloadButton>
+</div>
+
+Ou téléchargez et extrayez directement depuis le terminal — choisissez l'archive correspondant à votre architecture :
+
+<CodeBlock language="bash">
+  {`# x64
+curl -LO https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-linux_x64-v${packageInfo.version}.zip
+unzip oibus-linux_x64-v${packageInfo.version}.zip -d OIBus/
+
+# ARM64
+
+curl -LO https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-linux_arm64-v${packageInfo.version}.zip
+unzip oibus-linux_arm64-v${packageInfo.version}.zip -d OIBus/`}
+
+</CodeBlock>
+
+:::info Contenu de l'archive
+
+- `oibus-launcher` — launcher qui gère le processus OIBus et gère les mises à niveau
+- `binaries/oibus` — exécutable principal d'OIBus
+- `oibus-setup.sh` — script d'installation interactif
+- `oibus-uninstall.sh` — script de désinstallation (mis à jour lors de l'installation)
+  :::
+
+:::note
+Le script d'installation a été testé sur **Ubuntu** et **Debian**. Pour d'autres distributions, vous devrez peut-être adapter la configuration du service systemd.
+:::
+
+## Installer en tant que service système {#install-as-a-system-service}
+
+1. Extrayez l'archive téléchargée et accédez au répertoire.
+
+2. Exécutez le script d'installation en tant que root :
+
+```bash
+sudo ./oibus-setup.sh [options]
+```
+
+| Option    | Description                                                                          | Par défaut                         |
+| ------- | ------------------------------------------------------------------------------------ | -------------------------------- |
+| `-b`    | Répertoire dans lequel les binaires OIBus sont installés                                         | demandé si omis             |
+| `-c`    | Chemin vers le dossier de données OIBus (cache, journaux, configuration)                           | demandé si omis             |
+| `-k`    | Conserve la configuration existante sans demander confirmation (`Y` ou `N`)                           | demandé si omis             |
+| `-n`    | Nom de l'instance — définit `engineName` dans `oibus.init.json` **et** le nom de l'unité systemd | `oibus`                         |
+| `-u`    | Nom d'utilisateur administrateur écrit dans `oibus.init.json` lors de la première installation                         | omis (le comportement par défaut d'OIBus s'applique) |
+| `-p`    | Mot de passe administrateur écrit dans `oibus.init.json` lors de la première installation                         | omis (le comportement par défaut d'OIBus s'applique) |
+| `-port` | Port sur lequel OIBus écoute, écrit dans `oibus.init.json` lors de la première installation                 | omis (le comportement par défaut d'OIBus s'applique) |
+
+:::info
+`-u`, `-p` et `-port` ne sont utilisés que lorsque `oibus.db` n'existe pas encore (c'est-à-dire lors de la toute
+première installation). Ils sont écrits dans un fichier `oibus.init.json` dans le dossier de données et appliqués par
+OIBus au premier démarrage. Les options omises ne sont pas écrites dans le fichier — OIBus utilisera ses valeurs par
+défaut intégrées pour ces valeurs. Lors des installations ou mises à jour ultérieures, le fichier n'est pas recréé,
+ces options n'ont donc aucun effet.
+:::
+
+### Exécution de plusieurs instances {#running-multiple-instances}
+
+Passer un `-n` personnalisé vous permet d'exécuter plusieurs instances OIBus sur la même machine, chacune en tant que
+propre service systemd :
+
+- L'instance par défaut (`-n` omis, ou `-n oibus`) conserve le nom de service classique `oibus`.
+- Tout autre nom crée son propre service `oibus-<name>` (lettres, chiffres, points, tirets et
+  underscores uniquement — pas d'espaces).
+
+Chaque instance doit avoir son propre répertoire de binaires (`-b`) et son propre répertoire de données (`-c`) : le
+script vérifie un registre d'instances à l'échelle de la machine (`/etc/oibus/instances`) avant d'installer quoi que
+ce soit, et refuse de continuer si l'un des dossiers appartient déjà à une autre instance. Réinstaller ou mettre à
+jour la même instance dans ses propres dossiers existants n'est pas affecté.
+
+```bash
+sudo ./oibus-setup.sh -n test -b ./OIBusTest -c ./OIBusTestData
+```
+
+```bash
+sudo systemctl status oibus-test
+sudo journalctl -u oibus-test -f
+```
+
+3. Le script demandera toute valeur requise non fournie sous forme d'option (`-b` et `-c`).
+   Lors de la première installation, il demande également s'il faut conserver une configuration existante si elle est trouvée.
+
+4. En cas de succès, vous verrez :
+
+```
+Service file successfully created. Enabling OIBus service startup on system boot...
+Created symlink /etc/systemd/system/default.target.wants/oibus.service → /etc/systemd/system/oibus.service.
+Starting OIBus service...
+Installation procedure completed!
+```
+
+5. Ouvrez `http://localhost:2223` dans un navigateur et suivez le [guide de premier accès](./first-access.mdx).
+
+### Gestion du service {#service-management}
+
+Remplacez `oibus` par `oibus-<name>` ci-dessous si vous avez installé avec un `-n` personnalisé.
+
+```bash
+sudo systemctl status oibus    # check service status
+sudo systemctl start oibus     # start the service
+sudo systemctl stop oibus      # stop the service
+sudo systemctl restart oibus   # restart the service
+sudo journalctl -u oibus -f    # stream live logs
+```
+
+<h2 id="update-oibus-linux">Mettre à jour OIBus</h2>
+
+1. Téléchargez la dernière version et extrayez-la.
+2. Arrêtez le service : `sudo systemctl stop oibus` (ou `oibus-<name>` pour une instance nommée)
+3. Remplacez les fichiers binaires dans le répertoire d'installation par les nouveaux.
+4. Démarrez le service : `sudo systemctl start oibus` (ou `oibus-<name>` pour une instance nommée)
+
+La base de données de configuration `oibus.db` est mise à niveau automatiquement au premier démarrage après une mise à jour.
+
+<h2 id="uninstall-oibus-linux">Désinstaller OIBus</h2>
+
+Accédez au répertoire des binaires OIBus et exécutez :
+
+```bash
+sudo ./oibus-uninstall.sh
+```
+
+Il vous sera demandé si vous souhaitez supprimer toutes les données :
+
+```
+Do you wish to remove all OIBus data (cache, logs...)? All data, credentials and logs about your
+current OIBus will be permanently erased. (y/N)
+```
+
+Répondre `Y`/`y` supprime les dossiers `cache`, `error`, `archive`, `logs` et `certs` ainsi que les fichiers
+`oibus.db` et `crypto.db`. Cela supprime également l'instance du registre à l'échelle de la machine, afin que ses
+dossiers puissent être réutilisés par une nouvelle instance par la suite.
+
+:::caution
+Choisir de supprimer toutes les données supprime définitivement votre configuration, vos identifiants et vos journaux.
+Le dossier de données n'est **pas** supprimé automatiquement si vous répondez autre chose que **Y**/**y**.
+:::
+
+## Exécution en mode autonome {#run-in-standalone-mode}
+
+Pour exécuter OIBus sans l'installer en tant que service (utile pour les tests) :
+
+```bash
+./oibus-launcher --config ./OIBusData
+```
+
+Assurez-vous que le répertoire `OIBusData` existe avant d'exécuter cette commande. OIBus ne sera pas démarré
+automatiquement au démarrage du système dans ce mode.

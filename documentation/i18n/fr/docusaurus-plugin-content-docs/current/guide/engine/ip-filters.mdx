@@ -1,0 +1,123 @@
+---
+sidebar_position: 3
+---
+
+import IPFilterTester from '../../../../../../src/components/IPFilterTester/index';
+
+# Filtres IP
+
+Par défaut, OIBus n'accepte que les connexions provenant de la machine locale. Tout poste de travail distant devant
+accéder à l'interface web ou à l'API d'OIBus doit avoir son adresse IP explicitement autorisée via une règle de
+filtre IP.
+
+:::info Localhost est toujours autorisé
+Les adresses suivantes sont autorisées de façon permanente et ne peuvent pas être supprimées :
+`127.0.0.1`, `::1`, `::ffff:127.0.0.1`, `::ffff:7f00:1`, `0:0:0:0:0:0:0:1`
+:::
+
+## Format de l'adresse {#address-format}
+
+Chaque règle de filtre IP contient un seul champ **address**. OIBus prend en charge IPv4, IPv6 et les motifs
+génériques.
+
+| Motif                    | Exemple         | Correspond à                                        |
+| ------------------------- | --------------- | ---------------------------------------------------- |
+| IPv4 exacte                | `192.168.1.100` | Uniquement cette adresse spécifique                  |
+| Générique IPv4             | `192.168.1.*`   | Toutes les adresses de `192.168.1.0` à `192.168.1.255` |
+| IPv6 exacte                 | `2001:db8::1`   | Uniquement cette adresse spécifique                  |
+| Générique de préfixe IPv6  | `2001:db8:*`    | Toutes les adresses sous ce préfixe                  |
+| Tout autoriser              | `*`             | Toute adresse distante                                |
+
+:::note Équivalence IPv4 et IPv6
+Une adresse IPv4 saisie sous la forme `192.168.1.100` est automatiquement comparée aussi à sa forme mappée IPv6
+`::ffff:192.168.1.100`, de sorte qu'une seule règle couvre les deux types de connexion.
+:::
+
+## Gestion des filtres {#managing-filters}
+
+Les filtres IP se gèrent depuis **Engine → IP Filters** dans l'interface OIBus.
+
+Chaque règle comporte deux champs :
+
+| Champ            | Description                                                            |
+| ------------------ | -------------------------------------------------------------------------- |
+| **Address**        | L'adresse IP ou le motif à autoriser (voir les formats ci-dessus)          |
+| **Description**    | Note libre pour identifier la règle (par ex. `Production SCADA server`)    |
+
+Les règles peuvent être ajoutées, modifiées et supprimées à tout moment. Les modifications prennent effet
+immédiatement — aucun redémarrage n'est nécessaire.
+
+## Ajouter un filtre via l'API {#adding-a-filter-via-the-api}
+
+Les filtres peuvent également être créés de manière programmatique. Chaque point de terminaison de l'API OIBus
+nécessite une authentification (Basic ou jeton Bearer), les requêtes doivent donc inclure des identifiants. L'exemple
+suivant utilise `curl` pour ajouter une règle autorisant un sous-réseau spécifique :
+
+```bash title="Allow a specific subnet"
+curl --location 'http://localhost:2223/api/ip-filters' \
+--user 'admin:<password>' \
+--header 'Content-Type: application/json' \
+--header 'Accept: application/json' \
+--data '{
+  "address": "192.168.1.*",
+  "description": "Plant network"
+}'
+```
+
+Pour autoriser toutes les adresses distantes (utile lors de la configuration initiale) :
+
+```bash title="Allow all IP addresses"
+curl --location 'http://localhost:2223/api/ip-filters' \
+--user 'admin:<password>' \
+--header 'Content-Type: application/json' \
+--header 'Accept: application/json' \
+--data '{
+  "address": "*",
+  "description": "Allow all traffic"
+}'
+```
+
+:::info
+Pour une liste complète des points de terminaison disponibles, consultez la
+[page de documentation de l'API](../../api/index.mdx).
+:::
+
+:::danger Accès ouvert et serveur proxy
+Les règles de filtre IP s'appliquent à **toutes** les connexions entrantes — à la fois l'interface web d'OIBus et le
+[serveur proxy](./engine-settings.mdx#proxy-server). Autoriser toutes les adresses IP (`*`) ouvre donc également le
+proxy à toute machine du réseau. Le serveur proxy peut être configuré pour exiger son propre nom d'utilisateur/mot de
+passe (voir [Authentification](./engine-settings.mdx#authentication)), mais si celui-ci est laissé vide, tout hôte
+joignable peut relayer un trafic arbitraire à travers OIBus. Restreignez toujours l'accès à des adresses IP connues
+en production.
+:::
+
+:::note Désactiver complètement le filtrage IP
+Si OIBus est démarré avec le drapeau `--ignoreIpFilters`, tout filtrage IP est contourné et les règles existantes ne
+sont pas appliquées. Lorsque ce drapeau est actif, la page **IP Filters** devient en lecture seule et affiche un avis
+à la place de la liste habituelle des règles.
+:::
+
+:::tip Bonnes pratiques
+
+- Utilisez des adresses exactes ou le motif générique le plus restreint qui couvre vos besoins (par ex.
+  `192.168.10.*` plutôt que `*`).
+- Ajoutez une description claire à chaque règle pour pouvoir identifier et nettoyer les entrées obsolètes plus tard.
+- Gardez à l'esprit que les règles de filtre IP protègent à la fois l'interface web et le
+  [serveur proxy](./engine-settings.mdx#proxy-server) — une règle qui accorde l'accès à l'un accorde l'accès aux
+  deux.
+  :::
+
+## Tester les règles de filtre IP {#test-ip-filter-rules}
+
+Utilisez le testeur ci-dessous pour vérifier le comportement de vos règles avant de les appliquer à une instance en
+production. Saisissez une règle par ligne dans le champ **Filter Rules**, puis saisissez l'adresse IP que vous
+souhaitez vérifier et cliquez sur **Test**.
+
+Le testeur applique la même logique de correspondance qu'OIBus :
+
+- Les adresses localhost sont toujours considérées comme autorisées.
+- `*` correspond à toute adresse.
+- `192.168.1.*` correspond à toute adresse dont les trois premiers octets sont `192.168.1`.
+- Une adresse IPv4 est également testée avec sa forme mappée IPv6 `::ffff:<ipv4>`.
+
+<IPFilterTester />

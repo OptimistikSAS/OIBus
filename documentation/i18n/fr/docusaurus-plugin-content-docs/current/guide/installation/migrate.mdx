@@ -1,0 +1,137 @@
+---
+sidebar_position: 5
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import DownloadButton from '@site/src/components/DownloadButton';
+
+# Migrer vers la v3
+
+Migrez d'OIBus v1 et v2 vers la nouvelle version OIBus v3 grâce à notre outil de migration et quelques étapes manuelles.
+
+## Lien de téléchargement {#download-link}
+
+<Tabs>
+  <TabItem value="windows" label="Windows" default>
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <DownloadButton link="https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-win_x64.zip">
+        <div>
+          <div>{`OIBus migration tool`}</div>
+          <div>Windows (x64)</div>
+        </div>
+      </DownloadButton>
+    </div>
+  </TabItem>
+  <TabItem value="linux" label="Linux">
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <DownloadButton link="https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-linux_x64.zip">
+        <div>
+          <div>{`OIBus migration tool`}</div>
+          <div>Linux (x64)</div>
+        </div>
+      </DownloadButton>
+    </div>
+  </TabItem>
+  <TabItem value="macos" label="MacOS">
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <DownloadButton link="https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-macos_x64.zip">
+        <div>
+          <div>{`OIBus migration tool`}</div>
+          <div>macOS (Intel chip)</div>
+        </div>
+      </DownloadButton>
+    </div>
+  </TabItem>
+</Tabs>
+
+## Télécharger une version spécifique {#download-specific-version}
+
+:::caution Version d'OIBus
+La migration ne fonctionnera qu'avec la version OIBus 3.8.8. Si vous souhaitez migrer vers une version ultérieure,
+installez d'abord OIBus v3.8.8 à partir de l'un des liens ci-dessous, puis mettez à jour OIBus de la v3.8.8 vers une version ultérieure.
+:::
+
+<Tabs>
+  <TabItem value="windows" label="Windows" default>
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <DownloadButton link="https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-win_x64-setup-v3.8.8.exe">
+        <div>
+          <div>{`OIBus v3.8.8 (installer)`}</div>
+          <div>Windows (x64)</div>
+        </div>
+      </DownloadButton>
+      <DownloadButton link="https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-win_x64-v3.8.8.zip">
+        <div>
+          <div>{`OIBus v3.8.8 (zip)`}</div>
+          <div>Windows (x64)</div>
+        </div>
+      </DownloadButton>
+    </div>
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <a href="./windows">Installation</a>
+    </div>
+  </TabItem>
+  <TabItem value="linux" label="Linux">
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-linux_x64-v3.8.8.zip`}>
+        <div>
+          <div>{`OIBus v3.8.8`}</div>
+          <div>Linux (x64)</div>
+        </div>
+      </DownloadButton>
+    </div>
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <a href="./linux">Installation</a>
+    </div>
+  </TabItem>
+  <TabItem value="macos" label="MacOS">
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-macos_x64-v3.8.8.zip`}>
+        <div>
+          <div>{`OIBus v3.8.8`}</div>
+          <div>MacOS (Intel chip)</div>
+        </div>
+      </DownloadButton>
+    </div>
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <a href="./macos">Installation</a>
+    </div>
+  </TabItem>
+</Tabs>
+
+## Étapes de migration {#migration-steps}
+
+1. Arrêtez le service OIBus.
+   :::tip
+   Vous pouvez zipper le dossier de données, ou au moins le fichier de configuration `oibus.json` et son dossier
+   `keys`, en guise de sauvegarde.
+   :::
+
+2. Installez [OIBus v3.8.8](#download-specific-version). Veillez à spécifier le **même dossier de données**. Vérifiez
+   qu'OIBus v3 fonctionne correctement en vous connectant sur `http://localhost:2223` avec admin / pass. Si tout
+   fonctionne, passez à l'étape suivante.
+
+3. Arrêtez OIBus v3.
+
+4. Copiez l'outil de migration dans le **dossier binaire** d'OIBus.
+
+5. Exécutez l'outil de migration OIBus. Veillez à spécifier le dossier de données approprié.
+
+**Commande Windows**
+
+```
+oibus-upgrade.exe --config D:\OIBusData
+```
+
+**Commande Linux / macOS**
+
+```
+./oibus-upgrade --config /usr/oibus/OIBusData
+```
+
+6. Démarrez OIBus v3.
+
+:::tip
+Le fichier `upgrade-journal.log` contient les journaux de la migration.
+:::

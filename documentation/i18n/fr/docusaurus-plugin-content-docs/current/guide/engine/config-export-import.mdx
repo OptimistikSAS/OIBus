@@ -1,0 +1,103 @@
+---
+sidebar_position: 6
+---
+
+# Exporter / importer la configuration
+
+OIBus peut exporter l'intégralité de sa configuration sous la forme d'un unique fichier JSON portable, puis importer
+ce fichier — sur la même instance ou sur une autre — pour recréer la configuration à partir de zéro. Cela est utile
+pour les sauvegardes, la reprise après sinistre, ou le clonage d'une configuration vers une nouvelle instance.
+
+Les deux actions sont disponibles depuis **Engine > Settings**, via les boutons **Export configuration** et
+**Import configuration**.
+
+## Ce qui est exporté {#what-gets-exported}
+
+Le fichier d'export (`oibus-config-export.json`) est une enveloppe versionnée contenant :
+
+- Les modes de scrutation
+- Les filtres IP
+- Les certificats
+- Les transformateurs
+- Les connecteurs Sud (y compris les éléments et les groupes)
+- Les connecteurs Nord
+- Les requêtes d'historique
+- Les utilisateurs
+- Les paramètres d'enregistrement OIAnalytics (à titre informatif uniquement — voir
+  [Enregistrement](#registration-is-not-imported) ci-dessous)
+
+Les paramètres propres au moteur (nom, port, serveur proxy, durée d'authentification, etc.) ne sont **pas** inclus
+dans l'export et ne sont jamais modifiés par un import.
+
+### Les secrets sont toujours retirés {#secrets-are-always-stripped}
+
+Aucun secret n'est jamais écrit dans le fichier d'export — ni en clair, ni chiffré. Cela s'applique à tout champ de
+type secret dans la configuration : identifiants des connecteurs (mots de passe, clés API, jetons), mots de passe
+proxy, mot de passe de journalisation Loki, clés privées de certificats, et mots de passe utilisateurs. Un fichier
+exporté peut donc être partagé ou stocké sans exposer aucun identifiant, mais cela signifie aussi que ces champs
+doivent être ressaisis manuellement après un import — voir [Étapes manuelles après import](#manual-steps-after-import).
+
+## L'import est un remplacement complet, pas une fusion {#import-is-a-full-replace-not-a-merge}
+
+Importer un fichier de configuration **efface toutes les sections concernées de la configuration locale de
+l'instance cible et les recrée à partir du fichier**, en conservant l'ID interne d'origine de chaque entité. Cette
+opération est destructrice et ne peut pas être annulée : chaque connecteur Sud, connecteur Nord, requête
+d'historique, mode de scrutation, filtre IP, transformateur, certificat et utilisateur actuellement présent sur
+l'instance est supprimé avant que les éléments importés ne soient créés. L'interface exige une confirmation
+explicite, rappelant ce point, avant qu'un import ne soit soumis.
+
+Les paramètres propres au moteur et l'enregistrement OIAnalytics ne sont jamais effacés ni écrasés par un import —
+voir [Enregistrement](#registration-is-not-imported).
+
+Si le fichier téléversé est mal formé, ou est rejeté pour l'une des raisons ci-dessous, **rien n'est écrit** : l'import
+est tout-ou-rien.
+
+## Versions prises en charge {#supported-versions}
+
+Chaque fichier d'export porte un `formatVersion` (un entier décrivant la structure du fichier lui-même) et
+l'`oibusVersion` de l'instance qui l'a produit.
+
+- **Version de format** : un import est rejeté d'emblée si le `formatVersion` du fichier est plus récent que la
+  version de format la plus élevée que la version d'OIBus en cours d'import sait lire. Il n'y a pas de borne
+  inférieure — une version de format plus ancienne est toujours acceptée pour traitement.
+- **Version d'OIBus** : il n'y a pas d'`oibusVersion` minimale prise en charge. Avant de valider le fichier, OIBus
+  recherche chaque étape de mise à niveau de paramètres enregistrée pour une version plus récente que l'`oibusVersion`
+  du fichier et applique celles qui correspondent (par type de connecteur Sud/Nord, côté de requête d'historique, ou
+  transformateur) pour amener les anciennes structures de paramètres au format attendu par les manifestes de
+  connecteurs actuels. La réponse liste chaque mise à niveau appliquée.
+
+Après ces éventuelles mises à niveau, chaque bloc de paramètres du fichier est validé par rapport aux manifestes de
+connecteurs actuels. Si une entité échoue à la validation, l'import complet est rejeté avec une liste d'erreurs par
+entité et, là encore, rien n'est écrit.
+
+## Étapes manuelles après import {#manual-steps-after-import}
+
+Comme les secrets ne sont jamais exportés, une configuration importée n'est pas immédiatement utilisable telle
+quelle :
+
+- **Les connecteurs Sud et Nord sont importés avec `enabled: false`**, quelle que soit leur valeur exportée. Leurs
+  paramètres sont importés tels qu'exportés par ailleurs, mais avec chaque champ de type secret vide, de sorte que
+  les laisser activés échouerait soit à se connecter avec des identifiants vides, soit — pour un protocole
+  d'écriture — se connecterait avec des paramètres dépourvus de sens. Les identifiants doivent être ressaisis et
+  chaque connecteur réactivé manuellement avant de pouvoir fonctionner à nouveau.
+- **Les certificats sont importés sans leur clé privée.** L'entrée de certificat elle-même (nom, clé publique,
+  certificat, chaîne de certificats, expiration) est recréée sous son ID d'origine afin que tout ce qui y fait
+  référence continue de fonctionner, mais la clé privée doit être réimportée manuellement avant que le certificat
+  puisse être utilisé pour TLS.
+- **Les utilisateurs sont recréés avec un mot de passe aléatoire**, puisque les mots de passe ne sont jamais
+  exportés. Chaque utilisateur importé doit réinitialiser son mot de passe avant de pouvoir se reconnecter.
+- **Les transformateurs standards sont mis en correspondance par nom de fonction**, et non recréés — ils sont
+  initialisés une fois au démarrage d'OIBus et associés à la configuration importée via leur `functionName`. Si
+  l'instance cible ne dispose pas d'un transformateur standard avec un nom de fonction correspondant (par exemple une
+  version d'OIBus plus ancienne ou plus récente), les liens vers celui-ci sont ignorés et signalés sous forme
+  d'avertissement. Les transformateurs personnalisés sont toujours recréés sous leur ID d'origine.
+
+La réponse d'import (et le panneau correspondant de l'interface) liste chaque mise à niveau appliquée et chaque
+avertissement soulevé pendant l'import — y compris ceux ci-dessus — de sorte que cela reste visible après la fin de
+l'import plutôt que dans une notification éphémère.
+
+### L'enregistrement n'est pas importé {#registration-is-not-imported}
+
+Les paramètres d'enregistrement OIAnalytics sont inclus dans l'export à titre informatif/de référence uniquement.
+Importer un fichier n'écrit jamais l'état d'enregistrement — enregistrer l'instance cible auprès d'OIAnalytics (ou la
+réenregistrer) doit être fait manuellement, de la même façon que sur une instance neuve.

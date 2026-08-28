@@ -1,0 +1,1187 @@
+---
+sidebar_position: 4
+---
+
+# Transformateurs
+
+Un **Transformateur** se situe entre une source de données et un connecteur Nord. Il convertit les données entrantes
+dans le format attendu par le connecteur Nord avant qu'elles ne soient placées dans le cache du connecteur. Au-delà de
+la conversion de format, les transformateurs sont également le mécanisme de **filtrage** des données qu'un connecteur
+Nord reçoit — voir [Filtrage des données](../north-connectors/common-settings.md#data-filtering) pour plus de
+détails.
+
+Les transformateurs sont configurés **sur le connecteur Nord**, dans la section **Transformateurs** de sa page de
+paramètres.
+
+---
+
+## Configurer un transformateur {#configuring-a-transformer}
+
+Cliquez sur **Ajouter** dans la section Transformateurs pour ouvrir la fenêtre de configuration. Trois champs guident
+la configuration.
+
+### 1 — Source {#1--source}
+
+Choisissez d'où proviennent les données.
+
+| Source                   | Description                                                                                                                    |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Connecteur Sud**       | Données collectées par l'un des connecteurs Sud configurés                                                                    |
+| **API OIBus**            | Données envoyées à OIBus via l'API REST. Nécessite une chaîne **Data Source ID** pour identifier le système d'origine        |
+| **Consigne OIAnalytics** | Commandes d'écriture (write-back) envoyées depuis OIAnalytics                                                                 |
+
+### 2 — Portée des éléments (connecteurs Sud uniquement) {#2--item-scope-south-connectors-only}
+
+Lorsque la source est un connecteur Sud, vous pouvez restreindre les éléments auxquels le transformateur s'applique.
+
+| Portée                | Description                                                                       |
+| ---------------------- | ---------------------------------------------------------------------------------- |
+| **Tous les éléments**  | Chaque élément du connecteur Sud sélectionné passe par ce transformateur          |
+| **Par groupe**         | Seuls les éléments appartenant à un groupe spécifique sont traités                |
+| **Éléments spécifiques** | Sélectionnez individuellement des éléments dans la liste de recherche           |
+
+:::tip
+Un même connecteur Nord peut avoir **plusieurs transformateurs** avec des sources et des portées différentes. Cela
+vous permet d'appliquer des conversions différentes à différentes parties du même connecteur Sud — par exemple, un
+transformateur pour un groupe de capteurs de température et un autre pour des débitmètres. Lorsqu'un lot entrant
+mélange des éléments couverts par différents transformateurs, OIBus le divise automatiquement pour que chaque partie
+soit traitée par le transformateur qui la cible réellement.
+:::
+
+Si plusieurs transformateurs peuvent correspondre au même élément (par exemple, l'un ciblant un groupe et l'autre
+« Tous les éléments » du même connecteur Sud), OIBus résout cela avec cette priorité, du plus spécifique au moins
+spécifique :
+
+1. Un transformateur ciblant cet **élément spécifique**.
+2. Un transformateur ciblant le **groupe** de l'élément.
+3. Un transformateur ciblant **tous les éléments** du connecteur Sud (aucun groupe, aucun élément spécifique
+   sélectionné) — le repli par défaut.
+
+Le premier transformateur configuré qui correspond, dans cet ordre, est utilisé ; les égalités au sein d'un même
+niveau sont départagées par la position du transformateur dans la liste.
+
+### 3 — Transformateur {#3--transformer}
+
+Une fois une source sélectionnée, la liste est automatiquement filtrée pour n'afficher que les transformateurs
+compatibles. Les choix disponibles dépendent du type de connecteur Sud choisi :
+
+| Type de connecteur Sud                                                          | Transformateurs standard compatibles                                                        |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **OPC UA, OPC Classic, Modbus, ADS, OSIsoft PI, OIAnalytics** (automate / historien) | CSV, JSON, payloads MQTT, valeurs Modbus, OIAnalytics (sélection de la précision temporelle), valeurs OPCUA |
+| **MQTT, REST, SFTP, FTP, Folder Scanner, ODBC, OLEDB** (fichier / requête)        | Time Values (depuis CSV), payloads MQTT (depuis CSV), CSV (depuis JSON), OIAnalytics (depuis JSON) |
+| **MySQL, PostgreSQL, MSSQL, Oracle, SQLite** (basé requête, sortie liste de lignes) | CSV (depuis liste d'enregistrements)                                                        |
+| **API OIBus**                                                                     | Time Values (depuis CSV), payloads MQTT (depuis CSV), CSV (depuis JSON), OIAnalytics (depuis JSON) |
+| **Consigne OIAnalytics**                                                          | Payloads MQTT, valeurs Modbus, valeurs OPCUA                                                |
+
+Les transformateurs personnalisés apparaissent également dans cette liste et sont toujours nommés par l'utilisateur.
+De plus, **Ignore** et **No transform** (voir ci-dessous) sont disponibles pour chaque type de source.
+
+Après avoir choisi un transformateur, son formulaire de paramètres apparaît directement dans la fenêtre.
+
+---
+
+## Transformateurs standard {#standard-transformers}
+
+Les transformateurs standard sont intégrés et nécessitent seulement une configuration — aucun code.
+
+---
+
+### Ignore et No transform {#ignore-and-no-transform}
+
+Ces deux transformateurs sont disponibles pour **tous** les types de source, quel que soit le type de contenu, et ne
+nécessitent aucune configuration.
+
+| Transformateur    | Comportement                                                                                                                                                                                                       |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ignore**         | Rejette les données. Rien n'est mis en cache et rien n'est envoyé au connecteur Nord. Utile pour faire taire une partie de la sortie d'un connecteur Sud pour un Nord donné (via la portée élément/groupe) sans désactiver l'élément lui-même. |
+| **No transform**   | Met en cache les données exactement telles que reçues, sans aucune conversion. Utilisez ceci lorsque le connecteur Nord accepte déjà le type de contenu natif du Sud.                                          |
+
+---
+
+### Pour les connecteurs Sud automate et historien {#for-plc-and-historian-south-connectors}
+
+Ces transformateurs traitent les tableaux structurés **time-value** produits par des connecteurs tels que OPC UA, OPC
+Classic, Modbus, TwinCAT ADS et OSIsoft PI.
+
+Chaque objet time-value a cette forme :
+
+```json
+{ "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } }
+```
+
+---
+
+#### CSV {#csv}
+
+Convertit le tableau de time-values en fichier CSV. Chaque ligne correspond à une lecture. Les trois colonnes
+(identifiant du point, horodatage, valeur) sont associées à des titres de colonnes configurables. Des expressions
+JavaScript facultatives par colonne permettent de transformer les valeurs individuelles avant leur écriture.
+
+##### Paramètres {#settings}
+
+| Paramètre               | Description                                                                                                                                                                                        |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Filename**           | Nom du fichier de sortie ; prend en charge `@CurrentDate` (horodatage UTC courant), et, pour un contenu provenant d'une requête historique Sud, `@QueryStartTime`/`@QueryEndTime` (la fenêtre temporelle interrogée, vide sinon) |
+| **Encoding**           | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, ou `UTF_16_LE`                                                                                                                                                    |
+| **Header**             | Inclure ou non la ligne d'en-tête des colonnes                                                                                                                                                     |
+| **Delimiter**          | Séparateur de colonnes                                                                                                                                                                             |
+| **Newline**            | Fin de ligne (`LF`, `CRLF`, `CR`)                                                                                                                                                                  |
+| **Quote char**         | `DOUBLE_QUOTE`, `SINGLE_QUOTE`, ou `NONE`                                                                                                                                                          |
+| **Escape char**        | `DOUBLE_QUOTE` ou `BACKSLASH`                                                                                                                                                                      |
+| **Point ID column**    | Libellé d'en-tête pour la colonne d'identifiant de point                                                                                                                                           |
+| **Value column**       | Libellé d'en-tête pour la colonne de valeur                                                                                                                                                        |
+| **Timestamp column**   | Libellé d'en-tête pour la colonne d'horodatage                                                                                                                                                     |
+| **Timestamp type**     | Format de sortie (`iso-string`, `unix-epoch`, `unix-epoch-ms`, `string`)                                                                                                                           |
+| **Timestamp format**   | Motif personnalisé lorsque le type est `string` (ex. `yyyy-MM-dd HH:mm:ss.SSS`)                                                                                                                    |
+| **Timezone**           | Fuseau horaire pour le formatage lorsque le type est `string`                                                                                                                                      |
+| **Point ID process**   | Expression JS facultative appliquée à chaque identifiant de point (variable : `value`)                                                                                                            |
+| **Value process**      | Expression JS facultative appliquée à chaque valeur (variable : `value`)                                                                                                                           |
+| **Timestamp process**  | Expression JS facultative appliquée à chaque horodatage formaté (variable : `value`)                                                                                                              |
+
+##### Exemple {#example}
+
+**Entrée (éléments OPC UA : temp1, pressure1)**
+
+```json
+[
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
+  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1" } }
+]
+```
+
+Avec Delimiter : `SEMI_COLON`, `pointIdProcess: value.split('/').pop()`, et
+`valueProcess: String(value).replace('.', ',')` :
+
+:::tip Pourquoi un point-virgule ici
+`valueProcess` transforme le point décimal en virgule (`23.5` → `23,5`), comme cela est courant dans certaines
+régions. Avec une virgule comme **délimiteur**, cela créerait une colonne supplémentaire non désirée. Utiliser `;`
+comme délimiteur évite ce conflit.
+:::
+
+**CSV en sortie**
+
+```csv
+Reference;Timestamp;Value
+temp1;2024-01-15T10:00:00.000Z;23,5
+pressure1;2024-01-15T10:00:00.000Z;102,1
+```
+
+---
+
+#### JSON {#json}
+
+Un passage direct transparent qui resérialise le tableau de time-values en fichier JSON. Utilisez ceci lorsque le
+connecteur Nord attend un fichier JSON générique plutôt que le format interne time-values (par exemple un Nord basé
+fichier comme Azure Blob ou File Writer).
+
+Ce transformateur n'a **aucune option de configuration**.
+
+##### Exemple {#example-1}
+
+**Entrée** — n'importe quel tableau de time-values provenant d'un connecteur Sud OPC UA ou Modbus.
+
+**Sortie** — le contenu JSON identique, enregistré sous forme de fichier `.json`.
+
+---
+
+#### MQTT payloads {#mqtt-payloads}
+
+Associe chaque lecture à un message MQTT via une table de correspondance **identifiant de point → topic**. Les
+lectures dont l'identifiant de point n'a pas de correspondance sont silencieusement rejetées. Le payload est une
+chaîne JSON contenant les champs `data` fusionnés avec le `timestamp`.
+
+##### Paramètres {#settings-1}
+
+| Paramètre   | Description                              |
+| ----------- | ------------------------------------------ |
+| **Mapping** | Liste de paires `{ pointId, topic }`        |
+
+##### Exemple {#example-2}
+
+Mapping : `plant/temp1 → sensors/temperature`, `plant/pressure1 → sensors/pressure`
+
+**Entrée**
+
+```json
+[
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
+  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1" } },
+  { "pointId": "plant/unknown", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "0" } }
+]
+```
+
+**Sortie** — `plant/unknown` est rejeté (pas de correspondance)
+
+```json
+[
+  { "topic": "sensors/temperature", "payload": "{\"value\":\"23.5\",\"timestamp\":\"2024-01-15T10:00:00.000Z\"}" },
+  { "topic": "sensors/pressure", "payload": "{\"value\":\"102.1\",\"timestamp\":\"2024-01-15T10:00:00.000Z\"}" }
+]
+```
+
+---
+
+#### Modbus values {#modbus-values}
+
+Associe chaque lecture à une commande d'écriture Modbus via une table de correspondance **identifiant de point →
+adresse**. La valeur est convertie vers le type approprié : booléens pour les coils, entiers pour les registres de
+maintien. Les lectures sans correspondance sont rejetées.
+
+##### Paramètres {#settings-2}
+
+| Paramètre   | Description                                                                             |
+| ----------- | ----------------------------------------------------------------------------------------- |
+| **Mapping** | Liste de paires `{ pointId, address, modbusType }` (`modbusType` : `coil` ou `register`) |
+
+##### Exemple {#example-3}
+
+Mapping : `plant/valve1 → 0x0010 (coil)`, `plant/speed → 0x0020 (register)`
+
+**Entrée**
+
+```json
+[
+  { "pointId": "plant/valve1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "true" } },
+  { "pointId": "plant/speed", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "1450" } }
+]
+```
+
+**Sortie**
+
+```json
+[
+  { "address": "0x0010", "value": true, "modbusType": "coil" },
+  { "address": "0x0020", "value": 1450, "modbusType": "register" }
+]
+```
+
+---
+
+#### OIAnalytics (select time precision) {#oianalytics-select-time-precision}
+
+Prépare les lectures pour le connecteur Nord OIAnalytics. Les horodatages peuvent être tronqués à une précision
+choisie pour réduire l'empreinte de stockage. Seuls les champs `pointId`, `timestamp`, et `data.value` sont
+transmis — les champs de qualité supplémentaires sont supprimés.
+
+##### Paramètres {#settings-3}
+
+| Paramètre     | Description                                                     |
+| ------------- | ------------------------------------------------------------------ |
+| **Precision** | Précision de l'horodatage : `ms` (inchangé), `s`, `min`, ou `hr`   |
+
+##### Exemple — Precision `s` {#example--precision-s}
+
+**Entrée**
+
+```json
+[{ "pointId": "tag/temp1", "timestamp": "2024-01-15T10:00:00.523Z", "data": { "value": "23.5", "quality": "good" } }]
+```
+
+**Sortie** — les millisecondes sont mises à zéro, `quality` est supprimé
+
+```json
+[{ "pointId": "tag/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } }]
+```
+
+---
+
+#### OPCUA values {#opcua-values}
+
+Associe chaque lecture à une commande d'écriture OPC UA via une table de correspondance **identifiant de point →
+node ID**. La valeur est transmise telle quelle. Les lectures sans correspondance sont rejetées.
+
+##### Paramètres {#settings-4}
+
+| Paramètre   | Description                             |
+| ----------- | ------------------------------------------ |
+| **Mapping** | Liste de paires `{ pointId, nodeId }`       |
+
+##### Exemple {#example-4}
+
+Mapping : `plant/temp1 → ns=1;s=Temperature`, `plant/valve1 → ns=1;s=Valve1`
+
+**Entrée**
+
+```json
+[
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
+  { "pointId": "plant/valve1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "true" } }
+]
+```
+
+**Sortie**
+
+```json
+[
+  { "nodeId": "ns=1;s=Temperature", "value": "23.5" },
+  { "nodeId": "ns=1;s=Valve1", "value": "true" }
+]
+```
+
+---
+
+### Pour les connecteurs Sud fichier et basés requête {#for-file-and-query-based-south-connectors}
+
+Ces transformateurs traitent des fichiers ou des payloads JSON produits par des connecteurs tels que REST, SFTP, FTP,
+Folder Scanner, ODBC et OLEDB, ainsi que des données injectées via l'**API OIBus**.
+
+---
+
+#### Time Values (from CSV) {#time-values-from-csv}
+
+Analyse un fichier CSV et associe chaque ligne à un objet time-value OIBus. Le transformateur convertit la chaîne
+d'horodatage brute en ISO-8601 selon le format configuré.
+
+##### Paramètres {#settings-5}
+
+| Paramètre             | Description                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| **Has header**        | Si la première ligne est une ligne d'en-tête                                               |
+| **Delimiter**         | Séparateur de colonnes (`COMMA`, `SEMI_COLON`, `TAB`, etc.)                                |
+| **Point ID column**   | Nom de colonne (mode en-tête) ou index de base zéro contenant l'identifiant de point       |
+| **Timestamp column**  | Nom de colonne ou index contenant l'horodatage                                             |
+| **Value column**      | Nom de colonne ou index contenant la valeur                                                |
+| **Timestamp type**    | Format de l'horodatage brut (`iso-string`, `unix-epoch`, `unix-epoch-ms`, `string`)         |
+| **Timezone**          | Fuseau horaire pour l'analyse (utilisé uniquement lorsque le type est `string`)             |
+| **Format**            | Motif de date/heure personnalisé (utilisé uniquement lorsque le type est `string`, ex. `yyyy-MM-dd HH:mm:ss`) |
+
+##### Exemple {#example-5}
+
+Ce transformateur est utile lorsqu'un connecteur Sud REST récupère des exports CSV depuis une API, ou lorsqu'un
+connecteur Sud Folder Scanner récupère des fichiers CSV déposés par un autre système.
+
+**CSV en entrée** (récupéré par un élément REST)
+
+```csv
+SensorID,Timestamp,Reading
+tag/temp1,2024-01-15T10:00:00.000Z,23.5
+tag/temp1,2024-01-15T10:01:00.000Z,23.8
+tag/pressure1,2024-01-15T10:00:00.000Z,102.1
+```
+
+**Sortie (JSON time-values)**
+
+```json
+[
+  { "pointId": "tag/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": 23.5 } },
+  { "pointId": "tag/temp1", "timestamp": "2024-01-15T10:01:00.000Z", "data": { "value": 23.8 } },
+  { "pointId": "tag/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": 102.1 } }
+]
+```
+
+Ces time-values peuvent ensuite être transmises à tout connecteur Nord acceptant des lectures structurées
+(OIAnalytics, MQTT, OPC UA…).
+
+---
+
+#### MQTT payloads (from CSV) {#mqtt-payloads-from-csv}
+
+Analyse un fichier CSV et convertit chaque ligne en un message MQTT avec un topic et un payload. Deux modes de
+payload sont pris en charge :
+
+- **Simple** — une seule colonne devient le payload, convertie vers le type configuré.
+- **Object** — plusieurs colonnes sont assemblées en un payload objet JSON.
+
+##### Paramètres {#settings-6}
+
+| Paramètre              | Description                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------- |
+| **Has header**         | Si la première ligne est une ligne d'en-tête                                               |
+| **Delimiter**          | Séparateur de colonnes                                                                      |
+| **Topic column**       | Nom de colonne ou index contenant le topic MQTT                                            |
+| **Payload type**       | `string`, `number`, `boolean`, `datetime`, ou `object`                                     |
+| **Value column**       | Colonne pour la valeur (types de payload simple uniquement)                                |
+| **Object fields**      | Liste de correspondances `{ key, column, dataType }` (payload objet uniquement)            |
+| **Datetime settings**  | Conversion date/heure en entrée/sortie (s'applique lorsque le type de payload ou un champ est `datetime`) |
+
+##### Exemple — Payload simple {#example--simple-payload}
+
+**CSV en entrée**
+
+```csv
+topic,value
+plant/pump1/speed,1450
+plant/pump1/running,true
+```
+
+**Sortie (messages MQTT)**
+
+```json
+[
+  { "topic": "plant/pump1/speed", "payload": "1450" },
+  { "topic": "plant/pump1/running", "payload": "true" }
+]
+```
+
+##### Exemple — Payload objet {#example--object-payload}
+
+**CSV en entrée**
+
+```csv
+topic,value,quality,timestamp
+plant/sensor1,23.5,good,2024-01-15T10:00:00.000Z
+plant/sensor2,48.0,good,2024-01-15T10:00:00.000Z
+```
+
+Object fields : `value → number`, `quality → string`, `timestamp → datetime`
+
+**Sortie (messages MQTT)**
+
+```json
+[
+  { "topic": "plant/sensor1", "payload": "{\"value\":23.5,\"quality\":\"good\",\"timestamp\":\"2024-01-15T10:00:00.000Z\"}" },
+  { "topic": "plant/sensor2", "payload": "{\"value\":48.0,\"quality\":\"good\",\"timestamp\":\"2024-01-15T10:00:00.000Z\"}" }
+]
+```
+
+---
+
+#### CSV (from JSON) {#csv-from-json}
+
+Analyse une structure JSON et écrit un fichier CSV. Un **chemin d'itération de lignes** (expression JSONPath)
+identifie le tableau d'objets qui deviennent des lignes, et chaque **champ** configuré associe un chemin au sein de
+chaque ligne à une colonne CSV. Les champs prennent en charge la conversion date/heure, le transtypage, et des
+expressions JavaScript de post-traitement facultatives par champ.
+
+##### Paramètres {#settings-7}
+
+| Paramètre               | Description                                                                                                                                                                                        |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Filename**           | Nom du fichier de sortie ; prend en charge `@CurrentDate` (horodatage UTC courant), et, pour un contenu provenant d'une requête historique Sud, `@QueryStartTime`/`@QueryEndTime` (la fenêtre temporelle interrogée, vide sinon) |
+| **Encoding**           | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, ou `UTF_16_LE`                                                                                                                                                    |
+| **Header**             | Inclure ou non la ligne d'en-tête des colonnes                                                                                                                                                     |
+| **Delimiter**          | Séparateur de colonnes                                                                                                                                                                             |
+| **Newline**            | Fin de ligne (`LF`, `CRLF`, `CR`)                                                                                                                                                                  |
+| **Quote char**         | `DOUBLE_QUOTE`, `SINGLE_QUOTE`, ou `NONE`                                                                                                                                                          |
+| **Escape char**        | `DOUBLE_QUOTE` ou `BACKSLASH`                                                                                                                                                                      |
+| **Null value**         | Chaîne écrite lorsqu'un champ est manquant ou null (par défaut une chaîne vide)                                                                                                                    |
+| **Row iterator path**  | JSONPath pointant vers le tableau de lignes (ex. `$.data[*]`)                                                                                                                                      |
+| **Fields**             | Une entrée par colonne CSV (voir ci-dessous)                                                                                                                                                       |
+
+Chaque entrée de **field** :
+
+| Paramètre              | Description                                                                                |
+| --------------------- | --------------------------------------------------------------------------------------------- |
+| **Column name**        | Libellé d'en-tête dans le CSV                                                                |
+| **JSON path**          | JSONPath vers la valeur au sein de la ligne courante (ex. `$.timestamp`)                     |
+| **Data type**          | `string`, `number`, `boolean`, `datetime`, `array`, ou `object`                              |
+| **Datetime settings**  | Format/fuseau horaire/type en entrée et sortie lorsque le type de donnée est `datetime`      |
+| **Field process**      | Expression JS facultative pour post-traiter la valeur extraite (ex. `value.toUpperCase()`)   |
+
+##### Exemple {#example-6}
+
+Un connecteur Sud REST récupère un rapport JSON depuis une API. Le transformateur **CSV (from JSON)** extrait les
+champs pertinents et les reformate pour un connecteur Nord File Writer.
+
+**JSON en entrée** (retourné par l'élément REST)
+
+```json
+{
+  "data": [
+    { "ts": "2024-01-15T10:00:00.000Z", "tag": "temp1", "val": 23.5, "ok": true },
+    { "ts": "2024-01-15T10:01:00.000Z", "tag": "temp1", "val": 23.8, "ok": true },
+    { "ts": "2024-01-15T10:00:00.000Z", "tag": "pressure1", "val": 102.1, "ok": false }
+  ]
+}
+```
+
+Configuration :
+
+- Row iterator path : `$.data[*]`
+- Fields : `Timestamp` (`$.ts`, datetime), `Tag` (`$.tag`, string), `Value` (`$.val`, number), `OK` (`$.ok`, boolean)
+
+**CSV en sortie**
+
+```csv
+Timestamp,Tag,Value,OK
+2024-01-15T10:00:00.000Z,temp1,23.5,true
+2024-01-15T10:01:00.000Z,temp1,23.8,true
+2024-01-15T10:00:00.000Z,pressure1,102.1,false
+```
+
+:::info Chaînes JSON imbriquées
+Les transformateurs **CSV (from JSON)** et **OIAnalytics (from JSON)** (ci-dessous) peuvent tous deux analyser
+automatiquement des nœuds intermédiaires sérialisés en JSON — par exemple un connecteur Sud MQTT dont les messages
+transportent un payload JSON sous forme de chaîne brute. Si un segment de chemin résout vers une chaîne contenant
+elle-même du JSON, le reste du chemin est résolu par rapport à la valeur analysée. Cela s'applique également au
+**row iterator path** lui-même : il peut traverser cette frontière de chaîne et produire quand même une ligne par
+correspondance imbriquée, de sorte qu'un seul message contenant plusieurs lectures se divise en plusieurs lignes.
+Voir l'exemple [OIAnalytics (from JSON)](#oianalytics-from-json) ci-dessous pour un cas traité en détail.
+:::
+
+---
+
+#### OIAnalytics (from JSON) {#oianalytics-from-json}
+
+Extrait l'identifiant de point, la valeur et l'horodatage d'une structure JSON arbitraire via des expressions
+JSONPath et produit un tableau de time-values OIBus standard — la même forme que celle produite par les connecteurs
+Sud automate/historien. Un **row iterator path** identifie quelle partie du payload devient une ligne (une
+time-value) par correspondance ; les chemins d'identifiant de point, de valeur et d'horodatage sont ensuite résolus
+par rapport à cette ligne.
+
+C'est le transformateur à privilégier lorsqu'un connecteur Sud (typiquement MQTT, REST, ou Folder Scanner) fournit du
+JSON brut qui ne correspond pas déjà à la forme interne time-values d'OIBus, et que vous souhaitez l'envoyer
+directement à un connecteur Nord OIAnalytics sans écrire de transformateur personnalisé.
+
+##### Paramètres {#settings-8}
+
+| Paramètre                  | Description                                                                                                                                                                                                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Row Iterator JSONPath**  | JSONPath vers le tableau de lignes qui deviennent des time-values (ex. `$[*]`). Analyse automatiquement un nœud intermédiaire sérialisé en JSON lorsque la traversée directe échoue, de sorte que le chemin peut traverser un champ contenant du texte JSON brut (ex. un payload MQTT) et produire quand même une ligne par correspondance imbriquée |
+| **Point ID JSONPath**      | JSONPath vers l'identifiant de point au sein de la ligne courante (ex. `$[*].id`) ; les jokers (`[*]`) sont résolus par rapport aux indices de la ligne courante                                                                                                                     |
+| **Value JSONPath**         | JSONPath vers la valeur au sein de la ligne courante                                                                                                                                                                                                                                 |
+| **Timestamp JSONPath**     | JSONPath vers l'horodatage brut au sein de la ligne courante. Se rabat sur l'heure courante s'il ne peut être résolu                                                                                                                                                                |
+| **Timestamp input type**   | Format de l'horodatage brut : `String`, `ISO string`, `Unix epoch (s)`, ou `Unix epoch (ms)`                                                                                                                                                                                        |
+| **Timezone**               | Fuseau horaire utilisé pour l'analyse (utilisé uniquement lorsque le type d'entrée est `String`)                                                                                                                                                                                     |
+| **Format**                 | Motif de date/heure personnalisé (utilisé uniquement lorsque le type d'entrée est `String`, ex. `yyyy-MM-dd HH:mm:ss`)                                                                                                                                                              |
+| **Locale**                 | Locale utilisée pour analyser les noms de mois/jours (utilisée uniquement lorsque le type d'entrée est `String`)                                                                                                                                                                    |
+| **Timestamp precision**    | Précision de sortie à laquelle l'horodatage ISO résultant est tronqué : `Millisecond`, `Second`, `Minute`, ou `Hour`                                                                                                                                                                |
+
+##### Exemple — Messages MQTT avec un payload sérialisé en JSON {#example--mqtt-messages-with-a-json-stringified-payload}
+
+Un connecteur Sud MQTT fournit chaque message sous la forme `{ message, timestamp, item }`, où `message` est la
+**chaîne de payload MQTT brute**. Un seul message peut transporter plusieurs métriques ; le row iterator utilise donc
+**deux** jokers — l'un pour le tableau externe de messages, l'autre pour les métriques à l'intérieur du payload
+(sérialisé en JSON) de chaque message — et produit une ligne par métrique, qu'un message donné contienne une seule
+lecture ou plusieurs.
+
+**Entrée** — le premier message transporte deux métriques, le second en transporte une
+
+```json
+[
+  {
+    "message": "{\"metrics\":[{\"name\":\"PLANT.UNIT1.TANK3.LEVEL\",\"value\":52.2936,\"timestamp\":\"2026-07-16T08:50:18.808Z\"},{\"name\":\"PLANT.UNIT1.TANK3.TEMP\",\"value\":18.4,\"timestamp\":\"2026-07-16T08:50:19.001Z\"}]}"
+  },
+  { "message": "{\"metrics\":[{\"name\":\"PLANT.UNIT2.PUMP1.SPEED\",\"value\":1450,\"timestamp\":\"2026-07-16T08:50:20.500Z\"}]}" }
+]
+```
+
+Configuration :
+
+- Row Iterator JSONPath : `$[*].message.metrics[*]`
+- Point ID JSONPath : `$[*].message.metrics[*].name`
+- Value JSONPath : `$[*].message.metrics[*].value`
+- Timestamp JSONPath : `$[*].message.metrics[*].timestamp`
+- Timestamp input type : `ISO string`, Timestamp precision : `Millisecond`
+
+Le premier `[*]` parcourt le tableau externe de messages ; le second traverse la frontière de la chaîne `message`
+(analysée automatiquement) pour parcourir les métriques qu'elle contient. Les deux sont résolus ensemble pour chaque
+ligne, de sorte que la même configuration gère aussi bien un message à métrique unique qu'un message à métriques
+multiples.
+
+**Sortie** — trois lignes : deux issues du premier message, une du second
+
+```json
+[
+  { "pointId": "PLANT.UNIT1.TANK3.LEVEL", "timestamp": "2026-07-16T08:50:18.808Z", "data": { "value": 52.2936 } },
+  { "pointId": "PLANT.UNIT1.TANK3.TEMP", "timestamp": "2026-07-16T08:50:19.001Z", "data": { "value": 18.4 } },
+  { "pointId": "PLANT.UNIT2.PUMP1.SPEED", "timestamp": "2026-07-16T08:50:20.500Z", "data": { "value": 1450 } }
+]
+```
+
+---
+
+### Pour les connecteurs Sud de base de données SQL {#for-sql-database-south-connectors}
+
+Les connecteurs Sud MySQL, PostgreSQL, MSSQL, Oracle, et SQLite ne sérialisent pas eux-mêmes le résultat de leurs
+requêtes — chaque ligne est envoyée en aval exactement telle que la base de données l'a retournée, sous forme de
+contenu **record-list** (un tableau d'objets de ligne plats). Le rendu de ces données dans toute autre forme, y
+compris le CSV, est le travail du transformateur.
+
+---
+
+#### CSV (from Record list) {#csv-from-record-list}
+
+Convertit un tableau de lignes en fichier CSV. Chaque clé présente dans une ligne devient automatiquement une
+colonne — il n'est pas nécessaire de déclarer un champ juste pour qu'il apparaisse dans la sortie. Déclarer un champ
+(via **Fields Mapping**, en utilisant le même modèle de correspondance par champ que [CSV (from
+JSON)](#csv-from-json)) n'est nécessaire que lorsqu'une colonne doit être renommée, convertie vers un type
+spécifique, reformatée (dates), ou passée par une expression JavaScript. Toute colonne non couverte par une
+configuration de champ est écrite telle quelle.
+
+##### Paramètres {#settings-9}
+
+| Paramètre                | Description                                                                                       |
+| ------------------------ | ---------------------------------------------------------------------------------------------------- |
+| **Filename**             | Motif du nom de fichier de sortie (prend en charge `@CurrentDate`, `@QueryStartTime`, `@QueryEndTime`) |
+| **Encoding**             | Encodage de caractères de sortie (`UTF_8`, `UTF_8_BOM`, `LATIN_1`, `UTF_16_LE`)                     |
+| **First row as header**  | Écrire ou non une ligne d'en-tête avec les noms de colonnes                                         |
+| **Compression**          | Compresser le fichier de sortie en Gzip                                                             |
+| **Delimiter**            | Séparateur de colonnes (`COMMA`, `SEMI_COLON`, `TAB`, etc.)                                         |
+| **Newline**              | Séparateur de lignes (`CRLF`, `LF`, `CR`)                                                            |
+| **Quote character**      | Caractère utilisé pour entourer les champs (`DOUBLE_QUOTE`, `SINGLE_QUOTE`, `NONE`)                 |
+| **Escape character**     | Caractère utilisé pour échapper un caractère de citation dans un champ cité (`BACKSLASH`, `DOUBLE_QUOTE`) |
+| **Null value**           | Valeur écrite lorsqu'un champ configuré vaut `null` ou est absent de la ligne                       |
+| **Fields Mapping**       | Une liste de surcharges par colonne (renommage, conversion, reformatage, ou traitement) — voir ci-dessous |
+
+Chaque entrée de **Fields Mapping** cible une colonne, par son nom dans les lignes source :
+
+| Paramètre                | Description                                                                                              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Field Name**           | Nom de la colonne à configurer, correspondant à une clé dans les lignes source                              |
+| **Column Name**          | En-tête pour cette colonne dans le CSV de sortie. Laisser vide pour conserver le nom de champ d'origine.     |
+| **Data Type**            | Comment convertir la valeur : `string`, `number`, `boolean`, `datetime`, `array`, ou `object`                |
+| **Field Process**        | Expression JavaScript facultative appliquée après la conversion (ex. `value.toUpperCase()`)                 |
+| **Datetime Settings**    | Affiché uniquement lorsque Data Type est `datetime` — type entrée/sortie, fuseau horaire, format et locale (voir ci-dessous) |
+
+Lorsque **Data Type** est `datetime`, **Datetime Settings** décrit comment analyser la valeur brute et comment
+l'afficher :
+
+| Paramètre                                     | Description                                                                          |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **Timestamp input type**                      | Comment analyser la valeur brute (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`)   |
+| **Input timezone / format / locale**          | Utilisé pour analyser la valeur brute lorsque son type d'entrée est `string`               |
+| **Timestamp output type**                     | Comment afficher la valeur (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`)         |
+| **Output timezone / format / locale**         | Utilisé pour afficher la valeur lorsque son type de sortie est `string`                    |
+
+##### Exemple {#example-7}
+
+**Entrée** (contenu record-list depuis un élément MySQL)
+
+```json
+[
+  { "deviceId": "sensor-1", "readingTime": "2024-01-15T10:00:00.000Z", "value": 23.5 },
+  { "deviceId": "sensor-1", "readingTime": "2024-01-15T10:01:00.000Z", "value": 23.8 }
+]
+```
+
+Avec un seul champ configuré (`readingTime`, data type `datetime`, input type `iso-string`, output type `string`
+avec le format `yyyy-MM-dd HH:mm:ss` et le fuseau horaire `Europe/Paris`) — `deviceId` et `value` ne sont pas
+configurés, ils passent donc inchangés :
+
+**CSV en sortie**
+
+```csv
+deviceId,value,readingTime
+sensor-1,23.5,2024-01-15 11:00:00
+sensor-1,23.8,2024-01-15 11:01:00
+```
+
+---
+
+### Pour les consignes OIAnalytics (Setpoints) {#for-oianalytics-setpoints}
+
+Ces transformateurs convertissent les commandes d'écriture (write-back) envoyées par OIAnalytics dans le format
+attendu par le connecteur Nord actionneur cible.
+
+Chaque commande de consigne a cette forme :
+
+```json
+{ "reference": "pump1/setSpeed", "value": 1200 }
+```
+
+---
+
+#### MQTT payloads {#mqtt-payloads-1}
+
+Convertit les commandes de consigne en messages MQTT via une table de correspondance **reference → topic**. Les
+commandes sans entrée correspondante sont rejetées. Le payload est la valeur sérialisée en chaîne ; les valeurs
+objet sont sérialisées en JSON.
+
+##### Paramètres {#settings-10}
+
+| Paramètre   | Description                            |
+| ----------- | ------------------------------------------ |
+| **Mapping** | Liste de paires `{ reference, topic }`      |
+
+##### Exemple {#example-8}
+
+Mapping : `pump1/setSpeed → control/pump1/speed`
+
+**Entrée (consignes)**
+
+```json
+[
+  { "reference": "pump1/setSpeed", "value": 1200 },
+  { "reference": "valve2/open", "value": true }
+]
+```
+
+`valve2/open` est rejeté (pas de correspondance).
+
+**Sortie (messages MQTT)**
+
+```json
+[{ "topic": "control/pump1/speed", "payload": "1200" }]
+```
+
+---
+
+#### Modbus values {#modbus-values-1}
+
+Convertit les commandes de consigne en commandes d'écriture Modbus. Les valeurs booléennes sont écrites comme des
+coils ; les valeurs numériques sont analysées comme des entiers et écrites comme des registres de maintien.
+
+##### Paramètres {#settings-11}
+
+| Paramètre   | Description                                                                                 |
+| ----------- | ----------------------------------------------------------------------------------------------- |
+| **Mapping** | Liste de paires `{ reference, address, modbusType }` (`modbusType` : `coil` ou `register`)      |
+
+##### Exemple {#example-9}
+
+Mapping : `valve1/open → 0x0010 (coil)`, `pump1/speed → 0x0020 (register)`
+
+**Entrée (consignes)**
+
+```json
+[
+  { "reference": "valve1/open", "value": true },
+  { "reference": "pump1/speed", "value": 1450 }
+]
+```
+
+**Sortie (commandes d'écriture Modbus)**
+
+```json
+[
+  { "address": "0x0010", "value": true, "modbusType": "coil" },
+  { "address": "0x0020", "value": 1450, "modbusType": "register" }
+]
+```
+
+---
+
+#### OPCUA values {#opcua-values-1}
+
+Convertit les commandes de consigne en commandes d'écriture OPC UA via une table de correspondance **reference →
+node ID**.
+
+##### Paramètres {#settings-12}
+
+| Paramètre   | Description                              |
+| ----------- | -------------------------------------------- |
+| **Mapping** | Liste de paires `{ reference, nodeId }`       |
+
+##### Exemple {#example-10}
+
+Mapping : `pump1/speed → ns=1;s=PumpSpeed`
+
+**Entrée (consignes)**
+
+```json
+[{ "reference": "pump1/speed", "value": 1200 }]
+```
+
+**Sortie (commandes d'écriture OPC UA)**
+
+```json
+[{ "nodeId": "ns=1;s=PumpSpeed", "value": 1200 }]
+```
+
+---
+
+## Tester un transformateur avec un élément Sud réel {#testing-a-transformer-against-a-real-south-item}
+
+Au-delà de tester le code d'un transformateur personnalisé de manière isolée (voir ci-dessous), vous pouvez
+prévisualiser n'importe quel transformateur — standard ou personnalisé — de bout en bout avec des données réelles,
+fraîchement collectées, depuis la fenêtre **Test** de l'élément Sud (décrite dans [Éléments de connecteur
+Sud](../south-connectors/common-settings.md#item-actions)) :
+
+1. Choisissez l'un des connecteurs Nord associés à l'élément (ou, pour un élément de History Query, l'un des
+   transformateurs propres à la requête, directement).
+2. Choisissez l'un des transformateurs configurés de ce Nord et ajustez ses options pour cette exécution de test
+   uniquement — la configuration enregistrée n'est pas modifiée.
+3. Lancez le test. La fenêtre affiche le pipeline complet : **Résultat brut → Transformateur (+ options) → Sortie
+   transformée**, ce qui vous permet de valider un transformateur avec les données réelles de l'élément avant
+   qu'elles n'atteignent le cache du Nord.
+
+---
+
+## Transformateurs personnalisés {#custom-transformers}
+
+Lorsqu'aucun transformateur standard ne convient à votre cas d'usage, vous pouvez écrire un **transformateur
+personnalisé** en JavaScript ou TypeScript. Le code personnalisé s'exécute dans un bac à sable (sandbox) isolé et
+sécurisé, sans accès au système de fichiers hôte, aux modules Node.js, ni au réseau.
+
+Les transformateurs personnalisés sont créés dans la page **Engine → Transformers** et sont ensuite disponibles dans
+la liste de sélection des transformateurs de tout connecteur Nord.
+
+### Fonction Transform {#transform-function}
+
+Votre code doit exporter une fonction `transform` (ou un export par défaut). Elle reçoit quatre arguments et doit
+retourner un objet résultat.
+
+```typescript
+/**
+ * @param content  - The raw input data as a UTF-8 string (JSON, CSV, XML…)
+ * @param source   - Metadata about the data source ({ type, dataSourceId, … })
+ * @param filename - The original filename (or a generated ID if no file was involved)
+ * @param options  - The transformer options as configured in the UI
+ */
+export function transform(
+  content: string,
+  source: object,
+  filename: string,
+  options: object
+): { data: unknown; filename: string; numberOfElement?: number } {
+  // …
+}
+```
+
+| Champ de retour     | Description                                                                                        |
+| ----------------- | ------------------------------------------------------------------------------------------------------ |
+| `data`             | Le contenu écrit dans le fichier de cache (voir ci-dessous) : une chaîne, du binaire brut, ou toute autre valeur |
+| `filename`         | Le nom de fichier utilisé lorsque la sortie est stockée dans le cache du Nord                          |
+| `numberOfElement`  | Comptage facultatif des enregistrements traités, affiché dans les journaux et les métriques            |
+
+La sortie du transformateur est **écrite dans le fichier de cache telle quelle**, puis relue par le Nord selon son
+type de contenu. `data` est traité selon son type :
+
+| `data` retourné                               | Stocké comme                     | À utiliser avec                                          |
+| --------------------------------------------- | --------------------------------- | ---------------------------------------------------------- |
+| une **chaîne (string)**                       | la chaîne telle quelle (UTF-8)    | tout type de sortie — vous contrôlez le texte exact         |
+| un **`Uint8Array` / `ArrayBuffer`** (binaire)  | les octets bruts, tels quels      | le type de sortie **`any`** uniquement (Nords fichier)      |
+| toute **autre valeur** (objet, tableau, nombre…) | `JSON.stringify(data)`         | les sorties typées (`time-values`, `mqtt`, …) qui lisent du JSON |
+
+:::caution Faire correspondre `data` au type de sortie ; garder `filename` en chaîne
+
+- Pour les types de sortie **typés** (`time-values`, `mqtt`, `oianalytics`, `modbus`, `opcua`), le Nord lit le
+  fichier de cache comme du **JSON** — retournez une chaîne ou un objet/tableau (qu'OIBus sérialise en JSON). Le
+  retour de binaire ici ne sera pas analysé.
+- La sortie **binaire** (`Uint8Array`/`ArrayBuffer`) est destinée au type de sortie **`any`**, où les Nords fichier
+  (File Writer, S3, Azure, envoi de fichier OIAnalytics) écrivent/téléversent les octets sans modification.
+- Une valeur non-chaîne, non-binaire, que `JSON.stringify` rejette (une structure circulaire, un `BigInt`) ou
+  ignore (une fonction) fait échouer la transformation avec une erreur claire plutôt que d'être mise en cache.
+
+`filename` **doit être une chaîne** — il devient le nom de fichier du cache et est enregistré dans les métriques du
+connecteur, donc retourner un objet ou un tableau à cet endroit peut casser la persistance des métriques. Lorsque
+vous le dérivez de données d'entrée (un topic MQTT, un champ du payload…), convertissez-le en chaîne et retirez les
+séparateurs de chemin, ex. `` `mqtt_${String(topic).replace(/[\\/]/g, '_')}.json` ``.
+:::
+
+### Bibliothèques disponibles {#available-libraries}
+
+Les bibliothèques suivantes sont préchargées dans le bac à sable et disponibles via `require` :
+
+| Bibliothèque                                                           | Nom `require`   | Description                                          |
+| ---------------------------------------------------------------------- | --------------- | ------------------------------------------------------- |
+| **[Luxon](https://moment.github.io/luxon/)**                           | `luxon`         | Analyse, formatage et calculs sur les dates/heures      |
+| **[JSONPath Plus](https://jsonpath-plus.github.io/JSONPath/docs/ts/)** | `jsonpath-plus` | Requêtes JSONPath sur des structures JSON arbitraires    |
+| **[PapaParse](https://www.papaparse.com/docs)**                        | `papaparse`     | Analyse et sérialisation CSV                            |
+
+Tout autre appel à `require` lève une erreur — `fs`, `http`, `process`, et tous les modules natifs Node.js sont
+bloqués.
+
+### Journalisation {#logging}
+
+À l'intérieur du bac à sable, `console.log`, `console.info`, `console.warn`, et `console.error` sont relayés vers le
+journal (logger) d'OIBus. Tous les messages apparaissent préfixés par `CUSTOM TRANSFORMER:`.
+
+### Limites {#limits}
+
+| Limite                 | Valeur                                             |
+| ----------------------- | -------------------------------------------------- |
+| Mémoire                 | 256 Mo par exécution                                |
+| Délai d'expiration      | Configurable dans les paramètres du transformateur |
+| Accès aux modules       | Uniquement `luxon`, `jsonpath-plus`, `papaparse`   |
+| Accès hôte              | Aucun (système de fichiers, réseau, et variables d'environnement bloqués) |
+
+---
+
+### Exemples {#examples}
+
+#### Exemple 1 — Reformater un tableau JSON en CSV (JavaScript) {#example-1--reformat-a-json-array-to-csv-javascript}
+
+Un connecteur Sud REST retourne un tableau JSON. Ce transformateur le convertit en fichier CSV délimité par des
+points-virgules pour un connecteur Nord File Writer.
+
+**Entrée (`content`)**
+
+```json
+[
+  { "ts": "2024-01-15T10:00:00.000Z", "id": "temp1", "val": 23.5 },
+  { "ts": "2024-01-15T10:01:00.000Z", "id": "temp1", "val": 23.8 },
+  { "ts": "2024-01-15T10:00:00.000Z", "id": "pressure1", "val": 102.1 }
+]
+```
+
+**Sortie**
+
+```csv
+Timestamp;Tag;Value
+2024-01-15T10:00:00.000Z;temp1;23.5
+2024-01-15T10:01:00.000Z;temp1;23.8
+2024-01-15T10:00:00.000Z;pressure1;102.1
+```
+
+**Code**
+
+```javascript
+export function transform(content, source, filename, options) {
+  const Papa = require('papaparse');
+  const rows = JSON.parse(content);
+
+  const csv = Papa.unparse(
+    rows.map(r => ({
+      Timestamp: r.ts,
+      Tag: r.id,
+      Value: r.val
+    })),
+    { delimiter: ';', header: true }
+  );
+
+  return {
+    data: csv,
+    filename: `export_${filename.replace('.json', '.csv')}`,
+    numberOfElement: rows.length
+  };
+}
+```
+
+---
+
+#### Exemple 2 — Filtrer et enrichir des time-values (TypeScript) {#example-2--filter-and-enrich-time-values-typescript}
+
+Ne conserver que les lectures au-dessus d'un seuil configuré, et annoter chacune avec un champ `status` dérivé.
+
+**Entrée (`content`)** — tableau time-values standard, `options.threshold = 20`
+
+```json
+[
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
+  { "pointId": "plant/temp2", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "18.0" } },
+  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1" } }
+]
+```
+
+**Sortie** — `temp2` est rejeté (18.0 ≤ 20), les autres sont annotées
+
+```json
+[
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5", "status": "NORMAL" } },
+  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1", "status": "HIGH" } }
+]
+```
+
+**Code**
+
+```typescript
+type TimeValue = { pointId: string; timestamp: string; data: { value: string } };
+
+export function transform(
+  content: string,
+  _source: object,
+  _filename: string,
+  options: { threshold: number }
+): { data: string; filename: string; numberOfElement: number } {
+  const values: Array<TimeValue> = JSON.parse(content);
+  const threshold = options.threshold ?? 0;
+
+  const filtered = values
+    .filter(v => parseFloat(v.data.value) > threshold)
+    .map(v => ({
+      ...v,
+      data: {
+        ...v.data,
+        status: parseFloat(v.data.value) > threshold * 2 ? 'HIGH' : 'NORMAL'
+      }
+    }));
+
+  console.info(`Kept ${filtered.length} / ${values.length} values above threshold ${threshold}`);
+
+  return {
+    data: JSON.stringify(filtered),
+    filename: `filtered_${Date.now()}.json`,
+    numberOfElement: filtered.length
+  };
+}
+```
+
+---
+
+#### Exemple 3 — Extraire des champs d'un JSON imbriqué avec JSONPath (JavaScript) {#example-3--extract-fields-from-a-nested-json-with-jsonpath-javascript}
+
+**Entrée (`content`)**
+
+```json
+{
+  "records": [
+    { "header": { "ts": "2024-01-15T10:00:00.000Z" }, "tag": "plant/temp1", "measurements": { "val": 23.5 } },
+    { "header": { "ts": "2024-01-15T10:01:00.000Z" }, "tag": "plant/temp1", "measurements": { "val": 23.8 } },
+    { "header": { "ts": "2024-01-15T10:00:00.000Z" }, "tag": "plant/pressure1", "measurements": { "val": 102.1 } }
+  ]
+}
+```
+
+**Sortie**
+
+```json
+[
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:01:00.000Z", "data": { "value": "23.8" } },
+  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1" } }
+]
+```
+
+**Code**
+
+```javascript
+export function transform(content, _source, _filename, _options) {
+  const { JSONPath } = require('jsonpath-plus');
+  const data = JSON.parse(content);
+
+  const timestamps = JSONPath({ path: '$.records[*].header.ts', json: data });
+  const tags = JSONPath({ path: '$.records[*].tag', json: data });
+  const values = JSONPath({ path: '$.records[*].measurements.val', json: data });
+
+  const timeValues = timestamps.map((ts, i) => ({
+    pointId: tags[i],
+    timestamp: ts,
+    data: { value: String(values[i]) }
+  }));
+
+  return {
+    data: JSON.stringify(timeValues),
+    filename: `extracted_${Date.now()}.json`,
+    numberOfElement: timeValues.length
+  };
+}
+```
+
+---
+
+#### Exemple 4 — Conversion d'horodatage avec Luxon (JavaScript) {#example-4--timestamp-conversion-with-luxon-javascript}
+
+Analyser des horodatages en millisecondes Unix epoch provenant d'une réponse d'API REST et les convertir en ISO-8601
+dans un fuseau horaire spécifique.
+
+**Entrée (`content`)**
+
+```json
+[
+  { "id": "plant/temp1", "epoch_ms": 1705312800000, "val": 23.5 },
+  { "id": "plant/pressure1", "epoch_ms": 1705312800000, "val": 102.1 }
+]
+```
+
+**Sortie** — `epoch_ms` converti en ISO-8601, fuseau horaire `Europe/Paris` (UTC+1 en janvier)
+
+```json
+[
+  { "id": "plant/temp1", "epoch_ms": 1705312800000, "val": 23.5, "timestamp": "2024-01-15T11:00:00.000+01:00" },
+  { "id": "plant/pressure1", "epoch_ms": 1705312800000, "val": 102.1, "timestamp": "2024-01-15T11:00:00.000+01:00" }
+]
+```
+
+**Code**
+
+```javascript
+export function transform(content, _source, _filename, _options) {
+  const { DateTime } = require('luxon');
+  const rows = JSON.parse(content);
+
+  const converted = rows.map(row => ({
+    ...row,
+    timestamp: DateTime.fromMillis(row.epoch_ms, { zone: 'Europe/Paris' }).toISO()
+  }));
+
+  return {
+    data: JSON.stringify(converted),
+    filename: `converted_${Date.now()}.json`,
+    numberOfElement: converted.length
+  };
+}
+```
+
+---
+
+#### Exemple 5 — Normaliser des messages JSON MQTT en time-values (JavaScript) {#example-5--normalize-mqtt-json-messages-to-time-values-javascript}
+
+Un connecteur **Sud MQTT** fournit chaque lot de messages reçus sous la forme d'un unique payload `any-content` :
+un tableau JSON de `{ message, timestamp, item: { id, name, topic } }`, où `message` est la **chaîne de payload MQTT
+brute**. Ce payload brut peut avoir n'importe quelle forme — un simple nombre, une chaîne JSON, un objet plat, ou un
+tableau de lectures (voir les [topics JSON](../../developer/local-test-stack.md#json-topics) publiés par la pile de
+test locale). Ce transformateur normalise tous ces cas en un tableau time-values standard, en utilisant le topic
+comme identifiant de point.
+
+**Entrée (`content`)** — trois messages provenant de différents topics
+
+```json
+[
+  {
+    "message": "{\"value\":35.17,\"unit\":\"celsius\",\"timestamp\":\"2026-06-04T08:15:06.673+00:00\",\"quality\":\"good\"}",
+    "timestamp": "2026-06-04T08:15:06.700Z",
+    "item": { "id": "i1", "name": "flat", "topic": "workshop1/json/flat" }
+  },
+  {
+    "message": "44.53",
+    "timestamp": "2026-06-04T08:15:06.700Z",
+    "item": { "id": "i2", "name": "number", "topic": "workshop2/json/number" }
+  },
+  {
+    "message": "[{\"timestamp\":\"2026-06-04T08:15:06.673+00:00\",\"value\":34.95},{\"timestamp\":\"2026-06-04T08:15:08.673+00:00\",\"value\":35.48}]",
+    "timestamp": "2026-06-04T08:15:06.700Z",
+    "item": { "id": "i3", "name": "array", "topic": "workshop1/json/array" }
+  }
+]
+```
+
+**Sortie** — une time-value par lecture ; le message tableau en produit deux
+
+```json
+[
+  { "pointId": "workshop1/json/flat", "timestamp": "2026-06-04T08:15:06.673+00:00", "data": { "value": "35.17" } },
+  { "pointId": "workshop2/json/number", "timestamp": "2026-06-04T08:15:06.700Z", "data": { "value": "44.53" } },
+  { "pointId": "workshop1/json/array", "timestamp": "2026-06-04T08:15:06.673+00:00", "data": { "value": "34.95" } },
+  { "pointId": "workshop1/json/array", "timestamp": "2026-06-04T08:15:08.673+00:00", "data": { "value": "35.48" } }
+]
+```
+
+**Code**
+
+```javascript
+export function transform(content, _source, _filename, _options) {
+  const messages = JSON.parse(content); // [{ message, timestamp, item: { topic } }, …]
+  const timeValues = [];
+
+  // Extract a scalar value from one reading, whatever its shape.
+  const toValue = reading => {
+    if (reading !== null && typeof reading === 'object') {
+      // Flat reading ({ value, … }); fall back to the whole object for nested shapes.
+      return reading.value ?? JSON.stringify(reading);
+    }
+    return reading; // number, string or boolean
+  };
+
+  for (const { message, timestamp, item } of messages) {
+    // The raw MQTT payload may be JSON (object/array/number/string) or plain text.
+    let parsed;
+    try {
+      parsed = JSON.parse(message);
+    } catch {
+      parsed = message; // non-JSON payload: keep the raw string
+    }
+
+    const readings = Array.isArray(parsed) ? parsed : [parsed];
+    for (const reading of readings) {
+      timeValues.push({
+        pointId: item.topic,
+        timestamp: (reading && reading.timestamp) || timestamp,
+        data: { value: String(toValue(reading)) }
+      });
+    }
+  }
+
+  return {
+    data: JSON.stringify(timeValues),
+    // Always a plain string filename — never a payload object (see the caution above).
+    filename: `mqtt_${Date.now()}.json`,
+    numberOfElement: timeValues.length
+  };
+}
+```
+
+:::tip Générer ces payloads localement
+La [pile de test locale](../../developer/local-test-stack.md#json-topics) publie exactement ces formes JSON MQTT
+(`flat`, `nested`, `array`, `mixed`, `string`, `number`), afin que vous puissiez pointer un connecteur Sud MQTT
+vers elle et exercer un transformateur personnalisé sur chaque cas.
+:::
+
+---
+
+:::info Tester des transformateurs personnalisés
+Utilisez le bouton **Test** dans l'éditeur de transformateur pour exécuter votre code sur un exemple de payload
+avant de le déployer. Le résultat du test affiche la sortie transformée, le nom du fichier de sortie, et le temps
+d'exécution.
+:::

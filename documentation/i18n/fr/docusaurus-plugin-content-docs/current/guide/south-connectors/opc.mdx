@@ -1,0 +1,165 @@
+---
+sidebar_position: 10
+---
+
+import ThrottlingSettings from './_throttling-settings.mdx';
+
+# OPC Classic™
+
+Connectez-vous à des serveurs OPC Classic™ avec OIBus en utilisant l'[agent OIBus](../oibus-agent/installation.mdx).
+
+:::info Contexte technologique
+
+- Protocole de communication industriel de l'[OPC Foundation](https://opcfoundation.org/)
+- Prend en charge les modes HDA et DA
+- Nécessite un agent OIBus basé sur Windows
+- Pour OPC UA, voir le [connecteur OPC UA](./opcua.mdx)
+
+:::
+
+:::caution Prérequis système
+L'agent OIBus **doit** être installé sur une machine Windows
+:::
+
+## OPC Classic vs OPC UA {#opc-classic-vs-opc-ua}
+
+|                            | OPC Classic™                                                                                                                | OPC UA                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Standard**               | Trois spécifications distinctes : **DA** (valeurs en direct), **HDA** (données historiques), **AE** (alarmes &amp; événements) | Norme unifiée unique : **DA** (valeurs en direct) + **HA** (accès historique) + alarmes         |
+| **Nom du mode historique** | **HDA** — Historical Data Access                                                                                          | **HA** — Historical Access (OPC UA Part 11). Même concept, nom différent — voir la note ci-dessous |
+| **Transport**               | COM/DCOM — communication inter-processus Windows uniquement                                                              | TCP/IP ou HTTPS — fonctionne sur tout réseau IP                                                |
+| **Plateforme**              | Windows uniquement                                                                                                        | Multi-plateforme : Windows, Linux, macOS, embarqué                                             |
+| **Sécurité**                | Repose sur la sécurité du domaine/DCOM Windows                                                                            | Intégrée : signature des messages, chiffrement, authentification par certificat                |
+| **Introduit en**            | 1996                                                                                                                       | 2006                                                                                            |
+| **Exigence OIBus**          | Nécessite un [agent OIBus](../oibus-agent/installation.mdx) s'exécutant sur la machine Windows hébergeant le serveur OPC | Se connecte directement depuis OIBus — aucun agent requis                                      |
+
+:::note HDA vs HA — la confusion des noms
+Les utilisateurs venant d'un environnement OPC Classic cherchent souvent **HDA** dans OPC UA et ne le trouvent pas.
+OPC UA renomme la fonctionnalité équivalente **HA** (Historical Access, défini dans OPC UA Part 11).
+Le concept est identique — interroger un serveur pour des valeurs enregistrées dans le passé — mais l'acronyme
+a changé. Dans OIBus, ce connecteur appelle le mode `HDA`, et le connecteur OPC UA l'appelle `HA`.
+Ne confondez pas OPC UA HA avec OPC Classic HDA : ce sont des protocoles distincts et ils ne sont **pas
+interopérables**.
+:::
+
+**Choisissez OPC Classic** lorsque votre infrastructure exploite déjà des serveurs OPC DA ou OPC HDA qui ne peuvent pas être
+migrés. La technologie COM/DCOM sur laquelle repose OPC Classic est réservée à Windows et ne transite pas sur les
+réseaux IP standard sans tunnelage DCOM — d'où l'obligation pour l'agent OIBus de s'exécuter directement sur
+l'hôte Windows.
+
+**Choisissez OPC UA** pour tout nouveau déploiement. OPC UA est la norme actuelle de l'industrie, prise en charge sur toutes
+les plateformes et avec une sécurité intégrée. Voir le [connecteur OPC UA](./opcua.mdx) pour plus de détails.
+
+## Serveurs OPC Classic courants {#common-opc-classic-servers}
+
+| Serveur                                                                                                                                                           | Éditeur              | Modes   | Remarques                                                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| [KEPServerEX](https://www.ptc.com/en/products/kepware/kepserverex)                                                                                               | PTC (Kepware)       | DA, HDA | Passerelle OPC la plus largement déployée ; prend en charge des centaines de types d'automates, DCS et appareils. Expose aussi un point d'accès OPC UA — voir la page OPC UA |
+| [FactoryTalk Linx](https://www.rockwellautomation.com/en-us/products/software/factorytalk/operationsuite/linx.html)                                              | Rockwell Automation | DA      | Serveur OPC DA standard pour automates Allen-Bradley / ControlLogix                                                                     |
+| [SIMATIC NET PC Software](https://www.siemens.com/global/en/products/automation/industry-software/automation-software/simatic-net-industrial-communication.html) | Siemens             | DA      | Accès OPC DA pour automates S7-300 et S7-400. Les S7-1500 et plus récents exposent nativement OPC UA — utilisez plutôt le connecteur OPC UA |
+| [Matrikon OPC](https://www.matrikon.com)                                                                                                                         | Honeywell           | DA, HDA | Vaste catalogue de serveurs OPC spécifiques à chaque appareil, incluant un serveur de simulation gratuit largement utilisé              |
+| [PI Server](https://www.aveva.com/en/products/aveva-pi-system/)                                                                                                  | AVEVA (OSIsoft)     | DA, HDA | Historien de processus leader du marché ; expose également une interface OPC UA                                                        |
+| [Proficy Historian](https://www.ge.com/digital/applications/proficy-historian)                                                                                   | GE Digital          | HDA     | Historien courant dans l'industrie manufacturière et les services publics                                                              |
+| [InfoPlus.21](https://www.aspentech.com/en/products/mss/aspen-infoplus-21)                                                                                       | AspenTech           | DA, HDA | Largement utilisé dans le pétrole et gaz ainsi que dans l'industrie chimique                                                            |
+
+## Paramètres spécifiques {#specific-settings}
+
+| Paramètre                | Description                                    | Exemple de valeur           |
+| ------------------------ | ----------------------------------------------- | --------------------------- |
+| URL de l'agent distant    | Point d'accès de l'agent (ex. `http://host:2224`)  | `http://192.168.1.100:2224` |
+| Intervalle de nouvelle tentative | Temps (ms) avant nouvelle tentative de connexion  | 10000                       |
+| URL du serveur           | Adresse du serveur OPC (depuis la machine agent) | `localhost` ou adresse IP   |
+| Nom du serveur           | Nom du serveur OPC (ProgID)                      | `Matrikon.OPC.Simulation`   |
+| Mode                      | Mode d'accès aux données (DA ou HDA)             | `HDA`                       |
+
+## Paramètres du groupe {#group-settings}
+
+Les éléments sont organisés en **groupes**. Chaque groupe définit une planification partagée et, pour le mode HDA, les
+paramètres de régulation par défaut pour tous les éléments qu'il contient.
+
+| Paramètre         | Description                                                | Exemple de valeur |
+| ------------------ | ------------------------------------------------------------ | ------------- |
+| **Nom**            | Libellé unique du groupe au sein de ce connecteur.            | `Group A`     |
+| **Mode de scrutation** | Planification de collecte appliquée à chaque élément du groupe. | `Every 1 min` |
+
+<ThrottlingSettings />
+
+:::tip Surcharger la régulation par élément
+Chaque élément peut surcharger les paramètres de régulation par défaut du groupe en désactivant le bouton **Synchroniser avec le groupe** dans le
+formulaire d'édition de l'élément.
+:::
+
+## Paramètres des éléments {#item-settings}
+
+| Paramètre    | Description                                                                        | Exemple de valeur                   |
+| ------------- | ------------------------------------------------------------------------------------- | -------------------------------- |
+| ID du nœud   | Chemin vers les données dans l'espace de noms du serveur OPC                          | `Channel1.Device1.Tag1`         |
+| Agrégat       | Méthode d'agrégation des données (vérifier le support du serveur). Voir la note ci-dessous pour la liste complète. | `Raw`, `Average`, `Minimum`, …  |
+| Rééchantillonnage | Rééchantillonne les valeurs agrégées à l'intervalle demandé (nécessite un agrégat autre que Raw)  | `None`, `1 second`, `1 hour`, … |
+
+:::caution Remarques de compatibilité
+
+1. **Support de l'agrégation** : Tous les serveurs ne prennent pas en charge toutes les méthodes d'agrégation
+2. **Rééchantillonnage** : Disponible uniquement lorsque l'agrégat ≠ `Raw`
+3. **Paramètres recommandés** : Utilisez l'agrégat `Raw` et le rééchantillonnage `None` pour une compatibilité maximale
+4. **Capacités du serveur** : Vérifiez les fonctionnalités prises en charge dans la documentation de votre serveur OPC
+
+:::
+
+:::note Valeurs d'agrégat
+
+| Valeur               | Description                              |
+| ------------------- | ---------------------------------------- |
+| Raw                 | Toutes les valeurs brutes de l'intervalle |
+| Interpolative       | Valeur interpolée à l'instant demandé |
+| Total               | Somme de toutes les valeurs de l'intervalle |
+| Average             | Moyenne arithmétique |
+| Time average        | Moyenne pondérée dans le temps |
+| Count               | Nombre de points de données |
+| STDEV               | Écart type |
+| Minimum actual time | Valeur minimale avec son horodatage réel |
+| Minimum             | Valeur minimale de l'intervalle |
+| Maximum actual time | Valeur maximale avec son horodatage réel |
+| Maximum             | Valeur maximale de l'intervalle |
+| Start               | Première valeur de l'intervalle |
+| End                 | Dernière valeur de l'intervalle |
+| Delta               | Différence entre la première et la dernière valeur |
+| Reg slope           | Pente de régression linéaire |
+| Reg const            | Ordonnée à l'origine de la régression linéaire |
+| Reg dev              | Déviation de la régression linéaire |
+| Variance            | Variance statistique |
+| Range               | Maximum moins minimum |
+| Duration good       | Durée des données de bonne qualité |
+| Duration bad        | Durée des données de mauvaise qualité |
+| Percent good        | Pourcentage d'échantillons de bonne qualité |
+| Percent bad         | Pourcentage d'échantillons de mauvaise qualité |
+| Worst quality       | Pire code de qualité de l'intervalle |
+| Annotations         | Événements d'annotation |
+
+:::
+
+:::note Valeurs de rééchantillonnage
+
+`None` · `1 second` · `10 seconds` · `30 seconds` · `1 minute` · `1 hour` · `1 day`
+
+:::
+
+### Exemples de configuration {#configuration-examples}
+
+1. **Configuration de base** :
+
+- ID du nœud : `Simulation Random.Int4`
+- Agrégat : `Raw`
+- Rééchantillonnage : `None`
+
+2. **Valeurs agrégées** :
+
+- ID du nœud : `Production.Line1.Temperature`
+- Agrégat : `Average`
+- Rééchantillonnage : `1 minute`
+
+3. **Données à haute fréquence** :
+
+- ID du nœud : `Process.Vessel.Pressure`
+- Agrégat : `Minimum`
+- Rééchantillonnage : `1s`

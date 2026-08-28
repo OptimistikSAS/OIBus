@@ -1,0 +1,50 @@
+---
+sidebar_position: 16
+---
+
+import RegexTester from '../../../../../../src/components/RegexTester/index';
+
+# SFTP
+
+Transférez et lisez de manière sécurisée des fichiers depuis des serveurs SFTP distants.
+
+## Paramètres spécifiques {#specific-settings}
+
+| Setting           | Description                                      | Example Value    |
+| ----------------- | ------------------------------------------------ | ---------------- |
+| **Host**          | Adresse IP ou nom d'hôte du serveur SFTP.       | `192.168.1.100`  |
+| **Port**          | Port pour la connexion. Par défaut : `22`.          | `22`             |
+| **Compress file** | Active la compression gzip avant le traitement North. | Enabled/Disabled |
+
+### Authentification {#authentication}
+
+| Setting          | Description                                                                  | Example Value                      |
+| ---------------- | ---------------------------------------------------------------------------- | ----------------------------------- |
+| Authentication   | Méthode d'authentification.                                                       | `Username/Password`, `Private Key` |
+| Username         | Nom d'utilisateur pour l'authentification SFTP.                                            | `sftp_user`                        |
+| Password         | Mot de passe (pour l'authentification Username/Password).                             | `••••••••`                         |
+| Private key path | Chemin vers le fichier de clé privée au format PEM (pour l'authentification Private Key). | `/home/user/.ssh/id_rsa`           |
+| Passphrase       | Phrase secrète pour la clé privée, si protégée (facultatif).                     | `••••••••`                         |
+
+:::info Notes sur la clé privée
+
+- Prend en charge les clés protégées par une phrase secrète
+- Format de clé : PEM
+- Exemple de chemin : `/home/user/.ssh/id_rsa` ou `C:\Users\user\.ssh\id_rsa`
+
+:::
+
+## Paramètres de récupération des fichiers {#file-retrieval-settings}
+
+| Setting               | Description                                                                                                                                                             | Example Value         |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| Remote folder         | Chemin du répertoire source sur le serveur SFTP.                                                                                                                               | `/incoming/data`      |
+| RegExp                | Filtre de motif de fichier (expression régulière).                                                                                                                             | `.*\.txt`, `.*\.csv`  |
+| Minimum age           | Âge minimum (en ms) requis pour qu'un fichier soit récupéré. Évite de récupérer des fichiers corrompus encore en cours d'écriture. Par défaut : `1000` ms.                                                          | `1000`                |
+| Preserve file         | Si activé, les fichiers ne sont **pas supprimés** après récupération. Utile si d'autres applications ont besoin d'y accéder. OIBus suit la date de modification pour éviter de récupérer à nouveau des fichiers inchangés. | Enabled/Disabled      |
+| Ignored modified date | (_Nécessite **Preserve file**_) Force la récupération même si la date de modification du fichier n'a pas changé. Utile pour garantir que les fichiers sont toujours traités.                    | Enabled/Disabled      |
+| Max files per scan    | Nombre maximum de fichiers à récupérer par analyse. Réglez sur **0** pour ne pas fixer de limite. Les fichiers restants sont récupérés lors de l'analyse suivante.                                                | `0` (no limit), `100` |
+| Max size per scan     | Taille totale maximale (en Mo) des fichiers par analyse. Réglez sur **0** pour ne pas fixer de limite. Les fichiers restants sont récupérés lors de l'analyse suivante.                                                | `0` (no limit), `500` |
+| Scan sub-folders      | Si activé, analyse récursivement les sous-dossiers au sein du dossier distant.                                                                                                     | Enabled/Disabled      |
+
+<RegexTester />

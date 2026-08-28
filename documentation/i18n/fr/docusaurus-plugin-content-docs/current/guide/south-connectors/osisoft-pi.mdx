@@ -1,0 +1,121 @@
+---
+sidebar_position: 13
+---
+
+import ThrottlingSettings from './_throttling-settings.mdx';
+
+# OSIsoft PI System™
+
+Connectez-vous à OSIsoft PI System™ pour la collecte et la visualisation de données industrielles avec OIBus, grâce au pilote PI intégré dans [OIBus Agent](../oibus-agent/installation.mdx).
+
+:::caution Prérequis système
+
+- OIBus Agent **doit** être installé sur une machine Windows
+- Peut être installé sur la machine du serveur PI ou sur une machine distincte avec [PI SDK configuré](#osisoft-pi-sdk-configuration)
+
+:::
+
+## Paramètres de connexion {#connection-settings}
+
+| Paramètre         | Description                                                                       | Exemple de valeur           |
+| ------------------ | ----------------------------------------------------------------------------------- | ---------------------------- |
+| URL de l'agent distant | URL du point de terminaison de l'agent. Requis pour toutes les connexions.       | `http://192.168.1.100:2224` |
+| Intervalle de nouvelle tentative | Temps en millisecondes à attendre avant de retenter la connexion. Par défaut : `10000`. | `10000`         |
+
+## Paramètres de groupe {#group-settings}
+
+Les éléments sont organisés en **groupes**. Chaque groupe définit une planification partagée ainsi que les
+paramètres de limitation par défaut pour la récupération des données historiques.
+
+| Paramètre     | Description                                                    | Exemple de valeur |
+| -------------- | ---------------------------------------------------------------- | ------------- |
+| **Nom**       | Libellé unique du groupe au sein de ce connecteur.               | `Group A`     |
+| **Mode de scrutation** | Planification de collecte appliquée à chaque élément du groupe. | `Every 1 min` |
+
+<ThrottlingSettings />
+
+:::tip Remplacer la limitation par élément
+Chaque élément peut remplacer les paramètres de limitation par défaut du groupe en désactivant l'option **Sync with group**
+dans le formulaire d'édition de l'élément.
+:::
+
+## Configuration des éléments {#item-configuration}
+
+### Méthodes d'accès aux points {#point-access-methods}
+
+| Paramètre  | Description                                                                                                                                                                       | Exemple de valeur         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| Type        | Méthode d'accès : `PI point` (point unique par ID) ou `PI query` (plusieurs points via une expression de requête)                                                                | `PI point` ou `PI query`  |
+| Point ID    | ID complet du point (sans le nom du serveur). Utilisé lorsque le Type est `PI point`.                                                                                            | `\\CDT158\SINUSOID`      |
+| Point Query | Sélecteur de requête pour plusieurs points (voir [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)). Utilisé lorsque le Type est `PI query`. | `Name:='SINUSOID'`       |
+
+:::info Noms de référence
+
+- Pour `PI point` : le nom de l'élément sert de référence dans les payloads JSON
+- Pour `PI query` : le nom PI est utilisé comme référence
+  :::
+
+## Configuration du SDK OSIsoft PI {#osisoft-pi-sdk-configuration}
+
+### Prérequis d'installation {#installation-requirements}
+
+1. Installer PI SDK sur la machine de l'agent
+2. Pendant l'installation, spécifier le serveur de données par défaut
+3. En cas d'installation à distance :
+
+- PI SDK doit être correctement configuré
+- PI System Access (PSA) doit être installé
+
+### Configuration de l'utilisateur {#user-configuration}
+
+1. Créer un compte utilisateur de domaine (accessible depuis les deux machines)
+
+- Si le domaine n'existe pas, créer des utilisateurs locaux identiques avec le même mot de passe
+
+2. Configurer le service OIBus Agent pour qu'il s'exécute en tant que cet utilisateur
+
+### Configuration de la confiance (Trust) {#trust-configuration}
+
+1. Ouvrir PI System Management Tools
+2. Naviguer vers `Mapping & Trusts` → onglet `Trusts`
+3. Créer une nouvelle confiance avec :
+
+- L'adresse IP et le masque de sous-réseau de la machine OIBus Agent
+- Le domaine (le cas échéant)
+- L'identité PI à laquelle se connecter
+
+### Configuration du mapping {#mapping-configuration}
+
+1. Dans PI System Management Tools
+2. Naviguer vers `Mapping & Trusts` → onglet `Mappings`
+3. Créer un nouveau mapping avec :
+
+- L'utilisateur du service OIBus Agent
+- L'identité PI issue de la configuration de la confiance
+
+:::tip Accès aux journaux
+Consultez les journaux système dans PI System Management Tools :
+`Operation` → `Messages Logs`
+:::
+
+### Captures d'écran de configuration {#configuration-screenshots}
+
+**1. Installation du SDK** — Spécifier le serveur de données par défaut pendant l'installation
+
+![Installation du SDK PI](../../../static/img/guide/south/osisoft-pi/0-installation.png)
+
+**2. Configuration de la confiance** — Configurer la confiance pour la machine de l'agent
+
+![Ajout de confiance SDK PI](../../../static/img/guide/south/osisoft-pi/1-add-trust.png)
+
+**3. Liste des confiances** — Configuration de confiance vérifiée
+
+![Liste des confiances SDK PI](../../../static/img/guide/south/osisoft-pi/2-trust-list.png)
+
+**4. Création du mapping** — Associer l'utilisateur de l'agent à l'identité PI
+
+![Ajout de mapping SDK PI](../../../static/img/guide/south/osisoft-pi/3-add-mapping.png)
+
+**5. Liste des mappings** — Mapping utilisateur vérifié
+
+![Liste des confiances SDK PI](../../../static/img/guide/south/osisoft-pi/4-mapping-list.png)
