@@ -32,7 +32,7 @@ export default {
 
   i18n: {
     defaultLocale: 'en',
-    locales: ['en', 'fr']
+    locales: ['en', 'fr', 'zh']
   },
 
   // JSON-LD structured data for the whole site
@@ -100,7 +100,7 @@ export default {
               indexDocs: true,
               indexBlog: false,
               docsRouteBasePath: '/docs',
-              language: ['en', 'fr']
+              language: ['en', 'fr', 'zh']
             }
           ]
         ]
