@@ -1,0 +1,76 @@
+---
+displayed_sidebar: guideSidebar
+sidebar_position: 1
+---
+
+# Concepts principaux
+
+## Open source, évolutif et flexible {#open-source-scalable-and-flexible}
+
+OIBus est une solution légère et open source conçue pour simplifier la collecte de données dans les environnements industriels. Elle rassemble
+de manière transparente des données provenant de sources diverses et les transmet à des applications cibles — que ce soit sur site ou dans le cloud.
+
+Initialement développé pour alimenter **OIAnalytics®**, OIBus est maintenu par Optimistik depuis 2020 sous la
+[Licence Publique de l'Union Européenne (EU-PL)](https://ec.europa.eu/info/european-union-public-licence_en). En tant que projet open source, il offre
+une flexibilité inégalée pour répondre à un large éventail de cas d'usage. De nombreux fournisseurs de solutions ont adopté OIBus pour surmonter
+les défis de collecte de données et accélérer la digitalisation industrielle.
+
+## Une solution modulaire en streaming {#a-modular-streaming-solution}
+
+OIBus est construit avec une architecture modulaire, composée de trois composants principaux :
+
+- **South** : collecte les données depuis les systèmes source.
+- **North** : met en cache et transmet les données vers les systèmes cibles.
+- **Engine** : gère la configuration, l'orchestration, et la journalisation.
+
+<div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
+  <div style={{ width: '650px', height: '650px' }}>
+
+    ![Bannière exemple](../../static/img/guide/oibus.svg)
+
+  </div>
+</div>
+
+:::info
+Cette conception modulaire simplifie l'évolutivité en centralisant la complexité dans l'Engine, ce qui facilite le
+[développement et l'intégration](../developer/create-connector/presentation.md) de nouveaux modules North ou South.
+:::
+
+## Capacités avancées {#advanced-capabilities}
+
+### Sources de données prises en charge {#supported-data-sources}
+
+OIBus prend en charge un large éventail de sources de données industrielles et métier, et sa nature open source permet une expansion continue :
+
+- **Systèmes industriels** : automates, systèmes de supervision, et historiens utilisant des protocoles comme OPC UA™, OPC Classic™, TwinCAT® ADS, et Modbus.
+- **Systèmes métier** : accès aux bases de données (Oracle Database™, Microsoft SQL Server™, PostgreSQL, MySQL®, MariaDB™, SQLite™) et récupération
+  de fichiers (par ex. Excel, CSV).
+- **Capteurs IoT** : intégration avec des services de messagerie IoT (MQTT, API, etc.).
+
+| Protocole/Type          | Capacités d'historisation | Accès direct        | Cas d'usage typiques                      |
+| ------------------------ | -------------------------- | -------------------- | -------------------------------------------- |
+| OPC UA™                 | Oui                        | Oui                  | Automates, systèmes de supervision, historiens |
+| OPC Classic™            | Oui                        | Oui                  | Systèmes industriels hérités                 |
+| TwinCAT® ADS            | Non                        | Oui                  | Automates Beckhoff                           |
+| Modbus                  | Non                        | Oui                  | Automates, capteurs, appareils               |
+| MQTT                    | Limitée                    | Oui                  | Capteurs IoT, services de messagerie         |
+| REST API                | Dépend de l'API            | Dépend de l'API      | Services web, applications cloud             |
+| Bases de données SQL    | Oui                        | Non                  | Oracle, SQL Server, PostgreSQL, etc.         |
+| Récupération de fichiers, SFTP | Non                 | Oui                  | Excel, CSV, journaux                         |
+
+### Applications cibles {#target-applications}
+
+OIBus transmet des données vers diverses destinations, notamment :
+
+- **Applications SaaS** : OIAnalytics®, Amazon S3™, Azure Blob Storage™, API REST, et plus encore.
+- **Plateformes IoT** : MQTT, API, et autres services de messagerie IoT.
+- **Systèmes industriels** : OPC UA™ et Modbus.
+
+### Performance et fiabilité {#performance-and-reliability}
+
+OIBus est conçu pour gérer des flux de données à haut volume, avec des déploiements allant de **10 à 10 000 points de données par seconde**. Les fonctionnalités
+clés incluent :
+
+- **Communications fiables et sécurisées** (HTTPS, tunneling, gestion de proxy).
+- **Fonctionnalité de stockage et retransmission** (store-and-forward) pour garantir qu'aucune donnée n'est perdue.
+- **Compression des données** pour une transmission optimisée.

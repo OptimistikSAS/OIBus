@@ -1,0 +1,59 @@
+---
+sidebar_position: 1
+---
+
+import RegexTester from '../../../../../../src/components/RegexTester/index';
+
+# Scanner de dossier
+
+Le connecteur South **Scanner de dossier** scanne périodiquement un dossier d'entrée spécifié à la recherche de
+nouveaux fichiers, en se basant sur des **expressions régulières (Regexp)** définies dans ses éléments. Les fichiers
+correspondants sont transmis aux caches North.
+
+## Paramètres spécifiques {#specific-settings}
+
+| Paramètre               | Description                                                                                                                                                                                                                    | Exemple de valeur           |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
+| Dossier d'entrée           | Chemin du dossier à scanner. Peut être **absolu** ou **relatif** (relatif au **dossier de données** - voir la section _À propos_). Prend en charge les chemins distants (par exemple, `/remote.server/data` ou `Z:\Remote disk\DATA`). **Sensible à la casse**. | `/data/input` ou `Z:\Files` |
+| Activer la compression     | Si activé, les fichiers sont compressés avec **gzip** avant d'être envoyés aux caches North.                                                                                                                                    | Activé/Désactivé                |
+
+:::caution Exigences d'accès utilisateur
+
+L'utilisateur exécutant OIBus (utilisateur du terminal ou compte de service) **doit disposer d'un accès en lecture**
+au dossier d'entrée. Si **Conserver le fichier** est désactivé, un **accès en écriture** est également requis pour
+supprimer les fichiers.
+
+:::
+
+### Authentification sur partage réseau (Windows uniquement) {#network-share-authentication-windows-only}
+
+Pour scanner un partage réseau Windows, définissez **Dossier d'entrée** sur un chemin UNC (`\\server\share\...`) et
+fournissez des identifiants pour celui-ci :
+
+| Paramètre          | Description                                                             | Exemple de valeur |
+| -------------------- | -------------------------------------------------------------------------- | -------------------- |
+| **Nom d'utilisateur SMB** | Nom d'utilisateur utilisé pour s'authentifier auprès du partage réseau. | `svc_oibus`           |
+| **Mot de passe SMB**      | Mot de passe pour le nom d'utilisateur SMB.                             | `••••••••`            |
+| **Domaine SMB**           | Domaine pour le nom d'utilisateur SMB (optionnel, par exemple pour Active Directory). | `CORP`     |
+
+:::info Windows uniquement
+Ces champs n'apparaissent que lorsque OIBus s'exécute sous Windows. OIBus authentifie une session SMB auprès du
+serveur (`net use`) avant le scan, et la supprime lorsque le connecteur se déconnecte. Cela ne passe pas par le
+gestionnaire d'identifiants Windows, ce qui fonctionne également lorsque OIBus s'exécute en tant que service
+Windows, où le gestionnaire d'identifiants, réservé aux sessions interactives, n'est pas fiable même sous un compte
+qui a par ailleurs accès au partage.
+:::
+
+## Paramètres des éléments {#item-settings}
+
+| Paramètre                 | Description                                                                                                                                                             | Exemple de valeur                       |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| RegExp                       | Expression régulière pour filtrer les fichiers.                                                                                                                         | `.*\.csv\|.*\xlsx` → fichiers CSV ou Excel |
+| Âge minimum                  | Âge minimum (en ms) des fichiers à récupérer. Évite de récupérer des fichiers corrompus encore en cours d'écriture. Par défaut : `1000` ms.                            | `1000`                                      |
+| Conserver le fichier         | Si activé, les fichiers ne sont **pas supprimés** après récupération. Utile si d'autres applications ont besoin d'y accéder. OIBus suit l'heure de modification pour éviter de récupérer à nouveau des fichiers inchangés. | Activé/Désactivé |
+| Ignorer la date de modification | (_Nécessite **Conserver le fichier**_) Force la récupération même si l'heure de modification du fichier n'a pas changé. Utile pour garantir que les fichiers sont toujours traités. | Activé/Désactivé |
+| Fichiers max par scan        | Nombre maximum de fichiers à récupérer par scan. Réglez sur **0** pour aucune limite. Les fichiers restants sont récupérés au scan suivant.                             | `0` (pas de limite), `100`                  |
+| Taille max par scan          | Taille totale maximale (en Mo) des fichiers par scan. Réglez sur **0** pour aucune limite. Les fichiers restants sont récupérés au scan suivant.                        | `0` (pas de limite), `500`                  |
+| Scanner les sous-dossiers    | Si activé, scanne récursivement les sous-dossiers au sein du dossier d'entrée.                                                                                          | Activé/Désactivé                            |
+
+<RegexTester />

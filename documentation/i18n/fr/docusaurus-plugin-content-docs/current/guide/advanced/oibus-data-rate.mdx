@@ -1,0 +1,191 @@
+---
+sidebar_position: 2
+---
+
+import DataSizeComparison from '../../../../../../src/components/DataSizeComparison/index';
+
+# Débit de données et dimensionnement du cache
+
+OIBus utilise un mécanisme de **stockage et retransmission** (store-and-forward) : lorsqu'un connecteur North ne peut pas atteindre sa cible, les données sont mises en mémoire tampon dans un cache local sur disque. Une fois la connexion rétablie, les données mises en cache sont rejouées dans l'ordre. Dimensionner correctement le cache — suffisamment grand pour survivre aux interruptions attendues sans saturer le disque — nécessite de connaître le débit de données soutenu pour chaque format.
+
+Cette page explique comment estimer le volume de données par format et fournit un calculateur interactif pour dimensionner le cache selon votre configuration spécifique.
+
+## Formats de transmission {#transmission-formats}
+
+OIBus envoie les données selon deux modes, en fonction du connecteur North :
+
+| Mode                        | Description                                                        | Connecteurs                                       |
+| ---------------------------- | -------------------------------------------------------------------- | ------------------------------------------------- |
+| **Point de terminaison fichier** | Données écrites dans des fichiers CSV et poussées vers un emplacement distant | SFTP, Amazon S3, Azure Blob Storage, File Writer |
+| **Charge utile JSON**        | Données sérialisées en tableau JSON et envoyées par POST via HTTP    | OIAnalytics, REST API                             |
+
+Le choix du format a un effet important sur le débit et la taille du cache, en particulier pour les charges de travail à haute fréquence ou multi-signaux.
+
+:::note Portée de cette page
+Les formules de taille en octets de cette page modélisent les fichiers CSV et la forme JSON
+`{timestamp, pointId, value}` utilisée par les connecteurs ci-dessus. Elles ne s'appliquent pas aux
+connecteurs North **Modbus**, **MQTT** ou **OPC UA**, qui écrivent directement dans leur protocole
+industriel (écritures de registre, publications de sujet, écritures de nœud) en utilisant un format de
+cache différent, propre au protocole — ni au connecteur North **Console**, qui se contente d'enregistrer
+dans la sortie standard et ne transmet ni ne met en cache de données pour une interruption.
+:::
+
+## Estimations au format CSV {#csv-format-estimations}
+
+Les tailles en octets ci-dessous utilisent les largeurs de champ représentatives suivantes :
+
+| Champ                             | Exemple                    | Octets |
+| ----------------------------------- | --------------------------- | -----: |
+| Horodatage                          | `2020-02-01T20:04:00.000Z` |     24 |
+| Nom du point                        | `Data001`                  |      7 |
+| Valeur numérique                    | `12.0`                     |      4 |
+| Séparateur (virgule ou saut de ligne) | `,` / `\n`                 | 1 chacun |
+
+### 1. Format Ligne (Row) {#1-row-format}
+
+Un point de donnée par ligne.
+
+```
+Timestamp,Reference,Value
+2020-02-01T20:04:00.000Z,Data001,12.0
+```
+
+**Taille par ligne** (= par point de donnée) :
+
+- Horodatage : 24 octets
+- Référence : 7 octets
+- Valeur : 4 octets
+- 2 virgules + saut de ligne : 3 octets
+- **Total : 38 octets par point de donnée**
+
+|                    |                                                                                                                    |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| **À utiliser quand** | Les points ont des horodatages différents, proviennent de sources hétérogènes, ou arrivent à intervalles irréguliers |
+| **Avantages**       | Structure la plus simple ; chaque ligne est autonome ; facile à diffuser en flux ou à ajouter ; aucun schéma nécessaire pour interpréter une ligne |
+| **Inconvénients**   | Format CSV le plus verbeux — l'horodatage est répété pour chaque point de donnée                                     |
+
+### 2. Format Colonne (Column) {#2-column-format}
+
+K points de données partagent une ligne d'horodatage. Les noms de points apparaissent dans l'en-tête.
+
+```
+Timestamp,Data001,Data002,Data003
+2020-02-01T20:04:00.000Z,12.0,10.0,10.0
+```
+
+**Taille par ligne de données** (K points par ligne) :
+
+- Horodatage : 24 octets
+- K valeurs : K × 4 octets
+- K virgules + saut de ligne : K + 1 octets
+- **Total par ligne : (25 + 5K) octets → (25 + 5K) / K octets par point de donnée**
+
+Pour K = 3 : 40 octets / ligne → **≈ 13,3 octets par point de donnée**
+
+|                    |                                                                                                                 |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| **À utiliser quand** | Plusieurs signaux sont échantillonnés simultanément au même taux de scrutation (par exemple un groupe de scrutation SCADA) |
+| **Avantages**       | Horodatage partagé entre K points — très économe en espace à mesure que K augmente ; adapté naturellement à la scrutation synchrone |
+| **Inconvénients**   | Tous les points d'une ligne doivent partager le même horodatage ; le schéma réside dans l'en-tête — plus difficile à traiter sans lui |
+
+### 3. Format Colonne-Ligne (Column-Row) {#3-column-row-format}
+
+Chaque ligne contient un horodatage, un nom de référence partagé, et K valeurs. Les sous-identifiants apparaissent dans l'en-tête.
+
+```
+Timestamp,Reference,001,002,003
+2020-02-01T20:04:00.000Z,Data,12.0,10.0,10.0
+```
+
+**Taille par ligne de données** (K points par ligne, référence de 4 octets) :
+
+- Horodatage : 24 octets
+- Référence : 4 octets
+- K valeurs : K × 4 octets
+- (K + 1) virgules + saut de ligne : K + 2 octets
+- **Total par ligne : (30 + 5K) octets → (30 + 5K) / K octets par point de donnée**
+
+Pour K = 3 : 45 octets / ligne → **15 octets par point de donnée**
+
+|                    |                                                                                                                                                                |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **À utiliser quand** | Les données ont une structure de regroupement naturelle — par exemple la même mesure sur plusieurs instances d'équipement, comme utilisé dans les connecteurs historian avec tableaux de groupe/référence |
+| **Avantages**       | Combine le partage d'horodatage avec une dimension de regroupement supplémentaire ; lisible lorsque le nom de référence a un sens                                |
+| **Inconvénients**   | Même contrainte d'horodatage que Colonne ; légèrement moins efficace en raison de la colonne de référence ; moins largement pris en charge par les outils en aval |
+
+## Estimation de la charge utile JSON {#json-payload-estimation}
+
+```json
+[
+  {
+    "timestamp": "2020-02-01T20:04:00.000Z",
+    "pointId": "Data001",
+    "value": "12.0"
+  }
+]
+```
+
+**Décomposition de la taille** (sérialisation compacte, sans espace blanc) :
+
+| Composant              | Contenu                                  | Octets |
+| ------------------------ | ------------------------------------------ | -----: |
+| Champ `timestamp`        | `"timestamp":"2020-02-01T20:04:00.000Z"` |     38 |
+| Champ `pointId`          | `"pointId":"Data001"`                    |     19 |
+| Champ `value`            | `"value":"12.0"`                         |     14 |
+| Caractères structurels    | `[{`, 2× `,`, `}]`                       |      6 |
+| **Total**                 |                                          | **77** |
+
+|                    |                                                                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| **À utiliser quand** | Envoi de données à des API REST ou des plateformes modernes qui consomment nativement le JSON                                 |
+| **Avantages**       | Auto-descriptif ; aucune connaissance du schéma requise par le destinataire ; facile à consommer dans la plupart des langages et plateformes |
+| **Inconvénients**   | Format le plus verbeux — environ 2× plus volumineux que Ligne CSV et ~5,8× plus volumineux que Colonne CSV à K = 3 ; surcoût de sérialisation plus élevé |
+
+## Résumé de l'efficacité des formats {#format-efficiency-summary}
+
+Octets par point de donnée à différentes valeurs de K (Colonne-Ligne suppose une référence de 4 octets) :
+
+| Format          | Formule       | K = 1 | K = 3 | K = 10 |
+| ---------------- | ------------- | ----: | ----: | -----: |
+| Ligne CSV         | 38            |    38 |  38,0 |   38,0 |
+| Colonne CSV       | (25 + 5K) / K |    30 |  13,3 |    7,5 |
+| Colonne-Ligne CSV | (30 + 5K) / K |    35 |  15,0 |    8,0 |
+| JSON              | 77            |    77 |  77,0 |   77,0 |
+
+Les formats en colonnes amortissent l'horodatage sur K points de données, devenant significativement plus économes en espace à mesure que K augmente. À K = 10, le format Colonne CSV utilise **5× moins d'espace** que Ligne CSV et **10× moins** que JSON.
+
+## Calculateur de dimensionnement du cache {#cache-sizing-calculator}
+
+Utilisez le calculateur ci-dessous pour estimer le débit et la taille minimale du cache pour votre déploiement.
+
+**Guide de saisie :**
+
+| Saisie                             | Ce qu'elle représente                                                                                                                     |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Points de donnée / seconde**       | Votre taux de collecte soutenu sur l'ensemble des connecteurs South actifs alimentant ce connecteur North                                    |
+| **Points par ligne (K)**             | Nombre de signaux partageant une ligne d'horodatage — n'affecte que les formats Colonne et Colonne-Ligne                                     |
+| **Marge de sécurité (%)**            | Marge supplémentaire pour les lignes d'en-tête CSV, les enregistrements partiels, les pics de mesure et les arrondis. 20 à 30 % est typique. |
+| **Surcharge réseau (%)**             | Octets supplémentaires dus à la couche de transport — amortissement TLS, découpage HTTP, encadrement de paquets SFTP. 20 à 50 % est typique pour HTTPS ou SFTP. |
+| **Durée d'interruption (heures)**    | La fenêtre de déconnexion la plus longue attendue. Le cache doit contenir au moins cette quantité de données avant le rétablissement de la connexion. |
+
+La colonne **Cache pour interruption** affiche la valeur minimale à configurer pour la **Taille de stockage maximale** dans les paramètres du cache du connecteur North.
+
+<DataSizeComparison />
+
+## Application du résultat {#applying-the-result}
+
+Dans l'onglet **Cache** de chaque connecteur North, réglez la **Taille de stockage maximale** sur au moins la valeur affichée dans la colonne **Cache pour interruption** pour le format choisi. Ajoutez une marge supplémentaire si :
+
+- Les interruptions dans votre environnement ont tendance à durer plus longtemps que l'estimation
+- Plusieurs connecteurs North partagent le même volume disque
+- L'hôte exécute également des exports en arrière-plan, de la journalisation, ou d'autres processus intensifs en disque
+
+:::tip Plusieurs connecteurs North
+Chaque connecteur North maintient son propre cache indépendant. Si plusieurs connecteurs transmettent des données simultanément, dimensionnez chacun indépendamment et vérifiez que l'hôte dispose d'une capacité disque totale suffisante.
+:::
+
+## Effet de la compression {#effect-of-compression}
+
+Certaines configurations de transport prennent en charge la compression des charges utiles — par exemple, gzip via HTTPS entre OIBus et un proxy inverse, ou SFTP avec la compression activée côté client. La compression réduit généralement la taille de la charge utile de **60 à 80 % pour le CSV** et de **70 à 85 % pour le JSON**, car les deux formats contiennent un contenu hautement répétitif (horodatages, noms de champs, chaînes numériques).
+
+Notez que le cache OIBus stocke les données **avant** la compression. La taille du cache est donc déterminée par le débit non compressé affiché dans le calculateur. La compression ne réduit que les octets transmis sur le réseau, pas l'espace disque utilisé par le cache.

@@ -1,0 +1,106 @@
+import ThrottlingSettings from './_throttling-settings.mdx';
+
+## Paramètres de groupe {#group-settings}
+
+Les éléments peuvent être organisés en groupes. Chaque groupe définit une planification de collecte partagée et des
+paramètres de limitation par défaut. Les éléments d'un même groupe sont toujours récupérés **un à la fois** en
+séquence — le groupe fournit simplement des valeurs par défaut communes que chaque élément peut redéfinir.
+
+| Setting        | Description                                                                                                                                       | Example Value             |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| **Name**       | Libellé unique pour le groupe au sein de ce connecteur.                                                                                                 | `Group A`                 |
+| **Scan mode**  | Planification utilisée pour collecter tous les éléments du groupe.                                                                                                  | `Every 1 min`             |
+| **Throttling** | Valeurs de limitation par défaut (Max read interval, Read delay, Start time offset, End time offset, Recovery strategy) héritées par les éléments du groupe. | `3600, 200, 0, 0, oldest` |
+
+## Paramètres des éléments {#item-settings}
+
+Chaque élément peut être configuré individuellement avec ses propres paramètres de requête et, éventuellement, un
+instant de suivi utilisé pour lire la source de manière incrémentale. Les éléments héritent de leur mode de
+planification et de leurs valeurs de limitation par défaut depuis leur groupe, mais chaque paramètre peut être
+redéfini par élément en désactivant **Sync with group**.
+
+<ThrottlingSettings />
+### Configuration de la requête {#query-configuration}
+
+Le champ de requête accepte la syntaxe SQL standard avec prise en charge de variables internes qui améliorent la
+résilience de la récupération des données et l'optimisation des performances.
+
+#### Variables de requête {#query-variables}
+
+| Setting      | Description                                                                                           | Example Value              |
+| ------------ | ----------------------------------------------------------------------------------------------------- | --------------------------- |
+| `@StartTime` | Initialisée à l'heure de la première exécution, puis mise à jour avec l'horodatage le plus récent du champ suivi | `2024-01-15T10:00:00.000Z` |
+| `@EndTime`   | Définie sur l'heure actuelle (`now()`) ou sur la fin du sous-intervalle lorsque les requêtes sont découpées                              | `2024-01-15T11:00:00.000Z` |
+
+Exemple de requête :
+
+```sql
+SELECT device_id, value, reading_time
+FROM sensor_data
+WHERE reading_time > @StartTime
+AND reading_time < @EndTime
+ORDER BY reading_time
+```
+
+:::info Découpage des requêtes
+Pour traiter de grands jeux de données, les requêtes peuvent être automatiquement divisées en plus petits blocs
+temporels en fonction du paramètre de limitation **Max read interval**.
+:::
+
+### Configuration de l'instant de suivi {#tracking-instant-configuration}
+
+Chaque colonne renvoyée par la requête est envoyée en aval exactement telle que renvoyée par la base de données —
+OIBus ne l'analyse, ne la reformate ni ne la restructure en aucune façon. Le seul paramètre facultatif par élément
+est un **instant de suivi** : une seule colonne dont la valeur maximale sur un lot devient le `@StartTime` de la
+requête suivante, pour une collecte incrémentale.
+
+| Setting           | Description                                                                                                    | Example Value               |
+| ----------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| **Track instant** | Active la collecte incrémentale à l'aide du champ ci-dessous. Lorsqu'il est désactivé, chaque requête relit l'ensemble complet des résultats. | Enabled/Disabled            |
+| **Field name**    | Nom de la colonne datetime dans votre instruction SELECT à suivre                                                  | `timestamp`, `reading_time` |
+| **Type**          | Type de données de cette colonne. Les valeurs disponibles diffèrent selon le connecteur — voir la note spécifique au connecteur ci-dessous.        | `iso-string`, `unix-epoch`  |
+| **Timezone**      | Fuseau horaire de la date/heure stockée (pour les types chaîne/date)                                                        | `UTC`, `Europe/Paris`       |
+| **Format**        | Modèle de format pour les dates/heures sous forme de chaîne                                                      | `yyyy-MM-dd HH:mm:ss`       |
+| **Locale**        | Locale pour les éléments de format (par exemple, les noms de mois)                                                 | `en_US`, `fr_FR`            |
+
+:::warning Exigence de cohérence de type
+Lors de l'utilisation de conversions de date/heure dans les requêtes, gardez le type cohérent à la fois dans la
+liste SELECT et dans la clause WHERE :
+
+Approche problématique (peut provoquer un comportement inattendu) :
+
+```sql
+SELECT value, CONVERT(datetime, string_field) AS timestamp
+FROM table
+WHERE string_field > @StartTime
+```
+
+Approche recommandée :
+
+```sql
+SELECT value, CONVERT(datetime, string_field) AS timestamp
+FROM table
+WHERE CONVERT(datetime, string_field) > @StartTime
+```
+
+:::
+
+### Processus de flux de données {#data-flow-process}
+
+1. OIBus exécute chaque requête configurée de manière séquentielle.
+2. Les lignes sont envoyées en aval telles quelles — aucune colonne n'est analysée, reformatée ou restructurée.
+3. Si **Track instant** est activé, la valeur maximale du champ suivi sur le lot est extraite, convertie en
+   UTC, puis stockée comme prochain `@StartTime`.
+4. Les données sont envoyées aux connecteurs North configurés sous forme de contenu record-list (une entrée par ligne).
+5. Pour restituer ces données au format CSV (ou dans un autre format), attachez un transformateur compatible — par
+   exemple **record-list-to-csv** — au connecteur North ou à la requête d'historique. Voir
+   [Transformateurs](../engine/transformers.mdx) pour plus de détails.
+
+:::tip Bonnes pratiques
+
+1. Lors du suivi d'un instant, choisissez un champ dont les valeurs sont cohérentes et croissantes.
+2. Pour les dates/heures sous forme de chaîne, assurez-vous que le format correspond entre le stockage en base de données et les variables de requête.
+3. Ajoutez des index sur les champs de type date/heure pour de meilleures performances de requête.
+4. Utilisez le paramètre Max read interval pour découper les grandes plages temporelles en blocs gérables.
+
+:::
