@@ -105,7 +105,10 @@
             "browsers": ["chromiumHeadless"],
             "runnerConfig": true,
             "include": ["src/**/*.spec.ts"],
-            "setupFiles": ["src/test/test.ts"]
+            "setupFiles": ["src/test/test.ts"],
+            "coverage": true,
+            "coverageReporters": ["text", "html", "json-summary", "json"],
+            "coverageInclude": ["src/app/**/*.ts"]
           }
         }
       }
