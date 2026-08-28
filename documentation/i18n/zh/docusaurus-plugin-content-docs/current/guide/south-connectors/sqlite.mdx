@@ -1,0 +1,35 @@
+---
+sidebar_position: 17
+---
+
+import ItemSettings from './_south-record-list-item-settings.mdx';
+
+# SQLite™
+
+使用 OIBus 连接并查询 SQLite™ 数据库文件。
+
+## 专属设置 {#specific-settings}
+
+| 设置       | 描述                       | 示例值                    |
+| ------------- | --------------------------------- | -------------------------------- |
+| Database path | SQLite 数据库文件的完整路径 | `C:\databases\production.sqlite` |
+
+### 最佳实践 {#best-practices}
+
+- 将数据库放置在高速存储上（推荐使用 SSD）
+- 避免多个进程并发写入
+- 使用 WAL 模式以获得更好的并发性能（PRAGMA journal_mode=WAL）
+
+<ItemSettings />
+
+:::note SQLite 日期时间字段类型
+以下**类型**取值可用于追踪时刻的日期时间字段：
+
+| 类型            | 描述                                       |
+| --------------- | ------------------------------------------------- |
+| String          | 使用自定义格式解析的字符串表示形式 |
+| ISO String      | ISO 8601 字符串（例如 `2024-01-15T10:30:00.000Z`） |
+| UNIX epoch (s)  | 以秒为单位的 Unix 时间戳                         |
+| UNIX epoch (ms) | 以毫秒为单位的 Unix 时间戳                    |
+
+:::

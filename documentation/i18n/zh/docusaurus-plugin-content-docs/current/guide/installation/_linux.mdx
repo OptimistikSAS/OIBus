@@ -1,0 +1,169 @@
+import CodeBlock from '@theme/CodeBlock';
+import DownloadButton from '../../../../../../src/components/DownloadButton';
+import packageInfo from '../../../../../../package.json';
+
+<h2 id="download-linux">下载</h2>
+
+<div style={{ display: 'flex', justifyContent: 'space-around' }}>
+  <DownloadButton
+    link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-linux_x64-v${packageInfo.version}.zip`}
+  >
+    <div>
+      <div>{`OIBus v${packageInfo.version}`}</div>
+      <div>Linux (x64)</div>
+    </div>
+  </DownloadButton>
+  <DownloadButton
+    link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-linux_arm64-v${packageInfo.version}.zip`}
+  >
+    <div>
+      <div>{`OIBus v${packageInfo.version}`}</div>
+      <div>Linux (ARM64)</div>
+    </div>
+  </DownloadButton>
+</div>
+
+或者直接从终端下载并解压——根据你的架构选择对应的压缩包：
+
+<CodeBlock language="bash">
+  {`# x64
+curl -LO https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-linux_x64-v${packageInfo.version}.zip
+unzip oibus-linux_x64-v${packageInfo.version}.zip -d OIBus/
+
+# ARM64
+
+curl -LO https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-linux_arm64-v${packageInfo.version}.zip
+unzip oibus-linux_arm64-v${packageInfo.version}.zip -d OIBus/`}
+
+</CodeBlock>
+
+:::info 压缩包内容
+
+- `oibus-launcher`——管理 OIBus 进程并处理升级的启动器
+- `binaries/oibus`——OIBus 主可执行文件
+- `oibus-setup.sh`——交互式安装脚本
+- `oibus-uninstall.sh`——卸载脚本（在安装过程中更新）
+  :::
+
+:::note
+该安装脚本已在 **Ubuntu** 和 **Debian** 上测试通过。对于其他发行版，你可能需要调整 systemd 服务配置。
+:::
+
+## 安装为系统服务 {#install-as-a-system-service}
+
+1. 解压下载的压缩包并进入该目录。
+
+2. 以 root 身份运行安装脚本：
+
+```bash
+sudo ./oibus-setup.sh [options]
+```
+
+| 参数    | 说明                                                                          | 默认值                         |
+| ------- | ------------------------------------------------------------------------------------ | -------------------------------- |
+| `-b`    | 安装 OIBus 二进制文件的目录                                         | 若省略则会提示输入             |
+| `-c`    | OIBus 数据文件夹的路径（缓存、日志、配置）                           | 若省略则会提示输入             |
+| `-k`    | 保留现有配置而不进行提示（`Y` 或 `N`）                           | 若省略则会提示输入             |
+| `-n`    | 实例名称——设置 `oibus.init.json` 中的 `engineName`，**同时**也设置 systemd 单元名称 | `oibus`                         |
+| `-u`    | 首次安装时写入 `oibus.init.json` 的管理员用户名                         | 省略（应用 OIBus 默认值） |
+| `-p`    | 首次安装时写入 `oibus.init.json` 的管理员密码                         | 省略（应用 OIBus 默认值） |
+| `-port` | OIBus 监听的端口，首次安装时写入 `oibus.init.json`                 | 省略（应用 OIBus 默认值） |
+
+:::info
+`-u`、`-p` 和 `-port` 仅在 `oibus.db` 尚不存在时使用（即仅在首次安装时）。
+它们会被写入数据文件夹中的 `oibus.init.json` 文件，并由 OIBus 在首次启动时应用。
+被省略的参数不会写入该文件——OIBus 会对这些值使用其内置默认值。
+在后续的安装或更新中，该文件不会被重新创建，因此这些参数不再有任何作用。
+:::
+
+### 运行多个实例 {#running-multiple-instances}
+
+传入自定义的 `-n` 可以让你在同一台机器上运行多个 OIBus 实例，每个实例都作为独立的
+systemd 服务：
+
+- 默认实例（省略 `-n`，或使用 `-n oibus`）保持经典的 `oibus` 服务名称。
+- 任何其他名称都会创建自己的 `oibus-<name>` 服务（仅限字母、数字、点、连字符和
+  下划线——不允许空格）。
+
+每个实例都必须拥有自己的二进制目录（`-b`）和自己的数据目录（`-c`）：脚本会在安装
+之前检查机器范围内的实例注册表（`/etc/oibus/instances`），如果任一文件夹已经属于
+另一个实例，则拒绝继续执行。将同一实例重新安装或升级到其自身已有的文件夹中不受此影响。
+
+```bash
+sudo ./oibus-setup.sh -n test -b ./OIBusTest -c ./OIBusTestData
+```
+
+```bash
+sudo systemctl status oibus-test
+sudo journalctl -u oibus-test -f
+```
+
+3. 脚本会针对未通过参数提供的任何必需值（`-b` 和 `-c`）进行提示。
+   在首次安装时，如果发现已有配置，脚本还会询问是否保留该配置。
+
+4. 成功后你将看到：
+
+```
+Service file successfully created. Enabling OIBus service startup on system boot...
+Created symlink /etc/systemd/system/default.target.wants/oibus.service → /etc/systemd/system/oibus.service.
+Starting OIBus service...
+Installation procedure completed!
+```
+
+5. 在浏览器中打开 `http://localhost:2223`，然后按照[首次访问指南](./first-access.mdx)操作。
+
+### 服务管理 {#service-management}
+
+如果你使用自定义 `-n` 进行了安装，请将下面的 `oibus` 替换为 `oibus-<name>`。
+
+```bash
+sudo systemctl status oibus    # check service status
+sudo systemctl start oibus     # start the service
+sudo systemctl stop oibus      # stop the service
+sudo systemctl restart oibus   # restart the service
+sudo journalctl -u oibus -f    # stream live logs
+```
+
+<h2 id="update-oibus-linux">更新 OIBus</h2>
+
+1. 下载最新版本并解压。
+2. 停止服务：`sudo systemctl stop oibus`（如为命名实例，则为 `oibus-<name>`）
+3. 用新文件替换安装目录中的二进制文件。
+4. 启动服务：`sudo systemctl start oibus`（如为命名实例，则为 `oibus-<name>`）
+
+更新后首次启动时，`oibus.db` 配置数据库会自动升级。
+
+<h2 id="uninstall-oibus-linux">卸载 OIBus</h2>
+
+进入 OIBus 二进制文件目录并运行：
+
+```bash
+sudo ./oibus-uninstall.sh
+```
+
+系统会询问你是否要移除所有数据：
+
+```
+Do you wish to remove all OIBus data (cache, logs...)? All data, credentials and logs about your
+current OIBus will be permanently erased. (y/N)
+```
+
+回答 `Y`/`y` 会移除 `cache`、`error`、`archive`、`logs` 和 `certs` 文件夹，
+以及 `oibus.db` 和 `crypto.db` 文件。这也会从机器范围的注册表中移除该实例，
+以便这些文件夹之后可被新实例重新使用。
+
+:::caution
+选择移除所有数据会永久删除你的配置、凭据和日志。
+如果你回答的不是 **Y**/**y**，数据文件夹**不会**被自动移除。
+:::
+
+## 以独立模式运行 {#run-in-standalone-mode}
+
+如果不想将 OIBus 安装为服务运行（适用于测试场景）：
+
+```bash
+./oibus-launcher --config ./OIBusData
+```
+
+请确保在运行此命令之前 `OIBusData` 目录已存在。在此模式下，OIBus 不会在系统启动时
+自动启动。
