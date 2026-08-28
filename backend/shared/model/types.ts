@@ -32,7 +32,7 @@ export const DEFAULT_TZ: Timezone = 'Europe/Paris';
 /**
  * List of supported languages in the application.
  */
-export const LANGUAGES = ['fr', 'en'] as const;
+export const LANGUAGES = ['fr', 'en', 'zh'] as const;
 
 /**
  * Type representing a supported language.
