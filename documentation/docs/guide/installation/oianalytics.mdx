@@ -8,7 +8,7 @@ Registering OIBus with OIAnalytics® is optional, but it unlocks centralized rem
 synchronization, remote command execution, log forwarding, and streamlined upgrades — all without requiring
 inbound access to the OIBus machine.
 
-## Registration Process
+## Registration Process {#registration-process}
 
 <div style={{ textAlign: 'center' }}>
   ![OIAnalytics registration process](../../../static/img/guide/installation/oianalytics-registration.svg)
@@ -38,9 +38,9 @@ inbound access to the OIBus machine.
 - OIBus periodically polls OIAnalytics for new commands.
 - Each command is validated, executed, and acknowledged.
 
-## Registration Settings
+## Registration Settings {#registration-settings}
 
-### Network Configuration
+### Network Configuration {#network-configuration}
 
 | Setting                             | Description                                                                                                                         | Example Value                           |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
@@ -55,7 +55,7 @@ inbound access to the OIBus machine.
 | **API gateway header value**        | Secret value for the gateway header (stored encrypted). Required when **Use API gateway** is enabled.                               | `••••••••`                              |
 | **API gateway base endpoint**       | Path prefix prepended to every OIAnalytics API path when routing through the gateway. Required when **Use API gateway** is enabled. | `/oianalytics`                          |
 
-### Timing Configuration
+### Timing Configuration {#timing-configuration}
 
 | Setting                    | Description                                         | Default |
 | -------------------------- | --------------------------------------------------- | ------- |
@@ -63,7 +63,7 @@ inbound access to the OIBus machine.
 | **Command retry interval** | Delay before retrying a failed command request.     | `5 s`   |
 | **Message retry interval** | Delay before retrying a failed message delivery.    | `5 s`   |
 
-## Using the Registration in Connectors
+## Using the Registration in Connectors {#using-the-registration-in-connectors}
 
 Once registered, the [OIAnalytics South Connector](../south-connectors/oianalytics.mdx),
 the [OIAnalytics North Connector](../north-connectors/oianalytics.md), and history queries can reuse the
@@ -73,7 +73,7 @@ registration settings instead of requiring separate connection parameters:
 2. Enable **Use OIAnalytics registration**.
 3. Save — host, authentication, and proxy are inherited from the registration automatically.
 
-## Log Forwarding
+## Log Forwarding {#log-forwarding}
 
 When the OIAnalytics log level is enabled in
 [Engine Settings → Logging Parameters](../engine/engine-settings.mdx#logging-parameters), OIBus forwards its
@@ -81,9 +81,9 @@ logs to OIAnalytics. The forwarding frequency and minimum log level depend on th
 are batched and sent according to those settings, not streamed continuously. Forwarded logs are searchable and
 filterable in the OIAnalytics OIBus log page, and their retention follows OIAnalytics policies.
 
-## Command Architecture
+## Command Architecture {#command-architecture}
 
-### Pull-Based Communication
+### Pull-Based Communication {#pull-based-communication}
 
 OIBus uses a **pull-based model** — it initiates all communication with OIAnalytics. This means:
 
@@ -95,7 +95,7 @@ OIBus uses a **pull-based model** — it initiates all communication with OIAnal
 Only **outbound HTTPS (TCP 443)** to the OIAnalytics domain needs to be allowed. No inbound rules are required.
 :::
 
-### Supported Commands
+### Supported Commands {#supported-commands}
 
 | Command                          | Description                                                                                                                                                 |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -114,7 +114,7 @@ Only **outbound HTTPS (TCP 443)** to the OIAnalytics domain needs to be allowed.
 | **Test transformer**             | Test any transformer (standard or custom) against a real South item or pasted input data — distinct from testing a custom transformer's own code.           |
 | **Setpoint**                     | Receive setpoint values from OIAnalytics and dispatch them to North connectors.                                                                             |
 
-### Version Upgrade Process
+### Version Upgrade Process {#version-upgrade-process}
 
 Upgrades are downloaded through OIAnalytics, so the OIBus machine does not need direct access to GitHub.
 
@@ -142,9 +142,9 @@ backup pattern (the `cache/` folder by default) — make sure you have enough fr
 copy of that content. Verify available space and schedule upgrades during low-activity periods.
 :::
 
-## Security Architecture
+## Security Architecture {#security-architecture}
 
-### Secret Management
+### Secret Management {#secret-management}
 
 OIBus uses a **zero-trust model** to ensure secrets (passwords, tokens, API keys) never leave the OIBus machine
 in plaintext:
@@ -164,7 +164,7 @@ OIAnalytics must be re-entered since the old ciphertext can no longer be decrypt
 Once on the OIBus machine, secrets are stored using the [OIBus security model](../advanced/oibus-security.md).
 :::
 
-## Troubleshooting
+## Troubleshooting {#troubleshooting}
 
 | Issue                  | What to check                                              |
 | ---------------------- | ---------------------------------------------------------- |

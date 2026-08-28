@@ -14,7 +14,7 @@ The following addresses are permanently allowed and cannot be removed:
 `127.0.0.1`, `::1`, `::ffff:127.0.0.1`, `::ffff:7f00:1`, `0:0:0:0:0:0:0:1`
 :::
 
-## Address Format
+## Address Format {#address-format}
 
 Each IP filter rule contains a single **address** field. OIBus supports IPv4, IPv6, and wildcard patterns.
 
@@ -31,7 +31,7 @@ An IPv4 address entered as `192.168.1.100` is automatically also matched against
 `::ffff:192.168.1.100`, so a single rule covers both connection types.
 :::
 
-## Managing Filters
+## Managing Filters {#managing-filters}
 
 IP filters are managed from **Engine → IP Filters** in the OIBus interface.
 
@@ -44,7 +44,7 @@ Each rule has two fields:
 
 Rules can be added, edited, and deleted at any time. Changes take effect immediately — no restart is required.
 
-## Adding a Filter via the API
+## Adding a Filter via the API {#adding-a-filter-via-the-api}
 
 Filters can also be created programmatically. Every OIBus API endpoint requires authentication (Basic or Bearer
 token), so requests must include credentials. The following example uses `curl` to add a rule that allows a
@@ -99,7 +99,7 @@ usual rule list.
 - Keep in mind that IP filter rules protect both the web interface and the [proxy server](./engine-settings.mdx#proxy-server) — a rule that grants access to one grants access to both.
   :::
 
-## Test IP Filter Rules
+## Test IP Filter Rules {#test-ip-filter-rules}
 
 Use the tester below to verify how your rules behave before applying them to a live instance. Enter one rule
 per line in the **Filter Rules** field, then enter the IP address you want to check and click **Test**.

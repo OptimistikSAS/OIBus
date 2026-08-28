@@ -11,14 +11,14 @@ This indirection is what makes [remote upgrades from OIAnalytics](../installatio
 the launcher can replace the binary, detect a failed start, and roll back automatically — all without
 human intervention.
 
-## Component Overview
+## Component Overview {#component-overview}
 
 | Component          | Binary           | Role                                                                                     |
 | ------------------ | ---------------- | ---------------------------------------------------------------------------------------- |
 | **OIBus Launcher** | `oibus-launcher` | Managed by the OS service. Handles updates, crash recovery, and child process lifecycle. |
 | **OIBus**          | `oibus`          | The main application. Started and monitored by the launcher.                             |
 
-## Folder Structure
+## Folder Structure {#folder-structure}
 
 The launcher expects the following layout in its working directory (the OIBus installation folder):
 
@@ -44,7 +44,7 @@ be overridden by a `backupFolders` entry in `update.json`, dropped alongside the
 When an upgrade command is received from OIAnalytics, the new binary is placed in `update/binaries/`.
 The launcher detects it on the next start.
 
-## Startup Sequence
+## Startup Sequence {#startup-sequence}
 
 Every time `oibus-launcher` starts, it follows this sequence:
 
@@ -74,13 +74,13 @@ The same monitoring logic applies even without an update. If OIBus crashes for a
 restarts it automatically — behaving like a process supervisor.
 :::
 
-## Command-Line Arguments
+## Command-Line Arguments {#command-line-arguments}
 
 All arguments passed to `oibus-launcher` (except `--reset-password`) are forwarded to the `oibus` child
 process. The launcher also automatically injects `--launcherVersion <version>` so OIBus knows which
 launcher version is managing it.
 
-### `--config`
+### `--config` {#--config}
 
 Path to the OIBus data folder. Defaults to `./` if omitted.
 
@@ -92,7 +92,7 @@ oibus-launcher --config /path/to/OIBusData
 oibus-launcher --config C:\OIBusData
 ```
 
-### `--version`
+### `--version` {#--version}
 
 Print the versions of `oibus-launcher` and `oibus`, then exit. The launcher still checks whether a
 staged update is present, but does not apply it — the binary/data-folder swap is skipped.
@@ -101,7 +101,7 @@ staged update is present, but does not apply it — the binary/data-folder swap 
 oibus-launcher --version
 ```
 
-### `--reset-password`
+### `--reset-password` {#--reset-password}
 
 Reset the admin user credentials to the defaults (`admin` / `pass`) and exit immediately.
 Always provide `--config` alongside this flag so the launcher finds the correct database.
