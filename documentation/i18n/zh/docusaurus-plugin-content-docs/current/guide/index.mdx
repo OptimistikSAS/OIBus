@@ -1,0 +1,75 @@
+---
+displayed_sidebar: guideSidebar
+sidebar_position: 1
+---
+
+# 核心概念
+
+## 开源、可扩展且灵活 {#open-source-scalable-and-flexible}
+
+OIBus 是一款轻量级的开源解决方案，旨在简化工业环境中的数据采集。它能够无缝地从各种数据源采集数据，
+并将其传输到目标应用程序——无论是在本地部署还是在云端。
+
+OIBus 最初是为支持 **OIAnalytics®** 而开发的，自 2020 年起由 Optimistik 依据
+[欧盟公共许可证 (EU-PL)](https://ec.europa.eu/info/european-union-public-licence_en) 维护。作为一个开源项目，
+它为应对各种应用场景提供了无与伦比的灵活性。许多解决方案提供商都采用了 OIBus 来克服数据采集方面的挑战，
+并加速工业数字化进程。
+
+## 模块化的流式解决方案 {#a-modular-streaming-solution}
+
+OIBus 采用模块化架构构建，由三个核心组件组成：
+
+- **South（南向连接器）**：从源系统采集数据。
+- **North（北向连接器）**：缓存数据并将其传输到目标系统。
+- **Engine（引擎）**：管理配置、编排和日志记录。
+
+<div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
+  <div style={{ width: '650px', height: '650px' }}>
+
+    ![示例横幅](../../static/img/guide/oibus.svg)
+
+  </div>
+</div>
+
+:::info
+这种模块化设计通过将复杂性集中在引擎中来简化可扩展性，使得
+[开发和集成](../developer/create-connector/presentation.md) 新的 North 或 South 模块变得更加容易。
+:::
+
+## 高级能力 {#advanced-capabilities}
+
+### 支持的数据源 {#supported-data-sources}
+
+OIBus 支持广泛的工业和业务数据源，其开源特性使其能够持续扩展：
+
+- **工业系统**：使用 OPC UA™、OPC Classic™、TwinCAT® ADS 和 Modbus 等协议的 PLC、监控系统和历史数据库。
+- **业务系统**：访问数据库（Oracle Database™、Microsoft SQL Server™、PostgreSQL、MySQL®、MariaDB™、SQLite™）
+  以及文件检索（例如 Excel、CSV）。
+- **物联网传感器**：与物联网消息服务（MQTT、API 等）集成。
+
+| 协议/类型             | 历史数据能力          | 直接访问            | 典型用例                     |
+| -------------------- | ---------------------- | ------------------ | ------------------------------------- |
+| OPC UA™              | 是                    | 是                | PLC、监控系统、历史数据库 |
+| OPC Classic™         | 是                    | 是                | 传统工业系统             |
+| TwinCAT® ADS         | 否                    | 是                | 倍福 PLC                         |
+| Modbus               | 否                    | 是                | PLC、传感器、设备               |
+| MQTT                 | 有限                | 是                | 物联网传感器、消息服务       |
+| REST API             | 取决于具体 API     | 取决于具体 API | Web 服务、云应用程序      |
+| SQL 数据库        | 是                    | 否                | Oracle、SQL Server、PostgreSQL 等  |
+| 文件检索、SFTP | 否                    | 是                | Excel、CSV、日志                |
+
+### 目标应用 {#target-applications}
+
+OIBus 可将数据传输到各种目标，包括：
+
+- **SaaS 应用程序**：OIAnalytics®、Amazon S3™、Azure Blob Storage™、REST API 等。
+- **物联网平台**：MQTT、API 及其他物联网消息服务。
+- **工业系统**：OPC UA™ 和 Modbus。
+
+### 性能与可靠性 {#performance-and-reliability}
+
+OIBus 专为处理大流量数据流而设计，部署规模可达**每秒 10 到 10,000 个数据点**。主要特性包括：
+
+- **可靠且安全的通信**（HTTPS、隧道、代理管理）。
+- **存储转发功能**，确保数据不丢失。
+- **数据压缩**，优化传输效率。

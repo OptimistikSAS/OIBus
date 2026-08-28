@@ -1,0 +1,189 @@
+---
+sidebar_position: 19
+---
+
+import ThrottlingSettings from './_throttling-settings.mdx';
+
+# InfluxDB
+
+使用 OIBus 连接并查询 [InfluxDB](https://www.influxdata.com/) 时序数据库。支持全部三个主要的
+InfluxDB API 版本：InfluxDB v1（InfluxQL）、InfluxDB v2（Flux）和 InfluxDB v3（SQL / Flight SQL）。
+
+:::info 技术概览
+
+- 由 [InfluxData](https://www.influxdata.com/) 专为时间序列打造的数据库
+- 仅支持历史查询的连接器：每个扫描周期查询一个时间范围
+- 三个不同的 API 版本，各自拥有不同的查询语言和身份验证方案
+
+:::
+
+## API 版本 {#api-versions}
+
+InfluxDB 经历了三次主要的 API 修订，这些版本之间**互不向后兼容**。请在配置其他设置之前，
+选择与您服务器相匹配的版本。
+
+| 版本    | 查询语言                       | 身份验证                          | 典型部署方式                             |
+| ------- | ------------------------------- | ----------------------------------- | ------------------------------------------ |
+| **v1**  | InfluxQL（类 SQL）              | 用户名 / 密码                       | 自托管的 InfluxDB 1.x                      |
+| **v2**  | Flux（函数式管道）              | API 令牌 + 组织 + 存储桶            | InfluxDB 2.x、InfluxDB Cloud（TSM）        |
+| **v3**  | SQL（Apache Arrow Flight SQL）  | API 令牌                            | InfluxDB 3.x、InfluxDB Cloud Serverless    |
+
+## 特定设置 {#specific-settings}
+
+### 通用 {#common}
+
+| 设置        | 说明                                    |
+| ----------- | ----------------------------------------- |
+| **Version** | 要使用的 InfluxDB API 版本：`1`、`2`、`3`。 |
+
+### InfluxDB v1 {#influxdb-v1}
+
+| 设置         | 说明                             | 示例值      |
+| ------------ | ---------------------------------- | ----------- |
+| **Host**     | InfluxDB 服务器的主机名或 IP 地址。 | `localhost` |
+| **Port**     | 服务器端口。默认值：`8086`。       | `8086`      |
+| **Protocol** | 传输协议：`http` 或 `https`。      | `http`      |
+| **Database** | 要查询的 InfluxDB 数据库名称。      | `telegraf`  |
+| **Username** | 可选。用于身份验证的用户名。        | `reader`    |
+| **Password** | 可选。用于身份验证的密码。          | `••••••••`  |
+
+### InfluxDB v2 {#influxdb-v2}
+
+| 设置              | 说明                             | 示例值                    |
+| ----------------- | ---------------------------------- | ---------------------------- |
+| **URL**           | InfluxDB v2 实例的完整 URL。        | `http://localhost:8086`      |
+| **Token**         | 具有目标存储桶读取权限的 API 令牌。  | `••••••••`                   |
+| **Organisation**  | 拥有该存储桶的 InfluxDB 组织名称。  | `my-org`                     |
+| **Bucket**        | 要查询的存储桶名称。                 | `sensors`                    |
+
+### InfluxDB v3 {#influxdb-v3}
+
+| 设置         | 说明                                             | 示例值                                             |
+| ------------ | -------------------------------------------------- | ---------------------------------------------------- |
+| **URL**      | InfluxDB v3 / Cloud Serverless 端点的完整 URL。      | `https://us-east-1-1.aws.cloud2.influxdata.com`      |
+| **Token**    | 具有目标数据库读取权限的 API 令牌。                  | `••••••••`                                            |
+| **Database** | 数据库名称（相当于 v1 的数据库或 v2 的存储桶）。      | `sensors`                                             |
+
+:::tip 使用只读令牌
+为 OIBus 创建专用的只读令牌或用户。在 InfluxDB v1 上，仅在目标数据库授予 `READ` 权限；
+在 v2/v3 上，将令牌的作用范围限定在特定的存储桶或数据库。
+:::
+
+## 项目设置 {#item-settings}
+
+每个项目代表在每个扫描周期针对 InfluxDB 服务器执行的一次查询。项目拥有各自独立的扫描模式和
+限流设置（InfluxDB 连接器中没有分组功能）。
+
+| 设置          | 说明                     | 示例值          |
+| ------------- | -------------------------- | ---------------- |
+| **Scan mode** | 用于触发查询的调度。         | `Every 1 min`    |
+
+<ThrottlingSettings />
+
+### 查询 {#query}
+
+| 设置                 | 说明                                                            | 示例值    |
+| -------------------- | ------------------------------------------------------------------- | ---------- |
+| **Query**            | 要运行的查询。支持 `@StartTime` 和 `@EndTime` 占位符。               | 见下文     |
+| **Request timeout**  | 查询在被中止之前的最大执行时间（毫秒）。（仅 v1）                     | `15000`    |
+
+#### 各版本的查询示例 {#query-examples-by-version}
+
+**v1 — InfluxQL**
+
+```sql
+SELECT mean("temperature"), mean("pressure")
+FROM "sensors"
+WHERE time > '@StartTime' AND time <= '@EndTime'
+GROUP BY time(1m), "device_id"
+```
+
+**v2 — Flux**
+
+```flux
+from(bucket: "sensors")
+  |> range(start: @StartTime, stop: @EndTime)
+  |> filter(fn: (r) => r["_measurement"] == "temperature")
+  |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)
+```
+
+:::tip 排除范围的起始点
+Flux 的 `range()` 包含 `start`，但不包含 `stop`（`start <= _time < stop`）。由于
+[时间戳跟踪](#timestamp-tracking)会将下一次扫描的 `@StartTime` 设置为上一次返回结果中的最大
+`_time`，恰好落在该边界上的数据点否则会被返回两次。请添加一个针对 `_time` 的显式过滤条件，
+使起始点也变为不包含：
+
+```flux
+from(bucket: "sensors")
+  |> range(start: @StartTime, stop: @EndTime)
+  |> filter(fn: (r) => r._time > @StartTime)
+  |> filter(fn: (r) => r["_measurement"] == "temperature")
+```
+
+上面的 InfluxQL（v1）和 SQL（v3）示例不需要这样处理——它们已经使用严格的
+`time > '@StartTime'` 比较。
+:::
+
+**v3 — SQL**
+
+```sql
+SELECT time, device_id, temperature, pressure
+FROM sensors
+WHERE time > '@StartTime' AND time <= '@EndTime'
+ORDER BY time
+```
+
+## 时间变量 {#time-variables}
+
+以下占位符可在查询字符串的任何位置使用，OIBus 会在将请求发送到服务器之前将其替换：
+
+| 变量          | 注入的值                                                                                | 示例                          |
+| ------------- | ------------------------------------------------------------------------------------------ | ------------------------------ |
+| `@StartTime`  | 当前查询区间的起始时间。初始化为首次扫描时间，之后由跟踪机制推进。                          | `2024-01-15T10:00:00.000Z`     |
+| `@EndTime`    | 当前查询区间的结束时间，上限为当前时间或子区间的结束时间。                                  | `2024-01-15T11:00:00.000Z`     |
+
+替换是一种**纯文本替换**——如果查询语言要求使用字符串字面量（InfluxQL、SQL），请用引号将
+占位符括起来。在 Flux 中，`range(start:, stop:)` 可以直接接受 RFC 3339 字符串，无需外加引号。
+
+:::info 查询拆分
+当请求的时间范围较大时，OIBus 会根据 **Max read interval** 限流设置将其拆分为更小的子区间。
+每个子区间都拥有自己的 `@StartTime` / `@EndTime` 值对。
+:::
+
+## 时间戳跟踪 {#timestamp-tracking}
+
+每次成功查询后，OIBus 会取结果集中**最后一行**的时间戳，并将其用作下一个扫描周期的
+`@StartTime`。无需任何配置。
+
+:::caution 查询结果必须按时间升序排列
+OIBus 不会扫描整个结果集来查找真正的最大值——它假定 InfluxDB 按时间升序返回行（这是其
+默认行为），并直接读取最后一行。不能保证该顺序的查询——例如未显式使用 `ORDER BY time`
+的多序列 `GROUP BY` 查询——可能会返回一个实际上并非最新时间戳的最后一行，这可能导致数据
+被跳过或重复获取。如果您的查询涉及分组或重新排序结果，请添加显式的 `ORDER BY time`
+（或等效语句）。
+:::
+
+时间戳列的名称由 API 版本决定：
+
+| 版本 | 时间戳列  | 格式                                                       |
+| ---- | --------- | ------------------------------------------------------------ |
+| v1   | `time`    | ISO 8601 字符串——OIBus 对客户端返回的原始 `INanoDate` 进行标准化 |
+| v2   | `_time`   | 由 Flux 查询 API 直接返回的 RFC 3339 字符串                  |
+| v3   | `time`    | 由 Arrow Flight 客户端返回的 ISO 8601 字符串                 |
+
+如果没有返回任何结果，`@StartTime` 不会被推进，下一次扫描将重试相同的区间。
+
+## 数据流 {#data-flow}
+
+1. OIBus 将 `@StartTime` 和 `@EndTime` 替换到查询字符串中。
+2. 该查询通过与所配置版本相对应的客户端库发送到 InfluxDB 服务器。
+3. 结果以行对象组成的 JSON 数组形式收集。
+4. OIBus 提取时间戳列（v1/v3 为 `time`，v2 为 `_time`）的最大值，并将其存储为下一个扫描
+   周期的 `@StartTime`。
+5. 该 JSON 数组被写入文件，并作为原始 JSON 载荷转发到已配置的 North 连接器。
+
+:::note 输出格式
+与生成 CSV 文件的 SQL 连接器不同，InfluxDB 连接器始终输出 **JSON 文件**。请使用能接受原始
+文件载荷的 North 连接器——OIAnalytics、Azure Blob、S3、File Writer——或者，如果您的下游系统
+需要 CSV，请添加一个 JSON 转 CSV 的转换器。
+:::

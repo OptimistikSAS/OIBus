@@ -1,0 +1,52 @@
+---
+sidebar_position: 5
+---
+
+# OSIsoft PI System™
+
+OIBus agent 可以接收以下 [HTTP 调用](#http-api)。该 agent 通过进程间通信运行一个本地 PI 模块。
+
+## HTTP API {#http-api}
+
+### 状态 {#status}
+
+```
+curl --location 'http://localhost:2224/api/pi/id/status'
+```
+
+### 连接 {#connection}
+
+```
+curl --location --request PUT 'http://localhost:2224/api/pi/id/connect' \
+--header 'Content-Type: application/json' \
+--data '{}'
+```
+
+### 读取 {#read}
+
+```
+curl --location --request PUT 'http://localhost:2224/api/pi/id/read' \
+--header 'Content-Type: application/json' \
+--data '{
+    "startTime": "2023-11-02T15:00:00.000Z",
+    "endTime": "2023-11-02T16:00:00.000Z",
+    "items": [
+        {
+            "name": "PUMP01.Bearing Temperature",
+            "type": "pointId",
+            "piPoint": "OSIDemo_Pump01.Bearing Temperature.7918cae4-e10a-5af6-340b-5b8d9da3f5b2",
+        },
+        {
+            "name": "PUMP02",
+            "type": "pointQuery",
+            "piQuery": "OSIDemo_Pump02*",
+        }
+    ]
+}'
+```
+
+### 断开连接 {#disconnection}
+
+```
+curl --location --request DELETE 'http://localhost:2224/api/pi/id/disconnect'
+```
