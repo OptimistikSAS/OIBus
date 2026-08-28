@@ -11,7 +11,8 @@
 				"type": "string",
 				"enum": [
 					"fr",
-					"en"
+					"en",
+					"zh"
 				],
 				"example": "en",
 				"description": "Type representing a supported language."
@@ -42187,7 +42188,7 @@
 						}
 					}
 				},
-				"description": "Imports a previously exported configuration file, transactionally wiping and recreating every\nin-scope section of the local configuration (scan modes, ip filters, certificates, transformers,\nsouth and north connectors, history queries and users) from it, preserving each entity's original\nid. This is a full replace, not a merge, and cannot be undone. The engine's own settings and the\nOIAnalytics registration are never touched. Older exports are brought forward with the\nsettings-upgrade registry before being applied; nothing is written if the file is malformed, too\nnew for this OIBus version, or fails validation after any upgrades.",
+				"description": "Imports a previously exported configuration file, transactionally wiping and recreating every\nin-scope section of the local configuration (scan modes, ip filters, certificates, transformers,\nsouth and north connectors, history queries and users) from it, preserving each entity's original\nid. This is a full replace, not a merge, and cannot be undone. The engine's own settings and the\nOIAnalytics registration are never touched. Older exports are brought forward with the\nsettings-upgrade registry before being applied; nothing is written if the file is malformed, too\nnew for this OIBus version, or fails validation after any upgrades.\n\nOn success, OIBus restarts itself so the running engine picks up the newly written configuration\n— the wipe+recreate only touches the database, and the in-memory south/north connectors and\nhistory queries the engine is already running would otherwise keep operating against rows that\nno longer exist.",
 				"summary": "Import configuration",
 				"tags": [
 					"Config Transfer"
