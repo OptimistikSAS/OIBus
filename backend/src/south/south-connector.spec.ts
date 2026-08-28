@@ -539,6 +539,20 @@ describe('SouthConnector', () => {
       south.historyQueryHandler = mock.fn(async (_items: unknown, _startTime: unknown, _endTime: unknown) => undefined);
     });
 
+    it('should report hasExplore() as false for a connector that does not implement SouthExplore', () => {
+      assert.strictEqual(south.hasExplore(), false);
+    });
+
+    it('should not throw when reassigned a connector entity without items', () => {
+      assert.doesNotThrow(() => {
+        south.connectorConfiguration = { ...testData.south.list[1], items: undefined } as unknown as SouthConnectorEntity<
+          SouthMSSQLSettings,
+          SouthMSSQLItemSettings
+        >;
+      });
+      south.connectorConfiguration = testData.south.list[1] as SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>;
+    });
+
     it('should ignore history query when not history items', async () => {
       await south.historyQueryHandler([], '2020-02-02T02:02:02.222Z', '2020-02-02T02:02:02.222Z');
       assert.ok(
@@ -564,6 +578,18 @@ describe('SouthConnector', () => {
           String(c.arguments[0]).startsWith('Skipping history query: effective window')
         )
       );
+    });
+
+    it('falls back to a maxReadInterval/readDelay of 0 when the item does not configure them', async () => {
+      utilsExports.generateIntervals = mock.fn(() => []);
+      south.historyQuery = mock.fn(async () => ({ trackedInstant: '2021-02-02T02:02:02.222Z', value: null }));
+
+      const items = [{ ...testData.south.list[1].items[0], maxReadInterval: null, readDelay: null }] as Array<
+        SouthConnectorItemEntity<SouthMSSQLItemSettings>
+      >;
+      await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2021-02-02T02:02:02.222Z');
+
+      assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[2], 0);
     });
 
     it('should log a trace message for more than 2 sub-intervals', async () => {
@@ -809,6 +835,26 @@ describe('SouthConnector', () => {
       ]);
       assert.strictEqual(historyQueryHandlerMock.mock.calls.length, 2);
       assert.strictEqual(directQueryMock.mock.calls.length, 2);
+    });
+
+    it('should fall back to a 1-hour lookback window when the item has no maxReadInterval configured', async () => {
+      const historyQueryHandlerMock = mock.fn(async () => undefined);
+      south.historyQueryHandler = historyQueryHandlerMock;
+      south.directQuery = mock.fn(async (): Promise<null> => null);
+
+      const baseItem = testData.south.list[2].items[0] as SouthConnectorItemEntity<SouthOPCUAItemSettings>;
+      const items = [{ ...baseItem, group: null, syncWithGroup: false, maxReadInterval: null }];
+
+      await south['runTask']({ scanModeId: testData.scanMode.list[0].id, items });
+
+      assert.deepStrictEqual(historyQueryHandlerMock.mock.calls[0].arguments, [
+        items,
+        DateTime.fromISO(testData.constants.dates.FAKE_NOW)
+          .minus(3600 * 1000)
+          .toUTC()
+          .toISO()!,
+        testData.constants.dates.FAKE_NOW
+      ]);
     });
 
     it('should log the group id/name in the error context when running a task for multiple items in a group', async () => {
@@ -1093,6 +1139,24 @@ describe('SouthConnector', () => {
         null,
         null
       ]);
+    });
+
+    it('should forward the current history query interval bounds when adding a file', async () => {
+      const interval = { start: '2020-01-01T00:00:00.000Z', end: '2020-01-02T00:00:00.000Z' };
+      south['currentHistoryQueryInterval'] = interval;
+
+      await south.addContent({ type: 'any', filePath: 'file.csv' }, testData.constants.dates.DATE_1, testData.south.list[2].items);
+
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments, [
+        testData.south.list[2].id,
+        { type: 'any', filePath: 'file.csv' },
+        testData.constants.dates.DATE_1,
+        testData.south.list[2].items,
+        interval.start,
+        interval.end
+      ]);
+
+      south['currentHistoryQueryInterval'] = null;
     });
 
     it('should add any content', async () => {

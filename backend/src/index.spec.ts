@@ -402,5 +402,29 @@ describe('index.ts bootstrap()', () => {
         process.argv[1] = originalArgv1;
       }
     });
+
+    it('returns true and triggers bootstrap when invoked as index.ts directly (ts-node/tsx entry point)', async () => {
+      setupMocks(fakeEngineSettings, fakeCryptoSettings);
+      const originalArgv1 = process.argv[1];
+      process.argv[1] = '/app/index.ts';
+      try {
+        assert.equal(indexMod.runAsMain(), true);
+        await flushPromises();
+        assert.equal(webServerMock.init.mock.calls.length, 1);
+      } finally {
+        process.argv[1] = originalArgv1;
+      }
+    });
+
+    it('returns false when process.argv[1] is not set', () => {
+      setupMocks(fakeEngineSettings, fakeCryptoSettings);
+      const originalArgv = process.argv;
+      process.argv = [originalArgv[0]!];
+      try {
+        assert.equal(indexMod.runAsMain(), false);
+      } finally {
+        process.argv = originalArgv;
+      }
+    });
   });
 });
