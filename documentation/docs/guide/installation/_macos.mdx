@@ -26,7 +26,7 @@ import packageInfo from '../../../package.json';
 macOS support is intended for development and testing. For production deployments, use Linux or Windows where OIBus can be installed as a system service.
 :::
 
-## Run OIBus
+## Run OIBus {#run-oibus}
 
 1. Extract the downloaded archive to a location of your choice.
 
@@ -46,7 +46,7 @@ Replace `~/oibus-data` with the path where you want to store OIBus configuration
 - The binary must be executed from its own folder.
   :::
 
-## Allow App Execution
+## Allow App Execution {#allow-app-execution}
 
 macOS Gatekeeper will block unsigned binaries on first launch. You need to allow both `oibus-launcher`
 and `oibus` (which the launcher starts as a child process):
@@ -58,7 +58,7 @@ and `oibus` (which the launcher starts as a child process):
 
 <div style={{ textAlign: 'center' }}>![macOS Security Settings](../../../static/img/guide/installation/macos-security.png)</div>
 
-## Access OIBus
+## Access OIBus {#access-oibus}
 
 Once OIBus is running, open `http://localhost:2223` in a browser and follow the
 [first access guide](./first-access.mdx).

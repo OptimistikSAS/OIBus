@@ -13,11 +13,11 @@ Transformers are configured **on the North connector**, in the **Transformers** 
 
 ---
 
-## Configuring a Transformer
+## Configuring a Transformer {#configuring-a-transformer}
 
 Click **Add** in the Transformers section to open the configuration modal. Three fields guide the setup.
 
-### 1 — Source
+### 1 — Source {#1--source}
 
 Choose where the data comes from.
 
@@ -27,7 +27,7 @@ Choose where the data comes from.
 | **OIBus API**            | Data pushed to OIBus via the REST API. Requires a **Data Source ID** string to identify the originating system |
 | **OIAnalytics Setpoint** | Write-back commands sent from OIAnalytics                                                                      |
 
-### 2 — Item Scope (South connectors only)
+### 2 — Item Scope (South connectors only) {#2--item-scope-south-connectors-only}
 
 When the source is a South connector, you can restrict which of its items the transformer applies to.
 
@@ -55,7 +55,7 @@ the same South connector), OIBus resolves it with this priority, most specific f
 The first configured transformer that matches, in that order, is used; ties within the same level are broken by
 the transformer's position in the list.
 
-### 3 — Transformer
+### 3 — Transformer {#3--transformer}
 
 Once a source is selected, the list is automatically filtered to show only compatible transformers. The available
 choices depend on the type of South connector chosen:
@@ -75,13 +75,13 @@ After choosing a transformer, its settings form appears directly in the modal.
 
 ---
 
-## Standard Transformers
+## Standard Transformers {#standard-transformers}
 
 Standard transformers are built-in and require only configuration — no coding.
 
 ---
 
-### Ignore and No transform
+### Ignore and No transform {#ignore-and-no-transform}
 
 These two are available for **every** source type, regardless of content type, and require no configuration.
 
@@ -92,7 +92,7 @@ These two are available for **every** source type, regardless of content type, a
 
 ---
 
-### For PLC and historian South connectors
+### For PLC and historian South connectors {#for-plc-and-historian-south-connectors}
 
 These transformers process the structured **time-value** arrays produced by connectors such as OPC UA, OPC Classic,
 Modbus, TwinCAT ADS, and OSIsoft PI.
@@ -105,13 +105,13 @@ Each time-value object has this shape:
 
 ---
 
-#### CSV
+#### CSV {#csv}
 
 Converts the time-values array into a CSV file. Each row is one reading. The three columns (point ID, timestamp,
 value) are mapped to configurable column titles. Optional per-column JavaScript expressions let you
 transform individual values before they are written.
 
-##### Settings
+##### Settings {#settings}
 
 | Setting               | Description                                                                                                                                                                                        |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -132,7 +132,7 @@ transform individual values before they are written.
 | **Value process**     | Optional JS expression applied to each value (variable: `value`)                                                                                                                                   |
 | **Timestamp process** | Optional JS expression applied to each formatted timestamp (variable: `value`)                                                                                                                     |
 
-##### Example
+##### Example {#example}
 
 **Input (OPC UA items: temp1, pressure1)**
 
@@ -160,7 +160,7 @@ pressure1;2024-01-15T10:00:00.000Z;102,1
 
 ---
 
-#### JSON
+#### JSON {#json}
 
 A transparent pass-through that re-serializes the time-values array as a JSON file. Use this when the North
 connector expects a generic JSON file rather than the internal time-values format (e.g. a file-based North like
@@ -168,7 +168,7 @@ Azure Blob or File Writer).
 
 This transformer has **no configuration options**.
 
-##### Example
+##### Example {#example-1}
 
 **Input** — any time-values array from an OPC UA or Modbus South connector.
 
@@ -176,18 +176,18 @@ This transformer has **no configuration options**.
 
 ---
 
-#### MQTT payloads
+#### MQTT payloads {#mqtt-payloads}
 
 Maps each reading to an MQTT message using a **point ID → topic** mapping table. Readings whose point ID has no
 match are silently dropped. The payload is a JSON string containing the `data` fields merged with the `timestamp`.
 
-##### Settings
+##### Settings {#settings-1}
 
 | Setting     | Description                        |
 | ----------- | ---------------------------------- |
 | **Mapping** | List of `{ pointId, topic }` pairs |
 
-##### Example
+##### Example {#example-2}
 
 Mapping: `plant/temp1 → sensors/temperature`, `plant/pressure1 → sensors/pressure`
 
@@ -212,18 +212,18 @@ Mapping: `plant/temp1 → sensors/temperature`, `plant/pressure1 → sensors/pre
 
 ---
 
-#### Modbus values
+#### Modbus values {#modbus-values}
 
 Maps each reading to a Modbus write command using a **point ID → address** mapping table. The value is cast to the
 appropriate type: booleans for coils, integers for holding registers. Readings with no match are dropped.
 
-##### Settings
+##### Settings {#settings-2}
 
 | Setting     | Description                                                                           |
 | ----------- | ------------------------------------------------------------------------------------- |
 | **Mapping** | List of `{ pointId, address, modbusType }` pairs (`modbusType`: `coil` or `register`) |
 
-##### Example
+##### Example {#example-3}
 
 Mapping: `plant/valve1 → 0x0010 (coil)`, `plant/speed → 0x0020 (register)`
 
@@ -247,19 +247,19 @@ Mapping: `plant/valve1 → 0x0010 (coil)`, `plant/speed → 0x0020 (register)`
 
 ---
 
-#### OIAnalytics (select time precision)
+#### OIAnalytics (select time precision) {#oianalytics-select-time-precision}
 
 Prepares readings for the OIAnalytics North connector. Timestamps can be truncated to a chosen precision to reduce
 storage footprint. Only the `pointId`, `timestamp`, and `data.value` fields are forwarded — extra quality fields
 are stripped.
 
-##### Settings
+##### Settings {#settings-3}
 
 | Setting       | Description                                                |
 | ------------- | ---------------------------------------------------------- |
 | **Precision** | Timestamp precision: `ms` (unchanged), `s`, `min`, or `hr` |
 
-##### Example — Precision `s`
+##### Example — Precision `s` {#example--precision-s}
 
 **Input**
 
@@ -275,18 +275,18 @@ are stripped.
 
 ---
 
-#### OPCUA values
+#### OPCUA values {#opcua-values}
 
 Maps each reading to an OPC UA write command using a **point ID → node ID** mapping table. The value is forwarded
 as-is. Readings with no match are dropped.
 
-##### Settings
+##### Settings {#settings-4}
 
 | Setting     | Description                         |
 | ----------- | ----------------------------------- |
 | **Mapping** | List of `{ pointId, nodeId }` pairs |
 
-##### Example
+##### Example {#example-4}
 
 Mapping: `plant/temp1 → ns=1;s=Temperature`, `plant/valve1 → ns=1;s=Valve1`
 
@@ -310,19 +310,19 @@ Mapping: `plant/temp1 → ns=1;s=Temperature`, `plant/valve1 → ns=1;s=Valve1`
 
 ---
 
-### For file and query-based South connectors
+### For file and query-based South connectors {#for-file-and-query-based-south-connectors}
 
 These transformers process files or JSON payloads produced by connectors such as REST, SFTP, FTP, Folder Scanner,
 ODBC, and OLEDB, as well as data injected via the **OIBus API**.
 
 ---
 
-#### Time Values (from CSV)
+#### Time Values (from CSV) {#time-values-from-csv}
 
 Parses a CSV file and maps each row to an OIBus time-value object. The transformer converts the raw timestamp
 string to ISO-8601 according to the configured format.
 
-##### Settings
+##### Settings {#settings-5}
 
 | Setting              | Description                                                                           |
 | -------------------- | ------------------------------------------------------------------------------------- |
@@ -335,7 +335,7 @@ string to ISO-8601 according to the configured format.
 | **Timezone**         | Timezone for parsing (only used when type is `string`)                                |
 | **Format**           | Custom datetime pattern (only used when type is `string`, e.g. `yyyy-MM-dd HH:mm:ss`) |
 
-##### Example
+##### Example {#example-5}
 
 This transformer is useful when a REST South connector fetches CSV exports from an API, or when a Folder Scanner
 South connector picks up CSV files dropped by another system.
@@ -364,7 +364,7 @@ MQTT, OPC UA…).
 
 ---
 
-#### MQTT payloads (from CSV)
+#### MQTT payloads (from CSV) {#mqtt-payloads-from-csv}
 
 Parses a CSV file and converts each row into an MQTT message with a topic and a payload. Two payload modes are
 supported:
@@ -372,7 +372,7 @@ supported:
 - **Simple** — a single column becomes the payload, cast to the configured type.
 - **Object** — multiple columns are assembled into a JSON object payload.
 
-##### Settings
+##### Settings {#settings-6}
 
 | Setting               | Description                                                                           |
 | --------------------- | ------------------------------------------------------------------------------------- |
@@ -384,7 +384,7 @@ supported:
 | **Object fields**     | List of `{ key, column, dataType }` mappings (object payload only)                    |
 | **Datetime settings** | Input/output datetime conversion (applies when payload type or a field is `datetime`) |
 
-##### Example — Simple payload
+##### Example — Simple payload {#example--simple-payload}
 
 **Input CSV**
 
@@ -403,7 +403,7 @@ plant/pump1/running,true
 ]
 ```
 
-##### Example — Object payload
+##### Example — Object payload {#example--object-payload}
 
 **Input CSV**
 
@@ -426,13 +426,13 @@ Object fields: `value → number`, `quality → string`, `timestamp → datetime
 
 ---
 
-#### CSV (from JSON)
+#### CSV (from JSON) {#csv-from-json}
 
 Parses a JSON structure and writes a CSV file. A **row iterator path** (JSONPath expression) identifies the array
 of objects that become rows, and each configured **field** maps a path within each row to a CSV column. Fields
 support datetime conversion, type casting, and optional per-field JavaScript post-processing expressions.
 
-##### Settings
+##### Settings {#settings-7}
 
 | Setting               | Description                                                                                                                                                                                        |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -457,7 +457,7 @@ Each **field** entry:
 | **Datetime settings** | Input and output format/timezone/type when data type is `datetime`                      |
 | **Field process**     | Optional JS expression to post-process the extracted value (e.g. `value.toUpperCase()`) |
 
-##### Example
+##### Example {#example-6}
 
 A REST South connector fetches a JSON report from an API. The **CSV (from JSON)** transformer extracts the
 relevant fields and reformats them for a File Writer North connector.
@@ -499,7 +499,7 @@ one row per nested match, so a single message holding several readings splits in
 
 ---
 
-#### OIAnalytics (from JSON)
+#### OIAnalytics (from JSON) {#oianalytics-from-json}
 
 Extracts point ID, value, and timestamp from an arbitrary JSON structure via JSONPath expressions and produces a
 standard OIBus time-values array — the same shape produced by PLC/historian South connectors. A **row iterator
@@ -510,7 +510,7 @@ This is the transformer to reach for when a South connector (typically MQTT, RES
 JSON that doesn't already match OIBus's internal time-values shape, and you want to feed it straight to an
 OIAnalytics North connector without writing a custom transformer.
 
-##### Settings
+##### Settings {#settings-8}
 
 | Setting                   | Description                                                                                                                                                                                                                                                                          |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -524,7 +524,7 @@ OIAnalytics North connector without writing a custom transformer.
 | **Locale**                | Locale used for parsing month/day names (only used when input type is `String`)                                                                                                                                                                                                      |
 | **Timestamp precision**   | Output precision the resulting ISO timestamp is truncated to: `Millisecond`, `Second`, `Minute`, or `Hour`                                                                                                                                                                           |
 
-##### Example — MQTT messages with a JSON-stringified payload
+##### Example — MQTT messages with a JSON-stringified payload {#example--mqtt-messages-with-a-json-stringified-payload}
 
 An MQTT South connector delivers each message as `{ message, timestamp, item }`, where `message` is the **raw
 MQTT payload string**. A single message can carry more than one metric, so the row iterator uses **two**
@@ -566,7 +566,7 @@ handles a single-metric message and a multi-metric message alike.
 
 ---
 
-### For SQL database South connectors
+### For SQL database South connectors {#for-sql-database-south-connectors}
 
 MySQL, PostgreSQL, MSSQL, Oracle, and SQLite South connectors don't serialize their query results themselves —
 each row is sent downstream exactly as the database returned it, as **record-list** content (an array of flat
@@ -574,7 +574,7 @@ row objects). Rendering that data into any other shape, including CSV, is the tr
 
 ---
 
-#### CSV (from Record list)
+#### CSV (from Record list) {#csv-from-record-list}
 
 Converts an array of rows into a CSV file. Every key present in a row becomes a column automatically — there's
 no need to declare a field just to have it appear in the output. Declaring a field (via **Fields Mapping**,
@@ -582,7 +582,7 @@ using the same per-field mapping model as [CSV (from JSON)](#csv-from-json)) is 
 be renamed, cast to a specific type, reformatted (dates), or passed through a JavaScript expression. Any column
 not covered by a field configuration is written out unchanged.
 
-##### Settings
+##### Settings {#settings-9}
 
 | Setting                 | Description                                                                                    |
 | ----------------------- | ---------------------------------------------------------------------------------------------- |
@@ -617,7 +617,7 @@ it:
 | **Timestamp output type**                     | How to render the value (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`)          |
 | **Output timezone / format / locale**         | Used to render the value when its output type is `string`                              |
 
-##### Example
+##### Example {#example-7}
 
 **Input** (record-list content from a MySQL item)
 
@@ -642,7 +642,7 @@ sensor-1,23.8,2024-01-15 11:01:00
 
 ---
 
-### For OIAnalytics Setpoints
+### For OIAnalytics Setpoints {#for-oianalytics-setpoints}
 
 These transformers convert write-back commands sent by OIAnalytics into the format expected by the target
 actuator North connector.
@@ -655,18 +655,18 @@ Each setpoint command has this shape:
 
 ---
 
-#### MQTT payloads
+#### MQTT payloads {#mqtt-payloads-1}
 
 Converts setpoint commands into MQTT messages using a **reference → topic** mapping table. Commands with no
 matching entry are dropped. The payload is the value serialized to a string; object values are JSON-stringified.
 
-##### Settings
+##### Settings {#settings-10}
 
 | Setting     | Description                          |
 | ----------- | ------------------------------------ |
 | **Mapping** | List of `{ reference, topic }` pairs |
 
-##### Example
+##### Example {#example-8}
 
 Mapping: `pump1/setSpeed → control/pump1/speed`
 
@@ -689,18 +689,18 @@ Mapping: `pump1/setSpeed → control/pump1/speed`
 
 ---
 
-#### Modbus values
+#### Modbus values {#modbus-values-1}
 
 Converts setpoint commands into Modbus write commands. Boolean values are written as coils; numeric values are
 parsed as integers and written as holding registers.
 
-##### Settings
+##### Settings {#settings-11}
 
 | Setting     | Description                                                                             |
 | ----------- | --------------------------------------------------------------------------------------- |
 | **Mapping** | List of `{ reference, address, modbusType }` pairs (`modbusType`: `coil` or `register`) |
 
-##### Example
+##### Example {#example-9}
 
 Mapping: `valve1/open → 0x0010 (coil)`, `pump1/speed → 0x0020 (register)`
 
@@ -724,17 +724,17 @@ Mapping: `valve1/open → 0x0010 (coil)`, `pump1/speed → 0x0020 (register)`
 
 ---
 
-#### OPCUA values
+#### OPCUA values {#opcua-values-1}
 
 Converts setpoint commands into OPC UA write commands using a **reference → node ID** mapping table.
 
-##### Settings
+##### Settings {#settings-12}
 
 | Setting     | Description                           |
 | ----------- | ------------------------------------- |
 | **Mapping** | List of `{ reference, nodeId }` pairs |
 
-##### Example
+##### Example {#example-10}
 
 Mapping: `pump1/speed → ns=1;s=PumpSpeed`
 
@@ -752,7 +752,7 @@ Mapping: `pump1/speed → ns=1;s=PumpSpeed`
 
 ---
 
-## Testing a Transformer Against a Real South Item
+## Testing a Transformer Against a Real South Item {#testing-a-transformer-against-a-real-south-item}
 
 Beyond testing a custom transformer's code in isolation (see below), you can preview any transformer —
 standard or custom — end-to-end against real, freshly-collected data from the **South item's Test** modal
@@ -768,7 +768,7 @@ standard or custom — end-to-end against real, freshly-collected data from the 
 
 ---
 
-## Custom Transformers
+## Custom Transformers {#custom-transformers}
 
 When no standard transformer fits your use case, you can write a **Custom Transformer** in JavaScript or
 TypeScript. Custom code runs inside a secure isolated sandbox with no access to the host file system, Node.js
@@ -777,7 +777,7 @@ modules, or the network.
 Custom transformers are created in the **Engine → Transformers** page and are then available in the transformer
 selection list of any North connector.
 
-### Transform Function
+### Transform Function {#transform-function}
 
 Your code must export a `transform` function (or a default export). It receives four arguments and must return a
 result object.
@@ -830,7 +830,7 @@ input data (an MQTT topic, a payload field…), coerce it and strip path separat
 `` `mqtt_${String(topic).replace(/[\\/]/g, '_')}.json` ``.
 :::
 
-### Available Libraries
+### Available Libraries {#available-libraries}
 
 The following libraries are pre-loaded in the sandbox and available via `require`:
 
@@ -842,12 +842,12 @@ The following libraries are pre-loaded in the sandbox and available via `require
 
 Any other `require` call throws an error — `fs`, `http`, `process`, and all Node.js built-ins are blocked.
 
-### Logging
+### Logging {#logging}
 
 Inside the sandbox, `console.log`, `console.info`, `console.warn`, and `console.error` are bridged to the OIBus
 logger. All messages appear prefixed with `CUSTOM TRANSFORMER:`.
 
-### Limits
+### Limits {#limits}
 
 | Limit         | Value                                            |
 | ------------- | ------------------------------------------------ |
@@ -858,9 +858,9 @@ logger. All messages appear prefixed with `CUSTOM TRANSFORMER:`.
 
 ---
 
-### Examples
+### Examples {#examples}
 
-#### Example 1 — Reformat a JSON array to CSV (JavaScript)
+#### Example 1 — Reformat a JSON array to CSV (JavaScript) {#example-1--reformat-a-json-array-to-csv-javascript}
 
 A REST South connector returns a JSON array. This transformer converts it to a semicolon-delimited CSV file
 for a File Writer North connector.
@@ -910,7 +910,7 @@ export function transform(content, source, filename, options) {
 
 ---
 
-#### Example 2 — Filter and enrich time-values (TypeScript)
+#### Example 2 — Filter and enrich time-values (TypeScript) {#example-2--filter-and-enrich-time-values-typescript}
 
 Only keep readings above a configured threshold, and annotate each with a derived `status` field.
 
@@ -969,7 +969,7 @@ export function transform(
 
 ---
 
-#### Example 3 — Extract fields from a nested JSON with JSONPath (JavaScript)
+#### Example 3 — Extract fields from a nested JSON with JSONPath (JavaScript) {#example-3--extract-fields-from-a-nested-json-with-jsonpath-javascript}
 
 **Input (`content`)**
 
@@ -1020,7 +1020,7 @@ export function transform(content, _source, _filename, _options) {
 
 ---
 
-#### Example 4 — Timestamp conversion with Luxon (JavaScript)
+#### Example 4 — Timestamp conversion with Luxon (JavaScript) {#example-4--timestamp-conversion-with-luxon-javascript}
 
 Parse Unix epoch millisecond timestamps from a REST API response and convert them to ISO-8601 in a specific timezone.
 
@@ -1064,7 +1064,7 @@ export function transform(content, _source, _filename, _options) {
 
 ---
 
-#### Example 5 — Normalize MQTT JSON messages to time-values (JavaScript)
+#### Example 5 — Normalize MQTT JSON messages to time-values (JavaScript) {#example-5--normalize-mqtt-json-messages-to-time-values-javascript}
 
 An **MQTT South** connector delivers each batch of received messages as a single `any-content` payload:
 a JSON array of `{ message, timestamp, item: { id, name, topic } }`, where `message` is the **raw MQTT
