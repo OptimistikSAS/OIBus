@@ -1,0 +1,188 @@
+---
+displayed_sidebar: useCasesSidebar
+sidebar_position: 2
+---
+
+# Microsoft SQL Server™ → Azure Blob Storage™
+
+## Préalable {#beforehand}
+
+Ce cas d'usage montre comment configurer un connecteur SQL (ici avec MSSQL), en travaillant en particulier sur les requêtes SQL avec quelques
+réglages, et comment envoyer les fichiers CSV résultants vers Azure Blob.
+
+Les détails concernant les configurations se trouvent sur les pages des connecteurs [North Azure Blob Storage](../guide/north-connectors/azure-blob.md) et
+[South Microsoft SQL Server™](../guide/south-connectors/mssql.mdx).
+
+Ce scénario spécifique est construit autour du réseau fictif représenté.
+
+<div style={{ textAlign: 'center' }}>
+
+![Cas d'usage MSSQL -> Azure Blob](../../static/img/use-cases/mssql-azure-blob.svg)
+
+</div>
+
+## South MSSQL {#south-mssql}
+
+Assurez-vous d'avoir l'URL ou l'adresse IP du serveur MSSQL, ainsi que le port associé, et un utilisateur en lecture seule.
+
+:::caution Utilisateur en lecture seule
+Bien qu'un utilisateur en lecture seule ne soit pas obligatoire, il est fortement recommandé afin d'éviter l'insertion ou la mise à jour de données
+via une requête SQL. Les connecteurs South sont conçus pour accéder aux données, pas pour créer de nouvelles entrées.
+:::
+
+Avec le schéma proposé, les paramètres suivants peuvent être définis :
+
+- Hôte : `10.0.0.1`
+- Port : `1433`
+- Base de données : `oibus-test`
+
+<div style={{ textAlign: 'center' }}>
+
+![Paramètres MSSQL](../../static/img/use-cases/mssql-settings.png)
+
+</div>
+
+:::tip Test de la connexion
+Vous pouvez vérifier la connexion en testant les paramètres à l'aide du bouton `Test settings`.
+:::
+
+### Requêtes SQL {#sql-queries}
+
+OIBus fournit des variables de requête telles que `@StartTime` et `@EndTime`. Cependant, leur utilisation n'est pas obligatoire.
+
+#### Sans variable {#without-variable}
+
+Dans cet exemple, une fenêtre glissante peut récupérer régulièrement les données sans avoir besoin de ces variables, entre maintenant et hier :
+
+```SQL
+SELECT timestamp, message, level FROM table
+WHERE timestamp > DATEADD(DAY,-1,GETDATE()) AND timestamp <= GETDATE()
+```
+
+:::caution Type DateTime
+Assurez-vous de comparer la date avec un champ du même type de date, tel qu'un type DateTime. Utilisez une
+[fonction de conversion (cast ou convert)](https://learn.microsoft.com/en-us/sql/t-sql/functions/cast-and-convert-transact-sql?view=sql-server-ver16) pour
+traiter correctement le champ ou votre date de comparaison.
+:::
+
+Dans ce scénario, la section des champs date-heure peut toujours être utilisée pour analyser les dates et les restituer dans le format
+approprié. Seul le champ `timestamp` est un champ date-heure, et nous ne l'utilisons pas comme référence car il n'est pas utilisé avec `@StartTime` ou `@EndTime`.
+
+<div style={{ textAlign: 'center' }}>
+
+![Élément MSSQL sans variable](../../static/img/use-cases/mssql-item-1.png)
+
+</div>
+
+#### Avec variables {#with-variables}
+
+La variable `@StartTime` capture le dernier instant maximum récupéré lors d'une requête précédente. Pour la toute première requête, avant qu'aucun instant
+n'ait été suivi, OIBus remonte dans le temps selon le paramètre **Intervalle de lecture maximum** (en secondes) depuis l'instant présent — ou 1 heure si l'intervalle de lecture maximum
+est laissé à `0`. La variable `@EndTime` est définie sur l'instant présent, ou sur la fin du sous-intervalle lorsque la requête est fractionnée par **Intervalle de lecture maximum**.
+
+Pour éviter de surcharger le serveur avec une requête volumineuse, vous pouvez diviser l'intervalle \[`@StartTime`, `@EndTime`\] en morceaux plus petits. Cela
+peut être configuré dans la section **Paramètres d'historique**, depuis les paramètres du connecteur :
+
+- **Intervalle de lecture maximum** (en secondes) : si réglé sur 60 secondes, et que l'intervalle est de 1 heure, 60 requêtes de sous-intervalle seront générées.
+- **Délai de lecture** (en millisecondes) entre chaque requête de sous-intervalle.
+- **Décalage de début** (en millisecondes) : ajouté au début de la fenêtre de requête (`@StartTime`). Une valeur négative avance le début plus tôt,
+  pour capturer les données arrivant en retard — c'est l'ancien comportement « Overlap ».
+- **Décalage de fin** (en millisecondes) : ajouté à la fin de la fenêtre de requête (`@EndTime`). Une valeur négative rapproche la fin ; une
+  valeur positive la prolonge.
+- **Stratégie de récupération** : ordre dans lequel OIBus rattrape un retard de sous-intervalles — `From oldest to newest` (par défaut) ou
+  `From newest to oldest`.
+
+<div style={{ textAlign: 'center' }}>
+
+![Paramètres d'historique MSSQL](../../static/img/use-cases/mssql-history-settings.png)
+
+</div>
+
+:::caution Quand utiliser le décalage de début ?
+Un **décalage de début** négatif est utile lorsque certaines données récupérées présentent une latence et sont stockées après l'exécution de la requête.
+Dans ce cas, cela permet d'étendre légèrement l'intervalle demandé vers l'arrière, afin que les lignes arrivant en retard ne soient pas manquées.
+
+Faites preuve de prudence si votre requête implique une agrégation, car cela pourrait altérer vos données en décalant l'origine temporelle du premier intervalle.
+:::
+
+```SQL
+SELECT timestamp, message, level FROM logs
+WHERE timestamp > @StartTime AND timestamp <= @EndTime
+```
+
+##### Champs date-heure {#date-time-fields}
+
+Un champ date-heure peut être ajouté :
+
+- Nom du champ : timestamp
+- Champ de référence : true
+- Type : ISO 8601
+
+Le champ `timestamp` contient une date-heure au format ISO-8601. Il sert de référence, ce qui signifie qu'il sera stocké dans l'instant
+maximum du cache South.
+
+##### Sérialisation {#serialization}
+
+- Type : `csv`
+- Nom de fichier : `sqlite-@CurrentDate.csv`
+- Format de date-heure de sortie : `yyyy-MM-dd'T'HH:mm:ss.SSS'Z'`
+- Fuseau horaire de sortie : `Europe/Paris`
+- Délimiteur : `Comma ,`
+
+<div style={{ textAlign: 'center' }}>
+
+![Élément MSSQL avec variable](../../static/img/use-cases/mssql-item-2.png)
+
+</div>
+
+##### Résultat {#result}
+
+Notez que le nom de fichier avec `@CurrentDate` sera toujours formaté `yyyy_MM_dd_HH_mm_ss_SSS`.
+
+```csv title="CSV file sqlite-2024_01_23_10_38_50_063.csv"
+timestamp;message;level
+2024-01-23T11:38:36.282Z;"Error while connecting to the OPCUA server. Error: The connection may have been rejected by server,Err = (premature socket termination socket timeout : timeout=60000  ClientTCP_transport57)";error
+2024-01-23T11:38:36.282Z;"South connector ""OPCUA"" (keOidHvw9qJ3CXAr1_zIF) disconnected";debug
+2024-01-23T11:38:36.282Z;"Error while connecting to the OPCUA server. Error: The connection may have been rejected by server,Err = (premature socket termination socket timeout : timeout=60000  ClientTCP_transport56)";error
+2024-01-23T11:38:36.282Z;"South connector ""Prosys HA"" (Mv8o0vr_nyh39-eF01Q2l) disconnected";debug
+2024-01-23T11:38:40.007Z;Opening ./OIBus/data-folder/logs/logs.db SQLite database;debug
+2024-01-23T11:38:40.007Z;"Sending ""SELECT timestamp, message, level FROM logs WHERE timestamp > @StartTime AND timestamp < @EndTime"" with @StartTime = 2024-01-23T10:38:17.083Z @EndTime = 2024-01-23T10:38:40.006Z";info
+2024-01-23T11:38:40.059Z;Found 24 results for item SQLite log 2 in 52 ms;info
+2024-01-23T11:38:40.063Z;"Writing 4913 bytes into CSV file at ""./OIBus/data-folder/cache/data-stream/south-GG6BT_CR31m1h1jMpm9ud/tmp/sqlite-2024_01_23_10_38_40_063.csv""";debug
+2024-01-23T11:38:40.063Z;"Sending CSV file ""./OIBus/data-folder/cache/data-stream/south-GG6BT_CR31m1h1jMpm9ud/tmp/sqlite-2024_01_23_10_38_40_063.csv"" to Engine";debug
+2024-01-23T11:38:40.063Z;"Add file ""./OIBus/data-folder/cache/data-stream/south-GG6BT_CR31m1h1jMpm9ud/tmp/sqlite-2024_01_23_10_38_40_063.csv"" to cache from South ""SQLite log""";debug
+2024-01-23T11:38:40.063Z;"Caching file ""./OIBus/data-folder/cache/data-stream/south-GG6BT_CR31m1h1jMpm9ud/tmp/sqlite-2024_01_23_10_38_40_063.csv"" in North connector ""Console debug""...";debug
+2024-01-23T11:38:40.064Z;"File ""./OIBus/data-folder/cache/data-stream/south-GG6BT_CR31m1h1jMpm9ud/tmp/sqlite-2024_01_23_10_38_40_063.csv"" cached in ""./OIBus/data-folder/cache/data-stream/north-FSyK0CdXNxVe0onCI1RA1/files/sqlite-2024_01_23_10_38_40_063-1706006320063.csv""";debug
+2024-01-23T11:38:40.066Z;Next start time updated from 2024-01-23T10:38:17.083Z to 2024-01-23T10:38:36.282Z;debug
+2024-01-23T11:38:40.067Z;"File ""./OIBus/data-folder/cache/data-stream/north-FSyK0CdXNxVe0onCI1RA1/files/sqlite-2024_01_23_10_38_40_063-1706006320063.csv"" moved to archive folder ""./OIBus/data-folder/cache/data-stream/north-FSyK0CdXNxVe0onCI1RA1/archive/sqlite-2024_01_23_10_38_40_063-1706006320063.csv""";debug
+2024-01-23T11:38:46.283Z;Connecting to OPCUA on opc.tcp://oibus.rd.optimistik.fr:53530/OPCUA/SimulationServer;debug
+```
+
+Dans cet exemple, l'instant maximum enregistré pour le `@StartTime` de la prochaine requête sera `2024-01-23T11:38:46.283Z`, injecté dans la
+requête au format ISO 8601.
+
+:::tip Base de données de journaux SQLite
+Cet exemple de requête peut être utilisé pour la base de données de journaux SQLite d'OIBus `./logs/logs.db`.
+:::
+
+## North Azure Blob {#north-azure-blob}
+
+Assurez-vous de disposer des identifiants utilisateur donnant accès à un conteneur Azure Blob avec droits d'écriture.
+
+Créez le connecteur North Azure Blob et renseignez les champs pertinents :
+
+- Compte : `oibus`
+- Conteneur : `test-oibus`
+- Chemin : `north-local-oib`
+
+Si **Chemin** est laissé vide, les fichiers seront stockés à la racine du conteneur.
+
+<div style={{ textAlign: 'center' }}>
+
+![Paramètres Azure Blob](../../static/img/use-cases/azure-blob-settings.png)
+
+</div>
+
+:::tip Test de la connexion
+Vous pouvez vérifier la connexion en testant les paramètres à l'aide du bouton `Test settings`.
+:::
