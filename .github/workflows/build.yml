@@ -74,9 +74,37 @@ jobs:
         run: |
           gh release upload ${{ steps.release_info.outputs.release_name }} oibus-sbom.json --clobber
 
+  build-documentation:
+    name: 'Build embedded documentation'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Use Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: documentation/package.json
+
+      - name: Build embedded documentation
+        shell: bash
+        run: |
+          cd documentation
+          npm ci
+          npm run build:embedded
+
+      - name: Upload embedded documentation artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: embedded-documentation
+          path: documentation/build
+
   build:
     name: Build for ${{ matrix.config['friendlyName'] }}
-    needs: [ prepare ]
+    needs: [ prepare, build-documentation ]
     runs-on: ${{ matrix.config['os'] }}
     strategy:
       fail-fast: false
@@ -126,6 +154,12 @@ jobs:
       - name: Build OIBus launcher for ${{ matrix.config['friendlyName'] }}
         working-directory: ./launcher
         run: npm run build:${{ matrix.config['platform'] }}
+
+      - name: Download embedded documentation
+        uses: actions/download-artifact@v8
+        with:
+          name: embedded-documentation
+          path: backend/dist/documentation
 
       - name: Build OIBus binary for ${{ matrix.config['friendlyName'] }}
         working-directory: ./backend
