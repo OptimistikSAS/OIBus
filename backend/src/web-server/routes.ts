@@ -43,7 +43,7 @@ const multer = require('multer');
 const models: TsoaRoute.Models = {
     "Language": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["fr"]},{"dataType":"enum","enums":["en"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["fr"]},{"dataType":"enum","enums":["en"]},{"dataType":"enum","enums":["zh"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Timezone": {
