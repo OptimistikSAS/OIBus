@@ -50,6 +50,7 @@ import { ExportItemModalComponent } from '../../shared/export-item-modal/export-
 import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/import-history-query-items-modal/import-history-query-items-modal.component';
 import { OIBusAttribute, OIBusObjectAttribute } from '../../../../../backend/shared/model/form.model';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { DocsUrlService } from '../../shared/docs-url.service';
 
 const PAGE_SIZE = 20;
 
@@ -114,6 +115,9 @@ export class HistoryQueryDetailComponent {
   private cd = inject(ChangeDetectorRef);
   private translateService = inject(TranslateService);
   private destroyRef = inject(DestroyRef);
+  private docsUrlService = inject(DocsUrlService);
+
+  readonly itemSectionHelpUrl = this.docsUrlService.resolve('guide/south-connectors/common-settings#item-section');
 
   historyQuery: HistoryQueryDTO | null = null;
   northDisplayedSettings: Array<{ key: string; value: string }> = [];

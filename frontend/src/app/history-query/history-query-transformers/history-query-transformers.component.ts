@@ -7,6 +7,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { EditHistoryQueryTransformerModalComponent } from './edit-history-query-transformer-modal/edit-history-query-transformer-modal.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { DocsUrlService } from '../../shared/docs-url.service';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ConfirmationService } from '../../shared/confirmation.service';
@@ -30,6 +31,9 @@ export class HistoryQueryTransformersComponent {
   private modalService = inject(ModalService);
   private historyQueryService = inject(HistoryQueryService);
   private translateService = inject(TranslateService);
+  private docsUrlService = inject(DocsUrlService);
+
+  readonly helpUrl = this.docsUrlService.resolve('guide/north-connectors/common-settings#transformers');
 
   readonly historyQuery = input<HistoryQueryDTO | null>(null);
 

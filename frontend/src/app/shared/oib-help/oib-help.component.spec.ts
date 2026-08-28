@@ -12,7 +12,7 @@ import { page } from 'vitest/browser';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
-  url = 'https://oibus.optimistik.com' as const;
+  url = '/documentation/guide/x' as const;
 }
 
 class TestComponentTester {
@@ -34,7 +34,7 @@ describe('OibHelpComponent', () => {
   });
 
   test('should display a info circle', async () => {
-    await expect.element(tester.helpLink).toHaveAttribute('href', 'https://oibus.optimistik.com');
+    await expect.element(tester.helpLink).toHaveAttribute('href', '/documentation/guide/x');
     await expect.element(tester.infoCircle).toBeInTheDocument();
   });
 });
