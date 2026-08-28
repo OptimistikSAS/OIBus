@@ -70,8 +70,8 @@ describe('shared model type constants', () => {
     assert.equal(DEFAULT_TZ, 'Europe/Paris');
   });
 
-  it('LANGUAGES contains fr and en', () => {
-    assert.deepEqual(LANGUAGES, ['fr', 'en']);
+  it('LANGUAGES contains fr, en and zh', () => {
+    assert.deepEqual(LANGUAGES, ['fr', 'en', 'zh']);
   });
 
   it('DATE_TIME_TYPES contains the expected values', () => {
