@@ -15,14 +15,14 @@ Connect to OSIsoft PI System™ for industrial data collection and visualization
 
 :::
 
-## Connection Settings
+## Connection Settings {#connection-settings}
 
 | Setting          | Description                                                                    | Example Value               |
 | ---------------- | ------------------------------------------------------------------------------ | --------------------------- |
 | Remote agent URL | Agent endpoint URL. Required for all connections.                              | `http://192.168.1.100:2224` |
 | Retry interval   | Time in milliseconds to wait before retrying the connection. Default: `10000`. | `10000`                     |
 
-## Group Settings
+## Group Settings {#group-settings}
 
 Items are organised into **groups**. Each group defines a shared schedule and the default throttling
 parameters for historical data retrieval.
@@ -39,9 +39,9 @@ Each item can override the group throttling defaults by disabling the **Sync wit
 edit form.
 :::
 
-## Item Configuration
+## Item Configuration {#item-configuration}
 
-### Point Access Methods
+### Point Access Methods {#point-access-methods}
 
 | Setting     | Description                                                                                                                                                                       | Example Value            |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
@@ -55,9 +55,9 @@ edit form.
 - For `PI query`: PI name is used as reference
   :::
 
-## OSIsoft PI SDK Configuration
+## OSIsoft PI SDK Configuration {#osisoft-pi-sdk-configuration}
 
-### Installation Requirements
+### Installation Requirements {#installation-requirements}
 
 1. Install PI SDK on agent machine
 2. During installation, specify default data server
@@ -66,7 +66,7 @@ edit form.
 - PI SDK must be properly configured
 - PI System Access (PSA) must be installed
 
-### User Configuration
+### User Configuration {#user-configuration}
 
 1. Create domain user account (accessible from both machines)
 
@@ -74,7 +74,7 @@ edit form.
 
 2. Configure OIBus Agent service to run as this user
 
-### Trust Configuration
+### Trust Configuration {#trust-configuration}
 
 1. Open PI System Management Tools
 2. Navigate to `Mapping & Trusts` → `Trusts` tab
@@ -84,7 +84,7 @@ edit form.
 - Domain (if applicable)
 - PI Identity to connect with
 
-### Mapping Configuration
+### Mapping Configuration {#mapping-configuration}
 
 1. In PI System Management Tools
 2. Navigate to `Mapping & Trusts` → `Mappings` tab
@@ -98,7 +98,7 @@ View system logs in PI System Management Tools:
 `Operation` → `Messages Logs`
 :::
 
-### Configuration Screenshots
+### Configuration Screenshots {#configuration-screenshots}
 
 **1. SDK Installation** — Specify default data server during installation
 

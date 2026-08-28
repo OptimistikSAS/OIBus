@@ -1,11 +1,11 @@
 import CodeBlock from '@theme/CodeBlock';
 import packageInfo from '../../../package.json';
 
-## Pull the Image
+## Pull the Image {#pull-the-image}
 
 <CodeBlock language="bash">{`docker pull ghcr.io/optimistiksas/oibus:v${packageInfo.version}`}</CodeBlock>
 
-## Run the Container
+## Run the Container {#run-the-container}
 
 <CodeBlock language="bash">
   {`docker run -d \\
@@ -28,7 +28,7 @@ only exposes port 2223 — changing it internally will make the interface unreac
 
 Open `http://localhost:2223` in a browser and follow the [first access guide](./first-access.mdx).
 
-## Initial Configuration (First Run)
+## Initial Configuration (First Run) {#initial-configuration-first-run}
 
 Set these environment variables on the container to configure the admin account, port, and engine name
 before OIBus starts for the first time — the equivalent of the `-u`/`-p`/`-port`/`-n` flags used by the
@@ -67,7 +67,7 @@ the same port on the host, e.g. `-p 8080:8080 -e DEFAULT_PORT=8080`, and it must
 run for the same reason as above.
 :::
 
-## Docker Compose
+## Docker Compose {#docker-compose}
 
 <CodeBlock language="yaml">
   {`services:
@@ -90,7 +90,7 @@ run for the same reason as above.
 `}
 </CodeBlock>
 
-## Port Configuration
+## Port Configuration {#port-configuration}
 
 | Port       | Purpose             | How to expose                                   |
 | ---------- | ------------------- | ----------------------------------------------- |

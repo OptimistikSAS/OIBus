@@ -8,9 +8,9 @@ The **MQTT North Connector** enables OIBus to **publish data to MQTT brokers**, 
 - **Real-time Notifications**: Send alerts and events to subscribed systems
 - **Edge Device Control**: Send commands to edge devices via MQTT topics
 
-## Specific Settings
+## Specific Settings {#specific-settings}
 
-### Connection Configuration
+### Connection Configuration {#connection-configuration}
 
 | Setting                            | Description                                                                                                                                      | Example Value                    |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
@@ -21,7 +21,7 @@ The **MQTT North Connector** enables OIBus to **publish data to MQTT brokers**, 
 | **Connect timeout**                | Maximum time to wait for a connection (in milliseconds).                                                                                         | `30000`                          |
 | **Persistent**                     | Enable for persistent sessions that survive broker restarts. Only available when **QoS** is `1` or `2` — a QoS `0` session cannot be persistent. | Enabled/Disabled                 |
 
-### Authentication
+### Authentication {#authentication}
 
 | Setting            | Description                                                                                                               | Example Value                              |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
