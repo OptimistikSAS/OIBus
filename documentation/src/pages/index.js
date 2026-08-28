@@ -4,7 +4,7 @@ import Layout from '@theme/Layout';
 import HomepageFeatures from '@site/src/components/HomepageFeatures';
 
 import styles from './index.module.css';
-import Translate from '@docusaurus/Translate';
+import Translate, { translate } from '@docusaurus/Translate';
 
 const HomepageHeader = () => {
   return (
@@ -67,8 +67,15 @@ const HomepageHeader = () => {
 export default function Home() {
   return (
     <Layout
-      title={`OIBus — Open source data collection`}
-      description="OIBus is an open source industrial data collection software. Connect to OPC UA, Modbus, SQL databases, MQTT, REST APIs and more. Forward data to OIAnalytics, Amazon S3, Azure Blob Storage, or any HTTP endpoint. Free, lightweight, runs on Windows, Linux, macOS and Docker."
+      title={translate({
+        message: 'OIBus — Open source data collection',
+        description: 'The homepage document title'
+      })}
+      description={translate({
+        message:
+          'OIBus is an open source industrial data collection software. Connect to OPC UA, Modbus, SQL databases, MQTT, REST APIs and more. Forward data to OIAnalytics, Amazon S3, Azure Blob Storage, or any HTTP endpoint. Free, lightweight, runs on Windows, Linux, macOS and Docker.',
+        description: 'The homepage meta description'
+      })}
     >
       <HomepageHeader />
       <main>

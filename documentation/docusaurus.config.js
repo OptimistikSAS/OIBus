@@ -25,7 +25,7 @@ export default {
 
   i18n: {
     defaultLocale: 'en',
-    locales: ['en']
+    locales: ['en', 'fr']
   },
 
   // JSON-LD structured data for the whole site
@@ -93,7 +93,7 @@ export default {
               indexDocs: true,
               indexBlog: false,
               docsRouteBasePath: '/docs',
-              language: ['en']
+              language: ['en', 'fr']
             }
           ]
         ]
