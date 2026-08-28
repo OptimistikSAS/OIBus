@@ -1,0 +1,161 @@
+---
+sidebar_position: 10
+---
+
+import ThrottlingSettings from './_throttling-settings.mdx';
+
+# OPC Classic™
+
+使用 OIBus 通过 [OIBus Agent](../oibus-agent/installation.mdx) 连接到 OPC Classic™ 服务器。
+
+:::info 技术背景
+
+- 由 [OPC Foundation](https://opcfoundation.org/) 制定的工业通信协议
+- 同时支持 HDA 和 DA 模式
+- 需要基于 Windows 的 OIBus Agent
+- 关于 OPC UA，请参见 [OPC UA 连接器](./opcua.mdx)
+
+:::
+
+:::caution 系统要求
+OIBus Agent **必须**安装在 Windows 机器上
+:::
+
+## OPC Classic 与 OPC UA 对比 {#opc-classic-vs-opc-ua}
+
+|              | OPC Classic™                                                                       | OPC UA                                                              |
+| ------------ | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| **标准**     | 三个独立规范：**DA**（实时数据）、**HDA**（历史数据）、**AE**（报警与事件）          | 统一标准：**DA**（实时数据）+ **HA**（历史访问）+ 报警                |
+| **历史模式名称** | **HDA** —— 历史数据访问                                                          | **HA** —— 历史访问（OPC UA Part 11）。概念相同，名称不同 —— 见下方说明 |
+| **传输方式** | COM/DCOM —— 仅限 Windows 进程间通信                                                  | TCP/IP 或 HTTPS —— 可在任何 IP 网络上工作                             |
+| **平台**     | 仅限 Windows                                                                         | 跨平台：Windows、Linux、macOS、嵌入式设备                             |
+| **安全性**   | 依赖 Windows 域/DCOM 安全机制                                                       | 内置：消息签名、加密、基于证书的身份验证                              |
+| **推出时间** | 1996 年                                                                              | 2006 年                                                               |
+| **OIBus 要求** | 需要在托管 OPC 服务器的 Windows 机器上运行 [OIBus Agent](../oibus-agent/installation.mdx) | 由 OIBus 直接连接 —— 无需 Agent                                       |
+
+:::note HDA 与 HA —— 命名上的混淆
+来自 OPC Classic 背景的用户经常在 OPC UA 中寻找 **HDA**，却找不到。
+OPC UA 将等效功能重命名为 **HA**（历史访问，定义于 OPC UA Part 11）。
+概念完全相同 —— 都是向服务器查询过去记录的值 —— 但缩写发生了变化。
+在 OIBus 中，本连接器将该模式称为 `HDA`，而 OPC UA 连接器称为 `HA`。
+不要将 OPC UA 的 HA 与 OPC Classic 的 HDA 混淆：它们是相互**不可互操作**的独立协议。
+:::
+
+**选择 OPC Classic**：当您的基础设施已经运行无法迁移的 OPC DA 或 OPC HDA 服务器时。OPC Classic 所依赖的
+COM/DCOM 技术仅限 Windows 使用，且在没有 DCOM 隧道的情况下无法通过标准 IP 网络传输 —— 因此需要
+OIBus Agent 直接运行在 Windows 主机上。
+
+**选择 OPC UA**：适用于任何新部署。OPC UA 是当前的行业标准，支持所有平台并内置安全机制。详情请参见
+[OPC UA 连接器](./opcua.mdx)。
+
+## 常见 OPC Classic 服务器 {#common-opc-classic-servers}
+
+| 服务器                                                                                                                                                           | 供应商              | 模式    | 说明                                                                                                                                   |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| [KEPServerEX](https://www.ptc.com/en/products/kepware/kepserverex)                                                                                               | PTC（Kepware）      | DA、HDA | 部署最广泛的 OPC 网关；支持数百种 PLC、DCS 及设备类型。同时也暴露 OPC UA 端点 —— 参见 OPC UA 页面                                       |
+| [FactoryTalk Linx](https://www.rockwellautomation.com/en-us/products/software/factorytalk/operationsuite/linx.html)                                              | Rockwell Automation | DA      | 标准 OPC DA 服务器，适用于 Allen-Bradley / ControlLogix PLC                                                                              |
+| [SIMATIC NET PC Software](https://www.siemens.com/global/en/products/automation/industry-software/automation-software/simatic-net-industrial-communication.html) | Siemens             | DA      | 面向 S7-300 和 S7-400 PLC 的 OPC DA 访问。S7-1500 及更新型号原生支持 OPC UA —— 请改用 OPC UA 连接器                                     |
+| [Matrikon OPC](https://www.matrikon.com)                                                                                                                         | Honeywell           | DA、HDA | 提供大量针对特定设备的 OPC 服务器目录，包括一个广泛使用的免费仿真服务器                                                                  |
+| [PI Server](https://www.aveva.com/en/products/aveva-pi-system/)                                                                                                  | AVEVA（OSIsoft）    | DA、HDA | 业界领先的过程历史数据库；同时也暴露 OPC UA 接口                                                                                        |
+| [Proficy Historian](https://www.ge.com/digital/applications/proficy-historian)                                                                                   | GE Digital          | HDA     | 制造业和公用事业领域常见的历史数据库                                                                                                    |
+| [InfoPlus.21](https://www.aspentech.com/en/products/mss/aspen-infoplus-21)                                                                                       | AspenTech           | DA、HDA | 广泛应用于石油天然气和化工行业                                                                                                          |
+
+## 专有设置 {#specific-settings}
+
+| 设置         | 说明                                          | 示例值                       |
+| ------------ | --------------------------------------------- | ---------------------------- |
+| 远程代理 URL | 代理端点（例如 `http://host:2224`）           | `http://192.168.1.100:2224` |
+| 重试间隔     | 连接重试前的等待时间（毫秒）                  | 10000                        |
+| 服务器 URL   | OPC 服务器地址（从代理机器角度）              | `localhost` 或 IP 地址       |
+| 服务器名称   | OPC 服务器名称（ProgID）                      | `Matrikon.OPC.Simulation`    |
+| 模式         | 数据访问模式（DA 或 HDA）                     | `HDA`                        |
+
+## 组设置 {#group-settings}
+
+条目被组织为**组**。每个组定义一个共享的调度计划，以及对于 HDA 模式而言，该组内所有条目的默认限流参数。
+
+| 设置          | 说明                                     | 示例值        |
+| ------------- | ---------------------------------------- | ------------- |
+| **名称**      | 该连接器内该组的唯一标签。               | `Group A`     |
+| **扫描模式**  | 应用于该组内每个条目的采集调度。         | `Every 1 min` |
+
+<ThrottlingSettings />
+
+:::tip 按条目覆盖限流设置
+每个条目都可以通过在条目编辑表单中禁用**与组同步**开关来覆盖组的默认限流设置。
+:::
+
+## 条目设置 {#item-settings}
+
+| 设置       | 说明                                                                     | 示例值                           |
+| ---------- | ------------------------------------------------------------------------ | --------------------------------- |
+| 节点 ID    | OPC 服务器命名空间中数据的路径                                           | `Channel1.Device1.Tag1`           |
+| 聚合方式   | 数据聚合方法（请核实服务器是否支持）。完整列表见下方说明。               | `Raw`、`Average`、`Minimum` 等   |
+| 重采样     | 以请求的间隔对聚合值进行重采样（需要非 `Raw` 的聚合方式）                | `None`、`1 second`、`1 hour` 等 |
+
+:::caution 兼容性说明
+
+1. **聚合支持**：并非所有服务器都支持所有聚合方法
+2. **重采样**：仅在聚合方式不为 `Raw` 时可用
+3. **推荐设置**：为获得最大兼容性，使用 `Raw` 聚合和 `None` 重采样
+4. **服务器能力**：请查阅您的 OPC 服务器文档以核实所支持的功能
+
+:::
+
+:::note 聚合值
+
+| 值                   | 说明                                     |
+| -------------------- | ---------------------------------------- |
+| Raw                  | 区间内所有原始值                         |
+| Interpolative        | 请求时间点的插值                         |
+| Total                | 区间内所有值之和                         |
+| Average              | 算术平均值                               |
+| Time average         | 时间加权平均值                           |
+| Count                | 数据点数量                               |
+| STDEV                | 标准差                                   |
+| Minimum actual time  | 最小值及其实际时间戳                     |
+| Minimum              | 区间内的最小值                           |
+| Maximum actual time  | 最大值及其实际时间戳                     |
+| Maximum              | 区间内的最大值                           |
+| Start                | 区间内的第一个值                         |
+| End                  | 区间内的最后一个值                       |
+| Delta                | 首值与末值之差                           |
+| Reg slope            | 线性回归斜率                             |
+| Reg const             | 线性回归 y 轴截距                       |
+| Reg dev              | 线性回归偏差                             |
+| Variance             | 统计方差                                 |
+| Range                | 最大值减最小值                           |
+| Duration good        | 质量良好数据的持续时间                   |
+| Duration bad         | 质量不良数据的持续时间                   |
+| Percent good         | 质量良好样本的百分比                     |
+| Percent bad          | 质量不良样本的百分比                     |
+| Worst quality        | 区间内最差的质量代码                     |
+| Annotations          | 注释事件                                 |
+
+:::
+
+:::note 重采样值
+
+`None` · `1 second` · `10 seconds` · `30 seconds` · `1 minute` · `1 hour` · `1 day`
+
+:::
+
+### 配置示例 {#configuration-examples}
+
+1. **基本配置**：
+
+- 节点 ID：`Simulation Random.Int4`
+- 聚合方式：`Raw`
+- 重采样：`None`
+
+2. **聚合值**：
+
+- 节点 ID：`Production.Line1.Temperature`
+- 聚合方式：`Average`
+- 重采样：`1 minute`
+
+3. **高频数据**：
+
+- 节点 ID：`Process.Vessel.Pressure`
+- 聚合方式：`Minimum`
+- 重采样：`1s`

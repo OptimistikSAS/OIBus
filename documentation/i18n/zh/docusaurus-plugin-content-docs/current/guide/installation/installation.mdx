@@ -1,0 +1,59 @@
+---
+sidebar_position: 1
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import WindowsSteps from './_windows.mdx';
+import LinuxSteps from './_linux.mdx';
+import MacOSSteps from './_macos.mdx';
+import DockerSteps from './_docker.mdx';
+
+# 安装
+
+## 系统要求 {#system-requirements}
+
+| 资源                  | 最低要求                  | 说明                                                                                                                                                                      |
+| ------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **内存**                   | 2 GB                     | 实际使用量取决于连接器数量和数据量。                                                                                                          |
+| **磁盘空间**            | 200 MB                   | 建议为数据缓冲和缓存预留额外的若干 GB 空间。可参见[数据速率与缓存规划](../advanced/oibus-data-rate.mdx)来估算你的部署所需的容量。 |
+| **管理员权限** | 必需                 | 安装 OIBus 并将其注册为系统服务需要此权限。                                                                                                               |
+| **网页浏览器**           | Chrome、Firefox 或 Edge | 不支持 Internet Explorer。                                                                                                                        |
+
+:::note 远程访问
+浏览器可以在同一台机器上，也可以在远程工作站上。如需远程访问，请配置
+[IP 过滤器](../engine/ip-filters.mdx)以允许客户端地址。
+:::
+
+## 支持的平台 {#supported-platforms}
+
+| 平台    | 版本                                 | 架构                      |
+| ----------- | ---------------------------------------- | ----------------------------------- |
+| **Windows** | 10、11、Server 2016 / 2019 / 2022 / 2025 | x64                                |
+| **Linux**   | Ubuntu 20.04+、Debian 10/11、RHEL 8/9    | x64、ARM64                         |
+| **macOS**   | 11（Big Sur）及更高版本                   | Intel（x64）、Apple Silicon（ARM64） |
+| **Docker**  | 任何运行 Docker Engine 20.10+ 的宿主机    | x64、ARM64                         |
+
+## 安装 {#installation}
+
+:::tip 需要部署到多台机器？
+如果你需要通过磁盘镜像在多台机器上部署 OIBus——并在首次启动时自动应用
+安装和初始配置——请参见[自动化安装指南](./disk-image.mdx)。
+:::
+
+选择你的平台：
+
+<Tabs>
+  <TabItem value="windows" label="Windows" default>
+    <WindowsSteps />
+  </TabItem>
+  <TabItem value="linux" label="Linux">
+    <LinuxSteps />
+  </TabItem>
+  <TabItem value="macos" label="macOS">
+    <MacOSSteps />
+  </TabItem>
+  <TabItem value="docker" label="Docker">
+    <DockerSteps />
+  </TabItem>
+</Tabs>

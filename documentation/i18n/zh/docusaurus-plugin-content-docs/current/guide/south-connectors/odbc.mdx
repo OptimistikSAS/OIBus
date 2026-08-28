@@ -1,0 +1,86 @@
+---
+sidebar_position: 7
+---
+
+import ItemSettings from './_south-sql-item-settings.mdx';
+
+# ODBC
+
+连接到本地或通过远程 [OIBus Agent](../oibus-agent/odbc.md) 连接到 ODBC 数据源。对于 Aspen InfoPlus.21®（IP21）等系统以及其他兼容 ODBC 的应用程序特别有用。
+
+:::info 兼容性说明
+
+- 适用于任何兼容 ODBC 的数据源
+- 推荐用于 Aspen IP21 连接
+- 支持本地和远程驱动程序配置
+
+:::
+
+## 特定设置 {#specific-settings}
+
+| 设置            | 描述                                                                                                                                                                                                                       | 示例值                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Use remote agent   | 启用后，通过远程机器上的 OIBus Agent 路由查询。                                                                                                                                               | 启用/禁用                                  |
+| Remote agent URL   | Agent 端点 URL。使用远程 Agent 时必填。                                                                                                                                                             | `http://host:2224`                                |
+| Connection timeout | 建立连接的最长时间（毫秒）。默认值：`15000`。                                                                                                                                                           | `15000`                                           |
+| Retry interval     | 重试连接之前等待的时间（毫秒）。默认值：`10000`。                                                                                                                                                    | `10000`                                           |
+| Request timeout    | _（仅在使用**远程 Agent** 时使用）_ 发送给 Agent 的单个查询的最长执行时间（毫秒）。默认值：`15000`。不适用于本地（非 Agent）连接。                      | `15000`                                           |
+| Connection string  | 驱动程序特定格式的 ODBC 连接字符串。                                                                                                                                                                 | `Driver={AspenTech SQLplus};HOST=ip21;PORT=10014` |
+| Password           | 认证密码（安全存储）。始终以 `PWD=<password>;` 的形式附加 —— 如果您的连接字符串已经包含自己的 `PWD=`/`Pwd=` 条目，请将其从此处或字符串中移除，以避免重复。 | `••••••••`                                        |
+
+### 连接字符串示例 {#connection-string-examples}
+
+**Windows**：
+`Driver={driver name};SERVER=host;PORT=10014;Database=db;UID=user`
+
+> 示例：`Driver={AspenTech SQLplus};HOST=ip21-server;PORT=10014;MAXROWS=12000000`
+
+**类 UNIX 系统**：
+`Driver=/path/to/driver.so;SERVER=host;PORT=10014;Database=db;UID=user`
+
+> 示例：`Driver=/opt/lib/libmsodbcsql.18.dylib;SERVER=localhost;Database=test`
+
+:::tip macOS 设置
+
+1. 安装 unixodbc：`brew install unixodbc`
+2. 验证安装：`odbcinst -j`
+3. 列出驱动程序：`cat /opt/homebrew/etc/odbcinst.ini`
+   :::
+
+### 驱动程序安装 {#driver-installation}
+
+| Platform   | Installation Method                                        |
+| ---------- | ---------------------------------------------------------- |
+| Windows    | 使用 ODBC 数据源管理器配置驱动程序    |
+| UNIX/Linux | 安装驱动程序，然后在连接字符串中指定完整路径 |
+| macOS      | `brew install unixodbc` + 安装驱动程序              |
+
+### Aspen IP21 配置 {#aspen-ip21-configuration}
+
+为获得最佳 IP21 性能：
+
+1. 在 IP21 机器上安装 OIBus Agent
+2. 使用连接字符串：`Driver={AspenTech SQLplus};HOST=<host>;PORT=10014;MAXROWS=12000000`
+3. 确保在 Agent 机器上安装了 `AspenTech SQLplus` 驱动程序
+4. 使用适当的权限配置 Agent 服务
+
+:::caution 认证
+
+- 连接字符串中的密码以纯文本形式存储。请改用**密码**字段。
+- 对于本地认证，请确保 OIBus Agent 以适当的权限运行
+
+:::
+
+<ItemSettings />
+
+:::note ODBC 日期时间字段类型
+以下**类型**值可用于日期时间字段配置：
+
+| Type            | Description                                       |
+| --------------- | ------------------------------------------------- |
+| String          | 使用自定义格式解析的字符串表示形式 |
+| ISO String      | ISO 8601 字符串（例如 `2024-01-15T10:30:00.000Z`） |
+| UNIX epoch (s)  | 以秒为单位的 Unix 时间戳                          |
+| UNIX epoch (ms) | 以毫秒为单位的 Unix 时间戳                    |
+
+:::

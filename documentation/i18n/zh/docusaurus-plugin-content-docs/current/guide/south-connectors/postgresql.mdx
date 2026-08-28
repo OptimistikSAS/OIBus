@@ -1,0 +1,62 @@
+---
+sidebar_position: 14
+---
+
+import ItemSettings from './_south-record-list-item-settings.mdx';
+
+# PostgreSQL
+
+使用 OIBus 连接并查询 PostgreSQL 数据库。
+
+:::info 兼容性说明
+
+- 支持 PostgreSQL 9.6 及更高版本
+
+:::
+
+## 特定设置 {#specific-settings}
+
+| 设置       | 描述                                                | 示例值           |
+| ---------- | ------------------------------------------------------ | ----------------- |
+| Host       | PostgreSQL 服务器的 IP 地址或主机名。                   | `192.168.1.10`     |
+| Port       | 服务器端口号。默认：`5432`。                            | `5432`              |
+| SSL        | 启用加密连接。建议在生产环境中使用。                     | Enabled/Disabled   |
+| Database   | 要连接的数据库名称。                                     | `production`        |
+| 连接超时   | 建立连接的最长时间（毫秒）。默认：`10000`。              | `10000`             |
+| 请求超时   | 单个 SQL 查询的最长执行时间（毫秒）。                    | `15000`             |
+| Username   | 身份验证用户名。                                         | `db_user`            |
+| Password   | 身份验证密码。                                           | `••••••••`           |
+
+:::tip 安全最佳实践
+
+- 使用只读数据库用户
+
+:::
+
+### 性能考量 {#performance-considerations}
+
+**查询优化**：
+
+- 在 WHERE 子句中使用带索引的列
+- 限制结果集（避免使用 `SELECT *`）
+
+**资源管理**：
+
+- SSL 加密带来的开销极小
+- 对于大数据集或复杂查询，增加超时时间
+
+<ItemSettings />
+
+:::note PostgreSQL 日期时间字段类型
+以下**类型**值可用于跟踪瞬时值的日期时间字段：
+
+| 类型                    | 描述                                       |
+| ----------------------- | -------------------------------------------- |
+| String                  | 使用自定义格式解析的字符串表示               |
+| Timestamp               | PostgreSQL `TIMESTAMP` 列（不含时区）        |
+| Timestamp with timezone | PostgreSQL `TIMESTAMPTZ` 列（含时区）        |
+| ISO String              | ISO 8601 字符串（例如 `2024-01-15T10:30:00.000Z`） |
+| UNIX epoch (s)          | 以秒为单位的 Unix 时间戳                     |
+| UNIX epoch (ms)         | 以毫秒为单位的 Unix 时间戳                   |
+
+:::
