@@ -423,6 +423,291 @@ describe('HistoryQueryRepository', () => {
     assert.strictEqual(historyDeleteCalls.length, 1);
   });
 
+  it('should audit removed items and transformers when an update reduces (but does not empty) both lists', () => {
+    const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+      JSON.stringify(testData.historyQueries.list[0])
+    );
+    newHistoryQuery.id = '';
+    newHistoryQuery.name = 'history with two items and transformers to reduce';
+    newHistoryQuery.northTransformers = [];
+    newHistoryQuery.items = [
+      {
+        id: '',
+        name: 'item-to-keep',
+        enabled: true,
+        settings: {} as SouthItemSettings,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      },
+      {
+        id: '',
+        name: 'item-to-remove',
+        enabled: true,
+        settings: {} as SouthItemSettings,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ];
+    repository.saveHistory(newHistoryQuery, true);
+    repository.addOrEditTransformer(
+      newHistoryQuery.id,
+      { id: '', transformer: testData.transformers.list[0] as Transformer, options: {}, items: [] },
+      'attachUser'
+    );
+    repository.addOrEditTransformer(
+      newHistoryQuery.id,
+      { id: '', transformer: testData.transformers.list[1] as Transformer, options: {}, items: [] },
+      'attachUser'
+    );
+
+    const before = repository.findHistoryById(newHistoryQuery.id)!;
+    assert.strictEqual(before.items.length, 2);
+    assert.strictEqual(before.northTransformers.length, 2);
+    const keptItem = before.items.find(i => i.name === 'item-to-keep')!;
+    const removedItem = before.items.find(i => i.name === 'item-to-remove')!;
+    const keptTransformer = before.northTransformers[0];
+
+    const updated: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(before));
+    updated.items = [keptItem];
+    updated.northTransformers = [keptTransformer];
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+    repository.saveHistory(updated, false);
+
+    const after = repository.findHistoryById(newHistoryQuery.id)!;
+    assert.strictEqual(after.items.length, 1);
+    assert.strictEqual(after.northTransformers.length, 1);
+
+    const itemDeleteCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'history_query_item' && call.arguments[1] === removedItem.id && call.arguments[2] === 'DELETE'
+    );
+    assert.ok(itemDeleteCall, 'expected a DELETE audit entry for the item dropped by the update');
+
+    const transformerDeleteCalls = recordMock.mock.calls.filter(
+      call => call.arguments[0] === 'history_query_transformer' && call.arguments[2] === 'DELETE'
+    );
+    assert.strictEqual(transformerDeleteCalls.length, 1);
+  });
+
+  it('should audit removed items when an update clears a previously non-empty item list', () => {
+    const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+      JSON.stringify(testData.historyQueries.list[0])
+    );
+    newHistoryQuery.id = '';
+    newHistoryQuery.name = 'history with items to fully clear';
+    newHistoryQuery.northTransformers = [];
+    newHistoryQuery.items = [
+      {
+        id: '',
+        name: 'item-to-clear',
+        enabled: true,
+        settings: {} as SouthItemSettings,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ];
+    repository.saveHistory(newHistoryQuery, true);
+    const before = repository.findHistoryById(newHistoryQuery.id)!;
+    assert.strictEqual(before.items.length, 1);
+
+    const updated: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(before));
+    updated.items = [];
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+    repository.saveHistory(updated, false);
+
+    assert.strictEqual(repository.findHistoryById(newHistoryQuery.id)!.items.length, 0);
+    const itemDeleteCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'history_query_item' && call.arguments[1] === before.items[0].id && call.arguments[2] === 'DELETE'
+    );
+    assert.ok(itemDeleteCall, 'expected a DELETE audit entry for the item cleared by the update');
+  });
+
+  it('should redact without a manifest (null "before") when the pre-transaction item snapshot cannot resolve an updated item', () => {
+    // beforeItemsById is captured via findAllItemsForHistory() *before* saveHistory's transaction
+    // opens; the update-path lookup inside the transaction re-queries existingItemsById
+    // independently. The only way to desynchronize the two without breaking referential integrity is
+    // to stub the pre-transaction snapshot call so it reports no items despite the DB still holding one.
+    const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+      JSON.stringify(testData.historyQueries.list[0])
+    );
+    newHistoryQuery.id = '';
+    newHistoryQuery.name = 'history for desynced-before-items-snapshot test';
+    newHistoryQuery.northTransformers = [];
+    newHistoryQuery.items = [
+      {
+        id: '',
+        name: 'item-to-desync',
+        enabled: true,
+        settings: {} as SouthItemSettings,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ];
+    repository.saveHistory(newHistoryQuery, true);
+    const created = repository.findHistoryById(newHistoryQuery.id)!;
+    const existingItem = created.items[0];
+
+    const updated: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(created));
+    updated.items[0].name = 'desynced-before-items-snapshot';
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+
+    const originalFindAllItemsForHistory = repository.findAllItemsForHistory.bind(repository);
+    repository.findAllItemsForHistory = () => [];
+    try {
+      repository.saveHistory(updated, false);
+    } finally {
+      repository.findAllItemsForHistory = originalFindAllItemsForHistory;
+    }
+
+    const updateCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'history_query_item' && call.arguments[1] === existingItem.id && call.arguments[2] === 'UPDATE'
+    );
+    assert.ok(updateCall, 'expected an UPDATE audit entry for the desynced item');
+    assert.strictEqual(updateCall!.arguments[3], null);
+  });
+
+  it('should insert and then update a transformer link, exercising both the CREATE and UPDATE audit branches', () => {
+    const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+      JSON.stringify(testData.historyQueries.list[0])
+    );
+    newHistoryQuery.id = '';
+    newHistoryQuery.name = 'history for transformer create-then-update test';
+    newHistoryQuery.northTransformers = [];
+    newHistoryQuery.items = [];
+    repository.saveHistory(newHistoryQuery, true);
+
+    repository.addOrEditTransformer(
+      newHistoryQuery.id,
+      { id: '', transformer: testData.transformers.list[0] as Transformer, options: {}, items: [] },
+      'attachUser'
+    );
+    const withTransformer = repository.findHistoryById(newHistoryQuery.id)!;
+    const transformerId = withTransformer.northTransformers[0].id;
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+    repository.addOrEditTransformer(
+      newHistoryQuery.id,
+      { id: transformerId, transformer: testData.transformers.list[0] as Transformer, options: { updated: true }, items: [] },
+      'updateUser'
+    );
+
+    const updateCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'history_query_transformer' && call.arguments[1] === transformerId && call.arguments[2] === 'UPDATE'
+    );
+    assert.ok(updateCall, 'expected an UPDATE audit entry when re-saving an existing transformer link');
+    assert.deepStrictEqual(repository.findHistoryById(newHistoryQuery.id)!.northTransformers[0].options, { updated: true });
+  });
+
+  it('should return null when removing a transformer whose id does not exist', () => {
+    assert.doesNotThrow(() => repository.removeTransformer('non-existent-transformer-id', 'removeUser'));
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    const deleteCalls = recordMock.mock.calls.filter(
+      call =>
+        call.arguments[0] === 'history_query_transformer' &&
+        call.arguments[1] === 'non-existent-transformer-id' &&
+        call.arguments[2] === 'DELETE'
+    );
+    assert.strictEqual(deleteCalls.length, 0);
+  });
+
+  it('should redact an unknown south/north connector type by returning settings as-is (no manifest match)', () => {
+    const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+      JSON.stringify(testData.historyQueries.list[0])
+    );
+    newHistoryQuery.id = '';
+    newHistoryQuery.name = 'history with unknown south/north types';
+    newHistoryQuery.southType = 'not-a-real-south-type' as typeof newHistoryQuery.southType;
+    newHistoryQuery.northType = 'not-a-real-north-type' as typeof newHistoryQuery.northType;
+    newHistoryQuery.northTransformers = [];
+    newHistoryQuery.items = [
+      {
+        id: '',
+        name: 'item-under-unknown-south-type',
+        enabled: true,
+        settings: {} as SouthItemSettings,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ];
+    repository.saveHistory(newHistoryQuery, true);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+    repository.deleteHistory(newHistoryQuery.id, 'deleteUser');
+
+    const historyDeleteCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'history_query' && call.arguments[1] === newHistoryQuery.id && call.arguments[2] === 'DELETE'
+    );
+    assert.ok(historyDeleteCall);
+    // With no manifest for either type, redactHistory must return both settings objects untouched.
+    const redacted = historyDeleteCall!.arguments[3] as { southType: string; northType: string };
+    assert.strictEqual(redacted.southType, 'not-a-real-south-type');
+    assert.strictEqual(redacted.northType, 'not-a-real-north-type');
+
+    const itemDeleteCall = recordMock.mock.calls.find(call => call.arguments[0] === 'history_query_item' && call.arguments[2] === 'DELETE');
+    assert.ok(itemDeleteCall);
+    assert.strictEqual((itemDeleteCall!.arguments[3] as { name: string }).name, 'item-under-unknown-south-type');
+  });
+
+  it('should redact without a manifest (raw before/after) when saveItem is given a historyId whose history query does not exist', () => {
+    // saveItem's UPDATE query matches by item id alone (not history_id), so passing a historyId that
+    // doesn't resolve to a real history query still updates the row while making
+    // findHistoryById(...)?.southType resolve to undefined — the only way to reach the "no southType"
+    // side of saveItem's audit redaction without breaking referential integrity.
+    const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+      JSON.stringify(testData.historyQueries.list[0])
+    );
+    newHistoryQuery.id = '';
+    newHistoryQuery.name = 'history for saveItem unknown historyId test';
+    newHistoryQuery.northTransformers = [];
+    newHistoryQuery.items = [];
+    repository.saveHistory(newHistoryQuery, true);
+
+    const item: HistoryQueryItemEntity<SouthItemSettings> = {
+      id: '',
+      name: 'save-item-unknown-history',
+      enabled: true,
+      settings: {} as SouthItemSettings,
+      createdBy: '',
+      updatedBy: 'creatorUser',
+      createdAt: '',
+      updatedAt: ''
+    };
+    repository.saveItem(newHistoryQuery.id, item);
+    assert.ok(item.id);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+
+    item.name = 'save-item-unknown-history-renamed';
+    item.updatedBy = 'updaterUser';
+    repository.saveItem('history-id-that-does-not-exist', item);
+
+    assert.strictEqual(recordMock.mock.calls.length, 1);
+    const [, , , before, after] = recordMock.mock.calls[0].arguments as [string, string, string, unknown, unknown];
+    // No history query resolves for this (wrong) historyId => no southType => no manifest lookup;
+    // findItemById(...) itself can't find the row via that same wrong id either, so both sides of the
+    // audit entry come back null — the "no southType" ternary branch is what this test targets.
+    assert.strictEqual(before, null);
+    assert.strictEqual(after, null);
+  });
+
   it('should update status', () => {
     repository.updateHistoryStatus(testData.historyQueries.list[0].id, 'FINISHED');
     assert.strictEqual(repository.findHistoryById(testData.historyQueries.list[0].id)!.status, 'FINISHED');
