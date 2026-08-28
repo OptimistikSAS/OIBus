@@ -1,0 +1,78 @@
+---
+displayed_sidebar: useCasesSidebar
+sidebar_position: 3
+---
+
+import NorthOIAnalytics from './_north_oianalytics.mdx';
+
+# ADS / TwinCAT® → OIAnalytics®
+
+## Préalable {#beforehand}
+
+Consultez les pages des connecteurs [North OIAnalytics](../guide/north-connectors/oianalytics.md) et [South ADS](../guide/south-connectors/ads.mdx) pour tous les détails de configuration.
+
+Lisez les [paramètres réseau spécifiques au connecteur](../guide/south-connectors/ads.mdx#specific-settings) avant de configurer le connecteur ADS — les paramètres requis dépendent de la manière dont OIBus est déployé par rapport au routeur ADS.
+
+Deux scénarios de déploiement sont décrits ci-dessous.
+
+## South ADS {#south-ads}
+
+### ADS local {#local-ads}
+
+OIBus est installé sur la même machine que le routeur ADS.
+
+<div style={{ textAlign: 'center' }}>
+
+![Twincat local -> OIA](../../static/img/use-cases/twincat-local-oia.svg)
+
+</div>
+
+Seul le **Net ID** doit être renseigné (ici `127.0.0.1.1.1`).
+
+<div style={{ textAlign: 'center' }}>
+
+![Paramètres Twincat local](../../static/img/use-cases/twincat-local-settings.png)
+
+</div>
+
+### ADS distant {#remote-ads}
+
+OIBus est déployé sur une machine séparée et doit se connecter au routeur ADS via le réseau.
+
+<div style={{ textAlign: 'center' }}>
+
+![Twincat distant -> OIA](../../static/img/use-cases/twincat-remote-oia.svg)
+
+</div>
+
+- **Adresse du routeur** : `10.0.0.1`, port `48898`
+- **AMS Net ID** : doit correspondre à la route statique configurée sur le serveur AMS. Les quatre premiers segments correspondent généralement à l'adresse IP de la machine OIBus (par exemple `193.164.196.201.1.1`)
+- **Port client ADS** : un port local inutilisé servant à se connecter à l'automate via le routeur (par exemple `48899`)
+
+<div style={{ textAlign: 'center' }}>
+
+![Paramètres Twincat distant](../../static/img/use-cases/twincat-remote-settings.png)
+
+</div>
+
+:::tip Test de la connexion
+Cliquez sur **Tester les paramètres** pour vérifier la connexion avant d'enregistrer.
+:::
+
+### Éléments {#items}
+
+Ajoutez les adresses que vous souhaitez lire. Demandez à l'administrateur de l'automate les adresses disponibles. Sélectionnez un [mode de scrutation](../guide/engine/scan-modes.mdx) pour contrôler l'intervalle de collecte.
+
+<div style={{ textAlign: 'center' }}>
+
+![Paramètres d'élément ADS](../../static/img/use-cases/twincat-item.png)
+
+</div>
+
+:::tip Import en masse
+Cliquez sur **Exporter** pour télécharger un modèle CSV avec les colonnes appropriées, renseignez une ligne par élément, puis importez-le à nouveau. Les noms d'éléments doivent être uniques.
+:::
+
+Lors de la collecte de données depuis plusieurs automates partageant le même espace de noms d'adresses, exportez les éléments d'un connecteur ADS et importez-les dans un autre. Comme les noms d'éléments seront identiques, utilisez le champ **Nom du PLC** dans les paramètres du connecteur (par exemple `PLC001`) — OIBus l'ajoute en préfixe à chaque nom d'élément pour les garder uniques.
+
+<NorthOIAnalytics></NorthOIAnalytics>
