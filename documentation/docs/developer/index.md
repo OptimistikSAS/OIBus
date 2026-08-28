@@ -7,9 +7,9 @@ sidebar_position: 1
 
 Welcome to the OIBus developer community! This guide will help you get started with contributing to OIBus.
 
-## 🚀 Getting Started
+## 🚀 Getting Started {#-getting-started}
 
-### Prerequisites
+### Prerequisites {#prerequisites}
 
 | Tool                      | Purpose                                       | Required?   | Installation                                                                            |
 | ------------------------- | --------------------------------------------- | ----------- | --------------------------------------------------------------------------------------- |
@@ -19,9 +19,9 @@ Welcome to the OIBus developer community! This guide will help you get started w
 | VS Code or IntelliJ       | Code editor                                   | Recommended | [VS Code](https://code.visualstudio.com/) · [IntelliJ](https://www.jetbrains.com/idea/) |
 | DBeaver or SQLite browser | Database inspection                           | Optional    | [DBeaver](https://dbeaver.io/) · [SQLite browser](https://sqlitebrowser.org/)           |
 
-## 📥 Setting Up Your Development Environment
+## 📥 Setting Up Your Development Environment {#-setting-up-your-development-environment}
 
-### 1. Get the Source Code
+### 1. Get the Source Code {#1-get-the-source-code}
 
 The OIBus source lives on GitHub at
 [github.com/OptimistikSAS/OIBus](https://github.com/OptimistikSAS/OIBus). You'll use **Git** to clone it
@@ -59,7 +59,7 @@ git clone git@github.com:OptimistikSAS/OIBus.git
 cd OIBus
 ```
 
-#### Day-to-day Git workflow
+#### Day-to-day Git workflow {#day-to-day-git-workflow}
 
 A typical contribution looks like:
 
@@ -93,7 +93,7 @@ git push --force-with-lease
 Use `--force-with-lease` (not plain `--force`) — it refuses to overwrite remote commits you don't know
 about, so you can't accidentally clobber a teammate's review fixup.
 
-### 2. Install Dependencies
+### 2. Install Dependencies {#2-install-dependencies}
 
 ```bash
 # Install Node.js version specified in .nvmrc
@@ -101,7 +101,7 @@ nvm install
 nvm use
 ```
 
-### 3. Set Up the Backend
+### 3. Set Up the Backend {#3-set-up-the-backend}
 
 ```bash
 cd backend
@@ -109,7 +109,7 @@ npm install
 npm start  # Starts on http://localhost:2223
 ```
 
-### 4. Set Up the Frontend
+### 4. Set Up the Frontend {#4-set-up-the-frontend}
 
 ```bash
 cd frontend
@@ -121,7 +121,7 @@ npm start  # Builds and watches for changes
 The frontend is served by the backend. While `npm start` watches for changes, you'll need to **manually refresh** your browser to see updates.
 :::
 
-### 5. Set Up Documentation
+### 5. Set Up Documentation {#5-set-up-documentation}
 
 ```bash
 cd documentation
@@ -129,7 +129,7 @@ npm install
 npm start  # Starts on http://localhost:3000
 ```
 
-### 6. (Optional) Set Up the Launcher
+### 6. (Optional) Set Up the Launcher {#6-optional-set-up-the-launcher}
 
 Skip this unless you're working on the supervisor / auto-update path. The launcher is a standalone Node
 package with its own dependencies and a separate Node version pin (`node >= 24`, see `launcher/package.json`).
@@ -146,14 +146,14 @@ npm run build:macos-arm64
 The bundled binary lands in `build/bin/<platform>/oibus-launcher` and that's what ships in the platform
 installers — it's responsible for starting the OIBus runtime binary as a child process.
 
-### 7. Verify Your Setup
+### 7. Verify Your Setup {#7-verify-your-setup}
 
 - Backend: [http://localhost:2223](http://localhost:2223)
 - Documentation: [http://localhost:3000](http://localhost:3000)
 
-## 🛠 Development Workflow
+## 🛠 Development Workflow {#-development-workflow}
 
-### Project Structure
+### Project Structure {#project-structure}
 
 ```
 OIBus/
@@ -171,7 +171,7 @@ It's bundled via [@yao-pkg/pkg](https://github.com/yao-pkg/pkg) into per-platfor
 (`win-x64`, `macos-x64`, `macos-arm64`, `linux-x64`, `linux-arm64`). You only need to touch it when you're
 changing the supervisor itself, the on-disk layout it manages, or the update flow.
 
-### Quick Test Setup
+### Quick Test Setup {#quick-test-setup}
 
 To verify everything works:
 
@@ -179,9 +179,9 @@ To verify everything works:
 2. Create a **Console** North connector (outputs to console)
 3. Configure them to work together
 
-## 🔧 Development Guidelines
+## 🔧 Development Guidelines {#-development-guidelines}
 
-### Branch Naming
+### Branch Naming {#branch-naming}
 
 ```
 <type>/<descriptive-name>#<issue-number>
@@ -193,7 +193,7 @@ Examples:
 - `fix/folder-scanner-bug#5678`
 - `docs/update-readme#9101`
 
-### Commit Messages
+### Commit Messages {#commit-messages}
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
@@ -211,7 +211,7 @@ Common scopes correspond to top-level concerns: `south`, `north`, `engine`, `cac
 `oianalytics`, `logger`, `web-server`, `migration`, `frontend`, `launcher`, `docs`. Use the most specific
 one that fits; omit the scope entirely if the change is cross-cutting.
 
-#### Examples
+#### Examples {#examples}
 
 ```text title="Feature commit"
 feat(south): add subscription support to south-rest
@@ -260,7 +260,7 @@ instead of canHandleValues / canHandleFiles flags.
 The squash-merge into `main` uses the PR title as the commit message, so make sure the **title** follows
 this format — the individual commits on your branch can be looser.
 
-### Testing Requirements
+### Testing Requirements {#testing-requirements}
 
 All changes must include tests:
 
@@ -289,15 +289,15 @@ npm test
 npm run lint
 ```
 
-## 📤 Submitting Contributions
+## 📤 Submitting Contributions {#-submitting-contributions}
 
-### Before You Start
+### Before You Start {#before-you-start}
 
 1. **Check existing issues** for similar work
 2. **Create a feature issue** if adding new functionality
 3. **Discuss your approach** with maintainers before coding
 
-### Pull Request Process
+### Pull Request Process {#pull-request-process}
 
 1. Create a branch from `main` with [proper naming](#branch-naming).
 2. Make your changes and commit with [clear messages](#commit-messages).
@@ -312,22 +312,22 @@ npm run lint
 5. Wait for code review and address feedback. Use `--force-with-lease` for any rebase pushes (see the
    [Git workflow](#1-get-the-source-code)).
 
-## 🤝 Community Guidelines
+## 🤝 Community Guidelines {#-community-guidelines}
 
-### How to Contribute
+### How to Contribute {#how-to-contribute}
 
 1. **Start small**: Fix typos, improve docs, or tackle "good first issue" labels
 2. **Ask questions**: Use GitHub discussions or issues
 3. **Be patient**: We'll review your PR as soon as possible
 4. **Stay engaged**: Be responsive to feedback
 
-### Code of Conduct
+### Code of Conduct {#code-of-conduct}
 
 We follow a [Code of Conduct](https://github.com/OptimistikSAS/OIBus/blob/main/DEVELOPER-GUIDELINES.md) to ensure a welcoming community.
 
-## 📚 Learning Resources
+## 📚 Learning Resources {#-learning-resources}
 
-### Technologies Used
+### Technologies Used {#technologies-used}
 
 | Area          | Technology          | Learning Resources                                                                             |
 | ------------- | ------------------- | ---------------------------------------------------------------------------------------------- |
@@ -336,7 +336,7 @@ We follow a [Code of Conduct](https://github.com/OptimistikSAS/OIBus/blob/main/D
 | Documentation | Docusaurus          | [Docusaurus Docs](https://docusaurus.io/)                                                      |
 | Testing       | node:test / Jasmine | [node:test Docs](https://nodejs.org/api/test.html), [Jasmine Docs](https://jasmine.github.io/) |
 
-### Recommended Reading
+### Recommended Reading {#recommended-reading}
 
 Deep-links into the official documentation of the libraries OIBus relies on most. Each one targets the
 section that's directly useful when working on the codebase — not generic landing pages.
@@ -366,12 +366,12 @@ section that's directly useful when working on the codebase — not generic land
   [Semantic Versioning](https://semver.org/) — the commit-message format and release versioning
   conventions OIBus uses.
 
-## 🎯 First Contributions
+## 🎯 First Contributions {#-first-contributions}
 
 A few concrete starting points, ranked from lowest to highest investment. Pick whichever matches your
 available time and familiarity with the stack.
 
-### Documentation fixes
+### Documentation fixes {#documentation-fixes}
 
 The fastest way to make your first PR land. Most pages live in `documentation/docs/` as Markdown / MDX —
 typos, missing examples, outdated screenshots, and broken links are all valuable contributions. Run
@@ -380,7 +380,7 @@ typos, missing examples, outdated screenshots, and broken links are all valuable
 Search [open documentation issues](https://github.com/OptimistikSAS/OIBus/labels/documentation), or just
 fix something you noticed while reading these docs.
 
-### Bug fixes
+### Bug fixes {#bug-fixes}
 
 Look for issues tagged [`good first issue`](https://github.com/OptimistikSAS/OIBus/labels/good%20first%20issue)
 — those are intentionally scoped so a new contributor can get to a working PR without needing a guided
@@ -389,7 +389,7 @@ tour of the codebase. If nothing matches your interest, scan the broader
 the issue before you start** so we can confirm nobody else is already on it and answer any preliminary
 questions.
 
-### Improve an existing connector
+### Improve an existing connector {#improve-an-existing-connector}
 
 OIBus's South / North connectors are a great way to learn the codebase incrementally: each one is a small
 self-contained class with a manifest and a spec, and they all follow the same pattern. Useful entry-level
@@ -399,14 +399,14 @@ surface more diagnostics.
 Start from `backend/src/south/south-<type>/` (or the equivalent North folder) and skim the corresponding
 `.spec.ts` to see what's covered. Every PR should keep coverage at 100%.
 
-### Add a new connector
+### Add a new connector {#add-a-new-connector}
 
 For larger contributions, see the dedicated guide:
 [Create a new OIBus connector](./create-connector/presentation.md). It walks through the file layout, the
 four registration steps (type list, factory, type-generator, translations), the manifest format, and the
 connector class API with full working examples.
 
-### Benchmark the product
+### Benchmark the product {#benchmark-the-product}
 
 We welcome contributions that _measure_ OIBus's behaviour under realistic load and either propose a
 targeted fix or simply document the finding. The repository ships a `docker-compose.yml` with simulated

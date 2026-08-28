@@ -8,23 +8,23 @@ import ThrottlingSettings from './_throttling-settings.mdx';
 
 Query time series data from [OIAnalytics®](https://optimistik.com/oianalytics/) SaaS application.
 
-## Connection Settings
+## Connection Settings {#connection-settings}
 
-### Main Configuration
+### Main Configuration {#main-configuration}
 
 | Setting                      | Description                                                                                                                | Example Value    |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------- |
 | Use OIAnalytics registration | Use pre-configured connection settings from [OIAnalytics registration](../installation/oianalytics.mdx). Default: enabled. | Enabled/Disabled |
 | Timeout                      | Duration in seconds before connection failure is reported. Default: `30`.                                                  | `30`             |
 
-### Manual Configuration (when registration not used)
+### Manual Configuration (when registration not used) {#manual-configuration-when-registration-not-used}
 
 | Setting                             | Description                                                              | Example Value                        |
 | ----------------------------------- | ------------------------------------------------------------------------ | ------------------------------------ |
 | **Host**                            | Hostname of the OIAnalytics® SaaS application.                           | `https://optimistik.oianalytics.com` |
 | **Accept unauthorized certificate** | Enable if HTTP queries pass through a firewall that strips certificates. | Enabled/Disabled                     |
 
-#### Authentication Settings
+#### Authentication Settings {#authentication-settings}
 
 | Setting               | Description                                                                                                 | Example Value                                                             |
 | --------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
@@ -37,7 +37,7 @@ Query time series data from [OIAnalytics®](https://optimistik.com/oianalytics/)
 | Certificate           | Certificate selected from OIBus's Certificates page (for Azure AD Certificate method), not a raw file path. | (selected from list)                                                      |
 | Scope                 | OAuth scope (for Azure AD Certificate method).                                                              | `https://resource/.default`                                               |
 
-#### Proxy Configuration
+#### Proxy Configuration {#proxy-configuration}
 
 | Setting            | Description                                      | Example Value                   |
 | ------------------ | ------------------------------------------------ | ------------------------------- |
@@ -46,7 +46,7 @@ Query time series data from [OIAnalytics®](https://optimistik.com/oianalytics/)
 | **Proxy username** | Username for proxy authentication (if required). | `proxy_user`                    |
 | **Proxy password** | Password for proxy authentication (if required). | `••••••••`                      |
 
-## Group Settings
+## Group Settings {#group-settings}
 
 Items can be organised into groups. Each group defines a shared collection schedule and default throttling
 settings. Items in the same group are still fetched **one at a time** in sequence — the group simply
@@ -58,20 +58,20 @@ provides common defaults that individual items can override.
 | **Scan mode**  | Schedule used to collect all items in the group.                                                                                                  | `Every 1 min`             |
 | **Throttling** | Default throttling values (Max read interval, Read delay, Start time offset, End time offset, Recovery strategy) inherited by items in the group. | `3600, 200, 0, 0, oldest` |
 
-## Item Settings
+## Item Settings {#item-settings}
 
 Each item can be individually configured. Items inherit their scan mode and throttling defaults from their
 group, but each setting can be overridden per item by disabling **Sync with group**.
 
 <ThrottlingSettings />
 
-### Endpoint Settings
+### Endpoint Settings {#endpoint-settings}
 
 | Setting  | Description                    | Example Value                  |
 | -------- | ------------------------------ | ------------------------------ |
 | Endpoint | API endpoint for HTTP requests | `/api/oianalytics/data/values` |
 
-### Query Parameters
+### Query Parameters {#query-parameters}
 
 **Query Variables**:
 
@@ -92,7 +92,7 @@ previous one. This is useful for endpoints that accept multiple values for a sin
 `data-reference` below.
 :::
 
-#### Example: querying data values
+#### Example: querying data values {#example-querying-data-values}
 
 To retrieve raw values for several data references over a time window, configure the item with the
 `/api/oianalytics/data/values` endpoint and the following query parameters:
@@ -108,7 +108,7 @@ To retrieve raw values for several data references over a time window, configure
 Since `data-reference` is repeated, it is sent as `data-reference=CIP_Line_1_Acid_Tank_Level&data-reference=CIP_Line_1_Caustic_Tank_Level`,
 letting the endpoint return values for both tank levels in a single query.
 
-## CSV Serialization Options
+## CSV Serialization Options {#csv-serialization-options}
 
 | Setting                | Description                                                              | Example Value                                                                                                     |
 | ---------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |

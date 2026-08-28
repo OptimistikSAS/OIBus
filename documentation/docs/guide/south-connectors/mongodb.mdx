@@ -12,7 +12,7 @@ Query MongoDB document databases with OIBus.
 
 :::
 
-## Specific Settings
+## Specific Settings {#specific-settings}
 
 | Setting            | Description                                                                                                       | Example Value                                                                            |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
@@ -35,7 +35,7 @@ OIBus does not derive or append connection options on your behalf. If your deplo
 `replicaSet`, or other parameters, include them directly in the **Connection string** field.
 :::
 
-## Item Settings
+## Item Settings {#item-settings}
 
 Each item queries a single MongoDB collection and is scheduled independently via its own scan mode.
 
@@ -47,7 +47,7 @@ Each item queries a single MongoDB collection and is scheduled independently via
 | **Sort**          | JSON sort specification, applied to `find` queries only.                        | `{ "timestamp": 1 }`  |
 | **Track instant** | Enables incremental cursor tracking via a JSONPath expression (see below).      | on/off                |
 
-### Query
+### Query {#query}
 
 The **Query** field is JSON text, parsed differently depending on **Query type**:
 
@@ -77,7 +77,7 @@ applies to `find` queries only. A bolted-on sort could reference a field that no
 be sorted.
 :::
 
-#### `@StartTime` / `@EndTime` placeholders
+#### `@StartTime` / `@EndTime` placeholders {#starttime--endtime-placeholders}
 
 `@StartTime` and `@EndTime` work the same way as in OIBus's SQL-based connectors, with one MongoDB-specific
 requirement: they must appear as **quoted JSON string literals** inside the query text, e.g.
@@ -90,13 +90,13 @@ a string.
 | `@StartTime` | Initialized to first execution time, then updated to the most recent tracked field value | `2024-01-15T10:00:00.000Z` |
 | `@EndTime`   | Set to current time (`now()`) or sub-interval end when queries are split                 | `2024-01-15T11:00:00.000Z` |
 
-### Sort
+### Sort {#sort}
 
 The **Sort** field is a JSON object in MongoDB's native sort-spec shape (e.g. `{ "timestamp": 1 }`), passed
 directly to `.sort()` in `find` mode. Compound sorts (multiple keys) are supported. It has no effect in
 `aggregation` mode and is unrelated to incremental cursor tracking — see **Tracking instant** below.
 
-### Tracking instant
+### Tracking instant {#tracking-instant}
 
 Enabling **Track instant** lets OIBus advance its cursor between scheduled queries, so the next query only picks
 up documents newer than the last one already collected. When disabled (the default), OIBus does not track a
@@ -117,7 +117,7 @@ for a native BSON `Date` field. Choose `ISO String`, `UNIX epoch (s)`, or `UNIX 
 text or numbers; `String` additionally requires a **Format**, **Timezone**, and **Locale** for parsing a custom
 text representation.
 
-### Document Flattening
+### Document Flattening {#document-flattening}
 
 Documents are sent downstream as record-list content, one entry per document, flattened to their **top-level
 fields only**:

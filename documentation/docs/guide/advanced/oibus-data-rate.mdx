@@ -10,7 +10,7 @@ OIBus uses a **store-and-forward** mechanism: when a North connector cannot reac
 
 This page explains how to estimate data volume per format and provides an interactive calculator to size the cache for your specific setup.
 
-## Transmission Formats
+## Transmission Formats {#transmission-formats}
 
 OIBus sends data in two modes, depending on the North connector:
 
@@ -29,7 +29,7 @@ protocol-specific cache format — nor to the **Console** North connector, which
 not transmit or buffer data for an outage at all.
 :::
 
-## CSV Format Estimations
+## CSV Format Estimations {#csv-format-estimations}
 
 Byte sizes below use the following representative field widths:
 
@@ -40,7 +40,7 @@ Byte sizes below use the following representative field widths:
 | Numeric value                | `12.0`                     |      4 |
 | Separator (comma or newline) | `,` / `\n`                 | 1 each |
 
-### 1. Row Format
+### 1. Row Format {#1-row-format}
 
 One data point per row.
 
@@ -63,7 +63,7 @@ Timestamp,Reference,Value
 | **Pros**     | Simplest structure; each row is self-contained; easy to stream or append; no schema needed to interpret a row |
 | **Cons**     | Most verbose CSV format — timestamp is repeated for every data point                                          |
 
-### 2. Column Format
+### 2. Column Format {#2-column-format}
 
 K data points share one timestamp row. Point names appear in the header.
 
@@ -87,7 +87,7 @@ For K = 3: 40 bytes / row → **≈ 13.3 bytes per data point**
 | **Pros**     | Timestamp shared across K points — very space-efficient as K grows; natural fit for synchronous polling      |
 | **Cons**     | All points in a row must share the same timestamp; schema lives in the header — harder to process without it |
 
-### 3. Column-Row Format
+### 3. Column-Row Format {#3-column-row-format}
 
 Each row holds one timestamp, a shared reference name, and K values. Sub-IDs appear in the header.
 
@@ -112,7 +112,7 @@ For K = 3: 45 bytes / row → **15 bytes per data point**
 | **Pros**     | Combines timestamp sharing with an extra grouping dimension; readable when the reference name is meaningful                                                        |
 | **Cons**     | Same timestamp constraint as Column; slightly less efficient due to the reference column; less widely supported by downstream tools                                |
 
-## JSON Payload Estimation
+## JSON Payload Estimation {#json-payload-estimation}
 
 ```json
 [
@@ -140,7 +140,7 @@ For K = 3: 45 bytes / row → **15 bytes per data point**
 | **Pros**     | Self-describing; no schema knowledge required by the receiver; easy to consume in most languages and platforms                |
 | **Cons**     | Most verbose format — roughly 2× larger than Row CSV and ~5.8× larger than Column CSV at K = 3; higher serialisation overhead |
 
-## Format Efficiency Summary
+## Format Efficiency Summary {#format-efficiency-summary}
 
 Bytes per data point at various K values (Column-Row assumes a 4-byte reference):
 
@@ -153,7 +153,7 @@ Bytes per data point at various K values (Column-Row assumes a 4-byte reference)
 
 Column formats amortise the timestamp across K data points, becoming significantly more space-efficient as K grows. At K = 10, Column CSV uses **5× less space** than Row CSV and **10× less** than JSON.
 
-## Cache Sizing Calculator
+## Cache Sizing Calculator {#cache-sizing-calculator}
 
 Use the calculator below to estimate throughput and minimum cache size for your deployment.
 
@@ -171,7 +171,7 @@ The **Cache for outage** column shows the minimum value to configure for **Maxim
 
 <DataSizeComparison />
 
-## Applying the Result
+## Applying the Result {#applying-the-result}
 
 In each North connector's **Cache** tab, set **Maximum storage size** to at least the value shown in the **Cache for outage** column for your chosen format. Add extra margin if:
 
@@ -183,7 +183,7 @@ In each North connector's **Cache** tab, set **Maximum storage size** to at leas
 Each North connector maintains its own independent cache. If several connectors forward data simultaneously, size each one independently and verify the host has sufficient total disk capacity.
 :::
 
-## Effect of Compression
+## Effect of Compression {#effect-of-compression}
 
 Some transport configurations support payload compression — for example, gzip over HTTPS between OIBus and a reverse proxy, or SFTP with compression enabled on the client. Compression typically reduces payload size by **60–80% for CSV** and **70–85% for JSON**, since both formats contain highly repetitive content (timestamps, field names, numeric strings).
 

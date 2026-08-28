@@ -21,7 +21,7 @@ don't trigger releases directly: your change ships when the maintainers next pro
 maintainers operating the pipeline.
 :::
 
-## Branching model
+## Branching model {#branching-model}
 
 | Branch   | Purpose                                                                               |
 | -------- | ------------------------------------------------------------------------------------- |
@@ -31,7 +31,7 @@ maintainers operating the pipeline.
 A release is initiated by **fast-forwarding `stable` to `main`** (typically via a PR from `main`). No
 other manual step is required — the rest happens via Actions.
 
-## The pipeline at a glance
+## The pipeline at a glance {#the-pipeline-at-a-glance}
 
 ```
   ◇ PR squash-merged to main      ← daily contributions (Conventional Commits)
@@ -63,13 +63,13 @@ All files referenced live under `.github/`:
 - [`release-please-config.json`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/release-please-config.json)
 - [`release-please-manifest.json`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/release-please-manifest.json)
 
-## 📦 release-please
+## 📦 release-please {#-release-please}
 
 [release-please](https://github.com/googleapis/release-please) is the only thing that ever changes the
 version number. It reads commits since the last tag, decides the bump, and writes the changes into a PR
 for the maintainers to review.
 
-### Version-bump rules
+### Version-bump rules {#version-bump-rules}
 
 Driven entirely by commit type — same as
 [Conventional Commits](https://www.conventionalcommits.org/):
@@ -83,7 +83,7 @@ Driven entirely by commit type — same as
 Other types (`docs`, `chore`, `refactor`, `perf`, `test`, `style`, `build`, `ci`) **do not** bump the
 version — they're recorded in the changelog under the relevant section without causing a release.
 
-### What release-please rewrites
+### What release-please rewrites {#what-release-please-rewrites}
 
 When a release PR lands, release-please updates the version field in:
 
@@ -109,21 +109,21 @@ marker). The exact rules are in
 under `extra-files` — if you add a new package or another file that should track the release version,
 extend that list.
 
-## 🛠 What the release workflow actually produces
+## 🛠 What the release workflow actually produces {#-what-the-release-workflow-actually-produces}
 
 `build.yml` runs on `release: types: [published]` — i.e. **only after release-please's release PR has
 been merged and the GitHub Release object is created.** (It can also be triggered manually via
 **workflow_dispatch**, optionally with a `tag` input, to rebuild a specific release.) It is a single
 workflow of cooperating jobs:
 
-### `prepare`
+### `prepare` {#prepare}
 
 Runs once. Resolves the release info (`tag_name`, `release_name`, whether it's a `prerelease`) and
 **generates the SBOM once** (`cdxgen` → `oibus-sbom.json`), uploading it as a workflow artifact and —
 for non-prereleases only — attaching it to the GitHub Release. The matrix builds download this single
 artifact rather than each regenerating it.
 
-### `build` (5-platform matrix, `needs: prepare`)
+### `build` (5-platform matrix, `needs: prepare`) {#build-5-platform-matrix-needs-prepare}
 
 | Friendly name | OS runner          | Platform target |
 | ------------- | ------------------ | --------------- |
@@ -143,7 +143,7 @@ Each matrix row (`fail-fast: false`, so one platform failing doesn't cancel the 
    (`oibus-<platform>-<tag>.zip`) and uploads it to the GitHub Release.
 5. **Windows only**: builds the Inno Setup installer (`oibus-win_x64-setup-<tag>.exe`) and uploads it.
 
-### `snyk`, `docker`, `deploy-documentation`, `slack` (`needs: build`)
+### `snyk`, `docker`, `deploy-documentation`, `slack` (`needs: build`) {#snyk-docker-deploy-documentation-slack-needs-build}
 
 | Job                    | Runs when           | What it does                                                                                       |
 | ---------------------- | ------------------- | -------------------------------------------------------------------------------------------------- |
@@ -157,7 +157,7 @@ The Docker image tags depend on the release kind:
 - **Stable releases** get the `latest` tag **and** the version tag.
 - **Pre-releases** get the `beta` tag **and** the version tag.
 
-## 🆕 Creating a pre-release
+## 🆕 Creating a pre-release {#-creating-a-pre-release}
 
 Pre-releases are useful when you need to publish artefacts for testing _before_ cutting a stable
 release — typically reserved for the maintainers (operators of `OptimistikSAS/OIBus`).
@@ -167,7 +167,7 @@ release-asset upload and the documentation deployment, and the Docker image gets
 instead of `latest`. (The SBOM is still generated in `prepare` and bundled inside each zip — only the
 separate release-asset upload is skipped.)
 
-### Steps
+### Steps {#steps}
 
 1. On [GitHub → Releases](https://github.com/OptimistikSAS/OIBus/releases), click **Draft a new release**.
 
@@ -194,7 +194,7 @@ correctly against future stable releases (`v3.8.0-rc.1` < `v3.8.0`) and the Dock
 up automatically.
 :::
 
-## Troubleshooting
+## Troubleshooting {#troubleshooting}
 
 | Symptom                                         | What to check                                                                                                                                                                                         |
 | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

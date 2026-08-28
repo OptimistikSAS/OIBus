@@ -16,7 +16,7 @@ Connect to ODBC data sources either locally or through a remote [OIBus Agent](..
 
 :::
 
-## Specific Settings
+## Specific Settings {#specific-settings}
 
 | Setting            | Description                                                                                                                                                                                                       | Example Value                                     |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
@@ -28,7 +28,7 @@ Connect to ODBC data sources either locally or through a remote [OIBus Agent](..
 | Connection string  | ODBC connection string in driver-specific format.                                                                                                                                                                 | `Driver={AspenTech SQLplus};HOST=ip21;PORT=10014` |
 | Password           | Authentication password (stored securely). Always appended as `PWD=<password>;` — if your connection string already includes its own `PWD=`/`Pwd=` entry, remove it here or from the string to avoid a duplicate. | `••••••••`                                        |
 
-### Connection String Examples
+### Connection String Examples {#connection-string-examples}
 
 **Windows**:
 `Driver={driver name};SERVER=host;PORT=10014;Database=db;UID=user`
@@ -47,7 +47,7 @@ Connect to ODBC data sources either locally or through a remote [OIBus Agent](..
 3. List drivers: `cat /opt/homebrew/etc/odbcinst.ini`
    :::
 
-### Driver Installation
+### Driver Installation {#driver-installation}
 
 | Platform   | Installation Method                                        |
 | ---------- | ---------------------------------------------------------- |
@@ -55,7 +55,7 @@ Connect to ODBC data sources either locally or through a remote [OIBus Agent](..
 | UNIX/Linux | Install driver then specify full path in connection string |
 | macOS      | `brew install unixodbc` + driver installation              |
 
-### Aspen IP21 Configuration
+### Aspen IP21 Configuration {#aspen-ip21-configuration}
 
 For optimal IP21 performance:
 

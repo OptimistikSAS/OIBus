@@ -9,7 +9,7 @@ Data Lake Storage**. This connector is ideal for cloud storage, data lakes, or i
 - **Backup and Archiving**: Securely archive OIBus data in Azure Blob Storage.
 - **Azure Ecosystem Integration**: Use stored data with Azure services like Azure Functions, Logic Apps, or Power BI.
 
-## Specific Settings
+## Specific Settings {#specific-settings}
 
 Configure the following parameters to connect to your Azure Blob Storage:
 
@@ -18,7 +18,7 @@ Configure the following parameters to connect to your Azure Blob Storage:
 | **Azure Data Lake Storage** | Enable to use **Azure Data Lake Storage** instead of standard Azure Blob Storage. | Enabled/Disabled |
 | **Use custom URL**          | Use a custom endpoint URL instead of the account-based standard URL.              | Enabled/Disabled |
 
-### Connection Settings
+### Connection Settings {#connection-settings}
 
 | Setting        | Description                                                                        | Example Value                                    |
 | -------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------ |
@@ -27,7 +27,7 @@ Configure the following parameters to connect to your Azure Blob Storage:
 | **Container**  | Azure Blob container where files will be stored.                                   | `oibus-data`                                     |
 | **Path**       | Folder path within the container where files should be stored.                     | `factory/line1`                                  |
 
-### Authentication
+### Authentication {#authentication}
 
 | Setting            | Description                                                                                   | Example Value                                                               |
 | ------------------ | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
@@ -38,7 +38,7 @@ Configure the following parameters to connect to your Azure Blob Storage:
 | **Client ID**      | Application (client) ID. Required for AAD authentication.                                     | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                                      |
 | **Client secret**  | Application client secret. Required for AAD authentication.                                   | `••••••••`                                                                  |
 
-### Proxy Configuration
+### Proxy Configuration {#proxy-configuration}
 
 If your network infrastructure requires requests to pass through a proxy server to reach Azure Blob Storage, enable the
 **Use proxy** option and configure the proxy details below.
@@ -49,6 +49,6 @@ If your network infrastructure requires requests to pass through a proxy server 
 | **Proxy username** | Username for proxy authentication (if required). | `proxy_user`                    |
 | **Proxy password** | Password for proxy authentication (if required). | `••••••••`                      |
 
-## Best Practices
+## Best Practices {#best-practices}
 
 - **Monitoring**: Use Azure Monitor to track storage usage, performance, and costs.
