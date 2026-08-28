@@ -217,6 +217,124 @@ describe('Entity migration v3.10.0_2', () => {
       transformer_id: 'iso-transformer',
       options: '{}'
     });
+
+    // south2/item4: exercises every `??` fallback at once — a reference dateTimeField missing
+    // timezone/format/locale entirely (so `toNewItemSettings`'s fallbacks to `null` are hit), and no
+    // `serialization` key at all on the item (so every `serialization?.x ?? default` fallback in
+    // `buildTransformerOptions` is hit too). item4 also belongs to a south-item-group ('grp1'), which
+    // north6/north7 target at the group level rather than item- or south-level.
+    await db('south_connectors').insert({
+      id: 'south2',
+      name: 'South 2',
+      type: 'postgresql',
+      enabled: true,
+      settings: JSON.stringify({ host: 'h', port: 1, database: 'd' })
+    });
+    await db('south_items').insert({
+      id: 'item4',
+      connector_id: 'south2',
+      scan_mode_id: 'sm1',
+      name: 'item4',
+      enabled: true,
+      settings: JSON.stringify({
+        query: 'SELECT * FROM t4',
+        dateTimeFields: [{ fieldName: 'ts', useAsReference: true, type: 'unix-epoch-ms' }]
+      })
+    });
+    await db('south_item_groups').insert({
+      id: 'grp1',
+      created_at: NOW,
+      updated_at: NOW,
+      name: 'Group 1',
+      south_id: 'south2',
+      scan_mode_id: 'sm1'
+    });
+    await db('group_items').insert({ group_id: 'grp1', item_id: 'item4' });
+
+    // south3: an in-scope SQL south with no items at all -> exercises the "no items" early return.
+    await db('south_connectors').insert({
+      id: 'south3',
+      name: 'South 3',
+      type: 'oracle',
+      enabled: true,
+      settings: JSON.stringify({ host: 'h', port: 1, database: 'd' })
+    });
+
+    // north6/north7: group-scoped (not item- or south-level) pre-existing transformers for south2/grp1.
+    await db('north_connectors').insert([
+      { ...northConnectorDefaults, id: 'north6', name: 'North 6', enabled: true },
+      { ...northConnectorDefaults, id: 'north7', name: 'North 7', enabled: true }
+    ]);
+    await db('north_transformers').insert({
+      id: 'nt-group-iso',
+      north_id: 'north6',
+      transformer_id: 'iso-transformer',
+      options: '{}',
+      source_type: 'south',
+      source_south_south_id: 'south2',
+      source_south_group_id: 'grp1'
+    });
+    await db('north_transformers').insert({
+      id: 'nt-group-csvmqtt',
+      north_id: 'north7',
+      transformer_id: 'csv-to-mqtt-transformer',
+      options: '{}',
+      source_type: 'south',
+      source_south_south_id: 'south2',
+      source_south_group_id: 'grp1'
+    });
+
+    // The migration processes every (south, north) combination, not just the ones a given test cares
+    // about — so, left alone, south2/item4 would also get a new attachment on north1..north5 (nothing
+    // resolves for south2 there), and south1's item1..item3 would also get one on north6/north7
+    // (nothing resolves for south1 there), corrupting the item-count assertions above and below. A
+    // south-level 'ignore' bridge on the "other" south for each of those norths keeps the two
+    // scenarios independent, the same deliberate "leave it" choice north3/north4 already exercise at
+    // the item level.
+    for (const northId of ['north1', 'north2', 'north3', 'north4', 'north5']) {
+      await db('north_transformers').insert({
+        id: `nt-${northId}-south2-ignore-bridge`,
+        north_id: northId,
+        transformer_id: 'ignore-transformer',
+        options: '{}',
+        source_type: 'south',
+        source_south_south_id: 'south2',
+        source_south_group_id: null
+      });
+    }
+    for (const northId of ['north6', 'north7']) {
+      await db('north_transformers').insert({
+        id: `nt-${northId}-south1-ignore-bridge`,
+        north_id: northId,
+        transformer_id: 'ignore-transformer',
+        options: '{}',
+        source_type: 'south',
+        source_south_south_id: 'south1',
+        source_south_group_id: null
+      });
+    }
+
+    // hq2: an in-scope history query with no items at all -> exercises the per-history-query "no
+    // items" `continue` (distinct from the "no in-scope history queries at all" early return).
+    await db('history_queries').insert({
+      id: 'hq2',
+      name: 'HQ 2',
+      start_time: NOW,
+      end_time: NOW,
+      south_type: 'mssql',
+      north_type: 'file-writer',
+      south_settings: JSON.stringify({ host: 'h', port: 1, database: 'd' }),
+      north_settings: JSON.stringify({}),
+      caching_trigger_schedule: 'sm1',
+      caching_trigger_number_of_elements: 1000,
+      caching_trigger_number_of_files: 1,
+      caching_throttling_cache_max_size: 0,
+      caching_throttling_max_number_of_elements: 10_000,
+      caching_error_retry_interval: 5000,
+      caching_error_retry_count: 3,
+      caching_archive_enabled: false,
+      caching_archive_retention_duration: 0
+    });
   });
 
   it('should seed a single record-list-to-csv transformer catalog row, idempotently', async () => {
@@ -400,6 +518,121 @@ describe('Entity migration v3.10.0_2', () => {
     assert.strictEqual(rows.length, 1);
     assert.strictEqual(rows[0].item_id, 'hitem1');
     assert.strictEqual(rows[0].transformer_id, recordListToCsv.id);
+  });
+
+  it('should fall back to null for a reference field missing timezone/format/locale, and to the documented defaults when serialization is entirely absent (item4)', async () => {
+    await up(db);
+
+    const item4 = await db('south_items').where('id', 'item4').first();
+    assert.deepStrictEqual(JSON.parse(item4.settings), {
+      query: 'SELECT * FROM t4',
+      trackingInstant: {
+        trackInstant: true,
+        fieldName: 'ts',
+        dateTimeInput: { type: 'unix-epoch-ms', timezone: null, format: null, locale: null }
+      }
+    });
+
+    // item4 gets a new attachment on north6 (see the group-level test below) whose options prove
+    // every `serialization?.x ?? default` fallback fired, since item4 has no `serialization` at all.
+    const recordListToCsv = await db('transformers').where('function_name', 'record-list-to-csv').first();
+    const north6Rows = await db('north_transformers as nt')
+      .join('north_transformers_items as nti', 'nti.id', 'nt.id')
+      .where('nt.north_id', 'north6')
+      .andWhere('nt.transformer_id', recordListToCsv.id)
+      .select('nt.options', 'nti.item_id');
+    assert.strictEqual(north6Rows.length, 1);
+    assert.strictEqual(north6Rows[0].item_id, 'item4');
+    assert.deepStrictEqual(JSON.parse(north6Rows[0].options), {
+      filename: '@CurrentDate.csv',
+      encoding: 'UTF_8',
+      header: true,
+      compression: false,
+      delimiter: 'COMMA',
+      newline: 'LF',
+      quoteChar: 'NONE',
+      escapeChar: 'DOUBLE_QUOTE',
+      nullValue: '',
+      fields: [
+        {
+          fieldName: 'ts',
+          columnName: null,
+          dataType: 'datetime',
+          fieldProcess: null,
+          datetimeSettings: {
+            inputType: 'unix-epoch-ms',
+            inputTimezone: null,
+            inputFormat: null,
+            inputLocale: null,
+            outputType: 'string',
+            outputTimezone: 'UTC',
+            outputFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputLocale: null
+          }
+        }
+      ]
+    });
+  });
+
+  it('should resolve a group-level transformer via south-item-group membership, shadowing an "iso" one (north6) but leaving a real one alone (north7)', async () => {
+    await up(db);
+
+    const recordListToCsv = await db('transformers').where('function_name', 'record-list-to-csv').first();
+
+    // north6: the group-level 'iso' row is left in place, untouched...
+    const isoRow = await db('north_transformers').where('id', 'nt-group-iso').first();
+    assert.strictEqual(isoRow.transformer_id, 'iso-transformer');
+    // ...but item4 gets a new, higher-priority item-level attachment on north6, since group-level
+    // resolution found only a bare passthrough.
+    const north6NewRows = await db('north_transformers as nt')
+      .join('north_transformers_items as nti', 'nti.id', 'nt.id')
+      .where('nt.north_id', 'north6')
+      .andWhere('nt.transformer_id', recordListToCsv.id)
+      .select('nti.item_id');
+    assert.deepStrictEqual(
+      north6NewRows.map(r => r.item_id),
+      ['item4']
+    );
+
+    // north7: the group-level 'csv-to-mqtt' row is a deliberate, already-rendered choice -> left
+    // alone, and no new attachment is created for item4 there.
+    const csvMqttRow = await db('north_transformers').where('id', 'nt-group-csvmqtt').first();
+    assert.strictEqual(csvMqttRow.transformer_id, 'csv-to-mqtt-transformer');
+    const north7NewRows = await db('north_transformers as nt')
+      .join('north_transformers_items as nti', 'nti.id', 'nt.id')
+      .where('nt.north_id', 'north7')
+      .andWhere('nt.transformer_id', recordListToCsv.id);
+    assert.strictEqual(north7NewRows.length, 0);
+  });
+
+  it('should skip a south connector with no items at all (south3) without error', async () => {
+    await assert.doesNotReject(up(db));
+
+    const rows = await db('south_items').where('connector_id', 'south3');
+    assert.strictEqual(rows.length, 0);
+  });
+
+  it('should skip a history query with no items (hq2) while still processing hq1 normally', async () => {
+    await up(db);
+
+    const hq2TransformerRows = await db('history_query_transformers').where('history_id', 'hq2');
+    assert.strictEqual(hq2TransformerRows.length, 0);
+
+    const hq1Item = await db('history_items').where('id', 'hitem1').first();
+    assert.ok(JSON.parse(hq1Item.settings).trackingInstant, 'expected hq1 to still be migrated normally');
+  });
+
+  it('should no-op cleanly when there are no in-scope history queries at all', async () => {
+    await db('history_query_transformers_items').del();
+    await db('history_query_transformers').del();
+    await db('history_items').del();
+    await db('history_queries').del();
+
+    await assert.doesNotReject(up(db));
+
+    // the south-side migration still runs normally even though the history-query side is empty.
+    const item1 = await db('south_items').where('id', 'item1').first();
+    assert.ok(JSON.parse(item1.settings).trackingInstant);
   });
 
   it('down() is a no-op (irreversible)', async () => {
