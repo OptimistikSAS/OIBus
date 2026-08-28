@@ -122,23 +122,14 @@ export const SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
 export type SouthOIAnalyticsItemSettingsSerializationDelimiter =
   (typeof SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-export const SOUTH_O_L_E_D_B_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
-export type SouthOLEDBItemSettingsDateTimeFieldsType = (typeof SOUTH_O_L_E_D_B_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
-
-export const SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
-export type SouthOLEDBItemSettingsSerializationType = (typeof SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
-
-export const SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
-  'DOT',
-  'SEMI_COLON',
-  'COLON',
-  'COMMA',
-  'NON_BREAKING_SPACE',
-  'SLASH',
-  'TAB',
-  'PIPE'
+export const SOUTH_O_L_E_D_B_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES = [
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms',
+  'string'
 ] as const;
-export type SouthOLEDBItemSettingsSerializationDelimiter = (typeof SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
+export type SouthOLEDBItemSettingsTrackingInstantDateTimeInputType =
+  (typeof SOUTH_O_L_E_D_B_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES)[number];
 
 export const SOUTH_O_P_C_SETTINGS_MODES = ['hda', 'da'] as const;
 export type SouthOPCSettingsMode = (typeof SOUTH_O_P_C_SETTINGS_MODES)[number];
@@ -463,7 +454,6 @@ export interface SouthOIAnalyticsSettings {
 }
 
 export interface SouthOLEDBSettings {
-  agentUrl: string;
   connectionTimeout: number;
   retryInterval: number;
   requestTimeout: number;
@@ -655,22 +645,17 @@ export interface SouthOIAnalyticsItemSettingsSerialization {
   outputTimezone: Timezone;
 }
 
-export interface SouthOLEDBItemSettingsDateTimeFields {
-  fieldName: string;
-  useAsReference: boolean;
-  type: SouthOLEDBItemSettingsDateTimeFieldsType;
+export interface SouthOLEDBItemSettingsTrackingInstantDateTimeInput {
+  type: SouthOLEDBItemSettingsTrackingInstantDateTimeInputType;
   timezone?: Timezone;
   format?: string;
   locale?: string;
 }
 
-export interface SouthOLEDBItemSettingsSerialization {
-  type: SouthOLEDBItemSettingsSerializationType;
-  filename: string;
-  delimiter: SouthOLEDBItemSettingsSerializationDelimiter;
-  compression: boolean;
-  outputTimestampFormat: string;
-  outputTimezone: Timezone;
+export interface SouthOLEDBItemSettingsTrackingInstant {
+  trackInstant: boolean;
+  fieldName?: string;
+  dateTimeInput?: SouthOLEDBItemSettingsTrackingInstantDateTimeInput | null;
 }
 
 export interface SouthOPCUAItemSettingsHaMode {
@@ -838,8 +823,7 @@ export interface SouthOIAnalyticsItemSettings {
 
 export interface SouthOLEDBItemSettings {
   query: string;
-  dateTimeFields: Array<SouthOLEDBItemSettingsDateTimeFields> | null;
-  serialization: SouthOLEDBItemSettingsSerialization;
+  trackingInstant: SouthOLEDBItemSettingsTrackingInstant | null;
 }
 
 export interface SouthOPCItemSettings {

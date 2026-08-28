@@ -52,6 +52,7 @@
     "@azure/storage-file-datalake": "12.31.0",
     "@influxdata/influxdb-client": "1.35.0",
     "@influxdata/influxdb3-client": "2.3.0",
+    "@oibus/oledb-windows": "file:native/oledb-windows",
     "@smithy/node-http-handler": "4.10.0",
     "@st-one-io/nodes7": "1.1.2",
     "ads-client": "2.2.0",
