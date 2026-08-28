@@ -1,0 +1,143 @@
+---
+sidebar_position: 20
+---
+
+# MongoDB
+
+使用 OIBus 查询 MongoDB 文档数据库。
+
+:::info 兼容性说明
+
+- 支持 MongoDB 4.4 及更高版本
+
+:::
+
+## 特定设置 {#specific-settings}
+
+| 设置            | 描述                                                                                                       | 示例值                                                                            |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Connection string  | MongoDB 连接字符串，包括主机、数据库以及任何查询参数（例如 `replicaSet`、`authSource`）。 | `mongodb://host1:27017,host2:27017,host3:27017/database?replicaSet=rs0&authSource=admin` |
+| Connection timeout | 建立连接的最长时间（毫秒）。默认值：`10000`。                                           | `10000`                                                                                  |
+| Username           | 认证用户名。可选。                                                                                | `db_user`                                                                                |
+| Password           | 认证密码。                                                                                          | `••••••••`                                                                               |
+
+:::tip 安全最佳实践
+
+- 凭据永远不会嵌入到连接字符串中。设置用户名后，OIBus 会使用
+  驱动程序原生的 `auth` 选项进行认证，将用户名和（解密后的）密码与连接
+  字符串分开发送。
+- 使用限制为仅可读取 OIBus 所需集合的只读 MongoDB 用户/角色。
+
+:::
+
+:::note 连接字符串参数
+OIBus 不会代您派生或附加连接选项。如果您的部署需要 `authSource`、
+`replicaSet` 或其他参数，请直接将其包含在**连接字符串**字段中。
+:::
+
+## 条目设置 {#item-settings}
+
+每个条目查询单个 MongoDB 集合，并通过其自身的扫描模式独立调度。
+
+| 设置           | 描述                                                                     | 示例值         |
+| ----------------- | ------------------------------------------------------------------------------- | --------------------- |
+| **Collection**    | 要查询的 MongoDB 集合名称。                                        | `sensor_readings`     |
+| **Query type**    | `find` 表示过滤文档，`aggregation` 表示管道。                  | `find`, `aggregation` |
+| **Query**         | JSON 过滤文档（`find`）或 JSON 管道阶段数组（`aggregation`）。 | 见下文             |
+| **Sort**          | JSON 排序规范，仅应用于 `find` 查询。                        | `{ "timestamp": 1 }`  |
+| **Track instant** | 通过 JSONPath 表达式启用增量游标跟踪（见下文）。                      | on/off                |
+
+### 查询 {#query}
+
+**Query** 字段是 JSON 文本，根据**查询类型**进行不同的解析：
+
+- **find**：作为过滤文档传递给
+  [`collection.find()`](https://www.mongodb.com/docs/manual/reference/method/db.collection.find/) 的单个 JSON 对象。
+
+```json
+{
+  "timestamp": { "$gt": "@StartTime", "$lte": "@EndTime" }
+}
+```
+
+- **aggregation**：作为管道阶段传递给
+  [`collection.aggregate()`](https://www.mongodb.com/docs/manual/reference/method/db.collection.aggregate/) 的 JSON 数组。
+
+```json
+[
+  { "$match": { "timestamp": { "$gt": "@StartTime", "$lte": "@EndTime" } } },
+  { "$group": { "_id": "$deviceId", "value": { "$avg": "$value" }, "timestamp": { "$max": "$timestamp" } } }
+]
+```
+
+:::note 聚合管道不会自动排序
+在 `aggregation` 模式下，OIBus **不会**追加由**排序**设置构建的 `$sort` 阶段 —— **排序**
+仅应用于 `find` 查询。附加的排序可能会引用一个在 `$group`（或类似的重塑）
+阶段运行后已不存在的字段，因此如果需要对查询结果进行排序，请在管道中包含您自己的
+`$sort` 阶段。
+:::
+
+#### `@StartTime` / `@EndTime` 占位符 {#starttime--endtime-placeholders}
+
+`@StartTime` 和 `@EndTime` 的工作方式与 OIBus 的基于 SQL 的连接器相同，但有一个 MongoDB 特有的
+要求：它们必须在查询文本中以**带引号的 JSON 字符串字面量**形式出现，例如
+`"@StartTime"`。在查询运行之前，OIBus 会替换每个占位符并将其转换为原生 BSON
+`Date` —— JSON 源中的字符串字面量在实际发送到 MongoDB 的查询中会变为 `Date` 值，而不是
+字符串。
+
+| 设置      | 描述                                                                              | 示例值              |
+| ------------ | ---------------------------------------------------------------------------------------- | --------------------------- |
+| `@StartTime` | 初始化为首次执行时间，之后更新为最近一次跟踪字段的值 | `2024-01-15T10:00:00.000Z` |
+| `@EndTime`   | 设置为当前时间（`now()`），或在查询被拆分时设置为子区间结束时间                 | `2024-01-15T11:00:00.000Z` |
+
+### 排序 {#sort}
+
+**Sort** 字段是采用 MongoDB 原生排序规范格式的 JSON 对象（例如 `{ "timestamp": 1 }`），在
+`find` 模式下直接传递给 `.sort()`。支持复合排序（多个键）。它在
+`aggregation` 模式下不起作用，也与增量游标跟踪无关 —— 详见下方的**跟踪时刻**。
+
+### 跟踪时刻 {#tracking-instant}
+
+启用**跟踪时刻**后，OIBus 可以在两次计划查询之间推进其游标，因此下一次查询只会
+获取比上一次已采集的文档更新的文档。禁用时（默认），OIBus 不跟踪
+游标字段 —— 需要以其他方式在条目的**查询**中限定每次执行的范围。
+
+| 设置                    | 描述                                                                                                                                                         | 示例值                                                            |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **Track instant**          | 启用游标跟踪。                                                                                                                                            | on/off                                                                   |
+| **JSON path**              | 针对查询返回的原始文档数组求值的 [JSONPath](https://github.com/JSONPath-Plus/JSONPath) 表达式 —— 可深入到嵌套字段。 | `$[*].timestamp`, `$[*].metadata.recordedAt`                             |
+| **Date time input → Type** | 提取的原始值在比较之前应如何解释。                                                                                                                | `Timestamp`, `ISO String`, `UNIX epoch (s)`, `UNIX epoch (ms)`, `String` |
+
+`$[*]` 匹配批次中的每个文档；其后的路径指向要比较的字段。每次查询后，
+OIBus 会对 JSONPath 求值，根据**类型**将每个匹配值转换为时刻，
+并保留最大值作为下一个 `@StartTime`。
+
+**类型**应与 MongoDB 驱动程序返回的字段实际形状匹配 —— 对于原生 BSON
+`Date` 字段最常用的是 `Timestamp`。对于以文本或数字形式存储的字段，请选择
+`ISO String`、`UNIX epoch (s)` 或 `UNIX epoch (ms)`；`String` 还需要提供**格式**、**时区**和**区域设置**
+以解析自定义文本表示。
+
+### 文档扁平化 {#document-flattening}
+
+文档会以记录列表内容的形式下游发送，每个文档一条记录，仅扁平化其**顶层
+字段**：
+
+| 源值                                       | 发送值                         |
+| -------------------------------------------------- | ----------------------------------- |
+| `Date`                                             | ISO 8601 字符串（`.toISOString()`） |
+| `ObjectId`                                         | 十六进制字符串（`.toHexString()`）      |
+| 字符串、数字、布尔值                            | 原样发送                         |
+| `null` / `undefined`                               | `null`                             |
+| 嵌套对象、数组、`Decimal128`、`Binary` 等。 | JSON 字符串化                   |
+
+要将这些数据渲染为 CSV（或其他格式），请在北向连接器或历史查询上附加一个兼容的
+转换器 —— 例如 **record-list-to-csv**。有关详细信息，请参阅[转换器](../engine/transformers.mdx)。
+
+:::tip 最佳实践
+
+1. 选择一个数值一致且递增的跟踪字段（例如插入时间戳）。
+2. 为跟踪字段以及**排序**中使用的任何字段添加索引，以提升查询性能。
+3. 对于简单的时间范围查询，优先使用 `find` 模式；仅在需要在服务器端重塑或
+   聚合文档时才使用 `aggregation` 模式，并在排序很重要时包含显式的 `$sort` 阶段。
+
+:::
