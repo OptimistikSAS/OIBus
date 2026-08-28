@@ -1,0 +1,40 @@
+---
+hide_table_of_contents: true
+sidebar: false
+---
+
+import RedocWrapper from '../../../../../src/components/Redoc/index';
+import openApi from './openapi.json';
+
+# OIBus API 参考
+
+OIBus REST API 可让您自动化 OIBus 实例的方方面面：配置连接器和扫描模式、将数据直接推送到 North 连接器缓存、搜索日志、管理用户以及监控引擎健康状况——全部通过 HTTP 完成。
+
+## 基础 URL {#base-url}
+
+```
+http://<oibus-host>:2223
+```
+
+默认端口是 `2223`。将 `<oibus-host>` 替换为运行 OIBus 的主机名或 IP 地址。
+
+## 身份验证 {#authentication}
+
+每个请求都必须经过身份验证。OIBus 支持两种方法：
+
+| 方法                    | 使用场景                                                                                                                                                                                                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **JWT（Bearer 令牌）**  | 交互式会话。通过 `POST /api/users/authenticate` 传入 `{ login, password }` 获取令牌。以 `Authorization: Bearer <token>` 的形式传递。令牌有效期为 7 天，密码更改后即失效。                                            |
+| **HTTP 基本身份验证**   | 脚本和自动化场景。以 `Authorization: Basic <base64(login:password)>` 的形式传递凭据。建议在 OIBus 主机（`localhost`）上运行脚本，以避免凭据以明文形式通过网络传输。                                                  |
+
+## 常见模式 {#common-patterns}
+
+**分页** — 返回 `Page<T>` 的列表端点接受 `page` 查询参数（从零开始）。响应中包含 `totalElements`、`totalPages`、`size` 和 `number`。
+
+**逗号分隔的多值** — 部分查询参数（例如 `northId`、`levels`、`types`、`status`）支持以逗号分隔的字符串形式传入多个值：`?levels=error,warn`。
+
+**204 No Content** — `PUT` 和 `DELETE` 操作成功时返回 `204`，响应体为空。
+
+---
+
+<RedocWrapper spec={openApi} />
