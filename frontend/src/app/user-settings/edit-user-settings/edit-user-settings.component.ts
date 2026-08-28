@@ -56,7 +56,8 @@ export class EditUserSettingsComponent implements CanComponentDeactivate {
 
   private static readonly LANGUAGE_DISPLAY_NAMES: Record<Language, string> = {
     en: 'English',
-    fr: 'Français'
+    fr: 'Français',
+    zh: '中文'
   };
 
   private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
