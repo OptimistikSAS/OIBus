@@ -1,4 +1,4 @@
 {
-  "reporter": ["text", "html"],
+  "reporter": ["text", "html", "json-summary", "json"],
   "exclude": ["src/**/*.spec.ts", "src/tests/**"]
 }
