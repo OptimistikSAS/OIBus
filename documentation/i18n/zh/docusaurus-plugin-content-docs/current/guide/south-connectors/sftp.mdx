@@ -1,0 +1,50 @@
+---
+sidebar_position: 16
+---
+
+import RegexTester from '../../../../../../src/components/RegexTester/index';
+
+# SFTP
+
+安全地传输并读取来自远程 SFTP 服务器的文件。
+
+## 特定设置 {#specific-settings}
+
+| 设置              | 描述                                     | 示例值             |
+| ----------------- | ------------------------------------------ | -------------------- |
+| **Host**          | SFTP 服务器的 IP 地址或主机名。             | `192.168.1.100`       |
+| **Port**          | 连接使用的端口。默认：`22`。                | `22`                   |
+| **Compress file** | 在 North 处理之前启用 gzip 压缩。           | Enabled/Disabled      |
+
+### 身份验证 {#authentication}
+
+| 设置              | 描述                                                              | 示例值                              |
+| ----------------- | --------------------------------------------------------------------- | -------------------------------------- |
+| Authentication    | 身份验证方法。                                                         | `Username/Password`、`Private Key`      |
+| Username          | 用于 SFTP 身份验证的用户名。                                           | `sftp_user`                              |
+| Password          | 密码（用于用户名/密码身份验证）。                                       | `••••••••`                               |
+| Private key path  | PEM 格式私钥文件的路径（用于私钥身份验证）。                            | `/home/user/.ssh/id_rsa`                 |
+| Passphrase        | 私钥的口令，如受保护（可选）。                                          | `••••••••`                               |
+
+:::info 私钥说明
+
+- 支持受口令保护的密钥
+- 密钥格式：PEM
+- 路径示例：`/home/user/.ssh/id_rsa` 或 `C:\Users\user\.ssh\id_rsa`
+
+:::
+
+## 文件检索设置 {#file-retrieval-settings}
+
+| 设置                   | 描述                                                                                                          | 示例值                 |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| Remote folder          | SFTP 服务器上源目录的路径。                                                                                    | `/incoming/data`          |
+| RegExp                 | 文件模式过滤器（正则表达式）。                                                                                 | `.*\.txt`、`.*\.csv`       |
+| Minimum age            | 文件被检索所需的最小存在时长（毫秒）。避免检索仍在写入中的损坏文件。默认：`1000` 毫秒。                        | `1000`                     |
+| Preserve file          | 如启用，检索后文件**不会被删除**。适用于其他应用程序仍需访问该文件的情况。OIBus 会跟踪修改时间以避免重复检索未变更的文件。 | Enabled/Disabled           |
+| Ignored modified date  | （_需要启用 **Preserve file**_）即使文件的修改时间未变化也强制检索。用于确保文件始终被处理。                     | Enabled/Disabled           |
+| Max files per scan     | 每次扫描检索的最大文件数。设为 **0** 表示不限制。剩余文件将在下一次扫描中检索。                                | `0`（不限制）、`100`        |
+| Max size per scan      | 每次扫描检索文件的最大总大小（MB）。设为 **0** 表示不限制。剩余文件将在下一次扫描中检索。                       | `0`（不限制）、`500`        |
+| Scan sub-folders       | 如启用，将递归扫描远程文件夹中的子文件夹。                                                                     | Enabled/Disabled           |
+
+<RegexTester />

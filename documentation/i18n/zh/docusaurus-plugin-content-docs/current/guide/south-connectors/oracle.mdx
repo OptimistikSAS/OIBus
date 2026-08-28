@@ -1,0 +1,74 @@
+---
+sidebar_position: 12
+---
+
+import ItemSettings from './_south-record-list-item-settings.mdx';
+
+# Oracle Database™
+
+使用 OIBus 连接并查询 Oracle Database™，同时支持 thin 和 thick 两种连接模式。
+
+## 版本兼容性 {#version-compatibility}
+
+| Oracle DB 版本    | Thin 模式 | Thick 模式 | 说明                                |
+| ----------------- | --------- | ---------- | ---------------------------------- |
+| 19c+              | ✅        | ✅         | 推荐                                |
+| 12.2（12c R2）    | ✅        | ✅         | Thin 模式的最低要求                |
+| 12.1（12c R1）    | ⚠️        | ✅         | Thin 模式未获官方支持               |
+| 11.2（11g R2）    | ❌        | ✅         | Thick 模式的最低要求                |
+| 10g 或更早版本    | ❌        | ❌         | 不兼容                              |
+
+## 专有设置 {#specific-settings}
+
+| 设置                    | 说明                                                                                            | 示例值                          |
+| ----------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------ |
+| Thick 模式              | 使用 Oracle Client Library 访问数据库。需要安装 Instant Client。                                    | Enabled/Disabled               |
+| Oracle Client Library   | Oracle Instant Client 的路径。启用 thick 模式时必填。                                               | `C:\oracle\instantclient_23_5` |
+| 主机                    | Oracle 服务器的 IP 地址或主机名。                                                                    | `192.168.1.10`                 |
+| 端口                    | 服务器端口。默认值：`1521`。                                                                        | `1521`                         |
+| 连接超时                | 建立连接的最大时间（毫秒）。默认值：`15000`。                                                        | `15000`                        |
+| 数据库                  | 目标数据库的服务名称（Oracle Easy Connect 格式：`host:port/service_name`；不支持传统的 SID 形式）。 | `ORCL`                         |
+| 用户名                  | 身份验证用户名。                                                                                    | `db_user`                      |
+| 密码                    | 身份验证密码。                                                                                      | `••••••••`                     |
+
+### 连接模式 {#connection-modes}
+
+| 模式  | 说明                    | 要求                  | 优势                       |
+| ----- | ------------------------- | -------------------- | -------------------------- |
+| Thin  | 纯 JavaScript 实现        | 无                    | 设置简单，无需原生二进制文件 |
+| Thick | 使用 Oracle Client Library | Instant Client 18.5+ | 完整功能支持                |
+
+:::info Oracle Instant Client
+
+- **仅 thick 模式需要**
+- 最低版本：18.5.0.0.0
+- 支持 Oracle Database 11.2+
+- 下载地址：[Oracle Instant Client](https://www.oracle.com/database/technologies/instant-client.html)
+  :::
+
+:::tip 安全最佳实践
+
+- 使用只读数据库用户
+- 尽可能优先使用 thin 模式以简化部署
+
+:::
+
+<ItemSettings />
+
+:::note Oracle 日期时间字段类型
+以下**类型**值可用于跟踪时刻的日期时间字段：
+
+| 类型            | 说明                                       |
+| --------------- | ------------------------------------------- |
+| String          | 使用自定义格式解析的字符串表示形式          |
+| DateTime        | Oracle `DATE` 或 `TIMESTAMP` 列              |
+| ISO String      | ISO 8601 字符串（例如 `2024-01-15T10:30:00.000Z`） |
+| UNIX epoch (s)  | 以秒为单位的 Unix 时间戳                    |
+| UNIX epoch (ms) | 以毫秒为单位的 Unix 时间戳                  |
+
+:::
+
+:::note Oracle 条目请求超时
+每个 Oracle 条目都有一个额外的**请求超时**字段（毫秒），用于设置该特定查询的最大执行
+时间。
+:::
