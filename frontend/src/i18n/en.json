@@ -411,6 +411,7 @@
       "first-name": "First name",
       "last-name": "Last name",
       "timezone": "Timezone",
+      "language": "Language",
       "change-password": "Change password",
       "saved": "The user settings have been saved"
     },
