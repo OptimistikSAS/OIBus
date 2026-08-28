@@ -363,7 +363,13 @@ export default class ConfigTransferBuilderService {
             readDelay: item.readDelay,
             startTimeOffset: item.startTimeOffset,
             endTimeOffset: item.endTimeOffset,
-            recoveryStrategy: item.recoveryStrategy
+            recoveryStrategy: item.recoveryStrategy,
+            cachingStrategy: item.cachingStrategy,
+            thresholdType: item.thresholdType,
+            threshold: item.threshold,
+            rangeLow: item.rangeLow,
+            rangeHigh: item.rangeHigh,
+            maxCachingInterval: item.maxCachingInterval
           })),
           groups: south.groups.map(group => ({
             id: group.id,
@@ -376,7 +382,8 @@ export default class ConfigTransferBuilderService {
               endTimeOffset: group.endTimeOffset,
               maxReadInterval: group.maxReadInterval,
               readDelay: group.readDelay,
-              recoveryStrategy: group.recoveryStrategy
+              recoveryStrategy: group.recoveryStrategy,
+              cachingStrategy: group.cachingStrategy
             }
           }))
         }
