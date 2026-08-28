@@ -1,0 +1,81 @@
+---
+displayed_sidebar: useCasesSidebar
+sidebar_position: 7
+---
+
+# 高级多网络配置
+
+## 概述 {#overview}
+
+本使用案例展示了一个包含两个隔离区域的异构网络：
+
+- **OT 网络** — 承载 PLC 的工业网络
+- **IT 网络** — 拥有数据库和云连接能力的企业网络
+
+<div style={{ textAlign: 'center' }}>
+
+![复杂集成](../../static/img/use-cases/advanced-integration.svg)
+
+</div>
+
+部署了两个 OIBus 实例：**OIBus OT** 和 **OIBus IT**。这样可以将两个区域之间的防火墙开放范围限制为单一连接：OIBus OT 通过运行在 OIBus IT 上的代理服务器将数据发送到 OIAnalytics。
+
+请先设置 **OIBus IT** — 在配置 OIBus OT 之前，先配置好其代理服务器以及所需的防火墙规则。
+
+## OIBus IT {#oibus-it}
+
+### 南向连接器 {#south-connectors}
+
+#### MSSQL {#mssql}
+
+有关设置说明，请参阅 [MSSQL 使用案例](./use-case-mssql)和[连接器文档](../guide/south-connectors/mssql)。
+
+#### MQTT {#mqtt}
+
+按照 [MQTT 连接器页面](../guide/south-connectors/mqtt)中的说明订阅 MQTT 主题。
+
+#### 文件夹扫描器 {#folder-scanner}
+
+OIBus 可以监视一个文件夹，并获取匹配正则表达式模式的文件 — 当脚本或其他工具生成 OIBus 无法直接查询的 CSV 文件时，这非常有用。参见[文件夹扫描器连接器页面](../guide/south-connectors/folder-scanner)。
+
+#### ODBC（配合 OIBus Agent）{#odbc-with-oibus-agent}
+
+[ODBC 连接器](../guide/south-connectors/odbc)使用安装在 IP21 机器上的 [OIBus Agent](../guide/oibus-agent/installation)。设置详情请参见 [IP21 使用案例](./use-case-ip21)。
+
+#### OSIsoft PI（配合 OIBus Agent）{#osisoft-pi-with-oibus-agent}
+
+[OSIsoft PI 连接器](../guide/south-connectors/osisoft-pi)使用安装在 PI 服务器上或附近的 [OIBus Agent](../guide/oibus-agent/installation)。设置详情请参见 [OSIsoft PI 使用案例](./use-case-pi)。
+
+### 北向连接器 {#north-connectors}
+
+#### OIAnalytics {#oianalytics}
+
+首先[将 OIBus 注册到 OIAnalytics](../guide/installation/oianalytics)，然后在[北向 OIAnalytics 连接器](../guide/north-connectors/oianalytics)中启用该注册。
+
+### 代理服务器 {#proxy-server}
+
+在 OIBus IT 上启用[代理服务器](../guide/engine/engine-settings#proxy-server)，并确保所选端口可用，并在防火墙中对入站连接开放。
+
+## OIBus OT {#oibus-ot}
+
+OIBus OT 从工业网络中的 PLC 采集数据，并通过 OIBus IT 代理将其转发给 OIAnalytics。
+
+### 南向连接器 {#south-connectors-1}
+
+#### TwinCAT ADS {#twincat-ads}
+
+参见 [TwinCAT ADS 使用案例](./use-case-ads) — 在此场景中 ADS 服务器为远程。
+
+#### OPC UA {#opc-ua}
+
+参见 [OPC UA 使用案例](./use-case-opcua)。
+
+#### Modbus {#modbus}
+
+参见 [Modbus 使用案例](./use-case-modbus)。
+
+### 北向连接器 {#north-connectors-1}
+
+#### OIAnalytics {#oianalytics-1}
+
+[将 OIBus OT 注册到 OIAnalytics](../guide/installation/oianalytics)，并在注册设置中配置代理（即 OIBus IT 代理服务器）。在[北向 OIAnalytics 连接器](../guide/north-connectors/oianalytics)中启用该注册，并确认防火墙允许从 OIBus OT 到 OIBus IT 的连接。

@@ -1,0 +1,76 @@
+---
+displayed_sidebar: useCasesSidebar
+sidebar_position: 5
+---
+
+# Aspen InfoPlus.21® (IP21) → Amazon S3™
+
+## 前提条件 {#beforehand}
+
+AspenTech IP21 是一个实时数据历史数据库，用于采集、存储和分析工业过程的时间序列数据。OIBus 通过 ODBC 连接到 IP21。
+
+有关完整的配置详情，请参阅[北向 Amazon S3](../guide/north-connectors/aws-s3.md)和[南向 ODBC](../guide/south-connectors/odbc)连接器页面。
+
+本使用案例需要一个 [OIBus Agent](../guide/oibus-agent/installation)。示例使用以下虚构网络。
+
+<div style={{ textAlign: 'center' }}>
+
+![IP21 -> AWS S3](../../static/img/use-cases/ip21-aws.svg)
+
+</div>
+
+:::caution 将 Agent 安装在靠近 IP21 的位置
+Aspen SQLplus 驱动程序对网络延迟很敏感。请将 OIBus Agent 安装在 IP21 服务器上，或至少安装在同一本地网络中。Agent 与历史数据库之间额外的网络跳数或防火墙可能导致数据采集问题和性能下降。
+:::
+
+## 南向 ODBC {#south-odbc}
+
+ODBC 连接可以通过两种方式管理：
+
+- 内置的 [node-odbc](https://github.com/markdirish/node-odbc) JavaScript 驱动程序。
+- 带有其 C# ODBC 实现的 [OIBus Agent](../guide/oibus-agent/installation)。
+
+:::info
+本使用案例使用 OIBus Agent — 这是 IP21 的推荐方式。
+:::
+
+在 IP21 机器上安装 OIBus Agent，在连接器设置中启用**使用远程代理**，并输入 `http://192.169.0.2:2224` 作为**远程代理 URL**。
+
+:::tip OIBus Agent 端口
+2224 是默认端口。您可以在安装期间更改它。请确保所选端口在防火墙中对入站 HTTP 连接开放。
+:::
+
+连接字符串遵循标准 ODBC 格式。运行 OIBus Agent 的机器上必须安装 **AspenTech SQLplus** ODBC 驱动程序。
+
+<div style={{ textAlign: 'center' }}>
+
+![ODBC 设置](../../static/img/use-cases/odbc-settings.png)
+
+</div>
+
+:::tip 测试连接
+点击**测试设置**以在保存前验证连接。
+:::
+
+### 项目 {#items}
+
+ODBC 连接器接受 SQL 查询。有关使用 `@StartTime` 和 `@EndTime` 变量编写查询的指导，请参阅 [MSSQL 项目文档](./use-case-mssql#sql-queries)。
+
+## 北向 Amazon S3 {#north-amazon-s3}
+
+在填写连接器设置之前，您需要准备以下内容：
+
+- 存储桶：`oibus-test`
+- 区域：`eu-west-3`
+- 文件夹：`north-local-oib`（留空则将文件存储在存储桶根目录）
+- 在 Amazon S3 中生成的访问密钥和私密密钥
+
+<div style={{ textAlign: 'center' }}>
+
+![AWS S3 设置](../../static/img/use-cases/aws-s3-settings.png)
+
+</div>
+
+:::tip 测试连接
+点击**测试设置**以在保存前验证连接。
+:::

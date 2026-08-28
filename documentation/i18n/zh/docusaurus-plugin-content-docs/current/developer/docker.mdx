@@ -1,0 +1,167 @@
+---
+displayed_sidebar: developerSidebar
+sidebar_position: 4
+---
+
+# Docker 镜像
+
+OIBus 提供官方的多架构 Docker 镜像。本页介绍该镜像包含的内容、它的来源，以及如果需要，如何从同一个
+`Dockerfile` 构建自定义变体。
+
+有关部署说明（数据卷、网络、环境变量、推荐的运行时参数），请参阅面向用户的文档中的
+[Docker 安装指南](../guide/installation/installation.mdx)。
+
+## 🐳 使用官方镜像 {#-use-the-official-image}
+
+日常使用时，请**拉取预构建镜像**，而不是自行构建：
+
+```bash
+docker pull ghcr.io/optimistiksas/oibus:latest
+```
+
+可用标签：
+
+| 标签      | 来源                                                                                                                                                          |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `latest` | 最新稳定版本。每次发布稳定版时由 [`new_release.yml`](./release.mdx) 自动更新。                                                                                    |
+| `beta`   | 最新预发布版本。用于在测试环境中验证即将推出的功能。                                                                                                                |
+| `vX.Y.Z` | 固定到特定版本（例如 `v3.8.8`）。推荐用于生产环境，以便升级成为运维人员的明确操作。 {/* <!-- x-release-please-version --> */} |
+
+该镜像面向 `linux/amd64` 和 `linux/arm64` 构建；执行 `pull` 时 Docker 会自动为你的主机选择正确的变体。完整的发布流程通过
+[`.github/workflows/docker.yml`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/workflows/docker.yml) 运行。
+
+### 最简 `docker run` {#minimal-docker-run}
+
+```bash
+docker run -d \
+  --name oibus \
+  -p 2223:2223 \
+  -v /path/to/persistent-data:/app/OIBus/OIBusData \
+  ghcr.io/optimistiksas/oibus:latest
+```
+
+- **端口 `2223`** — OIBus 的 Web UI / API。
+- **`/app/OIBus/OIBusData`** — 容器存储配置、缓存和日志的位置。在此挂载一个宿主机目录，以便数据在容器替换后仍然保留。
+
+### Docker Compose 示例 {#docker-compose-example}
+
+仓库中的 `docker-compose.yml` 包含一个可直接复制使用的服务定义：
+
+```yaml title="docker-compose.yml — oibus service"
+services:
+  oibus:
+    image: ghcr.io/optimistiksas/oibus:latest
+    container_name: oibus_runtime
+    ports:
+      - '2223:2223'
+    volumes:
+      - ./data-folder:/app/OIBus/OIBusData
+    restart: unless-stopped
+```
+
+仓库还在 Docker Compose profile 之后附带了 `nginx`、`opcua-server`、`mqtt-broker`、`postgres` 以及其他模拟器 —— 对于完整的开发/测试堆栈很有用。可用内容请参阅
+[对产品进行基准测试](./index.md#benchmark-the-product) 一节。
+
+## 🔧 镜像中包含的内容 {#-whats-in-the-image}
+
+Dockerfile 位于
+[`build/docker/Dockerfile`](https://github.com/OptimistikSAS/OIBus/blob/main/build/docker/Dockerfile)。
+它体积很小，而且是有意为之的 —— 它是从匹配的 GitHub Release **下载**预构建的 OIBus 二进制文件，而不是从源码编译：
+
+{/* x-release-please-start-version */}
+
+```dockerfile title="build/docker/Dockerfile"
+FROM ubuntu
+
+ARG TARGETARCH                         # set automatically by `docker buildx` / `--platform`
+ARG ARCH=${TARGETARCH/amd64/x64}        # GitHub release filenames use x64, not amd64
+ARG VERSION="v3.8.8"                    # overridden by the release workflow
+
+RUN apt update -y && apt install -y curl unzip
+
+WORKDIR /app
+RUN curl -LO https://github.com/OptimistikSAS/OIBus/releases/download/${VERSION}/oibus-linux_${ARCH}-${VERSION}.zip
+RUN unzip -a oibus-linux_${ARCH}-${VERSION}.zip -d OIBus/
+WORKDIR /app/OIBus
+RUN mkdir OIBusData
+
+EXPOSE 2223
+CMD ["./oibus-launcher", "--config", "./OIBusData", "--ignoreIpFilters", "true", "--ignoreRemoteUpdate", "true"]
+```
+
+{/* x-release-please-end */}
+
+有几点值得了解：
+
+- **预构建二进制文件**：该镜像从
+  [Releases](https://github.com/OptimistikSAS/OIBus/releases) 获取 `oibus-linux_<arch>-<version>.zip`。这个压缩包本身也是由发布流水线产生的 —— 参见
+  [发布流程](./release.mdx#-what-the-release-workflow-actually-produces)。
+- **`--ignoreIpFilters true`** 被固化在默认的 `CMD` 中：容器假定你已经在网络层（Docker 网络、反向代理等）隔离了访问。如果你希望应用内的
+  IP 过滤生效，请覆盖 `CMD` 或在不带该参数的情况下重新构建。
+- **`--ignoreRemoteUpdate true`** 禁用了 launcher 的自动更新路径：在容器中，更新是通过用更新的标签替换镜像来完成的，而不是修改正在运行的容器。
+- Dockerfile 中默认的 `VERSION="v3.8.8"` 仅是本地构建的占位符。 {/* <!-- x-release-please-version --> */}
+  发布流水线总是会传入 `--build-arg VERSION=<tag>` 来覆盖它。
+
+### 构建参数 {#build-arguments}
+
+| 参数         | 如何设置                                     | 用途                                                                                                                   |
+| ------------ | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `TARGETARCH` | 由 `docker buildx` 根据 `--platform` 设置       | 告诉 Dockerfile 应该获取哪个架构。不要手动传入。                                                                          |
+| `VERSION`    | `--build-arg VERSION=...`（默认 `v3.8.8`）      | 从哪个 GitHub Release 拉取二进制文件。必须匹配一个已存在的发布标签。 {/* <!-- x-release-please-version --> */}           |
+
+## 🛠 构建你自己的镜像 {#-building-your-own-image}
+
+只有在你需要修补 Dockerfile 本身、针对一个还没有官方镜像的发布版本进行测试，或者为构建矩阵未覆盖的架构进行构建时，才需要这样做。其他情况请使用
+[官方镜像](#-use-the-official-image)。
+
+所有命令都在仓库的 `build/docker/` 目录中运行。
+
+### 为你的主机架构构建 {#build-for-your-host-architecture}
+
+```bash
+cd build/docker
+docker build -t oibus-local .
+```
+
+`docker build` 默认使用你主机的架构；`TARGETARCH` 会自动填充。
+
+### 为特定架构构建 {#build-for-a-specific-architecture}
+
+使用 `--platform`，而不是 `--build-arg`：
+
+```bash
+# 构建 arm64 镜像（可在任意主机上通过 Docker Desktop / buildx 完成）
+docker buildx build --platform linux/arm64 -t oibus-local:arm64 .
+
+# 构建 amd64 镜像
+docker buildx build --platform linux/amd64 -t oibus-local:amd64 .
+```
+
+`docker buildx` 会根据 `--platform` 填充 `TARGETARCH`，Dockerfile 会将 `amd64 → x64` 重写以匹配发布资源的命名方式，从而获取正确的压缩包。
+
+### 固定特定的 OIBus 版本 {#pin-a-specific-oibus-version}
+
+{/* x-release-please-start-version */}
+
+```bash
+docker build -t oibus-local --build-arg VERSION="v3.8.8" .
+```
+
+{/* x-release-please-end */}
+
+`VERSION` 必须引用一个已存在的 GitHub Release —— Dockerfile 会从该 Release 获取
+`oibus-linux_<arch>-<version>.zip`。如果该资源不存在（例如你指向了一个预发布标签），`curl` 步骤会失败。要使用预发布版本，请在
+[Releases 页面](https://github.com/OptimistikSAS/OIBus/releases) 查看确切的资源名称和标签。
+
+### 一次性构建多架构镜像 {#build-multi-arch-in-one-shot}
+
+```bash
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  --tag oibus-local:multiarch \
+  --output type=image,push=false \
+  .
+```
+
+这与 [`docker.yml`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/workflows/docker.yml)
+在发布过程中所做的操作类似，只是不会推送到 `ghcr.io`。
