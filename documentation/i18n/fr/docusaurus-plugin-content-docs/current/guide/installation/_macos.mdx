@@ -1,0 +1,64 @@
+import DownloadButton from '../../../../../../src/components/DownloadButton';
+import packageInfo from '../../../../../../package.json';
+
+<h2 id="download-macos">Téléchargement</h2>
+
+<div style={{ display: 'flex', justifyContent: 'space-around' }}>
+  <DownloadButton
+    link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-macos_x64-v${packageInfo.version}.zip`}
+  >
+    <div>
+      <div>{`OIBus v${packageInfo.version}`}</div>
+      <div>macOS (Intel)</div>
+    </div>
+  </DownloadButton>
+  <DownloadButton
+    link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-macos_arm64-v${packageInfo.version}.zip`}
+  >
+    <div>
+      <div>{`OIBus v${packageInfo.version}`}</div>
+      <div>macOS (Apple Silicon)</div>
+    </div>
+  </DownloadButton>
+</div>
+
+:::info
+Le support macOS est destiné au développement et aux tests. Pour les déploiements en production, utilisez Linux ou Windows, où OIBus peut être installé en tant que service système.
+:::
+
+## Exécuter OIBus {#run-oibus}
+
+1. Extrayez l'archive téléchargée à l'emplacement de votre choix.
+
+2. Ouvrez le **Terminal** et accédez au dossier extrait.
+
+3. Lancez OIBus :
+
+```bash
+./oibus-launcher --config ~/oibus-data
+```
+
+Remplacez `~/oibus-data` par le chemin où vous souhaitez stocker la configuration et les fichiers de cache d'OIBus.
+
+:::note
+
+- Des droits administrateur sont requis pour exécuter le binaire.
+- Le binaire doit être exécuté depuis son propre dossier.
+  :::
+
+## Autoriser l'exécution de l'application {#allow-app-execution}
+
+macOS Gatekeeper bloquera les binaires non signés au premier lancement. Vous devez autoriser à la fois `oibus-launcher`
+et `oibus` (que le launcher démarre en tant que processus enfant) :
+
+1. Exécutez `./oibus-launcher` — macOS affichera un avertissement de sécurité et bloquera l'exécution.
+2. Allez dans **Réglages Système → Confidentialité et sécurité**.
+3. Dans la section **Sécurité**, cliquez sur **Autoriser quand même** à côté du binaire bloqué.
+4. Répétez l'opération pour le second binaire lorsqu'il est bloqué.
+
+<div style={{ textAlign: 'center' }}>![Paramètres de sécurité macOS](../../../static/img/guide/installation/macos-security.png)</div>
+
+## Accéder à OIBus {#access-oibus}
+
+Une fois qu'OIBus est en cours d'exécution, ouvrez `http://localhost:2223` dans un navigateur et suivez le
+[guide de premier accès](./first-access.mdx).

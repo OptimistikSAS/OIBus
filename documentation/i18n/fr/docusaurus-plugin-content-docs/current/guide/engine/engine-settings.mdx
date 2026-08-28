@@ -1,0 +1,198 @@
+---
+sidebar_position: 1
+---
+
+# Paramètres du moteur
+
+## Nom d'OIBus {#oibus-name}
+
+Nommer votre instance OIBus est important, en particulier lors de la gestion de plusieurs instances. Un nom clair
+permet d'identifier chaque OIBus dans les journaux, les tableaux de bord et les outils de supervision.
+
+## Serveur web {#web-server}
+
+### Port {#port}
+
+Le port par défaut pour accéder aux paramètres d'OIBus via l'interface web est **2223** (`http://localhost:2223`).
+Vous pouvez modifier ce port si nécessaire — par exemple pour résoudre des conflits ou améliorer la sécurité.
+
+### Durée d'authentification {#authentication-duration}
+
+Le paramètre **Authentication duration** contrôle la durée de validité d'une session de connexion avant que
+l'utilisateur ne doive se reconnecter. Les valeurs disponibles sont **1 heure**, **6 heures**, **1 jour**,
+**3 jours**, **7 jours** (par défaut), **14 jours** et **30 jours**.
+
+## Serveur proxy {#proxy-server}
+
+OIBus peut agir comme un **serveur proxy**, lui permettant de transférer des requêtes HTTP(S) vers un hôte cible.
+Cette fonctionnalité est particulièrement utile lorsque deux instances OIBus sont déployées sur des réseaux séparés :
+
+- **OIBus1** : installé sur un réseau ayant accès à Internet.
+- **OIBus2** : installé sur un réseau sans accès à Internet.
+
+En configurant **OIBus1** comme serveur proxy, **OIBus2** peut envoyer des données vers Internet en passant par
+**OIBus1**, à condition que le connecteur Nord l'autorise.
+
+### Prérequis {#prerequisites}
+
+1. **Configuration du pare-feu** : assurez-vous que votre pare-feu autorise les connexions entrantes d'**OIBus2** vers
+   **OIBus1** sur le port proxy spécifié.
+2. **Filtre IP** : autorisez l'adresse IP d'**OIBus2** dans la section [Filtre IP](./ip-filters.mdx) d'**OIBus1**.
+
+### Étapes de configuration {#configuration-steps}
+
+#### Sur OIBus1 (serveur proxy) {#on-oibus1-proxy-server}
+
+1. Activez l'option **proxy server**.
+2. Définissez le **port d'écoute** (par exemple, `2224`).
+3. Facultativement, définissez un **Username** et un **Password** pour exiger que les clients s'authentifient avant
+   d'utiliser le proxy (voir [Authentication](#authentication) ci-dessous).
+4. Assurez-vous que le pare-feu autorise les connexions entrantes sur ce port.
+5. Autorisez l'adresse IP d'**OIBus2** dans la section **IP Filter**.
+
+#### Sur OIBus2 (client proxy) {#on-oibus2-proxy-client}
+
+1. Configurez le **connecteur Nord** ou les **paramètres d'enregistrement OIAnalytics** pour utiliser le serveur
+   proxy.
+2. Indiquez l'adresse et le port du serveur proxy d'**OIBus1** (par exemple, `http://oibus1.fr:2224`).
+3. Si le serveur proxy d'**OIBus1** nécessite une authentification, indiquez le même **Username** et **Password**
+   dans les paramètres proxy du connecteur Nord ou de l'enregistrement.
+
+### Authentification {#authentication}
+
+Le serveur proxy peut exiger que les clients s'authentifient avec un **Username** et un **Password**
+(authentification HTTP Basic) avant de transférer une quelconque requête. Laissez ces champs vides pour autoriser
+l'accès anonyme.
+
+:::tip
+Le filtrage IP est vérifié avant l'authentification : une requête provenant d'un hôte non autorisé est rejetée avant
+même que ses identifiants ne soient vérifiés. Les deux peuvent être utilisés ensemble pour une défense en profondeur :
+le filtre IP limite quels hôtes peuvent atteindre le proxy, et l'authentification contrôle qui peut l'utiliser parmi
+ces hôtes.
+:::
+
+### Transférer vers un proxy en amont {#forward-to-an-upstream-proxy}
+
+Si **OIBus1** lui-même n'a pas d'accès direct à Internet (par exemple, il doit passer par un proxy d'entreprise), il
+peut être configuré pour transférer chaque requête reçue vers un **proxy en amont** au lieu de contacter directement
+l'hôte cible :
+
+```
+OIBus2 → OIBus1 (serveur proxy) → Proxy en amont → Internet
+```
+
+Pour le configurer, activez **Forward to upstream proxy** dans les paramètres du serveur proxy d'**OIBus1** et
+fournissez :
+
+- **URL** : l'adresse du proxy en amont (par exemple, `http://corporate-proxy.company.com:8080`).
+- **Username** / **Password** : les identifiants pour le proxy en amont, s'il nécessite une authentification.
+
+Ceci est indépendant des paramètres d'[Authentication](#authentication) ci-dessus : les identifiants en amont sont
+utilisés par **OIBus1** pour atteindre le proxy en amont, tandis que le nom d'utilisateur/mot de passe propre au
+serveur proxy (s'il est défini) continue de contrôler quels clients (par exemple, **OIBus2**) peuvent utiliser
+**OIBus1** comme proxy.
+
+### Exemple {#example}
+
+#### Scénario {#scenario}
+
+- **OIBus1** :
+- Agit comme serveur proxy.
+- Écoute sur le port `2224`.
+- Accessible à l'adresse `http://oibus1.fr`.
+- **OIBus2** :
+- Configuré avec un [connecteur Nord Azure Blob](../north-connectors/azure-blob.md) et un
+  [connecteur Nord OIAnalytics](../north-connectors/oianalytics.md).
+- Envoie des données vers Azure et OIAnalytics via le serveur proxy d'**OIBus1**.
+
+<div style={{ textAlign: 'center' }}>![Exemple de proxy réseau](../../../static/img/guide/engine/proxy-network.svg)</div>
+
+#### Configuration {#configuration}
+
+1. **Sur OIBus1** :
+
+- Activez le serveur proxy et configurez-le pour écouter sur le port `2224`.
+- Autorisez l'adresse IP d'**OIBus2** dans le **IP Filter**.
+
+<div style={{ textAlign: 'center' }}>![Exemple de serveur proxy](../../../static/img/guide/engine/proxy-server-example.png)</div>
+
+2. **Sur OIBus2** :
+
+- Dans les paramètres du **connecteur Nord Azure Blob**, indiquez le serveur proxy :
+- **Proxy URL** : `http://oibus1.fr:2224`
+
+<div style={{ textAlign: 'center' }}>![Exemple de proxy Nord](../../../static/img/guide/engine/north-proxy-example.png)</div>
+
+:::tip
+Si vous utilisez un [Nord OIAnalytics](../north-connectors/oianalytics.md) avec un
+[enregistrement OIAnalytics](../installation/oianalytics.mdx), configurez les paramètres du client proxy dans les
+**paramètres d'enregistrement**.
+:::
+
+---
+
+## Paramètres de journalisation {#logging-parameters}
+
+OIBus prend en charge six niveaux de journalisation, du plus critique au moins critique :
+
+| Niveau de journal | Description                                                                     |
+| ------------------ | -------------------------------------------------------------------------------- |
+| Silent              | Désactive tous les journaux.                                                    |
+| Error               | Journalise uniquement les erreurs.                                              |
+| Warning             | Journalise les avertissements et les erreurs.                                   |
+| Info                | Journalise les messages informatifs, les avertissements et les erreurs.         |
+| Debug               | Journalise des informations détaillées pour le débogage, plus tous les niveaux ci-dessus. |
+| Trace               | Journalise des informations très détaillées et verbeuses, principalement pour le dépannage. |
+
+:::caution
+N'utilisez les niveaux de journal **Trace** et **Debug** que pour le dépannage, car ils génèrent de gros volumes de
+données.
+:::
+
+### Options de sortie des journaux {#log-output-options}
+
+#### OIAnalytics {#oianalytics}
+
+- Si OIBus est [enregistré auprès d'OIAnalytics](../installation/oianalytics.mdx), les journaux peuvent être
+  transmis à OIAnalytics.
+- Ces paramètres sont ignorés si OIBus n'est pas enregistré.
+
+#### Base de données {#database}
+
+- Enregistre les journaux dans une **base de données SQLite** locale.
+- Consultez les journaux dans l'onglet **Logs** d'OIBus.
+- Définissez un **nombre maximal de journaux** pour empêcher la base de données de grossir excessivement. Les
+  anciens journaux sont automatiquement purgés.
+
+#### Fichier {#file}
+
+- Stocke les journaux dans un ou plusieurs fichiers.
+- Configurez :
+- **Taille maximale du fichier** (en Mo)
+- **Nombre de fichiers** pour la rotation des journaux
+
+#### Loki {#loki}
+
+- Envoie les journaux par lots vers une instance **Loki** distante.
+- Configurez :
+- **URL**
+- **Intervalle de lot** (par défaut : 60 secondes)
+- **Identifiants Basic Auth** (nom d'utilisateur et mot de passe)
+
+:::caution
+Les journaux envoyés à Loki sont identifiés par l'**ID OIBus** et le nom. Assurez-vous que le nom est correctement
+défini pour retrouver vos journaux, en particulier si vous avez plusieurs instances OIBus.
+:::
+
+#### Syslog {#syslog}
+
+- Envoie les journaux vers un serveur **Syslog** distant (RFC 5424).
+- Configurez :
+- **Host**
+- **Port** (par défaut : 514)
+- **Protocole** : UDP ou TCP
+
+#### Console {#console}
+
+- Affiche les journaux dans la **Console**.
+- Accessible en exécutant OIBus depuis un terminal.
