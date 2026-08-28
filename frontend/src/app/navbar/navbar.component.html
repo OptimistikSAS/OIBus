@@ -42,7 +42,7 @@
           </div>
         </li>
         <li class="nav-item">
-          <a class="nav-link" [ngbTooltip]="'nav.tooltips.documentation' | translate" href="https://oibus.optimistik.com/" target="_blank"
+          <a class="nav-link" [ngbTooltip]="'nav.tooltips.documentation' | translate" [href]="docsHomeUrl" target="_blank"
             ><span class="fa fa-question"></span
           ></a>
         </li>
@@ -93,7 +93,7 @@
           </div>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="https://oibus.optimistik.com/" target="_blank"><span class="fa fa-question"></span></a>
+          <a class="nav-link" [href]="docsHomeUrl" target="_blank"><span class="fa fa-question"></span></a>
         </li>
       </ul>
     }
