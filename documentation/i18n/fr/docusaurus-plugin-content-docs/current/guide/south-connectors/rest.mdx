@@ -63,13 +63,13 @@ fournit simplement des valeurs par défaut communes que chaque élément peut re
 | Paramètre       | Description                                                                                                                                       | Exemple de valeur          |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
 | **Nom**          | Libellé unique du groupe au sein de ce connecteur.                                                                                                  | `Group A`                 |
-| **Mode de scrutation** | Planification utilisée pour collecter tous les éléments du groupe.                                                                            | `Every 1 min`             |
+| **Mode de scan** | Planification utilisée pour collecter tous les éléments du groupe.                                                                            | `Every 1 min`             |
 | **Limitation**    | Valeurs de limitation par défaut (intervalle de lecture max, délai de lecture, décalage d'heure de début, décalage d'heure de fin, stratégie de reprise) héritées par les éléments du groupe. | `3600, 200, 0, 0, oldest` |
 
 ## Paramètres d'élément {#item-settings}
 
 Chaque élément cible un point de terminaison d'API spécifique et définit comment formuler la requête et interpréter la réponse. Les éléments
-héritent de leur mode de scrutation et de leurs paramètres de limitation par défaut depuis leur groupe, mais chaque paramètre peut être remplacé par
+héritent de leur mode de scan et de leurs paramètres de limitation par défaut depuis leur groupe, mais chaque paramètre peut être remplacé par
 élément en désactivant **Sync with group**.
 
 <ThrottlingSettings />
