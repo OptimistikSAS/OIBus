@@ -10,6 +10,7 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { EditScanModeModalComponent } from './edit-scan-mode-modal/edit-scan-mode-modal.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { DocsUrlService } from '../../shared/docs-url.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
@@ -45,6 +46,9 @@ export class ScanModeListComponent {
   private modalService = inject(ModalService);
   private notificationService = inject(NotificationService);
   private scanModeService = inject(ScanModeService);
+  private docsUrlService = inject(DocsUrlService);
+
+  readonly helpUrl = this.docsUrlService.resolve('guide/engine/scan-modes');
 
   allScanModes: Array<ScanModeDTO> = [];
   private filteredScanModes: Array<ScanModeDTO> = [];

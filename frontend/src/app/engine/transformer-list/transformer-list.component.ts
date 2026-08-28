@@ -7,6 +7,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { DocsUrlService } from '../../shared/docs-url.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TransformerService } from '../../services/transformer.service';
 import { CustomTransformerDTO } from '../../../../../backend/shared/model/transformer.model';
@@ -43,6 +44,9 @@ export class TransformerListComponent {
   private modalService = inject(ModalService);
   private notificationService = inject(NotificationService);
   private transformerService = inject(TransformerService);
+  private docsUrlService = inject(DocsUrlService);
+
+  readonly helpUrl = this.docsUrlService.resolve('guide/engine/transformers');
 
   allTransformers: Array<CustomTransformerDTO> = [];
   private filteredTransformers: Array<CustomTransformerDTO> = [];

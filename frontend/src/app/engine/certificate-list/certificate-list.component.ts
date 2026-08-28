@@ -13,6 +13,7 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { ClipboardCopyDirective } from '../../shared/clipboard-copy-directive';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { DocsUrlService } from '../../shared/docs-url.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
@@ -49,6 +50,9 @@ export class CertificateListComponent {
   private modalService = inject(ModalService);
   private notificationService = inject(NotificationService);
   private certificateService = inject(CertificateService);
+  private docsUrlService = inject(DocsUrlService);
+
+  readonly helpUrl = this.docsUrlService.resolve('guide/engine/engine-settings');
 
   private refreshTrigger = new Subject<void>();
   readonly certificates = toSignal(
