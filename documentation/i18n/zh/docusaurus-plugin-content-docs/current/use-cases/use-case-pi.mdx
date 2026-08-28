@@ -1,0 +1,61 @@
+---
+displayed_sidebar: useCasesSidebar
+sidebar_position: 6
+---
+
+import NorthOIAnalytics from './_north_oianalytics.mdx';
+
+# OSIsoft PI System™ → OIAnalytics®
+
+## 前提条件 {#beforehand}
+
+OSIsoft PI System™ 是一个实时数据管理平台，广泛应用于制造业、能源和公用事业领域，用于采集、存储和分析来自工业过程的时间序列数据。
+
+有关完整的配置详情，请参见[北向 OIAnalytics](../guide/north-connectors/oianalytics)和[南向 OSIsoft PI](../guide/south-connectors/osisoft-pi)连接器页面。
+
+此用例需要一个 [OIBus Agent](../guide/oibus-agent/installation)。可以将其安装在 PI 服务器本身上，也可以安装在安装了 OSIsoft PI SDK 的另一台机器上——详情请参见 [OSIsoft PI SDK 配置](../guide/south-connectors/osisoft-pi#osisoft-pi-sdk-configuration)。以下示例使用了如下虚构网络。
+
+<div style={{ textAlign: 'center' }}>
+
+![OSIsoft PI -> OIAnalytics 用例](../../static/img/use-cases/pi-oia.svg)
+
+</div>
+
+## 南向 PI {#south-pi}
+
+输入**远程代理 URL**。在此示例中为：`http://localhost:2224`。
+
+<div style={{ textAlign: 'center' }}>
+
+![OSIsoft PI 设置](../../static/img/use-cases/pi-settings.png)
+
+</div>
+
+:::tip 测试连接
+点击**测试设置**以在保存前验证连接。
+:::
+
+### 条目 {#items}
+
+PI 条目可以是以下两种类型之一：
+
+- **PI point** —— 检索单个 PI 点位的时间序列数值。
+- **PI query** —— 检索所有匹配类正则表达式的 PI 点位的时间序列数值。条目名称仅用于日志记录；数据会以实际的 PI 点位引用作为标签。
+
+#### PI point {#pi-point}
+
+<div style={{ textAlign: 'center' }}>
+
+![OSIsoft PI 条目点位 ID 设置](../../static/img/use-cases/pi-item-point-id.png)
+
+</div>
+
+#### PI query {#pi-query}
+
+<div style={{ textAlign: 'center' }}>
+
+![OSIsoft PI 条目查询设置](../../static/img/use-cases/pi-item-query.png)
+
+</div>
+
+<NorthOIAnalytics></NorthOIAnalytics>
