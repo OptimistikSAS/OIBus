@@ -31,8 +31,14 @@ describe('DocsUrlService', () => {
     expect(service.resolve('guide/x')).toBe('/documentation/fr/docs/guide/x');
   });
 
+  test('should resolve a fragment for chinese with the zh locale segment', () => {
+    vi.spyOn(windowService, 'languageToUse').mockReturnValue('zh');
+    const service: DocsUrlService = TestBed.inject(DocsUrlService);
+    expect(service.resolve('guide/x')).toBe('/documentation/zh/docs/guide/x');
+  });
+
   test('should fall back to no locale prefix for a language with no bundled docs locale yet', () => {
-    vi.spyOn(windowService, 'languageToUse').mockReturnValue('zh' as unknown as Language);
+    vi.spyOn(windowService, 'languageToUse').mockReturnValue('unmapped' as unknown as Language);
     const service: DocsUrlService = TestBed.inject(DocsUrlService);
     expect(service.resolve('guide/x')).toBe('/documentation/docs/guide/x');
   });
