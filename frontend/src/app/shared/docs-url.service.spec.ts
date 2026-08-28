@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { DocsUrlService } from './docs-url.service';
 import { WindowService } from './window.service';
+import { Language } from '../../../../backend/shared/model/types';
 
 describe('DocsUrlService', () => {
   let windowService: WindowService;
@@ -24,8 +25,14 @@ describe('DocsUrlService', () => {
     expect(service.resolve('guide/x')).toBe('/documentation/docs/guide/x');
   });
 
-  test('should fall back to no locale prefix for a language with no bundled locale yet', () => {
+  test('should resolve a fragment for french with the fr locale segment', () => {
     vi.spyOn(windowService, 'languageToUse').mockReturnValue('fr');
+    const service: DocsUrlService = TestBed.inject(DocsUrlService);
+    expect(service.resolve('guide/x')).toBe('/documentation/fr/docs/guide/x');
+  });
+
+  test('should fall back to no locale prefix for a language with no bundled docs locale yet', () => {
+    vi.spyOn(windowService, 'languageToUse').mockReturnValue('zh' as unknown as Language);
     const service: DocsUrlService = TestBed.inject(DocsUrlService);
     expect(service.resolve('guide/x')).toBe('/documentation/docs/guide/x');
   });
