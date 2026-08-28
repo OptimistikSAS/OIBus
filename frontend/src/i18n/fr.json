@@ -1,0 +1,3260 @@
+{
+  "configuration": {
+    "oibus": {
+      "secret": {
+        "placeholder": "Laisser vide pour conserver le secret existant"
+      },
+      "edit-array-element-modal": {
+        "title": {
+          "create": "Créer un élément",
+          "edit": "Modifier un élément"
+        },
+        "tooltips": {
+          "add": "Ajouter un élément",
+          "edit": "Modifier l'élément",
+          "copy": "Copier l'élément",
+          "delete": "Supprimer l'élément"
+        }
+      },
+      "manifest": {
+        "north": {
+          "settings": "Paramètres North",
+          "aws-s3": {
+            "bucket": "Bucket",
+            "region": "Région",
+            "folder": "Dossier",
+            "access-key": "Clé d'accès",
+            "secret-key": "Clé secrète",
+            "use-proxy": "Utiliser un proxy",
+            "proxy-url": "URL du proxy",
+            "proxy-username": "Nom d'utilisateur du proxy",
+            "proxy-password": "Mot de passe du proxy"
+          },
+          "azure-blob": {
+            "use-adls": "Azure Data Lake Storage",
+            "use-custom-url": "Utiliser une URL personnalisée",
+            "account": "Compte",
+            "custom-url": "URL personnalisée",
+            "container": "Conteneur",
+            "path": "Chemin",
+            "authentication": {
+              "title": "Authentification",
+              "access-key": "Clé d'accès",
+              "sas-token": "Jeton SAS",
+              "aad": "AAD - Application Active Directory",
+              "external": "Externe"
+            },
+            "access-key": "Clé d'accès",
+            "sas-token": "Jeton de signature d'accès partagé",
+            "tenant-id": "ID du locataire",
+            "client-id": "ID client",
+            "client-secret": "Secret client",
+            "use-proxy": "Utiliser un proxy",
+            "proxy-url": "URL du proxy",
+            "proxy-username": "Nom d'utilisateur du proxy",
+            "proxy-password": "Mot de passe du proxy"
+          },
+          "azure-data-explorer": {
+            "cluster-url": "URL du cluster",
+            "database": "Base de données",
+            "table": "Table",
+            "authentication": {
+              "title": "Authentification",
+              "aad-app-secret": "Secret d'application AAD",
+              "aad-app-certificate": "Certificat d'application AAD",
+              "managed-identity": "Identité managée"
+            },
+            "tenant-id": "ID du locataire",
+            "client-id": "ID client",
+            "client-secret": "Secret client",
+            "certificate-id": "Certificat",
+            "data-format": {
+              "title": "Format de données",
+              "csv": "CSV",
+              "json": "JSON",
+              "multijson": "JSON multiligne"
+            },
+            "ingestion-mapping-name": "Nom du mapping d'ingestion",
+            "use-proxy": "Utiliser un proxy",
+            "proxy-url": "URL du proxy",
+            "proxy-username": "Nom d'utilisateur du proxy",
+            "proxy-password": "Mot de passe du proxy"
+          },
+          "console": {
+            "verbose": "Verbeux"
+          },
+          "file-writer": {
+            "output-folder": "Dossier de sortie",
+            "prefix": "Préfixe",
+            "suffix": "Suffixe",
+            "smb-username": "Nom d'utilisateur SMB",
+            "smb-password": "Mot de passe SMB",
+            "smb-domain": "Domaine SMB"
+          },
+          "modbus": {
+            "host": "Hôte",
+            "port": "Port",
+            "connect-timeout": "Délai de connexion",
+            "retry-interval": "Intervalle de nouvelle tentative",
+            "slave-id": "ID esclave",
+            "address-offset": {
+              "title": "Décalage d'adresse",
+              "modbus": "Modbus",
+              "jbus": "JBus"
+            },
+            "endianness": {
+              "title": "Boutisme",
+              "big-endian": "Gros-boutiste",
+              "little-endian": "Petit-boutiste"
+            },
+            "swap-bytes-in-words": "Inverser les octets ?",
+            "swap-words-in-dwords": "Inverser les mots ?",
+            "grouping-gap": "Écart max de regroupement (adresses)"
+          },
+          "mqtt": {
+            "url": "URL",
+            "qos": {
+              "0": "0",
+              "1": "1",
+              "2": "2",
+              "title": "QoS"
+            },
+            "persistent": "Persistant",
+            "authentication": {
+              "title": "Authentification",
+              "none": "Aucune",
+              "basic": "Nom d'utilisateur/Mot de passe",
+              "cert": "Certificat",
+              "username": "Nom d'utilisateur",
+              "password": "Mot de passe",
+              "cert-file-path": "Chemin du fichier de certificat",
+              "key-file-path": "Chemin du fichier de clé",
+              "ca-file-path": "Chemin du fichier CA"
+            },
+            "reject-unauthorized": "Rejeter les connexions non autorisées",
+            "reconnect-period": "Période de reconnexion",
+            "connect-timeout": "Délai de connexion"
+          },
+          "oianalytics": {
+            "use-oianalytics-module": "Utiliser l'enregistrement OIAnalytics",
+            "timeout": "Délai d'expiration",
+            "compress": "Compresser",
+            "specific-settings": {
+              "host": "URL",
+              "accept-unauthorized": "Accepter non autorisé",
+              "authentication": {
+                "title": "Authentification",
+                "basic": "Clé d'accès/Secret",
+                "aad-client-secret": "Azure Active Directory avec secret client",
+                "aad-certificate": "Azure Active Directory avec certificat"
+              },
+              "access-key": "Clé d'accès",
+              "secret-key": "Secret",
+              "tenant-id": "ID du locataire",
+              "client-id": "ID client",
+              "client-secret": "Secret client",
+              "certificate-id": "Certificat",
+              "scope": "Portée",
+              "use-proxy": "Utiliser un proxy",
+              "proxy-url": "URL du proxy",
+              "proxy-username": "Nom d'utilisateur du proxy",
+              "proxy-password": "Mot de passe du proxy"
+            }
+          },
+          "opcua": {
+            "url": "URL",
+            "keep-session-alive": "Maintenir la session active",
+            "retry-interval": "Intervalle de nouvelle tentative",
+            "security-mode": {
+              "title": "Mode de sécurité",
+              "none": "Aucun",
+              "sign": "Signer",
+              "sign-and-encrypt": "Signer et chiffrer"
+            },
+            "security-policy": {
+              "title": "Politique de sécurité",
+              "none": "Aucune",
+              "basic128": "Basic128",
+              "basic192": "Basic192",
+              "basic256": "Basic256 (obsolète)",
+              "basic128-rsa15": "Basic128-RSA15 (obsolète)",
+              "basic192-rsa15": "Basic192-RSA15",
+              "basic256-rsa15": "Basic256-RSA15",
+              "basic256-sha256": "Basic256-SHA256",
+              "aes128-sha256-rsa-oaep": "AES128-SHA256-RSA-OAEP",
+              "pub-sub-aes-128-ctr": "PubSub AES-128-CTR",
+              "pub-sub-aes-256-ctr": "PubSub AES-256-CTR"
+            },
+            "authentication": {
+              "title": "Authentification",
+              "none": "Aucune",
+              "basic": "Nom d'utilisateur/Mot de passe",
+              "cert": "Certificat"
+            },
+            "username": "Nom d'utilisateur",
+            "password": "Mot de passe",
+            "cert-file-path": "Chemin du fichier de certificat",
+            "key-file-path": "Chemin du fichier de clé"
+          },
+          "rest": {
+            "host": "Hôte",
+            "accept-unauthorized": "Accepter certificat non autorisé",
+            "authentication": {
+              "title": "Authentification",
+              "type": {
+                "title": "Type",
+                "none": "Aucune",
+                "basic": "Basique (nom d'utilisateur/mot de passe)",
+                "bearer": "Jeton Bearer",
+                "api-key": "Clé API"
+              },
+              "username": "Nom d'utilisateur",
+              "password": "Mot de passe",
+              "token": "Jeton Bearer",
+              "api-key": "Clé API",
+              "api-value": "Valeur API",
+              "add-to": {
+                "title": "Ajouter à",
+                "header": "En-tête",
+                "query-params": "Paramètres de requête"
+              }
+            },
+            "send-as": {
+              "title": "Envoyer la charge utile en tant que",
+              "file": "Fichier",
+              "body": "Corps"
+            },
+            "test": {
+              "title": "Test de connexion",
+              "endpoint": "Point de terminaison de test",
+              "method": {
+                "title": "Méthode",
+                "GET": "GET",
+                "POST": "POST",
+                "PUT": "PUT"
+              },
+              "body": "Corps",
+              "success-code": "Code de succès attendu"
+            },
+            "proxy": {
+              "title": "Proxy",
+              "use-proxy": "Utiliser un proxy",
+              "url": "URL du proxy",
+              "username": "Nom d'utilisateur du proxy",
+              "password": "Mot de passe du proxy"
+            },
+            "timeout": "Délai d'expiration de la requête",
+            "method": {
+              "title": "Méthode",
+              "GET": "GET",
+              "POST": "POST",
+              "PUT": "PUT",
+              "PATCH": "PATCH",
+              "DELETE": "DELETE"
+            },
+            "endpoint": "Point de terminaison",
+            "query-params": {
+              "title": "Paramètres de requête",
+              "query-param": "Paramètre de requête",
+              "key": "Clé",
+              "value": "Valeur"
+            },
+            "headers": {
+              "title": "En-têtes",
+              "header": "En-tête",
+              "key": "Nom de clé d'en-tête HTTP",
+              "value": "Valeur d'en-tête HTTP"
+            },
+            "success-code": "Code de succès attendu"
+          },
+          "sftp": {
+            "host": "Hôte",
+            "port": "Port",
+            "authentication": {
+              "title": "Authentification",
+              "password": "Nom d'utilisateur/Mot de passe",
+              "private-key": "Clé privée"
+            },
+            "remote-folder": "Dossier distant",
+            "prefix": "Préfixe",
+            "suffix": "Suffixe",
+            "username": "Nom d'utilisateur",
+            "password": "Mot de passe",
+            "private-key": "Clé privée",
+            "passphrase": "Phrase secrète"
+          }
+        },
+        "transformers": {
+          "title": "Transformer les charges utiles",
+          "source-simple": "Source : {{ source }}",
+          "source": "Source : {{ name }} ({{ type }})",
+          "source-disabled": "Source : {{ name }} ({{ type }}) - en pause",
+          "output": "Sortie",
+          "api-data-source": "Source de données API",
+          "items": "Éléments",
+          "one-item-selected": "1 élément",
+          "several-items-selected": "{{ numberOfItems }} éléments",
+          "all-items-selected": "Tous les éléments",
+          "oibus-api-selected": "API OIBus (dataSourceId : {{ dataSourceId }})",
+          "oianalytics-setpoint-selected": "Consignes OIAnalytics",
+          "all-items": "Tous les éléments",
+          "specific-items": "Éléments spécifiques",
+          "search-items": "Rechercher des éléments...",
+          "no-items-found": "Aucun élément trouvé",
+          "search-results-count": "{{ count }} résultats",
+          "showing-first-n": "(affichage des {{ limit }} premiers)",
+          "select-all-results": "Sélectionner tous les résultats",
+          "remove-all": "Tout retirer",
+          "options": "Options",
+          "transformer": "Transformateur",
+          "add": "Ajouter un transformateur",
+          "list": "Transformateurs personnalisés",
+          "none": "Aucun transformateur personnalisé",
+          "created": "Transformateur {{ name }} créé",
+          "updated": "Transformateur {{ name }} mis à jour",
+          "edited": "Transformateur {{ name }} modifié",
+          "confirm-deletion": "Êtes-vous sûr de vouloir supprimer le transformateur personnalisé {{ name }} ? Tous les connecteurs North et requêtes d'historique qui l'utilisent seront immédiatement impactés.",
+          "confirm-edit": "Êtes-vous sûr de vouloir mettre à jour le transformateur personnalisé {{ name }} ? Tous les connecteurs North et requêtes d'historique qui l'utilisent seront rechargés.",
+          "deleted": "Transformateur {{ name }} supprimé",
+          "standard": {
+            "csv-to-mqtt": "Charges utiles MQTT (depuis CSV)",
+            "csv-to-time-values": "Valeurs temporelles (depuis CSV)",
+            "ignore": "Ignorer",
+            "iso": "Pas de transformation",
+            "json-to-csv": "CSV (depuis JSON)",
+            "json-to-oianalytics": "OIAnalytics (depuis JSON)",
+            "record-list-to-csv": "CSV (depuis liste d'enregistrements)",
+            "time-values-to-csv": "CSV",
+            "time-values-to-json": "JSON",
+            "time-values-to-modbus": "Valeurs Modbus",
+            "time-values-to-mqtt": "Charges utiles MQTT",
+            "time-values-to-oianalytics": "OIAnalytics (sélectionner la précision temporelle)",
+            "time-values-to-opcua": "Valeurs OPCUA",
+            "setpoint-to-modbus": "Valeurs Modbus",
+            "setpoint-to-mqtt": "Charges utiles MQTT",
+            "setpoint-to-opcua": "Valeurs OPCUA"
+          },
+          "choose-transformer-modal": {
+            "title": "Choisir comment traiter les charges utiles",
+            "transformer": "Transformateur à appliquer",
+            "options": "Options"
+          },
+          "copy-from-existing": {
+            "mode-new": "Nouveau",
+            "mode-from-north": "Depuis un connecteur North",
+            "mode-from-history": "Depuis une requête d'historique",
+            "select-source": "Sélectionner une source",
+            "select-transformer": "Transformateur à copier",
+            "no-compatible-transformer": "Aucun transformateur compatible trouvé pour cette source"
+          },
+          "edit-transformer-modal": {
+            "create-title": "Créer un transformateur personnalisé",
+            "edit-title": "Modifier un transformateur personnalisé",
+            "input-type": "Entrée",
+            "output-type": "Sortie",
+            "name": "Nom",
+            "description": "Description",
+            "custom-code": "Code",
+            "language": "Langage",
+            "custom-manifest": "Options",
+            "timeout": "Délai d'exécution",
+            "select-language": "Sélectionnez d'abord un langage de programmation.",
+            "test": "Test",
+            "tooltips": {
+              "add": "Ajouter un transformateur personnalisé",
+              "edit": "Modifier ce transformateur personnalisé",
+              "delete": "Supprimer ce transformateur personnalisé",
+              "audit": "Voir l'historique d'audit de ce transformateur personnalisé"
+            }
+          },
+          "test-transformer-modal": {
+            "title": "Tester le transformateur personnalisé",
+            "transformer": "Transformateur",
+            "input-type": "Type d'entrée",
+            "input-data": "Données d'entrée",
+            "options": "Options",
+            "output": "Sortie",
+            "results": "Résultats",
+            "success": "Test terminé avec succès",
+            "test": "Lancer le test",
+            "content-file": "Fichier :",
+            "content-size": "Taille :",
+            "created-at": "Créé le :",
+            "number-of-elements": "Nombre d'éléments :",
+            "csv-delimiter": "Délimiteur",
+            "csv-delimiter-dot": "Point .",
+            "csv-delimiter-semicolon": "Point-virgule ;",
+            "csv-delimiter-colon": "Deux-points :",
+            "csv-delimiter-comma": "Virgule ,",
+            "csv-delimiter-slash": "Barre oblique /",
+            "csv-delimiter-tab": "Tabulation",
+            "csv-delimiter-non-breaking-space": "Espace",
+            "csv-delimiter-pipe": "Barre verticale |"
+          },
+          "attributes": {
+            "attribute": "Attribut",
+            "sub-attribute": "Sous-attribut",
+            "root-attribute": "Attribut racine",
+            "root-attribute-item": "Élément d'attribut racine",
+            "key": "Clé",
+            "type": {
+              "title": "Type",
+              "string": "Chaîne",
+              "number": "Nombre",
+              "instant": "Instant",
+              "string-select": "Sélection de chaîne",
+              "secret": "Secret",
+              "code": "Code",
+              "boolean": "Booléen",
+              "scan-mode": "Mode de scan",
+              "certificate": "Certificat",
+              "timezone": "Fuseau horaire",
+              "array": "Tableau",
+              "object": "Objet"
+            },
+            "translation-key": "Clé de traduction",
+            "visible": "Visible",
+            "wrap-in-box": "Encadrer dans une boîte",
+            "attributes": "Attributs",
+            "add": "Ajouter un attribut",
+            "none": "Aucun attribut défini",
+            "default-value": "Valeur par défaut",
+            "unit": "Unité",
+            "selectable-values": "Valeurs sélectionnables",
+            "selectable-values-help": "Liste de valeurs séparées par des virgules",
+            "content-type": {
+              "title": "Type de contenu",
+              "json": "JSON",
+              "sql": "SQL"
+            },
+            "acceptable-type": {
+              "title": "Type acceptable",
+              "POLL": "Interrogation",
+              "SUBSCRIPTION": "Abonnement",
+              "SUBSCRIPTION_AND_POLL": "Abonnement et interrogation"
+            },
+            "paginate": "Paginer",
+            "number-of-elements-per-page": "Nombre d'éléments par page",
+            "display-properties": {
+              "visible": "Visible",
+              "wrap-in-box": "Encadrer dans une boîte"
+            },
+            "row": "Ligne",
+            "columns": "Colonnes",
+            "display-in-view-mode": "Afficher en mode consultation",
+            "nested-attributes": "Attributs imbriqués",
+            "nested-context": "Attributs imbriqués — {{ path }}",
+            "secret-info": "Les champs secrets sont utilisés pour les données sensibles",
+            "instant-info": "Les champs instant sont utilisés pour les valeurs d'horodatage",
+            "certificate-info": "Les champs certificat sont utilisés pour les certificats SSL",
+            "edit-transformer-modal": {
+              "create-title": "Créer un attribut",
+              "edit-title": "Modifier un attribut"
+            }
+          },
+          "csv-to-mqtt": {
+            "delimiter": {
+              "title": "Délimiteur CSV",
+              "DOT": "Point .",
+              "SEMI_COLON": "Point-virgule ;",
+              "COLON": "Deux-points :",
+              "COMMA": "Virgule ,",
+              "SLASH": "Barre oblique /",
+              "TAB": "Tabulation",
+              "NON_BREAKING_SPACE": "Espace",
+              "PIPE": "Barre verticale |"
+            },
+            "has-header": "Comporte un en-tête",
+            "topic-column": "Colonne du sujet",
+            "payload-type": {
+              "title": "Type de charge utile",
+              "string": "Chaîne",
+              "number": "Nombre",
+              "boolean": "Booléen",
+              "datetime": "Date/heure",
+              "object": "Objet"
+            },
+            "value-column": "Colonne de valeur",
+            "datetime-settings": {
+              "title": "Paramètres de date/heure",
+              "input-type": {
+                "title": "Type d'entrée de l'horodatage",
+                "string": "Chaîne",
+                "iso-string": "Chaîne ISO",
+                "unix-epoch": "Époque Unix (s)",
+                "unix-epoch-ms": "Époque Unix (ms)"
+              },
+              "output-type": {
+                "title": "Type de sortie de l'horodatage",
+                "string": "Chaîne",
+                "iso-string": "Chaîne ISO",
+                "unix-epoch": "Époque Unix (s)",
+                "unix-epoch-ms": "Époque Unix (ms)"
+              },
+              "timezone": "Fuseau horaire",
+              "format": "Format",
+              "locale": "Paramètres régionaux"
+            },
+            "object-fields": {
+              "title": "Champs objet",
+              "item": {
+                "title": "Configuration du champ"
+              },
+              "key": "Clé",
+              "column": "Colonne",
+              "data-type": {
+                "title": "Type de données",
+                "string": "Chaîne",
+                "number": "Nombre",
+                "boolean": "Booléen",
+                "datetime": "Date/heure",
+                "array": "Tableau",
+                "object": "Objet"
+              }
+            }
+          },
+          "csv-to-time-values": {
+            "delimiter": {
+              "title": "Délimiteur CSV",
+              "DOT": "Point .",
+              "SEMI_COLON": "Point-virgule ;",
+              "COLON": "Deux-points :",
+              "COMMA": "Virgule ,",
+              "SLASH": "Barre oblique /",
+              "TAB": "Tabulation",
+              "NON_BREAKING_SPACE": "Espace",
+              "PIPE": "Barre verticale |"
+            },
+            "has-header": "Comporte un en-tête",
+            "point-id-column": "Colonne ID du point",
+            "timestamp-column": "Colonne d'horodatage",
+            "value-column": "Colonne de valeur",
+            "timestamp-settings": {
+              "title": "Paramètres d'horodatage",
+              "type": {
+                "title": "Type d'horodatage",
+                "string": "Chaîne",
+                "iso-string": "Chaîne ISO",
+                "unix-epoch": "Époque Unix (s)",
+                "unix-epoch-ms": "Époque Unix (ms)"
+              },
+              "timezone": "Fuseau horaire",
+              "format": "Format",
+              "locale": "Paramètres régionaux"
+            }
+          },
+          "json-to-csv": {
+            "filename": "Nom du fichier de sortie",
+            "delimiter": {
+              "title": "Délimiteur CSV",
+              "DOT": "Point .",
+              "SEMI_COLON": "Point-virgule ;",
+              "COLON": "Deux-points :",
+              "COMMA": "Virgule ,",
+              "SLASH": "Barre oblique /",
+              "TAB": "Tabulation",
+              "NON_BREAKING_SPACE": "Espace",
+              "PIPE": "Barre verticale |"
+            },
+            "encoding": {
+              "title": "Encodage",
+              "UTF_8": "UTF-8",
+              "UTF_8_BOM": "UTF-8 BOM",
+              "LATIN_1": "Latin-1 (ISO-8859-1)",
+              "UTF_16_LE": "UTF-16 LE"
+            },
+            "quote-char": {
+              "title": "Caractère de citation",
+              "DOUBLE_QUOTE": "Guillemet double (\")",
+              "SINGLE_QUOTE": "Guillemet simple (')",
+              "NONE": "Aucun"
+            },
+            "escape-char": {
+              "title": "Caractère d'échappement",
+              "BACKSLASH": "Barre oblique inversée (\\)",
+              "DOUBLE_QUOTE": "Guillemet double (\")"
+            },
+            "newline": {
+              "title": "Délimiteur de ligne",
+              "DEFAULT": "Par défaut (\\r, \\n, ou \\r\\n)",
+              "CRLF": "CRLF (\\r\\n)",
+              "LF": "LF (\\n)",
+              "CR": "CR (\\r)"
+            },
+            "null-value": "Valeur nulle",
+            "header": "Première ligne comme en-tête",
+            "row-iterator-path": "JSONPath de l'itérateur de ligne",
+            "fields": {
+              "title": "Mappage des champs",
+              "item": {
+                "title": "Configuration du champ"
+              },
+              "column-name": "Nom de colonne",
+              "json-path": "JSONPath",
+              "data-type": {
+                "title": "Type de données",
+                "string": "Chaîne",
+                "number": "Nombre",
+                "boolean": "Booléen",
+                "datetime": "Date/heure",
+                "array": "Tableau",
+                "object": "Objet"
+              },
+              "field-process": "Traitement du champ (expression JS, ex. value.toUpperCase())",
+              "datetime-settings": {
+                "title": "Paramètres de date/heure",
+                "input-type": {
+                  "title": "Type d'entrée de l'horodatage",
+                  "string": "Chaîne",
+                  "iso-string": "Chaîne ISO",
+                  "unix-epoch": "Époque Unix (s)",
+                  "unix-epoch-ms": "Époque Unix (ms)"
+                },
+                "output-type": {
+                  "title": "Type de sortie de l'horodatage",
+                  "string": "Chaîne",
+                  "iso-string": "Chaîne ISO",
+                  "unix-epoch": "Époque Unix (s)",
+                  "unix-epoch-ms": "Époque Unix (ms)"
+                },
+                "timezone": "Fuseau horaire",
+                "format": "Format",
+                "locale": "Paramètres régionaux"
+              }
+            }
+          },
+          "record-list-to-csv": {
+            "filename": "Nom du fichier",
+            "encoding": {
+              "title": "Encodage",
+              "UTF_8": "UTF-8",
+              "UTF_8_BOM": "UTF-8 BOM",
+              "LATIN_1": "Latin-1 (ISO-8859-1)",
+              "UTF_16_LE": "UTF-16 LE"
+            },
+            "header": "Première ligne comme en-tête",
+            "compression": "Compresser le fichier",
+            "delimiter": {
+              "title": "Délimiteur",
+              "DOT": "Point .",
+              "SEMI_COLON": "Point-virgule ;",
+              "COLON": "Deux-points :",
+              "COMMA": "Virgule ,",
+              "SLASH": "Barre oblique /",
+              "TAB": "Tabulation",
+              "NON_BREAKING_SPACE": "Espace",
+              "PIPE": "Barre verticale |"
+            },
+            "newline": {
+              "title": "Saut de ligne",
+              "CRLF": "CRLF (\\r\\n)",
+              "LF": "LF (\\n)",
+              "CR": "CR (\\r)"
+            },
+            "quote-char": {
+              "title": "Caractère de citation",
+              "DOUBLE_QUOTE": "Guillemet double (\")",
+              "SINGLE_QUOTE": "Guillemet simple (')",
+              "NONE": "Aucun"
+            },
+            "escape-char": {
+              "title": "Caractère d'échappement",
+              "BACKSLASH": "Barre oblique inversée (\\)",
+              "DOUBLE_QUOTE": "Guillemet double (\")"
+            },
+            "null-value": "Valeur nulle",
+            "fields": {
+              "title": "Mappage des champs",
+              "item": {
+                "title": "Configuration du champ"
+              },
+              "field-name": "Nom du champ",
+              "column-name": "Nom de colonne",
+              "data-type": {
+                "title": "Type de données",
+                "string": "Chaîne",
+                "number": "Nombre",
+                "boolean": "Booléen",
+                "datetime": "Date/heure",
+                "array": "Tableau",
+                "object": "Objet"
+              },
+              "field-process": "Traitement du champ (expression JS, ex. value.toUpperCase())",
+              "datetime-settings": {
+                "title": "Paramètres de date/heure",
+                "input-type": {
+                  "title": "Type d'entrée de l'horodatage",
+                  "string": "Chaîne",
+                  "iso-string": "Chaîne ISO",
+                  "unix-epoch": "Époque Unix (s)",
+                  "unix-epoch-ms": "Époque Unix (ms)"
+                },
+                "output-type": {
+                  "title": "Type de sortie de l'horodatage",
+                  "string": "Chaîne",
+                  "iso-string": "Chaîne ISO",
+                  "unix-epoch": "Époque Unix (s)",
+                  "unix-epoch-ms": "Époque Unix (ms)"
+                },
+                "timezone": "Fuseau horaire",
+                "format": "Format",
+                "locale": "Paramètres régionaux"
+              }
+            }
+          },
+          "setpoint-to-modbus": {
+            "mapping": {
+              "title": "Table de mappage",
+              "point-id": "ID du point (Référence)",
+              "reference": "Référence",
+              "address": "Adresse Modbus",
+              "modbus-type": {
+                "title": "Type Modbus",
+                "coil": "Bobine",
+                "register": "Registre"
+              }
+            }
+          },
+          "setpoint-to-mqtt": {
+            "mapping": {
+              "title": "Table de mappage",
+              "point-id": "ID du point (Référence)",
+              "reference": "Référence",
+              "topic": "Sujet MQTT"
+            }
+          },
+          "setpoint-to-opcua": {
+            "mapping": {
+              "title": "Table de mappage",
+              "point-id": "ID du point (Référence)",
+              "reference": "Référence",
+              "node-id": "ID de nœud OPCUA",
+              "data-type": {
+                "title": "Type de données",
+                "boolean": "Booléen",
+                "s-byte": "SByte",
+                "byte": "Byte",
+                "int16": "Int16",
+                "uint16": "UInt16",
+                "int32": "Int32",
+                "uint32": "UInt32",
+                "int64": "Int64",
+                "uint64": "UInt64",
+                "float": "Flottant",
+                "double": "Double",
+                "string": "Chaîne",
+                "date-time": "Date/heure"
+              }
+            }
+          },
+          "time-values-to-csv": {
+            "filename": "Nom du fichier",
+            "encoding": {
+              "title": "Encodage",
+              "UTF_8": "UTF-8",
+              "UTF_8_BOM": "UTF-8 BOM",
+              "LATIN_1": "Latin-1 (ISO-8859-1)",
+              "UTF_16_LE": "UTF-16 LE"
+            },
+            "header": "Première ligne comme en-tête",
+            "delimiter": {
+              "title": "Délimiteur",
+              "DOT": "Point .",
+              "SEMI_COLON": "Point-virgule ;",
+              "COLON": "Deux-points :",
+              "COMMA": "Virgule ,",
+              "SLASH": "Barre oblique /",
+              "TAB": "Tabulation",
+              "NON_BREAKING_SPACE": "Espace",
+              "PIPE": "Barre verticale |"
+            },
+            "newline": {
+              "title": "Saut de ligne",
+              "DEFAULT": "Par défaut",
+              "CRLF": "CRLF (\\r\\n)",
+              "LF": "LF (\\n)",
+              "CR": "CR (\\r)"
+            },
+            "quote-char": {
+              "title": "Caractère de citation",
+              "DOUBLE_QUOTE": "Guillemet double (\")",
+              "SINGLE_QUOTE": "Guillemet simple (')",
+              "NONE": "Aucun"
+            },
+            "escape-char": {
+              "title": "Caractère d'échappement",
+              "BACKSLASH": "Barre oblique inversée (\\)",
+              "DOUBLE_QUOTE": "Guillemet double (\")"
+            },
+            "compression": "Compresser le fichier",
+            "point-id": "Nom de colonne pour l'ID du point (Référence)",
+            "value": "Nom de colonne pour la valeur",
+            "timestamp": "Nom de colonne pour l'horodatage",
+            "timestamp-type": {
+              "title": "Type de sortie de l'horodatage",
+              "string": "Chaîne",
+              "iso-string": "Chaîne ISO",
+              "unix-epoch": "Époque Unix (s)",
+              "unix-epoch-ms": "Époque Unix (ms)"
+            },
+            "timestamp-format": "Format de sortie de l'horodatage",
+            "timezone": "Fuseau horaire de sortie",
+            "point-id-process": "Traitement de l'ID du point (expression JS, ex. value.toUpperCase())"
+          },
+          "time-values-to-modbus": {
+            "mapping": {
+              "title": "Table de mappage",
+              "point-id": "ID du point (Référence)",
+              "address": "Adresse Modbus",
+              "modbus-type": {
+                "title": "Type Modbus",
+                "coil": "Bobine",
+                "register": "Registre"
+              }
+            }
+          },
+          "time-values-to-mqtt": {
+            "mapping": {
+              "title": "Table de mappage",
+              "point-id": "ID du point (Référence)",
+              "topic": "Sujet MQTT"
+            }
+          },
+          "json-to-oianalytics": {
+            "row-iterator-path": "JSONPath de l'itérateur de ligne",
+            "point-id": "JSONPath de l'ID du point",
+            "value": "JSONPath de la valeur",
+            "timestamp": "JSONPath de l'horodatage",
+            "datetime-settings": {
+              "title": "Paramètres de date/heure",
+              "input-type": {
+                "title": "Type d'entrée de l'horodatage",
+                "string": "Chaîne",
+                "iso-string": "Chaîne ISO",
+                "unix-epoch": "Époque Unix (s)",
+                "unix-epoch-ms": "Époque Unix (ms)"
+              },
+              "timezone": "Fuseau horaire",
+              "format": "Format",
+              "locale": "Paramètres régionaux",
+              "output-precision": {
+                "title": "Précision de l'horodatage",
+                "ms": "Milliseconde",
+                "s": "Seconde",
+                "min": "Minute",
+                "hr": "Heure"
+              }
+            }
+          },
+          "time-values-to-oianalytics": {
+            "precision": {
+              "title": "Précision de l'horodatage",
+              "ms": "Milliseconde",
+              "s": "Seconde",
+              "min": "Minute",
+              "hr": "Heure"
+            }
+          },
+          "time-values-to-opcua": {
+            "mapping": {
+              "title": "Table de mappage",
+              "point-id": "ID du point (Référence)",
+              "node-id": "ID de nœud OPCUA",
+              "data-type": {
+                "title": "Type de données",
+                "boolean": "Booléen",
+                "s-byte": "SByte",
+                "byte": "Byte",
+                "int16": "Int16",
+                "uint16": "UInt16",
+                "int32": "Int32",
+                "uint32": "UInt32",
+                "int64": "Int64",
+                "uint64": "UInt64",
+                "float": "Flottant",
+                "double": "Double",
+                "string": "Chaîne",
+                "date-time": "Date/heure"
+              }
+            }
+          },
+          "by-group": "Par groupe",
+          "select-group": "Sélectionner un groupe...",
+          "no-groups": "Aucun groupe disponible",
+          "group-selected": "Groupe : {{ groupName }}",
+          "tooltip-overflow": "... ({{ count }} de plus)"
+        },
+        "south": {
+          "tooltips": {
+            "create": "Créer un nouvel élément",
+            "edit": "Modifier l'élément",
+            "copy": "Copier l'élément",
+            "delete": "Supprimer l'élément"
+          },
+          "settings": "Paramètres South",
+          "ads": {
+            "net-id": "Net ID",
+            "port": "Port",
+            "router-address": "Adresse du routeur",
+            "router-tcp-port": "Port TCP du routeur",
+            "client-ams-net-id": "AMS Net ID",
+            "client-ads-port": "Port client ADS",
+            "retry-interval": "Intervalle de nouvelle tentative",
+            "plc-name": "Nom de l'automate",
+            "enum-as-text": {
+              "title": "Valeur d'énumération",
+              "text": "Texte",
+              "integer": "Entier"
+            },
+            "bool-as-text": {
+              "title": "Valeur booléenne",
+              "text": "Texte",
+              "integer": "Entier"
+            },
+            "structure-filtering": {
+              "structure": "Filtrage de structure",
+              "name": "Nom de la structure",
+              "fields": "Champs à conserver (séparés par des virgules)"
+            }
+          },
+          "folder-scanner": {
+            "input-folder": "Dossier d'entrée",
+            "compression": "Activer la compression",
+            "smb-username": "Nom d'utilisateur SMB",
+            "smb-password": "Mot de passe SMB",
+            "smb-domain": "Domaine SMB"
+          },
+          "modbus": {
+            "host": "Hôte",
+            "port": "Port",
+            "connect-timeout": "Délai de connexion",
+            "network-timeout": "Délai réseau",
+            "retry-interval": "Intervalle de nouvelle tentative",
+            "slave-id": "ID esclave",
+            "address-offset": {
+              "title": "Décalage d'adresse",
+              "modbus": "Modbus",
+              "jbus": "JBus"
+            },
+            "endianness": {
+              "title": "Boutisme",
+              "big-endian": "Gros-boutiste",
+              "little-endian": "Petit-boutiste"
+            },
+            "swap-bytes-in-words": "Inverser les octets ?",
+            "swap-words-in-dwords": "Inverser les mots ?",
+            "grouping-gap": "Écart max de regroupement (adresses)",
+            "batch-query": "Regrouper les requêtes par lot ?"
+          },
+          "s7": {
+            "host": "Hôte",
+            "port": "Port",
+            "rack": "Rack",
+            "slot": "Slot",
+            "connection-type": {
+              "title": "Type de connexion",
+              "PG": "PG",
+              "OP": "OP",
+              "S7Basic": "S7 Basic"
+            },
+            "connect-timeout": "Délai de connexion",
+            "request-timeout": "Délai de requête",
+            "retry-interval": "Intervalle de nouvelle tentative"
+          },
+          "mqtt": {
+            "url": "URL",
+            "qos": {
+              "0": "0",
+              "1": "1",
+              "2": "2",
+              "title": "QoS"
+            },
+            "persistent": "Persistant",
+            "authentication": {
+              "title": "Authentification",
+              "none": "Aucune",
+              "basic": "Nom d'utilisateur/Mot de passe",
+              "cert": "Certificat",
+              "username": "Nom d'utilisateur",
+              "password": "Mot de passe",
+              "cert-file-path": "Chemin du fichier de certificat",
+              "key-file-path": "Chemin du fichier de clé",
+              "ca-file-path": "Chemin du fichier CA"
+            },
+            "reject-unauthorized": "Rejeter les connexions non autorisées",
+            "reconnect-period": "Période de reconnexion",
+            "connect-timeout": "Délai de connexion",
+            "flush-message-timeout": "Délai entre les vidages",
+            "max-number-of-messages": "Nombre de messages avant vidage"
+          },
+          "mssql": {
+            "host": "Hôte",
+            "port": "Port",
+            "connection-timeout": "Délai de connexion",
+            "database": "Base de données",
+            "username": "Nom d'utilisateur",
+            "password": "Mot de passe",
+            "domain": "Domaine",
+            "encryption": "Utiliser le chiffrement",
+            "trust-server-certificate": "Faire confiance au certificat du serveur",
+            "request-timeout": "Délai de requête"
+          },
+          "mysql": {
+            "host": "Hôte",
+            "port": "Port",
+            "connection-timeout": "Délai de connexion",
+            "database": "Base de données",
+            "username": "Nom d'utilisateur",
+            "password": "Mot de passe"
+          },
+          "mongodb": {
+            "connection-string": "Chaîne de connexion",
+            "connection-timeout": "Délai de connexion",
+            "username": "Nom d'utilisateur",
+            "password": "Mot de passe"
+          },
+          "influxdb": {
+            "version": {
+              "1": "v1 (InfluxDB 1.x – InfluxQL)",
+              "2": "v2 (InfluxDB 2.x – Flux)",
+              "3": "v3 (InfluxDB 3.x – SQL)",
+              "title": "Version"
+            },
+            "host": "Hôte",
+            "port": "Port",
+            "protocol": {
+              "title": "Protocole",
+              "http": "HTTP",
+              "https": "HTTPS"
+            },
+            "database": "Base de données",
+            "username": "Nom d'utilisateur",
+            "password": "Mot de passe",
+            "url": "URL",
+            "token": "Jeton API",
+            "organisation": "Organisation",
+            "bucket": "Bucket"
+          },
+          "odbc": {
+            "remote-agent": "Utiliser un agent distant",
+            "agent-url": "URL de l'agent distant",
+            "connection-timeout": "Délai de connexion",
+            "retry-interval": "Intervalle de nouvelle tentative",
+            "request-timeout": "Délai de requête",
+            "connection-string": "Chaîne de connexion",
+            "password": "Mot de passe"
+          },
+          "oianalytics": {
+            "use-oia-module": "Utiliser l'enregistrement OIAnalytics",
+            "timeout": "Délai d'expiration",
+            "specific-settings": {
+              "title": "Paramètres spécifiques",
+              "host": "Hôte",
+              "accept-unauthorized": "Accepter certificat non autorisé",
+              "authentication": {
+                "title": "Authentification",
+                "basic": "Clé d'accès/Secret",
+                "aad-client-secret": "Azure Active Directory avec secret client",
+                "aad-certificate": "Azure Active Directory avec certificat"
+              },
+              "access-key": "Clé d'accès",
+              "secret-key": "Secret",
+              "tenant-id": "ID du locataire",
+              "client-id": "ID client",
+              "client-secret": "Secret client",
+              "certificate-id": "Certificat",
+              "scope": "Portée",
+              "use-proxy": "Utiliser un proxy",
+              "proxy-url": "URL du proxy",
+              "proxy-username": "Nom d'utilisateur du proxy",
+              "proxy-password": "Mot de passe du proxy"
+            }
+          },
+          "oledb": {
+            "agent-url": "URL de l'agent distant",
+            "connection-timeout": "Délai de connexion",
+            "retry-interval": "Intervalle de nouvelle tentative",
+            "request-timeout": "Délai de requête",
+            "connection-string": "Chaîne de connexion",
+            "password": "Mot de passe"
+          },
+          "opc": {
+            "agent-url": "URL de l'agent distant",
+            "retry-interval": "Intervalle de nouvelle tentative",
+            "host": "URL du serveur (depuis l'agent)",
+            "server-name": "Nom du serveur",
+            "mode": {
+              "title": "Mode",
+              "hda": "HDA",
+              "da": "DA"
+            }
+          },
+          "opcua": {
+            "url": "URL",
+            "keep-session-alive": "Maintenir la session active",
+            "read-timeout": "Délai de lecture",
+            "retry-interval": "Intervalle de nouvelle tentative",
+            "max-parallel-run": "Requêtes parallèles max",
+            "flush-message-timeout": "Délai entre les vidages",
+            "max-number-of-messages": "Nombre de messages avant vidage",
+            "security-mode": {
+              "title": "Mode de sécurité",
+              "none": "Aucun",
+              "sign": "Signer",
+              "sign-and-encrypt": "Signer et chiffrer"
+            },
+            "security-policy": {
+              "title": "Politique de sécurité",
+              "none": "Aucune",
+              "basic128": "Basic128",
+              "basic192": "Basic192",
+              "basic256": "Basic256 (obsolète)",
+              "basic128-rsa15": "Basic128-RSA15 (obsolète)",
+              "basic192-rsa15": "Basic192-RSA15",
+              "basic256-rsa15": "Basic256-RSA15",
+              "basic256-sha256": "Basic256-SHA256",
+              "aes128-sha256-rsa-oaep": "AES128-SHA256-RSA-OAEP",
+              "pub-sub-aes-128-ctr": "PubSub AES-128-CTR",
+              "pub-sub-aes-256-ctr": "PubSub AES-256-CTR"
+            },
+            "authentication": {
+              "title": "Authentification",
+              "none": "Aucune",
+              "basic": "Nom d'utilisateur/Mot de passe",
+              "cert": "Certificat"
+            },
+            "username": "Nom d'utilisateur",
+            "password": "Mot de passe",
+            "cert-file-path": "Chemin du fichier de certificat",
+            "key-file-path": "Chemin du fichier de clé"
+          },
+          "oracle": {
+            "thick-mode": "Mode thick",
+            "oracle-client": "Bibliothèque cliente Oracle",
+            "host": "Hôte",
+            "port": "Port",
+            "connection-timeout": "Délai de connexion",
+            "database": "Base de données",
+            "username": "Nom d'utilisateur",
+            "password": "Mot de passe"
+          },
+          "osisoft-pi": {
+            "agent-url": "URL de l'agent distant",
+            "retry-interval": "Intervalle de nouvelle tentative"
+          },
+          "postgresql": {
+            "host": "Hôte",
+            "port": "Port",
+            "ssl-mode": "SSL",
+            "connection-timeout": "Délai de connexion",
+            "request-timeout": "Délai de requête",
+            "database": "Base de données",
+            "username": "Nom d'utilisateur",
+            "password": "Mot de passe"
+          },
+          "rest": {
+            "host": "Hôte",
+            "accept-unauthorized": "Accepter certificat non autorisé",
+            "authentication": {
+              "title": "Authentification",
+              "type": {
+                "title": "Type",
+                "none": "Aucune",
+                "basic": "Basique (nom d'utilisateur/mot de passe)",
+                "bearer": "Jeton Bearer",
+                "api-key": "Clé API"
+              },
+              "username": "Nom d'utilisateur",
+              "password": "Mot de passe",
+              "token": "Jeton Bearer",
+              "api-key": "Clé API",
+              "api-value": "Valeur API",
+              "add-to": {
+                "title": "Ajouter à",
+                "header": "En-tête",
+                "query-params": "Paramètres de requête"
+              }
+            },
+            "test": {
+              "title": "Test de connexion",
+              "endpoint": "Point de terminaison de test",
+              "method": {
+                "title": "Méthode",
+                "GET": "GET",
+                "POST": "POST",
+                "PUT": "PUT"
+              },
+              "body": "Corps",
+              "success-code": "Code de succès attendu"
+            },
+            "proxy": {
+              "title": "Proxy",
+              "use-proxy": "Utiliser un proxy",
+              "url": "URL du proxy",
+              "username": "Nom d'utilisateur du proxy",
+              "password": "Mot de passe du proxy"
+            },
+            "timeout": "Délai d'expiration de la requête"
+          },
+          "sftp": {
+            "host": "Hôte",
+            "port": "Port",
+            "authentication": {
+              "title": "Authentification",
+              "password": "Nom d'utilisateur/Mot de passe",
+              "private-key": "Clé privée"
+            },
+            "username": "Nom d'utilisateur",
+            "password": "Mot de passe",
+            "private-key": "Clé privée",
+            "passphrase": "Phrase secrète",
+            "compression": "Compresser les fichiers",
+            "retry-interval": "Intervalle de nouvelle tentative"
+          },
+          "ftp": {
+            "host": "Hôte",
+            "port": "Port",
+            "authentication": {
+              "title": "Authentification",
+              "none": "Aucune",
+              "password": "Nom d'utilisateur/Mot de passe"
+            },
+            "username": "Nom d'utilisateur",
+            "password": "Mot de passe",
+            "compression": "Compresser les fichiers",
+            "retry-interval": "Intervalle de nouvelle tentative"
+          },
+          "sqlite": {
+            "database-path": "Chemin de la base de données"
+          },
+          "items": {
+            "title": "Éléments",
+            "name": "Nom",
+            "enabled": "Activé",
+            "disabled": "Désactivé",
+            "scan-mode": "Planification",
+            "settings": "Paramètres",
+            "no-items": "Aucun élément",
+            "item": "Élément",
+            "ads": {
+              "address": "Adresse"
+            },
+            "folder-scanner": {
+              "regex": "Regex pour récupérer les fichiers",
+              "min-age": "Âge minimum",
+              "preserve-files": "Conserver les fichiers",
+              "ignore-modified-date": "Ignorer la date de modification",
+              "max-files": "Fichiers max par scan (0 = illimité)",
+              "max-size": "Taille max par scan (0 = illimité)",
+              "recursive": "Scanner les sous-dossiers"
+            },
+            "modbus": {
+              "address": "Adresse",
+              "modbus-type": {
+                "title": "Type Modbus",
+                "coil": "Bobine",
+                "discrete-input": "Entrée discrète",
+                "input-register": "Registre d'entrée",
+                "holding-register": "Registre de maintien"
+              },
+              "data": {
+                "data-type": {
+                  "title": "Type de données",
+                  "uint16": "UInt16",
+                  "int16": "Int16",
+                  "uint32": "UInt32",
+                  "int32": "Int32",
+                  "big-uint64": "Big UInt64",
+                  "big-int64": "Big Int64",
+                  "float": "Flottant",
+                  "double": "Double",
+                  "bit": "Bit"
+                },
+                "bit-index": "Index de bit",
+                "multiplier-coefficient": "Coefficient multiplicateur"
+              }
+            },
+            "s7": {
+              "address": "Adresse"
+            },
+            "mqtt": {
+              "topic": "Sujet"
+            },
+            "mssql": {
+              "query": "Requête",
+              "tracking-instant": {
+                "title": "Suivi de l'instant",
+                "track-instant": "Suivre l'instant",
+                "field-name": "Nom du champ",
+                "date-time-input": {
+                  "title": "Entrée date/heure",
+                  "type": {
+                    "title": "Type",
+                    "string": "Chaîne",
+                    "date": "Date",
+                    "date-time": "DateTime",
+                    "date-time-2": "DateTime2",
+                    "date-time-offset": "DateTime Offset",
+                    "small-date-time": "Small DateTime",
+                    "iso-string": "Chaîne ISO",
+                    "unix-epoch": "Époque UNIX (s)",
+                    "unix-epoch-ms": "Époque UNIX (ms)"
+                  },
+                  "timezone": "Fuseau horaire",
+                  "format": "Format",
+                  "locale": "Paramètres régionaux"
+                }
+              }
+            },
+            "mysql": {
+              "query": "Requête",
+              "request-timeout": "Délai de requête",
+              "tracking-instant": {
+                "title": "Suivi de l'instant",
+                "track-instant": "Suivre l'instant",
+                "field-name": "Nom du champ",
+                "date-time-input": {
+                  "title": "Entrée date/heure",
+                  "type": {
+                    "title": "Type",
+                    "string": "Chaîne",
+                    "iso-string": "Chaîne ISO",
+                    "unix-epoch": "Époque UNIX (s)",
+                    "unix-epoch-ms": "Époque UNIX (ms)",
+                    "date-time": "DateTime"
+                  },
+                  "timezone": "Fuseau horaire",
+                  "format": "Format",
+                  "locale": "Paramètres régionaux"
+                }
+              }
+            },
+            "mongodb": {
+              "collection": "Collection",
+              "query-type": {
+                "title": "Type de requête",
+                "find": "Find",
+                "aggregation": "Agrégation"
+              },
+              "query": "Requête",
+              "sort": "Tri",
+              "tracking-instant": {
+                "title": "Suivi de l'instant",
+                "track-instant": "Suivre l'instant",
+                "json-path": "Chemin JSON",
+                "date-time-input": {
+                  "title": "Entrée date/heure",
+                  "type": {
+                    "title": "Type",
+                    "timestamp": "Horodatage",
+                    "iso-string": "Chaîne ISO",
+                    "unix-epoch": "Époque UNIX (s)",
+                    "unix-epoch-ms": "Époque UNIX (ms)",
+                    "string": "Chaîne"
+                  },
+                  "timezone": "Fuseau horaire",
+                  "format": "Format",
+                  "locale": "Paramètres régionaux"
+                }
+              }
+            },
+            "influxdb": {
+              "query": "Requête",
+              "request-timeout": "Délai de requête",
+              "track-max-instant": "Suivre l'instant maximal",
+              "date-time": {
+                "track-instant": "Suivre l'instant",
+                "json-path": "Chemin JSON",
+                "type": {
+                  "title": "Type",
+                  "iso-string": "Chaîne ISO",
+                  "unix-epoch": "Époque UNIX (s)",
+                  "unix-epoch-ms": "Époque UNIX (ms)",
+                  "string": "Chaîne"
+                },
+                "timezone": "Fuseau horaire",
+                "format": "Format",
+                "locale": "Paramètres régionaux"
+              },
+              "date-time-input": "Entrée date/heure"
+            },
+            "odbc": {
+              "query": "Requête",
+              "date-time-fields": {
+                "date-time-field": "Champs date/heure",
+                "field-name": "Nom du champ",
+                "use-as-reference": "Champ de référence",
+                "type": {
+                  "title": "Type",
+                  "iso-string": "Chaîne ISO",
+                  "unix-epoch": "Époque UNIX (s)",
+                  "unix-epoch-ms": "Époque UNIX (ms)",
+                  "string": "Chaîne"
+                },
+                "timezone": "Fuseau horaire",
+                "format": "Format",
+                "locale": "Paramètres régionaux"
+              },
+              "serialization": {
+                "title": "Sérialisation",
+                "type": {
+                  "title": "Type",
+                  "csv": "CSV"
+                },
+                "filename": "Nom du fichier",
+                "delimiter": {
+                  "title": "Délimiteur",
+                  "DOT": "Point .",
+                  "SEMI_COLON": "Point-virgule ;",
+                  "COLON": "Deux-points :",
+                  "COMMA": "Virgule ,",
+                  "SLASH": "Barre oblique /",
+                  "TAB": "Tabulation",
+                  "NON_BREAKING_SPACE": "Espace",
+                  "PIPE": "Barre verticale |"
+                },
+                "compression": "Compression",
+                "output-timestamp-format": "Format de date/heure de sortie",
+                "output-timezone": "Fuseau horaire de sortie"
+              }
+            },
+            "oianalytics": {
+              "endpoint": "Point de terminaison",
+              "query-params": {
+                "query-param": "Paramètres de requête",
+                "key": "Clé",
+                "value": "Valeur"
+              },
+              "serialization": {
+                "title": "Sérialisation",
+                "type": {
+                  "title": "Type",
+                  "csv": "CSV"
+                },
+                "filename": "Nom du fichier",
+                "delimiter": {
+                  "title": "Délimiteur",
+                  "DOT": "Point .",
+                  "SEMI_COLON": "Point-virgule ;",
+                  "COLON": "Deux-points :",
+                  "COMMA": "Virgule ,",
+                  "SLASH": "Barre oblique /",
+                  "TAB": "Tabulation",
+                  "NON_BREAKING_SPACE": "Espace",
+                  "PIPE": "Barre verticale |"
+                },
+                "compression": "Compression",
+                "output-timestamp-format": "Format de date/heure de sortie",
+                "output-timezone": "Fuseau horaire de sortie"
+              }
+            },
+            "oledb": {
+              "query": "Requête",
+              "date-time-fields": {
+                "date-time-field": "Champs date/heure",
+                "field-name": "Nom du champ",
+                "use-as-reference": "Champ de référence",
+                "type": {
+                  "title": "Type",
+                  "iso-string": "Chaîne ISO",
+                  "unix-epoch": "Époque UNIX (s)",
+                  "unix-epoch-ms": "Époque UNIX (ms)",
+                  "string": "Chaîne"
+                },
+                "timezone": "Fuseau horaire",
+                "format": "Format",
+                "locale": "Paramètres régionaux"
+              },
+              "serialization": {
+                "title": "Sérialisation",
+                "type": {
+                  "title": "Type",
+                  "csv": "CSV"
+                },
+                "filename": "Nom du fichier",
+                "delimiter": {
+                  "title": "Délimiteur",
+                  "DOT": "Point .",
+                  "SEMI_COLON": "Point-virgule ;",
+                  "COLON": "Deux-points :",
+                  "COMMA": "Virgule ,",
+                  "SLASH": "Barre oblique /",
+                  "TAB": "Tabulation",
+                  "NON_BREAKING_SPACE": "Espace",
+                  "PIPE": "Barre verticale |"
+                },
+                "compression": "Compression",
+                "output-timestamp-format": "Format de date/heure de sortie",
+                "output-timezone": "Fuseau horaire de sortie"
+              }
+            },
+            "opc": {
+              "node-id": "ID de nœud",
+              "aggregate": {
+                "title": "Agrégat",
+                "raw": "Brut",
+                "interpolative": "Interpolatif",
+                "total": "Total",
+                "average": "Moyenne",
+                "time-average": "Moyenne temporelle",
+                "count": "Nombre",
+                "stdev": "Écart type",
+                "minimum-actual-time": "Temps réel minimum",
+                "minimum": "Minimum",
+                "maximum-actual-time": "Temps réel maximum",
+                "maximum": "Maximum",
+                "start": "Début",
+                "end": "Fin",
+                "delta": "Delta",
+                "reg-slope": "Pente de régression",
+                "reg-const": "Constante de régression",
+                "reg-dev": "Écart de régression",
+                "variance": "Variance",
+                "range": "Plage",
+                "duration-good": "Durée bonne",
+                "duration-bad": "Durée mauvaise",
+                "percent-good": "Pourcentage bon",
+                "percent-bad": "Pourcentage mauvais",
+                "worst-quality": "Pire qualité",
+                "annotations": "Annotations"
+              },
+              "resampling": {
+                "title": "Rééchantillonnage",
+                "none": "Aucun",
+                "1s": "1 seconde",
+                "10s": "10 secondes",
+                "30s": "30 secondes",
+                "1min": "1 minute",
+                "1h": "1 heure",
+                "1d": "1 jour"
+              }
+            },
+            "opcua": {
+              "node-id": "ID de nœud",
+              "mode": {
+                "title": "Mode",
+                "ha": "HA",
+                "da": "DA"
+              },
+              "ha-mode": {
+                "title": "Mode HA",
+                "aggregate": {
+                  "title": "Agrégat",
+                  "raw": "Brut",
+                  "average": "Moyenne",
+                  "minimum": "Minimum",
+                  "maximum": "Maximum",
+                  "count": "Nombre"
+                },
+                "resampling": {
+                  "title": "Rééchantillonnage",
+                  "none": "Aucun",
+                  "1s": "1 seconde",
+                  "10s": "10 secondes",
+                  "30s": "30 secondes",
+                  "1min": "1 minute",
+                  "1h": "1 heure",
+                  "1d": "1 jour"
+                }
+              },
+              "timestamp-origin": {
+                "title": "Origine de l'horodatage",
+                "oibus": "OIBus",
+                "point": "Point",
+                "server": "Serveur"
+              }
+            },
+            "oracle": {
+              "query": "Requête",
+              "request-timeout": "Délai de requête",
+              "tracking-instant": {
+                "title": "Suivi de l'instant",
+                "track-instant": "Suivre l'instant",
+                "field-name": "Nom du champ",
+                "date-time-input": {
+                  "title": "Entrée date/heure",
+                  "type": {
+                    "title": "Type",
+                    "iso-string": "Chaîne ISO",
+                    "unix-epoch": "Époque UNIX (s)",
+                    "unix-epoch-ms": "Époque UNIX (ms)",
+                    "string": "Chaîne",
+                    "date-time": "DateTime"
+                  },
+                  "timezone": "Fuseau horaire",
+                  "format": "Format",
+                  "locale": "Paramètres régionaux"
+                }
+              }
+            },
+            "osisoft-pi": {
+              "type": {
+                "title": "Type",
+                "point-id": "Point PI",
+                "point-query": "Requête PI"
+              },
+              "pi-point": "Point PI",
+              "pi-query": "Requête PI"
+            },
+            "postgresql": {
+              "query": "Requête",
+              "tracking-instant": {
+                "title": "Suivi de l'instant",
+                "track-instant": "Suivre l'instant",
+                "field-name": "Nom du champ",
+                "date-time-input": {
+                  "title": "Entrée date/heure",
+                  "type": {
+                    "title": "Type",
+                    "string": "Chaîne",
+                    "iso-string": "Chaîne ISO",
+                    "unix-epoch": "Époque UNIX (s)",
+                    "unix-epoch-ms": "Époque UNIX (ms)",
+                    "timestamp": "Horodatage",
+                    "timestamptz": "Horodatage avec fuseau horaire"
+                  },
+                  "timezone": "Fuseau horaire",
+                  "format": "Format",
+                  "locale": "Paramètres régionaux"
+                }
+              }
+            },
+            "rest": {
+              "method": {
+                "title": "Méthode",
+                "GET": "GET",
+                "POST": "POST",
+                "PUT": "PUT",
+                "PATCH": "PATCH",
+                "DELETE": "DELETE"
+              },
+              "endpoint": "Point de terminaison",
+              "query-params": {
+                "title": "Paramètres de requête",
+                "query-param": "Paramètre de requête",
+                "key": "Clé",
+                "value": "Valeur"
+              },
+              "body": {
+                "title": "Corps de la requête (JSON)",
+                "content": "Contenu"
+              },
+              "headers": {
+                "title": "En-têtes",
+                "header": "En-tête",
+                "key": "Nom de clé d'en-tête HTTP",
+                "value": "Valeur d'en-tête HTTP"
+              },
+              "return-type": {
+                "title": "Type de retour",
+                "body": "Corps (JSON / XML)",
+                "file": "Fichier (Content-Disposition)"
+              },
+              "date-time-input": "Format d'entrée date/heure",
+              "track-max-instant": "Suivre l'instant maximal",
+              "date-time": {
+                "json-path": "Chemin JSON",
+                "type": {
+                  "title": "Type",
+                  "iso-string": "Chaîne ISO",
+                  "unix-epoch": "Époque Unix (s)",
+                  "unix-epoch-ms": "Époque Unix (ms)",
+                  "string": "Chaîne"
+                },
+                "timezone": "Fuseau horaire",
+                "format": "Format",
+                "locale": "Paramètres régionaux"
+              }
+            },
+            "sftp": {
+              "remote-folder": "Dossier distant",
+              "regex": "Regex pour récupérer les fichiers",
+              "min-age": "Âge minimum",
+              "preserve-files": "Conserver les fichiers",
+              "ignore-modified-date": "Ignorer la date de modification",
+              "max-files": "Fichiers max par scan (0 = illimité)",
+              "max-size": "Taille max par scan (0 = illimité)",
+              "recursive": "Scanner les sous-dossiers"
+            },
+            "ftp": {
+              "remote-folder": "Dossier distant",
+              "regex": "Regex pour récupérer les fichiers",
+              "min-age": "Âge minimum",
+              "preserve-files": "Conserver les fichiers",
+              "ignore-modified-date": "Ignorer la date de modification",
+              "max-files": "Fichiers max par scan (0 = illimité)",
+              "max-size": "Taille max par scan (0 = illimité)",
+              "recursive": "Scanner les sous-dossiers"
+            },
+            "sqlite": {
+              "query": "Requête",
+              "tracking-instant": {
+                "title": "Suivi de l'instant",
+                "track-instant": "Suivre l'instant",
+                "field-name": "Nom du champ",
+                "date-time-input": {
+                  "title": "Entrée date/heure",
+                  "type": {
+                    "title": "Type",
+                    "string": "Chaîne",
+                    "iso-string": "Chaîne ISO",
+                    "unix-epoch": "Époque UNIX (s)",
+                    "unix-epoch-ms": "Époque UNIX (ms)"
+                  },
+                  "timezone": "Fuseau horaire",
+                  "format": "Format",
+                  "locale": "Paramètres régionaux"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "south": {
+    "title": "South {{ name }}",
+    "list": "Liste des South",
+    "type-title": "Type de South",
+    "type-error": "Vous devez sélectionner un type de South",
+    "create-title": "Créer un connecteur South {{ type }}",
+    "edit-title": "Modifier {{ name }}",
+    "confirm-deletion": "Êtes-vous sûr de vouloir supprimer le connecteur South {{ name }} ?",
+    "updated": "Connecteur South {{ name }} mis à jour avec succès",
+    "created": "Connecteur South {{ name }} créé avec succès",
+    "deleted": "Connecteur South {{ name }} supprimé",
+    "search-by-name": "Nom",
+    "edit": "Modifier",
+    "none": "Aucun connecteur South ne correspond à la recherche",
+    "name": "Nom",
+    "description": "Description",
+    "copy-cache-path": "Copier le chemin du cache ({{ id }})",
+    "status": "Statut",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "started": "Connecteur South {{ name }} démarré",
+    "stopped": "Connecteur South {{ name }} arrêté",
+    "cache-path-copy": {
+      "success": "Chemin du cache copié dans le presse-papiers",
+      "error": "Erreur lors de la copie du chemin du cache dans le presse-papiers"
+    },
+    "test-connection": {
+      "title": "Test des paramètres",
+      "button": "Tester les paramètres",
+      "success": "Connexion testée avec succès",
+      "error": "Erreur lors du test des paramètres"
+    },
+    "explore": {
+      "title": "Explorer la source de données",
+      "button": "Explorer",
+      "empty": "Rien à explorer",
+      "error": "Erreur lors de l'exploration de la source de données"
+    },
+    "test-item": {
+      "title": "Test de l'élément",
+      "test-button": "Lancer le test",
+      "cancel-button": "Annuler",
+      "query-start": "Interroger les données depuis",
+      "query-end": "Interroger les données jusqu'à",
+      "connection-duration": "Connexion : {{duration}} ms",
+      "query-duration": "Requête : {{duration}} ms",
+      "transformer": "Transformateur",
+      "transformer-raw": "Brut (pas de transformateur)",
+      "transformer-options": "Options du transformateur",
+      "edit-options": "Modifier les options",
+      "north": "North",
+      "transformer-run-first": "Lancez le test une première fois pour charger les transformateurs correspondant à la sortie de cet élément.",
+      "transformer-none-compatible": "Aucun transformateur configuré ne correspond au type de sortie de cet élément.",
+      "hide-settings": "Masquer les paramètres",
+      "pipeline": {
+        "raw": "Résultat brut",
+        "output": "Sortie du transformateur"
+      },
+      "status-message": {
+        "initial": "Les résultats du test apparaîtront ici",
+        "item-error": "Erreur lors du test de l'élément",
+        "display-result-error": "Erreur lors de l'affichage de l'élément, veuillez essayer un autre mode d'affichage",
+        "cancel": "Test annulé"
+      },
+      "view": {
+        "any": "Vue brute",
+        "table": "Vue tableau",
+        "json": "Vue JSON"
+      },
+      "table": {
+        "timestamp": "Horodatage",
+        "pointId": "Identifiant du point",
+        "value": "Valeur",
+        "other": "Autre",
+        "no-values": "Il n'y a aucune valeur à afficher"
+      }
+    },
+    "type": "Type",
+    "created-by": "Créé par",
+    "created-at": "Créé le",
+    "updated-at": "Mis à jour le",
+    "general-settings": "Paramètres généraux",
+    "specific-settings": "Paramètres {{ type }}",
+    "edit-item-modal": {
+      "create-title": "Ajouter un nouvel élément au connecteur South",
+      "edit-title": "Modifier l'élément",
+      "copy-title": "Ajouter un nouvel élément au connecteur South"
+    },
+    "items": {
+      "title": "Éléments",
+      "export": {
+        "button": "Exporter",
+        "title": "Liste d'export",
+        "element-name": "Nom",
+        "export-filename": "Nom du fichier"
+      },
+      "import": {
+        "button": "Importer",
+        "imported": "Éléments importés",
+        "title": "Validation de l'import",
+        "error-title": "Ces éléments contiennent des erreurs et ne seront pas importés",
+        "error": "Erreur",
+        "valid-title": "Ces éléments seront créés",
+        "csv-file": "Fichier CSV",
+        "format-error-title": "Erreur de format CSV",
+        "select-file": "Choisir un fichier",
+        "format-error-description": "Le format du fichier CSV sélectionné ne correspond pas au format attendu",
+        "missing-columns": "Colonnes manquantes :",
+        "extra-columns": "Colonnes en trop :",
+        "expected-format": "Format attendu :",
+        "actual-format": "Format actuel :",
+        "mqtt-topic-overlap-title": "Erreur de chevauchement de topics MQTT",
+        "mqtt-topic-overlap-description": "Le fichier CSV contient des topics MQTT qui créeraient des abonnements se chevauchant. Ces conflits doivent être résolus avant l'import.",
+        "erase-existing": "Effacer les éléments existants",
+        "checking": "Vérification du fichier...",
+        "check-error": "Erreur lors de la vérification du fichier : {{ error }}"
+      },
+      "search-placeholder": "Saisir du texte pour filtrer les éléments",
+      "save-before-adding-items": "Enregistrez le connecteur avant de pouvoir ajouter de nouveaux éléments",
+      "name": "Nom",
+      "status": "Statut",
+      "confirm-deletion": "Êtes-vous sûr de vouloir supprimer cet élément du connecteur South ?",
+      "confirm-delete-all": "Êtes-vous sûr de vouloir supprimer tous les éléments de ce connecteur South ?",
+      "updated": "Élément du connecteur South mis à jour avec succès",
+      "created": "Élément du connecteur South créé avec succès",
+      "deleted": "Élément du connecteur South supprimé",
+      "view-last-value": "Voir la dernière valeur",
+      "last-value-error": "Erreur lors de la récupération de la dernière valeur : {{ error }}",
+      "last-value-not-available-in-create-mode": "Dernière valeur non disponible en mode création",
+      "last-value-modal": {
+        "title": "Dernière valeur mise en cache de l'élément",
+        "item-name": "Nom de l'élément",
+        "query-time": "Heure de la dernière requête",
+        "tracked-instant": "Instant suivi",
+        "value": "Valeur mise en cache",
+        "no-value": "Aucune valeur mise en cache",
+        "filename": "Nom du fichier",
+        "modified-time": "Heure de modification",
+        "group-value-notice": "Ce connecteur interroge les éléments par groupes. La valeur affichée ici reflète le dernier résultat obtenu pour le groupe de l'élément, et non exclusivement pour cet élément.",
+        "error-title": "Impossible de récupérer la dernière valeur mise en cache"
+      },
+      "all-deleted": "Éléments du connecteur South supprimés",
+      "delete-all": "Tout supprimer",
+      "edit": "Modifier",
+      "none": "Aucun élément n'a encore été défini sur ce connecteur",
+      "none-match": "Aucun élément ne correspond aux critères de recherche",
+      "scan-mode": "Planification",
+      "select-scan-mode": "Sélectionner une planification",
+      "enabled": "Élément South {{name}} activé",
+      "disabled": "Élément South {{name}} désactivé",
+      "enabled-label": "Activé",
+      "disabled-label": "Désactivé",
+      "enabled-multiple": "{{count}} éléments South activés",
+      "disabled-multiple": "{{count}} éléments South désactivés",
+      "deleted-multiple": "{{count}} éléments South supprimés",
+      "enable-selected": "Activer la sélection",
+      "disable-selected": "Désactiver la sélection",
+      "delete-selected": "Supprimer la sélection",
+      "select-all": "Tout sélectionner",
+      "unselect-all": "Tout désélectionner",
+      "selected-items": "{{count}} sélectionné(s)",
+      "selected-count": "{{count}} sélectionné(s)",
+      "delete-multiple-message": "Êtes-vous sûr de vouloir supprimer les {{count}} éléments sélectionnés ?",
+      "enable-error": "Erreur lors de l'activation des éléments : {{error}}",
+      "disable-error": "Erreur lors de la désactivation des éléments : {{error}}",
+      "delete-error": "Erreur lors de la suppression des éléments : {{error}}",
+      "group": "Groupe",
+      "group-and-schedule": "Groupe (Planification)",
+      "group-none": "Aucun",
+      "all-groups": "Tous les groupes",
+      "all-scan-modes": "Toutes les planifications",
+      "all-statuses": "Tous les statuts",
+      "created-at": "Créé",
+      "updated-at": "Mis à jour",
+      "create-new-group": "Créer un nouveau groupe...",
+      "mass-actions": "Actions groupées ({{count}} éléments)",
+      "move-to-group": "Déplacer vers le groupe",
+      "move-to-group-title": "Déplacer les éléments vers un groupe",
+      "select-group": "Sélectionner un groupe",
+      "moved-to-group": "{{count}} éléments déplacés vers le groupe",
+      "enable": "Activer",
+      "disable": "Désactiver",
+      "delete": "Supprimer",
+      "search": {
+        "name": "Nom"
+      },
+      "max-read-interval": "Intervalle de lecture maximal",
+      "read-delay": "Délai de lecture",
+      "start-time-offset": "Décalage de l'heure de début",
+      "end-time-offset": "Décalage de l'heure de fin",
+      "recovery-strategy": "Stratégie de récupération",
+      "recovery-strategy-oldest": "Du plus ancien au plus récent",
+      "recovery-strategy-newest": "Du plus récent au plus ancien",
+      "scan-mode-change-warning": "Changer la planification lorsque l'instant maximal par élément est désactivé peut entraîner une duplication ou une perte de données.",
+      "sync-with-group": "Synchroniser avec le groupe",
+      "not-synced-notice": "L'élément utilise ses propres paramètres d'historisation (non synchronisé avec le groupe)"
+    },
+    "groups": {
+      "create-title": "Créer un nouveau groupe",
+      "edit-title": "Modifier le groupe",
+      "name": "Nom du groupe",
+      "start-time-offset": "Décalage par défaut de l'heure de début",
+      "end-time-offset": "Décalage par défaut de l'heure de fin",
+      "max-read-interval": "Intervalle de lecture maximal",
+      "read-delay": "Délai de lecture",
+      "recovery-strategy": "Stratégie de récupération",
+      "recovery-strategy-oldest": "Du plus ancien au plus récent",
+      "recovery-strategy-newest": "Du plus récent au plus ancien",
+      "confirm-deletion": "Êtes-vous sûr de vouloir supprimer le groupe \"{{name}}\" ? Les éléments de ce groupe seront replacés dans \"Aucun\".",
+      "created": "Groupe créé",
+      "updated": "Groupe mis à jour",
+      "deleted": "Groupe supprimé",
+      "delete-error": "Erreur lors de la suppression du groupe : {{error}}",
+      "manage-title": "Groupes ({{count}})",
+      "manage-button": "Gérer les groupes",
+      "item-count": "Éléments",
+      "none": "Aucun groupe configuré",
+      "export": {
+        "button": "Exporter"
+      },
+      "import": {
+        "button": "Importer",
+        "in-progress": "Import des groupes en cours...",
+        "success": "{{count}} groupe(s) importé(s)",
+        "errors-title": "{{count}} ligne(s) n'ont pas pu être importées",
+        "row": "Ligne {{row}}",
+        "errors": {
+          "missing-name": "Le nom du groupe est requis",
+          "duplicate-name": "Un groupe nommé \"{{name}}\" existe déjà",
+          "unknown-scan-mode": "La planification \"{{scanMode}}\" n'a pas été trouvée"
+        }
+      },
+      "search-placeholder": "Rechercher des groupes par nom",
+      "none-match": "Aucun groupe ne correspond aux filtres actuels"
+    },
+    "monitoring": {
+      "title": "Métriques de {{ name }}",
+      "since": "depuis {{ date }}",
+      "reset-metrics": "Réinitialiser les métriques",
+      "metrics-reset": "Métriques réinitialisées avec succès",
+      "metrics-title": "Métriques South",
+      "metrics-start": "Métriques démarrées le {{ start }}",
+      "number-of-values": "Nombre de valeurs récupérées",
+      "number-of-files": "Nombre de fichiers récupérés",
+      "last-connection": "Dernière connexion",
+      "last-file": "Dernier fichier récupéré",
+      "last-value": "Dernière valeur récupérée",
+      "last-value-content": "{{ pointId }} à {{ timestamp }} avec le contenu {{ data }}",
+      "last-run-start": "Dernière exécution",
+      "last-run-duration": "Durée de la dernière exécution"
+    },
+    "tooltips": {
+      "add": "Créer un nouveau connecteur South",
+      "start": "Démarrer le connecteur South",
+      "stop": "Arrêter le connecteur South",
+      "view": "Voir les détails du connecteur South",
+      "edit": "Modifier le connecteur South",
+      "duplicate": "Dupliquer le connecteur South",
+      "delete": "Supprimer le connecteur South",
+      "view-metrics": "Voir les métriques du connecteur South",
+      "copy-cache-path": "Copier le chemin du cache dans le presse-papiers",
+      "audit": "Voir l'historique d'audit du connecteur South"
+    }
+  },
+  "scan-mode": {
+    "subscription": "S'abonner"
+  },
+  "engine": {
+    "title": "Moteur",
+    "edit": "Modifier les paramètres",
+    "edit-title": "Modifier les paramètres du moteur",
+    "oianalytics": "OIAnalytics",
+    "shutdown-complete": "OIBus arrêté",
+    "restart": "Redémarrer",
+    "restart-complete": "OIBus redémarré",
+    "confirm-restart": "Êtes-vous sûr de vouloir redémarrer le moteur OIBus ?",
+    "updated": "Paramètres du moteur mis à jour",
+    "port-changed": {
+      "title": "Port modifié",
+      "message": "Le port du serveur web a été changé pour {{ port }}. Vous serez automatiquement redirigé dans {{ seconds }} secondes.",
+      "redirect-now": "Rediriger maintenant"
+    },
+    "general-settings": {
+      "title": "Paramètres généraux",
+      "name": "Nom",
+      "port": "Port",
+      "log-levels": "Niveaux de log",
+      "console": "Console : {{ level }}",
+      "file": "Fichier : {{ level }}",
+      "database": "Base de données : {{ level }}",
+      "loki": "Loki : {{ level }}",
+      "oia": "OIAnalytics : {{ level }}",
+      "syslog": "Syslog : {{ level }}"
+    },
+    "web-server-settings": {
+      "title": "Serveur web",
+      "auth-token-duration": "Durée d'authentification",
+      "auth-token-duration-options": {
+        "1h": "1 heure",
+        "6h": "6 heures",
+        "1d": "1 jour",
+        "3d": "3 jours",
+        "7d": "7 jours",
+        "14d": "14 jours",
+        "30d": "30 jours"
+      }
+    },
+    "proxy-settings": {
+      "title": "Serveur proxy",
+      "proxy-enabled": "Activé",
+      "enabled-details": "Activé sur le port {{ port }}",
+      "disabled-details": "Désactivé",
+      "proxy-port": "Port",
+      "proxy-username": "Nom d'utilisateur",
+      "proxy-password": "Mot de passe",
+      "forward-proxy-enabled": "Transférer vers un proxy en amont",
+      "forward-proxy-url": "URL",
+      "forward-proxy-username": "Nom d'utilisateur",
+      "forward-proxy-password": "Mot de passe"
+    },
+    "logger": {
+      "title": "Journalisation et audit",
+      "audit-retention-duration": "Durée de conservation des journaux d'audit",
+      "audit-retention-duration-hint": "Nombre de jours pendant lesquels les entrées du journal d'audit sont conservées avant d'être supprimées. 0 = conserver indéfiniment.",
+      "console": {
+        "level": "Niveau console"
+      },
+      "file": {
+        "level": "Niveau fichier",
+        "max-file-size": "Taille maximale du fichier",
+        "number-of-files": "Nombre de fichiers"
+      },
+      "database": {
+        "title": "Base de données",
+        "level": "Niveau base de données",
+        "max-number-of-logs": "Nombre maximal de logs"
+      },
+      "loki": {
+        "level": "Niveau Loki",
+        "interval": "Intervalle Loki",
+        "address": "URL Loki",
+        "username": "Nom d'utilisateur Loki",
+        "password": "Mot de passe Loki"
+      },
+      "oia": {
+        "level": "Niveau OIAnalytics",
+        "interval": "Intervalle OIAnalytics"
+      },
+      "syslog": {
+        "level": "Niveau Syslog",
+        "host": "Hôte Syslog",
+        "port": "Port Syslog",
+        "protocol": "Protocole Syslog"
+      }
+    },
+    "monitoring": {
+      "title": "Métriques",
+      "metrics-reset": "Métriques réinitialisées avec succès",
+      "cpu-usage-instant": "Utilisation CPU (dernière seconde)",
+      "cpu-usage-average": "Utilisation CPU (moyenne)",
+      "uptime": "Temps de fonctionnement",
+      "free-memory": "Mémoire libre",
+      "rss": "Utilisation RAM (min / actuel / max)",
+      "heap-total": "Total du tas (min / actuel / max)",
+      "heap-used": "Tas utilisé (min / actuel / max)",
+      "external": "Mémoire externe (min / actuel / max)",
+      "array-buffer": "Tampon de tableau (min / actuel / max)",
+      "reset-metrics": "Réinitialiser les métriques",
+      "since": "depuis {{ date }}",
+      "tooltips": {
+        "view-metrics": "Voir les métriques du moteur"
+      }
+    },
+    "scan-mode": {
+      "list": "Mode de scan",
+      "title-create": "Créer un mode de scan",
+      "title-edit": "Modifier le mode de scan",
+      "confirm-deletion": "Êtes-vous sûr de vouloir supprimer le mode de scan {{ name }} ? Assurez-vous au préalable qu'il n'est pas utilisé.",
+      "updated": "Mode de scan {{ name }} mis à jour avec succès",
+      "created": "Mode de scan {{ name }} créé avec succès",
+      "deleted": "Mode de scan {{ name }} supprimé",
+      "none": "Aucun mode de scan",
+      "name": "Nom",
+      "description": "Description",
+      "cron": "Cron",
+      "schedule": "Planification",
+      "schedule-every": "toutes les {{ value }} {{ unit }}",
+      "type": "Type",
+      "type-cron": "Cron",
+      "type-interval": "Intervalle",
+      "interval": "Toutes les",
+      "interval-unit": {
+        "ms": "millisecondes",
+        "s": "secondes",
+        "min": "minutes",
+        "hour": "heures"
+      },
+      "interval-unit-short": {
+        "ms": "ms",
+        "s": "s",
+        "min": "min",
+        "hour": "h"
+      },
+      "sub-second-warning": "Les intervalles inférieurs à 1 seconde peuvent ne pas être réalisables selon la source de données et la capacité du réseau.",
+      "restrict-activation-window": "Restreindre la fenêtre d'activation",
+      "date-range": "Plage de dates",
+      "date-range-hint": "(optionnel de chaque côté)",
+      "date-range-from": "De",
+      "date-range-to": "À",
+      "clear-bound": "Effacer",
+      "days-of-week": "Jours de la semaine",
+      "days-of-week-hint": "(aucun sélectionné = tous les jours)",
+      "time-of-day": "Heure de la journée",
+      "time-of-day-hint": "(optionnel)",
+      "time-start": "Début",
+      "time-end": "Fin",
+      "live-summary": "Résumé en direct",
+      "window-restricted": "Fenêtre d'activation restreinte",
+      "window-never-fires": "Cette fenêtre d'activation ne peut plus jamais se déclencher",
+      "timezone-changed-warning": "Cette fenêtre d'activation a été enregistrée avec le fuseau horaire {{ persisted }}. L'enregistrer maintenant la réancrera à votre fuseau horaire actuel {{ current }}.",
+      "summary": {
+        "always": "Actif",
+        "from-date": "Actif depuis {{ start }}",
+        "until-date": "Actif jusqu'au {{ end }}",
+        "between-dates": "Actif du {{ start }} au {{ end }}",
+        "on-days": "le {{ days }}",
+        "all-day": "toute la journée",
+        "between-times": "entre {{ start }} et {{ end }} ({{ timezone }})",
+        "between-times-overnight": "entre {{ start }} et {{ end }} (+1 jour) ({{ timezone }})",
+        "separator": ", ",
+        "day-separator": ", "
+      },
+      "created-by": "Créé par",
+      "created-at": "Créé le",
+      "updated-at": "Mis à jour le",
+      "cron-meaning": "Signification du cron :",
+      "cron-next-occurrences": "Prochaines occurrences :",
+      "tooltips": {
+        "add": "Ajouter un nouveau mode de scan",
+        "edit": "Modifier le mode de scan",
+        "delete": "Supprimer le mode de scan",
+        "overnight": "L'heure de fin est le jour suivant",
+        "audit": "Voir l'historique d'audit du mode de scan"
+      }
+    },
+    "certificate": {
+      "list": "Certificats",
+      "title-create": "Créer un certificat",
+      "title-edit": "Modifier le certificat",
+      "confirm-deletion": "Êtes-vous sûr de vouloir supprimer le certificat {{ name }} ? Assurez-vous au préalable qu'il n'est pas utilisé.",
+      "updated": "Certificat {{ name }} mis à jour avec succès",
+      "created": "Certificat {{ name }} créé avec succès",
+      "imported": "Certificat {{ name }} importé avec succès",
+      "deleted": "Certificat {{ name }} supprimé",
+      "none": "Aucun certificat",
+      "name": "Nom",
+      "description": "Description",
+      "expiry": "Expire",
+      "public-key": "Clé publique",
+      "certificate": "Certificat",
+      "created-by": "Créé par",
+      "created-at": "Créé le",
+      "updated-at": "Mis à jour le",
+      "regenerate-certificate": "Régénérer le certificat",
+      "common-name": "Nom commun",
+      "country-name": "Nom du pays",
+      "state-or-province-name": "Nom de l'état/de la province",
+      "locality-name": "Nom de la localité",
+      "organization-name": "Nom de l'organisation",
+      "key-size": "Taille de la clé",
+      "days-before-expiry": "Jours avant expiration",
+      "tooltips": {
+        "add": "Ajouter un nouveau certificat",
+        "export": "Exporter le certificat",
+        "edit": "Modifier le certificat",
+        "delete": "Supprimer le certificat",
+        "copy-public-key": "Copier la clé publique dans le presse-papiers",
+        "copy-certificate": "Copier le certificat dans le presse-papiers",
+        "audit": "Voir l'historique d'audit du certificat"
+      },
+      "import": {
+        "button": "Importer",
+        "title": "Importer un certificat",
+        "certificate-file": "Fichier de certificat",
+        "private-key-file": "Fichier de clé privée",
+        "certificate-chain-file": "Fichier de chaîne de certificats (optionnel)",
+        "private-key-passphrase": "Phrase secrète de la clé privée",
+        "file-too-large": "Le fichier sélectionné est trop volumineux. La taille maximale est de 1 Mo",
+        "hint": "Formats acceptés : PEM, CRT, CER, DER. La phrase secrète n'est nécessaire que si le fichier de clé privée téléchargé est chiffré."
+      },
+      "export": {
+        "title": "Exporter le certificat",
+        "format": "Format",
+        "include-chain": "Inclure la chaîne CA",
+        "include-chain-der-hint": "La chaîne CA ne peut pas être incluse lors de l'export au format DER",
+        "include-private-key": "Inclure la clé privée",
+        "private-key-warning": "La clé privée sera exportée sous forme de fichier PKCS#8 chiffré, en utilisant la phrase secrète ci-dessous. Cette phrase secrète n'est pas stockée et ne peut pas être récupérée, alors conservez-la en lieu sûr.",
+        "passphrase": "Phrase secrète",
+        "passphrase-confirmation": "Confirmer la phrase secrète",
+        "passphrases-not-identical": "Les phrases secrètes ne sont pas identiques"
+      }
+    },
+    "ip-filter": {
+      "list": "Filtres IP",
+      "title-create": "Créer un filtre IP",
+      "title-edit": "Modifier le filtre IP",
+      "confirm-deletion": "Êtes-vous sûr de vouloir supprimer le filtre IP {{ address }} ? Assurez-vous au préalable qu'il n'est pas utilisé.",
+      "updated": "Filtre IP {{ address }} mis à jour avec succès",
+      "created": "Filtre IP {{ address }} créé avec succès",
+      "deleted": "Filtre IP {{ address }} supprimé",
+      "none": "Aucun filtre IP",
+      "disabled": "Le filtrage IP est désactivé sur cet OIBus (démarré avec --ignoreIpFilters). Les filtres IP existants ne sont pas appliqués et ne peuvent pas être configurés ici.",
+      "name": "Nom",
+      "description": "Description",
+      "address": "Adresse",
+      "created-by": "Créé par",
+      "created-at": "Créé le",
+      "updated-at": "Mis à jour le",
+      "tooltips": {
+        "add": "Ajouter un nouveau filtre IP",
+        "edit": "Modifier le filtre IP",
+        "delete": "Supprimer le filtre IP",
+        "audit": "Voir l'historique d'audit du filtre IP"
+      }
+    },
+    "transformer": {
+      "created-by": "Créé par",
+      "created-at": "Créé le",
+      "updated-at": "Mis à jour le"
+    },
+    "config-transfer": {
+      "export": "Exporter la configuration",
+      "import": {
+        "button": "Importer la configuration",
+        "title": "Importer la configuration",
+        "warning": "Cela remplace tous les connecteurs, requêtes d'historique, modes de scan, filtres IP, transformateurs, certificats et utilisateurs de cette instance et ne peut pas être annulé.",
+        "confirm-message": "Cela remplace tous les connecteurs, requêtes d'historique, modes de scan, filtres IP, transformateurs, certificats et utilisateurs de cette instance et ne peut pas être annulé. Êtes-vous sûr de vouloir continuer ?",
+        "file": "Fichier de configuration",
+        "file-too-large": "Le fichier sélectionné est trop volumineux. La taille maximale est de 10 Mo",
+        "success": "Configuration importée avec succès.",
+        "applied-upgrades": "Mises à niveau appliquées",
+        "no-upgrades": "Aucune mise à niveau des paramètres n'a été nécessaire.",
+        "warnings": "Avertissements",
+        "no-warnings": "Aucun avertissement.",
+        "reload-hint": "La page se rechargera pour refléter la nouvelle configuration une fois cette boîte de dialogue fermée.",
+        "close-and-reload": "Fermer et recharger"
+      }
+    },
+    "tooltips": {
+      "edit": "Modifier les paramètres du moteur"
+    }
+  },
+  "enums": {
+    "boolean": {
+      "true": "Oui",
+      "false": "Non"
+    },
+    "log-levels": {
+      "silent": "Silencieux",
+      "error": "Erreur",
+      "warn": "Avertissement",
+      "info": "Info",
+      "debug": "Debug",
+      "trace": "Trace"
+    },
+    "scope-types": {
+      "south": "Sud",
+      "north": "Nord",
+      "history-query": "Requête d'historique",
+      "internal": "Interne"
+    },
+    "audit-entity-types": {
+      "south_connector": "Connecteur sud",
+      "south_item": "Point sud",
+      "south_item_group": "Groupe de points sud",
+      "north_connector": "Connecteur nord",
+      "north_transformer": "Transformateur nord",
+      "history_query": "Requête d'historique",
+      "history_query_item": "Point de requête d'historique",
+      "history_query_transformer": "Transformateur de requête d'historique",
+      "scan_mode": "Mode de scan",
+      "ip_filter": "Filtre IP",
+      "certificate": "Certificat",
+      "user": "Utilisateur",
+      "transformer": "Transformateur",
+      "engine": "Moteur",
+      "oianalytics_registration": "Enregistrement OIAnalytics"
+    },
+    "internal-scope-ids": {
+      "engine": "Moteur",
+      "web-server": "Serveur Web",
+      "node-opcua": "Node OPC-UA"
+    },
+    "categories": {
+      "api": "API",
+      "database": "Base de données",
+      "debug": "Debug",
+      "file": "Fichier",
+      "iot": "IoT",
+      "oi": "OI"
+    },
+    "certificate-export-format": {
+      "PEM": "PEM (.pem)",
+      "DER": "DER (.cer)"
+    },
+    "csv-character": {
+      "DOT": "Point .",
+      "SEMI_COLON": "Point-virgule ;",
+      "COLON": "Deux points :",
+      "COMMA": "Virgule ,",
+      "SLASH": "Barre oblique /",
+      "TAB": "Tabulation",
+      "NON_BREAKING_SPACE": "Espace",
+      "PIPE": "Barre verticale |"
+    },
+    "status": {
+      "PENDING": "En attente",
+      "PAUSED": "En pause",
+      "FINISHED": "Terminé",
+      "RUNNING": "En cours",
+      "ERRORED": "En erreur"
+    },
+    "oibus-command-status": {
+      "RETRIEVED": "En attente",
+      "ERRORED": "En erreur",
+      "CANCELLED": "Annulé",
+      "COMPLETED": "Terminé",
+      "RUNNING": "En cours"
+    },
+    "oibus-command-type": {
+      "update-version": "Mettre à niveau la version",
+      "restart-engine": "Redémarrer",
+      "regenerate-cipher-keys": "Régénérer les clés de chiffrement",
+      "update-engine-general": "Mettre à jour les paramètres généraux du moteur",
+      "update-engine-web-server": "Mettre à jour les paramètres du serveur Web du moteur",
+      "update-engine-proxy": "Mettre à jour les paramètres de proxy du moteur",
+      "update-engine-logger": "Mettre à jour les paramètres de journalisation du moteur",
+      "update-registration-settings": "Mettre à jour les paramètres d'enregistrement",
+      "create-scan-mode": "Créer un mode de scan",
+      "update-scan-mode": "Mettre à jour le mode de scan",
+      "delete-scan-mode": "Supprimer le mode de scan",
+      "create-ip-filter": "Créer un filtre IP",
+      "update-ip-filter": "Mettre à jour le filtre IP",
+      "delete-ip-filter": "Supprimer le filtre IP",
+      "create-certificate": "Créer un certificat",
+      "update-certificate": "Mettre à jour le certificat",
+      "delete-certificate": "Supprimer le certificat",
+      "create-south": "Créer un connecteur sud",
+      "update-south": "Mettre à jour le connecteur sud",
+      "delete-south": "Supprimer le connecteur sud",
+      "test-south-connection": "Tester la connexion sud",
+      "test-south-item": "Tester le point sud",
+      "create-or-update-south-items-from-csv": "Charger les points sud depuis un CSV",
+      "create-north": "Créer un connecteur nord",
+      "update-north": "Mettre à jour le connecteur nord",
+      "delete-north": "Supprimer le connecteur nord",
+      "test-north-connection": "Tester la connexion nord",
+      "create-history-query": "Créer une requête d'historique",
+      "update-history-query": "Mettre à jour la requête d'historique",
+      "delete-history-query": "Supprimer la requête d'historique",
+      "test-history-query-north-connection": "Tester la connexion nord",
+      "test-history-query-south-connection": "Tester la connexion sud",
+      "test-history-query-south-item": "Tester le point sud",
+      "create-or-update-history-query-south-items-from-csv": "Charger les points sud depuis un CSV",
+      "update-history-query-status": "Mettre à jour le statut de la requête d'historique",
+      "setpoint": "Consigne",
+      "search-north-cache-content": "Rechercher dans le contenu du cache",
+      "search-history-cache-content": "Rechercher dans le contenu du cache",
+      "get-north-cache-file-content": "Récupérer le fichier de cache",
+      "get-history-cache-file-content": "Récupérer le fichier de cache",
+      "update-north-cache-content": "Modifier le cache",
+      "update-history-cache-content": "Modifier le cache",
+      "create-custom-transformer": "Créer un transformateur",
+      "update-custom-transformer": "Mettre à jour le transformateur",
+      "delete-custom-transformer": "Supprimer le transformateur",
+      "test-custom-transformer": "Tester le transformateur",
+      "test-transformer": "Tester le transformateur"
+    },
+    "oibus-data-source-type": {
+      "oianalytics-setpoint": "Consignes OIAnalytics",
+      "oibus-api": "Source de données API OIBus",
+      "oibus-south": "Connecteur sud"
+    },
+    "oibus-input-data-type": {
+      "any": "Fichiers (pour toutes les sources)",
+      "setpoint": "Consignes (pour toutes les sources)",
+      "time-values": "Valeurs temporelles OIBus (pour toutes les sources)",
+      "any-content": "Tout contenu",
+      "record-list": "Liste d'enregistrements (sources de type SQL)"
+    },
+    "oibus-output-data-type": {
+      "any": "Tout",
+      "mqtt": "MQTT",
+      "modbus": "Modbus",
+      "oianalytics": "Valeurs temporelles optimisées OIAnalytics",
+      "opcua": "OPCUA",
+      "time-values": "Valeurs temporelles OIBus"
+    },
+    "oibus-transformer-language": {
+      "javascript": "JavaScript",
+      "typescript": "TypeScript"
+    },
+    "oibus-north-category": {
+      "debug": "Debug",
+      "file": "Fichier",
+      "api": "API",
+      "iot": "IoT",
+      "database": "Base de données"
+    },
+    "oibus-north-type": {
+      "aws-s3": "Amazon S3™",
+      "azure-blob": "Azure Blob Storage™",
+      "azure-data-explorer": "Azure Data Explorer™",
+      "console": "Console",
+      "file-writer": "Écriture de fichiers",
+      "modbus": "Modbus",
+      "mqtt": "MQTT",
+      "oianalytics": "OIAnalytics®",
+      "opcua": "OPC UA™",
+      "rest": "API REST",
+      "sftp": "SFTP"
+    },
+    "oibus-north-type-description": {
+      "aws-s3": "Stocker des fichiers dans Amazon S3™ (Simple Storage Service)",
+      "azure-blob": "Stocker des fichiers dans Microsoft Azure Blob Storage™",
+      "azure-data-explorer": "Ingérer des données dans une table Azure Data Explorer™ (Kusto)",
+      "console": "Afficher les noms de fichiers ou les valeurs dans la console (utilisé pour le débogage)",
+      "file-writer": "Écrire des fichiers et des données dans le dossier de sortie",
+      "modbus": "Écrire dans des registres Modbus sur un automate",
+      "mqtt": "Publier sur les topics d'un broker MQTT",
+      "oianalytics": "Envoyer des fichiers et des valeurs à OIAnalytics®",
+      "opcua": "Écrire des données sur un serveur OPC UA™",
+      "rest": "Envoyer des données vers un point de terminaison REST",
+      "sftp": "Envoyer des fichiers et des données vers un serveur SFTP"
+    },
+    "oibus-south-category": {
+      "iot": "IoT",
+      "database": "Base de données",
+      "file": "Fichier",
+      "api": "API"
+    },
+    "oibus-south-type": {
+      "ads": "ADS - TwinCAT®",
+      "folder-scanner": "Scanner de dossier",
+      "ftp": "FTP",
+      "influxdb": "InfluxDB",
+      "modbus": "Modbus",
+      "mongodb": "MongoDB",
+      "mqtt": "MQTT",
+      "mssql": "Microsoft SQL Server™",
+      "mysql": "MySQL® / MariaDB™",
+      "odbc": "ODBC",
+      "oianalytics": "OIAnalytics®",
+      "oledb": "OLEDB",
+      "opc": "OPC Classic™",
+      "opcua": "OPC UA™",
+      "oracle": "Oracle Database™",
+      "osisoft-pi": "OSIsoft PI System™",
+      "postgresql": "PostgreSQL",
+      "rest": "API REST",
+      "s7": "Siemens S7",
+      "sftp": "SFTP",
+      "sqlite": "SQLite™"
+    },
+    "oibus-south-type-description": {
+      "ads": "Le protocole ADS utilisé dans les systèmes TwinCAT®",
+      "folder-scanner": "Lire des fichiers depuis un dossier local ou distant",
+      "ftp": "Lire des fichiers depuis un serveur FTP distant",
+      "influxdb": "Interroger des bases de données de séries temporelles InfluxDB (v1, v2, v3)",
+      "modbus": "Accéder aux registres Modbus sur un automate",
+      "mongodb": "Interroger des bases de données documentaires MongoDB",
+      "mqtt": "S'abonner aux topics d'un broker MQTT",
+      "mssql": "Interroger des bases de données Microsoft SQL Server™",
+      "mysql": "Interroger des bases de données MySQL® ou MariaDB™",
+      "odbc": "Interroger des bases de données SQL avec un pilote ODBC",
+      "oianalytics": "Interroger des valeurs temporelles depuis OIAnalytics®",
+      "oledb": "Interroger des bases de données SQL avec OLEDB",
+      "opc": "Se connecter à un agent OIBus pour récupérer des données depuis un serveur OPC Classic™ (HDA/DA)",
+      "opcua": "Interroger des données depuis un serveur OPC UA™ (HA/DA)",
+      "oracle": "Interroger des données depuis une base de données Oracle Database™",
+      "osisoft-pi": "Établir une connexion avec un agent OIBus pour accéder aux données d'un PI System™",
+      "postgresql": "Interroger des bases de données PostgreSQL",
+      "rest": "Collecter des données depuis des points de terminaison d'API REST",
+      "s7": "Accéder aux données d'un automate Siemens S7 via ISO-on-TCP",
+      "sftp": "Lire des fichiers depuis un serveur SFTP distant",
+      "sqlite": "Interroger des bases de données SQLite™"
+    }
+  },
+  "history-query": {
+    "list": "Requêtes d'historique",
+    "title": "Requête d'historique {{ name }}",
+    "search-by-name": "Nom",
+    "confirm-deletion": "Êtes-vous sûr de vouloir supprimer la requête d'historique {{ name }} ?",
+    "updated": "Requête d'historique {{ name }} mise à jour avec succès",
+    "created": "Requête d'historique {{ name }} créée avec succès",
+    "deleted": "Requête d'historique {{ name }} supprimée",
+    "create-title": "Créer une nouvelle requête d'historique",
+    "edit-title": "Modifier {{ name }}",
+    "general-settings": "Paramètres généraux",
+    "add": "Ajouter",
+    "from-existing-south": "À partir d'un South existant",
+    "from-existing-north": "À partir d'un North existant",
+    "edit": "Modifier",
+    "none": "Aucune requête d'historique",
+    "name": "Nom",
+    "description": "Description",
+    "status": "Statut",
+    "south-type": "Type de South",
+    "north-type": "Type de North",
+    "interval": "Intervalle",
+    "item-progress": "{{ current }}/{{ total }} éléments",
+    "query-time-range": {
+      "start": "Début",
+      "end": "Fin",
+      "max-read-interval": "Intervalle de lecture maximum",
+      "read-delay": "Délai de lecture"
+    },
+    "created-by": "Créé par",
+    "created-at": "Créé le",
+    "updated-at": "Mis à jour le",
+    "started": "Requête d'historique {{ name }} démarrée",
+    "paused": "Requête d'historique {{ name }} mise en pause",
+    "cache-path-copy": {
+      "success": "Chemin du cache copié dans le presse-papiers",
+      "error": "Erreur lors de la copie du chemin du cache dans le presse-papiers"
+    },
+    "modal": {
+      "title": "Créer une nouvelle requête d'historique",
+      "create-details": "Importer des configurations de connecteurs existantes ou en créer une nouvelle à partir de zéro"
+    },
+    "north": {
+      "specific-settings": "Paramètres {{ type }}"
+    },
+    "south": {
+      "specific-settings": "Paramètres {{ type }}"
+    },
+    "transformers": {
+      "title": "Transformer les charges utiles",
+      "input-type": "Type source",
+      "output-type": "Type de destination",
+      "transformer": "Transformateur",
+      "add": "Ajouter un transformateur",
+      "none": "Aucun transformateur",
+      "choose-transformer-modal": {
+        "title": "Choisir comment traiter les charges utiles"
+      },
+      "added": "Transformateur ajouté",
+      "edited": "Options du transformateur modifiées",
+      "confirm-deletion": "Êtes-vous sûr de vouloir supprimer ce transformateur de cette requête d'historique ?",
+      "removed": "Transformateur supprimé"
+    },
+    "items": {
+      "title": "Éléments",
+      "name": "Nom",
+      "status": "Statut",
+      "confirm-deletion": "Êtes-vous sûr de vouloir supprimer cet élément ?",
+      "confirm-delete-all": "Êtes-vous sûr de vouloir supprimer tous ces éléments ?",
+      "updated": "Élément de la requête d'historique mis à jour avec succès",
+      "created": "Élément de la requête d'historique créé avec succès",
+      "deleted": "Élément de la requête d'historique supprimé",
+      "all-deleted": "Éléments de la requête d'historique supprimés",
+      "delete-all": "Tout supprimer",
+      "add": "Ajouter",
+      "edit": "Modifier",
+      "none": "Aucun élément de requête d'historique",
+      "scan-mode": "Planification",
+      "export": "Exporter les éléments",
+      "import": "Importer des éléments",
+      "imported": "Éléments importés",
+      "enabled": "Élément d'historique {{ name }} activé",
+      "disabled": "Élément d'historique {{ name }} désactivé",
+      "enabled-label": "Activé",
+      "disabled-label": "Désactivé",
+      "enabled-multiple": "{{count}} éléments d'historique activés",
+      "disabled-multiple": "{{count}} éléments d'historique désactivés",
+      "deleted-multiple": "{{count}} éléments d'historique supprimés",
+      "enable-selected": "Activer la sélection",
+      "disable-selected": "Désactiver la sélection",
+      "delete-selected": "Supprimer la sélection",
+      "select-all": "Tout sélectionner",
+      "unselect-all": "Tout désélectionner",
+      "selected-items": "{{count}} sélectionnés",
+      "selected-count": "{{count}} sélectionnés",
+      "delete-multiple-message": "Êtes-vous sûr de vouloir supprimer les {{count}} éléments sélectionnés ?",
+      "enable-error": "Erreur lors de l'activation des éléments : {{error}}",
+      "disable-error": "Erreur lors de la désactivation des éléments : {{error}}",
+      "delete-error": "Erreur lors de la suppression des éléments : {{error}}",
+      "all-statuses": "Tous les statuts",
+      "created-at": "Créé",
+      "updated-at": "Mis à jour",
+      "mass-actions": "Actions groupées ({{count}} éléments)",
+      "enable": "Activer",
+      "disable": "Désactiver",
+      "delete": "Supprimer",
+      "none-match": "Aucun élément ne correspond aux critères de recherche",
+      "search": {},
+      "tooltips": {
+        "add": "Ajouter un nouvel élément",
+        "edit": "Modifier l'élément",
+        "duplicate": "Dupliquer l'élément",
+        "delete": "Supprimer l'élément"
+      }
+    },
+    "monitoring": {
+      "title": "Métriques de {{ name }}",
+      "north": {
+        "title": "Métriques North",
+        "reset-metrics": "Réinitialiser les métriques",
+        "metrics-reset": "Métriques réinitialisées avec succès",
+        "metrics-start": "Métriques démarrées le {{ start }}",
+        "cache-size-title": "Taille du cache",
+        "cache-size-value": "Taille actuelle : {{ currentSize }} / Total en cache : {{ totalCached }} / Total envoyé : {{ totalSent }}",
+        "error-size-title": "Taille des erreurs",
+        "error-size-value": "Taille actuelle : {{ currentSize }} / Total en erreur : {{ totalSize }}",
+        "archive-size-title": "Taille de l'archive",
+        "archive-size-value": "Taille actuelle : {{ currentSize }} / Total archivé : {{ totalSize }}",
+        "last-content-sent": "Dernier contenu envoyé",
+        "last-connection": "Dernière connexion",
+        "last-run-start": "Dernière exécution",
+        "last-run-duration": "Durée de la dernière exécution",
+        "data-sent": "Données envoyées"
+      },
+      "south": {
+        "title": "Métriques South",
+        "reset-metrics": "Réinitialiser les métriques",
+        "metrics-reset": "Métriques réinitialisées avec succès",
+        "metrics-start": "Métriques démarrées le {{ start }}",
+        "number-of-values": "Nombre de valeurs récupérées",
+        "number-of-files": "Nombre de fichiers récupérés",
+        "last-connection": "Dernière connexion",
+        "last-file": "Dernier fichier récupéré",
+        "last-value": "Dernière valeur récupérée",
+        "last-value-content": "{{ pointId }} à {{ timestamp }} avec le contenu {{ data }}",
+        "last-run-start": "Dernière exécution",
+        "last-run-duration": "Durée de la dernière exécution",
+        "data-retrieved": "Données récupérées",
+        "interval-progress": "Progression de l'intervalle",
+        "current-item": "Élément actuel : {{ name }} ({{ current }} / {{ total }})",
+        "item-progress": "Éléments traités",
+        "item-interval-progress": "Progression de l'élément actuel",
+        "values-per-second": "Valeurs/fichiers par seconde",
+        "eta": "Temps restant estimé",
+        "items-status": {
+          "title": "Statut des éléments",
+          "name": "Nom",
+          "status": "Statut",
+          "last-value": "Dernière valeur récupérée",
+          "records": "Enregistrements récupérés",
+          "pending": "En attente",
+          "running": "En cours",
+          "done": "Terminé"
+        }
+      }
+    },
+    "tooltips": {
+      "add": "Créer une nouvelle requête d'historique",
+      "start": "Démarrer la requête d'historique",
+      "pause": "Mettre en pause la requête d'historique",
+      "resume": "Reprendre la requête d'historique",
+      "restart": "Redémarrer la requête d'historique",
+      "view": "Voir les détails de la requête d'historique",
+      "edit": "Modifier la requête d'historique",
+      "duplicate": "Dupliquer la requête d'historique",
+      "delete": "Supprimer la requête d'historique",
+      "copy-cache-path": "Copier le chemin du cache dans le presse-papiers",
+      "audit": "Voir l'historique d'audit de la requête d'historique"
+    }
+  },
+  "explore-cache": {
+    "title": "Cache de {{ name }}",
+    "search": {
+      "start": "De",
+      "end": "À",
+      "filename-contains": "Le nom de fichier contient",
+      "max-number-of-files-returned": "Nombre maximum de fichiers"
+    },
+    "snapshot-warning": "Les données affichées correspondent à un instantané du {{ snapshotDate }}. L'état du cache a pu changer dans OIBus depuis la recherche.",
+    "unsaved-changes": "Vous avez des modifications non enregistrées.",
+    "save-changes": "Enregistrer les modifications",
+    "cache-updated": "Cache mis à jour",
+    "select-all": "Tout sélectionner",
+    "unselect-all": "Tout désélectionner",
+    "selected-files": "{{ count }} sélectionnés",
+    "file-date": "Date de création",
+    "filename": "Nom de fichier",
+    "file-size": "Taille",
+    "cache": {
+      "title": "Dossier cache",
+      "title-empty": "Dossier cache (vide)",
+      "none": "Aucun fichier dans le dossier cache"
+    },
+    "error": {
+      "title": "Dossier d'erreurs",
+      "title-empty": "Dossier d'erreurs (vide)",
+      "none": "Aucun fichier dans le dossier d'erreurs"
+    },
+    "archive": {
+      "title": "Dossier d'archive",
+      "title-empty": "Dossier d'archive (vide)",
+      "none": "Aucun fichier dans le dossier d'archive"
+    },
+    "error-content-action": "Contenu en erreur",
+    "archive-content-action": "Contenu de l'archive",
+    "retry-content-action": "Réessayer le contenu",
+    "replay-content-action": "Rejouer le contenu",
+    "view-content-action": "Voir le contenu",
+    "remove-content-action": "Supprimer le contenu",
+    "remove-selected-content": "Supprimer le contenu sélectionné",
+    "replay-selected-content": "Rejouer le contenu sélectionné",
+    "archive-selected-content": "Archiver le contenu sélectionné",
+    "retry-selected-content": "Réessayer le contenu sélectionné",
+    "error-selected-content": "Mettre en erreur le contenu sélectionné",
+    "view-content": {
+      "title": "Contenu du fichier {{ contentFilename }} ({{ filename }})",
+      "truncated": "Le contenu est tronqué. Taille réelle : {{ realSize }}. Taille récupérée : {{ currentSize }}",
+      "file-size": "Taille du contenu : {{ contentSize }}",
+      "content-type": "Type de contenu : {{ contentType }}",
+      "content-type-truncated": "Type de contenu : {{ contentType }}. Affiché en texte brut car le contenu est tronqué"
+    }
+  },
+  "audit": {
+    "title": "Audit",
+    "none": "Aucun journal d'audit trouvé",
+    "history-modal": {
+      "title": "Historique d'audit",
+      "loading": "Chargement de l'historique d'audit…",
+      "none": "Aucun historique trouvé",
+      "tooltips": {
+        "expand": "Afficher les détails",
+        "collapse": "Masquer les détails"
+      },
+      "modes": {
+        "table": "Tableau",
+        "json-diff": "Différence JSON",
+        "json-side-by-side": "JSON côte à côte"
+      }
+    },
+    "tooltips": {
+      "view": "Voir les détails du journal d'audit"
+    },
+    "actions": {
+      "CREATE": "Créer",
+      "UPDATE": "Mettre à jour",
+      "DELETE": "Supprimer"
+    },
+    "diff": {
+      "field": "Champ",
+      "before": "Avant",
+      "after": "Après"
+    },
+    "search": {
+      "entity-type": "Type d'entité",
+      "action": "Action",
+      "start": "Début",
+      "end": "Fin",
+      "all-entity-types": "Tous les types d'entité",
+      "all-actions": "Toutes les actions"
+    },
+    "entity-type": "Type d'entité",
+    "entity-id": "ID de l'entité",
+    "action": "Action",
+    "user": "Utilisateur",
+    "date": "Date"
+  },
+  "logs": {
+    "title": "Journaux",
+    "auto-reload": {},
+    "search": {
+      "start": "Début",
+      "end": "Fin",
+      "message-content": "Le journal contient",
+      "scope-type": "Types",
+      "scope": "Portées",
+      "item": "Éléments",
+      "group": "Groupes",
+      "levels": "Niveaux"
+    },
+    "date": "Date",
+    "level": "Niveau",
+    "scope-type": "Type",
+    "scope": "Portée",
+    "item": "Élément",
+    "group": "Groupe",
+    "message": "Message",
+    "none": "Aucun journal trouvé",
+    "tooltips": {
+      "pause-auto-reload": "Mettre en pause le rechargement automatique",
+      "resume-auto-reload": "Reprendre le rechargement automatique"
+    },
+    "context-menu": {
+      "title": "Rechercher autour de ce journal",
+      "1-minute": "± 1 minute",
+      "5-minutes": "± 5 minutes",
+      "15-minutes": "± 15 minutes",
+      "30-minutes": "± 30 minutes",
+      "1-hour": "± 1 heure"
+    }
+  },
+  "north": {
+    "title": "North {{ name }}",
+    "list": "Liste des North",
+    "search-by-name": "Nom",
+    "choose-north-type-title": "Choisissez le type de North",
+    "type-error": "Vous devez sélectionner un type de North",
+    "create-title": "Créer un connecteur North {{ type }}",
+    "edit-title": "Modifier {{ name }}",
+    "confirm-deletion": "Êtes-vous sûr de vouloir supprimer le connecteur North {{ name }} ?",
+    "updated": "Connecteur North {{ name }} mis à jour avec succès",
+    "created": "Connecteur North {{ name }} créé avec succès",
+    "deleted": "Connecteur North {{ name }} supprimé",
+    "none": "Aucun connecteur North ne correspond à la recherche",
+    "name": "Nom",
+    "description": "Description",
+    "copy-cache-path": "Copier le chemin du cache ({{ id }})",
+    "status": "Statut",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "started": "Connecteur North {{ name }} démarré",
+    "stopped": "Connecteur North {{ name }} arrêté",
+    "cache-path-copy": {
+      "success": "Chemin du cache copié dans le presse-papiers",
+      "error": "Erreur lors de la copie du chemin du cache dans le presse-papiers"
+    },
+    "test-connection": {
+      "title": "Test des paramètres",
+      "button": "Tester les paramètres",
+      "success": "Connexion testée avec succès",
+      "error": "Erreur lors du test des paramètres"
+    },
+    "type": "Type",
+    "created-by": "Créé par",
+    "created-at": "Créé le",
+    "updated-at": "Mis à jour le",
+    "general-settings": "Paramètres généraux",
+    "specific-settings": "Paramètres {{ type }}",
+    "caching": {
+      "title": "Paramètres du cache",
+      "trigger": {
+        "title": "Conditions de déclenchement",
+        "schedule": "Planification",
+        "number-of-elements": "Nombre d'éléments",
+        "number-of-files": "Nombre de fichiers",
+        "value": "Planification : {{ scanMode }} / Éléments : {{ numberOfElements }} / Fichiers : {{ numberOfFiles }}"
+      },
+      "throttling": {
+        "title": "Limitation",
+        "run-min-delay": "Délai minimum entre deux transmissions",
+        "max-size": "Taille maximale de stockage (cache + erreur + archive)",
+        "max-number-of-elements": "Nombre maximal d'éléments",
+        "value": "Délai min. d'exécution : {{ runMinDelay }} ms / Taille max. du cache : {{ maxSize }} Mo / Nombre max. d'éléments : {{ maxNumberOfElements }}"
+      },
+      "error": {
+        "title": "Erreurs",
+        "retry-interval": "Délai d'attente avant nouvelle tentative après erreur",
+        "retry-count": "Nombre de tentatives",
+        "retention-duration": "Durée de rétention des données en erreur",
+        "value": "Intervalle de nouvelle tentative : {{ retryInterval }} ms / Nombre de tentatives : {{ retryCount }} / Durée de rétention : {{ retentionDuration }} h"
+      },
+      "archive": {
+        "title": "Archive",
+        "enabled": "Activé",
+        "retention-duration": "Durée de rétention des données archivées",
+        "value": "Activé : {{ enabled }} / Durée de rétention : {{ retentionDuration }} h"
+      },
+      "explore-cache": "Explorer le cache"
+    },
+    "transformers": {
+      "title": "Transformer les charges utiles",
+      "source": "Source",
+      "output": "Sortie",
+      "add": "Ajouter un transformateur",
+      "none": "Aucun transformateur",
+      "choose-transformer-modal": {
+        "title": "Choisissez comment traiter les charges utiles"
+      },
+      "added": "Transformateur ajouté",
+      "edited": "Options du transformateur modifiées",
+      "confirm-deletion": "Êtes-vous sûr de vouloir supprimer ce transformateur de ce connecteur North ?",
+      "removed": "Transformateur supprimé",
+      "test": {
+        "title": "Tester le transformateur",
+        "run": "Lancer le test",
+        "source-paste": "Coller des données",
+        "source-item": "À partir d'un élément source",
+        "item": "Élément"
+      }
+    },
+    "monitoring": {
+      "title": "Métriques de {{ name }}",
+      "since": "depuis {{ date }}",
+      "reset-metrics": "Réinitialiser les métriques",
+      "metrics-reset": "Métriques réinitialisées avec succès",
+      "metrics-start": "Métriques démarrées le {{ start }}",
+      "last-connection": "Dernière connexion",
+      "last-content-sent": "Dernier contenu envoyé",
+      "last-run": "Dernière exécution",
+      "last-run-value": "{{ lastRunStart }} (en {{ lastRunDuration }})",
+      "cache-size-title": "Taille du cache",
+      "cache-size-value": "Taille actuelle : {{ currentSize }} / Total mis en cache : {{ totalCached }} / Total envoyé : {{ totalSent }}",
+      "error-size-title": "Taille des erreurs",
+      "error-size-value": "Taille actuelle : {{ currentSize }} / Total en erreur : {{ totalSize }}",
+      "archive-size-title": "Taille de l'archive",
+      "archive-size-value": "Taille actuelle : {{ currentSize }} / Total archivé : {{ totalSize }}"
+    },
+    "tooltips": {
+      "add": "Créer un nouveau connecteur North",
+      "start": "Démarrer le connecteur North",
+      "stop": "Arrêter le connecteur North",
+      "view": "Voir les détails du connecteur North",
+      "edit": "Modifier le connecteur North",
+      "duplicate": "Dupliquer le connecteur North",
+      "delete": "Supprimer le connecteur North",
+      "copy-cache-path": "Copier le chemin du cache dans le presse-papiers",
+      "view-metrics": "Voir les métriques du connecteur North",
+      "audit": "Voir l'historique d'audit du connecteur North"
+    }
+  },
+  "oia-module": {
+    "title": "Enregistrement OIAnalytics",
+    "registration": {
+      "title": "Enregistrer OIBus",
+      "host": "Hôte",
+      "accept-unauthorized": "Accepter les connexions non autorisées",
+      "use-proxy": "Utiliser un proxy",
+      "proxy-url": "URL du proxy",
+      "proxy-username": "Nom d'utilisateur du proxy",
+      "proxy-password": "Mot de passe du proxy",
+      "use-api-gateway": "Utiliser une passerelle API",
+      "api-gateway-header-key": "Clé d'en-tête",
+      "api-gateway-header-value": "Valeur secrète de l'en-tête",
+      "api-gateway-base-endpoint": "Point de terminaison de base",
+      "register": "Enregistrer",
+      "saved": "Paramètres d'enregistrement enregistrés",
+      "unregister": "Désenregistrer",
+      "confirm-unregistration": "Êtes-vous sûr de vouloir désenregistrer cet OIBus ?",
+      "unregistered": "OIBus désenregistré",
+      "not-registered": "OIBus n'est pas enregistré auprès d'OIAnalytics. Cliquez sur le bouton ci-dessous pour l'enregistrer.",
+      "pending": "Enregistrement en attente. Activez-le sur OIAnalytics avec le code d'activation suivant",
+      "expiration-date": "Expiré le",
+      "registered": "OIBus enregistré le {{ activationDate }}",
+      "enable-all": "Tout activer",
+      "disable-all": "Tout désactiver",
+      "remote-update-disabled": "La mise à jour à distance est désactivée sur cet OIBus (démarré avec --ignoreRemoteUpdate), la commande de mise à niveau de version ne peut donc pas être activée.",
+      "test-connection": "Tester la connexion",
+      "test-connection-success": "Connexion réussie",
+      "test-connection-error": "Erreur lors du test de connexion"
+    },
+    "commands": {
+      "title": "Liste des commandes",
+      "creation-date": "Date de création",
+      "completion-date": "Date d'achèvement",
+      "status": "Statut",
+      "type": "Type",
+      "command": "Commande (id)",
+      "none": "Aucune commande",
+      "refresh-interval": "Intervalle de récupération des commandes (depuis OIAnalytics)",
+      "command-retry-interval": "Intervalle de nouvelle tentative des commandes (depuis OIAnalytics)",
+      "message-retry-interval": "Intervalle de nouvelle tentative des messages (vers OIAnalytics)",
+      "permissions": "Permissions des commandes OIAnalytics",
+      "update-engine-settings-permission": "Mettre à jour les paramètres du moteur (nom, serveur web, proxy, journalisation)",
+      "engine": "Moteur",
+      "registration": "Enregistrement",
+      "scan-mode": "Mode de scrutation",
+      "ip-filter": "Filtre IP",
+      "certificate": "Certificat",
+      "north-connector": "Connecteur North",
+      "transformers": "Transformateurs personnalisés",
+      "south-connector": "Connecteur South",
+      "test-connector": "Tester les connecteurs",
+      "history-query": "Requête d'historique",
+      "test-history-query": "Tester les requêtes d'historique",
+      "north-cache": "Gestion du cache North",
+      "history-cache": "Gestion du cache d'historique",
+      "setpoint": "Consigne",
+      "details-modal": {
+        "title": "Commande {{ type }}",
+        "success-info": "Commande terminée avec succès",
+        "error-info": "Échec de la commande",
+        "command-message": "Message de la commande",
+        "command-content": {
+          "title": "Contenu de la commande",
+          "retrieved-date": "Date de récupération : {{ retrievedDate }}",
+          "update-version": {
+            "version": "Mise à jour vers la version : {{ version }}",
+            "asset-id": "Élément à télécharger : {{ assetId }}",
+            "update-launcher": "Mettre à jour le lanceur : {{ updateLauncher }}",
+            "backup-folders-patterns": "Sauvegarder les dossiers selon ce motif : {{ backupFoldersPattern }}"
+          },
+          "update-engine-settings": {
+            "command-content": "Contenu JSON"
+          },
+          "update-registration-settings": {
+            "command-content": "Contenu JSON"
+          },
+          "scan-mode": {
+            "command-content": "Contenu JSON",
+            "scan-mode-id": "ID du mode de scrutation : {{ scanModeId }}"
+          },
+          "south": {
+            "command-content": "Contenu JSON",
+            "south-id": "ID du connecteur South : {{ southConnectorId }}",
+            "delete-items-not-present": "Supprimer les éléments absents : {{ deleteItemsNotPresent }}",
+            "delimiter": "Délimiteur : {{ delimiter }}",
+            "csv-content": "Contenu CSV : {{ csvContent }}"
+          },
+          "north": {
+            "command-content": "Contenu JSON",
+            "north-id": "ID du connecteur North : {{ northConnectorId }}"
+          }
+        }
+      },
+      "details-tooltip": "Détails de la commande",
+      "confirm-delete": "Êtes-vous sûr de vouloir supprimer cette commande ?",
+      "delete-tooltip": "Supprimer la commande",
+      "deleted": "Commande supprimée"
+    }
+  },
+  "version-update": {
+    "title": "Mise à jour disponible",
+    "message": "Une nouvelle version d'OIBus a été détectée. La page va se recharger automatiquement dans {{ seconds }} secondes pour appliquer la mise à jour.",
+    "reload-now": "Recharger maintenant"
+  },
+  "about": {
+    "official-site": "Site officiel",
+    "version": "Version",
+    "launcher-version": "Version du lanceur",
+    "license": "Licence",
+    "executable": "Exécutable",
+    "hostname": "Nom d'hôte",
+    "data-folder": "Dossier de données",
+    "operating-system": "Système d'exploitation",
+    "architecture": "Architecture",
+    "process-id": "ID de processus",
+    "copyright": "Copyright (c) 2018-{{nowYear}} Optimistik SAS. Ce logiciel est distribué selon les termes de la licence EUPL-1.2."
+  },
+  "home": {
+    "south": {
+      "title": "South activés"
+    },
+    "north": {
+      "title": "North activés"
+    },
+    "engine": {
+      "title": "Moteur"
+    },
+    "history-query": {
+      "title": "Requête d'historique",
+      "name": "Nom",
+      "status": "Statut"
+    }
+  },
+  "common": {
+    "yes": "Oui",
+    "no": "Non",
+    "beta": "Bêta",
+    "ok": "OK",
+    "save": "Enregistrer",
+    "back": "Retour",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "close": "Fermer",
+    "search": "Rechercher",
+    "clear": "Effacer",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "colon-separator": " : ",
+    "audit": {
+      "created-on": "Créé le",
+      "created-by": "Créé par",
+      "updated-on": "Mis à jour le",
+      "updated-by": "Mis à jour par"
+    },
+    "forbidden": "Vous n'avez pas les droits d'accès pour cette entité.\n{{ url }}",
+    "not-found": "Il semble que cette entité n'existe pas.\n{{ url }}",
+    "confirmation-modal-title": "Confirmation",
+    "date-hour-format": "yyyy-MM-dd HH:mm",
+    "delimiter": "Délimiteur",
+    "file": "Fichier",
+    "drop-file-here": "Déposez le fichier ici",
+    "item": "Élément",
+    "nested": "Imbriqué",
+    "root": "Racine",
+    "unsaved-changes": "Modifications non enregistrées",
+    "unsaved-changes-message": "Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter sans enregistrer ?",
+    "leave-without-saving": "Quitter sans enregistrer",
+    "continue-editing": "Continuer l'édition",
+    "validation-errors": {
+      "this-field": "Ce champ",
+      "required": "{{ label }} est requis",
+      "invalid-date": "{{ label }} n'est pas une date valide",
+      "minlength": "{{ label }} doit comporter au moins {{ requiredLength }} caractères",
+      "maxlength": "{{ label }} doit comporter au plus {{ requiredLength }} caractères",
+      "pattern": "{{ label }} n'a pas le format requis",
+      "email": "{{ label }} doit être une adresse email valide",
+      "min": "{{ label }} doit être au moins {{ min }}",
+      "max": "{{ label }} doit être au plus {{ max }}",
+      "end-must-be-after-start": "La date de fin doit être postérieure à la date de début",
+      "descending-limits-error": "Les valeurs limites doivent être décroissantes",
+      "invalid-period": "La période n'est pas valide",
+      "invalid-positive-integer": "Le nombre doit être un entier positif",
+      "null-period-error": "La période ne peut pas être nulle",
+      "invalid-regex": "L'expression régulière n'est pas valide",
+      "invalid-json": "Le json n'est pas valide",
+      "all-access-control-tag-keys-must-be-valued": "Toutes les clés de tag utilisées pour le contrôle d'accès doivent avoir une valeur. Clé(s) de tag manquante(s) : {{ missingTagKeys }}.",
+      "parsing-processor-error": "Le processeur d'analyse n'est pas valide. {{ error }}",
+      "must-be-unique": "Doit être unique",
+      "resolve-pending-changes": "Veuillez valider ou annuler les modifications en attente avant d'enregistrer",
+      "bad-start-date-range": "L'heure de début doit être antérieure à l'heure de fin",
+      "bad-end-date-range": "L'heure de fin doit être postérieure à l'heure de début",
+      "date-range-required": "La plage de dates est requise",
+      "invalid-date-range": "Plage de dates sélectionnée invalide",
+      "duplicate-field-names": "Noms de champs en double détectés",
+      "only-one-reference": "Un seul élément peut être marqué comme référence",
+      "mqtt-topic-overlap": "Les abonnements aux topics MQTT ne peuvent pas se chevaucher. Topics en conflit : {{ conflictingTopics }}",
+      "interval-too-small": "L'intervalle doit être d'au moins {{ min }} ms",
+      "time-of-day-incomplete": "Les heures de début et de fin doivent être toutes les deux définies, ou aucune des deux",
+      "time-of-day-empty": "Les heures de début et de fin doivent être différentes"
+    },
+    "period": {
+      "none": "Aucune",
+      "years": "a.",
+      "quarters": "trim.",
+      "months": "mois",
+      "weeks": "sem.",
+      "days": "j.",
+      "hours": "h.",
+      "minutes": "mn.",
+      "seconds": "s.",
+      "milliseconds": "ms.",
+      "custom": "Personnalisé"
+    },
+    "size": {
+      "B": "o",
+      "kB": "ko",
+      "MB": "Mo"
+    },
+    "unit": {
+      "ms": "ms",
+      "s": "s",
+      "hr": "h",
+      "MB": "Mo",
+      "days": "jours"
+    },
+    "tooltips": {
+      "help": "Aide",
+      "save": "Enregistrer les modifications",
+      "discard": "Annuler les modifications",
+      "remove": "Supprimer"
+    },
+    "export-success": "Export effectué avec succès",
+    "export-error": "Échec de l'export",
+    "import-success": "Import effectué avec succès",
+    "import-error": "Échec de l'import",
+    "create": "Créer",
+    "edit": "Modifier",
+    "cache": "Cache"
+  },
+  "duration-pipe": {
+    "long": {
+      "hour": "{{ hours }} heure",
+      "hours": "{{ hours }} heures",
+      "minute": "{{ minutes }} minute",
+      "minutes": "{{ minutes }} minutes",
+      "second": "{{ seconds }} seconde",
+      "seconds": "{{ seconds }} secondes"
+    },
+    "short": {
+      "hour": "{{ hours }} h",
+      "hours": "{{ hours }} h",
+      "minute": "{{ minutes }} min",
+      "minutes": "{{ minutes }} min",
+      "second": "{{ seconds }} s",
+      "seconds": "{{ seconds }} s"
+    },
+    "hours-and-minutes": "{{ hours }}, {{ minutes }}",
+    "hours-and-seconds": "{{ hours }}, {{ seconds }}",
+    "hours-and-minutes-and-seconds": "{{ hours }}, {{ minutes }}, {{ seconds }}",
+    "minutes-and-seconds": "{{ minutes }}, {{ seconds }}"
+  },
+  "date-range": {
+    "range-type": "Plage de dates",
+    "last-minute": "Dernière minute",
+    "last-10-minutes": "10 dernières minutes",
+    "last-hour": "Dernière heure",
+    "last-day": "Dernier jour",
+    "custom": "Personnalisé"
+  },
+  "datepicker": {
+    "parse-pattern": "d/M/yyyy",
+    "format-pattern": "dd/MM/yyyy",
+    "tooltips": {
+      "open-calendar": "Ouvrir le calendrier"
+    }
+  },
+  "nav": {
+    "home": "Accueil",
+    "engine": "Moteur",
+    "north-list": "North",
+    "south-list": "South",
+    "history-queries": "Historique",
+    "logs": "Journaux",
+    "about": "À propos",
+    "version": "Version : {{ version }}",
+    "account": {
+      "logout": "Déconnexion",
+      "settings": "Paramètres",
+      "audit": "Audit"
+    },
+    "tooltips": {
+      "documentation": "Documentation"
+    }
+  },
+  "login": {
+    "title": "Connexion",
+    "login": "Identifiant",
+    "password": "Mot de passe",
+    "login-button": "Se connecter",
+    "login-error": "Nom d'utilisateur ou mot de passe invalide"
+  },
+  "user-settings": {
+    "edit-user-settings": {
+      "login": "Identifiant : {{ login }}",
+      "first-name": "Prénom",
+      "last-name": "Nom",
+      "timezone": "Fuseau horaire",
+      "language": "Langue",
+      "change-password": "Changer le mot de passe",
+      "saved": "Les paramètres utilisateur ont été enregistrés"
+    },
+    "change-password": {
+      "title": "Changer le mot de passe",
+      "current-password": "Mot de passe actuel",
+      "new-password": "Nouveau mot de passe",
+      "new-password-confirmation": "Confirmation du nouveau mot de passe",
+      "passwords-not-identical": "Le nouveau mot de passe et sa confirmation doivent être identiques",
+      "password-changed": "Le mot de passe a été changé avec succès",
+      "error": "Le mot de passe n'a pas été changé. Assurez-vous d'avoir saisi le mot de passe actuel correct.",
+      "lowercase-character-required": "Au moins une lettre minuscule requise",
+      "uppercase-character-required": "Au moins une lettre majuscule requise",
+      "numeric-character-required": "Au moins un chiffre requis",
+      "special-character-required": "Au moins un caractère spécial requis"
+    }
+  },
+  "enabled": "actif",
+  "disabled": "en pause"
+}
