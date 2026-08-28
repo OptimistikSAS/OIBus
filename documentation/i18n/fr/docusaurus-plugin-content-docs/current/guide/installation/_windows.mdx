@@ -1,0 +1,265 @@
+import DownloadButton from '../../../../../../src/components/DownloadButton';
+import packageInfo from '../../../../../../package.json';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+**Choisissez la méthode d'installation qui correspond le mieux à vos besoins :**
+
+- Utilisez l'**Installateur** pour une installation guidée et conviviale. Il permet également d'exécuter
+  plusieurs instances d'OIBus côte à côte sur la même machine.
+- Utilisez la méthode par **Scripts** pour les utilisateurs avancés, ou pour des déploiements
+  scriptés/automatisés (voir [Installation automatisée](./disk-image.mdx)).
+
+<Tabs>
+  <TabItem value="windows-installer" label="Installer" default>
+    <h2 id="download-windows-installer">Téléchargement</h2>
+    <div style={{ display: "flex", justifyContent: "space-around" }}>
+      <DownloadButton
+        link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-win_x64-setup-v${packageInfo.version}.exe`}>
+        <div>
+          <div>{`OIBus v${packageInfo.version} (x64 installer)`}</div>
+          <div>Windows (x64)</div>
+        </div>
+      </DownloadButton>
+    </div>
+
+    <h2 id="installation-steps-windows-installer">Étapes d'installation</h2>
+
+    1. **Lancer l'installateur**
+
+    Lancez l'installateur téléchargé. Vous verrez l'écran d'accueil :
+    <div style={{ textAlign: 'center' }}>
+      ![Écran d'accueil de l'installateur](../../../static/img/guide/installation/win_installer/1.png)
+    </div>
+
+    2. **Accepter la licence**
+
+    Lisez et acceptez la **licence EU-PL** pour continuer.
+    <div style={{ textAlign: 'center' }}>
+      ![Acceptation de la licence de l'installateur](../../../static/img/guide/installation/win_installer/2.png)
+    </div>
+
+    3. **Choisir le nom du service et définir le répertoire de données**
+
+    Le **Nom du service** identifie cette installation OIBus en tant que service Windows. Conservez la valeur
+    par défaut (`OIBus`) pour une installation unique, ou donnez-lui un nom unique (lettres, chiffres, espaces,
+    points, tirets et underscores uniquement) pour exécuter plusieurs instances OIBus côte à côte sur la même
+    machine. Le **Répertoire de données** est l'endroit où sa configuration, son cache et ses journaux sont
+    stockés :
+    <div style={{ textAlign: 'center' }}>
+      ![Chemin du dossier de données de l'installateur](../../../static/img/guide/installation/win_installer/3.png)
+    </div>
+
+    :::tip
+    Pour la sécurité des données, envisagez de placer le dossier de données sur un **disque séparé** (par ex.,
+    `D:\OIBusData`). Cela aide à prévenir les problèmes d'espace disque sur le disque système et améliore la
+    fiabilité.
+    :::
+
+    :::info
+    Chaque instance OIBus a besoin de son propre dossier d'installation et de son propre répertoire de données.
+    Si l'un des deux est déjà utilisé par une autre instance, l'installateur s'arrête avec une erreur et vous
+    demande de choisir une valeur différente ici (ou sur la page du chemin d'installation ci-dessous).
+    :::
+
+    4. **Définir les variables initiales**
+
+    Définissez le nom d'utilisateur administrateur initial, le mot de passe, et le port sur lequel OIBus va
+    écouter. Chaque instance possède ses propres identifiants indépendants, donc le **port** est généralement
+    la valeur que vous devez modifier ici lors de l'installation d'une seconde instance aux côtés d'une instance
+    existante (elles ne peuvent pas partager le même port) :
+    <div style={{ textAlign: 'center' }}>
+      ![Variables initiales de l'installateur](../../../static/img/guide/installation/win_installer/4.png)
+    </div>
+
+    5. **Choisir le chemin d'installation**
+
+    Sélectionnez le répertoire où les binaires OIBus seront installés. Il est pré-rempli avec une suggestion
+    basée sur le nom du service de l'étape 3 (`OIBus` pour le nom par défaut, `OIBus - <name>` sinon), mais vous
+    pouvez tout de même le modifier — il doit simplement s'agir d'un dossier qu'aucune autre instance n'utilise
+    déjà :
+    <div style={{ textAlign: 'center' }}>
+      ![Chemin des binaires de l'installateur](../../../static/img/guide/installation/win_installer/5.png)
+    </div>
+
+    6. **Confirmer et installer**
+
+    Vérifiez vos paramètres et confirmez pour démarrer l'installation :
+    <div style={{ textAlign: 'center' }}>
+      ![Étape de validation de l'installateur](../../../static/img/guide/installation/win_installer/6.png)
+    </div>
+
+    7. **Terminer l'installation**
+
+    Une fois l'installation terminée, vous verrez un écran de confirmation.
+
+    <div style={{ textAlign: 'center' }}>
+      ![Fin de l'installation](../../../static/img/guide/installation/win_installer/7.png)
+    </div>
+
+    Vous pouvez vérifier qu'OIBus fonctionne correctement en tant que service Windows.
+    <div style={{ textAlign: 'center' }}>
+      ![Résultat du service de l'installateur](../../../static/img/guide/installation/win_installer/8.png)
+    </div>
+
+    Le dossier des binaires ressemble à ceci :
+    <div style={{ textAlign: 'center' }}>
+      ![Résultat du dossier binaire de l'installateur](../../../static/img/guide/installation/win_installer/9.png)
+    </div>
+
+    Et le dossier de données ressemble à ceci :
+    <div style={{ textAlign: 'center' }}>
+      ![Résultat du dossier de données de l'installateur](../../../static/img/guide/installation/win_installer/10.png)
+    </div>
+
+    Passez au [guide de premier accès](./first-access.mdx) pour configurer OIBus.
+
+    <h2 id="update-oibus-windows-installer">Mettre à jour OIBus</h2>
+
+    - Utilisez l'**Installateur Windows OIBus** pour mettre à jour.
+    - Utilisez le **même nom de service** que l'installation existante que vous souhaitez mettre à niveau — un
+      nom différent installe une nouvelle instance supplémentaire au lieu de mettre à jour l'instance existante.
+    - Spécifiez les chemins de l'exécutable et de la configuration actuels.
+    - Choisissez de **conserver** ou de **remplacer** votre configuration existante.
+    - Le service OIBus s'arrêtera brièvement pendant la mise à jour.
+    - Au premier démarrage après la mise à jour, la base de données de configuration `oibus.db` sera
+      automatiquement mise à niveau.
+
+    <h2 id="uninstall-oibus-windows-installer">Désinstaller OIBus</h2>
+
+    1. Naviguez vers le dossier binaire d'OIBus.
+    2. Exécutez `unin000.exe` en tant qu'administrateur et confirmez la suppression :
+    <div style={{ textAlign: 'center' }}>
+      ![Désinstallation étape 1](../../../static/img/guide/installation/win_uninstall/1.png)
+    </div>
+    3. Il vous sera demandé si vous souhaitez supprimer toutes les données (cache, erreurs, archives, journaux,
+       certificats, et les bases de données de configuration/identifiants) pour cette instance. Répondre
+       autrement que **Yes** laisse le dossier de données intact :
+    <div style={{ textAlign: 'center' }}>
+      ![Désinstallation étape 2](../../../static/img/guide/installation/win_uninstall/2.png)
+    </div>
+
+    :::caution
+    Choisir de supprimer toutes les données efface définitivement votre configuration, vos identifiants et vos
+    journaux.
+    :::
+
+    :::info Désinstallation d'un dossier d'installation partagé
+    Si plusieurs instances OIBus ont été installées dans le même dossier de binaires, la désinstallation supprime
+    les fichiers dont elles dépendent toutes. Dans ce cas, un avertissement listant chaque instance concernée
+    apparaît avant que quoi que ce soit ne soit modifié, et chacune est arrêtée puis proposée pour suppression de
+    données à son tour.
+    :::
+
+  </TabItem>
+
+  <TabItem value="windows-scripts" label="Scripts">
+    <h2 id="download-windows-scripts">Téléchargement</h2>
+
+    <div style={{ display: "flex", justifyContent: "space-around" }}>
+      <DownloadButton
+        link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-win_x64-v${packageInfo.version}.zip`}>
+        <div>
+          <div>{`OIBus v${packageInfo.version} (zip)`}</div>
+          <div>Windows (x64)</div>
+        </div>
+      </DownloadButton>
+    </div>
+
+    <h2 id="installation-steps-windows-scripts">Étapes d'installation</h2>
+
+    1. **Extraire l'archive Zip**
+
+    Décompressez le fichier téléchargé dans le répertoire où vous souhaitez installer OIBus (par ex.,
+    `C:\Program Files\OIBus`).
+
+    2. **Exécuter le script d'installation**
+    Ouvrez un **terminal administrateur** dans le dossier extrait et exécutez :
+    ``` commandline title="Usage"
+    install.bat -c "[your-data-folder-path]"
+    ```
+
+    | Flag | Description | Défaut |
+    |------|-------------|---------|
+    | `-c` | Chemin du dossier de données OIBus (cache, journaux, configuration) | demandé si omis |
+    | `-n` | Nom du service Windows — utilisez un nom unique pour exécuter plusieurs instances OIBus sur la même machine | `OIBus` |
+    | `-u` | Nom d'utilisateur administrateur écrit dans `oibus.init.json` lors de la première installation | omis (la valeur par défaut d'OIBus s'applique) |
+    | `-p` | Mot de passe administrateur écrit dans `oibus.init.json` lors de la première installation | omis (la valeur par défaut d'OIBus s'applique) |
+    | `-port` | Port sur lequel OIBus écoute, écrit dans `oibus.init.json` lors de la première installation | omis (la valeur par défaut d'OIBus s'applique) |
+
+    :::info
+    `-u`, `-p`, et `-port` ne sont utilisés que lorsque `oibus.db` n'existe pas encore (c'est-à-dire lors de la
+    toute première installation). Ils sont écrits dans un fichier `oibus.init.json` dans le dossier de données et
+    appliqués par OIBus au premier démarrage. Les flags omis ne sont pas écrits dans le fichier — OIBus utilisera
+    ses valeurs par défaut intégrées pour ces valeurs. Lors des installations ou mises à jour ultérieures, le
+    fichier n'est pas recréé, donc ces flags n'ont aucun effet.
+    :::
+
+    :::tip
+    - Si vous omettez l'argument `-c`, le script vous demandera le chemin des données.
+    - Pour la sécurité des données, envisagez de placer le dossier de données sur un **disque séparé** (par ex.,
+    `D:\OIBusData`). Cela aide à prévenir les problèmes d'espace disque sur le disque système et améliore la
+    fiabilité.
+    :::
+
+    :::info
+    Chaque instance OIBus a besoin de son propre dossier d'installation et de son propre répertoire de données.
+    `install.bat` vérifie cela avant d'installer quoi que ce soit et se termine avec une erreur si l'un des deux
+    appartient déjà à une instance différente.
+    :::
+
+    **Exemple :**
+    ``` commandline title="Example with terminal outputs"
+    install.bat -c "D:\OIBusData" -u "admin" -p "password" -port 2223
+    > Administrator permissions required. Detecting permission...
+    > Stopping OIBus service...
+    > Installing OIBus as Windows service...
+    > The "OIBus" service has been successfully installed!
+    > Configuration of the "AppDirectory" parameter value for the "OIBus" service.
+    > nssm set OIBus AppNoConsole 1
+    > Starting OIBus service...
+    > OIBus: START: Operation successful.
+    > Creating go.bat
+    > echo Stopping OIBus service... You can restart it from the Windows Service Manager
+    > nssm.exe stop OIBus
+    > "C:\Users\Administrator\Downloads\oibus-win_x64\oibus-launcher.exe" --config "D:\OIBusData"
+    ```
+
+    Passez au [guide de premier accès](./first-access.mdx) pour configurer OIBus.
+
+    <h2 id="update-oibus-windows-scripts">Mettre à jour OIBus</h2>
+
+    1. Extrayez les nouveaux fichiers de l'archive zip.
+    2. Ouvrez le **Gestionnaire des services Windows** et arrêtez le service OIBus.
+    3. Remplacez les anciens fichiers dans le répertoire exécutable d'OIBus par les nouveaux.
+    4. Redémarrez le service OIBus.
+    5. Au premier démarrage, la base de données de configuration `oibus.db` sera automatiquement mise à niveau.
+
+    :::info
+    Si vous relancez `install.bat` pour mettre à jour à la place, utilisez la **même valeur `-n`** que l'instance
+    existante — un nom différent installe une nouvelle instance supplémentaire au lieu de mettre à jour
+    l'instance existante.
+    :::
+
+    <h2 id="uninstall-oibus-windows-scripts">Désinstaller OIBus</h2>
+
+    Exécutez la commande suivante dans un **terminal administrateur** :
+    ```` commandline title="Example with terminal outputs"
+    uninstall.bat -n "OIBus"
+    > Administrator permissions required. Detecting permission...
+    > Stopping OIBus service...
+    > Do you wish to remove all data for service OIBus (cache, logs...)? (y/N)
+    > Removing OIBus service...
+    ````
+
+    Il vous sera demandé si vous souhaitez supprimer toutes les données (cache, erreurs, archives, journaux,
+    certificats, et les bases de données de configuration/identifiants). Répondre autrement que `Y`/`y` laisse le
+    dossier de données intact.
+
+    :::caution
+    Choisir de supprimer toutes les données efface définitivement votre configuration, vos identifiants et vos
+    journaux.
+    :::
+
+  </TabItem>
+</Tabs>

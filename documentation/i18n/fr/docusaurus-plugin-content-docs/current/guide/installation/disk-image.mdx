@@ -1,0 +1,538 @@
+---
+sidebar_position: 4
+---
+
+# Installation automatisée d'OIBus
+
+## Objectif {#objective}
+
+Cette procédure permet des déploiements OIBus efficaces et à grande échelle en combinant une installation
+silencieuse avec une configuration initiale standardisée appliquée au premier démarrage.
+
+**Avantages clés :**
+
+- **Déploiement évolutif** sur plusieurs machines à partir d'une seule image disque
+- **Configuration cohérente** dès le premier démarrage — aucune étape manuelle sur chaque machine
+- **Gestion à distance immédiate** via l'enregistrement [OIAnalytics](./oianalytics.mdx)
+- **Effort manuel réduit** et erreurs de configuration minimisées
+
+## Fonctionnement {#how-it-works}
+
+L'approche repose sur deux scripts travaillant ensemble :
+
+- **`install.bat`** — livré dans le ZIP d'installation d'OIBus. Il enregistre OIBus comme service Windows
+  via [NSSM](https://nssm.cc/) et le démarre.
+- **`mass-install.bat`** — un script d'amorçage que vous ajoutez à l'image disque. Il s'exécute au démarrage
+  de la machine, appelle `install.bat` uniquement au premier démarrage, puis configure OIBus via son API
+  avant de l'enregistrer auprès d'OIAnalytics.
+
+La garde en haut de `mass-install.bat` vérifie si le service Windows OIBus existe déjà. Si c'est le cas,
+le script se termine immédiatement — ainsi les machines clonées déjà initialisées ne sont jamais
+reconfigurées accidentellement.
+
+## Préparation de l'image disque {#disk-image-preparation}
+
+1. Extrayez le ZIP d'installation d'OIBus vers `C:\Program Files\OIBus`.
+2. Ajoutez `mass-install.bat` à ce répertoire.
+3. Configurez `mass-install.bat` pour s'exécuter au démarrage (via le Planificateur de tâches ou une
+   stratégie de script de démarrage).
+4. Construisez une image disque **avant** d'exécuter le script — OIBus n'est pas encore installé au
+   moment de la capture de l'image.
+
+Lorsqu'une machine démarre pour la première fois à partir de cette image, le script installe et configure
+tout automatiquement.
+
+## Le script `install.bat` {#the-installbat-script}
+
+`install.bat` est l'installateur de service de bas niveau fourni avec OIBus. Il :
+
+1. Vérifie qu'il s'exécute en tant qu'Administrateur.
+2. Accepte jusqu'à cinq paramètres : `-n` (nom du service), `-c` (répertoire de données), `-u`/`-p`
+   (nom d'utilisateur/mot de passe administrateur initial), et `-port` (port HTTP initial) — voir
+   [Installation Windows](./installation.mdx) pour la référence complète des indicateurs. Si `-c` est
+   omis, il demande de manière interactive.
+3. Crée le répertoire de données s'il n'existe pas.
+4. Vérifie un registre machine (`HKLM\SOFTWARE\OIBus\Instances`, partagé avec l'installateur graphique)
+   pour s'assurer que ni le dossier des binaires actuels ni le répertoire de données ne sont déjà utilisés
+   par une autre instance OIBus, en abandonnant avec une erreur le cas échéant. Chaque instance — qu'elle
+   soit installée via ce script ou l'installateur graphique — doit avoir son propre dossier de binaires et
+   son propre dossier de données.
+5. Enregistre le lanceur OIBus comme service Windows via NSSM, en configurant le chemin de l'application,
+   les paramètres, et le répertoire de travail.
+6. Démarre le service, puis enregistre l'instance (nom, dossier des binaires, répertoire de données) dans
+   le même registre afin que les installations ultérieures puissent y détecter des conflits.
+7. Crée un script d'aide `go.bat` qui arrête le service et exécute OIBus directement dans la console —
+   utile pour le débogage.
+
+Ce script est appelé par `mass-install.bat` avec les paramètres appropriés, donc aucune interaction manuelle
+n'est nécessaire dans un contexte d'image disque. `mass-install.bat` ne passe que `-c` et `-n` — il s'appuie
+sur les identifiants administrateur par défaut d'OIBus (voir la Phase 1 ci-dessous) plutôt que de les
+configurer via `-u`/`-p`.
+
+## Le script `mass-install.bat` {#the-mass-installbat-script}
+
+`mass-install.bat` orchestre la séquence complète d'amorçage au premier démarrage. Chaque phase est décrite
+ci-dessous.
+
+### Phase 1 — Variables de configuration {#phase-1--configuration-variables}
+
+```batch
+set INSTALL_SCRIPT_PATH=%~dp0install.bat
+
+set USERNAME=admin
+set PASSWORD=pass
+set OIANALYTICS_URL=https://instance.optimistik.fr/
+
+set SERVICE_NAME=OIBus
+set DATA_FOLDER_PATH=C:\OIBusData
+```
+
+`%~dp0` se résout au répertoire contenant `mass-install.bat`, donc `INSTALL_SCRIPT_PATH` pointe toujours
+vers `install.bat` dans le même dossier, quel que soit l'endroit d'où le script est lancé.
+
+Les cinq variables sont des valeurs par défaut. Chacune d'elles peut être remplacée au moment de l'appel via
+un paramètre en ligne de commande (voir Phase 2). Les identifiants par défaut (`admin` / `pass`) correspondent
+à une installation OIBus fraîche.
+
+### Phase 2 — Analyse des paramètres {#phase-2--parameter-parsing}
+
+```batch
+:PARSE_PARAMETERS
+if "%~1"=="" goto PARSE_PARAMETERS_DONE
+if "%~1"=="-n" (
+    set "SERVICE_NAME=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
+if "%~1"=="-c" (
+    set "DATA_FOLDER_PATH=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
+if "%~1"=="-u" (
+    set "USERNAME=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
+if "%~1"=="-p" (
+    set "PASSWORD=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
+if "%~1"=="-o" (
+    set "OIANALYTICS_URL=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
+shift
+goto PARSE_PARAMETERS
+:PARSE_PARAMETERS_DONE
+```
+
+Chaque indicateur remplace sa valeur par défaut correspondante :
+
+- `-n` — nom du service Windows (utile lors de l'exécution de plusieurs instances OIBus sur la même machine)
+- `-c` — chemin du répertoire de données
+- `-u` — nom d'utilisateur de l'API OIBus
+- `-p` — mot de passe de l'API OIBus
+- `-o` — URL d'enregistrement OIAnalytics
+
+Tous les indicateurs sont optionnels ; toute valeur omise se rabat sur la valeur par défaut déclarée en
+Phase 1.
+
+### Phase 3 — Validation des entrées {#phase-3--input-validation}
+
+```batch
+:: The service name ends up as a raw, unquoted argument in several commands below (sc.exe,
+:: echo), so anything outside this safe set - especially shell metacharacters like & | > < ^ -
+:: could inject arbitrary commands. Reject it outright rather than trying to quote/escape it
+:: differently at every use site.
+echo %SERVICE_NAME%| findstr /r /v /c:"^[A-Za-z0-9 ._-]*$" >nul
+if not ERRORLEVEL 1 (
+    echo ERROR: Service name "%SERVICE_NAME%" contains characters that are not allowed.
+    echo Allowed characters: letters, digits, spaces, dots, hyphens and underscores.
+    exit /b 1
+)
+
+:: USERNAME, PASSWORD and OIANALYTICS_URL are embedded in curl arguments and JSON bodies
+:: below. Unlike the service name they must accept any character - a real password may
+:: legitimately contain & | " etc. - so escape them for safe embedding instead of rejecting
+:: anything.
+set "ESCAPED_USERNAME=%USERNAME:\=\\%"
+set "ESCAPED_USERNAME=%ESCAPED_USERNAME:"=\"%"
+set "ESCAPED_PASSWORD=%PASSWORD:\=\\%"
+set "ESCAPED_PASSWORD=%ESCAPED_PASSWORD:"=\"%"
+set "ESCAPED_OIANALYTICS_URL=%OIANALYTICS_URL:\=\\%"
+set "ESCAPED_OIANALYTICS_URL=%ESCAPED_OIANALYTICS_URL:"=\"%"
+```
+
+Sans cela, une valeur `-n` malveillante pourrait injecter des commandes arbitraires (ce script s'exécute en
+tant qu'Administrateur), et une valeur `-u`/`-p`/`-o` contenant `&`, `|`, ou `"` — tout à fait plausible pour
+un vrai mot de passe — corromprait ou détournerait les appels `curl` dans les phases suivantes. À partir
+d'ici, utilisez `%ESCAPED_USERNAME%`, `%ESCAPED_PASSWORD%`, et `%ESCAPED_OIANALYTICS_URL%` au lieu des
+variables brutes partout où elles sont intégrées dans une commande ou un corps JSON.
+
+### Phase 4 — Vérification des droits Administrateur {#phase-4--administrator-check}
+
+```batch
+net session >nul 2>&1
+if %errorLevel% neq 0 (
+    echo This script must be run as Administrator.
+    exit /b 1
+)
+```
+
+L'installation d'un service Windows nécessite des privilèges élevés. Si le script ne s'exécute pas en tant
+qu'Administrateur, il se termine immédiatement avec un code non nul afin que l'échec soit visible dans les
+journaux du planificateur.
+
+### Phase 5 — Garde d'idempotence {#phase-5--idempotency-guard}
+
+```batch
+sc query "%SERVICE_NAME%" >nul 2>&1
+if %errorlevel% equ 0 (
+    echo %SERVICE_NAME% service is already installed. Skipping installation.
+    goto END
+)
+```
+
+Ceci est la vérification de sécurité clé pour l'image disque. `sc query` renvoie 0 uniquement si le service
+nommé existe. Au premier démarrage, le service n'existe pas, donc l'installation se poursuit. À chaque
+démarrage suivant (ou sur toute machine où OIBus a déjà été installé manuellement), le script se termine tôt
+sans toucher à l'installation existante.
+
+### Phase 6 — Disponibilité du réseau {#phase-6--network-readiness}
+
+```batch
+:WAIT_FOR_NETWORK
+sc query "Dnscache" | find "RUNNING" >nul
+if %errorlevel% neq 0 (
+    timeout /t 5 >nul
+    goto WAIT_FOR_NETWORK
+)
+```
+
+L'installation s'exécute souvent tôt dans la séquence de démarrage, avant que la pile réseau ne soit
+complètement opérationnelle. Le script attend que le service Client DNS (`Dnscache`) soit `RUNNING` — un
+indicateur fiable que la mise en réseau TCP/IP est disponible — avant de continuer. Cela évite que les
+appels API échouent en raison d'un réseau manquant.
+
+### Phase 7 — Installation {#phase-7--installation}
+
+```batch
+if not exist "%DATA_FOLDER_PATH%" mkdir "%DATA_FOLDER_PATH%"
+
+call "%INSTALL_SCRIPT_PATH%" -c "%DATA_FOLDER_PATH%" -n "%SERVICE_NAME%"
+if %errorlevel% neq 0 (
+    echo Error: %SERVICE_NAME% installation failed.
+    exit /b %errorlevel%
+)
+```
+
+Crée le répertoire de données si nécessaire, puis appelle `install.bat` avec les paramètres configurés.
+`install.bat` enregistre le service OIBus via NSSM et le démarre. Tout échec propage le code de sortie afin
+que la tâche du planificateur appelante puisse le détecter et le signaler.
+
+### Phase 8 — Disponibilité du service {#phase-8--service-readiness}
+
+```batch
+:WAIT_FOR_OIBUS
+for /f "tokens=3 delims=: " %%H in ('sc query "%SERVICE_NAME%" ^| findstr "STATE"') do (
+    if /I "%%H" NEQ "RUNNING" (
+        timeout /t 5 >nul
+        goto WAIT_FOR_OIBUS
+    )
+)
+```
+
+Interroge l'état du service toutes les 5 secondes jusqu'à ce que `sc query` le signale comme `RUNNING`. Ceci
+est nécessaire car `nssm.exe start` retourne dès que le processus de service se lance, et non lorsqu'il est
+entièrement initialisé.
+
+### Phase 9 — Disponibilité du serveur web {#phase-9--web-server-readiness}
+
+```batch
+:WAIT_FOR_WEB
+curl --silent --output NUL --fail http://localhost:2223/api/status
+if %errorlevel% neq 0 (
+    timeout /t 5 >nul
+    goto WAIT_FOR_WEB
+)
+```
+
+Même après que le service soit `RUNNING`, le serveur HTTP d'OIBus met un moment à initialiser sa base de
+données et à commencer l'écoute. Cette boucle interroge `/api/status` — un point de terminaison non
+authentifié qui existe uniquement pour confirmer que le serveur est joignable — toutes les 5 secondes
+jusqu'à ce qu'elle renvoie une réponse HTTP 2xx, moment auquel l'API est prête à accepter des appels de
+configuration.
+
+### Phase 10 — Configuration initiale via l'API {#phase-10--initial-configuration-via-the-api}
+
+Avec OIBus en cours d'exécution et son API joignable, le script crée les objets initiaux — modes de
+scrutation, connecteurs, ou toute autre ressource nécessaire à votre déploiement. L'exemple ci-dessous crée
+deux modes de scrutation et un connecteur South Modbus. Notez le
+`"%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%"` entre guillemets — les guillemets protègent contre les
+métacaractères shell, et l'échappement de la Phase 3 protège contre un mot de passe contenant `"` :
+
+```batch
+curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/scan-modes" ^
+--header "Content-Type: application/json" ^
+--header "Accept: application/json" ^
+--data "{\"name\": \"Every 5 seconds\", \"description\": \"Trigger every 5 seconds\", \"cron\": \"*/5 * * * * *\"}"
+
+curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/scan-modes" ^
+--header "Content-Type: application/json" ^
+--header "Accept: application/json" ^
+--data "{\"name\": \"Every 2 minutes\", \"description\": \"Trigger every 2 minutes\", \"cron\": \"* */2 * * * *\"}"
+
+curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/south" ^
+--header "Content-Type: application/json" ^
+--header "Accept: application/json" ^
+--data "{\"name\": \"Modbus\", \"type\": \"modbus\", ...}"
+```
+
+Ajoutez, retirez, ou adaptez ces appels pour correspondre à votre configuration cible. Chaque objet que vous
+pouvez créer via l'interface OIBus dispose d'un point de terminaison POST correspondant.
+
+:::info Référence de l'API
+Pour la liste complète des points de terminaison disponibles et de leurs schémas de requête/réponse, voir la
+[documentation de l'API](../../api/index.mdx).
+:::
+
+### Phase 11 — Enregistrement OIAnalytics {#phase-11--oianalytics-registration}
+
+```batch
+curl --location --request POST --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/oianalytics/register" ^
+--header "Content-Type: application/json" ^
+--data "{\"host\": \"%ESCAPED_OIANALYTICS_URL%\", ...}"
+```
+
+Soumet une demande d'enregistrement à OIAnalytics pour le compte de cette instance OIBus. L'enregistrement
+n'est pas immédiatement actif — il entre dans un état **en attente** jusqu'à ce qu'un administrateur
+OIAnalytics l'approuve.
+
+:::info Code d'activation
+Une fois la demande d'enregistrement reçue, un **code d'activation à 6 caractères** est généré. Ce code est
+affiché sur l'écran d'enregistrement OIBus et également envoyé par courriel à l'adresse configurée dans
+OIAnalytics. L'administrateur doit le saisir dans **Configuration → OIBus** dans OIAnalytics pour terminer
+l'appairage.
+:::
+
+Après approbation, tous les changements de configuration ultérieurs peuvent être poussés à distance depuis
+OIAnalytics sans avoir à toucher chaque machine individuellement.
+
+Pour le flux d'enregistrement complet, les exigences réseau, et le modèle de sécurité, voir la page
+[Enregistrement OIAnalytics](./oianalytics.mdx).
+
+Si vous n'utilisez pas OIAnalytics, omettez cette étape.
+
+## Script complet {#full-script}
+
+```batch
+@echo off
+:: This script checks if OIBus is already installed. If not, it waits for the network,
+:: installs OIBus, waits for the service to start, and registers it with OIAnalytics.
+
+:: Path to install.bat (must be in the same folder as this script)
+set INSTALL_SCRIPT_PATH=%~dp0install.bat
+
+setlocal enabledelayedexpansion
+
+:: Default values — all can be overridden via command-line parameters
+set SERVICE_NAME=OIBus
+set DATA_FOLDER_PATH=C:\OIBusData
+set USERNAME=admin
+set PASSWORD=pass
+set OIANALYTICS_URL=https://instance.optimistik.fr/
+
+:PARSE_PARAMETERS
+if "%~1"=="" goto PARSE_PARAMETERS_DONE
+if "%~1"=="-n" (
+    set "SERVICE_NAME=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
+if "%~1"=="-c" (
+    set "DATA_FOLDER_PATH=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
+if "%~1"=="-u" (
+    set "USERNAME=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
+if "%~1"=="-p" (
+    set "PASSWORD=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
+if "%~1"=="-o" (
+    set "OIANALYTICS_URL=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
+shift
+goto PARSE_PARAMETERS
+:PARSE_PARAMETERS_DONE
+
+:: The service name ends up as a raw, unquoted argument in several commands below (sc.exe,
+:: echo), so anything outside this safe set - especially shell metacharacters like & | > < ^ -
+:: could inject arbitrary commands. Reject it outright rather than trying to quote/escape it
+:: differently at every use site.
+echo %SERVICE_NAME%| findstr /r /v /c:"^[A-Za-z0-9 ._-]*$" >nul
+if not ERRORLEVEL 1 (
+    echo ERROR: Service name "%SERVICE_NAME%" contains characters that are not allowed.
+    echo Allowed characters: letters, digits, spaces, dots, hyphens and underscores.
+    exit /b 1
+)
+
+:: USERNAME, PASSWORD and OIANALYTICS_URL are embedded in curl arguments and JSON bodies
+:: below. Unlike the service name they must accept any character - a real password may
+:: legitimately contain & | " etc. - so escape them for safe embedding instead of rejecting
+:: anything.
+set "ESCAPED_USERNAME=%USERNAME:\=\\%"
+set "ESCAPED_USERNAME=%ESCAPED_USERNAME:"=\"%"
+set "ESCAPED_PASSWORD=%PASSWORD:\=\\%"
+set "ESCAPED_PASSWORD=%ESCAPED_PASSWORD:"=\"%"
+set "ESCAPED_OIANALYTICS_URL=%OIANALYTICS_URL:\=\\%"
+set "ESCAPED_OIANALYTICS_URL=%ESCAPED_OIANALYTICS_URL:"=\"%"
+
+:: Check if running as Admin
+net session >nul 2>&1
+if %errorLevel% neq 0 (
+    echo This script must be run as Administrator.
+    exit /b 1
+)
+
+:: Idempotency guard: skip if OIBus service is already installed
+sc query "%SERVICE_NAME%" >nul 2>&1
+if %errorlevel% equ 0 (
+    echo %SERVICE_NAME% service is already installed. Skipping installation.
+    goto END
+)
+
+:: Wait for the network to be available
+echo Waiting for the network service to start...
+:WAIT_FOR_NETWORK
+sc query "Dnscache" | find "RUNNING" >nul
+if %errorlevel% neq 0 (
+    timeout /t 5 >nul
+    goto WAIT_FOR_NETWORK
+)
+echo Network service is running.
+
+:: Create data directory if it doesn't exist
+if not exist "%DATA_FOLDER_PATH%" mkdir "%DATA_FOLDER_PATH%"
+
+:: Install OIBus as a Windows service
+call "%INSTALL_SCRIPT_PATH%" -c "%DATA_FOLDER_PATH%" -n "%SERVICE_NAME%"
+if %errorlevel% neq 0 (
+    echo Error: %SERVICE_NAME% installation failed.
+    exit /b %errorlevel%
+)
+
+:: Wait for the OIBus service to reach RUNNING state
+echo Waiting for %SERVICE_NAME% service to start...
+:WAIT_FOR_OIBUS
+for /f "tokens=3 delims=: " %%H in ('sc query "%SERVICE_NAME%" ^| findstr "STATE"') do (
+    if /I "%%H" NEQ "RUNNING" (
+        timeout /t 5 >nul
+        goto WAIT_FOR_OIBUS
+    )
+)
+echo %SERVICE_NAME% service is now running.
+
+:: Wait for the OIBus web server to accept requests
+echo Waiting for %SERVICE_NAME% web server to be up...
+:WAIT_FOR_WEB
+curl --silent --output NUL --fail http://localhost:2223/api/status
+if %errorlevel% neq 0 (
+    timeout /t 5 >nul
+    goto WAIT_FOR_WEB
+)
+echo %SERVICE_NAME% web server is now up.
+
+:: Create scan modes
+echo Creating scan modes...
+curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/scan-modes" ^
+--header "Content-Type: application/json" ^
+--header "Accept: application/json" ^
+--data "{\"name\": \"Every 5 seconds\", \"description\": \"Trigger every 5 seconds\", \"cron\": \"*/5 * * * * *\"}"
+echo.
+if %errorlevel% neq 0 (
+    echo Error: Failed to create scan mode.
+    exit /b %errorlevel%
+)
+
+curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/scan-modes" ^
+--header "Content-Type: application/json" ^
+--header "Accept: application/json" ^
+--data "{\"name\": \"Every 2 minutes\", \"description\": \"Trigger every 2 minutes\", \"cron\": \"* */2 * * * *\"}"
+echo.
+if %errorlevel% neq 0 (
+    echo Error: Failed to create scan mode.
+    exit /b %errorlevel%
+)
+
+:: Create North connector (OIAnalytics)
+echo Creating North connector...
+curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/north" ^
+--header "Content-Type: application/json" ^
+--header "Accept: application/json" ^
+--data "{\"name\": \"North OIAnalytics\", \"type\": \"oianalytics\", \"description\": \"\", \"enabled\": true, \"settings\": {\"useOiaModule\": true, \"compress\": true, \"timeout\": 60000}, \"caching\": {\"trigger\": {\"scanModeId\": null, \"scanModeName\": \"Every 2 minutes\", \"numberOfElements\": 10000, \"numberOfFiles\": 1}, \"throttling\": {\"runMinDelay\": 200, \"maxSize\": 0, \"maxNumberOfElements\": 50000}, \"error\": {\"retryInterval\": 5000, \"retryCount\": 3, \"retentionDuration\": 0}, \"archive\": {\"enabled\": false, \"retentionDuration\": 72}}, \"transformers\": []}"
+echo.
+if %errorlevel% neq 0 (
+    echo Error: Failed to create North connector.
+    exit /b %errorlevel%
+)
+
+:: Create South connector (Modbus)
+echo Creating South connector...
+curl --location --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/south" ^
+--header "Content-Type: application/json" ^
+--header "Accept: application/json" ^
+--data "{\"name\": \"Modbus\", \"type\": \"modbus\", \"description\": \"Modbus South\", \"enabled\": true, \"settings\": {\"host\": \"127.0.0.1\", \"port\": 502, \"connectTimeout\": 10000, \"networkTimeout\": 10000, \"retryInterval\": 10000, \"slaveId\": 1, \"addressOffset\": \"modbus\", \"endianness\": \"big-endian\", \"swapBytesInWords\": false, \"swapWordsInDWords\": false, \"batchQuery\": false, \"groupingGap\": 0}, \"groups\": [], \"items\": []}"
+echo.
+if %errorlevel% neq 0 (
+    echo Error: Failed to create South connector.
+    exit /b %errorlevel%
+)
+
+:: Register OIBus with OIAnalytics
+echo Registering OIBus...
+curl --location --request POST --user "%ESCAPED_USERNAME%:%ESCAPED_PASSWORD%" "http://localhost:2223/api/oianalytics/register" ^
+--header "Content-Type: application/json" ^
+--data "{\"host\": \"%ESCAPED_OIANALYTICS_URL%\", \"useProxy\": false, \"proxyUrl\": null, \"proxyUsername\": null, \"proxyPassword\": null, \"useApiGateway\": false, \"apiGatewayHeaderKey\": null, \"apiGatewayHeaderValue\": null, \"apiGatewayBaseEndpoint\": null, \"acceptUnauthorized\": false, \"commandRefreshInterval\": 60, \"commandRetryInterval\": 10, \"messageRetryInterval\": 10, \"commandPermissions\": {\"testCustomTransformer\": true, \"deleteCustomTransformer\": true, \"updateCustomTransformer\": true, \"createCustomTransformer\": true, \"updateNorthCacheContent\": true, \"getNorthCacheFileContent\": true, \"searchNorthCacheContent\": true, \"updateHistoryCacheContent\": true, \"getHistoryCacheFileContent\": true, \"searchHistoryCacheContent\": true, \"setpoint\": true, \"testNorthConnection\": true, \"deleteNorth\": true, \"updateNorth\": true, \"createNorth\": true, \"testSouthItem\": true, \"testSouthConnection\": true, \"createOrUpdateSouthItemsFromCsv\": true, \"deleteSouth\": true, \"updateSouth\": true, \"createSouth\": true, \"testHistorySouthItem\": true, \"testHistorySouthConnection\": true, \"testHistoryNorthConnection\": true, \"createOrUpdateHistoryItemsFromCsv\": true, \"deleteHistoryQuery\": true, \"updateHistoryQuery\": true, \"createHistoryQuery\": true, \"deleteCertificate\": true, \"updateCertificate\": true, \"createCertificate\": true, \"deleteIpFilter\": true, \"updateIpFilter\": true, \"createIpFilter\": true, \"deleteScanMode\": true, \"updateScanMode\": true, \"createScanMode\": true, \"updateRegistrationSettings\": true, \"updateEngineSettings\": true, \"regenerateCipherKeys\": true, \"restartEngine\": true, \"updateVersion\": true}}"
+echo.
+if %errorlevel% neq 0 (
+    echo Error: Failed to register OIBus.
+    exit /b %errorlevel%
+)
+
+:END
+```
+
+### Utilisation {#usage}
+
+```batch
+.\mass-install.bat -n "OIBus" -c "C:\OIBusData" -u "admin" -p "pass" -o "https://instance.optimistik.fr/"
+```
+
+| Paramètre | Description                             | Défaut                             |
+| --------- | ---------------------------------------- | --------------------------------- |
+| `-n`      | Nom du service Windows OIBus.            | `OIBus`                           |
+| `-c`      | Chemin du répertoire de données OIBus.   | `C:\OIBusData`                    |
+| `-u`      | Nom d'utilisateur de l'API OIBus.        | `admin`                           |
+| `-p`      | Mot de passe de l'API OIBus.             | `pass`                            |
+| `-o`      | URL d'enregistrement OIAnalytics.        | `https://instance.optimistik.fr/` |

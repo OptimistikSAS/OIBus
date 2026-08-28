@@ -1,0 +1,166 @@
+---
+sidebar_position: 2
+---
+
+# OPC Classic™
+
+L'agent OIBus peut recevoir les [appels HTTP](#http-api) suivants. L'agent exécute un module HDA local via une communication inter-processus. Pour fonctionner correctement, [COM/DCOM](#comdcom-setup) doit être activé.
+
+## API HTTP {#http-api}
+
+### État {#status}
+
+```bash
+curl --location 'http://localhost:2224/api/opc/id/status'
+```
+
+### Connexion {#connection}
+
+```bash
+curl --location --request PUT 'http://localhost:2224/api/opc/id/connect' \
+--header 'Content-Type: application/json' \
+--data '{
+    "host": "localhost",
+    "serverName": "Matrikon.OPC.Simulation"
+}'
+```
+
+### Lecture {#read}
+
+```bash
+curl --location --request PUT 'http://localhost:2224/api/opc/id/read' \
+--header 'Content-Type: application/json' \
+--data '{
+    "host": "localhost",
+    "serverName": "Matrikon.OPC.Simulation",
+    "startTime": "2023-11-02T15:00:00.000Z",
+    "endTime": "2023-11-02T16:00:00.000Z",
+    "aggregate": "raw",
+    "resampling": "none",
+    "items": [
+        {
+            "name": "Random",
+            "nodeId": "Random.Int1"
+        },
+        {
+            "name": "Triangle Waves",
+            "nodeId": "Triangle Waves.Int1"
+        },
+        {
+            "name": "Saw-toothed Waves",
+            "nodeId": "Saw-toothed Waves.Int1"
+        }
+    ]
+}'
+```
+
+### Déconnexion {#disconnection}
+
+```bash
+curl --location --request DELETE 'http://localhost:2224/api/opc/id/disconnect'
+```
+
+## Configuration COM/DCOM {#comdcom-setup}
+
+### Contexte {#background}
+
+#### COM {#com}
+
+COM est le protocole standard de communication entre des objets situés sur le même ordinateur mais faisant partie de programmes différents. Le serveur est l'objet fournissant des services, comme la mise à disposition de données. Le client est une application qui utilise les services fournis par le serveur.
+
+#### DCOM {#dcom}
+
+DCOM représente une extension des fonctionnalités de COM permettant l'accès à des objets sur des ordinateurs distants. Ce protocole permet un échange de données standardisé entre des applications issues de l'industrie, des services administratifs et de la fabrication.
+
+#### OPC {#opc}
+
+Le client OPC est une application qui accède aux données de processus, messages et archives d'un serveur OPC. Un serveur OPC est un programme qui fournit une interface logicielle standard pour lire ou écrire des données.
+
+:::info Connectivité DCOM
+Cette page donne quelques indications sur la mise en place d'une communication COM/DCOM avec un serveur OPCHDA. Cependant, dans un contexte industriel, c'est souvent à l'équipe informatique qu'il incombe de configurer correctement les permissions, le pare-feu et la configuration Windows.
+:::
+
+### Paramètres Windows (client) {#windows-settings-client}
+
+#### Paramètres de la machine cliente {#client-machine-settings}
+
+Suivez ces étapes pour activer les communications COM/DCOM depuis le client. Ouvrez d'abord les Services de composants, puis accédez aux _Propriétés_ de l'ordinateur.
+
+<div style={{ textAlign: 'center' }}>![Services de composants](../../../static/img/guide/south/opchda/OPCHDA-component-services.png)</div>
+
+Assurez-vous d'activer _Distributed COM_ sur cet ordinateur (dans l'onglet _Propriétés par défaut_).
+
+<div style={{ textAlign: 'center' }}>![Propriétés du composant](../../../static/img/guide/south/opchda/OPCHDA-computer-properties.png)</div>
+
+Dans l'onglet _Sécurité COM_, modifiez les _Autorisations de lancement et d'activation_ par défaut.
+
+<div style={{ textAlign: 'center' }}>![Sécurité COM](../../../static/img/guide/south/opchda/OPCHDA-COM-security.png)</div>
+
+Dans la fenêtre _Autorisations de lancement et d'activation_, autorisez les permissions suivantes :
+
+- Lancement local
+- Lancement à distance
+- Activation locale
+- Activation à distance
+
+<div style={{ textAlign: 'center' }}>![Autorisations d'accès](../../../static/img/guide/south/opchda/OPCHDA-access-permissions.png)</div>
+
+#### Tester la communication {#test-communication}
+
+DCOM utilise le port 135 du serveur HDA pour échanger avec le client. Pour tester la connectivité :
+
+```powershell
+tnc localhost -port 135
+```
+
+<div style={{ textAlign: 'center' }}>![Tester la communication DCOM](../../../static/img/guide/south/opchda/OPCHDA-test-communication.png)</div>
+
+#### Authentification {#authentication}
+
+Un programme client OPCHDA communiquera avec le serveur DA/HDA à l'aide de l'adresse IP ou du nom d'hôte du serveur suivi du "progId" du serveur. L'utilisateur doit être connu du serveur HDA.
+
+:::info Important
+L'utilisateur doit être membre du groupe _Distributed COM Users_
+:::
+
+:::tip Service
+Si le programme s'exécute via un service (comme OIBus), configurez le service pour qu'il s'exécute en tant qu'utilisateur spécifique.
+:::
+
+#### Configuration du pare-feu {#firewall-configuration}
+
+Configurez le pare-feu en ajoutant une règle sur le port 135.
+
+<div style={{ textAlign: 'center' }}>
+  ![Configuration du pare-feu Windows](../../../static/img/guide/south/opchda/OPCHDA-windows-firewall.png)
+</div>
+
+Pour les hébergeurs cloud comme Lightsail, configurez des règles de pare-feu supplémentaires :
+
+<div style={{ textAlign: 'center' }}>
+  ![Configuration du pare-feu Lightsail](../../../static/img/guide/south/opchda/OPCHDA-lightsail-firewall.png)
+</div>
+
+#### Outil OPCEnum {#opcenum-tool}
+
+L'outil [OPCEnum](https://opcfoundation.org/developer-tools/samples-and-tools-classic/core-components/) permet aux clients OPCHDA de localiser des serveurs sur des nœuds distants.
+
+##### Serveur RPC indisponible {#rpc-unavailable}
+
+Si le serveur RPC est indisponible, vérifiez votre pare-feu et testez à nouveau la communication.
+
+<div style={{ textAlign: 'center' }}>![Serveur RPC indisponible](../../../static/img/guide/south/opchda/OPCHDA-rpc-unavailable.png)</div>
+
+##### Accès refusé {#access-denied}
+
+Vérifiez les identifiants de l'utilisateur et l'appartenance au groupe en cas de refus d'accès.
+
+<div style={{ textAlign: 'center' }}>![Accès refusé](../../../static/img/guide/south/opchda/OPCHDA-access-denied.png)</div>
+
+### Paramètres du serveur {#server-settings}
+
+Vérifiez si DCOM est activé pour l'application serveur OPC dans la fenêtre _Services de composants_.
+
+<div style={{ textAlign: 'center' }}>
+  ![Configuration DCOM de la machine serveur](../../../static/img/guide/south/opchda/OPCHDA-server-DCOM-configuration.png)
+</div>

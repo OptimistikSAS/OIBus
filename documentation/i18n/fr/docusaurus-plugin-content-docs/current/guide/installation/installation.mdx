@@ -1,0 +1,60 @@
+---
+sidebar_position: 1
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import WindowsSteps from './_windows.mdx';
+import LinuxSteps from './_linux.mdx';
+import MacOSSteps from './_macos.mdx';
+import DockerSteps from './_docker.mdx';
+
+# Installation
+
+## Configuration système requise {#system-requirements}
+
+| Ressource                  | Minimum                  | Remarques                                                                                                                                                                      |
+| ------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RAM**                   | 2 Go                     | L'utilisation réelle dépend du nombre de connecteurs et du volume de données.                                                                                                          |
+| **Espace disque**            | 200 Mo                   | Plusieurs Go supplémentaires recommandés pour la mise en tampon et le cache des données. Voir [Débit de données et dimensionnement du cache](../advanced/oibus-data-rate.mdx) pour estimer les besoins de votre installation. |
+| **Droits administratifs** | Requis                 | Nécessaires pour installer OIBus et l'enregistrer en tant que service système.                                                                                                               |
+| **Navigateur web**           | Chrome, Firefox ou Edge | Internet Explorer n'est pas pris en charge.                                                                                                                                        |
+
+:::note Accès à distance
+Le navigateur peut se trouver sur la même machine ou sur un poste de travail distant. Pour un accès distant, configurez un
+[filtre IP](../engine/ip-filters.mdx) pour autoriser l'adresse du client.
+:::
+
+## Plateformes prises en charge {#supported-platforms}
+
+| Plateforme    | Versions                                 | Architectures                      |
+| ----------- | ---------------------------------------- | ---------------------------------- |
+| **Windows** | 10, 11, Server 2016 / 2019 / 2022 / 2025 | x64                                |
+| **Linux**   | Ubuntu 20.04+, Debian 10/11, RHEL 8/9    | x64, ARM64                         |
+| **macOS**   | 11 (Big Sur) et versions ultérieures                   | Intel (x64), Apple Silicon (ARM64) |
+| **Docker**  | Tout hôte exécutant Docker Engine 20.10+    | x64, ARM64                         |
+
+## Installation {#installation}
+
+:::tip Déploiement sur plusieurs machines ?
+Si vous devez provisionner OIBus sur de nombreuses machines à partir d'une image disque — avec l'installation et la
+configuration initiale appliquées automatiquement au premier démarrage — consultez le
+[guide d'installation automatisée](./disk-image.mdx).
+:::
+
+Sélectionnez votre plateforme :
+
+<Tabs>
+  <TabItem value="windows" label="Windows" default>
+    <WindowsSteps />
+  </TabItem>
+  <TabItem value="linux" label="Linux">
+    <LinuxSteps />
+  </TabItem>
+  <TabItem value="macos" label="macOS">
+    <MacOSSteps />
+  </TabItem>
+  <TabItem value="docker" label="Docker">
+    <DockerSteps />
+  </TabItem>
+</Tabs>

@@ -1,0 +1,35 @@
+---
+sidebar_position: 17
+---
+
+import ItemSettings from './_south-record-list-item-settings.mdx';
+
+# SQLite™
+
+Se connecter à des fichiers de base de données SQLite™ et les interroger avec OIBus.
+
+## Paramètres spécifiques {#specific-settings}
+
+| Setting       | Description                       | Example Value                    |
+| ------------- | --------------------------------- | -------------------------------- |
+| Database path | Chemin complet vers le fichier de base de données SQLite | `C:\databases\production.sqlite` |
+
+### Bonnes pratiques {#best-practices}
+
+- Placez la base de données sur un support de stockage rapide (SSD recommandé)
+- Évitez les écritures concurrentes depuis plusieurs processus
+- Utilisez le mode WAL pour une meilleure concurrence (PRAGMA journal_mode=WAL)
+
+<ItemSettings />
+
+:::note SQLite datetime field types
+Les valeurs de **Type** suivantes sont disponibles pour le champ date/heure de l'instant suivi :
+
+| Type            | Description                                       |
+| --------------- | ------------------------------------------------- |
+| String          | Représentation sous forme de chaîne analysée avec un format personnalisé |
+| ISO String      | Chaîne ISO 8601 (par exemple `2024-01-15T10:30:00.000Z`) |
+| UNIX epoch (s)  | Horodatage Unix en secondes                       |
+| UNIX epoch (ms) | Horodatage Unix en millisecondes                  |
+
+:::
