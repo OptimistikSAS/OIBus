@@ -1,0 +1,30 @@
+{
+  "title": {
+    "message": "OIBus",
+    "description": "The title in the navbar"
+  },
+  "logo.alt": {
+    "message": "OIBus 标志",
+    "description": "The alt text of navbar logo"
+  },
+  "item.label.Documentation": {
+    "message": "文档",
+    "description": "Navbar item with label Documentation"
+  },
+  "item.label.Use cases": {
+    "message": "使用案例",
+    "description": "Navbar item with label Use cases"
+  },
+  "item.label.Developer": {
+    "message": "开发者",
+    "description": "Navbar item with label Developer"
+  },
+  "item.label.API": {
+    "message": "API",
+    "description": "Navbar item with label API"
+  },
+  "item.label.GitHub": {
+    "message": "GitHub",
+    "description": "Navbar item with label GitHub"
+  }
+}
