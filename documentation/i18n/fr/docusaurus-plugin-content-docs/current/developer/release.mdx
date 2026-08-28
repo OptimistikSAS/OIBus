@@ -1,0 +1,221 @@
+---
+displayed_sidebar: developerSidebar
+sidebar_position: 5
+---
+
+# Processus de release GitHub
+
+Les releases d'OIBus sont automatisées de bout en bout par GitHub Actions : les contributeurs se contentent
+de fournir des PR Conventional Commits, et le reste — incrémentation de version, changelog, binaires
+multi-plateformes, images Docker, déploiement de la documentation — s'exécute à partir d'un seul push sur
+la branche `stable`.
+
+Cette page explique les rouages afin que vous puissiez soit suivre une release en cours, préparer une
+pré-version pour les tests, soit mettre à jour le pipeline lui-même.
+
+:::info Les releases sont gérées par l'équipe Optimistik
+Les releases officielles d'OIBus — stables comme pré-versions — sont émises **uniquement** par l'équipe
+Optimistik, sur le dépôt `OptimistikSAS/OIBus`. L'équipe possède le calendrier de release, les clés de
+signature, et les canaux de publication (GitHub Releases, `ghcr.io`, le site de documentation). Les
+contributeurs externes ne déclenchent pas les releases directement : votre changement est livré lorsque
+les mainteneurs promeuvent ensuite `main` vers `stable`. Cette page est un document de référence — pour
+comprendre ce qui se passe après que votre PR a été fusionnée, ou pour les mainteneurs qui gèrent le
+pipeline.
+:::
+
+## Modèle de branches {#branching-model}
+
+| Branche  | Objectif                                                                                  |
+| -------- | -------------------------------------------------------------------------------------------- |
+| `main`   | Travail quotidien — chaque PR est squash-fusionnée ici. Toujours au vert ; jamais publiée directement. |
+| `stable` | Branche de release — reçoit `main` périodiquement, déclenche le workflow de release lors d'un push. |
+
+Une release est initiée en **avançant rapidement `stable` vers `main`** (typiquement via une PR depuis
+`main`). Aucune autre étape manuelle n'est requise — le reste se produit via Actions.
+
+## Le pipeline en un coup d'œil {#the-pipeline-at-a-glance}
+
+```
+  ◇ PR squash-merged to main      ← daily contributions (Conventional Commits)
+            │
+  ◇ main fast-forwarded to stable ← release trigger (manual)
+            │
+            ▼
+  .github/workflows/new_release.yml         (on: push → stable)
+    └── googleapis/release-please-action
+          ├─ Opens a "release PR" against stable
+          │  (bumps every package.json + lockfile + openapi.json + Dockerfile
+          │   + docker.mdx, regenerates the CHANGELOG)
+          └─ When that PR is merged → tags + publishes a GitHub Release
+            │
+            ▼
+  .github/workflows/build.yml   (on: release published — or manual workflow_dispatch)
+    ├── prepare              → resolve release info + generate the SBOM (once)
+    ├── build (5-platform matrix) → build · sign (Windows) · package · upload to the release
+    ├── snyk                 → monitor the SBOM                         (stable only)
+    ├── docker               → build & push the multi-arch image to ghcr.io
+    ├── deploy-documentation → build & publish the documentation site   (stable only)
+    └── slack                → notification → #oibus-ci
+```
+
+Tous les fichiers référencés se trouvent sous `.github/` :
+
+- [`workflows/new_release.yml`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/workflows/new_release.yml) — exécute release-please à chaque push sur `stable`
+- [`workflows/build.yml`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/workflows/build.yml) — tout ce qui s'exécute une fois qu'une Release est publiée (binaires, Docker, documentation)
+- [`release-please-config.json`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/release-please-config.json)
+- [`release-please-manifest.json`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/release-please-manifest.json)
+
+## 📦 release-please {#-release-please}
+
+[release-please](https://github.com/googleapis/release-please) est la seule chose qui modifie jamais le
+numéro de version. Il lit les commits depuis le dernier tag, décide de l'incrément, et écrit les
+changements dans une PR pour que les mainteneurs la relisent.
+
+### Règles d'incrémentation de version {#version-bump-rules}
+
+Entièrement pilotées par le type de commit — de la même manière que
+[Conventional Commits](https://www.conventionalcommits.org/) :
+
+| Type de commit                        | Incrément de version | Exemple                              |
+| -------------------------------------- | --------------------- | -------------------------------------- |
+| `fix:`                                 | Patch — `0.0.x`        | `fix(cache): correct chunk write`      |
+| `feat:`                                 | Mineur — `0.x.0`       | `feat(north): add SFTP retry`          |
+| `feat!:` ou footer `BREAKING CHANGE:` | Majeur — `x.0.0`       | `feat(north)!: replace handleValues`   |
+
+Les autres types (`docs`, `chore`, `refactor`, `perf`, `test`, `style`, `build`, `ci`) **n'incrémentent
+pas** la version — ils sont enregistrés dans le changelog sous la section pertinente sans provoquer de
+release.
+
+### Ce que release-please réécrit {#what-release-please-rewrites}
+
+Lorsqu'une PR de release est fusionnée, release-please met à jour le champ de version dans :
+
+| Fichier                                    | Champ / comment                       |
+| -------------------------------------------- | ---------------------------------------- |
+| `backend/package.json`                     | `version`                                |
+| `backend/package-lock.json`                | `version` + `packages[""].version`      |
+| `frontend/package.json`                    | `version`                                |
+| `frontend/package-lock.json`               | `version` + `packages[""].version`      |
+| `launcher/package.json`                    | `version`                                |
+| `launcher/package-lock.json`               | `version` + `packages[""].version`      |
+| `documentation/package.json`               | `version`                                |
+| `documentation/package-lock.json`          | `version` + `packages[""].version`      |
+| `documentation/docs/api/openapi.json`      | `$.info.version`                         |
+| `build/docker/Dockerfile`                  | chaîne de version (remplaceur `generic`) |
+| `documentation/docs/developer/docker.mdx`  | chaîne de version (remplaceur `generic`) |
+| `CHANGELOG.md`                              | nouvelle entrée ajoutée en tête          |
+
+Les fichiers JSON sont mis à jour via `jsonpath` ; le `Dockerfile` et `docker.mdx` utilisent le
+remplaceur `generic` de release-please (il réécrit la version sur les lignes annotées d'un marqueur
+`x-release-please-version`). Les règles exactes se trouvent dans
+[`release-please-config.json`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/release-please-config.json)
+sous `extra-files` — si vous ajoutez un nouveau package ou un autre fichier qui doit suivre la version de
+release, étendez cette liste.
+
+## 🛠 Ce que le workflow de release produit réellement {#-what-the-release-workflow-actually-produces}
+
+`build.yml` s'exécute sur `release: types: [published]` — c'est-à-dire **uniquement après que la PR de
+release de release-please a été fusionnée et que l'objet GitHub Release a été créé.** (Il peut également
+être déclenché manuellement via **workflow_dispatch**, éventuellement avec une entrée `tag`, pour
+reconstruire une release spécifique.) C'est un unique workflow composé de jobs coopérants :
+
+### `prepare` {#prepare}
+
+S'exécute une seule fois. Résout les informations de release (`tag_name`, `release_name`, si c'est une
+`prerelease`) et **génère le SBOM une seule fois** (`cdxgen` → `oibus-sbom.json`), le téléversant en tant
+qu'artefact de workflow et — pour les non-pré-versions uniquement — l'attachant à la GitHub Release. Les
+builds de la matrice téléchargent cet unique artefact plutôt que de le régénérer chacun.
+
+### `build` (matrice 5 plateformes, `needs: prepare`) {#build-5-platform-matrix-needs-prepare}
+
+| Nom convivial | Runner OS           | Cible de plateforme |
+| -------------- | ------------------- | ---------------------- |
+| macOS arm64    | `macos-15`           | `macos-arm64`           |
+| macOS x64      | `macos-15-intel`     | `macos-x64`             |
+| Windows x64    | `windows-2025`       | `win-x64`               |
+| Linux x64      | `ubuntu-24.04`       | `linux-x64`             |
+| Linux arm64    | `ubuntu-24.04-arm`   | `linux-arm64`           |
+
+Chaque ligne de la matrice (`fail-fast: false`, de sorte qu'une plateforme en échec n'annule pas les
+autres) :
+
+1. **Construit** le frontend, le launcher, et le backend pour sa plateforme.
+2. **Signe** les binaires Windows (`oibus.exe`, `oibus-launcher.exe`) via Google Cloud KMS + horodatage
+   Sectigo (s'exécute uniquement sur la ligne Windows).
+3. **Vérifie** l'environnement d'exécution en invoquant `oibus-launcher --version true`.
+4. **Regroupe** le SBOM issu de `prepare` dans le package, puis **empaquette** un zip
+   (`oibus-<platform>-<tag>.zip`) et le téléverse vers la GitHub Release.
+5. **Windows uniquement** : construit l'installateur Inno Setup (`oibus-win_x64-setup-<tag>.exe`) et le
+   téléverse.
+
+### `snyk`, `docker`, `deploy-documentation`, `slack` (`needs: build`) {#snyk-docker-deploy-documentation-slack-needs-build}
+
+| Job                     | S'exécute quand      | Ce qu'il fait                                                                                       |
+| ------------------------ | --------------------- | ------------------------------------------------------------------------------------------------------- |
+| `snyk`                  | **stable uniquement** | Surveille le SBOM avec Snyk (`snyk monitor`, référence cible `OIBus-<tag>`).                            |
+| `docker`                | toujours               | Construit et pousse l'image multi-architecture (`linux/amd64,linux/arm64`) vers `ghcr.io/optimistiksas/oibus`. |
+| `deploy-documentation`  | **stable uniquement** | Construit le site Docusaurus et le publie sur GitHub Pages (`needs: [build, docker]`).                  |
+| `slack`                 | toujours (`always()`) | Notifie `#oibus-ci` avec le résultat du job `docker` (`needs: [snyk, docker, deploy-documentation]`).   |
+
+Les tags de l'image Docker dépendent du type de release :
+
+- Les **releases stables** obtiennent le tag `latest` **et** le tag de version.
+- Les **pré-versions** obtiennent le tag `beta` **et** le tag de version.
+
+## 🆕 Créer une pré-version {#-creating-a-pre-release}
+
+Les pré-versions sont utiles lorsque vous devez publier des artefacts pour les tests _avant_ de finaliser
+une release stable — typiquement réservé aux mainteneurs (opérateurs de `OptimistikSAS/OIBus`).
+
+Une pré-version exécute la **même** matrice `build.yml` mais saute la surveillance Snyk, le téléversement
+du SBOM en tant qu'asset de release, et le déploiement de la documentation, et l'image Docker obtient le
+tag `beta` au lieu de `latest`. (Le SBOM est toujours généré dans `prepare` et regroupé dans chaque zip —
+seul le téléversement séparé en tant qu'asset de release est ignoré.)
+
+### Étapes {#steps}
+
+1. Sur [GitHub → Releases](https://github.com/OptimistikSAS/OIBus/releases), cliquez sur **Draft a new
+   release**.
+
+   <div style={{ textAlign: 'center' }}>
+     <div>![Draft a GitHub release](../../static/img/developer/draft-release.png)</div>
+   </div>
+
+2. Remplissez le formulaire :
+   - **Tag** : `vX.Y.Z-<suffix>.N` (suffixe de pré-version semver — `alpha.1`, `beta.1`, `rc.1`).
+   - **Cible** : la branche ou le commit à partir duquel vous voulez construire (généralement `main`).
+   - **Titre** : `vX.Y.Z-<suffix>.N (Pre-release)`.
+   - **Description** : ce qui a changé depuis la dernière (pré-)version, les problèmes connus, et les
+     instructions de test pour les personnes qui la récupéreront.
+   - **Set as a pre-release** : ✅ **cochez-la.**
+   - **Set as the latest release** : ❌ laissez décochée — les pré-versions ne doivent pas devenir le
+     téléchargement par défaut.
+
+3. Cliquez sur **Publish release**. L'événement de publication déclenche `build.yml` ; les binaires et
+   l'image Docker taguée `beta` seront disponibles quelques minutes plus tard, accompagnés d'une
+   notification Slack.
+
+:::tip Nommage des pré-versions
+Tenez-vous-en aux suffixes semver standard (`-alpha`, `-beta`, `-rc`) et à un compteur numérique. Ils se
+trient correctement par rapport aux futures releases stables (`v3.8.0-rc.1` < `v3.8.0`) et le tag Docker
+`beta` les récupère automatiquement.
+:::
+
+## Dépannage {#troubleshooting}
+
+| Symptôme                                          | Ce qu'il faut vérifier                                                                                                                                                                                 |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Aucune PR de release n'apparaît après un push sur `stable` | release-please n'ouvre une PR que lorsqu'il y a des commits qui déclenchent un incrément depuis le dernier tag. `chore:` / `docs:` seuls n'incrémentent pas la version.                                    |
+| PR de release ouverte mais avec la mauvaise version | Inspectez les sujets des commits — un `feat!:` n'importe où déclenche un incrément majeur. Modifiez `release-please-manifest.json` si vous devez corriger manuellement la prochaine version.               |
+| `build.yml` ne se déclenche pas                     | Confirmez qu'un objet **Release** GitHub a réellement été créé (pas seulement un tag). `build.yml` écoute `release: types: [published]` (ou exécutez-le manuellement via workflow_dispatch).               |
+| Binaires Windows non signés                          | L'étape d'authentification KMS a besoin des secrets `GCP_SERVICE_ACCOUNT_JSON` et `CERT` configurés pour le dépôt / fork en cours d'exécution — ceux-ci ne sont pas disponibles sur les forks de contributeurs. |
+| Image Docker non taguée `latest`                    | La release a été marquée comme pré-version. Les releases stables obtiennent `latest` ; les pré-versions obtiennent `beta`. Voir le job `docker` dans `build.yml`.                                          |
+| Le site de documentation ne s'est pas mis à jour     | Le job `deploy-documentation` (dans `build.yml`) s'exécute **uniquement pour les non-pré-versions** et `needs: [build, docker]` — confirmez que la release n'était pas une pré-version et que les jobs build + docker ont réussi. |
+| Une seule plateforme a échoué mais les autres ont été publiées | Attendu — la matrice `build` a `fail-fast: false`. Relancez uniquement le job en échec, ou relancez `build.yml` pour le tag via workflow_dispatch.                                                          |
+
+:::info Exécution sur un fork
+Le workflow de release nécessite les secrets `REPO_ACCESS_TOKEN`, `GCP_SERVICE_ACCOUNT_JSON`, `CERT`,
+`SNYK_TOKEN`, et `SLACK_BOT_TOKEN`. Les forks ne les auront pas par défaut ; le workflow ignorera les
+parties qu'il ne peut pas authentifier, mais vous obtiendrez un ensemble d'artefacts incomplet. Le
+pipeline est conçu pour être exécuté depuis `OptimistikSAS/OIBus` lui-même.
+:::

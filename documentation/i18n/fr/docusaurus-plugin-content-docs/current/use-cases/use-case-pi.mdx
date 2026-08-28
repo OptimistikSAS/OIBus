@@ -1,0 +1,61 @@
+---
+displayed_sidebar: useCasesSidebar
+sidebar_position: 6
+---
+
+import NorthOIAnalytics from './_north_oianalytics.mdx';
+
+# OSIsoft PI System™ → OIAnalytics®
+
+## Avant de commencer {#beforehand}
+
+OSIsoft PI System™ est une plateforme de gestion de données en temps réel largement utilisée dans l'industrie manufacturière, l'énergie et les services publics pour collecter, stocker et analyser des données temporelles issues de processus industriels.
+
+Consultez les pages des connecteurs [North OIAnalytics](../guide/north-connectors/oianalytics) et [South OSIsoft PI](../guide/south-connectors/osisoft-pi) pour tous les détails de configuration.
+
+Ce cas d'usage nécessite un [OIBus Agent](../guide/oibus-agent/installation). Installez-le soit sur le serveur PI lui-même, soit sur une autre machine sur laquelle le SDK OSIsoft PI est installé — voir [configuration du SDK OSIsoft PI](../guide/south-connectors/osisoft-pi#osisoft-pi-sdk-configuration) pour plus de détails. L'exemple utilise le réseau fictif suivant.
+
+<div style={{ textAlign: 'center' }}>
+
+![Cas d'usage OSIsoft PI -> OIAnalytics](../../static/img/use-cases/pi-oia.svg)
+
+</div>
+
+## South PI {#south-pi}
+
+Saisissez l'**URL de l'agent distant**. Dans cet exemple : `http://localhost:2224`.
+
+<div style={{ textAlign: 'center' }}>
+
+![Paramètres OSIsoft PI](../../static/img/use-cases/pi-settings.png)
+
+</div>
+
+:::tip Test de connexion
+Cliquez sur **Tester les paramètres** pour vérifier la connexion avant d'enregistrer.
+:::
+
+### Items {#items}
+
+Les items PI peuvent être de deux types :
+
+- **PI point** — récupère les valeurs temporelles d'un seul point PI.
+- **PI query** — récupère les valeurs temporelles de tous les points PI correspondant à une expression de type regex. Le nom de l'item n'est utilisé qu'à des fins de journalisation ; les données sont étiquetées avec les références réelles des points PI.
+
+#### PI point {#pi-point}
+
+<div style={{ textAlign: 'center' }}>
+
+![Paramètres de l'item PI point ID](../../static/img/use-cases/pi-item-point-id.png)
+
+</div>
+
+#### PI query {#pi-query}
+
+<div style={{ textAlign: 'center' }}>
+
+![Paramètres de l'item PI query](../../static/img/use-cases/pi-item-query.png)
+
+</div>
+
+<NorthOIAnalytics></NorthOIAnalytics>
