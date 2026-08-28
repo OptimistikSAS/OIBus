@@ -1,6 +1,8 @@
 import { themes } from 'prism-react-renderer';
 const { github: lightCodeTheme, dracula: darkCodeTheme } = themes;
 
+const docsBuildTarget = process.env.DOCS_BUILD_TARGET === 'embedded' ? 'embedded' : 'public';
+
 /** @type {import('@docusaurus/types').Config} */
 export default {
   title: 'OIBus',
@@ -77,6 +79,23 @@ export default {
       };
     }
   ],
+
+  ...(docsBuildTarget === 'embedded'
+    ? {
+        themes: [
+          [
+            '@easyops-cn/docusaurus-search-local',
+            {
+              hashed: true,
+              indexDocs: true,
+              indexBlog: false,
+              docsRouteBasePath: '/docs',
+              language: ['en']
+            }
+          ]
+        ]
+      }
+    : {}),
 
   presets: [
     [
@@ -196,14 +215,18 @@ export default {
         ],
         copyright: `Copyright © ${new Date().getFullYear()} Optimistik. Built with Docusaurus. All trademarks, logos and brand names are the property of their respective owners. All company, product and service names used in this website are for identification purposes only. Use of these names, trademarks and brands does not imply endorsement.`
       },
-      algolia: {
-        appId: 'RFGM4OD43Y',
-        apiKey: '4d97db82cb5a33edb810b5798335f501',
-        indexName: 'oibus-optimistik',
-        contextualSearch: true,
-        searchParameters: {},
-        searchPagePath: 'search'
-      },
+      ...(docsBuildTarget === 'public'
+        ? {
+            algolia: {
+              appId: 'RFGM4OD43Y',
+              apiKey: '4d97db82cb5a33edb810b5798335f501',
+              indexName: 'oibus-optimistik',
+              contextualSearch: true,
+              searchParameters: {},
+              searchPagePath: 'search'
+            }
+          }
+        : {}),
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme
