@@ -142,6 +142,7 @@
     ],
     "assets": [
       "dist/frontend/**/*",
+      "dist/documentation/**/*",
       "dist/backend/src/service/logger/sqlite-transport.js",
       "dist/backend/src/service/logger/oianalytics-transport.js",
       "dist/backend/src/service/logger/syslog-transport.js",
