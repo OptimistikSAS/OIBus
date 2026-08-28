@@ -55,6 +55,7 @@
     "@types/luxon": "3.7.5",
     "@types/papaparse": "5.5.2",
     "@vitest/browser-playwright": "4.1.11",
+    "@vitest/coverage-v8": "^4.1.11",
     "angular-eslint": "22.1.0",
     "eslint": "9.39.5",
     "eslint-config-prettier": "10.1.8",
