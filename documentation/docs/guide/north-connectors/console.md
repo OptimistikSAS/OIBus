@@ -3,13 +3,13 @@
 The **Console North Connector** displays filenames or values directly in the console output, making it ideal for
 **debugging and development purposes**.
 
-## Specific Settings
+## Specific Settings {#specific-settings}
 
 | Setting     | Description                                                                                                              | Example Value    |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------- |
 | **Verbose** | When enabled, displays received data in **detailed tables**. When disabled, only shows the **count of values** received. | Enabled/Disabled |
 
-## Using the Console in Production
+## Using the Console in Production {#using-the-console-in-production}
 
 In production environments where OIBus runs as a service (Windows/Linux), follow these steps to view console output:
 
@@ -27,7 +27,7 @@ After debugging, remember to:
 
 :::
 
-## Best Practices
+## Best Practices {#best-practices}
 
 - Use **verbose mode** during development or troubleshooting to inspect data structure and content.
 - Do not use in production to reduce console clutter.

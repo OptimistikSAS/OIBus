@@ -11,7 +11,7 @@ is useful for backups, disaster recovery, or cloning a configuration onto a new 
 Both actions are available from **Engine > Settings**, via the **Export configuration** and
 **Import configuration** buttons.
 
-## What gets exported
+## What gets exported {#what-gets-exported}
 
 The export file (`oibus-config-export.json`) is a versioned envelope containing:
 
@@ -29,7 +29,7 @@ The export file (`oibus-config-export.json`) is a versioned envelope containing:
 The engine's own settings (name, port, proxy server, authentication duration, etc.) are **not**
 included in the export and are never touched by an import.
 
-### Secrets are always stripped
+### Secrets are always stripped {#secrets-are-always-stripped}
 
 No secret is ever written to the export file — not in plaintext, not encrypted. This applies to
 every secret-shaped field across the configuration: connector credentials (passwords, API keys,
@@ -38,7 +38,7 @@ An exported file can therefore be shared or stored without exposing any credenti
 means those fields must be re-entered manually after an import — see
 [Manual steps after import](#manual-steps-after-import).
 
-## Import is a full replace, not a merge
+## Import is a full replace, not a merge {#import-is-a-full-replace-not-a-merge}
 
 Importing a configuration file **wipes every in-scope section of the target instance's local
 configuration and recreates it from the file**, preserving each entity's original internal ID.
@@ -53,7 +53,7 @@ import — see [Registration](#registration-is-not-imported).
 If the uploaded file is malformed, or is rejected for any of the reasons below, **nothing is
 written**: the import is all-or-nothing.
 
-## Supported versions
+## Supported versions {#supported-versions}
 
 Every export file is stamped with a `formatVersion` (an integer describing the shape of the file
 itself) and the `oibusVersion` of the instance that produced it.
@@ -71,7 +71,7 @@ After any such upgrades, every settings blob in the file is validated against th
 manifests. If any entity fails validation, the whole import is rejected with a per-entity list of
 errors and, again, nothing is written.
 
-## Manual steps after import
+## Manual steps after import {#manual-steps-after-import}
 
 Because secrets are never exported, an imported configuration is not immediately usable as-is:
 
@@ -96,7 +96,7 @@ The import response (and the corresponding UI panel) lists every upgrade that wa
 warning raised during the import — including the ones above — so this stays visible after the
 import completes rather than in a toast that disappears.
 
-### Registration is not imported
+### Registration is not imported {#registration-is-not-imported}
 
 The OIAnalytics registration settings are included in the export for informational/reference
 purposes only. Importing a file never writes registration state — registering the target instance

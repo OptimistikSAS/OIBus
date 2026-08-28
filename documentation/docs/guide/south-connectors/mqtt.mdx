@@ -10,9 +10,9 @@ MQTT (Message Queuing Telemetry Transport) is a lightweight protocol designed fo
 publish/subscribe model. OIBus acts as an MQTT client using the [MQTT.js](https://github.com/mqttjs/MQTT.js) library to
 interact with MQTT brokers.
 
-## Specific Settings
+## Specific Settings {#specific-settings}
 
-### Connection
+### Connection {#connection}
 
 | Setting             | Description                                                                                                                                                                           | Example Value                    |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
@@ -21,29 +21,29 @@ interact with MQTT brokers.
 | Connect timeout     | Maximum time (in milliseconds) to wait for connection establishment                                                                                                                   | `30000`                          |
 | Reject unauthorized | Reject connections with unverified certificates (e.g., self-signed)                                                                                                                   | Enabled/Disabled                 |
 
-### Quality of Service
+### Quality of Service {#quality-of-service}
 
 | Setting        | Description                                                                                                                                            | Example Value    |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------- |
 | QoS            | Quality of Service level: `0` (at most once), `1` (at least once, possible duplicates), `2` (exactly once).                                            | `0`, `1`, `2`    |
 | **Persistent** | When enabled, the broker retains messages and queued deliveries across reconnections (requires QoS 1 or 2). When disabled, a clean session is started. | Enabled/Disabled |
 
-### Authentication
+### Authentication {#authentication}
 
-#### No Authentication
+#### No Authentication {#no-authentication}
 
 | Setting | Description                               | Example Value |
 | ------- | ----------------------------------------- | ------------- |
 | (None)  | No authentication required for connection | -             |
 
-#### Username / Password
+#### Username / Password {#username--password}
 
 | Setting  | Description                        | Example Value |
 | -------- | ---------------------------------- | ------------- |
 | Username | Username for broker authentication | `mqtt_user`   |
 | Password | Password for broker authentication | `••••••••`    |
 
-#### Certificate Authentication
+#### Certificate Authentication {#certificate-authentication}
 
 | Setting        | Description                                                                      | Example Value       |
 | -------------- | -------------------------------------------------------------------------------- | ------------------- |
@@ -51,14 +51,14 @@ interact with MQTT brokers.
 | Key file path  | Path to the private key file                                                     | `/path/to/key.pem`  |
 | CA file path   | Path to the certificate authority file. Required for Certificate authentication. | `/path/to/ca.pem`   |
 
-### Data Throttling
+### Data Throttling {#data-throttling}
 
 | Setting                         | Description                                                                    | Example Value |
 | ------------------------------- | ------------------------------------------------------------------------------ | ------------- |
 | Number of messages before flush | Number of messages to accumulate before flushing to North caches               | `1000`        |
 | Delay between flush             | Time delay (in milliseconds) between automatic flushes of accumulated messages | `1000`        |
 
-## Item Settings
+## Item Settings {#item-settings}
 
 Each item subscribes to one MQTT topic. MQTT uses a hierarchical topic structure with wildcard support:
 
@@ -66,7 +66,7 @@ Each item subscribes to one MQTT topic. MQTT uses a hierarchical topic structure
 | --------- | ---------------------------------------------------- | ------------------------ |
 | **Topic** | The MQTT topic to subscribe to. Wildcards supported. | `sensors/#`, `plant/+/T` |
 
-### Topic Wildcards
+### Topic Wildcards {#topic-wildcards}
 
 | Setting | Description           | Example Value           |
 | ------- | --------------------- | ----------------------- |

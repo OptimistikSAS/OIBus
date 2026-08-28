@@ -12,7 +12,7 @@ the **database** category.
 - **Dashboards and Reporting**: Feed Power BI or Azure dashboards directly from Azure Data Explorer.
 - **Historian Offload**: Use Azure Data Explorer as a long-term, low-cost historian for OIBus data.
 
-## Specific Settings
+## Specific Settings {#specific-settings}
 
 Configure the following parameters to connect to your Azure Data Explorer cluster:
 
@@ -24,7 +24,7 @@ Configure the following parameters to connect to your Azure Data Explorer cluste
 | **Data format**            | Format used to send data to Azure Data Explorer. Must match the transformer selected on this connector.                                                                                                   | `CSV`, `JSON`, `Multiline JSON`                  |
 | **Ingestion mapping name** | Name of a pre-created Azure Data Explorer ingestion mapping used to map columns. Optional; must already exist in Azure Data Explorer. When empty, Azure Data Explorer uses its default column resolution. | `TimeValuesMapping`                              |
 
-### Authentication
+### Authentication {#authentication}
 
 Azure Data Explorer supports three authentication modes:
 
@@ -39,7 +39,7 @@ Azure Data Explorer supports three authentication modes:
 With `Managed identity`, no credentials are required: OIBus authenticates using the ambient Azure managed identity of
 the host it runs on (for example an Azure VM or App Service with a system- or user-assigned managed identity).
 
-### Proxy
+### Proxy {#proxy}
 
 If your network infrastructure requires requests to pass through a proxy server to reach Azure Data Explorer, enable
 the **Use proxy** option and configure the proxy details below.
@@ -59,7 +59,7 @@ It does **not** cover the payload upload: queued ingestion uploads the file thro
 not honour this setting. If those uploads must also go through the proxy, set `HTTPS_PROXY` at the OS level in addition
 to configuring the proxy here.
 
-## Important Notes
+## Important Notes {#important-notes}
 
 - **Data format must match the transformer**: use the `oibus-time-values-to-csv` transformer with the `CSV` data
   format, or the `oibus-time-values-to-json` transformer with the `JSON` or `Multiline JSON` data format. A mismatch
@@ -71,7 +71,7 @@ to configuring the proxy here.
 - **Schema must pre-exist**: the target table and any ingestion mapping must be created in Azure Data Explorer
   beforehand. This connector does not create or alter schema.
 
-## Testing the connection
+## Testing the connection {#testing-the-connection}
 
 The **Test settings** action runs a lightweight `.show table … cslschema` management command against the configured
 cluster, database and table. This verifies cluster reachability, authentication, and that the target table exists,

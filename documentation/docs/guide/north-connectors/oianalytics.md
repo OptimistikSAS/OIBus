@@ -15,7 +15,7 @@ OIAnalytics® includes **built-in file parsers**, eliminating the need for pre-p
 - **Historical Data Storage**: Transmit files for archiving and analysis.
 - **Integration**: Combine with OIAnalytics® dashboards, alerts, and analysis tools.
 
-## Specific Settings
+## Specific Settings {#specific-settings}
 
 | Setting                          | Description                                                                                          | Example Value    |
 | -------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------- |
@@ -23,14 +23,14 @@ OIAnalytics® includes **built-in file parsers**, eliminating the need for pre-p
 | **Timeout**                      | Duration (in seconds) before a connection failure is reported.                                       | `30`             |
 | **Compress data**                | Compress data if not already compressed. Adds `.gz` extension to files and compresses JSON payloads. | Enabled/Disabled |
 
-### Manual Configuration (if registration is not used)
+### Manual Configuration (if registration is not used) {#manual-configuration-if-registration-is-not-used}
 
 | Setting                             | Description                                                              | Example Value                        |
 | ----------------------------------- | ------------------------------------------------------------------------ | ------------------------------------ |
 | **Host**                            | Hostname of the OIAnalytics® SaaS application.                           | `https://optimistik.oianalytics.com` |
 | **Accept unauthorized certificate** | Enable if HTTP queries pass through a firewall that strips certificates. | Enabled/Disabled                     |
 
-#### Authentication
+#### Authentication {#authentication}
 
 | Setting            | Description                                                                        | Example Value                                                                                               |
 | ------------------ | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
@@ -43,7 +43,7 @@ OIAnalytics® includes **built-in file parsers**, eliminating the need for pre-p
 | **Certificate**    | Application certificate. Required for Azure Active Directory with certificate.     | (selected from list)                                                                                        |
 | **Scope**          | OAuth2 scope. Required for Azure Active Directory with certificate.                | `https://example.com/.default`                                                                              |
 
-#### Proxy Configuration
+#### Proxy Configuration {#proxy-configuration}
 
 If your network infrastructure requires requests to pass through a proxy server to reach OIAnalytics®, enable
 **Use proxy** and configure the proxy details below.
@@ -55,9 +55,9 @@ If your network infrastructure requires requests to pass through a proxy server 
 | **Proxy username** | Username for proxy authentication (if required). | `proxy_user`                    |
 | **Proxy password** | Password for proxy authentication (if required). | `••••••••`                      |
 
-## Connecting OIBus to OIAnalytics®
+## Connecting OIBus to OIAnalytics® {#connecting-oibus-to-oianalytics}
 
-### Recommended Approach: OIAnalytics Registration
+### Recommended Approach: OIAnalytics Registration {#recommended-approach-oianalytics-registration}
 
 1. **Register OIBus** on OIAnalytics® for seamless integration and secure communication.
 2. Enable **Use OIAnalytics registration** in the North connector settings.
@@ -67,7 +67,7 @@ If your network infrastructure requires requests to pass through a proxy server 
 For the complete registration procedure, refer to the [OIAnalytics registration guide](../installation/oianalytics.mdx).
 :::
 
-### Alternative Approach: API Key Authentication
+### Alternative Approach: API Key Authentication {#alternative-approach-api-key-authentication}
 
 If you choose not to register OIBus on OIAnalytics®, obtain an API key:
 
@@ -89,7 +89,7 @@ The password is **only displayed once** during API key generation. If lost, you 
 
 :::
 
-## Data Format
+## Data Format {#data-format}
 
 - OIBus **time values** are sent as **JSON payloads** to OIAnalytics®.
 - OIAnalytics® directly references external data in time values `pointId` field (no file parser needed).

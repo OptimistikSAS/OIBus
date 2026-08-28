@@ -10,9 +10,9 @@ Modbus is a communication protocol utilized in PLC networks. Originally develope
 RS422, and RS485, it was later expanded to include TCP mode. OIBus uses
 the [jsmodbus](https://github.com/Cloud-Automation/node-modbus) library **in TCP mode only**.
 
-## Specific Settings
+## Specific Settings {#specific-settings}
 
-### Connection Configuration
+### Connection Configuration {#connection-configuration}
 
 | Setting                | Description                                                                                                                                                                       | Example Value   |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
@@ -24,7 +24,7 @@ the [jsmodbus](https://github.com/Cloud-Automation/node-modbus) library **in TCP
 | **Slave ID**           | Identifies the Modbus source machine (default is 1).                                                                                                                              | `1`             |
 | **Address offset**     | For most PLCs, there is no offset (Modbus option). Some PLCs may start the address range at 1 instead of 0 (JBus option)                                                          | `Modbus`        |
 
-### Data Format Options
+### Data Format Options {#data-format-options}
 
 | Setting        | Description                                                   | Example Value    |
 | -------------- | ------------------------------------------------------------- | ---------------- |
@@ -36,7 +36,7 @@ Use the tester below to see how these three settings affect the decoded value fo
 
 <ModbusDataFormatTester />
 
-### Query Optimisation
+### Query Optimisation {#query-optimisation}
 
 | Setting                  | Description                                                                                                                                                                                                                                             | Example Value    |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
@@ -66,7 +66,7 @@ Ranges that exceed these limits are automatically split into multiple requests.
 
 :::
 
-## Item Settings
+## Item Settings {#item-settings}
 
 | Setting                | Description                                                                                                                                                                           | Example Value      |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |

@@ -2,14 +2,14 @@
 
 The **SFTP North Connector** securely uploads files and data to an **SFTP (SSH File Transfer Protocol) server**.
 
-## Specific Settings
+## Specific Settings {#specific-settings}
 
 | Setting  | Description                                | Example Value   |
 | -------- | ------------------------------------------ | --------------- |
 | **Host** | IP address or hostname of the SFTP server. | `192.168.1.100` |
 | **Port** | Port for the connection (default: `22`).   | `22`            |
 
-### Authentication
+### Authentication {#authentication}
 
 | Setting            | Description                                                               | Example Value                      |
 | ------------------ | ------------------------------------------------------------------------- | ---------------------------------- |
@@ -19,7 +19,7 @@ The **SFTP North Connector** securely uploads files and data to an **SFTP (SSH F
 | **Private key**    | Path to the private key file (PEM format). Required for Private key auth. | `/path/to/key.pem`                 |
 | **Passphrase**     | Passphrase for the private key (if protected).                            | `••••••••`                         |
 
-### File Configuration
+### File Configuration {#file-configuration}
 
 | Setting           | Description                                                                                             | Example Value     |
 | ----------------- | ------------------------------------------------------------------------------------------------------- | ----------------- |

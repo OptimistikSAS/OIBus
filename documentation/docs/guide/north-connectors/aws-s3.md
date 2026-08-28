@@ -9,7 +9,7 @@ long-term storage, data lakes, or integration with AWS services.
 - **Backup and Archiving**: Securely archive data from OIBus to Amazon S3.
 - **AWS Ecosystem Integration**: Use stored data with AWS services like Athena, Redshift, or Glue.
 
-## Specific Settings
+## Specific Settings {#specific-settings}
 
 Configure the following parameters to connect to your Amazon S3 bucket:
 
@@ -21,7 +21,7 @@ Configure the following parameters to connect to your Amazon S3 bucket:
 | **Access key** | Authentication key for connecting to the Amazon S3 bucket.      | `AKIAIOSFODNN7EXAMPLE` |
 | **Secret key** | Secret key associated with the access key.                      | `••••••••`             |
 
-### Proxy Configuration
+### Proxy Configuration {#proxy-configuration}
 
 If your network infrastructure requires requests to pass through a proxy server to reach Amazon S3, enable the
 **Use proxy** option and configure the proxy details below.
@@ -33,7 +33,7 @@ If your network infrastructure requires requests to pass through a proxy server 
 | **Proxy username** | Username for proxy authentication (if required). | `proxy_user`                    |
 | **Proxy password** | Password for proxy authentication (if required). | `••••••••`                      |
 
-## Best Practices
+## Best Practices {#best-practices}
 
 - **IAM Permissions**: Ensure the provided access key and secret key have the necessary permissions (e.g.,
   `s3:PutObject`).

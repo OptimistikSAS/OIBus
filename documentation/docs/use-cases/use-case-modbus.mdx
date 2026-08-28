@@ -5,21 +5,19 @@ sidebar_position: 4
 
 # Modbus → File Writer
 
-## Beforehand
+## Beforehand {#beforehand}
 
 This use case is a good starting point for testing OIBus — you can use a Modbus simulator to try it without real hardware.
 
 See the [North File Writer](../guide/north-connectors/file-writer.md) and [South Modbus](../guide/south-connectors/modbus.mdx) connector pages for full configuration details. The example uses the following fictional network.
 
 <div style={{ textAlign: 'center' }}>
-  <div>
 
-    ![Modbus -> File writer](../../static/img/use-cases/modbus-file-writer.svg)
+![Modbus -> File writer](../../static/img/use-cases/modbus-file-writer.svg)
 
-  </div>
 </div>
 
-## South Modbus
+## South Modbus {#south-modbus}
 
 You need the IP address (or hostname) and port of the Modbus server (port 502 is the default). If the server has multiple slaves, you also need the slave ID of your target — use `1` when there is only one slave.
 
@@ -28,34 +26,30 @@ In this example, the IP address is `10.0.0.1` and the port is `502`.
 Select **JBus** or **Modbus** address offset depending on whether register addresses start at 0 or 1 on your PLC. Also confirm the endianness, byte swapping, and word swapping with the PLC documentation or its administrator.
 
 <div style={{ textAlign: 'center' }}>
-  <div>
 
-    ![Modbus settings](../../static/img/use-cases/modbus-settings.png)
+![Modbus settings](../../static/img/use-cases/modbus-settings.png)
 
-  </div>
 </div>
 
 :::tip Testing connection
 Click **Test settings** to verify the connection before saving.
 :::
 
-### Items
+### Items {#items}
 
 Add the register addresses you want to read. Ask the Modbus server administrator for the available addresses, their Modbus type, data type, and multiplier coefficient. Select a [scan mode](../guide/engine/scan-modes.mdx) to control the collection interval.
 
 <div style={{ textAlign: 'center' }}>
-  <div>
 
-    ![Modbus item settings](../../static/img/use-cases/modbus-item.png)
+![Modbus item settings](../../static/img/use-cases/modbus-item.png)
 
-  </div>
 </div>
 
 :::tip Bulk import
 Click **Export** to download a CSV template with the correct columns, fill in one item per row, then import it back. Item names must be unique.
 :::
 
-## North File Writer
+## North File Writer {#north-file-writer}
 
 You need the path to the output folder and the OIBus service account must have write access to it (e.g. `D:\Data`).
 
@@ -66,11 +60,9 @@ When OIBus runs as a Windows service, the default account is **SYSTEM**. Change 
 OIBus can write data as raw files or as JSON files. Files received from South connectors are written as-is; JSON values are serialised to JSON files. You can also add a prefix and suffix to every filename written to the output folder.
 
 <div style={{ textAlign: 'center' }}>
-  <div>
 
-    ![File writer settings](../../static/img/use-cases/file-writer-settings.png)
+![File writer settings](../../static/img/use-cases/file-writer-settings.png)
 
-  </div>
 </div>
 
 :::tip Testing connection

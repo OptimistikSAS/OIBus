@@ -3,13 +3,13 @@
 The **File Writer North Connector** writes files and data to a specified output folder on disk. This connector is useful
 for local storage, data processing pipelines, or integration with file-based systems.
 
-## Specific Settings
+## Specific Settings {#specific-settings}
 
 | Setting           | Description                                                                                                           | Example Value     |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------- |
 | **Output folder** | Directory where files will be stored. Relative paths are resolved based on the **Data folder** (see _About_ section). | `/data/oibus-out` |
 
-### Network Share Authentication (Windows only)
+### Network Share Authentication (Windows only) {#network-share-authentication-windows-only}
 
 To write to a Windows network share, set **Output folder** to a UNC path (`\\server\share\...`) and provide credentials
 for it:
@@ -27,7 +27,7 @@ so it also works when OIBus runs as a Windows service, where the interactive-ses
 unreliable even under an account that otherwise has access to the share.
 :::
 
-### File Naming Options
+### File Naming Options {#file-naming-options}
 
 | Setting    | Description                                                                                             | Example Value     |
 | ---------- | ------------------------------------------------------------------------------------------------------- | ----------------- |
@@ -45,7 +45,7 @@ With prefix `@ConnectorName-` and suffix `-@CurrentDate`, a file named `example.
 `<ConnectorName>-example-<CurrentDate>.file`
 :::
 
-## Best Practices
+## Best Practices {#best-practices}
 
 - Use **absolute paths** for the output folder to avoid ambiguity.
 - Create a **dedicated directory** for each connector to keep files organized.
