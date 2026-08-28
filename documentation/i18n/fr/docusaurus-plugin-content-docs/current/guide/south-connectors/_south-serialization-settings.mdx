@@ -1,0 +1,33 @@
+### Sérialisation CSV {#csv-serialization}
+
+OIBus offre des options flexibles pour sérialiser les données récupérées au format CSV avec des paramètres de sortie personnalisables.
+
+#### Configuration du fichier {#file-configuration}
+
+| Setting     | Description                                       | Example Value                                                                                                     |
+| ----------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Filename    | Modèle de nom pour les fichiers de sortie.                    | `data_@ConnectorName_@CurrentDate.csv`                                                                            |
+| Delimiter   | Caractère utilisé pour séparer les valeurs dans le fichier CSV | `COMMA` (,), `SEMI_COLON` (;), `DOT` (.), `COLON` (:), `PIPE` (\|), `SLASH` (/), `TAB` (\t), `NON_BREAKING_SPACE` |
+| Compression | Active la compression gzip pour les fichiers de sortie          | Enabled/Disabled                                                                                                  |
+
+:::info Variables de nom de fichier
+Les variables suivantes peuvent être utilisées dans les modèles de nom de fichier :
+
+- `@ConnectorName` : remplacée automatiquement par le nom du connecteur
+- `@CurrentDate` : insère l'horodatage actuel au format fixe `yyyy_MM_dd_HH_mm_ss_SSS`
+  :::
+
+#### Gestion des données temporelles {#temporal-data-handling}
+
+| Setting                | Description                                                                                 | Example Value           |
+| ---------------------- | ------------------------------------------------------------------------------------------- | ----------------------- |
+| Output datetime format | Modèle de format pour les champs date/heure dans le CSV (n'affecte pas `@CurrentDate` dans les noms de fichier) | `yyyy-MM-dd HH:mm:ss`   |
+| Output timezone        | Fuseau horaire utilisé pour les valeurs date/heure dans le CSV                                                | `UTC` or `Europe/Paris` |
+
+:::info Remarques importantes
+
+1. La variable `@CurrentDate` dans les noms de fichier utilise un format fixe (`yyyy_MM_dd_HH_mm_ss_SSS`), quel que soit le paramètre de format de date/heure
+2. Seuls les [champs date/heure](#datetime-field-configuration) spécifiés dans votre configuration seront formatés selon ces paramètres
+3. La conversion de fuseau horaire s'applique uniquement aux valeurs date/heure dans le contenu CSV, et non à l'horodatage du nom de fichier
+
+:::

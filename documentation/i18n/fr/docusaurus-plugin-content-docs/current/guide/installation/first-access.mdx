@@ -1,0 +1,181 @@
+---
+sidebar_position: 2
+---
+
+# Premier accès
+
+Une fois qu'OIBus est en cours d'exécution, ouvrez un navigateur et accédez à `http://localhost:2223`.
+
+:::caution Identifiants par défaut
+L'identifiant par défaut est **admin** avec le mot de passe **pass**.
+
+Changez le mot de passe immédiatement après votre première connexion dans la section [Paramètres utilisateur](#user-settings).
+:::
+
+:::note Configuration du port
+Le port par défaut **2223** peut être modifié dans les [Paramètres du moteur](../engine/engine-settings.mdx#port) en cas de conflit avec un autre service.
+:::
+
+## Page d'accueil {#home-page}
+
+La page d'accueil offre une vue d'ensemble en temps réel de votre instance OIBus : les connecteurs North activés sont
+listés en premier avec leurs métriques en direct, suivis par le statut du moteur, puis les connecteurs South activés.
+
+<div style={{ textAlign: 'center' }}>![Page d'accueil](../../../static/img/guide/installation/first_access/home-page.png)</div>
+
+Cliquez sur l'icône **loupe** à côté de n'importe quel connecteur ou du moteur pour ouvrir sa page d'affichage, où vous
+pouvez inspecter les métriques détaillées et le statut du cache.
+
+## Moteur {#engine}
+
+La page du moteur est le centre de contrôle des paramètres globaux d'OIBus. Depuis cette page, vous pouvez configurer :
+
+- Les paramètres généraux (nom)
+- Les [paramètres du serveur web](../engine/engine-settings.mdx#web-server) (port, durée d'authentification)
+- Le [serveur proxy](../engine/engine-settings.mdx#proxy-server)
+- Les [paramètres de journalisation](../engine/engine-settings.mdx#logging-parameters)
+- Les [modes de scan](../engine/scan-modes.mdx)
+- Les [filtres IP](../engine/ip-filters.mdx)
+- Les certificats
+- Les transformateurs
+
+Le bouton **OIAnalytics** en haut de la page ouvre les paramètres d'[enregistrement OIAnalytics](./oianalytics.mdx).
+
+<div style={{ textAlign: 'center' }}>![Moteur](../../../static/img/guide/installation/first_access/engine.png)</div>
+
+:::note Bouton Redémarrer
+Le bouton **Redémarrer** arrête le processus OIBus. Il ne redémarre automatiquement que lorsqu'OIBus s'exécute sous le
+**OIBus Launcher** (`oibus-launcher`), qui est la façon dont le service système installé l'exécute — le launcher détecte
+que le processus OIBus s'est arrêté et le relance.
+
+Si le binaire `oibus` est démarré directement (par exemple depuis un terminal, sans le launcher), le bouton de
+redémarrage arrêtera le processus sans le relancer automatiquement.
+:::
+
+:::tip Autoriser l'accès à distance
+Pour accéder à OIBus depuis une autre machine, ajoutez un filtre IP — y compris via curl pour les configurations automatisées.
+Consultez [Filtres IP](../engine/ip-filters.mdx) pour plus de détails.
+:::
+
+### Métriques du moteur {#engine-metrics}
+
+La page d'affichage du moteur montre l'utilisation des ressources en temps réel pour le processus OIBus, suivie depuis
+la dernière réinitialisation des métriques (un bouton **Réinitialiser les métriques** est disponible sur cette page) :
+
+| Métrique                                    | Description                                              |
+| ----------------------------------------- | -------------------------------------------------------- |
+| **Utilisation CPU (dernière seconde)**    | Utilisation du CPU au cours de la dernière seconde.       |
+| **Utilisation CPU (moyenne)**             | Utilisation moyenne du CPU depuis la dernière réinitialisation des métriques. |
+| **Temps de fonctionnement**               | Temps écoulé depuis le dernier démarrage du processus OIBus. |
+| **Mémoire libre**                         | Pourcentage de mémoire système actuellement disponible.  |
+| **Utilisation RAM (min / actuel / max)**  | Mémoire de processus résidant en RAM depuis la réinitialisation des métriques. |
+| **Heap total (min / actuel / max)**       | Mémoire totale allouée pour le tas JavaScript.            |
+| **Heap utilisé (min / actuel / max)**     | Mémoire activement utilisée dans le tas.                  |
+| **Mémoire externe (min / actuel / max)**  | Mémoire utilisée par les extensions natives (par ex. les liaisons C++). |
+| **Tampon de tableau (min / actuel / max)**| Mémoire allouée pour les tampons de données binaires.      |
+
+## Connecteurs North {#north-connectors}
+
+Les connecteurs North définissent où OIBus envoie les données. Cliquez sur **+** pour ajouter un nouveau connecteur et
+choisissez parmi les types disponibles.
+
+<div style={{ textAlign: 'center' }}>![North](../../../static/img/guide/installation/first_access/north.png)</div>
+
+Chaque connecteur de la liste dispose des actions suivantes sur le côté droit :
+
+- **Activer / Désactiver** — active ou désactive le connecteur sans le supprimer
+- **Afficher** — ouvre la page de surveillance du connecteur (métriques, statut du cache, transmissions récentes)
+- **Modifier** — modifie les paramètres du connecteur
+- **Dupliquer** — crée une copie du connecteur avec un nouveau nom
+- **Supprimer** — supprime définitivement le connecteur
+
+:::tip
+Consultez le [guide des connecteurs North](../north-connectors/common-settings.md) pour plus de détails sur les
+paramètres de cache, la limitation de débit et les transformateurs.
+:::
+
+## Connecteurs South {#south-connectors}
+
+Les connecteurs South définissent les sources de données depuis lesquelles OIBus lit. Cliquez sur **+** pour ajouter un
+nouveau connecteur et choisissez parmi les protocoles disponibles.
+
+<div style={{ textAlign: 'center' }}>![South](../../../static/img/guide/installation/first_access/south.png)</div>
+
+Chaque connecteur de la liste dispose des actions suivantes sur le côté droit :
+
+- **Activer / Désactiver** — active ou désactive le connecteur sans le supprimer
+- **Afficher** — ouvre la page de surveillance du connecteur (métriques, dernières heures de scan, statut d'abonnement)
+- **Modifier** — modifie les paramètres du connecteur
+- **Dupliquer** — crée une copie du connecteur avec un nouveau nom
+- **Supprimer** — supprime définitivement le connecteur
+
+:::tip
+Consultez le [guide des connecteurs South](../south-connectors/common-settings.md) pour plus de détails sur les modes
+de scan, les éléments et les protocoles basés sur l'abonnement.
+:::
+
+## Requêtes d'historique {#history-queries}
+
+Les requêtes d'historique rejouent une plage de temps de données via un connecteur South et les transmettent à un
+connecteur North. Cliquez sur **+** pour créer une nouvelle requête d'historique.
+
+<div style={{ textAlign: 'center' }}>![Requêtes d'historique](../../../static/img/guide/installation/first_access/history-query.png)</div>
+
+Chaque requête d'historique de la liste dispose des actions suivantes sur le côté droit, selon son statut actuel :
+
+- **Démarrer / Mettre en pause / Reprendre / Redémarrer** — contrôle l'exécution de la requête
+- **Afficher** — ouvre la page de surveillance de la requête (progression, métriques)
+- **Modifier** — modifie les paramètres de la requête
+- **Dupliquer** — crée une copie de la requête
+- **Supprimer** — supprime définitivement la requête
+
+:::tip
+Consultez le [guide des requêtes d'historique](../history-queries.md) pour plus de détails sur la configuration de
+plage de temps et les contrôles d'exécution.
+:::
+
+## Journaux {#logs}
+
+La page des journaux affiche les journaux d'exécution d'OIBus et se rafraîchit automatiquement toutes les 10 secondes.
+
+<div style={{ textAlign: 'center' }}>![Journaux](../../../static/img/guide/installation/first_access/logs.png)</div>
+
+Utilisez les filtres pour affiner ce que vous voyez :
+
+| Filtre           | Description                                                                                   |
+| -------------- | --------------------------------------------------------------------------------------------- |
+| **Plage de dates** | Affiche uniquement les journaux dans une fenêtre temporelle spécifique.                    |
+| **Niveau**      | Filtre par gravité, sélectionné sous forme de puces cliquables : `trace`, `debug`, `info`, `warn`, `error`. |
+| **Type de portée** | Filtre par catégorie, également sélectionné sous forme de puces cliquables : moteur, South, North ou requête d'historique. |
+| **Portée**      | Restreint les journaux à un connecteur South, un connecteur North ou une requête d'historique spécifique. |
+| **Élément**       | Restreint les journaux à un élément South/requête d'historique spécifique.                  |
+| **Groupe**      | Restreint les journaux à un groupe d'éléments South spécifique.                              |
+| **Message**    | Recherche par texte libre dans le contenu du message du journal.                              |
+
+La verbosité des journaux est configurée par destination (console, fichier, base de données, Loki, Syslog, OIAnalytics)
+dans [Paramètres du moteur → Paramètres de journalisation](../engine/engine-settings.mdx#logging-parameters).
+
+## À propos {#about}
+
+La page **À propos** affiche la version d'OIBus, la version du launcher, ainsi que des détails sur l'environnement
+d'exécution (chemin de l'exécutable, dossier de données, système d'exploitation, architecture, ID de processus, nom
+d'hôte), accompagnés d'un lien vers la licence et d'un lien vers le site officiel d'OIBus.
+
+<div style={{ textAlign: 'center' }}>![À propos](../../../static/img/guide/installation/first_access/about.png)</div>
+
+Utilisez cette page pour confirmer la version exacte lors du signalement de problèmes ou de la vérification de la
+compatibilité avec OIAnalytics.
+
+## Paramètres utilisateur {#user-settings}
+
+La page **Paramètres utilisateur** vous permet de mettre à jour le nom de votre compte, de définir le fuseau horaire
+utilisé pour l'affichage des dates et heures dans toute l'interface, et de changer votre mot de passe de connexion.
+
+<div style={{ textAlign: 'center' }}>![Paramètres utilisateur](../../../static/img/guide/installation/first_access/user-settings.png)</div>
+
+| Paramètre        | Description                                                          |
+| -------------- | --------------------------------------------------------------------- |
+| **Prénom** | Le prénom de l'utilisateur.                                               |
+| **Nom**  | Le nom de famille de l'utilisateur.                                               |
+| **Fuseau horaire**   | Sélectionnez le fuseau horaire pour toutes les valeurs de date/heure affichées dans l'interface. |
+| **Mot de passe**   | Change le mot de passe de connexion de l'utilisateur actuel (via une boîte de dialogue séparée). |
