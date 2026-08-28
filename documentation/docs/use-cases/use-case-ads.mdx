@@ -7,7 +7,7 @@ import NorthOIAnalytics from './_north_oianalytics.mdx';
 
 # ADS / TwinCAT® → OIAnalytics®
 
-## Beforehand
+## Beforehand {#beforehand}
 
 See the [North OIAnalytics](../guide/north-connectors/oianalytics.md) and [South ADS](../guide/south-connectors/ads.mdx) connector pages for full configuration details.
 
@@ -15,9 +15,9 @@ Read the [connector-specific network settings](../guide/south-connectors/ads.mdx
 
 Two deployment scenarios are described below.
 
-## South ADS
+## South ADS {#south-ads}
 
-### Local ADS
+### Local ADS {#local-ads}
 
 OIBus is installed on the same machine as the ADS router.
 
@@ -35,7 +35,7 @@ Only the **Net ID** needs to be specified (here `127.0.0.1.1.1`).
 
 </div>
 
-### Remote ADS
+### Remote ADS {#remote-ads}
 
 OIBus is deployed on a separate machine and must connect to the ADS router over the network.
 
@@ -59,16 +59,14 @@ OIBus is deployed on a separate machine and must connect to the ADS router over 
 Click **Test settings** to verify the connection before saving.
 :::
 
-### Items
+### Items {#items}
 
 Add the addresses you want to read. Ask the PLC administrator for the available addresses. Select a [scan mode](../guide/engine/scan-modes.mdx) to control the collection interval.
 
 <div style={{ textAlign: 'center' }}>
-  <div>
 
-    ![ADS item settings](../../static/img/use-cases/twincat-item.png)
+![ADS item settings](../../static/img/use-cases/twincat-item.png)
 
-  </div>
 </div>
 
 :::tip Bulk import

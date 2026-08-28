@@ -14,7 +14,7 @@ OPC Classic in HDA mode, OSIsoft PI, OIAnalytics, REST, InfluxDB — see the ful
 [History Queries](../history-queries.md#compatible-south-connectors)). Streaming-only connectors (MQTT, Modbus,
 folder/FTP/SFTP scanners) have no time range to slice, so none of this applies to them.
 
-## The mental model: one run, four decisions
+## The mental model: one run, four decisions {#the-mental-model-one-run-four-decisions}
 
 Every time a history-capable item or group runs, OIBus goes through the same four steps in order:
 
@@ -57,12 +57,12 @@ consecutive pair of sub-intervals — never before the first, never after the la
 
 The rest of this page walks through why you'd push each of these knobs away from its default.
 
-## Max read interval: bounding how much a single query asks for
+## Max read interval: bounding how much a single query asks for {#max-read-interval-bounding-how-much-a-single-query-asks-for}
 
 `Max read interval` exists to protect both the source and OIBus from a single query that's simply too big —
 which happens whenever the data source holds **many values** for the requested window.
 
-### Example: a wide backlog
+### Example: a wide backlog {#example-a-wide-backlog}
 
 Say a connector collects 200 tags at 1 sample/second: 200 rows/second, or roughly 720,000 rows/hour. If this
 connector is stopped for maintenance for 24 hours, the very next run's window spans the full outage — without
@@ -75,7 +75,7 @@ queries. Each one is small enough to complete quickly and predictably, and — c
 recovery strategy — every completed hour is durably checkpointed, so a restart during the catch-up only repeats
 the one hour that was in flight, not the whole day.
 
-### Sizing it
+### Sizing it {#sizing-it}
 
 - **Base it on what the source (and the network) can comfortably return in one call** — see
   [Data Rate and Cache Sizing](./oibus-data-rate.mdx) for how to translate a row count into a byte estimate.
@@ -109,14 +109,14 @@ connector's own historical-read call, so `Max read interval` always bounds the q
 are configured.
 :::
 
-## Read delay: pacing consecutive sub-queries
+## Read delay: pacing consecutive sub-queries {#read-delay-pacing-consecutive-sub-queries}
 
 `Read delay` inserts a pause between sub-queries so a large `Max read interval` split doesn't turn into a burst
 of back-to-back requests hammering the source — useful for rate-limited APIs (REST, OIAnalytics), production
 databases that shouldn't be monopolized, or PLC/historian servers that need a moment to service the previous
 request before the next one arrives.
 
-### The interaction with Max read interval
+### The interaction with Max read interval {#the-interaction-with-max-read-interval}
 
 The two settings trade off directly. Total pacing overhead for one run is approximately:
 
@@ -130,7 +130,7 @@ same 1-second delay adds almost **24 minutes** of pure pacing, on top of the 1,4
 you shrink `Max read interval` to reduce load per query, check what that does to catch-up time on a realistic
 backlog before assuming a small `Read delay` is harmless.
 
-### Sizing it
+### Sizing it {#sizing-it-1}
 
 | Symptom                                                                  | Adjustment                                                |
 | ------------------------------------------------------------------------ | --------------------------------------------------------- |
@@ -138,12 +138,12 @@ backlog before assuming a small `Read delay` is harmless.
 | Catching up a large backlog takes far longer than the backlog itself     | Decrease `Read delay` and/or increase `Max read interval` |
 | Source has no rate concerns at all (local file-backed DB, etc.)          | `0` is fine                                               |
 
-## Start/End time offset: when the source isn't done writing yet
+## Start/End time offset: when the source isn't done writing yet {#startend-time-offset-when-the-source-isnt-done-writing-yet}
 
 This is the setting that matters most when **several items queried together are not all digested by the data
 source at the same moment**.
 
-### Why this happens
+### Why this happens {#why-this-happens}
 
 Many historian-style sources don't make a value durably queryable the instant it's timestamped. A SQL table
 might commit inserts in periodic batches; an OPC UA HA server typically buffers newly historized samples locally
@@ -157,7 +157,7 @@ If OIBus queries `[tracked instant, now]` and immediately advances the tracked i
 wasn't yet digested by the source at query time is gone for good — the next run starts strictly after it and
 will never ask for that slice of time again.
 
-### Start time offset: re-request a safety cushion
+### Start time offset: re-request a safety cushion {#start-time-offset-re-request-a-safety-cushion}
 
 A **negative** `Start time offset` (e.g. `-2000` for a 2-second cushion) shifts the start of the window
 backward, so OIBus re-asks for a slice of time it already covered on the previous run. Any value that had not
@@ -168,7 +168,7 @@ timestamp-keyed SQL queries and for North-side handling of duplicate timestamps.
 Size the negative offset a bit larger than the source's known or observed commit/flush lag. If you don't know
 that lag, start conservative (e.g. `-5000`) and tighten it once you've confirmed no gaps appear at the boundary.
 
-### End time offset: don't touch the fuzzy region at all
+### End time offset: don't touch the fuzzy region at all {#end-time-offset-dont-touch-the-fuzzy-region-at-all}
 
 A **negative** `End time offset` takes the opposite approach: instead of re-querying a cushion next time, it
 pulls the end of _this_ window back so the not-yet-reliable trailing edge is never queried in the first place.
@@ -183,7 +183,7 @@ the same trailing slice. `End time offset` never duplicates a value, but it dela
 trailing region by at least one run: since the tracked instant only ever advances up to the shrunk end, that
 region simply becomes part of the _next_ run's window instead of being queried now.
 
-### Example: a 2-second commit lag, visualized
+### Example: a 2-second commit lag, visualized {#example-a-2-second-commit-lag-visualized}
 
 Toy example: a source commits values 2 seconds after their timestamp, and a scan mode polls it every 5
 seconds — an exaggerated ratio, purely to make the pattern visible. Every run's window ends 2 seconds into
@@ -224,7 +224,7 @@ a negative `Start time offset` re-asks the `:15` boundary on the next tick and r
 cost of a harmless duplicate read of item A's, which was already there); a negative `End time offset` simply
 never asks for a tick until the run after, by which point every item in the group is expected to have caught up.
 
-### Choosing between them
+### Choosing between them {#choosing-between-them}
 
 | Situation                                                                                    | Use                                     |
 | -------------------------------------------------------------------------------------------- | --------------------------------------- |
@@ -238,7 +238,7 @@ data source's by a roughly known amount, the source can already have data timest
 considers "now". Pushing the query's upper bound forward by that same drift lets OIBus retrieve up to the
 source's actual current time instead of stopping short at its own, lagging clock.
 
-## Recovery strategy: order and durability during catch-up
+## Recovery strategy: order and durability during catch-up {#recovery-strategy-order-and-durability-during-catch-up}
 
 `Recovery strategy` only matters once there's more than one sub-interval to work through — i.e., whenever a
 backlog (first run, downtime, a widened `Start time offset`) produces several chunks in a single tick.
@@ -255,7 +255,7 @@ Pick `newest` when a dashboard or downstream consumer needs current values as so
 long backfill is still catching up on history. Keep `oldest` (the default) when incremental, crash-safe
 progress matters more than how quickly "now" appears — which is the right choice for most unattended setups.
 
-## Putting it together: a worked example
+## Putting it together: a worked example {#putting-it-together-a-worked-example}
 
 A South MSSQL connector polls 200 tags from a historian table. The database batches inserts and typically
 commits within 1.5 seconds of the sample timestamp. The team wants dashboards to show current values quickly
@@ -272,7 +272,7 @@ If the same team instead needed the live dashboard to reflect current values imm
 weekend-outage catch-up — accepting that a mid-catch-up restart would re-run the whole backlog — they'd switch
 `Recovery strategy` to `From newest to oldest` and leave the other three values as is.
 
-## Common pitfalls
+## Common pitfalls {#common-pitfalls}
 
 - **`Max read interval` too large for the source.** The very next run after any real backlog becomes one
   oversized query — the same problem the setting exists to prevent.
@@ -291,7 +291,7 @@ weekend-outage catch-up — accepting that a mid-catch-up restart would re-run t
   [Common Settings — Max Instant Tracking](../south-connectors/common-settings.md#max-instant-tracking) for the
   full picture of how the tracked instant behaves across configuration changes.
 
-## Quick reference
+## Quick reference {#quick-reference}
 
 | Goal / symptom                                                                       | Adjust                                              |
 | ------------------------------------------------------------------------------------ | --------------------------------------------------- |
