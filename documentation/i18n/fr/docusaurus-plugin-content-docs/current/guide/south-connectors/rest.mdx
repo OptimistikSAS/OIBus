@@ -1,0 +1,183 @@
+---
+sidebar_position: 15
+---
+
+import ThrottlingSettings from './_throttling-settings.mdx';
+
+# REST
+
+Interrogez des données depuis n'importe quelle API REST HTTP/HTTPS en utilisant des méthodes, des paramètres de requête, des en-têtes et des corps de requête configurables.
+
+## Paramètres de connexion {#connection-settings}
+
+### Configuration principale {#main-configuration}
+
+| Paramètre                             | Description                                                                 | Exemple de valeur        |
+| -------------------------------------- | --------------------------------------------------------------------------- | -------------------------- |
+| **Hôte**                              | URL de base du serveur d'API REST. Doit commencer par `http://` ou `https://`. | `http://server.com:8080` |
+| **Accepter le certificat non autorisé** | Autorise les connexions HTTPS avec des certificats auto-signés ou invalides. | Activé/Désactivé         |
+| **Délai d'expiration**                | Durée en secondes avant qu'un échec de connexion soit signalé. Par défaut : `30`. | `30`                     |
+
+### Authentification {#authentication}
+
+| Paramètre              | Description                                                       | Exemple de valeur                          |
+| ------------------------ | ----------------------------------------------------------------- | ---------------------------------------------- |
+| Méthode d'authentification | Type d'authentification pour la connexion.                     | `None`, `Basic`, `Bearer`, `API Key`       |
+| Nom d'utilisateur       | Nom d'utilisateur pour l'authentification Basic.                  | `api_user`                                |
+| Mot de passe            | Mot de passe pour l'authentification Basic.                       | `••••••••`                                |
+| Token                   | Jeton Bearer envoyé dans l'en-tête `Authorization`.                | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` |
+| API Key                 | Nom de l'en-tête ou du paramètre de requête pour l'authentification API Key. | `X-Api-Key`                               |
+| API Value               | Valeur secrète envoyée avec la requête (stockée chiffrée).        | `••••••••`                                |
+| Ajouter à               | Emplacement où la paire clé/valeur de l'API est injectée.         | `header`, `query-params`                  |
+
+### Configuration du proxy {#proxy-configuration}
+
+| Paramètre            | Description                                       | Exemple de valeur                |
+| ---------------------- | -------------------------------------------------- | ---------------------------------- |
+| **Utiliser un proxy** | Faire transiter les requêtes par un serveur proxy. | Activé/Désactivé                 |
+| **URL du proxy**      | URL complète du serveur proxy.                     | `http://proxy.example.com:8080` |
+| **Nom d'utilisateur du proxy** | Nom d'utilisateur pour l'authentification proxy (si requis). | `proxy_user`                    |
+| **Mot de passe du proxy** | Mot de passe pour l'authentification proxy (si requis). | `••••••••`                      |
+
+### Test de connexion {#connection-test}
+
+OIBus peut tester la connexion au serveur avant l'exécution de toute requête d'élément. Cela permet de vérifier les identifiants et l'accessibilité.
+
+| Paramètre           | Description                                                          | Exemple de valeur |
+| ---------------------- | ------------------------------------------------------------------- | ------------- |
+| **Méthode**           | Méthode HTTP utilisée pour la requête de test. Par défaut : `GET`.  | `GET`         |
+| **Point de terminaison de test** | Chemin ajouté à l'hôte. Par défaut : `/`.                | `/health`     |
+| **Corps**             | Corps JSON optionnel pour les requêtes de test `POST` ou `PUT`.     | `{}`          |
+| **Code de succès**    | Code de statut HTTP indiquant une connexion réussie. Par défaut : `200`. | `200`         |
+
+:::info
+Le corps de test n'est envoyé que lorsque la méthode est `POST` ou `PUT`.
+:::
+
+## Paramètres de groupe {#group-settings}
+
+Les éléments peuvent être organisés en groupes. Chaque groupe définit une planification de collecte partagée et des
+paramètres de limitation par défaut. Les éléments d'un même groupe sont toujours récupérés **un par un** en séquence — le groupe
+fournit simplement des valeurs par défaut communes que chaque élément peut remplacer.
+
+| Paramètre       | Description                                                                                                                                       | Exemple de valeur          |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| **Nom**          | Libellé unique du groupe au sein de ce connecteur.                                                                                                  | `Group A`                 |
+| **Mode de scrutation** | Planification utilisée pour collecter tous les éléments du groupe.                                                                            | `Every 1 min`             |
+| **Limitation**    | Valeurs de limitation par défaut (intervalle de lecture max, délai de lecture, décalage d'heure de début, décalage d'heure de fin, stratégie de reprise) héritées par les éléments du groupe. | `3600, 200, 0, 0, oldest` |
+
+## Paramètres d'élément {#item-settings}
+
+Chaque élément cible un point de terminaison d'API spécifique et définit comment formuler la requête et interpréter la réponse. Les éléments
+héritent de leur mode de scrutation et de leurs paramètres de limitation par défaut depuis leur groupe, mais chaque paramètre peut être remplacé par
+élément en désactivant **Sync with group**.
+
+<ThrottlingSettings />
+
+### Configuration de la requête {#request-configuration}
+
+| Paramètre       | Description                                                                  | Exemple de valeur |
+| ----------------- | ---------------------------------------------------------------------------- | -------------- |
+| **Méthode**      | Méthode HTTP pour la requête de données. Par défaut : `GET`.                 | `GET`          |
+| **Point de terminaison** | Chemin ajouté à l'hôte.                                                | `/api/data`    |
+| **Type de retour** | Manière dont la réponse est traitée — comme un corps structuré ou un téléchargement de fichier brut. | `body`, `file` |
+
+### Paramètres de requête {#query-parameters}
+
+Ajoutez des paires clé/valeur ajoutées à l'URL de la requête sous forme de paramètres de chaîne de requête. Utilisez les variables `@StartTime` et
+`@EndTime` pour injecter directement la fenêtre temporelle de la requête dans une valeur de paramètre.
+
+| Paramètre       | Description                                                                                         | Exemple de valeur |
+| ----------------- | ----------------------------------------------------------------------------------------------------- | ------------- |
+| **Clé**          | Nom du paramètre de requête.                                                                          | `from`        |
+| **Valeur**       | Valeur du paramètre ; peut contenir les espaces réservés `@StartTime` ou `@EndTime`.                  | `@StartTime`  |
+| **Format de date** | Affiché lorsque la valeur contient `@StartTime` ou `@EndTime` — configure comment l'instant est formaté. | `iso-string`  |
+
+#### Format de date/heure pour les paramètres de requête {#datetime-format-for-query-parameters}
+
+Lorsqu'une valeur de paramètre inclut `@StartTime` ou `@EndTime`, une section de configuration du format de date apparaît :
+
+| Paramètre      | Description                                        | Exemple de valeur                                     |
+| ---------------- | ---------------------------------------------------- | --------------------------------------------------------- |
+| **Type**        | Représentation de la valeur datetime.                | `iso-string`, `unix-epoch`, `unix-epoch-ms`, `string` |
+| **Fuseau horaire** | Fuseau horaire pour le formatage (uniquement pour le type `string`). | `UTC`, `Europe/Paris`                                 |
+| **Format**      | Modèle de format personnalisé (uniquement pour le type `string`). | `yyyy-MM-dd HH:mm:ss`                                 |
+
+### En-têtes {#headers}
+
+Ajoutez des en-têtes HTTP personnalisés à la requête. Comme pour les paramètres de requête, les valeurs d'en-tête prennent en charge la substitution
+`@StartTime` et `@EndTime` avec la même configuration de format de date/heure.
+
+| Paramètre   | Description                                                        | Exemple de valeur   |
+| ------------- | --------------------------------------------------------------------- | ---------------------- |
+| **Clé**      | Nom de l'en-tête.                                                     | `X-Custom-Header` |
+| **Valeur**   | Valeur de l'en-tête ; peut contenir les espaces réservés `@StartTime` ou `@EndTime`. | `Bearer my_token` |
+
+:::info Content-Type
+Lorsqu'un corps est configuré et qu'aucun en-tête `Content-Type` n'est explicitement défini, OIBus ajoute automatiquement
+`Content-Type: application/json`.
+:::
+
+### Corps de la requête {#request-body}
+
+Un corps JSON peut être envoyé pour les requêtes `POST`, `PUT`, `PATCH` et `DELETE`. Le corps prend en charge les espaces réservés `@StartTime` et
+`@EndTime` pour injecter la fenêtre temporelle de la requête dans le payload.
+
+| Paramètre       | Description                                                                                        | Exemple de valeur       |
+| ----------------- | ----------------------------------------------------------------------------------------------------- | -------------------------- |
+| **Contenu**      | Corps JSON de la requête ; peut contenir les espaces réservés `@StartTime` ou `@EndTime`.             | `{"from": "@StartTime"}` |
+| **Format de date** | Affiché lorsque le corps contient `@StartTime` ou `@EndTime` — configure comment l'instant est formaté. | `iso-string`             |
+
+La configuration du format de date/heure pour le corps suit les mêmes paramètres que les [paramètres de requête](#datetime-format-for-query-parameters).
+
+### Traitement de la réponse {#response-handling}
+
+Le paramètre `Return type` contrôle la manière dont OIBus interprète la réponse du serveur.
+
+| Paramètre    | Description                                                                                                                                                                                            | Exemple de valeur |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| Type de retour | `body` : la réponse est lue comme du texte ; OIBus détecte automatiquement le JSON ou le XML à partir de l'en-tête `Content-Type`. `file` : le corps de la réponse est enregistré comme fichier binaire en utilisant le nom de fichier `Content-Disposition` s'il est fourni. | `body`, `file` |
+
+:::info Nom de fichier en mode fichier
+Lorsque le serveur ne fournit pas d'en-tête `Content-Disposition`, le fichier est enregistré avec un nom généré automatiquement
+basé sur le nom du connecteur, le nom de l'élément et un identifiant aléatoire.
+:::
+
+### Suivi de l'instant maximal {#tracking-the-maximum-instant}
+
+Lorsque le type de retour est `body` et que la réponse est au format JSON, OIBus peut suivre automatiquement l'horodatage le plus récent
+trouvé dans la réponse. Cela fait avancer le `@StartTime` de la requête suivante afin d'éviter de récupérer à nouveau des données déjà vues.
+
+| Paramètre          | Description                                                                                 | Exemple de valeur     |
+| -------------------- | ----------------------------------------------------------------------------------------------- | -------------------------- |
+| **Suivre l'instant** | Active l'extraction de l'horodatage maximal depuis la réponse JSON.                             | Activé/Désactivé      |
+| **JSONPath**         | Expression utilisée pour localiser les valeurs d'horodatage dans la réponse JSON.               | `$.data[*].timestamp` |
+| **Format de date**   | Comment OIBus doit interpréter les valeurs d'horodatage extraites (type, fuseau horaire, format, locale). | `iso-string`          |
+
+#### Format de date/heure pour le suivi de l'instant {#tracking-instant-datetime-format}
+
+| Paramètre      | Description                                                    | Exemple de valeur                                     |
+| ---------------- | ------------------------------------------------------------------ | --------------------------------------------------------- |
+| **Type**        | Représentation de la valeur datetime dans le champ JSON.           | `iso-string`, `unix-epoch`, `unix-epoch-ms`, `string` |
+| **Fuseau horaire** | Fuseau horaire pour l'analyse (uniquement pour le type `string`). | `UTC`, `Europe/Paris`                                 |
+| **Format**      | Modèle de format personnalisé pour l'analyse (uniquement pour le type `string`). | `yyyy-MM-dd HH:mm:ss`                                 |
+| **Locale**      | Locale pour l'analyse des noms de mois/jours (uniquement pour le type `string`). | `en-En`                                               |
+
+:::info JSONPath
+OIBus utilise la bibliothèque [JSONPath Plus](https://github.com/JSONPath-Plus/JSONPath). Lorsque plusieurs valeurs correspondent à l'expression
+JSONPath, l'horodatage maximal parmi toutes ces valeurs est utilisé comme nouveau `@StartTime`.
+:::
+
+## Variables temporelles {#time-variables}
+
+Les variables suivantes peuvent être utilisées dans les valeurs des paramètres de requête, les valeurs d'en-têtes et les corps de requête :
+
+| Paramètre    | Description                                                                               | Exemple de valeur          |
+| -------------- | --------------------------------------------------------------------------------------------- | ------------------------------- |
+| `@StartTime` | Début de l'intervalle de requête en cours. Mis à jour avec l'instant maximal suivi après chaque requête. | `2024-01-15T10:00:00.000Z` |
+| `@EndTime`   | Fin de l'intervalle de requête en cours (plafonné à l'heure actuelle ou à la fin du sous-intervalle). | `2024-01-15T11:00:00.000Z` |
+
+:::info Découpage des requêtes
+Lorsqu'une large plage temporelle est demandée, OIBus la divise en sous-intervalles plus petits selon le paramètre de limitation **Max read interval**.
+Chaque sous-intervalle obtient sa propre paire `@StartTime` / `@EndTime`.
+:::

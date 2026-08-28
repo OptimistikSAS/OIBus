@@ -1,0 +1,78 @@
+---
+sidebar_position: 5
+---
+
+import MqttWildcardTester from '../../../../../../src/components/MqttWildcardTester/index';
+
+# MQTT
+
+MQTT (Message Queuing Telemetry Transport) est un protocole léger conçu pour la messagerie en temps réel utilisant un
+modèle publication/abonnement. OIBus agit comme un client MQTT utilisant la bibliothèque [MQTT.js](https://github.com/mqttjs/MQTT.js) pour
+interagir avec les courtiers MQTT.
+
+## Paramètres spécifiques {#specific-settings}
+
+### Connexion {#connection}
+
+| Paramètre              | Description                                                                                                                                                                          | Exemple de valeur                 |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| URL                         | Adresse du courtier MQTT. Accepte `mqtt://`, `mqtts://`, `tcp://`, `tls://`, `ws://`, ou `wss://` (utilisez `mqtts://`/`tls://` pour l'authentification par certificat). Port par défaut : `1883`. | `mqtt://broker.example.com:1883`    |
+| Reconnect period            | Temps (en millisecondes) à attendre avant les tentatives de reconnexion                                                                                                                 | `5000`                              |
+| Connect timeout             | Temps maximal (en millisecondes) à attendre pour l'établissement de la connexion                                                                                                        | `30000`                             |
+| Reject unauthorized         | Rejette les connexions avec des certificats non vérifiés (ex. auto-signés)                                                                                                              | Activé/Désactivé                    |
+
+### Qualité de service {#quality-of-service}
+
+| Paramètre        | Description                                                                                                                                             | Exemple de valeur    |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------- |
+| QoS                   | Niveau de qualité de service : `0` (au plus une fois), `1` (au moins une fois, doublons possibles), `2` (exactement une fois).                                | `0`, `1`, `2`     |
+| **Persistent**        | Lorsqu'activé, le courtier conserve les messages et les livraisons en file d'attente à travers les reconnexions (nécessite QoS 1 ou 2). Lorsque désactivé, une session propre est démarrée. | Activé/Désactivé |
+
+### Authentification {#authentication}
+
+#### Aucune authentification {#no-authentication}
+
+| Paramètre | Description                                    | Exemple de valeur |
+| ------------- | ------------------------------------------------- | ------------- |
+| (Aucun)       | Aucune authentification requise pour la connexion  | -             |
+
+#### Nom d'utilisateur / Mot de passe {#username--password}
+
+| Paramètre  | Description                                | Exemple de valeur |
+| -------------- | ---------------------------------------------- | ------------- |
+| Username        | Nom d'utilisateur pour l'authentification au courtier | `mqtt_user`   |
+| Password        | Mot de passe pour l'authentification au courtier      | `••••••••`    |
+
+#### Authentification par certificat {#certificate-authentication}
+
+| Paramètre        | Description                                                                       | Exemple de valeur   |
+| -------------------- | -------------------------------------------------------------------------------------- | ---------------------- |
+| Cert file path        | Chemin d'accès au fichier de certificat signé                                          | `/path/to/cert.pem`    |
+| Key file path         | Chemin d'accès au fichier de clé privée                                                | `/path/to/key.pem`     |
+| CA file path          | Chemin d'accès au fichier de l'autorité de certification. Requis pour l'authentification par certificat. | `/path/to/ca.pem`      |
+
+### Limitation de débit des données {#data-throttling}
+
+| Paramètre                            | Description                                                                     | Exemple de valeur |
+| ----------------------------------------- | ------------------------------------------------------------------------------------ | ------------- |
+| Number of messages before flush            | Nombre de messages à accumuler avant de les vider vers les caches North              | `1000`        |
+| Delay between flush                        | Délai (en millisecondes) entre les vidages automatiques des messages accumulés       | `1000`        |
+
+## Paramètres des éléments {#item-settings}
+
+Chaque élément s'abonne à un sujet (topic) MQTT. MQTT utilise une structure de sujets hiérarchique avec prise en charge des caractères génériques :
+
+| Paramètre   | Description                                                | Exemple de valeur          |
+| --------------- | --------------------------------------------------------------- | ----------------------------- |
+| **Topic**       | Le sujet MQTT auquel s'abonner. Les caractères génériques sont pris en charge. | `sensors/#`, `plant/+/T`    |
+
+### Caractères génériques de sujet {#topic-wildcards}
+
+| Paramètre | Description                     | Exemple de valeur          |
+| ------------- | ------------------------------------ | ----------------------------- |
+| `#`           | Caractère générique multi-niveaux    | `sensors/#`                   |
+| `+`           | Caractère générique à un seul niveau | `sensors/+/temperature`       |
+
+Utilisez le testeur ci-dessous pour voir quels sujets correspondent à un filtre d'abonnement donné :
+
+<MqttWildcardTester />
