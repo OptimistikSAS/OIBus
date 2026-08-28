@@ -1,6 +1,6 @@
 import ThrottlingSettings from './_throttling-settings.mdx';
 
-## Group Settings
+## Group Settings {#group-settings}
 
 Items can be organised into groups. Each group defines a shared collection schedule and default throttling
 settings. Items in the same group are still fetched **one at a time** in sequence — the group simply
@@ -12,19 +12,19 @@ provides common defaults that individual items can override.
 | **Scan mode**  | Schedule used to collect all items in the group.                                                                                                  | `Every 1 min`             |
 | **Throttling** | Default throttling values (Max read interval, Read delay, Start time offset, End time offset, Recovery strategy) inherited by items in the group. | `3600, 200, 0, 0, oldest` |
 
-## Item Settings
+## Item Settings {#item-settings}
 
 Each item can be individually configured with its own query parameters and, optionally, a tracking instant used
 to read the source incrementally. Items inherit their scan mode and throttling defaults from their group, but
 each setting can be overridden per item by disabling **Sync with group**.
 
 <ThrottlingSettings />
-### Query Configuration
+### Query Configuration {#query-configuration}
 
 The query field accepts standard SQL syntax with support for internal variables that enhance data retrieval
 resilience and performance optimization.
 
-#### Query Variables
+#### Query Variables {#query-variables}
 
 | Setting      | Description                                                                                           | Example Value              |
 | ------------ | ----------------------------------------------------------------------------------------------------- | -------------------------- |
@@ -46,7 +46,7 @@ For handling large datasets, queries can be automatically divided into smaller t
 **Max read interval** throttling setting.
 :::
 
-### Tracking Instant Configuration
+### Tracking Instant Configuration {#tracking-instant-configuration}
 
 Every column returned by the query is sent downstream exactly as the database returned it — OIBus does not parse,
 reformat, or reshape any of it. The only optional per-item setting is a **tracking instant**: a single column
@@ -83,7 +83,7 @@ WHERE CONVERT(datetime, string_field) > @StartTime
 
 :::
 
-### Data Flow Process
+### Data Flow Process {#data-flow-process}
 
 1. OIBus executes each configured query sequentially.
 2. Rows are sent downstream as-is — no column is parsed, reformatted, or reshaped.

@@ -13,9 +13,9 @@ The two base classes have extensive JSDoc covering every lifecycle method and th
 This page is a quick reference; for the deep details read
 `backend/src/south/south-connector.ts` and `backend/src/north/north-connector.ts`.
 
-## North connectors
+## North connectors {#north-connectors}
 
-### Minimal complete example
+### Minimal complete example {#minimal-complete-example}
 
 ```typescript title="backend/src/north/north-console/north-console.ts"
 import NorthConnector from '../north-connector';
@@ -63,7 +63,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
 }
 ```
 
-### Required methods
+### Required methods {#required-methods}
 
 | Method                                                 | Purpose                                                                                                                                                  |
 | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -71,14 +71,14 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
 | `testConnection(): Promise<OIBusConnectionTestResult>` | Probe the destination with current settings. Throw on failure — the message is shown to the user. Return a `{ items: [...] }` of diagnostics on success. |
 | `handleContent(fileStream, metadata): Promise<void>`   | Actually deliver one cached payload. May throw — the base class handles retry + the error folder.                                                        |
 
-### Optional overrides
+### Optional overrides {#optional-overrides}
 
 | Method         | When to override                                                                                              |
 | -------------- | ------------------------------------------------------------------------------------------------------------- |
 | `connect()`    | Open a long-lived session / socket / HTTP client. Call `super.connect()` once your transport is ready.        |
 | `disconnect()` | Close your transport. Call `super.disconnect()` at the end. Must be idempotent (called more than once is OK). |
 
-### Retry semantics
+### Retry semantics {#retry-semantics}
 
 When `handleContent` throws, the file stays in the cache and `errorCount` increments. The base class retries
 on the next cron tick. After `caching.error.retryCount` failures the file is moved to the error folder so the
@@ -95,9 +95,9 @@ throw { ...new Error('Connection reset'), forceRetry: true } as OIBusError;
 
 `forceRetry` keeps the file in the cache indefinitely — never moved to the error folder.
 
-## South connectors
+## South connectors {#south-connectors}
 
-### Minimal skeleton
+### Minimal skeleton {#minimal-skeleton}
 
 ```typescript title="South skeleton — pick one or more capability interfaces"
 import SouthConnector from '../south-connector';
@@ -163,24 +163,24 @@ export default class SouthMyType extends SouthConnector<SouthMyTypeSettings, Sou
 }
 ```
 
-### Required methods
+### Required methods {#required-methods-1}
 
 | Method                                                   | Purpose                                                                    |
 | -------------------------------------------------------- | -------------------------------------------------------------------------- |
 | `testConnection(): Promise<OIBusConnectionTestResult>`   | Probe the source. Throw on failure.                                        |
 | `testItem(item, testingSettings): Promise<OIBusContent>` | Run one item once for the UI's "test" button. Return the produced content. |
 
-### Optional overrides
+### Optional overrides {#optional-overrides-1}
 
 Same as North: `connect()` and `disconnect()`. **Always call `super.*` at the end** of your override so cron
 state, subscription bookkeeping, and the `'connected'` event are kept in sync.
 
-### Capability interfaces (South only)
+### Capability interfaces (South only) {#capability-interfaces-south-only}
 
 A South connector implements one or more of three capability interfaces from `south-interface.ts`. The base
 class detects them with structural `in`-checks at runtime — you don't need to declare a flag.
 
-#### `SouthDirectQuery`
+#### `SouthDirectQuery` {#southdirectquery}
 
 For one-shot reads — e.g. Modbus register read, REST API call, "get current value".
 
@@ -195,7 +195,7 @@ The base class calls `directQuery()` for each scan-mode tick. Push the actual re
 
 Example: `backend/src/south/south-modbus/south-modbus.ts`.
 
-#### `SouthHistoryQuery`
+#### `SouthHistoryQuery` {#southhistoryquery}
 
 For time-windowed reads — e.g. OPC UA HistoryRead, SQL `BETWEEN`, OSIsoft PI archive.
 
@@ -222,7 +222,7 @@ the next call resumes from there. Return `{ trackedInstant: null, value: null }`
 
 Example: `backend/src/south/south-opcua/south-opcua.ts`.
 
-#### `SouthSubscription`
+#### `SouthSubscription` {#southsubscription}
 
 For push-driven sources — MQTT, OPC UA subscription, anything event-based.
 
@@ -246,7 +246,7 @@ Examples: `backend/src/south/south-mqtt/south-mqtt.ts` (subscription-only),
 A single connector class can implement any combination of the three interfaces; the base class fans out
 appropriately per scan tick.
 
-### Pushing data — `addContent`
+### Pushing data — `addContent` {#pushing-data--addcontent}
 
 ```typescript
 await this.addContent(
@@ -267,7 +267,7 @@ await this.addContent(
 The engine takes care of writing the content into each enabled North's cache via its transformer pipeline.
 Don't write to the cache directly — always go through `addContent`.
 
-## Lifecycle
+## Lifecycle {#lifecycle}
 
 ```
 start()              ← engine constructs and starts the connector
@@ -293,7 +293,7 @@ The base class also drives the `metricsEvent` and `'connected'` event emitters, 
 deferred-promise dance so `stop()` waits for any in-flight scan to complete cleanly. Override at the right
 level, call `super.*`, and the rest is automatic.
 
-## Tests
+## Tests {#tests}
 
 Connector specs live alongside the class file as `<connector-name>.spec.ts`. The team standard is **100%
 coverage** — including error paths, retry handling, and `testConnection` / `testItem`. Existing connectors

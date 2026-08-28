@@ -17,7 +17,7 @@ Reach out to the OIBus team if you're not sure where to begin — what you need 
 existing connector, or might be a better fit as an enhancement to one.
 :::
 
-## File layout
+## File layout {#file-layout}
 
 Each connector lives in its own folder under `backend/src/north/` or `backend/src/south/`:
 
@@ -39,7 +39,7 @@ Connectors that share protocol-specific helpers (parsing, certificate handling, 
 extract them to `backend/src/service/utils-<type>.ts` so the connector class stays focused on lifecycle and
 orchestration. Examples: `service/utils-opcua.ts`, `service/utils-mqtt.ts`, `service/utils-modbus.ts`.
 
-## Mental model
+## Mental model {#mental-model}
 
 |                  | **South**                                                    | **North**                                        |
 | ---------------- | ------------------------------------------------------------ | ------------------------------------------------ |
@@ -52,12 +52,12 @@ South batches are written into the engine's per-North file cache by the engine i
 that cache at its own cadence. This decoupling means a flaky destination doesn't block South ingestion — files
 just pile up in the cache and get retried on the next tick.
 
-## Registration steps
+## Registration steps {#registration-steps}
 
 Adding a new connector type requires four edits beyond the connector folder. The TypeScript compiler catches
 the first three; the fourth is a runtime check.
 
-### 1. Add the type id to the shared list
+### 1. Add the type id to the shared list {#1-add-the-type-id-to-the-shared-list}
 
 For a South connector, append your id to `OIBUS_SOUTH_TYPES` in
 `backend/shared/model/south-connector.model.ts`:
@@ -75,7 +75,7 @@ Pick a `category` from the existing list (`OIBUS_SOUTH_CATEGORIES` or `OIBUS_NOR
 new category unless you have a strong reason — the UI groups connectors by category, and a one-off category
 makes that grouping less useful.
 
-### 2. Register in the factory
+### 2. Register in the factory {#2-register-in-the-factory}
 
 The factory builds a connector instance from a stored configuration row. Add a `case` for your type:
 
@@ -92,7 +92,7 @@ case 'my-new-source':
 
 The North equivalent is `buildNorth(...)` in `backend/src/north/north-connector-factory.ts`.
 
-### 3. Map the type id to the generated settings interface name
+### 3. Map the type id to the generated settings interface name {#3-map-the-type-id-to-the-generated-settings-interface-name}
 
 Settings types (`South<Type>Settings`, `South<Type>ItemSettings`) are generated from the manifest. Tell the
 generator how to name them in `backend/src/settings-interface.generator.ts`:
@@ -123,14 +123,14 @@ On the first run after adding a new type, the generated types don't exist yet �
 finishes, your connector class will compile against the freshly generated types.
 :::
 
-### 4. Translation keys
+### 4. Translation keys {#4-translation-keys}
 
 Every `translationKey` in your manifest must resolve to a string in the frontend's i18n bundles
 (`frontend/src/assets/i18n/*.json`). The convention is
 `configuration.oibus.manifest.<south|north>.<connector-type>.<field>`. Missing keys fall back to the key
 itself — the UI keeps working, it just looks rough.
 
-## What's next
+## What's next {#whats-next}
 
 - **[The manifest](./manifest.md)** — settings schema, attribute types, validators, conditional display.
 - **[The connector class](./class.md)** — base classes, capability interfaces, lifecycle, examples.
