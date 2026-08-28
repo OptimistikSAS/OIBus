@@ -42,7 +42,7 @@ Configurez le moment où les données sont envoyées à l'application cible :
 
 | Paramètre                    | Description                                                                                            | Exemple de valeur |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------- | -------------------- |
-| **Planification**             | Définit la fréquence de transmission des données. Configurez à l'aide des [modes de scrutation](../engine/scan-modes.mdx). | `Every 10 s`         |
+| **Planification**             | Définit la fréquence de transmission des données. Configurez à l'aide des [modes de scan](../engine/scan-modes.mdx). | `Every 10 s`         |
 | **Nombre d'éléments**         | (Charges utiles JSON) Envoie les données lorsque le nombre d'éléments spécifié est atteint, en contournant la planification. | `1000`               |
 | **Nombre de fichiers**        | (Fichiers) Envoie les données lorsque le nombre de fichiers spécifié est atteint, en contournant la planification. | `10`                 |
 
