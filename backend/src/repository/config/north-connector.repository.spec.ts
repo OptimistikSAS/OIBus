@@ -309,6 +309,104 @@ describe('NorthConnectorRepository', () => {
     ]);
   });
 
+  it('should record a DELETE audit entry for each transformer removed by an update', () => {
+    const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
+    newNorthConnector.id = '';
+    newNorthConnector.name = 'north losing a transformer on update';
+    newNorthConnector.transformers = [];
+    repository.saveNorth(newNorthConnector, true);
+
+    repository.addOrEditTransformer(
+      newNorthConnector.id,
+      { id: '', transformer: testData.transformers.list[0] as Transformer, options: {}, source: { type: 'oianalytics-setpoint' } },
+      'userTest'
+    );
+    const withTransformer = repository.findNorthById(newNorthConnector.id)!;
+    assert.strictEqual(withTransformer.transformers.length, 1);
+    const removedTransformerId = withTransformer.transformers[0].id;
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+
+    const updated: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(withTransformer));
+    updated.transformers = [];
+    repository.saveNorth(updated, false);
+
+    const afterUpdate = repository.findNorthById(newNorthConnector.id)!;
+    assert.deepStrictEqual(afterUpdate.transformers, []);
+
+    const removalCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'north_transformer' && call.arguments[1] === removedTransformerId && call.arguments[2] === 'DELETE'
+    );
+    assert.ok(removalCall, 'expected a DELETE audit entry for the transformer dropped by the update');
+  });
+
+  it('should redact an unknown north connector type by returning it as-is (no manifest match)', () => {
+    const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
+    newNorthConnector.id = '';
+    newNorthConnector.name = 'north with unknown type';
+    newNorthConnector.type = 'not-a-real-north-type' as typeof newNorthConnector.type;
+    newNorthConnector.transformers = [];
+    repository.saveNorth(newNorthConnector, true);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    recordMock.mock.resetCalls();
+    repository.deleteNorth(newNorthConnector.id, 'deleteUser');
+
+    const deleteCall = recordMock.mock.calls.find(
+      call => call.arguments[0] === 'north_connector' && call.arguments[1] === newNorthConnector.id && call.arguments[2] === 'DELETE'
+    );
+    assert.ok(deleteCall);
+    // With no manifest for this type, redactConnector must return the entity untouched rather than filtering secrets.
+    assert.strictEqual((deleteCall!.arguments[3] as { type: string }).type, 'not-a-real-north-type');
+  });
+
+  it('should insert and update a transformer sourced from oibus-api', () => {
+    const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
+    newNorthConnector.id = '';
+    newNorthConnector.name = 'north with oibus-api transformer';
+    newNorthConnector.transformers = [];
+    repository.saveNorth(newNorthConnector, true);
+
+    repository.addOrEditTransformer(
+      newNorthConnector.id,
+      {
+        id: '',
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        source: { type: 'oibus-api', dataSourceId: 'ds1' }
+      },
+      'userTest'
+    );
+    let connector = repository.findNorthById(newNorthConnector.id)!;
+    assert.strictEqual(connector.transformers.length, 1);
+    assert.strictEqual((connector.transformers[0].source as { type: 'oibus-api'; dataSourceId: string }).dataSourceId, 'ds1');
+    const transformerId = connector.transformers[0].id;
+
+    repository.addOrEditTransformer(
+      newNorthConnector.id,
+      {
+        id: transformerId,
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        source: { type: 'oibus-api', dataSourceId: 'ds2' }
+      },
+      'userTest'
+    );
+    connector = repository.findNorthById(newNorthConnector.id)!;
+    assert.strictEqual((connector.transformers[0].source as { type: 'oibus-api'; dataSourceId: string }).dataSourceId, 'ds2');
+  });
+
+  it('should return null when removing a transformer whose id does not exist', () => {
+    assert.doesNotThrow(() => repository.removeTransformer('non-existent-transformer-id', 'removeUser'));
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    const deleteCalls = recordMock.mock.calls.filter(
+      call =>
+        call.arguments[0] === 'north_transformer' && call.arguments[1] === 'non-existent-transformer-id' && call.arguments[2] === 'DELETE'
+    );
+    assert.strictEqual(deleteCalls.length, 0);
+  });
+
   it('should delete a north connector', () => {
     const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
     newNorthConnector.id = '';
