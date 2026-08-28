@@ -1,6 +1,6 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Timezone } from '../../../../../backend/shared/model/types';
+import { LANGUAGES, Language, Timezone } from '../../../../../backend/shared/model/types';
 import { Observable, of, switchMap, tap, timer } from 'rxjs';
 import { CurrentUserService } from '../../shared/current-user.service';
 import { ChangePasswordModalComponent } from '../change-password-modal/change-password-modal.component';
@@ -45,11 +45,19 @@ export class EditUserSettingsComponent implements CanComponentDeactivate {
   form = inject(NonNullableFormBuilder).group({
     firstName: [null as string | null, [Validators.maxLength(50)]],
     lastName: [null as string | null, [Validators.maxLength(50)]],
-    timezone: ['' as Timezone, Validators.required]
+    timezone: ['' as Timezone, Validators.required],
+    language: ['' as Language, Validators.required]
   });
   editedUserSettings = signal<UserDTO | null>(null);
 
   state = new ObservableState();
+
+  readonly languages: ReadonlyArray<Language> = LANGUAGES;
+
+  private static readonly LANGUAGE_DISPLAY_NAMES: Record<Language, string> = {
+    en: 'English',
+    fr: 'Français'
+  };
 
   private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
   timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
@@ -79,7 +87,7 @@ export class EditUserSettingsComponent implements CanComponentDeactivate {
       login: this.editedUserSettings()!.login,
       firstName: formValue.firstName!,
       lastName: formValue.lastName!,
-      language: this.editedUserSettings()!.language!,
+      language: formValue.language!,
       timezone: formValue.timezone!
     };
 
@@ -116,7 +124,8 @@ export class EditUserSettingsComponent implements CanComponentDeactivate {
         const formValue = {
           firstName: settings.firstName,
           lastName: settings.lastName,
-          timezone: settings.timezone
+          timezone: settings.timezone,
+          language: settings.language
         };
         this.form.setValue(formValue);
       })
@@ -125,5 +134,9 @@ export class EditUserSettingsComponent implements CanComponentDeactivate {
 
   openChangePasswordModal() {
     this.modalService.open(ChangePasswordModalComponent, { size: 'sm', backdrop: 'static' });
+  }
+
+  languageDisplayName(lang: Language): string {
+    return EditUserSettingsComponent.LANGUAGE_DISPLAY_NAMES[lang];
   }
 }
