@@ -8,7 +8,7 @@ import RegexTester from '../../../src/components/RegexTester/index';
 
 The **Folder Scanner** South connector periodically scans a specified input folder for new files based on **regular expressions (Regexp)** defined in its items. Matching files are transmitted to North caches.
 
-## Specific Settings
+## Specific Settings {#specific-settings}
 
 | Setting            | Description                                                                                                                                                                                                                    | Example Value               |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
@@ -21,7 +21,7 @@ The user running OIBus (terminal user or service account) **must have read acces
 
 :::
 
-### Network Share Authentication (Windows only)
+### Network Share Authentication (Windows only) {#network-share-authentication-windows-only}
 
 To scan a Windows network share, set **Input folder** to a UNC path (`\\server\share\...`) and provide credentials
 for it:
@@ -39,7 +39,7 @@ so it also works when OIBus runs as a Windows service, where the interactive-ses
 unreliable even under an account that otherwise has access to the share.
 :::
 
-## Item Settings
+## Item Settings {#item-settings}
 
 | Setting               | Description                                                                                                                                                             | Example Value                           |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |

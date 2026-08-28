@@ -5,7 +5,7 @@ sidebar_position: 5
 
 # Aspen InfoPlus.21® (IP21) → Amazon S3™
 
-## Beforehand
+## Beforehand {#beforehand}
 
 AspenTech IP21 is a real-time data historian that collects, stores, and analyses time-series data from industrial processes. OIBus connects to IP21 via ODBC.
 
@@ -14,18 +14,16 @@ See the [North Amazon S3](../guide/north-connectors/aws-s3.md) and [South ODBC](
 This use case requires an [OIBus Agent](../guide/oibus-agent/installation). The example uses the following fictional network.
 
 <div style={{ textAlign: 'center' }}>
-  <div>
 
-    ![IP21 -> AWS S3](../../static/img/use-cases/ip21-aws.svg)
+![IP21 -> AWS S3](../../static/img/use-cases/ip21-aws.svg)
 
-  </div>
 </div>
 
 :::caution Install the Agent close to IP21
 The Aspen SQLplus driver is sensitive to network latency. Install the OIBus Agent on the IP21 server, or at least on the same local network. Additional network hops or firewalls between the Agent and the historian can cause data collection issues and performance degradation.
 :::
 
-## South ODBC
+## South ODBC {#south-odbc}
 
 ODBC connections can be managed in two ways:
 
@@ -45,22 +43,20 @@ Port 2224 is the default. You can change it during installation. Make sure the c
 The connection string follows the standard ODBC format. The **AspenTech SQLplus** ODBC driver must be installed on the machine running the OIBus Agent.
 
 <div style={{ textAlign: 'center' }}>
-  <div>
 
-    ![ODBC settings](../../static/img/use-cases/odbc-settings.png)
+![ODBC settings](../../static/img/use-cases/odbc-settings.png)
 
-  </div>
 </div>
 
 :::tip Testing connection
 Click **Test settings** to verify the connection before saving.
 :::
 
-### Items
+### Items {#items}
 
 The ODBC connector accepts SQL queries. See the [MSSQL item documentation](./use-case-mssql#sql-queries) for guidance on writing queries with `@StartTime` and `@EndTime` variables.
 
-## North Amazon S3
+## North Amazon S3 {#north-amazon-s3}
 
 You need the following before filling in the connector settings:
 
@@ -70,11 +66,9 @@ You need the following before filling in the connector settings:
 - Access key and secret key generated in Amazon S3
 
 <div style={{ textAlign: 'center' }}>
-  <div>
 
-    ![AWS S3 settings](../../static/img/use-cases/aws-s3-settings.png)
+![AWS S3 settings](../../static/img/use-cases/aws-s3-settings.png)
 
-  </div>
 </div>
 
 :::tip Testing connection
