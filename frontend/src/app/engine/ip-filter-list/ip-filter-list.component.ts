@@ -11,6 +11,7 @@ import { IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model
 import { EditIpFilterModalComponent } from './edit-ip-filter-modal/edit-ip-filter-modal.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { DocsUrlService } from '../../shared/docs-url.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
@@ -45,6 +46,9 @@ export class IpFilterListComponent {
   private notificationService = inject(NotificationService);
   private ipFilterService = inject(IpFilterService);
   private engineService = inject(EngineService);
+  private docsUrlService = inject(DocsUrlService);
+
+  readonly helpUrl = this.docsUrlService.resolve('guide/engine/ip-filters');
 
   allIpFilters: Array<IPFilterDTO> = [];
   private filteredIpFilters: Array<IPFilterDTO> = [];

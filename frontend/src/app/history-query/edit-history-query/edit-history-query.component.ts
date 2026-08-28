@@ -44,6 +44,7 @@ import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { DocsUrlService } from '../../shared/docs-url.service';
 import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-query-modal/reset-cache-history-query-modal.component';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
@@ -138,6 +139,19 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private confirmationService = inject(ConfirmationService);
   private translateService = inject(TranslateService);
+  private docsUrlService = inject(DocsUrlService);
+
+  readonly generalSettingsHelpUrl = this.docsUrlService.resolve('guide/history-queries');
+  readonly cachingHelpUrl = this.docsUrlService.resolve('guide/north-connectors/common-settings#caching');
+  readonly itemSectionHelpUrl = this.docsUrlService.resolve('guide/south-connectors/common-settings#item-section');
+
+  get northTypeHelpUrl(): string {
+    return this.docsUrlService.resolve('guide/north-connectors/' + this.northType);
+  }
+
+  get southTypeHelpUrl(): string {
+    return this.docsUrlService.resolve('guide/south-connectors/' + this.southType);
+  }
 
   mode: 'create' | 'edit' = 'create';
   historyId!: string;

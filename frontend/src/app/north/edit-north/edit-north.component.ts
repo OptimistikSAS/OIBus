@@ -23,6 +23,7 @@ import { ModalService } from '../../shared/modal.service';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { CertificateService } from '../../services/certificate.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { DocsUrlService } from '../../shared/docs-url.service';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
 import { TransformerService } from '../../services/transformer.service';
@@ -76,6 +77,10 @@ export class EditNorthComponent implements CanComponentDeactivate {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private docsUrlService = inject(DocsUrlService);
+
+  readonly generalSettingsHelpUrl = this.docsUrlService.resolve('guide/north-connectors/common-settings');
+  readonly cachingHelpUrl = this.docsUrlService.resolve('guide/north-connectors/common-settings#caching');
 
   mode: 'create' | 'edit' = 'create';
   northId!: string;
@@ -188,6 +193,10 @@ export class EditNorthComponent implements CanComponentDeactivate {
         this.buildForm();
         this.loading = false;
       });
+  }
+
+  get northTypeHelpUrl(): string {
+    return this.docsUrlService.resolve('guide/north-connectors/' + this.northType);
   }
 
   private checkUniqueness(): ValidatorFn {

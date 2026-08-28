@@ -35,6 +35,7 @@ import { CertificateService } from '../../services/certificate.service';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { DocsUrlService } from '../../shared/docs-url.service';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
@@ -106,6 +107,9 @@ export class SouthDetailComponent {
   private engineService = inject(EngineService);
   private translateService = inject(TranslateService);
   private destroyRef = inject(DestroyRef);
+  private docsUrlService = inject(DocsUrlService);
+
+  readonly itemSectionHelpUrl = this.docsUrlService.resolve('guide/south-connectors/common-settings#item-section');
 
   protected router = inject(Router);
   private route = inject(ActivatedRoute);
