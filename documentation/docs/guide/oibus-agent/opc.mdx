@@ -6,15 +6,15 @@ sidebar_position: 2
 
 The OIBus agent can receive the following [HTTP calls](#http-api). The agent runs a local HDA module through an inter-process communication. To run properly, [COM/DCOM](#comdcom-setup) must be enabled.
 
-## HTTP API
+## HTTP API {#http-api}
 
-### Status
+### Status {#status}
 
 ```bash
 curl --location 'http://localhost:2224/api/opc/id/status'
 ```
 
-### Connection
+### Connection {#connection}
 
 ```bash
 curl --location --request PUT 'http://localhost:2224/api/opc/id/connect' \
@@ -25,7 +25,7 @@ curl --location --request PUT 'http://localhost:2224/api/opc/id/connect' \
 }'
 ```
 
-### Read
+### Read {#read}
 
 ```bash
 curl --location --request PUT 'http://localhost:2224/api/opc/id/read' \
@@ -54,25 +54,25 @@ curl --location --request PUT 'http://localhost:2224/api/opc/id/read' \
 }'
 ```
 
-### Disconnection
+### Disconnection {#disconnection}
 
 ```bash
 curl --location --request DELETE 'http://localhost:2224/api/opc/id/disconnect'
 ```
 
-## COM/DCOM setup
+## COM/DCOM setup {#comdcom-setup}
 
-### Background
+### Background {#background}
 
-#### COM
+#### COM {#com}
 
 COM is the standard protocol for communication between objects located on the same computer but which are part of different programs. The server is the object providing services, such as making data available. The client is an application that uses the services provided by the server.
 
-#### DCOM
+#### DCOM {#dcom}
 
 DCOM represents an expansion of COM functionality to allow access to objects on remote computers. This protocol allows standardized data exchange between applications from industry, administrative offices and manufacturing.
 
-#### OPC
+#### OPC {#opc}
 
 The OPC client is an application that accesses process data, messages, and archives of an OPC server. An OPC server is a program that provides standard software interface to read or write data.
 
@@ -80,9 +80,9 @@ The OPC client is an application that accesses process data, messages, and archi
 This page gives some hints on how to set up a communication with COM/DCOM to an OPCHDA server. However, in industrial context, it is often the responsibility of the IT team to correctly set the permissions, firewall and Windows configuration.
 :::
 
-### Windows settings (client)
+### Windows settings (client) {#windows-settings-client}
 
-#### Client machine settings
+#### Client machine settings {#client-machine-settings}
 
 Follow these steps to enable COM/DCOM communications from the client. First, open the Component services, and access the _Properties_ of the computer.
 
@@ -105,7 +105,7 @@ On the _Launch and Activation Permissions_ window, allow the following permissio
 
 <div style={{ textAlign: 'center' }}>![Access Permissions](../../../static/img/guide/south/opchda/OPCHDA-access-permissions.png)</div>
 
-#### Test communication
+#### Test communication {#test-communication}
 
 DCOM uses port 135 of the HDA server to exchange with the client. To test connectivity:
 
@@ -115,7 +115,7 @@ tnc localhost -port 135
 
 <div style={{ textAlign: 'center' }}>![Test DCOM communication](../../../static/img/guide/south/opchda/OPCHDA-test-communication.png)</div>
 
-#### Authentication
+#### Authentication {#authentication}
 
 An OPCHDA client program will communicate with the DA/HDA server with the IP address or hostname of the server followed by the "progId" of the server. The user must be known on the HDA server.
 
@@ -127,7 +127,7 @@ The user must be a member of the _Distributed COM Users_ group
 If the program runs through a service (such as OIBus), configure the service to run as a specific user.
 :::
 
-#### Firewall configuration
+#### Firewall configuration {#firewall-configuration}
 
 Configure the firewall by adding a rule on port 135.
 
@@ -141,23 +141,23 @@ For cloud hosts like Lightsail, configure additional firewall rules:
   ![Lightsail Firewall Configuration](../../../static/img/guide/south/opchda/OPCHDA-lightsail-firewall.png)
 </div>
 
-#### OPCEnum tool
+#### OPCEnum tool {#opcenum-tool}
 
 The [OPCEnum](https://opcfoundation.org/developer-tools/samples-and-tools-classic/core-components/) tool allows OPCHDA clients to locate servers on remote nodes.
 
-##### RPC unavailable
+##### RPC unavailable {#rpc-unavailable}
 
 If the RPC server is unavailable, check your firewall and test communication again.
 
 <div style={{ textAlign: 'center' }}>![RPC Unavailable](../../../static/img/guide/south/opchda/OPCHDA-rpc-unavailable.png)</div>
 
-##### Access denied
+##### Access denied {#access-denied}
 
 Check user credentials and group membership if access is denied.
 
 <div style={{ textAlign: 'center' }}>![Access denied](../../../static/img/guide/south/opchda/OPCHDA-access-denied.png)</div>
 
-### Server settings
+### Server settings {#server-settings}
 
 Check if DCOM is enabled for the OPC Server application in the _Component Service_ window.
 

@@ -12,7 +12,7 @@ For deployment instructions (volumes, networking, environment variables, recomme
 see the [Docker Installation Guide](../guide/installation/installation.mdx) on the user-facing
 side of the docs.
 
-## 🐳 Use the official image
+## 🐳 Use the official image {#-use-the-official-image}
 
 For day-to-day use, **pull the pre-built image** rather than building your own:
 
@@ -32,7 +32,7 @@ The image is built for `linux/amd64` and `linux/arm64`; Docker picks the right v
 automatically when you `pull`. The full publish flow runs through
 [`.github/workflows/docker.yml`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/workflows/docker.yml).
 
-### Minimal `docker run`
+### Minimal `docker run` {#minimal-docker-run}
 
 ```bash
 docker run -d \
@@ -46,7 +46,7 @@ docker run -d \
 - **`/app/OIBus/OIBusData`** — where the container stores configuration, the cache, and logs. Mount a
   host directory here so data survives a container replacement.
 
-### Docker Compose example
+### Docker Compose example {#docker-compose-example}
 
 The repository's `docker-compose.yml` includes a ready-to-use service definition that you can copy:
 
@@ -66,7 +66,7 @@ The repo also bundles `nginx`, `opcua-server`, `mqtt-broker`, `postgres`, and ot
 Docker Compose profiles — useful for a full dev / testing stack. See the
 [Benchmark the product](./index.md#benchmark-the-product) section for what's available.
 
-## 🔧 What's in the image
+## 🔧 What's in the image {#-whats-in-the-image}
 
 The Dockerfile lives at
 [`build/docker/Dockerfile`](https://github.com/OptimistikSAS/OIBus/blob/main/build/docker/Dockerfile).
@@ -109,14 +109,14 @@ A few things worth knowing:
 - The default `VERSION="v3.9.0"` in the Dockerfile is just a placeholder for local builds. {/* <!-- x-release-please-version --> */}
   The release pipeline always passes `--build-arg VERSION=<tag>` to override it.
 
-### Build arguments
+### Build arguments {#build-arguments}
 
 | Argument     | How it's set                                 | Purpose                                                                                                                   |
 | ------------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `TARGETARCH` | Set by `docker buildx` from `--platform`     | Tells the Dockerfile which arch to fetch. Don't pass it manually.                                                         |
 | `VERSION`    | `--build-arg VERSION=...` (default `v3.9.0`) | Which GitHub release to pull binaries from. Must match an existing release tag. {/* <!-- x-release-please-version --> */} |
 
-## 🛠 Building your own image
+## 🛠 Building your own image {#-building-your-own-image}
 
 You only need this if you're patching the Dockerfile itself, testing against a release that doesn't
 have an official image yet, or building for an arch the matrix doesn't ship. Everyone else: use
@@ -124,7 +124,7 @@ have an official image yet, or building for an arch the matrix doesn't ship. Eve
 
 All commands run from the repository's `build/docker/` directory.
 
-### Build for your host architecture
+### Build for your host architecture {#build-for-your-host-architecture}
 
 ```bash
 cd build/docker
@@ -133,7 +133,7 @@ docker build -t oibus-local .
 
 `docker build` defaults to your host's architecture; `TARGETARCH` is filled in automatically.
 
-### Build for a specific architecture
+### Build for a specific architecture {#build-for-a-specific-architecture}
 
 Use `--platform`, NOT `--build-arg`:
 
@@ -148,7 +148,7 @@ docker buildx build --platform linux/amd64 -t oibus-local:amd64 .
 `docker buildx` populates `TARGETARCH` from `--platform`, the Dockerfile rewrites `amd64 → x64` so it
 matches the release-asset naming, and the right zip is fetched.
 
-### Pin a specific OIBus version
+### Pin a specific OIBus version {#pin-a-specific-oibus-version}
 
 {/* x-release-please-start-version */}
 
@@ -163,7 +163,7 @@ docker build -t oibus-local --build-arg VERSION="v3.9.0" .
 pre-release tag), the `curl` step fails. To use a pre-release, check the
 [Releases page](https://github.com/OptimistikSAS/OIBus/releases) for the exact asset name and tag.
 
-### Build multi-arch in one shot
+### Build multi-arch in one shot {#build-multi-arch-in-one-shot}
 
 ```bash
 docker buildx build \

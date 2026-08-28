@@ -11,9 +11,9 @@ OIBus uses a [fork of pkg](https://github.com/yao-pkg/pkg) as its building tool 
 The original `pkg` is deprecated. OIBus uses a maintained fork that's compatible with modern Node.js versions.
 :::
 
-## 📦 Building Binaries
+## 📦 Building Binaries {#-building-binaries}
 
-### Available Build Commands
+### Available Build Commands {#available-build-commands}
 
 | Command                     | Platform | Architecture  | Description                                      |
 | --------------------------- | -------- | ------------- | ------------------------------------------------ |
@@ -23,7 +23,7 @@ The original `pkg` is deprecated. OIBus uses a maintained fork that's compatible
 | `npm run build:macos-x64`   | macOS    | Intel         | Builds for Intel-based Macs                      |
 | `npm run build:macos-arm64` | macOS    | Apple Silicon | Builds for M1/M2 Macs                            |
 
-### Build Process Details
+### Build Process Details {#build-process-details}
 
 1. **Prerequisites**:
    - Node.js installed (version specified in `.nvmrc`)
@@ -44,9 +44,9 @@ The original `pkg` is deprecated. OIBus uses a maintained fork that's compatible
    - Each platform has its own subdirectory
    - Includes all required assets and dependencies
 
-## 🚀 Starting the Binary
+## 🚀 Starting the Binary {#-starting-the-binary}
 
-### Available Start Commands
+### Available Start Commands {#available-start-commands}
 
 | Command                     | Platform            | Description                 |
 | --------------------------- | ------------------- | --------------------------- |
@@ -56,7 +56,7 @@ The original `pkg` is deprecated. OIBus uses a maintained fork that's compatible
 | `npm run start:macos-x64`   | macOS Intel         | Starts Intel Mac binary     |
 | `npm run start:macos-arm64` | macOS Apple Silicon | Starts Apple Silicon binary |
 
-### Data Folder
+### Data Folder {#data-folder}
 
 All commands use `data-folder` as the default directory for:
 
@@ -65,19 +65,19 @@ All commands use `data-folder` as the default directory for:
 - Log files
 - Temporary data
 
-## Windows Installer
+## Windows Installer {#windows-installer}
 
 The Windows installer is built using [Inno Setup](https://jrsoftware.org/isinfo.php).
 
-### Prerequisites
+### Prerequisites {#prerequisites}
 
 - Windows operating system
 - [Inno Setup](https://jrsoftware.org/isinfo.php) installed
 - OpenSSL for certificate operations
 
-### Certificate Setup
+### Certificate Setup {#certificate-setup}
 
-#### 1. Create Configuration File
+#### 1. Create Configuration File {#1-create-configuration-file}
 
 Create `cert.conf` with the following content:
 
@@ -109,7 +109,7 @@ organizationName = OI
 commonName = oibus
 ```
 
-#### 2. Generate Certificate Files
+#### 2. Generate Certificate Files {#2-generate-certificate-files}
 
 Run these commands in **PowerShell**:
 
@@ -128,14 +128,14 @@ $pfxContent = [System.Convert]::ToBase64String((Get-Content -Path "oibus.pfx" -E
 $pfxContent | Out-File -FilePath "oibus64.pfx" -Encoding ASCII
 ```
 
-#### 3. Build the Installer
+#### 3. Build the Installer {#3-build-the-installer}
 
 ```powershell
 # Run the build
 npm run build:win-setup
 ```
 
-### Installer Build Process
+### Installer Build Process {#installer-build-process}
 
 1. The script:
    - Compiles the binary (if not already built)

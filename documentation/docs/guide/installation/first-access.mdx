@@ -16,7 +16,7 @@ Change the password immediately after your first login in the [User Settings](#u
 The default port **2223** can be changed in [Engine Settings](../engine/engine-settings.mdx#port) if it conflicts with another service.
 :::
 
-## Home Page
+## Home Page {#home-page}
 
 The home page gives a real-time overview of your OIBus instance: enabled North connectors are listed with their
 live metrics first, followed by the engine status, then the enabled South connectors.
@@ -26,7 +26,7 @@ live metrics first, followed by the engine status, then the enabled South connec
 Click the **magnifying glass** icon next to any connector or the engine to open its display page, where you can
 inspect detailed metrics and cache status.
 
-## Engine
+## Engine {#engine}
 
 The engine page is the control centre for OIBus-wide settings. From here you can configure:
 
@@ -57,7 +57,7 @@ To access OIBus from another machine, add an IP filter — including via curl fo
 See [IP Filters](../engine/ip-filters.mdx) for details.
 :::
 
-### Engine Metrics
+### Engine Metrics {#engine-metrics}
 
 The engine display page shows real-time resource usage for the OIBus process, tracked since the last time metrics
 were reset (a **Reset metrics** button is available on this page):
@@ -74,7 +74,7 @@ were reset (a **Reset metrics** button is available on this page):
 | **External memory (min / current / max)** | Memory used by native extensions (e.g., C++ bindings).   |
 | **Array buffer (min / current / max)**    | Memory allocated for binary data buffers.                |
 
-## North Connectors
+## North Connectors {#north-connectors}
 
 North connectors define where OIBus sends data. Click **+** to add a new connector and choose from the available
 types.
@@ -94,7 +94,7 @@ Refer to the [North connectors guide](../north-connectors/common-settings.md) fo
 throttling, and transformers.
 :::
 
-## South Connectors
+## South Connectors {#south-connectors}
 
 South connectors define the data sources OIBus reads from. Click **+** to add a new connector and choose from the
 available protocols.
@@ -114,7 +114,7 @@ Refer to the [South connectors guide](../south-connectors/common-settings.md) fo
 items, and subscription-based protocols.
 :::
 
-## History Queries
+## History Queries {#history-queries}
 
 History queries replay a time range of data through a South connector and forward it to a North connector.
 Click **+** to create a new history query.
@@ -134,7 +134,7 @@ Refer to the [History Queries guide](../history-queries.md) for details on time 
 execution controls.
 :::
 
-## Logs
+## Logs {#logs}
 
 The log page displays OIBus runtime logs and refreshes automatically every 10 seconds.
 
@@ -155,7 +155,7 @@ Use the filters to narrow down what you see:
 Log verbosity is configured per destination (console, file, database, Loki, Syslog, OIAnalytics) in
 [Engine Settings → Logging Parameters](../engine/engine-settings.mdx#logging-parameters).
 
-## About
+## About {#about}
 
 The **About** page shows the OIBus version, launcher version, and runtime environment details (executable path,
 data folder, operating system, architecture, process ID, hostname), along with a license link and a link to the
@@ -165,7 +165,7 @@ official OIBus site.
 
 Use this page to confirm the exact version when reporting issues or checking compatibility with OIAnalytics.
 
-## User Settings
+## User Settings {#user-settings}
 
 The **User Settings** page lets you update your account's name, set the timezone used for date and time displays
 throughout the interface, and change your login password.
