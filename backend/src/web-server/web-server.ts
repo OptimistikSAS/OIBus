@@ -143,6 +143,9 @@ export default class WebServer {
     // Static files for web client
     this.app.use(express.static(path.join(__dirname, '../../../frontend/browser')));
 
+    // Static files for the embedded documentation site
+    this.app.use('/documentation', express.static(path.join(__dirname, '../../../documentation')));
+
     // CORS middleware
     this.app.use(this.setupCors());
 
@@ -168,7 +171,7 @@ export default class WebServer {
 
     // Create a function to check if a path is a static file
     const isStaticFile = (path: string) => {
-      return path.startsWith('/assets/') || path === '/favicon.ico';
+      return path.startsWith('/assets/') || path === '/favicon.ico' || path.startsWith('/documentation');
     };
 
     // Rate limiting for configuration API endpoints
