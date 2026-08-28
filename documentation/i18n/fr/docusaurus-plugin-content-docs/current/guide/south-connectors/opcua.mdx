@@ -1,0 +1,286 @@
+---
+sidebar_position: 11
+---
+
+import ThrottlingSettings from './_throttling-settings.mdx';
+
+# OPC UA™
+
+Protocole OPC Unified Architecture (OPC UA) pour un accès sécurisé aux données industrielles en mode lecture seule, prenant en charge à la fois les modes Historical Access (HA) et Data Access (DA).
+
+:::info Présentation technologique
+
+- Successeur moderne d'OPC Classic™ (voir le [connecteur OPC Classic™](./opc.mdx))
+- Basé sur TCP/IP avec un espace d'adressage arborescent
+- Utilise des ID de nœud pour référencer les données
+- Implémenté à l'aide de la [bibliothèque node-opcua](https://github.com/node-opcua/node-opcua)
+- Nativement embarqué dans de nombreux automates industriels
+  :::
+
+## OPC Classic vs OPC UA {#opc-classic-vs-opc-ua}
+
+|                            | OPC Classic™                                                                                                                | OPC UA                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Standard**               | Trois spécifications distinctes : **DA** (valeurs en direct), **HDA** (données historiques), **AE** (alarmes &amp; événements) | Norme unifiée unique : **DA** (valeurs en direct) + **HA** (accès historique) + alarmes         |
+| **Nom du mode historique** | **HDA** — Historical Data Access                                                                                          | **HA** — Historical Access (OPC UA Part 11). Même concept, nom différent — voir la note ci-dessous |
+| **Transport**               | COM/DCOM — communication inter-processus Windows uniquement                                                              | TCP/IP ou HTTPS — fonctionne sur tout réseau IP                                                |
+| **Plateforme**              | Windows uniquement                                                                                                        | Multi-plateforme : Windows, Linux, macOS, embarqué                                             |
+| **Sécurité**                | Repose sur la sécurité du domaine/DCOM Windows                                                                            | Intégrée : signature des messages, chiffrement, authentification par certificat                |
+| **Introduit en**            | 1996                                                                                                                       | 2006                                                                                            |
+| **Exigence OIBus**          | Nécessite un [agent OIBus](../oibus-agent/installation.mdx) s'exécutant sur la machine Windows hébergeant le serveur OPC | Se connecte directement depuis OIBus — aucun agent requis                                      |
+
+:::note HDA vs HA — la confusion des noms
+Les utilisateurs venant d'un environnement OPC Classic cherchent souvent **HDA** dans OPC UA et ne le trouvent pas.
+OPC UA renomme la fonctionnalité équivalente **HA** (Historical Access, défini dans OPC UA Part 11).
+Le concept est identique — interroger un serveur pour des valeurs enregistrées dans le passé — mais l'acronyme
+a changé. Dans OIBus, le connecteur OPC Classic appelle le mode `HDA`, et le connecteur OPC UA l'appelle
+`HA`. Ne confondez pas OPC UA HA avec OPC Classic HDA : ce sont des protocoles distincts et ils ne sont **pas
+interopérables**.
+:::
+
+**Choisissez OPC Classic** lorsque votre infrastructure exploite déjà des serveurs OPC DA ou OPC HDA qui ne peuvent pas être migrés. Un agent OIBus doit être déployé sur la machine Windows qui héberge ces serveurs.
+
+**Choisissez OPC UA** pour tout nouveau déploiement. OPC UA est la norme actuelle de l'industrie : indépendante de la plateforme, adaptée aux réseaux, et avec une sécurité native intégrée.
+
+## Serveurs OPC UA courants {#common-opc-ua-servers}
+
+| Serveur                                                                                                         | Éditeur               | Modes  | Remarques                                                                                                                                         |
+| -------------------------------------------------------------------------------------------------------------- | -------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [S7-1500 / S7-1200](https://www.siemens.com/global/en/products/automation/systems/industrial/plc/s7-1500.html) | Siemens              | DA     | Serveur OPC UA natif intégré aux automates Siemens modernes — aucun logiciel supplémentaire requis. Les anciens S7-300/400 utilisent OPC Classic via SIMATIC NET |
+| [KEPServerEX](https://www.ptc.com/en/products/kepware/kepserverex)                                             | PTC (Kepware)        | DA     | Expose un point d'accès OPC UA en plus de son interface OPC Classic — chemin de transition pratique                                                  |
+| [Ignition](https://inductiveautomation.com/ignition/)                                                          | Inductive Automation | DA     | Plateforme SCADA populaire avec un serveur OPC UA intégré                                                                                          |
+| [PI Server](https://www.aveva.com/en/products/aveva-pi-system/)                                                | AVEVA (OSIsoft)      | DA, HA | Expose également une interface OPC Classic HDA — voir la page du connecteur OPC Classic                                                                |
+| [OPC UA Simulation Server](https://www.prosysopc.com/products/opc-ua-simulation-server/)                       | Prosys               | DA, HA | Serveur de simulation gratuit ; idéal pour tester la configuration OIBus avant de se connecter à un serveur réel                                              |
+
+## Paramètres spécifiques {#specific-settings}
+
+### Configuration de la connexion {#connection-configuration}
+
+| Paramètre                                     | Description                                                                                                               | Exemple de valeur              |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| **URL du point d'accès**                            | URL du serveur OPC UA.                                                                                                 | `opc.tcp://localhost:4840` |
+| **Maintenir la session active**                      | Maintenir la session active entre les messages.                                                                                  | Activé/Désactivé           |
+| **Intervalle de nouvelle tentative**                          | Délai en millisecondes entre les nouvelles tentatives.                                                                                    | `5000`                     |
+| **Délai d'expiration de lecture**                            | Durée d'exécution maximale en millisecondes pour les requêtes.                                                                      | `15000`                    |
+| **Requêtes parallèles maximum** (`maxParallelRun`) | Nombre maximal de requêtes d'éléments/groupes qu'OIBus peut exécuter simultanément contre ce serveur. De `1` (entièrement séquentiel) à `32`. | `1`                         |
+
+### Requêtes parallèles {#parallel-queries}
+
+Par défaut (**Requêtes parallèles maximum** = `1`), OIBus interroge les éléments et groupes de ce connecteur un à
+la fois, même si plusieurs d'entre eux sont dus en même temps. Augmenter ce paramètre permet à OIBus de traiter en pipeline jusqu'à
+ce nombre de requêtes simultanément, ce qui aide lorsque de nombreux éléments/groupes ont des modes de scrutation courts et attendre
+leur tour prendrait autrement du retard.
+
+Toutes les requêtes simultanées partagent la **même session OPC UA** — OIBus n'ouvre pas de session séparée par
+requête. Une session unique prend déjà en charge en toute sécurité des requêtes en cours de traitement qui se chevauchent, et de nombreux
+serveurs OPC UA (en particulier ceux embarqués dans des automates) limitent le nombre de sessions simultanées par client à un nombre
+faible, parfois exactement un, donc partager une seule session évite d'atteindre cette limite. **Requêtes parallèles maximum**
+limite uniquement le nombre de requêtes traitées en pipeline sur cette session partagée à la fois — cela n'ouvre pas de
+sessions supplémentaires.
+
+:::tip Augmentez progressivement
+Chaque requête simultanée ajoute quand même de la charge sur la même connexion sous-jacente et sur le serveur lui-même.
+Augmentez **Requêtes parallèles maximum** progressivement et surveillez les temps de réponse du serveur et les
+journaux du connecteur — un serveur avec une capacité de traitement limitée peut mieux répondre à une valeur plus basse même si
+davantage de requêtes simultanées seraient techniquement autorisées.
+:::
+
+### Régulation des données {#data-throttling}
+
+| Paramètre                         | Description                                                                    | Exemple de valeur |
+| ------------------------------- | ------------------------------------------------------------------------------ | ------------- |
+| Nombre de messages avant vidage | Nombre de messages à accumuler avant de les vider vers les caches North               | `1000`        |
+| Délai entre les vidages             | Délai (en millisecondes) entre les vidages automatiques des messages accumulés | `1000`        |
+
+### Paramètres de sécurité {#security-settings}
+
+| Paramètre             | Description                                                       | Exemple de valeur                                       |
+| ------------------- | ----------------------------------------------------------------- | --------------------------------------------------- |
+| **Mode de sécurité**   | Mode de sécurité pour la connexion.                                 | `None`, `Sign`, `Sign and encrypt`                  |
+| **Politique de sécurité** | Politique de sécurité pour la connexion. Voir la note ci-dessous pour la liste complète. | `None`, `Basic256-SHA256`, `AES128-SHA256-RSA-OAEP` |
+
+:::note Valeurs de la politique de sécurité
+
+| Valeur                  | Description                                                                                                                 |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| None                   | Aucune sécurité. Les données sont transmises non chiffrées sans authentification des messages.                                |
+| Basic128               | Chiffrement AES-128, signature HMAC-SHA1, échange de clés RSA-1024.                                                               |
+| Basic192               | Chiffrement AES-192, signature HMAC-SHA1, échange de clés RSA-1024.                                                               |
+| Basic256               | ⚠️ **Obsolète.** Chiffrement AES-256, signature HMAC-SHA1. À éviter — SHA-1 est cryptographiquement faible.                          |
+| Basic128-RSA15         | ⚠️ **Obsolète.** Chiffrement AES-128, signature HMAC-SHA1, remplissage RSA PKCS#1 v1.5. À éviter — SHA-1 et RSA-1.5 sont tous deux faibles. |
+| Basic192-RSA15         | Chiffrement AES-192, signature HMAC-SHA1, remplissage RSA PKCS#1 v1.5.                                                             |
+| Basic256-RSA15         | Chiffrement AES-256, signature HMAC-SHA1, remplissage RSA PKCS#1 v1.5.                                                             |
+| Basic256-SHA256        | Chiffrement AES-256, signature HMAC-SHA256, remplissage RSA-OAEP. **Recommandé** pour la plupart des déploiements.                                            |
+| AES128-SHA256-RSA-OAEP | Chiffrement AES-128, signature SHA-256, remplissage RSA-OAEP. Norme moderne (OPC UA Part 2 rev. 1.05).                           |
+| PubSub AES-128-CTR     | Chiffrement symétrique AES-128-CTR pour le mode OPC UA Pub/Sub.                                                                   |
+| PubSub AES-256-CTR     | Chiffrement symétrique AES-256-CTR pour le mode OPC UA Pub/Sub.                                                                   |
+
+:::
+
+### Méthodes d'authentification {#authentication-methods}
+
+| Paramètre        | Description                                             | Exemple de valeur                              |
+| -------------- | ------------------------------------------------------- | ------------------------------------------ |
+| Authentification | Méthode d'authentification pour la connexion au serveur OPC UA. | `None`, `Username/Password`, `Certificate` |
+| Nom d'utilisateur       | Nom d'utilisateur pour l'authentification par nom d'utilisateur/mot de passe.          | `opc_user`                                 |
+| Mot de passe       | Mot de passe pour l'authentification par nom d'utilisateur/mot de passe.          | `••••••••`                                 |
+| Chemin du fichier de certificat | Fichier de certificat client pour l'authentification par certificat. | `/path/to/cert.pem`                        |
+| Chemin du fichier de clé  | Clé privée pour l'authentification par certificat.        | `/path/to/key.pem`                         |
+
+## Paramètres du groupe {#group-settings}
+
+Les éléments sont organisés en **groupes**. Chaque groupe définit une planification partagée et, pour le mode HA, les
+paramètres de régulation par défaut pour tous les éléments qu'il contient.
+
+| Paramètre         | Description                                                | Exemple de valeur |
+| ------------------ | ------------------------------------------------------------ | ------------- |
+| **Nom**            | Libellé unique du groupe au sein de ce connecteur.            | `Group A`     |
+| **Mode de scrutation** | Planification de collecte appliquée à chaque élément du groupe. | `Every 1 min` |
+
+<ThrottlingSettings />
+
+:::tip Surcharger la régulation par élément
+Chaque élément peut surcharger les paramètres de régulation par défaut du groupe en désactivant le bouton **Synchroniser avec le groupe** dans le
+formulaire d'édition de l'élément.
+:::
+
+## Paramètres des éléments {#item-settings}
+
+| Paramètre          | Description                                                                                                  | Exemple de valeur                                   |
+| ---------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| ID du nœud          | Chemin vers le point de données dans l'espace de noms du serveur OPC UA.                                                       | `ns=3;i=1001`, `ns=3;s=Counter`                 |
+| Mode              | Méthode d'accès aux données : `ha` (Historical Access) ou `da` (Data Access).                                                  | `ha`, `da`                                      |
+| Agrégat        | Méthode d'agrégation des valeurs (mode HA uniquement).                                                                     | `Raw`, `Average`, `Minimum`, `Maximum`, `Count` |
+| Rééchantillonnage       | Rééchantillonnage de l'intervalle (mode HA uniquement).                                                                          | `None`, `1 second`, `1 hour`, `1 day`           |
+| Origine de l'horodatage | Source de l'horodatage : `OIBus` (heure de la requête), `Point` (horodatage rapporté par le serveur), `Server` (heure actuelle du serveur). | `OIBus`, `Point`, `Server`                      |
+
+:::caution Compatibilité du serveur
+
+1. Vérifiez que le serveur prend en charge le mode sélectionné (HA/DA)
+2. Tous les serveurs ne prennent pas en charge toutes les options d'agrégation/rééchantillonnage
+3. Recommandé : Utilisez l'agrégat `Raw` et le rééchantillonnage `None`
+
+:::
+
+:::note Valeurs d'agrégat (mode HA)
+
+| Valeur   | Description                    |
+| ------- | ------------------------------ |
+| Raw     | Toutes les valeurs brutes de l'intervalle |
+| Average | Moyenne arithmétique |
+| Minimum | Valeur minimale de l'intervalle |
+| Maximum | Valeur maximale de l'intervalle |
+| Count   | Nombre de points de données |
+
+:::
+
+:::note Valeurs de rééchantillonnage
+
+`None` · `1 second` · `10 seconds` · `30 seconds` · `1 minute` · `1 hour` · `1 day`
+
+:::
+
+## Configuration de sécurité {#security-configuration}
+
+### Certificat de communication {#communication-certificate}
+
+Lorsque le **Mode de sécurité** est défini sur `Sign` ou `Sign and Encrypt`, OIBus s'authentifie auprès du serveur OPC UA
+à l'aide d'un certificat. Ce certificat est :
+
+- **Généré automatiquement** par OIBus au premier démarrage (RSA 4096 bits, auto-signé)
+- **Emplacement** : `<OIBusData>/certs/cert.pem` — clé privée : `<OIBusData>/certs/private.pem`
+
+Avant qu'une connexion sécurisée puisse être établie, **le serveur OPC UA doit faire confiance à ce certificat**. S'il n'est
+pas dans le magasin de confiance du serveur, OIBus enregistrera dans les journaux :
+
+```
+The connection may have been rejected by the server
+```
+
+Pour l'autoriser, importez ou copiez `<OIBusData>/certs/cert.pem` dans le magasin de certificats de confiance du serveur.
+
+![Exemple de certificat Prosys](../../../static/img/guide/south/opcua/prosys-opcua-simulation-server-certificates.png)
+
+:::info Serveur de simulation Prosys — chemins du magasin de confiance
+
+- **Approuvés** : `.prosysopc\prosys-opc-ua-simulation-server\PKI\CA\trusted\certs\`
+- **Rejetés** (déplacer d'ici vers approuvés) : `.prosysopc\prosys-opc-ua-simulation-server\PKI\CA\rejected\`
+  :::
+
+### Certificat d'authentification {#authentication-certificate}
+
+Lorsque l'**Authentification** est définie sur `Certificate`, vous devez fournir un certificat d'identité distinct et sa
+clé privée dans les paramètres du connecteur (champs **Chemin du fichier de certificat** et **Chemin du fichier de clé**). Ce certificat
+identifie l'_utilisateur_, indépendamment du certificat de sécurité de transport ci-dessus.
+
+Le serveur doit également faire confiance à ce certificat d'identité. Pour Prosys, importez-le dans :
+
+```
+.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\certs\
+```
+
+Si le serveur le rejette, OIBus enregistre `BadIdentityTokenRejected (0x80210000)`. Dans Prosys, les certificats d'identité
+rejetés atterrissent dans `.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\rejected\` — déplacez-les vers
+le dossier `certs\` situé à côté.
+
+:::tip Réutiliser le certificat généré par OIBus pour l'authentification
+Vous pouvez pointer les champs de connecteur **Chemin du fichier de certificat** et **Chemin du fichier de clé** vers le certificat propre à OIBus
+(`<OIBusData>/certs/cert.pem` et `<OIBusData>/certs/private.pem`) pour utiliser un seul certificat pour
+à la fois la sécurité au niveau du transport et l'authentification de l'utilisateur.
+:::
+
+## Créer un certificat d'authentification personnalisé pour Prosys {#creating-a-custom-authentication-certificate-for-prosys}
+
+Si vous avez besoin d'un certificat d'identité dédié, utilisé pour authentifier OIBus, et pas seulement pour signer la communication,
+générez-en un avec OpenSSL :
+
+1. Créez `cert.conf` :
+
+```ini
+[ req ]
+default_bits = 2048
+default_md = sha256
+distinguished_name = subject
+req_extensions = req_ext
+x509_extensions = req_ext
+string_mask = utf8only
+prompt = no
+
+[ req_ext ]
+basicConstraints = CA:FALSE
+nsCertType = client, server
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment, dataEncipherment, keyCertSign
+extendedKeyUsage= serverAuth, clientAuth
+nsComment = "OIBus User Cert"
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid,issuer
+subjectAltName = URI:urn:opcua:user:oibus,IP: 127.0.0.1
+
+[ subject ]
+countryName = FR
+stateOrProvinceName = FR
+localityName = Chambéry
+organizationName = OI
+commonName = oibus
+```
+
+2. Générez le certificat et retirez la phrase secrète :
+
+```bash
+# Create key and certificate
+openssl req -new -x509 -keyout oibus.key -out oibus.pem -config cert.conf
+
+# Remove passphrase from key
+openssl rsa -in oibus.key -out oibus.key
+
+# Convert to DER format (required by some servers)
+openssl x509 -inform PEM -outform DER -in oibus.pem -out oibus.der
+```
+
+3. Installez-le dans le magasin PKI utilisateur de Prosys :
+
+```bash
+cp oibus.der ".prosysopc/prosys-opc-ua-simulation-server/USERS_PKI/CA/certs/"
+```
+
+Ensuite, dans les paramètres du connecteur OIBus, définissez **Chemin du fichier de certificat** sur `oibus.pem` et **Chemin du fichier de clé** sur `oibus.key`.

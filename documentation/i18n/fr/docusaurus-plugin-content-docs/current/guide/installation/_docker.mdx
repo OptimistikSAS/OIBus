@@ -1,0 +1,137 @@
+import CodeBlock from '@theme/CodeBlock';
+import packageInfo from '../../../../../../package.json';
+
+## Récupérer l'image {#pull-the-image}
+
+<CodeBlock language="bash">{`docker pull ghcr.io/optimistiksas/oibus:v${packageInfo.version}`}</CodeBlock>
+
+## Lancer le conteneur {#run-the-container}
+
+<CodeBlock language="bash">
+  {`docker run -d \\
+  --name oibus-container \\
+  -p 2223:2223 \\
+  -v ./OIBusData:/app/OIBus/OIBusData \\
+  --restart unless-stopped \\
+  ghcr.io/optimistiksas/oibus:v${packageInfo.version}`}
+</CodeBlock>
+
+:::tip Volume de données persistant
+Le montage `-v` est **requis** pour une utilisation en production. Sans lui, toute la configuration, le
+cache et les journaux sont perdus lorsque le conteneur s'arrête ou est remplacé.
+:::
+
+:::danger Ne pas modifier le port HTTP depuis OIBus
+Lors de l'exécution dans Docker, ne modifiez pas le port HTTP d'OIBus (2223) depuis l'interface web. Le
+conteneur n'expose que le port 2223 — le modifier en interne rendra l'interface inaccessible.
+:::
+
+Ouvrez `http://localhost:2223` dans un navigateur et suivez le [guide de premier accès](./first-access.mdx).
+
+## Configuration initiale (premier démarrage) {#initial-configuration-first-run}
+
+Définissez ces variables d'environnement sur le conteneur pour configurer le compte administrateur, le port,
+et le nom du moteur avant qu'OIBus ne démarre pour la première fois — l'équivalent des indicateurs
+`-u`/`-p`/`-port`/`-n` utilisés par les installateurs Windows et Linux.
+
+| Variable               | Description                                                                                                                              | Défaut                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
+| `ENGINE_NAME`          | Nom donné au moteur OIBus                                                                                                                  | omis (la valeur par défaut d'OIBus s'applique) |
+| `ADMIN_USERNAME`       | Nom d'utilisateur administrateur                                                                                                            | omis (la valeur par défaut d'OIBus s'applique) |
+| `ADMIN_PASSWORD`       | Mot de passe administrateur                                                                                                                 | omis (la valeur par défaut d'OIBus s'applique) |
+| `ADMIN_USERNAME_FILE`  | Chemin (à l'intérieur du conteneur) vers un fichier contenant le nom d'utilisateur administrateur — pour Docker Secrets ; prioritaire sur `ADMIN_USERNAME` s'il est défini | omis |
+| `ADMIN_PASSWORD_FILE`  | Chemin (à l'intérieur du conteneur) vers un fichier contenant le mot de passe administrateur — pour Docker Secrets ; prioritaire sur `ADMIN_PASSWORD` s'il est défini | omis |
+| `DEFAULT_PORT`         | Port sur lequel OIBus écoute à l'intérieur du conteneur                                                                                     | omis (la valeur par défaut d'OIBus s'applique) |
+
+<CodeBlock language="bash">
+  {`docker run -d \\
+  --name oibus-container \\
+  -p 2223:2223 \\
+  -v ./OIBusData:/app/OIBus/OIBusData \\
+  -e ENGINE_NAME=MyOIBus \\
+  -e ADMIN_USERNAME=admin \\
+  -e ADMIN_PASSWORD=changeme \\
+  --restart unless-stopped \\
+  ghcr.io/optimistiksas/oibus:v${packageInfo.version}`}
+</CodeBlock>
+
+:::info
+Ces variables ne sont appliquées que lorsque le dossier de données ne contient pas encore de fichier
+`oibus.db` — c'est-à-dire lors du tout premier démarrage. Lors de tout démarrage ultérieur (y compris après
+une mise à jour), elles n'ont aucun effet ; OIBus dispose déjà d'une base de données de configuration et
+utilise les valeurs qui y sont stockées.
+:::
+
+:::caution Modification du port exposé
+`DEFAULT_PORT` ne change que le port sur lequel OIBus écoute **à l'intérieur du conteneur**. Vous devez
+toujours publier le même port sur l'hôte, par exemple `-p 8080:8080 -e DEFAULT_PORT=8080`, et il doit être
+défini dès ce tout premier démarrage pour la même raison que ci-dessus.
+:::
+
+## Docker Compose {#docker-compose}
+
+<CodeBlock language="yaml">
+  {`services:
+  oibus:
+    image: ghcr.io/optimistiksas/oibus:v${packageInfo.version}
+    container_name: oibus-container
+    ports:
+      - '2223:2223'
+    volumes:
+      - ./OIBusData:/app/OIBus/OIBusData
+    restart: unless-stopped
+    environment:
+      - TZ=UTC
+    # Uncomment to apply resource limits:
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '2'
+    #       memory: 2G
+`}
+</CodeBlock>
+
+## Configuration des ports {#port-configuration}
+
+| Port       | Objectif                    | Comment l'exposer                               |
+| ---------- | ---------------------------- | ----------------------------------------------- |
+| `2223`     | Interface web d'OIBus        | `-p 2223:2223` (inclus par défaut ci-dessus)    |
+| _(personnalisé)_ | Serveur proxy d'OIBus  | Ajoutez `-p <HOST_PORT>:<CONTAINER_PORT>` au besoin |
+
+Pour exposer le port du serveur proxy (par exemple `9000`) en plus de l'interface web :
+
+<CodeBlock language="bash">
+  {`docker run -d \\
+  --name oibus-container \\
+  -p 2223:2223 \\
+  -p 9000:9000 \\
+  -v ./OIBusData:/app/OIBus/OIBusData \\
+  --restart unless-stopped \\
+  ghcr.io/optimistiksas/oibus:v${packageInfo.version}`}
+</CodeBlock>
+
+<h2 id="update-oibus-docker">Mettre à jour OIBus</h2>
+
+Récupérez la nouvelle image, puis recréez le conteneur. Le volume de données est préservé :
+
+<CodeBlock language="bash">
+  {`docker pull ghcr.io/optimistiksas/oibus:v${packageInfo.version}
+docker stop oibus-container
+docker rm oibus-container
+docker run -d \\
+  --name oibus-container \\
+  -p 2223:2223 \\
+  -v ./OIBusData:/app/OIBus/OIBusData \\
+  --restart unless-stopped \\
+  ghcr.io/optimistiksas/oibus:v${packageInfo.version}`}
+</CodeBlock>
+
+Avec Docker Compose :
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+La base de données de configuration `oibus.db` est mise à niveau automatiquement au premier démarrage après
+une mise à jour.

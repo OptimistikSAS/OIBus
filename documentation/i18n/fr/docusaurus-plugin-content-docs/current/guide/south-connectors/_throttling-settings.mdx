@@ -1,0 +1,47 @@
+### Paramètres de limitation {#throttling-settings}
+
+La limitation contrôle la manière dont OIBus rythme les requêtes de données historiques. Ces paramètres apparaissent
+sur chaque **groupe** (pour les connecteurs qui prennent en charge les groupes) ou sur chaque **élément** (pour les
+connecteurs à élément unique). Les éléments d'un groupe peuvent surcharger les valeurs par défaut du groupe en
+désactivant le bouton **Sync with group**.
+
+| Setting               | Description                                                                                                                                                                                                                                                                                                                                                                                          | Example Value           |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| **Max read interval** | Durée maximale de chaque sous-requête en secondes. Les plages temporelles plus grandes sont automatiquement découpées en blocs ne dépassant pas cette valeur.                                                                                                                                                                                                                                        | `3600`                  |
+| **Read delay**        | Pause en millisecondes entre les sous-requêtes consécutives. Aide à éviter la surcharge du serveur et gère les limites de débit.                                                                                                                                                                                                                                                                     | `1000`                  |
+| **Start time offset** | Millisecondes ajoutées au début de la fenêtre de requête (`@StartTime`). Une valeur **négative** avance le début plus tôt, pour capturer les données arrivées en retard de l'intervalle précédent — c'est l'ancien comportement « Overlap ». Une valeur **positive** décale le début plus tard à la place, en ignorant une partie de la fenêtre.                                                    | `-60000`                |
+| **End time offset**   | Millisecondes ajoutées à la fin de la fenêtre de requête (`@EndTime`). Une valeur **négative** rapproche la fin plus tôt — utile pour les sources à cohérence différée où les toutes dernières lignes ne sont pas encore fiables. Une valeur **positive** étend la fenêtre plus tard. Si la fin résultante n'est pas postérieure au début effectif, la requête est ignorée pour cette exécution.        | `0`                     |
+| **Recovery strategy** | Ordre dans lequel OIBus rattrape un arriéré de sous-intervalles non interrogés — par exemple après un arrêt prolongé, ou lors de la première exécution sur une large plage temporelle. `From oldest to newest` (par défaut) traite l'arriéré chronologiquement. `From newest to oldest` interroge d'abord le sous-intervalle le plus récent, afin que les valeurs à jour soient disponibles immédiatement pendant que les écarts plus anciens sont comblés ensuite. | `From oldest to newest` |
+
+#### Fonctionnement de la limitation {#how-throttling-works}
+
+1. **Découpage en intervalles** — Une plage de 24 heures avec `Max read interval = 3600` (1 heure) est découpée en 24
+   sous-requêtes distinctes d'1 heure.
+2. **Read delay** — Une pause est insérée entre les sous-requêtes pour gérer la charge du serveur.
+3. **Start/End time offset** — Avec `Start time offset = -60000` (-1 minute), une requête pour `[10:00–11:00]`
+   demande en réalité `[9:59–11:00]`, garantissant qu'aucune donnée arrivée en retard n'est manquée. `End time offset`
+   décale l'autre limite de la même manière.
+4. **Recovery strategy** — N'a d'importance que lorsqu'il y a plus d'un sous-intervalle à rattraper. Avec `From newest
+to oldest`, l'instant suivi n'avance qu'une fois que chaque sous-intervalle de l'arriéré a été interrogé — cela
+   évite de sauter des intervalles plus anciens non encore interrogés si OIBus redémarre en plein rattrapage.
+
+:::info Offsets apply to the full query range
+Start/End time offset sont appliqués une seule fois, au début et à la fin de la fenêtre de requête globale — pas au
+début de chaque sous-intervalle individuel lorsqu'une grande plage est découpée en blocs par Max read interval.
+:::
+
+#### Configurations recommandées {#recommended-configurations}
+
+| Scenario                       | Max read interval | Read delay | Start time offset |
+| ------------------------------ | ----------------- | ---------- | ----------------- |
+| Stable network, small datasets | 3600 (1 hour)     | 500        | 0 (none)          |
+| Unstable network               | 1800 (30 min)     | 2000       | 0 (none)          |
+| Large historical retrievals    | 7200 (2 hours)    | 1000       | 0 (none)          |
+| Real-time with occasional gaps | 900 (15 min)      | 200        | -15000 (-15 sec)  |
+
+:::tip Going deeper
+Pour comprendre la logique derrière ces chiffres — le dimensionnement du Max read interval par rapport aux volumes
+de données réels, le compromis Read delay / Max read interval sur un arriéré important, et des exemples détaillés de
+Start vs. End time offset (y compris le cas des lots multi-éléments où les éléments ne sont pas tous vidés en même
+temps) — voir [Tuning South History Call Settings](../advanced/history-query-timing.md).
+:::
