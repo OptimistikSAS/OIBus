@@ -68,7 +68,7 @@ interopérables**.
 
 Par défaut (**Requêtes parallèles maximum** = `1`), OIBus interroge les éléments et groupes de ce connecteur un à
 la fois, même si plusieurs d'entre eux sont dus en même temps. Augmenter ce paramètre permet à OIBus de traiter en pipeline jusqu'à
-ce nombre de requêtes simultanément, ce qui aide lorsque de nombreux éléments/groupes ont des modes de scrutation courts et attendre
+ce nombre de requêtes simultanément, ce qui aide lorsque de nombreux éléments/groupes ont des modes de scan courts et attendre
 leur tour prendrait autrement du retard.
 
 Toutes les requêtes simultanées partagent la **même session OPC UA** — OIBus n'ouvre pas de session séparée par
@@ -135,7 +135,7 @@ paramètres de régulation par défaut pour tous les éléments qu'il contient.
 | Paramètre         | Description                                                | Exemple de valeur |
 | ------------------ | ------------------------------------------------------------ | ------------- |
 | **Nom**            | Libellé unique du groupe au sein de ce connecteur.            | `Group A`     |
-| **Mode de scrutation** | Planification de collecte appliquée à chaque élément du groupe. | `Every 1 min` |
+| **Mode de scan** | Planification de collecte appliquée à chaque élément du groupe. | `Every 1 min` |
 
 <ThrottlingSettings />
 
