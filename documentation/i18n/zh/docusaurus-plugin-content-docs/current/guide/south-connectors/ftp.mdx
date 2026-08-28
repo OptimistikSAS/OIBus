@@ -1,0 +1,40 @@
+---
+sidebar_position: 2
+---
+
+import RegexTester from '../../../../../../src/components/RegexTester/index';
+
+# FTP
+
+安全地传输并读取来自远程 FTP 服务器的文件。
+
+## 特定设置 {#specific-settings}
+
+| 设置               | 说明                                | 示例值            |
+| ------------------ | ------------------------------------- | ----------------- |
+| **Host**           | FTP 服务器的 IP 地址或主机名。          | `192.168.1.100`   |
+| **Port**           | 连接使用的端口。默认值：`21`。         | `21`               |
+| **Compress file**  | 在 North 处理之前启用 gzip 压缩。      | Enabled/Disabled  |
+
+### 身份验证 {#authentication}
+
+| 设置                    | 说明                                                          | 示例值                       |
+| ----------------------- | --------------------------------------------------------------- | ------------------------------ |
+| Authentication method   | 身份验证类型：`None`（无身份验证）或 `Username/Password`。       | `None`、`Username/Password`    |
+| Username                | 用于 FTP 服务器身份验证的用户名（使用 Username/Password 时）。   | `ftp_user`                     |
+| Password                | 用于 FTP 服务器身份验证的密码（使用 Username/Password 时）。     | `••••••••`                     |
+
+## 文件检索设置 {#file-retrieval-settings}
+
+| 设置                    | 说明                                                                                                     | 示例值                    |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| Remote folder           | FTP 服务器上的源目录路径。                                                                                   | `/incoming/data`             |
+| RegExp                  | 文件模式过滤器（正则表达式）。                                                                               | `.*\.txt`、`.*\.csv`         |
+| Minimum age             | 文件被检索所需的最小存在时间（毫秒）。用于避免检索仍在写入中的损坏文件。默认值：`1000` 毫秒。                | `1000`                       |
+| Preserve file           | 启用后，文件在检索后**不会被删除**。适用于其他应用程序仍需要访问该文件的情况。OIBus 会跟踪修改时间，以避免重复检索未更改的文件。 | Enabled/Disabled             |
+| Ignored modified date   | （_需要启用 **Preserve file**_）即使文件的修改时间未发生变化，也强制进行检索。适用于确保文件始终被处理的场景。 | Enabled/Disabled             |
+| Max files per scan      | 每次扫描检索的最大文件数。设置为 **0** 表示无限制。剩余文件将在下一次扫描中检索。                             | `0`（无限制）、`100`          |
+| Max size per scan       | 每次扫描检索的文件总大小上限（MB）。设置为 **0** 表示无限制。剩余文件将在下一次扫描中检索。                    | `0`（无限制）、`500`          |
+| Scan sub-folders        | 启用后，将递归扫描远程文件夹内的子文件夹。                                                                    | Enabled/Disabled             |
+
+<RegexTester />
