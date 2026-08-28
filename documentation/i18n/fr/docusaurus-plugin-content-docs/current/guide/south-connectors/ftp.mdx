@@ -1,0 +1,40 @@
+---
+sidebar_position: 2
+---
+
+import RegexTester from '../../../../../../src/components/RegexTester/index';
+
+# FTP
+
+Transférez et lisez de manière sécurisée des fichiers depuis des serveurs FTP distants.
+
+## Paramètres spécifiques {#specific-settings}
+
+| Paramètre              | Description                                          | Exemple de valeur |
+| ------------------------- | -------------------------------------------------------- | -------------------- |
+| **Hôte**                  | Adresse IP ou nom d'hôte du serveur FTP.                  | `192.168.1.100`      |
+| **Port**                  | Port pour la connexion. Par défaut : `21`.                | `21`                  |
+| **Compresser le fichier** | Active la compression gzip avant traitement North.         | Activé/Désactivé      |
+
+### Authentification {#authentication}
+
+| Paramètre               | Description                                                                | Exemple de valeur           |
+| --------------------------- | ------------------------------------------------------------------------------ | ------------------------------ |
+| Méthode d'authentification  | Type d'authentification : `None` (aucune authentification) ou `Username/Password`. | `None`, `Username/Password` |
+| Nom d'utilisateur           | Nom d'utilisateur pour l'authentification au serveur FTP (avec Username/Password). | `ftp_user`                    |
+| Mot de passe                | Mot de passe pour l'authentification au serveur FTP (avec Username/Password).     | `••••••••`                    |
+
+## Paramètres de récupération de fichiers {#file-retrieval-settings}
+
+| Paramètre                    | Description                                                                                                                                                             | Exemple de valeur     |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| Dossier distant                  | Chemin du répertoire source sur le serveur FTP.                                                                                                                          | `/incoming/data`         |
+| RegExp                           | Filtre de motif de fichier (expression régulière).                                                                                                                       | `.*\.txt`, `.*\.csv`     |
+| Âge minimum                      | Âge minimum (en ms) des fichiers à récupérer. Évite de récupérer des fichiers corrompus encore en cours d'écriture. Par défaut : `1000` ms.                             | `1000`                    |
+| Conserver le fichier             | Si activé, les fichiers ne sont **pas supprimés** après récupération. Utile si d'autres applications ont besoin d'y accéder. OIBus suit l'heure de modification pour éviter de récupérer à nouveau des fichiers inchangés. | Activé/Désactivé |
+| Ignorer la date de modification  | (_Nécessite **Conserver le fichier**_) Force la récupération même si l'heure de modification du fichier n'a pas changé. Utile pour garantir que les fichiers sont toujours traités. | Activé/Désactivé |
+| Fichiers max par scan            | Nombre maximum de fichiers à récupérer par scan. Réglez sur **0** pour aucune limite. Les fichiers restants sont récupérés au scan suivant.                             | `0` (pas de limite), `100` |
+| Taille max par scan              | Taille totale maximale (en Mo) des fichiers par scan. Réglez sur **0** pour aucune limite. Les fichiers restants sont récupérés au scan suivant.                        | `0` (pas de limite), `500` |
+| Scanner les sous-dossiers        | Si activé, scanne récursivement les sous-dossiers au sein du dossier distant.                                                                                            | Activé/Désactivé          |
+
+<RegexTester />

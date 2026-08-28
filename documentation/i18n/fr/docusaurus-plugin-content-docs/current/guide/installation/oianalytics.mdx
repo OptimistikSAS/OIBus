@@ -1,0 +1,183 @@
+---
+sidebar_position: 3
+---
+
+# Enregistrement OIAnalytics
+
+L'enregistrement d'OIBus auprès d'OIAnalytics® est optionnel, mais il débloque la gestion centralisée à distance :
+synchronisation de la configuration, exécution de commandes à distance, transfert des journaux et mises à jour
+simplifiées — le tout sans nécessiter d'accès entrant vers la machine OIBus.
+
+## Processus d'enregistrement {#registration-process}
+
+<div style={{ textAlign: 'center' }}>
+  ![Processus d'enregistrement OIAnalytics](../../../static/img/guide/installation/oianalytics-registration.svg)
+</div>
+
+**1 – 2 · Initier l'enregistrement**
+
+- Naviguez vers la page **Engine** dans OIBus.
+- Cliquez sur le bouton **OIAnalytics**, remplissez le formulaire d'enregistrement, puis cliquez sur **Register**.
+
+**3 · Valider dans OIAnalytics**
+
+- Dans OIAnalytics, allez dans **Configuration → OIBus** et repérez l'enregistrement en attente.
+- Saisissez le **code à 6 caractères** affiché sur l'écran d'enregistrement OIBus (également envoyé à l'adresse e-mail
+  configurée dans OIAnalytics).
+- Accordez les permissions requises — **l'accès API est obligatoire**.
+
+**4 – 5 · Finalisation**
+
+- OIBus interroge OIAnalytics pour confirmer que l'enregistrement a été approuvé.
+- En cas de succès, OIBus envoie sa configuration complète (secrets exclus — voir
+  [Gestion des secrets](#secret-management)) à OIAnalytics.
+- Le transfert des journaux démarre s'il est activé dans
+  [Paramètres du moteur → Paramètres de journalisation](../engine/engine-settings.mdx#logging-parameters).
+
+**6 – 7 · Synchronisation continue**
+
+- OIBus interroge périodiquement OIAnalytics pour de nouvelles commandes.
+- Chaque commande est validée, exécutée puis acquittée.
+
+## Paramètres d'enregistrement {#registration-settings}
+
+### Configuration réseau {#network-configuration}
+
+| Paramètre                           | Description                                                                                                                         | Exemple de valeur                       |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| **Host**                            | URL de l'instance OIAnalytics.                                                                                                      | `https://instance_name.oianalytics.com` |
+| **Accept unauthorized certificate** | Accepter les certificats TLS auto-signés ou autrement non fiables.                                                                  | Enabled/Disabled                        |
+| **Use proxy**                       | Faire transiter les requêtes OIAnalytics par un serveur proxy.                                                                      | Enabled/Disabled                        |
+| **Proxy URL**                       | URL du serveur proxy. Requis lorsque **Use proxy** est activé.                                                                      | `http://proxy.example.com:8080`         |
+| **Proxy username**                  | Nom d'utilisateur pour l'authentification du proxy (si requis).                                                                     | `proxy_user`                            |
+| **Proxy password**                  | Mot de passe pour l'authentification du proxy (si requis).                                                                          | `••••••••`                              |
+| **Use API gateway**                 | Faire transiter les requêtes par une passerelle API au lieu d'appeler OIAnalytics directement.                                     | Enabled/Disabled                        |
+| **API gateway header key**          | Nom de l'en-tête HTTP envoyé pour s'authentifier auprès de la passerelle. Requis lorsque **Use API gateway** est activé.            | `X-Api-Key`                             |
+| **API gateway header value**        | Valeur secrète de l'en-tête de la passerelle (stockée chiffrée). Requis lorsque **Use API gateway** est activé.                     | `••••••••`                              |
+| **API gateway base endpoint**       | Préfixe de chemin ajouté devant chaque chemin d'API OIAnalytics lors du routage via la passerelle. Requis lorsque **Use API gateway** est activé. | `/oianalytics`                          |
+
+### Configuration de la temporisation {#timing-configuration}
+
+| Paramètre                  | Description                                                    | Défaut |
+| -------------------------- | ---------------------------------------------------------------| ------- |
+| **Command check interval** | Fréquence à laquelle OIBus interroge OIAnalytics pour de nouvelles commandes. | `60 s`  |
+| **Command retry interval** | Délai avant de réessayer une demande de commande échouée.      | `5 s`   |
+| **Message retry interval** | Délai avant de réessayer l'envoi d'un message échoué.          | `5 s`   |
+
+## Utilisation de l'enregistrement dans les connecteurs {#using-the-registration-in-connectors}
+
+Une fois enregistrés, le [connecteur Sud OIAnalytics](../south-connectors/oianalytics.mdx),
+le [connecteur Nord OIAnalytics](../north-connectors/oianalytics.md), ainsi que les requêtes d'historique peuvent
+réutiliser les paramètres d'enregistrement au lieu de nécessiter des paramètres de connexion séparés :
+
+1. Ouvrez la configuration du connecteur ou de la requête d'historique.
+2. Activez **Use OIAnalytics registration**.
+3. Enregistrez — l'hôte, l'authentification et le proxy sont hérités automatiquement de l'enregistrement.
+
+## Transfert des journaux {#log-forwarding}
+
+Lorsque le niveau de journalisation OIAnalytics est activé dans
+[Paramètres du moteur → Paramètres de journalisation](../engine/engine-settings.mdx#logging-parameters), OIBus
+transfère ses journaux vers OIAnalytics. La fréquence de transfert et le niveau minimal de journalisation dépendent
+de la configuration de journalisation — les journaux sont regroupés puis envoyés selon ces paramètres, et non
+diffusés en continu. Les journaux transférés sont consultables et filtrables dans la page des journaux OIBus
+d'OIAnalytics, et leur rétention suit les politiques d'OIAnalytics.
+
+## Architecture des commandes {#command-architecture}
+
+### Communication basée sur le pull {#pull-based-communication}
+
+OIBus utilise un **modèle basé sur le pull** — il initie toute communication avec OIAnalytics. Cela signifie :
+
+- Aucune connexion réseau entrante n'est requise vers la machine OIBus.
+- Tout le trafic utilise du **HTTPS sortant sur le port 443**.
+- OIBus interroge OIAnalytics à l'intervalle configuré et lit les commandes en attente dans le corps de la réponse.
+
+:::info Exigences pare-feu
+Seul le **HTTPS sortant (TCP 443)** vers le domaine OIAnalytics doit être autorisé. Aucune règle entrante n'est
+requise.
+:::
+
+### Commandes prises en charge {#supported-commands}
+
+| Commande                         | Description                                                                                                                                                 |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Upgrade version**              | Télécharger et installer une nouvelle version d'OIBus.                                                                                                       |
+| **Restart**                      | Redémarrer le service OIBus.                                                                                                                                 |
+| **Update engine settings**       | Appliquer une nouvelle configuration du moteur (journalisation, proxy…).                                                                                     |
+| **Update registration settings** | Appliquer de nouveaux paramètres d'enregistrement OIAnalytics (réseau, temporisation, permissions…).                                                        |
+| **Regenerate cipher keys**       | Générer une nouvelle paire de clés RSA pour le chiffrement des secrets.                                                                                      |
+| **Scan mode management**         | Créer, mettre à jour ou supprimer des modes de scrutation.                                                                                                   |
+| **North connector**              | Créer, mettre à jour, supprimer ou tester des connecteurs Nord.                                                                                              |
+| **North connector cache**        | Rechercher, récupérer, déplacer ou supprimer du contenu mis en cache dans le cache d'un connecteur Nord. Déplacer inclut le fait de réessayer un fichier en erreur (retour vers le cache) ou de l'archiver. |
+| **South connector**              | Créer, mettre à jour, supprimer ou tester des connecteurs Sud et leurs éléments.                                                                             |
+| **History query**                | Créer, mettre à jour, supprimer ou tester des requêtes d'historique et leurs éléments.                                                                       |
+| **History query cache**          | Rechercher, récupérer, déplacer ou supprimer du contenu mis en cache dans le cache d'une requête d'historique. Déplacer inclut le fait de réessayer un fichier en erreur (retour vers le cache) ou de l'archiver. |
+| **Custom transformer**           | Créer, mettre à jour, supprimer ou tester des transformateurs personnalisés.                                                                                 |
+| **Test transformer**             | Tester n'importe quel transformateur (standard ou personnalisé) contre un véritable élément Sud ou des données collées — distinct du test du code propre d'un transformateur personnalisé. |
+| **Setpoint**                     | Recevoir des valeurs de consigne depuis OIAnalytics et les transmettre aux connecteurs Nord.                                                                 |
+
+### Processus de mise à niveau de version {#version-upgrade-process}
+
+Les mises à niveau sont téléchargées via OIAnalytics, de sorte que la machine OIBus n'a pas besoin d'un accès direct
+à GitHub.
+
+1. OIBus reçoit une commande de mise à niveau avec la version cible et télécharge le paquet de la version via
+   OIAnalytics.
+2. OIBus extrait le paquet dans un dossier temporaire `update`, puis s'arrête. À ce stade, OIBus lui-même a terminé
+   — le reste se passe côté launcher une fois que celui-ci constate que le processus s'est arrêté.
+3. Le **launcher OIBus** (`oibus-launcher`) détecte les nouveaux binaires dans le dossier `update` lors de son
+   prochain cycle de démarrage. Avant de les substituer, il sauvegarde le binaire OIBus actuel ainsi que les
+   sous-dossiers du dossier de données correspondant au motif de sauvegarde de la mise à niveau (le dossier `cache/`
+   par défaut — OIAnalytics peut le remplacer), puis démarre la version mise à niveau d'OIBus.
+4. Si la nouvelle version d'OIBus ne démarre pas (plantage, ou non-démarrage dans un délai d'environ 30 secondes),
+   le launcher restaure automatiquement le binaire et les dossiers sauvegardés et redémarre la version précédente.
+
+:::info Architecture du launcher
+`oibus-launcher` exécute le processus principal `oibus` en tant que processus enfant. Chaque fois qu'`oibus` s'arrête
+— que ce soit normalement ou de manière inattendue — le launcher vérifie le dossier de mise à jour : si de nouveaux
+binaires sont présents, il effectue une mise à niveau (en sauvegardant d'abord, comme décrit ci-dessus), sinon il
+redémarre simplement le binaire existant. Cela gère à la fois les mises à niveau et la récupération après plantage
+automatiquement.
+:::
+
+:::danger Exigence d'espace disque
+Avant d'installer la nouvelle version, le launcher sauvegarde le binaire actuel ainsi que les dossiers correspondant
+au motif de sauvegarde (le dossier `cache/` par défaut) — assurez-vous de disposer de suffisamment d'espace disque
+libre pour contenir une seconde copie de ce contenu. Vérifiez l'espace disponible et planifiez les mises à niveau
+pendant les périodes de faible activité.
+:::
+
+## Architecture de sécurité {#security-architecture}
+
+### Gestion des secrets {#secret-management}
+
+OIBus utilise un **modèle zero-trust** pour garantir que les secrets (mots de passe, jetons, clés API) ne quittent
+jamais la machine OIBus en clair :
+
+- Lorsqu'OIBus envoie sa configuration à OIAnalytics, tous les secrets sont **retirés** avant la transmission. Seuls
+  les paramètres non sensibles sont synchronisés.
+- Lorsqu'un secret est saisi via OIAnalytics, il est **immédiatement chiffré avec la clé publique RSA d'OIBus**
+  (RSA-OAEP) dans le navigateur avant d'être transmis. OIAnalytics ne voit jamais la valeur en clair.
+- Sur la machine OIBus, les secrets sont stockés avec un chiffrement local. La clé privée ne quitte jamais l'instance
+  OIBus.
+
+Utilisez la commande **Regenerate cipher keys** pour faire pivoter la paire de clés RSA. Après régénération, les
+secrets stockés dans OIAnalytics doivent être ressaisis puisque l'ancien texte chiffré ne peut plus être déchiffré.
+
+:::info Détails cryptographiques
+**Algorithme** : RSA-OAEP — une paire de clés unique est générée par instance OIBus lors de l'enregistrement.
+
+Une fois sur la machine OIBus, les secrets sont stockés selon le
+[modèle de sécurité OIBus](../advanced/oibus-security.md).
+:::
+
+## Dépannage {#troubleshooting}
+
+| Problème                | Ce qu'il faut vérifier                                              |
+| ---------------------- | -------------------------------------------------------------------- |
+| Registration fails     | Connectivité réseau et règles de pare-feu vers OIAnalytics.          |
+| Code not accepted      | Vérifiez que le code à 6 caractères correspond et n'a pas expiré.    |
+| Commands not executing | Permissions de commande accordées dans OIAnalytics.                  |
+| Upgrade fails          | Espace disque disponible et permissions d'écriture sur le dossier de données. |
+| Connection errors      | Paramètres de proxy, confiance du certificat, et règles de pare-feu. |

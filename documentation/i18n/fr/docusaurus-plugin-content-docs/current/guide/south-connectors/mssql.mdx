@@ -1,0 +1,73 @@
+---
+sidebar_position: 3
+---
+
+import ItemSettings from './_south-record-list-item-settings.mdx';
+
+# Microsoft SQL Server™
+
+Se connecter et interroger des bases de données Microsoft SQL Server™ (MSSQL) avec OIBus.
+
+Ce connecteur est couramment utilisé pour extraire des données de process et d'historisation à partir de plateformes industrielles qui stockent leurs données dans SQL Server, telles que **AVEVA™ Historian** (anciennement Wonderware® InSQL) ou **Inductive Automation Ignition®**.
+
+:::info Notes de compatibilité
+
+- Prend en charge SQL Server 2012 et versions ultérieures
+- Nécessite l'activation du protocole TCP/IP sur SQL Server
+
+:::
+
+## Paramètres spécifiques {#specific-settings}
+
+| Setting                  | Description                                                            | Example Value    |
+| ------------------------ | ---------------------------------------------------------------------- | ---------------- |
+| Host                     | Adresse IP ou nom d'hôte de l'instance SQL Server.                     | `192.168.1.10`   |
+| Port                     | Numéro de port SQL Server. Par défaut : `1433`.                        | `1433`           |
+| Connection timeout       | Temps maximal en millisecondes pour établir la connexion. Par défaut : `5000`. | `5000`           |
+| Database                 | Nom de la base de données à laquelle se connecter.                     | `production`     |
+| Use encryption           | Activer le chiffrement des données entre OIBus et la base de données.  | Enabled/Disabled |
+| Trust server certificate | Accepter les certificats auto-signés ou expirés. À utiliser avec prudence. | Enabled/Disabled |
+| Username                 | Nom d'utilisateur d'authentification.                                  | `sa`             |
+| Password                 | Mot de passe d'authentification.                                       | `••••••••`       |
+| Domain                   | Domaine Active Directory pour l'authentification de domaine (optionnel). | `CORP`           |
+| Request timeout          | Temps d'exécution maximal en millisecondes pour chaque requête SQL individuelle. | `15000`          |
+
+### Bonnes pratiques de sécurité {#security-best-practices}
+
+- **Permissions utilisateur** : Toujours utiliser un utilisateur de base de données en lecture seule
+- **Validation du certificat** : Ne faire confiance aux certificats du serveur qu'en environnement de développement/test
+- **Chiffrement** : Activer pour les données sensibles, les réseaux non fiables ou les exigences de conformité
+
+### Considérations de performance {#performance-considerations}
+
+**Optimisation des requêtes** :
+
+- Utiliser des colonnes indexées dans les clauses WHERE
+- Limiter les jeux de résultats (éviter `SELECT *`)
+- Privilégier les requêtes paramétrées
+
+**Gestion des ressources** :
+
+- Le chiffrement ajoute une charge CPU
+- Augmenter les délais d'expiration pour les requêtes longues
+- Mettre en œuvre la pagination pour les grands jeux de résultats
+- Réutiliser les connexions autant que possible
+
+<ItemSettings />
+
+:::note Types de champ datetime MSSQL
+Les valeurs de **Type** suivantes sont disponibles pour le champ datetime de l'instant de suivi dans Microsoft SQL Server :
+
+| Type            | Description                                            |
+| --------------- | ------------------------------------------------------ |
+| String          | Représentation textuelle analysée avec un format personnalisé |
+| Date            | Colonne SQL `DATE` (date uniquement, sans heure)        |
+| DateTime        | Colonne SQL `DATETIME`                                  |
+| DateTime2       | Colonne SQL `DATETIME2` (précision supérieure)          |
+| DateTime Offset | Colonne SQL `DATETIMEOFFSET` (inclut le décalage de fuseau horaire) |
+| Small DateTime  | Colonne SQL `SMALLDATETIME` (précision à la minute)     |
+| ISO String      | Chaîne ISO 8601 (par ex. `2024-01-15T10:30:00.000Z`)    |
+| UNIX epoch (s)  | Horodatage Unix en secondes                             |
+| UNIX epoch (ms) | Horodatage Unix en millisecondes                        |
+
+:::

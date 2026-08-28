@@ -1,0 +1,55 @@
+---
+sidebar_position: 6
+---
+
+import ItemSettings from './_south-record-list-item-settings.mdx';
+
+# MySQL® / MariaDB™
+
+Se connecter et interroger des bases de données MySQL® ou MariaDB™ avec OIBus.
+
+:::info Notes de compatibilité
+
+- Prend en charge MySQL 5.7+
+- Prend en charge MariaDB 10.2+
+
+:::
+
+## Paramètres spécifiques {#specific-settings}
+
+| Setting            | Description                                                            | Example Value  |
+| ------------------ | ---------------------------------------------------------------------- | -------------- |
+| Host               | Adresse IP ou nom d'hôte du serveur MySQL/MariaDB.                     | `192.168.1.10` |
+| Port               | Numéro de port du serveur. Par défaut : `3306`.                        | `3306`         |
+| Connection timeout | Temps maximal en millisecondes pour établir la connexion. Par défaut : `5000`. | `5000`         |
+| Database           | Nom de la base de données à laquelle se connecter.                     | `production`   |
+| Username           | Nom d'utilisateur d'authentification.                                  | `db_user`      |
+| Password           | Mot de passe d'authentification.                                       | `••••••••`     |
+
+:::caution Permissions utilisateur
+
+Toujours utiliser un utilisateur de base de données en lecture seule
+
+:::
+
+<ItemSettings />
+
+:::note Types de champ datetime MySQL / MariaDB
+Les valeurs de **Type** suivantes sont disponibles pour le champ datetime de l'instant de suivi :
+
+| Type            | Description                                       |
+| --------------- | ------------------------------------------------- |
+| String          | Représentation textuelle analysée avec un format personnalisé |
+| DateTime        | Colonne MySQL `DATETIME` ou `TIMESTAMP`            |
+| ISO String      | Chaîne ISO 8601 (par ex. `2024-01-15T10:30:00.000Z`) |
+| UNIX epoch (s)  | Horodatage Unix en secondes                        |
+| UNIX epoch (ms) | Horodatage Unix en millisecondes                   |
+
+:::
+
+:::note Délai d'expiration des requêtes d'un élément MySQL
+Chaque élément MySQL possède son propre champ **Request timeout** (en millisecondes), qui définit le temps d'exécution
+maximal pour la requête de cet élément. Il n'existe pas d'équivalent au niveau de la connexion pour le remplacer —
+**Connection timeout** ne borne que le temps qu'OIBus attend pour établir la connexion elle-même, pas la durée
+d'exécution d'une requête.
+:::
