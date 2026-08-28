@@ -1,0 +1,135 @@
+---
+sidebar_position: 5
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import DownloadButton from '@site/src/components/DownloadButton';
+
+# 迁移到 v3
+
+使用我们的迁移工具并执行少量手动步骤，将 OIBus v1 和 v2 迁移到全新的 OIBus v3 版本。
+
+## 下载链接 {#download-link}
+
+<Tabs>
+  <TabItem value="windows" label="Windows" default>
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <DownloadButton link="https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-win_x64.zip">
+        <div>
+          <div>{`OIBus 迁移工具`}</div>
+          <div>Windows (x64)</div>
+        </div>
+      </DownloadButton>
+    </div>
+  </TabItem>
+  <TabItem value="linux" label="Linux">
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <DownloadButton link="https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-linux_x64.zip">
+        <div>
+          <div>{`OIBus 迁移工具`}</div>
+          <div>Linux (x64)</div>
+        </div>
+      </DownloadButton>
+    </div>
+  </TabItem>
+  <TabItem value="macos" label="MacOS">
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <DownloadButton link="https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-macos_x64.zip">
+        <div>
+          <div>{`OIBus 迁移工具`}</div>
+          <div>macOS (Intel chip)</div>
+        </div>
+      </DownloadButton>
+    </div>
+  </TabItem>
+</Tabs>
+
+## 下载指定版本 {#download-specific-version}
+
+:::caution OIBus 版本
+迁移仅适用于 3.8.8 版本的 OIBus。如果您想迁移到更新的版本，请先通过下方链接安装 OIBus v3.8.8，
+然后再将 OIBus 从 v3.8.8 更新到更新的版本。
+:::
+
+<Tabs>
+  <TabItem value="windows" label="Windows" default>
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <DownloadButton link="https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-win_x64-setup-v3.8.8.exe">
+        <div>
+          <div>{`OIBus v3.8.8（安装程序）`}</div>
+          <div>Windows (x64)</div>
+        </div>
+      </DownloadButton>
+      <DownloadButton link="https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-win_x64-v3.8.8.zip">
+        <div>
+          <div>{`OIBus v3.8.8（zip 压缩包）`}</div>
+          <div>Windows (x64)</div>
+        </div>
+      </DownloadButton>
+    </div>
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <a href="./windows">安装</a>
+    </div>
+  </TabItem>
+  <TabItem value="linux" label="Linux">
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-linux_x64-v3.8.8.zip`}>
+        <div>
+          <div>{`OIBus v3.8.8`}</div>
+          <div>Linux (x64)</div>
+        </div>
+      </DownloadButton>
+    </div>
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <a href="./linux">安装</a>
+    </div>
+  </TabItem>
+  <TabItem value="macos" label="MacOS">
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.8.8/oibus-macos_x64-v3.8.8.zip`}>
+        <div>
+          <div>{`OIBus v3.8.8`}</div>
+          <div>MacOS (Intel chip)</div>
+        </div>
+      </DownloadButton>
+    </div>
+    <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+      <a href="./macos">安装</a>
+    </div>
+  </TabItem>
+</Tabs>
+
+## 迁移步骤 {#migration-steps}
+
+1. 停止 OIBus 服务。
+   :::tip
+   您可以将数据文件夹压缩打包，或至少备份配置文件 `oibus.json` 及其 `keys` 目录。
+   :::
+
+2. 安装 [OIBus v3.8.8](#download-specific-version)。请务必指定**相同的数据文件夹**。通过登录
+   `http://localhost:2223`（用户名 admin，密码 pass）检查 OIBus v3 是否正常运行。如果一切正常，继续下一步。
+
+3. 停止 OIBus v3。
+
+4. 将迁移工具复制到 OIBus **二进制文件夹**中。
+
+5. 运行 OIBus 迁移工具。请务必指定正确的数据文件夹。
+
+**Windows 命令**
+
+```
+oibus-upgrade.exe --config D:\OIBusData
+```
+
+**Linux / macOS 命令**
+
+```
+./oibus-upgrade --config /usr/oibus/OIBusData
+```
+
+6. 启动 OIBus v3。
+
+:::tip
+文件 `upgrade-journal.log` 包含迁移过程的日志。
+:::

@@ -1,0 +1,120 @@
+---
+sidebar_position: 13
+---
+
+import ThrottlingSettings from './_throttling-settings.mdx';
+
+# OSIsoft PI System™
+
+使用 OIBus 通过 [OIBus Agent](../oibus-agent/installation.mdx) 中内置的 PI 驱动程序连接到
+OSIsoft PI System™，用于工业数据采集与可视化。
+
+:::caution 系统要求
+
+- OIBus Agent **必须**安装在 Windows 计算机上
+- 可以安装在 PI Server 计算机上，也可以安装在配置了 [PI SDK](#osisoft-pi-sdk-configuration) 的单独计算机上
+
+:::
+
+## 连接设置 {#connection-settings}
+
+| 设置          | 描述                                          | 示例值                       |
+| ------------- | ---------------------------------------------- | ----------------------------- |
+| 远程代理 URL  | Agent 端点 URL。所有连接均为必填项。           | `http://192.168.1.100:2224`   |
+| 重试间隔      | 重试连接前等待的时间（毫秒）。默认：`10000`。  | `10000`                       |
+
+## 分组设置 {#group-settings}
+
+项目被组织成**分组**。每个分组定义一个共享的计划以及历史数据检索的默认限流参数。
+
+| 设置        | 描述                             | 示例值         |
+| ----------- | ---------------------------------- | --------------- |
+| **名称**    | 该连接器内分组的唯一标签。         | `Group A`        |
+| **扫描模式** | 应用于分组中每个项目的采集计划。   | `Every 1 min`     |
+
+<ThrottlingSettings />
+
+:::tip 按项目覆盖限流
+每个项目都可以通过在项目编辑表单中禁用**与分组同步**开关来覆盖分组的限流默认值。
+:::
+
+## 项目配置 {#item-configuration}
+
+### 点访问方法 {#point-access-methods}
+
+| 设置       | 描述                                                                                                       | 示例值                    |
+| ---------- | ------------------------------------------------------------------------------------------------------------ | --------------------------- |
+| 类型       | 访问方法：`PI point`（通过 ID 访问单个点）或 `PI query`（通过查询表达式访问多个点）                        | `PI point` 或 `PI query`     |
+| Point ID   | 完全限定的点 ID（不含服务器名称）。当类型为 `PI point` 时使用。                                            | `\\CDT158\SINUSOID`          |
+| Point Query | 用于选择多个点的查询选择器（参见 [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)）。当类型为 `PI query` 时使用。 | `Name:='SINUSOID'`           |
+
+:::info 引用名称
+
+- 对于 `PI point`：项目名称在 JSON 负载中作为引用
+- 对于 `PI query`：PI 名称用作引用
+  :::
+
+## OSIsoft PI SDK 配置 {#osisoft-pi-sdk-configuration}
+
+### 安装要求 {#installation-requirements}
+
+1. 在 Agent 计算机上安装 PI SDK
+2. 安装过程中，指定默认数据服务器
+3. 如果是远程安装：
+
+- 必须正确配置 PI SDK
+- 必须安装 PI System Access (PSA)
+
+### 用户配置 {#user-configuration}
+
+1. 创建域用户账户（可从两台计算机访问）
+
+- 如果域不存在，请创建具有相同密码的相同本地用户
+
+2. 将 OIBus Agent 服务配置为以该用户身份运行
+
+### 信任配置 {#trust-configuration}
+
+1. 打开 PI System Management Tools
+2. 导航到 `Mapping & Trusts` → `Trusts` 选项卡
+3. 创建新信任，包含：
+
+- OIBus Agent 计算机 IP 和子网掩码
+- 域（如适用）
+- 用于连接的 PI Identity
+
+### 映射配置 {#mapping-configuration}
+
+1. 在 PI System Management Tools 中
+2. 导航到 `Mapping & Trusts` → `Mappings` 选项卡
+3. 创建新映射，包含：
+
+- OIBus Agent 服务用户
+- 来自信任配置的 PI Identity
+
+:::tip 日志访问
+在 PI System Management Tools 中查看系统日志：
+`Operation` → `Messages Logs`
+:::
+
+### 配置截图 {#configuration-screenshots}
+
+**1. SDK 安装** — 在安装过程中指定默认数据服务器
+
+![PI SDK installation](../../../static/img/guide/south/osisoft-pi/0-installation.png)
+
+**2. 信任配置** — 为 Agent 计算机配置信任
+
+![PI SDK add trust](../../../static/img/guide/south/osisoft-pi/1-add-trust.png)
+
+**3. 信任列表** — 已验证的信任配置
+
+![PI SDK list trust](../../../static/img/guide/south/osisoft-pi/2-trust-list.png)
+
+**4. 映射创建** — 将 Agent 用户映射到 PI Identity
+
+![PI SDK add mapping](../../../static/img/guide/south/osisoft-pi/3-add-mapping.png)
+
+**5. 映射列表** — 已验证的用户映射
+
+![PI SDK list trust](../../../static/img/guide/south/osisoft-pi/4-mapping-list.png)

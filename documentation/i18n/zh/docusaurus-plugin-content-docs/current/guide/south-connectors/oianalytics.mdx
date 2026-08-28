@@ -1,0 +1,125 @@
+---
+sidebar_position: 8
+---
+
+import ThrottlingSettings from './_throttling-settings.mdx';
+
+# OIAnalytics®
+
+从 [OIAnalytics®](https://optimistik.com/oianalytics/) SaaS 应用程序查询时间序列数据。
+
+## 连接设置 {#connection-settings}
+
+### 主要配置 {#main-configuration}
+
+| 设置                | 描述                                                                                        | 示例值            |
+| ------------------- | ------------------------------------------------------------------------------------------- | ----------------- |
+| 使用 OIAnalytics 注册 | 使用来自 [OIAnalytics 注册](../installation/oianalytics.mdx) 的预配置连接设置。默认：启用。 | Enabled/Disabled  |
+| 超时                | 报告连接失败之前的持续时间（秒）。默认：`30`。                                              | `30`              |
+
+### 手动配置（未使用注册时） {#manual-configuration-when-registration-not-used}
+
+| 设置                    | 描述                                       | 示例值                                |
+| ----------------------- | ------------------------------------------ | -------------------------------------- |
+| **主机**                | OIAnalytics® SaaS 应用程序的主机名。       | `https://optimistik.oianalytics.com`   |
+| **接受未经授权的证书**  | 如果 HTTP 查询经过会剥离证书的防火墙，启用此项。 | Enabled/Disabled                       |
+
+#### 身份验证设置 {#authentication-settings}
+
+| 设置          | 描述                                                                       | 示例值                                                                     |
+| ------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 身份验证方法  | 连接的身份验证类型。                                                       | `Access key/Secret`、`Azure AD (Client Secret)`、`Azure AD (Certificate)`   |
+| 访问密钥      | 用于访问密钥/密钥身份验证的访问密钥。                                      | `my_access_key`                                                             |
+| 密钥          | 用于访问密钥/密钥身份验证的密钥。                                          | `••••••••`                                                                   |
+| 租户 ID       | Azure AD 租户标识符（用于 Azure AD 方法）。                                | `tenant-id-uuid`                                                            |
+| 客户端 ID     | Azure AD 客户端标识符（用于 Azure AD 方法）。                              | `client-id-uuid`                                                            |
+| 客户端密钥    | Azure AD 客户端密钥（用于 Azure AD 客户端密钥方法）。                      | `••••••••`                                                                   |
+| 证书          | 从 OIBus 的证书页面选择的证书（用于 Azure AD 证书方法），而非原始文件路径。 | （从列表中选择）                                                            |
+| 范围          | OAuth 范围（用于 Azure AD 证书方法）。                                     | `https://resource/.default`                                                 |
+
+#### 代理配置 {#proxy-configuration}
+
+| 设置            | 描述                             | 示例值                            |
+| --------------- | -------------------------------- | ---------------------------------- |
+| **使用代理**    | 通过代理服务器路由请求。         | Enabled/Disabled                   |
+| **代理 URL**    | 代理服务器的 URL。               | `http://proxy.example.com:8080`    |
+| **代理用户名**  | 代理身份验证的用户名（如需要）。 | `proxy_user`                       |
+| **代理密码**    | 代理身份验证的密码（如需要）。   | `••••••••`                         |
+
+## 分组设置 {#group-settings}
+
+项目可以组织成分组。每个分组定义一个共享的采集计划和默认的限流设置。同一分组中的项目仍然是
+**依次逐个**获取的——分组只是提供各项目可以覆盖的通用默认值。
+
+| 设置        | 描述                                                                                             | 示例值                     |
+| ----------- | -------------------------------------------------------------------------------------------------- | --------------------------- |
+| **名称**    | 该连接器内分组的唯一标签。                                                                         | `Group A`                   |
+| **扫描模式** | 用于采集分组中所有项目的计划。                                                                     | `Every 1 min`                |
+| **限流**    | 该分组中项目继承的默认限流值（最大读取间隔、读取延迟、开始时间偏移、结束时间偏移、恢复策略）。     | `3600, 200, 0, 0, oldest`   |
+
+## 项目设置 {#item-settings}
+
+每个项目都可以单独配置。项目默认从所属分组继承扫描模式和限流设置，但可以通过禁用**与分组同步**
+对每个设置进行单独覆盖。
+
+<ThrottlingSettings />
+
+### 端点设置 {#endpoint-settings}
+
+| 设置  | 描述                     | 示例值                          |
+| ----- | ------------------------ | -------------------------------- |
+| 端点  | HTTP 请求使用的 API 端点 | `/api/oianalytics/data/values`   |
+
+### 查询参数 {#query-parameters}
+
+**查询变量**：
+
+- `@StartTime`：初始执行时间，会更新为结果中最近的时间戳
+- `@EndTime`：当前时间（`now()`）或查询被拆分时的子区间结束时间
+
+:::info 查询拆分
+较大的时间区间会使用以下方式自动拆分为更小的块：
+
+- **最大读取间隔**（来自[限流设置](#throttling-settings)）
+- 减少服务器和网络负载
+- 提升数据流的韧性
+  :::
+
+:::tip 重复的键
+多次添加相同的键会将其作为值数组发送在请求中，而不是覆盖之前的值。这对于接受单个参数
+多个值的端点很有用，例如下方的 `data-reference`。
+:::
+
+#### 示例：查询数据值 {#example-querying-data-values}
+
+要在一个时间窗口内检索多个数据引用的原始值，请使用 `/api/oianalytics/data/values` 端点
+和以下查询参数配置该项目：
+
+| 键             | 值                               |
+| -------------- | --------------------------------- |
+| from           | `@StartTime`                      |
+| to             | `@EndTime`                        |
+| aggregation    | `RAW_VALUES`                      |
+| data-reference | `CIP_Line_1_Acid_Tank_Level`      |
+| data-reference | `CIP_Line_1_Caustic_Tank_Level`   |
+
+由于 `data-reference` 是重复的，它会以 `data-reference=CIP_Line_1_Acid_Tank_Level&data-reference=CIP_Line_1_Caustic_Tank_Level`
+的形式发送，使端点能够在一次查询中返回两个储罐液位的值。
+
+## CSV 序列化选项 {#csv-serialization-options}
+
+| 设置             | 描述                                                        | 示例值                                                                                                             |
+| ---------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| 文件名           | 带变量的输出文件名模式：`@ConnectorName`、`@CurrentDate`     | `data_@ConnectorName.csv`                                                                                         |
+| 分隔符           | 字段分隔符                                                    | `COMMA` (,)、`SEMI_COLON` (;)、`DOT` (.)、`COLON` (:)、`PIPE` (\|)、`SLASH` (/)、`TAB` (\t)、`NON_BREAKING_SPACE` |
+| 压缩             | 启用 gzip 压缩                                                | Enabled/Disabled                                                                                                   |
+| 输出日期时间格式 | CSV 中日期时间字段的格式                                      | `yyyy-MM-dd HH:mm:ss`                                                                                              |
+| 输出时区         | 日期时间值的时区                                              | `UTC` 或 `Europe/Paris`                                                                                            |
+
+:::info 文件名变量
+
+- `@ConnectorName`：连接器名称
+- `@CurrentDate`：以 `yyyy_MM_dd_HH_mm_ss_SSS` 格式（固定格式）表示的当前时间戳
+- 日期时间格式设置不影响文件名中的时间戳
+
+:::

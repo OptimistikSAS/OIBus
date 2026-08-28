@@ -1,0 +1,141 @@
+---
+sidebar_position: 1
+---
+
+import DownloadButton from '@site/src/components/DownloadButton';
+
+# OIBus Agent：概述与安装
+
+OIBus Agent 是一个轻量级的 Windows 服务，可为需要原生 Windows 集成的技术提供特定协议的数据采集能力。
+
+## 主要功能 {#key-features}
+
+| 功能           | 支持的协议                        | 优势                     |
+| -------------- | --------------------------------- | ------------------------ |
+| Windows 原生访问 | OPC Classic™、OLEDB、OSIsoft PI™ | 与 Windows 技术直接集成 |
+| 服务集成       | Windows 服务管理器                | 可靠的后台运行           |
+| 跨架构支持     | x64、x86、ARM64                   | 支持所有现代 Windows 系统 |
+
+## 下载 {#download}
+
+<div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: '1rem' }}>
+  <DownloadButton link={`https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/oibus-agent-win_x64-__VERSION__.zip`}>
+    <div>Windows (x64)</div>
+  </DownloadButton>
+  <DownloadButton link={`https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/oibus-agent-win_x86-__VERSION__.zip`}>
+    <div>Windows (x86)</div>
+  </DownloadButton>
+  <DownloadButton
+    link={`https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/oibus-agent-win_arm64-__VERSION__.zip`}
+  >
+    <div>Windows (ARM64)</div>
+  </DownloadButton>
+</div>
+
+## 系统要求 {#system-requirements}
+
+| 要求         | 规格                                 |
+| ------------ | ------------------------------------ |
+| 操作系统     | Windows 10/11、Windows Server 2016+  |
+| 架构         | x64、x86 或 ARM64                    |
+| .NET Framework | 4.8 或更高版本                     |
+| 磁盘空间     | 最少 50 MB                           |
+| 内存         | 最少 128 MB                          |
+
+## 安装 {#installation}
+
+### 安装包内容 {#package-contents}
+
+解压下载的压缩包后，你会看到以下文件：
+
+| 文件                   | 用途                     |
+| ---------------------- | ------------------------ |
+| `OIBusAgent.exe`       | 主可执行文件             |
+| `install-agent.bat`    | 服务安装脚本             |
+| `uninstall-agent.bat`  | 服务卸载脚本             |
+
+### 安装方式 {#installation-methods}
+
+#### 1. 作为 Windows 服务安装（推荐） {#1-as-a-windows-service-recommended}
+
+```bash
+# Default installation (port 2224, service name "OIBusAgent")
+install-agent.bat
+
+# Custom installation
+install-agent.bat -n="CustomServiceName" -p=2225
+```
+
+| 参数 | 说明     | 默认值        |
+| ---- | -------- | ------------- |
+| `-n` | 服务名称 | "OIBusAgent"  |
+| `-p` | HTTP 端口 | 2224          |
+
+#### 2. 手动运行 {#2-manual-execution}
+
+```bash
+# Default port (2224)
+OIBusAgent.exe
+
+# Custom port
+OIBusAgent.exe -p 2225
+```
+
+### 更新流程 {#update-procedure}
+
+1. 停止正在运行的服务（如果已在运行）
+2. 解压新版本文件
+3. 用新文件替换旧文件
+4. 重启服务
+
+### 卸载 {#uninstallation}
+
+```bash
+# Default service name
+uninstall-agent.bat
+
+# Custom service name
+uninstall-agent.bat -n="CustomServiceName"
+```
+
+## 使用模式 {#usage-modes}
+
+### 1. 与 OIBus 集成 {#1-integrated-with-oibus}
+
+- 作为 OIBus 南向连接器的协议桥接器
+- 透明地处理 Windows 特定协议
+- 通过 OIBus 界面自动管理服务
+
+### 2. 独立模式 {#2-standalone-mode}
+
+- 直接访问 HTTP API
+- 独立于 OIBus 运行
+- 适用于自定义集成
+
+## 安装后操作 {#post-installation}
+
+1. **验证安装**：
+
+```bash
+sc query "OIBusAgent"
+```
+
+（或你自定义的服务名称）
+
+2. **检查服务状态**：
+
+- 打开服务管理器（`services.msc`）
+- 查找 “OIBusAgent”（或你的自定义名称）
+- 确认状态为 “正在运行”
+
+3. **测试连通性**：
+
+```bash
+curl http://localhost:2224/api/status
+```
+
+应返回：
+
+```json
+{ "status": "running", "version": "__VERSION__" }
+```

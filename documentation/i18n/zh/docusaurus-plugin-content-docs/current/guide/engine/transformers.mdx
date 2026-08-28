@@ -1,0 +1,1160 @@
+---
+sidebar_position: 4
+---
+
+# Transformers
+
+**Transformer（转换器）**位于数据源和 North 连接器之间。它会将传入的数据转换为 North 连接器
+所期望的格式，然后再放入连接器的缓存中。除了格式转换之外，转换器也是**过滤**哪些数据可以到达
+North 连接器的机制——详情参见
+[数据过滤](../north-connectors/common-settings.md#data-filtering)。
+
+转换器是**在 North 连接器上**配置的，位于其设置页面的**转换器（Transformers）**部分。
+
+---
+
+## 配置转换器 {#configuring-a-transformer}
+
+点击转换器部分中的**添加**以打开配置弹窗。三个字段用于指导配置过程。
+
+### 1 — 来源 {#1--source}
+
+选择数据的来源。
+
+| 来源                   | 说明                                                                                                    |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| **South 连接器**      | 由某个已配置的 South 连接器采集的数据                                                       |
+| **OIBus API**            | 通过 REST API 推送到 OIBus 的数据。需要一个**数据源 ID（Data Source ID）**字符串来标识来源系统 |
+| **OIAnalytics Setpoint（设定点）** | 从 OIAnalytics 发送的写回命令                                                                      |
+
+### 2 — 条目范围（仅限 South 连接器） {#2--item-scope-south-connectors-only}
+
+当来源为 South 连接器时，您可以限制转换器所应用的条目范围。
+
+| 范围              | 说明                                                              |
+| ------------------ | ------------------------------------------------------------------------ |
+| **所有条目**      | 所选 South 连接器的每一个条目都会经过此转换器 |
+| **按分组**       | 只处理属于特定分组的条目                   |
+| **指定条目** | 从搜索列表中手动挑选具体条目                  |
+
+:::tip
+单个 North 连接器可以配置**多个转换器**，各自具有不同的来源和范围。这样您就可以对同一个
+South 连接器的不同部分应用不同的转换——例如，为一组温度传感器配置一个转换器，为流量计
+配置另一个转换器。当传入的一批数据混合了不同转换器所覆盖的条目时，OIBus 会自动将其拆分，
+使每一部分都由实际针对它的转换器来处理。
+:::
+
+如果同一个条目可能匹配多个转换器（例如一个针对某个分组，另一个针对同一 South 连接器的
+"所有条目"），OIBus 会按照以下优先级来解析，最具体的优先：
+
+1. 针对该**特定条目**的转换器。
+2. 针对该条目所属**分组**的转换器。
+3. 针对该 South 连接器**所有条目**（未选择分组，也未选择特定条目）的转换器——
+   即兜底转换器。
+
+按此顺序匹配到的第一个已配置转换器将被使用；同一层级内的平局按转换器在列表中的位置来打破。
+
+### 3 — 转换器 {#3--transformer}
+
+选定来源后，列表会自动过滤，仅显示兼容的转换器。可选项取决于所选 South 连接器的类型：
+
+| South 连接器类型                                                            | 兼容的标准转换器                                                           |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **OPC UA、OPC Classic、Modbus、ADS、OSIsoft PI、OIAnalytics**（PLC / 历史数据库） | CSV、JSON、MQTT payloads、Modbus values、OIAnalytics（选择时间精度）、OPCUA values |
+| **MQTT、REST、SFTP、FTP、Folder Scanner、ODBC、OLEDB**（文件 / 查询型）     | Time Values (from CSV)、MQTT payloads (from CSV)、CSV (from JSON)、OIAnalytics (from JSON) |
+| **MySQL、PostgreSQL、MSSQL、Oracle、SQLite**（查询型，行列表输出）     | CSV (from Record list)                                                                     |
+| **OIBus API**                                                                   | Time Values (from CSV)、MQTT payloads (from CSV)、CSV (from JSON)、OIAnalytics (from JSON) |
+| **OIAnalytics Setpoint**                                                        | MQTT payloads、Modbus values、OPCUA values                                                 |
+
+此列表中还会显示自定义转换器，它们始终由用户命名。此外，**Ignore（忽略）**和
+**No transform（不转换）**（见下文）对每种来源类型都可用。
+
+选择转换器后，其设置表单会直接显示在弹窗中。
+
+---
+
+## 标准转换器 {#standard-transformers}
+
+标准转换器是内置的，只需配置即可使用——无需编写代码。
+
+---
+
+### Ignore 和 No transform {#ignore-and-no-transform}
+
+这两个转换器对**所有**来源类型都可用，无论内容类型如何，且都不需要任何配置。
+
+| 转换器      | 行为                                                                                                                                                                                                         |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ignore（忽略）**       | 丢弃数据。不缓存任何内容，也不发送给 North 连接器。可用于在不禁用条目本身的情况下，
+通过条目/分组范围限定，屏蔽 South 连接器对某个 North 输出的部分内容。 |
+| **No transform（不转换）** | 按原样缓存接收到的数据，完全不做任何转换。当 North 连接器已经接受 South 的原生内容类型时使用此选项。                                                               |
+
+---
+
+### 适用于 PLC 和历史数据库 South 连接器 {#for-plc-and-historian-south-connectors}
+
+这些转换器处理由 OPC UA、OPC Classic、Modbus、TwinCAT ADS 和 OSIsoft PI 等连接器产生的结构化
+**time-value（时间值）**数组。
+
+每个 time-value 对象具有如下结构：
+
+```json
+{ "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } }
+```
+
+---
+
+#### CSV {#csv}
+
+将 time-values 数组转换为 CSV 文件。每一行对应一次读数。三列（点位 ID、时间戳、
+值）会映射到可配置的列标题。可选的按列 JavaScript 表达式可以在写入之前对各个值进行转换。
+
+##### 设置 {#settings}
+
+| 设置               | 说明                                                                                                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Filename（文件名）**          | 输出文件名；支持 `@CurrentDate`（当前 UTC 时间戳），以及在内容来自 South 历史查询时，
+`@QueryStartTime`/`@QueryEndTime`（查询的时间窗口，否则为空） |
+| **Encoding（编码）**          | `UTF_8`、`UTF_8_BOM`、`LATIN_1` 或 `UTF_16_LE`                                                                                                                                                    |
+| **Header（表头）**            | 是否包含列标题行                                                                                                                                                           |
+| **Delimiter（分隔符）**         | 列分隔符                                                                                                                                                                                   |
+| **Newline（换行符）**           | 行结束符（`LF`、`CRLF`、`CR`）                                                                                                                                                                   |
+| **Quote char（引号字符）**        | `DOUBLE_QUOTE`、`SINGLE_QUOTE` 或 `NONE`                                                                                                                                                          |
+| **Escape char（转义字符）**       | `DOUBLE_QUOTE` 或 `BACKSLASH`                                                                                                                                                                      |
+| **Point ID column（点位 ID 列）**   | 点位标识符列的表头标签                                                                                                                                                       |
+| **Value column（值列）**      | 值列的表头标签                                                                                                                                                                  |
+| **Timestamp column（时间戳列）**  | 时间戳列的表头标签                                                                                                                                                     |
+| **Timestamp type（时间戳类型）**    | 输出格式（`iso-string`、`unix-epoch`、`unix-epoch-ms`、`string`）                                                                                                                              |
+| **Timestamp format（时间戳格式）**  | 类型为 `string` 时的自定义模式（例如 `yyyy-MM-dd HH:mm:ss.SSS`）                                                                                                                              |
+| **Timezone（时区）**          | 类型为 `string` 时用于格式化的时区                                                                                                                                |
+| **Point ID process（点位 ID 处理）**  | 应用于每个点位 ID 的可选 JS 表达式（变量：`value`）                                                                                                                                |
+| **Value process（值处理）**     | 应用于每个值的可选 JS 表达式（变量：`value`）                                                                                                                                   |
+| **Timestamp process（时间戳处理）** | 应用于每个已格式化时间戳的可选 JS 表达式（变量：`value`）                                                                                                                     |
+
+##### 示例 {#example}
+
+**输入（OPC UA 条目：temp1、pressure1）**
+
+```json
+[
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
+  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1" } }
+]
+```
+
+使用 Delimiter: `SEMI_COLON`、`pointIdProcess: value.split('/').pop()`，以及
+`valueProcess: String(value).replace('.', ',')`：
+
+:::tip 此处为何使用分号
+`valueProcess` 将小数点转换为逗号（`23.5` → `23,5`），这在某些地区是常见做法。如果使用逗号作为
+**分隔符**，则会产生额外的、意料之外的列。使用 `;` 作为分隔符可以避免这种冲突。
+:::
+
+**输出 CSV**
+
+```csv
+Reference;Timestamp;Value
+temp1;2024-01-15T10:00:00.000Z;23,5
+pressure1;2024-01-15T10:00:00.000Z;102,1
+```
+
+---
+
+#### JSON {#json}
+
+一个透明的直通转换器，将 time-values 数组重新序列化为 JSON 文件。当 North 连接器需要通用的
+JSON 文件而非内部的 time-values 格式时使用（例如 Azure Blob 或 File Writer 等基于文件的 North）。
+
+此转换器**没有任何配置选项**。
+
+##### 示例 {#example-1}
+
+**输入** — 来自 OPC UA 或 Modbus South 连接器的任意 time-values 数组。
+
+**输出** — 保存为 `.json` 文件的完全相同的 JSON 内容。
+
+---
+
+#### MQTT payloads {#mqtt-payloads}
+
+使用**点位 ID → 主题**映射表将每条读数映射为一条 MQTT 消息。点位 ID 未匹配的读数会被
+静默丢弃。负载是一个 JSON 字符串，其中包含合并了 `timestamp` 的 `data` 字段。
+
+##### 设置 {#settings-1}
+
+| 设置     | 说明                        |
+| ----------- | ---------------------------------- |
+| **Mapping（映射）** | `{ pointId, topic }` 对的列表 |
+
+##### 示例 {#example-2}
+
+映射：`plant/temp1 → sensors/temperature`，`plant/pressure1 → sensors/pressure`
+
+**输入**
+
+```json
+[
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
+  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1" } },
+  { "pointId": "plant/unknown", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "0" } }
+]
+```
+
+**输出** — `plant/unknown` 被丢弃（无匹配映射）
+
+```json
+[
+  { "topic": "sensors/temperature", "payload": "{\"value\":\"23.5\",\"timestamp\":\"2024-01-15T10:00:00.000Z\"}" },
+  { "topic": "sensors/pressure", "payload": "{\"value\":\"102.1\",\"timestamp\":\"2024-01-15T10:00:00.000Z\"}" }
+]
+```
+
+---
+
+#### Modbus values {#modbus-values}
+
+使用**点位 ID → 地址**映射表将每条读数映射为一条 Modbus 写命令。值会被转换为相应的类型：
+线圈使用布尔值，保持寄存器使用整数。无匹配的读数会被丢弃。
+
+##### 设置 {#settings-2}
+
+| 设置     | 说明                                                                           |
+| ----------- | ------------------------------------------------------------------------------------- |
+| **Mapping（映射）** | `{ pointId, address, modbusType }` 对的列表（`modbusType`：`coil` 或 `register`） |
+
+##### 示例 {#example-3}
+
+映射：`plant/valve1 → 0x0010 (coil)`，`plant/speed → 0x0020 (register)`
+
+**输入**
+
+```json
+[
+  { "pointId": "plant/valve1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "true" } },
+  { "pointId": "plant/speed", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "1450" } }
+]
+```
+
+**输出**
+
+```json
+[
+  { "address": "0x0010", "value": true, "modbusType": "coil" },
+  { "address": "0x0020", "value": 1450, "modbusType": "register" }
+]
+```
+
+---
+
+#### OIAnalytics（选择时间精度） {#oianalytics-select-time-precision}
+
+为 OIAnalytics North 连接器准备读数。时间戳可以被截断到指定精度以减少存储占用。
+只有 `pointId`、`timestamp` 和 `data.value` 字段会被转发——多余的质量字段会被剥离。
+
+##### 设置 {#settings-3}
+
+| 设置       | 说明                                                |
+| ------------- | ---------------------------------------------------------- |
+| **Precision（精度）** | 时间戳精度：`ms`（不变）、`s`、`min` 或 `hr` |
+
+##### 示例 — 精度 `s` {#example--precision-s}
+
+**输入**
+
+```json
+[{ "pointId": "tag/temp1", "timestamp": "2024-01-15T10:00:00.523Z", "data": { "value": "23.5", "quality": "good" } }]
+```
+
+**输出** — 毫秒被清零，`quality` 被剥离
+
+```json
+[{ "pointId": "tag/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } }]
+```
+
+---
+
+#### OPCUA values {#opcua-values}
+
+使用**点位 ID → 节点 ID**映射表将每条读数映射为一条 OPC UA 写命令。值原样转发。
+无匹配的读数会被丢弃。
+
+##### 设置 {#settings-4}
+
+| 设置     | 说明                         |
+| ----------- | ------------------------------------ |
+| **Mapping（映射）** | `{ pointId, nodeId }` 对的列表 |
+
+##### 示例 {#example-4}
+
+映射：`plant/temp1 → ns=1;s=Temperature`，`plant/valve1 → ns=1;s=Valve1`
+
+**输入**
+
+```json
+[
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
+  { "pointId": "plant/valve1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "true" } }
+]
+```
+
+**输出**
+
+```json
+[
+  { "nodeId": "ns=1;s=Temperature", "value": "23.5" },
+  { "nodeId": "ns=1;s=Valve1", "value": "true" }
+]
+```
+
+---
+
+### 适用于文件和查询型 South 连接器 {#for-file-and-query-based-south-connectors}
+
+这些转换器处理由 REST、SFTP、FTP、Folder Scanner、ODBC、OLEDB 等连接器产生的文件或
+JSON 负载，以及通过 **OIBus API** 注入的数据。
+
+---
+
+#### Time Values (from CSV) {#time-values-from-csv}
+
+解析一个 CSV 文件，并将每一行映射为一个 OIBus time-value 对象。转换器会根据配置的格式
+将原始时间戳字符串转换为 ISO-8601 格式。
+
+##### 设置 {#settings-5}
+
+| 设置              | 说明                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------- |
+| **Has header（含表头）**       | 首行是否为表头行                                                 |
+| **Delimiter（分隔符）**        | 列分隔符（`COMMA`、`SEMI_COLON`、`TAB` 等）                                 |
+| **Point ID column（点位 ID 列）**  | 列名（表头模式）或包含点位标识符的从零开始的索引            |
+| **Timestamp column（时间戳列）** | 包含时间戳的列名或索引                                            |
+| **Value column（值列）**     | 包含值的列名或索引                                            |
+| **Timestamp type（时间戳类型）**   | 原始时间戳的格式（`iso-string`、`unix-epoch`、`unix-epoch-ms`、`string`）   |
+| **Timezone（时区）**         | 解析所用的时区（仅当类型为 `string` 时使用）                |
+| **Format（格式）**           | 自定义日期时间模式（仅当类型为 `string` 时使用，例如 `yyyy-MM-dd HH:mm:ss`） |
+
+##### 示例 {#example-5}
+
+当 REST South 连接器从某个 API 获取 CSV 导出文件时，或当 Folder Scanner South 连接器
+拾取由其他系统放置的 CSV 文件时，此转换器非常有用。
+
+**输入 CSV**（由 REST 条目获取）
+
+```csv
+SensorID,Timestamp,Reading
+tag/temp1,2024-01-15T10:00:00.000Z,23.5
+tag/temp1,2024-01-15T10:01:00.000Z,23.8
+tag/pressure1,2024-01-15T10:00:00.000Z,102.1
+```
+
+**输出（time-values JSON）**
+
+```json
+[
+  { "pointId": "tag/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": 23.5 } },
+  { "pointId": "tag/temp1", "timestamp": "2024-01-15T10:01:00.000Z", "data": { "value": 23.8 } },
+  { "pointId": "tag/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": 102.1 } }
+]
+```
+
+这些 time-values 随后可以转发给任何接受结构化读数的 North 连接器（OIAnalytics、
+MQTT、OPC UA……）。
+
+---
+
+#### MQTT payloads (from CSV) {#mqtt-payloads-from-csv}
+
+解析一个 CSV 文件，并将每一行转换为一条带有主题和负载的 MQTT 消息。支持两种负载模式：
+
+- **Simple（简单）** — 单个列成为负载，转换为配置的类型。
+- **Object（对象）** — 多个列被组装成一个 JSON 对象负载。
+
+##### 设置 {#settings-6}
+
+| 设置               | 说明                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------- |
+| **Has header（含表头）**        | 首行是否为表头行                                                 |
+| **Delimiter（分隔符）**         | 列分隔符                                                                      |
+| **Topic column（主题列）**      | 包含 MQTT 主题的列名或索引                                           |
+| **Payload type（负载类型）**      | `string`、`number`、`boolean`、`datetime` 或 `object`                                |
+| **Value column（值列）**      | 值所在的列（仅限简单负载类型）                                      |
+| **Object fields（对象字段）**     | `{ key, column, dataType }` 映射的列表（仅限对象负载）                    |
+| **Datetime settings（日期时间设置）** | 输入/输出日期时间转换（当负载类型或某个字段为 `datetime` 时适用） |
+
+##### 示例 — 简单负载 {#example--simple-payload}
+
+**输入 CSV**
+
+```csv
+topic,value
+plant/pump1/speed,1450
+plant/pump1/running,true
+```
+
+**输出（MQTT 消息）**
+
+```json
+[
+  { "topic": "plant/pump1/speed", "payload": "1450" },
+  { "topic": "plant/pump1/running", "payload": "true" }
+]
+```
+
+##### 示例 — 对象负载 {#example--object-payload}
+
+**输入 CSV**
+
+```csv
+topic,value,quality,timestamp
+plant/sensor1,23.5,good,2024-01-15T10:00:00.000Z
+plant/sensor2,48.0,good,2024-01-15T10:00:00.000Z
+```
+
+对象字段：`value → number`，`quality → string`，`timestamp → datetime`
+
+**输出（MQTT 消息）**
+
+```json
+[
+  { "topic": "plant/sensor1", "payload": "{\"value\":23.5,\"quality\":\"good\",\"timestamp\":\"2024-01-15T10:00:00.000Z\"}" },
+  { "topic": "plant/sensor2", "payload": "{\"value\":48.0,\"quality\":\"good\",\"timestamp\":\"2024-01-15T10:00:00.000Z\"}" }
+]
+```
+
+---
+
+#### CSV (from JSON) {#csv-from-json}
+
+解析一个 JSON 结构并写入一个 CSV 文件。**行迭代路径（row iterator path）**（一个 JSONPath
+表达式）用于标识成为行的对象数组，每个已配置的**字段（field）**将行内的某个路径映射到一个
+CSV 列。字段支持日期时间转换、类型转换以及可选的按字段 JavaScript 后处理表达式。
+
+##### 设置 {#settings-7}
+
+| 设置               | 说明                                                                                                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Filename（文件名）**          | 输出文件名；支持 `@CurrentDate`（当前 UTC 时间戳），以及在内容来自 South 历史查询时，
+`@QueryStartTime`/`@QueryEndTime`（查询的时间窗口，否则为空） |
+| **Encoding（编码）**          | `UTF_8`、`UTF_8_BOM`、`LATIN_1` 或 `UTF_16_LE`                                                                                                                                                    |
+| **Header（表头）**            | 是否包含列标题行                                                                                                                                                           |
+| **Delimiter（分隔符）**         | 列分隔符                                                                                                                                                                                   |
+| **Newline（换行符）**           | 行结束符（`LF`、`CRLF`、`CR`）                                                                                                                                                                   |
+| **Quote char（引号字符）**        | `DOUBLE_QUOTE`、`SINGLE_QUOTE` 或 `NONE`                                                                                                                                                          |
+| **Escape char（转义字符）**       | `DOUBLE_QUOTE` 或 `BACKSLASH`                                                                                                                                                                      |
+| **Null value（空值）**        | 当字段缺失或为 null 时写入的字符串（默认为空字符串）                                                                                                                          |
+| **Row iterator path（行迭代路径）** | 指向行数组的 JSONPath（例如 `$.data[*]`）                                                                                                                                                          |
+| **Fields（字段）**            | 每个 CSV 列对应一个条目（见下文）                                                                                                                                               |
+
+每个**字段**条目：
+
+| 设置               | 说明                                                                             |
+| --------------------- | --------------------------------------------------------------------------------------- |
+| **Column name（列名）**       | CSV 中的表头标签                                                                 |
+| **JSON path（JSON 路径）**         | 指向当前行内某个值的 JSONPath（例如 `$.timestamp`）                       |
+| **Data type（数据类型）**         | `string`、`number`、`boolean`、`datetime`、`array` 或 `object`                         |
+| **Datetime settings（日期时间设置）** | 数据类型为 `datetime` 时的输入/输出格式/时区/类型                      |
+| **Field process（字段处理）**     | 用于对提取值进行后处理的可选 JS 表达式（例如 `value.toUpperCase()`） |
+
+##### 示例 {#example-6}
+
+REST South 连接器从某个 API 获取一份 JSON 报告。**CSV (from JSON)** 转换器提取相关字段，
+并为 File Writer North 连接器重新格式化它们。
+
+**输入 JSON**（由 REST 条目返回）
+
+```json
+{
+  "data": [
+    { "ts": "2024-01-15T10:00:00.000Z", "tag": "temp1", "val": 23.5, "ok": true },
+    { "ts": "2024-01-15T10:01:00.000Z", "tag": "temp1", "val": 23.8, "ok": true },
+    { "ts": "2024-01-15T10:00:00.000Z", "tag": "pressure1", "val": 102.1, "ok": false }
+  ]
+}
+```
+
+配置：
+
+- 行迭代路径：`$.data[*]`
+- 字段：`Timestamp`（`$.ts`，datetime）、`Tag`（`$.tag`，string）、`Value`（`$.val`，number）、`OK`（`$.ok`，boolean）
+
+**输出 CSV**
+
+```csv
+Timestamp,Tag,Value,OK
+2024-01-15T10:00:00.000Z,temp1,23.5,true
+2024-01-15T10:01:00.000Z,temp1,23.8,true
+2024-01-15T10:00:00.000Z,pressure1,102.1,false
+```
+
+:::info 嵌套的 JSON 字符串
+**CSV (from JSON)** 和下面的 **OIAnalytics (from JSON)** 都可以自动解析 JSON 字符串化的中间节点——
+例如某个 MQTT South 连接器，其消息携带的负载是一个原始 JSON 字符串。如果某个路径片段解析到
+一个本身包含 JSON 的字符串，路径的其余部分会针对解析出的值继续解析。这同样适用于**行迭代路径**
+本身：它可以跨越该字符串边界，并仍然为每个嵌套匹配产生一行，因此一条包含多个读数的消息会被
+拆分成多行。请参见下面的
+[OIAnalytics (from JSON)](#oianalytics-from-json) 示例，了解详细的操作过程。
+:::
+
+---
+
+#### OIAnalytics (from JSON) {#oianalytics-from-json}
+
+通过 JSONPath 表达式从任意 JSON 结构中提取点位 ID、值和时间戳，并生成一个标准的
+OIBus time-values 数组——与 PLC/历史数据库 South 连接器产生的形状相同。**行迭代路径**
+标识负载的哪一部分成为一行（一个 time-value），对每次匹配都会产生一行；点位 ID、值和
+时间戳路径随后会相对于该行进行解析。
+
+当 South 连接器（通常是 MQTT、REST 或 Folder Scanner）提供的原始 JSON 尚未匹配 OIBus 内部
+time-values 形状，而您又想直接将其提供给 OIAnalytics North 连接器而不编写自定义转换器时，
+就应该使用这个转换器。
+
+##### 设置 {#settings-8}
+
+| 设置                   | 说明                                                                                                                                                                                                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Row Iterator JSONPath（行迭代 JSONPath）** | 指向成为 time-values 的行数组的 JSONPath（例如 `$[*]`）。当直接遍历失败时，
+会自动解析 JSON 字符串化的中间节点，因此该路径可以跨入包含原始 JSON 文本的字段
+（例如 MQTT 负载）并仍然为每个嵌套匹配产生一行 |
+| **Point ID JSONPath（点位 ID JSONPath）**     | 指向当前行内点位标识符的 JSONPath（例如 `$[*].id`）；通配符（`[*]`）会解析为当前行的索引                                                                                                                                                                |
+| **Value JSONPath（值 JSONPath）**        | 指向当前行内值的 JSONPath                                                                                                                                                                                                                                         |
+| **Timestamp JSONPath（时间戳 JSONPath）**    | 指向当前行内原始时间戳的 JSONPath。如果无法解析，则回退到当前时间                                                                                                                                                                        |
+| **Timestamp input type（时间戳输入类型）**  | 原始时间戳的格式：`String`、`ISO string`、`Unix epoch (s)` 或 `Unix epoch (ms)`                                                                                                                                                                                          |
+| **Timezone（时区）**              | 解析时使用的时区（仅当输入类型为 `String` 时使用）                                                                                                                                                                                                   |
+| **Format（格式）**                | 自定义日期时间模式（仅当输入类型为 `String` 时使用，例如 `yyyy-MM-dd HH:mm:ss`）                                                                                                                                                                                |
+| **Locale（区域设置）**              | 解析月/日名称时使用的区域设置（仅当输入类型为 `String` 时使用）                                                                                                                                                                            |
+| **Timestamp precision（时间戳精度）**   | 结果 ISO 时间戳被截断到的输出精度：`Millisecond`、`Second`、`Minute` 或 `Hour`                                                                                                                                                                           |
+
+##### 示例 — 带有 JSON 字符串化负载的 MQTT 消息 {#example--mqtt-messages-with-a-json-stringified-payload}
+
+某个 MQTT South 连接器将每条消息交付为 `{ message, timestamp, item }`，其中 `message` 是**原始
+MQTT 负载字符串**。单条消息可以携带不止一个指标，因此行迭代路径使用了**两个**通配符——
+一个用于外层消息数组，另一个用于每条消息（JSON 字符串化）负载内部的指标——并为每个指标
+展开一行，无论某条消息携带的是一个读数还是多个读数。
+
+**输入** — 第一条消息携带两个指标，第二条携带一个
+
+```json
+[
+  {
+    "message": "{\"metrics\":[{\"name\":\"PLANT.UNIT1.TANK3.LEVEL\",\"value\":52.2936,\"timestamp\":\"2026-07-16T08:50:18.808Z\"},{\"name\":\"PLANT.UNIT1.TANK3.TEMP\",\"value\":18.4,\"timestamp\":\"2026-07-16T08:50:19.001Z\"}]}"
+  },
+  { "message": "{\"metrics\":[{\"name\":\"PLANT.UNIT2.PUMP1.SPEED\",\"value\":1450,\"timestamp\":\"2026-07-16T08:50:20.500Z\"}]}" }
+]
+```
+
+配置：
+
+- Row Iterator JSONPath：`$[*].message.metrics[*]`
+- Point ID JSONPath：`$[*].message.metrics[*].name`
+- Value JSONPath：`$[*].message.metrics[*].value`
+- Timestamp JSONPath：`$[*].message.metrics[*].timestamp`
+- Timestamp input type：`ISO string`，Timestamp precision：`Millisecond`
+
+第一个 `[*]` 遍历外层消息数组；第二个跨越 `message` 字符串边界（自动解析）以遍历其中的指标。
+两者会针对每一行一起解析，因此同一份配置既能处理单指标消息，也能处理多指标消息。
+
+**输出** — 三行：来自第一条消息的两行，来自第二条消息的一行
+
+```json
+[
+  { "pointId": "PLANT.UNIT1.TANK3.LEVEL", "timestamp": "2026-07-16T08:50:18.808Z", "data": { "value": 52.2936 } },
+  { "pointId": "PLANT.UNIT1.TANK3.TEMP", "timestamp": "2026-07-16T08:50:19.001Z", "data": { "value": 18.4 } },
+  { "pointId": "PLANT.UNIT2.PUMP1.SPEED", "timestamp": "2026-07-16T08:50:20.500Z", "data": { "value": 1450 } }
+]
+```
+
+---
+
+### 适用于 SQL 数据库 South 连接器 {#for-sql-database-south-connectors}
+
+MySQL、PostgreSQL、MSSQL、Oracle 和 SQLite South 连接器不会自行序列化其查询结果——
+每一行都会以数据库返回的原始形式作为**记录列表（record-list）**内容（一个扁平行对象的数组）
+向下游发送。将该数据渲染为任何其他形状（包括 CSV）是转换器的工作。
+
+---
+
+#### CSV (from Record list) {#csv-from-record-list}
+
+将一个行数组转换为一个 CSV 文件。行中出现的每个键都会自动成为一列——
+无需专门声明某个字段才能让它出现在输出中。只有当某一列需要重命名、转换为特定类型、
+重新格式化（日期）或通过 JavaScript 表达式处理时，才需要声明一个字段
+（通过**字段映射（Fields Mapping）**，使用与
+[CSV (from JSON)](#csv-from-json) 相同的按字段映射模型）。任何未被字段配置覆盖的列
+都会原样写出。
+
+##### 设置 {#settings-9}
+
+| 设置                 | 说明                                                                                    |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| **Filename（文件名）**            | 输出文件名模式（支持 `@CurrentDate`、`@QueryStartTime`、`@QueryEndTime`）          |
+| **Encoding（编码）**            | 输出字符编码（`UTF_8`、`UTF_8_BOM`、`LATIN_1`、`UTF_16_LE`）                       |
+| **First row as header（首行作为表头）** | 是否写入包含列名的表头行                                                            |
+| **Compression（压缩）**         | 对输出文件进行 Gzip 压缩                                                                  |
+| **Delimiter（分隔符）**           | 列分隔符（`COMMA`、`SEMI_COLON`、`TAB` 等）                                          |
+| **Newline（换行符）**             | 行分隔符（`CRLF`、`LF`、`CR`）                                                             |
+| **Quote character（引号字符）**     | 用于给字段加引号的字符（`DOUBLE_QUOTE`、`SINGLE_QUOTE`、`NONE`）                        |
+| **Escape character（转义字符）**    | 用于转义带引号字段内的引号字符的字符（`BACKSLASH`、`DOUBLE_QUOTE`） |
+| **Null value（空值）**          | 当配置的字段为 `null` 或在行中缺失时写出的值                    |
+| **Fields Mapping（字段映射）**      | 一份按列覆盖的列表（重命名、转换、重新格式化或处理）——见下文                |
+
+**字段映射**中的每个条目都通过其在源行中的名称来定位一列：
+
+| 设置                | 说明                                                                                              |
+| ----------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Field Name（字段名）**          | 要配置的列的名称，与源行中的某个键相匹配                                        |
+| **Column Name（列名）**         | 该列在输出 CSV 中的表头。留空则保留原始字段名。                    |
+| **Data Type（数据类型）**           | 如何转换该值：`string`、`number`、`boolean`、`datetime`、`array` 或 `object`                     |
+| **Field Process（字段处理）**       | 转换之后应用的可选 JavaScript 表达式（例如 `value.toUpperCase()`）                         |
+| **Datetime Settings（日期时间设置）**   | 仅当数据类型为 `datetime` 时显示——输入/输出类型、时区、格式和区域设置（见下文）      |
+
+当**数据类型**为 `datetime` 时，**日期时间设置**描述如何解析原始值以及如何渲染它：
+
+| 设置                                     | 说明                                                                          |
+| --------------------------------------------- | ----------------------------------------------------------------------------------- |
+| **Timestamp input type（时间戳输入类型）**                      | 如何解析原始值（`string`、`iso-string`、`unix-epoch`、`unix-epoch-ms`）      |
+| **Input timezone / format / locale（输入时区/格式/区域设置）**          | 当输入类型为 `string` 时用于解析原始值                             |
+| **Timestamp output type（时间戳输出类型）**                     | 如何渲染该值（`string`、`iso-string`、`unix-epoch`、`unix-epoch-ms`）          |
+| **Output timezone / format / locale（输出时区/格式/区域设置）**         | 当输出类型为 `string` 时用于渲染该值                              |
+
+##### 示例 {#example-7}
+
+**输入**（来自某个 MySQL 条目的记录列表内容）
+
+```json
+[
+  { "deviceId": "sensor-1", "readingTime": "2024-01-15T10:00:00.000Z", "value": 23.5 },
+  { "deviceId": "sensor-1", "readingTime": "2024-01-15T10:01:00.000Z", "value": 23.8 }
+]
+```
+
+配置一个字段（`readingTime`，数据类型 `datetime`，输入类型 `iso-string`，输出类型
+`string`，格式为 `yyyy-MM-dd HH:mm:ss`，时区为 `Europe/Paris`）——`deviceId` 和 `value`
+未配置，因此会原样透传：
+
+**输出 CSV**
+
+```csv
+deviceId,value,readingTime
+sensor-1,23.5,2024-01-15 11:00:00
+sensor-1,23.8,2024-01-15 11:01:00
+```
+
+---
+
+### 适用于 OIAnalytics Setpoints {#for-oianalytics-setpoints}
+
+这些转换器将 OIAnalytics 发送的写回命令转换为目标执行器 North 连接器所期望的格式。
+
+每个设定点命令具有如下结构：
+
+```json
+{ "reference": "pump1/setSpeed", "value": 1200 }
+```
+
+---
+
+#### MQTT payloads {#mqtt-payloads-1}
+
+使用**reference（引用） → topic（主题）**映射表，将设定点命令转换为 MQTT 消息。
+没有匹配条目的命令会被丢弃。负载是序列化为字符串的值；对象值会被 JSON 字符串化。
+
+##### 设置 {#settings-10}
+
+| 设置     | 说明                          |
+| ----------- | ------------------------------------ |
+| **Mapping（映射）** | `{ reference, topic }` 对的列表 |
+
+##### 示例 {#example-8}
+
+映射：`pump1/setSpeed → control/pump1/speed`
+
+**输入（设定点）**
+
+```json
+[
+  { "reference": "pump1/setSpeed", "value": 1200 },
+  { "reference": "valve2/open", "value": true }
+]
+```
+
+`valve2/open` 被丢弃（无匹配映射）。
+
+**输出（MQTT 消息）**
+
+```json
+[{ "topic": "control/pump1/speed", "payload": "1200" }]
+```
+
+---
+
+#### Modbus values {#modbus-values-1}
+
+将设定点命令转换为 Modbus 写命令。布尔值以线圈写入；数值会被解析为整数并写入保持寄存器。
+
+##### 设置 {#settings-11}
+
+| 设置     | 说明                                                                             |
+| ----------- | --------------------------------------------------------------------------------------- |
+| **Mapping（映射）** | `{ reference, address, modbusType }` 对的列表（`modbusType`：`coil` 或 `register`） |
+
+##### 示例 {#example-9}
+
+映射：`valve1/open → 0x0010 (coil)`，`pump1/speed → 0x0020 (register)`
+
+**输入（设定点）**
+
+```json
+[
+  { "reference": "valve1/open", "value": true },
+  { "reference": "pump1/speed", "value": 1450 }
+]
+```
+
+**输出（Modbus 写命令）**
+
+```json
+[
+  { "address": "0x0010", "value": true, "modbusType": "coil" },
+  { "address": "0x0020", "value": 1450, "modbusType": "register" }
+]
+```
+
+---
+
+#### OPCUA values {#opcua-values-1}
+
+使用**reference（引用） → node ID（节点 ID）**映射表将设定点命令转换为 OPC UA 写命令。
+
+##### 设置 {#settings-12}
+
+| 设置     | 说明                           |
+| ----------- | ------------------------------------- |
+| **Mapping（映射）** | `{ reference, nodeId }` 对的列表 |
+
+##### 示例 {#example-10}
+
+映射：`pump1/speed → ns=1;s=PumpSpeed`
+
+**输入（设定点）**
+
+```json
+[{ "reference": "pump1/speed", "value": 1200 }]
+```
+
+**输出（OPC UA 写命令）**
+
+```json
+[{ "nodeId": "ns=1;s=PumpSpeed", "value": 1200 }]
+```
+
+---
+
+## 针对真实 South 条目测试转换器 {#testing-a-transformer-against-a-real-south-item}
+
+除了在隔离环境中测试自定义转换器的代码（见下文）之外，您还可以从 **South 条目的 Test（测试）**
+弹窗（在 [South 连接器条目](../south-connectors/common-settings.md#item-actions)中描述）
+端到端地预览任意转换器（标准或自定义），并使用真实的、刚采集到的数据：
+
+1. 选择该条目关联的某个 North 连接器之一（或者，对于历史查询条目，直接选择该查询自身的
+   转换器之一）。
+2. 选择该 North 已配置的某个转换器，并仅针对本次测试运行调整其选项——
+   已保存的配置不受影响。
+3. 运行测试。弹窗会显示完整的处理流程：**原始结果 → 转换器（+ 选项） → 转换后的
+   输出**，这样您就可以在数据到达 North 的缓存之前，针对该条目的实际数据验证转换器。
+
+---
+
+## 自定义转换器 {#custom-transformers}
+
+当没有标准转换器适合您的用例时，您可以使用 JavaScript 或 TypeScript 编写一个**自定义转换器
+（Custom Transformer）**。自定义代码运行在一个安全的隔离沙箱中，无法访问主机文件系统、
+Node.js 模块或网络。
+
+自定义转换器在**引擎 → 转换器**页面创建，随后可在任何 North 连接器的转换器选择列表中使用。
+
+### 转换函数 {#transform-function}
+
+您的代码必须导出一个 `transform` 函数（或一个默认导出）。它接收四个参数，并且必须返回一个
+结果对象。
+
+```typescript
+/**
+ * @param content  - The raw input data as a UTF-8 string (JSON, CSV, XML…)
+ * @param source   - Metadata about the data source ({ type, dataSourceId, … })
+ * @param filename - The original filename (or a generated ID if no file was involved)
+ * @param options  - The transformer options as configured in the UI
+ */
+export function transform(
+  content: string,
+  source: object,
+  filename: string,
+  options: object
+): { data: unknown; filename: string; numberOfElement?: number } {
+  // …
+}
+```
+
+| 返回字段      | 说明                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------------- |
+| `data`            | 写入缓存文件的内容（见下文）：一个字符串、原始二进制数据或任何其他值 |
+| `filename`        | 输出存储在 North 缓存中时使用的文件名                              |
+| `numberOfElement` | 已处理记录数的可选计数，会显示在日志和指标中                              |
+
+转换器的输出会**原样写入**缓存文件，然后由 North 根据其内容类型读回。`data`
+会按类型处理：
+
+| 返回的 `data`                              | 存储为                    | 用于                                                |
+| -------------------------------------------- | ---------------------------- | ------------------------------------------------------- |
+| **字符串**                                 | 该字符串原样（UTF-8）  | 任意输出类型——由您完全控制确切的文本            |
+| **`Uint8Array` / `ArrayBuffer`**（二进制）  | 原始字节，逐字节保留 | 仅限 **`any`** 输出类型（文件类 North）            |
+| 任何**其他值**（对象、数组、数字……） | `JSON.stringify(data)`       | 读取 JSON 的类型化输出（`time-values`、`mqtt` 等） |
+
+:::caution 使 `data` 与输出类型匹配；确保 `filename` 是字符串
+
+- 对于**类型化**输出类型（`time-values`、`mqtt`、`oianalytics`、`modbus`、`opcua`），North
+  会将缓存文件作为 **JSON** 读取——请返回字符串或对象/数组（OIBus 会将其序列化为 JSON）。
+  在这里返回二进制数据将无法解析。
+- **二进制**输出（`Uint8Array`/`ArrayBuffer`）用于 **`any`** 输出类型，即文件类 North
+  （File Writer、S3、Azure、OIAnalytics 文件上传）会原样写入/上传这些字节。
+- 一个非字符串、非二进制的值，如果被 `JSON.stringify` 拒绝（循环结构、`BigInt`）或
+  丢弃（函数），会以明确的错误使转换失败，而不会被缓存。
+
+`filename` **必须是字符串**——它会成为缓存文件名并被记录到连接器指标中，因此在此处返回
+一个对象或数组可能会破坏指标持久化。当您从输入数据（MQTT 主题、负载字段等）推导它时，
+请将其转换为字符串并去除路径分隔符，例如
+`` `mqtt_${String(topic).replace(/[\\/]/g, '_')}.json` ``。
+:::
+
+### 可用的库 {#available-libraries}
+
+以下库已预先加载到沙箱中，可通过 `require` 使用：
+
+| 库                                                                | `require` 名称  | 说明                                     |
+| ---------------------------------------------------------------------- | --------------- | ----------------------------------------------- |
+| **[Luxon](https://moment.github.io/luxon/)**                           | `luxon`         | 日期/时间的解析、格式化和运算   |
+| **[JSONPath Plus](https://jsonpath-plus.github.io/JSONPath/docs/ts/)** | `jsonpath-plus` | 对任意 JSON 结构进行 JSONPath 查询 |
+| **[PapaParse](https://www.papaparse.com/docs)**                        | `papaparse`     | CSV 解析和序列化                   |
+
+任何其他 `require` 调用都会抛出错误——`fs`、`http`、`process` 以及所有 Node.js 内置模块
+都被阻止使用。
+
+### 日志记录 {#logging}
+
+在沙箱内部，`console.log`、`console.info`、`console.warn` 和 `console.error` 会被桥接到
+OIBus 日志系统。所有消息都会带有 `CUSTOM TRANSFORMER:` 前缀。
+
+### 限制 {#limits}
+
+| 限制         | 值                                            |
+| ------------- | ------------------------------------------------ |
+| 内存        | 每次执行 256 MB                             |
+| 超时       | 可在转换器设置中配置                         |
+| 可用模块 | 仅 `luxon`、`jsonpath-plus`、`papaparse`       |
+| 主机访问   | 无（文件系统、网络和环境变量均被阻止） |
+
+---
+
+### 示例 {#examples}
+
+#### 示例 1 — 将 JSON 数组重新格式化为 CSV（JavaScript） {#example-1--reformat-a-json-array-to-csv-javascript}
+
+某个 REST South 连接器返回一个 JSON 数组。此转换器将其转换为一个以分号分隔的 CSV 文件，
+供 File Writer North 连接器使用。
+
+**输入（`content`）**
+
+```json
+[
+  { "ts": "2024-01-15T10:00:00.000Z", "id": "temp1", "val": 23.5 },
+  { "ts": "2024-01-15T10:01:00.000Z", "id": "temp1", "val": 23.8 },
+  { "ts": "2024-01-15T10:00:00.000Z", "id": "pressure1", "val": 102.1 }
+]
+```
+
+**输出**
+
+```csv
+Timestamp;Tag;Value
+2024-01-15T10:00:00.000Z;temp1;23.5
+2024-01-15T10:01:00.000Z;temp1;23.8
+2024-01-15T10:00:00.000Z;pressure1;102.1
+```
+
+**代码**
+
+```javascript
+export function transform(content, source, filename, options) {
+  const Papa = require('papaparse');
+  const rows = JSON.parse(content);
+
+  const csv = Papa.unparse(
+    rows.map(r => ({
+      Timestamp: r.ts,
+      Tag: r.id,
+      Value: r.val
+    })),
+    { delimiter: ';', header: true }
+  );
+
+  return {
+    data: csv,
+    filename: `export_${filename.replace('.json', '.csv')}`,
+    numberOfElement: rows.length
+  };
+}
+```
+
+---
+
+#### 示例 2 — 过滤并丰富 time-values（TypeScript） {#example-2--filter-and-enrich-time-values-typescript}
+
+只保留高于配置阈值的读数，并为每一条添加一个派生的 `status` 字段。
+
+**输入（`content`）** — 标准 time-values 数组，`options.threshold = 20`
+
+```json
+[
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
+  { "pointId": "plant/temp2", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "18.0" } },
+  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1" } }
+]
+```
+
+**输出** — `temp2` 被丢弃（18.0 ≤ 20），其他的被标注
+
+```json
+[
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5", "status": "NORMAL" } },
+  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1", "status": "HIGH" } }
+]
+```
+
+**代码**
+
+```typescript
+type TimeValue = { pointId: string; timestamp: string; data: { value: string } };
+
+export function transform(
+  content: string,
+  _source: object,
+  _filename: string,
+  options: { threshold: number }
+): { data: string; filename: string; numberOfElement: number } {
+  const values: Array<TimeValue> = JSON.parse(content);
+  const threshold = options.threshold ?? 0;
+
+  const filtered = values
+    .filter(v => parseFloat(v.data.value) > threshold)
+    .map(v => ({
+      ...v,
+      data: {
+        ...v.data,
+        status: parseFloat(v.data.value) > threshold * 2 ? 'HIGH' : 'NORMAL'
+      }
+    }));
+
+  console.info(`Kept ${filtered.length} / ${values.length} values above threshold ${threshold}`);
+
+  return {
+    data: JSON.stringify(filtered),
+    filename: `filtered_${Date.now()}.json`,
+    numberOfElement: filtered.length
+  };
+}
+```
+
+---
+
+#### 示例 3 — 使用 JSONPath 从嵌套 JSON 中提取字段（JavaScript） {#example-3--extract-fields-from-a-nested-json-with-jsonpath-javascript}
+
+**输入（`content`）**
+
+```json
+{
+  "records": [
+    { "header": { "ts": "2024-01-15T10:00:00.000Z" }, "tag": "plant/temp1", "measurements": { "val": 23.5 } },
+    { "header": { "ts": "2024-01-15T10:01:00.000Z" }, "tag": "plant/temp1", "measurements": { "val": 23.8 } },
+    { "header": { "ts": "2024-01-15T10:00:00.000Z" }, "tag": "plant/pressure1", "measurements": { "val": 102.1 } }
+  ]
+}
+```
+
+**输出**
+
+```json
+[
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:01:00.000Z", "data": { "value": "23.8" } },
+  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1" } }
+]
+```
+
+**代码**
+
+```javascript
+export function transform(content, _source, _filename, _options) {
+  const { JSONPath } = require('jsonpath-plus');
+  const data = JSON.parse(content);
+
+  const timestamps = JSONPath({ path: '$.records[*].header.ts', json: data });
+  const tags = JSONPath({ path: '$.records[*].tag', json: data });
+  const values = JSONPath({ path: '$.records[*].measurements.val', json: data });
+
+  const timeValues = timestamps.map((ts, i) => ({
+    pointId: tags[i],
+    timestamp: ts,
+    data: { value: String(values[i]) }
+  }));
+
+  return {
+    data: JSON.stringify(timeValues),
+    filename: `extracted_${Date.now()}.json`,
+    numberOfElement: timeValues.length
+  };
+}
+```
+
+---
+
+#### 示例 4 — 使用 Luxon 进行时间戳转换（JavaScript） {#example-4--timestamp-conversion-with-luxon-javascript}
+
+解析 REST API 响应中的 Unix epoch 毫秒时间戳，并将其转换为特定时区下的 ISO-8601 格式。
+
+**输入（`content`）**
+
+```json
+[
+  { "id": "plant/temp1", "epoch_ms": 1705312800000, "val": 23.5 },
+  { "id": "plant/pressure1", "epoch_ms": 1705312800000, "val": 102.1 }
+]
+```
+
+**输出** — `epoch_ms` 转换为 ISO-8601，时区 `Europe/Paris`（一月份为 UTC+1）
+
+```json
+[
+  { "id": "plant/temp1", "epoch_ms": 1705312800000, "val": 23.5, "timestamp": "2024-01-15T11:00:00.000+01:00" },
+  { "id": "plant/pressure1", "epoch_ms": 1705312800000, "val": 102.1, "timestamp": "2024-01-15T11:00:00.000+01:00" }
+]
+```
+
+**代码**
+
+```javascript
+export function transform(content, _source, _filename, _options) {
+  const { DateTime } = require('luxon');
+  const rows = JSON.parse(content);
+
+  const converted = rows.map(row => ({
+    ...row,
+    timestamp: DateTime.fromMillis(row.epoch_ms, { zone: 'Europe/Paris' }).toISO()
+  }));
+
+  return {
+    data: JSON.stringify(converted),
+    filename: `converted_${Date.now()}.json`,
+    numberOfElement: converted.length
+  };
+}
+```
+
+---
+
+#### 示例 5 — 将 MQTT JSON 消息规范化为 time-values（JavaScript） {#example-5--normalize-mqtt-json-messages-to-time-values-javascript}
+
+某个 **MQTT South** 连接器将每批接收到的消息交付为单个 `any-content` 负载：
+一个 `{ message, timestamp, item: { id, name, topic } }` 的 JSON 数组，其中 `message` 是
+**原始 MQTT 负载字符串**。该原始负载可以是任意形状——一个裸数字、一个 JSON 字符串、
+一个扁平对象，或一个读数数组（参见本地测试环境发布的
+[JSON topics](../../developer/local-test-stack.md#json-topics)）。此转换器将它们全部规范化为
+一个标准的 time-values 数组，并使用主题作为点位 ID。
+
+**输入（`content`）** — 来自不同主题的三条消息
+
+```json
+[
+  {
+    "message": "{\"value\":35.17,\"unit\":\"celsius\",\"timestamp\":\"2026-06-04T08:15:06.673+00:00\",\"quality\":\"good\"}",
+    "timestamp": "2026-06-04T08:15:06.700Z",
+    "item": { "id": "i1", "name": "flat", "topic": "workshop1/json/flat" }
+  },
+  {
+    "message": "44.53",
+    "timestamp": "2026-06-04T08:15:06.700Z",
+    "item": { "id": "i2", "name": "number", "topic": "workshop2/json/number" }
+  },
+  {
+    "message": "[{\"timestamp\":\"2026-06-04T08:15:06.673+00:00\",\"value\":34.95},{\"timestamp\":\"2026-06-04T08:15:08.673+00:00\",\"value\":35.48}]",
+    "timestamp": "2026-06-04T08:15:06.700Z",
+    "item": { "id": "i3", "name": "array", "topic": "workshop1/json/array" }
+  }
+]
+```
+
+**输出** — 每个读数一条 time-value；数组消息产生两条
+
+```json
+[
+  { "pointId": "workshop1/json/flat", "timestamp": "2026-06-04T08:15:06.673+00:00", "data": { "value": "35.17" } },
+  { "pointId": "workshop2/json/number", "timestamp": "2026-06-04T08:15:06.700Z", "data": { "value": "44.53" } },
+  { "pointId": "workshop1/json/array", "timestamp": "2026-06-04T08:15:06.673+00:00", "data": { "value": "34.95" } },
+  { "pointId": "workshop1/json/array", "timestamp": "2026-06-04T08:15:08.673+00:00", "data": { "value": "35.48" } }
+]
+```
+
+**代码**
+
+```javascript
+export function transform(content, _source, _filename, _options) {
+  const messages = JSON.parse(content); // [{ message, timestamp, item: { topic } }, …]
+  const timeValues = [];
+
+  // Extract a scalar value from one reading, whatever its shape.
+  const toValue = reading => {
+    if (reading !== null && typeof reading === 'object') {
+      // Flat reading ({ value, … }); fall back to the whole object for nested shapes.
+      return reading.value ?? JSON.stringify(reading);
+    }
+    return reading; // number, string or boolean
+  };
+
+  for (const { message, timestamp, item } of messages) {
+    // The raw MQTT payload may be JSON (object/array/number/string) or plain text.
+    let parsed;
+    try {
+      parsed = JSON.parse(message);
+    } catch {
+      parsed = message; // non-JSON payload: keep the raw string
+    }
+
+    const readings = Array.isArray(parsed) ? parsed : [parsed];
+    for (const reading of readings) {
+      timeValues.push({
+        pointId: item.topic,
+        timestamp: (reading && reading.timestamp) || timestamp,
+        data: { value: String(toValue(reading)) }
+      });
+    }
+  }
+
+  return {
+    data: JSON.stringify(timeValues),
+    // Always a plain string filename — never a payload object (see the caution above).
+    filename: `mqtt_${Date.now()}.json`,
+    numberOfElement: timeValues.length
+  };
+}
+```
+
+:::tip 在本地生成这些负载
+[本地测试环境](../../developer/local-test-stack.md#json-topics)会准确发布这些 MQTT
+JSON 形状（`flat`、`nested`、`array`、`mixed`、`string`、`number`），因此您可以将一个
+MQTT South 连接器指向它，并针对每种情况测试自定义转换器。
+:::
+
+---
+
+:::info 测试自定义转换器
+使用转换器编辑器中的**测试（Test）**按钮，在部署之前针对示例负载运行您的代码。
+测试结果会显示转换后的输出、输出文件名以及执行时间。
+:::
