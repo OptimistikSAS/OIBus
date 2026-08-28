@@ -292,6 +292,18 @@ describe('WebServer', () => {
       // Unauthenticated API call: rejected by auth middleware, never reaches static/Angular handling.
       assert.equal(res.status, 401);
     });
+
+    it('still serves the Angular index.html fallback for a route that merely starts with the word "documentation"', async () => {
+      // isStaticFile() must anchor on the '/documentation' path segment, not just the string
+      // prefix - otherwise a route like '/documentation-settings' would be misclassified as
+      // already-served-by-static-middleware and 404 instead of falling through to the Angular
+      // SPA shell.
+      await webServer.init();
+      const res = await fetch(`http://localhost:${TEST_PORT}/documentation-settings`);
+      assert.equal(res.status, 200);
+      const body = await res.text();
+      assert.equal(body, '<!doctype html><html><body>test placeholder</body></html>');
+    });
   });
 
   describe('error handling middleware', () => {
