@@ -2645,4 +2645,69 @@ describe('SouthOPCUA', () => {
       }
     ]);
   });
+
+  it('discover should flatten a recursive walk into one record per Variable, never descending into a Variable itself', async () => {
+    const explore = mock.fn(async (parentId: string | null) => {
+      if (parentId === null) {
+        return [
+          { id: 'ns=1;s=Folder', name: 'Folder', metadata: { nodeId: 'ns=1;s=Folder', type: 'Object' }, hasChildren: true },
+          {
+            id: 'ns=1;s=Temperature',
+            name: 'Temperature',
+            metadata: { nodeId: 'ns=1;s=Temperature', type: 'Variable', value: '21.5', unit: '°C' },
+            hasChildren: true
+          }
+        ];
+      }
+      if (parentId === 'ns=1;s=Folder') {
+        return [
+          {
+            id: 'ns=1;s=Folder.Pressure',
+            name: 'Pressure',
+            metadata: { nodeId: 'ns=1;s=Folder.Pressure', type: 'Variable', value: '3.2' },
+            hasChildren: false
+          }
+        ];
+      }
+      // Would only be reached if discover() incorrectly descended into a Variable's own properties.
+      throw new Error(`unexpected explore(${parentId})`);
+    });
+    south.explore = explore;
+
+    const records = await south.discover({ rootNodeId: null });
+
+    // Depth-first: the root's first entry (the folder) is fully walked — pushing its Pressure leaf —
+    // before the loop moves on to the root's second entry (Temperature).
+    assert.deepStrictEqual(records, [
+      { id: 'ns=1;s=Folder.Pressure', name: 'Pressure', nodeId: 'ns=1;s=Folder.Pressure', type: 'Variable', value: '3.2' },
+      { id: 'ns=1;s=Temperature', name: 'Temperature', nodeId: 'ns=1;s=Temperature', type: 'Variable', value: '21.5', unit: '°C' }
+    ]);
+    assert.strictEqual(explore.mock.calls.length, 2);
+  });
+
+  it('discover should default to browsing from the root when the scope has no rootNodeId', async () => {
+    const explore = mock.fn(async () => []);
+    south.explore = explore;
+
+    await south.discover({});
+
+    assert.strictEqual(explore.mock.calls[0].arguments[0], null);
+  });
+
+  it('discover should start from the configured rootNodeId', async () => {
+    const explore = mock.fn(async () => []);
+    south.explore = explore;
+
+    await south.discover({ rootNodeId: 'ns=1;s=CustomRoot' });
+
+    assert.strictEqual(explore.mock.calls[0].arguments[0], 'ns=1;s=CustomRoot');
+  });
+
+  it('discover should return an empty array for an empty subtree', async () => {
+    south.explore = mock.fn(async () => []);
+
+    const records = await south.discover({ rootNodeId: 'ns=1;s=Empty' });
+
+    assert.deepStrictEqual(records, []);
+  });
 });

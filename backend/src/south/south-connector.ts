@@ -9,7 +9,7 @@ import {
 } from '../../shared/model/south-connector.model';
 import { Instant, Interval } from '../../shared/model/types';
 import { DateTime } from 'luxon';
-import { SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from './south-interface';
+import { SouthConfigurationDiscovery, SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from './south-interface';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import {
   OIBusAnyContent,
@@ -963,6 +963,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   /** Capability check — true iff the subclass implements `SouthExplore.explore()`. */
   hasExplore(): this is SouthExplore {
     return 'explore' in this;
+  }
+
+  /** Capability check — true iff the subclass implements `SouthConfigurationDiscovery.discover()`. */
+  hasConfigurationDiscovery(): this is SouthConfigurationDiscovery {
+    return 'discover' in this;
   }
 
   set connectorConfiguration(connectorConfiguration: SouthConnectorEntity<T, I>) {

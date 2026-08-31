@@ -1,9 +1,9 @@
 import { Aggregate, Instant, Resampling } from '../../../shared/model/types';
 import SouthConnector from '../south-connector';
 import { DateTime } from 'luxon';
-import { SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from '../south-interface';
+import { SouthConfigurationDiscovery, SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from '../south-interface';
 import { SouthItemSettings, SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent, OIBusRecord, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import {
@@ -73,7 +73,7 @@ function isSessionError(error: unknown): boolean {
  */
 export default class SouthOPCUA
   extends SouthConnector<SouthOPCUASettings, SouthOPCUAItemSettings>
-  implements SouthHistoryQuery, SouthDirectQuery, SouthSubscription, SouthExplore
+  implements SouthHistoryQuery, SouthDirectQuery, SouthSubscription, SouthExplore, SouthConfigurationDiscovery
 {
   private disconnecting = false;
   private connecting = false;
@@ -528,6 +528,33 @@ export default class SouthOPCUA
     }
 
     return result;
+  }
+
+  /**
+   * Retrieve step of a Configuration Workflow run: a full recursive walk of the address space under
+   * `scope.rootNodeId` (or the Objects folder root, matching `explore()`'s own default, if omitted),
+   * flattened into one record per Variable node — Object/folder nodes are walked into, never recorded
+   * themselves. Reuses `explore()` level by level rather than a bespoke traversal, so a Variable's
+   * value/unit/min/max already come from the same enrichment `explore()` itself does; this assumes
+   * `rootNodeId` names a folder/Object, not a Variable directly — pointing it at a leaf Variable would
+   * walk into that Variable's own EngineeringUnits/EURange properties as if they were data points.
+   */
+  async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
+    const rootNodeId = (scope.rootNodeId as string | undefined) ?? null;
+    const records: Array<OIBusRecord> = [];
+    await this.walkForDiscovery(rootNodeId, records);
+    return records;
+  }
+
+  private async walkForDiscovery(parentId: string | null, records: Array<OIBusRecord>): Promise<void> {
+    const entries = await this.explore(parentId);
+    for (const entry of entries) {
+      if (entry.metadata.type === 'Variable') {
+        records.push({ id: entry.id, name: entry.name, ...entry.metadata });
+      } else if (entry.hasChildren) {
+        await this.walkForDiscovery(entry.id, records);
+      }
+    }
   }
 
   /**
