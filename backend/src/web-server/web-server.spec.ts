@@ -19,6 +19,8 @@ import TransformerServiceMock from '../tests/__mocks__/service/transformer-servi
 import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
 import ConfigTransferServiceMock from '../tests/__mocks__/service/config-transfer-service.mock';
 import ConfigImportServiceMock from '../tests/__mocks__/service/config-import-service.mock';
+import ConfigurationWorkflowServiceMock from '../tests/__mocks__/service/configuration-workflow-service.mock';
+import ConfigurationWorkflowRunServiceMock from '../tests/__mocks__/service/configuration-workflow-run-service.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import { fixTsoaModuleResolution, mockModule, reloadModule } from '../tests/utils/test-utils';
 import type WebServerClass from './web-server';
@@ -36,6 +38,8 @@ import type TransformerService from '../service/transformer.service';
 import type HistoryQueryService from '../service/history-query.service';
 import type ConfigTransferService from '../service/config-transfer/config-transfer.service';
 import type ConfigImportService from '../service/config-transfer/config-import.service';
+import type ConfigurationWorkflowService from '../service/configuration-workflow.service';
+import type ConfigurationWorkflowRunService from '../service/configuration-workflow-run.service';
 import type HomeMetricsService from '../service/metrics/home-metrics.service';
 import type EncryptionService from '../service/encryption.service';
 import type AuditService from '../service/audit.service';
@@ -165,6 +169,8 @@ describe('WebServer', () => {
       new NorthServiceMock() as unknown as NorthService,
       new TransformerServiceMock() as unknown as TransformerService,
       new HistoryQueryServiceMock() as unknown as HistoryQueryService,
+      new ConfigurationWorkflowServiceMock() as unknown as ConfigurationWorkflowService,
+      new ConfigurationWorkflowRunServiceMock() as unknown as ConfigurationWorkflowRunService,
       homeMetricsMock as unknown as HomeMetricsService,
       new ConfigTransferServiceMock() as unknown as ConfigTransferService,
       new ConfigImportServiceMock() as unknown as ConfigImportService,
@@ -211,6 +217,8 @@ describe('WebServer', () => {
       new NorthServiceMock() as unknown as NorthService,
       new TransformerServiceMock() as unknown as TransformerService,
       new HistoryQueryServiceMock() as unknown as HistoryQueryService,
+      new ConfigurationWorkflowServiceMock() as unknown as ConfigurationWorkflowService,
+      new ConfigurationWorkflowRunServiceMock() as unknown as ConfigurationWorkflowRunService,
       homeMetricsMock as unknown as HomeMetricsService,
       new ConfigTransferServiceMock() as unknown as ConfigTransferService,
       new ConfigImportServiceMock() as unknown as ConfigImportService,

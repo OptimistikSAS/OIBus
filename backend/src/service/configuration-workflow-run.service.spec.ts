@@ -113,13 +113,16 @@ describe('Configuration Workflow Run Service', () => {
     mock.restoreAll();
   });
 
-  it('should throw when the south connector is not running', async () => {
+  it('should throw and record an ERRORED run when the south connector is not running', async () => {
     engine.hasSouth.mock.mockImplementation(() => false);
     await assert.rejects(
       service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest'),
       new OIBusValidationError(`South connector "${SOUTH_ID}" is not running - start it before running a workflow`)
     );
-    assert.strictEqual(workflowRunRepository.start.mock.calls.length, 0);
+    // The run still gets started (and then failed) - a validation failure is worth showing in run
+    // history rather than swallowing before any record exists, and preview shares this same check.
+    assert.strictEqual(workflowRunRepository.start.mock.calls.length, 1);
+    assert.strictEqual(workflowRunRepository.fail.mock.calls.length, 1);
   });
 
   it('should throw when the south connector does not support configuration discovery', async () => {
@@ -474,5 +477,102 @@ describe('Configuration Workflow Run Service', () => {
     const counts = failCall.arguments[2] as { createdCount: number; discoveredCount: number };
     assert.strictEqual(counts.discoveredCount, 2);
     assert.strictEqual(counts.createdCount, 1);
+  });
+
+  describe('preview', () => {
+    it('should never start a run or write anything', async () => {
+      south.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' }]);
+
+      await service.preview(SOUTH_ID, WORKFLOW_ID);
+
+      assert.strictEqual(workflowRunRepository.start.mock.calls.length, 0);
+      assert.strictEqual(southService.createItem.mock.calls.length, 0);
+      assert.strictEqual(southService.updateItem.mock.calls.length, 0);
+      assert.strictEqual(itemPointMetadataRepository.create.mock.calls.length, 0);
+      assert.strictEqual(itemPointMetadataRepository.update.mock.calls.length, 0);
+      assert.strictEqual(itemPointMetadataRepository.markOrphaned.mock.calls.length, 0);
+    });
+
+    it('should classify a brand-new entry as "new"', async () => {
+      south.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' }]);
+
+      const result = await service.preview(SOUTH_ID, WORKFLOW_ID);
+
+      assert.strictEqual(result.discoveredCount, 1);
+      assert.strictEqual(result.eligibleCount, 1);
+      assert.strictEqual(result.entries.length, 1);
+      assert.strictEqual(result.entries[0].status, 'new');
+      assert.strictEqual(result.entries[0].previousMetadata, null);
+      assert.deepStrictEqual(result.entries[0].record, { nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' });
+    });
+
+    it('should classify an unchanged, changed, reactivated, and missing entry correctly in one preview', async () => {
+      const unchangedPoint: ItemPointMetadataEntity = {
+        id: 'p1',
+        workflowId: WORKFLOW_ID,
+        southItemId: 'itemA',
+        discoveredEntryKey: 'nodeId=unchanged',
+        discoveredMetadata: { nodeId: 'unchanged', name: 'Same', type: 'Variable' },
+        description: null,
+        unit: null,
+        minAcceptableValue: null,
+        maxAcceptableValue: null,
+        resolution: null,
+        resamplingMethod: null,
+        remoteMetadataExtra: null,
+        status: 'active',
+        orphanedAt: null,
+        lastPushedAt: null
+      };
+      const changedPoint: ItemPointMetadataEntity = {
+        ...unchangedPoint,
+        id: 'p2',
+        discoveredEntryKey: 'nodeId=changed',
+        discoveredMetadata: { nodeId: 'changed', name: 'Old Name' }
+      };
+      const reactivatedPoint: ItemPointMetadataEntity = {
+        ...unchangedPoint,
+        id: 'p3',
+        discoveredEntryKey: 'nodeId=reactivated',
+        discoveredMetadata: { nodeId: 'reactivated', name: 'Back Again' },
+        status: 'orphaned',
+        orphanedAt: '2024-01-02T00:00:00.000Z'
+      };
+      const missingPoint: ItemPointMetadataEntity = {
+        ...unchangedPoint,
+        id: 'p4',
+        discoveredEntryKey: 'nodeId=missing',
+        discoveredMetadata: { nodeId: 'missing', name: 'Gone' }
+      };
+      itemPointMetadataRepository.findAllByWorkflow.mock.mockImplementation(() => [
+        unchangedPoint,
+        changedPoint,
+        reactivatedPoint,
+        missingPoint
+      ]);
+      south.discover.mock.mockImplementation(async () => [
+        { nodeId: 'unchanged', name: 'Same', type: 'Variable' },
+        { nodeId: 'changed', name: 'New Name', type: 'Variable' },
+        { nodeId: 'reactivated', name: 'Back Again', type: 'Variable' }
+      ]);
+
+      const result = await service.preview(SOUTH_ID, WORKFLOW_ID);
+
+      const byKey = new Map(result.entries.map(entry => [entry.key, entry]));
+      assert.strictEqual(byKey.get('nodeId=unchanged')?.status, 'unchanged');
+      assert.strictEqual(byKey.get('nodeId=changed')?.status, 'changed');
+      assert.strictEqual(byKey.get('nodeId=reactivated')?.status, 'reactivated');
+      assert.strictEqual(byKey.get('nodeId=missing')?.status, 'missing');
+      assert.strictEqual(byKey.get('nodeId=missing')?.record, null);
+      assert.deepStrictEqual(byKey.get('nodeId=missing')?.previousMetadata, { nodeId: 'missing', name: 'Gone' });
+    });
+
+    it('should throw the same validation errors as runNow when the south is not running or lacks discovery', async () => {
+      engine.hasSouth.mock.mockImplementation(() => false);
+      await assert.rejects(
+        service.preview(SOUTH_ID, WORKFLOW_ID),
+        new OIBusValidationError(`South connector "${SOUTH_ID}" is not running - start it before running a workflow`)
+      );
+    });
   });
 });
