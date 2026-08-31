@@ -23,7 +23,9 @@ import CertificateRepositoryMock from '../tests/__mocks__/repository/config/cert
 import OIAnalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
 import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import ConfigurationWorkflowRepositoryMock from '../tests/__mocks__/repository/config/configuration-workflow-repository.mock';
 import type { ScanMode } from '../model/scan-mode.model';
+import type { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 
 import type DataStreamEngineType from './data-stream-engine';
 import type { NorthConnectorEntityLight } from '../model/north-connector.model';
@@ -118,6 +120,7 @@ const certificateRepository = new CertificateRepositoryMock();
 const oIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
 const oianalyticsMessageService = new OIAnalyticsMessageServiceMock();
 const scanModeRepository = new ScanModeRepositoryMock();
+const configurationWorkflowRepository = new ConfigurationWorkflowRepositoryMock();
 
 let DataStreamEngine: new (...args: Array<unknown>) => DataStreamEngineType;
 let engine: DataStreamEngineType;
@@ -203,6 +206,7 @@ describe('DataStreamEngine', () => {
     historyQueryRepository.removeTransformersByTransformerId.mock.resetCalls();
     oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.resetCalls();
     scanModeRepository.findAll = mock.fn((): Array<ScanMode> => []);
+    configurationWorkflowRepository.findBySouthId = mock.fn((_southId: string): Array<ConfigurationWorkflowEntity> => []);
     cronMockInstance.stop.mock.resetCalls();
     cronExports.CronJob = mock.fn(function (_cron: unknown, _callback: () => void) {
       return cronMockInstance;
@@ -274,7 +278,8 @@ describe('DataStreamEngine', () => {
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       oianalyticsMessageService,
-      scanModeRepository
+      scanModeRepository,
+      configurationWorkflowRepository
     );
   });
 
@@ -1139,6 +1144,182 @@ describe('DataStreamEngine', () => {
       // be configurable but was never actually fired.
       assert.strictEqual(mockedHistoryQuery1.triggerNorth.mock.calls.length, 1);
       assert.deepStrictEqual(mockedHistoryQuery1.triggerNorth.mock.calls[0].arguments, [testData.scanMode.list[0]]);
+    });
+
+    it('should fan out a scan-mode tick to a scheduled configuration workflow via the wired run callback', async () => {
+      const workflow: ConfigurationWorkflowEntity = {
+        id: 'workflowId1',
+        name: 'Reactor discovery',
+        southId: testData.south.list[0].id,
+        targetItemId: null,
+        discoveryScope: {},
+        identityKeyFields: ['nodeId'],
+        eligibilityFilter: [],
+        itemFieldMapping: { name: '{{name}}' },
+        remoteFieldMapping: null,
+        scanMode: testData.scanMode.list[0],
+        enabled: true,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      configurationWorkflowRepository.findBySouthId = mock.fn((southId: string) =>
+        southId === testData.south.list[0].id ? [workflow] : []
+      );
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [testData.scanMode.list[0]]);
+      await engine.start(northList, southList, historyList);
+
+      const callback = mock.fn(async () => undefined);
+      engine.setWorkflowRunCallback(callback);
+
+      const cronCallback = cronExports.CronJob.mock.calls[0].arguments[1] as () => void;
+      cronCallback();
+
+      assert.strictEqual(callback.mock.calls.length, 1);
+      assert.deepStrictEqual(callback.mock.calls[0].arguments, [testData.south.list[0].id, 'workflowId1']);
+    });
+
+    it('should not fan out to a workflow with no scan mode (manual-only) or a disabled workflow', async () => {
+      const manualOnly: ConfigurationWorkflowEntity = {
+        id: 'workflowId1',
+        name: 'Manual only',
+        southId: testData.south.list[0].id,
+        targetItemId: null,
+        discoveryScope: {},
+        identityKeyFields: [],
+        eligibilityFilter: [],
+        itemFieldMapping: { name: '{{name}}' },
+        remoteFieldMapping: null,
+        scanMode: null,
+        enabled: true,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      const disabled: ConfigurationWorkflowEntity = {
+        ...manualOnly,
+        id: 'workflowId2',
+        scanMode: testData.scanMode.list[0],
+        enabled: false
+      };
+      configurationWorkflowRepository.findBySouthId = mock.fn((southId: string) =>
+        southId === testData.south.list[0].id ? [manualOnly, disabled] : []
+      );
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [testData.scanMode.list[0]]);
+      await engine.start(northList, southList, historyList);
+
+      const callback = mock.fn(async () => undefined);
+      engine.setWorkflowRunCallback(callback);
+
+      const cronCallback = cronExports.CronJob.mock.calls[0].arguments[1] as () => void;
+      cronCallback();
+
+      assert.strictEqual(callback.mock.calls.length, 0);
+    });
+
+    it('should log rather than throw when the wired run callback rejects', async () => {
+      const workflow: ConfigurationWorkflowEntity = {
+        id: 'workflowId1',
+        name: 'Reactor discovery',
+        southId: testData.south.list[0].id,
+        targetItemId: null,
+        discoveryScope: {},
+        identityKeyFields: [],
+        eligibilityFilter: [],
+        itemFieldMapping: { name: '{{name}}' },
+        remoteFieldMapping: null,
+        scanMode: testData.scanMode.list[0],
+        enabled: true,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      configurationWorkflowRepository.findBySouthId = mock.fn((southId: string) =>
+        southId === testData.south.list[0].id ? [workflow] : []
+      );
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [testData.scanMode.list[0]]);
+      await engine.start(northList, southList, historyList);
+      engine.setWorkflowRunCallback(
+        mock.fn(async () => {
+          throw new Error('south not running');
+        })
+      );
+
+      const cronCallback = cronExports.CronJob.mock.calls[0].arguments[1] as () => void;
+      assert.doesNotThrow(() => cronCallback());
+      await flushPromises();
+
+      assert.ok(
+        logger.error.mock.calls.some(c =>
+          String(c.arguments[0]).includes('Error running scheduled configuration workflow "Reactor discovery"')
+        )
+      );
+    });
+
+    it('should be a silent no-op when no run callback has been wired yet', async () => {
+      const workflow: ConfigurationWorkflowEntity = {
+        id: 'workflowId1',
+        name: 'Reactor discovery',
+        southId: testData.south.list[0].id,
+        targetItemId: null,
+        discoveryScope: {},
+        identityKeyFields: [],
+        eligibilityFilter: [],
+        itemFieldMapping: { name: '{{name}}' },
+        remoteFieldMapping: null,
+        scanMode: testData.scanMode.list[0],
+        enabled: true,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      configurationWorkflowRepository.findBySouthId = mock.fn((southId: string) =>
+        southId === testData.south.list[0].id ? [workflow] : []
+      );
+      scanModeRepository.findAll = mock.fn((): Array<ScanMode> => [testData.scanMode.list[0]]);
+      await engine.start(northList, southList, historyList);
+
+      const cronCallback = cronExports.CronJob.mock.calls[0].arguments[1] as () => void;
+      assert.doesNotThrow(() => cronCallback());
+    });
+
+    it("reloadWorkflows should replace only the calling south connector's contribution to the schedule", async () => {
+      await engine.start(northList, southList, historyList);
+      assert.strictEqual(engine['workflowsByScanModeId'].size, 0);
+
+      const workflowForSouth1: ConfigurationWorkflowEntity = {
+        id: 'workflowId1',
+        name: 'South 1 workflow',
+        southId: testData.south.list[0].id,
+        targetItemId: null,
+        discoveryScope: {},
+        identityKeyFields: [],
+        eligibilityFilter: [],
+        itemFieldMapping: { name: '{{name}}' },
+        remoteFieldMapping: null,
+        scanMode: testData.scanMode.list[0],
+        enabled: true,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      configurationWorkflowRepository.findBySouthId = mock.fn((southId: string) =>
+        southId === testData.south.list[0].id ? [workflowForSouth1] : []
+      );
+
+      engine.reloadWorkflows(testData.south.list[0].id);
+      assert.deepStrictEqual(engine['workflowsByScanModeId'].get(testData.scanMode.list[0].id), [workflowForSouth1]);
+
+      // Reloading again with an empty list for that south removes its contribution entirely,
+      // without needing to touch any other south's entries in the same scan-mode bucket.
+      configurationWorkflowRepository.findBySouthId = mock.fn((_southId: string): Array<ConfigurationWorkflowEntity> => []);
+      engine.reloadWorkflows(testData.south.list[0].id);
+      assert.strictEqual(engine['workflowsByScanModeId'].has(testData.scanMode.list[0].id), false);
     });
 
     it('createScanMode should add a new cron', async () => {
