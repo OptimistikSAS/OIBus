@@ -9,7 +9,7 @@ import {
   WorkflowPreviewEntryStatus,
   WorkflowPreviewResultDTO
 } from '../../shared/model/configuration-workflow.model';
-import { WorkflowRunCounts, WorkflowRunEntity } from '../model/workflow-run.model';
+import { WorkflowRunCounts, WorkflowRunEntity, WorkflowRunTriggerType } from '../model/workflow-run.model';
 import { ItemPointMetadataEntity, ItemPointMetadataWrite } from '../model/item-point-metadata.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import { SouthConnectorItemCommandDTO } from '../../shared/model/south-connector.model';
@@ -76,10 +76,61 @@ export default class ConfigurationWorkflowRunService {
     private readonly engine: IDataStreamEngine
   ) {}
 
+  /**
+   * Manual "run now". Queued onto the target south connector's own task queue (see
+   * SouthConnector.enqueueWorkflowRun) rather than run directly against the live instance, exactly
+   * like a scheduled tick - so a manual run is never literally concurrent with either the
+   * connector's own scheduled reads or another run of this same workflow. Rejects immediately
+   * (before anything is queued) if the south connector doesn't exist, or if this workflow is
+   * already queued/running.
+   */
   async runNow(southId: string, workflowId: string, triggeredBy: string): Promise<WorkflowRunEntity> {
     const workflow = this.configurationWorkflowService.findById(southId, workflowId); // Ownership check
-    const run = this.workflowRunRepository.start(workflowId, 'manual', triggeredBy);
+    if (!this.engine.hasSouth(southId)) {
+      throw new OIBusValidationError(`South connector "${southId}" not found`);
+    }
+    const south = this.engine.getSouth(southId).south;
+    const queued = south.enqueueWorkflowRun(workflowId, () => this.executeRun(southId, workflow, 'manual', triggeredBy));
+    if (queued === null) {
+      throw new OIBusValidationError(`Configuration workflow "${workflow.name}" is already running`);
+    }
+    return await queued;
+  }
+
+  /**
+   * Scheduled trigger, called from DataStreamEngine.onScanModeTriggered (via the callback wired
+   * through setWorkflowRunCallback). Fire-and-forget from the engine's perspective - silently a
+   * no-op if the south connector isn't registered, or if this workflow is already queued/running,
+   * mirroring SouthConnector.trigger()'s own silent backpressure/disabled-connector handling for
+   * items, rather than surfacing either case as an error nobody is watching for.
+   */
+  async runScheduled(southId: string, workflowId: string): Promise<void> {
+    const workflow = this.configurationWorkflowService.findById(southId, workflowId);
+    if (!this.engine.hasSouth(southId)) {
+      return;
+    }
+    const south = this.engine.getSouth(southId).south;
+    const queued = south.enqueueWorkflowRun(workflowId, () => this.executeRun(southId, workflow, 'scheduled', null));
+    if (queued === null) {
+      return;
+    }
+    await queued;
+  }
+
+  /** Retrieve + Decide + Act + record - the actual run, executed once SouthConnector.enqueueWorkflowRun dispatches it. */
+  private async executeRun(
+    southId: string,
+    workflow: ConfigurationWorkflowEntity,
+    triggerType: WorkflowRunTriggerType,
+    triggeredBy: string | null
+  ): Promise<WorkflowRunEntity> {
+    const run = this.workflowRunRepository.start(workflow.id, triggerType, triggeredBy);
     const counts: WorkflowRunCounts = { ...ZERO_COUNTS };
+    // workflow_runs.triggeredBy stays null for a scheduled run (whose column means "the user who
+    // triggered a MANUAL run"), but the item/point mutations Act performs still need a real
+    // createdBy/updatedBy string - 'system' is the codebase's existing sentinel for that (see
+    // AuditService.NON_AUDITABLE_USER_IDS / UserService.getUserInfo).
+    const actingUser = triggeredBy ?? 'system';
 
     try {
       const { eligibleByKey, previousPoints } = await this.retrieve(southId, workflow);
@@ -93,14 +144,14 @@ export default class ConfigurationWorkflowRunService {
         if (previous !== null && previous.status === 'active' && isSameMetadata(previous.discoveredMetadata, record)) {
           continue; // Unchanged - nothing to act on, not even a metadata-snapshot refresh.
         }
-        await this.actOnRecord(southId, workflow, key, record, previous, triggeredBy, counts);
+        await this.actOnRecord(southId, workflow, key, record, previous, actingUser, counts);
       }
 
       for (const point of previousPoints) {
         if (point.status === 'orphaned' || eligibleByKey.map.has(point.discoveredEntryKey)) {
           continue;
         }
-        this.orphanPoint(southId, point, triggeredBy, counts);
+        this.orphanPoint(southId, point, actingUser, counts);
       }
 
       this.workflowRunRepository.complete(run.id, counts);
