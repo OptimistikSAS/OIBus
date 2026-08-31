@@ -146,7 +146,8 @@ export async function bootstrap(): Promise<void> {
     repositoryService.certificateRepository,
     repositoryService.oianalyticsRegistrationRepository,
     oIAnalyticsMessageService,
-    repositoryService.scanModeRepository
+    repositoryService.scanModeRepository,
+    repositoryService.configurationWorkflowRepository
   );
 
   const transformerService = new TransformerService(
@@ -187,7 +188,8 @@ export async function bootstrap(): Promise<void> {
   const configurationWorkflowService = new ConfigurationWorkflowService(
     repositoryService.configurationWorkflowRepository,
     repositoryService.southConnectorRepository,
-    repositoryService.scanModeRepository
+    repositoryService.scanModeRepository,
+    dataStreamEngine
   );
   const configurationWorkflowRunService = new ConfigurationWorkflowRunService(
     configurationWorkflowService,
@@ -197,6 +199,10 @@ export async function bootstrap(): Promise<void> {
     southService,
     dataStreamEngine
   );
+  // DataStreamEngine.onScanModeTriggered needs to reach ConfigurationWorkflowRunService.runScheduled
+  // to fire a scheduled workflow run, but ConfigurationWorkflowRunService itself depends on
+  // dataStreamEngine (constructed above) - a lazy callback sidesteps the resulting cycle.
+  dataStreamEngine.setWorkflowRunCallback((southId, workflowId) => configurationWorkflowRunService.runScheduled(southId, workflowId));
   const historyQueryService = new HistoryQueryService(
     new JoiValidator(),
     repositoryService.historyQueryRepository,
