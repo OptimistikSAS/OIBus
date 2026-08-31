@@ -2,6 +2,7 @@ import { Instant } from '../../shared/model/types';
 import { SouthItemSettings } from '../../shared/model/south-settings.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import { SouthConnectorExploreEntry } from '../../shared/model/south-connector.model';
+import { OIBusRecord } from '../../shared/model/engine.model';
 
 export interface SouthDirectQuery {
   directQuery(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<unknown | null>;
@@ -34,4 +35,17 @@ export interface SouthExplore {
    * @param parentId - the entry to expand, or null to load the root level
    */
   explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>>;
+}
+
+export interface SouthConfigurationDiscovery {
+  /**
+   * Retrieve step of a Configuration Workflow run: unlike the interactive, one-level-at-a-time
+   * `SouthExplore.explore()`, this returns the *complete* result — for a tree-shaped source (OPC-UA,
+   * Folder Scanner), a full recursive walk flattened into one record per leaf; for a query-based
+   * source, the rows of a dedicated metadata query. Every connector's result is normalized to the same
+   * flat `Array<OIBusRecord>` shape regardless of source, so the workflow's eligibility filter and
+   * identity-key matching never need to know which connector produced it.
+   * @param scope - the workflow's `discoveryScope` (e.g. `{ rootNodeId }` for OPC-UA, `{ query }` for SQL)
+   */
+  discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>>;
 }

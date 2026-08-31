@@ -25,6 +25,7 @@ describe('Configuration Workflow Repository', () => {
     let auditService: AuditService;
 
     const selfScopedCommand: ConfigurationWorkflowCommand = {
+      name: 'Self-scoped workflow',
       southId: testData.south.list[0].id,
       targetItemId: null,
       discoveryScope: { rootNodeId: 'ns=1;s=Root' },
@@ -65,6 +66,7 @@ describe('Configuration Workflow Repository', () => {
 
     it('should create a workflow targeting one existing item, with no scan mode (manual-only)', () => {
       const command: ConfigurationWorkflowCommand = {
+        name: 'Metadata query workflow',
         southId: testData.south.list[0].id,
         targetItemId: testData.south.list[0].items[0].id,
         discoveryScope: { query: 'SELECT tag_name, unit, min, max FROM metadata_table' },
@@ -85,6 +87,7 @@ describe('Configuration Workflow Repository', () => {
 
     it('should create a remote-metadata-only workflow (itemFieldMapping null — never touches items)', () => {
       const command: ConfigurationWorkflowCommand = {
+        name: 'Remote metadata only workflow',
         southId: testData.south.list[0].id,
         targetItemId: testData.south.list[0].items[0].id,
         discoveryScope: { query: 'SELECT tag_name, unit FROM metadata_table' },
@@ -110,8 +113,8 @@ describe('Configuration Workflow Repository', () => {
     });
 
     it('should find workflows by south id', () => {
-      repository.create({ ...selfScopedCommand, discoveryScope: { rootNodeId: 'a' } }, 'userTest');
-      repository.create({ ...selfScopedCommand, discoveryScope: { rootNodeId: 'b' } }, 'userTest');
+      repository.create({ ...selfScopedCommand, name: 'Workflow A', discoveryScope: { rootNodeId: 'a' } }, 'userTest');
+      repository.create({ ...selfScopedCommand, name: 'Workflow B', discoveryScope: { rootNodeId: 'b' } }, 'userTest');
 
       const found = repository.findBySouthId(testData.south.list[0].id);
       assert.ok(found.length >= 2);
@@ -123,11 +126,12 @@ describe('Configuration Workflow Repository', () => {
     });
 
     it('should update a workflow and record the audit diff', () => {
-      const created = repository.create(selfScopedCommand, 'userTest');
+      const created = repository.create({ ...selfScopedCommand, name: 'Update test workflow' }, 'userTest');
 
       repository.update(
         created.id,
         {
+          name: 'Updated workflow name',
           targetItemId: null,
           discoveryScope: { rootNodeId: 'ns=1;s=Updated' },
           identityKeyFields: ['nodeId', 'parentPath'],
@@ -154,7 +158,7 @@ describe('Configuration Workflow Repository', () => {
     });
 
     it('should delete a workflow and record the audit deletion', () => {
-      const created = repository.create(selfScopedCommand, 'userTest');
+      const created = repository.create({ ...selfScopedCommand, name: 'Delete test workflow' }, 'userTest');
 
       repository.delete(created.id, 'deleteUser');
 

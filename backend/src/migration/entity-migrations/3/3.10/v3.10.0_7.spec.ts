@@ -26,6 +26,7 @@ describe('Entity migration v3.10.0_7', () => {
     });
     await db('configuration_workflows').insert({
       id: 'workflow1',
+      name: 'workflow1',
       created_at: '2026-01-01T00:00:00.000Z',
       updated_at: '2026-01-01T00:00:00.000Z',
       south_id: 'south1',
@@ -144,6 +145,7 @@ describe('Entity migration v3.10.0_7', () => {
       await up(db);
       await db('configuration_workflows').insert({
         id: 'workflow2',
+        name: 'workflow2',
         created_at: '2026-01-01T00:00:00.000Z',
         updated_at: '2026-01-01T00:00:00.000Z',
         south_id: 'south1',
