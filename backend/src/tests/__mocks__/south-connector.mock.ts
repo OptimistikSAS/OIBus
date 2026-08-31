@@ -13,6 +13,7 @@ import type {
   SouthConnectorItemQueryResult,
   SouthConnectorItemTestingSettings
 } from '../../../shared/model/south-connector.model';
+import type { OIBusRecord } from '../../../shared/model/engine.model';
 
 /**
  * Create a mock object for South Connector
@@ -60,4 +61,6 @@ export default class SouthConnectorMock extends SouthConnector<SouthSettings, So
   hasSubscription = mock.fn((): boolean => false);
   hasExplore = mock.fn((): boolean => false);
   explore = mock.fn(async (_parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> => []);
+  hasConfigurationDiscovery = mock.fn((): boolean => false);
+  discover = mock.fn(async (_scope: Record<string, unknown>): Promise<Array<OIBusRecord>> => []);
 }
