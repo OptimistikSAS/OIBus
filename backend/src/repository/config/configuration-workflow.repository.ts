@@ -8,7 +8,7 @@ const CONFIGURATION_WORKFLOWS_TABLE = 'configuration_workflows';
 const SCAN_MODE_TABLE = 'scan_modes';
 
 const SELECT_COLUMNS =
-  'w.id, w.created_at, w.updated_at, w.created_by, w.updated_by, w.south_id, w.target_item_id, ' +
+  'w.id, w.created_at, w.updated_at, w.created_by, w.updated_by, w.name, w.south_id, w.target_item_id, ' +
   'w.discovery_scope, w.identity_key_fields, w.eligibility_filter, w.item_field_mapping, w.remote_field_mapping, ' +
   'w.scan_mode_id, w.enabled';
 
@@ -40,16 +40,26 @@ export default class ConfigurationWorkflowRepository {
       .map(result => toConfigurationWorkflow(result as Record<string, unknown>));
   }
 
+  findByNameAndSouthId(name: string, southId: string): ConfigurationWorkflowEntity | null {
+    const query =
+      `SELECT ${SELECT_COLUMNS}, ${scanModeAliasedColumns('s', 'sm_')} ` +
+      `FROM ${CONFIGURATION_WORKFLOWS_TABLE} w LEFT JOIN ${SCAN_MODE_TABLE} s ON w.scan_mode_id = s.id ` +
+      `WHERE w.name = ? AND w.south_id = ?;`;
+    const result = this.database.prepare(query).get(name, southId) as Record<string, unknown> | undefined;
+    return result ? toConfigurationWorkflow(result) : null;
+  }
+
   create(command: ConfigurationWorkflowCommand, createdBy: string, id = generateRandomId(6)): ConfigurationWorkflowEntity {
     const insertQuery =
       `INSERT INTO ${CONFIGURATION_WORKFLOWS_TABLE} ` +
-      `(id, south_id, target_item_id, discovery_scope, identity_key_fields, eligibility_filter, item_field_mapping, ` +
+      `(id, name, south_id, target_item_id, discovery_scope, identity_key_fields, eligibility_filter, item_field_mapping, ` +
       `remote_field_mapping, scan_mode_id, enabled, created_by, updated_by, created_at, updated_at) ` +
-      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     this.database
       .prepare(insertQuery)
       .run(
         id,
+        command.name,
         command.southId,
         command.targetItemId,
         JSON.stringify(command.discoveryScope),
@@ -81,12 +91,13 @@ export default class ConfigurationWorkflowRepository {
     const before = this.findById(id);
     const query =
       `UPDATE ${CONFIGURATION_WORKFLOWS_TABLE} ` +
-      `SET target_item_id = ?, discovery_scope = ?, identity_key_fields = ?, eligibility_filter = ?, item_field_mapping = ?, ` +
+      `SET name = ?, target_item_id = ?, discovery_scope = ?, identity_key_fields = ?, eligibility_filter = ?, item_field_mapping = ?, ` +
       `remote_field_mapping = ?, scan_mode_id = ?, enabled = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE id = ?;`;
     this.database
       .prepare(query)
       .run(
+        command.name,
         command.targetItemId,
         JSON.stringify(command.discoveryScope),
         JSON.stringify(command.identityKeyFields),
@@ -121,6 +132,7 @@ export default class ConfigurationWorkflowRepository {
 
 export const toConfigurationWorkflow = (result: Record<string, unknown>): ConfigurationWorkflowEntity => ({
   id: result.id as string,
+  name: result.name as string,
   southId: result.south_id as string,
   targetItemId: (result.target_item_id as string | null) ?? null,
   discoveryScope: JSON.parse(result.discovery_scope as string),
