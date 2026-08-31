@@ -8,6 +8,8 @@ import { createFolder, getCommandLineArguments, getOIBusInfo, readInitConfig, IN
 import RepositoryService from './service/repository.service';
 import NorthService from './service/north.service';
 import SouthService from './service/south.service';
+import ConfigurationWorkflowService from './service/configuration-workflow.service';
+import ConfigurationWorkflowRunService from './service/configuration-workflow-run.service';
 import DataStreamEngine from './engine/data-stream-engine';
 import HistoryQueryService from './service/history-query.service';
 import OIBusService from './service/oibus.service';
@@ -208,6 +210,19 @@ export async function bootstrap(): Promise<void> {
     repositoryService.southItemGroupRepository,
     transformerService
   );
+  const configurationWorkflowService = new ConfigurationWorkflowService(
+    repositoryService.configurationWorkflowRepository,
+    repositoryService.southConnectorRepository,
+    repositoryService.scanModeRepository
+  );
+  const configurationWorkflowRunService = new ConfigurationWorkflowRunService(
+    configurationWorkflowService,
+    repositoryService.workflowRunRepository,
+    repositoryService.itemPointMetadataRepository,
+    repositoryService.southConnectorRepository,
+    southService,
+    dataStreamEngine
+  );
   const historyQueryService = new HistoryQueryService(
     new JoiValidator(),
     repositoryService.historyQueryRepository,
@@ -312,6 +327,8 @@ export async function bootstrap(): Promise<void> {
     northService,
     transformerService,
     historyQueryService,
+    configurationWorkflowService,
+    configurationWorkflowRunService,
     configTransferService,
     configImportService,
     ignoreIpFilters,

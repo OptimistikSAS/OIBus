@@ -10,6 +10,8 @@ import OIAnalyticsRegistrationService from '../../service/oia/oianalytics-regist
 import TransformerService from '../../service/transformer.service';
 import UserService from '../../service/user.service';
 import SouthService from '../../service/south.service';
+import ConfigurationWorkflowService from '../../service/configuration-workflow.service';
+import ConfigurationWorkflowRunService from '../../service/configuration-workflow-run.service';
 import HistoryQueryService from '../../service/history-query.service';
 import NorthService from '../../service/north.service';
 import AuditService from '../../service/audit.service';
@@ -21,6 +23,8 @@ export function createInjectServicesMiddleware(
   certificateService: CertificateService,
   configImportService: ConfigImportService,
   configTransferService: ConfigTransferService,
+  configurationWorkflowRunService: ConfigurationWorkflowRunService,
+  configurationWorkflowService: ConfigurationWorkflowService,
   historyQueryService: HistoryQueryService,
   ipFilterService: IPFilterService,
   logService: LogService,
@@ -39,6 +43,8 @@ export function createInjectServicesMiddleware(
       certificateService,
       configImportService,
       configTransferService,
+      configurationWorkflowRunService,
+      configurationWorkflowService,
       historyQueryService,
       ipFilterService,
       logService,
