@@ -1,5 +1,11 @@
 import { BaseEntity } from './types';
 import { ScanMode } from './scan-mode.model';
+import { RecordFilterCondition } from '../../shared/model/configuration-workflow.model';
+
+// Re-exported so existing backend-internal consumers don't need to know this type actually lives in
+// the shared model — it's a plain data shape with no reason to differ between the two layers, unlike
+// most entities here (which typically resolve shared DTO ids into full backend objects).
+export { RecordFilterCondition, RecordFilterOperator, RECORD_FILTER_OPERATORS } from '../../shared/model/configuration-workflow.model';
 
 /**
  * A Configuration Workflow discovers a data source, decides which of what it found actually warrants
@@ -30,6 +36,8 @@ import { ScanMode } from './scan-mode.model';
  * discovery creates, tracked via `south_items.created_by_workflow_id`, not group membership.
  */
 export interface ConfigurationWorkflowEntity extends BaseEntity {
+  /** Unique per south connector — how a person picks this workflow out of a list. */
+  name: string;
   southId: string;
   targetItemId: string | null;
 
@@ -68,6 +76,7 @@ export interface ConfigurationWorkflowEntity extends BaseEntity {
 }
 
 export interface ConfigurationWorkflowCommand {
+  name: string;
   southId: string;
   targetItemId: string | null;
   discoveryScope: Record<string, unknown>;
@@ -77,19 +86,4 @@ export interface ConfigurationWorkflowCommand {
   remoteFieldMapping: Record<string, string> | null;
   scanMode: ScanMode | null;
   enabled: boolean;
-}
-
-export const RECORD_FILTER_OPERATORS = ['equals', 'notEquals', 'contains', 'matches', 'exists', 'greaterThan', 'lessThan'] as const;
-export type RecordFilterOperator = (typeof RECORD_FILTER_OPERATORS)[number];
-
-/**
- * One condition of a workflow's `eligibilityFilter`, evaluated against a single discovered record
- * (`field` is one of that record's keys — connector-agnostic, since it only ever looks at the flat
- * `Array<OIBusRecord>` shape Retrieve normalizes every connector down to). `value` is omitted for the
- * `exists` operator, which only checks presence.
- */
-export interface RecordFilterCondition {
-  field: string;
-  operator: RecordFilterOperator;
-  value?: string;
 }

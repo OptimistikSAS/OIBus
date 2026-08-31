@@ -541,6 +541,7 @@ describe('SouthConnectorRepository', () => {
     const workflowRepository = new ConfigurationWorkflowRepository(database, auditService);
     const workflow = workflowRepository.create(
       {
+        name: `Claim item workflow ${itemId}`,
         southId,
         targetItemId: null,
         discoveryScope: { rootNodeId: 'ns=1;s=Root' },
@@ -570,6 +571,7 @@ describe('SouthConnectorRepository', () => {
     const workflowRepository = new ConfigurationWorkflowRepository(database, auditService);
     const workflow = workflowRepository.create(
       {
+        name: `Claim item workflow ${itemId}`,
         southId,
         targetItemId: null,
         discoveryScope: {},
