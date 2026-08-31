@@ -15,6 +15,8 @@ import IPFilterService from '../service/ip-filter.service';
 import OIAnalyticsCommandService from '../service/oia/oianalytics-command.service';
 import OIAnalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
 import HistoryQueryService from '../service/history-query.service';
+import ConfigurationWorkflowService from '../service/configuration-workflow.service';
+import ConfigurationWorkflowRunService from '../service/configuration-workflow-run.service';
 import HomeMetricsService from '../service/metrics/home-metrics.service';
 import CertificateService from '../service/certificate.service';
 import UserService from '../service/user.service';
@@ -64,6 +66,8 @@ export default class WebServer {
     private readonly northService: NorthService,
     private readonly transformerService: TransformerService,
     private readonly historyQueryService: HistoryQueryService,
+    private readonly configurationWorkflowService: ConfigurationWorkflowService,
+    private readonly configurationWorkflowRunService: ConfigurationWorkflowRunService,
     private readonly homeMetricsService: HomeMetricsService,
     private readonly configTransferService: ConfigTransferService,
     private readonly configImportService: ConfigImportService,
@@ -126,6 +130,8 @@ export default class WebServer {
         this.certificateService,
         this.configImportService,
         this.configTransferService,
+        this.configurationWorkflowRunService,
+        this.configurationWorkflowService,
         this.historyQueryService,
         this.ipFilterService,
         this.logService,
