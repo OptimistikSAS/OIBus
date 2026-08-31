@@ -1,27 +1,17 @@
-export const WORKFLOW_RUN_STATUSES = ['RUNNING', 'COMPLETED', 'ERRORED'] as const;
-export type WorkflowRunStatus = (typeof WORKFLOW_RUN_STATUSES)[number];
+import { WorkflowRunCounts, WorkflowRunStatus, WorkflowRunTriggerType } from '../../shared/model/workflow-run.model';
 
-export const WORKFLOW_RUN_TRIGGER_TYPES = ['manual', 'scheduled'] as const;
-export type WorkflowRunTriggerType = (typeof WORKFLOW_RUN_TRIGGER_TYPES)[number];
-
-/**
- * The counts a run reports, mirroring its four-step lifecycle: Retrieve produces `discoveredCount`
- * records; the workflow's eligibility filter narrows that to `eligibleCount`; Act only ever touches
- * new/changed/missing ones, split into item actions (`createdCount`/`updatedCount`/`disabledCount`)
- * and remote pushes (`pushedCount`) — independent, since a workflow can be item-only, remote-only, or
- * both.
- */
-export interface WorkflowRunCounts {
-  discoveredCount: number;
-  eligibleCount: number;
-  createdCount: number;
-  updatedCount: number;
-  disabledCount: number;
-  pushedCount: number;
-}
+// Re-exported so existing backend-internal consumers don't need to know these live in the shared model -
+// see the equivalent note in configuration-workflow.model.ts.
+export {
+  WORKFLOW_RUN_STATUSES,
+  WorkflowRunStatus,
+  WORKFLOW_RUN_TRIGGER_TYPES,
+  WorkflowRunTriggerType,
+  WorkflowRunCounts
+} from '../../shared/model/workflow-run.model';
 
 /**
- * One execution of a Configuration Workflow — manual or scheduled — reviewable independent of whether
+ * One execution of a Configuration Workflow - manual or scheduled - reviewable independent of whether
  * anyone was watching. This table *is* the audit trail for a run (the same way `audit_logs` itself
  * isn't audited), so there's no separate AuditService wiring for it.
  */
