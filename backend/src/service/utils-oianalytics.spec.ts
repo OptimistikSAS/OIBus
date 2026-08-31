@@ -1,18 +1,8 @@
 import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import {
-  getAuthorizationOptions,
-  getHost,
-  getHeaders,
-  getProxyOptions,
-  buildHttpOptions,
-  parseData,
-  OIATimeValues,
-  getUrl,
-  testOIAnalyticsConnection,
-  clearOIAnalyticsCredentialCache
-} from './utils-oianalytics';
+import { mockModule, reloadModule } from '../tests/utils/test-utils';
+import type { OIATimeValues } from './utils-oianalytics';
 import { encryptionService } from './encryption.service';
 import CertificateRepository from '../repository/config/certificate.repository';
 import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model';
@@ -22,18 +12,40 @@ import { createMockResponse } from '../tests/__mocks__/undici.mock';
 import testData from '../tests/utils/test-data';
 
 const nodeRequire = createRequire(import.meta.url);
-const azureModule = nodeRequire('@azure/identity');
 const undiciModule = nodeRequire('undici');
+
+// Mutable refs so the mocked azure/identity constructors below always call the mock.fn()
+// currently in effect for the running test (reassigned in beforeEach).
+let mockGetTokenCSC: ReturnType<typeof mock.fn>;
+let mockGetTokenCCC: ReturnType<typeof mock.fn>;
+
+// @azure/identity's published commonjs build re-exports its classes via non-configurable getters,
+// so they can't be monkey-patched with Object.defineProperty on the real module. Replace the whole
+// module in the require cache instead, then reload the SUT so it picks up these mocked classes.
+mockModule(nodeRequire, '@azure/identity', {
+  __esModule: true,
+  ClientSecretCredential: function MockClientSecretCredential(this: { getToken: unknown }) {
+    this.getToken = (...args: Array<unknown>) => mockGetTokenCSC(...args);
+  },
+  ClientCertificateCredential: function MockClientCertificateCredential(this: { getToken: unknown }) {
+    this.getToken = (...args: Array<unknown>) => mockGetTokenCCC(...args);
+  }
+});
+
+const {
+  getAuthorizationOptions,
+  getHost,
+  getHeaders,
+  getProxyOptions,
+  buildHttpOptions,
+  parseData,
+  getUrl,
+  testOIAnalyticsConnection,
+  clearOIAnalyticsCredentialCache
+} = reloadModule<typeof import('./utils-oianalytics')>(nodeRequire, './utils-oianalytics');
 
 describe('utils-oianalytics', () => {
   let mockCertRepo: { findById: ReturnType<typeof mock.fn> };
-
-  // Save original descriptors for azure/identity constructors
-  let origCSCDescriptor: PropertyDescriptor;
-  let origCCCDescriptor: PropertyDescriptor;
-
-  let mockGetTokenCSC: ReturnType<typeof mock.fn>;
-  let mockGetTokenCCC: ReturnType<typeof mock.fn>;
 
   let encryptTextMock: ReturnType<typeof mock.fn>;
   let decryptTextMock: ReturnType<typeof mock.fn>;
@@ -50,33 +62,10 @@ describe('utils-oianalytics', () => {
 
     mockGetTokenCSC = mock.fn(async () => ({ token: 'azure-token' }));
     mockGetTokenCCC = mock.fn(async () => ({ token: 'azure-token' }));
-
-    origCSCDescriptor = Object.getOwnPropertyDescriptor(azureModule, 'ClientSecretCredential')!;
-    origCCCDescriptor = Object.getOwnPropertyDescriptor(azureModule, 'ClientCertificateCredential')!;
-
-    const getTokenCSC = mockGetTokenCSC;
-    const getTokenCCC = mockGetTokenCCC;
-
-    Object.defineProperty(azureModule, 'ClientSecretCredential', {
-      value: function MockClientSecretCredential(this: unknown) {
-        (this as { getToken: typeof getTokenCSC }).getToken = getTokenCSC;
-      },
-      writable: true,
-      configurable: true
-    });
-    Object.defineProperty(azureModule, 'ClientCertificateCredential', {
-      value: function MockClientCertificateCredential(this: unknown) {
-        (this as { getToken: typeof getTokenCCC }).getToken = getTokenCCC;
-      },
-      writable: true,
-      configurable: true
-    });
   });
 
   afterEach(() => {
     mock.restoreAll();
-    Object.defineProperty(azureModule, 'ClientSecretCredential', origCSCDescriptor);
-    Object.defineProperty(azureModule, 'ClientCertificateCredential', origCCCDescriptor);
     clearOIAnalyticsCredentialCache();
   });
 
