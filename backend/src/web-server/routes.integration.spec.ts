@@ -15,6 +15,8 @@ import CertificateServiceMock from '../tests/__mocks__/service/certificate-servi
 import ConfigImportServiceMock from '../tests/__mocks__/service/config-import-service.mock';
 import ConfigTransferServiceMock from '../tests/__mocks__/service/config-transfer-service.mock';
 import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
+import ConfigurationWorkflowServiceMock from '../tests/__mocks__/service/configuration-workflow-service.mock';
+import ConfigurationWorkflowRunServiceMock from '../tests/__mocks__/service/configuration-workflow-run-service.mock';
 import IpFilterServiceMock from '../tests/__mocks__/service/ip-filter-service.mock';
 import LogServiceMock from '../tests/__mocks__/service/log-service.mock';
 import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
@@ -31,6 +33,8 @@ import type CertificateService from '../service/certificate.service';
 import type ConfigImportService from '../service/config-transfer/config-import.service';
 import type ConfigTransferService from '../service/config-transfer/config-transfer.service';
 import type HistoryQueryService from '../service/history-query.service';
+import type ConfigurationWorkflowService from '../service/configuration-workflow.service';
+import type ConfigurationWorkflowRunService from '../service/configuration-workflow-run.service';
 import type IPFilterService from '../service/ip-filter.service';
 import type LogService from '../service/log.service';
 import type NorthService from '../service/north.service';
@@ -101,6 +105,8 @@ describe('routes.ts integration (real RegisterRoutes over HTTP)', () => {
     const certificateService = new CertificateServiceMock();
     const configImportService = new ConfigImportServiceMock();
     const configTransferService = new ConfigTransferServiceMock();
+    const configurationWorkflowRunService = new ConfigurationWorkflowRunServiceMock();
+    const configurationWorkflowService = new ConfigurationWorkflowServiceMock();
     const historyQueryService = new HistoryQueryServiceMock();
     const ipFilterService = new IpFilterServiceMock();
     const logService = new LogServiceMock();
@@ -121,6 +127,8 @@ describe('routes.ts integration (real RegisterRoutes over HTTP)', () => {
         certificateService as unknown as CertificateService,
         configImportService as unknown as ConfigImportService,
         configTransferService as unknown as ConfigTransferService,
+        configurationWorkflowRunService as unknown as ConfigurationWorkflowRunService,
+        configurationWorkflowService as unknown as ConfigurationWorkflowService,
         historyQueryService as unknown as HistoryQueryService,
         ipFilterService as unknown as IPFilterService,
         logService as unknown as LogService,

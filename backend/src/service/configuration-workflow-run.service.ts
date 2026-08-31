@@ -4,12 +4,18 @@ import SouthConnectorRepository from '../repository/config/south-connector.repos
 import type SouthConnector from '../south/south-connector';
 import { isEligible, computeIdentityKey, resolveFieldMapping } from './configuration-workflow.utils';
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
+import {
+  WorkflowPreviewEntryDTO,
+  WorkflowPreviewEntryStatus,
+  WorkflowPreviewResultDTO
+} from '../../shared/model/configuration-workflow.model';
 import { WorkflowRunCounts, WorkflowRunEntity } from '../model/workflow-run.model';
 import { ItemPointMetadataEntity, ItemPointMetadataWrite } from '../model/item-point-metadata.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import { SouthConnectorItemCommandDTO } from '../../shared/model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { OIBusRecord } from '../../shared/model/engine.model';
+import { Page } from '../../shared/model/types';
 import { OIBusValidationError } from '../model/types';
 
 // Minimal slices of SouthService/DataStreamEngine this orchestrator actually calls - kept as local
@@ -72,37 +78,17 @@ export default class ConfigurationWorkflowRunService {
 
   async runNow(southId: string, workflowId: string, triggeredBy: string): Promise<WorkflowRunEntity> {
     const workflow = this.configurationWorkflowService.findById(southId, workflowId); // Ownership check
-
-    if (!this.engine.hasSouth(southId)) {
-      throw new OIBusValidationError(`South connector "${southId}" is not running - start it before running a workflow`);
-    }
-    const south = this.engine.getSouth(southId).south;
-    if (!south.hasConfigurationDiscovery()) {
-      throw new OIBusValidationError(`South connector "${southId}" does not support configuration discovery`);
-    }
-
     const run = this.workflowRunRepository.start(workflowId, 'manual', triggeredBy);
     const counts: WorkflowRunCounts = { ...ZERO_COUNTS };
 
     try {
-      const records = await south.discover(workflow.discoveryScope);
-      counts.discoveredCount = records.length;
+      const { eligibleByKey, previousPoints } = await this.retrieve(southId, workflow);
+      counts.discoveredCount = eligibleByKey.discoveredCount;
+      counts.eligibleCount = eligibleByKey.map.size;
 
-      // Later duplicates of the same identity key overwrite earlier ones - a workflow's identityKeyFields
-      // are expected to actually identify records uniquely; a collision is a misconfiguration, not
-      // something worth failing the whole run over.
-      const eligibleByKey = new Map<string, OIBusRecord>();
-      for (const record of records) {
-        if (isEligible(record, workflow.eligibilityFilter)) {
-          eligibleByKey.set(computeIdentityKey(record, workflow.identityKeyFields), record);
-        }
-      }
-      counts.eligibleCount = eligibleByKey.size;
-
-      const previousPoints = this.itemPointMetadataRepository.findAllByWorkflow(workflowId);
       const previousByKey = new Map(previousPoints.map(point => [point.discoveredEntryKey, point]));
 
-      for (const [key, record] of eligibleByKey) {
+      for (const [key, record] of eligibleByKey.map) {
         const previous = previousByKey.get(key) ?? null;
         if (previous !== null && previous.status === 'active' && isSameMetadata(previous.discoveredMetadata, record)) {
           continue; // Unchanged - nothing to act on, not even a metadata-snapshot refresh.
@@ -111,7 +97,7 @@ export default class ConfigurationWorkflowRunService {
       }
 
       for (const point of previousPoints) {
-        if (point.status === 'orphaned' || eligibleByKey.has(point.discoveredEntryKey)) {
+        if (point.status === 'orphaned' || eligibleByKey.map.has(point.discoveredEntryKey)) {
           continue;
         }
         this.orphanPoint(southId, point, triggeredBy, counts);
@@ -124,6 +110,70 @@ export default class ConfigurationWorkflowRunService {
     }
 
     return this.workflowRunRepository.findById(run.id)!;
+  }
+
+  /**
+   * A dry run: identical Retrieve + Decide as `runNow`, but Act never runs and nothing is persisted -
+   * no items, no point metadata, no `workflow_runs` record. Discovery itself is a real round-trip to the
+   * data source, so this costs what a real run costs, minus the writes.
+   */
+  async preview(southId: string, workflowId: string): Promise<WorkflowPreviewResultDTO> {
+    const workflow = this.configurationWorkflowService.findById(southId, workflowId); // Ownership check
+    const { eligibleByKey, previousPoints } = await this.retrieve(southId, workflow);
+    const previousByKey = new Map(previousPoints.map(point => [point.discoveredEntryKey, point]));
+
+    const entries: Array<WorkflowPreviewEntryDTO> = [];
+    for (const [key, record] of eligibleByKey.map) {
+      const previous = previousByKey.get(key) ?? null;
+      entries.push({ key, status: classifyEntry(previous, record), record, previousMetadata: previous?.discoveredMetadata ?? null });
+    }
+    for (const point of previousPoints) {
+      if (point.status === 'orphaned' || eligibleByKey.map.has(point.discoveredEntryKey)) {
+        continue;
+      }
+      entries.push({ key: point.discoveredEntryKey, status: 'missing', record: null, previousMetadata: point.discoveredMetadata });
+    }
+
+    return { discoveredCount: eligibleByKey.discoveredCount, eligibleCount: eligibleByKey.map.size, entries };
+  }
+
+  findRuns(southId: string, workflowId: string, page: number): Page<WorkflowRunEntity> {
+    this.configurationWorkflowService.findById(southId, workflowId); // Ownership check
+    return this.workflowRunRepository.findByWorkflowId(workflowId, page);
+  }
+
+  /** Trigger + Retrieve + Decide's eligibility filter - shared by `runNow` and `preview`. */
+  private async retrieve(
+    southId: string,
+    workflow: ConfigurationWorkflowEntity
+  ): Promise<{
+    eligibleByKey: { map: Map<string, OIBusRecord>; discoveredCount: number };
+    previousPoints: Array<ItemPointMetadataEntity>;
+  }> {
+    if (!this.engine.hasSouth(southId)) {
+      throw new OIBusValidationError(`South connector "${southId}" is not running - start it before running a workflow`);
+    }
+    const south = this.engine.getSouth(southId).south;
+    if (!south.hasConfigurationDiscovery()) {
+      throw new OIBusValidationError(`South connector "${southId}" does not support configuration discovery`);
+    }
+
+    const records = await south.discover(workflow.discoveryScope);
+
+    // Later duplicates of the same identity key overwrite earlier ones - a workflow's identityKeyFields
+    // are expected to actually identify records uniquely; a collision is a misconfiguration, not
+    // something worth failing the whole run over.
+    const map = new Map<string, OIBusRecord>();
+    for (const record of records) {
+      if (isEligible(record, workflow.eligibilityFilter)) {
+        map.set(computeIdentityKey(record, workflow.identityKeyFields), record);
+      }
+    }
+
+    return {
+      eligibleByKey: { map, discoveredCount: records.length },
+      previousPoints: this.itemPointMetadataRepository.findAllByWorkflow(workflow.id)
+    };
   }
 
   private async actOnRecord(
@@ -209,6 +259,18 @@ export default class ConfigurationWorkflowRunService {
       counts.disabledCount++;
     }
   }
+}
+
+// Mirrors runNow's Decide-step logic exactly, but as a pure classification instead of driving actions -
+// `preview` uses this; `runNow` only needs the unchanged/not-unchanged split, computed inline.
+function classifyEntry(previous: ItemPointMetadataEntity | null, record: OIBusRecord): WorkflowPreviewEntryStatus {
+  if (previous === null) {
+    return 'new';
+  }
+  if (previous.status === 'orphaned') {
+    return 'reactivated';
+  }
+  return isSameMetadata(previous.discoveredMetadata, record) ? 'unchanged' : 'changed';
 }
 
 function isSameMetadata(previous: Record<string, unknown>, current: OIBusRecord): boolean {
