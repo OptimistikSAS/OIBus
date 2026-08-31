@@ -197,7 +197,9 @@ describe('index.ts bootstrap()', () => {
 
     mockModule(nodeRequire, './engine/data-stream-engine', {
       __esModule: true,
-      default: class FakeDataStreamEngine {}
+      default: class FakeDataStreamEngine {
+        setWorkflowRunCallback = mock.fn();
+      }
     });
 
     mockModule(nodeRequire, './service/transformer.service', {

@@ -94,6 +94,9 @@ describe('Configuration Workflow Run Service', () => {
     workflowRunRepository.findById.mock.mockImplementation(() => startedRun);
     engine.hasSouth.mock.mockImplementation(() => true);
     engine.getSouth.mock.mockImplementation(() => ({ south, metrics: {} }) as never);
+    // enqueueWorkflowRun (inherited, unmocked, from the real SouthConnector base class) requires
+    // the connector to be enabled to accept anything onto its queue.
+    south.isEnabled.mock.mockImplementation(() => true);
     south.hasConfigurationDiscovery.mock.mockImplementation(() => true);
     south.discover.mock.mockImplementation(async () => []);
     southConnectorRepository.findItemById.mock.mockImplementation(() => runningItem as never);
@@ -113,16 +116,25 @@ describe('Configuration Workflow Run Service', () => {
     mock.restoreAll();
   });
 
-  it('should throw and record an ERRORED run when the south connector is not running', async () => {
+  it('should throw without recording a run when the south connector is not registered in the engine', async () => {
     engine.hasSouth.mock.mockImplementation(() => false);
+    // No south instance to enqueue onto - this is a pre-flight check, before any run record exists
+    // (unlike a discovery-time failure, e.g. a missing hasConfigurationDiscovery, which does get
+    // recorded as an ERRORED run, since retrieve() runs inside the queued executeRun()).
     await assert.rejects(
       service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest'),
-      new OIBusValidationError(`South connector "${SOUTH_ID}" is not running - start it before running a workflow`)
+      new OIBusValidationError(`South connector "${SOUTH_ID}" not found`)
     );
-    // The run still gets started (and then failed) - a validation failure is worth showing in run
-    // history rather than swallowing before any record exists, and preview shares this same check.
-    assert.strictEqual(workflowRunRepository.start.mock.calls.length, 1);
-    assert.strictEqual(workflowRunRepository.fail.mock.calls.length, 1);
+    assert.strictEqual(workflowRunRepository.start.mock.calls.length, 0);
+  });
+
+  it('should throw without queuing anything when this workflow is already queued or running', async () => {
+    south.enqueueWorkflowRun = mock.fn(() => null) as never;
+    await assert.rejects(
+      service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest'),
+      new OIBusValidationError(`Configuration workflow "${baseWorkflow.name}" is already running`)
+    );
+    assert.strictEqual(workflowRunRepository.start.mock.calls.length, 0);
   });
 
   it('should throw when the south connector does not support configuration discovery', async () => {
@@ -573,6 +585,58 @@ describe('Configuration Workflow Run Service', () => {
         service.preview(SOUTH_ID, WORKFLOW_ID),
         new OIBusValidationError(`South connector "${SOUTH_ID}" is not running - start it before running a workflow`)
       );
+    });
+  });
+
+  describe('runScheduled', () => {
+    it('should run with triggerType "scheduled" and a null triggeredBy on the run record', async () => {
+      await service.runScheduled(SOUTH_ID, WORKFLOW_ID);
+
+      assert.deepStrictEqual(workflowRunRepository.start.mock.calls[0].arguments, [WORKFLOW_ID, 'scheduled', null]);
+    });
+
+    it('should attribute Act mutations to "system" rather than a real user', async () => {
+      south.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' }]);
+
+      await service.runScheduled(SOUTH_ID, WORKFLOW_ID);
+
+      assert.strictEqual(southService.createItem.mock.calls[0].arguments[2], 'system');
+      assert.strictEqual(southConnectorRepository.claimItemForWorkflow.mock.calls[0].arguments[3], 'system');
+    });
+
+    it('should silently no-op (no throw) when the south connector is not registered in the engine', async () => {
+      engine.hasSouth.mock.mockImplementation(() => false);
+      await assert.doesNotReject(service.runScheduled(SOUTH_ID, WORKFLOW_ID));
+      assert.strictEqual(workflowRunRepository.start.mock.calls.length, 0);
+    });
+
+    it('should silently no-op (no throw) when this workflow is already queued or running', async () => {
+      south.enqueueWorkflowRun = mock.fn(() => null) as never;
+      await assert.doesNotReject(service.runScheduled(SOUTH_ID, WORKFLOW_ID));
+      assert.strictEqual(workflowRunRepository.start.mock.calls.length, 0);
+    });
+  });
+
+  describe('runNow and runScheduled share the south connector queue', () => {
+    it('should enqueue onto the same connector so a scheduled tick is skipped while a manual run is in flight', async () => {
+      // The real (unmocked, inherited) enqueueWorkflowRun tracks queued/running state per workflowId -
+      // starting a manual run and, before it resolves, attempting a scheduled run for the same
+      // workflow should hit that same backpressure guard.
+      let releaseManualRun: () => void = () => undefined;
+      south.discover.mock.mockImplementation(
+        () =>
+          new Promise(resolve => {
+            releaseManualRun = () => resolve([]);
+          })
+      );
+
+      const manualRunPromise = service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
+      await service.runScheduled(SOUTH_ID, WORKFLOW_ID); // Should silently no-op, not throw.
+
+      releaseManualRun();
+      await manualRunPromise;
+
+      assert.strictEqual(workflowRunRepository.start.mock.calls.length, 1);
     });
   });
 });
