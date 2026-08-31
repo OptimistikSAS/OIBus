@@ -6,6 +6,7 @@ import { ConfigurationWorkflowCommandDTO } from '../../shared/model/configuratio
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { ScanMode } from '../model/scan-mode.model';
 import { checkScanMode } from './utils';
+import type DataStreamEngine from '../engine/data-stream-engine';
 
 /**
  * Service used for Configuration Workflows: CRUD orchestration only. Running a workflow (discovery, eligibility
@@ -16,7 +17,8 @@ export default class ConfigurationWorkflowService {
   constructor(
     private readonly configurationWorkflowRepository: ConfigurationWorkflowRepository,
     private readonly southConnectorRepository: SouthConnectorRepository,
-    private readonly scanModeRepository: ScanModeRepository
+    private readonly scanModeRepository: ScanModeRepository,
+    private readonly engine: DataStreamEngine
   ) {}
 
   findById(southId: string, workflowId: string): ConfigurationWorkflowEntity {
@@ -55,7 +57,9 @@ export default class ConfigurationWorkflowService {
       scanMode,
       enabled: command.enabled
     };
-    return this.configurationWorkflowRepository.create(workflowCommand, user);
+    const created = this.configurationWorkflowRepository.create(workflowCommand, user);
+    this.engine.reloadWorkflows(southId);
+    return created;
   }
 
   update(southId: string, workflowId: string, command: ConfigurationWorkflowCommandDTO, user: string): ConfigurationWorkflowEntity {
@@ -85,12 +89,14 @@ export default class ConfigurationWorkflowService {
     if (!updated) {
       throw new NotFoundError(`Failed to update configuration workflow "${workflowId}"`);
     }
+    this.engine.reloadWorkflows(southId);
     return updated;
   }
 
   delete(southId: string, workflowId: string, user: string): void {
     this.findById(southId, workflowId); // Ownership check
     this.configurationWorkflowRepository.delete(workflowId, user);
+    this.engine.reloadWorkflows(southId);
   }
 
   private checkSouthExists(southId: string): void {

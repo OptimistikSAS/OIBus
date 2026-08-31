@@ -5,6 +5,7 @@ import ConfigurationWorkflowService from './configuration-workflow.service';
 import ConfigurationWorkflowRepositoryMock from '../tests/__mocks__/repository/config/configuration-workflow-repository.mock';
 import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
 import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import testData from '../tests/utils/test-data';
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import { ConfigurationWorkflowCommandDTO } from '../../shared/model/configuration-workflow.model';
@@ -13,6 +14,7 @@ import { NotFoundError, OIBusValidationError } from '../model/types';
 let configurationWorkflowRepository: ConfigurationWorkflowRepositoryMock;
 let southConnectorRepository: SouthConnectorRepositoryMock;
 let scanModeRepository: ScanModeRepositoryMock;
+let engine: DataStreamEngineMock;
 let service: ConfigurationWorkflowService;
 
 const selfScopedCommand: ConfigurationWorkflowCommandDTO = {
@@ -50,7 +52,13 @@ describe('Configuration Workflow Service', () => {
     configurationWorkflowRepository = new ConfigurationWorkflowRepositoryMock();
     southConnectorRepository = new SouthConnectorRepositoryMock();
     scanModeRepository = new ScanModeRepositoryMock();
-    service = new ConfigurationWorkflowService(configurationWorkflowRepository, southConnectorRepository, scanModeRepository);
+    engine = new DataStreamEngineMock();
+    service = new ConfigurationWorkflowService(
+      configurationWorkflowRepository,
+      southConnectorRepository,
+      scanModeRepository,
+      engine as never
+    );
     southConnectorRepository.findSouthById.mock.mockImplementation(() => testData.south.list[0]);
   });
 
@@ -195,6 +203,11 @@ describe('Configuration Workflow Service', () => {
       assert.strictEqual((createCall.arguments[0] as { southId: string }).southId, testData.south.list[0].id);
       assert.strictEqual(createCall.arguments[1], 'userTest');
     });
+
+    it("should tell the engine to reload this south connector's scheduled workflows", () => {
+      service.create(testData.south.list[0].id, selfScopedCommand, 'userTest');
+      assert.deepStrictEqual(engine.reloadWorkflows.mock.calls[0].arguments, [testData.south.list[0].id]);
+    });
   });
 
   describe('update', () => {
@@ -233,6 +246,11 @@ describe('Configuration Workflow Service', () => {
       assert.strictEqual(updateCall.arguments[2], 'updateUser');
     });
 
+    it("should tell the engine to reload this south connector's scheduled workflows", () => {
+      service.update(testData.south.list[0].id, existingWorkflow.id, selfScopedCommand, 'updateUser');
+      assert.deepStrictEqual(engine.reloadWorkflows.mock.calls[0].arguments, [testData.south.list[0].id]);
+    });
+
     it('should throw if the workflow disappears between update and re-fetch', () => {
       configurationWorkflowRepository.findById.mock.mockImplementationOnce(() => existingWorkflow, 0);
       configurationWorkflowRepository.findById.mock.mockImplementationOnce(() => null, 1);
@@ -256,6 +274,12 @@ describe('Configuration Workflow Service', () => {
       configurationWorkflowRepository.findById.mock.mockImplementation(() => existingWorkflow);
       service.delete(testData.south.list[0].id, existingWorkflow.id, 'deleteUser');
       assert.deepStrictEqual(configurationWorkflowRepository.delete.mock.calls[0].arguments, [existingWorkflow.id, 'deleteUser']);
+    });
+
+    it("should tell the engine to reload this south connector's scheduled workflows", () => {
+      configurationWorkflowRepository.findById.mock.mockImplementation(() => existingWorkflow);
+      service.delete(testData.south.list[0].id, existingWorkflow.id, 'deleteUser');
+      assert.deepStrictEqual(engine.reloadWorkflows.mock.calls[0].arguments, [testData.south.list[0].id]);
     });
   });
 });
