@@ -55,6 +55,12 @@ export default class SouthConnectorRepositoryMock extends SouthConnectorReposito
   override deleteAllItemsBySouth = mock.fn((_southId: string, _deletedBy: string): void => undefined);
   override enableItem = mock.fn((_id: string): void => undefined);
   override disableItem = mock.fn((_id: string): void => undefined);
+  override claimItemForWorkflow = mock.fn(
+    (_southConnectorId: string, _itemId: string, _workflowId: string, _updatedBy: string): void => undefined
+  );
+  override disableItemWithReason = mock.fn(
+    (_southConnectorId: string, _itemId: string, _reason: string, _updatedBy: string): void => undefined
+  );
   override moveItemsToGroup = mock.fn((_itemIds: Array<string>, _groupId: string | null): void => undefined);
   override deleteGroupAndUpdateItems = mock.fn(
     (_southId: string, _group: SouthItemGroupEntity, _applyHistorySettings: boolean, _deletedBy: string): void => undefined

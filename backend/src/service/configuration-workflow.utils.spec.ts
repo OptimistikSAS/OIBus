@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeIdentityKey, isEligible } from './configuration-workflow.utils';
+import { computeIdentityKey, isEligible, resolveFieldMapping } from './configuration-workflow.utils';
 import { RecordFilterCondition } from '../model/configuration-workflow.model';
 
 describe('configuration-workflow.utils', () => {
@@ -101,6 +101,58 @@ describe('configuration-workflow.utils', () => {
 
     it('should return an empty string when no identity key fields are declared', () => {
       assert.strictEqual(computeIdentityKey({ nodeId: 'ns=1;s=Temperature' }, []), '');
+    });
+  });
+
+  describe('resolveFieldMapping', () => {
+    it('should resolve an exact placeholder to the raw value, preserving its type', () => {
+      const resolved = resolveFieldMapping(
+        { nodeId: 'ns=1;s=Temp', min: 0, max: 100.5, active: true },
+        {
+          'settings.nodeId': '{{nodeId}}',
+          'settings.min': '{{min}}',
+          'settings.max': '{{max}}',
+          'settings.active': '{{active}}'
+        }
+      );
+      assert.strictEqual(resolved['settings.nodeId'], 'ns=1;s=Temp');
+      assert.strictEqual(resolved['settings.min'], 0);
+      assert.strictEqual(resolved['settings.max'], 100.5);
+      assert.strictEqual(resolved['settings.active'], true);
+    });
+
+    it('should stringify placeholders embedded in surrounding text', () => {
+      const resolved = resolveFieldMapping({ name: 'Temperature', unit: '°C' }, { description: 'Reads {{name}} in {{unit}}' });
+      assert.strictEqual(resolved.description, 'Reads Temperature in °C');
+    });
+
+    it('should resolve a missing field to null when the template is an exact placeholder', () => {
+      const resolved = resolveFieldMapping({}, { unit: '{{unit}}' });
+      assert.strictEqual(resolved.unit, null);
+    });
+
+    it('should resolve a missing field to an empty string when interpolated', () => {
+      const resolved = resolveFieldMapping({}, { description: 'unit: {{unit}}' });
+      assert.strictEqual(resolved.description, 'unit: ');
+    });
+
+    it('should resolve a one-level nested path (e.g. item.name)', () => {
+      const resolved = resolveFieldMapping({ unit: '°C', item: { name: 'Reactor Temperature' } }, { description: '{{item.name}}' });
+      assert.strictEqual(resolved.description, 'Reactor Temperature');
+    });
+
+    it('should resolve a nested path to undefined-turned-null/empty when the parent is missing or not an object', () => {
+      assert.strictEqual(resolveFieldMapping({}, { description: '{{item.name}}' }).description, null);
+      assert.strictEqual(resolveFieldMapping({ item: 'not an object' }, { description: '{{item.name}}' }).description, null);
+    });
+
+    it('should resolve every key of the mapping independently', () => {
+      const resolved = resolveFieldMapping({ name: 'Temperature', unit: '°C' }, { 'settings.nodeId': '{{name}}', unit: '{{unit}}' });
+      assert.deepStrictEqual(resolved, { 'settings.nodeId': 'Temperature', unit: '°C' });
+    });
+
+    it('should return an empty object for an empty mapping', () => {
+      assert.deepStrictEqual(resolveFieldMapping({ name: 'Temperature' }, {}), {});
     });
   });
 });
