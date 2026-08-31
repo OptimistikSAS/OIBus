@@ -135,13 +135,31 @@ describe('Configuration Workflow Service', () => {
       );
     });
 
-    it('should allow itemFieldMapping null when remoteFieldMapping is set (remote-metadata-only)', () => {
+    it('should allow itemFieldMapping null when remoteFieldMapping is set and targetItemId is set (remote-metadata-only)', () => {
+      southConnectorRepository.findItemById.mock.mockImplementation(() => testData.south.list[0].items[0]);
       service.create(
         testData.south.list[0].id,
-        { ...selfScopedCommand, itemFieldMapping: null, remoteFieldMapping: { unit: '{{unit}}' } },
+        {
+          ...selfScopedCommand,
+          targetItemId: testData.south.list[0].items[0].id,
+          itemFieldMapping: null,
+          remoteFieldMapping: { unit: '{{unit}}' }
+        },
         'userTest'
       );
       assert.strictEqual(configurationWorkflowRepository.create.mock.calls.length, 1);
+    });
+
+    it('should throw when itemFieldMapping is null and targetItemId is also null (no way to know which item)', () => {
+      assert.throws(
+        () =>
+          service.create(
+            testData.south.list[0].id,
+            { ...selfScopedCommand, targetItemId: null, itemFieldMapping: null, remoteFieldMapping: { unit: '{{unit}}' } },
+            'userTest'
+          ),
+        new OIBusValidationError('targetItemId is required when itemFieldMapping is not set')
+      );
     });
 
     it('should throw when a workflow with the same name already exists for this south connector', () => {
