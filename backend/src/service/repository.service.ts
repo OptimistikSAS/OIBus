@@ -7,6 +7,8 @@ import ScanModeRepository from '../repository/config/scan-mode.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
 import ConfigurationWorkflowRepository from '../repository/config/configuration-workflow.repository';
+import WorkflowRunRepository from '../repository/config/workflow-run.repository';
+import ItemPointMetadataRepository from '../repository/config/item-point-metadata.repository';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import LogRepository from '../repository/logs/log.repository';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
@@ -43,6 +45,8 @@ export default class RepositoryService {
   private readonly _southConnectorRepository: SouthConnectorRepository;
   private readonly _southItemGroupRepository: SouthItemGroupRepository;
   private readonly _configurationWorkflowRepository: ConfigurationWorkflowRepository;
+  private readonly _workflowRunRepository: WorkflowRunRepository;
+  private readonly _itemPointMetadataRepository: ItemPointMetadataRepository;
   private readonly _logRepository: LogRepository;
   private readonly _southMetricsRepository: SouthConnectorMetricsRepository;
   private readonly _engineMetricsRepository: EngineMetricsRepository;
@@ -99,6 +103,8 @@ export default class RepositoryService {
     this._southConnectorRepository = new SouthConnectorRepository(this.oibusDatabase, this._auditService);
     this._southItemGroupRepository = new SouthItemGroupRepository(this.oibusDatabase, this._auditService);
     this._configurationWorkflowRepository = new ConfigurationWorkflowRepository(this.oibusDatabase, this._auditService);
+    this._workflowRunRepository = new WorkflowRunRepository(this.oibusDatabase);
+    this._itemPointMetadataRepository = new ItemPointMetadataRepository(this.oibusDatabase);
     this._historyQueryRepository = new HistoryQueryRepository(this.oibusDatabase, this._auditService);
     this._userRepository = new UserRepository(this.oibusDatabase, this._auditService, initConfig.adminUsername, initConfig.adminPassword);
     this._oianalyticsRegistrationRepository = new OIAnalyticsRegistrationRepository(this.oibusDatabase, this._auditService);
@@ -200,6 +206,14 @@ export default class RepositoryService {
 
   get configurationWorkflowRepository(): ConfigurationWorkflowRepository {
     return this._configurationWorkflowRepository;
+  }
+
+  get workflowRunRepository(): WorkflowRunRepository {
+    return this._workflowRunRepository;
+  }
+
+  get itemPointMetadataRepository(): ItemPointMetadataRepository {
+    return this._itemPointMetadataRepository;
   }
 
   get historyQueryRepository(): HistoryQueryRepository {

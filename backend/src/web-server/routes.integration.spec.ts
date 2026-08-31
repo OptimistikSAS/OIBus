@@ -13,6 +13,8 @@ import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model
 import AuditServiceMock from '../tests/__mocks__/service/audit-service.mock';
 import CertificateServiceMock from '../tests/__mocks__/service/certificate-service.mock';
 import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
+import ConfigurationWorkflowServiceMock from '../tests/__mocks__/service/configuration-workflow-service.mock';
+import ConfigurationWorkflowRunServiceMock from '../tests/__mocks__/service/configuration-workflow-run-service.mock';
 import IpFilterServiceMock from '../tests/__mocks__/service/ip-filter-service.mock';
 import LogServiceMock from '../tests/__mocks__/service/log-service.mock';
 import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
@@ -27,6 +29,8 @@ import UserServiceMock from '../tests/__mocks__/service/user-service.mock';
 import type AuditService from '../service/audit.service';
 import type CertificateService from '../service/certificate.service';
 import type HistoryQueryService from '../service/history-query.service';
+import type ConfigurationWorkflowService from '../service/configuration-workflow.service';
+import type ConfigurationWorkflowRunService from '../service/configuration-workflow-run.service';
 import type IPFilterService from '../service/ip-filter.service';
 import type LogService from '../service/log.service';
 import type NorthService from '../service/north.service';
@@ -95,6 +99,8 @@ describe('routes.ts integration (real RegisterRoutes over HTTP)', () => {
 
     const auditService = new AuditServiceMock();
     const certificateService = new CertificateServiceMock();
+    const configurationWorkflowRunService = new ConfigurationWorkflowRunServiceMock();
+    const configurationWorkflowService = new ConfigurationWorkflowServiceMock();
     const historyQueryService = new HistoryQueryServiceMock();
     const ipFilterService = new IpFilterServiceMock();
     const logService = new LogServiceMock();
@@ -113,6 +119,8 @@ describe('routes.ts integration (real RegisterRoutes over HTTP)', () => {
       createInjectServicesMiddleware(
         auditService as unknown as AuditService,
         certificateService as unknown as CertificateService,
+        configurationWorkflowRunService as unknown as ConfigurationWorkflowRunService,
+        configurationWorkflowService as unknown as ConfigurationWorkflowService,
         historyQueryService as unknown as HistoryQueryService,
         ipFilterService as unknown as IPFilterService,
         logService as unknown as LogService,

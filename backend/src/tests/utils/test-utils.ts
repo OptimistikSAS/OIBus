@@ -12,6 +12,8 @@ import OIAnalyticsRegistrationServiceMock from '../__mocks__/service/oia/oianaly
 import OIBusServiceMock from '../__mocks__/service/oibus-service.mock';
 import ScanModeServiceMock from '../__mocks__/service/scan-mode-service.mock';
 import SouthServiceMock from '../__mocks__/service/south-service.mock';
+import ConfigurationWorkflowServiceMock from '../__mocks__/service/configuration-workflow-service.mock';
+import ConfigurationWorkflowRunServiceMock from '../__mocks__/service/configuration-workflow-run-service.mock';
 import TransformerServiceMock from '../__mocks__/service/transformer-service.mock';
 import UserServiceMock from '../__mocks__/service/user-service.mock';
 import { setImmediate } from 'node:timers';
@@ -66,6 +68,10 @@ export function createMockServices(overrides: Record<string, unknown> = {}): Cus
   return {
     auditService: new AuditServiceMock() as unknown as CustomExpressRequest['services']['auditService'],
     certificateService: new CertificateServiceMock() as unknown as CustomExpressRequest['services']['certificateService'],
+    configurationWorkflowRunService:
+      new ConfigurationWorkflowRunServiceMock() as unknown as CustomExpressRequest['services']['configurationWorkflowRunService'],
+    configurationWorkflowService:
+      new ConfigurationWorkflowServiceMock() as unknown as CustomExpressRequest['services']['configurationWorkflowService'],
     historyQueryService: new HistoryQueryServiceMock() as unknown as CustomExpressRequest['services']['historyQueryService'],
     ipFilterService: new IPFilterServiceMock() as unknown as CustomExpressRequest['services']['ipFilterService'],
     logService: new LogServiceMock() as unknown as CustomExpressRequest['services']['logService'],
