@@ -36,6 +36,8 @@ import { PassThrough } from 'node:stream';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
+import ConfigurationWorkflowRepository from '../repository/config/configuration-workflow.repository';
+import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import { buildSouth, deleteSouthCache, initSouthCache } from '../south/south-connector-factory';
 import { buildNorth, createNorthOrchestrator, deleteNorthCache, initNorthCache } from '../north/north-connector-factory';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
@@ -65,6 +67,16 @@ export default class DataStreamEngine {
   // Sibling of cronByScanModeId for `type: 'interval'` scan modes. A scan mode lives in exactly one
   // of the two maps, keyed by id, so it can switch mechanism without leaking a timer.
   private intervalByScanModeId = new Map<string, NodeJS.Timeout>();
+  // Enabled, scan-mode-attached workflows, bucketed by scan mode id - the workflow analogue of
+  // SouthConnector's own itemGroupsByScanModeId, but kept here rather than per-connector since
+  // workflows have no existing coupling to SouthConnector and this is the one place with global
+  // visibility across every south. Rebuilt via reloadWorkflows() whenever a south's workflows
+  // change, and seeded for every south once start() has registered them all.
+  private workflowsByScanModeId = new Map<string, Array<ConfigurationWorkflowEntity>>();
+  // Set lazily by ConfigurationWorkflowRunService (via setWorkflowRunCallback, from index.ts) right
+  // after it's constructed - it depends on this engine (to reach the live south instance discovery
+  // must run against), so this engine can't take it as a constructor dependency without a cycle.
+  private workflowRunCallback: ((southId: string, workflowId: string) => Promise<void>) | null = null;
 
   private readonly _logger = loggerService.createChildLogger('internal', 'engine');
   readonly baseFolder: string;
@@ -80,7 +92,8 @@ export default class DataStreamEngine {
     private certificateRepository: CertificateRepository,
     private oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private oianalyticsMessageService: IOIAnalyticsMessageService,
-    private scanModeRepository: ScanModeRepository
+    private scanModeRepository: ScanModeRepository,
+    private configurationWorkflowRepository: ConfigurationWorkflowRepository
   ) {
     this.baseFolder = path.resolve('./');
   }
@@ -122,6 +135,13 @@ export default class DataStreamEngine {
           `Error while creating South connector "${southLight.name}" of type "${southLight.type}" (${southLight.id}): ${(error as Error).message}`
         );
       }
+    }
+
+    // Seed workflowsByScanModeId for every south now registered above - after the loop, not inside
+    // it, since a south's own creation doesn't depend on this and one pass over the finished map is
+    // simpler than threading it through the per-south try/catch.
+    for (const southId of this.southConnectors.keys()) {
+      this.reloadWorkflows(southId);
     }
 
     for (const historyLight of historyQueryList) {
@@ -264,6 +284,57 @@ export default class DataStreamEngine {
     }
     for (const { historyQuery } of this.historyQueries.values()) {
       historyQuery.triggerNorth(scanMode);
+    }
+    for (const workflow of this.workflowsByScanModeId.get(scanMode.id) ?? []) {
+      this.triggerWorkflow(workflow);
+    }
+  }
+
+  /**
+   * Dispatches to whatever ConfigurationWorkflowRunService.runScheduled() was wired in via
+   * setWorkflowRunCallback() - it, not this engine, owns actually queuing the run onto the target
+   * south connector's own task queue (SouthConnector.enqueueWorkflowRun), so a scheduled workflow
+   * run is interleaved with, never concurrent with, that connector's own scheduled reads. Silently
+   * a no-op if nothing has been wired yet (shouldn't happen post-startup) - errors from the run
+   * itself are the callback's own responsibility to log; this only guards against never awaiting it.
+   */
+  private triggerWorkflow(workflow: ConfigurationWorkflowEntity): void {
+    if (!this.workflowRunCallback) {
+      return;
+    }
+    this.workflowRunCallback(workflow.southId, workflow.id).catch((error: unknown) => {
+      this._logger.error(`Error running scheduled configuration workflow "${workflow.name}" (${workflow.id}): ${(error as Error).message}`);
+    });
+  }
+
+  setWorkflowRunCallback(callback: (southId: string, workflowId: string) => Promise<void>): void {
+    this.workflowRunCallback = callback;
+  }
+
+  /**
+   * Recomputes one south connector's contribution to workflowsByScanModeId from the database -
+   * called once per south from start(), and again whenever that south's workflows change (create/
+   * update/delete), mirroring reloadSouthItems' role for item-scan-mode grouping.
+   */
+  reloadWorkflows(southId: string): void {
+    for (const [scanModeId, workflows] of this.workflowsByScanModeId) {
+      const remaining = workflows.filter(workflow => workflow.southId !== southId);
+      if (remaining.length > 0) {
+        this.workflowsByScanModeId.set(scanModeId, remaining);
+      } else {
+        this.workflowsByScanModeId.delete(scanModeId);
+      }
+    }
+    for (const workflow of this.configurationWorkflowRepository.findBySouthId(southId)) {
+      if (!workflow.enabled || !workflow.scanMode) {
+        continue;
+      }
+      const existing = this.workflowsByScanModeId.get(workflow.scanMode.id);
+      if (existing) {
+        existing.push(workflow);
+      } else {
+        this.workflowsByScanModeId.set(workflow.scanMode.id, [workflow]);
+      }
     }
   }
 
