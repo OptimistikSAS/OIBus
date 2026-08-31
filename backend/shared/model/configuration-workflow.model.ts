@@ -1,5 +1,6 @@
 import { BaseEntity } from './types';
 import { ScanModeDTO } from './scan-mode.model';
+import { OIBusRecord } from './engine.model';
 
 export const RECORD_FILTER_OPERATORS = ['equals', 'notEquals', 'contains', 'matches', 'exists', 'greaterThan', 'lessThan'] as const;
 /**
@@ -106,4 +107,37 @@ export interface ConfigurationWorkflowCommandDTO {
   scanModeId: string | null;
 
   enabled: boolean;
+}
+
+export const WORKFLOW_PREVIEW_ENTRY_STATUSES = ['new', 'changed', 'unchanged', 'reactivated', 'missing'] as const;
+/**
+ * How a preview classifies one discovered/tracked entry against the workflow's previous run - the same
+ * classification a real run's Decide step uses, before Act would touch anything.
+ * @example "new"
+ */
+export type WorkflowPreviewEntryStatus = (typeof WORKFLOW_PREVIEW_ENTRY_STATUSES)[number];
+
+/**
+ * One entry of a workflow preview - a discovered record classified against what the previous run last
+ * saw for the same identity key, without writing anything.
+ */
+export interface WorkflowPreviewEntryDTO {
+  /** The identity key computed from the workflow's `identityKeyFields`. */
+  key: string;
+  status: WorkflowPreviewEntryStatus;
+  /** The freshly discovered record - null for `missing` entries, which weren't found this time. */
+  record: OIBusRecord | null;
+  /** The previous run's snapshot for this key - null for a brand new (`new`) entry. */
+  previousMetadata: Record<string, unknown> | null;
+}
+
+/**
+ * A dry run of a Configuration Workflow: identical discovery and Decide-step classification as a real
+ * run, but nothing is written - no items, no point metadata, no `workflow_runs` record. Discovery
+ * itself is a real round-trip to the data source, so a preview costs what a run costs minus the writes.
+ */
+export interface WorkflowPreviewResultDTO {
+  discoveredCount: number;
+  eligibleCount: number;
+  entries: Array<WorkflowPreviewEntryDTO>;
 }
