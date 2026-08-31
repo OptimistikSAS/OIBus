@@ -114,6 +114,11 @@ export default class ConfigurationWorkflowService {
     if (command.itemFieldMapping === null && command.remoteFieldMapping === null) {
       throw new OIBusValidationError('At least one of itemFieldMapping or remoteFieldMapping must be set');
     }
+    // A remote-metadata-only workflow (itemFieldMapping null) never creates items, so it has no way to
+    // learn which item a discovered record's metadata belongs to unless it already targets exactly one.
+    if (command.itemFieldMapping === null && command.targetItemId === null) {
+      throw new OIBusValidationError('targetItemId is required when itemFieldMapping is not set');
+    }
   }
 
   private checkNameNotTaken(southId: string, name: string, ignoreWorkflowId: string | null): void {
