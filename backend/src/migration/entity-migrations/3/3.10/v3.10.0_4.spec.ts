@@ -41,6 +41,7 @@ describe('Entity migration v3.10.0_4', () => {
 
       await db('configuration_workflows').insert({
         id: 'workflow1',
+        name: 'workflow1',
         created_at: '2026-01-01T00:00:00.000Z',
         updated_at: '2026-01-01T00:00:00.000Z',
         created_by: 'user1',
@@ -71,6 +72,7 @@ describe('Entity migration v3.10.0_4', () => {
 
       await db('configuration_workflows').insert({
         id: 'workflow2',
+        name: 'workflow2',
         created_at: '2026-01-01T00:00:00.000Z',
         updated_at: '2026-01-01T00:00:00.000Z',
         created_by: 'user1',
@@ -96,6 +98,7 @@ describe('Entity migration v3.10.0_4', () => {
 
       await db('configuration_workflows').insert({
         id: 'workflow-metadata-only',
+        name: 'workflow-metadata-only',
         created_at: '2026-01-01T00:00:00.000Z',
         updated_at: '2026-01-01T00:00:00.000Z',
         south_id: 'south1',
@@ -117,6 +120,7 @@ describe('Entity migration v3.10.0_4', () => {
 
       await db('configuration_workflows').insert({
         id: 'workflow3',
+        name: 'workflow3',
         created_at: '2026-01-01T00:00:00.000Z',
         updated_at: '2026-01-01T00:00:00.000Z',
         south_id: 'south1',
@@ -134,6 +138,7 @@ describe('Entity migration v3.10.0_4', () => {
       await up(db);
       await db('configuration_workflows').insert({
         id: 'workflow4',
+        name: 'workflow4',
         created_at: '2026-01-01T00:00:00.000Z',
         updated_at: '2026-01-01T00:00:00.000Z',
         south_id: 'south1',
@@ -154,6 +159,7 @@ describe('Entity migration v3.10.0_4', () => {
       await up(db);
       await db('configuration_workflows').insert({
         id: 'workflow5',
+        name: 'workflow5',
         created_at: '2026-01-01T00:00:00.000Z',
         updated_at: '2026-01-01T00:00:00.000Z',
         south_id: 'south1',
@@ -176,6 +182,7 @@ describe('Entity migration v3.10.0_4', () => {
       await up(db);
       await db('configuration_workflows').insert({
         id: 'workflow6',
+        name: 'workflow6',
         created_at: '2026-01-01T00:00:00.000Z',
         updated_at: '2026-01-01T00:00:00.000Z',
         south_id: 'south1',

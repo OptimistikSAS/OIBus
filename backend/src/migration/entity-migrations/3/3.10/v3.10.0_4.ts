@@ -37,6 +37,7 @@ export async function up(knex: Knex): Promise<void> {
     table.datetime('updated_at').notNullable();
     table.string('created_by');
     table.string('updated_by');
+    table.string('name').notNullable();
     table.string('south_id', 36).notNullable().references('id').inTable(SOUTH_CONNECTORS_TABLE).onDelete('CASCADE');
     table.string('target_item_id', 36).nullable().references('id').inTable(SOUTH_ITEMS_TABLE).onDelete('CASCADE');
     table.text('discovery_scope').notNullable();
@@ -46,6 +47,7 @@ export async function up(knex: Knex): Promise<void> {
     table.text('remote_field_mapping').nullable();
     table.string('scan_mode_id', 36).nullable().references('id').inTable(SCAN_MODES_TABLE).onDelete('SET NULL');
     table.boolean('enabled').notNullable().defaultTo(true);
+    table.unique(['south_id', 'name']);
   });
 }
 

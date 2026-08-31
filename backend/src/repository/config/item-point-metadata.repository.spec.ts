@@ -22,6 +22,7 @@ describe('Item Point Metadata Repository', () => {
     const workflowRepository = new ConfigurationWorkflowRepository(database, createAuditServiceMock());
     workflowId = workflowRepository.create(
       {
+        name: 'Item point metadata test workflow',
         southId: testData.south.list[0].id,
         targetItemId: null,
         discoveryScope: { rootNodeId: 'ns=1;s=Root' },

@@ -18,6 +18,7 @@ describe('Workflow Run Repository', () => {
     const workflowRepository = new ConfigurationWorkflowRepository(database, createAuditServiceMock());
     workflowId = workflowRepository.create(
       {
+        name: 'Workflow run test workflow',
         southId: testData.south.list[0].id,
         targetItemId: null,
         discoveryScope: { rootNodeId: 'ns=1;s=Root' },
