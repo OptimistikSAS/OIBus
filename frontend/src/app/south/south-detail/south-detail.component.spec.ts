@@ -8,6 +8,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { SouthDetailComponent } from './south-detail.component';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
+import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ScanModeService } from '../../services/scan-mode.service';
@@ -240,6 +241,19 @@ describe('SouthDetailComponent', () => {
     );
     const getItemCount = prepare.mock.calls[0][4];
     expect(getItemCount('group1')).toBe(1);
+  });
+
+  test('manageWorkflows should open the manage workflows modal with the south id, scan modes, and items', () => {
+    const prepare = vi.fn();
+    modalService.open.mockReturnValue({ componentInstance: { prepare } } as any);
+
+    const fixture = TestBed.createComponent(SouthDetailComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.manageWorkflows();
+
+    expect(modalService.open).toHaveBeenCalledWith(ManageWorkflowsModalComponent, expect.anything());
+    expect(prepare).toHaveBeenCalledWith(southConnector.id, scanModes, southConnector.items, manifest, southConnector.groups);
   });
 
   test('should show the explore button when the manifest supports exploration', async () => {
