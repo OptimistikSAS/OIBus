@@ -20,6 +20,7 @@ import { UnsavedChangesGuard } from './shared/unsaved-changes.guard';
 import { ExploreNorthCacheComponent } from './north/explore-north-cache/explore-north-cache.component';
 import { ExploreHistoryCacheComponent } from './history-query/explore-history-cache/explore-history-cache.component';
 import { AuditListComponent } from './audit/audit-list.component';
+import { WorkflowRunHistoryComponent } from './south/south-workflows/workflow-run-history/workflow-run-history.component';
 
 export const ROUTES: Routes = [
   { path: 'login', component: LoginComponent },
@@ -74,6 +75,10 @@ export const ROUTES: Routes = [
         path: 'south/:southId/edit',
         component: EditSouthComponent,
         canDeactivate: [UnsavedChangesGuard]
+      },
+      {
+        path: 'south/:southId/workflows/:workflowId/history',
+        component: WorkflowRunHistoryComponent
       },
       {
         path: 'south/:southId',

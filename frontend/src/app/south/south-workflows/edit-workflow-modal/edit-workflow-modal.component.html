@@ -1,0 +1,358 @@
+<div class="modal-header">
+  <h4 class="modal-title" [translate]="'south.workflows.' + mode + '-title'"></h4>
+</div>
+@if (form) {
+  <div class="modal-body">
+    <form [formGroup]="form" (ngSubmit)="save()" id="workflow-form">
+      @if (formError) {
+        <div class="alert alert-danger py-1 px-2" id="form-error" [translate]="formError"></div>
+      }
+
+      <!-- Name -->
+      <div class="form-group">
+        <label class="form-label" for="workflow-name" translate="south.workflows.name"></label>
+        <input formControlName="name" id="workflow-name" class="form-control" />
+        <val-errors controlName="name" />
+      </div>
+
+      <!-- Discovery scope -->
+      <div class="form-group">
+        <label class="form-label" for="workflow-discovery-scope" translate="south.workflows.discovery-scope"></label>
+        <textarea formControlName="discoveryScope" id="workflow-discovery-scope" class="form-control" rows="3"></textarea>
+        <div class="form-text" translate="south.workflows.discovery-scope-hint"></div>
+        @if (discoveryScopeError) {
+          <div class="text-danger small" id="discovery-scope-error" translate="south.workflows.discovery-scope-invalid-json"></div>
+        }
+      </div>
+
+      <div class="row">
+        <div class="col-6">
+          <!-- Scan mode -->
+          <div class="form-group">
+            <label class="form-label" for="workflow-scan-mode" translate="south.workflows.scan-mode"></label>
+            <select class="form-select" id="workflow-scan-mode" formControlName="scanModeId">
+              <option [ngValue]="null" translate="south.workflows.scan-mode-manual-only"></option>
+              @for (scanMode of scanModes; track scanMode.id) {
+                <option [value]="scanMode.id">{{ scanMode.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="col-6">
+          <!-- Target item -->
+          <div class="form-group">
+            <label class="form-label" for="workflow-target-item" translate="south.workflows.target-item"></label>
+            <select class="form-select" id="workflow-target-item" formControlName="targetItemId">
+              <option [ngValue]="null" translate="south.workflows.target-item-self-scoped"></option>
+              @for (item of items; track item.id) {
+                <option [value]="item.id">{{ item.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Identity key fields -->
+      <div class="form-group">
+        <label class="form-label" translate="south.workflows.identity-key-fields"></label>
+        <div class="form-text" translate="south.workflows.identity-key-fields-hint"></div>
+        <div class="d-flex flex-wrap gap-1 mb-2" id="identity-key-fields-list">
+          @for (field of identityKeyFields; track field) {
+            <span class="badge bg-secondary d-flex align-items-center">
+              {{ field }}
+              <button
+                type="button"
+                class="btn-close btn-close-white ms-1"
+                style="font-size: 0.6rem"
+                (click)="removeIdentityKeyField(field)"
+              ></button>
+            </span>
+          }
+        </div>
+        <div class="input-group input-group-sm" style="max-width: 20rem">
+          <input
+            class="form-control"
+            id="new-identity-key-field"
+            [(ngModel)]="newIdentityKeyField"
+            [ngModelOptions]="{ standalone: true }"
+            [placeholder]="'south.workflows.identity-key-fields-add-placeholder' | translate"
+            (keydown.enter)="$event.preventDefault(); addIdentityKeyField()"
+          />
+          <button type="button" class="btn btn-secondary" id="add-identity-key-field" (click)="addIdentityKeyField()">
+            <span class="fa fa-plus"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Eligibility filter -->
+      <div class="form-group">
+        <label class="form-label" translate="south.workflows.eligibility-filter"></label>
+        <div class="form-text" translate="south.workflows.eligibility-filter-hint"></div>
+        @if (eligibilityFilter.length === 0) {
+          <div class="text-muted small mb-2" translate="south.workflows.eligibility-filter-none"></div>
+        } @else {
+          <table class="table table-sm" id="eligibility-filter-table">
+            <thead>
+              <tr>
+                <th translate="south.workflows.eligibility-filter-field"></th>
+                <th translate="south.workflows.eligibility-filter-operator"></th>
+                <th translate="south.workflows.eligibility-filter-value"></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (condition of eligibilityFilter; track $index) {
+                <tr>
+                  <td>{{ condition.field }}</td>
+                  <td>{{ 'south.workflows.operator.' + condition.operator | translate }}</td>
+                  <td>{{ condition.value }}</td>
+                  <td>
+                    <button type="button" class="btn btn-link px-1 py-0" (click)="removeEligibilityCondition($index)">
+                      <span class="fa fa-trash"></span>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+        <div class="d-flex gap-1 align-items-center">
+          <input
+            class="form-control form-control-sm"
+            id="new-eligibility-field"
+            [(ngModel)]="newEligibilityField"
+            [ngModelOptions]="{ standalone: true }"
+            [placeholder]="'south.workflows.eligibility-filter-field' | translate"
+          />
+          <select
+            class="form-select form-select-sm"
+            id="new-eligibility-operator"
+            [(ngModel)]="newEligibilityOperator"
+            [ngModelOptions]="{ standalone: true }"
+          >
+            @for (operator of operators; track operator) {
+              <option [value]="operator">{{ 'south.workflows.operator.' + operator | translate }}</option>
+            }
+          </select>
+          @if (newEligibilityOperator !== 'exists') {
+            <input
+              class="form-control form-control-sm"
+              id="new-eligibility-value"
+              [(ngModel)]="newEligibilityValue"
+              [ngModelOptions]="{ standalone: true }"
+              [placeholder]="'south.workflows.eligibility-filter-value' | translate"
+            />
+          }
+          <button type="button" class="btn btn-secondary btn-sm" id="add-eligibility-condition" (click)="addEligibilityCondition()">
+            <span class="fa fa-plus"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Item field mapping -->
+      <div class="form-group">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="item-field-mapping-enabled" formControlName="itemFieldMappingEnabled" />
+          <label class="form-check-label" for="item-field-mapping-enabled" translate="south.workflows.item-field-mapping-enable"></label>
+        </div>
+        @if (form.controls.itemFieldMappingEnabled.value) {
+          <div class="form-text" translate="south.workflows.item-field-mapping-hint"></div>
+          <table class="table table-sm" id="item-field-mapping-table">
+            <tbody>
+              @for (field of itemMappableFields; track field.path) {
+                <tr>
+                  <td class="align-middle" [translate]="fieldLabelKey(field)"></td>
+                  <td>
+                    @if (isSelectType(field)) {
+                      <select
+                        class="form-select form-select-sm"
+                        [attr.id]="'item-field-mapping-field-' + field.path"
+                        [ngModel]="selectDisplayValue(itemFieldMappingValues, field)"
+                        (ngModelChange)="onSelectChange(itemFieldMappingValues, field, $event)"
+                        [ngModelOptions]="{ standalone: true }"
+                      >
+                        <option value="" translate="south.workflows.mapping-not-mapped"></option>
+                        @switch (field.attributeType) {
+                          @case ('boolean') {
+                            <option value="true" translate="enums.boolean.true"></option>
+                            <option value="false" translate="enums.boolean.false"></option>
+                          }
+                          @case ('string-select') {
+                            @for (value of field.selectableValues ?? []; track value) {
+                              <option [value]="value">{{ stringSelectOptionLabel(field, value) | translate }}</option>
+                            }
+                          }
+                          @case ('scan-mode') {
+                            @for (scanMode of scanModes; track scanMode.id) {
+                              <option [value]="scanMode.id">{{ scanMode.name }}</option>
+                            }
+                          }
+                          @case ('group-select') {
+                            @for (group of groups; track group.id) {
+                              <option [value]="group.id">{{ group.standardSettings.name }}</option>
+                            }
+                          }
+                          @default {}
+                        }
+                        <option [value]="variableSentinel" translate="south.workflows.mapping-use-variable"></option>
+                      </select>
+                      @if (isVariableMode(itemFieldMappingValues, field)) {
+                        <input
+                          class="form-control form-control-sm mt-1"
+                          [attr.id]="'item-field-mapping-field-' + field.path + '-expression'"
+                          [(ngModel)]="itemFieldMappingValues[field.path]"
+                          [ngModelOptions]="{ standalone: true }"
+                          [placeholder]="'south.workflows.item-field-mapping-expression-placeholder' | translate"
+                        />
+                      }
+                    } @else {
+                      <input
+                        class="form-control form-control-sm"
+                        [attr.id]="'item-field-mapping-field-' + field.path"
+                        [(ngModel)]="itemFieldMappingValues[field.path]"
+                        [ngModelOptions]="{ standalone: true }"
+                        [placeholder]="'south.workflows.item-field-mapping-expression-placeholder' | translate"
+                      />
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <div class="text-muted small" translate="south.workflows.item-field-mapping-none"></div>
+        }
+      </div>
+
+      <!-- Remote field mapping -->
+      <div class="form-group">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="remote-field-mapping-enabled" formControlName="remoteFieldMappingEnabled" />
+          <label
+            class="form-check-label"
+            for="remote-field-mapping-enabled"
+            translate="south.workflows.remote-field-mapping-enable"
+          ></label>
+        </div>
+        @if (form.controls.remoteFieldMappingEnabled.value) {
+          <div class="form-text" translate="south.workflows.remote-field-mapping-hint"></div>
+          <table class="table table-sm" id="remote-field-mapping-table">
+            <tbody>
+              @for (field of remoteKnownFields; track field.path) {
+                <tr>
+                  <td class="align-middle" [translate]="fieldLabelKey(field)"></td>
+                  <td>
+                    @if (isSelectType(field)) {
+                      <select
+                        class="form-select form-select-sm"
+                        [attr.id]="'remote-field-mapping-field-' + field.path"
+                        [ngModel]="selectDisplayValue(remoteFieldMappingValues, field)"
+                        (ngModelChange)="onSelectChange(remoteFieldMappingValues, field, $event)"
+                        [ngModelOptions]="{ standalone: true }"
+                      >
+                        <option value="" translate="south.workflows.mapping-not-mapped"></option>
+                        @switch (field.attributeType) {
+                          @case ('boolean') {
+                            <option value="true" translate="enums.boolean.true"></option>
+                            <option value="false" translate="enums.boolean.false"></option>
+                          }
+                          @case ('string-select') {
+                            @for (value of field.selectableValues ?? []; track value) {
+                              <option [value]="value">{{ stringSelectOptionLabel(field, value) | translate }}</option>
+                            }
+                          }
+                          @case ('scan-mode') {
+                            @for (scanMode of scanModes; track scanMode.id) {
+                              <option [value]="scanMode.id">{{ scanMode.name }}</option>
+                            }
+                          }
+                          @case ('group-select') {
+                            @for (group of groups; track group.id) {
+                              <option [value]="group.id">{{ group.standardSettings.name }}</option>
+                            }
+                          }
+                          @default {}
+                        }
+                        <option [value]="variableSentinel" translate="south.workflows.mapping-use-variable"></option>
+                      </select>
+                      @if (isVariableMode(remoteFieldMappingValues, field)) {
+                        <input
+                          class="form-control form-control-sm mt-1"
+                          [attr.id]="'remote-field-mapping-field-' + field.path + '-expression'"
+                          [(ngModel)]="remoteFieldMappingValues[field.path]"
+                          [ngModelOptions]="{ standalone: true }"
+                          [placeholder]="'south.workflows.item-field-mapping-expression-placeholder' | translate"
+                        />
+                      }
+                    } @else {
+                      <input
+                        class="form-control form-control-sm"
+                        [attr.id]="'remote-field-mapping-field-' + field.path"
+                        [(ngModel)]="remoteFieldMappingValues[field.path]"
+                        [ngModelOptions]="{ standalone: true }"
+                        [placeholder]="'south.workflows.item-field-mapping-expression-placeholder' | translate"
+                      />
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+          <label class="form-label mt-2" translate="south.workflows.remote-field-mapping-extra"></label>
+          <div class="form-text" translate="south.workflows.remote-field-mapping-extra-hint"></div>
+          @if (remoteFieldMappingExtraRows.length > 0) {
+            <table class="table table-sm" id="remote-field-mapping-extra-table">
+              <tbody>
+                @for (row of remoteFieldMappingExtraRows; track $index) {
+                  <tr>
+                    <td>{{ row.key }}</td>
+                    <td>{{ row.value }}</td>
+                    <td>
+                      <button type="button" class="btn btn-link px-1 py-0" (click)="removeRemoteExtraRow($index)">
+                        <span class="fa fa-trash"></span>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          <div class="d-flex gap-1">
+            <input
+              class="form-control form-control-sm"
+              id="new-remote-extra-key"
+              [(ngModel)]="newRemoteExtraKey"
+              [ngModelOptions]="{ standalone: true }"
+              [placeholder]="'south.workflows.remote-field-mapping-extra-key' | translate"
+            />
+            <input
+              class="form-control form-control-sm"
+              id="new-remote-extra-value"
+              [(ngModel)]="newRemoteExtraValue"
+              [ngModelOptions]="{ standalone: true }"
+              [placeholder]="'south.workflows.remote-field-mapping-extra-value' | translate"
+            />
+            <button type="button" class="btn btn-secondary btn-sm" id="add-remote-extra-row" (click)="addRemoteExtraRow()">
+              <span class="fa fa-plus"></span>
+            </button>
+          </div>
+        } @else {
+          <div class="text-muted small" translate="south.workflows.remote-field-mapping-none"></div>
+        }
+      </div>
+
+      <!-- Enabled -->
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="workflow-enabled" formControlName="enabled" />
+        <label class="form-check-label" for="workflow-enabled" translate="south.workflows.enabled"></label>
+      </div>
+    </form>
+  </div>
+}
+<div class="modal-footer">
+  <div class="btn-group">
+    <button [oib-save-button]="state" form="workflow-form" translationKey="common.save" iconClass="fa-save"></button>
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+  </div>
+</div>
