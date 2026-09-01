@@ -1,0 +1,47 @@
+<div class="modal-header">
+  <h4 class="modal-title" [translate]="'south.workflows.preview-title'" [translateParams]="{ name: workflowName }"></h4>
+</div>
+<div class="modal-body">
+  @if (result) {
+    <div class="text-muted mb-2" id="preview-counts">
+      {{ 'south.workflows.preview-discovered' | translate: { discovered: result.discoveredCount, eligible: result.eligibleCount } }}
+    </div>
+    @if (result.entries.length === 0) {
+      <div class="oib-grey-container" id="preview-none" translate="south.workflows.preview-none"></div>
+    } @else {
+      <table class="table table-sm table-hover oib-table">
+        <thead class="light">
+          <tr>
+            <th translate="south.workflows.eligibility-filter-field"></th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of result.entries; track entry.key) {
+            <tr>
+              <td>{{ entry.key }}</td>
+              <td>
+                <span
+                  class="badge"
+                  [class.bg-success]="entry.status === 'new' || entry.status === 'reactivated'"
+                  [class.bg-warning]="entry.status === 'changed'"
+                  [class.bg-secondary]="entry.status === 'unchanged'"
+                  [class.bg-danger]="entry.status === 'missing'"
+                >
+                  {{ 'south.workflows.preview-status.' + entry.status | translate }}
+                </span>
+              </td>
+              <td>
+                <pre class="mb-0 small">{{ entry.record ?? entry.previousMetadata | json }}</pre>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  }
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-primary" (click)="close()" translate="common.close" id="close-button"></button>
+</div>
