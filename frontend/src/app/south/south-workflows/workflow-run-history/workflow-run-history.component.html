@@ -1,0 +1,64 @@
+<div class="oib-padded-container">
+  <div class="oib-header-container">
+    <div class="row mb-3">
+      <div class="col">
+        <button type="button" class="btn btn-link px-0" id="back-button" (click)="back()">
+          <span class="fa fa-arrow-left me-1"></span>
+          <span translate="common.back"></span>
+        </button>
+        <h1 id="title" [translate]="'south.workflows.run-history-title'" [translateParams]="{ name: workflow()?.name || '' }"></h1>
+      </div>
+    </div>
+
+    @if (runs().totalElements !== 0) {
+      <div class="d-flex justify-content-end mb-2">
+        <oib-pagination [page]="runs()" [navigate]="true" />
+      </div>
+      <div class="table-container">
+        <table class="table table-sm table-hover oib-table">
+          <thead>
+            <tr>
+              <th translate="south.workflows.run-status"></th>
+              <th translate="south.workflows.run-trigger-type"></th>
+              <th translate="south.workflows.run-started-at"></th>
+              <th translate="south.workflows.run-completed-at"></th>
+              <th translate="south.workflows.run-triggered-by"></th>
+              <th translate="south.workflows.run-counts"></th>
+              <th translate="south.workflows.run-error"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (run of runs().content; track run.id) {
+              <tr class="data">
+                <td>
+                  <span
+                    class="badge"
+                    [class.bg-primary]="run.status === 'RUNNING'"
+                    [class.bg-success]="run.status === 'COMPLETED'"
+                    [class.bg-danger]="run.status === 'ERRORED'"
+                    [translate]="'south.workflows.run-status.' + run.status"
+                  ></span>
+                </td>
+                <td>{{ 'south.workflows.run-trigger.' + run.triggerType | translate }}</td>
+                <td class="text-nowrap">{{ run.startedAt | datetime: 'ff' }}</td>
+                <td class="text-nowrap">
+                  @if (run.completedAt) {
+                    {{ run.completedAt | datetime: 'ff' }}
+                  }
+                </td>
+                <td>{{ run.triggeredBy || '-' }}</td>
+                <td>
+                  {{ run.discoveredCount }} / {{ run.eligibleCount }} / {{ run.createdCount }} / {{ run.updatedCount }} /
+                  {{ run.disabledCount }}
+                </td>
+                <td class="text-danger small">{{ run.error }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else if (!loading()) {
+      <div class="oi-details empty" translate="south.workflows.run-history-none"></div>
+    }
+  </div>
+</div>

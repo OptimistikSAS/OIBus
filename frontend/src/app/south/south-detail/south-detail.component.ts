@@ -47,6 +47,7 @@ import { DatetimePipe } from '../../shared/datetime.pipe';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
+import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
 import { ViewItemValueModalComponent } from '../south-items/view-item-value-modal/view-item-value-modal.component';
 import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
 
@@ -853,6 +854,12 @@ export class SouthDetailComponent {
       this.filteredItems = this.filter();
       this.changePage(this.displayedItems.number);
     });
+  }
+
+  manageWorkflows() {
+    const modalRef = this.modalService.open(ManageWorkflowsModalComponent, { size: 'xl', backdrop: 'static' });
+    const component: ManageWorkflowsModalComponent = modalRef.componentInstance;
+    component.prepare(this.southConnector!.id, this.scanModes, this.southConnector!.items, this.manifest!, this.southConnector!.groups);
   }
 
   getGroupName(item: SouthConnectorItemDTO): string {

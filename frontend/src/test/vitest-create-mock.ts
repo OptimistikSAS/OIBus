@@ -59,10 +59,12 @@ export function stubRoute(options: StubRouteOptions = {}): Partial<ActivatedRout
   return {
     params: of(params),
     queryParams: of(queryParams),
+    paramMap: of(convertToParamMap(params)),
     queryParamMap: of(convertToParamMap(queryParams)),
     snapshot: {
       params,
       queryParams,
+      paramMap: convertToParamMap(params),
       queryParamMap: convertToParamMap(queryParams)
     }
   } as Partial<ActivatedRoute>;
