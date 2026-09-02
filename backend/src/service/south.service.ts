@@ -1008,6 +1008,14 @@ export const copySouthItemCommandToSouthItemEntity = async (
   southItemEntity.scanMode =
     command.scanModeId || command.scanModeName ? checkScanMode(scanModes, command.scanModeId, command.scanModeName) : null;
   southItemEntity.group = command.groupId || command.groupName ? checkGroups(groups, command.groupId, command.groupName) : null;
+  // An enabled item with neither its own scan mode nor a group has nothing to schedule it: it would
+  // otherwise sail through here as valid and only blow up later, as a null-dereference crash, when the
+  // engine (re)builds the connector's scan-mode groups (south-connector.ts's rebuildItemGroupsByScanMode:
+  // `item.group ? item.group.scanMode.id : item.scanMode!.id`). Reject it here instead, before any of it
+  // reaches the database — a disabled item is exempt since rebuildItemGroupsByScanMode skips it outright.
+  if (southItemEntity.enabled && !southItemEntity.scanMode && !southItemEntity.group) {
+    throw new OIBusValidationError(`Item "${southItemEntity.name}" must have a scan mode or belong to a group`);
+  }
 };
 
 export const toSouthConnectorLightDTO = (entity: SouthConnectorEntityLight, getUserInfo: GetUserInfo): SouthConnectorLightDTO => {

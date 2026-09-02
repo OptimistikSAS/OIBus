@@ -165,6 +165,14 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     // always populate it, so this is just defensive, not a real production case.
     for (const item of this.connector.items ?? []) {
       if (!item.enabled) continue;
+      // An enabled item should always carry either its own scan mode or a group (validated on
+      // write by copySouthItemCommandToSouthItemEntity) — but older/corrupted rows written before
+      // that guard existed can still have neither. Skip rather than crash: one bad item must not
+      // take the whole connector's reload down with it.
+      if (!item.group && !item.scanMode) {
+        this.logger.error(`Item "${item.name}" (id: ${item.id}) has no scan mode and no group: skipping it`);
+        continue;
+      }
       const scanModeId = item.group ? item.group.scanMode.id : item.scanMode!.id;
       const items = itemsByScanModeId.get(scanModeId);
       if (items) {

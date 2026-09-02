@@ -139,6 +139,13 @@ describe('South Service', () => {
     mockUtils.stringToBoolean.mock.resetCalls();
     mockUtils.stringToBoolean.mock.mockImplementation(() => true);
     mockUtils.checkScanMode.mock.resetCalls();
+    // Default to resolving successfully, matching checkScanMode's real contract (it always either
+    // returns a scan mode or throws — never returns a falsy value) — copySouthItemCommandToSouthItemEntity
+    // now validates that an enabled item ends up with a scan mode or a group, so leaving this mock's
+    // default return value as `undefined` would trip that validation for every test that doesn't care
+    // about scan mode resolution specifically. Tests exercising scan-mode-resolution behavior itself
+    // still override this per-test.
+    mockUtils.checkScanMode.mock.mockImplementation(() => testData.scanMode.list[0]);
     mockUtils.checkGroups.mock.resetCalls();
 
     southConnectorRepository.findAllSouth.mock.mockImplementation(() => []);
@@ -2783,6 +2790,59 @@ describe('South Service', () => {
           );
 
           assert.strictEqual(southItemEntity.syncWithGroup, false);
+        });
+
+        it('should reject an enabled item with neither a scan mode nor a group', async () => {
+          const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
+          const command: SouthConnectorItemCommandDTO = {
+            ...testData.south.itemCommand,
+            id: 'testItemId',
+            name: 'Orphan Item',
+            scanModeId: null,
+            scanModeName: null,
+            groupId: null,
+            groupName: null
+          };
+
+          await assert.rejects(
+            () =>
+              copySouthItemCommandToSouthItemEntity(
+                southItemEntity,
+                command,
+                null,
+                testData.south.list[0].type,
+                testData.scanMode.list,
+                [],
+                false
+              ),
+            /Item "Orphan Item" must have a scan mode or belong to a group/
+          );
+        });
+
+        it('should allow a disabled item with neither a scan mode nor a group', async () => {
+          const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
+          const command: SouthConnectorItemCommandDTO = {
+            ...testData.south.itemCommand,
+            id: 'testItemId',
+            enabled: false,
+            scanModeId: null,
+            scanModeName: null,
+            groupId: null,
+            groupName: null
+          };
+
+          await copySouthItemCommandToSouthItemEntity(
+            southItemEntity,
+            command,
+            null,
+            testData.south.list[0].type,
+            testData.scanMode.list,
+            [],
+            false
+          );
+
+          assert.strictEqual(southItemEntity.scanMode, null);
+          assert.strictEqual(southItemEntity.group, null);
         });
 
         it('should default syncWithGroup to false when command.syncWithGroup is undefined', async () => {
