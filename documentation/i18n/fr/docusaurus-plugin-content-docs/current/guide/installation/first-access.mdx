@@ -62,17 +62,17 @@ Consultez [Filtres IP](../engine/ip-filters.mdx) pour plus de détails.
 La page d'affichage du moteur montre l'utilisation des ressources en temps réel pour le processus OIBus, suivie depuis
 la dernière réinitialisation des métriques (un bouton **Réinitialiser les métriques** est disponible sur cette page) :
 
-| Métrique                                    | Description                                              |
-| ----------------------------------------- | -------------------------------------------------------- |
-| **Utilisation CPU (dernière seconde)**    | Utilisation du CPU au cours de la dernière seconde.       |
-| **Utilisation CPU (moyenne)**             | Utilisation moyenne du CPU depuis la dernière réinitialisation des métriques. |
-| **Temps de fonctionnement**               | Temps écoulé depuis le dernier démarrage du processus OIBus. |
-| **Mémoire libre**                         | Pourcentage de mémoire système actuellement disponible.  |
-| **Utilisation RAM (min / actuel / max)**  | Mémoire de processus résidant en RAM depuis la réinitialisation des métriques. |
-| **Heap total (min / actuel / max)**       | Mémoire totale allouée pour le tas JavaScript.            |
-| **Heap utilisé (min / actuel / max)**     | Mémoire activement utilisée dans le tas.                  |
-| **Mémoire externe (min / actuel / max)**  | Mémoire utilisée par les extensions natives (par ex. les liaisons C++). |
-| **Tampon de tableau (min / actuel / max)**| Mémoire allouée pour les tampons de données binaires.      |
+| Métrique                                   | Description                                                                    |
+| ------------------------------------------ | ------------------------------------------------------------------------------ |
+| **Utilisation CPU (dernière seconde)**     | Utilisation du CPU au cours de la dernière seconde.                            |
+| **Utilisation CPU (moyenne)**              | Utilisation moyenne du CPU depuis la dernière réinitialisation des métriques.  |
+| **Temps de fonctionnement**                | Temps écoulé depuis le dernier démarrage du processus OIBus.                   |
+| **Mémoire libre**                          | Pourcentage de mémoire système actuellement disponible.                        |
+| **Utilisation RAM (min / actuel / max)**   | Mémoire de processus résidant en RAM depuis la réinitialisation des métriques. |
+| **Heap total (min / actuel / max)**        | Mémoire totale allouée pour le tas JavaScript.                                 |
+| **Heap utilisé (min / actuel / max)**      | Mémoire activement utilisée dans le tas.                                       |
+| **Mémoire externe (min / actuel / max)**   | Mémoire utilisée par les extensions natives (par ex. les liaisons C++).        |
+| **Tampon de tableau (min / actuel / max)** | Mémoire allouée pour les tampons de données binaires.                          |
 
 ## Connecteurs North {#north-connectors}
 
@@ -142,15 +142,15 @@ La page des journaux affiche les journaux d'exécution d'OIBus et se rafraîchit
 
 Utilisez les filtres pour affiner ce que vous voyez :
 
-| Filtre           | Description                                                                                   |
-| -------------- | --------------------------------------------------------------------------------------------- |
-| **Plage de dates** | Affiche uniquement les journaux dans une fenêtre temporelle spécifique.                    |
-| **Niveau**      | Filtre par gravité, sélectionné sous forme de puces cliquables : `trace`, `debug`, `info`, `warn`, `error`. |
+| Filtre             | Description                                                                                                                |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| **Plage de dates** | Affiche uniquement les journaux dans une fenêtre temporelle spécifique.                                                    |
+| **Niveau**         | Filtre par gravité, sélectionné sous forme de puces cliquables : `trace`, `debug`, `info`, `warn`, `error`.                |
 | **Type de portée** | Filtre par catégorie, également sélectionné sous forme de puces cliquables : moteur, South, North ou requête d'historique. |
-| **Portée**      | Restreint les journaux à un connecteur South, un connecteur North ou une requête d'historique spécifique. |
-| **Élément**       | Restreint les journaux à un élément South/requête d'historique spécifique.                  |
-| **Groupe**      | Restreint les journaux à un groupe d'éléments South spécifique.                              |
-| **Message**    | Recherche par texte libre dans le contenu du message du journal.                              |
+| **Portée**         | Restreint les journaux à un connecteur South, un connecteur North ou une requête d'historique spécifique.                  |
+| **Élément**        | Restreint les journaux à un élément South/requête d'historique spécifique.                                                 |
+| **Groupe**         | Restreint les journaux à un groupe d'éléments South spécifique.                                                            |
+| **Message**        | Recherche par texte libre dans le contenu du message du journal.                                                           |
 
 La verbosité des journaux est configurée par destination (console, fichier, base de données, Loki, Syslog, OIAnalytics)
 dans [Paramètres du moteur → Paramètres de journalisation](../engine/engine-settings.mdx#logging-parameters).
@@ -169,13 +169,22 @@ compatibilité avec OIAnalytics.
 ## Paramètres utilisateur {#user-settings}
 
 La page **Paramètres utilisateur** vous permet de mettre à jour le nom de votre compte, de définir le fuseau horaire
-utilisé pour l'affichage des dates et heures dans toute l'interface, et de changer votre mot de passe de connexion.
+utilisé pour l'affichage des dates et heures dans toute l'interface, de choisir la langue de l'interface, et de
+changer votre mot de passe de connexion.
 
 <div style={{ textAlign: 'center' }}>![Paramètres utilisateur](../../../static/img/guide/installation/first_access/user-settings.png)</div>
 
-| Paramètre        | Description                                                          |
-| -------------- | --------------------------------------------------------------------- |
-| **Prénom** | Le prénom de l'utilisateur.                                               |
-| **Nom**  | Le nom de famille de l'utilisateur.                                               |
-| **Fuseau horaire**   | Sélectionnez le fuseau horaire pour toutes les valeurs de date/heure affichées dans l'interface. |
+| Paramètre          | Description                                                                                      |
+| ------------------ | ------------------------------------------------------------------------------------------------ |
+| **Prénom**         | Le prénom de l'utilisateur.                                                                      |
+| **Nom**            | Le nom de famille de l'utilisateur.                                                              |
+| **Fuseau horaire** | Sélectionnez le fuseau horaire pour toutes les valeurs de date/heure affichées dans l'interface. |
+| **Langue**         | Sélectionnez la langue de l'interface : **English**, **Français**, ou **中文**.                  |
 | **Mot de passe**   | Change le mot de passe de connexion de l'utilisateur actuel (via une boîte de dialogue séparée). |
+
+:::note Changer la langue recharge la page
+Enregistrer une **Langue** différente recharge OIBus un instant plus tard pour l'appliquer. Le choix est
+enregistré sur votre compte utilisateur, il vous suit donc lors de votre prochaine connexion — depuis
+n'importe quel navigateur ou appareil — plutôt que d'être lié uniquement au navigateur actuel. Cela change
+également la langue dans laquelle s'ouvrent les liens **Aide** de la documentation embarquée.
+:::

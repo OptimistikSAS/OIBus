@@ -112,6 +112,19 @@ If you use a [North OIAnalytics](../north-connectors/oianalytics.md) with [OIAna
 
 ## Logging Parameters {#logging-parameters}
 
+### Audit Log Retention {#audit-log-retention}
+
+**Audit log retention** sets the number of days [audit trail](./audit-trail.mdx) entries are kept before
+being automatically pruned. Set it to `0` to keep audit log entries forever.
+
+:::warning
+Keeping audit log entries forever (`0`) lets the configuration database grow without bound on a
+busy instance, which can affect its size and performance over time. Prefer a bounded retention period
+unless you have a specific compliance or auditing reason to keep everything.
+:::
+
+### Log Levels {#log-levels}
+
 OIBus supports six log levels, from most to least critical:
 
 | Log Level | Description                                                                  |
@@ -131,26 +144,25 @@ Use **Trace** and **Debug** log levels only for troubleshooting, as they generat
 
 #### OIAnalytics {#oianalytics}
 
-- If OIBus is [registered with OIAnalytics](../installation/oianalytics.mdx), logs can be forwarded to OIAnalytics.
-- These settings are ignored if OIBus is not registered.
+If OIBus is [registered with OIAnalytics](../installation/oianalytics.mdx), logs can be forwarded to OIAnalytics. These settings are ignored if
+OIBus is not registered.
 
 #### Database {#database}
 
-- Save logs in a local **SQLite database**.
-- View logs in the **Logs tab** of OIBus.
-- Set a **maximum number of logs** to prevent the database from growing too large. Older logs are automatically purged.
+Save logs in a local **SQLite database**. View logs in the **Logs tab** of OIBus. Set a **maximum number of logs** to
+prevent the database from growing too large. Older logs are automatically purged.
 
 #### File {#file}
 
-- Store logs in one or more files.
-- Configure:
+Store logs in one or more files. Configure:
+
 - **Maximum file size** (in MB)
 - **Number of files** for log rotation
 
 #### Loki {#loki}
 
-- Send logs to a remote **Loki** instance in batches.
-- Configure:
+Send logs to a remote **Loki** instance in batches. Configure:
+
 - **URL**
 - **Batch interval** (default: 60 seconds)
 - **Basic Auth credentials** (username and password)
@@ -161,13 +173,12 @@ Logs sent to Loki are identified by the **OIBus ID** and name. Ensure the name i
 
 #### Syslog {#syslog}
 
-- Send logs to a remote **Syslog** server (RFC 5424).
-- Configure:
+Send logs to a remote **Syslog** server (RFC 5424). Configure:
+
 - **Host**
 - **Port** (default: 514)
 - **Protocol**: UDP or TCP
 
 #### Console {#console}
 
-- Displays logs in the **Console**.
-- Accessible by running OIBus from a terminal.
+Displays logs in the **Console**. Accessible by running OIBus from a terminal.

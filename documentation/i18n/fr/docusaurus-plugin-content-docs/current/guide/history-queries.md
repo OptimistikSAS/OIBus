@@ -12,21 +12,22 @@ des données antérieures à l'activation de votre installation en direct, ou po
 
 Seuls les connecteurs South disposant de capacités d'historisation prennent en charge les requêtes d'historique :
 
-| Connecteur                                               |
-| --------------------------------------------------------- |
-| [InfluxDB](./south-connectors/influxdb.mdx)                |
-| [MSSQL](./south-connectors/mssql.mdx)                       |
-| [MySQL® / MariaDB™](./south-connectors/mysql.mdx)          |
-| [ODBC](./south-connectors/odbc.mdx)                         |
-| [OIAnalytics®](./south-connectors/oianalytics.mdx)          |
-| [OLEDB](./south-connectors/oledb.mdx)                       |
-| [OPC Classic™ (mode HDA)](./south-connectors/opc.mdx)      |
-| [OPC UA™ (mode HA)](./south-connectors/opcua.mdx)          |
-| [Oracle Database™](./south-connectors/oracle.mdx)          |
-| [OSIsoft PI System™](./south-connectors/osisoft-pi.mdx)    |
-| [PostgreSQL](./south-connectors/postgresql.mdx)             |
-| [REST](./south-connectors/rest.mdx)                         |
-| [SQLite™](./south-connectors/sqlite.mdx)                    |
+| Connecteur                                              |
+| ------------------------------------------------------- |
+| [InfluxDB](./south-connectors/influxdb.mdx)             |
+| [MongoDB](./south-connectors/mongodb.mdx)               |
+| [MSSQL](./south-connectors/mssql.mdx)                   |
+| [MySQL® / MariaDB™](./south-connectors/mysql.mdx)       |
+| [ODBC](./south-connectors/odbc.mdx)                     |
+| [OIAnalytics®](./south-connectors/oianalytics.mdx)      |
+| [OLEDB](./south-connectors/oledb.mdx)                   |
+| [OPC Classic™ (mode HDA)](./south-connectors/opc.mdx)   |
+| [OPC UA™ (mode HA)](./south-connectors/opcua.mdx)       |
+| [Oracle Database™](./south-connectors/oracle.mdx)       |
+| [OSIsoft PI System™](./south-connectors/osisoft-pi.mdx) |
+| [PostgreSQL](./south-connectors/postgresql.mdx)         |
+| [REST](./south-connectors/rest.mdx)                     |
+| [SQLite™](./south-connectors/sqlite.mdx)                |
 
 ## Créer une requête d'historique {#create-a-history-query}
 
@@ -46,19 +47,19 @@ l'intégralité de la configuration South et North, les items, et les transforme
 
 ### Général {#general}
 
-| Paramètre         | Description                            | Exemple de valeur         |
-| ------------------ | ---------------------------------------- | ---------------------------- |
-| **Name**          | Étiquette unique pour la requête d'historique. | `Backfill Jan 2024`          |
-| **Description**   | Contexte facultatif pour la requête.     | `Re-export after outage`     |
+| Paramètre       | Description                                    | Exemple de valeur        |
+| --------------- | ---------------------------------------------- | ------------------------ |
+| **Name**        | Étiquette unique pour la requête d'historique. | `Backfill Jan 2024`      |
+| **Description** | Contexte facultatif pour la requête.           | `Re-export after outage` |
 
 ### Plage temporelle {#time-range}
 
-| Paramètre               | Description                                                                                       | Exemple de valeur              |
-| -------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| **Start time**            | Début de la période historique à récupérer.                                                          | `2024-01-01T00:00:00.000Z`         |
-| **End time**              | Fin de la période historique à récupérer.                                                            | `2024-02-01T00:00:00.000Z`         |
-| **Max read interval**     | Durée maximale d'une sous-requête en secondes. La plage complète est découpée en morceaux de cette taille. | `3600`                             |
-| **Read delay**            | Pause en millisecondes entre des sous-requêtes consécutives, pour éviter de surcharger le système source. | `200`                              |
+| Paramètre             | Description                                                                                                | Exemple de valeur          |
+| --------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------- |
+| **Start time**        | Début de la période historique à récupérer.                                                                | `2024-01-01T00:00:00.000Z` |
+| **End time**          | Fin de la période historique à récupérer.                                                                  | `2024-02-01T00:00:00.000Z` |
+| **Max read interval** | Durée maximale d'une sous-requête en secondes. La plage complète est découpée en morceaux de cette taille. | `3600`                     |
+| **Read delay**        | Pause en millisecondes entre des sous-requêtes consécutives, pour éviter de surcharger le système source.  | `200`                      |
 
 > Pour des conseils sur le dimensionnement de **Max read interval** et **Read delay** — y compris le compromis entre les deux sur un
 > important arriéré — voir [Max read interval](./advanced/history-query-timing.md#max-read-interval-bounding-how-much-a-single-query-asks-for)
@@ -87,11 +88,11 @@ dérogation de limitation par item. Chaque item partage les seuls paramètres de
 
 ## Contrôles d'exécution {#execution-controls}
 
-| Contrôle    | Description                                                                                                                                        |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Start**   | Disponible lorsque la requête est `PENDING`. Démarre la requête à partir de Start time.                                                              |
-| **Pause**   | Disponible lorsque la requête est `RUNNING`. Suspend l'exécution ; la progression de chaque item est préservée.                                       |
-| **Resume**  | Disponible lorsque la requête est `PAUSED`. Continue depuis la dernière position suivie de chaque item.                                               |
+| Contrôle    | Description                                                                                                                                                                  |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Start**   | Disponible lorsque la requête est `PENDING`. Démarre la requête à partir de Start time.                                                                                      |
+| **Pause**   | Disponible lorsque la requête est `RUNNING`. Suspend l'exécution ; la progression de chaque item est préservée.                                                              |
+| **Resume**  | Disponible lorsque la requête est `PAUSED`. Continue depuis la dernière position suivie de chaque item.                                                                      |
 | **Restart** | Disponible lorsque la requête est `FINISHED` ou `ERRORED`. Réexécute la requête à partir de Start time — démarrer dans cet état réinitialise toujours la progression suivie. |
 
 Ces contrôles sont disponibles depuis la liste des requêtes d'historique et sa page d'affichage.
@@ -101,11 +102,39 @@ efface toute la progression suivie afin que la prochaine exécution reparte de S
 
 ## Surveillance {#monitoring}
 
-La page d'affichage montre des métriques en temps réel pour les côtés South et North de la requête :
+La page d'affichage montre des métriques en temps réel pour les côtés South et North de la requête. Ce que le côté
+South rapporte dépend de la façon dont le connecteur exécute la requête — sur toute la plage en une fois, ou élément
+par élément.
 
-**Métriques South (récupération) :**
+**Métriques South (récupération) — connecteurs par lots :**
 
-- Progression de l'intervalle — numéro d'intervalle actuel sur le total d'intervalles
+La plupart des connecteurs interrogent toute la plage de leur élément/groupe en une seule fois, et rapportent la
+progression sur l'ensemble de cette plage :
+
+- Données récupérées — barre de progression globale de la requête
+- Progression de l'intervalle — numéro d'intervalle actuel sur le total d'intervalles, avec sa fenêtre temporelle
+
+**Métriques South (récupération) — connecteurs élément par élément :**
+
+Les connecteurs basés sur SQL et REST (voir [Connecteurs South compatibles](#compatible-south-connectors))
+interrogent leurs éléments un par un, la progression est donc rapportée par élément plutôt que pour l'ensemble de
+la plage :
+
+- Éléments traités — nom de l'élément en cours d'interrogation, et sa position (`actuel / total`) parmi tous les
+  éléments, avec une barre de progression
+- Progression de l'élément courant — la propre progression du sous-intervalle de l'élément courant, avec sa fenêtre
+  temporelle
+- Un tableau **Statut des éléments** sous les métriques, listant chaque élément avec son statut (`Pending`,
+  `Running`, ou `Done`), la dernière valeur récupérée, et le nombre d'enregistrements récupérés jusqu'ici
+
+:::tip Suivre la progression depuis la page de liste
+La page de liste des requêtes d'historique affiche également un indicateur de progression `(actuel / total)` par
+élément à côté de l'icône de statut d'une requête en cours d'exécution, sans avoir à ouvrir sa page d'affichage.
+:::
+
+**Métriques South (récupération) — communes aux deux :**
+
+- Valeurs/fichiers par seconde et temps restant estimé, pendant que la requête s'exécute
 - Nombre de valeurs et de fichiers récupérés
 - Heure de dernière connexion
 - Dernière valeur récupérée (identifiant de point, horodatage, donnée)
