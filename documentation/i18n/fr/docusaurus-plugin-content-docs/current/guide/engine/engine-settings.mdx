@@ -133,16 +133,31 @@ Si vous utilisez un [North OIAnalytics](../north-connectors/oianalytics.md) avec
 
 ## Paramètres de journalisation {#logging-parameters}
 
+### Rétention du journal d'audit {#audit-log-retention}
+
+**Rétention du journal d'audit** définit le nombre de jours pendant lesquels les entrées de la
+[piste d'audit](./audit-trail.mdx) sont conservées avant d'être automatiquement purgées. Réglez-le sur `0` pour
+conserver les entrées du journal d'audit indéfiniment.
+
+:::warning
+Conserver les entrées du journal d'audit indéfiniment (`0`) permet à la base de données de configuration de
+croître sans limite sur une instance très sollicitée, ce qui peut affecter sa taille et ses performances au fil du
+temps. Préférez une durée de rétention bornée, sauf si vous avez une raison spécifique de conformité ou d'audit de
+tout conserver.
+:::
+
+### Niveaux de journal {#log-levels}
+
 OIBus prend en charge six niveaux de journalisation, du plus critique au moins critique :
 
-| Niveau de journal | Description                                                                     |
-| ------------------ | -------------------------------------------------------------------------------- |
-| Silent              | Désactive tous les journaux.                                                    |
-| Error               | Journalise uniquement les erreurs.                                              |
-| Warning             | Journalise les avertissements et les erreurs.                                   |
-| Info                | Journalise les messages informatifs, les avertissements et les erreurs.         |
-| Debug               | Journalise des informations détaillées pour le débogage, plus tous les niveaux ci-dessus. |
-| Trace               | Journalise des informations très détaillées et verbeuses, principalement pour le dépannage. |
+| Niveau de journal | Description                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------------- |
+| Silent            | Désactive tous les journaux.                                                                |
+| Error             | Journalise uniquement les erreurs.                                                          |
+| Warning           | Journalise les avertissements et les erreurs.                                               |
+| Info              | Journalise les messages informatifs, les avertissements et les erreurs.                     |
+| Debug             | Journalise des informations détaillées pour le débogage, plus tous les niveaux ci-dessus.   |
+| Trace             | Journalise des informations très détaillées et verbeuses, principalement pour le dépannage. |
 
 :::caution
 N'utilisez les niveaux de journal **Trace** et **Debug** que pour le dépannage, car ils génèrent de gros volumes de
