@@ -37,11 +37,12 @@ Use the **Test settings** button to verify your connection configuration.
 
 A group bundles items that share the same collection schedule. Each group has:
 
-| Setting        | Description                                                                                      | Example Value  |
-| -------------- | ------------------------------------------------------------------------------------------------ | -------------- |
-| **Name**       | Unique label for the group within this connector.                                                | `Group A`      |
-| **Scan mode**  | Schedule used to collect data for all items in the group.                                        | `Every 1 min`  |
-| **Throttling** | _(History-capable connectors only)_ Default throttling settings inherited by items in the group. | `3600, 200, 0` |
+| Setting              | Description                                                                                                                                  | Example Value  |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| **Name**             | Unique label for the group within this connector.                                                                                            | `Group A`      |
+| **Scan mode**        | Schedule used to collect data for all items in the group.                                                                                    | `Every 1 min`  |
+| **Throttling**       | _(History-capable connectors only)_ Default throttling settings inherited by items in the group.                                             | `3600, 200, 0` |
+| **Caching strategy** | _(IoT-family connectors only)_ Default caching strategy inherited by items synced with the group. See [Caching Strategy](#caching-strategy). | `On change`    |
 
 Items assigned to a group inherit its scan mode. For history-capable connectors, items also inherit
 the group's throttling settings by default (Max read interval, Read delay, Start time offset, End time offset,
@@ -87,19 +88,20 @@ for details. For every other connector type, execution stays fully sequential an
 
 Items retrieve data as files or JSON payloads. Each item has the following fields:
 
-| Setting               | Description                                                                                                                              | Example Value           |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| **Name**              | Unique reference used by North connectors and transformers to identify this data point.                                                  | `Temperature_Sensor1`   |
-| **Group**             | The group this item belongs to. Leave empty for a standalone item with its own scan mode.                                                | `Group A`               |
-| **Scan mode**         | Schedule that determines when OIBus collects data. Only shown when the item has no group (otherwise inherited from the group).           | `Every 1 min`           |
-| **Enabled**           | Whether the item is active.                                                                                                              | Enabled/Disabled        |
-| **Sync with group**   | _(History-capable connectors only)_ When enabled, throttling settings are inherited from the group.                                      | Enabled/Disabled        |
-| **Max read interval** | _(History-capable connectors)_ Maximum sub-query duration in seconds.                                                                    | `3600`                  |
-| **Read delay**        | _(History-capable connectors)_ Pause in milliseconds between consecutive sub-queries.                                                    | `200`                   |
-| **Start time offset** | _(History-capable connectors)_ Milliseconds added to `@StartTime`. Negative values move it earlier to capture late-arriving data.        | `-60000`                |
-| **End time offset**   | _(History-capable connectors)_ Milliseconds added to `@EndTime`. Negative values pull it earlier.                                        | `0`                     |
-| **Recovery strategy** | _(History-capable connectors)_ Order in which a backlog of unqueried sub-intervals is caught up: oldest-first (default) or newest-first. | `From oldest to newest` |
-| **Specific settings** | Varies by connector type — see each connector's documentation.                                                                           | —                       |
+| Setting               | Description                                                                                                                                 | Example Value           |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| **Name**              | Unique reference used by North connectors and transformers to identify this data point.                                                     | `Temperature_Sensor1`   |
+| **Group**             | The group this item belongs to. Leave empty for a standalone item with its own scan mode.                                                   | `Group A`               |
+| **Scan mode**         | Schedule that determines when OIBus collects data. Only shown when the item has no group (otherwise inherited from the group).              | `Every 1 min`           |
+| **Enabled**           | Whether the item is active.                                                                                                                 | Enabled/Disabled        |
+| **Sync with group**   | _(History-capable connectors only)_ When enabled, throttling settings are inherited from the group.                                         | Enabled/Disabled        |
+| **Max read interval** | _(History-capable connectors)_ Maximum sub-query duration in seconds.                                                                       | `3600`                  |
+| **Read delay**        | _(History-capable connectors)_ Pause in milliseconds between consecutive sub-queries.                                                       | `200`                   |
+| **Start time offset** | _(History-capable connectors)_ Milliseconds added to `@StartTime`. Negative values move it earlier to capture late-arriving data.           | `-60000`                |
+| **End time offset**   | _(History-capable connectors)_ Milliseconds added to `@EndTime`. Negative values pull it earlier.                                           | `0`                     |
+| **Recovery strategy** | _(History-capable connectors)_ Order in which a backlog of unqueried sub-intervals is caught up: oldest-first (default) or newest-first.    | `From oldest to newest` |
+| **Caching strategy**  | _(IoT-family connectors only)_ Filters which collected values are actually cached and forwarded. See [Caching Strategy](#caching-strategy). | `On change`             |
+| **Specific settings** | Varies by connector type — see each connector's documentation.                                                                              | —                       |
 
 > For guidance on sizing **Max read interval**, **Read delay**, **Start time offset**, and **End time offset**
 > — with worked examples for large backlogs and sources that don't commit all items at once — see
@@ -124,6 +126,43 @@ Items retrieve data as files or JSON payloads. Each item has the following field
 - **Import**: Upload a CSV to create or update items in bulk. Export an existing list to get a valid
   template with the correct column names.
   > **Note**: The system validates for duplicates and correct formatting before applying the import.
+
+---
+
+## Caching Strategy {#caching-strategy}
+
+For **IoT-family connectors** (OPC UA, Modbus, ADS, OPC Classic, S7, MQTT), each item can filter which
+collected values are actually cached and forwarded to North connectors, instead of caching every value
+read or received. This reduces cache size and North connector load for stable or slowly-changing points.
+
+| Setting                        | Description                                                                                                                                                                                                                                                                                                      | Example Value |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| **Caching strategy**           | `All values` (default): cache every value. `On change`: cache only when the value differs from the last cached one. `Threshold`: cache only when the value moves by more than a configured amount. When left unset on an item synced with a group, the item inherits the group's caching strategy.               | `On change`   |
+| **Threshold type**             | _(Threshold strategy only)_ `Absolute`: compare the raw numeric difference. `Percentage`: compare the difference as a percentage of a configured range.                                                                                                                                                          | `Percentage`  |
+| **Threshold**                  | _(Threshold strategy only)_ The minimum change required to cache a new value — interpreted as an absolute difference or a percentage of the range, depending on **Threshold type**.                                                                                                                              | `5`           |
+| **Range low** / **Range high** | _(Threshold strategy, percentage type only)_ The expected lower/upper bound of the value, used to compute the percentage span the threshold is measured against.                                                                                                                                                 | `0` / `100`   |
+| **Max caching interval**       | _(Not shown for "All values")_ Optional heartbeat, in milliseconds. Even if a value doesn't qualify under **On change** or **Threshold**, it is still cached once this much time has elapsed since the last cached value — so a stable point still produces periodic proof-of-life data. Leave empty to disable. | `3600000`     |
+
+Unlike scheduling settings, **Threshold type**, **Threshold**, **Range low**/**Range high**, and **Max
+caching interval** are always configured on the item itself — they are never inherited from a group, even
+when the item's **Caching strategy** is.
+
+:::note Not available for every connector
+The **Threshold** strategy isn't offered for MQTT items, since MQTT payloads aren't guaranteed to be
+numeric. **On change** compares values for deep equality instead, so it works for any payload shape.
+:::
+
+:::tip The first value is always cached
+The first value collected for an item — or the first one collected again after its cached comparison
+state is gone (e.g. the item was deleted and re-created) — is always cached, since there is nothing yet
+to compare it against. This comparison state is persisted, so it survives OIBus restarts rather than
+resetting on every reconnect.
+:::
+
+Groups can also be assigned a **Caching strategy**, which items synced with the group use by default. The
+threshold-specific fields, however, are never inherited: if a group's caching strategy is **Threshold**,
+each synced item must still configure its own **Threshold type**/**Threshold**/**Range** — leaving them
+unset falls back to an absolute threshold of `0` (i.e. any change is cached).
 
 ---
 
