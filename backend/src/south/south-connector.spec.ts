@@ -231,6 +231,28 @@ describe('SouthConnector', () => {
       assert.strictEqual(runTaskMock.mock.calls.length, 0);
     });
 
+    it('should skip an enabled item with no scan mode and no group instead of crashing', () => {
+      const runTaskMock = mock.fn(async () => undefined);
+      south['runTask'] = runTaskMock;
+      const badItem = { ...south.connectorConfiguration.items[0], id: 'badItem', name: 'Bad Item', scanMode: null, group: null };
+      // Routed through the setter so rebuildItemGroupsByScanMode() runs against this item list.
+      south.connectorConfiguration = { ...south.connectorConfiguration, items: [badItem, ...south.connectorConfiguration.items] };
+
+      south.trigger(testData.scanMode.list[0]);
+
+      assert.strictEqual(runTaskMock.mock.calls.length, 1);
+      assert.deepStrictEqual(
+        runTaskMock.mock.calls[0].arguments[0].items.find((item: { id: string }) => item.id === 'badItem'),
+        undefined
+      );
+      assert.strictEqual(
+        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
+          call => call.arguments[0] === 'Item "Bad Item" (id: badItem) has no scan mode and no group: skipping it'
+        ),
+        true
+      );
+    });
+
     it('should not update subscriptions if not compatible', async () => {
       await south.updateSubscriptions();
       assert.strictEqual((logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
