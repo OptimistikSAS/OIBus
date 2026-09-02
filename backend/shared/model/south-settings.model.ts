@@ -472,7 +472,6 @@ export interface SouthOLEDBSettings {
 }
 
 export interface SouthOPCSettings {
-  agentUrl: string;
   retryInterval: number;
   host: string;
   serverName: string;

@@ -2,17 +2,48 @@ import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, assertContains } from '../../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type { SouthItemSettings, SouthOPCItemSettings, SouthOPCSettings } from '../../../shared/model/south-settings.model';
 import type { OIBusContent } from '../../../shared/model/engine.model';
 import type SouthOpcClass from './south-opc';
+import type { OpcHdaReadOptions, OpcRawValue, OpcServerInfo } from '@oibus/opc-classic';
 
 const nodeRequire = createRequire(import.meta.url);
+
+const FAKE_SERVER_INFO: OpcServerInfo = { vendorInfo: 'Matrikon Inc', productVersion: '1.9.8629', serverState: 'running' };
+
+/**
+ * Stands in for the real `@oibus/opc-classic` package (which spawns a native child process)
+ * — south-opc.ts's own behavior is what's under test here, not the package's process-management or
+ * multi-connection concurrency logic, which has its own dedicated spec in that package's own repo
+ * (https://github.com/OptimistikSAS/opc-classic).
+ */
+class FakeOpcConnection {
+  static instances: Array<FakeOpcConnection> = [];
+  static connectMock = mock.fn(async (_host: string, _serverName: string, _mode: string): Promise<FakeOpcConnection> => {
+    const instance = new FakeOpcConnection();
+    FakeOpcConnection.instances.push(instance);
+    return instance;
+  });
+
+  serverInfo: OpcServerInfo = FAKE_SERVER_INFO;
+  read = mock.fn(
+    async (_startTime: string, _endTime: string, _nodeIds: Array<string>, _options?: OpcHdaReadOptions): Promise<Array<OpcRawValue>> => []
+  );
+  disconnect = mock.fn(async () => undefined);
+
+  static connect(host: string, serverName: string, mode: string): Promise<FakeOpcConnection> {
+    return FakeOpcConnection.connectMock(host, serverName, mode);
+  }
+
+  static latest(): FakeOpcConnection {
+    return FakeOpcConnection.instances[FakeOpcConnection.instances.length - 1];
+  }
+}
 
 describe('South OPC', () => {
   let SouthOpc: typeof SouthOpcClass;
@@ -48,13 +79,9 @@ describe('South OPC', () => {
     })
   };
 
-  const httpRequestExports = {
-    HTTPRequest: mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200))
-  };
-
   before(() => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
-    mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
+    mockModule(nodeRequire, '@oibus/opc-classic', { OpcConnection: FakeOpcConnection });
     mockModule(nodeRequire, '../../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}
@@ -70,7 +97,6 @@ describe('South OPC', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      agentUrl: 'http://localhost:2224',
       retryInterval: 1000,
       host: 'localhost',
       serverName: 'Matrikon.OPC.Simulation',
@@ -82,7 +108,7 @@ describe('South OPC', () => {
         id: 'id1',
         name: 'item1',
         enabled: true,
-        settings: { nodeId: 'ns=3;s=Random', aggregate: 'raw', resampling: 'none' },
+        settings: { nodeId: 'Random.Int1', aggregate: 'raw', resampling: 'none' },
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
@@ -106,7 +132,7 @@ describe('South OPC', () => {
         id: 'id2',
         name: 'item2',
         enabled: true,
-        settings: { nodeId: 'ns=3;s=Counter', aggregate: 'raw' },
+        settings: { nodeId: 'Random.Int2', aggregate: 'raw' },
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
@@ -130,7 +156,7 @@ describe('South OPC', () => {
         id: 'id3',
         name: 'item3',
         enabled: true,
-        settings: { nodeId: 'ns=3;s=Triangle', aggregate: 'average', resampling: '10s' },
+        settings: { nodeId: 'Triangle.Real8', aggregate: 'average', resampling: '10s' },
         scanMode: testData.scanMode.list[1],
         group: null,
         syncWithGroup: false,
@@ -158,12 +184,20 @@ describe('South OPC', () => {
   };
 
   beforeEach(() => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
+    FakeOpcConnection.instances = [];
+    FakeOpcConnection.connectMock = mock.fn(async () => {
+      const instance = new FakeOpcConnection();
+      FakeOpcConnection.instances.push(instance);
+      return instance;
+    });
     addContentCallback.mock.resetCalls();
     (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
     (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => new Map());
     (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.resetCalls();
     (southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementation(() => undefined);
+    for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
+      fn.mock.resetCalls();
+    }
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
     south = new SouthOpc(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
@@ -173,48 +207,34 @@ describe('South OPC', () => {
     mock.restoreAll();
   });
 
-  it('should properly connect to remote agent and disconnect', async () => {
+  it('connects and disconnects the live connection', async () => {
     await south.connect();
-
-    const connectCall = httpRequestExports.HTTPRequest.mock.calls[0];
-    assertContains(connectCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}/connect`
-    });
-    assert.deepStrictEqual(connectCall.arguments[1], {
-      method: 'PUT',
-      body: JSON.stringify({ host: configuration.settings.host, serverName: configuration.settings.serverName, mode: 'hda' }),
-      headers: { 'Content-Type': 'application/json' }
-    });
+    assert.strictEqual(FakeOpcConnection.connectMock.mock.calls.length, 1);
+    assert.deepStrictEqual(FakeOpcConnection.connectMock.mock.calls[0].arguments, ['localhost', 'Matrikon.OPC.Simulation', 'hda']);
+    const connection = FakeOpcConnection.latest();
 
     await south.disconnect();
-    const disconnectCall = httpRequestExports.HTTPRequest.mock.calls[1];
-    assertContains(disconnectCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}/disconnect`
-    });
-    assert.deepStrictEqual(disconnectCall.arguments[1], { method: 'DELETE' });
+    assert.strictEqual(connection.disconnect.mock.calls.length, 1);
   });
 
-  it('should properly reconnect when connection fails', async () => {
+  it('reconnects after retryInterval when the connection fails', async () => {
     let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
+    FakeOpcConnection.connectMock = mock.fn(async () => {
       callCount++;
-      if (callCount === 1) throw new Error('connection failed');
-      return createMockResponse(200);
+      throw new Error('connection failed');
     });
 
     await south.connect();
-
-    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}/connect`
-    });
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+    assert.strictEqual(callCount, 1);
 
     mock.timers.tick(configuration.settings.retryInterval);
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 2);
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.strictEqual(callCount, 2);
   });
 
-  it('should not reconnect when disconnecting', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
+  it('does not reconnect when disconnecting', async () => {
+    FakeOpcConnection.connectMock = mock.fn(async () => {
       throw new Error('connection failed');
     });
     (south as unknown as Record<string, unknown>)['disconnecting'] = true;
@@ -224,165 +244,163 @@ describe('South OPC', () => {
     await south.connect();
 
     assert.strictEqual(disconnectMock1.mock.calls.length, 0);
-    // no timer should be set — tick confirms no retry
     mock.timers.tick(configuration.settings.retryInterval);
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+    await Promise.resolve();
+    assert.strictEqual(FakeOpcConnection.connectMock.mock.calls.length, 1);
   });
 
-  it('should properly clear reconnect timeout on disconnect when not connected', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
+  it('clears the reconnect timeout on disconnect when never connected', async () => {
+    FakeOpcConnection.connectMock = mock.fn(async () => {
       throw new Error('connection failed');
     });
 
     await south.connect();
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+    assert.strictEqual(FakeOpcConnection.connectMock.mock.calls.length, 1);
 
     await south.disconnect();
-    // After disconnect, timer should be cleared — advancing time must NOT trigger another call
     mock.timers.tick(configuration.settings.retryInterval);
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+    await Promise.resolve();
+    assert.strictEqual(FakeOpcConnection.connectMock.mock.calls.length, 1, 'no reconnect attempt after disconnect cleared the timer');
     assert.ok(
       logger.error.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
-          (c.arguments[0] as string).includes('Error while sending connection HTTP request') &&
+          (c.arguments[0] as string).includes('Error while connecting to the OPC server') &&
           (c.arguments[0] as string).includes(`${configuration.settings.retryInterval} ms`)
       )
     );
   });
 
-  it('should properly clear reconnect timeout on disconnect when connected', async () => {
-    let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      callCount++;
-      if (callCount === 1) return createMockResponse(200);
+  it('clears the reconnect timeout on disconnect when connected, logging a disconnect failure', async () => {
+    await south.connect();
+    const connection = FakeOpcConnection.latest();
+    connection.disconnect = mock.fn(async () => {
       throw new Error('disconnection failed');
     });
 
-    await south.connect();
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
-
     await south.disconnect();
-    // disconnect sends its own request (which fails), no clearTimeout path taken
     mock.timers.tick(configuration.settings.retryInterval);
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 2);
+    await Promise.resolve();
+    assert.strictEqual(FakeOpcConnection.connectMock.mock.calls.length, 1, 'no reconnect attempt scheduled by an explicit disconnect');
     assert.ok(
       logger.error.mock.calls.some((c: { arguments: Array<unknown> }) =>
-        (c.arguments[0] as string).includes('Error while sending disconnection HTTP request')
+        (c.arguments[0] as string).includes('Error while disconnecting from the OPC server')
       )
     );
   });
 
-  it('should test connection successfully', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
+  it('uses an isolated connection for testConnection, never the live one', async () => {
+    await south.connect();
+    const liveConnection = FakeOpcConnection.latest();
+
     await assert.doesNotReject(south.testConnection());
+
+    assert.strictEqual((south as unknown as Record<string, unknown>)['connection'], liveConnection);
+    assert.strictEqual(liveConnection.disconnect.mock.calls.length, 0);
+    assert.strictEqual(FakeOpcConnection.instances.length, 2);
+    assert.strictEqual(FakeOpcConnection.instances[1].disconnect.mock.calls.length, 1);
   });
 
-  it('should test connection fail', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(400, 'bad request'));
-    await assert.rejects(
-      south.testConnection(),
-      new Error('Error occurred when sending connect command to remote agent with status 400. bad request')
-    );
+  it('returns OPC server info from testConnection', async () => {
+    const result = await south.testConnection();
 
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(500, 'another error'));
-    await assert.rejects(south.testConnection(), new Error('Error occurred when sending connect command to remote agent with status 500'));
+    assert.deepStrictEqual(result, {
+      items: [
+        { key: 'Vendor', value: FAKE_SERVER_INFO.vendorInfo },
+        { key: 'Version', value: FAKE_SERVER_INFO.productVersion },
+        { key: 'State', value: FAKE_SERVER_INFO.serverState }
+      ]
+    });
   });
 
-  it('should get data from Remote agent', async () => {
+  it('propagates a connection failure from testConnection', async () => {
+    FakeOpcConnection.connectMock = mock.fn(async () => {
+      throw new Error('Class not registered');
+    });
+    await assert.rejects(south.testConnection(), { message: 'Class not registered' });
+  });
+
+  it('throws from historyQuery when not connected', async () => {
+    await assert.rejects(south.historyQuery(configuration.items, '2020-01-01', '2020-01-02'), {
+      message: 'OPC server is not connected'
+    });
+  });
+
+  it('groups items by aggregate/resampling into separate read calls, tracking the max instant across groups', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
-
+    await south.connect();
+    const connection = FakeOpcConnection.latest();
     const addContentMock = mock.method(
       south,
       'addContent',
       mock.fn(async () => undefined)
     );
+
     let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
+    connection.read = mock.fn(async () => {
       callCount++;
-      if (callCount === 1)
-        return createMockResponse(200, {
-          recordCount: 2,
-          // pointId joins each value back to its item (via the name-keyed map built from
-          // resampledItems) so the caching-strategy filtering step can look up the item's own
-          // strategy/last-cached state before addContent.
-          content: [
-            { pointId: 'item1', timestamp: '2020-02-01T00:00:00.000Z', data: { value: 10 } },
-            { pointId: 'item2', timestamp: '2020-03-01T00:00:00.000Z', data: { value: 20 } }
-          ],
-          maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-        });
-      if (callCount === 2) return createMockResponse(200, { recordCount: 0, content: [], maxInstantRetrieved: '2020-03-01T00:00:00.000Z' });
-      return createMockResponse(200, {
-        recordCount: 1,
-        content: [{ pointId: 'item1', timestamp: '2020-02-01T00:00:00.000Z', data: { value: 10 } }],
-        maxInstantRetrieved: '2020-02-01T00:00:00.000Z'
-      });
+      if (callCount === 1) {
+        // Group 1: item1 + item2 (raw/none)
+        return [
+          { nodeId: 'Random.Int1', timestamp: '2020-02-01T00:00:00.000Z', value: '1', quality: '0xC0' },
+          { nodeId: 'Random.Int2', timestamp: '2020-03-01T00:00:00.000Z', value: '2', quality: '0xC0' }
+        ];
+      }
+      // Group 2: item3 (average/10s) — a later timestamp than group 1's, to verify the tracked
+      // instant is the true max across both groups, not just whichever group ran last.
+      return [{ nodeId: 'Triangle.Real8', timestamp: '2020-04-01T00:00:00.000Z', value: '3', quality: '0xC0' }];
     });
 
     const result = await south.historyQuery(configuration.items, startTime, endTime);
 
-    const firstCall = httpRequestExports.HTTPRequest.mock.calls[0];
-    assertContains(firstCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}/read`
-    });
-    assert.deepStrictEqual(firstCall.arguments[1], {
-      method: 'PUT',
-      body: JSON.stringify({
-        host: configuration.settings.host,
-        serverName: configuration.settings.serverName,
-        mode: 'hda',
-        maxReadValues: 3600,
-        intervalReadDelay: 200,
-        aggregate: 'raw',
-        resampling: 'none',
-        startTime,
-        endTime,
-        items: [
-          { name: 'item1', nodeId: 'ns=3;s=Random' },
-          { name: 'item2', nodeId: 'ns=3;s=Counter' }
-        ]
-      }),
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    const thirdGroupCall = httpRequestExports.HTTPRequest.mock.calls[1];
-    assert.deepStrictEqual(JSON.parse((thirdGroupCall.arguments[1] as { body: string }).body).items, [
-      { name: 'item3', nodeId: 'ns=3;s=Triangle' }
+    assert.strictEqual(connection.read.mock.calls.length, 2);
+    assert.deepStrictEqual(connection.read.mock.calls[0].arguments, [
+      startTime,
+      endTime,
+      ['Random.Int1', 'Random.Int2'],
+      { aggregate: 'raw', resampling: 'none', maxReadValues: 3600, intervalReadDelay: 200 }
+    ]);
+    assert.deepStrictEqual(connection.read.mock.calls[1].arguments, [
+      startTime,
+      endTime,
+      ['Triangle.Real8'],
+      { aggregate: 'average', resampling: '10s', maxReadValues: 3600, intervalReadDelay: 200 }
     ]);
 
     assert.deepStrictEqual(result, {
-      trackedInstant: '2020-03-01T00:00:00.001Z',
-      value: { content: [], maxInstantRetrieved: '2020-03-01T00:00:00.000Z', recordCount: 0 }
+      trackedInstant: '2020-04-01T00:00:00.001Z',
+      value: { pointId: 'item3', timestamp: '2020-04-01T00:00:00.000Z', data: { value: '3', quality: '0xC0' } }
     });
-    assert.strictEqual(addContentMock.mock.calls.length, 1);
+    assert.strictEqual(addContentMock.mock.calls.length, 2);
     assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
       type: 'time-values',
       content: [
-        { pointId: 'item1', timestamp: '2020-02-01T00:00:00.000Z', data: { value: 10 } },
-        { pointId: 'item2', timestamp: '2020-03-01T00:00:00.000Z', data: { value: 20 } }
+        { pointId: 'item1', timestamp: '2020-02-01T00:00:00.000Z', data: { value: '1', quality: '0xC0' } },
+        { pointId: 'item2', timestamp: '2020-03-01T00:00:00.000Z', data: { value: '2', quality: '0xC0' } }
       ]
     });
-    assert.strictEqual(addContentMock.mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
-    assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [configuration.items[0], configuration.items[1]]);
-    assert.deepStrictEqual((southCacheRepository.saveItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], [
-      { itemId: 'id1', value: 10, instant: '2020-02-01T00:00:00.000Z' },
-      { itemId: 'id2', value: 20, instant: '2020-03-01T00:00:00.000Z' }
-    ]);
-
-    assert.ok(
-      logger.debug.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[1] === 'No result found. Request done in 0 ms')
-    );
-
-    const noUpdateInstant = await south.historyQuery([configuration.items[0]], result!.trackedInstant!, endTime);
-    assert.deepStrictEqual(noUpdateInstant, {
-      trackedInstant: null,
-      value: {
-        content: [{ pointId: 'item1', timestamp: '2020-02-01T00:00:00.000Z', data: { value: 10 } }],
-        maxInstantRetrieved: '2020-02-01T00:00:00.000Z',
-        recordCount: 1
-      }
+    assert.deepStrictEqual(addContentMock.mock.calls[1].arguments[0], {
+      type: 'time-values',
+      content: [{ pointId: 'item3', timestamp: '2020-04-01T00:00:00.000Z', data: { value: '3', quality: '0xC0' } }]
     });
+    assert.deepStrictEqual(addContentMock.mock.calls[1].arguments[2], [configuration.items[2]]);
+  });
+
+  it('logs and returns null trackedInstant when no records are found', async () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    const endTime = '2022-01-01T00:00:00.000Z';
+    await south.connect();
+    const connection = FakeOpcConnection.latest();
+    connection.read = mock.fn(async () => []);
+
+    const result = await south.historyQuery(configuration.items, startTime, endTime);
+
+    assert.deepStrictEqual(result, { trackedInstant: null, value: null });
+    assert.ok(
+      logger.debug.mock.calls.some(
+        (c: { arguments: Array<unknown> }) => typeof c.arguments[1] === 'string' && c.arguments[1].includes('No result found')
+      )
+    );
   });
 
   describe('caching strategy filtering', () => {
@@ -421,19 +439,17 @@ describe('South OPC', () => {
       items: [item]
     });
 
-    const mockSingleValueResponse = (pointId: string, value: number, timestamp: string) => {
-      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) =>
-        createMockResponse(200, {
-          recordCount: 1,
-          content: [{ pointId, timestamp, data: { value } }],
-          maxInstantRetrieved: timestamp
-        })
-      );
+    // Mocks the live connection's next read() call to return a single raw value for the given
+    // nodeId — the connection-based equivalent of the old HTTP-agent's mocked response.
+    const mockSingleValueResponse = (connection: FakeOpcConnection, value: number, timestamp: string, nodeId = 'ns=3;s=Random') => {
+      connection.read = mock.fn(async () => [{ nodeId, timestamp, value, quality: '0xC0' }]);
     };
 
     it('suppresses a no-change value under the onChange strategy', async () => {
       const item = buildItem({ id: 'id1', name: 'item1', cachingStrategy: 'onChange' });
       south = new SouthOpc(singleItemConfiguration(item), addContentCallback, southCacheRepository, 'cacheFolder');
+      await south.connect();
+      const connection = FakeOpcConnection.latest();
       const addContentMock = mock.method(
         south,
         'addContent',
@@ -449,7 +465,7 @@ describe('South OPC', () => {
           ])
       );
 
-      mockSingleValueResponse('item1', 10, '2020-01-01T00:01:00.000Z');
+      mockSingleValueResponse(connection, 10, '2020-01-01T00:01:00.000Z');
       await south.historyQuery([item], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z');
 
       assert.strictEqual(addContentMock.mock.calls.length, 1);
@@ -470,6 +486,8 @@ describe('South OPC', () => {
         threshold: 5
       });
       south = new SouthOpc(singleItemConfiguration(item), addContentCallback, southCacheRepository, 'cacheFolder');
+      await south.connect();
+      const connection = FakeOpcConnection.latest();
       const addContentMock = mock.method(
         south,
         'addContent',
@@ -486,13 +504,13 @@ describe('South OPC', () => {
       );
 
       // |20 - 10| = 10 > 5 → cached
-      mockSingleValueResponse('item1', 20, '2020-01-01T00:01:00.000Z');
+      mockSingleValueResponse(connection, 20, '2020-01-01T00:01:00.000Z');
       await south.historyQuery([item], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z');
 
       assert.strictEqual(addContentMock.mock.calls.length, 1);
       assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
         type: 'time-values',
-        content: [{ pointId: 'item1', timestamp: '2020-01-01T00:01:00.000Z', data: { value: 20 } }]
+        content: [{ pointId: 'item1', timestamp: '2020-01-01T00:01:00.000Z', data: { value: 20, quality: '0xC0' } }]
       });
       assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [item]);
       assert.deepStrictEqual(
@@ -513,6 +531,8 @@ describe('South OPC', () => {
         rangeHigh: 100
       });
       south = new SouthOpc(singleItemConfiguration(item), addContentCallback, southCacheRepository, 'cacheFolder');
+      await south.connect();
+      const connection = FakeOpcConnection.latest();
       const addContentMock = mock.method(
         south,
         'addContent',
@@ -529,7 +549,7 @@ describe('South OPC', () => {
             ]
           ])
       );
-      mockSingleValueResponse('item1', 15, '2020-01-01T00:01:00.000Z');
+      mockSingleValueResponse(connection, 15, '2020-01-01T00:01:00.000Z');
       await south.historyQuery([item], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z');
       assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], []);
 
@@ -543,11 +563,11 @@ describe('South OPC', () => {
             ]
           ])
       );
-      mockSingleValueResponse('item1', 25, '2020-01-01T00:02:00.000Z');
+      mockSingleValueResponse(connection, 25, '2020-01-01T00:02:00.000Z');
       await south.historyQuery([item], '2020-01-01T00:01:00.000Z', '2022-01-01T00:00:00.000Z');
       assert.deepStrictEqual(addContentMock.mock.calls[1].arguments[0], {
         type: 'time-values',
-        content: [{ pointId: 'item1', timestamp: '2020-01-01T00:02:00.000Z', data: { value: 25 } }]
+        content: [{ pointId: 'item1', timestamp: '2020-01-01T00:02:00.000Z', data: { value: 25, quality: '0xC0' } }]
       });
       assert.deepStrictEqual(addContentMock.mock.calls[1].arguments[2], [item]);
     });
@@ -560,6 +580,8 @@ describe('South OPC', () => {
         maxCachingInterval: 1000
       });
       south = new SouthOpc(singleItemConfiguration(item), addContentCallback, southCacheRepository, 'cacheFolder');
+      await south.connect();
+      const connection = FakeOpcConnection.latest();
       const addContentMock = mock.method(
         south,
         'addContent',
@@ -576,7 +598,7 @@ describe('South OPC', () => {
           ])
       );
 
-      mockSingleValueResponse('item1', 10, '2020-01-01T00:00:02.000Z');
+      mockSingleValueResponse(connection, 10, '2020-01-01T00:00:02.000Z');
       await south.historyQuery([item], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z');
 
       assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [item]);
@@ -589,6 +611,8 @@ describe('South OPC', () => {
     it('always caches the very first read for an item, regardless of strategy', async () => {
       const item = buildItem({ id: 'id1', name: 'item1', cachingStrategy: 'onChange' });
       south = new SouthOpc(singleItemConfiguration(item), addContentCallback, southCacheRepository, 'cacheFolder');
+      await south.connect();
+      const connection = FakeOpcConnection.latest();
       const addContentMock = mock.method(
         south,
         'addContent',
@@ -597,7 +621,7 @@ describe('South OPC', () => {
       // No prior cached state for this item
       (southCacheRepository.getItemsLastValues as unknown as ReturnType<typeof mock.fn>).mock.mockImplementationOnce(() => new Map());
 
-      mockSingleValueResponse('item1', 10, '2020-01-01T00:00:00.000Z');
+      mockSingleValueResponse(connection, 10, '2020-01-01T00:00:00.000Z');
       await south.historyQuery([item], '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z');
 
       assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [item]);
@@ -608,11 +632,25 @@ describe('South OPC', () => {
     });
 
     it('calls saveItemsLastValues with exactly the cached subset, excluding suppressed items', async () => {
-      const cachedItem = buildItem({ id: 'id1', name: 'item1', cachingStrategy: 'onChange' });
-      const suppressedItem = buildItem({ id: 'id2', name: 'item2', cachingStrategy: 'onChange' });
+      // Distinct nodeIds: toTimeValues joins each raw value back to an item by nodeId, so two items
+      // sharing one nodeId (buildItem's default) would collapse into a single lookup entry.
+      const cachedItem = buildItem({
+        id: 'id1',
+        name: 'item1',
+        cachingStrategy: 'onChange',
+        settings: { nodeId: 'node1', aggregate: 'raw', resampling: 'none' }
+      });
+      const suppressedItem = buildItem({
+        id: 'id2',
+        name: 'item2',
+        cachingStrategy: 'onChange',
+        settings: { nodeId: 'node2', aggregate: 'raw', resampling: 'none' }
+      });
       const config = singleItemConfiguration(cachedItem);
       config.items = [cachedItem, suppressedItem];
       south = new SouthOpc(config, addContentCallback, southCacheRepository, 'cacheFolder');
+      await south.connect();
+      const connection = FakeOpcConnection.latest();
       const addContentMock = mock.method(
         south,
         'addContent',
@@ -632,16 +670,10 @@ describe('South OPC', () => {
             ]
           ])
       );
-      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) =>
-        createMockResponse(200, {
-          recordCount: 2,
-          content: [
-            { pointId: 'item1', timestamp: '2020-01-01T00:01:00.000Z', data: { value: 99 } }, // changed → cached
-            { pointId: 'item2', timestamp: '2020-01-01T00:01:00.000Z', data: { value: 2 } } // unchanged → suppressed
-          ],
-          maxInstantRetrieved: '2020-01-01T00:01:00.000Z'
-        })
-      );
+      connection.read = mock.fn(async () => [
+        { nodeId: 'node1', timestamp: '2020-01-01T00:01:00.000Z', value: 99, quality: '0xC0' }, // changed → cached
+        { nodeId: 'node2', timestamp: '2020-01-01T00:01:00.000Z', value: 2, quality: '0xC0' } // unchanged → suppressed
+      ]);
 
       await south.historyQuery(config.items, '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z');
 
@@ -653,108 +685,103 @@ describe('South OPC', () => {
     });
   });
 
-  it('should manage query error', async () => {
+  it('forces a reconnect and rethrows on a query error', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
+    await south.connect();
+    const connection = FakeOpcConnection.latest();
+    connection.read = mock.fn(async () => {
+      throw new Error('OPC RPC broken');
+    });
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
+    const connectMock = mock.fn(async () => undefined);
+    south.connect = connectMock;
 
-    let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      callCount++;
-      if (callCount === 1) return createMockResponse(400, 'bad request');
-      return createMockResponse(500);
+    await assert.rejects(south.historyQuery(configuration.items, startTime, endTime), { message: 'OPC RPC broken' });
+
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    assert.strictEqual(connectMock.mock.calls.length, 1);
+    assert.ok(
+      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) =>
+        (c.arguments[1] as string).includes('Error while querying the OPC server: OPC RPC broken')
+      )
+    );
+  });
+
+  it('does not reconnect after a query error while disconnecting', async () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    const endTime = '2022-01-01T00:00:00.000Z';
+    await south.connect();
+    const connection = FakeOpcConnection.latest();
+    connection.read = mock.fn(async () => {
+      throw new Error('OPC RPC broken');
     });
     south.disconnect = mock.fn(async () => undefined);
     const connectMock = mock.fn(async () => undefined);
     south.connect = connectMock;
-
-    await assert.rejects(
-      south.historyQuery(configuration.items, startTime, endTime),
-      new Error('Error occurred when querying remote agent with status 400: bad request')
-    );
-
-    connectMock.mock.resetCalls();
     (south as unknown as Record<string, unknown>)['disconnecting'] = true;
-    await assert.rejects(
-      south.historyQuery(configuration.items, startTime, endTime),
-      new Error('Error occurred when querying remote agent with status 500')
-    );
+
+    await assert.rejects(south.historyQuery(configuration.items, startTime, endTime), { message: 'OPC RPC broken' });
+
     assert.strictEqual(connectMock.mock.calls.length, 0);
   });
 
-  it('should manage fetch error', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      throw new Error('bad request');
-    });
-
-    await assert.rejects(south.historyQuery(configuration.items, startTime, endTime), new Error('bad request'));
-  });
-
-  it('should test item', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      mock.timers.tick(25);
-      return createMockResponse(200, {
-        recordCount: 2,
-        content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-        maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-      });
-    });
-
+  it('tests an item through an isolated connection, measuring connect and query durations separately', async () => {
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
-    const fetchOptions = {
-      method: 'PUT',
-      body: JSON.stringify({
-        host: configuration.settings.host,
-        serverName: configuration.settings.serverName,
-        mode: 'hda',
-        aggregate: configuration.items[0].settings.aggregate,
-        resampling: configuration.items[0].settings.resampling,
-        startTime,
-        endTime,
-        items: [{ nodeId: configuration.items[0].settings.nodeId, name: configuration.items[0].name }]
-      }),
-      headers: { 'Content-Type': 'application/json' }
-    };
+
+    FakeOpcConnection.connectMock = mock.fn(async () => {
+      mock.timers.tick(10);
+      const instance = new FakeOpcConnection();
+      instance.read = mock.fn(async () => {
+        mock.timers.tick(25);
+        return [{ nodeId: 'Random.Int1', timestamp: '2020-02-01T00:00:00.000Z', value: '1', quality: '0xC0' }];
+      });
+      FakeOpcConnection.instances.push(instance);
+      return instance;
+    });
 
     const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
+    const connection = FakeOpcConnection.latest();
 
-    const testCall = httpRequestExports.HTTPRequest.mock.calls[0];
-    assertContains(testCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}-test/read`
+    assert.strictEqual(connection.read.mock.calls.length, 1);
+    assert.deepStrictEqual(connection.read.mock.calls[0].arguments, [
+      startTime,
+      endTime,
+      ['Random.Int1'],
+      { aggregate: 'raw', resampling: 'none', maxReadValues: 3600, intervalReadDelay: 200 }
+    ]);
+    assert.strictEqual(connection.disconnect.mock.calls.length, 1);
+    assert.deepStrictEqual(result.result, {
+      type: 'time-values',
+      content: [{ pointId: 'item1', timestamp: '2020-02-01T00:00:00.000Z', data: { value: '1', quality: '0xC0' } }]
     });
-    assert.deepStrictEqual(testCall.arguments[1], fetchOptions);
+    assert.strictEqual(result.connectionDuration, 10);
     assert.strictEqual(result.queryDuration, 25);
-    assert.strictEqual(result.connectionDuration, 0);
   });
 
-  it('should test item and throw error if bad status', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(400));
-
-    await assert.rejects(
-      south.testItem(configuration.items[0], testData.south.itemTestingSettings),
-      new Error('Error occurred when sending connect command to remote agent. 400')
-    );
-
-    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
-    const testCall = httpRequestExports.HTTPRequest.mock.calls[0];
-    assertContains(testCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}-test/read`
+  it('still disconnects the isolated connection when the read fails', async () => {
+    FakeOpcConnection.connectMock = mock.fn(async () => {
+      const instance = new FakeOpcConnection();
+      instance.read = mock.fn(async () => {
+        throw new Error('bad node id');
+      });
+      FakeOpcConnection.instances.push(instance);
+      return instance;
     });
-    assert.deepStrictEqual(testCall.arguments[1], {
-      method: 'PUT',
-      body: JSON.stringify({
-        host: configuration.settings.host,
-        serverName: configuration.settings.serverName,
-        mode: 'hda',
-        aggregate: configuration.items[0].settings.aggregate,
-        resampling: configuration.items[0].settings.resampling,
-        startTime,
-        endTime,
-        items: [{ nodeId: configuration.items[0].settings.nodeId, name: configuration.items[0].name }]
-      }),
-      headers: { 'Content-Type': 'application/json' }
-    });
+
+    await assert.rejects(south.testItem(configuration.items[0], testData.south.itemTestingSettings), { message: 'bad node id' });
+    assert.strictEqual(FakeOpcConnection.latest().disconnect.mock.calls.length, 1);
+  });
+
+  it('leaves a live connection untouched by testItem()', async () => {
+    await south.connect();
+    const liveConnection = FakeOpcConnection.latest();
+
+    await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
+
+    assert.strictEqual((south as unknown as Record<string, unknown>)['connection'], liveConnection);
+    assert.strictEqual(liveConnection.read.mock.calls.length, 0);
+    assert.strictEqual(liveConnection.disconnect.mock.calls.length, 0);
   });
 });
