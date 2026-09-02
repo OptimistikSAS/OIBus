@@ -1,0 +1,82 @@
+---
+sidebar_position: 21
+---
+
+# Siemens S7
+
+The S7 south connector reads data directly from Siemens S7-200/300/400/1200/1500 PLCs over **ISO-on-TCP**
+(RFC1006), using the Siemens S7 Communication protocol. It queries PLC memory (data blocks, inputs, outputs,
+markers, timers, counters) on each scan mode tick, without going through an OPC server or a separate agent.
+
+OIBus uses the [nodes7](https://github.com/st-one-io/nodes7) library to communicate with the PLC.
+
+:::warning Beta connector
+This connector is in **beta**. Test it thoroughly against your PLC model and firmware before relying on it in
+production.
+:::
+
+## Specific Settings {#specific-settings}
+
+| Setting             | Description                                                                                                                                                                                                                               | Example Value   |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| **Host**            | IP address or hostname of the PLC.                                                                                                                                                                                                        | `192.168.1.100` |
+| **Port**            | ISO-on-TCP port to connect to (502 is used by some gateways, but Siemens PLCs typically use `102`).                                                                                                                                       | `102`           |
+| **Connection type** | The TSAP (Transport Service Access Point) identity OIBus presents to the PLC: `PG` (programming device), `OP` (operator panel), or `S7 Basic`. Must match a connection type allowed by the PLC's connection-mechanisms/security settings. | `S7 Basic`      |
+| **Rack**            | Rack number of the CPU in its rail. Typically `0` for S7-1200/1500 and standalone CPUs.                                                                                                                                                   | `0`             |
+| **Slot**            | Slot number of the CPU in its rack. Typically `1` for S7-1200/1500, often `2` for S7-300/400.                                                                                                                                             | `1`             |
+| **Connect timeout** | Maximum time (in milliseconds) to wait when establishing the connection.                                                                                                                                                                  | `10000`         |
+| **Request timeout** | Maximum time (in milliseconds) to wait for a response to a read request.                                                                                                                                                                  | `15000`         |
+| **Retry interval**  | Time to wait (in milliseconds) before retrying after a connection failure or an unexpected disconnection.                                                                                                                                 | `10000`         |
+
+:::tip Connection type, rack and slot
+On S7-1200/1500 CPUs, TIA Portal's **Protection & Security &gt; Connection mechanisms** settings control which
+connection types (PG/OP/S7 Basic) are permitted — if OIBus fails to connect, check that the selected
+**Connection type** is allowed there. **Rack**/**Slot** depend on the CPU model and its physical/virtual
+placement; consult your PLC's documentation if the defaults don't work.
+:::
+
+## Item Settings {#item-settings}
+
+Each item has a single **Address** setting, using nodes7's address syntax:
+
+| Setting     | Description                                                            | Example Value |
+| ----------- | ---------------------------------------------------------------------- | ------------- |
+| **Address** | The PLC memory address to read, using nodes7's address syntax (below). | `DB1,REAL0`   |
+
+### Address Syntax {#address-syntax}
+
+An address has the form `[DB<n>,]<type><offset>[.<bitOrArrayLength>][.<arrayLength>]`:
+
+- **`DB<n>,`** — prefix required to address a data block (e.g. `DB1,`); omit it to address a PLC-wide memory
+  area instead (see below).
+- **`<type>`** — the data type to read at that offset. Common types: `X` (single bit — requires a bit offset),
+  `BYTE`/`B`, `INT`/`I`, `DINT`/`DI`, `WORD`/`W`, `DWORD`/`D`, `REAL`/`R`, `CHAR`/`C`, `STRING`/`S`.
+- **`<offset>`** — the byte offset within the data block or memory area.
+- **`.<bitOrArrayLength>`** — for `X`, the bit offset (`0`–`7`); for other types, an optional array length to
+  read several consecutive values as an array.
+
+Outside a data block, the same `<type><offset>` syntax applies to PLC memory areas, identified by their own
+leading letter: `M`/`MB`/`MW`/`MD`/`MR` (Merker/memory bits, bytes, words, double words, reals), `I`/`E`
+(inputs), `Q`/`A` (outputs), `T` (timers), `C` (counters).
+
+| Address        | Meaning                                                   |
+| -------------- | --------------------------------------------------------- |
+| `DB1,REAL0`    | A single `REAL` (float) at byte offset 0 of data block 1. |
+| `DB1,INT2`     | A single `INT` at byte offset 2 of data block 1.          |
+| `DB1,X4.0`     | A single bit at byte offset 4, bit 0, of data block 1.    |
+| `DB1,REAL0.20` | An array of 20 `REAL` values starting at byte offset 0.   |
+| `M32.2`        | A single bit at byte offset 32, bit 2, of Merker memory.  |
+| `MR4`          | A single `REAL` at byte offset 4 of Merker memory.        |
+
+See the [nodes7 README](https://github.com/st-one-io/nodes7#usage-example) for the full address grammar,
+including timers, counters, and string types.
+
+:::note Values are read as text
+Regardless of the PLC data type, OIBus reports every S7 item's value as a string (e.g. `"3.14"`, `"true"`).
+Account for this when configuring transformers or North connectors downstream.
+:::
+
+## Caching Strategy {#caching-strategy}
+
+Like the other IoT-family connectors, S7 items support a per-item [caching strategy](./common-settings.md#caching-strategy)
+(`All values`, `On change`, `Threshold`) to filter which reads are actually cached and forwarded.

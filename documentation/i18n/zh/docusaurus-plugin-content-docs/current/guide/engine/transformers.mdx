@@ -21,20 +21,20 @@ North 连接器的机制——详情参见
 
 选择数据的来源。
 
-| 来源                   | 说明                                                                                                    |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| **South 连接器**      | 由某个已配置的 South 连接器采集的数据                                                       |
-| **OIBus API**            | 通过 REST API 推送到 OIBus 的数据。需要一个**数据源 ID（Data Source ID）**字符串来标识来源系统 |
-| **OIAnalytics Setpoint（设定点）** | 从 OIAnalytics 发送的写回命令                                                                      |
+| 来源                               | 说明                                                                                           |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **South 连接器**                   | 由某个已配置的 South 连接器采集的数据                                                          |
+| **OIBus API**                      | 通过 REST API 推送到 OIBus 的数据。需要一个**数据源 ID（Data Source ID）**字符串来标识来源系统 |
+| **OIAnalytics Setpoint（设定点）** | 从 OIAnalytics 发送的写回命令                                                                  |
 
 ### 2 — 条目范围（仅限 South 连接器） {#2--item-scope-south-connectors-only}
 
 当来源为 South 连接器时，您可以限制转换器所应用的条目范围。
 
-| 范围              | 说明                                                              |
-| ------------------ | ------------------------------------------------------------------------ |
-| **所有条目**      | 所选 South 连接器的每一个条目都会经过此转换器 |
-| **按分组**       | 只处理属于特定分组的条目                   |
+| 范围         | 说明                                          |
+| ------------ | --------------------------------------------- |
+| **所有条目** | 所选 South 连接器的每一个条目都会经过此转换器 |
+| **按分组**   | 只处理属于特定分组的条目                      |
 | **指定条目** | 从搜索列表中手动挑选具体条目                  |
 
 :::tip
@@ -58,13 +58,13 @@ South 连接器的不同部分应用不同的转换——例如，为一组温�
 
 选定来源后，列表会自动过滤，仅显示兼容的转换器。可选项取决于所选 South 连接器的类型：
 
-| South 连接器类型                                                            | 兼容的标准转换器                                                           |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **OPC UA、OPC Classic、Modbus、ADS、OSIsoft PI、OIAnalytics**（PLC / 历史数据库） | CSV、JSON、MQTT payloads、Modbus values、OIAnalytics（选择时间精度）、OPCUA values |
-| **MQTT、REST、SFTP、FTP、Folder Scanner、ODBC、OLEDB**（文件 / 查询型）     | Time Values (from CSV)、MQTT payloads (from CSV)、CSV (from JSON)、OIAnalytics (from JSON) |
-| **MySQL、PostgreSQL、MSSQL、Oracle、SQLite**（查询型，行列表输出）     | CSV (from Record list)                                                                     |
-| **OIBus API**                                                                   | Time Values (from CSV)、MQTT payloads (from CSV)、CSV (from JSON)、OIAnalytics (from JSON) |
-| **OIAnalytics Setpoint**                                                        | MQTT payloads、Modbus values、OPCUA values                                                 |
+| South 连接器类型                                                                      | 兼容的标准转换器                                                                           |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **OPC UA、OPC Classic、Modbus、ADS、S7、OSIsoft PI、OIAnalytics**（PLC / 历史数据库） | CSV、JSON、MQTT payloads、Modbus values、OIAnalytics（选择时间精度）、OPCUA values         |
+| **MQTT、REST、SFTP、FTP、Folder Scanner、ODBC、OLEDB**（文件 / 查询型）               | Time Values (from CSV)、MQTT payloads (from CSV)、CSV (from JSON)、OIAnalytics (from JSON) |
+| **MySQL、PostgreSQL、MSSQL、Oracle、SQLite、MongoDB**（查询型，行列表输出）           | CSV (from Record list)                                                                     |
+| **OIBus API**                                                                         | Time Values (from CSV)、MQTT payloads (from CSV)、CSV (from JSON)、OIAnalytics (from JSON) |
+| **OIAnalytics Setpoint**                                                              | MQTT payloads、Modbus values、OPCUA values                                                 |
 
 此列表中还会显示自定义转换器，它们始终由用户命名。此外，**Ignore（忽略）**和
 **No transform（不转换）**（见下文）对每种来源类型都可用。
@@ -83,18 +83,18 @@ South 连接器的不同部分应用不同的转换——例如，为一组温�
 
 这两个转换器对**所有**来源类型都可用，无论内容类型如何，且都不需要任何配置。
 
-| 转换器      | 行为                                                                                                                                                                                                         |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Ignore（忽略）**       | 丢弃数据。不缓存任何内容，也不发送给 North 连接器。可用于在不禁用条目本身的情况下，
-通过条目/分组范围限定，屏蔽 South 连接器对某个 North 输出的部分内容。 |
-| **No transform（不转换）** | 按原样缓存接收到的数据，完全不做任何转换。当 North 连接器已经接受 South 的原生内容类型时使用此选项。                                                               |
+| 转换器                                                                | 行为                                                                                                 |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Ignore（忽略）**                                                    | 丢弃数据。不缓存任何内容，也不发送给 North 连接器。可用于在不禁用条目本身的情况下，                  |
+| 通过条目/分组范围限定，屏蔽 South 连接器对某个 North 输出的部分内容。 |
+| **No transform（不转换）**                                            | 按原样缓存接收到的数据，完全不做任何转换。当 North 连接器已经接受 South 的原生内容类型时使用此选项。 |
 
 ---
 
 ### 适用于 PLC 和历史数据库 South 连接器 {#for-plc-and-historian-south-connectors}
 
-这些转换器处理由 OPC UA、OPC Classic、Modbus、TwinCAT ADS 和 OSIsoft PI 等连接器产生的结构化
-**time-value（时间值）**数组。
+这些转换器处理由 OPC UA、OPC Classic、Modbus、TwinCAT ADS、Siemens S7 和 OSIsoft PI 等连接器
+产生的结构化**time-value（时间值）**数组。
 
 每个 time-value 对象具有如下结构：
 
@@ -111,25 +111,25 @@ South 连接器的不同部分应用不同的转换——例如，为一组温�
 
 ##### 设置 {#settings}
 
-| 设置               | 说明                                                                                                                                                                                        |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Filename（文件名）**          | 输出文件名；支持 `@CurrentDate`（当前 UTC 时间戳），以及在内容来自 South 历史查询时，
-`@QueryStartTime`/`@QueryEndTime`（查询的时间窗口，否则为空） |
-| **Encoding（编码）**          | `UTF_8`、`UTF_8_BOM`、`LATIN_1` 或 `UTF_16_LE`                                                                                                                                                    |
-| **Header（表头）**            | 是否包含列标题行                                                                                                                                                           |
-| **Delimiter（分隔符）**         | 列分隔符                                                                                                                                                                                   |
-| **Newline（换行符）**           | 行结束符（`LF`、`CRLF`、`CR`）                                                                                                                                                                   |
-| **Quote char（引号字符）**        | `DOUBLE_QUOTE`、`SINGLE_QUOTE` 或 `NONE`                                                                                                                                                          |
-| **Escape char（转义字符）**       | `DOUBLE_QUOTE` 或 `BACKSLASH`                                                                                                                                                                      |
-| **Point ID column（点位 ID 列）**   | 点位标识符列的表头标签                                                                                                                                                       |
-| **Value column（值列）**      | 值列的表头标签                                                                                                                                                                  |
-| **Timestamp column（时间戳列）**  | 时间戳列的表头标签                                                                                                                                                     |
-| **Timestamp type（时间戳类型）**    | 输出格式（`iso-string`、`unix-epoch`、`unix-epoch-ms`、`string`）                                                                                                                              |
-| **Timestamp format（时间戳格式）**  | 类型为 `string` 时的自定义模式（例如 `yyyy-MM-dd HH:mm:ss.SSS`）                                                                                                                              |
-| **Timezone（时区）**          | 类型为 `string` 时用于格式化的时区                                                                                                                                |
-| **Point ID process（点位 ID 处理）**  | 应用于每个点位 ID 的可选 JS 表达式（变量：`value`）                                                                                                                                |
-| **Value process（值处理）**     | 应用于每个值的可选 JS 表达式（变量：`value`）                                                                                                                                   |
-| **Timestamp process（时间戳处理）** | 应用于每个已格式化时间戳的可选 JS 表达式（变量：`value`）                                                                                                                     |
+| 设置                                                          | 说明                                                                                  |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **Filename（文件名）**                                        | 输出文件名；支持 `@CurrentDate`（当前 UTC 时间戳），以及在内容来自 South 历史查询时， |
+| `@QueryStartTime`/`@QueryEndTime`（查询的时间窗口，否则为空） |
+| **Encoding（编码）**                                          | `UTF_8`、`UTF_8_BOM`、`LATIN_1` 或 `UTF_16_LE`                                        |
+| **Header（表头）**                                            | 是否包含列标题行                                                                      |
+| **Delimiter（分隔符）**                                       | 列分隔符                                                                              |
+| **Newline（换行符）**                                         | 行结束符（`LF`、`CRLF`、`CR`）                                                        |
+| **Quote char（引号字符）**                                    | `DOUBLE_QUOTE`、`SINGLE_QUOTE` 或 `NONE`                                              |
+| **Escape char（转义字符）**                                   | `DOUBLE_QUOTE` 或 `BACKSLASH`                                                         |
+| **Point ID column（点位 ID 列）**                             | 点位标识符列的表头标签                                                                |
+| **Value column（值列）**                                      | 值列的表头标签                                                                        |
+| **Timestamp column（时间戳列）**                              | 时间戳列的表头标签                                                                    |
+| **Timestamp type（时间戳类型）**                              | 输出格式（`iso-string`、`unix-epoch`、`unix-epoch-ms`、`string`）                     |
+| **Timestamp format（时间戳格式）**                            | 类型为 `string` 时的自定义模式（例如 `yyyy-MM-dd HH:mm:ss.SSS`）                      |
+| **Timezone（时区）**                                          | 类型为 `string` 时用于格式化的时区                                                    |
+| **Point ID process（点位 ID 处理）**                          | 应用于每个点位 ID 的可选 JS 表达式（变量：`value`）                                   |
+| **Value process（值处理）**                                   | 应用于每个值的可选 JS 表达式（变量：`value`）                                         |
+| **Timestamp process（时间戳处理）**                           | 应用于每个已格式化时间戳的可选 JS 表达式（变量：`value`）                             |
 
 ##### 示例 {#example}
 
@@ -182,8 +182,8 @@ JSON 文件而非内部的 time-values 格式时使用（例如 Azure Blob 或 F
 
 ##### 设置 {#settings-1}
 
-| 设置     | 说明                        |
-| ----------- | ---------------------------------- |
+| 设置                | 说明                          |
+| ------------------- | ----------------------------- |
 | **Mapping（映射）** | `{ pointId, topic }` 对的列表 |
 
 ##### 示例 {#example-2}
@@ -218,8 +218,8 @@ JSON 文件而非内部的 time-values 格式时使用（例如 Azure Blob 或 F
 
 ##### 设置 {#settings-2}
 
-| 设置     | 说明                                                                           |
-| ----------- | ------------------------------------------------------------------------------------- |
+| 设置                | 说明                                                                              |
+| ------------------- | --------------------------------------------------------------------------------- |
 | **Mapping（映射）** | `{ pointId, address, modbusType }` 对的列表（`modbusType`：`coil` 或 `register`） |
 
 ##### 示例 {#example-3}
@@ -253,8 +253,8 @@ JSON 文件而非内部的 time-values 格式时使用（例如 Azure Blob 或 F
 
 ##### 设置 {#settings-3}
 
-| 设置       | 说明                                                |
-| ------------- | ---------------------------------------------------------- |
+| 设置                  | 说明                                         |
+| --------------------- | -------------------------------------------- |
 | **Precision（精度）** | 时间戳精度：`ms`（不变）、`s`、`min` 或 `hr` |
 
 ##### 示例 — 精度 `s` {#example--precision-s}
@@ -280,8 +280,8 @@ JSON 文件而非内部的 time-values 格式时使用（例如 Azure Blob 或 F
 
 ##### 设置 {#settings-4}
 
-| 设置     | 说明                         |
-| ----------- | ------------------------------------ |
+| 设置                | 说明                           |
+| ------------------- | ------------------------------ |
 | **Mapping（映射）** | `{ pointId, nodeId }` 对的列表 |
 
 ##### 示例 {#example-4}
@@ -322,16 +322,16 @@ JSON 负载，以及通过 **OIBus API** 注入的数据。
 
 ##### 设置 {#settings-5}
 
-| 设置              | 说明                                                                           |
-| -------------------- | ------------------------------------------------------------------------------------- |
-| **Has header（含表头）**       | 首行是否为表头行                                                 |
-| **Delimiter（分隔符）**        | 列分隔符（`COMMA`、`SEMI_COLON`、`TAB` 等）                                 |
-| **Point ID column（点位 ID 列）**  | 列名（表头模式）或包含点位标识符的从零开始的索引            |
-| **Timestamp column（时间戳列）** | 包含时间戳的列名或索引                                            |
-| **Value column（值列）**     | 包含值的列名或索引                                            |
-| **Timestamp type（时间戳类型）**   | 原始时间戳的格式（`iso-string`、`unix-epoch`、`unix-epoch-ms`、`string`）   |
-| **Timezone（时区）**         | 解析所用的时区（仅当类型为 `string` 时使用）                |
-| **Format（格式）**           | 自定义日期时间模式（仅当类型为 `string` 时使用，例如 `yyyy-MM-dd HH:mm:ss`） |
+| 设置                              | 说明                                                                         |
+| --------------------------------- | ---------------------------------------------------------------------------- |
+| **Has header（含表头）**          | 首行是否为表头行                                                             |
+| **Delimiter（分隔符）**           | 列分隔符（`COMMA`、`SEMI_COLON`、`TAB` 等）                                  |
+| **Point ID column（点位 ID 列）** | 列名（表头模式）或包含点位标识符的从零开始的索引                             |
+| **Timestamp column（时间戳列）**  | 包含时间戳的列名或索引                                                       |
+| **Value column（值列）**          | 包含值的列名或索引                                                           |
+| **Timestamp type（时间戳类型）**  | 原始时间戳的格式（`iso-string`、`unix-epoch`、`unix-epoch-ms`、`string`）    |
+| **Timezone（时区）**              | 解析所用的时区（仅当类型为 `string` 时使用）                                 |
+| **Format（格式）**                | 自定义日期时间模式（仅当类型为 `string` 时使用，例如 `yyyy-MM-dd HH:mm:ss`） |
 
 ##### 示例 {#example-5}
 
@@ -371,14 +371,14 @@ MQTT、OPC UA……）。
 
 ##### 设置 {#settings-6}
 
-| 设置               | 说明                                                                           |
-| --------------------- | ------------------------------------------------------------------------------------- |
-| **Has header（含表头）**        | 首行是否为表头行                                                 |
-| **Delimiter（分隔符）**         | 列分隔符                                                                      |
-| **Topic column（主题列）**      | 包含 MQTT 主题的列名或索引                                           |
-| **Payload type（负载类型）**      | `string`、`number`、`boolean`、`datetime` 或 `object`                                |
-| **Value column（值列）**      | 值所在的列（仅限简单负载类型）                                      |
-| **Object fields（对象字段）**     | `{ key, column, dataType }` 映射的列表（仅限对象负载）                    |
+| 设置                                  | 说明                                                              |
+| ------------------------------------- | ----------------------------------------------------------------- |
+| **Has header（含表头）**              | 首行是否为表头行                                                  |
+| **Delimiter（分隔符）**               | 列分隔符                                                          |
+| **Topic column（主题列）**            | 包含 MQTT 主题的列名或索引                                        |
+| **Payload type（负载类型）**          | `string`、`number`、`boolean`、`datetime` 或 `object`             |
+| **Value column（值列）**              | 值所在的列（仅限简单负载类型）                                    |
+| **Object fields（对象字段）**         | `{ key, column, dataType }` 映射的列表（仅限对象负载）            |
 | **Datetime settings（日期时间设置）** | 输入/输出日期时间转换（当负载类型或某个字段为 `datetime` 时适用） |
 
 ##### 示例 — 简单负载 {#example--simple-payload}
@@ -431,29 +431,29 @@ CSV 列。字段支持日期时间转换、类型转换以及可选的按字段 
 
 ##### 设置 {#settings-7}
 
-| 设置               | 说明                                                                                                                                                                                        |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Filename（文件名）**          | 输出文件名；支持 `@CurrentDate`（当前 UTC 时间戳），以及在内容来自 South 历史查询时，
-`@QueryStartTime`/`@QueryEndTime`（查询的时间窗口，否则为空） |
-| **Encoding（编码）**          | `UTF_8`、`UTF_8_BOM`、`LATIN_1` 或 `UTF_16_LE`                                                                                                                                                    |
-| **Header（表头）**            | 是否包含列标题行                                                                                                                                                           |
-| **Delimiter（分隔符）**         | 列分隔符                                                                                                                                                                                   |
-| **Newline（换行符）**           | 行结束符（`LF`、`CRLF`、`CR`）                                                                                                                                                                   |
-| **Quote char（引号字符）**        | `DOUBLE_QUOTE`、`SINGLE_QUOTE` 或 `NONE`                                                                                                                                                          |
-| **Escape char（转义字符）**       | `DOUBLE_QUOTE` 或 `BACKSLASH`                                                                                                                                                                      |
-| **Null value（空值）**        | 当字段缺失或为 null 时写入的字符串（默认为空字符串）                                                                                                                          |
-| **Row iterator path（行迭代路径）** | 指向行数组的 JSONPath（例如 `$.data[*]`）                                                                                                                                                          |
-| **Fields（字段）**            | 每个 CSV 列对应一个条目（见下文）                                                                                                                                               |
+| 设置                                                          | 说明                                                                                  |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **Filename（文件名）**                                        | 输出文件名；支持 `@CurrentDate`（当前 UTC 时间戳），以及在内容来自 South 历史查询时， |
+| `@QueryStartTime`/`@QueryEndTime`（查询的时间窗口，否则为空） |
+| **Encoding（编码）**                                          | `UTF_8`、`UTF_8_BOM`、`LATIN_1` 或 `UTF_16_LE`                                        |
+| **Header（表头）**                                            | 是否包含列标题行                                                                      |
+| **Delimiter（分隔符）**                                       | 列分隔符                                                                              |
+| **Newline（换行符）**                                         | 行结束符（`LF`、`CRLF`、`CR`）                                                        |
+| **Quote char（引号字符）**                                    | `DOUBLE_QUOTE`、`SINGLE_QUOTE` 或 `NONE`                                              |
+| **Escape char（转义字符）**                                   | `DOUBLE_QUOTE` 或 `BACKSLASH`                                                         |
+| **Null value（空值）**                                        | 当字段缺失或为 null 时写入的字符串（默认为空字符串）                                  |
+| **Row iterator path（行迭代路径）**                           | 指向行数组的 JSONPath（例如 `$.data[*]`）                                             |
+| **Fields（字段）**                                            | 每个 CSV 列对应一个条目（见下文）                                                     |
 
 每个**字段**条目：
 
-| 设置               | 说明                                                                             |
-| --------------------- | --------------------------------------------------------------------------------------- |
-| **Column name（列名）**       | CSV 中的表头标签                                                                 |
-| **JSON path（JSON 路径）**         | 指向当前行内某个值的 JSONPath（例如 `$.timestamp`）                       |
-| **Data type（数据类型）**         | `string`、`number`、`boolean`、`datetime`、`array` 或 `object`                         |
-| **Datetime settings（日期时间设置）** | 数据类型为 `datetime` 时的输入/输出格式/时区/类型                      |
-| **Field process（字段处理）**     | 用于对提取值进行后处理的可选 JS 表达式（例如 `value.toUpperCase()`） |
+| 设置                                  | 说明                                                                 |
+| ------------------------------------- | -------------------------------------------------------------------- |
+| **Column name（列名）**               | CSV 中的表头标签                                                     |
+| **JSON path（JSON 路径）**            | 指向当前行内某个值的 JSONPath（例如 `$.timestamp`）                  |
+| **Data type（数据类型）**             | `string`、`number`、`boolean`、`datetime`、`array` 或 `object`       |
+| **Datetime settings（日期时间设置）** | 数据类型为 `datetime` 时的输入/输出格式/时区/类型                    |
+| **Field process（字段处理）**         | 用于对提取值进行后处理的可选 JS 表达式（例如 `value.toUpperCase()`） |
 
 ##### 示例 {#example-6}
 
@@ -510,19 +510,20 @@ time-values 形状，而您又想直接将其提供给 OIAnalytics North 连接�
 
 ##### 设置 {#settings-8}
 
-| 设置                   | 说明                                                                                                                                                                                                                                                                          |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Row Iterator JSONPath（行迭代 JSONPath）** | 指向成为 time-values 的行数组的 JSONPath（例如 `$[*]`）。当直接遍历失败时，
+| 设置                                         | 说明                                                                        |
+| -------------------------------------------- | --------------------------------------------------------------------------- |
+| **Row Iterator JSONPath（行迭代 JSONPath）** | 指向成为 time-values 的行数组的 JSONPath（例如 `$[*]`）。当直接遍历失败时， |
+
 会自动解析 JSON 字符串化的中间节点，因此该路径可以跨入包含原始 JSON 文本的字段
 （例如 MQTT 负载）并仍然为每个嵌套匹配产生一行 |
-| **Point ID JSONPath（点位 ID JSONPath）**     | 指向当前行内点位标识符的 JSONPath（例如 `$[*].id`）；通配符（`[*]`）会解析为当前行的索引                                                                                                                                                                |
-| **Value JSONPath（值 JSONPath）**        | 指向当前行内值的 JSONPath                                                                                                                                                                                                                                         |
-| **Timestamp JSONPath（时间戳 JSONPath）**    | 指向当前行内原始时间戳的 JSONPath。如果无法解析，则回退到当前时间                                                                                                                                                                        |
-| **Timestamp input type（时间戳输入类型）**  | 原始时间戳的格式：`String`、`ISO string`、`Unix epoch (s)` 或 `Unix epoch (ms)`                                                                                                                                                                                          |
-| **Timezone（时区）**              | 解析时使用的时区（仅当输入类型为 `String` 时使用）                                                                                                                                                                                                   |
-| **Format（格式）**                | 自定义日期时间模式（仅当输入类型为 `String` 时使用，例如 `yyyy-MM-dd HH:mm:ss`）                                                                                                                                                                                |
-| **Locale（区域设置）**              | 解析月/日名称时使用的区域设置（仅当输入类型为 `String` 时使用）                                                                                                                                                                            |
-| **Timestamp precision（时间戳精度）**   | 结果 ISO 时间戳被截断到的输出精度：`Millisecond`、`Second`、`Minute` 或 `Hour`                                                                                                                                                                           |
+| **Point ID JSONPath（点位 ID JSONPath）** | 指向当前行内点位标识符的 JSONPath（例如 `$[*].id`）；通配符（`[*]`）会解析为当前行的索引 |
+| **Value JSONPath（值 JSONPath）** | 指向当前行内值的 JSONPath |
+| **Timestamp JSONPath（时间戳 JSONPath）** | 指向当前行内原始时间戳的 JSONPath。如果无法解析，则回退到当前时间 |
+| **Timestamp input type（时间戳输入类型）** | 原始时间戳的格式：`String`、`ISO string`、`Unix epoch (s)` 或 `Unix epoch (ms)` |
+| **Timezone（时区）** | 解析时使用的时区（仅当输入类型为 `String` 时使用） |
+| **Format（格式）** | 自定义日期时间模式（仅当输入类型为 `String` 时使用，例如 `yyyy-MM-dd HH:mm:ss`） |
+| **Locale（区域设置）** | 解析月/日名称时使用的区域设置（仅当输入类型为 `String` 时使用） |
+| **Timestamp precision（时间戳精度）** | 结果 ISO 时间戳被截断到的输出精度：`Millisecond`、`Second`、`Minute` 或 `Hour` |
 
 ##### 示例 — 带有 JSON 字符串化负载的 MQTT 消息 {#example--mqtt-messages-with-a-json-stringified-payload}
 
@@ -565,11 +566,11 @@ MQTT 负载字符串**。单条消息可以携带不止一个指标，因此行�
 
 ---
 
-### 适用于 SQL 数据库 South 连接器 {#for-sql-database-south-connectors}
+### 适用于 SQL 数据库和 MongoDB South 连接器 {#for-sql-database-and-mongodb-south-connectors}
 
-MySQL、PostgreSQL、MSSQL、Oracle 和 SQLite South 连接器不会自行序列化其查询结果——
-每一行都会以数据库返回的原始形式作为**记录列表（record-list）**内容（一个扁平行对象的数组）
-向下游发送。将该数据渲染为任何其他形状（包括 CSV）是转换器的工作。
+MySQL、PostgreSQL、MSSQL、Oracle、SQLite 和 MongoDB South 连接器不会自行序列化其查询结果——
+每一行（或每一份文档）都会以数据库返回的原始形式作为**记录列表（record-list）**内容
+（一个扁平行对象的数组）向下游发送。将该数据渲染为任何其他形状（包括 CSV）是转换器的工作。
 
 ---
 
@@ -584,37 +585,37 @@ MySQL、PostgreSQL、MSSQL、Oracle 和 SQLite South 连接器不会自行序列
 
 ##### 设置 {#settings-9}
 
-| 设置                 | 说明                                                                                    |
-| ----------------------- | ---------------------------------------------------------------------------------------------- |
-| **Filename（文件名）**            | 输出文件名模式（支持 `@CurrentDate`、`@QueryStartTime`、`@QueryEndTime`）          |
-| **Encoding（编码）**            | 输出字符编码（`UTF_8`、`UTF_8_BOM`、`LATIN_1`、`UTF_16_LE`）                       |
-| **First row as header（首行作为表头）** | 是否写入包含列名的表头行                                                            |
-| **Compression（压缩）**         | 对输出文件进行 Gzip 压缩                                                                  |
-| **Delimiter（分隔符）**           | 列分隔符（`COMMA`、`SEMI_COLON`、`TAB` 等）                                          |
-| **Newline（换行符）**             | 行分隔符（`CRLF`、`LF`、`CR`）                                                             |
-| **Quote character（引号字符）**     | 用于给字段加引号的字符（`DOUBLE_QUOTE`、`SINGLE_QUOTE`、`NONE`）                        |
-| **Escape character（转义字符）**    | 用于转义带引号字段内的引号字符的字符（`BACKSLASH`、`DOUBLE_QUOTE`） |
-| **Null value（空值）**          | 当配置的字段为 `null` 或在行中缺失时写出的值                    |
-| **Fields Mapping（字段映射）**      | 一份按列覆盖的列表（重命名、转换、重新格式化或处理）——见下文                |
+| 设置                                    | 说明                                                                      |
+| --------------------------------------- | ------------------------------------------------------------------------- |
+| **Filename（文件名）**                  | 输出文件名模式（支持 `@CurrentDate`、`@QueryStartTime`、`@QueryEndTime`） |
+| **Encoding（编码）**                    | 输出字符编码（`UTF_8`、`UTF_8_BOM`、`LATIN_1`、`UTF_16_LE`）              |
+| **First row as header（首行作为表头）** | 是否写入包含列名的表头行                                                  |
+| **Compression（压缩）**                 | 对输出文件进行 Gzip 压缩                                                  |
+| **Delimiter（分隔符）**                 | 列分隔符（`COMMA`、`SEMI_COLON`、`TAB` 等）                               |
+| **Newline（换行符）**                   | 行分隔符（`CRLF`、`LF`、`CR`）                                            |
+| **Quote character（引号字符）**         | 用于给字段加引号的字符（`DOUBLE_QUOTE`、`SINGLE_QUOTE`、`NONE`）          |
+| **Escape character（转义字符）**        | 用于转义带引号字段内的引号字符的字符（`BACKSLASH`、`DOUBLE_QUOTE`）       |
+| **Null value（空值）**                  | 当配置的字段为 `null` 或在行中缺失时写出的值                              |
+| **Fields Mapping（字段映射）**          | 一份按列覆盖的列表（重命名、转换、重新格式化或处理）——见下文              |
 
 **字段映射**中的每个条目都通过其在源行中的名称来定位一列：
 
-| 设置                | 说明                                                                                              |
-| ----------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Field Name（字段名）**          | 要配置的列的名称，与源行中的某个键相匹配                                        |
-| **Column Name（列名）**         | 该列在输出 CSV 中的表头。留空则保留原始字段名。                    |
-| **Data Type（数据类型）**           | 如何转换该值：`string`、`number`、`boolean`、`datetime`、`array` 或 `object`                     |
-| **Field Process（字段处理）**       | 转换之后应用的可选 JavaScript 表达式（例如 `value.toUpperCase()`）                         |
-| **Datetime Settings（日期时间设置）**   | 仅当数据类型为 `datetime` 时显示——输入/输出类型、时区、格式和区域设置（见下文）      |
+| 设置                                  | 说明                                                                            |
+| ------------------------------------- | ------------------------------------------------------------------------------- |
+| **Field Name（字段名）**              | 要配置的列的名称，与源行中的某个键相匹配                                        |
+| **Column Name（列名）**               | 该列在输出 CSV 中的表头。留空则保留原始字段名。                                 |
+| **Data Type（数据类型）**             | 如何转换该值：`string`、`number`、`boolean`、`datetime`、`array` 或 `object`    |
+| **Field Process（字段处理）**         | 转换之后应用的可选 JavaScript 表达式（例如 `value.toUpperCase()`）              |
+| **Datetime Settings（日期时间设置）** | 仅当数据类型为 `datetime` 时显示——输入/输出类型、时区、格式和区域设置（见下文） |
 
 当**数据类型**为 `datetime` 时，**日期时间设置**描述如何解析原始值以及如何渲染它：
 
-| 设置                                     | 说明                                                                          |
-| --------------------------------------------- | ----------------------------------------------------------------------------------- |
-| **Timestamp input type（时间戳输入类型）**                      | 如何解析原始值（`string`、`iso-string`、`unix-epoch`、`unix-epoch-ms`）      |
-| **Input timezone / format / locale（输入时区/格式/区域设置）**          | 当输入类型为 `string` 时用于解析原始值                             |
-| **Timestamp output type（时间戳输出类型）**                     | 如何渲染该值（`string`、`iso-string`、`unix-epoch`、`unix-epoch-ms`）          |
-| **Output timezone / format / locale（输出时区/格式/区域设置）**         | 当输出类型为 `string` 时用于渲染该值                              |
+| 设置                                                            | 说明                                                                    |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **Timestamp input type（时间戳输入类型）**                      | 如何解析原始值（`string`、`iso-string`、`unix-epoch`、`unix-epoch-ms`） |
+| **Input timezone / format / locale（输入时区/格式/区域设置）**  | 当输入类型为 `string` 时用于解析原始值                                  |
+| **Timestamp output type（时间戳输出类型）**                     | 如何渲染该值（`string`、`iso-string`、`unix-epoch`、`unix-epoch-ms`）   |
+| **Output timezone / format / locale（输出时区/格式/区域设置）** | 当输出类型为 `string` 时用于渲染该值                                    |
 
 ##### 示例 {#example-7}
 
@@ -660,8 +661,8 @@ sensor-1,23.8,2024-01-15 11:01:00
 
 ##### 设置 {#settings-10}
 
-| 设置     | 说明                          |
-| ----------- | ------------------------------------ |
+| 设置                | 说明                            |
+| ------------------- | ------------------------------- |
 | **Mapping（映射）** | `{ reference, topic }` 对的列表 |
 
 ##### 示例 {#example-8}
@@ -693,8 +694,8 @@ sensor-1,23.8,2024-01-15 11:01:00
 
 ##### 设置 {#settings-11}
 
-| 设置     | 说明                                                                             |
-| ----------- | --------------------------------------------------------------------------------------- |
+| 设置                | 说明                                                                                |
+| ------------------- | ----------------------------------------------------------------------------------- |
 | **Mapping（映射）** | `{ reference, address, modbusType }` 对的列表（`modbusType`：`coil` 或 `register`） |
 
 ##### 示例 {#example-9}
@@ -727,8 +728,8 @@ sensor-1,23.8,2024-01-15 11:01:00
 
 ##### 设置 {#settings-12}
 
-| 设置     | 说明                           |
-| ----------- | ------------------------------------- |
+| 设置                | 说明                             |
+| ------------------- | -------------------------------- |
 | **Mapping（映射）** | `{ reference, nodeId }` 对的列表 |
 
 ##### 示例 {#example-10}
@@ -794,20 +795,20 @@ export function transform(
 }
 ```
 
-| 返回字段      | 说明                                                                                 |
-| ----------------- | ------------------------------------------------------------------------------------------- |
+| 返回字段          | 说明                                                                 |
+| ----------------- | -------------------------------------------------------------------- |
 | `data`            | 写入缓存文件的内容（见下文）：一个字符串、原始二进制数据或任何其他值 |
-| `filename`        | 输出存储在 North 缓存中时使用的文件名                              |
-| `numberOfElement` | 已处理记录数的可选计数，会显示在日志和指标中                              |
+| `filename`        | 输出存储在 North 缓存中时使用的文件名                                |
+| `numberOfElement` | 已处理记录数的可选计数，会显示在日志和指标中                         |
 
 转换器的输出会**原样写入**缓存文件，然后由 North 根据其内容类型读回。`data`
 会按类型处理：
 
-| 返回的 `data`                              | 存储为                    | 用于                                                |
-| -------------------------------------------- | ---------------------------- | ------------------------------------------------------- |
-| **字符串**                                 | 该字符串原样（UTF-8）  | 任意输出类型——由您完全控制确切的文本            |
-| **`Uint8Array` / `ArrayBuffer`**（二进制）  | 原始字节，逐字节保留 | 仅限 **`any`** 输出类型（文件类 North）            |
-| 任何**其他值**（对象、数组、数字……） | `JSON.stringify(data)`       | 读取 JSON 的类型化输出（`time-values`、`mqtt` 等） |
+| 返回的 `data`                              | 存储为                 | 用于                                               |
+| ------------------------------------------ | ---------------------- | -------------------------------------------------- |
+| **字符串**                                 | 该字符串原样（UTF-8）  | 任意输出类型——由您完全控制确切的文本               |
+| **`Uint8Array` / `ArrayBuffer`**（二进制） | 原始字节，逐字节保留   | 仅限 **`any`** 输出类型（文件类 North）            |
+| 任何**其他值**（对象、数组、数字……）       | `JSON.stringify(data)` | 读取 JSON 的类型化输出（`time-values`、`mqtt` 等） |
 
 :::caution 使 `data` 与输出类型匹配；确保 `filename` 是字符串
 
@@ -829,9 +830,9 @@ export function transform(
 
 以下库已预先加载到沙箱中，可通过 `require` 使用：
 
-| 库                                                                | `require` 名称  | 说明                                     |
-| ---------------------------------------------------------------------- | --------------- | ----------------------------------------------- |
-| **[Luxon](https://moment.github.io/luxon/)**                           | `luxon`         | 日期/时间的解析、格式化和运算   |
+| 库                                                                     | `require` 名称  | 说明                               |
+| ---------------------------------------------------------------------- | --------------- | ---------------------------------- |
+| **[Luxon](https://moment.github.io/luxon/)**                           | `luxon`         | 日期/时间的解析、格式化和运算      |
 | **[JSONPath Plus](https://jsonpath-plus.github.io/JSONPath/docs/ts/)** | `jsonpath-plus` | 对任意 JSON 结构进行 JSONPath 查询 |
 | **[PapaParse](https://www.papaparse.com/docs)**                        | `papaparse`     | CSV 解析和序列化                   |
 
@@ -845,12 +846,12 @@ OIBus 日志系统。所有消息都会带有 `CUSTOM TRANSFORMER:` 前缀。
 
 ### 限制 {#limits}
 
-| 限制         | 值                                            |
-| ------------- | ------------------------------------------------ |
-| 内存        | 每次执行 256 MB                             |
-| 超时       | 可在转换器设置中配置                         |
-| 可用模块 | 仅 `luxon`、`jsonpath-plus`、`papaparse`       |
-| 主机访问   | 无（文件系统、网络和环境变量均被阻止） |
+| 限制     | 值                                       |
+| -------- | ---------------------------------------- |
+| 内存     | 每次执行 256 MB                          |
+| 超时     | 可在转换器设置中配置                     |
+| 可用模块 | 仅 `luxon`、`jsonpath-plus`、`papaparse` |
+| 主机访问 | 无（文件系统、网络和环境变量均被阻止）   |
 
 ---
 

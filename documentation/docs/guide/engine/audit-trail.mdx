@@ -1,0 +1,54 @@
+---
+sidebar_position: 7
+---
+
+# Audit Trail
+
+OIBus records an audit log entry every time a configuration entity is created, updated, or deleted, so you
+can see who changed what, and when.
+
+## What Gets Audited {#what-gets-audited}
+
+Each audit log entry records:
+
+| Field                | Description                                                                                                            |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Entity type / ID** | The kind of entity that changed, and its identifier.                                                                   |
+| **Action**           | `Create`, `Update`, or `Delete`.                                                                                       |
+| **User**             | The user who performed the change.                                                                                     |
+| **Date**             | When the change was recorded.                                                                                          |
+| **Before / After**   | A JSON snapshot of the entity before and after the change — before is empty for `Create`, after is empty for `Delete`. |
+
+The following entity types are audited: South connector, South item, South item group, North connector,
+North transformer, History query, History query item, History query transformer, Scan mode, IP filter,
+Certificate, User, Transformer, Engine, and OIAnalytics registration.
+
+## Viewing the Audit Trail {#viewing-the-audit-trail}
+
+### The Audit Page {#the-audit-page}
+
+Open the account menu (top right) and select **Audit** to see every audit log entry across the whole
+OIBus instance. Filter by **Entity type**, **Action**, and a **Start**/**End** date range, then click the
+🔍 icon on any row to open its full history.
+
+### From an Entity's Own List {#from-an-entitys-own-list}
+
+Most configuration list pages — South, North, History Queries, Scan modes, IP filters, Certificates, and
+Transformers — also have an audit icon on each row, opening that entity's own history directly without
+going through the global Audit page.
+
+## Reading a History Entry {#reading-a-history-entry}
+
+The history view lists every change recorded for the entity, most recent first. Expand a row to see what
+changed, in one of three modes (switch between them with the dropdown at the top):
+
+| Mode                  | Description                                                                                 |
+| --------------------- | ------------------------------------------------------------------------------------------- |
+| **Table** (default)   | One row per field, with its value **Before** and **After**. Changed fields are highlighted. |
+| **JSON diff**         | A unified diff of the two JSON snapshots.                                                   |
+| **JSON side by side** | The two JSON snapshots shown side by side.                                                  |
+
+## Retention {#retention}
+
+Audit log entries are kept for a configurable number of days before being automatically pruned — see
+**Audit log retention** under [Logging Parameters](./engine-settings.mdx#logging-parameters).
