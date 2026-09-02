@@ -540,12 +540,21 @@ export default class SouthConnectorRepository {
       // Remove items from all groups (enforcing single-group behavior for "Move to")
       this.database.prepare(`DELETE FROM ${GROUP_ITEMS_TABLE} WHERE item_id IN (${placeholders});`).run(...itemIds);
 
-      if (groupId) {
+      if (groupId && itemIds.length > 0) {
+        // Also align the items' own scan_mode_id with the target group's: it stops driving scheduling
+        // once sync_with_group is set (south-connector.ts prefers item.group.scanMode), but it remains
+        // a real FK to scan_modes, so leaving it stale would silently block deleting the old scan mode.
+        const group = this.groupRepository.findById(groupId);
+        if (!group) {
+          throw new Error(`South item group "${groupId}" not found`);
+        }
         const insertGroup = this.database.prepare(`INSERT INTO ${GROUP_ITEMS_TABLE} (group_id, item_id) VALUES (?, ?);`);
-        const setSyncWithGroup = this.database.prepare(`UPDATE ${SOUTH_ITEMS_TABLE} SET sync_with_group = 1 WHERE id = ?;`);
+        const setSyncWithGroup = this.database.prepare(
+          `UPDATE ${SOUTH_ITEMS_TABLE} SET sync_with_group = 1, scan_mode_id = ? WHERE id = ?;`
+        );
         for (const itemId of itemIds) {
           insertGroup.run(groupId, itemId);
-          setSyncWithGroup.run(itemId);
+          setSyncWithGroup.run(group.scanMode.id, itemId);
         }
       } else {
         // When removing from group, reset sync_with_group to false

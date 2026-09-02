@@ -434,7 +434,40 @@ describe('SouthConnectorRepository', () => {
     const movedItems = itemsAfterMove.filter(item => itemIds.includes(item.id));
     for (const item of movedItems) {
       assert.strictEqual(item.group!.id, group.id);
+      // The item's own scan mode must be kept in sync with the group's: it stays a real FK to
+      // scan_modes even though it is no longer used for scheduling, so a stale value would silently
+      // block deleting the item's previous scan mode later on.
+      assert.strictEqual(item.scanMode!.id, group.scanMode.id);
     }
+  });
+
+  it('should update an item scan mode to match the group scan mode when moved into a group', () => {
+    const groupRepository = new SouthItemGroupRepository(database);
+
+    const group = groupRepository.create(
+      {
+        name: 'Move Group With Different Scan Mode',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[1],
+        startTimeOffset: null,
+        endTimeOffset: null,
+        recoveryStrategy: null,
+        maxReadInterval: null,
+        readDelay: 0
+      },
+      'userTest'
+    );
+
+    const existingItems = repository.findAllItemsForSouth(testData.south.list[0].id);
+    const item = existingItems.find(existingItem => existingItem.scanMode?.id === testData.scanMode.list[0].id);
+    assert.ok(item);
+    assert.notStrictEqual(item.scanMode!.id, group.scanMode.id);
+
+    repository.moveItemsToGroup([item.id], group.id);
+
+    const movedItem = repository.findItemById(testData.south.list[0].id, item.id);
+    assert.ok(movedItem);
+    assert.strictEqual(movedItem.scanMode!.id, group.scanMode.id);
   });
 
   it('should remove items from groups when groupId is null', () => {
