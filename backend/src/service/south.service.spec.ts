@@ -3228,6 +3228,7 @@ describe('South Service', () => {
           const command: SouthConnectorItemCommandDTO = {
             ...testData.south.itemCommand,
             id: 'testItemId',
+            enabled: false,
             scanModeId: null,
             scanModeName: null,
             startTimeOffset: null

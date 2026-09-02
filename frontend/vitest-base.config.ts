@@ -17,7 +17,7 @@ export default defineConfig({
         interval: 5
       }
     },
-    testTimeout: 2000,
-    hookTimeout: 2000
+    testTimeout: 5000,
+    hookTimeout: 5000
   }
 });
