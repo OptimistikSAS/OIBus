@@ -17,7 +17,7 @@ complète dans [Requêtes History](../history-queries.md#compatible-south-connec
 uniquement en streaming (MQTT, Modbus, scanners de dossier/FTP/SFTP) n'ont pas de plage temporelle à
 découper, donc rien de tout cela ne s'applique à eux.
 
-## Le modèle mental : une exécution, quatre décisions {#the-mental-model-one-run-four-decisions}
+## Le modèle mental : une exécution, quatre décisions {#the-history-query-strategy}
 
 Chaque fois qu'un élément ou un groupe compatible avec l'historisation s'exécute, OIBus suit les quatre
 mêmes étapes, dans l'ordre :
@@ -88,7 +88,7 @@ se terminer rapidement et de manière prévisible, et — combinée à la strat�
 heure terminée est durablement enregistrée comme point de reprise, de sorte qu'un redémarrage pendant le
 rattrapage ne répète que l'heure qui était en cours, pas la journée entière.
 
-### Le dimensionner {#sizing-it}
+### Le dimensionner {#choosing-the-right-value-for-max-read-interval}
 
 - **Basez-vous sur ce que la source (et le réseau) peuvent raisonnablement renvoyer en un seul appel** —
   voir [Débit de données et dimensionnement du cache](./oibus-data-rate.mdx) pour savoir comment traduire un
@@ -134,7 +134,7 @@ source — utile pour les API à débit limité (REST, OIAnalytics), les bases d
 doivent pas être monopolisées, ou les serveurs API/historian qui ont besoin d'un instant pour traiter la
 requête précédente avant que la suivante n'arrive.
 
-### L'interaction avec Intervalle de lecture maximum {#the-interaction-with-max-read-interval}
+### L'interaction avec Intervalle de lecture maximum {#the-interaction-of-read-delay-with-max-read-interval}
 
 Les deux réglages s'équilibrent directement. Le surcoût total de cadencement pour une exécution est
 approximativement :
@@ -150,15 +150,15 @@ cadencement, en plus des 1 440 allers-retours eux-mêmes. Si vous réduisez `Int
 pour diminuer la charge par requête, vérifiez l'effet sur le temps de rattrapage pour un retard réaliste
 avant de supposer qu'un petit `Délai de lecture` est anodin.
 
-### Le dimensionner {#sizing-it-1}
+### Le dimensionner {#choosing-the-right-value-for-read-delay}
 
-| Symptôme                                                                          | Ajustement                                                                       |
-| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| La source rejette les requêtes, limite le débit, ou se dégrade sous interrogation répétée | Augmenter `Délai de lecture`                                                      |
-| Le rattrapage d'un retard important prend bien plus de temps que le retard lui-même | Diminuer `Délai de lecture` et/ou augmenter `Intervalle de lecture maximum`       |
-| La source n'a aucune contrainte de débit (base de données locale sur fichier, etc.) | `0` convient                                                                       |
+| Symptôme                                                                                  | Ajustement                                                                  |
+| ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| La source rejette les requêtes, limite le débit, ou se dégrade sous interrogation répétée | Augmenter `Délai de lecture`                                                |
+| Le rattrapage d'un retard important prend bien plus de temps que le retard lui-même       | Diminuer `Délai de lecture` et/ou augmenter `Intervalle de lecture maximum` |
+| La source n'a aucune contrainte de débit (base de données locale sur fichier, etc.)       | `0` convient                                                                |
 
-## Décalage de l'heure de début/fin : quand la source n'a pas fini d'écrire {#startend-time-offset-when-the-source-isnt-done-writing-yet}
+## Décalage de l'heure de début/fin : quand la source n'a pas fini d'écrire {#startend-time-offset-when-the-source-is-still-processing-the-values}
 
 C'est le réglage qui compte le plus lorsque **plusieurs éléments interrogés ensemble ne sont pas tous
 digérés par la source de données au même moment**.
@@ -172,13 +172,14 @@ vers son stockage sous-jacent ; un serveur PI ou OPC Classic HDA résout une lec
 un tag à la fois. Ce dernier cas est le scénario concret de « plusieurs éléments ensemble » : une même
 requête groupée pour un ensemble d'éléments peut voir la valeur du tag A déjà transférée et interrogeable,
 alors que la valeur du tag B pour ce même instant est encore dans une mémoire tampon interne quelques
-centaines de millisecondes en retard — parce que le groupe est interrogé en un seul appel partageant un
-seul instant suivi, cette incohérence n'est pas visible élément par élément.
+centaines de millisecondes en retard.
 
-Si OIBus interroge `[instant suivi, maintenant]` et fait immédiatement avancer l'instant suivi à
-`maintenant`, toute valeur qui n'avait pas encore été digérée par la source au moment de la requête est
-perdue définitivement — l'exécution suivante démarre strictement après elle et ne demandera plus jamais
-cette tranche de temps.
+#### Quel est l'impact sur OIBus ? {#how-does-this-impact-oibus}
+
+Le problème est qu'OIBus interroge tous les tags du groupe en même temps. Il reçoit une réponse et ne peut
+pas savoir que certains tags manquent — il n'a aucun moyen de savoir qu'ils n'étaient simplement pas encore
+disponibles. OIBus fait alors avancer l'instant suivi jusqu'au dernier horodatage récupéré, si bien que la
+requête suivante manque toutes les valeurs qui n'étaient pas encore disponibles dans l'historian.
 
 ### Décalage de l'heure de début : redemander une marge de sécurité {#start-time-offset-re-request-a-safety-cushion}
 
@@ -259,14 +260,14 @@ anodine de celle de l'élément A, qui était déjà là) ; un `Décalage de l'h
 simplement jamais un cycle avant l'exécution suivante, moment auquel chaque élément du groupe est censé
 avoir rattrapé son retard.
 
-### Choisir entre les deux {#choosing-between-them}
+### Choisir entre les deux {#choosing-the-right-solution}
 
-| Situation                                                                                          | Utiliser                                          |
-| ---------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| La source valide occasionnellement une valeur avec un léger retard ; les lectures en double sont anodines | `Décalage de l'heure de début` négatif             |
+| Situation                                                                                                                       | Utiliser                                           |
+| ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| La source valide occasionnellement une valeur avec un léger retard ; les lectures en double sont anodines                       | `Décalage de l'heure de début` négatif             |
 | Les données les plus récentes de la source sont peu fiables/partielles jusqu'à stabilisation ; redemander n'est pas souhaitable | `Décalage de l'heure de fin` négatif               |
-| Une requête multi-éléments groupée (OPC UA HA, PI, HDA) où les éléments ne se transfèrent pas tous en même temps | `Décalage de l'heure de fin` négatif sur le groupe |
-| L'horloge d'OIBus est en retard par rapport à celle de la source de données                          | `Décalage de l'heure de fin` positif                |
+| Une requête multi-éléments groupée (OPC UA HA, PI, HDA) où les éléments ne se transfèrent pas tous en même temps                | `Décalage de l'heure de fin` négatif sur le groupe |
+| L'horloge d'OIBus est en retard par rapport à celle de la source de données                                                     | `Décalage de l'heure de fin` positif               |
 
 Un `Décalage de l'heure de fin` positif est surtout utile pour l'**alignement d'horloge** : si l'horloge
 propre d'OIBus est en retard par rapport à celle de la source de données d'un écart connu approximativement,
@@ -295,7 +296,7 @@ que possible, même pendant qu'un rattrapage historique important est encore en 
 (par défaut) lorsque la progression incrémentale et sécurisée en cas de plantage compte plus que la vitesse
 d'apparition du « maintenant » — ce qui est le bon choix pour la plupart des installations non supervisées.
 
-## Assembler le tout : un exemple concret {#putting-it-together-a-worked-example}
+## Assembler le tout : un exemple concret {#putting-it-together-a-real-life-example}
 
 Un connecteur South MSSQL interroge 200 tags depuis une table historian. La base de données valide les
 insertions par lots et effectue généralement la validation dans un délai de 1,5 seconde après l'horodatage
@@ -303,12 +304,12 @@ de l'échantillon. L'équipe souhaite que les tableaux de bord affichent rapidem
 après une fenêtre de maintenance, tout en garantissant une progression sécurisée en cas de plantage si un
 rattrapage est interrompu.
 
-| Réglage                       | Valeur                          | Justification                                                                                                                      |
-| ------------------------------ | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| **Intervalle de lecture maximum** | `900`                          | Des tranches de 15 minutes maintiennent le nombre de lignes de chaque requête (~180 000 lignes à ce débit) confortablement dans le budget de temps de réponse de la source. |
-| **Délai de lecture**           | `500`                            | Un cadencement suffisant pour éviter de concurrencer le trafic de production sur la même base de données, sans ralentir significativement un rattrapage de plusieurs heures. |
-| **Décalage de l'heure de début** | `-2000`                        | Une marge de 2 secondes, confortablement au-dessus du retard de validation observé de 1,5 seconde.                              |
-| **Stratégie de reprise**       | `Du plus ancien au plus récent` | La sécurité en cas de plantage a été privilégiée par rapport à la visibilité immédiate de « maintenant » pour ce connecteur.     |
+| Réglage                           | Valeur                          | Justification                                                                                                                                                                |
+| --------------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Intervalle de lecture maximum** | `900`                           | Des tranches de 15 minutes maintiennent le nombre de lignes de chaque requête (~180 000 lignes à ce débit) confortablement dans le budget de temps de réponse de la source.  |
+| **Délai de lecture**              | `500`                           | Un cadencement suffisant pour éviter de concurrencer le trafic de production sur la même base de données, sans ralentir significativement un rattrapage de plusieurs heures. |
+| **Décalage de l'heure de début**  | `-2000`                         | Une marge de 2 secondes, confortablement au-dessus du retard de validation observé de 1,5 seconde.                                                                           |
+| **Stratégie de reprise**          | `Du plus ancien au plus récent` | La sécurité en cas de plantage a été privilégiée par rapport à la visibilité immédiate de « maintenant » pour ce connecteur.                                                 |
 
 Si la même équipe avait plutôt besoin que le tableau de bord en direct reflète les valeurs actuelles
 immédiatement pendant un long rattrapage suite à une coupure de week-end — en acceptant qu'un redémarrage en
@@ -341,12 +342,12 @@ cours de rattrapage réexécute l'intégralité du retard — elle basculerait `
 
 ## Aide-mémoire {#quick-reference}
 
-| Objectif / symptôme                                                                        | Ajuster                                                     |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| La source expire ou manque de mémoire sur les requêtes larges                                 | Réduire `Intervalle de lecture maximum`                      |
-| Le rattrapage d'un retard important est dominé par les pauses, pas par les requêtes elles-mêmes | Augmenter `Intervalle de lecture maximum` et/ou réduire `Délai de lecture` |
-| La source limite le débit, se dégrade ou renvoie des erreurs sous interrogation répétée       | Augmenter `Délai de lecture`                                  |
-| Besoin de récupérer les valeurs arrivant en retard dès qu'elles existent, les doublons sont acceptables | `Décalage de l'heure de début` négatif                        |
-| Il faut éviter les lectures en double, on peut attendre l'exécution suivante pour les valeurs déjà disponibles | `Décalage de l'heure de fin` négatif                          |
-| Les tableaux de bord doivent afficher les valeurs actuelles rapidement pendant un long rattrapage | `Stratégie de reprise` → `newest`                             |
-| Le rattrapage doit être sécurisé en cas de plantage avec un minimum de travail répété          | `Stratégie de reprise` → `oldest` (par défaut)                |
+| Objectif / symptôme                                                                                            | Ajuster                                                                    |
+| -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| La source expire ou manque de mémoire sur les requêtes larges                                                  | Réduire `Intervalle de lecture maximum`                                    |
+| Le rattrapage d'un retard important est dominé par les pauses, pas par les requêtes elles-mêmes                | Augmenter `Intervalle de lecture maximum` et/ou réduire `Délai de lecture` |
+| La source limite le débit, se dégrade ou renvoie des erreurs sous interrogation répétée                        | Augmenter `Délai de lecture`                                               |
+| Besoin de récupérer les valeurs arrivant en retard dès qu'elles existent, les doublons sont acceptables        | `Décalage de l'heure de début` négatif                                     |
+| Il faut éviter les lectures en double, on peut attendre l'exécution suivante pour les valeurs déjà disponibles | `Décalage de l'heure de fin` négatif                                       |
+| Les tableaux de bord doivent afficher les valeurs actuelles rapidement pendant un long rattrapage              | `Stratégie de reprise` → `newest`                                          |
+| Le rattrapage doit être sécurisé en cas de plantage avec un minimum de travail répété                          | `Stratégie de reprise` → `oldest` (par défaut)                             |

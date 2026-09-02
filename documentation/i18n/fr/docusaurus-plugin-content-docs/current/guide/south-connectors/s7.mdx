@@ -1,0 +1,86 @@
+---
+sidebar_position: 21
+---
+
+# Siemens S7
+
+Le connecteur South S7 lit directement les données des automates Siemens S7-200/300/400/1200/1500 via
+**ISO-on-TCP** (RFC1006), en utilisant le protocole de communication Siemens S7. Il interroge la mémoire de
+l'automate (blocs de données, entrées, sorties, mémentos, temporisateurs, compteurs) à chaque déclenchement du
+mode de scan, sans passer par un serveur OPC ni un agent séparé.
+
+OIBus utilise la bibliothèque [nodes7](https://github.com/st-one-io/nodes7) pour communiquer avec l'automate.
+
+:::warning Connecteur bêta
+Ce connecteur est en **bêta**. Testez-le minutieusement avec votre modèle d'automate et son firmware avant de vous
+y fier en production.
+:::
+
+## Paramètres spécifiques {#specific-settings}
+
+| Paramètre                      | Description                                                                                                                                                                                                                                                                       | Exemple de valeur |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Hôte**                       | Adresse IP ou nom d'hôte de l'automate.                                                                                                                                                                                                                                           | `192.168.1.100`   |
+| **Port**                       | Port ISO-on-TCP à utiliser (502 est utilisé par certaines passerelles, mais les automates Siemens utilisent généralement `102`).                                                                                                                                                  | `102`             |
+| **Type de connexion**          | L'identité TSAP (Transport Service Access Point) qu'OIBus présente à l'automate : `PG` (poste de programmation), `OP` (pupitre opérateur), ou `S7 Basic`. Doit correspondre à un type de connexion autorisé par les paramètres de sécurité/mécanismes de connexion de l'automate. | `S7 Basic`        |
+| **Rack**                       | Numéro du rack occupé par la CPU sur son châssis. Généralement `0` pour les S7-1200/1500 et les CPU autonomes.                                                                                                                                                                    | `0`               |
+| **Slot**                       | Numéro de l'emplacement (slot) occupé par la CPU sur son rack. Généralement `1` pour les S7-1200/1500, souvent `2` pour les S7-300/400.                                                                                                                                           | `1`               |
+| **Délai de connexion**         | Temps maximal (en millisecondes) à attendre lors de l'établissement de la connexion.                                                                                                                                                                                              | `10000`           |
+| **Délai de requête**           | Temps maximal (en millisecondes) à attendre pour la réponse à une requête de lecture.                                                                                                                                                                                             | `15000`           |
+| **Intervalle de nouvel essai** | Temps d'attente (en millisecondes) avant de retenter la connexion après un échec de connexion ou une déconnexion inattendue.                                                                                                                                                      | `10000`           |
+
+:::tip Type de connexion, rack et slot
+Sur les CPU S7-1200/1500, les paramètres **Protection & Security &gt; Connection mechanisms** de TIA Portal
+contrôlent quels types de connexion (PG/OP/S7 Basic) sont autorisés — si OIBus ne parvient pas à se connecter,
+vérifiez que le **Type de connexion** sélectionné y est autorisé. **Rack**/**Slot** dépendent du modèle de la
+CPU et de son emplacement physique/virtuel ; consultez la documentation de votre automate si les valeurs par
+défaut ne fonctionnent pas.
+:::
+
+## Paramètres des éléments {#item-settings}
+
+Chaque élément possède un unique paramètre **Adresse**, utilisant la syntaxe d'adressage de nodes7 :
+
+| Paramètre   | Description                                                                                      | Exemple de valeur |
+| ----------- | ------------------------------------------------------------------------------------------------ | ----------------- |
+| **Adresse** | L'adresse mémoire de l'automate à lire, utilisant la syntaxe d'adressage de nodes7 (ci-dessous). | `DB1,REAL0`       |
+
+### Syntaxe d'adressage {#address-syntax}
+
+Une adresse a la forme `[DB<n>,]<type><offset>[.<bitOrArrayLength>][.<arrayLength>]` :
+
+- **`DB<n>,`** — préfixe requis pour adresser un bloc de données (par exemple `DB1,`) ; omettez-le pour adresser
+  à la place une zone de mémoire globale de l'automate (voir ci-dessous).
+- **`<type>`** — le type de donnée à lire à cet offset. Types courants : `X` (bit unique — nécessite un offset de
+  bit), `BYTE`/`B`, `INT`/`I`, `DINT`/`DI`, `WORD`/`W`, `DWORD`/`D`, `REAL`/`R`, `CHAR`/`C`, `STRING`/`S`.
+- **`<offset>`** — l'offset en octets au sein du bloc de données ou de la zone de mémoire.
+- **`.<bitOrArrayLength>`** — pour `X`, l'offset de bit (`0`–`7`) ; pour les autres types, une longueur de
+  tableau optionnelle pour lire plusieurs valeurs consécutives sous forme de tableau.
+
+En dehors d'un bloc de données, la même syntaxe `<type><offset>` s'applique aux zones de mémoire de l'automate,
+identifiées par leur propre lettre initiale : `M`/`MB`/`MW`/`MD`/`MR` (mémentos — bits, octets, mots, doubles
+mots, réels), `I`/`E` (entrées), `Q`/`A` (sorties), `T` (temporisateurs), `C` (compteurs).
+
+| Adresse        | Signification                                                           |
+| -------------- | ----------------------------------------------------------------------- |
+| `DB1,REAL0`    | Un unique `REAL` (flottant) à l'offset d'octet 0 du bloc de données 1.  |
+| `DB1,INT2`     | Un unique `INT` à l'offset d'octet 2 du bloc de données 1.              |
+| `DB1,X4.0`     | Un unique bit à l'offset d'octet 4, bit 0, du bloc de données 1.        |
+| `DB1,REAL0.20` | Un tableau de 20 valeurs `REAL` démarrant à l'offset d'octet 0.         |
+| `M32.2`        | Un unique bit à l'offset d'octet 32, bit 2, de la mémoire des mémentos. |
+| `MR4`          | Un unique `REAL` à l'offset d'octet 4 de la mémoire des mémentos.       |
+
+Consultez le [README de nodes7](https://github.com/st-one-io/nodes7#usage-example) pour la grammaire d'adressage
+complète, incluant les temporisateurs, les compteurs et les types chaîne.
+
+:::note Les valeurs sont lues sous forme de texte
+Quel que soit le type de donnée de l'automate, OIBus rapporte la valeur de chaque élément S7 sous forme de
+chaîne de caractères (par exemple `"3.14"`, `"true"`). Tenez-en compte lors de la configuration des
+transformateurs ou des connecteurs North en aval.
+:::
+
+## Stratégie de mise en cache {#caching-strategy}
+
+Comme les autres connecteurs de la famille IoT, les éléments S7 prennent en charge une
+[stratégie de mise en cache](./common-settings.md#caching-strategy) par élément (`All values`, `On change`,
+`Threshold`) pour filtrer les lectures effectivement mises en cache et transmises.

@@ -18,11 +18,11 @@ partager une planification et une configuration de limitation (throttling) commu
 
 ## Paramètres généraux {#general-settings}
 
-| Paramètre        | Description                                                                     | Exemple de valeur      |
-| ----------------- | ----------------------------------------------------------------------------------- | ------------------------ |
-| **Nom**           | Libellé convivial pour une identification facile.                                   | `My MSSQL Connector`     |
-| **Description**   | Contexte optionnel (détails de connexion, droits d'accès, caractéristiques uniques). | `Production database`    |
-| **Activé**        | Active/désactive le connecteur depuis la liste ou sa page d'affichage.              | Activé/Désactivé          |
+| Paramètre       | Description                                                                          | Exemple de valeur     |
+| --------------- | ------------------------------------------------------------------------------------ | --------------------- |
+| **Nom**         | Libellé convivial pour une identification facile.                                    | `My MSSQL Connector`  |
+| **Description** | Contexte optionnel (détails de connexion, droits d'accès, caractéristiques uniques). | `Production database` |
+| **Activé**      | Active/désactive le connecteur depuis la liste ou sa page d'affichage.               | Activé/Désactivé      |
 
 ## Section spécifique {#specific-section}
 
@@ -38,11 +38,12 @@ Utilisez le bouton **Tester les paramètres** pour vérifier votre configuration
 
 Un groupe regroupe des éléments qui partagent la même planification de collecte. Chaque groupe possède :
 
-| Paramètre      | Description                                                                                       | Exemple de valeur |
-| --------------- | ------------------------------------------------------------------------------------------------------ | -------------------- |
-| **Nom**         | Libellé unique pour le groupe au sein de ce connecteur.                                                | `Group A`             |
-| **Mode de scan**| Planification utilisée pour collecter les données de tous les éléments du groupe.                      | `Every 1 min`         |
-| **Limitation**  | _(connecteurs compatibles historique uniquement)_ Paramètres de limitation par défaut hérités par les éléments du groupe. | `3600, 200, 0` |
+| Paramètre                      | Description                                                                                                                                                                                    | Exemple de valeur |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Nom**                        | Libellé unique pour le groupe au sein de ce connecteur.                                                                                                                                        | `Group A`         |
+| **Mode de scan**               | Planification utilisée pour collecter les données de tous les éléments du groupe.                                                                                                              | `Every 1 min`     |
+| **Limitation**                 | _(connecteurs compatibles historique uniquement)_ Paramètres de limitation par défaut hérités par les éléments du groupe.                                                                      | `3600, 200, 0`    |
+| **Stratégie de mise en cache** | _(connecteurs de la famille IoT uniquement)_ Stratégie de mise en cache par défaut héritée par les éléments synchronisés avec le groupe. Voir [Stratégie de mise en cache](#caching-strategy). | `On change`       |
 
 Les éléments assignés à un groupe héritent de son mode de scan. Pour les connecteurs compatibles historique, les
 éléments héritent également par défaut des paramètres de limitation du groupe (intervalle de lecture maximum, délai
@@ -94,19 +95,20 @@ pas configurable.
 Les éléments récupèrent les données sous forme de fichiers ou de payloads JSON. Chaque élément possède les champs
 suivants :
 
-| Paramètre                       | Description                                                                                                                              | Exemple de valeur       |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| **Nom**                          | Référence unique utilisée par les connecteurs North et les transformateurs pour identifier ce point de données.                          | `Temperature_Sensor1`      |
-| **Groupe**                        | Le groupe auquel cet élément appartient. Laissez vide pour un élément autonome avec son propre mode de scan.                             | `Group A`                  |
-| **Mode de scan**                  | Planification qui détermine quand OIBus collecte les données. Affiché uniquement lorsque l'élément n'a pas de groupe (sinon hérité du groupe). | `Every 1 min`         |
-| **Activé**                        | Indique si l'élément est actif.                                                                                                           | Activé/Désactivé            |
-| **Synchroniser avec le groupe**   | _(connecteurs compatibles historique uniquement)_ Lorsque activé, les paramètres de limitation sont hérités du groupe.                   | Activé/Désactivé            |
-| **Intervalle de lecture maximum** | _(connecteurs compatibles historique)_ Durée maximale d'une sous-requête en secondes.                                                     | `3600`                     |
-| **Délai de lecture**              | _(connecteurs compatibles historique)_ Pause en millisecondes entre les sous-requêtes consécutives.                                       | `200`                      |
-| **Décalage de l'heure de début**  | _(connecteurs compatibles historique)_ Millisecondes ajoutées à `@StartTime`. Des valeurs négatives l'avancent pour capturer les données arrivées en retard. | `-60000`      |
-| **Décalage de l'heure de fin**    | _(connecteurs compatibles historique)_ Millisecondes ajoutées à `@EndTime`. Des valeurs négatives l'avancent.                             | `0`                         |
-| **Stratégie de récupération**     | _(connecteurs compatibles historique)_ Ordre dans lequel un arriéré de sous-intervalles non interrogés est rattrapé : du plus ancien au plus récent (par défaut) ou l'inverse. | `From oldest to newest` |
-| **Paramètres spécifiques**        | Varie selon le type de connecteur — voir la documentation de chaque connecteur.                                                            | —                           |
+| Paramètre                         | Description                                                                                                                                                                                                 | Exemple de valeur       |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| **Nom**                           | Référence unique utilisée par les connecteurs North et les transformateurs pour identifier ce point de données.                                                                                             | `Temperature_Sensor1`   |
+| **Groupe**                        | Le groupe auquel cet élément appartient. Laissez vide pour un élément autonome avec son propre mode de scan.                                                                                                | `Group A`               |
+| **Mode de scan**                  | Planification qui détermine quand OIBus collecte les données. Affiché uniquement lorsque l'élément n'a pas de groupe (sinon hérité du groupe).                                                              | `Every 1 min`           |
+| **Activé**                        | Indique si l'élément est actif.                                                                                                                                                                             | Activé/Désactivé        |
+| **Synchroniser avec le groupe**   | _(connecteurs compatibles historique uniquement)_ Lorsque activé, les paramètres de limitation sont hérités du groupe.                                                                                      | Activé/Désactivé        |
+| **Intervalle de lecture maximum** | _(connecteurs compatibles historique)_ Durée maximale d'une sous-requête en secondes.                                                                                                                       | `3600`                  |
+| **Délai de lecture**              | _(connecteurs compatibles historique)_ Pause en millisecondes entre les sous-requêtes consécutives.                                                                                                         | `200`                   |
+| **Décalage de l'heure de début**  | _(connecteurs compatibles historique)_ Millisecondes ajoutées à `@StartTime`. Des valeurs négatives l'avancent pour capturer les données arrivées en retard.                                                | `-60000`                |
+| **Décalage de l'heure de fin**    | _(connecteurs compatibles historique)_ Millisecondes ajoutées à `@EndTime`. Des valeurs négatives l'avancent.                                                                                               | `0`                     |
+| **Stratégie de récupération**     | _(connecteurs compatibles historique)_ Ordre dans lequel un arriéré de sous-intervalles non interrogés est rattrapé : du plus ancien au plus récent (par défaut) ou l'inverse.                              | `From oldest to newest` |
+| **Stratégie de mise en cache**    | _(connecteurs de la famille IoT uniquement)_ Filtre les valeurs collectées qui sont effectivement mises en cache et transmises aux connecteurs North. Voir [Stratégie de mise en cache](#caching-strategy). | `On change`             |
+| **Paramètres spécifiques**        | Varie selon le type de connecteur — voir la documentation de chaque connecteur.                                                                                                                             | —                       |
 
 > Pour des conseils sur le dimensionnement de **l'intervalle de lecture maximum**, du **délai de lecture**, du
 > **décalage de l'heure de début** et du **décalage de l'heure de fin** — avec des exemples concrets pour de gros
@@ -139,6 +141,46 @@ suivants :
 
 ---
 
+## Stratégie de mise en cache {#caching-strategy}
+
+Pour les **connecteurs de la famille IoT** (OPC UA, Modbus, ADS, OPC Classic, S7, MQTT), chaque élément peut filtrer
+les valeurs collectées qui sont effectivement mises en cache et transmises aux connecteurs North, au lieu de mettre
+en cache chaque valeur lue ou reçue. Cela réduit la taille du cache et la charge sur le connecteur North pour les
+points stables ou qui évoluent lentement.
+
+| Paramètre                               | Description                                                                                                                                                                                                                                                                                                                                                                                                                     | Exemple de valeur |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Stratégie de mise en cache**          | `All values` (par défaut) : met en cache chaque valeur. `On change` : ne met en cache que lorsque la valeur diffère de la dernière valeur mise en cache. `Threshold` : ne met en cache que lorsque la valeur varie de plus d'un montant configuré. Lorsqu'elle n'est pas définie sur un élément synchronisé avec un groupe, l'élément hérite de la stratégie de mise en cache du groupe.                                        | `On change`       |
+| **Type de seuil**                       | _(stratégie Threshold uniquement)_ `Absolute` : compare la différence numérique brute. `Percentage` : compare la différence sous forme de pourcentage d'une plage configurée.                                                                                                                                                                                                                                                   | `Percentage`      |
+| **Seuil**                               | _(stratégie Threshold uniquement)_ Le changement minimal requis pour mettre en cache une nouvelle valeur — interprété comme une différence absolue ou un pourcentage de la plage, selon le **Type de seuil**.                                                                                                                                                                                                                   | `5`               |
+| **Plage basse** / **Plage haute**       | _(stratégie Threshold, type pourcentage uniquement)_ La borne inférieure/supérieure attendue de la valeur, utilisée pour calculer l'étendue en pourcentage par rapport à laquelle le seuil est mesuré.                                                                                                                                                                                                                          | `0` / `100`       |
+| **Intervalle de mise en cache maximum** | _(non affiché pour « All values »)_ Signal de vie (heartbeat) optionnel, en millisecondes. Même si une valeur ne remplit pas les conditions de **On change** ou **Threshold**, elle est tout de même mise en cache une fois ce délai écoulé depuis la dernière valeur mise en cache — de sorte qu'un point stable produit tout de même des données périodiques prouvant qu'il est toujours actif. Laisser vide pour désactiver. | `3600000`         |
+
+Contrairement aux paramètres de planification, le **Type de seuil**, le **Seuil**, la **Plage basse**/**Plage
+haute**, et l'**Intervalle de mise en cache maximum** sont toujours configurés sur l'élément lui-même — ils ne sont
+jamais hérités d'un groupe, même lorsque la **Stratégie de mise en cache** de l'élément l'est.
+
+:::note Non disponible pour tous les connecteurs
+La stratégie **Threshold** n'est pas proposée pour les éléments MQTT, car les payloads MQTT ne sont pas garantis
+d'être numériques. **On change** compare les valeurs par égalité profonde à la place, ce qui fonctionne pour
+n'importe quelle forme de payload.
+:::
+
+:::tip La première valeur est toujours mise en cache
+La première valeur collectée pour un élément — ou la première collectée à nouveau après la disparition de son état
+de comparaison en cache (par exemple, l'élément a été supprimé puis recréé) — est toujours mise en cache, puisqu'il
+n'y a encore rien avec quoi la comparer. Cet état de comparaison est persisté, il survit donc aux redémarrages
+d'OIBus au lieu d'être réinitialisé à chaque reconnexion.
+:::
+
+Les groupes peuvent également se voir attribuer une **Stratégie de mise en cache**, que les éléments synchronisés
+avec le groupe utilisent par défaut. Les champs spécifiques au seuil, en revanche, ne sont jamais hérités : si la
+stratégie de mise en cache d'un groupe est **Threshold**, chaque élément synchronisé doit tout de même configurer
+son propre **Type de seuil**/**Seuil**/**Plage** — les laisser non définis revient à un seuil absolu de `0` (c'est-à-dire
+que tout changement est mis en cache).
+
+---
+
 ## Suivi de l'instant maximum {#max-instant-tracking}
 
 Les connecteurs South compatibles historique suivent le dernier horodatage récupéré avec succès (l'_instant
@@ -165,13 +207,13 @@ le nouveau groupe.
 
 ### Comportement lors des changements de configuration {#behaviour-when-configuration-changes}
 
-| Action                              | Effet sur l'instant maximum                                                                                                                                                                                                                              |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Changer le groupe de l'élément       | Un élément déjà indépendant conserve son propre instant suivi. Un élément quittant un groupe partagé reprend l'instant suivi de ce groupe pour son propre suivi (voir l'astuce ci-dessus). Passer entre deux groupes synchronisés continue d'utiliser un instant partagé tout du long. |
-| Changer le mode de scan du groupe    | Le(s) instant(s) suivi(s) — par élément ou partagé — sont conservés sous le nouveau mode de scan.                                                                                                                                                        |
-| Supprimer un groupe                  | Les éléments deviennent non assignés. Un élément qui était indépendant conserve son propre instant suivi ; un élément synchronisé avec le groupe reprend l'instant suivi partagé pour son propre suivi.                                                  |
-| Supprimer un élément                 | Son propre instant suivi est supprimé ; un instant de groupe partagé n'est pas affecté tant que d'autres éléments restent dans le groupe.                                                                                                                |
-| Supprimer le connecteur              | Tous les éléments, groupes et instants suivis sont supprimés.                                                                                                                                                                                             |
+| Action                            | Effet sur l'instant maximum                                                                                                                                                                                                                                                            |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Changer le groupe de l'élément    | Un élément déjà indépendant conserve son propre instant suivi. Un élément quittant un groupe partagé reprend l'instant suivi de ce groupe pour son propre suivi (voir l'astuce ci-dessus). Passer entre deux groupes synchronisés continue d'utiliser un instant partagé tout du long. |
+| Changer le mode de scan du groupe | Le(s) instant(s) suivi(s) — par élément ou partagé — sont conservés sous le nouveau mode de scan.                                                                                                                                                                                      |
+| Supprimer un groupe               | Les éléments deviennent non assignés. Un élément qui était indépendant conserve son propre instant suivi ; un élément synchronisé avec le groupe reprend l'instant suivi partagé pour son propre suivi.                                                                                |
+| Supprimer un élément              | Son propre instant suivi est supprimé ; un instant de groupe partagé n'est pas affecté tant que d'autres éléments restent dans le groupe.                                                                                                                                              |
+| Supprimer le connecteur           | Tous les éléments, groupes et instants suivis sont supprimés.                                                                                                                                                                                                                          |
 
 :::warning Écarts et doublons de données lors du changement des paramètres de limitation
 Si vous modifiez l'intervalle de lecture maximum, le décalage de l'heure de début ou le décalage de l'heure de fin
@@ -184,13 +226,13 @@ actuel. Un décalage significativement différent peut provoquer de petits écar
 Cliquez sur l'icône **🔍** sur n'importe quelle ligne d'élément pour ouvrir le panneau **Dernière valeur récupérée**.
 Il affiche :
 
-| Paramètre               | Description                                                                                                                                                                                                     | Exemple de valeur              |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| **Nom de l'élément**      | Nom de l'élément.                                                                                                                                                                                                | `Temperature_Sensor1`             |
-| **Groupe**                | Groupe auquel appartient cet élément, le cas échéant.                                                                                                                                                            | `Group A`                          |
-| **Heure de la requête**   | Horodatage de la dernière exécution de la requête pour cet élément.                                                                                                                                              | `2024-01-15T10:30:00.000Z`        |
-| **Instant suivi**         | L'_instant maximum_ stocké pour cet élément — utilisé comme `@StartTime` dans la prochaine requête. Vide si aucune requête n'a encore été exécutée.                                                             | `2024-01-15T10:29:55.000Z`        |
-| **Valeur**                | Le dernier résultat en cache. Pour les connecteurs basés sur fichiers : une liste de noms de fichiers et d'heures de modification. Pour les connecteurs d'historique : le payload JSON brut de la dernière sous-requête. Vide si aucune donnée n'a encore été récupérée. | `[{"file": "data.csv", ...}]` |
+| Paramètre               | Description                                                                                                                                                                                                                                                              | Exemple de valeur             |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------- |
+| **Nom de l'élément**    | Nom de l'élément.                                                                                                                                                                                                                                                        | `Temperature_Sensor1`         |
+| **Groupe**              | Groupe auquel appartient cet élément, le cas échéant.                                                                                                                                                                                                                    | `Group A`                     |
+| **Heure de la requête** | Horodatage de la dernière exécution de la requête pour cet élément.                                                                                                                                                                                                      | `2024-01-15T10:30:00.000Z`    |
+| **Instant suivi**       | L'_instant maximum_ stocké pour cet élément — utilisé comme `@StartTime` dans la prochaine requête. Vide si aucune requête n'a encore été exécutée.                                                                                                                      | `2024-01-15T10:29:55.000Z`    |
+| **Valeur**              | Le dernier résultat en cache. Pour les connecteurs basés sur fichiers : une liste de noms de fichiers et d'heures de modification. Pour les connecteurs d'historique : le payload JSON brut de la dernière sous-requête. Vide si aucune donnée n'a encore été récupérée. | `[{"file": "data.csv", ...}]` |
 
 Ce panneau est utile pour :
 
