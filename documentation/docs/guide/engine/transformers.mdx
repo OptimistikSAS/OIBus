@@ -60,13 +60,13 @@ the transformer's position in the list.
 Once a source is selected, the list is automatically filtered to show only compatible transformers. The available
 choices depend on the type of South connector chosen:
 
-| South connector type                                                            | Compatible standard transformers                                                           |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **OPC UA, OPC Classic, Modbus, ADS, OSIsoft PI, OIAnalytics** (PLC / historian) | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values |
-| **MQTT, REST, SFTP, FTP, Folder Scanner, ODBC, OLEDB** (file / query-based)     | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
-| **MySQL, PostgreSQL, MSSQL, Oracle, SQLite** (query-based, row-list output)     | CSV (from Record list)                                                                     |
-| **OIBus API**                                                                   | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
-| **OIAnalytics Setpoint**                                                        | MQTT payloads, Modbus values, OPCUA values                                                 |
+| South connector type                                                                 | Compatible standard transformers                                                           |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| **OPC UA, OPC Classic, Modbus, ADS, S7, OSIsoft PI, OIAnalytics** (PLC / historian)  | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values |
+| **MQTT, REST, SFTP, FTP, Folder Scanner, ODBC, OLEDB** (file / query-based)          | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
+| **MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB** (query-based, row-list output) | CSV (from Record list)                                                                     |
+| **OIBus API**                                                                        | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON) |
+| **OIAnalytics Setpoint**                                                             | MQTT payloads, Modbus values, OPCUA values                                                 |
 
 Custom transformers are also shown in this list and are always named by the user. In addition, **Ignore** and
 **No transform** (see below) are available for every source type.
@@ -95,7 +95,7 @@ These two are available for **every** source type, regardless of content type, a
 ### For PLC and historian South connectors {#for-plc-and-historian-south-connectors}
 
 These transformers process the structured **time-value** arrays produced by connectors such as OPC UA, OPC Classic,
-Modbus, TwinCAT ADS, and OSIsoft PI.
+Modbus, TwinCAT ADS, Siemens S7, and OSIsoft PI.
 
 Each time-value object has this shape:
 
@@ -566,11 +566,12 @@ handles a single-metric message and a multi-metric message alike.
 
 ---
 
-### For SQL database South connectors {#for-sql-database-south-connectors}
+### For SQL database and MongoDB South connectors {#for-sql-database-and-mongodb-south-connectors}
 
-MySQL, PostgreSQL, MSSQL, Oracle, and SQLite South connectors don't serialize their query results themselves —
-each row is sent downstream exactly as the database returned it, as **record-list** content (an array of flat
-row objects). Rendering that data into any other shape, including CSV, is the transformer's job.
+MySQL, PostgreSQL, MSSQL, Oracle, SQLite, and MongoDB South connectors don't serialize their query results
+themselves — each row (or document) is sent downstream exactly as the database returned it, as
+**record-list** content (an array of flat row objects). Rendering that data into any other shape, including
+CSV, is the transformer's job.
 
 ---
 
@@ -599,23 +600,23 @@ not covered by a field configuration is written out unchanged.
 
 Each entry in **Fields Mapping** targets one column, by its name in the source rows:
 
-| Setting                | Description                                                                                              |
-| ----------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Field Name**          | Name of the column to configure, matching a key in the source rows                                        |
-| **Column Name**         | Header for this column in the output CSV. Leave empty to keep the original field name.                    |
-| **Data Type**           | How to cast the value: `string`, `number`, `boolean`, `datetime`, `array`, or `object`                     |
-| **Field Process**       | Optional JavaScript expression applied after casting (e.g. `value.toUpperCase()`)                         |
-| **Datetime Settings**   | Shown only when Data Type is `datetime` — input/output type, timezone, format and locale (see below)      |
+| Setting               | Description                                                                                          |
+| --------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Field Name**        | Name of the column to configure, matching a key in the source rows                                   |
+| **Column Name**       | Header for this column in the output CSV. Leave empty to keep the original field name.               |
+| **Data Type**         | How to cast the value: `string`, `number`, `boolean`, `datetime`, `array`, or `object`               |
+| **Field Process**     | Optional JavaScript expression applied after casting (e.g. `value.toUpperCase()`)                    |
+| **Datetime Settings** | Shown only when Data Type is `datetime` — input/output type, timezone, format and locale (see below) |
 
 When **Data Type** is `datetime`, **Datetime Settings** describes how to parse the raw value and how to render
 it:
 
-| Setting                                     | Description                                                                          |
-| --------------------------------------------- | --------------------------------------------------------------------------------------- |
-| **Timestamp input type**                      | How to parse the raw value (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`)      |
-| **Input timezone / format / locale**          | Used to parse the raw value when its input type is `string`                             |
-| **Timestamp output type**                     | How to render the value (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`)          |
-| **Output timezone / format / locale**         | Used to render the value when its output type is `string`                              |
+| Setting                               | Description                                                                        |
+| ------------------------------------- | ---------------------------------------------------------------------------------- |
+| **Timestamp input type**              | How to parse the raw value (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`) |
+| **Input timezone / format / locale**  | Used to parse the raw value when its input type is `string`                        |
+| **Timestamp output type**             | How to render the value (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`)    |
+| **Output timezone / format / locale** | Used to render the value when its output type is `string`                          |
 
 ##### Example {#example-7}
 

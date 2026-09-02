@@ -1,0 +1,56 @@
+---
+sidebar_position: 7
+---
+
+# Piste d'audit
+
+OIBus enregistre une entrée de journal d'audit chaque fois qu'une entité de configuration est créée, modifiée ou
+supprimée, afin que vous puissiez voir qui a changé quoi, et quand.
+
+## Ce qui est audité {#what-gets-audited}
+
+Chaque entrée du journal d'audit enregistre :
+
+| Champ                  | Description                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| **Type d'entité / ID** | Le type d'entité qui a changé, et son identifiant.                                                                        |
+| **Action**             | `Create`, `Update`, ou `Delete`.                                                                                          |
+| **Utilisateur**        | L'utilisateur qui a effectué le changement.                                                                               |
+| **Date**               | Le moment où le changement a été enregistré.                                                                              |
+| **Avant / Après**      | Un instantané JSON de l'entité avant et après le changement — avant est vide pour `Create`, après est vide pour `Delete`. |
+
+Les types d'entités suivants sont audités : connecteur South, élément South, groupe d'éléments South, connecteur
+North, transformateur North, requête d'historique, élément de requête d'historique, transformateur de requête
+d'historique, mode de scan, filtre IP, certificat, utilisateur, transformateur, moteur (Engine), et enregistrement
+OIAnalytics.
+
+## Consulter la piste d'audit {#viewing-the-audit-trail}
+
+### La page Audit {#the-audit-page}
+
+Ouvrez le menu du compte (en haut à droite) et sélectionnez **Audit** pour voir chaque entrée du journal d'audit
+sur l'ensemble de l'instance OIBus. Filtrez par **Type d'entité**, **Action**, et une plage de dates
+**Début**/**Fin**, puis cliquez sur l'icône 🔍 de n'importe quelle ligne pour ouvrir son historique complet.
+
+### Depuis la liste propre à une entité {#from-an-entitys-own-list}
+
+La plupart des pages de liste de configuration — South, North, Requêtes d'historique, Modes de scan, Filtres IP,
+Certificats, et Transformateurs — disposent également d'une icône d'audit sur chaque ligne, ouvrant directement
+l'historique propre à cette entité sans passer par la page Audit globale.
+
+## Lire une entrée d'historique {#reading-a-history-entry}
+
+La vue d'historique liste chaque changement enregistré pour l'entité, du plus récent au plus ancien. Développez une
+ligne pour voir ce qui a changé, selon l'un des trois modes (basculez entre eux avec le menu déroulant en haut) :
+
+| Mode                     | Description                                                                                           |
+| ------------------------ | ----------------------------------------------------------------------------------------------------- |
+| **Tableau** (par défaut) | Une ligne par champ, avec sa valeur **Avant** et **Après**. Les champs modifiés sont mis en évidence. |
+| **Diff JSON**            | Un diff unifié des deux instantanés JSON.                                                             |
+| **JSON côte à côte**     | Les deux instantanés JSON affichés côte à côte.                                                       |
+
+## Rétention {#retention}
+
+Les entrées du journal d'audit sont conservées pendant un nombre configurable de jours avant d'être
+automatiquement purgées — voir **Rétention du journal d'audit** sous
+[Paramètres de journalisation](./engine-settings.mdx#logging-parameters).

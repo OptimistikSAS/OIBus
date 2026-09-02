@@ -42,27 +42,29 @@ Cette conception modulaire simplifie l'évolutivité en centralisant la complexi
 
 OIBus prend en charge un large éventail de sources de données industrielles et métier, et sa nature open source permet une expansion continue :
 
-- **Systèmes industriels** : automates, systèmes de supervision, et historiens utilisant des protocoles comme OPC UA™, OPC Classic™, TwinCAT® ADS, et Modbus.
-- **Systèmes métier** : accès aux bases de données (Oracle Database™, Microsoft SQL Server™, PostgreSQL, MySQL®, MariaDB™, SQLite™) et récupération
+- **Systèmes industriels** : automates, systèmes de supervision, et historiens utilisant des protocoles comme OPC UA™, OPC Classic™, TwinCAT® ADS, Siemens S7™,
+  et Modbus.
+- **Systèmes métier** : accès aux bases de données (Oracle Database™, Microsoft SQL Server™, PostgreSQL, MySQL®, MariaDB™, SQLite™, MongoDB®) et récupération
   de fichiers (par ex. Excel, CSV).
 - **Capteurs IoT** : intégration avec des services de messagerie IoT (MQTT, API, etc.).
 
-| Protocole/Type          | Capacités d'historisation | Accès direct        | Cas d'usage typiques                      |
-| ------------------------ | -------------------------- | -------------------- | -------------------------------------------- |
-| OPC UA™                 | Oui                        | Oui                  | Automates, systèmes de supervision, historiens |
-| OPC Classic™            | Oui                        | Oui                  | Systèmes industriels hérités                 |
-| TwinCAT® ADS            | Non                        | Oui                  | Automates Beckhoff                           |
-| Modbus                  | Non                        | Oui                  | Automates, capteurs, appareils               |
-| MQTT                    | Limitée                    | Oui                  | Capteurs IoT, services de messagerie         |
-| REST API                | Dépend de l'API            | Dépend de l'API      | Services web, applications cloud             |
-| Bases de données SQL    | Oui                        | Non                  | Oracle, SQL Server, PostgreSQL, etc.         |
-| Récupération de fichiers, SFTP | Non                 | Oui                  | Excel, CSV, journaux                         |
+| Protocole/Type                 | Capacités d'historisation | Accès direct    | Cas d'usage typiques                           |
+| ------------------------------ | ------------------------- | --------------- | ---------------------------------------------- |
+| OPC UA™                        | Oui                       | Oui             | Automates, systèmes de supervision, historiens |
+| OPC Classic™                   | Oui                       | Oui             | Systèmes industriels hérités                   |
+| TwinCAT® ADS                   | Non                       | Oui             | Automates Beckhoff                             |
+| Siemens S7™                    | Non                       | Oui             | Automates Siemens                              |
+| Modbus                         | Non                       | Oui             | Automates, capteurs, appareils                 |
+| MQTT                           | Limitée                   | Oui             | Capteurs IoT, services de messagerie           |
+| REST API                       | Dépend de l'API           | Dépend de l'API | Services web, applications cloud               |
+| Bases de données SQL & NoSQL   | Oui                       | Non             | Oracle, SQL Server, PostgreSQL, MongoDB, etc.  |
+| Récupération de fichiers, SFTP | Non                       | Oui             | Excel, CSV, journaux                           |
 
 ### Applications cibles {#target-applications}
 
 OIBus transmet des données vers diverses destinations, notamment :
 
-- **Applications SaaS** : OIAnalytics®, Amazon S3™, Azure Blob Storage™, API REST, et plus encore.
+- **Applications SaaS** : OIAnalytics®, Amazon S3™, Azure Blob Storage™, Azure Data Explorer™, API REST, et plus encore.
 - **Plateformes IoT** : MQTT, API, et autres services de messagerie IoT.
 - **Systèmes industriels** : OPC UA™ et Modbus.
 

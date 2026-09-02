@@ -15,6 +15,7 @@ Only South connectors with historian capabilities support history queries:
 | Connector                                               |
 | ------------------------------------------------------- |
 | [InfluxDB](./south-connectors/influxdb.mdx)             |
+| [MongoDB](./south-connectors/mongodb.mdx)               |
 | [MSSQL](./south-connectors/mssql.mdx)                   |
 | [MySQL® / MariaDB™](./south-connectors/mysql.mdx)       |
 | [ODBC](./south-connectors/odbc.mdx)                     |
@@ -102,11 +103,36 @@ progress.
 
 ## Monitoring {#monitoring}
 
-The display page shows real-time metrics for both the South and North sides of the query:
+The display page shows real-time metrics for both the South and North sides of the query. What the South
+side reports depends on how the connector executes the query — as a whole range, or item by item.
 
-**South (retrieval) metrics:**
+**South (retrieval) metrics — batched connectors:**
 
-- Interval progress — current interval number out of total intervals
+Most connectors query their whole item/group range in one go, and report progress across that range as a
+whole:
+
+- Data retrieved — overall progress bar for the query
+- Interval progress — current sub-interval number out of the total, with its time window
+
+**South (retrieval) metrics — item-by-item connectors:**
+
+SQL and REST-based connectors (see [Compatible South Connectors](#compatible-south-connectors)) query
+their items one at a time, so progress is reported per item instead of for the whole range:
+
+- Items processed — name of the item currently being queried, and its position (`current / total`) among
+  all items, with a progress bar
+- Current item progress — the current item's own sub-interval progress, with its time window
+- An **Items status** table below the metrics, listing every item with its status (`Pending`, `Running`,
+  or `Done`), last value retrieved, and number of records retrieved so far
+
+:::tip Tracking progress from the list page
+The history queries list page also shows a `(current / total)` item-progress indicator next to a running
+query's status icon, without opening its display page.
+:::
+
+**South (retrieval) metrics — common to both:**
+
+- Values/files per second and estimated time remaining, while the query is running
 - Number of values and files retrieved
 - Last connection time
 - Last value retrieved (point ID, timestamp, data)
