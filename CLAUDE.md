@@ -42,7 +42,7 @@ All commands must be run from the relevant subdirectory (`backend/`, `frontend/`
 npm test
 
 # Run a single spec file
-node --import tsx --experimental-config-file=package.json --test src/path/to/file.spec.ts
+node --import tsx --experimental-config-file=test.config.json --test src/path/to/file.spec.ts
 
 # Lint
 npm run lint
