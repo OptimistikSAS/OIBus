@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { mock } from 'node:test';
 import { Database } from 'better-sqlite3';
 import SouthItemGroupRepository, { toSouthItemGroup } from './south-item-group.repository';
+import SouthConnectorRepository from './south-connector.repository';
 import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
 import { SouthItemGroupCommand } from '../../model/south-connector.model';
@@ -219,6 +220,49 @@ describe('South Item Group Repository', () => {
       assert.strictEqual(updated.scanMode.id, testData.scanMode.list[1].id);
       assert.strictEqual(updated.startTimeOffset, 15);
       assert.strictEqual(updated.southId, testData.south.list[0].id);
+    });
+
+    it('should cascade a group scan mode change to its synced member items', () => {
+      const southConnectorRepository = new SouthConnectorRepository(database);
+
+      const group = repository.create(
+        {
+          name: 'Cascade Group',
+          southId: testData.south.list[0].id,
+          scanMode: testData.scanMode.list[0],
+          startTimeOffset: null,
+          endTimeOffset: null,
+          maxReadInterval: null,
+          readDelay: 0
+        },
+        'userTest'
+      );
+
+      const existingItems = southConnectorRepository.findAllItemsForSouth(testData.south.list[0].id);
+      const itemToSync = existingItems[0];
+      southConnectorRepository.moveItemsToGroup([itemToSync.id], group.id);
+
+      const syncedItemBefore = southConnectorRepository.findItemById(testData.south.list[0].id, itemToSync.id);
+      assert.ok(syncedItemBefore);
+      assert.strictEqual(syncedItemBefore.scanMode!.id, testData.scanMode.list[0].id);
+
+      const updateCommand: Omit<SouthItemGroupCommand, 'southId'> = {
+        name: 'Cascade Group',
+        scanMode: testData.scanMode.list[1],
+        startTimeOffset: null,
+        endTimeOffset: null,
+        maxReadInterval: null,
+        readDelay: 0
+      };
+      repository.update(group.id, updateCommand, 'userTest');
+
+      const syncedItemAfter = southConnectorRepository.findItemById(testData.south.list[0].id, itemToSync.id);
+      assert.ok(syncedItemAfter);
+      assert.strictEqual(
+        syncedItemAfter.scanMode!.id,
+        testData.scanMode.list[1].id,
+        "member item's own scan_mode_id must follow the group's, otherwise it keeps a stale FK to the old scan mode"
+      );
     });
 
     it('should update a group with null startTimeOffset', () => {

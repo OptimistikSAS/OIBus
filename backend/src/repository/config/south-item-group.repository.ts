@@ -78,19 +78,29 @@ export default class SouthItemGroupRepository {
     const query = `UPDATE ${SOUTH_ITEM_GROUPS_TABLE}
       SET name = ?, scan_mode_id = ?, start_time_offset = ?, end_time_offset = ?, max_read_interval = ?, read_delay = ?, recovery_strategy = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
       WHERE id = ?;`;
-    this.database
-      .prepare(query)
-      .run(
-        command.name,
-        command.scanMode.id,
-        command.startTimeOffset ?? null,
-        command.endTimeOffset ?? null,
-        command.maxReadInterval ?? null,
-        command.readDelay,
-        command.recoveryStrategy ?? null,
-        updatedBy,
-        id
-      );
+    // Also update scan_mode_id on the member items themselves: it is unused for scheduling while an item
+    // is synced with its group (south-connector.ts prefers item.group.scanMode), but it stays in the DB as
+    // a real FK to scan_modes, so it must be kept in sync or it silently blocks deleting the old scan mode.
+    const cascadeQuery = `UPDATE ${SOUTH_ITEMS_TABLE}
+      SET scan_mode_id = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+      WHERE sync_with_group = 1 AND id IN (SELECT item_id FROM ${GROUP_ITEMS_TABLE} WHERE group_id = ?);`;
+    const transaction = this.database.transaction(() => {
+      this.database
+        .prepare(query)
+        .run(
+          command.name,
+          command.scanMode.id,
+          command.startTimeOffset ?? null,
+          command.endTimeOffset ?? null,
+          command.maxReadInterval ?? null,
+          command.readDelay,
+          command.recoveryStrategy ?? null,
+          updatedBy,
+          id
+        );
+      this.database.prepare(cascadeQuery).run(command.scanMode.id, updatedBy, id);
+    });
+    transaction();
   }
 
   delete(id: string): void {
