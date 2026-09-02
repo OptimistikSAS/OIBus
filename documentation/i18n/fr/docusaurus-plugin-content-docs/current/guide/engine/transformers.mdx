@@ -24,21 +24,21 @@ la configuration.
 
 Choisissez d'où proviennent les données.
 
-| Source                   | Description                                                                                                                    |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Connecteur South**       | Données collectées par l'un des connecteurs South configurés                                                                    |
-| **API OIBus**            | Données envoyées à OIBus via l'API REST. Nécessite une chaîne **Data Source ID** pour identifier le système d'origine        |
-| **Consigne OIAnalytics** | Commandes d'écriture (write-back) envoyées depuis OIAnalytics                                                                 |
+| Source                   | Description                                                                                                           |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| **Connecteur South**     | Données collectées par l'un des connecteurs South configurés                                                          |
+| **API OIBus**            | Données envoyées à OIBus via l'API REST. Nécessite une chaîne **Data Source ID** pour identifier le système d'origine |
+| **Consigne OIAnalytics** | Commandes d'écriture (write-back) envoyées depuis OIAnalytics                                                         |
 
 ### 2 — Portée des éléments (connecteurs South uniquement) {#2--item-scope-south-connectors-only}
 
 Lorsque la source est un connecteur South, vous pouvez restreindre les éléments auxquels le transformateur s'applique.
 
-| Portée                | Description                                                                       |
-| ---------------------- | ---------------------------------------------------------------------------------- |
-| **Tous les éléments**  | Chaque élément du connecteur South sélectionné passe par ce transformateur          |
-| **Par groupe**         | Seuls les éléments appartenant à un groupe spécifique sont traités                |
-| **Éléments spécifiques** | Sélectionnez individuellement des éléments dans la liste de recherche           |
+| Portée                   | Description                                                                |
+| ------------------------ | -------------------------------------------------------------------------- |
+| **Tous les éléments**    | Chaque élément du connecteur South sélectionné passe par ce transformateur |
+| **Par groupe**           | Seuls les éléments appartenant à un groupe spécifique sont traités         |
+| **Éléments spécifiques** | Sélectionnez individuellement des éléments dans la liste de recherche      |
 
 :::tip
 Un même connecteur North peut avoir **plusieurs transformateurs** avec des sources et des portées différentes. Cela
@@ -65,13 +65,13 @@ niveau sont départagées par la position du transformateur dans la liste.
 Une fois une source sélectionnée, la liste est automatiquement filtrée pour n'afficher que les transformateurs
 compatibles. Les choix disponibles dépendent du type de connecteur South choisi :
 
-| Type de connecteur South                                                          | Transformateurs standard compatibles                                                        |
-| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **OPC UA, OPC Classic, Modbus, ADS, OSIsoft PI, OIAnalytics** (automate / historien) | CSV, JSON, payloads MQTT, valeurs Modbus, OIAnalytics (sélection de la précision temporelle), valeurs OPCUA |
-| **MQTT, REST, SFTP, FTP, Folder Scanner, ODBC, OLEDB** (fichier / requête)        | Time Values (depuis CSV), payloads MQTT (depuis CSV), CSV (depuis JSON), OIAnalytics (depuis JSON) |
-| **MySQL, PostgreSQL, MSSQL, Oracle, SQLite** (basé requête, sortie liste de lignes) | CSV (depuis liste d'enregistrements)                                                        |
-| **API OIBus**                                                                     | Time Values (depuis CSV), payloads MQTT (depuis CSV), CSV (depuis JSON), OIAnalytics (depuis JSON) |
-| **Consigne OIAnalytics**                                                          | Payloads MQTT, valeurs Modbus, valeurs OPCUA                                                |
+| Type de connecteur South                                                                     | Transformateurs standard compatibles                                                                        |
+| -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **OPC UA, OPC Classic, Modbus, ADS, S7, OSIsoft PI, OIAnalytics** (automate / historien)     | CSV, JSON, payloads MQTT, valeurs Modbus, OIAnalytics (sélection de la précision temporelle), valeurs OPCUA |
+| **MQTT, REST, SFTP, FTP, Folder Scanner, ODBC, OLEDB** (fichier / requête)                   | Time Values (depuis CSV), payloads MQTT (depuis CSV), CSV (depuis JSON), OIAnalytics (depuis JSON)          |
+| **MySQL, PostgreSQL, MSSQL, Oracle, SQLite, MongoDB** (basé requête, sortie liste de lignes) | CSV (depuis liste d'enregistrements)                                                                        |
+| **API OIBus**                                                                                | Time Values (depuis CSV), payloads MQTT (depuis CSV), CSV (depuis JSON), OIAnalytics (depuis JSON)          |
+| **Consigne OIAnalytics**                                                                     | Payloads MQTT, valeurs Modbus, valeurs OPCUA                                                                |
 
 Les transformateurs personnalisés apparaissent également dans cette liste et sont toujours nommés par l'utilisateur.
 De plus, **Ignore** et **No transform** (voir ci-dessous) sont disponibles pour chaque type de source.
@@ -91,17 +91,17 @@ Les transformateurs standard sont intégrés et nécessitent seulement une confi
 Ces deux transformateurs sont disponibles pour **tous** les types de source, quel que soit le type de contenu, et ne
 nécessitent aucune configuration.
 
-| Transformateur    | Comportement                                                                                                                                                                                                       |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Ignore**         | Rejette les données. Rien n'est mis en cache et rien n'est envoyé au connecteur North. Utile pour faire taire une partie de la sortie d'un connecteur South pour un North donné (via la portée élément/groupe) sans désactiver l'élément lui-même. |
-| **No transform**   | Met en cache les données exactement telles que reçues, sans aucune conversion. Utilisez ceci lorsque le connecteur North accepte déjà le type de contenu natif du South.                                          |
+| Transformateur   | Comportement                                                                                                                                                                                                                                       |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ignore**       | Rejette les données. Rien n'est mis en cache et rien n'est envoyé au connecteur North. Utile pour faire taire une partie de la sortie d'un connecteur South pour un North donné (via la portée élément/groupe) sans désactiver l'élément lui-même. |
+| **No transform** | Met en cache les données exactement telles que reçues, sans aucune conversion. Utilisez ceci lorsque le connecteur North accepte déjà le type de contenu natif du South.                                                                           |
 
 ---
 
 ### Pour les connecteurs South automate et historien {#for-plc-and-historian-south-connectors}
 
 Ces transformateurs traitent les tableaux structurés **time-value** produits par des connecteurs tels que OPC UA, OPC
-Classic, Modbus, TwinCAT ADS et OSIsoft PI.
+Classic, Modbus, TwinCAT ADS, Siemens S7 et OSIsoft PI.
 
 Chaque objet time-value a cette forme :
 
@@ -119,24 +119,24 @@ JavaScript facultatives par colonne permettent de transformer les valeurs indivi
 
 ##### Paramètres {#settings}
 
-| Paramètre               | Description                                                                                                                                                                                        |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Filename**           | Nom du fichier de sortie ; prend en charge `@CurrentDate` (horodatage UTC courant), et, pour un contenu provenant d'une requête historique South, `@QueryStartTime`/`@QueryEndTime` (la fenêtre temporelle interrogée, vide sinon) |
-| **Encoding**           | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, ou `UTF_16_LE`                                                                                                                                                    |
-| **Header**             | Inclure ou non la ligne d'en-tête des colonnes                                                                                                                                                     |
-| **Delimiter**          | Séparateur de colonnes                                                                                                                                                                             |
-| **Newline**            | Fin de ligne (`LF`, `CRLF`, `CR`)                                                                                                                                                                  |
-| **Quote char**         | `DOUBLE_QUOTE`, `SINGLE_QUOTE`, ou `NONE`                                                                                                                                                          |
-| **Escape char**        | `DOUBLE_QUOTE` ou `BACKSLASH`                                                                                                                                                                      |
-| **Point ID column**    | Libellé d'en-tête pour la colonne d'identifiant de point                                                                                                                                           |
-| **Value column**       | Libellé d'en-tête pour la colonne de valeur                                                                                                                                                        |
-| **Timestamp column**   | Libellé d'en-tête pour la colonne d'horodatage                                                                                                                                                     |
-| **Timestamp type**     | Format de sortie (`iso-string`, `unix-epoch`, `unix-epoch-ms`, `string`)                                                                                                                           |
-| **Timestamp format**   | Motif personnalisé lorsque le type est `string` (ex. `yyyy-MM-dd HH:mm:ss.SSS`)                                                                                                                    |
-| **Timezone**           | Fuseau horaire pour le formatage lorsque le type est `string`                                                                                                                                      |
-| **Point ID process**   | Expression JS facultative appliquée à chaque identifiant de point (variable : `value`)                                                                                                            |
-| **Value process**      | Expression JS facultative appliquée à chaque valeur (variable : `value`)                                                                                                                           |
-| **Timestamp process**  | Expression JS facultative appliquée à chaque horodatage formaté (variable : `value`)                                                                                                              |
+| Paramètre             | Description                                                                                                                                                                                                                        |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Filename**          | Nom du fichier de sortie ; prend en charge `@CurrentDate` (horodatage UTC courant), et, pour un contenu provenant d'une requête historique South, `@QueryStartTime`/`@QueryEndTime` (la fenêtre temporelle interrogée, vide sinon) |
+| **Encoding**          | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, ou `UTF_16_LE`                                                                                                                                                                                    |
+| **Header**            | Inclure ou non la ligne d'en-tête des colonnes                                                                                                                                                                                     |
+| **Delimiter**         | Séparateur de colonnes                                                                                                                                                                                                             |
+| **Newline**           | Fin de ligne (`LF`, `CRLF`, `CR`)                                                                                                                                                                                                  |
+| **Quote char**        | `DOUBLE_QUOTE`, `SINGLE_QUOTE`, ou `NONE`                                                                                                                                                                                          |
+| **Escape char**       | `DOUBLE_QUOTE` ou `BACKSLASH`                                                                                                                                                                                                      |
+| **Point ID column**   | Libellé d'en-tête pour la colonne d'identifiant de point                                                                                                                                                                           |
+| **Value column**      | Libellé d'en-tête pour la colonne de valeur                                                                                                                                                                                        |
+| **Timestamp column**  | Libellé d'en-tête pour la colonne d'horodatage                                                                                                                                                                                     |
+| **Timestamp type**    | Format de sortie (`iso-string`, `unix-epoch`, `unix-epoch-ms`, `string`)                                                                                                                                                           |
+| **Timestamp format**  | Motif personnalisé lorsque le type est `string` (ex. `yyyy-MM-dd HH:mm:ss.SSS`)                                                                                                                                                    |
+| **Timezone**          | Fuseau horaire pour le formatage lorsque le type est `string`                                                                                                                                                                      |
+| **Point ID process**  | Expression JS facultative appliquée à chaque identifiant de point (variable : `value`)                                                                                                                                             |
+| **Value process**     | Expression JS facultative appliquée à chaque valeur (variable : `value`)                                                                                                                                                           |
+| **Timestamp process** | Expression JS facultative appliquée à chaque horodatage formaté (variable : `value`)                                                                                                                                               |
 
 ##### Exemple {#example}
 
@@ -192,9 +192,9 @@ chaîne JSON contenant les champs `data` fusionnés avec le `timestamp`.
 
 ##### Paramètres {#settings-1}
 
-| Paramètre   | Description                              |
-| ----------- | ------------------------------------------ |
-| **Mapping** | Liste de paires `{ pointId, topic }`        |
+| Paramètre   | Description                          |
+| ----------- | ------------------------------------ |
+| **Mapping** | Liste de paires `{ pointId, topic }` |
 
 ##### Exemple {#example-2}
 
@@ -229,8 +229,8 @@ maintien. Les lectures sans correspondance sont rejetées.
 
 ##### Paramètres {#settings-2}
 
-| Paramètre   | Description                                                                             |
-| ----------- | ----------------------------------------------------------------------------------------- |
+| Paramètre   | Description                                                                              |
+| ----------- | ---------------------------------------------------------------------------------------- |
 | **Mapping** | Liste de paires `{ pointId, address, modbusType }` (`modbusType` : `coil` ou `register`) |
 
 ##### Exemple {#example-3}
@@ -265,9 +265,9 @@ transmis — les champs de qualité supplémentaires sont supprimés.
 
 ##### Paramètres {#settings-3}
 
-| Paramètre     | Description                                                     |
-| ------------- | ------------------------------------------------------------------ |
-| **Precision** | Précision de l'horodatage : `ms` (inchangé), `s`, `min`, ou `hr`   |
+| Paramètre     | Description                                                      |
+| ------------- | ---------------------------------------------------------------- |
+| **Precision** | Précision de l'horodatage : `ms` (inchangé), `s`, `min`, ou `hr` |
 
 ##### Exemple — Precision `s` {#example--precision-s}
 
@@ -292,9 +292,9 @@ node ID**. La valeur est transmise telle quelle. Les lectures sans correspondanc
 
 ##### Paramètres {#settings-4}
 
-| Paramètre   | Description                             |
-| ----------- | ------------------------------------------ |
-| **Mapping** | Liste de paires `{ pointId, nodeId }`       |
+| Paramètre   | Description                           |
+| ----------- | ------------------------------------- |
+| **Mapping** | Liste de paires `{ pointId, nodeId }` |
 
 ##### Exemple {#example-4}
 
@@ -334,16 +334,16 @@ d'horodatage brute en ISO-8601 selon le format configuré.
 
 ##### Paramètres {#settings-5}
 
-| Paramètre             | Description                                                                             |
-| -------------------- | ------------------------------------------------------------------------------------------- |
-| **Has header**        | Si la première ligne est une ligne d'en-tête                                               |
-| **Delimiter**         | Séparateur de colonnes (`COMMA`, `SEMI_COLON`, `TAB`, etc.)                                |
-| **Point ID column**   | Nom de colonne (mode en-tête) ou index de base zéro contenant l'identifiant de point       |
-| **Timestamp column**  | Nom de colonne ou index contenant l'horodatage                                             |
-| **Value column**      | Nom de colonne ou index contenant la valeur                                                |
-| **Timestamp type**    | Format de l'horodatage brut (`iso-string`, `unix-epoch`, `unix-epoch-ms`, `string`)         |
-| **Timezone**          | Fuseau horaire pour l'analyse (utilisé uniquement lorsque le type est `string`)             |
-| **Format**            | Motif de date/heure personnalisé (utilisé uniquement lorsque le type est `string`, ex. `yyyy-MM-dd HH:mm:ss`) |
+| Paramètre            | Description                                                                                                   |
+| -------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Has header**       | Si la première ligne est une ligne d'en-tête                                                                  |
+| **Delimiter**        | Séparateur de colonnes (`COMMA`, `SEMI_COLON`, `TAB`, etc.)                                                   |
+| **Point ID column**  | Nom de colonne (mode en-tête) ou index de base zéro contenant l'identifiant de point                          |
+| **Timestamp column** | Nom de colonne ou index contenant l'horodatage                                                                |
+| **Value column**     | Nom de colonne ou index contenant la valeur                                                                   |
+| **Timestamp type**   | Format de l'horodatage brut (`iso-string`, `unix-epoch`, `unix-epoch-ms`, `string`)                           |
+| **Timezone**         | Fuseau horaire pour l'analyse (utilisé uniquement lorsque le type est `string`)                               |
+| **Format**           | Motif de date/heure personnalisé (utilisé uniquement lorsque le type est `string`, ex. `yyyy-MM-dd HH:mm:ss`) |
 
 ##### Exemple {#example-5}
 
@@ -384,15 +384,15 @@ payload sont pris en charge :
 
 ##### Paramètres {#settings-6}
 
-| Paramètre              | Description                                                                             |
-| --------------------- | ------------------------------------------------------------------------------------------- |
-| **Has header**         | Si la première ligne est une ligne d'en-tête                                               |
-| **Delimiter**          | Séparateur de colonnes                                                                      |
-| **Topic column**       | Nom de colonne ou index contenant le topic MQTT                                            |
-| **Payload type**       | `string`, `number`, `boolean`, `datetime`, ou `object`                                     |
-| **Value column**       | Colonne pour la valeur (types de payload simple uniquement)                                |
-| **Object fields**      | Liste de correspondances `{ key, column, dataType }` (payload objet uniquement)            |
-| **Datetime settings**  | Conversion date/heure en entrée/sortie (s'applique lorsque le type de payload ou un champ est `datetime`) |
+| Paramètre             | Description                                                                                               |
+| --------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Has header**        | Si la première ligne est une ligne d'en-tête                                                              |
+| **Delimiter**         | Séparateur de colonnes                                                                                    |
+| **Topic column**      | Nom de colonne ou index contenant le topic MQTT                                                           |
+| **Payload type**      | `string`, `number`, `boolean`, `datetime`, ou `object`                                                    |
+| **Value column**      | Colonne pour la valeur (types de payload simple uniquement)                                               |
+| **Object fields**     | Liste de correspondances `{ key, column, dataType }` (payload objet uniquement)                           |
+| **Datetime settings** | Conversion date/heure en entrée/sortie (s'applique lorsque le type de payload ou un champ est `datetime`) |
 
 ##### Exemple — Payload simple {#example--simple-payload}
 
@@ -445,28 +445,28 @@ expressions JavaScript de post-traitement facultatives par champ.
 
 ##### Paramètres {#settings-7}
 
-| Paramètre               | Description                                                                                                                                                                                        |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Filename**           | Nom du fichier de sortie ; prend en charge `@CurrentDate` (horodatage UTC courant), et, pour un contenu provenant d'une requête historique South, `@QueryStartTime`/`@QueryEndTime` (la fenêtre temporelle interrogée, vide sinon) |
-| **Encoding**           | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, ou `UTF_16_LE`                                                                                                                                                    |
-| **Header**             | Inclure ou non la ligne d'en-tête des colonnes                                                                                                                                                     |
-| **Delimiter**          | Séparateur de colonnes                                                                                                                                                                             |
-| **Newline**            | Fin de ligne (`LF`, `CRLF`, `CR`)                                                                                                                                                                  |
-| **Quote char**         | `DOUBLE_QUOTE`, `SINGLE_QUOTE`, ou `NONE`                                                                                                                                                          |
-| **Escape char**        | `DOUBLE_QUOTE` ou `BACKSLASH`                                                                                                                                                                      |
-| **Null value**         | Chaîne écrite lorsqu'un champ est manquant ou null (par défaut une chaîne vide)                                                                                                                    |
-| **Row iterator path**  | JSONPath pointant vers le tableau de lignes (ex. `$.data[*]`)                                                                                                                                      |
-| **Fields**             | Une entrée par colonne CSV (voir ci-dessous)                                                                                                                                                       |
+| Paramètre             | Description                                                                                                                                                                                                                        |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Filename**          | Nom du fichier de sortie ; prend en charge `@CurrentDate` (horodatage UTC courant), et, pour un contenu provenant d'une requête historique South, `@QueryStartTime`/`@QueryEndTime` (la fenêtre temporelle interrogée, vide sinon) |
+| **Encoding**          | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, ou `UTF_16_LE`                                                                                                                                                                                    |
+| **Header**            | Inclure ou non la ligne d'en-tête des colonnes                                                                                                                                                                                     |
+| **Delimiter**         | Séparateur de colonnes                                                                                                                                                                                                             |
+| **Newline**           | Fin de ligne (`LF`, `CRLF`, `CR`)                                                                                                                                                                                                  |
+| **Quote char**        | `DOUBLE_QUOTE`, `SINGLE_QUOTE`, ou `NONE`                                                                                                                                                                                          |
+| **Escape char**       | `DOUBLE_QUOTE` ou `BACKSLASH`                                                                                                                                                                                                      |
+| **Null value**        | Chaîne écrite lorsqu'un champ est manquant ou null (par défaut une chaîne vide)                                                                                                                                                    |
+| **Row iterator path** | JSONPath pointant vers le tableau de lignes (ex. `$.data[*]`)                                                                                                                                                                      |
+| **Fields**            | Une entrée par colonne CSV (voir ci-dessous)                                                                                                                                                                                       |
 
 Chaque entrée de **field** :
 
-| Paramètre              | Description                                                                                |
-| --------------------- | --------------------------------------------------------------------------------------------- |
-| **Column name**        | Libellé d'en-tête dans le CSV                                                                |
-| **JSON path**          | JSONPath vers la valeur au sein de la ligne courante (ex. `$.timestamp`)                     |
-| **Data type**          | `string`, `number`, `boolean`, `datetime`, `array`, ou `object`                              |
-| **Datetime settings**  | Format/fuseau horaire/type en entrée et sortie lorsque le type de donnée est `datetime`      |
-| **Field process**      | Expression JS facultative pour post-traiter la valeur extraite (ex. `value.toUpperCase()`)   |
+| Paramètre             | Description                                                                                |
+| --------------------- | ------------------------------------------------------------------------------------------ |
+| **Column name**       | Libellé d'en-tête dans le CSV                                                              |
+| **JSON path**         | JSONPath vers la valeur au sein de la ligne courante (ex. `$.timestamp`)                   |
+| **Data type**         | `string`, `number`, `boolean`, `datetime`, `array`, ou `object`                            |
+| **Datetime settings** | Format/fuseau horaire/type en entrée et sortie lorsque le type de donnée est `datetime`    |
+| **Field process**     | Expression JS facultative pour post-traiter la valeur extraite (ex. `value.toUpperCase()`) |
 
 ##### Exemple {#example-6}
 
@@ -525,17 +525,17 @@ directement à un connecteur North OIAnalytics sans écrire de transformateur pe
 
 ##### Paramètres {#settings-8}
 
-| Paramètre                  | Description                                                                                                                                                                                                                                                                          |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Row Iterator JSONPath**  | JSONPath vers le tableau de lignes qui deviennent des time-values (ex. `$[*]`). Analyse automatiquement un nœud intermédiaire sérialisé en JSON lorsque la traversée directe échoue, de sorte que le chemin peut traverser un champ contenant du texte JSON brut (ex. un payload MQTT) et produire quand même une ligne par correspondance imbriquée |
-| **Point ID JSONPath**      | JSONPath vers l'identifiant de point au sein de la ligne courante (ex. `$[*].id`) ; les jokers (`[*]`) sont résolus par rapport aux indices de la ligne courante                                                                                                                     |
-| **Value JSONPath**         | JSONPath vers la valeur au sein de la ligne courante                                                                                                                                                                                                                                 |
-| **Timestamp JSONPath**     | JSONPath vers l'horodatage brut au sein de la ligne courante. Se rabat sur l'heure courante s'il ne peut être résolu                                                                                                                                                                |
-| **Timestamp input type**   | Format de l'horodatage brut : `String`, `ISO string`, `Unix epoch (s)`, ou `Unix epoch (ms)`                                                                                                                                                                                        |
-| **Timezone**               | Fuseau horaire utilisé pour l'analyse (utilisé uniquement lorsque le type d'entrée est `String`)                                                                                                                                                                                     |
-| **Format**                 | Motif de date/heure personnalisé (utilisé uniquement lorsque le type d'entrée est `String`, ex. `yyyy-MM-dd HH:mm:ss`)                                                                                                                                                              |
-| **Locale**                 | Locale utilisée pour analyser les noms de mois/jours (utilisée uniquement lorsque le type d'entrée est `String`)                                                                                                                                                                    |
-| **Timestamp precision**    | Précision de sortie à laquelle l'horodatage ISO résultant est tronqué : `Millisecond`, `Second`, `Minute`, ou `Hour`                                                                                                                                                                |
+| Paramètre                 | Description                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Row Iterator JSONPath** | JSONPath vers le tableau de lignes qui deviennent des time-values (ex. `$[*]`). Analyse automatiquement un nœud intermédiaire sérialisé en JSON lorsque la traversée directe échoue, de sorte que le chemin peut traverser un champ contenant du texte JSON brut (ex. un payload MQTT) et produire quand même une ligne par correspondance imbriquée |
+| **Point ID JSONPath**     | JSONPath vers l'identifiant de point au sein de la ligne courante (ex. `$[*].id`) ; les jokers (`[*]`) sont résolus par rapport aux indices de la ligne courante                                                                                                                                                                                     |
+| **Value JSONPath**        | JSONPath vers la valeur au sein de la ligne courante                                                                                                                                                                                                                                                                                                 |
+| **Timestamp JSONPath**    | JSONPath vers l'horodatage brut au sein de la ligne courante. Se rabat sur l'heure courante s'il ne peut être résolu                                                                                                                                                                                                                                 |
+| **Timestamp input type**  | Format de l'horodatage brut : `String`, `ISO string`, `Unix epoch (s)`, ou `Unix epoch (ms)`                                                                                                                                                                                                                                                         |
+| **Timezone**              | Fuseau horaire utilisé pour l'analyse (utilisé uniquement lorsque le type d'entrée est `String`)                                                                                                                                                                                                                                                     |
+| **Format**                | Motif de date/heure personnalisé (utilisé uniquement lorsque le type d'entrée est `String`, ex. `yyyy-MM-dd HH:mm:ss`)                                                                                                                                                                                                                               |
+| **Locale**                | Locale utilisée pour analyser les noms de mois/jours (utilisée uniquement lorsque le type d'entrée est `String`)                                                                                                                                                                                                                                     |
+| **Timestamp precision**   | Précision de sortie à laquelle l'horodatage ISO résultant est tronqué : `Millisecond`, `Second`, `Minute`, ou `Hour`                                                                                                                                                                                                                                 |
 
 ##### Exemple — Messages MQTT avec un payload sérialisé en JSON {#example--mqtt-messages-with-a-json-stringified-payload}
 
@@ -581,12 +581,12 @@ multiples.
 
 ---
 
-### Pour les connecteurs South de base de données SQL {#for-sql-database-south-connectors}
+### Pour les connecteurs South de base de données SQL et MongoDB {#for-sql-database-and-mongodb-south-connectors}
 
-Les connecteurs South MySQL, PostgreSQL, MSSQL, Oracle, et SQLite ne sérialisent pas eux-mêmes le résultat de leurs
-requêtes — chaque ligne est envoyée en aval exactement telle que la base de données l'a retournée, sous forme de
-contenu **record-list** (un tableau d'objets de ligne plats). Le rendu de ces données dans toute autre forme, y
-compris le CSV, est le travail du transformateur.
+Les connecteurs South MySQL, PostgreSQL, MSSQL, Oracle, SQLite, et MongoDB ne sérialisent pas eux-mêmes le résultat
+de leurs requêtes — chaque ligne (ou document) est envoyée en aval exactement telle que la base de données l'a
+retournée, sous forme de contenu **record-list** (un tableau d'objets de ligne plats). Le rendu de ces données dans
+toute autre forme, y compris le CSV, est le travail du transformateur.
 
 ---
 
@@ -601,38 +601,38 @@ configuration de champ est écrite telle quelle.
 
 ##### Paramètres {#settings-9}
 
-| Paramètre                | Description                                                                                       |
-| ------------------------ | ---------------------------------------------------------------------------------------------------- |
-| **Filename**             | Motif du nom de fichier de sortie (prend en charge `@CurrentDate`, `@QueryStartTime`, `@QueryEndTime`) |
-| **Encoding**             | Encodage de caractères de sortie (`UTF_8`, `UTF_8_BOM`, `LATIN_1`, `UTF_16_LE`)                     |
-| **First row as header**  | Écrire ou non une ligne d'en-tête avec les noms de colonnes                                         |
-| **Compression**          | Compresser le fichier de sortie en Gzip                                                             |
-| **Delimiter**            | Séparateur de colonnes (`COMMA`, `SEMI_COLON`, `TAB`, etc.)                                         |
-| **Newline**              | Séparateur de lignes (`CRLF`, `LF`, `CR`)                                                            |
-| **Quote character**      | Caractère utilisé pour entourer les champs (`DOUBLE_QUOTE`, `SINGLE_QUOTE`, `NONE`)                 |
-| **Escape character**     | Caractère utilisé pour échapper un caractère de citation dans un champ cité (`BACKSLASH`, `DOUBLE_QUOTE`) |
-| **Null value**           | Valeur écrite lorsqu'un champ configuré vaut `null` ou est absent de la ligne                       |
-| **Fields Mapping**       | Une liste de surcharges par colonne (renommage, conversion, reformatage, ou traitement) — voir ci-dessous |
+| Paramètre               | Description                                                                                               |
+| ----------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Filename**            | Motif du nom de fichier de sortie (prend en charge `@CurrentDate`, `@QueryStartTime`, `@QueryEndTime`)    |
+| **Encoding**            | Encodage de caractères de sortie (`UTF_8`, `UTF_8_BOM`, `LATIN_1`, `UTF_16_LE`)                           |
+| **First row as header** | Écrire ou non une ligne d'en-tête avec les noms de colonnes                                               |
+| **Compression**         | Compresser le fichier de sortie en Gzip                                                                   |
+| **Delimiter**           | Séparateur de colonnes (`COMMA`, `SEMI_COLON`, `TAB`, etc.)                                               |
+| **Newline**             | Séparateur de lignes (`CRLF`, `LF`, `CR`)                                                                 |
+| **Quote character**     | Caractère utilisé pour entourer les champs (`DOUBLE_QUOTE`, `SINGLE_QUOTE`, `NONE`)                       |
+| **Escape character**    | Caractère utilisé pour échapper un caractère de citation dans un champ cité (`BACKSLASH`, `DOUBLE_QUOTE`) |
+| **Null value**          | Valeur écrite lorsqu'un champ configuré vaut `null` ou est absent de la ligne                             |
+| **Fields Mapping**      | Une liste de surcharges par colonne (renommage, conversion, reformatage, ou traitement) — voir ci-dessous |
 
 Chaque entrée de **Fields Mapping** cible une colonne, par son nom dans les lignes source :
 
-| Paramètre                | Description                                                                                              |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------ |
-| **Field Name**           | Nom de la colonne à configurer, correspondant à une clé dans les lignes source                              |
-| **Column Name**          | En-tête pour cette colonne dans le CSV de sortie. Laisser vide pour conserver le nom de champ d'origine.     |
-| **Data Type**            | Comment convertir la valeur : `string`, `number`, `boolean`, `datetime`, `array`, ou `object`                |
-| **Field Process**        | Expression JavaScript facultative appliquée après la conversion (ex. `value.toUpperCase()`)                 |
-| **Datetime Settings**    | Affiché uniquement lorsque Data Type est `datetime` — type entrée/sortie, fuseau horaire, format et locale (voir ci-dessous) |
+| Paramètre             | Description                                                                                                                  |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **Field Name**        | Nom de la colonne à configurer, correspondant à une clé dans les lignes source                                               |
+| **Column Name**       | En-tête pour cette colonne dans le CSV de sortie. Laisser vide pour conserver le nom de champ d'origine.                     |
+| **Data Type**         | Comment convertir la valeur : `string`, `number`, `boolean`, `datetime`, `array`, ou `object`                                |
+| **Field Process**     | Expression JavaScript facultative appliquée après la conversion (ex. `value.toUpperCase()`)                                  |
+| **Datetime Settings** | Affiché uniquement lorsque Data Type est `datetime` — type entrée/sortie, fuseau horaire, format et locale (voir ci-dessous) |
 
 Lorsque **Data Type** est `datetime`, **Datetime Settings** décrit comment analyser la valeur brute et comment
 l'afficher :
 
-| Paramètre                                     | Description                                                                          |
-| --------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| **Timestamp input type**                      | Comment analyser la valeur brute (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`)   |
-| **Input timezone / format / locale**          | Utilisé pour analyser la valeur brute lorsque son type d'entrée est `string`               |
-| **Timestamp output type**                     | Comment afficher la valeur (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`)         |
-| **Output timezone / format / locale**         | Utilisé pour afficher la valeur lorsque son type de sortie est `string`                    |
+| Paramètre                             | Description                                                                              |
+| ------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **Timestamp input type**              | Comment analyser la valeur brute (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`) |
+| **Input timezone / format / locale**  | Utilisé pour analyser la valeur brute lorsque son type d'entrée est `string`             |
+| **Timestamp output type**             | Comment afficher la valeur (`string`, `iso-string`, `unix-epoch`, `unix-epoch-ms`)       |
+| **Output timezone / format / locale** | Utilisé pour afficher la valeur lorsque son type de sortie est `string`                  |
 
 ##### Exemple {#example-7}
 
@@ -681,8 +681,8 @@ objet sont sérialisées en JSON.
 ##### Paramètres {#settings-10}
 
 | Paramètre   | Description                            |
-| ----------- | ------------------------------------------ |
-| **Mapping** | Liste de paires `{ reference, topic }`      |
+| ----------- | -------------------------------------- |
+| **Mapping** | Liste de paires `{ reference, topic }` |
 
 ##### Exemple {#example-8}
 
@@ -714,9 +714,9 @@ coils ; les valeurs numériques sont analysées comme des entiers et écrites co
 
 ##### Paramètres {#settings-11}
 
-| Paramètre   | Description                                                                                 |
-| ----------- | ----------------------------------------------------------------------------------------------- |
-| **Mapping** | Liste de paires `{ reference, address, modbusType }` (`modbusType` : `coil` ou `register`)      |
+| Paramètre   | Description                                                                                |
+| ----------- | ------------------------------------------------------------------------------------------ |
+| **Mapping** | Liste de paires `{ reference, address, modbusType }` (`modbusType` : `coil` ou `register`) |
 
 ##### Exemple {#example-9}
 
@@ -749,9 +749,9 @@ node ID**.
 
 ##### Paramètres {#settings-12}
 
-| Paramètre   | Description                              |
-| ----------- | -------------------------------------------- |
-| **Mapping** | Liste de paires `{ reference, nodeId }`       |
+| Paramètre   | Description                             |
+| ----------- | --------------------------------------- |
+| **Mapping** | Liste de paires `{ reference, nodeId }` |
 
 ##### Exemple {#example-10}
 
@@ -819,19 +819,19 @@ export function transform(
 }
 ```
 
-| Champ de retour     | Description                                                                                        |
-| ----------------- | ------------------------------------------------------------------------------------------------------ |
-| `data`             | Le contenu écrit dans le fichier de cache (voir ci-dessous) : une chaîne, du binaire brut, ou toute autre valeur |
-| `filename`         | Le nom de fichier utilisé lorsque la sortie est stockée dans le cache du North                          |
-| `numberOfElement`  | Comptage facultatif des enregistrements traités, affiché dans les journaux et les métriques            |
+| Champ de retour   | Description                                                                                                      |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `data`            | Le contenu écrit dans le fichier de cache (voir ci-dessous) : une chaîne, du binaire brut, ou toute autre valeur |
+| `filename`        | Le nom de fichier utilisé lorsque la sortie est stockée dans le cache du North                                   |
+| `numberOfElement` | Comptage facultatif des enregistrements traités, affiché dans les journaux et les métriques                      |
 
 La sortie du transformateur est **écrite dans le fichier de cache telle quelle**, puis relue par le North selon son
 type de contenu. `data` est traité selon son type :
 
-| `data` retourné                               | Stocké comme                     | À utiliser avec                                          |
-| --------------------------------------------- | --------------------------------- | ---------------------------------------------------------- |
-| une **chaîne (string)**                       | la chaîne telle quelle (UTF-8)    | tout type de sortie — vous contrôlez le texte exact         |
-| un **`Uint8Array` / `ArrayBuffer`** (binaire)  | les octets bruts, tels quels      | le type de sortie **`any`** uniquement (North fichier)      |
+| `data` retourné                                  | Stocké comme                   | À utiliser avec                                                  |
+| ------------------------------------------------ | ------------------------------ | ---------------------------------------------------------------- |
+| une **chaîne (string)**                          | la chaîne telle quelle (UTF-8) | tout type de sortie — vous contrôlez le texte exact              |
+| un **`Uint8Array` / `ArrayBuffer`** (binaire)    | les octets bruts, tels quels   | le type de sortie **`any`** uniquement (North fichier)           |
 | toute **autre valeur** (objet, tableau, nombre…) | `JSON.stringify(data)`         | les sorties typées (`time-values`, `mqtt`, …) qui lisent du JSON |
 
 :::caution Faire correspondre `data` au type de sortie ; garder `filename` en chaîne
@@ -854,11 +854,11 @@ séparateurs de chemin, ex. `` `mqtt_${String(topic).replace(/[\\/]/g, '_')}.jso
 
 Les bibliothèques suivantes sont préchargées dans le bac à sable et disponibles via `require` :
 
-| Bibliothèque                                                           | Nom `require`   | Description                                          |
-| ---------------------------------------------------------------------- | --------------- | ------------------------------------------------------- |
-| **[Luxon](https://moment.github.io/luxon/)**                           | `luxon`         | Analyse, formatage et calculs sur les dates/heures      |
-| **[JSONPath Plus](https://jsonpath-plus.github.io/JSONPath/docs/ts/)** | `jsonpath-plus` | Requêtes JSONPath sur des structures JSON arbitraires    |
-| **[PapaParse](https://www.papaparse.com/docs)**                        | `papaparse`     | Analyse et sérialisation CSV                            |
+| Bibliothèque                                                           | Nom `require`   | Description                                           |
+| ---------------------------------------------------------------------- | --------------- | ----------------------------------------------------- |
+| **[Luxon](https://moment.github.io/luxon/)**                           | `luxon`         | Analyse, formatage et calculs sur les dates/heures    |
+| **[JSONPath Plus](https://jsonpath-plus.github.io/JSONPath/docs/ts/)** | `jsonpath-plus` | Requêtes JSONPath sur des structures JSON arbitraires |
+| **[PapaParse](https://www.papaparse.com/docs)**                        | `papaparse`     | Analyse et sérialisation CSV                          |
 
 Tout autre appel à `require` lève une erreur — `fs`, `http`, `process`, et tous les modules natifs Node.js sont
 bloqués.
@@ -870,12 +870,12 @@ journal (logger) d'OIBus. Tous les messages apparaissent préfixés par `CUSTOM 
 
 ### Limites {#limits}
 
-| Limite                 | Valeur                                             |
-| ----------------------- | -------------------------------------------------- |
-| Mémoire                 | 256 Mo par exécution                                |
-| Délai d'expiration      | Configurable dans les paramètres du transformateur |
-| Accès aux modules       | Uniquement `luxon`, `jsonpath-plus`, `papaparse`   |
-| Accès hôte              | Aucun (système de fichiers, réseau, et variables d'environnement bloqués) |
+| Limite             | Valeur                                                                    |
+| ------------------ | ------------------------------------------------------------------------- |
+| Mémoire            | 256 Mo par exécution                                                      |
+| Délai d'expiration | Configurable dans les paramètres du transformateur                        |
+| Accès aux modules  | Uniquement `luxon`, `jsonpath-plus`, `papaparse`                          |
+| Accès hôte         | Aucun (système de fichiers, réseau, et variables d'environnement bloqués) |
 
 ---
 
