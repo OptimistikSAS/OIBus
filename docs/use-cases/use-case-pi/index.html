@@ -7,9 +7,9 @@
 
 
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"OIBus","applicationCategory":"BusinessApplication","operatingSystem":"Windows, Linux, macOS, Docker","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"description":"Open source industrial data collection software. Collect data from OPC UA, Modbus, SQL databases, MQTT and REST APIs. Forward it to OIAnalytics, Amazon S3, Azure Blob Storage, or any HTTP endpoint.","url":"https://oibus.optimistik.com","downloadUrl":"https://github.com/OptimistikSAS/OIBus/releases","author":{"@type":"Organization","name":"Optimistik","url":"https://optimistik.com"},"maintainer":{"@type":"Organization","name":"Optimistik","url":"https://optimistik.com"},"license":"https://ec.europa.eu/info/european-union-public-licence_en","codeRepository":"https://github.com/OptimistikSAS/OIBus","isAccessibleForFree":true,"keywords":"OPC UA, Modbus, MQTT, SQL, industrial data collection, IIoT, open source, edge computing, data historian"}</script>
-<link rel="me" href="https://github.com/OptimistikSAS/OIBus"><link rel="stylesheet" href="/assets/css/styles.35522f91.css">
-<script src="/assets/js/runtime~main.7665c90d.js" defer="defer"></script>
-<script src="/assets/js/main.4d736a5a.js" defer="defer"></script>
+<link rel="me" href="https://github.com/OptimistikSAS/OIBus"><link rel="stylesheet" href="/assets/css/styles.e9e7628f.css">
+<script src="/assets/js/runtime~main.e255fd61.js" defer="defer"></script>
+<script src="/assets/js/main.4f6d1d1d.js" defer="defer"></script>
 </head>
 <body>
 <svg style="display: none;"><defs>
@@ -28,12 +28,12 @@
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="items">Items<a href="#items" class="hash-link" aria-label="Direct link to Items" title="Direct link to Items" translate="no">​</a></h3>
 <p>PI items can be of two types:</p>
 <ul>
-<li class=""><strong>Point ID</strong> — retrieve time-series values for a single PI point.</li>
-<li class=""><strong>Query</strong> — retrieve time-series values for all PI points matching a regex-like expression. The item name is used only for logging; the data is labelled with the actual PI point references.</li>
+<li class=""><strong>PI point</strong> — retrieve time-series values for a single PI point.</li>
+<li class=""><strong>PI query</strong> — retrieve time-series values for all PI points matching a regex-like expression. The item name is used only for logging; the data is labelled with the actual PI point references.</li>
 </ul>
-<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="point-id">Point ID<a href="#point-id" class="hash-link" aria-label="Direct link to Point ID" title="Direct link to Point ID" translate="no">​</a></h4>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="pi-point">PI point<a href="#pi-point" class="hash-link" aria-label="Direct link to PI point" title="Direct link to PI point" translate="no">​</a></h4>
 <div style="text-align:center"><div><p><img decoding="async" loading="lazy" alt="OSIsoft PI item point ID settings" src="/assets/images/pi-item-point-id-0ba13a25239ac5f08d4c63a7e1eac390.png" width="2280" height="638" class="img_ev3q"></p></div></div>
-<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="query">Query<a href="#query" class="hash-link" aria-label="Direct link to Query" title="Direct link to Query" translate="no">​</a></h4>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="pi-query">PI query<a href="#pi-query" class="hash-link" aria-label="Direct link to PI query" title="Direct link to PI query" translate="no">​</a></h4>
 <div style="text-align:center"><div><p><img decoding="async" loading="lazy" alt="OSIsoft PI item query settings" src="/assets/images/pi-item-query-466a81c74ae74b2cadb5070dcbe7fc59.png" width="2280" height="674" class="img_ev3q"></p></div></div>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="north-oianalytics">North OIAnalytics<a href="#north-oianalytics" class="hash-link" aria-label="Direct link to North OIAnalytics" title="Direct link to North OIAnalytics" translate="no">​</a></h2>
 <p>Before setting up the connector, verify that OIAnalytics is reachable from the OIBus host: open a browser on the OIBus machine and navigate to the OIAnalytics URL (e.g. <code>https://instance.oianalytics.fr</code>). If the page does not load, ask your IT team to allow the connection — the issue is typically a domain name firewall rule or, less commonly, a port rule on HTTPS/443.</p>

@@ -1,0 +1,8 @@
+name,enabled,scanMode,group,maxReadInterval,readDelay,overlap,syncWithGroup,settings_address,settings_modbusType,settings_data
+Firmware version,true,Every 10 seconds,,,,,false,0x0000,input-register,"{""dataType"":""uint16"",""bitIndex"":1,""multiplierCoefficient"":1}"
+Serial number low word,true,Every 10 seconds,,,,,false,0x0001,input-register,"{""dataType"":""uint16"",""bitIndex"":1,""multiplierCoefficient"":1}"
+Serial number high word,true,Every 10 seconds,,,,,false,0x0002,input-register,"{""dataType"":""uint16"",""bitIndex"":1,""multiplierCoefficient"":1}"
+Panel door closed,true,Every 10 seconds,,,,,false,0x0000,discrete-input,
+Safety relay OK,true,Every 10 seconds,,,,,false,0x0001,discrete-input,
+Network connected,true,Every 10 seconds,,,,,false,0x0002,discrete-input,
+E-stop pressed,true,Every 10 seconds,,,,,false,0x0003,discrete-input,

@@ -7,9 +7,9 @@
 
 
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"OIBus","applicationCategory":"BusinessApplication","operatingSystem":"Windows, Linux, macOS, Docker","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"description":"Open source industrial data collection software. Collect data from OPC UA, Modbus, SQL databases, MQTT and REST APIs. Forward it to OIAnalytics, Amazon S3, Azure Blob Storage, or any HTTP endpoint.","url":"https://oibus.optimistik.com","downloadUrl":"https://github.com/OptimistikSAS/OIBus/releases","author":{"@type":"Organization","name":"Optimistik","url":"https://optimistik.com"},"maintainer":{"@type":"Organization","name":"Optimistik","url":"https://optimistik.com"},"license":"https://ec.europa.eu/info/european-union-public-licence_en","codeRepository":"https://github.com/OptimistikSAS/OIBus","isAccessibleForFree":true,"keywords":"OPC UA, Modbus, MQTT, SQL, industrial data collection, IIoT, open source, edge computing, data historian"}</script>
-<link rel="me" href="https://github.com/OptimistikSAS/OIBus"><link rel="stylesheet" href="/assets/css/styles.35522f91.css">
-<script src="/assets/js/runtime~main.7665c90d.js" defer="defer"></script>
-<script src="/assets/js/main.4d736a5a.js" defer="defer"></script>
+<link rel="me" href="https://github.com/OptimistikSAS/OIBus"><link rel="stylesheet" href="/assets/css/styles.e9e7628f.css">
+<script src="/assets/js/runtime~main.e255fd61.js" defer="defer"></script>
+<script src="/assets/js/main.4f6d1d1d.js" defer="defer"></script>
 </head>
 <body>
 <svg style="display: none;"><defs>
@@ -47,19 +47,24 @@ appropriately handle the field or your comparison date.</p></div></div>
 <code>timestamp</code> is a date time field, and we do not use it as a reference because it is not utilized with <code>@StartTime</code> or <code>@EndTime</code>.</p>
 <div style="text-align:center"><div><p><img decoding="async" loading="lazy" alt="MSSQL item without variable" src="/assets/images/mssql-item-1-a296c4a4cd7edd27087e871e47b70f1f.png" width="2280" height="1202" class="img_ev3q"></p></div></div>
 <h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="with-variables">With variables<a href="#with-variables" class="hash-link" aria-label="Direct link to With variables" title="Direct link to With variables" translate="no">​</a></h4>
-<p>The <code>@StartTime</code> variable captures the last maximum instant retrieved from a previous query. By default, for the initial query, it takes the
-current time minus one hour. The <code>@EndTime</code> variable is replaced by the current time.</p>
+<p>The <code>@StartTime</code> variable captures the last maximum instant retrieved from a previous query. For the very first query, before any instant
+has been tracked, OIBus looks back by the <strong>Max read interval</strong> setting (in seconds) from the current time — or 1 hour if Max read interval
+is left at <code>0</code>. The <code>@EndTime</code> variable is set to the current time, or to the sub-interval end when the query is split by <strong>Max read interval</strong>.</p>
 <p>To prevent overloading the server with a large query, you can divide the [<code>@StartTime</code>, <code>@EndTime</code>] interval into smaller chunks. This can
 be configured in the <strong>History settings</strong> section, from the connector settings:</p>
 <ul>
-<li class="">Max read interval (in seconds): If set to 60 seconds, and the interval is 1 hour, 60 sub-interval queries will be generated.</li>
-<li class="">Read delay (in milliseconds) between each sub-interval query.</li>
-<li class="">Overlap (in milliseconds) deduced a number of milliseconds from the <code>@StartTime</code> of the interval that will be chunked, expanding the query
-interval while still allowing the retrieval of data before the last maximum instant retrieved.</li>
+<li class=""><strong>Max read interval</strong> (in seconds): If set to 60 seconds, and the interval is 1 hour, 60 sub-interval queries will be generated.</li>
+<li class=""><strong>Read delay</strong> (in milliseconds) between each sub-interval query.</li>
+<li class=""><strong>Start time offset</strong> (in milliseconds): added to the start of the query window (<code>@StartTime</code>). A negative value moves the start earlier,
+to capture late-arriving data — this is the old &quot;Overlap&quot; behavior.</li>
+<li class=""><strong>End time offset</strong> (in milliseconds): added to the end of the query window (<code>@EndTime</code>). A negative value pulls the end in earlier; a
+positive value extends it later.</li>
+<li class=""><strong>Recovery strategy</strong>: order in which OIBus catches up a backlog of sub-intervals — <code>From oldest to newest</code> (default) or
+<code>From newest to oldest</code>.</li>
 </ul>
 <div style="text-align:center"><div><p><img decoding="async" loading="lazy" alt="MSSQL history settings" src="/assets/images/mssql-history-settings-e128ddfed1bd10492d3865301af71c68.png" width="1914" height="190" class="img_ev3q"></p></div></div>
-<div class="theme-admonition theme-admonition-caution admonition_xJq3 alert alert--warning"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path></svg></span>When to use overlap?</div><div class="admonitionContent_BuS1"><p>Overlap proves beneficial when certain retrieved data exhibit latency and are stored after the query has
-been executed. In such cases, it allows for a slight extension of the requested interval.</p><p>Exercise caution if your query involves aggregation, as it might alter your data by shifting the time origin of the first interval.</p></div></div>
+<div class="theme-admonition theme-admonition-caution admonition_xJq3 alert alert--warning"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path></svg></span>When to use Start time offset?</div><div class="admonitionContent_BuS1"><p>A negative <strong>Start time offset</strong> is beneficial when certain retrieved data exhibit latency and are stored after the query has been executed.
+In such cases, it allows for a slight extension of the requested interval backwards, so that late-arriving rows are not missed.</p><p>Exercise caution if your query involves aggregation, as it might alter your data by shifting the time origin of the first interval.</p></div></div>
 <div class="language-SQL language-sql codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-sql codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token keyword" style="color:#00009f">SELECT</span><span class="token plain"> </span><span class="token keyword" style="color:#00009f">timestamp</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"> message</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"> </span><span class="token keyword" style="color:#00009f">level</span><span class="token plain"> </span><span class="token keyword" style="color:#00009f">FROM</span><span class="token plain"> logs</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">WHERE</span><span class="token plain"> </span><span class="token keyword" style="color:#00009f">timestamp</span><span class="token plain"> </span><span class="token operator" style="color:#393A34">&gt;</span><span class="token plain"> </span><span class="token variable" style="color:#36acaa">@StartTime</span><span class="token plain"> </span><span class="token operator" style="color:#393A34">AND</span><span class="token plain"> </span><span class="token keyword" style="color:#00009f">timestamp</span><span class="token plain"> </span><span class="token operator" style="color:#393A34">&lt;=</span><span class="token plain"> </span><span class="token variable" style="color:#36acaa">@EndTime</span><br></div></code></pre></div></div>
 <h5 class="anchor anchorTargetStickyNavbar_Vzrq" id="date-time-fields">Date time fields<a href="#date-time-fields" class="hash-link" aria-label="Direct link to Date time fields" title="Direct link to Date time fields" translate="no">​</a></h5>
 <p>One date time field can be added:</p>

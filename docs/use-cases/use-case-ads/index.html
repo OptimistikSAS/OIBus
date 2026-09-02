@@ -7,9 +7,9 @@
 
 
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"OIBus","applicationCategory":"BusinessApplication","operatingSystem":"Windows, Linux, macOS, Docker","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"description":"Open source industrial data collection software. Collect data from OPC UA, Modbus, SQL databases, MQTT and REST APIs. Forward it to OIAnalytics, Amazon S3, Azure Blob Storage, or any HTTP endpoint.","url":"https://oibus.optimistik.com","downloadUrl":"https://github.com/OptimistikSAS/OIBus/releases","author":{"@type":"Organization","name":"Optimistik","url":"https://optimistik.com"},"maintainer":{"@type":"Organization","name":"Optimistik","url":"https://optimistik.com"},"license":"https://ec.europa.eu/info/european-union-public-licence_en","codeRepository":"https://github.com/OptimistikSAS/OIBus","isAccessibleForFree":true,"keywords":"OPC UA, Modbus, MQTT, SQL, industrial data collection, IIoT, open source, edge computing, data historian"}</script>
-<link rel="me" href="https://github.com/OptimistikSAS/OIBus"><link rel="stylesheet" href="/assets/css/styles.35522f91.css">
-<script src="/assets/js/runtime~main.7665c90d.js" defer="defer"></script>
-<script src="/assets/js/main.4d736a5a.js" defer="defer"></script>
+<link rel="me" href="https://github.com/OptimistikSAS/OIBus"><link rel="stylesheet" href="/assets/css/styles.e9e7628f.css">
+<script src="/assets/js/runtime~main.e255fd61.js" defer="defer"></script>
+<script src="/assets/js/main.4f6d1d1d.js" defer="defer"></script>
 </head>
 <body>
 <svg style="display: none;"><defs>
@@ -24,13 +24,13 @@
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="local-ads">Local ADS<a href="#local-ads" class="hash-link" aria-label="Direct link to Local ADS" title="Direct link to Local ADS" translate="no">​</a></h3>
 <p>OIBus is installed on the same machine as the ADS router.</p>
 <div style="text-align:center"><p><img decoding="async" loading="lazy" alt="Twincat local -&amp;gt; OIA" src="/assets/images/twincat-local-oia-d8b5fa110a96a3d0b98974fb290dc7b0.svg" width="804" height="617" class="img_ev3q"></p></div>
-<p>Only the <strong>ADS Net ID</strong> needs to be specified (here <code>127.0.0.1.1.1</code>).</p>
+<p>Only the <strong>Net ID</strong> needs to be specified (here <code>127.0.0.1.1.1</code>).</p>
 <div style="text-align:center"><p><img decoding="async" loading="lazy" alt="Twincat local settings" src="/assets/images/twincat-local-settings-a9b55f859002c30f11a7537ceb6950f2.png" width="1914" height="848" class="img_ev3q"></p></div>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="remote-ads">Remote ADS<a href="#remote-ads" class="hash-link" aria-label="Direct link to Remote ADS" title="Direct link to Remote ADS" translate="no">​</a></h3>
 <p>OIBus is deployed on a separate machine and must connect to the ADS router over the network.</p>
 <div style="text-align:center"><p><img decoding="async" loading="lazy" alt="Twincat remote -&amp;gt; OIA" src="/assets/images/twincat-remote-oia-5bb825759148fa4b440ddfa8509844af.svg" width="805" height="617" class="img_ev3q"></p></div>
 <ul>
-<li class=""><strong>ADS Router address</strong>: <code>10.0.0.1</code>, port <code>48898</code></li>
+<li class=""><strong>Router address</strong>: <code>10.0.0.1</code>, port <code>48898</code></li>
 <li class=""><strong>AMS Net ID</strong>: must match the static route configured on the AMS server. The first four segments typically correspond to the OIBus machine&#x27;s IP address (e.g. <code>193.164.196.201.1.1</code>)</li>
 <li class=""><strong>ADS Client port</strong>: an unused local port used to connect to the PLC through the router (e.g. <code>48899</code>)</li>
 </ul>
