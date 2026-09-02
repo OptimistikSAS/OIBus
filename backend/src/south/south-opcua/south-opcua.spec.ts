@@ -1665,7 +1665,7 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(result, null);
     assert.strictEqual(disconnectMock.mock.calls.length, 0);
     assert.ok(
-      (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+      (logger.warn as ReturnType<typeof mock.fn>).mock.calls.some(
         c => (c.arguments[1] as string).includes('BadTimeout') && (c.arguments[1] as string).includes('device/PLC error, session kept')
       )
     );
@@ -1999,7 +1999,7 @@ describe('SouthOPCUA', () => {
 
     await south.historyQuery(manyItems, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
-    const errorCalls = (logger.error as ReturnType<typeof mock.fn>).mock.calls;
+    const errorCalls = (logger.warn as ReturnType<typeof mock.fn>).mock.calls;
     const deviceErrorLog = errorCalls.find(c => (c.arguments[1] as string)?.startsWith('HA read failed for 13 item(s)'));
     assert.ok(deviceErrorLog, 'Expected item count in device error log');
     assert.ok(
@@ -2025,7 +2025,7 @@ describe('SouthOPCUA', () => {
     const result = await south.directQuery(manyItems);
 
     assert.strictEqual(result, null);
-    const errorCalls = (logger.error as ReturnType<typeof mock.fn>).mock.calls;
+    const errorCalls = (logger.warn as ReturnType<typeof mock.fn>).mock.calls;
     const deviceErrorLog = errorCalls.find(c => (c.arguments[1] as string)?.startsWith('DA read failed for 12 node(s)'));
     assert.ok(deviceErrorLog, 'Expected node count in device error log');
     assert.ok(
@@ -2053,7 +2053,7 @@ describe('SouthOPCUA', () => {
 
     await south.historyQuery(groupedItems, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
-    const errorCalls = (logger.error as ReturnType<typeof mock.fn>).mock.calls;
+    const errorCalls = (logger.warn as ReturnType<typeof mock.fn>).mock.calls;
     const deviceErrorLog = errorCalls.find(c => (c.arguments[1] as string)?.startsWith('HA read failed for 3 item(s)'));
     assert.ok(deviceErrorLog, 'Expected item count in device error log');
     assert.deepStrictEqual(deviceErrorLog.arguments[0], { groupId: 'groupId1', groupName: 'group 1' });

@@ -382,7 +382,7 @@ export default class SouthOPCUA
       return await this.getHAValues(items, startTime, endTime, session);
     } catch (error: unknown) {
       if (isDeviceError(error)) {
-        this.logger.error(
+        this.logger.warn(
           workUnitLogCtx(items),
           `HA read failed for ${items.length} item(s) (device/PLC error, session kept): ${getErrorMessage(error)}`
         );
@@ -666,7 +666,7 @@ export default class SouthOPCUA
       content = await this.getDAValues(nodesToRead, session, logCtx);
     } catch (error) {
       if (isDeviceError(error)) {
-        this.logger.error(
+        this.logger.warn(
           logCtx,
           `DA read failed for ${nodesToRead.length} node(s) (device/PLC error, session kept): ${getErrorMessage(error)}`
         );
