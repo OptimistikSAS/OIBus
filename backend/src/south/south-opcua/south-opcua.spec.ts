@@ -173,6 +173,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -197,6 +198,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -221,6 +223,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -242,6 +245,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -263,6 +267,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -284,6 +289,7 @@ describe('SouthOPCUA', () => {
         readDelay: 0,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: 'oldest',
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1983,6 +1989,38 @@ describe('SouthOPCUA', () => {
       assert.strictEqual(disconnectMock.mock.calls.length, 0, `Expected no disconnect for ${code}`);
       assert.strictEqual(south['session'], mockedSession, `Expected session preserved for ${code}`);
     }
+  });
+
+  it('should skip HA group without reconnect on node-opcua secure-channel transaction timeout', async () => {
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
+    const mockedSession = {} as unknown as ClientSession;
+    south['session'] = mockedSession;
+    south.getHAValues = mock.fn(() => {
+      throw new Error('Transaction has timed out ( timeout = 15000 ms , request = ReadRequest)');
+    });
+
+    const result = await south.historyQuery([configuration.items[0]], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
+
+    assert.deepStrictEqual(result, { trackedInstant: null, value: null });
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.strictEqual(south['session'], mockedSession);
+  });
+
+  it('should skip DA group without reconnect on node-opcua secure-channel transaction timeout', async () => {
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
+    const mockedSession = {} as unknown as ClientSession;
+    south['session'] = mockedSession;
+    south.getDAValues = mock.fn(() => {
+      throw new Error('Transaction has timed out ( timeout = 15000 ms , request = ReadRequest)');
+    });
+
+    const result = await south.directQuery([configuration.items[3]]);
+
+    assert.strictEqual(result, null);
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.strictEqual(south['session'], mockedSession);
   });
 
   it('should log a bounded message (no per-item name list) in HA device error log, however many items', async () => {
