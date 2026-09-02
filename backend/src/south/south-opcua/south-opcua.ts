@@ -42,9 +42,22 @@ const DEVICE_ERROR_CODES = [
   'BadTimeout'
 ];
 
+// node-opcua's own secure-channel-layer request timeout — thrown by
+// node-opcua-secure-channel's client_secure_channel_layer.js when the server never answers a single
+// ReadRequest/HistoryReadRequest within the configured timeout — is functionally the same event as our
+// own synthetic "BadTimeout" above: the server accepted the request but never replied, typically because
+// it is itself stuck waiting on an unreachable device (e.g. Kepware polling a disconnected PLC). It just
+// surfaces as plain wording instead of a Bad* status code, so it needs its own pattern match. Left
+// unmatched, this device-level timeout used to be treated as a session-breaking error: it triggered a
+// full reconnect that tore down the shared session for every other, healthy device on the same server.
+const DEVICE_ERROR_MESSAGE_PATTERNS = [/Transaction has timed out/];
+
 function isDeviceError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
-  return DEVICE_ERROR_CODES.some(code => error.message.includes(code));
+  return (
+    DEVICE_ERROR_CODES.some(code => error.message.includes(code)) ||
+    DEVICE_ERROR_MESSAGE_PATTERNS.some(pattern => pattern.test(error.message))
+  );
 }
 
 /**
