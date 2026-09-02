@@ -6,7 +6,7 @@ import {
   provideMissingTranslationHandler,
   TranslateService
 } from '@ngx-translate/core';
-import EN_TRANSLATIONS from './en.json';
+import EN_TRANSLATIONS from './locales/en.json';
 
 /**
  * Custom missing translation handler that throws an error when a translation is missing.

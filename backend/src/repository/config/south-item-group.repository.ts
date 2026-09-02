@@ -101,9 +101,10 @@ export default class SouthItemGroupRepository {
           command.readDelay,
           command.recoveryStrategy ?? null,
           command.cachingStrategy ?? null,
-        updatedBy,
-        id
-      );this.database.prepare(cascadeQuery).run(command.scanMode.id, updatedBy, id);
+          updatedBy,
+          id
+        );
+      this.database.prepare(cascadeQuery).run(command.scanMode.id, updatedBy, id);
     });
     transaction();
     const after = this.findById(id);
