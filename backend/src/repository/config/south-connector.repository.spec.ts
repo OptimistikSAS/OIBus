@@ -755,6 +755,12 @@ describe('SouthConnectorRepository', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: 'absolute',
+      threshold: 10,
+      rangeLow: 0,
+      rangeHigh: 100,
+      maxCachingInterval: 1000,
       createdBy: '',
       updatedBy: 'creatorUser',
       createdAt: '',
@@ -1053,7 +1059,7 @@ describe('SouthConnectorRepository', () => {
   });
 
   it('should update an item scan mode to match the group scan mode when moved into a group', () => {
-    const groupRepository = new SouthItemGroupRepository(database);
+    const groupRepository = new SouthItemGroupRepository(database, createAuditServiceMock());
 
     const group = groupRepository.create(
       {
@@ -1064,6 +1070,7 @@ describe('SouthConnectorRepository', () => {
         endTimeOffset: null,
         recoveryStrategy: null,
         maxReadInterval: null,
+        cachingStrategy: null,
         readDelay: 0
       },
       'userTest'

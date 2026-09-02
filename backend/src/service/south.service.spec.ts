@@ -3228,7 +3228,7 @@ describe('South Service', () => {
           const command: SouthConnectorItemCommandDTO = {
             ...testData.south.itemCommand,
             id: 'testItemId',
-            enabled: false, // an enabled item needs a scan mode or a group
+            enabled: false,
             scanModeId: null,
             scanModeName: null,
             startTimeOffset: null

@@ -5,6 +5,6 @@ import { from, Observable } from 'rxjs';
 @Injectable()
 export class ModuleTranslateLoader implements TranslateLoader {
   getTranslation(lang: string): Observable<any> {
-    return from(import(`./${lang}.json`).then(m => m.default));
+    return from(import(`./locales/${lang}.json`).then(m => m.default));
   }
 }
