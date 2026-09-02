@@ -15,7 +15,7 @@ to current data.
 
 The page explains the algorithm used and gives some use cases.
 
-## The history query strategy {#the-mental-model-one-run-four-decisions}
+## The history query strategy {#the-history-query-strategy}
 
 Every time a history-capable item or group runs, OIBus goes through the same four steps in order:
 
@@ -23,12 +23,12 @@ Every time a history-capable item or group runs, OIBus goes through the same fou
    and `End time offset` to both ends. If the resulting end isn't after the resulting start, the run is skipped entirely
    for this tick — nothing is queried and the tracked instant does not move.
 2. **Split into sub-intervals.** The effective window is chopped into consecutive slices of at most
-   `Max read interval` seconds each (the last slice may be shorter). A `Max read interval` value of `0` (or leaving it 
+   `Max read interval` seconds each (the last slice may be shorter). A `Max read interval` value of `0` (or leaving it
    empty) disables splitting — the whole window is queried in one call (not recommended).
 3. **Query each sub-interval in order**, pausing `Read delay` milliseconds between one sub-query and the next (never
    before the first, never after the last). The `Recovery strategy` decides whether that order is oldest-first (default)
    or newest-first.
-4. **Advance the tracked instant.** With `From oldest to newest`, the tracked instant moves forward after _each_ 
+4. **Advance the tracked instant.** With `From oldest to newest`, the tracked instant moves forward after _each_
    sub-interval that returns data more recent than previous results. In case of a crash, data will be queried from the
    last tracked instant retrieved. With `From newest to oldest`, the tracked instant only moves once _every_ sub-interval
    has completed. In case of a crash, data will be queried again for the full interval since the tracked instant has not
@@ -53,7 +53,7 @@ v                                                                            v
 ```
 
 `Start time offset` and `End time offset` each apply to one edge of the effective window — a negative value moves that
-edge earlier (in the past), a positive value moves it later (in the future); the diagram doesn't assume either direction, since it 
+edge earlier (in the past), a positive value moves it later (in the future); the diagram doesn't assume either direction, since it
 depends entirely on the sign you configure. Splitting only happens _after_ both edges are set: `sub-interval 1`
 starts exactly at the effective start above, and the last sub-interval ends exactly at the effective end, no matter how
 the offsets moved those edges to get there. The read-delay pause shown above repeats between every consecutive pair of
@@ -74,24 +74,24 @@ single query asking the source for over 17 million rows in one round trip. Depen
 multi-minute query that locks a table, a timeout, an out-of-memory error on either side, or simply a payload too large
 for the connector's driver to buffer.
 
-Setting `Max read interval` to, say, `3600` (1 hour) splits that big query into 24 sequential smaller ~720,000-row 
+Setting `Max read interval` to, say, `3600` (1 hour) splits that big query into 24 sequential smaller ~720,000-row
 queries. Each one is small enough to complete quickly and predictably, and — combined with the `From oldest to newest`
 recovery strategy — every completed hour is durably checkpointed. A restart during the catch-up only repeats the one
 hour that was in flight, not the whole day.
 
-### Choosing the right value for Max read interval {#sizing-it}
+### Choosing the right value for Max read interval {#choosing-the-right-value-for-max-read-interval}
 
 - **Base it on what the source (and the network) can comfortably return in one call** — see
   [Data Rate and Cache Sizing](./oibus-data-rate.mdx) for how to translate a row count into a byte estimate. A source
   with strict query timeouts or limited server-side memory wants a smaller interval; a source that handles wide range
   scans efficiently (e.g. a time-series database with proper indexing) can use a larger one.
 - **Don't shrink it just because the steady-state rate is low.** The setting has to survive the worst case — the longest
-  realistic backlog (a weekend outage, a network partition) — not just normal operation where the window is naturally 
+  realistic backlog (a weekend outage, a network partition) — not just normal operation where the window is naturally
   small anyway.
 - **`0` (no splitting) is fine for low-volume sources** where the window is always small in practice, but is risky for
   anything that might accumulate a large backlog after downtime, since the next run would become one unbounded query.
 
-:::warning SQL-like connectors must reference both time variables in the query 
+:::warning SQL-like connectors must reference both time variables in the query
 
 For SQL-based connectors (MSSQL, MySQL/MariaDB, ODBC, OLEDB, Oracle, PostgreSQL, SQLite) and REST, OIBus runs the query,
 replacing `@StartTime` and `@EndTime` with the computed sub-interval's bounds. Both variables are therefore necessary
@@ -120,7 +120,7 @@ back-to-back requests hammering the source — useful for rate-limited APIs (RES
 shouldn't be monopolized, or PLC/historian servers that need a moment to service the previous request before the next
 one arrives.
 
-### The interaction of Read delay with Max read interval {#the-interaction-with-max-read-interval}
+### The interaction of Read delay with Max read interval {#the-interaction-of-read-delay-with-max-read-interval}
 
 The two settings trade off directly. The total delay added to a single run is approximately:
 
@@ -134,18 +134,19 @@ adds almost **24 minutes** of pure waiting, on top of the 1,440 round trips them
 to reduce load per query, check what that does to catch-up time on a realistic backlog before assuming a small
 `Read delay` is harmless.
 
-### Choosing the right value for Read delay {#sizing-it-1}
+### Choosing the right value for Read delay {#choosing-the-right-value-for-read-delay}
 
 | Symptom                                                                  | Adjustment                                                |
-|--------------------------------------------------------------------------|-----------------------------------------------------------|
+| ------------------------------------------------------------------------ | --------------------------------------------------------- |
 | Source rejects requests, rate-limits, or degrades under repeated polling | Increase `Read delay`                                     |
 | Catching up a large backlog takes far longer than the backlog itself     | Decrease `Read delay` and/or increase `Max read interval` |
 | Source has no rate concerns at all (local file-backed DB, etc.)          | `0` is fine                                               |
 
-## Start/End time offset: when the source is still processing the values {#startend-time-offset-when-the-source-isnt-done-writing-yet}
+## Start/End time offset: when the source is still processing the values {#startend-time-offset-when-the-source-is-still-processing-the-values}
 
 This is the setting that matters most when **several items queried together are not all digested by the data source at
 the same moment**. Typical symptoms are:
+
 - Not all values are recovered by each query — the number of tags, and even the values themselves, can change from one
   run to the next.
 - Repeating the same query over the same period shows that the first run returned fewer values than a later one.
@@ -160,7 +161,8 @@ last case is the concrete "several items together" scenario: a single batched qu
 value already flushed into storage and queryable, while tag B's value for that very same instant is still sitting in an internal
 buffer a few hundred milliseconds behind.
 
-#### How does this impact OIBus?
+#### How does this impact OIBus? {#how-does-this-impact-oibus}
+
 The issue is that OIBus asks for all the tags in the group at the same time. It receives an answer and cannot tell
 that some tags are missing — it has no way to know they simply weren't available yet. OIBus then sets the tracked
 instant to the latest timestamp recovered, so the next query misses any values that were not yet available in the
@@ -201,6 +203,7 @@ committed yet: that trailing slice (marked `███` below) is the "risky zone
 is how each one treats it.
 
 **Legend**
+
 - `███` = requested by the window but not yet committed by the source, so the query silently returns nothing for it.
 - `▒▒▒` = a slice that was `███` last run, re-requested now that the source has caught up.
 
@@ -237,10 +240,10 @@ re-asks the `:15` boundary on the next tick and recovers item B's value (at the 
 item A's, which was already there); a negative `End time offset` simply never asks for a tick until the run after, by
 which point every item in the group is expected to have caught up.
 
-### Choosing the right solution {#choosing-between-them}
+### Choosing the right solution {#choosing-the-right-solution}
 
 | Situation                                                                                    | Use                                     |
-|----------------------------------------------------------------------------------------------|-----------------------------------------|
+| -------------------------------------------------------------------------------------------- | --------------------------------------- |
 | Source occasionally commits a value slightly late; duplicate reads are harmless              | Negative `Start time offset`            |
 | Source's most recent data is unreliable/partial until it settles; re-querying is undesirable | Negative `End time offset`              |
 | A batched multi-item query (OPC UA HA, PI, HDA) where items don't all flush at once          | Negative `End time offset` on the group |
@@ -270,14 +273,14 @@ Pick `From newest to oldest` when a dashboard or downstream consumer needs curre
 backfill is still catching up on history. Keep `From oldest to newest` (the default) when incremental, crash-safe progress matters more
 than how quickly "now" appears — which is the right choice for most unattended setups.
 
-## Putting it together: a real-life example {#putting-it-together-a-worked-example}
+## Putting it together: a real-life example {#putting-it-together-a-real-life-example}
 
 A South MSSQL connector polls 200 tags from a historian table. The database batches inserts and typically commits within
 1.5 seconds of the sample timestamp. The team wants dashboards to show current values quickly even after a maintenance
 window, but also wants crash-safe progress if a backfill is interrupted.
 
 | Setting               | Value                   | Reasoning                                                                                                                          |
-|-----------------------|-------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| --------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | **Max read interval** | `900`                   | 15-minute chunks keep each query's row count (~180,000 rows at this rate) comfortably within the source's response time budget.    |
 | **Read delay**        | `500`                   | Enough pacing to avoid competing with production traffic on the same database, without meaningfully slowing a multi-hour catch-up. |
 | **Start time offset** | `-2000`                 | A 2-second cushion, comfortably above the observed 1.5-second commit lag.                                                          |
@@ -314,7 +317,7 @@ catch-up — accepting that a mid-catch-up restart would re-run the whole backlo
 ## Quick reference {#quick-reference}
 
 | Goal / symptom                                                                       | Adjust                                              |
-|--------------------------------------------------------------------------------------|-----------------------------------------------------|
+| ------------------------------------------------------------------------------------ | --------------------------------------------------- |
 | Source times out or runs out of memory on wide queries                               | Lower `Max read interval`                           |
 | Catching up a large backlog is dominated by pauses, not the queries themselves       | Raise `Max read interval` and/or lower `Read delay` |
 | Source rate-limits, degrades, or errors under repeated polling                       | Raise `Read delay`                                  |
