@@ -64,6 +64,7 @@ describe('SouthMySQL', () => {
     formatInstant: mock.fn((instant: unknown) => instant),
     generateReplacementParameters: mock.fn((): unknown => []),
     logQuery: mock.fn(),
+    extractDiscoveryQuery: mock.fn((scope: Record<string, unknown>) => scope.query as string),
     getSqlQueryTimeVariablesUsage: mock.fn((_query: string) => ({ usesStartTime: true, usesEndTime: true, hasInlineOffset: false })),
     getErrorMessage: mock.fn((error: unknown) => {
       if (error instanceof Error) return error.message;
@@ -472,6 +473,37 @@ describe('SouthMySQL', () => {
       assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [configuration.items[1], startTime, endTime]);
       assert.strictEqual(result.connectionDuration, 0);
       assert.strictEqual(result.queryDuration, 25);
+    });
+
+    it("should discover a Configuration Workflow's dedicated metadata query, with no @StartTime/@EndTime substitution", async () => {
+      const mockExecute = mock.fn(async (_query: unknown) => [[{ column_name: 'temp', description: 'Temperature' }]]);
+      const mockEnd = mock.fn();
+      mysqlExports.createConnection = mock.fn(async () => ({ end: mockEnd, execute: mockExecute, ping: mock.fn() }));
+
+      const result = await south.discover({ query: 'SELECT column_name, description FROM my_metadata_table' });
+
+      assert.deepStrictEqual((utilsExports.extractDiscoveryQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+        query: 'SELECT column_name, description FROM my_metadata_table'
+      });
+      assert.strictEqual(mockExecute.mock.calls.length, 1);
+      assert.strictEqual(mockExecute.mock.calls[0].arguments[0], 'SELECT column_name, description FROM my_metadata_table');
+      assert.strictEqual(mockEnd.mock.calls.length, 1);
+      assert.deepStrictEqual(result, [{ column_name: 'temp', description: 'Temperature' }]);
+    });
+
+    it('should close the connection and rethrow when the discovery query fails', async () => {
+      const queryError = new Error('bad query');
+      const mockEnd = mock.fn();
+      mysqlExports.createConnection = mock.fn(async () => ({
+        end: mockEnd,
+        execute: mock.fn(async () => {
+          throw queryError;
+        }),
+        ping: mock.fn()
+      }));
+
+      await assert.rejects(south.discover({ query: 'SELECT 1' }), queryError);
+      assert.strictEqual(mockEnd.mock.calls.length, 1);
     });
   });
 
