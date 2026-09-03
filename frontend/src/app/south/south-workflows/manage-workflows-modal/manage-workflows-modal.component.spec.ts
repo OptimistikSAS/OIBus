@@ -141,6 +141,32 @@ describe('ManageWorkflowsModalComponent', () => {
     expect(notificationService.success).toHaveBeenCalledWith('south.workflows.updated');
   });
 
+  test('should open the edit modal pre-filled to duplicate a workflow and create it on confirm', () => {
+    const fixture = createComponent();
+    const duplicatedWorkflow = buildWorkflow('workflow3', 'Alpha-copy');
+    configurationWorkflowService.create.mockReturnValue(of(duplicatedWorkflow));
+    const editModalInstance = { prepareForCopy: vi.fn() };
+    modalService.open.mockReturnValue({ componentInstance: editModalInstance, result: of({ name: 'Alpha-copy' }) } as never);
+
+    fixture.componentInstance.onDuplicate(workflows[0]);
+
+    expect(editModalInstance.prepareForCopy).toHaveBeenCalledWith(
+      scanModes,
+      items,
+      workflows,
+      manifest,
+      workflows[0],
+      'southId1',
+      southSettings,
+      groups,
+      undefined,
+      undefined
+    );
+    expect(configurationWorkflowService.create).toHaveBeenCalledWith('southId1', { name: 'Alpha-copy' });
+    expect(fixture.componentInstance.workflows).toContainEqual(duplicatedWorkflow);
+    expect(notificationService.success).toHaveBeenCalledWith('south.workflows.created');
+  });
+
   test('should confirm, delete, and remove the workflow from the list', () => {
     const fixture = createComponent();
     confirmationService.confirm.mockReturnValue(of(undefined));
