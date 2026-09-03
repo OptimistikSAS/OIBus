@@ -390,17 +390,20 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * session), through the exact same `getMaxParallelRun()` ceiling as everything else. `run` is
    * called once a slot is free; its resolution/rejection is forwarded to the returned promise.
    *
-   * Returns `null` (without queuing anything) if the connector is disabled/exiting, or if this
-   * workflow is already queued or running - the same backpressure semantics `trigger()` applies to
-   * items, just keyed by `workflowId` instead of a work-unit's items. Callers decide what a `null`
-   * means for them: a scheduled tick silently skips it (matching a dropped item work-unit); a
-   * manual "run now" surfaces it to the caller as "already running".
+   * Unlike `trigger()`, this does NOT gate on `isEnabled()` - a manual "run now" must work against a
+   * disabled connector's live session (the same way `explore()`/discovery already does), so a
+   * workflow can be built and tested before its connector is switched on. A scheduled tick must
+   * still respect the enabled flag, but that's checked by the caller before this is ever invoked
+   * (see ConfigurationWorkflowRunService.runScheduled), exactly like `trigger()` checks it itself
+   * before queuing an 'items' work-unit, rather than pushing that decision down here.
+   *
+   * Returns `null` (without queuing anything) if the connector is exiting, or if this workflow is
+   * already queued or running - the same backpressure semantics `trigger()` applies to items, just
+   * keyed by `workflowId` instead of a work-unit's items. Callers decide what a `null` means for
+   * them: a scheduled tick silently skips it (matching a dropped item work-unit); a manual "run now"
+   * surfaces it to the caller as "already running".
    */
   enqueueWorkflowRun<T>(workflowId: string, run: () => Promise<T>): Promise<T> | null {
-    if (!this.isEnabled()) {
-      this.logger.trace(`Connector is disabled. Workflow run for "${workflowId}" not queued`);
-      return null;
-    }
     if (this.stopping) {
       this.logger.trace(`Connector is exiting. Workflow run for "${workflowId}" not queued`);
       return null;

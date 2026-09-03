@@ -137,6 +137,13 @@ describe('Configuration Workflow Run Service', () => {
     assert.strictEqual(workflowRunRepository.start.mock.calls.length, 0);
   });
 
+  it('should still run when the south connector is disabled - a workflow must be testable before its connector is switched on', async () => {
+    south.isEnabled.mock.mockImplementation(() => false);
+    const result = await service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
+    assert.strictEqual(result, startedRun);
+    assert.strictEqual(workflowRunRepository.start.mock.calls.length, 1);
+  });
+
   it('should throw when the south connector does not support configuration discovery', async () => {
     south.hasConfigurationDiscovery.mock.mockImplementation(() => false);
     await assert.rejects(
@@ -193,6 +200,38 @@ describe('Configuration Workflow Run Service', () => {
 
     const counts = workflowRunRepository.complete.mock.calls[0].arguments[1] as { createdCount: number };
     assert.strictEqual(counts.createdCount, 1);
+  });
+
+  it('should coerce a mapped boolean/number constant to the type the south connector manifest (folder-scanner) actually declares', async () => {
+    south.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' }]);
+    configurationWorkflowService.findById.mock.mockImplementation(() => ({
+      ...baseWorkflow,
+      // 'enabled' is a top-level boolean manifest attribute; 'settings.minAge' is a number nested one
+      // level under folder-scanner's own item settings - both typed in here as plain constant text,
+      // exactly as the field-mapping UI produces for a "constant" (not {{variable}}) selection.
+      itemFieldMapping: { name: '{{name}}', enabled: 'false', 'settings.minAge': '120' }
+    }));
+
+    await service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
+
+    const command = southService.createItem.mock.calls[0].arguments[1] as { enabled: boolean; settings: { minAge: number } };
+    assert.strictEqual(command.enabled, false);
+    assert.strictEqual(command.settings.minAge, 120);
+  });
+
+  it('should leave an unrecognized boolean constant untouched rather than guessing at it', async () => {
+    south.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' }]);
+    configurationWorkflowService.findById.mock.mockImplementation(() => ({
+      ...baseWorkflow,
+      itemFieldMapping: { name: '{{name}}', enabled: 'yes' }
+    }));
+
+    await service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
+
+    const command = southService.createItem.mock.calls[0].arguments[1] as { enabled: unknown };
+    // Not coerced to a boolean - SouthService's own settings validation is left to catch the mistake,
+    // rather than this silently guessing what "yes" was meant to mean.
+    assert.strictEqual(command.enabled, 'yes');
   });
 
   it("should create a tracking point row even when remoteFieldMapping is null, for the next run's diff", async () => {
@@ -614,6 +653,15 @@ describe('Configuration Workflow Run Service', () => {
       south.enqueueWorkflowRun = mock.fn(() => null) as never;
       await assert.doesNotReject(service.runScheduled(SOUTH_ID, WORKFLOW_ID));
       assert.strictEqual(workflowRunRepository.start.mock.calls.length, 0);
+    });
+
+    it('should silently no-op (no throw) when the south connector is disabled - unlike runNow, a scheduled tick must respect it', async () => {
+      south.isEnabled.mock.mockImplementation(() => false);
+      const enqueueWorkflowRun = mock.fn(() => null) as never;
+      south.enqueueWorkflowRun = enqueueWorkflowRun;
+      await assert.doesNotReject(service.runScheduled(SOUTH_ID, WORKFLOW_ID));
+      assert.strictEqual(workflowRunRepository.start.mock.calls.length, 0);
+      assert.strictEqual((enqueueWorkflowRun as ReturnType<typeof mock.fn>).mock.calls.length, 0);
     });
   });
 
