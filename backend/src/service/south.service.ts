@@ -28,7 +28,7 @@ import {
 
 import { southManifestList } from './south-manifests';
 export { southManifestList } from './south-manifests';
-import { OIBusConnectionTestResult, OIBusContent } from '../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent, OIBusRecord } from '../../shared/model/engine.model';
 import {
   SouthConnectorEntity,
   SouthConnectorEntityLight,
@@ -293,6 +293,24 @@ export default class SouthService {
   async testSouth(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<OIBusConnectionTestResult> {
     const south = await this.buildEphemeralSouth(southId, southType, settingsToTest);
     return await south.testConnection();
+  }
+
+  /**
+   * Run a Configuration Workflow discovery query as typed (before the workflow itself is saved) and
+   * return its raw rows - lets the user check a SQL-family discovery query works, the same way
+   * `testItem` lets them check an item's own query, without needing a persisted workflow to preview.
+   */
+  async testDiscoveryQuery(
+    southId: string,
+    southType: OIBusSouthType,
+    settingsToTest: SouthSettings,
+    query: string
+  ): Promise<Array<OIBusRecord>> {
+    const south = await this.buildEphemeralSouth(southId, southType, settingsToTest);
+    if (!south.hasConfigurationDiscovery()) {
+      throw new Error(`South connector of type "${southType}" does not support configuration discovery`);
+    }
+    return await south.discover({ query });
   }
 
   /**
