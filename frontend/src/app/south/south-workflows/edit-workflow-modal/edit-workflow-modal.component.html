@@ -44,8 +44,8 @@
         } @else if (isSqlFamily) {
           <div class="form-text" translate="south.workflows.discovery-scope-query-hint"></div>
           @if (showSqlExploreTree) {
-            <div class="border rounded p-2 mb-2" style="max-height: 12rem; overflow: auto" id="discovery-explore-tree">
-              <oib-explore-tree />
+            <div class="border rounded p-2 mb-2" id="discovery-explore-tree">
+              <oib-explore-tree maxHeight="12rem" />
             </div>
           }
           <textarea
