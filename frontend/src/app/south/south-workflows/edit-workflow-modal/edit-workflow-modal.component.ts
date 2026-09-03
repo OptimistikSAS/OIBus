@@ -88,6 +88,16 @@ interface MappableField {
    *  every settings.* field already implies (e.g. ['...ha-mode.title'] for settings.haMode.aggregate) -
    *  shown as breadcrumb context so a deeply-nested field isn't just a bare, ambiguous leaf name. */
   ancestorLabelKeys?: Array<string>;
+  /** True for a manifest attribute carrying a REQUIRED validator (e.g. name, scanMode) - the same source
+   *  of truth EditSouthItemModalComponent's own form validators read from. Checked at save time so a
+   *  workflow can't be saved half-mapped in a way item creation would only reject later, at run time. */
+  mandatory?: boolean;
+  /** The manifest's own defaultValue for this attribute, when it has a usable one (e.g. `enabled`'s is
+   *  `true`) - such a field is left off isMandatoryFieldMissing()'s check even when mandatory, since an
+   *  unmapped item command falls back to it (matching EditSouthItemModalComponent's own pre-filled
+   *  control). Undefined for attribute types with no such concept (name's is `null`, scan-mode has none
+   *  at all) - those stay genuinely required to be explicit. */
+  hasUsableDefault?: boolean;
   /** Historian fields whose relevance depends on whether the item is (going to be) mapped into a group,
    *  mirroring the real item edit form's own group-dependent fields - `true` shows the field only when
    *  'groupId' is mapped to something, `false` only when it isn't. Not expressible as an enablingRule
@@ -404,12 +414,20 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   }
 
   private buildForm() {
+    // SQL-family connectors are query-based (one item = one free-form query, item != point) - a
+    // workflow there always targets one pre-existing item directly and can only push remote point
+    // metadata for what it discovers, never create/update items itself (see isSqlFamily's own doc
+    // comment). itemFieldMappingEnabled is forced off and hidden from the template for these; falling
+    // back to it being false then makes the existing "no target item without item mapping" save() check
+    // require a target item, with no extra validation needed.
     this.form = this.fb.group({
       name: [this.workflow?.name ?? '', [Validators.required, this.checkUniqueness()]],
       scanModeId: this.fb.control<string | null>(this.workflow?.scanMode?.id ?? null),
       targetItemId: this.fb.control<string | null>(this.workflow?.targetItemId ?? null),
-      itemFieldMappingEnabled: this.fb.control<boolean>(this.workflow ? this.workflow.itemFieldMapping !== null : true),
-      remoteFieldMappingEnabled: this.fb.control<boolean>(this.workflow ? this.workflow.remoteFieldMapping !== null : false),
+      itemFieldMappingEnabled: this.fb.control<boolean>(
+        this.isSqlFamily ? false : this.workflow ? this.workflow.itemFieldMapping !== null : true
+      ),
+      remoteFieldMappingEnabled: this.fb.control<boolean>(this.workflow ? this.workflow.remoteFieldMapping !== null : this.isSqlFamily),
       enabled: this.fb.control<boolean>(this.workflow?.enabled ?? true)
     });
   }
@@ -618,6 +636,21 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     return (field.enablingRules ?? []).every(rule => this.evaluatesTrue(rule));
   }
 
+  /** Whether a mandatory, currently-visible field is missing a mapped value - checked at save time.
+   *  Exempt: a field with a usable manifest defaultValue (e.g. `enabled` falls back to `true` if left
+   *  unmapped, same as EditSouthItemModalComponent's own pre-filled control - never actually "missing"),
+   *  and scanModeId once the item is mapped into a group (mirrors that same form's scanModeId.disable()
+   *  when grouped: a grouped item's schedule comes from the group instead). */
+  isMandatoryFieldMissing(field: MappableField): boolean {
+    if (!field.mandatory || field.hasUsableDefault) {
+      return false;
+    }
+    if (field.path === 'scanModeId' && !!this.itemFieldMappingValues['groupId']?.trim()) {
+      return false;
+    }
+    return !(this.itemFieldMappingValues[field.path] ?? '').trim();
+  }
+
   private evaluatesTrue(rule: FieldEnablingRule): boolean {
     const referralValue = this.itemFieldMappingValues[rule.referralPath] ?? '';
     const matchesAnyValue = rule.values.some(value => String(value) === referralValue);
@@ -714,6 +747,11 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       return;
     }
     const formValue = this.form.getRawValue();
+    // SQL-family connectors can never create/update items (see buildForm()'s own comment) - re-clamped
+    // here too, defensively, not just via the checkbox being hidden from the template.
+    if (this.isSqlFamily) {
+      formValue.itemFieldMappingEnabled = false;
+    }
 
     let discoveryScope: Record<string, unknown>;
     if (this.isSqlFamily) {
@@ -750,6 +788,16 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     );
     if (formValue.itemFieldMappingEnabled && hasConstantOnlyViolation) {
       this.formError = 'south.workflows.mapping-constant-only';
+      return;
+    }
+
+    // Every visible, manifest-REQUIRED field must be mapped to something - otherwise a workflow can be
+    // saved in a state item creation would only reject later, at run time (see isMandatoryFieldMissing).
+    const hasMissingMandatoryField = this.itemMappableFields.some(
+      field => this.isItemFieldVisible(field) && this.isMandatoryFieldMissing(field)
+    );
+    if (formValue.itemFieldMappingEnabled && hasMissingMandatoryField) {
+      this.formError = 'south.workflows.mapping-mandatory-missing';
       return;
     }
 
@@ -804,7 +852,12 @@ function toMappableField(
     translationKey: attribute.translationKey,
     attributeType: attribute.type,
     enablingRules,
-    ancestorLabelKeys
+    ancestorLabelKeys,
+    mandatory: attribute.validators?.some(validator => validator.type === 'REQUIRED') ?? false,
+    // Only a subset of attribute shapes even carry a defaultValue property, and it's nullable on most
+    // of those (meaning "no real default", still genuinely required) - 'boolean' is the one type whose
+    // defaultValue is never null.
+    hasUsableDefault: 'defaultValue' in attribute && attribute.defaultValue !== null
   };
   if (attribute.type === 'string-select') {
     field.selectableValues = attribute.selectableValues;
