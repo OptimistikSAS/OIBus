@@ -233,6 +233,40 @@ describe('EditWorkflowModalComponent', () => {
     expect(fixture.nativeElement.querySelector('#discovery-scope-unsupported')).toBeNull();
   });
 
+  test('should hide item field mapping for a SQL-family connector, defaulting to remote mapping only', async () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], sqlManifest, southId, southSettings);
+    fixture.detectChanges();
+
+    const root = page.elementLocator(fixture.nativeElement);
+    expect(fixture.nativeElement.querySelector('#item-field-mapping-enabled')).toBeNull();
+    expect(fixture.nativeElement.querySelector('#item-field-mapping-table')).toBeNull();
+    await expect.element(root.getByCss('#item-field-mapping-sql-unavailable')).toBeInTheDocument();
+    expect(fixture.componentInstance.form!.controls.itemFieldMappingEnabled.value).toBe(false);
+    expect(fixture.componentInstance.form!.controls.remoteFieldMappingEnabled.value).toBe(true);
+  });
+
+  test('should require a target item and never build itemFieldMapping when saving a SQL-family workflow', () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], sqlManifest, southId, southSettings);
+    fixture.detectChanges();
+    fixture.componentInstance.form!.controls.name.setValue('SQL workflow');
+    fixture.componentInstance.discoveryQuery = 'SELECT column_name FROM my_metadata_table';
+    fixture.componentInstance.identityKeyFields = ['column_name'];
+    fixture.componentInstance.remoteFieldMappingValues['unit'] = '{{unit}}';
+
+    fixture.componentInstance.save();
+    expect(fixture.componentInstance.formError).toBe('south.workflows.target-item-required');
+    expect(activeModal.close).not.toHaveBeenCalled();
+
+    fixture.componentInstance.form!.controls.targetItemId.setValue(items[0].id);
+    fixture.componentInstance.save();
+
+    expect(activeModal.close).toHaveBeenCalledWith(
+      expect.objectContaining({ targetItemId: items[0].id, itemFieldMapping: null, remoteFieldMapping: { unit: '{{unit}}' } })
+    );
+  });
+
   test('should test the discovery query as currently typed and show the raw rows', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, items, [], sqlManifest, southId, southSettings);
@@ -848,6 +882,9 @@ describe('EditWorkflowModalComponent', () => {
     fixture.componentInstance.form!.controls.scanModeId.setValue(scanModes[0].id);
     fixture.componentInstance.identityKeyFields = ['nodeId'];
     fixture.componentInstance.itemFieldMappingValues['name'] = '{{name}}';
+    // scanModeId is a manifest-REQUIRED item field (see mandatory-field validation) - a constant only,
+    // never a {{ }} expression, mirroring allowsVariable()'s own 'scan-mode' exclusion.
+    fixture.componentInstance.itemFieldMappingValues['scanModeId'] = scanModes[0].id;
     fixture.componentInstance.itemFieldMappingValues['enabled'] = '  '; // blank after trim -> not included
 
     fixture.componentInstance.save();
@@ -858,11 +895,41 @@ describe('EditWorkflowModalComponent', () => {
       discoveryScope: { rootNodeId: 'ns=1;s=Root' },
       identityKeyFields: ['nodeId'],
       eligibilityFilter: [],
-      itemFieldMapping: { name: '{{name}}' },
+      itemFieldMapping: { name: '{{name}}', scanModeId: scanModes[0].id },
       remoteFieldMapping: null,
       scanModeId: scanModes[0].id,
       enabled: true
     });
+  });
+
+  test('should reject saving when a mandatory item field is not mapped', () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.detectChanges();
+    fixture.componentInstance.form!.controls.name.setValue('New workflow');
+    fixture.componentInstance.identityKeyFields = ['nodeId'];
+    fixture.componentInstance.itemFieldMappingValues['name'] = '{{name}}';
+    // scanModeId left unmapped, and the item isn't mapped into a group either - mandatory and missing.
+
+    fixture.componentInstance.save();
+
+    expect(fixture.componentInstance.formError).toBe('south.workflows.mapping-mandatory-missing');
+    expect(activeModal.close).not.toHaveBeenCalled();
+  });
+
+  test('should not require scanModeId once the item is mapped into a group', () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings, groups);
+    fixture.detectChanges();
+    fixture.componentInstance.form!.controls.name.setValue('New workflow');
+    fixture.componentInstance.identityKeyFields = ['nodeId'];
+    fixture.componentInstance.itemFieldMappingValues['name'] = '{{name}}';
+    fixture.componentInstance.onSelectGroup(groups[0].id!);
+
+    fixture.componentInstance.save();
+
+    expect(fixture.componentInstance.formError).toBeNull();
+    expect(activeModal.close).toHaveBeenCalled();
   });
 
   test('should build a query discoveryScope, and default a tree-based one to an empty scope, when saving', () => {
@@ -891,6 +958,8 @@ describe('EditWorkflowModalComponent', () => {
     fixture.componentInstance.form!.controls.name.setValue('New workflow');
     fixture.componentInstance.form!.controls.remoteFieldMappingEnabled.setValue(true);
     fixture.componentInstance.identityKeyFields = ['nodeId'];
+    fixture.componentInstance.itemFieldMappingValues['name'] = '{{name}}';
+    fixture.componentInstance.itemFieldMappingValues['scanModeId'] = scanModes[0].id;
     fixture.componentInstance.remoteFieldMappingValues['unit'] = '{{unit}}';
     fixture.componentInstance.remoteFieldMappingExtraRows = [{ key: 'customField', value: 'hello' }];
 
