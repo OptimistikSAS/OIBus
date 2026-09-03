@@ -2,12 +2,13 @@ import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { Router } from '@angular/router';
-import { switchMap } from 'rxjs';
+import { Observable, switchMap } from 'rxjs';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ConfigurationWorkflowDTO } from '../../../../../../backend/shared/model/configuration-workflow.model';
 import {
   SouthConnectorItemDTO,
   SouthConnectorManifest,
+  SouthItemGroupCommandDTO,
   SouthItemGroupDTO
 } from '../../../../../../backend/shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
@@ -38,12 +39,18 @@ export default class ManageWorkflowsModalComponent {
   southId!: string;
   scanModes: Array<ScanModeDTO> = [];
   items: Array<SouthConnectorItemDTO> = [];
-  groups: Array<SouthItemGroupDTO> = [];
+  groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
   manifest!: SouthConnectorManifest;
   workflows: Array<ConfigurationWorkflowDTO> = [];
   displayedWorkflows: Array<ConfigurationWorkflowDTO> = [];
   loading = true;
   runningWorkflowId: string | null = null;
+
+  private addOrEditGroup!: (command: {
+    mode: 'create' | 'edit';
+    group: SouthItemGroupCommandDTO;
+  }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
+  private deleteGroup!: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
 
   searchControl = this.fb.control(null as string | null);
 
@@ -56,13 +63,20 @@ export default class ManageWorkflowsModalComponent {
     scanModes: Array<ScanModeDTO>,
     items: Array<SouthConnectorItemDTO>,
     manifest: SouthConnectorManifest,
-    groups: Array<SouthItemGroupDTO> = []
+    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [],
+    addOrEditGroup?: (command: {
+      mode: 'create' | 'edit';
+      group: SouthItemGroupCommandDTO;
+    }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
+    deleteGroup?: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>
   ) {
     this.southId = southId;
     this.scanModes = scanModes;
     this.items = items;
     this.manifest = manifest;
     this.groups = groups;
+    this.addOrEditGroup = addOrEditGroup!;
+    this.deleteGroup = deleteGroup!;
     this.reload();
   }
 
@@ -96,9 +110,17 @@ export default class ManageWorkflowsModalComponent {
   }
 
   onAdd() {
-    const modalRef = this.modalService.open(EditWorkflowModalComponent, { size: 'lg', backdrop: 'static' });
+    const modalRef = this.modalService.open(EditWorkflowModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditWorkflowModalComponent = modalRef.componentInstance;
-    component.prepareForCreation(this.scanModes, this.items, this.workflows, this.manifest, this.groups);
+    component.prepareForCreation(
+      this.scanModes,
+      this.items,
+      this.workflows,
+      this.manifest,
+      this.groups,
+      this.addOrEditGroup,
+      this.deleteGroup
+    );
     modalRef.result.subscribe(command => {
       this.configurationWorkflowService.create(this.southId, command).subscribe(created => {
         this.workflows.push(created);
@@ -109,9 +131,18 @@ export default class ManageWorkflowsModalComponent {
   }
 
   onEdit(workflow: ConfigurationWorkflowDTO) {
-    const modalRef = this.modalService.open(EditWorkflowModalComponent, { size: 'lg', backdrop: 'static' });
+    const modalRef = this.modalService.open(EditWorkflowModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditWorkflowModalComponent = modalRef.componentInstance;
-    component.prepareForEdition(this.scanModes, this.items, this.workflows, this.manifest, workflow, this.groups);
+    component.prepareForEdition(
+      this.scanModes,
+      this.items,
+      this.workflows,
+      this.manifest,
+      workflow,
+      this.groups,
+      this.addOrEditGroup,
+      this.deleteGroup
+    );
     modalRef.result.subscribe(command => {
       this.configurationWorkflowService.update(this.southId, workflow.id, command).subscribe(updated => {
         const index = this.workflows.findIndex(w => w.id === updated.id);

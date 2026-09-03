@@ -859,7 +859,15 @@ export class SouthDetailComponent {
   manageWorkflows() {
     const modalRef = this.modalService.open(ManageWorkflowsModalComponent, { size: 'xl', backdrop: 'static' });
     const component: ManageWorkflowsModalComponent = modalRef.componentInstance;
-    component.prepare(this.southConnector!.id, this.scanModes, this.southConnector!.items, this.manifest!, this.southConnector!.groups);
+    component.prepare(
+      this.southConnector!.id,
+      this.scanModes,
+      this.southConnector!.items,
+      this.manifest!,
+      this.southConnector!.groups,
+      this.addOrEditGroup.bind(this),
+      this.deleteGroup.bind(this)
+    );
   }
 
   getGroupName(item: SouthConnectorItemDTO): string {
