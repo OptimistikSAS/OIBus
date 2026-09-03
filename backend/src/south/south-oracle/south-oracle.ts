@@ -3,6 +3,7 @@ import path from 'node:path';
 import SouthConnector from '../south-connector';
 import {
   convertDateTimeToInstant,
+  extractDiscoveryQuery,
   formatInstant,
   generateReplacementParameters,
   getErrorMessage,
@@ -11,7 +12,7 @@ import {
 } from '../../service/utils';
 import { encryptionService } from '../../service/encryption.service';
 import { Instant } from '../../../shared/model/types';
-import { SouthHistoryQuery } from '../south-interface';
+import { SouthConfigurationDiscovery, SouthHistoryQuery } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthItemSettings, SouthOracleItemSettings, SouthOracleSettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent, OIBusRecord } from '../../../shared/model/engine.model';
@@ -27,7 +28,10 @@ import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from
  * the responsibility of the north-side transformer (e.g. record-list-to-csv); the only datetime
  * handling done here is tracking the incremental cursor via `item.settings.trackingInstant`.
  */
-export default class SouthOracle extends SouthConnector<SouthOracleSettings, SouthOracleItemSettings> implements SouthHistoryQuery {
+export default class SouthOracle
+  extends SouthConnector<SouthOracleSettings, SouthOracleItemSettings>
+  implements SouthHistoryQuery, SouthConfigurationDiscovery
+{
   constructor(
     connector: SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings>,
     engineAddContentCallback: (
@@ -224,6 +228,40 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
         return [];
       }
       return result.rows as Array<OIBusRecord>;
+    } catch (error) {
+      if (connection) {
+        await connection.close();
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieve step of a Configuration Workflow run: runs the workflow's own dedicated metadata query
+   * (`discoveryScope.query`) as-is - no `@StartTime`/`@EndTime` substitution, since it's independent of
+   * any item's own data query - and returns its rows directly as the discovered records.
+   */
+  async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
+    const query = extractDiscoveryQuery(scope);
+
+    let connectString = `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}`;
+    if (this.connector.settings.connectionTimeout) {
+      connectString += `?connect_timeout=${this.connector.settings.connectionTimeout}ms`;
+    }
+    const config: ConnectionAttributes = {
+      user: this.connector.settings.username || undefined,
+      password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : undefined,
+      connectString
+    };
+
+    let connection;
+    try {
+      process.env.ORA_SDTZ = 'UTC';
+      oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+      connection = await oracledb.getConnection(config);
+      const result = await connection.execute(query);
+      await connection.close();
+      return (result.rows ?? []) as Array<OIBusRecord>;
     } catch (error) {
       if (connection) {
         await connection.close();
