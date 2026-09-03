@@ -260,7 +260,15 @@ describe('SouthDetailComponent', () => {
     fixture.componentInstance.manageWorkflows();
 
     expect(modalService.open).toHaveBeenCalledWith(ManageWorkflowsModalComponent, expect.anything());
-    expect(prepare).toHaveBeenCalledWith(southConnector.id, scanModes, southConnector.items, manifest, southConnector.groups);
+    expect(prepare).toHaveBeenCalledWith(
+      southConnector.id,
+      scanModes,
+      southConnector.items,
+      manifest,
+      southConnector.groups,
+      expect.any(Function),
+      expect.any(Function)
+    );
   });
 
   test('should show the explore button when the manifest supports exploration', async () => {
