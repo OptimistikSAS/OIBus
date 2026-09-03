@@ -2814,7 +2814,7 @@
       "edit-title": "Edit configuration workflow",
       "name": "Name",
       "discovery-scope": "Discovery scope",
-      "discovery-scope-hint": "Connector-specific, as JSON (e.g. { \"rootNodeId\": \"ns=1;s=Root\" })",
+      "discovery-scope-hint": "Connector-specific, as JSON - a root node to browse for OPC-UA (e.g. { \"rootNodeId\": \"ns=1;s=Root\" }), or a dedicated metadata query for a SQL connector (e.g. { \"query\": \"SELECT column_name, description FROM my_metadata_table\" })",
       "discovery-scope-invalid-json": "Discovery scope must be valid JSON",
       "identity-key-fields": "Identity key fields",
       "identity-key-fields-hint": "Discovered-record field(s) that uniquely identify an entry across runs",

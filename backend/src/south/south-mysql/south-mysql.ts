@@ -3,6 +3,7 @@ import mysql from 'mysql2/promise';
 import SouthConnector from '../south-connector';
 import {
   convertDateTimeToInstant,
+  extractDiscoveryQuery,
   formatInstant,
   generateReplacementParameters,
   getErrorMessage,
@@ -11,7 +12,7 @@ import {
 } from '../../service/utils';
 import { encryptionService } from '../../service/encryption.service';
 import { Instant } from '../../../shared/model/types';
-import { SouthHistoryQuery } from '../south-interface';
+import { SouthConfigurationDiscovery, SouthHistoryQuery } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthItemSettings, SouthMySQLItemSettings, SouthMySQLSettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent, OIBusRecord } from '../../../shared/model/engine.model';
@@ -25,7 +26,10 @@ import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from
  * display is the responsibility of the north-side transformer (e.g. record-list-to-csv); the only
  * datetime handling done here is tracking the incremental cursor via `item.settings.trackingInstant`.
  */
-export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, SouthMySQLItemSettings> implements SouthHistoryQuery {
+export default class SouthMySQL
+  extends SouthConnector<SouthMySQLSettings, SouthMySQLItemSettings>
+  implements SouthHistoryQuery, SouthConfigurationDiscovery
+{
   constructor(
     connector: SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings>,
     engineAddContentCallback: (
@@ -213,6 +217,29 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
         values: params,
         timeout: item.settings.requestTimeout
       });
+      await connection.end();
+      return data as Array<OIBusRecord>;
+    } catch (error) {
+      if (connection) {
+        await connection.end();
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieve step of a Configuration Workflow run: runs the workflow's own dedicated metadata query
+   * (`discoveryScope.query`) as-is - no `@StartTime`/`@EndTime` substitution, since it's independent of
+   * any item's own data query - and returns its rows directly as the discovered records.
+   */
+  async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
+    const query = extractDiscoveryQuery(scope);
+    const config = await this.createConnectionOptions();
+
+    let connection;
+    try {
+      connection = await mysql.createConnection(config);
+      const [data] = await connection.execute(query);
       await connection.end();
       return data as Array<OIBusRecord>;
     } catch (error) {

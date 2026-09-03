@@ -287,6 +287,21 @@ export const generateReplacementParameters = (
   return occurrences.map(occurrence => occurrence.value);
 };
 
+/**
+ * Extracts and validates the `query` a SQL-family Configuration Workflow's `discoveryScope` carries -
+ * a dedicated metadata query (see `SouthConfigurationDiscovery.discover()`'s own doc comment), run
+ * as-is with no `@StartTime`/`@EndTime` substitution since it's independent of any item's own data
+ * query. Shared by every SQL-family connector's `discover()` so the validation (and its error message)
+ * stays identical across all of them.
+ */
+export const extractDiscoveryQuery = (scope: Record<string, unknown>): string => {
+  const query = scope.query;
+  if (typeof query !== 'string' || !query.trim()) {
+    throw new Error('Configuration workflow discoveryScope.query is required and must be a non-empty string');
+  }
+  return query;
+};
+
 export const convertDelimiter = (delimiter: CsvCharacter): string => {
   switch (delimiter) {
     case 'NON_BREAKING_SPACE':
