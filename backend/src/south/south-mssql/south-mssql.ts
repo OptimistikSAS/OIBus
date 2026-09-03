@@ -1,10 +1,17 @@
 import mssql, { config } from 'mssql';
 
 import SouthConnector from '../south-connector';
-import { convertDateTimeToInstant, formatInstant, getErrorMessage, logQuery, workUnitLogCtx } from '../../service/utils';
+import {
+  convertDateTimeToInstant,
+  extractDiscoveryQuery,
+  formatInstant,
+  getErrorMessage,
+  logQuery,
+  workUnitLogCtx
+} from '../../service/utils';
 import { encryptionService } from '../../service/encryption.service';
 import { Instant } from '../../../shared/model/types';
-import { SouthHistoryQuery } from '../south-interface';
+import { SouthConfigurationDiscovery, SouthHistoryQuery } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthItemSettings, SouthMSSQLItemSettings, SouthMSSQLSettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent, OIBusRecord } from '../../../shared/model/engine.model';
@@ -19,7 +26,10 @@ import { OIBusTestingError } from '../../model/types';
  * the responsibility of the north-side transformer (e.g. record-list-to-csv); the only datetime
  * handling done here is tracking the incremental cursor via `item.settings.trackingInstant`.
  */
-export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, SouthMSSQLItemSettings> implements SouthHistoryQuery {
+export default class SouthMSSQL
+  extends SouthConnector<SouthMSSQLSettings, SouthMSSQLItemSettings>
+  implements SouthHistoryQuery, SouthConfigurationDiscovery
+{
   constructor(
     connector: SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>,
     engineAddContentCallback: (
@@ -213,6 +223,27 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
       const [first] = result.recordsets as Array<unknown>;
       await pool.close();
       return first as Array<OIBusRecord>;
+    } catch (error) {
+      await pool.close();
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieve step of a Configuration Workflow run: runs the workflow's own dedicated metadata query
+   * (`discoveryScope.query`) as-is - no `@StartTime`/`@EndTime` substitution, since it's independent of
+   * any item's own data query - and returns its rows directly as the discovered records.
+   */
+  async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
+    const query = extractDiscoveryQuery(scope);
+    const config = await this.createConnectionOptions();
+
+    const pool = await new mssql.ConnectionPool(config).connect();
+    try {
+      const result = await pool.request().query(query);
+      const [first] = result.recordsets as Array<unknown>;
+      await pool.close();
+      return (first ?? []) as Array<OIBusRecord>;
     } catch (error) {
       await pool.close();
       throw error;
