@@ -71,6 +71,7 @@ describe('SouthOracle', () => {
     formatInstant: mock.fn((instant: unknown) => instant),
     generateReplacementParameters: mock.fn((): unknown => []),
     logQuery: mock.fn(),
+    extractDiscoveryQuery: mock.fn((scope: Record<string, unknown>) => scope.query as string),
     getErrorMessage: mock.fn((error: unknown) => {
       if (error instanceof Error) return error.message;
       if (typeof error === 'string') return error;
@@ -488,6 +489,48 @@ describe('SouthOracle', () => {
       assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [configuration.items[1], startTime, endTime]);
       assert.strictEqual(result.queryDuration, 25);
       assert.strictEqual(result.connectionDuration, 0);
+    });
+
+    it("should discover a Configuration Workflow's dedicated metadata query, with no @StartTime/@EndTime substitution", async () => {
+      const mockClose = mock.fn();
+      const mockExecute = mock.fn(async () => ({ rows: [{ column_name: 'temp', description: 'Temperature' }] }));
+      oracledbExports.getConnection = mock.fn(async () => ({ ping, close: mockClose, execute: mockExecute, callTimeout: 0 }));
+
+      const result = await south.discover({ query: 'SELECT column_name, description FROM my_metadata_table' });
+
+      assert.deepStrictEqual((utilsExports.extractDiscoveryQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+        query: 'SELECT column_name, description FROM my_metadata_table'
+      });
+      assert.strictEqual(mockExecute.mock.calls.length, 1);
+      assert.strictEqual(mockExecute.mock.calls[0].arguments[0], 'SELECT column_name, description FROM my_metadata_table');
+      assert.strictEqual(mockClose.mock.calls.length, 1);
+      assert.deepStrictEqual(result, [{ column_name: 'temp', description: 'Temperature' }]);
+    });
+
+    it('should discover as an empty array when the metadata query returns no rows', async () => {
+      const mockClose = mock.fn();
+      const mockExecute = mock.fn(async () => ({ rows: null }));
+      oracledbExports.getConnection = mock.fn(async () => ({ ping, close: mockClose, execute: mockExecute, callTimeout: 0 }));
+
+      const result = await south.discover({ query: 'SELECT 1' });
+
+      assert.deepStrictEqual(result, []);
+    });
+
+    it('should close the connection and rethrow when the discovery query fails', async () => {
+      const queryError = new Error('bad query');
+      const mockClose = mock.fn();
+      oracledbExports.getConnection = mock.fn(async () => ({
+        ping,
+        close: mockClose,
+        execute: mock.fn(async () => {
+          throw queryError;
+        }),
+        callTimeout: 0
+      }));
+
+      await assert.rejects(south.discover({ query: 'SELECT 1' }), queryError);
+      assert.strictEqual(mockClose.mock.calls.length, 1);
     });
   });
 
