@@ -1,11 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { of } from 'rxjs';
 
 import EditWorkflowModalComponent from './edit-workflow-modal.component';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { ModalService } from '../../../shared/modal.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { ConfigurationWorkflowDTO } from '../../../../../../backend/shared/model/configuration-workflow.model';
@@ -23,6 +25,73 @@ const groups = [{ id: 'group1', standardSettings: { name: 'Group 1' } }] as unkn
 // Real manifest fixture: modes.history is true, items.rootAttribute.attributes = [name, enabled, scanMode, settings{...}] -
 // exercises both the manifest-driven fields and the historian fields added alongside them.
 const manifest = testData.south.manifest as unknown as SouthConnectorManifest;
+
+// Mirrors the real OPC-UA item manifest's mode -> haMode enabling condition (settings.mode is a
+// string-select referral gating the whole settings.haMode object, whose own children - here just
+// settings.haMode.aggregate - inherit that same condition). Reuses the real OPC-UA translation keys
+// (mock-i18n throws on any key that isn't actually in en.json) rather than inventing new ones.
+const enablingManifest = {
+  ...manifest,
+  items: {
+    ...manifest.items,
+    rootAttribute: {
+      type: 'object',
+      key: 'item',
+      translationKey: 'configuration.oibus.manifest.south.items.item',
+      displayProperties: { visible: true, wrapInBox: false },
+      enablingConditions: [],
+      validators: [],
+      attributes: [
+        {
+          type: 'string',
+          key: 'name',
+          translationKey: 'configuration.oibus.manifest.south.items.name',
+          defaultValue: null,
+          validators: [],
+          displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+        },
+        {
+          type: 'object',
+          key: 'settings',
+          translationKey: 'configuration.oibus.manifest.south.items.settings',
+          displayProperties: { visible: true, wrapInBox: true },
+          enablingConditions: [{ referralPathFromRoot: 'mode', targetPathFromRoot: 'haMode', values: ['ha'] }],
+          validators: [],
+          attributes: [
+            {
+              type: 'string-select',
+              key: 'mode',
+              translationKey: 'configuration.oibus.manifest.south.items.opcua.mode',
+              defaultValue: 'ha',
+              selectableValues: ['ha', 'da'],
+              validators: [],
+              displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+            },
+            {
+              type: 'object',
+              key: 'haMode',
+              translationKey: 'configuration.oibus.manifest.south.items.opcua.ha-mode.title',
+              displayProperties: { visible: true, wrapInBox: false },
+              enablingConditions: [],
+              validators: [],
+              attributes: [
+                {
+                  type: 'string-select',
+                  key: 'aggregate',
+                  translationKey: 'configuration.oibus.manifest.south.items.opcua.ha-mode.aggregate',
+                  defaultValue: 'raw',
+                  selectableValues: ['raw', 'average', 'minimum', 'maximum', 'count'],
+                  validators: [],
+                  displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+} as unknown as SouthConnectorManifest;
 
 const existingWorkflow: ConfigurationWorkflowDTO = {
   id: 'workflowId1',
@@ -44,15 +113,18 @@ const existingWorkflow: ConfigurationWorkflowDTO = {
 
 describe('EditWorkflowModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
+  let modalService: MockObject<ModalService>;
 
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
+    modalService = createMock(ModalService);
     const unsavedChangesService = createMock(UnsavedChangesConfirmationService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: activeModal },
+        { provide: ModalService, useValue: modalService },
         { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesService }
       ]
     });
@@ -113,7 +185,7 @@ describe('EditWorkflowModalComponent', () => {
     expect(paths).not.toContain('groupId');
   });
 
-  test('should render a select (not a text box) for boolean, scan-mode, string-select, and group-select fields', async () => {
+  test('should render a select (not a text box) for boolean, scan-mode, and string-select fields', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, groups);
     fixture.detectChanges();
@@ -128,10 +200,73 @@ describe('EditWorkflowModalComponent', () => {
     // string-select historian 'recoveryStrategy' -> a select of oldest/newest.
     await expect.element(root.getByCss('#item-field-mapping-field-recoveryStrategy option[value="oldest"]')).toBeInTheDocument();
     await expect.element(root.getByCss('#item-field-mapping-field-recoveryStrategy option[value="newest"]')).toBeInTheDocument();
-    // group-select historian 'groupId' -> a select of this south connector's own groups.
-    await expect.element(root.getByCss('#item-field-mapping-field-groupId option[value="group1"]')).toHaveTextContent('Group 1');
     // 'name' stays a plain string field -> no select rendered for it.
     expect(fixture.nativeElement.querySelector('#item-field-mapping-field-name').tagName).toBe('INPUT');
+  });
+
+  test("should render the group field as a dropdown listing this south connector's own groups, with a create-new-group action", async () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, groups);
+    fixture.detectChanges();
+
+    const root = page.elementLocator(fixture.nativeElement);
+    await expect.element(root.getByCss('#item-field-mapping-field-groupId')).toBeInTheDocument();
+    // Not a native <select> - the dropdown supports inline edit/delete/create, which a <select> can't.
+    expect(fixture.nativeElement.querySelector('#item-field-mapping-field-groupId').tagName).toBe('BUTTON');
+    await expect.element(root.getByText('Group 1')).toBeInTheDocument();
+    await expect.element(root.getByText('Create a new group...')).toBeInTheDocument();
+  });
+
+  test('should map the group field to a constant when a group is picked from the dropdown', () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, groups);
+    fixture.detectChanges();
+
+    fixture.componentInstance.onSelectGroup('group1');
+    expect(fixture.componentInstance.itemFieldMappingValues['groupId']).toBe('group1');
+    expect(fixture.componentInstance.getSelectedGroupName()).toBe('Group 1');
+
+    fixture.componentInstance.onSelectGroup(null);
+    expect(fixture.componentInstance.itemFieldMappingValues['groupId']).toBe('');
+    expect(fixture.componentInstance.getSelectedGroupName()).toBe('');
+  });
+
+  test('should create a group directly against the live south connector and map it, mirroring the item edit modal', () => {
+    // A fresh array, not the shared `groups` fixture - onAddGroup pushes into it in place (mirroring
+    // EditSouthItemModalComponent's own onAddGroup), which would otherwise leak into every other test.
+    const ownGroups = [{ id: 'group1', standardSettings: { name: 'Group 1' } }] as unknown as Array<SouthItemGroupDTO>;
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    const addOrEditGroup = vi.fn();
+    const deleteGroup = vi.fn();
+    const createdGroup = { id: 'group2', standardSettings: { name: 'Group 2' } } as unknown as SouthItemGroupDTO;
+    addOrEditGroup.mockReturnValue(of(createdGroup));
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, ownGroups, addOrEditGroup, deleteGroup);
+    fixture.detectChanges();
+    const groupModalInstance = { prepareForCreation: vi.fn() };
+    modalService.open.mockReturnValue({ componentInstance: groupModalInstance, result: of({ mode: 'create', group: {} }) } as never);
+
+    fixture.componentInstance.onAddGroup();
+
+    expect(addOrEditGroup).toHaveBeenCalledWith({ mode: 'create', group: {} });
+    expect(fixture.componentInstance.groups).toContainEqual(createdGroup);
+    expect(fixture.componentInstance.itemFieldMappingValues['groupId']).toBe('group2');
+  });
+
+  test('should delete a group and clear it from the mapping if it was the one currently selected', () => {
+    const ownGroups = [{ id: 'group1', standardSettings: { name: 'Group 1' } }] as unknown as Array<SouthItemGroupDTO>;
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    const addOrEditGroup = vi.fn();
+    const deleteGroup = vi.fn();
+    deleteGroup.mockReturnValue(of(undefined));
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, ownGroups, addOrEditGroup, deleteGroup);
+    fixture.detectChanges();
+    fixture.componentInstance.onSelectGroup('group1');
+
+    fixture.componentInstance.onDeleteGroup(ownGroups[0], new Event('click'));
+
+    expect(deleteGroup).toHaveBeenCalledWith(ownGroups[0]);
+    expect(fixture.componentInstance.groups).toEqual([]);
+    expect(fixture.componentInstance.itemFieldMappingValues['groupId']).toBe('');
   });
 
   test('should append .title to a manifest string-select field label, but not to the flat-string hardcoded ones', () => {
@@ -156,6 +291,200 @@ describe('EditWorkflowModalComponent', () => {
     expect(fixture.componentInstance.fieldLabelKey(recoveryStrategyField)).toBe('south.items.recovery-strategy');
     const resamplingField = fixture.componentInstance.remoteKnownFields.find(field => field.path === 'resamplingMethod')!;
     expect(fixture.componentInstance.fieldLabelKey(resamplingField)).toBe('south.workflows.remote-known-fields.resampling-method');
+  });
+
+  test('should flag a field referenced by an enablingCondition and omit its {{ }} option, forcing a constant', async () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], enablingManifest);
+    fixture.detectChanges();
+
+    const modeField = fixture.componentInstance.itemMappableFields.find(field => field.path === 'settings.mode')!;
+    expect(modeField.isEnablingReferral).toBe(true);
+    // Every other select-type field (not referenced by any enablingCondition) keeps its escape hatch.
+    const nameField = fixture.componentInstance.itemMappableFields.find(field => field.path === 'name')!;
+    expect(nameField.isEnablingReferral).toBeFalsy();
+
+    const root = page.elementLocator(fixture.nativeElement);
+    await expect
+      .element(root.getByCss('[id="item-field-mapping-field-settings.mode"] option[value="__variable__"]'))
+      .not.toBeInTheDocument();
+  });
+
+  test('should hide a field gated by an enablingCondition until the referral constant matches, then show it', async () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], enablingManifest);
+    fixture.detectChanges();
+
+    const targetSelector = '[id="item-field-mapping-field-settings.haMode.aggregate"]';
+    const root = page.elementLocator(fixture.nativeElement);
+    const modeField = fixture.componentInstance.itemMappableFields.find(field => field.path === 'settings.mode')!;
+    // settings.mode isn't mapped to anything yet, so the field it gates stays hidden - matching the real
+    // manifest form, where an unmet enabling condition disables (hides) its target.
+    expect(fixture.nativeElement.querySelector('[id="item-field-mapping-field-settings.haMode.aggregate"]')).toBeNull();
+
+    fixture.componentInstance.onSelectChange(fixture.componentInstance.itemFieldMappingValues, modeField, 'da');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[id="item-field-mapping-field-settings.haMode.aggregate"]')).toBeNull();
+
+    fixture.componentInstance.onSelectChange(fixture.componentInstance.itemFieldMappingValues, modeField, 'ha');
+    fixture.detectChanges();
+    await expect.element(root.getByCss(targetSelector)).toBeInTheDocument();
+  });
+
+  test('should reject saving when a field that gates other fields is mapped to a {{ }} expression', () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], enablingManifest);
+    fixture.detectChanges();
+    fixture.componentInstance.form!.controls.name.setValue('New workflow');
+    fixture.componentInstance.form!.controls.discoveryScope.setValue('{}');
+    fixture.componentInstance.identityKeyFields = ['nodeId'];
+    // Not reachable through the select itself (its {{ }} option is gone) - simulates an existing
+    // workflow whose mapping predates this restriction, loaded via prepareForEdition.
+    fixture.componentInstance.itemFieldMappingValues['settings.mode'] = '{{mode}}';
+
+    fixture.componentInstance.save();
+
+    expect(fixture.componentInstance.formError).toBe('south.workflows.mapping-constant-only');
+    expect(activeModal.close).not.toHaveBeenCalled();
+  });
+
+  test('should never offer {{ }} for the schedule field - it must always reference a real scan mode', async () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest);
+    fixture.detectChanges();
+
+    const scanModeIdField = fixture.componentInstance.itemMappableFields.find(field => field.path === 'scanModeId')!;
+    expect(fixture.componentInstance.allowsVariable(scanModeIdField)).toBe(false);
+    const root = page.elementLocator(fixture.nativeElement);
+    await expect.element(root.getByCss('[id="item-field-mapping-field-scanModeId"] option[value="__variable__"]')).not.toBeInTheDocument();
+  });
+
+  test('should never offer {{ }} for recoveryStrategy/syncWithGroup, and hint "constant value" on the other historian fields', async () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, groups);
+    fixture.detectChanges();
+
+    const byPath = (path: string) => fixture.componentInstance.itemMappableFields.find(field => field.path === path)!;
+    for (const path of ['maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'recoveryStrategy', 'syncWithGroup']) {
+      expect(fixture.componentInstance.allowsVariable(byPath(path))).toBe(false);
+    }
+
+    const root = page.elementLocator(fixture.nativeElement);
+    // recoveryStrategy is select-type - the {{ }} option is omitted from its dropdown.
+    await expect
+      .element(root.getByCss('[id="item-field-mapping-field-recoveryStrategy"] option[value="__variable__"]'))
+      .not.toBeInTheDocument();
+    // maxReadInterval is a plain text field - it can't hide an escape hatch, so it hints instead.
+    expect(fixture.componentInstance.itemFieldPlaceholderKey(byPath('maxReadInterval'))).toBe(
+      'south.workflows.mapping-constant-placeholder'
+    );
+    await expect.element(root.getByCss('#item-field-mapping-field-maxReadInterval')).toHaveAttribute('placeholder', 'constant value');
+  });
+
+  test('should reject saving when a constant-only historian field is mapped to a {{ }} expression', () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest);
+    fixture.detectChanges();
+    fixture.componentInstance.form!.controls.name.setValue('New workflow');
+    fixture.componentInstance.form!.controls.discoveryScope.setValue('{}');
+    fixture.componentInstance.identityKeyFields = ['nodeId'];
+    fixture.componentInstance.itemFieldMappingValues['maxReadInterval'] = '{{interval}}';
+
+    fixture.componentInstance.save();
+
+    expect(fixture.componentInstance.formError).toBe('south.workflows.mapping-constant-only');
+    expect(activeModal.close).not.toHaveBeenCalled();
+  });
+
+  test("should keep a hidden field's value while editing, but strip it from the mapping at save time", () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], enablingManifest);
+    fixture.detectChanges();
+    fixture.componentInstance.form!.controls.name.setValue('New workflow');
+    fixture.componentInstance.form!.controls.discoveryScope.setValue('{}');
+    fixture.componentInstance.identityKeyFields = ['nodeId'];
+    // 'da' hides settings.haMode.aggregate, but a value was set for it earlier (e.g. while mode was 'ha').
+    fixture.componentInstance.itemFieldMappingValues['settings.mode'] = 'da';
+    fixture.componentInstance.itemFieldMappingValues['settings.haMode.aggregate'] = 'average';
+    fixture.detectChanges();
+
+    // Still hidden and still holding its value - nothing was cleared just by re-rendering.
+    const aggregateField = fixture.componentInstance.itemMappableFields.find(field => field.path === 'settings.haMode.aggregate')!;
+    expect(fixture.componentInstance.isItemFieldVisible(aggregateField)).toBe(false);
+    expect(fixture.componentInstance.itemFieldMappingValues['settings.haMode.aggregate']).toBe('average');
+
+    fixture.componentInstance.save();
+
+    const command = (activeModal.close.mock.calls[0] as unknown as [{ itemFieldMapping: Record<string, string> }])[0];
+    expect(command.itemFieldMapping).not.toHaveProperty('settings.haMode.aggregate');
+    expect(command.itemFieldMapping).toEqual({ 'settings.mode': 'da' });
+    // Editing state itself is untouched - toggling mode back to 'ha' would still show the same value.
+    expect(fixture.componentInstance.itemFieldMappingValues['settings.haMode.aggregate']).toBe('average');
+  });
+
+  test('should record ancestor labels for a field nested beyond the top-level settings wrapper, but not for settings itself', () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], enablingManifest);
+    fixture.detectChanges();
+
+    const modeField = fixture.componentInstance.itemMappableFields.find(field => field.path === 'settings.mode')!;
+    expect(modeField.ancestorLabelKeys).toEqual([]);
+    const aggregateField = fixture.componentInstance.itemMappableFields.find(field => field.path === 'settings.haMode.aggregate')!;
+    expect(aggregateField.ancestorLabelKeys).toEqual(['configuration.oibus.manifest.south.items.opcua.ha-mode.title']);
+  });
+
+  test('should show the item-owned historian fields and hide syncWithGroup while the item is not mapped into a group', async () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, groups);
+    fixture.detectChanges();
+
+    const byPath = (path: string) => fixture.componentInstance.itemMappableFields.find(field => field.path === path)!;
+    for (const path of ['maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'recoveryStrategy']) {
+      expect(fixture.componentInstance.isItemFieldVisible(byPath(path))).toBe(true);
+    }
+    expect(fixture.componentInstance.isItemFieldVisible(byPath('syncWithGroup'))).toBe(false);
+
+    const root = page.elementLocator(fixture.nativeElement);
+    await expect.element(root.getByCss('#item-field-mapping-field-maxReadInterval')).toBeInTheDocument();
+    expect(fixture.nativeElement.querySelector('#item-field-mapping-field-syncWithGroup')).toBeNull();
+  });
+
+  test('should still show the item-owned historian fields once grouped, as long as the item is not synced with the group', async () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, groups);
+    fixture.detectChanges();
+
+    fixture.componentInstance.onSelectGroup('group1');
+    fixture.detectChanges();
+
+    // Being in a group alone doesn't hide these - the item still owns its settings until it's synced.
+    const byPath = (path: string) => fixture.componentInstance.itemMappableFields.find(field => field.path === path)!;
+    for (const path of ['maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'recoveryStrategy']) {
+      expect(fixture.componentInstance.isItemFieldVisible(byPath(path))).toBe(true);
+    }
+    expect(fixture.componentInstance.isItemFieldVisible(byPath('syncWithGroup'))).toBe(true);
+
+    const root = page.elementLocator(fixture.nativeElement);
+    await expect.element(root.getByCss('#item-field-mapping-field-maxReadInterval')).toBeInTheDocument();
+    await expect.element(root.getByCss('#item-field-mapping-field-syncWithGroup')).toBeInTheDocument();
+  });
+
+  test('should hide the item-owned historian fields once the item is actually synced with its group', () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, groups);
+    fixture.detectChanges();
+
+    fixture.componentInstance.onSelectGroup('group1');
+    const syncWithGroupField = fixture.componentInstance.itemMappableFields.find(field => field.path === 'syncWithGroup')!;
+    fixture.componentInstance.onSelectChange(fixture.componentInstance.itemFieldMappingValues, syncWithGroupField, 'true');
+    fixture.detectChanges();
+
+    const byPath = (path: string) => fixture.componentInstance.itemMappableFields.find(field => field.path === path)!;
+    for (const path of ['maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'recoveryStrategy']) {
+      expect(fixture.componentInstance.isItemFieldVisible(byPath(path))).toBe(false);
+    }
+
+    expect(fixture.nativeElement.querySelector('#item-field-mapping-field-maxReadInterval')).toBeNull();
   });
 
   test('should switch a select-type field into variable mode and expose an expression input when the sentinel is chosen', async () => {
