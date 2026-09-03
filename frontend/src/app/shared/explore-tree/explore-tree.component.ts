@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, ChangeDetectionStrategy, OnDestroy, Output } from '@angular/core';
+import { Component, EventEmitter, inject, ChangeDetectionStrategy, Input, OnDestroy, Output } from '@angular/core';
 import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
@@ -59,6 +59,14 @@ export class ExploreTreeComponent implements OnDestroy {
   private southConnectorService = inject(SouthConnectorService);
 
   @Output() nodeSelected = new EventEmitter<SouthConnectorExploreEntry>();
+
+  /**
+   * Height of the tree's own scroll region. Defaults to the standalone Explore modal's fill-the-modal
+   * sizing; a host embedding this inline alongside other form content (e.g. the Configuration Workflow
+   * discovery-scope editor) should pass a smaller value instead of wrapping this component in a second
+   * `overflow: auto` container of its own - two nested scroll regions produce two vertical scrollbars.
+   */
+  @Input() maxHeight = '50vh';
 
   private api: SouthExploreApi | null = null;
   selectable = false;

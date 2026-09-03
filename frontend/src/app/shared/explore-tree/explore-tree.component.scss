@@ -1,7 +1,8 @@
 @import '../../../common';
 
 .explore-tree {
-  max-height: 50vh;
+  // max-height is set inline (see the component's maxHeight @Input) - the one scroll region this
+  // component owns, sized per host. Never wrap this component in a second overflow:auto container.
   overflow: auto;
 }
 
