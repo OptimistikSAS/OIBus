@@ -1,0 +1,130 @@
+<div class="modal-header">
+  <h4 class="modal-title" [translate]="'south.workflows.manage-title'" [translateParams]="{ count: workflows.length }"></h4>
+</div>
+<div class="modal-body">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div></div>
+    <div class="ms-3">
+      <button type="button" class="btn btn-primary btn-sm oib-box-btn" id="add-workflow" (click)="onAdd()">
+        <span class="fa fa-plus"></span>
+      </button>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="text-center">
+      <div class="spinner-border" id="spinner" role="status"></div>
+    </div>
+  } @else if (workflows.length === 0) {
+    <div class="oib-grey-container" translate="south.workflows.none"></div>
+  } @else {
+    <div class="d-flex align-items-center gap-2 my-2">
+      <input
+        class="form-control form-control-sm flex-grow-1"
+        [formControl]="searchControl"
+        [placeholder]="'south.workflows.search-placeholder' | translate"
+        type="text"
+      />
+    </div>
+
+    @if (displayedWorkflows.length === 0) {
+      <div class="oib-grey-container" translate="south.workflows.none-match"></div>
+    } @else {
+      <table class="table table-sm table-hover oib-table">
+        <thead class="light">
+          <tr>
+            <th translate="south.workflows.name"></th>
+            <th translate="south.workflows.scan-mode"></th>
+            <th translate="south.workflows.target-item"></th>
+            <th translate="south.workflows.enabled"></th>
+            <th style="width: 12rem"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (workflow of displayedWorkflows; track workflow.id) {
+            <tr>
+              <td>{{ workflow.name }}</td>
+              <td>
+                @if (getScanModeName(workflow); as scanModeName) {
+                  {{ scanModeName }}
+                } @else {
+                  <span class="text-muted" translate="south.workflows.scan-mode-manual-only"></span>
+                }
+              </td>
+              <td>
+                @if (getTargetItemName(workflow); as itemName) {
+                  {{ itemName }}
+                } @else {
+                  <span class="text-muted" translate="south.workflows.target-item-self-scoped"></span>
+                }
+              </td>
+              <td>
+                <span class="fa" [class.fa-check]="workflow.enabled" [class.fa-times]="!workflow.enabled"></span>
+              </td>
+              <td class="text-nowrap action-buttons">
+                <div class="pull-right">
+                  <button
+                    type="button"
+                    class="btn btn-link run-workflow px-1 py-0"
+                    [disabled]="runningWorkflowId === workflow.id"
+                    [ngbTooltip]="'south.workflows.run-now' | translate"
+                    (click)="onRunNow(workflow)"
+                  >
+                    @if (runningWorkflowId === workflow.id) {
+                      <span class="spinner-border spinner-border-sm"></span>
+                    } @else {
+                      <span class="fa fa-play"></span>
+                    }
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-link preview-workflow px-1 py-0"
+                    [ngbTooltip]="'south.workflows.preview' | translate"
+                    (click)="onPreview(workflow)"
+                  >
+                    <span class="fa fa-eye"></span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-link history-workflow px-1 py-0"
+                    [ngbTooltip]="'south.workflows.run-history' | translate"
+                    (click)="onViewHistory(workflow)"
+                  >
+                    <span class="fa fa-history"></span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-link edit-workflow px-1 py-0"
+                    [ngbTooltip]="'south.workflows.edit-title' | translate"
+                    (click)="onEdit(workflow)"
+                  >
+                    <span class="fa fa-pencil"></span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-link duplicate-workflow px-1 py-0"
+                    [ngbTooltip]="'south.workflows.duplicate' | translate"
+                    (click)="onDuplicate(workflow)"
+                  >
+                    <span class="fa fa-copy"></span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-link delete-workflow px-1 py-0"
+                    [ngbTooltip]="'south.workflows.confirm-deletion' | translate: { name: workflow.name }"
+                    (click)="onDelete(workflow)"
+                  >
+                    <span class="fa fa-trash"></span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  }
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-primary" (click)="close()" translate="common.close" id="close-button"></button>
+</div>

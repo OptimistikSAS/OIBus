@@ -69,6 +69,7 @@ describe('SouthMSSQL', () => {
     formatInstant: mock.fn((instant: unknown) => instant),
     generateReplacementParameters: mock.fn(() => []),
     logQuery: mock.fn(),
+    extractDiscoveryQuery: mock.fn((scope: Record<string, unknown>) => scope.query as string),
     getErrorMessage: mock.fn((error: unknown) => {
       if (error instanceof Error) return error.message;
       if (typeof error === 'string') return error;
@@ -385,6 +386,33 @@ describe('SouthMSSQL', () => {
       assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [configuration.items[0], startTime, endTime]);
       assert.strictEqual(result.queryDuration, 25);
       assert.strictEqual(result.connectionDuration, 0);
+    });
+
+    it("should discover a Configuration Workflow's dedicated metadata query, with no @StartTime/@EndTime substitution", async () => {
+      query.mock.mockImplementationOnce(() => ({
+        recordsets: [[{ column_name: 'temp', description: 'Temperature' }]]
+      }));
+
+      const result = await south.discover({ query: 'SELECT column_name, description FROM my_metadata_table' });
+
+      assert.deepStrictEqual((utilsExports.extractDiscoveryQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+        query: 'SELECT column_name, description FROM my_metadata_table'
+      });
+      assert.ok(query.mock.calls.some(c => c.arguments[0] === 'SELECT column_name, description FROM my_metadata_table'));
+      // No time-range params - a metadata query is independent of any item's own data query.
+      assert.strictEqual(input.mock.calls.length, 0);
+      assert.strictEqual(close.mock.calls.length, 1);
+      assert.deepStrictEqual(result, [{ column_name: 'temp', description: 'Temperature' }]);
+    });
+
+    it('should close the connection and rethrow when the discovery query fails', async () => {
+      const queryError = new Error('bad query');
+      query.mock.mockImplementationOnce(() => {
+        throw queryError;
+      });
+
+      await assert.rejects(south.discover({ query: 'SELECT 1' }), queryError);
+      assert.strictEqual(close.mock.calls.length, 1);
     });
 
     it('should test item without datetimeFields', async () => {

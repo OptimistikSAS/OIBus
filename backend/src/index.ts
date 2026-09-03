@@ -8,6 +8,8 @@ import { createFolder, getCommandLineArguments, getOIBusInfo, readInitConfig, IN
 import RepositoryService from './service/repository.service';
 import NorthService from './service/north.service';
 import SouthService from './service/south.service';
+import ConfigurationWorkflowService from './service/configuration-workflow.service';
+import ConfigurationWorkflowRunService from './service/configuration-workflow-run.service';
 import DataStreamEngine from './engine/data-stream-engine';
 import HistoryQueryService from './service/history-query.service';
 import OIBusService from './service/oibus.service';
@@ -171,7 +173,8 @@ export async function bootstrap(): Promise<void> {
     repositoryService.certificateRepository,
     repositoryService.oianalyticsRegistrationRepository,
     oIAnalyticsMessageService,
-    repositoryService.scanModeRepository
+    repositoryService.scanModeRepository,
+    repositoryService.configurationWorkflowRepository
   );
 
   const transformerService = new TransformerService(
@@ -209,6 +212,24 @@ export async function bootstrap(): Promise<void> {
     repositoryService.southItemGroupRepository,
     transformerService
   );
+  const configurationWorkflowService = new ConfigurationWorkflowService(
+    repositoryService.configurationWorkflowRepository,
+    repositoryService.southConnectorRepository,
+    repositoryService.scanModeRepository,
+    dataStreamEngine
+  );
+  const configurationWorkflowRunService = new ConfigurationWorkflowRunService(
+    configurationWorkflowService,
+    repositoryService.workflowRunRepository,
+    repositoryService.itemPointMetadataRepository,
+    repositoryService.southConnectorRepository,
+    southService,
+    dataStreamEngine
+  );
+  // DataStreamEngine.onScanModeTriggered needs to reach ConfigurationWorkflowRunService.runScheduled
+  // to fire a scheduled workflow run, but ConfigurationWorkflowRunService itself depends on
+  // dataStreamEngine (constructed above) - a lazy callback sidesteps the resulting cycle.
+  dataStreamEngine.setWorkflowRunCallback((southId, workflowId) => configurationWorkflowRunService.runScheduled(southId, workflowId));
   const historyQueryService = new HistoryQueryService(
     new JoiValidator(),
     repositoryService.historyQueryRepository,
@@ -315,6 +336,8 @@ export async function bootstrap(): Promise<void> {
     northService,
     transformerService,
     historyQueryService,
+    configurationWorkflowService,
+    configurationWorkflowRunService,
     homeMetricsService,
     configTransferService,
     configImportService,

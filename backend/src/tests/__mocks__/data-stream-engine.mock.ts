@@ -63,6 +63,8 @@ export default class DataStreamEngineMock {
   resetSouthMetrics = mock.fn((_southId: string): void => undefined);
   reloadSouth = mock.fn(async (_southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>): Promise<void> => undefined);
   reloadSouthItems = mock.fn(async (_southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>): Promise<void> => undefined);
+  reloadWorkflows = mock.fn((_southId: string): void => undefined);
+  setWorkflowRunCallback = mock.fn((_callback: (southId: string, workflowId: string) => Promise<void>): void => undefined);
   stopSouth = mock.fn(async (_southId: string): Promise<void> => undefined);
   deleteSouth = mock.fn(async (_southEntity: SouthConnectorEntity<SouthSettings, SouthItemSettings>): Promise<void> => undefined);
   createHistoryQuery = mock.fn(async (_historyId: string): Promise<HistoryQuery> => ({}) as HistoryQuery);

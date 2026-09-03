@@ -174,6 +174,7 @@ describe('SouthConnector', () => {
       assert.strictEqual(runTaskMock.mock.calls.length, 1);
       assert.deepStrictEqual(runTaskMock.mock.calls[0].arguments, [
         {
+          kind: 'items',
           scanModeId: testData.scanMode.list[0].id,
           items: testData.south.list[0].items.filter(element => element.scanMode?.id === testData.scanMode.list[0].id)
         }
@@ -192,6 +193,100 @@ describe('SouthConnector', () => {
       south.trigger(testData.scanMode.list[1]);
       assert.strictEqual(runTaskMock.mock.calls.length, 1);
       assert.deepStrictEqual(south.connectorConfiguration, testData.south.list[0]);
+    });
+
+    it('should queue and run a Configuration Workflow run, resolving with what run() returns', async () => {
+      const run = mock.fn(async () => 'run result');
+      const result = await south.enqueueWorkflowRun('workflowId1', run);
+      assert.strictEqual(result, 'run result');
+      assert.strictEqual(run.mock.calls.length, 1);
+    });
+
+    it('should reject the returned promise when run() rejects', async () => {
+      const runError = new Error('discovery failed');
+      await assert.rejects(
+        south.enqueueWorkflowRun('workflowId1', () => Promise.reject(runError)),
+        runError
+      );
+    });
+
+    it('should interleave with items on the same connection: a queued workflow run waits for the concurrency slot an in-flight item task holds', async () => {
+      const runTaskMock = mock.fn(async () => undefined);
+      south['runTask'] = runTaskMock;
+      // Occupy the (default) single concurrency slot with an unresolved items task
+      south.trigger(testData.scanMode.list[0]);
+      assert.strictEqual(runTaskMock.mock.calls.length, 1);
+
+      const run = mock.fn(async () => undefined);
+      const queued = south.enqueueWorkflowRun('workflowId1', run);
+      assert.ok(queued !== null);
+      assert.strictEqual(run.mock.calls.length, 0, 'the workflow run must not start while the items task holds the only slot');
+      assert.strictEqual(south['taskQueue'].length, 1);
+    });
+
+    it('should return null and not queue when the same workflow is already queued or running', () => {
+      const first = south.enqueueWorkflowRun('workflowId1', () => new Promise<void>(() => undefined));
+      assert.ok(first !== null);
+
+      const second = south.enqueueWorkflowRun(
+        'workflowId1',
+        mock.fn(async () => undefined)
+      );
+      assert.strictEqual(second, null);
+      assert.ok(
+        (logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some((c: { arguments: Array<unknown> }) =>
+          (c.arguments[0] as string).includes('Workflow "workflowId1" is already queued or running')
+        )
+      );
+    });
+
+    it('should allow a different workflow id to queue independently of one that is already running', async () => {
+      const runOne = south.enqueueWorkflowRun('workflowId1', () => new Promise<void>(() => undefined));
+      assert.ok(runOne !== null);
+
+      const runTwo = mock.fn(async () => undefined);
+      const result = south.enqueueWorkflowRun('workflowId2', runTwo);
+      assert.ok(result !== null);
+      // Both compete for the single default concurrency slot - workflowId1 holds it, so
+      // workflowId2's run() hasn't been called yet, but it is legitimately queued (not rejected).
+      assert.strictEqual(runTwo.mock.calls.length, 0);
+      assert.strictEqual(south['taskQueue'].length, 1);
+    });
+
+    it('should still queue and run when the connector is disabled - unlike trigger(), gating on isEnabled() is left to the caller', async () => {
+      south.isEnabled = mock.fn((): boolean => false);
+      const run = mock.fn(async () => 'run result');
+      const result = await south.enqueueWorkflowRun('workflowId1', run);
+      assert.strictEqual(result, 'run result');
+      assert.strictEqual(run.mock.calls.length, 1);
+    });
+
+    it('should return null and not queue when the connector is stopping', async () => {
+      const promise = new Promise<void>(resolve => setTimeout(resolve, 1000));
+      south.disconnect = mock.fn(() => promise);
+      south.stop();
+      const result = south.enqueueWorkflowRun(
+        'workflowId1',
+        mock.fn(async () => undefined)
+      );
+      assert.strictEqual(result, null);
+      await flushPromises();
+    });
+
+    it('should reject a workflow run still sitting in the queue (never dispatched) when the connector disconnects', async () => {
+      const runTaskMock = mock.fn(async () => undefined);
+      south['runTask'] = runTaskMock;
+      // Occupy the only slot so the workflow run below stays queued, not dispatched.
+      south.trigger(testData.scanMode.list[0]);
+
+      const queued = south.enqueueWorkflowRun(
+        'workflowId1',
+        mock.fn(async () => undefined)
+      );
+      assert.ok(queued !== null);
+
+      await south.disconnect();
+      await assert.rejects(queued, /disconnected before workflow "workflowId1" could run/);
     });
 
     it('should warn once per hour and log trace in between when the previous cron is still running', () => {

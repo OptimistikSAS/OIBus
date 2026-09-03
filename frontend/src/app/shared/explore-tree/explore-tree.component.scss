@@ -1,7 +1,8 @@
 @import '../../../common';
 
 .explore-tree {
-  max-height: 50vh;
+  // max-height is set inline (see the component's maxHeight @Input) - the one scroll region this
+  // component owns, sized per host. Never wrap this component in a second overflow:auto container.
   overflow: auto;
 }
 
@@ -46,6 +47,25 @@
 .explore-leaf-spacer {
   display: inline-block;
   width: 0.85rem;
+}
+
+// The per-row "Select" action (selectable mode only). The global `.btn-link` rule (styles.scss)
+// sets color to $white for the box-title header buttons - invisible on this white modal/panel body,
+// exactly the same gotcha .explore-toggle above already works around. Given a deliberate, distinct
+// color ($electricBlue, bold) rather than reusing .explore-toggle's neutral $darkGrey: unlike the
+// toggle (the whole row, always there), this is the one actionable control a picker exists for, so
+// it needs to read as clickable at a glance, not blend into the row's own name/metadata text.
+.explore-select {
+  white-space: nowrap;
+  text-decoration: none;
+  color: $electricBlue;
+  font-weight: 600;
+
+  &:hover,
+  &:focus {
+    color: $electricBlue;
+    text-decoration: underline;
+  }
 }
 
 // Two-tone "key | value" chip for metadata entries. Bootstrap's default .badge (0.75em,

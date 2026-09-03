@@ -27,6 +27,8 @@ import { EngineController } from './controllers/engine.controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ContentController } from './controllers/content.controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { ConfigurationWorkflowController } from './controllers/configuration-workflow.controller';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ConfigTransferController } from './controllers/config-transfer.controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { CertificateController } from './controllers/certificate.controller';
@@ -1365,6 +1367,12 @@ const models: TsoaRoute.Models = {
             "startTimeOffset": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
             "endTimeOffset": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
             "recoveryStrategy": {"dataType":"union","subSchemas":[{"ref":"SouthHistoryRecoveryStrategy"},{"dataType":"enum","enums":[null]}],"required":true},
+            "cachingStrategy": {"dataType":"union","subSchemas":[{"ref":"SouthCachingStrategy"},{"dataType":"enum","enums":[null]}],"required":true},
+            "thresholdType": {"dataType":"union","subSchemas":[{"ref":"SouthCachingThresholdType"},{"dataType":"enum","enums":[null]}],"required":true},
+            "threshold": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "rangeLow": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "rangeHigh": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "maxCachingInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -1399,6 +1407,12 @@ const models: TsoaRoute.Models = {
             "startTimeOffset": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
             "endTimeOffset": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
             "recoveryStrategy": {"dataType":"union","subSchemas":[{"ref":"SouthHistoryRecoveryStrategy"},{"dataType":"enum","enums":[null]}],"required":true},
+            "cachingStrategy": {"dataType":"union","subSchemas":[{"ref":"SouthCachingStrategy"},{"dataType":"enum","enums":[null]}],"required":true},
+            "thresholdType": {"dataType":"union","subSchemas":[{"ref":"SouthCachingThresholdType"},{"dataType":"enum","enums":[null]}],"required":true},
+            "threshold": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "rangeLow": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "rangeHigh": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "maxCachingInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -3845,6 +3859,12 @@ const models: TsoaRoute.Models = {
             "startTimeOffset": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
             "endTimeOffset": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
             "recoveryStrategy": {"dataType":"union","subSchemas":[{"ref":"SouthHistoryRecoveryStrategy"},{"dataType":"enum","enums":[null]}],"required":true},
+            "cachingStrategy": {"dataType":"union","subSchemas":[{"ref":"SouthCachingStrategy"},{"dataType":"enum","enums":[null]}],"required":true},
+            "thresholdType": {"dataType":"union","subSchemas":[{"ref":"SouthCachingThresholdType"},{"dataType":"enum","enums":[null]}],"required":true},
+            "threshold": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "rangeLow": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "rangeHigh": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "maxCachingInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -3866,6 +3886,12 @@ const models: TsoaRoute.Models = {
             "startTimeOffset": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
             "endTimeOffset": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
             "recoveryStrategy": {"dataType":"union","subSchemas":[{"ref":"SouthHistoryRecoveryStrategy"},{"dataType":"enum","enums":[null]}],"required":true},
+            "cachingStrategy": {"dataType":"union","subSchemas":[{"ref":"SouthCachingStrategy"},{"dataType":"enum","enums":[null]}],"required":true},
+            "thresholdType": {"dataType":"union","subSchemas":[{"ref":"SouthCachingThresholdType"},{"dataType":"enum","enums":[null]}],"required":true},
+            "threshold": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "rangeLow": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "rangeHigh": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "maxCachingInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -4947,6 +4973,15 @@ const models: TsoaRoute.Models = {
             "southSettings": {"ref":"SouthSettings","required":true},
             "itemSettings": {"ref":"SouthItemSettings","required":true},
             "testingSettings": {"ref":"SouthConnectorItemTestingSettings","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthDiscoveryQueryTestRequest": {
+        "dataType": "refObject",
+        "properties": {
+            "southSettings": {"ref":"SouthSettings","required":true},
+            "query": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
     },
@@ -8984,6 +9019,128 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "RecordFilterOperator": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["equals"]},{"dataType":"enum","enums":["notEquals"]},{"dataType":"enum","enums":["contains"]},{"dataType":"enum","enums":["matches"]},{"dataType":"enum","enums":["exists"]},{"dataType":"enum","enums":["greaterThan"]},{"dataType":"enum","enums":["lessThan"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "RecordFilterCondition": {
+        "dataType": "refObject",
+        "properties": {
+            "field": {"dataType":"string","required":true},
+            "operator": {"ref":"RecordFilterOperator","required":true},
+            "value": {"dataType":"string"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ConfigurationWorkflowDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "createdBy": {"ref":"UserInfo","required":true},
+            "updatedBy": {"ref":"UserInfo","required":true},
+            "createdAt": {"ref":"Instant","required":true},
+            "updatedAt": {"ref":"Instant","required":true},
+            "name": {"dataType":"string","required":true},
+            "southId": {"dataType":"string","required":true},
+            "targetItemId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "discoveryScope": {"ref":"Record_string.unknown_","required":true},
+            "identityKeyFields": {"dataType":"array","array":{"dataType":"string"},"required":true},
+            "eligibilityFilter": {"dataType":"array","array":{"dataType":"refObject","ref":"RecordFilterCondition"},"required":true},
+            "itemFieldMapping": {"dataType":"union","subSchemas":[{"ref":"Record_string.string_"},{"dataType":"enum","enums":[null]}],"required":true},
+            "remoteFieldMapping": {"dataType":"union","subSchemas":[{"ref":"Record_string.string_"},{"dataType":"enum","enums":[null]}],"required":true},
+            "scanMode": {"dataType":"union","subSchemas":[{"ref":"ScanModeDTO"},{"dataType":"enum","enums":[null]}],"required":true},
+            "enabled": {"dataType":"boolean","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ConfigurationWorkflowCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "name": {"dataType":"string","required":true},
+            "targetItemId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "discoveryScope": {"ref":"Record_string.unknown_","required":true},
+            "identityKeyFields": {"dataType":"array","array":{"dataType":"string"},"required":true},
+            "eligibilityFilter": {"dataType":"array","array":{"dataType":"refObject","ref":"RecordFilterCondition"},"required":true},
+            "itemFieldMapping": {"dataType":"union","subSchemas":[{"ref":"Record_string.string_"},{"dataType":"enum","enums":[null]}],"required":true},
+            "remoteFieldMapping": {"dataType":"union","subSchemas":[{"ref":"Record_string.string_"},{"dataType":"enum","enums":[null]}],"required":true},
+            "scanModeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "enabled": {"dataType":"boolean","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "WorkflowRunTriggerType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["manual"]},{"dataType":"enum","enums":["scheduled"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "WorkflowRunStatus": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["RUNNING"]},{"dataType":"enum","enums":["ERRORED"]},{"dataType":"enum","enums":["COMPLETED"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "WorkflowRunDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "discoveredCount": {"dataType":"double","required":true},
+            "eligibleCount": {"dataType":"double","required":true},
+            "createdCount": {"dataType":"double","required":true},
+            "updatedCount": {"dataType":"double","required":true},
+            "disabledCount": {"dataType":"double","required":true},
+            "pushedCount": {"dataType":"double","required":true},
+            "id": {"dataType":"string","required":true},
+            "workflowId": {"dataType":"string","required":true},
+            "triggerType": {"ref":"WorkflowRunTriggerType","required":true},
+            "status": {"ref":"WorkflowRunStatus","required":true},
+            "startedAt": {"dataType":"string","required":true},
+            "completedAt": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "error": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "triggeredBy": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "WorkflowPreviewEntryStatus": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["new"]},{"dataType":"enum","enums":["changed"]},{"dataType":"enum","enums":["unchanged"]},{"dataType":"enum","enums":["reactivated"]},{"dataType":"enum","enums":["missing"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "WorkflowPreviewEntryDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "key": {"dataType":"string","required":true},
+            "status": {"ref":"WorkflowPreviewEntryStatus","required":true},
+            "record": {"dataType":"union","subSchemas":[{"ref":"OIBusRecord"},{"dataType":"enum","enums":[null]}],"required":true},
+            "previousMetadata": {"dataType":"union","subSchemas":[{"ref":"Record_string.unknown_"},{"dataType":"enum","enums":[null]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "WorkflowPreviewResultDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "discoveredCount": {"dataType":"double","required":true},
+            "eligibleCount": {"dataType":"double","required":true},
+            "entries": {"dataType":"array","array":{"dataType":"refObject","ref":"WorkflowPreviewEntryDTO"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Page_WorkflowRunDTO_": {
+        "dataType": "refObject",
+        "properties": {
+            "content": {"dataType":"array","array":{"dataType":"refObject","ref":"WorkflowRunDTO"},"required":true},
+            "totalElements": {"dataType":"double","required":true},
+            "size": {"dataType":"double","required":true},
+            "number": {"dataType":"double","required":true},
+            "totalPages": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ConfigImportResponseDTO": {
         "dataType": "refObject",
         "properties": {
@@ -9026,7 +9183,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "AuditEntityType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["certificate"]},{"dataType":"enum","enums":["south_connector"]},{"dataType":"enum","enums":["south_item"]},{"dataType":"enum","enums":["south_item_group"]},{"dataType":"enum","enums":["north_connector"]},{"dataType":"enum","enums":["north_transformer"]},{"dataType":"enum","enums":["history_query"]},{"dataType":"enum","enums":["history_query_item"]},{"dataType":"enum","enums":["history_query_transformer"]},{"dataType":"enum","enums":["scan_mode"]},{"dataType":"enum","enums":["ip_filter"]},{"dataType":"enum","enums":["user"]},{"dataType":"enum","enums":["transformer"]},{"dataType":"enum","enums":["engine"]},{"dataType":"enum","enums":["oianalytics_registration"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["certificate"]},{"dataType":"enum","enums":["south_connector"]},{"dataType":"enum","enums":["south_item"]},{"dataType":"enum","enums":["south_item_group"]},{"dataType":"enum","enums":["configuration_workflow"]},{"dataType":"enum","enums":["north_connector"]},{"dataType":"enum","enums":["north_transformer"]},{"dataType":"enum","enums":["history_query"]},{"dataType":"enum","enums":["history_query_item"]},{"dataType":"enum","enums":["history_query_transformer"]},{"dataType":"enum","enums":["scan_mode"]},{"dataType":"enum","enums":["ip_filter"]},{"dataType":"enum","enums":["user"]},{"dataType":"enum","enums":["transformer"]},{"dataType":"enum","enums":["engine"]},{"dataType":"enum","enums":["oianalytics_registration"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "AuditAction": {
@@ -9978,6 +10135,39 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'testItem',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSouthConnectorController_testDiscoveryQuery: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                southType: {"in":"query","name":"southType","required":true,"ref":"OIBusSouthType"},
+                command: {"in":"body","name":"command","required":true,"ref":"SouthDiscoveryQueryTestRequest"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/south/:southId/test/discovery-query',
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController.prototype.testDiscoveryQuery)),
+
+            async function SouthConnectorController_testDiscoveryQuery(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSouthConnectorController_testDiscoveryQuery, request, response });
+
+                const controller = new SouthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'testDiscoveryQuery',
                 controller,
                 response,
                 next,
@@ -13675,6 +13865,263 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 next,
                 validatedArgs,
                 successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsConfigurationWorkflowController_list: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/south/:southId/workflows',
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController)),
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController.prototype.list)),
+
+            async function ConfigurationWorkflowController_list(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsConfigurationWorkflowController_list, request, response });
+
+                const controller = new ConfigurationWorkflowController();
+
+              await templateService.apiHandler({
+                methodName: 'list',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsConfigurationWorkflowController_get: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                workflowId: {"in":"path","name":"workflowId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/south/:southId/workflows/:workflowId',
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController)),
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController.prototype.get)),
+
+            async function ConfigurationWorkflowController_get(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsConfigurationWorkflowController_get, request, response });
+
+                const controller = new ConfigurationWorkflowController();
+
+              await templateService.apiHandler({
+                methodName: 'get',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsConfigurationWorkflowController_create: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                command: {"in":"body","name":"command","required":true,"ref":"ConfigurationWorkflowCommandDTO"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/south/:southId/workflows',
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController)),
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController.prototype.create)),
+
+            async function ConfigurationWorkflowController_create(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsConfigurationWorkflowController_create, request, response });
+
+                const controller = new ConfigurationWorkflowController();
+
+              await templateService.apiHandler({
+                methodName: 'create',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 201,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsConfigurationWorkflowController_update: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                workflowId: {"in":"path","name":"workflowId","required":true,"dataType":"string"},
+                command: {"in":"body","name":"command","required":true,"ref":"ConfigurationWorkflowCommandDTO"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.put('/api/south/:southId/workflows/:workflowId',
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController)),
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController.prototype.update)),
+
+            async function ConfigurationWorkflowController_update(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsConfigurationWorkflowController_update, request, response });
+
+                const controller = new ConfigurationWorkflowController();
+
+              await templateService.apiHandler({
+                methodName: 'update',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsConfigurationWorkflowController_delete: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                workflowId: {"in":"path","name":"workflowId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.delete('/api/south/:southId/workflows/:workflowId',
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController)),
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController.prototype.delete)),
+
+            async function ConfigurationWorkflowController_delete(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsConfigurationWorkflowController_delete, request, response });
+
+                const controller = new ConfigurationWorkflowController();
+
+              await templateService.apiHandler({
+                methodName: 'delete',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsConfigurationWorkflowController_run: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                workflowId: {"in":"path","name":"workflowId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/south/:southId/workflows/:workflowId/run',
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController)),
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController.prototype.run)),
+
+            async function ConfigurationWorkflowController_run(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsConfigurationWorkflowController_run, request, response });
+
+                const controller = new ConfigurationWorkflowController();
+
+              await templateService.apiHandler({
+                methodName: 'run',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsConfigurationWorkflowController_preview: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                workflowId: {"in":"path","name":"workflowId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/south/:southId/workflows/:workflowId/preview',
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController)),
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController.prototype.preview)),
+
+            async function ConfigurationWorkflowController_preview(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsConfigurationWorkflowController_preview, request, response });
+
+                const controller = new ConfigurationWorkflowController();
+
+              await templateService.apiHandler({
+                methodName: 'preview',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsConfigurationWorkflowController_listRuns: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                workflowId: {"in":"path","name":"workflowId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+                page: {"default":0,"in":"query","name":"page","dataType":"double"},
+        };
+        app.get('/api/south/:southId/workflows/:workflowId/runs',
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController)),
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController.prototype.listRuns)),
+
+            async function ConfigurationWorkflowController_listRuns(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsConfigurationWorkflowController_listRuns, request, response });
+
+                const controller = new ConfigurationWorkflowController();
+
+              await templateService.apiHandler({
+                methodName: 'listRuns',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
               });
             } catch (err) {
                 return next(err);

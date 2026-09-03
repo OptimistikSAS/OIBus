@@ -5285,6 +5285,54 @@
 						"nullable": true,
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
+					},
+					"cachingStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthCachingStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"example": "onChange"
+					},
+					"thresholdType": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthCachingThresholdType"
+							}
+						],
+						"nullable": true,
+						"description": "The kind of threshold used by the 'threshold' caching strategy. Only applicable when cachingStrategy is\n'threshold'.\nAlways item-local, never inherited from a group.",
+						"example": "absolute"
+					},
+					"threshold": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Threshold value used by the 'threshold' caching strategy. Interpreted as an absolute difference or a\npercentage of the configured range depending on thresholdType.\nAlways item-local, never inherited from a group.",
+						"example": 1
+					},
+					"rangeLow": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Lower bound of the value's expected range, used to compute percentage thresholds.\nAlways item-local, never inherited from a group.",
+						"example": 0
+					},
+					"rangeHigh": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Upper bound of the value's expected range, used to compute percentage thresholds.\nAlways item-local, never inherited from a group.",
+						"example": 100
+					},
+					"maxCachingInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
+						"example": 3600000
 					}
 				},
 				"required": [
@@ -5303,7 +5351,13 @@
 					"readDelay",
 					"startTimeOffset",
 					"endTimeOffset",
-					"recoveryStrategy"
+					"recoveryStrategy",
+					"cachingStrategy",
+					"thresholdType",
+					"threshold",
+					"rangeLow",
+					"rangeHigh",
+					"maxCachingInterval"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5434,6 +5488,54 @@
 						"nullable": true,
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
+					},
+					"cachingStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthCachingStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"example": "onChange"
+					},
+					"thresholdType": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthCachingThresholdType"
+							}
+						],
+						"nullable": true,
+						"description": "The kind of threshold used by the 'threshold' caching strategy. Only applicable when cachingStrategy is\n'threshold'.\nAlways item-local, never inherited from a group.",
+						"example": "absolute"
+					},
+					"threshold": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Threshold value used by the 'threshold' caching strategy. Interpreted as an absolute difference or a\npercentage of the configured range depending on thresholdType.\nAlways item-local, never inherited from a group.",
+						"example": 1
+					},
+					"rangeLow": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Lower bound of the value's expected range, used to compute percentage thresholds.\nAlways item-local, never inherited from a group.",
+						"example": 0
+					},
+					"rangeHigh": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Upper bound of the value's expected range, used to compute percentage thresholds.\nAlways item-local, never inherited from a group.",
+						"example": 100
+					},
+					"maxCachingInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
+						"example": 3600000
 					}
 				},
 				"required": [
@@ -5452,7 +5554,13 @@
 					"readDelay",
 					"startTimeOffset",
 					"endTimeOffset",
-					"recoveryStrategy"
+					"recoveryStrategy",
+					"cachingStrategy",
+					"thresholdType",
+					"threshold",
+					"rangeLow",
+					"rangeHigh",
+					"maxCachingInterval"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -16396,6 +16504,54 @@
 						"nullable": true,
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
+					},
+					"cachingStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthCachingStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"example": "onChange"
+					},
+					"thresholdType": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthCachingThresholdType"
+							}
+						],
+						"nullable": true,
+						"description": "The kind of threshold used by the 'threshold' caching strategy. Only applicable when cachingStrategy is\n'threshold'.\nAlways item-local, never inherited from a group.",
+						"example": "absolute"
+					},
+					"threshold": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Threshold value used by the 'threshold' caching strategy. Interpreted as an absolute difference or a\npercentage of the configured range depending on thresholdType.\nAlways item-local, never inherited from a group.",
+						"example": 1
+					},
+					"rangeLow": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Lower bound of the value's expected range, used to compute percentage thresholds.\nAlways item-local, never inherited from a group.",
+						"example": 0
+					},
+					"rangeHigh": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Upper bound of the value's expected range, used to compute percentage thresholds.\nAlways item-local, never inherited from a group.",
+						"example": 100
+					},
+					"maxCachingInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
+						"example": 3600000
 					}
 				},
 				"required": [
@@ -16412,7 +16568,13 @@
 					"readDelay",
 					"startTimeOffset",
 					"endTimeOffset",
-					"recoveryStrategy"
+					"recoveryStrategy",
+					"cachingStrategy",
+					"thresholdType",
+					"threshold",
+					"rangeLow",
+					"rangeHigh",
+					"maxCachingInterval"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -16505,6 +16667,54 @@
 						"nullable": true,
 						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
 						"example": "oldest"
+					},
+					"cachingStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthCachingStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Per-item caching strategy. Only applicable for IoT-family connectors (OPC UA, Modbus, ADS, OPC classic,\nS7, MQTT).\nWhen null and item is in a group, inherits from group settings.",
+						"example": "onChange"
+					},
+					"thresholdType": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthCachingThresholdType"
+							}
+						],
+						"nullable": true,
+						"description": "The kind of threshold used by the 'threshold' caching strategy. Only applicable when cachingStrategy is\n'threshold'.\nAlways item-local, never inherited from a group.",
+						"example": "absolute"
+					},
+					"threshold": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Threshold value used by the 'threshold' caching strategy. Interpreted as an absolute difference or a\npercentage of the configured range depending on thresholdType.\nAlways item-local, never inherited from a group.",
+						"example": 1
+					},
+					"rangeLow": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Lower bound of the value's expected range, used to compute percentage thresholds.\nAlways item-local, never inherited from a group.",
+						"example": 0
+					},
+					"rangeHigh": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Upper bound of the value's expected range, used to compute percentage thresholds.\nAlways item-local, never inherited from a group.",
+						"example": 100
+					},
+					"maxCachingInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum interval in milliseconds between two cached values, regardless of the caching strategy, so a\nstable point still produces periodic proof-of-life data.\nAlways item-local, never inherited from a group.",
+						"example": 3600000
 					}
 				},
 				"required": [
@@ -16521,7 +16731,13 @@
 					"readDelay",
 					"startTimeOffset",
 					"endTimeOffset",
-					"recoveryStrategy"
+					"recoveryStrategy",
+					"cachingStrategy",
+					"thresholdType",
+					"threshold",
+					"rangeLow",
+					"rangeHigh",
+					"maxCachingInterval"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -22654,6 +22870,24 @@
 					"southSettings",
 					"itemSettings",
 					"testingSettings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthDiscoveryQueryTestRequest": {
+				"properties": {
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthSettings",
+						"description": "South connector settings"
+					},
+					"query": {
+						"type": "string",
+						"description": "The dedicated metadata query to run, as currently typed (before the workflow is saved)"
+					}
+				},
+				"required": [
+					"southSettings",
+					"query"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -40818,6 +41052,444 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"RecordFilterOperator": {
+				"type": "string",
+				"enum": [
+					"equals",
+					"notEquals",
+					"contains",
+					"matches",
+					"exists",
+					"greaterThan",
+					"lessThan"
+				],
+				"example": "equals",
+				"description": "How one condition of a workflow's eligibility filter compares a discovered record's field."
+			},
+			"RecordFilterCondition": {
+				"description": "One condition of a Configuration Workflow's eligibility filter, evaluated against a single\ndiscovered record. `value` is omitted for the `exists` operator, which only checks presence.",
+				"properties": {
+					"field": {
+						"type": "string",
+						"description": "A key of the discovered record to test.",
+						"example": "type"
+					},
+					"operator": {
+						"$ref": "#/components/schemas/RecordFilterOperator"
+					},
+					"value": {
+						"type": "string",
+						"description": "The value to compare against — not used for `exists`.",
+						"example": "Variable"
+					}
+				},
+				"required": [
+					"field",
+					"operator"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ConfigurationWorkflowDTO": {
+				"description": "A Configuration Workflow: discovers a data source, decides which of what it found actually\nwarrants a configuration change, and maps that into south item settings and/or remote point\nmetadata — run once by hand or recurringly on a scan mode.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "Unique per south connector.",
+						"example": "Reactor OPC-UA discovery"
+					},
+					"southId": {
+						"type": "string",
+						"description": "The south connector this workflow discovers from.",
+						"example": "b7f8e6d2-1c3a-4b5d-9e0f-2a3b4c5d6e7f"
+					},
+					"targetItemId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Set: the workflow manages exactly one pre-existing item's point metadata (e.g. a SQL query item,\nor a single node someone already created by hand). Null: the workflow is self-scoping and owns\nwhatever items its own discovery creates.",
+						"example": null
+					},
+					"discoveryScope": {
+						"$ref": "#/components/schemas/Record_string.unknown_",
+						"description": "What to (re-)discover — connector-specific (e.g. `{ rootNodeId: \"ns=1;s=Root\" }` for OPC-UA,\n`{ query: \"SELECT ...\" }` for SQL)."
+					},
+					"identityKeyFields": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "Discovered-record field(s) — possibly composite — that uniquely identify a record across\nre-runs.",
+						"example": [
+							"nodeId"
+						]
+					},
+					"eligibilityFilter": {
+						"items": {
+							"$ref": "#/components/schemas/RecordFilterCondition"
+						},
+						"type": "array",
+						"description": "Conditions a discovered record must all satisfy to be eligible for action — empty means every record is eligible."
+					},
+					"itemFieldMapping": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Record_string.string_"
+							}
+						],
+						"nullable": true,
+						"description": "Discovered record → item name/settings, as a key → expression bag. Null: this workflow never\ncreates/updates items.",
+						"example": {
+							"name": "{{name}}",
+							"settings.nodeId": "{{nodeId}}"
+						}
+					},
+					"remoteFieldMapping": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Record_string.string_"
+							}
+						],
+						"nullable": true,
+						"description": "Discovered record + item fields → remote (OIAnalytics) point metadata, as a key → expression\nbag. Null: no remote push is configured for this workflow.",
+						"example": {
+							"unit": "{{unit}}"
+						}
+					},
+					"scanMode": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
+						"description": "Null means manual-only — the workflow only ever runs when explicitly triggered."
+					},
+					"enabled": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"southId",
+					"targetItemId",
+					"discoveryScope",
+					"identityKeyFields",
+					"eligibilityFilter",
+					"itemFieldMapping",
+					"remoteFieldMapping",
+					"scanMode",
+					"enabled"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ConfigurationWorkflowCommandDTO": {
+				"properties": {
+					"name": {
+						"type": "string"
+					},
+					"targetItemId": {
+						"type": "string",
+						"nullable": true
+					},
+					"discoveryScope": {
+						"$ref": "#/components/schemas/Record_string.unknown_"
+					},
+					"identityKeyFields": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"eligibilityFilter": {
+						"items": {
+							"$ref": "#/components/schemas/RecordFilterCondition"
+						},
+						"type": "array"
+					},
+					"itemFieldMapping": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Record_string.string_"
+							}
+						],
+						"nullable": true
+					},
+					"remoteFieldMapping": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Record_string.string_"
+							}
+						],
+						"nullable": true
+					},
+					"scanModeId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the scan mode to use for this workflow, or null for manual-only.",
+						"example": null
+					},
+					"enabled": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"name",
+					"targetItemId",
+					"discoveryScope",
+					"identityKeyFields",
+					"eligibilityFilter",
+					"itemFieldMapping",
+					"remoteFieldMapping",
+					"scanModeId",
+					"enabled"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"WorkflowRunTriggerType": {
+				"type": "string",
+				"enum": [
+					"manual",
+					"scheduled"
+				],
+				"example": "manual"
+			},
+			"WorkflowRunStatus": {
+				"type": "string",
+				"enum": [
+					"RUNNING",
+					"ERRORED",
+					"COMPLETED"
+				],
+				"example": "COMPLETED"
+			},
+			"WorkflowRunDTO": {
+				"description": "One execution of a Configuration Workflow - manual or scheduled - reviewable independent of whether\nanyone was watching.",
+				"properties": {
+					"discoveredCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"eligibleCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"createdCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"updatedCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"disabledCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"pushedCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"id": {
+						"type": "string"
+					},
+					"workflowId": {
+						"type": "string"
+					},
+					"triggerType": {
+						"$ref": "#/components/schemas/WorkflowRunTriggerType"
+					},
+					"status": {
+						"$ref": "#/components/schemas/WorkflowRunStatus"
+					},
+					"startedAt": {
+						"type": "string"
+					},
+					"completedAt": {
+						"type": "string",
+						"nullable": true,
+						"description": "Null while `status` is `RUNNING`."
+					},
+					"error": {
+						"type": "string",
+						"nullable": true,
+						"description": "Set only when `status` is `ERRORED`."
+					},
+					"triggeredBy": {
+						"type": "string",
+						"nullable": true,
+						"description": "The user who triggered a manual run; null for a scheduled one."
+					}
+				},
+				"required": [
+					"discoveredCount",
+					"eligibleCount",
+					"createdCount",
+					"updatedCount",
+					"disabledCount",
+					"pushedCount",
+					"id",
+					"workflowId",
+					"triggerType",
+					"status",
+					"startedAt",
+					"completedAt",
+					"error",
+					"triggeredBy"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"WorkflowPreviewEntryStatus": {
+				"type": "string",
+				"enum": [
+					"new",
+					"changed",
+					"unchanged",
+					"reactivated",
+					"missing"
+				],
+				"example": "new",
+				"description": "How a preview classifies one discovered/tracked entry against the workflow's previous run - the same\nclassification a real run's Decide step uses, before Act would touch anything."
+			},
+			"WorkflowPreviewEntryDTO": {
+				"description": "One entry of a workflow preview - a discovered record classified against what the previous run last\nsaw for the same identity key, without writing anything.",
+				"properties": {
+					"key": {
+						"type": "string",
+						"description": "The identity key computed from the workflow's `identityKeyFields`."
+					},
+					"status": {
+						"$ref": "#/components/schemas/WorkflowPreviewEntryStatus"
+					},
+					"record": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/OIBusRecord"
+							}
+						],
+						"nullable": true,
+						"description": "The freshly discovered record - null for `missing` entries, which weren't found this time."
+					},
+					"previousMetadata": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Record_string.unknown_"
+							}
+						],
+						"nullable": true,
+						"description": "The previous run's snapshot for this key - null for a brand new (`new`) entry."
+					}
+				},
+				"required": [
+					"key",
+					"status",
+					"record",
+					"previousMetadata"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"WorkflowPreviewResultDTO": {
+				"description": "A dry run of a Configuration Workflow: identical discovery and Decide-step classification as a real\nrun, but nothing is written - no items, no point metadata, no `workflow_runs` record. Discovery\nitself is a real round-trip to the data source, so a preview costs what a run costs minus the writes.",
+				"properties": {
+					"discoveredCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"eligibleCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"entries": {
+						"items": {
+							"$ref": "#/components/schemas/WorkflowPreviewEntryDTO"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"discoveredCount",
+					"eligibleCount",
+					"entries"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Page_WorkflowRunDTO_": {
+				"description": "Represents a paginated response containing an array of elements.",
+				"properties": {
+					"content": {
+						"items": {
+							"$ref": "#/components/schemas/WorkflowRunDTO"
+						},
+						"type": "array",
+						"description": "The content of the page - an array of elements."
+					},
+					"totalElements": {
+						"type": "number",
+						"format": "double",
+						"description": "The total number of elements across all pages.",
+						"example": 2
+					},
+					"size": {
+						"type": "number",
+						"format": "double",
+						"description": "The size of the page, i.e., the maximum number of elements per page.",
+						"example": 10
+					},
+					"number": {
+						"type": "number",
+						"format": "double",
+						"description": "The number of the current page, starting at 0.",
+						"example": 0
+					},
+					"totalPages": {
+						"type": "number",
+						"format": "double",
+						"description": "The total number of pages (which can be 0 if there are no elements).",
+						"example": 1
+					}
+				},
+				"required": [
+					"content",
+					"totalElements",
+					"size",
+					"number",
+					"totalPages"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"ConfigImportResponseDTO": {
 				"properties": {
 					"appliedUpgrades": {
@@ -40958,6 +41630,7 @@
 					"south_connector",
 					"south_item",
 					"south_item_group",
+					"configuration_workflow",
 					"north_connector",
 					"north_transformer",
 					"history_query",
@@ -42120,6 +42793,60 @@
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/SouthItemTestRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/south/{southId}/test/discovery-query": {
+			"post": {
+				"operationId": "TestDiscoveryQuery",
+				"responses": {
+					"200": {
+						"description": "The rows returned by the query",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/OIBusRecord"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"description": "Test a Configuration Workflow discovery query as currently typed, against an ephemeral or the\nlive connector (mirrors testItem), and return its raw rows",
+				"summary": "Test a discovery query",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "southType",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/OIBusSouthType"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SouthDiscoveryQueryTestRequest"
 							}
 						}
 					}
@@ -46542,6 +47269,339 @@
 						}
 					}
 				}
+			}
+		},
+		"/api/south/{southId}/workflows": {
+			"get": {
+				"operationId": "List",
+				"responses": {
+					"200": {
+						"description": "Array of configuration workflow objects",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/ConfigurationWorkflowDTO"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"description": "Lists all configuration workflows for a south connector",
+				"summary": "List configuration workflows",
+				"tags": [
+					"Configuration Workflows"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "Create",
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ConfigurationWorkflowDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Creates a new configuration workflow for a south connector",
+				"summary": "Create configuration workflow",
+				"tags": [
+					"Configuration Workflows"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/south/{southId}/workflows/{workflowId}": {
+			"get": {
+				"operationId": "Get",
+				"responses": {
+					"200": {
+						"description": "The configuration workflow object",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ConfigurationWorkflowDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Gets a specific configuration workflow by id",
+				"summary": "Get configuration workflow",
+				"tags": [
+					"Configuration Workflows"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "workflowId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"put": {
+				"operationId": "Update",
+				"responses": {
+					"200": {
+						"description": "The updated configuration workflow",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ConfigurationWorkflowDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Updates an existing configuration workflow",
+				"summary": "Update configuration workflow",
+				"tags": [
+					"Configuration Workflows"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "workflowId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "Delete",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					}
+				},
+				"description": "Deletes a configuration workflow",
+				"summary": "Delete configuration workflow",
+				"tags": [
+					"Configuration Workflows"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "workflowId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/south/{southId}/workflows/{workflowId}/run": {
+			"post": {
+				"operationId": "Run",
+				"responses": {
+					"200": {
+						"description": "The completed (or errored) run",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/WorkflowRunDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Runs a configuration workflow now: discovers the south connector's data source, decides which\ndiscovered entries warrant a change, and acts on them (creating/updating/orphaning items and/or\nwriting remote point metadata) - on the south connector's live, already-running instance.",
+				"summary": "Run a configuration workflow now",
+				"tags": [
+					"Configuration Workflows"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "workflowId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/south/{southId}/workflows/{workflowId}/preview": {
+			"post": {
+				"operationId": "Preview",
+				"responses": {
+					"200": {
+						"description": "What the next run would find and how it would classify it",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/WorkflowPreviewResultDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Dry-runs a configuration workflow: identical discovery and classification as a real run, but\nnothing is written - no items, no point metadata, no run history entry. Discovery itself is a real\nround-trip to the data source, so this costs what a real run costs, minus the writes.",
+				"summary": "Preview a configuration workflow's next run",
+				"tags": [
+					"Configuration Workflows"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "workflowId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/south/{southId}/workflows/{workflowId}/runs": {
+			"get": {
+				"operationId": "ListRuns",
+				"responses": {
+					"200": {
+						"description": "Paginated list of runs",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Page_WorkflowRunDTO_"
+								}
+							}
+						}
+					}
+				},
+				"description": "Lists a configuration workflow's run history, most recent first.",
+				"summary": "List a configuration workflow's run history",
+				"tags": [
+					"Configuration Workflows"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "workflowId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "The zero-based page number to fetch.",
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"default": 0,
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
 			}
 		},
 		"/api/config-transfer/export": {

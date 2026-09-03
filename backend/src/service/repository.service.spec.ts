@@ -53,6 +53,9 @@ describe('Repository service', () => {
     assert.ok(repositoryService.northMetricsRepository);
     assert.ok(repositoryService.southConnectorRepository);
     assert.ok(repositoryService.southItemGroupRepository);
+    assert.ok(repositoryService.configurationWorkflowRepository);
+    assert.ok(repositoryService.workflowRunRepository);
+    assert.ok(repositoryService.itemPointMetadataRepository);
     assert.ok(repositoryService.southMetricsRepository);
     assert.ok(repositoryService.historyQueryMetricsRepository);
     assert.ok(repositoryService.engineMetricsRepository);

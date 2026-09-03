@@ -5,6 +5,7 @@ import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields }
 import testData from '../../tests/utils/test-data';
 import SouthConnectorRepository, { toItemEntityFromJoinedRow, toSouthItemGroupLight } from './south-connector.repository';
 import SouthItemGroupRepository from './south-item-group.repository';
+import ConfigurationWorkflowRepository from './configuration-workflow.repository';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthItemGroupEntityLight } from '../../model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { mock } from 'node:test';
@@ -499,6 +500,97 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(repository.findItemById(testData.south.list[0].id, testData.south.list[0].items[0].id)!.enabled, false);
     repository.enableItem(testData.south.list[0].items[0].id);
     assert.strictEqual(repository.findItemById(testData.south.list[0].id, testData.south.list[0].items[0].id)!.enabled, true);
+  });
+
+  it('should clear a workflow-set disabled_reason on manual enable/disable', () => {
+    const southId = testData.south.list[0].id;
+    const itemId = testData.south.list[0].items[0].id;
+    repository.disableItemWithReason(southId, itemId, 'No longer found by discovery', 'workflowUser');
+    assert.strictEqual(repository.findItemById(southId, itemId)!.disabledReason, 'No longer found by discovery');
+
+    // A person's own manual disable/enable is not the workflow's reason — clear it either way.
+    repository.disableItem(itemId);
+    assert.strictEqual(repository.findItemById(southId, itemId)!.disabledReason, null);
+
+    repository.disableItemWithReason(southId, itemId, 'No longer found by discovery', 'workflowUser');
+    repository.enableItem(itemId);
+    assert.strictEqual(repository.findItemById(southId, itemId)!.disabledReason, null);
+    assert.strictEqual(repository.findItemById(southId, itemId)!.enabled, true);
+  });
+
+  it('should auto-disable an item with a reason and record the audit diff', () => {
+    const southId = testData.south.list[0].id;
+    const itemId = testData.south.list[0].items[0].id;
+
+    repository.disableItemWithReason(southId, itemId, 'No longer found by discovery', 'workflowUser');
+
+    const found = repository.findItemById(southId, itemId)!;
+    assert.strictEqual(found.enabled, false);
+    assert.strictEqual(found.disabledReason, 'No longer found by discovery');
+    assert.strictEqual(found.updatedBy, 'workflowUser');
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    const call = recordMock.mock.calls.at(-1)!;
+    assert.deepStrictEqual(call.arguments.slice(0, 3), ['south_item', itemId, 'UPDATE']);
+    assert.strictEqual(call.arguments[5], 'workflowUser');
+  });
+
+  it('should claim an item for a workflow and record the audit diff', () => {
+    const southId = testData.south.list[0].id;
+    const itemId = testData.south.list[0].items[1].id;
+    const workflowRepository = new ConfigurationWorkflowRepository(database, auditService);
+    const workflow = workflowRepository.create(
+      {
+        name: `Claim item workflow ${itemId}`,
+        southId,
+        targetItemId: null,
+        discoveryScope: { rootNodeId: 'ns=1;s=Root' },
+        identityKeyFields: ['nodeId'],
+        eligibilityFilter: [],
+        itemFieldMapping: { name: '{{name}}' },
+        remoteFieldMapping: null,
+        scanMode: null,
+        enabled: true
+      },
+      'workflowUser'
+    );
+
+    repository.claimItemForWorkflow(southId, itemId, workflow.id, 'workflowUser');
+
+    const found = repository.findItemById(southId, itemId)!;
+    assert.strictEqual(found.createdByWorkflowId, workflow.id);
+
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    const call = recordMock.mock.calls.at(-1)!;
+    assert.deepStrictEqual(call.arguments.slice(0, 3), ['south_item', itemId, 'UPDATE']);
+  });
+
+  it('should clear created_by_workflow_id (not delete the item) when the owning workflow is deleted', () => {
+    const southId = testData.south.list[0].id;
+    const itemId = testData.south.list[0].items[0].id;
+    const workflowRepository = new ConfigurationWorkflowRepository(database, auditService);
+    const workflow = workflowRepository.create(
+      {
+        name: `Claim item workflow ${itemId}`,
+        southId,
+        targetItemId: null,
+        discoveryScope: {},
+        identityKeyFields: [],
+        eligibilityFilter: [],
+        itemFieldMapping: { name: '{{name}}' },
+        remoteFieldMapping: null,
+        scanMode: null,
+        enabled: true
+      },
+      'workflowUser'
+    );
+    repository.claimItemForWorkflow(southId, itemId, workflow.id, 'workflowUser');
+
+    workflowRepository.delete(workflow.id, 'workflowUser');
+
+    const found = repository.findItemById(southId, itemId);
+    assert.ok(found, 'the item must survive the owning workflow being deleted');
+    assert.strictEqual(found!.createdByWorkflowId, null);
   });
 
   it('should save all items without removing existing items', () => {

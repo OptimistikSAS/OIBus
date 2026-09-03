@@ -10,7 +10,7 @@ import {
 } from '../../shared/model/south-connector.model';
 import { Instant, Interval } from '../../shared/model/types';
 import { DateTime } from 'luxon';
-import { SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from './south-interface';
+import { SouthConfigurationDiscovery, SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from './south-interface';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import {
   OIBusAnyContent,
@@ -118,8 +118,16 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   private lastBackpressureWarnByUnitId: Map<string, DateTime> = new Map<string, DateTime>();
   // Per-item scheduling status. Only enabled items are tracked; a missing entry is equivalent to 'pending'.
   private itemStatus = new Map<string, 'pending' | 'queued' | 'running'>();
-  // FIFO queue of work-units (groups, or singleton arrays for connectors in SOUTH_SINGLE_ITEMS) waiting for a free slot.
-  private taskQueue: Array<{ scanModeId: string; items: Array<SouthConnectorItemEntity<I>> }> = [];
+  // Per-workflow scheduling status, sibling of itemStatus - a Configuration Workflow run is queued
+  // on this same connector's queue (see enqueueWorkflowRun) so it's interleaved, never concurrent,
+  // with this connector's own scheduled reads on a possibly-shared live session (e.g. OPC-UA).
+  private workflowStatus = new Map<string, 'queued' | 'running'>();
+  // FIFO queue of work-units waiting for a free slot: either a group of items (or a singleton array
+  // for connectors in SOUTH_SINGLE_ITEMS), or a Configuration Workflow run (see enqueueWorkflowRun).
+  private taskQueue: Array<
+    | { kind: 'items'; scanModeId: string; items: Array<SouthConnectorItemEntity<I>> }
+    | { kind: 'workflow'; workflowId: string; run: () => Promise<void>; cancel: () => void }
+  > = [];
   // Every currently-running task's promise. Its size is the current concurrency; stop() awaits all of them.
   private runningTasks = new Set<Promise<void>>();
   // Enabled items grouped via `groupItemsByGroup`, bucketed by their effective scan mode id (own
@@ -370,9 +378,54 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       for (const item of items) {
         this.itemStatus.set(item.id, 'queued');
       }
-      this.taskQueue.push({ scanModeId: scanMode.id, items });
+      this.taskQueue.push({ kind: 'items', scanModeId: scanMode.id, items });
     }
     this.dispatch();
+  }
+
+  /**
+   * Queues a Configuration Workflow run as another work-unit on this connector's own task queue -
+   * so a scheduled or manual run is interleaved with, never literally concurrent with, this
+   * connector's own scheduled item reads on a possibly-shared live session (e.g. an OPC-UA
+   * session), through the exact same `getMaxParallelRun()` ceiling as everything else. `run` is
+   * called once a slot is free; its resolution/rejection is forwarded to the returned promise.
+   *
+   * Unlike `trigger()`, this does NOT gate on `isEnabled()` - a manual "run now" must work against a
+   * disabled connector's live session (the same way `explore()`/discovery already does), so a
+   * workflow can be built and tested before its connector is switched on. A scheduled tick must
+   * still respect the enabled flag, but that's checked by the caller before this is ever invoked
+   * (see ConfigurationWorkflowRunService.runScheduled), exactly like `trigger()` checks it itself
+   * before queuing an 'items' work-unit, rather than pushing that decision down here.
+   *
+   * Returns `null` (without queuing anything) if the connector is exiting, or if this workflow is
+   * already queued or running - the same backpressure semantics `trigger()` applies to items, just
+   * keyed by `workflowId` instead of a work-unit's items. Callers decide what a `null` means for
+   * them: a scheduled tick silently skips it (matching a dropped item work-unit); a manual "run now"
+   * surfaces it to the caller as "already running".
+   */
+  enqueueWorkflowRun<T>(workflowId: string, run: () => Promise<T>): Promise<T> | null {
+    if (this.stopping) {
+      this.logger.trace(`Connector is exiting. Workflow run for "${workflowId}" not queued`);
+      return null;
+    }
+    const status = this.workflowStatus.get(workflowId);
+    if (status === 'queued' || status === 'running') {
+      this.logger.warn(`Workflow "${workflowId}" is already queued or running - skipping`);
+      return null;
+    }
+    this.workflowStatus.set(workflowId, 'queued');
+    return new Promise<T>((resolve, reject) => {
+      this.taskQueue.push({
+        kind: 'workflow',
+        workflowId,
+        run: () => run().then(resolve, reject),
+        // Settles the promise without ever calling run() - used by disconnect() to reject anything
+        // still sitting in the queue when the connector shuts down, rather than leaving a caller
+        // (e.g. a manual "run now" HTTP request) awaiting a promise that would otherwise never settle.
+        cancel: () => reject(new Error(`South connector disconnected before workflow "${workflowId}" could run`))
+      });
+      this.dispatch();
+    });
   }
 
   /**
@@ -403,20 +456,30 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   private dispatch(): void {
     while (!this.stopping && this.runningTasks.size < this.getMaxParallelRun() && this.taskQueue.length > 0) {
       const task = this.taskQueue.shift()!;
-      for (const item of task.items) {
-        this.itemStatus.set(item.id, 'running');
+      if (task.kind === 'items') {
+        for (const item of task.items) {
+          this.itemStatus.set(item.id, 'running');
+        }
+      } else {
+        this.workflowStatus.set(task.workflowId, 'running');
       }
       const taskPromise: Promise<void> = this.runTask(task)
         .catch((error: unknown) => {
           // Safety net for anything unexpected outside runTask's own per-branch try/catch (e.g. a
           // metrics emit throwing synchronously). Logged rather than left as an unhandled
           // rejection; this.taskQueue/itemStatus cleanup below still runs via finally() regardless.
+          // A 'workflow' task's own run() never actually rejects here (see enqueueWorkflowRun) -
+          // its outcome reaches the caller via the promise enqueueWorkflowRun returned instead.
           this.logger.error(`Unhandled error in South task runner: ${getErrorMessage(error)}`);
         })
         .finally(() => {
           this.runningTasks.delete(taskPromise);
-          for (const item of task.items) {
-            this.itemStatus.set(item.id, 'pending');
+          if (task.kind === 'items') {
+            for (const item of task.items) {
+              this.itemStatus.set(item.id, 'pending');
+            }
+          } else {
+            this.workflowStatus.delete(task.workflowId);
           }
           if (!this.stopping) {
             this.dispatch();
@@ -439,7 +502,16 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * work-unit must not abort or hide errors from any other concurrently
    * running work-unit.
    */
-  private async runTask(task: { scanModeId: string; items: Array<SouthConnectorItemEntity<I>> }): Promise<void> {
+  private async runTask(
+    task:
+      | { kind: 'items'; scanModeId: string; items: Array<SouthConnectorItemEntity<I>> }
+      | { kind: 'workflow'; workflowId: string; run: () => Promise<void>; cancel: () => void }
+  ): Promise<void> {
+    if (task.kind === 'workflow') {
+      await task.run();
+      return;
+    }
+
     const { items } = task;
     const runStart = DateTime.now();
     this.metricsEvent.emit('run-start', {
@@ -879,8 +951,16 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * Idempotent — safe to call when already disconnected.
    */
   disconnect(): Promise<void> {
+    // Anything still sitting in the queue never got its run() called - settle its promise anyway so
+    // a caller awaiting it (e.g. a manual "run now" HTTP request) doesn't hang forever.
+    for (const task of this.taskQueue) {
+      if (task.kind === 'workflow') {
+        task.cancel();
+      }
+    }
     this.taskQueue = [];
     this.itemStatus.clear();
+    this.workflowStatus.clear();
 
     return Promise.resolve();
   }
@@ -1043,6 +1123,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   /** Capability check — true iff the subclass implements `SouthExplore.explore()`. */
   hasExplore(): this is SouthExplore {
     return 'explore' in this;
+  }
+
+  /** Capability check — true iff the subclass implements `SouthConfigurationDiscovery.discover()`. */
+  hasConfigurationDiscovery(): this is SouthConfigurationDiscovery {
+    return 'discover' in this;
   }
 
   set connectorConfiguration(connectorConfiguration: SouthConnectorEntity<T, I>) {

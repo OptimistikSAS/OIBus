@@ -101,6 +101,16 @@
                   <span translate="south.groups.manage-button"></span>
                   <span class="badge bg-secondary ms-1">{{ southConnector.groups.length }}</span>
                 </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm oib-box-btn"
+                  id="manage-workflows-button"
+                  [ngbTooltip]="'south.workflows.manage-button' | translate"
+                  (click)="manageWorkflows()"
+                >
+                  <span class="fa fa-sync me-1"></span>
+                  <span translate="south.workflows.manage-button"></span>
+                </button>
               </div>
               <div class="ms-3">
                 <button
