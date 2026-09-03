@@ -1,5 +1,5 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import {
   AbstractControl,
   FormControl,
@@ -12,7 +12,7 @@ import {
   Validators
 } from '@angular/forms';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { Observable } from 'rxjs';
+import { Observable, switchMap } from 'rxjs';
 import {
   ConfigurationWorkflowCommandDTO,
   ConfigurationWorkflowDTO,
@@ -23,14 +23,22 @@ import {
 import {
   SouthConnectorItemDTO,
   SouthConnectorManifest,
+  SouthItemGroupCommandDTO,
   SouthItemGroupDTO
 } from '../../../../../../backend/shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
-import { OIBusAttribute, OIBusAttributeType } from '../../../../../../backend/shared/model/form.model';
+import {
+  OIBusAttribute,
+  OIBusAttributeType,
+  OIBusEnablingCondition,
+  OIBusObjectAttribute
+} from '../../../../../../backend/shared/model/form.model';
 import { RESAMPLING } from '../../../../../../backend/shared/model/types';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { ModalService } from '../../../shared/modal.service';
+import { EditSouthItemGroupModalComponent } from '../../south-items/edit-south-item-group-modal/edit-south-item-group-modal.component';
 
 interface FieldMappingRow {
   key: string;
@@ -42,6 +50,16 @@ interface FieldMappingRow {
 // than a static list.
 type MappableFieldType = OIBusAttributeType | 'group-select';
 
+/** One manifest enabling condition, resolved to full item-root-relative paths (the manifest's own
+ *  referralPathFromRoot/targetPathFromRoot are only relative to the object that declares them - see
+ *  buildItemMappableFields). A field is shown only once every rule covering it (its own, plus any
+ *  inherited from an enclosing object) evaluates true against the referral field's current mapped value. */
+interface FieldEnablingRule {
+  referralPath: string;
+  values: OIBusEnablingCondition['values'];
+  operator?: OIBusEnablingCondition['operator'];
+}
+
 /** One field a mapping can target - a path into the item command shape, its translated label, and enough type
  *  information to render a type-appropriate constant input (checkbox, select, ...) instead of a bare text box. */
 interface MappableField {
@@ -50,6 +68,22 @@ interface MappableField {
   attributeType: MappableFieldType;
   /** Only for 'string-select' - the manifest's own selectableValues. */
   selectableValues?: Array<string>;
+  /** Every enabling condition gating this field's visibility (own + inherited from an ancestor object) -
+   *  all must pass for the field to be shown at all. Empty for fields outside the manifest tree. */
+  enablingRules?: Array<FieldEnablingRule>;
+  /** True when some other field's visibility depends on this field's own value - such a field can only
+   *  be mapped to a constant (its value must be knowable while editing, not resolved per-record at run time). */
+  isEnablingReferral?: boolean;
+  /** Translation keys of every object this field is nested under, beyond the top-level `settings` wrapper
+   *  every settings.* field already implies (e.g. ['...ha-mode.title'] for settings.haMode.aggregate) -
+   *  shown as breadcrumb context so a deeply-nested field isn't just a bare, ambiguous leaf name. */
+  ancestorLabelKeys?: Array<string>;
+  /** Historian fields whose relevance depends on whether the item is (going to be) mapped into a group,
+   *  mirroring the real item edit form's own group-dependent fields - `true` shows the field only when
+   *  'groupId' is mapped to something, `false` only when it isn't. Not expressible as an enablingRule
+   *  (those match against a known, finite set of values; "groupId is mapped to *something*" can't, since
+   *  the set of valid group ids is dynamic). Unset for every field outside this historian group. */
+  visibleWhenGrouped?: boolean;
 }
 
 /** Sentinel select-option value meaning "map this to a {{field}} expression instead of a fixed value". */
@@ -72,20 +106,60 @@ const REMOTE_KNOWN_FIELDS: Array<MappableField> = [
   }
 ];
 
+// maxReadInterval/readDelay/the offsets/recoveryStrategy only apply to an item that owns its own
+// schedule/history settings - once synced with a group, those come from the group instead, so mapping
+// them here would be pointless. An item can be *in* a group without being *synced* to it, though (its
+// own settings still apply then) - so this hinges on syncWithGroup itself, not merely on groupId being
+// mapped, and is expressed as a regular enablingRule since 'true'/'false' is a fixed, known value set.
+const HIDDEN_WHILE_SYNCED_WITH_GROUP: FieldEnablingRule = { referralPath: 'syncWithGroup', values: ['true'], operator: 'NOT_EQUAL' };
+
+// None of these vary meaningfully per discovered record - each is a fixed setting of the item's own
+// schedule, or a plain on/off toggle - so, like the schedule/group fields, they're constant-only.
+const CONSTANT_ONLY_ITEM_PATHS = new Set([
+  'maxReadInterval',
+  'readDelay',
+  'startTimeOffset',
+  'endTimeOffset',
+  'recoveryStrategy',
+  'syncWithGroup'
+]);
+
 // Item fields that exist on every south item but aren't part of the manifest's item attribute tree
 // (the real item edit form adds them by hand too, gated on the same manifest.modes.history flag).
 const HISTORIAN_ITEM_FIELDS: Array<MappableField> = [
   { path: 'groupId', translationKey: 'south.items.group', attributeType: 'group-select' },
-  { path: 'syncWithGroup', translationKey: 'south.items.sync-with-group', attributeType: 'boolean' },
-  { path: 'maxReadInterval', translationKey: 'south.items.max-read-interval', attributeType: 'number' },
-  { path: 'readDelay', translationKey: 'south.items.read-delay', attributeType: 'number' },
-  { path: 'startTimeOffset', translationKey: 'south.items.start-time-offset', attributeType: 'number' },
-  { path: 'endTimeOffset', translationKey: 'south.items.end-time-offset', attributeType: 'number' },
+  // syncWithGroup is only meaningful once there's a group to sync with at all.
+  { path: 'syncWithGroup', translationKey: 'south.items.sync-with-group', attributeType: 'boolean', visibleWhenGrouped: true },
+  {
+    path: 'maxReadInterval',
+    translationKey: 'south.items.max-read-interval',
+    attributeType: 'number',
+    enablingRules: [HIDDEN_WHILE_SYNCED_WITH_GROUP]
+  },
+  {
+    path: 'readDelay',
+    translationKey: 'south.items.read-delay',
+    attributeType: 'number',
+    enablingRules: [HIDDEN_WHILE_SYNCED_WITH_GROUP]
+  },
+  {
+    path: 'startTimeOffset',
+    translationKey: 'south.items.start-time-offset',
+    attributeType: 'number',
+    enablingRules: [HIDDEN_WHILE_SYNCED_WITH_GROUP]
+  },
+  {
+    path: 'endTimeOffset',
+    translationKey: 'south.items.end-time-offset',
+    attributeType: 'number',
+    enablingRules: [HIDDEN_WHILE_SYNCED_WITH_GROUP]
+  },
   {
     path: 'recoveryStrategy',
     translationKey: 'south.items.recovery-strategy',
     attributeType: 'string-select',
-    selectableValues: ['oldest', 'newest']
+    selectableValues: ['oldest', 'newest'],
+    enablingRules: [HIDDEN_WHILE_SYNCED_WITH_GROUP]
   }
 ];
 
@@ -94,20 +168,38 @@ const HISTORIAN_ITEM_FIELDS: Array<MappableField> = [
   templateUrl: './edit-workflow-modal.component.html',
   styleUrl: './edit-workflow-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [ReactiveFormsModule, FormsModule, TranslateDirective, TranslatePipe, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent]
+  imports: [
+    ReactiveFormsModule,
+    FormsModule,
+    TranslateDirective,
+    TranslatePipe,
+    OI_FORM_VALIDATION_DIRECTIVES,
+    SaveButtonComponent,
+    NgbDropdownModule
+  ]
 })
 export default class EditWorkflowModalComponent {
   private modal = inject(NgbActiveModal);
   private fb = inject(NonNullableFormBuilder);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private modalService = inject(ModalService);
 
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
   scanModes: Array<ScanModeDTO> = [];
   items: Array<SouthConnectorItemDTO> = [];
-  groups: Array<SouthItemGroupDTO> = [];
+  groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
   workflow: ConfigurationWorkflowDTO | null = null;
   existingWorkflows: Array<ConfigurationWorkflowDTO> = [];
+  private currentManifest!: SouthConnectorManifest;
+
+  // Saves directly against the live south connector, exactly like EditSouthItemModalComponent's own
+  // group dropdown - bound from south-detail.component.ts and passed down through prepare().
+  private addOrEditGroup!: (command: {
+    mode: 'create' | 'edit';
+    group: SouthItemGroupCommandDTO;
+  }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
+  private deleteGroup!: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
 
   readonly operators: ReadonlyArray<RecordFilterOperator> = RECORD_FILTER_OPERATORS;
   readonly remoteKnownFields = REMOTE_KNOWN_FIELDS;
@@ -150,14 +242,22 @@ export default class EditWorkflowModalComponent {
     items: Array<SouthConnectorItemDTO>,
     existingWorkflows: Array<ConfigurationWorkflowDTO>,
     manifest: SouthConnectorManifest,
-    groups: Array<SouthItemGroupDTO> = []
+    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [],
+    addOrEditGroup?: (command: {
+      mode: 'create' | 'edit';
+      group: SouthItemGroupCommandDTO;
+    }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
+    deleteGroup?: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>
   ) {
     this.mode = 'create';
     this.scanModes = scanModes;
     this.items = items;
     this.groups = groups;
+    this.addOrEditGroup = addOrEditGroup!;
+    this.deleteGroup = deleteGroup!;
     this.existingWorkflows = existingWorkflows;
     this.workflow = null;
+    this.currentManifest = manifest;
     this.itemMappableFields = buildItemMappableFields(manifest);
     this.itemFieldMappingValues = {};
     this.remoteFieldMappingValues = {};
@@ -173,14 +273,22 @@ export default class EditWorkflowModalComponent {
     existingWorkflows: Array<ConfigurationWorkflowDTO>,
     manifest: SouthConnectorManifest,
     workflow: ConfigurationWorkflowDTO,
-    groups: Array<SouthItemGroupDTO> = []
+    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [],
+    addOrEditGroup?: (command: {
+      mode: 'create' | 'edit';
+      group: SouthItemGroupCommandDTO;
+    }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
+    deleteGroup?: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>
   ) {
     this.mode = 'edit';
     this.scanModes = scanModes;
     this.items = items;
     this.groups = groups;
+    this.addOrEditGroup = addOrEditGroup!;
+    this.deleteGroup = deleteGroup!;
     this.existingWorkflows = existingWorkflows;
     this.workflow = workflow;
+    this.currentManifest = manifest;
     this.itemMappableFields = buildItemMappableFields(manifest);
 
     this.itemFieldMappingValues = {};
@@ -306,7 +414,7 @@ export default class EditWorkflowModalComponent {
       case 'scan-mode':
         return this.scanModes.map(scanMode => scanMode.id);
       case 'group-select':
-        return this.groups.map(group => group.id);
+        return this.groups.map(group => group.id).filter((id): id is string => id != null);
       default:
         return [];
     }
@@ -342,6 +450,105 @@ export default class EditWorkflowModalComponent {
    *  expression when the sentinel is chosen, otherwise stores the picked constant value directly. */
   onSelectChange(values: Record<string, string>, field: MappableField, newValue: string) {
     values[field.path] = newValue === VARIABLE_SENTINEL ? '{{}}' : newValue;
+  }
+
+  /** Whether this field can be mapped to a {{ }} expression at all. False for a field other fields depend
+   *  on for their own visibility (its value must be knowable while editing), the schedule/group fields -
+   *  a workflow-created item's scan mode and group must always reference something real, never a
+   *  per-record expression - and the historian fields, which are either a fixed setting of the item's own
+   *  schedule (max read interval, read delay, the offsets, recovery strategy) or a plain toggle
+   *  (syncWithGroup), neither ever meaningfully varying per discovered record. */
+  allowsVariable(field: MappableField): boolean {
+    return (
+      !field.isEnablingReferral &&
+      field.attributeType !== 'scan-mode' &&
+      field.attributeType !== 'group-select' &&
+      !CONSTANT_ONLY_ITEM_PATHS.has(field.path)
+    );
+  }
+
+  /** Placeholder for a plain-text item field's input - a constant-only field (e.g. maxReadInterval) gets
+   *  a hint that it can't take a {{ }} expression, instead of the generic "constant or {{field}}" one. */
+  itemFieldPlaceholderKey(field: MappableField): string {
+    return this.allowsVariable(field)
+      ? 'south.workflows.item-field-mapping-expression-placeholder'
+      : 'south.workflows.mapping-constant-placeholder';
+  }
+
+  /** Name of the group currently mapped as a constant for the 'groupId' field, or the "no group" label. */
+  getSelectedGroupName(): string {
+    const groupId = this.itemFieldMappingValues['groupId'];
+    if (!groupId) {
+      return '';
+    }
+    return this.groups.find(group => group.id === groupId)?.standardSettings.name ?? groupId;
+  }
+
+  onSelectGroup(groupId: string | null) {
+    this.itemFieldMappingValues['groupId'] = groupId ?? '';
+  }
+
+  /** Mirrors EditSouthItemModalComponent's own onAddGroup - opens the same group modal, saves it directly
+   *  against the live south connector via the callback threaded in from south-detail, then maps the newly
+   *  created group as this field's constant. */
+  onAddGroup() {
+    const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
+    const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
+    component.prepareForCreation(this.scanModes, this.groups, this.currentManifest);
+    modalRef.result.pipe(switchMap(result => this.addOrEditGroup(result))).subscribe(groupResult => {
+      this.groups.push(groupResult);
+      this.onSelectGroup(groupResult.id!);
+    });
+  }
+
+  onEditGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO, event: Event) {
+    event.stopPropagation();
+    const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
+    const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
+    component.prepareForEdition(this.scanModes, this.groups, this.currentManifest, group);
+    modalRef.result.pipe(switchMap(result => this.addOrEditGroup(result))).subscribe(groupResult => {
+      const index = this.groups.findIndex(existing => existing.id === groupResult.id);
+      if (index >= 0) {
+        this.groups[index] = groupResult;
+      } else {
+        this.groups.push(groupResult);
+      }
+    });
+  }
+
+  onDeleteGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO, event: Event) {
+    event.stopPropagation();
+    this.deleteGroup(group).subscribe(() => {
+      this.groups = this.groups.filter(existing => existing.id !== group.id);
+      if (this.itemFieldMappingValues['groupId'] === group.id) {
+        this.onSelectGroup(null);
+      }
+    });
+  }
+
+  /** Whether an item field should be shown at all - every enabling rule covering it (its own, plus any
+   *  inherited from an enclosing settings object) must currently pass against itemFieldMappingValues,
+   *  and a group-dependent historian field must agree with whether 'groupId' is currently mapped. */
+  isItemFieldVisible(field: MappableField): boolean {
+    if (field.visibleWhenGrouped !== undefined) {
+      const isGrouped = !!this.itemFieldMappingValues['groupId'];
+      if (field.visibleWhenGrouped !== isGrouped) {
+        return false;
+      }
+    }
+    return (field.enablingRules ?? []).every(rule => this.evaluatesTrue(rule));
+  }
+
+  private evaluatesTrue(rule: FieldEnablingRule): boolean {
+    const referralValue = this.itemFieldMappingValues[rule.referralPath] ?? '';
+    const matchesAnyValue = rule.values.some(value => String(value) === referralValue);
+    if (rule.operator === 'CONTAINS') {
+      return rule.values.some(value => referralValue.includes(String(value)));
+    }
+    if (rule.operator === 'NOT_EQUAL') {
+      return !matchesAnyValue;
+    }
+    return matchesAnyValue;
   }
 
   canDismiss(): Observable<boolean> | boolean {
@@ -387,8 +594,29 @@ export default class EditWorkflowModalComponent {
       this.formError = 'south.workflows.target-item-required';
       return;
     }
+    // A field other fields depend on for their own visibility, plus the schedule/group fields, must be
+    // knowable while editing (or reference something real) rather than resolved per-record at run time -
+    // a select-type one of these can't even reach this state through the UI (its {{ }} option is
+    // omitted), but a free-text one still could.
+    const hasConstantOnlyViolation = this.itemMappableFields.some(
+      field => !this.allowsVariable(field) && (this.itemFieldMappingValues[field.path] ?? '').includes('{{')
+    );
+    if (formValue.itemFieldMappingEnabled && hasConstantOnlyViolation) {
+      this.formError = 'south.workflows.mapping-constant-only';
+      return;
+    }
 
-    const itemFieldMapping = formValue.itemFieldMappingEnabled ? nonEmptyEntries(this.itemFieldMappingValues) : null;
+    // A field hidden by an unmet enabling condition keeps whatever value it had while editing (so
+    // toggling the referral back and forth doesn't lose data), but is stripped here at save time - it
+    // isn't actually part of the item this mapping would produce.
+    const visibleItemPaths = new Set(this.itemMappableFields.filter(field => this.isItemFieldVisible(field)).map(field => field.path));
+    const itemFieldMappingValuesToSave: Record<string, string> = {};
+    for (const [path, value] of Object.entries(this.itemFieldMappingValues)) {
+      if (visibleItemPaths.has(path)) {
+        itemFieldMappingValuesToSave[path] = value;
+      }
+    }
+    const itemFieldMapping = formValue.itemFieldMappingEnabled ? nonEmptyEntries(itemFieldMappingValuesToSave) : null;
 
     let remoteFieldMapping: Record<string, string> | null = null;
     if (formValue.remoteFieldMappingEnabled) {
@@ -418,36 +646,90 @@ export default class EditWorkflowModalComponent {
 
 /** Builds a MappableField from a manifest attribute, capturing its type (and selectableValues, for 'string-select')
  *  so the mapping UI can render a type-appropriate constant input instead of a bare text box. */
-function toMappableField(attribute: OIBusAttribute, path: string = attribute.key): MappableField {
-  const field: MappableField = { path, translationKey: attribute.translationKey, attributeType: attribute.type };
+function toMappableField(
+  attribute: OIBusAttribute,
+  path: string,
+  enablingRules: Array<FieldEnablingRule>,
+  ancestorLabelKeys: Array<string>
+): MappableField {
+  const field: MappableField = {
+    path,
+    translationKey: attribute.translationKey,
+    attributeType: attribute.type,
+    enablingRules,
+    ancestorLabelKeys
+  };
   if (attribute.type === 'string-select') {
     field.selectableValues = attribute.selectableValues;
   }
   return field;
 }
 
+// `scanMode` is the one manifest key renamed on its way into a mappable path (to `scanModeId`, what the
+// workflow command actually uses) - applied wherever it appears, including as a referral/target of some
+// enabling condition, so path resolution stays consistent with the field's own listed path.
+function resolveChildPath(pathPrefix: string, key: string): string {
+  const resolvedKey = key === 'scanMode' ? 'scanModeId' : key;
+  return pathPrefix ? `${pathPrefix}.${resolvedKey}` : resolvedKey;
+}
+
+/**
+ * Recursively walks one object attribute's children (the item root, `settings`, or any object nested
+ * further under it), resolving each `enablingConditions` entry declared on it - relative to its own
+ * direct children per the manifest convention (see dynamic-form.builder.ts's addEnablingConditions) -
+ * into full item-root-relative paths, and pushing one MappableField per non-object child. A child that
+ * is itself an object is recursed into (never pushed as its own field - there's no single value to map
+ * a whole nested group of settings to); its own children inherit every rule gating the parent, plus
+ * whatever rule of its own further narrows them, and every ancestor's own label beyond the top-level
+ * `settings` wrapper (skipped as a breadcrumb entry - every settings.* field already implies it).
+ */
+function walkItemAttributes(
+  objectAttribute: OIBusObjectAttribute,
+  pathPrefix: string,
+  inheritedRules: Array<FieldEnablingRule>,
+  ancestorLabelKeys: Array<string>,
+  fields: Array<MappableField>,
+  referralPaths: Set<string>
+): void {
+  const ownRuleByChildKey = new Map<string, FieldEnablingRule>();
+  for (const condition of objectAttribute.enablingConditions) {
+    const referralPath = resolveChildPath(pathPrefix, condition.referralPathFromRoot);
+    ownRuleByChildKey.set(condition.targetPathFromRoot, { referralPath, values: condition.values, operator: condition.operator });
+    referralPaths.add(referralPath);
+  }
+
+  for (const attribute of objectAttribute.attributes) {
+    const childPath = resolveChildPath(pathPrefix, attribute.key);
+    const ownRule = ownRuleByChildKey.get(attribute.key);
+    const rules = ownRule ? [...inheritedRules, ownRule] : inheritedRules;
+
+    if (attribute.type === 'object') {
+      const childAncestors = pathPrefix === '' ? ancestorLabelKeys : [...ancestorLabelKeys, attribute.translationKey];
+      walkItemAttributes(attribute, childPath, rules, childAncestors, fields, referralPaths);
+    } else {
+      fields.push(toMappableField(attribute, childPath, rules, ancestorLabelKeys));
+    }
+  }
+}
+
 /**
  * Flattens a south connector's item manifest into a mappable-field list: every top-level item
- * attribute (name, enabled, ...), the connector-specific settings.* fields nested one level under
- * the manifest's own `settings` object attribute, `scanMode` renamed to the `scanModeId` path the
- * workflow command actually uses, plus the historian fields the real item form adds by hand outside
- * the manifest tree (gated on the same `manifest.modes.history` flag it uses).
+ * attribute (name, enabled, ...), the connector-specific settings.* fields nested arbitrarily deep
+ * under the manifest's own `settings` object attribute, `scanMode` renamed to the `scanModeId` path
+ * the workflow command actually uses, plus the historian fields the real item form adds by hand
+ * outside the manifest tree (gated on the same `manifest.modes.history` flag it uses). Each field
+ * carries the manifest's own `enablingConditions`, resolved to full paths, so the UI can hide a field
+ * until its condition is met and forbid a {{field}} expression on a field other fields depend on.
  */
 function buildItemMappableFields(manifest: SouthConnectorManifest): Array<MappableField> {
   const fields: Array<MappableField> = [];
-  for (const attribute of manifest.items.rootAttribute.attributes) {
-    if (attribute.type === 'object' && attribute.key === 'settings') {
-      for (const settingsAttribute of attribute.attributes) {
-        fields.push(toMappableField(settingsAttribute, `settings.${settingsAttribute.key}`));
-      }
-    } else if (attribute.key === 'scanMode') {
-      fields.push(toMappableField(attribute, 'scanModeId'));
-    } else {
-      fields.push(toMappableField(attribute));
-    }
-  }
+  const referralPaths = new Set<string>();
+  walkItemAttributes(manifest.items.rootAttribute, '', [], [], fields, referralPaths);
   if (manifest.modes.history) {
     fields.push(...HISTORIAN_ITEM_FIELDS);
+  }
+  for (const field of fields) {
+    field.isEnablingReferral = referralPaths.has(field.path);
   }
   return fields;
 }
