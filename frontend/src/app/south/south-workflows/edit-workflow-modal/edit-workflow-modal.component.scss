@@ -1,0 +1,14 @@
+@import '../../../../common';
+
+// The global `.btn-link` rule (styles.scss) sets color to $white for the box-title header
+// buttons — reclaim this app's normal dark text color ($darkGrey) since this button sits on the
+// white modal body, exactly like explore-tree.component.scss's own .explore-toggle/.explore-select.
+#clear-root-node {
+  color: $darkGrey;
+  text-decoration: none;
+
+  &:hover,
+  &:focus {
+    color: $darkGrey;
+  }
+}
