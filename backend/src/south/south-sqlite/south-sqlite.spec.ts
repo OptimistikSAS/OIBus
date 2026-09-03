@@ -46,6 +46,7 @@ const utilsExports = {
   convertDateTimeToInstant: mock.fn((inst: unknown) => inst),
   logQuery: mock.fn(),
   generateReplacementParameters: mock.fn((): unknown => []),
+  extractDiscoveryQuery: mock.fn((scope: Record<string, unknown>) => scope.query as string),
   getErrorMessage: mock.fn((error: unknown) => {
     if (error instanceof Error) return error.message;
     if (typeof error === 'string') return error;
@@ -256,6 +257,34 @@ describe('SouthSQLite', () => {
     mockDatabase.prepare = mock.fn(() => ({ all: mockDatabase.all }));
 
     assert.throws(() => south.queryData(configuration.items[1], startTime, endTime), { message: 'query error' });
+  });
+
+  it("should discover a Configuration Workflow's dedicated metadata query, with no @StartTime/@EndTime substitution", async () => {
+    const mockAll = mock.fn(() => [{ column_name: 'temp', description: 'Temperature' }]);
+    mockDatabase.prepare = mock.fn(() => ({ all: mockAll }));
+    // mockDatabase.close isn't reset in this describe block's beforeEach (unlike prepare/all) - its
+    // call count from earlier tests would otherwise leak into this assertion.
+    mockDatabase.close.mock.resetCalls();
+
+    const result = await south.discover({ query: 'SELECT column_name, description FROM my_metadata_table' });
+
+    assert.deepStrictEqual(utilsExports.extractDiscoveryQuery.mock.calls[0].arguments[0], {
+      query: 'SELECT column_name, description FROM my_metadata_table'
+    });
+    assert.strictEqual(mockDatabase.prepare.mock.calls[0].arguments[0], 'SELECT column_name, description FROM my_metadata_table');
+    assert.strictEqual(mockDatabase.close.mock.calls.length, 1);
+    assert.deepStrictEqual(result, [{ column_name: 'temp', description: 'Temperature' }]);
+  });
+
+  it('should close the database and rethrow when the discovery query fails', async () => {
+    const queryError = new Error('bad query');
+    mockDatabase.prepare = mock.fn(() => {
+      throw queryError;
+    });
+    mockDatabase.close.mock.resetCalls();
+
+    await assert.rejects(south.discover({ query: 'SELECT 1' }), queryError);
+    assert.strictEqual(mockDatabase.close.mock.calls.length, 1);
   });
 
   it('should test item', async () => {
