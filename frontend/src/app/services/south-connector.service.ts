@@ -21,7 +21,7 @@ import {
 } from '../../../../backend/shared/model/south-connector.model';
 import { Page } from '../../../../backend/shared/model/types';
 import { DownloadService } from './download.service';
-import { OIBusConnectionTestResult } from '../../../../backend/shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusRecord } from '../../../../backend/shared/model/engine.model';
 import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 
 /**
@@ -127,6 +127,23 @@ export class SouthConnectorService {
       {
         params: { southType, itemName }
       }
+    );
+  }
+
+  /**
+   * Test a Configuration Workflow discovery query as currently typed (before the workflow is saved)
+   * and return its raw rows.
+   */
+  testDiscoveryQuery(
+    southId: string,
+    southType: OIBusSouthType,
+    southSettings: SouthSettings,
+    query: string
+  ): Observable<Array<OIBusRecord>> {
+    return this.http.post<Array<OIBusRecord>>(
+      `/api/south/${southId}/test/discovery-query`,
+      { southSettings, query },
+      { params: { southType } }
     );
   }
 
