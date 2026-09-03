@@ -48,6 +48,25 @@
   width: 0.85rem;
 }
 
+// The per-row "Select" action (selectable mode only). The global `.btn-link` rule (styles.scss)
+// sets color to $white for the box-title header buttons - invisible on this white modal/panel body,
+// exactly the same gotcha .explore-toggle above already works around. Given a deliberate, distinct
+// color ($electricBlue, bold) rather than reusing .explore-toggle's neutral $darkGrey: unlike the
+// toggle (the whole row, always there), this is the one actionable control a picker exists for, so
+// it needs to read as clickable at a glance, not blend into the row's own name/metadata text.
+.explore-select {
+  white-space: nowrap;
+  text-decoration: none;
+  color: $electricBlue;
+  font-weight: 600;
+
+  &:hover,
+  &:focus {
+    color: $electricBlue;
+    text-decoration: underline;
+  }
+}
+
 // Two-tone "key | value" chip for metadata entries. Bootstrap's default .badge (0.75em,
 // bold, single flat color) reads as a tiny, hard-to-parse blob once it holds a "key: value"
 // pair — splitting key/value into their own tinted halves keeps each legible at a glance.
