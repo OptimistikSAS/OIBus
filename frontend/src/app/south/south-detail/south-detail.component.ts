@@ -861,6 +861,7 @@ export class SouthDetailComponent {
     const component: ManageWorkflowsModalComponent = modalRef.componentInstance;
     component.prepare(
       this.southConnector!.id,
+      this.southConnector!.settings,
       this.scanModes,
       this.southConnector!.items,
       this.manifest!,
