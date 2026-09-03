@@ -253,13 +253,12 @@ describe('SouthConnector', () => {
       assert.strictEqual(south['taskQueue'].length, 1);
     });
 
-    it('should return null and not queue when the connector is disabled', () => {
+    it('should still queue and run when the connector is disabled - unlike trigger(), gating on isEnabled() is left to the caller', async () => {
       south.isEnabled = mock.fn((): boolean => false);
-      const result = south.enqueueWorkflowRun(
-        'workflowId1',
-        mock.fn(async () => undefined)
-      );
-      assert.strictEqual(result, null);
+      const run = mock.fn(async () => 'run result');
+      const result = await south.enqueueWorkflowRun('workflowId1', run);
+      assert.strictEqual(result, 'run result');
+      assert.strictEqual(run.mock.calls.length, 1);
     });
 
     it('should return null and not queue when the connector is stopping', async () => {
