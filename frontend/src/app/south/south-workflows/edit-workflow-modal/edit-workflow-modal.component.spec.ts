@@ -2,13 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import EditWorkflowModalComponent from './edit-workflow-modal.component';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { ModalService } from '../../../shared/modal.service';
 import { SouthExploreModalComponent } from '../../../shared/south-explore-modal/south-explore-modal.component';
+import { SouthConnectorService } from '../../../services/south-connector.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { ConfigurationWorkflowDTO } from '../../../../../../backend/shared/model/configuration-workflow.model';
@@ -122,10 +123,17 @@ const existingWorkflow: ConfigurationWorkflowDTO = {
 describe('EditWorkflowModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
   let modalService: MockObject<ModalService>;
+  let southConnectorService: MockObject<SouthConnectorService>;
 
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
     modalService = createMock(ModalService);
+    southConnectorService = createMock(SouthConnectorService);
+    // Default for the SQLite reference tree's own real ExploreTreeComponent, embedded inline and
+    // driven straight from ngAfterViewInit() (not mocked away like the node-picker modal below) -
+    // individual tests override this via southConnectorService.testDiscoveryQuery for their own concern.
+    southConnectorService.startExplore.mockReturnValue(of({ sessionId: 'sessionId', entries: [] }));
+    southConnectorService.closeExplore.mockReturnValue(of(undefined));
     const unsavedChangesService = createMock(UnsavedChangesConfirmationService);
 
     TestBed.configureTestingModule({
@@ -133,6 +141,7 @@ describe('EditWorkflowModalComponent', () => {
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: activeModal },
         { provide: ModalService, useValue: modalService },
+        { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesService }
       ]
     });
@@ -222,6 +231,51 @@ describe('EditWorkflowModalComponent', () => {
     expect(fixture.nativeElement.querySelector('#browse-root-node')).toBeNull();
     expect(fixture.nativeElement.querySelector('#discovery-explore-tree')).toBeNull();
     expect(fixture.nativeElement.querySelector('#discovery-scope-unsupported')).toBeNull();
+  });
+
+  test('should test the discovery query as currently typed and show the raw rows', () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], sqlManifest, southId, southSettings);
+    fixture.detectChanges();
+    fixture.componentInstance.discoveryQuery = 'SELECT name, unit FROM metadata';
+    southConnectorService.testDiscoveryQuery.mockReturnValue(of([{ name: 'sensor1', unit: 'C' }]));
+
+    fixture.componentInstance.testDiscoveryQuery();
+
+    expect(southConnectorService.testDiscoveryQuery).toHaveBeenCalledWith(
+      southId,
+      sqlManifest.id,
+      southSettings,
+      'SELECT name, unit FROM metadata'
+    );
+    expect(fixture.componentInstance.queryTestRunning).toBe(false);
+    expect(fixture.componentInstance.queryTestError).toBeNull();
+    expect(fixture.componentInstance.queryTestResult).toEqual({ type: 'record-list', content: [{ name: 'sensor1', unit: 'C' }] });
+  });
+
+  test('should show an error when the discovery query test fails', () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], sqlManifest, southId, southSettings);
+    fixture.detectChanges();
+    fixture.componentInstance.discoveryQuery = 'SELECT * FROM nope';
+    southConnectorService.testDiscoveryQuery.mockReturnValue(throwError(() => ({ error: { message: 'no such table: nope' } })));
+
+    fixture.componentInstance.testDiscoveryQuery();
+
+    expect(fixture.componentInstance.queryTestRunning).toBe(false);
+    expect(fixture.componentInstance.queryTestError).toBe('no such table: nope');
+    expect(fixture.componentInstance.queryTestResult).toBeNull();
+  });
+
+  test('should not test a blank discovery query', () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], sqlManifest, southId, southSettings);
+    fixture.detectChanges();
+    fixture.componentInstance.discoveryQuery = '   ';
+
+    fixture.componentInstance.testDiscoveryQuery();
+
+    expect(southConnectorService.testDiscoveryQuery).not.toHaveBeenCalled();
   });
 
   test('should show the reference explore tree above the query editor for SQLite', async () => {

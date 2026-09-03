@@ -48,14 +48,32 @@
               <oib-explore-tree maxHeight="12rem" />
             </div>
           }
-          <textarea
-            class="form-control"
+          <oib-code-block
             id="discovery-query"
-            rows="4"
+            language="sql"
+            height="10rem"
             [(ngModel)]="discoveryQuery"
             [ngModelOptions]="{ standalone: true }"
-            [placeholder]="'south.workflows.discovery-scope-query-placeholder' | translate"
-          ></textarea>
+          />
+          <div class="d-flex align-items-center gap-2 mt-2">
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm"
+              id="test-discovery-query"
+              [disabled]="!discoveryQuery.trim() || queryTestRunning"
+              (click)="testDiscoveryQuery()"
+            >
+              @if (queryTestRunning) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              <span translate="south.workflows.discovery-scope-query-test"></span>
+            </button>
+          </div>
+          @if (queryTestError) {
+            <div class="alert alert-danger mt-2 mb-0" id="discovery-query-test-error">{{ queryTestError }}</div>
+          } @else if (queryTestResult) {
+            <oib-transformer-test-result class="d-block mt-2" id="discovery-query-test-result" [raw]="queryTestResult" />
+          }
         } @else {
           <div class="text-muted small" id="discovery-scope-unsupported" translate="south.workflows.discovery-scope-unsupported"></div>
         }
