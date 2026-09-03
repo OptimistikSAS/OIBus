@@ -3,10 +3,10 @@ import fs from 'node:fs/promises';
 import db from 'better-sqlite3';
 
 import SouthConnector from '../south-connector';
-import { convertDateTimeToInstant, formatInstant, logQuery, workUnitLogCtx } from '../../service/utils';
+import { convertDateTimeToInstant, extractDiscoveryQuery, formatInstant, logQuery, workUnitLogCtx } from '../../service/utils';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { SouthExplore, SouthHistoryQuery } from '../south-interface';
+import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
 import { SouthItemSettings, SouthSQLiteItemSettings, SouthSQLiteSettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent, OIBusRecord } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
@@ -35,7 +35,7 @@ function quoteIdentifier(identifier: string): string {
  */
 export default class SouthSQLite
   extends SouthConnector<SouthSQLiteSettings, SouthSQLiteItemSettings>
-  implements SouthHistoryQuery, SouthExplore
+  implements SouthHistoryQuery, SouthExplore, SouthConfigurationDiscovery
 {
   constructor(
     connector: SouthConnectorEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>,
@@ -276,6 +276,27 @@ export default class SouthSQLite
       }
 
       const data = stmt.all(preparedParameters);
+      database.close();
+      return data as unknown as Array<OIBusRecord>;
+    } catch (error) {
+      database.close();
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieve step of a Configuration Workflow run: runs the workflow's own dedicated metadata query
+   * (`discoveryScope.query`) as-is - no `@StartTime`/`@EndTime` substitution, since it's independent of
+   * any item's own data query - and returns its rows directly as the discovered records.
+   */
+  // better-sqlite3 is fully synchronous - see the same note on explore() above for why this is still
+  // declared `async` rather than just typed `Promise<...>`.
+  // eslint-disable-next-line require-await
+  async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
+    const query = extractDiscoveryQuery(scope);
+    const database = db(path.resolve(this.connector.settings.databasePath));
+    try {
+      const data = database.prepare(query).all();
       database.close();
       return data as unknown as Array<OIBusRecord>;
     } catch (error) {
