@@ -13,6 +13,7 @@ import {
 } from '@angular/forms';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { Observable, switchMap } from 'rxjs';
+import { OIBusRecordListContent } from '../../../../../../backend/shared/model/engine.model';
 import {
   ConfigurationWorkflowCommandDTO,
   ConfigurationWorkflowDTO,
@@ -44,6 +45,10 @@ import { ModalService } from '../../../shared/modal.service';
 import { EditSouthItemGroupModalComponent } from '../../south-items/edit-south-item-group-modal/edit-south-item-group-modal.component';
 import { SouthExploreModalComponent } from '../../../shared/south-explore-modal/south-explore-modal.component';
 import { ExploreTreeComponent } from '../../../shared/explore-tree/explore-tree.component';
+import { SouthConnectorService } from '../../../services/south-connector.service';
+import { extractErrorMessage } from '../../../shared/extract-error-message';
+import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
+import { TransformerTestResultComponent } from '../../../shared/transformer-test-result/transformer-test-result.component';
 
 interface FieldMappingRow {
   key: string;
@@ -181,7 +186,9 @@ const HISTORIAN_ITEM_FIELDS: Array<MappableField> = [
     OI_FORM_VALIDATION_DIRECTIVES,
     SaveButtonComponent,
     NgbDropdownModule,
-    ExploreTreeComponent
+    ExploreTreeComponent,
+    OibCodeBlockComponent,
+    TransformerTestResultComponent
   ]
 })
 export default class EditWorkflowModalComponent implements AfterViewInit {
@@ -189,6 +196,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   private fb = inject(NonNullableFormBuilder);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private modalService = inject(ModalService);
+  private southConnectorService = inject(SouthConnectorService);
 
   // The inline, read-only explore tree shown alongside the SQL query editor (SQLite only, for now -
   // see showSqlExploreTree) - undefined until that branch of the template actually renders it.
@@ -210,6 +218,11 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   discoveryRootNodeId: string | null = null;
   /** The dedicated metadata query, as typed by the user (SQL-family connectors only). */
   discoveryQuery = '';
+
+  /** "Test query" state - runs discoveryQuery as currently typed, independent of Save. */
+  queryTestRunning = false;
+  queryTestError: string | null = null;
+  queryTestResult: OIBusRecordListContent | null = null;
 
   // Saves directly against the live south connector, exactly like EditSouthItemModalComponent's own
   // group dropdown - bound from south-detail.component.ts and passed down through prepare().
@@ -658,6 +671,30 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   /** Resets the discovery root back to "browse from the data source's true root". */
   clearRootNodeId() {
     this.discoveryRootNodeId = null;
+  }
+
+  /**
+   * Run the discovery query exactly as currently typed (independent of Save, like EditSouthItemModal's
+   * own "test item") and show its raw rows - lets the user check it works before saving the workflow.
+   */
+  testDiscoveryQuery() {
+    const query = this.discoveryQuery.trim();
+    if (!query) {
+      return;
+    }
+    this.queryTestRunning = true;
+    this.queryTestError = null;
+    this.queryTestResult = null;
+    this.southConnectorService.testDiscoveryQuery(this.southId, this.currentManifest.id, this.southSettings, query).subscribe({
+      next: rows => {
+        this.queryTestRunning = false;
+        this.queryTestResult = { type: 'record-list', content: rows };
+      },
+      error: error => {
+        this.queryTestRunning = false;
+        this.queryTestError = extractErrorMessage(error);
+      }
+    });
   }
 
   canDismiss(): Observable<boolean> | boolean {
