@@ -4977,6 +4977,15 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthDiscoveryQueryTestRequest": {
+        "dataType": "refObject",
+        "properties": {
+            "southSettings": {"ref":"SouthSettings","required":true},
+            "query": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Record_string.string-or-number_": {
         "dataType": "refAlias",
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"}]},"validators":{}},
@@ -10126,6 +10135,39 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'testItem',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSouthConnectorController_testDiscoveryQuery: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                southType: {"in":"query","name":"southType","required":true,"ref":"OIBusSouthType"},
+                command: {"in":"body","name":"command","required":true,"ref":"SouthDiscoveryQueryTestRequest"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/south/:southId/test/discovery-query',
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController.prototype.testDiscoveryQuery)),
+
+            async function SouthConnectorController_testDiscoveryQuery(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSouthConnectorController_testDiscoveryQuery, request, response });
+
+                const controller = new SouthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'testDiscoveryQuery',
                 controller,
                 response,
                 next,

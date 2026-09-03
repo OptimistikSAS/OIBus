@@ -43,7 +43,7 @@ import SouthService, {
 } from '../../service/south.service';
 import { itemToFlattenedCSV } from '../../service/utils';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusRecord } from '../../../shared/model/engine.model';
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 import fs from 'node:fs/promises';
 
@@ -58,6 +58,17 @@ interface SouthItemTestRequest {
   itemSettings: SouthItemSettings;
   /** Testing settings including time range */
   testingSettings: SouthConnectorItemTestingSettings;
+}
+
+/**
+ * @interface SouthDiscoveryQueryTestRequest
+ * @description Request body for testing a Configuration Workflow discovery query
+ */
+interface SouthDiscoveryQueryTestRequest {
+  /** South connector settings */
+  southSettings: SouthSettings;
+  /** The dedicated metadata query to run, as currently typed (before the workflow is saved) */
+  query: string;
 }
 
 /**
@@ -256,6 +267,27 @@ export class SouthConnectorController extends Controller {
         command.itemSettings,
         command.testingSettings
       );
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
+  }
+
+  /**
+   * Test a Configuration Workflow discovery query as currently typed, against an ephemeral or the
+   * live connector (mirrors testItem), and return its raw rows
+   * @summary Test a discovery query
+   * @returns {Promise<Array<OIBusRecord>>} The rows returned by the query
+   */
+  @Post('/{southId}/test/discovery-query')
+  async testDiscoveryQuery(
+    @Path() southId: string,
+    @Query() southType: OIBusSouthType,
+    @Body() command: SouthDiscoveryQueryTestRequest,
+    @Request() request: CustomExpressRequest
+  ): Promise<Array<OIBusRecord>> {
+    const southService = request.services.southService as SouthService;
+    try {
+      return await southService.testDiscoveryQuery(southId, southType, command.southSettings, command.query);
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }

@@ -518,6 +518,27 @@ describe('South Service', () => {
     assert.strictEqual(mockedSouth1.testItem.mock.calls.length, 1);
   });
 
+  it('should test a discovery query in creation mode', async () => {
+    (mockedSouth1.hasConfigurationDiscovery as unknown as Mock<() => boolean>).mock.mockImplementation(() => true);
+    mockedSouth1.discover.mock.mockImplementation(async () => [{ name: 'sensor1', unit: 'C' }]);
+
+    const result = await service.testDiscoveryQuery('create', testData.south.command.type, testData.south.command.settings, 'SELECT 1');
+
+    assert.strictEqual(mockBuildSouth.mock.calls.length, 1);
+    assert.deepStrictEqual(mockedSouth1.discover.mock.calls[0].arguments, [{ query: 'SELECT 1' }]);
+    assert.deepStrictEqual(result, [{ name: 'sensor1', unit: 'C' }]);
+  });
+
+  it('should throw when testing a discovery query on a connector that does not support it', async () => {
+    (mockedSouth1.hasConfigurationDiscovery as unknown as Mock<() => boolean>).mock.mockImplementation(() => false);
+
+    await assert.rejects(
+      () => service.testDiscoveryQuery('create', testData.south.command.type, testData.south.command.settings, 'SELECT 1'),
+      /does not support configuration discovery/
+    );
+    assert.strictEqual(mockedSouth1.discover.mock.calls.length, 0);
+  });
+
   it('should test a south connector against the live instance when its settings already match', async () => {
     engine.hasSouth.mock.mockImplementationOnce(() => true);
     engine.getSouth.mock.mockImplementationOnce(() => ({ south: mockedSouth1, metrics: {} }) as never);
