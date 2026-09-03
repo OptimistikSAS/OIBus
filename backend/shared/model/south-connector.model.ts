@@ -130,6 +130,14 @@ export type SouthCachingThresholdType = 'absolute' | 'percentage';
 export const IOT_FAMILY_SOUTH_TYPES: Array<OIBusSouthType> = ['opcua', 'modbus', 'ads', 'opc', 's7', 'mqtt'];
 
 /**
+ * South connector types whose Configuration Workflow discoveryScope is a dedicated SQL metadata query
+ * (`{ query: string }`) rather than a tree root to browse - i.e. the ones with a `discover()`
+ * implementation today. ODBC and OLEDB are SQL-family too but route through a separate agent process
+ * rather than a driver this repo talks to directly, so they don't have `discover()` yet.
+ */
+export const SQL_FAMILY_SOUTH_TYPES: Array<OIBusSouthType> = ['mssql', 'mysql', 'postgresql', 'oracle', 'sqlite'];
+
+/**
  * Represents the type metadata for a South connector.
  * Describes the basic characteristics and capabilities of a South connector type.
  */
