@@ -1,11 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { ConfigurationWorkflowService } from './configuration-workflow.service';
 import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '../../../../backend/shared/model/configuration-workflow.model';
 import { WorkflowRunDTO } from '../../../../backend/shared/model/workflow-run.model';
 import { toPage } from '../shared/test-utils';
+import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 
 const SOUTH_ID = 'southId1';
 const WORKFLOW_ID = 'workflowId1';
@@ -145,6 +147,25 @@ describe('ConfigurationWorkflowService', () => {
     req.flush(previewResult);
 
     expect(result).toEqual(previewResult);
+  });
+
+  test('should tell the global error interceptor to skip 400/404 errors on run/preview/delete, since the caller shows its own notification', () => {
+    service.runNow(SOUTH_ID, WORKFLOW_ID).subscribe({ error: () => {} });
+    service.preview(SOUTH_ID, WORKFLOW_ID).subscribe({ error: () => {} });
+    service.delete(SOUTH_ID, WORKFLOW_ID).subscribe({ error: () => {} });
+
+    const requests = [
+      http.expectOne(`/api/south/${SOUTH_ID}/workflows/${WORKFLOW_ID}/run`),
+      http.expectOne(`/api/south/${SOUTH_ID}/workflows/${WORKFLOW_ID}/preview`),
+      http.expectOne(`/api/south/${SOUTH_ID}/workflows/${WORKFLOW_ID}`)
+    ];
+    for (const req of requests) {
+      const shouldIgnore = req.request.context.get(SHOULD_IGNORE_ERROR_PREDICATE);
+      expect(shouldIgnore({ status: 400 } as HttpErrorResponse)).toBe(true);
+      expect(shouldIgnore({ status: 404 } as HttpErrorResponse)).toBe(true);
+      expect(shouldIgnore({ status: 500 } as HttpErrorResponse)).toBe(false);
+      req.flush({ message: 'boom' }, { status: 400, statusText: 'Bad Request' });
+    }
   });
 
   test('should list run history with the given page', () => {
