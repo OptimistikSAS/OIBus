@@ -22874,6 +22874,24 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthDiscoveryQueryTestRequest": {
+				"properties": {
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthSettings",
+						"description": "South connector settings"
+					},
+					"query": {
+						"type": "string",
+						"description": "The dedicated metadata query to run, as currently typed (before the workflow is saved)"
+					}
+				},
+				"required": [
+					"southSettings",
+					"query"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"Record_string.string-or-number_": {
 				"properties": {},
 				"additionalProperties": {
@@ -42775,6 +42793,60 @@
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/SouthItemTestRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/south/{southId}/test/discovery-query": {
+			"post": {
+				"operationId": "TestDiscoveryQuery",
+				"responses": {
+					"200": {
+						"description": "The rows returned by the query",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/OIBusRecord"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"description": "Test a Configuration Workflow discovery query as currently typed, against an ephemeral or the\nlive connector (mirrors testItem), and return its raw rows",
+				"summary": "Test a discovery query",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "southType",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/OIBusSouthType"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SouthDiscoveryQueryTestRequest"
 							}
 						}
 					}

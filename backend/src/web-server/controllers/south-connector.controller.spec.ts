@@ -335,6 +335,43 @@ describe('SouthConnectorController', () => {
     ]);
   });
 
+  it('should test a discovery query', async () => {
+    const southId = testData.south.list[0].id;
+    const southType = testData.south.command.type;
+    const requestBody = { southSettings: testData.south.command.settings, query: 'SELECT 1' };
+    const mockResult = [{ name: 'sensor1', unit: 'C' }];
+    southService.testDiscoveryQuery = mock.fn(async () => mockResult);
+
+    const result = await controller.testDiscoveryQuery(southId, southType, requestBody, mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(southService.testDiscoveryQuery.mock.calls.length, 1);
+    assert.deepStrictEqual(southService.testDiscoveryQuery.mock.calls[0].arguments, [
+      southId,
+      southType,
+      requestBody.southSettings,
+      requestBody.query
+    ]);
+    assert.deepStrictEqual(result, mockResult);
+  });
+
+  it('should wrap errors when testing a discovery query', async () => {
+    const southId = testData.south.list[0].id;
+    const southType = testData.south.command.type;
+    const requestBody = { southSettings: testData.south.command.settings, query: 'SELECT 1' };
+    southService.testDiscoveryQuery = mock.fn(async () => {
+      throw new Error('Discovery query failure');
+    });
+
+    try {
+      await controller.testDiscoveryQuery(southId, southType, requestBody, mockRequest as CustomExpressRequest);
+      assert.fail('Expected error to be thrown');
+    } catch (error) {
+      assert.ok(error instanceof OIBusTestingError);
+      assert.strictEqual((error as OIBusTestingError).message, 'Discovery query failure');
+    }
+    assert.strictEqual(southService.testDiscoveryQuery.mock.calls.length, 1);
+  });
+
   it('should start a south explore session', async () => {
     const southId = testData.south.list[0].id;
     const southType = testData.south.command.type;
