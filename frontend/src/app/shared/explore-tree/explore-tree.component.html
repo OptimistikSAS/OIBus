@@ -11,7 +11,7 @@
 } @else if (nodes.length === 0) {
   <div class="alert alert-info" id="explore-empty" translate="south.explore.empty"></div>
 } @else {
-  <div class="explore-tree" id="explore-tree">
+  <div class="explore-tree" id="explore-tree" [style.max-height]="maxHeight">
     @for (node of nodes; track node.entry.id) {
       <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: node }" />
     }
