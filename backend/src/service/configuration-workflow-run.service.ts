@@ -2,6 +2,7 @@ import WorkflowRunRepository from '../repository/config/workflow-run.repository'
 import ItemPointMetadataRepository from '../repository/config/item-point-metadata.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import type SouthConnector from '../south/south-connector';
+import { southManifestList } from './south-manifests';
 import { isEligible, computeIdentityKey, resolveFieldMapping } from './configuration-workflow.utils';
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import {
@@ -54,6 +55,27 @@ const ZERO_COUNTS: WorkflowRunCounts = {
 // falls into remoteMetadataExtra instead of being silently dropped.
 const KNOWN_REMOTE_FIELDS = ['description', 'unit', 'minAcceptableValue', 'maxAcceptableValue', 'resolution', 'resamplingMethod'];
 
+// Every itemFieldMapping value is written as a mapping expression (a literal constant, or a
+// {{field}} template) - i.e. a string - regardless of what type the target field actually needs.
+// resolveFieldMapping already preserves a discovered field's own type for an exact {{field}} match,
+// but a typed-in constant ("true", "42") stays a string unless it's coerced back to the field's real
+// type here. Only 'boolean' and 'number' need this: every other manifest attribute type (string,
+// string-select, scan-mode, secret, ...) is genuinely string-shaped already, so coercing it would do
+// nothing (or actively corrupt a string value that happens to look numeric/boolean).
+type ItemFieldKind = 'boolean' | 'number' | 'other';
+
+// Historian item fields exist on every south item but aren't part of the manifest's own item
+// attribute tree (see buildItemMappableFields's frontend counterpart) - their types are hardcoded
+// here to match. groupId/recoveryStrategy are left out on purpose: both are already string-shaped
+// (an id, and an enum value respectively), so 'other' (the default) is correct for them.
+const HISTORIAN_ITEM_FIELD_KINDS: Record<string, ItemFieldKind> = {
+  syncWithGroup: 'boolean',
+  maxReadInterval: 'number',
+  readDelay: 'number',
+  startTimeOffset: 'number',
+  endTimeOffset: 'number'
+};
+
 /**
  * Runs a Configuration Workflow: Trigger (manual only, for now - scheduling is a later milestone) ->
  * Retrieve (the connector's `discover()`) -> Decide (`isEligible` + identity-key diff against the
@@ -80,9 +102,12 @@ export default class ConfigurationWorkflowRunService {
    * Manual "run now". Queued onto the target south connector's own task queue (see
    * SouthConnector.enqueueWorkflowRun) rather than run directly against the live instance, exactly
    * like a scheduled tick - so a manual run is never literally concurrent with either the
-   * connector's own scheduled reads or another run of this same workflow. Rejects immediately
-   * (before anything is queued) if the south connector doesn't exist, or if this workflow is
-   * already queued/running.
+   * connector's own scheduled reads or another run of this same workflow. Deliberately allowed even
+   * when the south connector is disabled (unlike a scheduled tick, see runScheduled below) - a
+   * workflow needs to be built and tested against a live discovery/read session before its connector
+   * is switched on, the same way the interactive Explore feature already works on a disabled
+   * connector. Rejects immediately (before anything is queued) if the south connector doesn't exist,
+   * or if this workflow is already queued/running.
    */
   async runNow(southId: string, workflowId: string, triggeredBy: string): Promise<WorkflowRunEntity> {
     const workflow = this.configurationWorkflowService.findById(southId, workflowId); // Ownership check
@@ -100,9 +125,11 @@ export default class ConfigurationWorkflowRunService {
   /**
    * Scheduled trigger, called from DataStreamEngine.onScanModeTriggered (via the callback wired
    * through setWorkflowRunCallback). Fire-and-forget from the engine's perspective - silently a
-   * no-op if the south connector isn't registered, or if this workflow is already queued/running,
-   * mirroring SouthConnector.trigger()'s own silent backpressure/disabled-connector handling for
-   * items, rather than surfacing either case as an error nobody is watching for.
+   * no-op if the south connector isn't registered, is disabled, or if this workflow is already
+   * queued/running, mirroring SouthConnector.trigger()'s own silent backpressure/disabled-connector
+   * handling for items, rather than surfacing any of those as an error nobody is watching for.
+   * Checked here rather than in enqueueWorkflowRun itself, since a manual "run now" deliberately
+   * does NOT apply this same disabled-connector gate (see runNow above).
    */
   async runScheduled(southId: string, workflowId: string): Promise<void> {
     const workflow = this.configurationWorkflowService.findById(southId, workflowId);
@@ -110,6 +137,9 @@ export default class ConfigurationWorkflowRunService {
       return;
     }
     const south = this.engine.getSouth(southId).south;
+    if (!south.isEnabled()) {
+      return;
+    }
     const queued = south.enqueueWorkflowRun(workflowId, () => this.executeRun(southId, workflow, 'scheduled', null));
     if (queued === null) {
       return;
@@ -132,6 +162,11 @@ export default class ConfigurationWorkflowRunService {
     // AuditService.NON_AUDITABLE_USER_IDS / UserService.getUserInfo).
     const actingUser = triggeredBy ?? 'system';
 
+    // Computed once per run, from this connector's own manifest, so a mapped constant lands on the
+    // item command with the type the manifest actually declares (a boolean checkbox field, a numeric
+    // setting, ...) instead of the raw string every mapping expression is written as.
+    const itemFieldKinds = buildItemFieldKinds(this.engine.getSouth(southId).south.connectorConfiguration.type);
+
     try {
       const { eligibleByKey, previousPoints } = await this.retrieve(southId, workflow);
       counts.discoveredCount = eligibleByKey.discoveredCount;
@@ -144,7 +179,7 @@ export default class ConfigurationWorkflowRunService {
         if (previous !== null && previous.status === 'active' && isSameMetadata(previous.discoveredMetadata, record)) {
           continue; // Unchanged - nothing to act on, not even a metadata-snapshot refresh.
         }
-        await this.actOnRecord(southId, workflow, key, record, previous, actingUser, counts);
+        await this.actOnRecord(southId, workflow, key, record, previous, actingUser, counts, itemFieldKinds);
       }
 
       for (const point of previousPoints) {
@@ -234,12 +269,13 @@ export default class ConfigurationWorkflowRunService {
     record: OIBusRecord,
     previous: ItemPointMetadataEntity | null,
     triggeredBy: string,
-    counts: WorkflowRunCounts
+    counts: WorkflowRunCounts,
+    itemFieldKinds: Record<string, ItemFieldKind>
   ): Promise<void> {
     let southItemId: string;
 
     if (workflow.itemFieldMapping !== null) {
-      const resolved = resolveFieldMapping(record, workflow.itemFieldMapping);
+      const resolved = coerceResolvedItemFields(resolveFieldMapping(record, workflow.itemFieldMapping), itemFieldKinds);
 
       if (workflow.targetItemId !== null) {
         // Single pre-existing item: itemFieldMapping only ever refreshes it, never creates.
@@ -384,6 +420,60 @@ function setDeep(target: Record<string, unknown>, path: string, value: unknown):
     cursor = cursor[key] as Record<string, unknown>;
   }
   cursor[parts[parts.length - 1]] = value;
+}
+
+// Mirrors the frontend's buildItemMappableFields (edit-workflow-modal.component.ts): every top-level
+// item attribute, the connector-specific settings.* fields nested one level under the manifest's own
+// settings object, plus the historian fields hardcoded above - each reduced down to just the
+// boolean/number/other distinction coerceResolvedItemFields actually needs.
+function buildItemFieldKinds(connectorType: string): Record<string, ItemFieldKind> {
+  const manifest = southManifestList.find(candidate => candidate.id === connectorType);
+  const kinds: Record<string, ItemFieldKind> = { ...HISTORIAN_ITEM_FIELD_KINDS };
+  for (const attribute of manifest?.items.rootAttribute.attributes ?? []) {
+    if (attribute.type === 'object' && attribute.key === 'settings') {
+      for (const settingsAttribute of attribute.attributes) {
+        kinds[`settings.${settingsAttribute.key}`] = toItemFieldKind(settingsAttribute.type);
+      }
+    } else if (attribute.key !== 'scanMode') {
+      kinds[attribute.key] = toItemFieldKind(attribute.type);
+    }
+  }
+  return kinds;
+}
+
+function toItemFieldKind(attributeType: string): ItemFieldKind {
+  if (attributeType === 'boolean') return 'boolean';
+  if (attributeType === 'number') return 'number';
+  return 'other';
+}
+
+// Parses each resolved itemFieldMapping value back into the type its target field actually needs -
+// see the ItemFieldKind comment above for why only boolean/number need this. Values resolveFieldMapping
+// already returned non-string (an exact {{field}} match preserving the discovered field's own type)
+// are left untouched; only a still-string constant gets parsed, and only if it's a clean instance of
+// the target type - an unrecognizable one (e.g. a boolean field mapped to "yes" instead of "true") is
+// passed through as-is rather than silently guessed at, so SouthService's own validation catches it.
+function coerceResolvedItemFields(resolved: Record<string, unknown>, kinds: Record<string, ItemFieldKind>): Record<string, unknown> {
+  const coerced: Record<string, unknown> = {};
+  for (const [path, value] of Object.entries(resolved)) {
+    coerced[path] = coerceItemFieldValue(kinds[path] ?? 'other', value);
+  }
+  return coerced;
+}
+
+function coerceItemFieldValue(kind: ItemFieldKind, value: unknown): unknown {
+  if (typeof value !== 'string') {
+    return value;
+  }
+  if (kind === 'boolean') {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  }
+  if (kind === 'number') {
+    return toNumberOrNull(value);
+  }
+  return value;
 }
 
 // The resulting object is cast to SouthConnectorItemCommandDTO - a union typed per connector's own
