@@ -2813,6 +2813,8 @@
       "manage-title": "Configuration workflows ({{count}})",
       "create-title": "Create a new configuration workflow",
       "edit-title": "Edit configuration workflow",
+      "copy-title": "Duplicate configuration workflow",
+      "duplicate": "Duplicate",
       "name": "Name",
       "discovery-scope": "Discovery scope",
       "discovery-scope-node-hint": "The node to start browsing from - leave unset to browse the entire data source",
