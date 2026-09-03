@@ -160,62 +160,112 @@
           <table class="table table-sm" id="item-field-mapping-table">
             <tbody>
               @for (field of itemMappableFields; track field.path) {
-                <tr>
-                  <td class="align-middle" [translate]="fieldLabelKey(field)"></td>
-                  <td>
-                    @if (isSelectType(field)) {
-                      <select
-                        class="form-select form-select-sm"
-                        [attr.id]="'item-field-mapping-field-' + field.path"
-                        [ngModel]="selectDisplayValue(itemFieldMappingValues, field)"
-                        (ngModelChange)="onSelectChange(itemFieldMappingValues, field, $event)"
-                        [ngModelOptions]="{ standalone: true }"
-                      >
-                        <option value="" translate="south.workflows.mapping-not-mapped"></option>
-                        @switch (field.attributeType) {
-                          @case ('boolean') {
-                            <option value="true" translate="enums.boolean.true"></option>
-                            <option value="false" translate="enums.boolean.false"></option>
-                          }
-                          @case ('string-select') {
-                            @for (value of field.selectableValues ?? []; track value) {
-                              <option [value]="value">{{ stringSelectOptionLabel(field, value) | translate }}</option>
+                @if (isItemFieldVisible(field)) {
+                  <tr>
+                    <td class="align-middle">
+                      @if (field.ancestorLabelKeys && field.ancestorLabelKeys.length > 0) {
+                        <div class="text-muted small">
+                          @for (ancestorKey of field.ancestorLabelKeys; track ancestorKey; let last = $last) {
+                            <span [translate]="ancestorKey"></span>
+                            @if (!last) {
+                              <span> / </span>
                             }
                           }
-                          @case ('scan-mode') {
-                            @for (scanMode of scanModes; track scanMode.id) {
-                              <option [value]="scanMode.id">{{ scanMode.name }}</option>
-                            }
-                          }
-                          @case ('group-select') {
+                        </div>
+                      }
+                      <span [translate]="fieldLabelKey(field)"></span>
+                      @if (field.isEnablingReferral) {
+                        <span
+                          class="badge bg-secondary bg-opacity-25 text-secondary ms-1"
+                          translate="south.workflows.enabling-referral-badge"
+                        ></span>
+                      }
+                    </td>
+                    <td>
+                      @if (field.path === 'groupId') {
+                        <div ngbDropdown class="d-inline-block w-100">
+                          <button
+                            type="button"
+                            class="form-select form-select-sm w-100 d-flex justify-content-between align-items-center text-start"
+                            [attr.id]="'item-field-mapping-field-' + field.path"
+                            ngbDropdownToggle
+                          >
+                            <span class="text-truncate">{{
+                              getSelectedGroupName() || ('south.workflows.mapping-not-mapped' | translate)
+                            }}</span>
+                          </button>
+                          <div ngbDropdownMenu class="w-100">
+                            <button type="button" ngbDropdownItem (click)="onSelectGroup(null)" translate="south.items.group-none"></button>
                             @for (group of groups; track group.id) {
-                              <option [value]="group.id">{{ group.standardSettings.name }}</option>
+                              <div class="d-flex align-items-center justify-content-between px-2 group-row">
+                                <button type="button" ngbDropdownItem (click)="onSelectGroup(group.id)" class="flex-grow-1 text-start ps-2">
+                                  {{ group.standardSettings.name }}
+                                </button>
+                                <div class="d-flex gap-1 pe-2">
+                                  <button type="button" class="btn btn-sm btn-link p-0 text-primary" (click)="onEditGroup(group, $event)">
+                                    <i class="fa fa-pencil"></i>
+                                  </button>
+                                  <button type="button" class="btn btn-sm btn-link p-0 text-danger" (click)="onDeleteGroup(group, $event)">
+                                    <i class="fa fa-trash"></i>
+                                  </button>
+                                </div>
+                              </div>
                             }
+                            <div class="dropdown-divider"></div>
+                            <button type="button" ngbDropdownItem (click)="onAddGroup()" translate="south.items.create-new-group"></button>
+                          </div>
+                        </div>
+                      } @else if (isSelectType(field)) {
+                        <select
+                          class="form-select form-select-sm"
+                          [attr.id]="'item-field-mapping-field-' + field.path"
+                          [ngModel]="selectDisplayValue(itemFieldMappingValues, field)"
+                          (ngModelChange)="onSelectChange(itemFieldMappingValues, field, $event)"
+                          [ngModelOptions]="{ standalone: true }"
+                        >
+                          <option value="" translate="south.workflows.mapping-not-mapped"></option>
+                          @switch (field.attributeType) {
+                            @case ('boolean') {
+                              <option value="true" translate="enums.boolean.true"></option>
+                              <option value="false" translate="enums.boolean.false"></option>
+                            }
+                            @case ('string-select') {
+                              @for (value of field.selectableValues ?? []; track value) {
+                                <option [value]="value">{{ stringSelectOptionLabel(field, value) | translate }}</option>
+                              }
+                            }
+                            @case ('scan-mode') {
+                              @for (scanMode of scanModes; track scanMode.id) {
+                                <option [value]="scanMode.id">{{ scanMode.name }}</option>
+                              }
+                            }
+                            @default {}
                           }
-                          @default {}
+                          @if (allowsVariable(field)) {
+                            <option [value]="variableSentinel" translate="south.workflows.mapping-use-variable"></option>
+                          }
+                        </select>
+                        @if (isVariableMode(itemFieldMappingValues, field)) {
+                          <input
+                            class="form-control form-control-sm mt-1"
+                            [attr.id]="'item-field-mapping-field-' + field.path + '-expression'"
+                            [(ngModel)]="itemFieldMappingValues[field.path]"
+                            [ngModelOptions]="{ standalone: true }"
+                            [placeholder]="'south.workflows.item-field-mapping-expression-placeholder' | translate"
+                          />
                         }
-                        <option [value]="variableSentinel" translate="south.workflows.mapping-use-variable"></option>
-                      </select>
-                      @if (isVariableMode(itemFieldMappingValues, field)) {
+                      } @else {
                         <input
-                          class="form-control form-control-sm mt-1"
-                          [attr.id]="'item-field-mapping-field-' + field.path + '-expression'"
+                          class="form-control form-control-sm"
+                          [attr.id]="'item-field-mapping-field-' + field.path"
                           [(ngModel)]="itemFieldMappingValues[field.path]"
                           [ngModelOptions]="{ standalone: true }"
-                          [placeholder]="'south.workflows.item-field-mapping-expression-placeholder' | translate"
+                          [placeholder]="itemFieldPlaceholderKey(field) | translate"
                         />
                       }
-                    } @else {
-                      <input
-                        class="form-control form-control-sm"
-                        [attr.id]="'item-field-mapping-field-' + field.path"
-                        [(ngModel)]="itemFieldMappingValues[field.path]"
-                        [ngModelOptions]="{ standalone: true }"
-                        [placeholder]="'south.workflows.item-field-mapping-expression-placeholder' | translate"
-                      />
-                    }
-                  </td>
-                </tr>
+                    </td>
+                  </tr>
+                }
               }
             </tbody>
           </table>
@@ -273,7 +323,9 @@
                           }
                           @default {}
                         }
-                        <option [value]="variableSentinel" translate="south.workflows.mapping-use-variable"></option>
+                        @if (allowsVariable(field)) {
+                          <option [value]="variableSentinel" translate="south.workflows.mapping-use-variable"></option>
+                        }
                       </select>
                       @if (isVariableMode(remoteFieldMappingValues, field)) {
                         <input
