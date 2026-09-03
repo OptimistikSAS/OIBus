@@ -159,6 +159,25 @@ describe('EditWorkflowModalComponent', () => {
     await expect.element(root.getByCss('#discovery-root-node-id')).toHaveTextContent('ns=1;s=Root');
   });
 
+  test('should prefill a duplicate with the source workflow settings, a "-copy" name, and create-mode uniqueness', async () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCopy(scanModes, items, [existingWorkflow], manifest, existingWorkflow, southId, southSettings);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.mode).toBe('copy');
+    const root = page.elementLocator(fixture.nativeElement);
+    await expect.element(root.getByCss('.modal-title')).toHaveTextContent('Duplicate configuration workflow');
+    await expect.element(root.getByCss('#workflow-name')).toHaveValue('Reactor discovery-copy');
+    await expect.element(root.getByCss('#identity-key-fields-list')).toHaveTextContent('nodeId');
+    await expect.element(root.getByCss('#item-field-mapping-field-name')).toHaveValue('{{name}}');
+    expect(fixture.componentInstance.discoveryRootNodeId).toBe('ns=1;s=Root');
+
+    // The clone's blanked id means the uniqueness check excludes nothing - the original workflow's own
+    // name (not the "-copy" suffixed default) is still reported as taken if renamed back onto it.
+    fixture.componentInstance.form!.controls.name.setValue('Reactor discovery');
+    expect(fixture.componentInstance.form!.controls.name.errors).toEqual({ mustBeUnique: true });
+  });
+
   test('should show the node picker for a tree-based connector, and open the explore modal in selectable mode', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
