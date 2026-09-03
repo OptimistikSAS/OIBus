@@ -102,6 +102,14 @@
                   </button>
                   <button
                     type="button"
+                    class="btn btn-link duplicate-workflow px-1 py-0"
+                    [ngbTooltip]="'south.workflows.duplicate' | translate"
+                    (click)="onDuplicate(workflow)"
+                  >
+                    <span class="fa fa-copy"></span>
+                  </button>
+                  <button
+                    type="button"
                     class="btn btn-link delete-workflow px-1 py-0"
                     [ngbTooltip]="'south.workflows.confirm-deletion' | translate: { name: workflow.name }"
                     (click)="onDelete(workflow)"
