@@ -4,6 +4,7 @@ import { ClientConfig } from 'pg';
 import SouthConnector from '../south-connector';
 import {
   convertDateTimeToInstant,
+  extractDiscoveryQuery,
   formatInstant,
   generateReplacementParameters,
   getErrorMessage,
@@ -12,7 +13,7 @@ import {
 } from '../../service/utils';
 import { encryptionService } from '../../service/encryption.service';
 import { Instant } from '../../../shared/model/types';
-import { SouthHistoryQuery } from '../south-interface';
+import { SouthConfigurationDiscovery, SouthHistoryQuery } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthItemSettings, SouthPostgreSQLItemSettings, SouthPostgreSQLSettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent, OIBusRecord } from '../../../shared/model/engine.model';
@@ -28,7 +29,7 @@ import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from
  */
 export default class SouthPostgreSQL
   extends SouthConnector<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
-  implements SouthHistoryQuery
+  implements SouthHistoryQuery, SouthConfigurationDiscovery
 {
   constructor(
     connector: SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>,
@@ -215,6 +216,30 @@ export default class SouthPostgreSQL
       await connection.connect();
       const params = generateReplacementParameters(item.settings.query, postgresqlStartTime, postgresqlEndTime);
       const { rows } = await connection.query(adaptedQuery, params);
+      await connection.end();
+      return rows;
+    } catch (error) {
+      if (connection) {
+        await connection.end();
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieve step of a Configuration Workflow run: runs the workflow's own dedicated metadata query
+   * (`discoveryScope.query`) as-is - no `@StartTime`/`@EndTime` substitution, since it's independent of
+   * any item's own data query - and returns its rows directly as the discovered records.
+   */
+  async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
+    const query = extractDiscoveryQuery(scope);
+    const config = await this.createConnectionOptions();
+
+    let connection;
+    try {
+      connection = new pg.Client(config);
+      await connection.connect();
+      const { rows } = await connection.query(query);
       await connection.end();
       return rows;
     } catch (error) {
