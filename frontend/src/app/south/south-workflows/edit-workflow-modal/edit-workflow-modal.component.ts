@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, AfterViewInit, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import {
   AbstractControl,
@@ -21,12 +21,15 @@ import {
   RecordFilterOperator
 } from '../../../../../../backend/shared/model/configuration-workflow.model';
 import {
+  SouthConnectorExploreEntry,
   SouthConnectorItemDTO,
   SouthConnectorManifest,
   SouthItemGroupCommandDTO,
-  SouthItemGroupDTO
+  SouthItemGroupDTO,
+  SQL_FAMILY_SOUTH_TYPES
 } from '../../../../../../backend/shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
+import { SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import {
   OIBusAttribute,
   OIBusAttributeType,
@@ -39,6 +42,8 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validat
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { ModalService } from '../../../shared/modal.service';
 import { EditSouthItemGroupModalComponent } from '../../south-items/edit-south-item-group-modal/edit-south-item-group-modal.component';
+import { SouthExploreModalComponent } from '../../../shared/south-explore-modal/south-explore-modal.component';
+import { ExploreTreeComponent } from '../../../shared/explore-tree/explore-tree.component';
 
 interface FieldMappingRow {
   key: string;
@@ -175,14 +180,19 @@ const HISTORIAN_ITEM_FIELDS: Array<MappableField> = [
     TranslatePipe,
     OI_FORM_VALIDATION_DIRECTIVES,
     SaveButtonComponent,
-    NgbDropdownModule
+    NgbDropdownModule,
+    ExploreTreeComponent
   ]
 })
-export default class EditWorkflowModalComponent {
+export default class EditWorkflowModalComponent implements AfterViewInit {
   private modal = inject(NgbActiveModal);
   private fb = inject(NonNullableFormBuilder);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private modalService = inject(ModalService);
+
+  // The inline, read-only explore tree shown alongside the SQL query editor (SQLite only, for now -
+  // see showSqlExploreTree) - undefined until that branch of the template actually renders it.
+  @ViewChild(ExploreTreeComponent) private inlineExploreTree?: ExploreTreeComponent;
 
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
@@ -192,6 +202,14 @@ export default class EditWorkflowModalComponent {
   workflow: ConfigurationWorkflowDTO | null = null;
   existingWorkflows: Array<ConfigurationWorkflowDTO> = [];
   private currentManifest!: SouthConnectorManifest;
+  private southId!: string;
+  private southSettings!: SouthSettings;
+
+  /** Root node id currently picked via the explore-tree node picker (tree-based connectors only) -
+   *  null means "browse from the data source's true root". */
+  discoveryRootNodeId: string | null = null;
+  /** The dedicated metadata query, as typed by the user (SQL-family connectors only). */
+  discoveryQuery = '';
 
   // Saves directly against the live south connector, exactly like EditSouthItemModalComponent's own
   // group dropdown - bound from south-detail.component.ts and passed down through prepare().
@@ -218,7 +236,6 @@ export default class EditWorkflowModalComponent {
   eligibilityFilter: Array<RecordFilterCondition> = [];
 
   formError: string | null = null;
-  discoveryScopeError = false;
 
   newIdentityKeyField = '';
   newEligibilityField = '';
@@ -229,7 +246,6 @@ export default class EditWorkflowModalComponent {
 
   form: FormGroup<{
     name: FormControl<string>;
-    discoveryScope: FormControl<string>;
     scanModeId: FormControl<string | null>;
     targetItemId: FormControl<string | null>;
     itemFieldMappingEnabled: FormControl<boolean>;
@@ -242,6 +258,8 @@ export default class EditWorkflowModalComponent {
     items: Array<SouthConnectorItemDTO>,
     existingWorkflows: Array<ConfigurationWorkflowDTO>,
     manifest: SouthConnectorManifest,
+    southId: string,
+    southSettings: SouthSettings,
     groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [],
     addOrEditGroup?: (command: {
       mode: 'create' | 'edit';
@@ -258,6 +276,10 @@ export default class EditWorkflowModalComponent {
     this.existingWorkflows = existingWorkflows;
     this.workflow = null;
     this.currentManifest = manifest;
+    this.southId = southId;
+    this.southSettings = southSettings;
+    this.discoveryRootNodeId = null;
+    this.discoveryQuery = '';
     this.itemMappableFields = buildItemMappableFields(manifest);
     this.itemFieldMappingValues = {};
     this.remoteFieldMappingValues = {};
@@ -273,6 +295,8 @@ export default class EditWorkflowModalComponent {
     existingWorkflows: Array<ConfigurationWorkflowDTO>,
     manifest: SouthConnectorManifest,
     workflow: ConfigurationWorkflowDTO,
+    southId: string,
+    southSettings: SouthSettings,
     groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [],
     addOrEditGroup?: (command: {
       mode: 'create' | 'edit';
@@ -289,7 +313,13 @@ export default class EditWorkflowModalComponent {
     this.existingWorkflows = existingWorkflows;
     this.workflow = workflow;
     this.currentManifest = manifest;
+    this.southId = southId;
+    this.southSettings = southSettings;
     this.itemMappableFields = buildItemMappableFields(manifest);
+
+    const scope = (workflow.discoveryScope ?? {}) as Record<string, unknown>;
+    this.discoveryRootNodeId = typeof scope['rootNodeId'] === 'string' ? scope['rootNodeId'] : null;
+    this.discoveryQuery = typeof scope['query'] === 'string' ? scope['query'] : '';
 
     this.itemFieldMappingValues = {};
     for (const [key, value] of Object.entries(workflow.itemFieldMapping ?? {})) {
@@ -326,7 +356,6 @@ export default class EditWorkflowModalComponent {
   private buildForm() {
     this.form = this.fb.group({
       name: [this.workflow?.name ?? '', [Validators.required, this.checkUniqueness()]],
-      discoveryScope: [this.workflow ? JSON.stringify(this.workflow.discoveryScope, null, 2) : '{}', [Validators.required]],
       scanModeId: this.fb.control<string | null>(this.workflow?.scanMode?.id ?? null),
       targetItemId: this.fb.control<string | null>(this.workflow?.targetItemId ?? null),
       itemFieldMappingEnabled: this.fb.control<boolean>(this.workflow ? this.workflow.itemFieldMapping !== null : true),
@@ -551,6 +580,49 @@ export default class EditWorkflowModalComponent {
     return matchesAnyValue;
   }
 
+  /** Tree-shaped discovery scope (a root node to browse) - OPC-UA, Folder Scanner. Checked before
+   *  isSqlFamily since a manifest could in principle declare both (none do today). */
+  get isTreeBased(): boolean {
+    return this.currentManifest.explore === true && !this.isSqlFamily;
+  }
+
+  /** Query-shaped discovery scope (a dedicated metadata query) - the SQL-family connectors that have
+   *  a `discover()` implementation today (see SQL_FAMILY_SOUTH_TYPES's own doc comment for why ODBC/
+   *  OLEDB aren't included). */
+  get isSqlFamily(): boolean {
+    return SQL_FAMILY_SOUTH_TYPES.includes(this.currentManifest.id);
+  }
+
+  /** Whether to show the read-only explore tree above the SQL query editor, for reference while
+   *  writing the query - only SQLite has an `explore()` implementation among the SQL-family connectors
+   *  today, so this is the same condition as isSqlFamily for now, but stated independently since it's
+   *  conceptually a separate capability (a future SQL connector could get discover() without explore(),
+   *  or vice versa). */
+  get showSqlExploreTree(): boolean {
+    return this.isSqlFamily && this.currentManifest.explore === true;
+  }
+
+  ngAfterViewInit() {
+    if (this.showSqlExploreTree) {
+      this.inlineExploreTree?.prepare(this.southId, this.southSettings, this.currentManifest.id);
+    }
+  }
+
+  /** Opens the explore tree in picker mode - selecting a node sets it as the discovery root. */
+  openNodePicker() {
+    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
+    const component: SouthExploreModalComponent = modalRef.componentInstance;
+    component.prepare(this.southId, this.southSettings, this.currentManifest.id, undefined, true);
+    modalRef.result.subscribe((entry: SouthConnectorExploreEntry) => {
+      this.discoveryRootNodeId = entry.id;
+    });
+  }
+
+  /** Resets the discovery root back to "browse from the data source's true root". */
+  clearRootNodeId() {
+    this.discoveryRootNodeId = null;
+  }
+
   canDismiss(): Observable<boolean> | boolean {
     if (this.form?.dirty) {
       return this.unsavedChangesConfirmation.confirmUnsavedChanges();
@@ -564,22 +636,23 @@ export default class EditWorkflowModalComponent {
 
   save() {
     this.formError = null;
-    this.discoveryScopeError = false;
     if (!this.form || !this.form.valid) {
       return;
     }
     const formValue = this.form.getRawValue();
 
     let discoveryScope: Record<string, unknown>;
-    try {
-      const parsed = JSON.parse(formValue.discoveryScope);
-      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-        throw new Error('not an object');
+    if (this.isSqlFamily) {
+      if (!this.discoveryQuery.trim()) {
+        this.formError = 'south.workflows.discovery-scope-query-required';
+        return;
       }
-      discoveryScope = parsed as Record<string, unknown>;
-    } catch {
-      this.discoveryScopeError = true;
-      return;
+      discoveryScope = { query: this.discoveryQuery.trim() };
+    } else if (this.isTreeBased) {
+      // No rootNodeId at all means "browse from the data source's true root" - a deliberate, valid choice.
+      discoveryScope = this.discoveryRootNodeId ? { rootNodeId: this.discoveryRootNodeId } : {};
+    } else {
+      discoveryScope = {};
     }
 
     if (this.identityKeyFields.length === 0) {
