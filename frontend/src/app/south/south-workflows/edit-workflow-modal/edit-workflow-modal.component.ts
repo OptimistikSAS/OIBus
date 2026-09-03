@@ -194,7 +194,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   // see showSqlExploreTree) - undefined until that branch of the template actually renders it.
   @ViewChild(ExploreTreeComponent) private inlineExploreTree?: ExploreTreeComponent;
 
-  mode: 'create' | 'edit' = 'create';
+  mode: 'create' | 'edit' | 'copy' = 'create';
   state = new ObservableState();
   scanModes: Array<ScanModeDTO> = [];
   items: Array<SouthConnectorItemDTO> = [];
@@ -339,6 +339,43 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.identityKeyFields = [...workflow.identityKeyFields];
     this.eligibilityFilter = workflow.eligibilityFilter.map(condition => ({ ...condition }));
     this.buildForm();
+  }
+
+  /**
+   * Duplicate an existing workflow: opens the same populated form as edition, but targeting a brand
+   * new workflow (create semantics on save, per ManageWorkflowsModalComponent.onDuplicate) - mirrors
+   * EditSouthItemModalComponent's own prepareForCopy for items. The clone's id is blanked so
+   * checkUniqueness() excludes nothing (the source workflow's own name stays taken, as it should).
+   */
+  prepareForCopy(
+    scanModes: Array<ScanModeDTO>,
+    items: Array<SouthConnectorItemDTO>,
+    existingWorkflows: Array<ConfigurationWorkflowDTO>,
+    manifest: SouthConnectorManifest,
+    workflow: ConfigurationWorkflowDTO,
+    southId: string,
+    southSettings: SouthSettings,
+    groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [],
+    addOrEditGroup?: (command: {
+      mode: 'create' | 'edit';
+      group: SouthItemGroupCommandDTO;
+    }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
+    deleteGroup?: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>
+  ) {
+    const clone: ConfigurationWorkflowDTO = { ...JSON.parse(JSON.stringify(workflow)), id: '', name: `${workflow.name}-copy` };
+    this.prepareForEdition(
+      scanModes,
+      items,
+      existingWorkflows,
+      manifest,
+      clone,
+      southId,
+      southSettings,
+      groups,
+      addOrEditGroup,
+      deleteGroup
+    );
+    this.mode = 'copy';
   }
 
   private checkUniqueness(): ValidatorFn {
