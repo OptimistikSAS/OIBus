@@ -2593,7 +2593,8 @@
       "title": "Explore data source",
       "button": "Explore",
       "empty": "Nothing to explore",
-      "error": "Error while exploring the data source"
+      "error": "Error while exploring the data source",
+      "select": "Select"
     },
     "test-item": {
       "title": "Testing item",
@@ -2814,8 +2815,13 @@
       "edit-title": "Edit configuration workflow",
       "name": "Name",
       "discovery-scope": "Discovery scope",
-      "discovery-scope-hint": "Connector-specific, as JSON - a root node to browse for OPC-UA (e.g. { \"rootNodeId\": \"ns=1;s=Root\" }), or a dedicated metadata query for a SQL connector (e.g. { \"query\": \"SELECT column_name, description FROM my_metadata_table\" })",
-      "discovery-scope-invalid-json": "Discovery scope must be valid JSON",
+      "discovery-scope-node-hint": "The node to start browsing from - leave unset to browse the entire data source",
+      "discovery-scope-node-none": "None - browse from the data source root",
+      "discovery-scope-node-clear": "Clear",
+      "discovery-scope-query-hint": "A dedicated metadata query, independent of any item's own query - each returned row becomes one discovered record",
+      "discovery-scope-query-placeholder": "SELECT column_name, description, unit FROM my_metadata_table",
+      "discovery-scope-query-required": "A metadata query is required",
+      "discovery-scope-unsupported": "This south connector type does not support Configuration Workflow discovery yet",
       "identity-key-fields": "Identity key fields",
       "identity-key-fields-hint": "Discovered-record field(s) that uniquely identify an entry across runs",
       "identity-key-fields-add-placeholder": "Field name",

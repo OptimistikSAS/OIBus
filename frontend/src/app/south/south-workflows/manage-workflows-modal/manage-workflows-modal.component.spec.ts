@@ -24,6 +24,7 @@ import testData from '../../../../../../backend/src/tests/utils/test-data';
 const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
 const items = [{ id: 'item1', name: 'Temperature' }] as unknown as Array<SouthConnectorItemDTO>;
 const manifest = testData.south.manifest as unknown as SouthConnectorManifest;
+const southSettings = testData.south.list[0].settings;
 const groups = [{ id: 'group1', standardSettings: { name: 'Group 1' } }] as unknown as Array<SouthItemGroupDTO>;
 
 const buildWorkflow = (id: string, name: string, overrides: Partial<ConfigurationWorkflowDTO> = {}): ConfigurationWorkflowDTO => ({
@@ -79,7 +80,7 @@ describe('ManageWorkflowsModalComponent', () => {
 
   function createComponent() {
     const fixture = TestBed.createComponent(ManageWorkflowsModalComponent);
-    fixture.componentInstance.prepare('southId1', scanModes, items, manifest, groups);
+    fixture.componentInstance.prepare('southId1', southSettings, scanModes, items, manifest, groups);
     fixture.detectChanges();
     return fixture;
   }
