@@ -11,6 +11,7 @@ import {
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO
 } from '../../../../../../backend/shared/model/south-connector.model';
+import { SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { ModalService } from '../../../shared/modal.service';
@@ -37,6 +38,7 @@ export default class ManageWorkflowsModalComponent {
   private fb = inject(NonNullableFormBuilder);
 
   southId!: string;
+  southSettings!: SouthSettings;
   scanModes: Array<ScanModeDTO> = [];
   items: Array<SouthConnectorItemDTO> = [];
   groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
@@ -60,6 +62,7 @@ export default class ManageWorkflowsModalComponent {
 
   prepare(
     southId: string,
+    southSettings: SouthSettings,
     scanModes: Array<ScanModeDTO>,
     items: Array<SouthConnectorItemDTO>,
     manifest: SouthConnectorManifest,
@@ -71,6 +74,7 @@ export default class ManageWorkflowsModalComponent {
     deleteGroup?: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>
   ) {
     this.southId = southId;
+    this.southSettings = southSettings;
     this.scanModes = scanModes;
     this.items = items;
     this.manifest = manifest;
@@ -117,6 +121,8 @@ export default class ManageWorkflowsModalComponent {
       this.items,
       this.workflows,
       this.manifest,
+      this.southId,
+      this.southSettings,
       this.groups,
       this.addOrEditGroup,
       this.deleteGroup
@@ -139,6 +145,8 @@ export default class ManageWorkflowsModalComponent {
       this.workflows,
       this.manifest,
       workflow,
+      this.southId,
+      this.southSettings,
       this.groups,
       this.addOrEditGroup,
       this.deleteGroup
