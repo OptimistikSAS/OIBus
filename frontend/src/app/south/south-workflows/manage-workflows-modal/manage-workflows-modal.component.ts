@@ -163,6 +163,30 @@ export default class ManageWorkflowsModalComponent {
     });
   }
 
+  onDuplicate(workflow: ConfigurationWorkflowDTO) {
+    const modalRef = this.modalService.open(EditWorkflowModalComponent, { size: 'xl', backdrop: 'static' });
+    const component: EditWorkflowModalComponent = modalRef.componentInstance;
+    component.prepareForCopy(
+      this.scanModes,
+      this.items,
+      this.workflows,
+      this.manifest,
+      workflow,
+      this.southId,
+      this.southSettings,
+      this.groups,
+      this.addOrEditGroup,
+      this.deleteGroup
+    );
+    modalRef.result.subscribe(command => {
+      this.configurationWorkflowService.create(this.southId, command).subscribe(created => {
+        this.workflows.push(created);
+        this.refreshDisplayed();
+        this.notificationService.success('south.workflows.created');
+      });
+    });
+  }
+
   onDelete(workflow: ConfigurationWorkflowDTO) {
     this.confirmationService
       .confirm({ messageKey: 'south.workflows.confirm-deletion', interpolateParams: { name: workflow.name } })
