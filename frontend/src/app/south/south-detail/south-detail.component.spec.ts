@@ -262,6 +262,7 @@ describe('SouthDetailComponent', () => {
     expect(modalService.open).toHaveBeenCalledWith(ManageWorkflowsModalComponent, expect.anything());
     expect(prepare).toHaveBeenCalledWith(
       southConnector.id,
+      southConnector.settings,
       scanModes,
       southConnector.items,
       manifest,

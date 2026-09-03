@@ -17,11 +17,47 @@
 
       <!-- Discovery scope -->
       <div class="form-group">
-        <label class="form-label" for="workflow-discovery-scope" translate="south.workflows.discovery-scope"></label>
-        <textarea formControlName="discoveryScope" id="workflow-discovery-scope" class="form-control" rows="3"></textarea>
-        <div class="form-text" translate="south.workflows.discovery-scope-hint"></div>
-        @if (discoveryScopeError) {
-          <div class="text-danger small" id="discovery-scope-error" translate="south.workflows.discovery-scope-invalid-json"></div>
+        <label class="form-label" translate="south.workflows.discovery-scope"></label>
+        @if (isTreeBased) {
+          <div class="form-text" translate="south.workflows.discovery-scope-node-hint"></div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="form-control form-control-sm text-truncate" id="discovery-root-node-id">
+              {{ discoveryRootNodeId || ('south.workflows.discovery-scope-node-none' | translate) }}
+            </span>
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm text-nowrap"
+              id="browse-root-node"
+              (click)="openNodePicker()"
+              translate="south.explore.button"
+            ></button>
+            @if (discoveryRootNodeId) {
+              <button
+                type="button"
+                class="btn btn-link btn-sm text-nowrap"
+                id="clear-root-node"
+                (click)="clearRootNodeId()"
+                translate="south.workflows.discovery-scope-node-clear"
+              ></button>
+            }
+          </div>
+        } @else if (isSqlFamily) {
+          <div class="form-text" translate="south.workflows.discovery-scope-query-hint"></div>
+          @if (showSqlExploreTree) {
+            <div class="border rounded p-2 mb-2" style="max-height: 12rem; overflow: auto" id="discovery-explore-tree">
+              <oib-explore-tree />
+            </div>
+          }
+          <textarea
+            class="form-control"
+            id="discovery-query"
+            rows="4"
+            [(ngModel)]="discoveryQuery"
+            [ngModelOptions]="{ standalone: true }"
+            [placeholder]="'south.workflows.discovery-scope-query-placeholder' | translate"
+          ></textarea>
+        } @else {
+          <div class="text-muted small" id="discovery-scope-unsupported" translate="south.workflows.discovery-scope-unsupported"></div>
         }
       </div>
 
