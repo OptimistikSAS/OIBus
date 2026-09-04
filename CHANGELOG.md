@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.9.1](https://github.com/OptimistikSAS/OIBus/compare/v3.9.0...v3.9.1) (2026-09-04)
+
+
+### Bug Fixes
+
+* **south:** fix tracked instant on history connectors ([b048612](https://github.com/OptimistikSAS/OIBus/commit/b04861210a773186a02838400a5d63147435ff87))
+* **south:** limit log of last value ([f7e7d30](https://github.com/OptimistikSAS/OIBus/commit/f7e7d301c15e68e42f408ab25a7cfdd369f58d3e))
+
 ## [3.9.0](https://github.com/OptimistikSAS/OIBus/compare/v3.8.8...v3.9.0) (2026-09-02)
 
 
