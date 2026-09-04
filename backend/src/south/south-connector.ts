@@ -652,7 +652,10 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         // We update the max instant only if the start interval is lower than the lastInstantRetrieved (i.e., we found data)
         // With a negative startTimeOffset the window extends backwards, so lastInstantRetrieved may be below trackedInstant — check both conditions
         if (lastValue && (!currentTrackedInstant || lastValue.trackedInstant > currentTrackedInstant)) {
-          this.logger.debug(`Saving last value ${JSON.stringify(lastValue.value)}, trackedInstant ${lastValue.trackedInstant}`);
+          this.logger.debug(
+            workUnitLogCtx(items),
+            `Saving last value ${this.truncateForLog(lastValue.value)}, trackedInstant ${lastValue.trackedInstant}`
+          );
           this.saveTrackedValue(southCache, queryTime, lastValue.value, lastValue.trackedInstant);
           currentTrackedInstant = lastValue.trackedInstant;
         }
@@ -674,9 +677,22 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     // This prevents a mid-run restart from skipping the not-yet-queried older intervals.
     // Only save if data was actually found — otherwise leave the cache untouched.
     if (strategy === 'newest' && !this.stopping && latestValue) {
-      this.logger.debug(`Saving last value ${JSON.stringify(latestValue.value)}, trackedInstant ${latestValue.trackedInstant}`);
+      this.logger.debug(
+        workUnitLogCtx(items),
+        `Saving last value ${this.truncateForLog(latestValue.value)}, trackedInstant ${latestValue.trackedInstant}`
+      );
       this.saveTrackedValue(southCache, DateTime.now().toUTC().toISO()!, latestValue.value, latestValue.trackedInstant);
     }
+  }
+
+  /**
+   * Stringify a value for a log line, truncated to the first 255 characters (with a trailing
+   * ellipsis) when longer — history query results can be large payloads that would otherwise
+   * flood the logs.
+   */
+  private truncateForLog(value: unknown): string {
+    const stringified = JSON.stringify(value);
+    return stringified.length > 255 ? `${stringified.slice(0, 255)}...` : stringified;
   }
 
   /**
