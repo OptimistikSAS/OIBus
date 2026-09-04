@@ -217,10 +217,14 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
       headers['Content-Type'] = 'application/json';
     }
 
-    this.logger.info(
-      workUnitLogCtx([item]),
-      `Requesting data from URL "${requestUrl}" with method "${item.settings.method}" and query params "${JSON.stringify(query)}"`
-    );
+    let logMessage = `Requesting data from URL "${requestUrl}" with method "${item.settings.method}"`;
+    if (Object.keys(query).length > 0) {
+      logMessage += ` and query params "${JSON.stringify(query)}"`;
+    }
+    if (body) {
+      logMessage += ` and body "${body}"`;
+    }
+    this.logger.info(workUnitLogCtx([item]), logMessage);
 
     const { proxy, acceptUnauthorized } = this.getProxyOptions();
     const fetchOptions: ReqOptions = {
