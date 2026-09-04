@@ -622,6 +622,12 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     // queried newest-first (see generateIntervals), so this is expected to resolve on the first
     // interval that has data — the comparison is a safety net, not a substitute for that ordering.
     let latestValue: { trackedInstant: Instant; value: unknown } | null = null;
+    // For 'oldest' strategy: the instant to compare each interval's result against. Starts as the
+    // cache's pre-run value but is advanced as intervals are saved below, so a later interval is
+    // compared against the latest progress made *within this run* — not the stale pre-run snapshot.
+    // Without this, a later interval whose max is lower than an earlier interval's (but still above
+    // the pre-run value) would pass the check and regress the saved trackedInstant backwards.
+    let currentTrackedInstant = southCache.trackedInstant;
 
     for (let index = 0; index < intervals.length; index++) {
       const queryTime = DateTime.now().toUTC().toISO()!;
@@ -637,13 +643,18 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       } finally {
         this.currentHistoryQueryInterval = null;
       }
+      this.logger.debug(
+        workUnitLogCtx(items),
+        `Retrieved tracked instant "${lastValue?.trackedInstant ?? null}" for interval [${interval.start}, ${interval.end}]`
+      );
 
       if (strategy === 'oldest') {
         // We update the max instant only if the start interval is lower than the lastInstantRetrieved (i.e., we found data)
         // With a negative startTimeOffset the window extends backwards, so lastInstantRetrieved may be below trackedInstant — check both conditions
-        if (lastValue && (!southCache.trackedInstant || lastValue.trackedInstant > southCache.trackedInstant)) {
+        if (lastValue && (!currentTrackedInstant || lastValue.trackedInstant > currentTrackedInstant)) {
           this.logger.debug(`Saving last value ${JSON.stringify(lastValue.value)}, trackedInstant ${lastValue.trackedInstant}`);
           this.saveTrackedValue(southCache, queryTime, lastValue.value, lastValue.trackedInstant);
+          currentTrackedInstant = lastValue.trackedInstant;
         }
       } else if (lastValue && (!latestValue || lastValue.trackedInstant > latestValue.trackedInstant)) {
         latestValue = lastValue;

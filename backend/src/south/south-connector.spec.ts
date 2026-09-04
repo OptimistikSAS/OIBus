@@ -526,6 +526,33 @@ describe('SouthConnector', () => {
       assert.strictEqual(saveCalls[1].arguments[1].itemId, items[1].id);
     });
 
+    it('should not regress trackedInstant when a later interval finds an older max than an earlier one (oldest strategy)', async () => {
+      const interval1 = { start: '2020-02-02T02:02:02.222Z', end: '2020-06-02T02:02:02.222Z' };
+      const interval2 = { start: '2020-06-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
+      utilsExports.generateIntervals = mock.fn(() => [interval1, interval2]);
+
+      // interval1 (queried first) finds a higher max than interval2 (queried second) — e.g. a source
+      // that returns a static snapshot, or late-arriving/out-of-order data. The saved trackedInstant
+      // must not regress from interval1's value down to interval2's lower one.
+      let callCount = 0;
+      south.historyQuery = mock.fn(async () => {
+        callCount += 1;
+        return callCount === 1
+          ? { trackedInstant: '2020-08-01T00:00:00.000Z', value: null }
+          : { trackedInstant: '2020-05-01T00:00:00.000Z', value: null };
+      });
+
+      const items = [{ ...testData.south.list[1].items[0], recoveryStrategy: 'oldest' }] as Array<
+        SouthConnectorItemEntity<SouthMSSQLItemSettings>
+      >;
+      await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2021-02-02T02:02:02.222Z');
+
+      const saveCalls = (southCacheRepository.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      // Only interval1's save should happen: interval2's lower max must be rejected, not overwrite it
+      assert.strictEqual(saveCalls.length, 1);
+      assert.strictEqual(saveCalls[0].arguments[1].trackedInstant, '2020-08-01T00:00:00.000Z');
+    });
+
     it('should defer cache update to end of run with newest recovery strategy', async () => {
       const interval1 = { start: '2020-02-02T02:02:02.222Z', end: '2020-06-02T02:02:02.222Z' };
       const interval2 = { start: '2020-06-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
