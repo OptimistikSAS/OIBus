@@ -41,12 +41,13 @@ export function resolveJsonPath(path: string, json: unknown): any {
   }
   if (json === null || json === undefined) return undefined;
 
-  const result = JSONPath({ path, json: json as object, wrap: false });
-  if (result !== undefined && result !== null) return result;
-
-  // Direct traversal returned nothing. Scan right-to-left through path segments
-  // to find the deepest JSON-stringified intermediate node, parse it, then run
-  // the remaining suffix path on the parsed value.
+  // Scan right-to-left through path segments to find the deepest JSON-stringified
+  // intermediate node, parse it, then run the remaining suffix path on the parsed value.
+  // This takes priority over plain traversal below: jsonpath-plus falls through to native
+  // JS property access (e.g. `.length` on a string returns its character count) which can
+  // produce a "successful" but wrong result for a leaf that only looks like a string because
+  // it hasn't been parsed yet (e.g. an MQTT message payload). A value recovered by actually
+  // parsing the embedded JSON is always the one we want when both are available.
   const segments = splitPathSegments(path);
   for (let i = segments.length - 1; i >= 2; i--) {
     const prefix = segments.slice(0, i).join('');
@@ -55,13 +56,14 @@ export function resolveJsonPath(path: string, json: unknown): any {
     if (typeof intermediate !== 'string') continue;
     try {
       const parsed = JSON.parse(intermediate);
-      return resolveJsonPath(suffix, parsed);
+      const resolved = resolveJsonPath(suffix, parsed);
+      if (resolved !== undefined && resolved !== null) return resolved;
     } catch {
       continue;
     }
   }
 
-  return result;
+  return JSONPath({ path, json: json as object, wrap: false });
 }
 
 /**

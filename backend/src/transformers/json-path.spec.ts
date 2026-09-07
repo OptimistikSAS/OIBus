@@ -15,6 +15,19 @@ describe('resolveJsonPath', () => {
   it('should return undefined when the path does not resolve at all', () => {
     assert.strictEqual(resolveJsonPath('$[0].missing', [{ name: 'point-1' }]), undefined);
   });
+
+  it('should resolve a "length" field inside a JSON-stringified node instead of the raw string length', () => {
+    // Before parsing, "message" is still a plain string, and native JSONPath traversal can
+    // resolve ".length" against it directly (returning the string's character count) instead
+    // of falling back to parsing the embedded JSON and reading its actual "length" field.
+    const content = [{ message: JSON.stringify({ length: 0.04146180441257728 }) }];
+    assert.strictEqual(resolveJsonPath('$[0].message.length', content), 0.04146180441257728);
+  });
+
+  it('should resolve an object field (e.g. an empty object) inside a JSON-stringified node', () => {
+    const content = [{ message: JSON.stringify({ rejectCauses: {} }) }];
+    assert.deepStrictEqual(resolveJsonPath('$[0].message.rejectCauses', content), {});
+  });
 });
 
 describe('resolveJsonPathRows', () => {

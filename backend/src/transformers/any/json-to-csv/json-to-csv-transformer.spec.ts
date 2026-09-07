@@ -258,6 +258,55 @@ describe('JSONToCSVTransformer', () => {
     ]);
   });
 
+  it('should resolve a numeric field named "length" inside a JSON-stringified message instead of the string length', async () => {
+    const options = {
+      regex: '.*\\.json',
+      filename: 'length-test.csv',
+      delimiter: 'SEMI_COLON',
+      rowIteratorPath: '$[*]',
+      fields: [{ jsonPath: '$[*].message.length', columnName: 'Length', dataType: 'number' }]
+    };
+    // "message" is a JSON-stringified payload (e.g. MQTT) that itself has a "length" field.
+    // Native JSONPath traversal would otherwise resolve "message.length" to the *string's*
+    // character count before it gets parsed.
+    const inputData = [{ message: JSON.stringify({ length: 0.04146180441257728 }) }];
+    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
+    const mockStream = new Readable();
+
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'input.json');
+    mockStream.push(JSON.stringify(inputData));
+    mockStream.push(null);
+
+    await flushPromises();
+    await promise;
+
+    assert.ok(mockPapaparse.unparse.mock.calls.length > 0);
+    assert.deepStrictEqual(mockPapaparse.unparse.mock.calls[0].arguments[0], [{ Length: 0.04146180441257728 }]);
+  });
+
+  it('should serialize an object resolved from a JSON-stringified message as JSON, not "[object Object]"', async () => {
+    const options = {
+      regex: '.*\\.json',
+      filename: 'reject-causes-test.csv',
+      delimiter: 'SEMI_COLON',
+      rowIteratorPath: '$[*]',
+      fields: [{ jsonPath: '$[*].message.rejectCauses', columnName: 'RejectCauses', dataType: 'string' }]
+    };
+    const inputData = [{ message: JSON.stringify({ rejectCauses: {} }) }];
+    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
+    const mockStream = new Readable();
+
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'input.json');
+    mockStream.push(JSON.stringify(inputData));
+    mockStream.push(null);
+
+    await flushPromises();
+    await promise;
+
+    assert.ok(mockPapaparse.unparse.mock.calls.length > 0);
+    assert.deepStrictEqual(mockPapaparse.unparse.mock.calls[0].arguments[0], [{ RejectCauses: '{}' }]);
+  });
+
   describe('fieldProcess', () => {
     it('should apply fieldProcess expression to the typed value before writing to CSV', async () => {
       mockPapaparse.unparse = mock.fn(() => 'csv result');
