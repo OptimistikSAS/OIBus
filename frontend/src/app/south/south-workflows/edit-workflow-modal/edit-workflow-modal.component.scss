@@ -12,3 +12,27 @@
     color: $darkGrey;
   }
 }
+
+// Same global `.btn-link` white-on-white gotcha as #clear-root-node above - these icon-only actions
+// sit in the eligibility filter table, on the same white modal body.
+.edit-eligibility-condition,
+.remove-eligibility-condition,
+.cancel-eligibility-condition {
+  color: $darkGrey;
+
+  &:hover,
+  &:focus {
+    color: $darkGrey;
+  }
+}
+
+// Save is the one action that actually commits an edit - given a distinct, affirmative color rather
+// than blending into the row's other icons, mirroring explore-tree.component.scss's own .explore-select.
+.save-eligibility-condition {
+  color: $electricBlue;
+
+  &:hover,
+  &:focus {
+    color: $electricBlue;
+  }
+}

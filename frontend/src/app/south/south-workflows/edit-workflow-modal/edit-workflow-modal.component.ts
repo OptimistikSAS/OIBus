@@ -264,6 +264,11 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   newEligibilityField = '';
   newEligibilityOperator: RecordFilterOperator = 'equals';
   newEligibilityValue = '';
+  /** Index of the eligibilityFilter row currently being edited inline, or null when none is. */
+  editingEligibilityIndex: number | null = null;
+  editingEligibilityField = '';
+  editingEligibilityOperator: RecordFilterOperator = 'equals';
+  editingEligibilityValue = '';
   newRemoteExtraKey = '';
   newRemoteExtraValue = '';
 
@@ -462,6 +467,43 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
   removeEligibilityCondition(index: number) {
     this.eligibilityFilter.splice(index, 1);
+    // Indices shift on removal - an in-progress edit elsewhere in the list can no longer be trusted
+    // to point at the right row, so drop it rather than risk silently editing the wrong condition.
+    this.cancelEditEligibilityCondition();
+  }
+
+  /** Enter inline edit mode for one eligibility condition, seeding the edit fields from its current value. */
+  startEditEligibilityCondition(index: number) {
+    const condition = this.eligibilityFilter[index];
+    this.editingEligibilityIndex = index;
+    this.editingEligibilityField = condition.field;
+    this.editingEligibilityOperator = condition.operator;
+    this.editingEligibilityValue = condition.value ?? '';
+  }
+
+  /** Commit the currently inline-edited condition in place of the original at the same index. */
+  saveEligibilityCondition() {
+    if (this.editingEligibilityIndex === null) {
+      return;
+    }
+    const field = this.editingEligibilityField.trim();
+    if (!field) {
+      return;
+    }
+    const condition: RecordFilterCondition = { field, operator: this.editingEligibilityOperator };
+    if (this.editingEligibilityOperator !== 'exists') {
+      condition.value = this.editingEligibilityValue;
+    }
+    this.eligibilityFilter[this.editingEligibilityIndex] = condition;
+    this.cancelEditEligibilityCondition();
+  }
+
+  /** Leave inline edit mode without saving any change. */
+  cancelEditEligibilityCondition() {
+    this.editingEligibilityIndex = null;
+    this.editingEligibilityField = '';
+    this.editingEligibilityOperator = 'equals';
+    this.editingEligibilityValue = '';
   }
 
   addRemoteExtraRow() {
