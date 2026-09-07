@@ -867,8 +867,19 @@ export class SouthDetailComponent {
       this.manifest!,
       this.southConnector!.groups,
       this.addOrEditGroup.bind(this),
-      this.deleteGroup.bind(this)
+      this.deleteGroup.bind(this),
+      () => this.reloadAfterWorkflowRun()
     );
+  }
+
+  /** A manual workflow run may have created/updated items directly on this connector - reload it so
+   *  the item list reflects them without the user needing to leave and come back to this page. */
+  private reloadAfterWorkflowRun() {
+    this.southConnectorService.findById(this.southConnector!.id).subscribe(southConnector => {
+      this.southConnector = southConnector;
+      this.filteredItems = this.filter();
+      this.changePage(this.displayedItems.number);
+    });
   }
 
   getGroupName(item: SouthConnectorItemDTO): string {
