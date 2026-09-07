@@ -209,6 +209,30 @@ describe('ManageWorkflowsModalComponent', () => {
     expect(notificationService.error).toHaveBeenCalledWith('south.workflows.run-now-error', { error: 'not running' });
   });
 
+  test('should call onWorkflowRun after a successful run, so the display page behind this modal reloads', () => {
+    const fixture = TestBed.createComponent(ManageWorkflowsModalComponent);
+    const onWorkflowRun = vi.fn();
+    fixture.componentInstance.prepare('southId1', southSettings, scanModes, items, manifest, groups, undefined, undefined, onWorkflowRun);
+    fixture.detectChanges();
+    configurationWorkflowService.runNow.mockReturnValue(of({}) as never);
+
+    fixture.componentInstance.onRunNow(workflows[0]);
+
+    expect(onWorkflowRun).toHaveBeenCalled();
+  });
+
+  test('should not call onWorkflowRun when the run fails', () => {
+    const fixture = TestBed.createComponent(ManageWorkflowsModalComponent);
+    const onWorkflowRun = vi.fn();
+    fixture.componentInstance.prepare('southId1', southSettings, scanModes, items, manifest, groups, undefined, undefined, onWorkflowRun);
+    fixture.detectChanges();
+    configurationWorkflowService.runNow.mockReturnValue(throwError(() => ({ error: { message: 'not running' } })));
+
+    fixture.componentInstance.onRunNow(workflows[0]);
+
+    expect(onWorkflowRun).not.toHaveBeenCalled();
+  });
+
   test('should preview a workflow and open the preview modal with the result', () => {
     const fixture = createComponent();
     const previewResult = { discoveredCount: 1, eligibleCount: 1, entries: [] };
