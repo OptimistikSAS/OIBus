@@ -803,6 +803,82 @@ describe('EditWorkflowModalComponent', () => {
     expect(fixture.componentInstance.eligibilityFilter).toEqual([{ field: 'unit', operator: 'exists' }]);
   });
 
+  test('should edit an eligibility condition in place', async () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.detectChanges();
+    fixture.componentInstance.eligibilityFilter = [{ field: 'type', operator: 'equals', value: 'Variable' }];
+    fixture.detectChanges();
+
+    fixture.componentInstance.startEditEligibilityCondition(0);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.editingEligibilityField).toBe('type');
+    expect(fixture.componentInstance.editingEligibilityOperator).toBe('equals');
+    expect(fixture.componentInstance.editingEligibilityValue).toBe('Variable');
+
+    const root = page.elementLocator(fixture.nativeElement);
+    await expect.element(root.getByCss('.save-eligibility-condition')).toBeInTheDocument();
+
+    fixture.componentInstance.editingEligibilityField = 'kind';
+    fixture.componentInstance.editingEligibilityOperator = 'contains';
+    fixture.componentInstance.editingEligibilityValue = 'Sensor';
+    fixture.componentInstance.saveEligibilityCondition();
+
+    expect(fixture.componentInstance.eligibilityFilter).toEqual([{ field: 'kind', operator: 'contains', value: 'Sensor' }]);
+    expect(fixture.componentInstance.editingEligibilityIndex).toBeNull();
+  });
+
+  test('should not save an eligibility edit with a blank field, and should clear the value when switching to "exists"', () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.detectChanges();
+    fixture.componentInstance.eligibilityFilter = [{ field: 'type', operator: 'equals', value: 'Variable' }];
+
+    fixture.componentInstance.startEditEligibilityCondition(0);
+    fixture.componentInstance.editingEligibilityField = '   ';
+    fixture.componentInstance.saveEligibilityCondition();
+    // Rejected - the original condition is untouched and edit mode stays open.
+    expect(fixture.componentInstance.eligibilityFilter).toEqual([{ field: 'type', operator: 'equals', value: 'Variable' }]);
+    expect(fixture.componentInstance.editingEligibilityIndex).toBe(0);
+
+    fixture.componentInstance.editingEligibilityField = 'type';
+    fixture.componentInstance.editingEligibilityOperator = 'exists';
+    fixture.componentInstance.editingEligibilityValue = 'ignored';
+    fixture.componentInstance.saveEligibilityCondition();
+
+    expect(fixture.componentInstance.eligibilityFilter).toEqual([{ field: 'type', operator: 'exists' }]);
+  });
+
+  test('should cancel an in-progress eligibility edit without changing the condition', () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.detectChanges();
+    fixture.componentInstance.eligibilityFilter = [{ field: 'type', operator: 'equals', value: 'Variable' }];
+
+    fixture.componentInstance.startEditEligibilityCondition(0);
+    fixture.componentInstance.editingEligibilityField = 'changed';
+    fixture.componentInstance.cancelEditEligibilityCondition();
+
+    expect(fixture.componentInstance.eligibilityFilter).toEqual([{ field: 'type', operator: 'equals', value: 'Variable' }]);
+    expect(fixture.componentInstance.editingEligibilityIndex).toBeNull();
+  });
+
+  test('should drop an in-progress eligibility edit when a condition is removed, since indices shift', () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.detectChanges();
+    fixture.componentInstance.eligibilityFilter = [
+      { field: 'a', operator: 'equals', value: '1' },
+      { field: 'b', operator: 'equals', value: '2' }
+    ];
+
+    fixture.componentInstance.startEditEligibilityCondition(1);
+    fixture.componentInstance.removeEligibilityCondition(0);
+
+    expect(fixture.componentInstance.editingEligibilityIndex).toBeNull();
+    expect(fixture.componentInstance.eligibilityFilter).toEqual([{ field: 'b', operator: 'equals', value: '2' }]);
+  });
+
   test('should add and remove a remote field mapping extra row', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);

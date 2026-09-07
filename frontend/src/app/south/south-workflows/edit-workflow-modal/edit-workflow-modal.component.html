@@ -157,14 +157,67 @@
             <tbody>
               @for (condition of eligibilityFilter; track $index) {
                 <tr>
-                  <td>{{ condition.field }}</td>
-                  <td>{{ 'south.workflows.operator.' + condition.operator | translate }}</td>
-                  <td>{{ condition.value }}</td>
-                  <td>
-                    <button type="button" class="btn btn-link px-1 py-0" (click)="removeEligibilityCondition($index)">
-                      <span class="fa fa-trash"></span>
-                    </button>
-                  </td>
+                  @if (editingEligibilityIndex === $index) {
+                    <td>
+                      <input
+                        class="form-control form-control-sm"
+                        [(ngModel)]="editingEligibilityField"
+                        [ngModelOptions]="{ standalone: true }"
+                      />
+                    </td>
+                    <td>
+                      <select
+                        class="form-select form-select-sm"
+                        [(ngModel)]="editingEligibilityOperator"
+                        [ngModelOptions]="{ standalone: true }"
+                      >
+                        @for (operator of operators; track operator) {
+                          <option [value]="operator">{{ 'south.workflows.operator.' + operator | translate }}</option>
+                        }
+                      </select>
+                    </td>
+                    <td>
+                      @if (editingEligibilityOperator !== 'exists') {
+                        <input
+                          class="form-control form-control-sm"
+                          [(ngModel)]="editingEligibilityValue"
+                          [ngModelOptions]="{ standalone: true }"
+                        />
+                      }
+                    </td>
+                    <td class="text-nowrap">
+                      <button type="button" class="btn btn-link px-1 py-0 save-eligibility-condition" (click)="saveEligibilityCondition()">
+                        <span class="fa fa-check"></span>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-link px-1 py-0 cancel-eligibility-condition"
+                        (click)="cancelEditEligibilityCondition()"
+                      >
+                        <span class="fa fa-times"></span>
+                      </button>
+                    </td>
+                  } @else {
+                    <td>{{ condition.field }}</td>
+                    <td>{{ 'south.workflows.operator.' + condition.operator | translate }}</td>
+                    <td>{{ condition.value }}</td>
+                    <td class="text-nowrap">
+                      <button
+                        type="button"
+                        class="btn btn-link px-1 py-0 edit-eligibility-condition"
+                        (click)="startEditEligibilityCondition($index)"
+                      >
+                        <span class="fa fa-pencil"></span>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-link px-1 py-0 remove-eligibility-condition"
+                        (click)="removeEligibilityCondition($index)"
+                      >
+                        <span class="fa fa-trash"></span>
+                      </button>
+                    </td>
+                  }
                 </tr>
               }
             </tbody>
