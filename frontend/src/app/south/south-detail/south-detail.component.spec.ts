@@ -268,8 +268,27 @@ describe('SouthDetailComponent', () => {
       manifest,
       southConnector.groups,
       expect.any(Function),
+      expect.any(Function),
       expect.any(Function)
     );
+  });
+
+  test('manageWorkflows should reload the south connector when a workflow run finishes, so the item list reflects it', () => {
+    const prepare = vi.fn();
+    modalService.open.mockReturnValue({ componentInstance: { prepare } } as any);
+    const newItem = { ...southConnector.items[0], id: 'newItem', name: 'New' };
+    const southConnectorAfterRun = { ...southConnector, items: [...southConnector.items, newItem] };
+    southConnectorService.findById.mockReturnValue(of(southConnectorAfterRun as any));
+
+    const fixture = TestBed.createComponent(SouthDetailComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.manageWorkflows();
+    const onWorkflowRun = prepare.mock.calls[0][8];
+
+    onWorkflowRun();
+
+    expect(southConnectorService.findById).toHaveBeenCalledWith(southConnector.id);
+    expect(fixture.componentInstance.southConnector).toEqual(southConnectorAfterRun);
   });
 
   test('should show the explore button when the manifest supports exploration', async () => {
