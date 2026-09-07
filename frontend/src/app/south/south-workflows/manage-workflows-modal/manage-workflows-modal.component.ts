@@ -53,6 +53,10 @@ export default class ManageWorkflowsModalComponent {
     group: SouthItemGroupCommandDTO;
   }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
   private deleteGroup!: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
+  // A manual run can create/update items directly on the south connector this modal was opened from -
+  // called after each successful "Run now" so the display page behind this modal reflects them, without
+  // this modal (which only has its own point-in-time snapshot of the connector) needing to know how.
+  private onWorkflowRun?: () => void;
 
   searchControl = this.fb.control(null as string | null);
 
@@ -71,7 +75,8 @@ export default class ManageWorkflowsModalComponent {
       mode: 'create' | 'edit';
       group: SouthItemGroupCommandDTO;
     }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
-    deleteGroup?: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>
+    deleteGroup?: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>,
+    onWorkflowRun?: () => void
   ) {
     this.southId = southId;
     this.southSettings = southSettings;
@@ -81,6 +86,7 @@ export default class ManageWorkflowsModalComponent {
     this.groups = groups;
     this.addOrEditGroup = addOrEditGroup!;
     this.deleteGroup = deleteGroup!;
+    this.onWorkflowRun = onWorkflowRun;
     this.reload();
   }
 
@@ -212,6 +218,9 @@ export default class ManageWorkflowsModalComponent {
       next: () => {
         this.runningWorkflowId = null;
         this.notificationService.success('south.workflows.run-now-success');
+        // A manual run may have created/updated items directly on the connector - refresh the display
+        // page behind this modal so they show up without needing to close and reopen anything.
+        this.onWorkflowRun?.();
       },
       error: error => {
         this.runningWorkflowId = null;
