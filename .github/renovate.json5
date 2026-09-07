@@ -1,7 +1,8 @@
 {
   "extends": [
     "config:base",
-    ":semanticCommitTypeAll(chore)"
+    ":semanticCommitTypeAll(chore)",
+    "local>Ninja-Squad/renovate-config:typescript-patch-only"
   ],
   "baseBranches": ["main"],
   "labels": ["dependencies"],
@@ -38,16 +39,6 @@
       "groupName": "Angular",
       "groupSlug": "angular",
       "schedule": ["before 3am on Monday"]
-    },
-
-    // ── TypeScript ────────────────────────────────────────────────────────
-    // Angular and the backend share TypeScript; major/minor bumps carry
-    // breaking language changes and must be evaluated manually.
-    // Patch updates (bug-fixes) are still automated.
-    {
-      "matchPackageNames": ["typescript"],
-      "matchUpdateTypes": ["major", "minor"],
-      "enabled": false
     },
 
     // ── OPC-UA ecosystem ──────────────────────────────────────────────────
