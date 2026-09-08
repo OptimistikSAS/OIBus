@@ -8,17 +8,24 @@ import { ScanMode } from '../model/scan-mode.model';
 import { checkScanMode } from './utils';
 import type DataStreamEngine from '../engine/data-stream-engine';
 
+/** Minimal slice of OIAnalyticsRegistrationService this service actually calls - see the
+ *  IConfigurationWorkflowSouthService/IDataStreamEngine precedent in configuration-workflow-run.service.ts. */
+interface IOIAnalyticsRegistrationService {
+  getRegistrationSettings(): { status: string } | null;
+}
+
 /**
  * Service used for Configuration Workflows: CRUD orchestration only. Running a workflow (discovery, eligibility
- * filtering, identity-key diff, item/point create-update-orphan, remote push) is handled elsewhere, once that
- * piece is built.
+ * filtering, identity-key diff, item create-update-orphan and/or OIAnalytics push) is handled elsewhere, in
+ * ConfigurationWorkflowRunService.
  */
 export default class ConfigurationWorkflowService {
   constructor(
     private readonly configurationWorkflowRepository: ConfigurationWorkflowRepository,
     private readonly southConnectorRepository: SouthConnectorRepository,
     private readonly scanModeRepository: ScanModeRepository,
-    private readonly engine: DataStreamEngine
+    private readonly engine: DataStreamEngine,
+    private readonly oIAnalyticsRegistrationService: IOIAnalyticsRegistrationService
   ) {}
 
   findById(southId: string, workflowId: string): ConfigurationWorkflowEntity {
@@ -40,20 +47,18 @@ export default class ConfigurationWorkflowService {
 
   create(southId: string, command: ConfigurationWorkflowCommandDTO, user: string): ConfigurationWorkflowEntity {
     this.checkSouthExists(southId);
-    this.checkTargetItem(southId, command.targetItemId);
-    this.checkMappingPresence(command);
+    this.checkMode(command);
     this.checkNameNotTaken(southId, command.name, null);
     const scanMode = this.resolveScanMode(command.scanModeId);
 
     const workflowCommand: ConfigurationWorkflowCommand = {
       name: command.name,
       southId,
-      targetItemId: command.targetItemId,
       discoveryScope: command.discoveryScope,
       identityKeyFields: command.identityKeyFields,
       eligibilityFilter: command.eligibilityFilter,
       itemFieldMapping: command.itemFieldMapping,
-      remoteFieldMapping: command.remoteFieldMapping,
+      pushToOIAnalytics: command.pushToOIAnalytics,
       scanMode,
       enabled: command.enabled
     };
@@ -64,8 +69,7 @@ export default class ConfigurationWorkflowService {
 
   update(southId: string, workflowId: string, command: ConfigurationWorkflowCommandDTO, user: string): ConfigurationWorkflowEntity {
     this.findById(southId, workflowId); // Ownership check (throws if not found / not owned by this south)
-    this.checkTargetItem(southId, command.targetItemId);
-    this.checkMappingPresence(command);
+    this.checkMode(command);
     this.checkNameNotTaken(southId, command.name, workflowId);
     const scanMode = this.resolveScanMode(command.scanModeId);
 
@@ -73,12 +77,11 @@ export default class ConfigurationWorkflowService {
       workflowId,
       {
         name: command.name,
-        targetItemId: command.targetItemId,
         discoveryScope: command.discoveryScope,
         identityKeyFields: command.identityKeyFields,
         eligibilityFilter: command.eligibilityFilter,
         itemFieldMapping: command.itemFieldMapping,
-        remoteFieldMapping: command.remoteFieldMapping,
+        pushToOIAnalytics: command.pushToOIAnalytics,
         scanMode,
         enabled: command.enabled
       },
@@ -106,24 +109,18 @@ export default class ConfigurationWorkflowService {
     }
   }
 
-  private checkTargetItem(southId: string, targetItemId: string | null): void {
-    if (targetItemId === null) {
-      return;
+  /** Exactly one of itemFieldMapping (local)/pushToOIAnalytics (remote) applies - never both, never neither.
+   *  Remote additionally requires OIBus to already be registered with OIAnalytics: a workflow that can never
+   *  actually push anything isn't a workflow anyone should be able to save, let alone run. */
+  private checkMode(command: ConfigurationWorkflowCommandDTO): void {
+    if (command.itemFieldMapping !== null && command.pushToOIAnalytics) {
+      throw new OIBusValidationError('A configuration workflow cannot both create/update items and push to OIAnalytics');
     }
-    const item = this.southConnectorRepository.findItemById(southId, targetItemId);
-    if (!item) {
-      throw new NotFoundError(`South item "${targetItemId}" not found`);
+    if (command.itemFieldMapping === null && !command.pushToOIAnalytics) {
+      throw new OIBusValidationError('A configuration workflow must either create/update items or push to OIAnalytics');
     }
-  }
-
-  private checkMappingPresence(command: ConfigurationWorkflowCommandDTO): void {
-    if (command.itemFieldMapping === null && command.remoteFieldMapping === null) {
-      throw new OIBusValidationError('At least one of itemFieldMapping or remoteFieldMapping must be set');
-    }
-    // A remote-metadata-only workflow (itemFieldMapping null) never creates items, so it has no way to
-    // learn which item a discovered record's metadata belongs to unless it already targets exactly one.
-    if (command.itemFieldMapping === null && command.targetItemId === null) {
-      throw new OIBusValidationError('targetItemId is required when itemFieldMapping is not set');
+    if (command.pushToOIAnalytics && this.oIAnalyticsRegistrationService.getRegistrationSettings()?.status !== 'REGISTERED') {
+      throw new OIBusValidationError('OIBus must be registered with OIAnalytics to push a configuration workflow result');
     }
   }
 

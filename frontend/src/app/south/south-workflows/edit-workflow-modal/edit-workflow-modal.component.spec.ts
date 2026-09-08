@@ -10,6 +10,7 @@ import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-chang
 import { ModalService } from '../../../shared/modal.service';
 import { SouthExploreModalComponent } from '../../../shared/south-explore-modal/south-explore-modal.component';
 import { SouthConnectorService } from '../../../services/south-connector.service';
+import { EngineService } from '../../../services/engine.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { ConfigurationWorkflowDTO } from '../../../../../../backend/shared/model/configuration-workflow.model';
@@ -19,6 +20,7 @@ import {
   SouthConnectorManifest,
   SouthItemGroupDTO
 } from '../../../../../../backend/shared/model/south-connector.model';
+import { RegistrationSettingsDTO } from '../../../../../../backend/shared/model/engine.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
@@ -106,12 +108,11 @@ const existingWorkflow: ConfigurationWorkflowDTO = {
   id: 'workflowId1',
   name: 'Reactor discovery',
   southId: 'southId1',
-  targetItemId: null,
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
   eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
   itemFieldMapping: { name: '{{name}}' },
-  remoteFieldMapping: { unit: '{{unit}}', customField: 'hello' },
+  pushToOIAnalytics: false,
   scanMode: scanModes[0],
   enabled: true,
   createdAt: '',
@@ -120,15 +121,23 @@ const existingWorkflow: ConfigurationWorkflowDTO = {
   updatedBy: { id: '', friendlyName: '' }
 };
 
+const notRegistered: RegistrationSettingsDTO = { status: 'NOT_REGISTERED' } as unknown as RegistrationSettingsDTO;
+const registered: RegistrationSettingsDTO = { status: 'REGISTERED' } as unknown as RegistrationSettingsDTO;
+
 describe('EditWorkflowModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
   let modalService: MockObject<ModalService>;
   let southConnectorService: MockObject<SouthConnectorService>;
+  let engineService: MockObject<EngineService>;
 
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
     modalService = createMock(ModalService);
     southConnectorService = createMock(SouthConnectorService);
+    engineService = createMock(EngineService);
+    // Default: OIBus isn't registered with OIAnalytics - individual tests override this to exercise the
+    // "Push to OIAnalytics" mode.
+    engineService.getRegistrationSettings.mockReturnValue(of(notRegistered));
     // Default for the SQLite reference tree's own real ExploreTreeComponent, embedded inline and
     // driven straight from ngAfterViewInit() (not mocked away like the node-picker modal below) -
     // individual tests override this via southConnectorService.testDiscoveryQuery for their own concern.
@@ -142,6 +151,7 @@ describe('EditWorkflowModalComponent', () => {
         { provide: NgbActiveModal, useValue: activeModal },
         { provide: ModalService, useValue: modalService },
         { provide: SouthConnectorService, useValue: southConnectorService },
+        { provide: EngineService, useValue: engineService },
         { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesService }
       ]
     });
@@ -159,10 +169,7 @@ describe('EditWorkflowModalComponent', () => {
     await expect.element(root.getByCss('#identity-key-fields-list')).toHaveTextContent('nodeId');
     await expect.element(root.getByCss('#eligibility-filter-table')).toHaveTextContent('type');
     await expect.element(root.getByCss('#item-field-mapping-field-name')).toHaveValue('{{name}}');
-    await expect.element(root.getByCss('#remote-field-mapping-field-unit')).toHaveValue('{{unit}}');
-    // A remoteFieldMapping key beyond the known fields lands in the extra rows, not silently dropped.
-    await expect.element(root.getByCss('#remote-field-mapping-extra-table')).toHaveTextContent('customField');
-    await expect.element(root.getByCss('#remote-field-mapping-extra-table')).toHaveTextContent('hello');
+    expect(fixture.componentInstance.form!.controls.pushToOIAnalytics.value).toBe(false);
     // discoveryScope.rootNodeId is read back for the node picker (manifest is tree-based: explore: true).
     expect(fixture.componentInstance.discoveryRootNodeId).toBe('ns=1;s=Root');
     await expect.element(root.getByCss('#discovery-root-node-id')).toHaveTextContent('ns=1;s=Root');
@@ -233,38 +240,31 @@ describe('EditWorkflowModalComponent', () => {
     expect(fixture.nativeElement.querySelector('#discovery-scope-unsupported')).toBeNull();
   });
 
-  test('should hide item field mapping for a SQL-family connector, defaulting to remote mapping only', async () => {
+  test('should force "Push to OIAnalytics" and hide the mode picker and item field mapping for a SQL-family connector', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, items, [], sqlManifest, southId, southSettings);
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
-    expect(fixture.nativeElement.querySelector('#item-field-mapping-enabled')).toBeNull();
+    expect(fixture.nativeElement.querySelector('#mode-local')).toBeNull();
+    expect(fixture.nativeElement.querySelector('#mode-remote')).toBeNull();
     expect(fixture.nativeElement.querySelector('#item-field-mapping-table')).toBeNull();
-    await expect.element(root.getByCss('#item-field-mapping-sql-unavailable')).toBeInTheDocument();
-    expect(fixture.componentInstance.form!.controls.itemFieldMappingEnabled.value).toBe(false);
-    expect(fixture.componentInstance.form!.controls.remoteFieldMappingEnabled.value).toBe(true);
+    await expect.element(root.getByCss('[translate="south.workflows.mode-sql-fixed"]')).toBeInTheDocument();
+    expect(fixture.componentInstance.form!.controls.pushToOIAnalytics.value).toBe(true);
   });
 
-  test('should require a target item and never build itemFieldMapping when saving a SQL-family workflow', () => {
+  test('should always push to OIAnalytics (never build itemFieldMapping) when saving a SQL-family workflow', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    engineService.getRegistrationSettings.mockReturnValue(of(registered));
     fixture.componentInstance.prepareForCreation(scanModes, items, [], sqlManifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.form!.controls.name.setValue('SQL workflow');
     fixture.componentInstance.discoveryQuery = 'SELECT column_name FROM my_metadata_table';
     fixture.componentInstance.identityKeyFields = ['column_name'];
-    fixture.componentInstance.remoteFieldMappingValues['unit'] = '{{unit}}';
 
     fixture.componentInstance.save();
-    expect(fixture.componentInstance.formError).toBe('south.workflows.target-item-required');
-    expect(activeModal.close).not.toHaveBeenCalled();
 
-    fixture.componentInstance.form!.controls.targetItemId.setValue(items[0].id);
-    fixture.componentInstance.save();
-
-    expect(activeModal.close).toHaveBeenCalledWith(
-      expect.objectContaining({ targetItemId: items[0].id, itemFieldMapping: null, remoteFieldMapping: { unit: '{{unit}}' } })
-    );
+    expect(activeModal.close).toHaveBeenCalledWith(expect.objectContaining({ pushToOIAnalytics: true, itemFieldMapping: null }));
   });
 
   test('should test the discovery query as currently typed and show the raw rows', () => {
@@ -334,7 +334,7 @@ describe('EditWorkflowModalComponent', () => {
   });
 
   test('should read discoveryScope.query back for a SQL-family workflow being edited', () => {
-    const sqlWorkflow: ConfigurationWorkflowDTO = { ...existingWorkflow, discoveryScope: { query: 'SELECT 1' } };
+    const sqlWorkflow: ConfigurationWorkflowDTO = { ...existingWorkflow, discoveryScope: { query: 'SELECT 1' }, pushToOIAnalytics: true };
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForEdition(scanModes, items, [sqlWorkflow], sqlManifest, sqlWorkflow, southId, southSettings);
     fixture.detectChanges();
@@ -508,11 +508,9 @@ describe('EditWorkflowModalComponent', () => {
       'configuration.oibus.manifest.south.opcua.settings.security-mode.title'
     );
 
-    // The two hardcoded string-select fields already resolve to a flat label string - no suffix needed.
+    // The hardcoded historian string-select field already resolves to a flat label string - no suffix needed.
     const recoveryStrategyField = fixture.componentInstance.itemMappableFields.find(field => field.path === 'recoveryStrategy')!;
     expect(fixture.componentInstance.fieldLabelKey(recoveryStrategyField)).toBe('south.items.recovery-strategy');
-    const resamplingField = fixture.componentInstance.remoteKnownFields.find(field => field.path === 'resamplingMethod')!;
-    expect(fixture.componentInstance.fieldLabelKey(resamplingField)).toBe('south.workflows.remote-known-fields.resampling-method');
   });
 
   test('should flag a field referenced by an enablingCondition and omit its {{ }} option, forcing a constant', async () => {
@@ -749,17 +747,50 @@ describe('EditWorkflowModalComponent', () => {
     await expect.element(root.getByCss('#item-field-mapping-field-enabled-expression')).toHaveValue('{{isEnabled}}');
   });
 
-  test('should render an empty form in create mode with item field mapping enabled by default', () => {
+  test('should render an empty form in create mode, defaulting to local (item-creating) mode', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
     fixture.detectChanges();
 
     const controls = fixture.componentInstance.form!.controls;
     expect(controls.name.value).toBe('');
-    expect(controls.itemFieldMappingEnabled.value).toBe(true);
-    expect(controls.remoteFieldMappingEnabled.value).toBe(false);
+    expect(controls.pushToOIAnalytics.value).toBe(false);
     expect(fixture.componentInstance.identityKeyFields).toEqual([]);
     expect(fixture.componentInstance.itemFieldMappingValues).toEqual({});
+  });
+
+  test('should refresh the OIAnalytics registration status when preparing the modal, allowing a click on the remote radio through', () => {
+    engineService.getRegistrationSettings.mockReturnValue(of(registered));
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.isRegistered).toBe(true);
+    fixture.componentInstance.blockRemoteModeClickIfNotRegistered(new Event('click'));
+    expect(fixture.componentInstance.isRegistered).toBe(true);
+  });
+
+  test('should block a click on the remote radio while OIBus is not registered, but still show a warning if picked anyway', async () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#mode-remote-not-registered')).toBeNull();
+
+    // preventDefault() on the click, before the browser applies the radio's own default action, stops it
+    // from becoming checked at all - the same effect a true disabled attribute would have had (see
+    // blockRemoteModeClickIfNotRegistered's own doc comment for why a plain [disabled] binding can't be
+    // used here instead).
+    const clickEvent = new Event('click', { cancelable: true });
+    fixture.componentInstance.blockRemoteModeClickIfNotRegistered(clickEvent);
+    expect(clickEvent.defaultPrevented).toBe(true);
+
+    // A pre-existing workflow can still be loaded already in remote mode (e.g. OIBus was unregistered
+    // after it was saved) - the warning covers that case even though a fresh click can never reach it.
+    fixture.componentInstance.form!.controls.pushToOIAnalytics.setValue(true);
+    fixture.detectChanges();
+
+    const root = page.elementLocator(fixture.nativeElement);
+    await expect.element(root.getByCss('#mode-remote-not-registered')).toBeInTheDocument();
   });
 
   test('should add and remove identity key fields', () => {
@@ -879,20 +910,6 @@ describe('EditWorkflowModalComponent', () => {
     expect(fixture.componentInstance.eligibilityFilter).toEqual([{ field: 'b', operator: 'equals', value: '2' }]);
   });
 
-  test('should add and remove a remote field mapping extra row', () => {
-    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
-    fixture.detectChanges();
-
-    fixture.componentInstance.newRemoteExtraKey = 'customField';
-    fixture.componentInstance.newRemoteExtraValue = '{{custom}}';
-    fixture.componentInstance.addRemoteExtraRow();
-    expect(fixture.componentInstance.remoteFieldMappingExtraRows).toEqual([{ key: 'customField', value: '{{custom}}' }]);
-
-    fixture.componentInstance.removeRemoteExtraRow(0);
-    expect(fixture.componentInstance.remoteFieldMappingExtraRows).toEqual([]);
-  });
-
   test('should reject saving when identityKeyFields is empty', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
@@ -905,33 +922,17 @@ describe('EditWorkflowModalComponent', () => {
     expect(activeModal.close).not.toHaveBeenCalled();
   });
 
-  test('should reject saving when neither mapping is enabled', () => {
+  test('should reject saving remote mode when OIBus is not registered with OIAnalytics', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.form!.controls.name.setValue('New workflow');
     fixture.componentInstance.identityKeyFields = ['nodeId'];
-    fixture.componentInstance.form!.controls.itemFieldMappingEnabled.setValue(false);
-    fixture.componentInstance.form!.controls.remoteFieldMappingEnabled.setValue(false);
+    fixture.componentInstance.form!.controls.pushToOIAnalytics.setValue(true);
 
     fixture.componentInstance.save();
 
-    expect(fixture.componentInstance.formError).toBe('south.workflows.mapping-required');
-    expect(activeModal.close).not.toHaveBeenCalled();
-  });
-
-  test('should reject saving when item field mapping is disabled and no target item is set', () => {
-    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
-    fixture.detectChanges();
-    fixture.componentInstance.form!.controls.name.setValue('New workflow');
-    fixture.componentInstance.identityKeyFields = ['nodeId'];
-    fixture.componentInstance.form!.controls.itemFieldMappingEnabled.setValue(false);
-    fixture.componentInstance.form!.controls.remoteFieldMappingEnabled.setValue(true);
-
-    fixture.componentInstance.save();
-
-    expect(fixture.componentInstance.formError).toBe('south.workflows.target-item-required');
+    expect(fixture.componentInstance.formError).toBe('south.workflows.mode-remote-not-registered');
     expect(activeModal.close).not.toHaveBeenCalled();
   });
 
@@ -967,15 +968,31 @@ describe('EditWorkflowModalComponent', () => {
 
     expect(activeModal.close).toHaveBeenCalledWith({
       name: 'New workflow',
-      targetItemId: null,
       discoveryScope: { rootNodeId: 'ns=1;s=Root' },
       identityKeyFields: ['nodeId'],
       eligibilityFilter: [],
       itemFieldMapping: { name: '{{name}}', scanModeId: scanModes[0].id },
-      remoteFieldMapping: null,
+      pushToOIAnalytics: false,
       scanModeId: scanModes[0].id,
       enabled: true
     });
+  });
+
+  test('should close the modal with a valid command when remote (push to OIAnalytics) mode is picked and OIBus is registered', () => {
+    engineService.getRegistrationSettings.mockReturnValue(of(registered));
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.detectChanges();
+
+    fixture.componentInstance.form!.controls.name.setValue('New workflow');
+    fixture.componentInstance.form!.controls.pushToOIAnalytics.setValue(true);
+    fixture.componentInstance.identityKeyFields = ['nodeId'];
+    // Mandatory-field/constant-only checks are skipped entirely in remote mode - no item is ever built.
+    fixture.componentInstance.itemFieldMappingValues['name'] = '{{name}}';
+
+    fixture.componentInstance.save();
+
+    expect(activeModal.close).toHaveBeenCalledWith(expect.objectContaining({ pushToOIAnalytics: true, itemFieldMapping: null }));
   });
 
   test('should reject saving when a mandatory item field is not mapped', () => {
@@ -1008,16 +1025,14 @@ describe('EditWorkflowModalComponent', () => {
     expect(activeModal.close).toHaveBeenCalled();
   });
 
-  test('should build a query discoveryScope, and default a tree-based one to an empty scope, when saving', () => {
+  test('should build a query discoveryScope, trimmed, when saving a SQL-family workflow', () => {
+    engineService.getRegistrationSettings.mockReturnValue(of(registered));
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, items, [], sqlManifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.form!.controls.name.setValue('SQL workflow');
     fixture.componentInstance.discoveryQuery = '  SELECT column_name FROM my_metadata_table  ';
     fixture.componentInstance.identityKeyFields = ['column_name'];
-    fixture.componentInstance.form!.controls.itemFieldMappingEnabled.setValue(false);
-    fixture.componentInstance.form!.controls.remoteFieldMappingEnabled.setValue(true);
-    fixture.componentInstance.form!.controls.targetItemId.setValue(items[0].id);
 
     fixture.componentInstance.save();
 
@@ -1026,23 +1041,19 @@ describe('EditWorkflowModalComponent', () => {
     expect(command.discoveryScope).toEqual({ query: 'SELECT column_name FROM my_metadata_table' });
   });
 
-  test('should merge known and extra fields into remoteFieldMapping when saving', () => {
+  test('should default a tree-based connector to an empty discoveryScope when no root node was picked, when saving', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings, groups);
     fixture.detectChanges();
-
     fixture.componentInstance.form!.controls.name.setValue('New workflow');
-    fixture.componentInstance.form!.controls.remoteFieldMappingEnabled.setValue(true);
     fixture.componentInstance.identityKeyFields = ['nodeId'];
     fixture.componentInstance.itemFieldMappingValues['name'] = '{{name}}';
-    fixture.componentInstance.itemFieldMappingValues['scanModeId'] = scanModes[0].id;
-    fixture.componentInstance.remoteFieldMappingValues['unit'] = '{{unit}}';
-    fixture.componentInstance.remoteFieldMappingExtraRows = [{ key: 'customField', value: 'hello' }];
+    fixture.componentInstance.onSelectGroup(groups[0].id!);
 
     fixture.componentInstance.save();
 
-    const command = (activeModal.close.mock.calls[0] as unknown as [{ remoteFieldMapping: unknown }])[0];
-    expect(command.remoteFieldMapping).toEqual({ unit: '{{unit}}', customField: 'hello' });
+    const command = (activeModal.close.mock.calls[0] as unknown as [{ discoveryScope: unknown }])[0];
+    expect(command.discoveryScope).toEqual({});
   });
 
   test('should cancel by dismissing the modal', () => {

@@ -9,7 +9,8 @@ import {
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
-  EngineWebServerCommandDTO
+  EngineWebServerCommandDTO,
+  OIBusRecord
 } from '../../../shared/model/engine.model';
 import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
 import {
@@ -144,6 +145,21 @@ export interface OIBusHistoryQueriesCommandDTO {
     oIBusUpdatedAt: string;
     settings: HistoryQueryCommandDTO;
   }>;
+}
+
+/**
+ * A remote (push-to-OIAnalytics) Configuration Workflow run's result: the raw eligible records
+ * discovered this run, exactly as retrieved — no mapping, no diffing against a previous run. OIBus
+ * only tells OIAnalytics which field(s) uniquely identify a record (`identityKeyFields`); everything
+ * else about interpreting or correlating the records across runs is OIAnalytics's own concern.
+ */
+export interface OIBusConfigurationWorkflowResultCommandDTO {
+  southId: string;
+  southName: string;
+  workflowId: string;
+  workflowName: string;
+  identityKeyFields: Array<string>;
+  records: Array<OIBusRecord>;
 }
 
 //

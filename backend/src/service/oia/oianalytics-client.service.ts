@@ -17,6 +17,7 @@ const RETRIEVE_PENDING_COMMANDS_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/c
 const REGISTRATION_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/registration`;
 const SEND_CONFIGURATION_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/configuration`;
 const HISTORY_QUERY_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/configuration/history-query`;
+const CONFIGURATION_WORKFLOW_RESULT_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/configuration/configuration-workflow-result`;
 const DOWNLOAD_UPDATE_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/upgrade/asset`;
 
 export default class OIAnalyticsClient {
@@ -173,6 +174,21 @@ export default class OIAnalyticsClient {
     }
     // Drain the response body so undici can return the connection to its pool.
     await response.body.dump();
+  }
+
+  async sendConfigurationWorkflowResult(registrationSettings: OIAnalyticsRegistration, payload: string): Promise<void> {
+    const url = getUrl(CONFIGURATION_WORKFLOW_RESULT_OIANALYTICS_ENDPOINT, registrationSettings.host, {
+      useApiGateway: registrationSettings.useApiGateway,
+      apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint
+    });
+    const httpOptions = await buildHttpOptions('PUT', true, registrationSettings, null, OIANALYTICS_TIMEOUT, null);
+    (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
+    httpOptions.body = payload;
+
+    const response = await HTTPRequest(url, httpOptions);
+    if (!response.ok) {
+      throw new Error(`${response.statusCode} - ${await response.body.text()}`);
+    }
   }
 
   async deleteHistoryQuery(registrationSettings: OIAnalyticsRegistration, historyId: string): Promise<void> {

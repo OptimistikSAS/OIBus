@@ -11,4 +11,5 @@ export default class OIAnalyticsMessageServiceMock {
   setLogger = mock.fn((_logger: ILogger): void => undefined);
   createFullConfigMessageIfNotPending = mock.fn((): void => undefined);
   createFullHistoryQueriesMessageIfNotPending = mock.fn((): void => undefined);
+  createConfigurationWorkflowResultMessage = mock.fn((_workflowRunId: string, _payload: string): void => undefined);
 }

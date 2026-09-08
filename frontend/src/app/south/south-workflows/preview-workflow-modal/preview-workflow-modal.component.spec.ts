@@ -20,7 +20,7 @@ describe('PreviewWorkflowModalComponent', () => {
   });
 
   test('should show the discovered/eligible counts and a message when there are no entries', async () => {
-    const result: WorkflowPreviewResultDTO = { discoveredCount: 3, eligibleCount: 0, entries: [] };
+    const result: WorkflowPreviewResultDTO = { discoveredCount: 3, eligibleCount: 0, entries: [], records: [] };
     const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
     fixture.componentInstance.prepare('Reactor discovery', result);
     fixture.detectChanges();
@@ -31,14 +31,15 @@ describe('PreviewWorkflowModalComponent', () => {
     await expect.element(root.getByCss('#preview-none')).toBeInTheDocument();
   });
 
-  test('should render one row per entry with its status badge', async () => {
+  test('should render one row per entry with its status badge for a local workflow', async () => {
     const result: WorkflowPreviewResultDTO = {
       discoveredCount: 2,
       eligibleCount: 2,
       entries: [
         { key: 'nodeId=a', status: 'new', record: { nodeId: 'a' }, previousMetadata: null },
         { key: 'nodeId=b', status: 'missing', record: null, previousMetadata: { nodeId: 'b' } }
-      ]
+      ],
+      records: []
     };
     const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
     fixture.componentInstance.prepare('Reactor discovery', result);
@@ -51,9 +52,28 @@ describe('PreviewWorkflowModalComponent', () => {
     await expect.element(root.getByCss('tbody')).toHaveTextContent('Missing');
   });
 
+  test('should render the raw records for a remote (push-to-OIAnalytics) workflow', async () => {
+    const result: WorkflowPreviewResultDTO = {
+      discoveredCount: 2,
+      eligibleCount: 2,
+      entries: [],
+      records: [
+        { nodeId: 'a', value: 1 },
+        { nodeId: 'b', value: 2 }
+      ]
+    };
+    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
+    fixture.componentInstance.prepare('Reactor discovery', result);
+    fixture.detectChanges();
+
+    const root = page.elementLocator(fixture.nativeElement);
+    await expect.element(root.getByCss('#preview-records-table')).toHaveTextContent('"nodeId": "a"');
+    await expect.element(root.getByCss('#preview-records-table')).toHaveTextContent('"nodeId": "b"');
+  });
+
   test('should close the modal', () => {
     const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
-    fixture.componentInstance.prepare('Reactor discovery', { discoveredCount: 0, eligibleCount: 0, entries: [] });
+    fixture.componentInstance.prepare('Reactor discovery', { discoveredCount: 0, eligibleCount: 0, entries: [], records: [] });
     fixture.detectChanges();
 
     fixture.componentInstance.close();

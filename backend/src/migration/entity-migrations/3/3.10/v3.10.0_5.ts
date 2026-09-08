@@ -17,11 +17,10 @@ const CONFIGURATION_WORKFLOWS_TABLE = 'configuration_workflows';
  *
  * Uses raw single-statement `ALTER TABLE ... ADD COLUMN`/`DROP COLUMN` (an in-place metadata change on
  * SQLite) instead of knex's schema builder. Adding a column with a `.references()` FK via knex's builder
- * makes it rebuild the whole table (CREATE __new + COPY + DROP TABLE + RENAME), and that DROP can fail
- * with a foreign key constraint error: `configuration_workflows.target_item_id` (added in the previous
- * migration) already references `south_items`, and SQLite refuses to drop a table another table's live
- * FK still points into if that FK would be left dangling. The raw single-statement form sidesteps the
- * rebuild entirely: adding a nullable column (even with a REFERENCES clause) or dropping a column
+ * makes it rebuild the whole table (CREATE __new + COPY + DROP TABLE + RENAME), and that rebuild can
+ * fail with a foreign key constraint error if some other table's live FK already points into this one
+ * and would be left dangling by the intermediate DROP TABLE. The raw single-statement form sidesteps
+ * the rebuild entirely: adding a nullable column (even with a REFERENCES clause) or dropping a column
  * (SQLite >= 3.35) is an in-place metadata edit, with no table rebuild and no DROP TABLE involved - same
  * reasoning as the raw `ALTER TABLE ... DROP COLUMN` already used in v3.9.0.ts for exactly this class of
  * problem.

@@ -24,15 +24,14 @@ describe('Configuration Workflow Repository', () => {
     let repository: ConfigurationWorkflowRepository;
     let auditService: AuditService;
 
-    const selfScopedCommand: ConfigurationWorkflowCommand = {
-      name: 'Self-scoped workflow',
+    const localCommand: ConfigurationWorkflowCommand = {
+      name: 'Local (self-scoped) workflow',
       southId: testData.south.list[0].id,
-      targetItemId: null,
       discoveryScope: { rootNodeId: 'ns=1;s=Root' },
       identityKeyFields: ['nodeId'],
       eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
       itemFieldMapping: { name: '{{name}}', 'settings.nodeId': '{{nodeId}}' },
-      remoteFieldMapping: null,
+      pushToOIAnalytics: false,
       scanMode: testData.scanMode.list[0],
       enabled: true
     };
@@ -42,16 +41,15 @@ describe('Configuration Workflow Repository', () => {
       repository = new ConfigurationWorkflowRepository(database, auditService);
     });
 
-    it('should create a self-scoped workflow (no target item) and find it by id', () => {
-      const created = repository.create(selfScopedCommand, 'userTest');
+    it('should create a local (item-creating) workflow and find it by id', () => {
+      const created = repository.create(localCommand, 'userTest');
 
       assert.strictEqual(created.southId, testData.south.list[0].id);
-      assert.strictEqual(created.targetItemId, null);
       assert.deepStrictEqual(created.discoveryScope, { rootNodeId: 'ns=1;s=Root' });
       assert.deepStrictEqual(created.identityKeyFields, ['nodeId']);
       assert.deepStrictEqual(created.eligibilityFilter, [{ field: 'type', operator: 'equals', value: 'Variable' }]);
       assert.deepStrictEqual(created.itemFieldMapping, { name: '{{name}}', 'settings.nodeId': '{{nodeId}}' });
-      assert.strictEqual(created.remoteFieldMapping, null);
+      assert.strictEqual(created.pushToOIAnalytics, false);
       assert.strictEqual(created.scanMode!.id, testData.scanMode.list[0].id);
       assert.strictEqual(created.enabled, true);
 
@@ -64,37 +62,15 @@ describe('Configuration Workflow Repository', () => {
       assert.strictEqual(call.arguments[3], null);
     });
 
-    it('should create a workflow targeting one existing item, with no scan mode (manual-only)', () => {
+    it('should create a remote (push-to-OIAnalytics) workflow, with no scan mode (manual-only)', () => {
       const command: ConfigurationWorkflowCommand = {
         name: 'Metadata query workflow',
         southId: testData.south.list[0].id,
-        targetItemId: testData.south.list[0].items[0].id,
         discoveryScope: { query: 'SELECT tag_name, unit, min, max FROM metadata_table' },
         identityKeyFields: ['tagName'],
         eligibilityFilter: [],
-        itemFieldMapping: {},
-        remoteFieldMapping: { unit: '{{unit}}' },
-        scanMode: null,
-        enabled: true
-      };
-
-      const created = repository.create(command, 'userTest');
-
-      assert.strictEqual(created.targetItemId, testData.south.list[0].items[0].id);
-      assert.deepStrictEqual(created.remoteFieldMapping, { unit: '{{unit}}' });
-      assert.strictEqual(created.scanMode, null);
-    });
-
-    it('should create a remote-metadata-only workflow (itemFieldMapping null — never touches items)', () => {
-      const command: ConfigurationWorkflowCommand = {
-        name: 'Remote metadata only workflow',
-        southId: testData.south.list[0].id,
-        targetItemId: testData.south.list[0].items[0].id,
-        discoveryScope: { query: 'SELECT tag_name, unit FROM metadata_table' },
-        identityKeyFields: ['tagName'],
-        eligibilityFilter: [],
         itemFieldMapping: null,
-        remoteFieldMapping: { unit: '{{unit}}' },
+        pushToOIAnalytics: true,
         scanMode: null,
         enabled: true
       };
@@ -102,10 +78,12 @@ describe('Configuration Workflow Repository', () => {
       const created = repository.create(command, 'userTest');
 
       assert.strictEqual(created.itemFieldMapping, null);
-      assert.deepStrictEqual(created.remoteFieldMapping, { unit: '{{unit}}' });
+      assert.strictEqual(created.pushToOIAnalytics, true);
+      assert.strictEqual(created.scanMode, null);
 
       const found = repository.findById(created.id);
       assert.strictEqual(found!.itemFieldMapping, null);
+      assert.strictEqual(found!.pushToOIAnalytics, true);
     });
 
     it('should return null when finding a non-existing workflow', () => {
@@ -113,8 +91,8 @@ describe('Configuration Workflow Repository', () => {
     });
 
     it('should find workflows by south id', () => {
-      repository.create({ ...selfScopedCommand, name: 'Workflow A', discoveryScope: { rootNodeId: 'a' } }, 'userTest');
-      repository.create({ ...selfScopedCommand, name: 'Workflow B', discoveryScope: { rootNodeId: 'b' } }, 'userTest');
+      repository.create({ ...localCommand, name: 'Workflow A', discoveryScope: { rootNodeId: 'a' } }, 'userTest');
+      repository.create({ ...localCommand, name: 'Workflow B', discoveryScope: { rootNodeId: 'b' } }, 'userTest');
 
       const found = repository.findBySouthId(testData.south.list[0].id);
       assert.ok(found.length >= 2);
@@ -126,18 +104,17 @@ describe('Configuration Workflow Repository', () => {
     });
 
     it('should update a workflow and record the audit diff', () => {
-      const created = repository.create({ ...selfScopedCommand, name: 'Update test workflow' }, 'userTest');
+      const created = repository.create({ ...localCommand, name: 'Update test workflow' }, 'userTest');
 
       repository.update(
         created.id,
         {
           name: 'Updated workflow name',
-          targetItemId: null,
           discoveryScope: { rootNodeId: 'ns=1;s=Updated' },
           identityKeyFields: ['nodeId', 'parentPath'],
           eligibilityFilter: [],
           itemFieldMapping: { name: '{{name}}' },
-          remoteFieldMapping: { unit: '{{unit}}' },
+          pushToOIAnalytics: false,
           scanMode: testData.scanMode.list[1],
           enabled: false
         },
@@ -148,7 +125,7 @@ describe('Configuration Workflow Repository', () => {
       assert.deepStrictEqual(updated!.discoveryScope, { rootNodeId: 'ns=1;s=Updated' });
       assert.deepStrictEqual(updated!.identityKeyFields, ['nodeId', 'parentPath']);
       assert.deepStrictEqual(updated!.eligibilityFilter, []);
-      assert.deepStrictEqual(updated!.remoteFieldMapping, { unit: '{{unit}}' });
+      assert.deepStrictEqual(updated!.itemFieldMapping, { name: '{{name}}' });
       assert.strictEqual(updated!.scanMode!.id, testData.scanMode.list[1].id);
       assert.strictEqual(updated!.enabled, false);
       assert.strictEqual(updated!.updatedBy, 'updateUser');
@@ -158,7 +135,7 @@ describe('Configuration Workflow Repository', () => {
     });
 
     it('should delete a workflow and record the audit deletion', () => {
-      const created = repository.create({ ...selfScopedCommand, name: 'Delete test workflow' }, 'userTest');
+      const created = repository.create({ ...localCommand, name: 'Delete test workflow' }, 'userTest');
 
       repository.delete(created.id, 'deleteUser');
 

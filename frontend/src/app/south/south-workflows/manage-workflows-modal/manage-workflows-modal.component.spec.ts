@@ -31,12 +31,11 @@ const buildWorkflow = (id: string, name: string, overrides: Partial<Configuratio
   id,
   name,
   southId: 'southId1',
-  targetItemId: null,
   discoveryScope: {},
   identityKeyFields: ['nodeId'],
   eligibilityFilter: [],
   itemFieldMapping: { name: '{{name}}' },
-  remoteFieldMapping: null,
+  pushToOIAnalytics: false,
   scanMode: null,
   enabled: true,
   createdAt: '',
@@ -95,12 +94,12 @@ describe('ManageWorkflowsModalComponent', () => {
     await expect.element(root.getByCss('tbody')).toHaveTextContent('Beta');
   });
 
-  test('should show a self-scoped/manual-only placeholder when scanMode/targetItemId are null', async () => {
+  test('should show a manual-only placeholder and the local/remote mode for each workflow', async () => {
     const fixture = createComponent();
 
     const root = page.elementLocator(fixture.nativeElement);
     await expect.element(root.getByCss('tbody')).toHaveTextContent('Manual only');
-    await expect.element(root.getByCss('tbody')).toHaveTextContent('None - self-scoped', { normalizeWhitespace: true });
+    await expect.element(root.getByCss('tbody')).toHaveTextContent('Create/update items locally');
   });
 
   test('should filter the displayed workflows by name', () => {
@@ -235,7 +234,7 @@ describe('ManageWorkflowsModalComponent', () => {
 
   test('should preview a workflow and open the preview modal with the result', () => {
     const fixture = createComponent();
-    const previewResult = { discoveredCount: 1, eligibleCount: 1, entries: [] };
+    const previewResult = { discoveredCount: 1, eligibleCount: 1, entries: [], records: [] };
     configurationWorkflowService.preview.mockReturnValue(of(previewResult));
     const previewModalInstance = { prepare: vi.fn() };
     modalService.open.mockReturnValue({ componentInstance: previewModalInstance } as never);

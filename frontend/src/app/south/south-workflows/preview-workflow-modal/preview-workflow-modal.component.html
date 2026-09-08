@@ -6,9 +6,8 @@
     <div class="text-muted mb-2" id="preview-counts">
       {{ 'south.workflows.preview-discovered' | translate: { discovered: result.discoveredCount, eligible: result.eligibleCount } }}
     </div>
-    @if (result.entries.length === 0) {
-      <div class="oib-grey-container" id="preview-none" translate="south.workflows.preview-none"></div>
-    } @else {
+    @if (result.entries.length > 0) {
+      <!-- Local (item-creating) workflow: each entry classified against the previous run. -->
       <table class="table table-sm table-hover oib-table">
         <thead class="light">
           <tr>
@@ -39,6 +38,21 @@
           }
         </tbody>
       </table>
+    } @else if (result.records.length > 0) {
+      <!-- Remote (push-to-OIAnalytics) workflow: no diffing at all - just the raw records that would be sent. -->
+      <table class="table table-sm table-hover oib-table" id="preview-records-table">
+        <tbody>
+          @for (record of result.records; track $index) {
+            <tr>
+              <td>
+                <pre class="mb-0 small">{{ record | json }}</pre>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <div class="oib-grey-container" id="preview-none" translate="south.workflows.preview-none"></div>
     }
   }
 </div>
