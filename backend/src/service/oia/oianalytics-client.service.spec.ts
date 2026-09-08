@@ -242,6 +242,26 @@ describe('OIAnalytics Client', () => {
     });
   });
 
+  describe('sendConfigurationWorkflowResult', () => {
+    it('should call PUT endpoint', async () => {
+      await service.sendConfigurationWorkflowResult(testData.oIAnalytics.registration.completed, 'workflow-result-payload');
+
+      assert.strictEqual(mockHttpRequest.HTTPRequest.mock.calls.length, 1);
+      const [calledUrl, calledOptions] = mockHttpRequest.HTTPRequest.mock.calls[0].arguments as [URL, Record<string, unknown>];
+      assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/configuration/configuration-workflow-result'));
+      assert.strictEqual(calledOptions.method, 'PUT');
+      assert.strictEqual(calledOptions.body, 'workflow-result-payload');
+    });
+
+    it('should throw on error response', async () => {
+      mockHttpRequest.HTTPRequest = mock.fn(async () => createMockResponse(400, 'Bad Request'));
+      await assert.rejects(
+        () => service.sendConfigurationWorkflowResult(testData.oIAnalytics.registration.completed, 'workflow-result-payload'),
+        /400 - Bad Request/
+      );
+    });
+  });
+
   describe('deleteHistoryQuery', () => {
     it('should call DELETE endpoint with query param', async () => {
       await service.deleteHistoryQuery(testData.oIAnalytics.registration.completed, 'hist-1');

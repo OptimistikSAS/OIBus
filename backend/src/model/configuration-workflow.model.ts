@@ -9,8 +9,8 @@ export { RecordFilterCondition, RecordFilterOperator, RECORD_FILTER_OPERATORS } 
 
 /**
  * A Configuration Workflow discovers a data source, decides which of what it found actually warrants
- * a configuration change, and maps that into south item settings and/or remote point metadata — run
- * once by hand or recurringly via `scanMode`. Every run follows the same four steps:
+ * a configuration change, and acts on it — run once by hand or recurringly via `scanMode`. Every run
+ * follows the same steps:
  *
  *  1. Trigger — manual ("run now") or a `scanMode` tick.
  *  2. Retrieve — connector-specific (`discoveryScope`), but always normalized to a flat
@@ -20,26 +20,24 @@ export { RecordFilterCondition, RecordFilterOperator, RECORD_FILTER_OPERATORS } 
  *     reads, only metadata about points (e.g. `tag_name, unit, min, max, description`).
  *  3. Decide — `eligibilityFilter` narrows the retrieved records to the ones that matter (e.g. "only
  *     Variables", redundant for SQL if the query already selects precisely, essential for tree-shaped
- *     sources that can't). Each surviving record is then classified new/changed/unchanged/missing by
- *     comparing its `identityKeyFields`-derived key against the previous run's snapshot
- *     (`item_point_metadata.discoveredMetadata`, added in a later migration) — only new/changed/missing
- *     records proceed to step 4.
- *  4. Act — `itemFieldMapping`, when set, creates/updates/orphans a south item per record. Independently,
- *     `remoteFieldMapping`, when set, produces point metadata for a remote push. At least one of the two
- *     must be set (enforced where workflows are created/updated, not here) — a workflow can be
- *     item-only, remote-metadata-only (e.g. the dedicated-SQL-query case, enriching an already-existing
- *     item without ever touching it), or both, run in that order.
+ *     sources that can't). For a local workflow, each surviving record is then classified
+ *     new/changed/unchanged/missing by comparing its `identityKeyFields`-derived key against the
+ *     previous run's snapshot (`item_point_metadata.discoveredMetadata`) — only new/changed/missing
+ *     records proceed to Act. A remote workflow skips this classification entirely: every eligible
+ *     record is forwarded every run, with no local tracking to diff against.
+ *  4. Act — exactly one of two modes, decided by `itemFieldMapping`/`pushToOIAnalytics` (enforced where
+ *     workflows are created/updated, not here): local (`itemFieldMapping` set) creates/updates/orphans
+ *     a south item per record; remote (`pushToOIAnalytics` true) forwards the raw eligible records to
+ *     OIAnalytics as one message, with no local item involved at all.
  *
- * Deliberately NOT scoped by a south item group: `targetItemId`, when set, means the workflow manages
- * exactly one pre-existing item's point metadata (e.g. a SQL query item, or a single node someone
- * already created by hand). When null, the workflow is self-scoping — it owns whatever items its own
- * discovery creates, tracked via `south_items.created_by_workflow_id`, not group membership.
+ * Deliberately NOT scoped by a south item group — a local workflow is self-scoping, owning whatever
+ * items its own discovery creates, tracked via `south_items.created_by_workflow_id`, not group
+ * membership.
  */
 export interface ConfigurationWorkflowEntity extends BaseEntity {
   /** Unique per south connector — how a person picks this workflow out of a list. */
   name: string;
   southId: string;
-  targetItemId: string | null;
 
   /**
    * What to (re-)discover — connector-specific and required to be meaningful (e.g. an OPC-UA root node
@@ -60,14 +58,17 @@ export interface ConfigurationWorkflowEntity extends BaseEntity {
    */
   eligibilityFilter: Array<RecordFilterCondition>;
 
-  /** Discovered record → item name/settings, as a key → expression bag. Null = this workflow never creates/updates items. */
+  /**
+   * Local mode: discovered record → item name/settings, as a key → expression bag. Null when this
+   * workflow is remote (`pushToOIAnalytics` true) instead.
+   */
   itemFieldMapping: Record<string, string> | null;
 
   /**
-   * Discovered record + item fields → remote (OIAnalytics) point metadata, as a key → expression bag.
-   * Null = no remote push is configured for this workflow.
+   * Remote mode: forward every run's raw eligible records to OIAnalytics as-is instead of
+   * creating/updating items locally. Requires OIBus to be registered with OIAnalytics.
    */
-  remoteFieldMapping: Record<string, string> | null;
+  pushToOIAnalytics: boolean;
 
   /** Null means manual-only — the workflow only ever runs when explicitly triggered. */
   scanMode: ScanMode | null;
@@ -78,12 +79,11 @@ export interface ConfigurationWorkflowEntity extends BaseEntity {
 export interface ConfigurationWorkflowCommand {
   name: string;
   southId: string;
-  targetItemId: string | null;
   discoveryScope: Record<string, unknown>;
   identityKeyFields: Array<string>;
   eligibilityFilter: Array<RecordFilterCondition>;
   itemFieldMapping: Record<string, string> | null;
-  remoteFieldMapping: Record<string, string> | null;
+  pushToOIAnalytics: boolean;
   scanMode: ScanMode | null;
   enabled: boolean;
 }

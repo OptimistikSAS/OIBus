@@ -543,12 +543,11 @@ describe('SouthConnectorRepository', () => {
       {
         name: `Claim item workflow ${itemId}`,
         southId,
-        targetItemId: null,
         discoveryScope: { rootNodeId: 'ns=1;s=Root' },
         identityKeyFields: ['nodeId'],
         eligibilityFilter: [],
         itemFieldMapping: { name: '{{name}}' },
-        remoteFieldMapping: null,
+        pushToOIAnalytics: false,
         scanMode: null,
         enabled: true
       },
@@ -573,12 +572,11 @@ describe('SouthConnectorRepository', () => {
       {
         name: `Claim item workflow ${itemId}`,
         southId,
-        targetItemId: null,
         discoveryScope: {},
         identityKeyFields: [],
         eligibilityFilter: [],
         itemFieldMapping: { name: '{{name}}' },
-        remoteFieldMapping: null,
+        pushToOIAnalytics: false,
         scanMode: null,
         enabled: true
       },

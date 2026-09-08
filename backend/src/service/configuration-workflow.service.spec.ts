@@ -6,6 +6,7 @@ import ConfigurationWorkflowRepositoryMock from '../tests/__mocks__/repository/c
 import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
 import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
+import OIAnalyticsRegistrationServiceMock from '../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 import testData from '../tests/utils/test-data';
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import { ConfigurationWorkflowCommandDTO } from '../../shared/model/configuration-workflow.model';
@@ -15,16 +16,16 @@ let configurationWorkflowRepository: ConfigurationWorkflowRepositoryMock;
 let southConnectorRepository: SouthConnectorRepositoryMock;
 let scanModeRepository: ScanModeRepositoryMock;
 let engine: DataStreamEngineMock;
+let oIAnalyticsRegistrationService: OIAnalyticsRegistrationServiceMock;
 let service: ConfigurationWorkflowService;
 
-const selfScopedCommand: ConfigurationWorkflowCommandDTO = {
+const localCommand: ConfigurationWorkflowCommandDTO = {
   name: 'Reactor discovery',
-  targetItemId: null,
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
   eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
   itemFieldMapping: { name: '{{name}}', 'settings.nodeId': '{{nodeId}}' },
-  remoteFieldMapping: null,
+  pushToOIAnalytics: false,
   scanModeId: null,
   enabled: true
 };
@@ -33,12 +34,11 @@ const existingWorkflow: ConfigurationWorkflowEntity = {
   id: 'workflowId1',
   name: 'Reactor discovery',
   southId: testData.south.list[0].id,
-  targetItemId: null,
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
   eligibilityFilter: [],
   itemFieldMapping: { name: '{{name}}' },
-  remoteFieldMapping: null,
+  pushToOIAnalytics: false,
   scanMode: null,
   enabled: true,
   createdBy: 'userTest',
@@ -53,11 +53,13 @@ describe('Configuration Workflow Service', () => {
     southConnectorRepository = new SouthConnectorRepositoryMock();
     scanModeRepository = new ScanModeRepositoryMock();
     engine = new DataStreamEngineMock();
+    oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
     service = new ConfigurationWorkflowService(
       configurationWorkflowRepository,
       southConnectorRepository,
       scanModeRepository,
-      engine as never
+      engine as never,
+      oIAnalyticsRegistrationService
     );
     southConnectorRepository.findSouthById.mock.mockImplementation(() => testData.south.list[0]);
   });
@@ -116,88 +118,65 @@ describe('Configuration Workflow Service', () => {
 
     it('should throw when the south connector does not exist', () => {
       southConnectorRepository.findSouthById.mock.mockImplementation(() => null);
+      assert.throws(() => service.create('badSouth', localCommand, 'userTest'), new NotFoundError('South connector "badSouth" not found'));
+    });
+
+    it('should throw when both itemFieldMapping and pushToOIAnalytics are set', () => {
       assert.throws(
-        () => service.create('badSouth', selfScopedCommand, 'userTest'),
-        new NotFoundError('South connector "badSouth" not found')
+        () => service.create(testData.south.list[0].id, { ...localCommand, pushToOIAnalytics: true }, 'userTest'),
+        new OIBusValidationError('A configuration workflow cannot both create/update items and push to OIAnalytics')
       );
     });
 
-    it('should throw when targetItemId is set but the item does not exist', () => {
-      southConnectorRepository.findItemById.mock.mockImplementation(() => null);
+    it('should throw when neither itemFieldMapping nor pushToOIAnalytics is set', () => {
       assert.throws(
-        () => service.create(testData.south.list[0].id, { ...selfScopedCommand, targetItemId: 'missingItem' }, 'userTest'),
-        new NotFoundError('South item "missingItem" not found')
+        () => service.create(testData.south.list[0].id, { ...localCommand, itemFieldMapping: null, pushToOIAnalytics: false }, 'userTest'),
+        new OIBusValidationError('A configuration workflow must either create/update items or push to OIAnalytics')
       );
     });
 
-    it('should not check the item when targetItemId is null (self-scoped)', () => {
-      service.create(testData.south.list[0].id, selfScopedCommand, 'userTest');
-      assert.strictEqual(southConnectorRepository.findItemById.mock.calls.length, 0);
-    });
-
-    it('should throw when both itemFieldMapping and remoteFieldMapping are null', () => {
+    it('should throw when pushToOIAnalytics is set but OIBus is not registered', () => {
+      oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => ({ status: 'NOT_REGISTERED' }) as never);
       assert.throws(
-        () =>
-          service.create(testData.south.list[0].id, { ...selfScopedCommand, itemFieldMapping: null, remoteFieldMapping: null }, 'userTest'),
-        new OIBusValidationError('At least one of itemFieldMapping or remoteFieldMapping must be set')
+        () => service.create(testData.south.list[0].id, { ...localCommand, itemFieldMapping: null, pushToOIAnalytics: true }, 'userTest'),
+        new OIBusValidationError('OIBus must be registered with OIAnalytics to push a configuration workflow result')
       );
     });
 
-    it('should allow itemFieldMapping null when remoteFieldMapping is set and targetItemId is set (remote-metadata-only)', () => {
-      southConnectorRepository.findItemById.mock.mockImplementation(() => testData.south.list[0].items[0]);
-      service.create(
-        testData.south.list[0].id,
-        {
-          ...selfScopedCommand,
-          targetItemId: testData.south.list[0].items[0].id,
-          itemFieldMapping: null,
-          remoteFieldMapping: { unit: '{{unit}}' }
-        },
-        'userTest'
-      );
+    it('should allow pushToOIAnalytics when OIBus is registered', () => {
+      oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => ({ status: 'REGISTERED' }) as never);
+      service.create(testData.south.list[0].id, { ...localCommand, itemFieldMapping: null, pushToOIAnalytics: true }, 'userTest');
       assert.strictEqual(configurationWorkflowRepository.create.mock.calls.length, 1);
-    });
-
-    it('should throw when itemFieldMapping is null and targetItemId is also null (no way to know which item)', () => {
-      assert.throws(
-        () =>
-          service.create(
-            testData.south.list[0].id,
-            { ...selfScopedCommand, targetItemId: null, itemFieldMapping: null, remoteFieldMapping: { unit: '{{unit}}' } },
-            'userTest'
-          ),
-        new OIBusValidationError('targetItemId is required when itemFieldMapping is not set')
-      );
     });
 
     it('should throw when a workflow with the same name already exists for this south connector', () => {
       configurationWorkflowRepository.findByNameAndSouthId.mock.mockImplementation(() => existingWorkflow);
       assert.throws(
-        () => service.create(testData.south.list[0].id, selfScopedCommand, 'userTest'),
-        new OIBusValidationError(`A configuration workflow with name "${selfScopedCommand.name}" already exists for this south connector`)
+        () => service.create(testData.south.list[0].id, localCommand, 'userTest'),
+        new OIBusValidationError(`A configuration workflow with name "${localCommand.name}" already exists for this south connector`)
       );
     });
 
     it('should default scanMode to null when scanModeId is null (manual-only)', () => {
-      service.create(testData.south.list[0].id, selfScopedCommand, 'userTest');
+      service.create(testData.south.list[0].id, localCommand, 'userTest');
       const createCall = configurationWorkflowRepository.create.mock.calls[0];
       assert.strictEqual((createCall.arguments[0] as { scanMode: unknown }).scanMode, null);
     });
 
     it('should resolve scanModeId into a full ScanMode via the scan mode repository', () => {
       scanModeRepository.findAll.mock.mockImplementation(() => testData.scanMode.list);
-      service.create(testData.south.list[0].id, { ...selfScopedCommand, scanModeId: testData.scanMode.list[0].id }, 'userTest');
+      service.create(testData.south.list[0].id, { ...localCommand, scanModeId: testData.scanMode.list[0].id }, 'userTest');
       const createCall = configurationWorkflowRepository.create.mock.calls[0];
       assert.deepStrictEqual((createCall.arguments[0] as { scanMode: unknown }).scanMode, testData.scanMode.list[0]);
     });
 
     it('should throw when scanModeId does not match any existing scan mode', () => {
       scanModeRepository.findAll.mock.mockImplementation(() => testData.scanMode.list);
-      assert.throws(() => service.create(testData.south.list[0].id, { ...selfScopedCommand, scanModeId: 'badScanMode' }, 'userTest'));
+      assert.throws(() => service.create(testData.south.list[0].id, { ...localCommand, scanModeId: 'badScanMode' }, 'userTest'));
     });
 
     it('should create the workflow scoped to the given south connector id', () => {
-      const created = service.create(testData.south.list[0].id, selfScopedCommand, 'userTest');
+      const created = service.create(testData.south.list[0].id, localCommand, 'userTest');
       assert.strictEqual(created, existingWorkflow);
       const createCall = configurationWorkflowRepository.create.mock.calls[0];
       assert.strictEqual((createCall.arguments[0] as { southId: string }).southId, testData.south.list[0].id);
@@ -205,7 +184,7 @@ describe('Configuration Workflow Service', () => {
     });
 
     it("should tell the engine to reload this south connector's scheduled workflows", () => {
-      service.create(testData.south.list[0].id, selfScopedCommand, 'userTest');
+      service.create(testData.south.list[0].id, localCommand, 'userTest');
       assert.deepStrictEqual(engine.reloadWorkflows.mock.calls[0].arguments, [testData.south.list[0].id]);
     });
   });
@@ -219,27 +198,34 @@ describe('Configuration Workflow Service', () => {
     it('should throw when the workflow does not exist (ownership check reused from findById)', () => {
       configurationWorkflowRepository.findById.mock.mockImplementation(() => null);
       assert.throws(
-        () => service.update(testData.south.list[0].id, 'workflowId1', selfScopedCommand, 'updateUser'),
+        () => service.update(testData.south.list[0].id, 'workflowId1', localCommand, 'updateUser'),
         new NotFoundError('Configuration workflow "workflowId1" not found')
       );
     });
 
     it('should allow renaming to its own current name (excluded from the duplicate check)', () => {
       configurationWorkflowRepository.findByNameAndSouthId.mock.mockImplementation(() => existingWorkflow);
-      service.update(testData.south.list[0].id, existingWorkflow.id, selfScopedCommand, 'updateUser');
+      service.update(testData.south.list[0].id, existingWorkflow.id, localCommand, 'updateUser');
       assert.strictEqual(configurationWorkflowRepository.update.mock.calls.length, 1);
     });
 
     it('should throw when renaming to a name already used by a different workflow', () => {
       configurationWorkflowRepository.findByNameAndSouthId.mock.mockImplementation(() => ({ ...existingWorkflow, id: 'otherWorkflowId' }));
       assert.throws(
-        () => service.update(testData.south.list[0].id, existingWorkflow.id, selfScopedCommand, 'updateUser'),
-        new OIBusValidationError(`A configuration workflow with name "${selfScopedCommand.name}" already exists for this south connector`)
+        () => service.update(testData.south.list[0].id, existingWorkflow.id, localCommand, 'updateUser'),
+        new OIBusValidationError(`A configuration workflow with name "${localCommand.name}" already exists for this south connector`)
+      );
+    });
+
+    it('should throw when both itemFieldMapping and pushToOIAnalytics are set', () => {
+      assert.throws(
+        () => service.update(testData.south.list[0].id, existingWorkflow.id, { ...localCommand, pushToOIAnalytics: true }, 'updateUser'),
+        new OIBusValidationError('A configuration workflow cannot both create/update items and push to OIAnalytics')
       );
     });
 
     it('should update and return the refreshed workflow', () => {
-      const updated = service.update(testData.south.list[0].id, existingWorkflow.id, selfScopedCommand, 'updateUser');
+      const updated = service.update(testData.south.list[0].id, existingWorkflow.id, localCommand, 'updateUser');
       assert.strictEqual(updated, existingWorkflow);
       const updateCall = configurationWorkflowRepository.update.mock.calls[0];
       assert.strictEqual(updateCall.arguments[0], existingWorkflow.id);
@@ -247,7 +233,7 @@ describe('Configuration Workflow Service', () => {
     });
 
     it("should tell the engine to reload this south connector's scheduled workflows", () => {
-      service.update(testData.south.list[0].id, existingWorkflow.id, selfScopedCommand, 'updateUser');
+      service.update(testData.south.list[0].id, existingWorkflow.id, localCommand, 'updateUser');
       assert.deepStrictEqual(engine.reloadWorkflows.mock.calls[0].arguments, [testData.south.list[0].id]);
     });
 
@@ -255,7 +241,7 @@ describe('Configuration Workflow Service', () => {
       configurationWorkflowRepository.findById.mock.mockImplementationOnce(() => existingWorkflow, 0);
       configurationWorkflowRepository.findById.mock.mockImplementationOnce(() => null, 1);
       assert.throws(
-        () => service.update(testData.south.list[0].id, existingWorkflow.id, selfScopedCommand, 'updateUser'),
+        () => service.update(testData.south.list[0].id, existingWorkflow.id, localCommand, 'updateUser'),
         new NotFoundError(`Failed to update configuration workflow "${existingWorkflow.id}"`)
       );
     });

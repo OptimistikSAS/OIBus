@@ -70,12 +70,11 @@ const EXACT_PLACEHOLDER_REGEX = /^\{\{\s*([\w.]+)\s*\}\}$/;
 const PLACEHOLDER_REGEX = /\{\{\s*([\w.]+)\s*\}\}/g;
 
 /**
- * Resolves every value of one workflow field mapping (`itemFieldMapping`/`remoteFieldMapping`) against
- * a context object - the discovered record for `itemFieldMapping`, or the discovered record plus the
- * already-created/updated item's own fields (nested under `item`) for `remoteFieldMapping`. This is a
- * deliberate `{{field}}` placeholder syntax rather than the `@Placeholder` convention used elsewhere in
- * OIBus (filename/query variables): those substitute a small, connector-defined set of built-in tokens,
- * while a workflow's field names are arbitrary and come from whatever the discovered record contains.
+ * Resolves every value of a workflow's `itemFieldMapping` against the discovered record it was matched
+ * against. This is a deliberate `{{field}}` placeholder syntax rather than the `@Placeholder` convention
+ * used elsewhere in OIBus (filename/query variables): those substitute a small, connector-defined set of
+ * built-in tokens, while a workflow's field names are arbitrary and come from whatever the discovered
+ * record contains.
  *
  * A template that is *exactly* one placeholder resolves to the field's raw value, preserving its type -
  * so a numeric discovered field maps onto a numeric setting untouched, not stringified. A template with
@@ -101,8 +100,9 @@ function resolveTemplate(context: Record<string, unknown>, template: string): un
   });
 }
 
-// `path` is a single key for a record-level field, or one dotted level (e.g. `item.name`) for the
-// `item` sub-context `remoteFieldMapping` gets - nothing deeper is supported.
+// `path` is a single key of the discovered record - `itemFieldMapping` values only ever resolve
+// against the flat record itself, so dotted-path lookup isn't exercised in practice, but is kept
+// generic since a discovered record can itself carry nested objects (e.g. a raw OPC-UA node's metadata).
 function lookupField(context: Record<string, unknown>, path: string): unknown {
   const [first, ...rest] = path.split('.');
   let value: unknown = context[first];

@@ -35,7 +35,7 @@
           <tr>
             <th translate="south.workflows.name"></th>
             <th translate="south.workflows.scan-mode"></th>
-            <th translate="south.workflows.target-item"></th>
+            <th translate="south.workflows.mode"></th>
             <th translate="south.workflows.enabled"></th>
             <th style="width: 12rem"></th>
           </tr>
@@ -51,13 +51,7 @@
                   <span class="text-muted" translate="south.workflows.scan-mode-manual-only"></span>
                 }
               </td>
-              <td>
-                @if (getTargetItemName(workflow); as itemName) {
-                  {{ itemName }}
-                } @else {
-                  <span class="text-muted" translate="south.workflows.target-item-self-scoped"></span>
-                }
-              </td>
+              <td [translate]="getModeKey(workflow)"></td>
               <td>
                 <span class="fa" [class.fa-check]="workflow.enabled" [class.fa-times]="!workflow.enabled"></span>
               </td>
