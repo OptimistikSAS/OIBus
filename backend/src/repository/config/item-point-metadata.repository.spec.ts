@@ -24,12 +24,11 @@ describe('Item Point Metadata Repository', () => {
       {
         name: 'Item point metadata test workflow',
         southId: testData.south.list[0].id,
-        targetItemId: null,
         discoveryScope: { rootNodeId: 'ns=1;s=Root' },
         identityKeyFields: ['nodeId'],
         eligibilityFilter: [],
         itemFieldMapping: { name: '{{name}}' },
-        remoteFieldMapping: { unit: '{{unit}}' },
+        pushToOIAnalytics: false,
         scanMode: null,
         enabled: true
       },
@@ -49,14 +48,7 @@ describe('Item Point Metadata Repository', () => {
       workflowId: '',
       southItemId: '',
       discoveredEntryKey: 'ns=1;s=Temperature',
-      discoveredMetadata: { nodeId: 'ns=1;s=Temperature', type: 'Variable' },
-      description: 'Reactor temperature',
-      unit: '°C',
-      minAcceptableValue: -20,
-      maxAcceptableValue: 120,
-      resolution: null,
-      resamplingMethod: null,
-      remoteMetadataExtra: null
+      discoveredMetadata: { nodeId: 'ns=1;s=Temperature', type: 'Variable' }
     };
 
     beforeEach(() => {
@@ -69,12 +61,8 @@ describe('Item Point Metadata Repository', () => {
       assert.strictEqual(created.workflowId, workflowId);
       assert.strictEqual(created.southItemId, itemId);
       assert.deepStrictEqual(created.discoveredMetadata, { nodeId: 'ns=1;s=Temperature', type: 'Variable' });
-      assert.strictEqual(created.unit, '°C');
-      assert.strictEqual(created.minAcceptableValue, -20);
-      assert.strictEqual(created.maxAcceptableValue, 120);
       assert.strictEqual(created.status, 'active');
       assert.strictEqual(created.orphanedAt, null);
-      assert.strictEqual(created.lastPushedAt, null);
 
       assert.deepStrictEqual(repository.findById(created.id), created);
     });
@@ -96,7 +84,7 @@ describe('Item Point Metadata Repository', () => {
       assert.ok(all.every(point => point.workflowId === workflowId));
     });
 
-    it('should find all points sharing one item (the N:1 SQL case)', () => {
+    it('should find all points sharing one item', () => {
       repository.create({ ...write, workflowId, southItemId: itemId, discoveredEntryKey: 'columnA' });
       repository.create({ ...write, workflowId, southItemId: itemId, discoveredEntryKey: 'columnB' });
       repository.create({ ...write, workflowId, southItemId: otherItemId, discoveredEntryKey: 'columnC' });
@@ -113,23 +101,13 @@ describe('Item Point Metadata Repository', () => {
 
       repository.update(created.id, {
         discoveredEntryKey: created.discoveredEntryKey,
-        discoveredMetadata: { nodeId: 'ns=1;s=Reactivate', type: 'Variable' },
-        description: 'Updated description',
-        unit: '°F',
-        minAcceptableValue: 0,
-        maxAcceptableValue: 250,
-        resolution: 0.1,
-        resamplingMethod: 'mean',
-        remoteMetadataExtra: { calibratedAt: '2026-01-01' }
+        discoveredMetadata: { nodeId: 'ns=1;s=Reactivate', type: 'Variable' }
       });
 
       const updated = repository.findById(created.id)!;
       assert.strictEqual(updated.status, 'active');
       assert.strictEqual(updated.orphanedAt, null);
-      assert.strictEqual(updated.unit, '°F');
-      assert.strictEqual(updated.resolution, 0.1);
-      assert.strictEqual(updated.resamplingMethod, 'mean');
-      assert.deepStrictEqual(updated.remoteMetadataExtra, { calibratedAt: '2026-01-01' });
+      assert.deepStrictEqual(updated.discoveredMetadata, { nodeId: 'ns=1;s=Reactivate', type: 'Variable' });
     });
 
     it('should mark a point orphaned without deleting it', () => {
@@ -140,15 +118,6 @@ describe('Item Point Metadata Repository', () => {
       const found = repository.findById(created.id)!;
       assert.strictEqual(found.status, 'orphaned');
       assert.ok(found.orphanedAt);
-    });
-
-    it('should mark a point pushed', () => {
-      const created = repository.create({ ...write, workflowId, southItemId: itemId, discoveredEntryKey: 'ns=1;s=ToPush' });
-      assert.strictEqual(created.lastPushedAt, null);
-
-      repository.markPushed(created.id);
-
-      assert.ok(repository.findById(created.id)!.lastPushedAt);
     });
 
     it('should delete a point', () => {

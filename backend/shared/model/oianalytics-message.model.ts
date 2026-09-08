@@ -3,7 +3,7 @@ import { Instant } from './types';
 export const OIANALYTICS_MESSAGE_STATUS = ['PENDING', 'COMPLETED', 'ERRORED'] as const;
 export type OIAnalyticsMessageStatus = (typeof OIANALYTICS_MESSAGE_STATUS)[number];
 
-export const OIANALYTICS_MESSAGE_TYPES = ['full-config', 'history-queries'] as const;
+export const OIANALYTICS_MESSAGE_TYPES = ['full-config', 'history-queries', 'configuration-workflow-result'] as const;
 export type OIAnalyticsMessageType = (typeof OIANALYTICS_MESSAGE_TYPES)[number];
 
 export interface OIAnalyticsMessageSearchParam {

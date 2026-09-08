@@ -221,3 +221,170 @@ This panel is useful for:
 - Verifying that a new item has started collecting data (check that **Tracked instant** is populated).
 - Diagnosing data gaps — compare the tracked instant against the current time to see how far behind an item is.
 - Confirming the exact file or record that was last seen by file-based connectors.
+
+---
+
+## Configuration Workflows {#configuration-workflows}
+
+Rather than creating and maintaining items by hand, a **Configuration Workflow** browses or queries a data source,
+decides which of what it finds is worth acting on, and either creates/updates items from it or forwards it to
+OIAnalytics — run once on demand, or on a recurring schedule like any other collection.
+
+Each workflow belongs to one South connector and runs in exactly one of two mutually exclusive modes, picked when the
+workflow is created:
+
+- **Create/update items locally** — the workflow owns whatever items its own discovery creates, updating them on
+  later runs and disabling (never deleting) ones no longer discovered.
+- **Push to OIAnalytics** — every run forwards the raw eligible records to OIAnalytics as-is, with no field mapping,
+  no local item, and no diffing against a previous run. Requires OIBus to be
+  [registered with OIAnalytics](../installation/oianalytics.mdx) — this is the only mode available for SQL-family
+  connectors (see [Mode: Local vs Remote](#mode-local-vs-remote)).
+
+### Opening the Workflow List {#opening-the-workflow-list}
+
+On a South connector's page, click **Manage sync configuration** (next to **Manage groups**) to open the list of
+workflows for that connector, then use the **+** button to create one. Each row in the list also exposes:
+
+| Action           | Description                                                                                                            |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Run now** (▶)  | Trigger a real run immediately — see [Running a Workflow](#running-a-workflow).                                       |
+| **Preview** (👁) | Dry-run the workflow and inspect what it would do, without writing anything.                                          |
+| **Run history**  | Past runs for this workflow, with their status and counts — see [Run History](#run-history).                         |
+| **Edit** (✏️)    | Open the workflow for editing.                                                                                        |
+| **Duplicate**    | Open the create form pre-filled with this workflow's settings (name suffixed `-copy`), saved as an independent copy.  |
+| **Delete**       | Remove the workflow. Items and point metadata it already produced are **not** deleted.                                |
+
+### Discovery Scope {#discovery-scope}
+
+What a workflow (re-)browses or queries depends on the South connector's type:
+
+| Connector family                                     | Discovery scope                                                                                                                                                                       |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Tree-based** (OPC UA, Folder Scanner)                | Click **Explore** to pick a root node to browse from, using the same interactive tree browser as the connector's own standalone Explore action. Leave it unset to browse the entire data source. |
+| **SQL-family** (MSSQL, MySQL, PostgreSQL, Oracle, SQLite) | A dedicated, syntax-highlighted SQL editor for a metadata query, independent of any item's own query — each row it returns becomes one discovered record.                          |
+| Any other connector type                               | Discovery isn't supported yet; the section shows a short message instead of a scope editor.                                                                                        |
+
+For SQL-family connectors, use **Test query** to run the query immediately and inspect its raw rows (as a table or
+JSON) before saving the workflow — the same round-trip a real run would make, just without acting on the result.
+SQLite additionally shows a read-only reference tree of tables and columns above the editor, to browse the schema
+while writing the query.
+
+### Workflow Settings {#workflow-settings}
+
+| Setting                | Description                                                                                                                                   | Example Value              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| **Name**                | Unique label for this workflow within the South connector.                                                                                    | `Reactor OPC-UA discovery` |
+| **Schedule**            | Scan mode driving scheduled runs. Leave as **Manual only** to run this workflow exclusively via **Run now**.                                  | `Every 1 hour`              |
+| **Mode**                | **Create/update items locally** or **Push to OIAnalytics** — see [below](#mode-local-vs-remote). Fixed to Push to OIAnalytics, and hidden, for SQL-family connectors. | `Create/update items locally` |
+| **Identity key fields** | One or more discovered-record field names whose combined value uniquely identifies a record — see [below](#identity-key-fields).             | `nodeId`                    |
+| **Eligibility filter**  | Conditions a discovered record must all satisfy to be acted on — see [below](#eligibility-filter).                                            | `type equals Variable`     |
+| **Enabled**             | Whether scheduled runs fire at all. **Run now** still works while disabled.                                                                   | Enabled/Disabled           |
+
+### Identity Key Fields {#identity-key-fields}
+
+**Identity key fields** name the discovered-record field(s) (e.g. `nodeId` for OPC UA, a `column_name` returned by a
+metadata query for SQL) whose combined value uniquely identifies a record. At least one is required, regardless of
+mode, but each mode uses it differently:
+
+- **Create/update items locally** re-discovers its data source on every run, so it needs a way to recognize "the
+  same" record from one run to the next — otherwise every run would look like an all-new set of records. Matched
+  against the previous run, a record is new, changed, or unchanged, and a previously-seen key that no longer comes
+  back is treated as missing (see [Running a Workflow](#running-a-workflow)).
+- **Push to OIAnalytics** never compares against a previous run — the identity key fields are only used to
+  de-duplicate records discovered more than once within the *same* run (a later duplicate overwrites an earlier one)
+  and are sent to OIAnalytics alongside the records themselves, so it knows which fields form each record's identity.
+
+### Eligibility Filter {#eligibility-filter}
+
+Conditions a discovered record must **all** satisfy (logical AND) to be considered at all — leave it empty to make
+every discovered record eligible. Each condition has:
+
+| Setting      | Description                                                                                         | Example Value |
+| ------------ | ----------------------------------------------------------------------------------------------------- | -------------- |
+| **Field**    | A key of the discovered record to test.                                                                | `type`         |
+| **Operator** | `equals`, `not equals`, `contains`, `matches` (regex), `exists`, `greater than`, `less than`.           | `equals`       |
+| **Value**    | The value to compare against — not used for `exists`.                                                  | `Variable`     |
+
+Use the pencil/trash icons on a condition to edit or remove it, or the fields below the table to add a new one.
+
+### Mode: Local vs Remote {#mode-local-vs-remote}
+
+Pick **Create/update items locally** or **Push to OIAnalytics** — the two are mutually exclusive, and switching
+between them clears whatever was configured for the other.
+
+**Create/update items locally** has the workflow create or update its own items from what it discovers. Every field
+this South connector's items support is listed (the connector-specific settings, plus the schedule/group fields
+every item has), and each can be mapped to:
+
+- nothing (**Not mapped**) — the item falls back to its own default for that field,
+- a fixed constant (a dropdown for boolean/choice/schedule/group fields, free text otherwise), or
+- a `{{field}}` expression pulling from the discovered record — see [Mapping Expressions](#mapping-expressions).
+
+A field badged **Required** must resolve to something once every other currently-visible field is accounted for —
+saving is blocked otherwise. A field badged **Controls visibility** gates whether some other field is even shown,
+so it can only be mapped to a constant (its value must be knowable while editing, not resolved per record at run
+time) — the same restriction applies to the schedule and group fields themselves, and to every history-specific
+field (max read interval, read delay, the time offsets, recovery strategy, sync with group). The **Group** field
+defaults to **None** (self-scoped item) and lets you create, edit, or delete groups inline, exactly like the item
+edit form's own group dropdown; picking a group is exempt from the scan-mode field's own **Required** badge, since
+the item then inherits the group's schedule instead.
+
+**Push to OIAnalytics** forwards every run's raw eligible records to OIAnalytics as-is — no field mapping, no local
+item, and no per-record decision beyond the eligibility filter itself. It requires OIBus to be
+[registered with OIAnalytics](../installation/oianalytics.mdx); saving (and later, running) is blocked otherwise.
+
+:::note Fixed to Push to OIAnalytics for SQL-family connectors
+For a SQL-family connector, one item is one free-form query, and a query can return several distinct points in a
+single pass — so item and point aren't the same thing there, and a workflow never creates or updates items for
+these connectors. The mode picker is hidden and locked to **Push to OIAnalytics**.
+:::
+
+### Mapping Expressions {#mapping-expressions}
+
+Item field mapping (local mode only) uses a `{{field}}` placeholder syntax:
+
+- A value that is **exactly** one placeholder (e.g. `{{nodeId}}`) resolves to that field's raw value, preserving
+  its type — a numeric discovered field lands on a numeric setting untouched, not stringified.
+- A placeholder embedded in other text (e.g. `Sensor {{nodeId}}`) is string interpolation instead — the result is
+  always a string.
+- A field missing from the discovered record resolves to an empty value rather than failing the run.
+
+### Running a Workflow {#running-a-workflow}
+
+A run always starts with **Retrieve** (discover the data source, exactly as the discovery scope defines) and
+**Decide** (keep only eligible records), then **Act** differently depending on the workflow's mode:
+
+- **Create/update items locally** diffs the eligible records by identity key against the previous run: create/update
+  an item for anything new, changed, or reactivated; skip anything unchanged; disable — never delete — the item for
+  anything no longer discovered, with the reason recorded as "Configuration workflow no longer discovers this
+  entry".
+- **Push to OIAnalytics** does neither — it never compares against a previous run, so nothing is ever created,
+  updated, or disabled. The eligible records (de-duplicated by identity key, see [Identity Key
+  Fields](#identity-key-fields)) are simply forwarded to OIAnalytics as one message, once per run.
+
+:::tip Run now works even on a disabled connector or item
+Building and testing a workflow shouldn't require switching the connector on first — **Run now** works the same
+way the standalone Explore feature already does. A **scheduled** run, however, is silently skipped if the South
+connector itself is disabled.
+:::
+
+Use **Preview** to see what a run would do without doing it — the same discovery and eligibility filtering as a
+real run, without writing anything. For a local workflow, each record is classified as **New**, **Changed**,
+**Unchanged**, **Reactivated**, or **Missing**, alongside the raw discovered/previous metadata; for a remote
+workflow, it's simply the raw eligible records that would be sent, exactly as discovered. Discovery is a real
+round-trip to the data source either way, so previewing a large source costs what running it for real costs, minus
+the writes.
+
+### Run History {#run-history}
+
+Every run — manual or scheduled, whether it succeeds or fails — is recorded. The **Run history** page (reachable
+from the workflow list) shows, per run:
+
+| Column           | Description                                                                          |
+| ----------------- | --------------------------------------------------------------------------------------- |
+| **Status**        | `Running`, `Completed`, or `Errored`.                                                    |
+| **Trigger type**  | `Manual` (via Run now) or `Scheduled`.                                                   |
+| **Started/Completed at** | When the run started, and when it finished (if it has).                          |
+| **Triggered by**  | The user who clicked Run now; empty for a scheduled run.                                 |
+| **Counts**        | Discovered / Eligible / Created / Updated / Disabled. For a remote (Push to OIAnalytics) workflow, Created/Updated/Disabled stay at zero — that mode never touches items. |
+| **Error**         | The failure message, if the run errored.                                                 |

@@ -80,6 +80,9 @@ export default class OIAnalyticsMessageService {
         case 'history-queries':
           await this.sendHistoryQueriesMessage(this.configTransferBuilderService.buildHistoryQueriesConfiguration());
           break;
+        case 'configuration-workflow-result':
+          await this.sendConfigurationWorkflowResult(message.payload);
+          break;
       }
       this.oIAnalyticsMessageRepository.markAsCompleted(message.id, DateTime.now().toUTC().toISO());
       this.removeMessageFromQueue(message.id);
@@ -183,6 +186,20 @@ export default class OIAnalyticsMessageService {
     this.addMessageToQueue(message);
   }
 
+  /**
+   * Queue a remote (push-to-OIAnalytics) Configuration Workflow run's result. Unlike
+   * createFullConfigMessageIfNotPending/createFullHistoryQueriesMessageIfNotPending, there's no
+   * "if not pending" dedup here: each run's discovered records are their own one-off snapshot, not a
+   * resync of current state, so every run gets its own message rather than collapsing into whatever's
+   * already queued. The caller (ConfigurationWorkflowRunService) is expected to have already checked
+   * registration before running at all - queuing regardless keeps this symmetrical with the "not
+   * registered" no-op below, which `run()` itself still enforces before ever sending anything.
+   */
+  createConfigurationWorkflowResultMessage(workflowRunId: string, payload: string): void {
+    const message = this.oIAnalyticsMessageRepository.create({ type: 'configuration-workflow-result', workflowRunId, payload });
+    this.addMessageToQueue(message);
+  }
+
   private removeMessageFromQueue(messageId: string): void {
     this.messagesQueue = this.messagesQueue.filter(message => message.id !== messageId);
   }
@@ -206,5 +223,11 @@ export default class OIAnalyticsMessageService {
     const registrationSettings = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
     await this.oIAnalyticsClient.sendHistoryQuery(registrationSettings, JSON.stringify(list));
     this.logger.debug(`${list.historyQueries.length} history queries sent to OIAnalytics`);
+  }
+
+  private async sendConfigurationWorkflowResult(payload: string): Promise<void> {
+    const registrationSettings = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
+    await this.oIAnalyticsClient.sendConfigurationWorkflowResult(registrationSettings, payload);
+    this.logger.debug('Configuration workflow result sent to OIAnalytics');
   }
 }

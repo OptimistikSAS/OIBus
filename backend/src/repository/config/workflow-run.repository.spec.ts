@@ -20,12 +20,11 @@ describe('Workflow Run Repository', () => {
       {
         name: 'Workflow run test workflow',
         southId: testData.south.list[0].id,
-        targetItemId: null,
         discoveryScope: { rootNodeId: 'ns=1;s=Root' },
         identityKeyFields: ['nodeId'],
         eligibilityFilter: [],
         itemFieldMapping: { name: '{{name}}' },
-        remoteFieldMapping: null,
+        pushToOIAnalytics: false,
         scanMode: null,
         enabled: true
       },
