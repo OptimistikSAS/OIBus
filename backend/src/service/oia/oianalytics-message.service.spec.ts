@@ -9,7 +9,7 @@ import OIAnalyticsMessageRepositoryMock from '../../tests/__mocks__/repository/c
 import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 import ConfigTransferBuilderServiceMock from '../../tests/__mocks__/service/config-transfer/config-transfer-builder-service.mock';
-import { OIAnalyticsMessageHistoryQueries } from '../../model/oianalytics-message.model';
+import { OIAnalyticsMessageConfigurationWorkflowResult, OIAnalyticsMessageHistoryQueries } from '../../model/oianalytics-message.model';
 import { OIBusFullConfigurationCommandDTO, OIBusHistoryQueriesCommandDTO } from './oianalytics.model';
 import DeferredPromise from '../deferred-promise';
 import { DateTime } from 'luxon';
@@ -447,5 +447,41 @@ describe('OIAnalytics message service without completed registration', () => {
     assert.strictEqual(oIAnalyticsClient.sendHistoryQuery.mock.calls[0].arguments[0], testData.oIAnalytics.registration.completed);
     const sentHistoryQueries = JSON.parse(oIAnalyticsClient.sendHistoryQuery.mock.calls[0].arguments[1] as string);
     assert.deepStrictEqual(sentHistoryQueries, builtHistoryQueries);
+  });
+
+  it('should queue and send a configuration-workflow-result message with its own stored payload, unconditionally (no pending dedup)', async () => {
+    const payload = JSON.stringify({ southId: 'south1', workflowId: 'workflow1', records: [{ tagName: 'a' }] });
+    const queuedMessage: OIAnalyticsMessageConfigurationWorkflowResult = {
+      id: 'messageId4',
+      status: 'PENDING',
+      error: null,
+      completedDate: null,
+      type: 'configuration-workflow-result',
+      workflowRunId: 'runId1',
+      payload,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(() => testData.oIAnalytics.registration.pending);
+    oIAnalyticsMessageRepository.list = mock.fn(() => []);
+    service.start(); // wires up the 'next' trigger listener run() relies on
+
+    oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(() => testData.oIAnalytics.registration.completed);
+    oIAnalyticsMessageRepository.create = mock.fn(() => queuedMessage);
+
+    service.createConfigurationWorkflowResultMessage('runId1', payload);
+
+    assert.deepStrictEqual(oIAnalyticsMessageRepository.create.mock.calls[0].arguments, [
+      { type: 'configuration-workflow-result', workflowRunId: 'runId1', payload }
+    ]);
+    await flushPromises();
+    assert.strictEqual(oIAnalyticsClient.sendConfigurationWorkflowResult.mock.calls.length, 1);
+    assert.strictEqual(
+      oIAnalyticsClient.sendConfigurationWorkflowResult.mock.calls[0].arguments[0],
+      testData.oIAnalytics.registration.completed
+    );
+    assert.strictEqual(oIAnalyticsClient.sendConfigurationWorkflowResult.mock.calls[0].arguments[1], payload);
   });
 });

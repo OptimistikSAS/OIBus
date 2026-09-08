@@ -11,18 +11,19 @@ import {
   WorkflowPreviewResultDTO
 } from '../../shared/model/configuration-workflow.model';
 import { WorkflowRunCounts, WorkflowRunEntity, WorkflowRunTriggerType } from '../model/workflow-run.model';
-import { ItemPointMetadataEntity, ItemPointMetadataWrite } from '../model/item-point-metadata.model';
+import { ItemPointMetadataEntity } from '../model/item-point-metadata.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import { SouthConnectorItemCommandDTO } from '../../shared/model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { OIBusRecord } from '../../shared/model/engine.model';
+import { OIBusConfigurationWorkflowResultCommandDTO } from './oia/oianalytics.model';
 import { Page } from '../../shared/model/types';
 import { OIBusValidationError } from '../model/types';
 
-// Minimal slices of SouthService/DataStreamEngine this orchestrator actually calls - kept as local
-// interfaces (matching the ISouthService/IHistoryEngine precedent in history-query.service.ts) so a
-// plain SouthServiceMock/DataStreamEngineMock satisfies them structurally, without extending the real
-// classes just for testing.
+// Minimal slices of SouthService/DataStreamEngine/OIAnalyticsMessageService/OIAnalyticsRegistrationService
+// this orchestrator actually calls - kept as local interfaces (matching the ISouthService/IHistoryEngine
+// precedent in history-query.service.ts) so a plain mock satisfies them structurally, without extending
+// the real classes just for testing.
 interface IConfigurationWorkflowSouthService {
   createItem(
     southId: string,
@@ -42,6 +43,14 @@ interface IConfigurationWorkflowService {
   findById(southId: string, workflowId: string): ConfigurationWorkflowEntity;
 }
 
+interface IOIAnalyticsMessageService {
+  createConfigurationWorkflowResultMessage(workflowRunId: string, payload: string): void;
+}
+
+interface IOIAnalyticsRegistrationService {
+  getRegistrationSettings(): { status: string } | null;
+}
+
 const ZERO_COUNTS: WorkflowRunCounts = {
   discoveredCount: 0,
   eligibleCount: 0,
@@ -50,10 +59,6 @@ const ZERO_COUNTS: WorkflowRunCounts = {
   disabledCount: 0,
   pushedCount: 0
 };
-
-// The known ItemPointMetadataWrite columns a remoteFieldMapping can target directly - anything else
-// falls into remoteMetadataExtra instead of being silently dropped.
-const KNOWN_REMOTE_FIELDS = ['description', 'unit', 'minAcceptableValue', 'maxAcceptableValue', 'resolution', 'resamplingMethod'];
 
 // Every itemFieldMapping value is written as a mapping expression (a literal constant, or a
 // {{field}} template) - i.e. a string - regardless of what type the target field actually needs.
@@ -77,16 +82,20 @@ const HISTORIAN_ITEM_FIELD_KINDS: Record<string, ItemFieldKind> = {
 };
 
 /**
- * Runs a Configuration Workflow: Trigger (manual only, for now - scheduling is a later milestone) ->
- * Retrieve (the connector's `discover()`) -> Decide (`isEligible` + identity-key diff against the
- * previous run's `item_point_metadata`) -> Act (create/update/orphan items, and/or write remote point
- * metadata) -> a `workflow_runs` record either way. `ConfigurationWorkflowService` stays CRUD-only; this
- * is the "elsewhere" its own doc comment refers to.
+ * Runs a Configuration Workflow: Trigger (manual, or a scan mode tick) -> Retrieve (the connector's
+ * `discover()`) -> Decide (`isEligible`, plus - local mode only - an identity-key diff against the
+ * previous run's `item_point_metadata`) -> Act, exactly one of two modes -> a `workflow_runs` record
+ * either way. `ConfigurationWorkflowService` stays CRUD-only; this is the "elsewhere" its own doc
+ * comment refers to.
  *
- * Discovery always runs on the engine's live, already-connected south instance - never a throwaway one -
- * since a workflow's side effects (real item creation) make an about-to-vanish connection the wrong
- * model, and reusing the live instance is required for any connector that only opens a session once
- * (e.g. OPC-UA).
+ * Local mode (`itemFieldMapping` set): creates/updates/orphans a south item per discovered record, on
+ * the engine's live, already-connected south instance - never a throwaway one, since a workflow's side
+ * effects (real item creation) make an about-to-vanish connection the wrong model, and reusing the live
+ * instance is required for any connector that only opens a session once (e.g. OPC-UA).
+ *
+ * Remote mode (`pushToOIAnalytics` true): forwards every eligible record, raw, as one message queued
+ * onto OIAnalyticsMessageService's own retry/registration-aware delivery - no local item, no per-record
+ * diffing, no `item_point_metadata` involvement at all.
  */
 export default class ConfigurationWorkflowRunService {
   constructor(
@@ -95,7 +104,9 @@ export default class ConfigurationWorkflowRunService {
     private readonly itemPointMetadataRepository: ItemPointMetadataRepository,
     private readonly southConnectorRepository: SouthConnectorRepository,
     private readonly southService: IConfigurationWorkflowSouthService,
-    private readonly engine: IDataStreamEngine
+    private readonly engine: IDataStreamEngine,
+    private readonly oIAnalyticsMessageService: IOIAnalyticsMessageService,
+    private readonly oIAnalyticsRegistrationService: IOIAnalyticsRegistrationService
   ) {}
 
   /**
@@ -162,31 +173,35 @@ export default class ConfigurationWorkflowRunService {
     // AuditService.NON_AUDITABLE_USER_IDS / UserService.getUserInfo).
     const actingUser = triggeredBy ?? 'system';
 
-    // Computed once per run, from this connector's own manifest, so a mapped constant lands on the
-    // item command with the type the manifest actually declares (a boolean checkbox field, a numeric
-    // setting, ...) instead of the raw string every mapping expression is written as.
-    const itemFieldKinds = buildItemFieldKinds(this.engine.getSouth(southId).south.connectorConfiguration.type);
-
     try {
-      const { eligibleByKey, previousPoints } = await this.retrieve(southId, workflow);
+      const eligibleByKey = await this.retrieve(southId, workflow);
       counts.discoveredCount = eligibleByKey.discoveredCount;
       counts.eligibleCount = eligibleByKey.map.size;
 
-      const previousByKey = new Map(previousPoints.map(point => [point.discoveredEntryKey, point]));
+      if (workflow.pushToOIAnalytics) {
+        this.actRemote(southId, workflow, run.id, [...eligibleByKey.map.values()], counts);
+      } else {
+        // Computed once per run, from this connector's own manifest, so a mapped constant lands on the
+        // item command with the type the manifest actually declares (a boolean checkbox field, a
+        // numeric setting, ...) instead of the raw string every mapping expression is written as.
+        const itemFieldKinds = buildItemFieldKinds(this.engine.getSouth(southId).south.connectorConfiguration.type);
+        const previousPoints = this.itemPointMetadataRepository.findAllByWorkflow(workflow.id);
+        const previousByKey = new Map(previousPoints.map(point => [point.discoveredEntryKey, point]));
 
-      for (const [key, record] of eligibleByKey.map) {
-        const previous = previousByKey.get(key) ?? null;
-        if (previous !== null && previous.status === 'active' && isSameMetadata(previous.discoveredMetadata, record)) {
-          continue; // Unchanged - nothing to act on, not even a metadata-snapshot refresh.
+        for (const [key, record] of eligibleByKey.map) {
+          const previous = previousByKey.get(key) ?? null;
+          if (previous !== null && previous.status === 'active' && isSameMetadata(previous.discoveredMetadata, record)) {
+            continue; // Unchanged - nothing to act on, not even a metadata-snapshot refresh.
+          }
+          await this.actOnRecord(southId, workflow, key, record, previous, actingUser, counts, itemFieldKinds);
         }
-        await this.actOnRecord(southId, workflow, key, record, previous, actingUser, counts, itemFieldKinds);
-      }
 
-      for (const point of previousPoints) {
-        if (point.status === 'orphaned' || eligibleByKey.map.has(point.discoveredEntryKey)) {
-          continue;
+        for (const point of previousPoints) {
+          if (point.status === 'orphaned' || eligibleByKey.map.has(point.discoveredEntryKey)) {
+            continue;
+          }
+          this.orphanPoint(southId, point, actingUser, counts);
         }
-        this.orphanPoint(southId, point, actingUser, counts);
       }
 
       this.workflowRunRepository.complete(run.id, counts);
@@ -200,12 +215,23 @@ export default class ConfigurationWorkflowRunService {
 
   /**
    * A dry run: identical Retrieve + Decide as `runNow`, but Act never runs and nothing is persisted -
-   * no items, no point metadata, no `workflow_runs` record. Discovery itself is a real round-trip to the
-   * data source, so this costs what a real run costs, minus the writes.
+   * no items, no point metadata, no `workflow_runs` record, no OIAnalytics push. Discovery itself is a
+   * real round-trip to the data source, so this costs what a real run costs, minus the writes.
    */
   async preview(southId: string, workflowId: string): Promise<WorkflowPreviewResultDTO> {
     const workflow = this.configurationWorkflowService.findById(southId, workflowId); // Ownership check
-    const { eligibleByKey, previousPoints } = await this.retrieve(southId, workflow);
+    const eligibleByKey = await this.retrieve(southId, workflow);
+
+    if (workflow.pushToOIAnalytics) {
+      return {
+        discoveredCount: eligibleByKey.discoveredCount,
+        eligibleCount: eligibleByKey.map.size,
+        entries: [],
+        records: [...eligibleByKey.map.values()]
+      };
+    }
+
+    const previousPoints = this.itemPointMetadataRepository.findAllByWorkflow(workflow.id);
     const previousByKey = new Map(previousPoints.map(point => [point.discoveredEntryKey, point]));
 
     const entries: Array<WorkflowPreviewEntryDTO> = [];
@@ -220,7 +246,7 @@ export default class ConfigurationWorkflowRunService {
       entries.push({ key: point.discoveredEntryKey, status: 'missing', record: null, previousMetadata: point.discoveredMetadata });
     }
 
-    return { discoveredCount: eligibleByKey.discoveredCount, eligibleCount: eligibleByKey.map.size, entries };
+    return { discoveredCount: eligibleByKey.discoveredCount, eligibleCount: eligibleByKey.map.size, entries, records: [] };
   }
 
   findRuns(southId: string, workflowId: string, page: number): Page<WorkflowRunEntity> {
@@ -228,14 +254,11 @@ export default class ConfigurationWorkflowRunService {
     return this.workflowRunRepository.findByWorkflowId(workflowId, page);
   }
 
-  /** Trigger + Retrieve + Decide's eligibility filter - shared by `runNow` and `preview`. */
+  /** Trigger + Retrieve + Decide's eligibility filter - shared by `runNow`, `preview` and remote Act. */
   private async retrieve(
     southId: string,
     workflow: ConfigurationWorkflowEntity
-  ): Promise<{
-    eligibleByKey: { map: Map<string, OIBusRecord>; discoveredCount: number };
-    previousPoints: Array<ItemPointMetadataEntity>;
-  }> {
+  ): Promise<{ map: Map<string, OIBusRecord>; discoveredCount: number }> {
     if (!this.engine.hasSouth(southId)) {
       throw new OIBusValidationError(`South connector "${southId}" is not running - start it before running a workflow`);
     }
@@ -256,10 +279,35 @@ export default class ConfigurationWorkflowRunService {
       }
     }
 
-    return {
-      eligibleByKey: { map, discoveredCount: records.length },
-      previousPoints: this.itemPointMetadataRepository.findAllByWorkflow(workflow.id)
+    return { map, discoveredCount: records.length };
+  }
+
+  /**
+   * Remote Act: forward every eligible record, raw, as one message. Registration is checked again
+   * here (not just at save time in ConfigurationWorkflowService) since it could have been revoked
+   * since - failing the run clearly beats silently queuing a message that would never actually send.
+   */
+  private actRemote(
+    southId: string,
+    workflow: ConfigurationWorkflowEntity,
+    runId: string,
+    records: Array<OIBusRecord>,
+    counts: WorkflowRunCounts
+  ): void {
+    if (this.oIAnalyticsRegistrationService.getRegistrationSettings()?.status !== 'REGISTERED') {
+      throw new OIBusValidationError('OIBus is not registered with OIAnalytics - the configuration workflow result cannot be sent');
+    }
+    const south = this.southConnectorRepository.findSouthById(southId)!;
+    const payload: OIBusConfigurationWorkflowResultCommandDTO = {
+      southId,
+      southName: south.name,
+      workflowId: workflow.id,
+      workflowName: workflow.name,
+      identityKeyFields: workflow.identityKeyFields,
+      records
     };
+    this.oIAnalyticsMessageService.createConfigurationWorkflowResultMessage(runId, JSON.stringify(payload));
+    counts.pushedCount = records.length;
   }
 
   private async actOnRecord(
@@ -272,69 +320,33 @@ export default class ConfigurationWorkflowRunService {
     counts: WorkflowRunCounts,
     itemFieldKinds: Record<string, ItemFieldKind>
   ): Promise<void> {
-    let southItemId: string;
+    const resolved = coerceResolvedItemFields(resolveFieldMapping(record, workflow.itemFieldMapping!), itemFieldKinds);
 
-    if (workflow.itemFieldMapping !== null) {
-      const resolved = coerceResolvedItemFields(resolveFieldMapping(record, workflow.itemFieldMapping), itemFieldKinds);
-
-      if (workflow.targetItemId !== null) {
-        // Single pre-existing item: itemFieldMapping only ever refreshes it, never creates.
-        southItemId = workflow.targetItemId;
-        const existingItem = this.southConnectorRepository.findItemById(southId, southItemId)!;
-        await this.southService.updateItem(southId, southItemId, buildItemCommand(resolved, existingItem), triggeredBy);
-        counts.updatedCount++;
-      } else if (previous !== null) {
-        // Self-scoped, re-discovered entry: update the item this workflow previously created for it.
-        southItemId = previous.southItemId;
-        const existingItem = this.southConnectorRepository.findItemById(southId, southItemId)!;
-        await this.southService.updateItem(southId, southItemId, buildItemCommand(resolved, existingItem), triggeredBy);
-        counts.updatedCount++;
-      } else {
-        // Self-scoped, brand new entry: create and claim ownership.
-        const created = await this.southService.createItem(southId, buildItemCommand(resolved, null), triggeredBy);
-        this.southConnectorRepository.claimItemForWorkflow(southId, created.id, workflow.id, triggeredBy);
-        southItemId = created.id;
-        counts.createdCount++;
-      }
+    if (previous !== null) {
+      // Re-discovered entry: update the item this workflow previously created for it.
+      const southItemId = previous.southItemId;
+      const existingItem = this.southConnectorRepository.findItemById(southId, southItemId)!;
+      await this.southService.updateItem(southId, southItemId, buildItemCommand(resolved, existingItem), triggeredBy);
+      counts.updatedCount++;
+      this.itemPointMetadataRepository.update(previous.id, { discoveredEntryKey: key, discoveredMetadata: record });
     } else {
-      // Remote-metadata-only workflow: never touches items. targetItemId is guaranteed non-null here -
-      // ConfigurationWorkflowService rejects itemFieldMapping: null with targetItemId: null at creation.
-      southItemId = workflow.targetItemId!;
-    }
-
-    if (workflow.remoteFieldMapping !== null) {
-      const item = this.southConnectorRepository.findItemById(southId, southItemId);
-      const remoteContext = { ...record, item: item ? { id: item.id, name: item.name } : null };
-      const write = buildItemPointMetadataWrite(
-        resolveFieldMapping(remoteContext, workflow.remoteFieldMapping),
-        workflow.id,
-        southItemId,
-        key,
-        record
-      );
-      if (previous !== null) {
-        this.itemPointMetadataRepository.update(previous.id, write);
-      } else {
-        this.itemPointMetadataRepository.create(write);
-      }
-      // pushedCount is reserved for the OIAnalytics push itself (a later milestone) - writing this row
-      // locally isn't a push yet.
-    } else if (previous === null) {
-      // itemFieldMapping-only workflow: still needs a tracking row, so the next run's diff has
-      // something to compare against, even though there's no remote metadata to store.
-      this.itemPointMetadataRepository.create(emptyPointWrite(workflow.id, southItemId, key, record));
-    } else {
-      // Refresh the snapshot even without remote metadata mapped, so the next run's "unchanged" check
-      // compares against the latest discovered content instead of a stale one.
-      this.itemPointMetadataRepository.update(previous.id, { ...toWrite(previous), discoveredMetadata: record });
+      // Brand new entry: create and claim ownership.
+      const created = await this.southService.createItem(southId, buildItemCommand(resolved, null), triggeredBy);
+      this.southConnectorRepository.claimItemForWorkflow(southId, created.id, workflow.id, triggeredBy);
+      counts.createdCount++;
+      this.itemPointMetadataRepository.create({
+        workflowId: workflow.id,
+        southItemId: created.id,
+        discoveredEntryKey: key,
+        discoveredMetadata: record
+      });
     }
   }
 
   private orphanPoint(southId: string, point: ItemPointMetadataEntity, triggeredBy: string, counts: WorkflowRunCounts): void {
     this.itemPointMetadataRepository.markOrphaned(point.id);
-    // An item only auto-disables once *all* of its points have orphaned - re-querying after marking
-    // this one lets a single findBySouthItemId check cover both the 1:1/1:N cases (this was the item's
-    // only point) and the N:1 SQL case (siblings from other columns may still be active).
+    // An item only auto-disables once *all* of its entries have orphaned - re-querying after marking
+    // this one lets a single findBySouthItemId check cover the (now-only) 1:1 case cleanly too.
     const siblings = this.itemPointMetadataRepository.findBySouthItemId(point.southItemId);
     if (siblings.every(sibling => sibling.status === 'orphaned')) {
       this.southConnectorRepository.disableItemWithReason(
@@ -497,67 +509,4 @@ function toNumberOrNull(value: unknown): number | null {
   }
   const numericValue = Number(value);
   return Number.isNaN(numericValue) ? null : numericValue;
-}
-
-function buildItemPointMetadataWrite(
-  resolved: Record<string, unknown>,
-  workflowId: string,
-  southItemId: string,
-  discoveredEntryKey: string,
-  discoveredMetadata: OIBusRecord
-): ItemPointMetadataWrite {
-  const remoteMetadataExtra: Record<string, unknown> = {};
-  for (const [targetKey, value] of Object.entries(resolved)) {
-    if (!KNOWN_REMOTE_FIELDS.includes(targetKey)) {
-      remoteMetadataExtra[targetKey] = value;
-    }
-  }
-  return {
-    workflowId,
-    southItemId,
-    discoveredEntryKey,
-    discoveredMetadata,
-    description: (resolved.description as string | undefined) ?? null,
-    unit: (resolved.unit as string | undefined) ?? null,
-    minAcceptableValue: toNumberOrNull(resolved.minAcceptableValue),
-    maxAcceptableValue: toNumberOrNull(resolved.maxAcceptableValue),
-    resolution: toNumberOrNull(resolved.resolution),
-    resamplingMethod: (resolved.resamplingMethod as string | undefined) ?? null,
-    remoteMetadataExtra: Object.keys(remoteMetadataExtra).length > 0 ? remoteMetadataExtra : null
-  };
-}
-
-function emptyPointWrite(
-  workflowId: string,
-  southItemId: string,
-  discoveredEntryKey: string,
-  discoveredMetadata: OIBusRecord
-): ItemPointMetadataWrite {
-  return {
-    workflowId,
-    southItemId,
-    discoveredEntryKey,
-    discoveredMetadata,
-    description: null,
-    unit: null,
-    minAcceptableValue: null,
-    maxAcceptableValue: null,
-    resolution: null,
-    resamplingMethod: null,
-    remoteMetadataExtra: null
-  };
-}
-
-function toWrite(point: ItemPointMetadataEntity): Omit<ItemPointMetadataWrite, 'workflowId' | 'southItemId'> {
-  return {
-    discoveredEntryKey: point.discoveredEntryKey,
-    discoveredMetadata: point.discoveredMetadata,
-    description: point.description,
-    unit: point.unit,
-    minAcceptableValue: point.minAcceptableValue,
-    maxAcceptableValue: point.maxAcceptableValue,
-    resolution: point.resolution,
-    resamplingMethod: point.resamplingMethod,
-    remoteMetadataExtra: point.remoteMetadataExtra
-  };
 }

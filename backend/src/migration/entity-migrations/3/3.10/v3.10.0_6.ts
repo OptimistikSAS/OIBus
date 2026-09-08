@@ -9,13 +9,13 @@ const CONFIGURATION_WORKFLOWS_TABLE = 'configuration_workflows';
  * `configuration_workflows`, this table has no `AuditService` wiring: it *is* the audit trail for a
  * run, the same way `audit_logs` itself isn't audited.
  *
- * Counts mirror the four-step run lifecycle a run goes through: Retrieve produces
- * `discovered_count` records; the workflow's `eligibility_filter` narrows that to
- * `eligible_count`; of those, Act only ever touches new/changed/missing ones, split into
- * `created_count`/`updated_count`/`disabled_count` (item actions) and `pushed_count` (remote
- * metadata pushes) — independent numbers, since a workflow can be item-only, remote-only, or both.
- * All default to 0 so a run that errors before reaching a step still has well-defined counts rather
- * than nulls.
+ * Counts mirror the run lifecycle: Retrieve produces `discovered_count` records; the workflow's
+ * `eligibility_filter` narrows that to `eligible_count`. From there, only one of two count groups is
+ * ever populated, matching the workflow's own exclusive local/remote mode: a local (item-creating)
+ * workflow's Act only ever touches new/changed/missing ones, split into
+ * `created_count`/`updated_count`/`disabled_count`; a remote workflow instead forwards every eligible
+ * record as-is, reflected in `pushed_count`. All default to 0 so a run that errors before reaching a
+ * step still has well-defined counts rather than nulls.
  */
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable(WORKFLOW_RUNS_TABLE, table => {
