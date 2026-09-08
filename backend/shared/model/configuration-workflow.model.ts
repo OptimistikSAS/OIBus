@@ -31,8 +31,13 @@ export interface RecordFilterCondition {
 
 /**
  * A Configuration Workflow: discovers a data source, decides which of what it found actually
- * warrants a configuration change, and maps that into south item settings and/or remote point
- * metadata — run once by hand or recurringly on a scan mode.
+ * warrants a configuration change, and either creates/updates south items from it or forwards the raw
+ * eligible records to OIAnalytics — run once by hand or recurringly on a scan mode.
+ *
+ * Exactly one of `itemFieldMapping`/`pushToOIAnalytics` applies — a workflow is either local
+ * (`itemFieldMapping` set, `pushToOIAnalytics` false) or remote (`itemFieldMapping` null,
+ * `pushToOIAnalytics` true), enforced at the service layer. Remote additionally requires OIBus to be
+ * registered with OIAnalytics.
  */
 export interface ConfigurationWorkflowDTO extends BaseEntity {
   /**
@@ -46,14 +51,6 @@ export interface ConfigurationWorkflowDTO extends BaseEntity {
    * @example "b7f8e6d2-1c3a-4b5d-9e0f-2a3b4c5d6e7f"
    */
   southId: string;
-
-  /**
-   * Set: the workflow manages exactly one pre-existing item's point metadata (e.g. a SQL query item,
-   * or a single node someone already created by hand). Null: the workflow is self-scoping and owns
-   * whatever items its own discovery creates.
-   * @example null
-   */
-  targetItemId: string | null;
 
   /**
    * What to (re-)discover — connector-specific (e.g. `{ rootNodeId: "ns=1;s=Root" }` for OPC-UA,
@@ -72,18 +69,18 @@ export interface ConfigurationWorkflowDTO extends BaseEntity {
   eligibilityFilter: Array<RecordFilterCondition>;
 
   /**
-   * Discovered record → item name/settings, as a key → expression bag. Null: this workflow never
-   * creates/updates items.
+   * Local mode: discovered record → item name/settings, as a key → expression bag. Null when this
+   * workflow is remote (`pushToOIAnalytics` true) instead.
    * @example { "name": "{{name}}", "settings.nodeId": "{{nodeId}}" }
    */
   itemFieldMapping: Record<string, string> | null;
 
   /**
-   * Discovered record + item fields → remote (OIAnalytics) point metadata, as a key → expression
-   * bag. Null: no remote push is configured for this workflow.
-   * @example { "unit": "{{unit}}" }
+   * Remote mode: forward every run's raw eligible records to OIAnalytics as-is (no mapping, no local
+   * item, no per-record diffing) instead of creating/updating items locally. Requires OIBus to be
+   * registered with OIAnalytics.
    */
-  remoteFieldMapping: Record<string, string> | null;
+  pushToOIAnalytics: boolean;
 
   /** Null means manual-only — the workflow only ever runs when explicitly triggered. */
   scanMode: ScanModeDTO | null;
@@ -93,12 +90,11 @@ export interface ConfigurationWorkflowDTO extends BaseEntity {
 
 export interface ConfigurationWorkflowCommandDTO {
   name: string;
-  targetItemId: string | null;
   discoveryScope: Record<string, unknown>;
   identityKeyFields: Array<string>;
   eligibilityFilter: Array<RecordFilterCondition>;
   itemFieldMapping: Record<string, string> | null;
-  remoteFieldMapping: Record<string, string> | null;
+  pushToOIAnalytics: boolean;
 
   /**
    * The ID of the scan mode to use for this workflow, or null for manual-only.
@@ -132,12 +128,17 @@ export interface WorkflowPreviewEntryDTO {
 }
 
 /**
- * A dry run of a Configuration Workflow: identical discovery and Decide-step classification as a real
- * run, but nothing is written - no items, no point metadata, no `workflow_runs` record. Discovery
- * itself is a real round-trip to the data source, so a preview costs what a run costs minus the writes.
+ * A dry run of a Configuration Workflow: identical discovery as a real run, but nothing is written - no
+ * items, no point metadata, no `workflow_runs` record, no OIAnalytics push. Discovery itself is a real
+ * round-trip to the data source, so a preview costs what a run costs minus the writes.
  */
 export interface WorkflowPreviewResultDTO {
   discoveredCount: number;
   eligibleCount: number;
+  /** Local (item-creating) workflow only - the per-entry new/changed/unchanged/missing classification
+   *  against the previous run. Empty for a remote workflow. */
   entries: Array<WorkflowPreviewEntryDTO>;
+  /** Remote (push-to-OIAnalytics) workflow only - the raw eligible records that would be sent, exactly
+   *  as discovered, with no mapping or diffing applied. Empty for a local workflow. */
+  records: Array<OIBusRecord>;
 }

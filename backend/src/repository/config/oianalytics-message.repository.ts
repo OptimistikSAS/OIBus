@@ -6,7 +6,7 @@ import {
   OIAnalyticsMessageStatus,
   OIAnalyticsMessageType
 } from '../../../shared/model/oianalytics-message.model';
-import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
+import { OIAnalyticsMessage, OIAnalyticsMessageConfigurationWorkflowResult } from '../../model/oianalytics-message.model';
 
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
 const PAGE_SIZE = 50;
@@ -93,11 +93,14 @@ export default class OIAnalyticsMessageRepository {
     return result ? this.toMessage(result as Record<string, string>) : null;
   }
 
-  create(message: Pick<OIAnalyticsMessage, 'type'>): OIAnalyticsMessage {
+  create(
+    message: Pick<OIAnalyticsMessage, 'type'> & Partial<Pick<OIAnalyticsMessageConfigurationWorkflowResult, 'workflowRunId' | 'payload'>>
+  ): OIAnalyticsMessage {
     const id = generateRandomId();
-    const insertQuery = `INSERT INTO ${OIANALYTICS_MESSAGE_TABLE} (id, type, status, created_by, updated_by, created_at, updated_at)
-                         VALUES (?, ?, 'PENDING', 'system', 'system', strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
-    const result = this.database.prepare(insertQuery).run(id, message.type);
+    const insertQuery = `INSERT INTO ${OIANALYTICS_MESSAGE_TABLE}
+                         (id, type, status, created_by, updated_by, created_at, updated_at, workflow_run_id, payload)
+                         VALUES (?, ?, 'PENDING', 'system', 'system', strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), ?, ?);`;
+    const result = this.database.prepare(insertQuery).run(id, message.type, message.workflowRunId ?? null, message.payload ?? null);
     const query = `SELECT * FROM ${OIANALYTICS_MESSAGE_TABLE} WHERE ROWID = ?;`;
     return this.toMessage(this.database.prepare(query).get(result.lastInsertRowid) as Record<string, string>);
   }
@@ -150,6 +153,20 @@ export default class OIAnalyticsMessageRepository {
           status: message.status as OIAnalyticsMessageStatus,
           error: message.error,
           completedDate: message.completed_date
+        };
+      case 'configuration-workflow-result':
+        return {
+          id: message.id,
+          createdBy: message.created_by,
+          updatedBy: message.updated_by,
+          createdAt: message.created_at,
+          updatedAt: message.updated_at,
+          type: 'configuration-workflow-result',
+          status: message.status as OIAnalyticsMessageStatus,
+          error: message.error,
+          completedDate: message.completed_date,
+          workflowRunId: message.workflow_run_id,
+          payload: message.payload
         };
     }
   }
