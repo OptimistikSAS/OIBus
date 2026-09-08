@@ -36,6 +36,9 @@ export default class OIAnalyticsClientMock {
   );
   sendConfiguration = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _payload: string): Promise<void> => undefined);
   sendHistoryQuery = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _payload: string): Promise<void> => undefined);
+  sendConfigurationWorkflowResult = mock.fn(
+    async (_registrationSettings: OIAnalyticsRegistration, _payload: string): Promise<void> => undefined
+  );
   deleteHistoryQuery = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _historyId: string): Promise<void> => undefined);
   downloadFile = mock.fn(
     async (_registrationSettings: OIAnalyticsRegistration, _assetId: string, _filename: string): Promise<void> => undefined

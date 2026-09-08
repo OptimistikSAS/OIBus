@@ -112,11 +112,9 @@ export default class ManageWorkflowsModalComponent {
     return workflow.scanMode?.name ?? null;
   }
 
-  getTargetItemName(workflow: ConfigurationWorkflowDTO): string | null {
-    if (!workflow.targetItemId) {
-      return null;
-    }
-    return this.items.find(item => item.id === workflow.targetItemId)?.name ?? workflow.targetItemId;
+  /** Translation key for this workflow's mode badge - local (create/update items) or remote (push to OIAnalytics). */
+  getModeKey(workflow: ConfigurationWorkflowDTO): string {
+    return workflow.pushToOIAnalytics ? 'south.workflows.mode-remote' : 'south.workflows.mode-local';
   }
 
   onAdd() {

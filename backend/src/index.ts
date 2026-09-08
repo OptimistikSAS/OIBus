@@ -216,7 +216,8 @@ export async function bootstrap(): Promise<void> {
     repositoryService.configurationWorkflowRepository,
     repositoryService.southConnectorRepository,
     repositoryService.scanModeRepository,
-    dataStreamEngine
+    dataStreamEngine,
+    oIAnalyticsRegistrationService
   );
   const configurationWorkflowRunService = new ConfigurationWorkflowRunService(
     configurationWorkflowService,
@@ -224,7 +225,9 @@ export async function bootstrap(): Promise<void> {
     repositoryService.itemPointMetadataRepository,
     repositoryService.southConnectorRepository,
     southService,
-    dataStreamEngine
+    dataStreamEngine,
+    oIAnalyticsMessageService,
+    oIAnalyticsRegistrationService
   );
   // DataStreamEngine.onScanModeTriggered needs to reach ConfigurationWorkflowRunService.runScheduled
   // to fire a scheduled workflow run, but ConfigurationWorkflowRunService itself depends on
