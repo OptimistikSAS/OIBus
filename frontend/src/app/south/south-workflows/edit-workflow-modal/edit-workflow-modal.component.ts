@@ -37,7 +37,6 @@ import {
   OIBusEnablingCondition,
   OIBusObjectAttribute
 } from '../../../../../../backend/shared/model/form.model';
-import { RESAMPLING } from '../../../../../../backend/shared/model/types';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
@@ -46,14 +45,10 @@ import { EditSouthItemGroupModalComponent } from '../../south-items/edit-south-i
 import { SouthExploreModalComponent } from '../../../shared/south-explore-modal/south-explore-modal.component';
 import { ExploreTreeComponent } from '../../../shared/explore-tree/explore-tree.component';
 import { SouthConnectorService } from '../../../services/south-connector.service';
+import { EngineService } from '../../../services/engine.service';
 import { extractErrorMessage } from '../../../shared/extract-error-message';
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
 import { TransformerTestResultComponent } from '../../../shared/transformer-test-result/transformer-test-result.component';
-
-interface FieldMappingRow {
-  key: string;
-  value: string;
-}
 
 // 'group-select' is not part of the manifest's own attribute-type vocabulary - it tags the
 // historian groupId field, whose options come from this south connector's item groups rather
@@ -108,23 +103,6 @@ interface MappableField {
 
 /** Sentinel select-option value meaning "map this to a {{field}} expression instead of a fixed value". */
 const VARIABLE_SENTINEL = '__variable__';
-
-// The known ItemPointMetadataWrite columns a remoteFieldMapping can target directly - mirrors
-// KNOWN_REMOTE_FIELDS in the backend's configuration-workflow-run.service.ts. Anything else is
-// handled as a free-form "extra" row, going into remoteMetadataExtra.
-const REMOTE_KNOWN_FIELDS: Array<MappableField> = [
-  { path: 'description', translationKey: 'south.workflows.remote-known-fields.description', attributeType: 'string' },
-  { path: 'unit', translationKey: 'south.workflows.remote-known-fields.unit', attributeType: 'string' },
-  { path: 'minAcceptableValue', translationKey: 'south.workflows.remote-known-fields.min-acceptable-value', attributeType: 'number' },
-  { path: 'maxAcceptableValue', translationKey: 'south.workflows.remote-known-fields.max-acceptable-value', attributeType: 'number' },
-  { path: 'resolution', translationKey: 'south.workflows.remote-known-fields.resolution', attributeType: 'number' },
-  {
-    path: 'resamplingMethod',
-    translationKey: 'south.workflows.remote-known-fields.resampling-method',
-    attributeType: 'string-select',
-    selectableValues: [...RESAMPLING]
-  }
-];
 
 // maxReadInterval/readDelay/the offsets/recoveryStrategy only apply to an item that owns its own
 // schedule/history settings - once synced with a group, those come from the group instead, so mapping
@@ -207,6 +185,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private modalService = inject(ModalService);
   private southConnectorService = inject(SouthConnectorService);
+  private engineService = inject(EngineService);
 
   // The inline, read-only explore tree shown alongside the SQL query editor (SQLite only, for now -
   // see showSqlExploreTree) - undefined until that branch of the template actually renders it.
@@ -234,6 +213,10 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   queryTestError: string | null = null;
   queryTestResult: OIBusRecordListContent | null = null;
 
+  /** Whether OIBus is currently registered with OIAnalytics - gates the "Push to OIAnalytics" mode,
+   *  refreshed each time this modal is prepared (registration can change between two workflow edits). */
+  isRegistered = false;
+
   // Saves directly against the live south connector, exactly like EditSouthItemModalComponent's own
   // group dropdown - bound from south-detail.component.ts and passed down through prepare().
   private addOrEditGroup!: (command: {
@@ -243,17 +226,12 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   private deleteGroup!: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
 
   readonly operators: ReadonlyArray<RecordFilterOperator> = RECORD_FILTER_OPERATORS;
-  readonly remoteKnownFields = REMOTE_KNOWN_FIELDS;
   readonly variableSentinel = VARIABLE_SENTINEL;
 
   /** Every field the connector's manifest (+ the historian fields it adds outside the manifest, when supported) exposes on an item. */
   itemMappableFields: Array<MappableField> = [];
   /** One expression string per itemMappableFields entry, keyed by its path - blank means "not mapped". */
   itemFieldMappingValues: Record<string, string> = {};
-  /** One expression string per REMOTE_KNOWN_FIELDS entry, keyed by its path. */
-  remoteFieldMappingValues: Record<string, string> = {};
-  /** Anything in remoteFieldMapping beyond the known fields - the remoteMetadataExtra escape hatch. */
-  remoteFieldMappingExtraRows: Array<FieldMappingRow> = [];
 
   identityKeyFields: Array<string> = [];
   eligibilityFilter: Array<RecordFilterCondition> = [];
@@ -269,15 +247,11 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   editingEligibilityField = '';
   editingEligibilityOperator: RecordFilterOperator = 'equals';
   editingEligibilityValue = '';
-  newRemoteExtraKey = '';
-  newRemoteExtraValue = '';
 
   form: FormGroup<{
     name: FormControl<string>;
     scanModeId: FormControl<string | null>;
-    targetItemId: FormControl<string | null>;
-    itemFieldMappingEnabled: FormControl<boolean>;
-    remoteFieldMappingEnabled: FormControl<boolean>;
+    pushToOIAnalytics: FormControl<boolean>;
     enabled: FormControl<boolean>;
   }> | null = null;
 
@@ -310,10 +284,9 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.discoveryQuery = '';
     this.itemMappableFields = buildItemMappableFields(manifest);
     this.itemFieldMappingValues = {};
-    this.remoteFieldMappingValues = {};
-    this.remoteFieldMappingExtraRows = [];
     this.identityKeyFields = [];
     this.eligibilityFilter = [];
+    this.refreshRegistrationStatus();
     this.buildForm();
   }
 
@@ -354,18 +327,9 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       this.itemFieldMappingValues[key] = value;
     }
 
-    this.remoteFieldMappingValues = {};
-    this.remoteFieldMappingExtraRows = [];
-    for (const [key, value] of Object.entries(workflow.remoteFieldMapping ?? {})) {
-      if (REMOTE_KNOWN_FIELDS.some(field => field.path === key)) {
-        this.remoteFieldMappingValues[key] = value;
-      } else {
-        this.remoteFieldMappingExtraRows.push({ key, value });
-      }
-    }
-
     this.identityKeyFields = [...workflow.identityKeyFields];
     this.eligibilityFilter = workflow.eligibilityFilter.map(condition => ({ ...condition }));
+    this.refreshRegistrationStatus();
     this.buildForm();
   }
 
@@ -418,21 +382,35 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     };
   }
 
+  /** Refreshes whether OIBus is currently registered with OIAnalytics - gates the "Push to
+   *  OIAnalytics" mode. Fire-and-forget: the template re-renders once this resolves, same as any
+   *  other one-shot fetch this modal makes. */
+  private refreshRegistrationStatus() {
+    this.engineService.getRegistrationSettings().subscribe(settings => {
+      this.isRegistered = settings.status === 'REGISTERED';
+    });
+  }
+
+  /** Blocks picking the "Push to OIAnalytics" radio while OIBus isn't registered. Deliberately not a plain
+   *  [disabled] binding - that fights the FormControlName directive, which manages a bound control's own
+   *  disabled state and silently overrides a template-level [disabled] on one of several radios sharing it
+   *  back to enabled. preventDefault() on the click stops the browser from checking the radio at all,
+   *  matching the effect a true disabled attribute would have had. */
+  blockRemoteModeClickIfNotRegistered(event: Event) {
+    if (!this.isRegistered) {
+      event.preventDefault();
+    }
+  }
+
   private buildForm() {
     // SQL-family connectors are query-based (one item = one free-form query, item != point) - a
-    // workflow there always targets one pre-existing item directly and can only push remote point
-    // metadata for what it discovers, never create/update items itself (see isSqlFamily's own doc
-    // comment). itemFieldMappingEnabled is forced off and hidden from the template for these; falling
-    // back to it being false then makes the existing "no target item without item mapping" save() check
-    // require a target item, with no extra validation needed.
+    // workflow there can only ever push the raw discovered records to OIAnalytics, never create/update
+    // items itself (see isSqlFamily's own doc comment). pushToOIAnalytics is forced true and the mode
+    // choice is hidden from the template for these.
     this.form = this.fb.group({
       name: [this.workflow?.name ?? '', [Validators.required, this.checkUniqueness()]],
       scanModeId: this.fb.control<string | null>(this.workflow?.scanMode?.id ?? null),
-      targetItemId: this.fb.control<string | null>(this.workflow?.targetItemId ?? null),
-      itemFieldMappingEnabled: this.fb.control<boolean>(
-        this.isSqlFamily ? false : this.workflow ? this.workflow.itemFieldMapping !== null : true
-      ),
-      remoteFieldMappingEnabled: this.fb.control<boolean>(this.workflow ? this.workflow.remoteFieldMapping !== null : this.isSqlFamily),
+      pushToOIAnalytics: this.fb.control<boolean>(this.isSqlFamily ? true : (this.workflow?.pushToOIAnalytics ?? false)),
       enabled: this.fb.control<boolean>(this.workflow?.enabled ?? true)
     });
   }
@@ -504,20 +482,6 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.editingEligibilityField = '';
     this.editingEligibilityOperator = 'equals';
     this.editingEligibilityValue = '';
-  }
-
-  addRemoteExtraRow() {
-    const key = this.newRemoteExtraKey.trim();
-    if (!key) {
-      return;
-    }
-    this.remoteFieldMappingExtraRows.push({ key, value: this.newRemoteExtraValue });
-    this.newRemoteExtraKey = '';
-    this.newRemoteExtraValue = '';
-  }
-
-  removeRemoteExtraRow(index: number) {
-    this.remoteFieldMappingExtraRows.splice(index, 1);
   }
 
   /** Whether this field's constant value should be picked from a fixed list (checkbox/select) rather than typed freely. */
@@ -790,10 +754,8 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     }
     const formValue = this.form.getRawValue();
     // SQL-family connectors can never create/update items (see buildForm()'s own comment) - re-clamped
-    // here too, defensively, not just via the checkbox being hidden from the template.
-    if (this.isSqlFamily) {
-      formValue.itemFieldMappingEnabled = false;
-    }
+    // here too, defensively, not just via the mode choice being hidden from the template.
+    const pushToOIAnalytics = this.isSqlFamily ? true : formValue.pushToOIAnalytics;
 
     let discoveryScope: Record<string, unknown>;
     if (this.isSqlFamily) {
@@ -813,67 +775,57 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       this.formError = 'south.workflows.identity-key-fields-none';
       return;
     }
-    if (!formValue.itemFieldMappingEnabled && !formValue.remoteFieldMappingEnabled) {
-      this.formError = 'south.workflows.mapping-required';
-      return;
-    }
-    if (!formValue.itemFieldMappingEnabled && !formValue.targetItemId) {
-      this.formError = 'south.workflows.target-item-required';
-      return;
-    }
-    // A field other fields depend on for their own visibility, plus the schedule/group fields, must be
-    // knowable while editing (or reference something real) rather than resolved per-record at run time -
-    // a select-type one of these can't even reach this state through the UI (its {{ }} option is
-    // omitted), but a free-text one still could.
-    const hasConstantOnlyViolation = this.itemMappableFields.some(
-      field => !this.allowsVariable(field) && (this.itemFieldMappingValues[field.path] ?? '').includes('{{')
-    );
-    if (formValue.itemFieldMappingEnabled && hasConstantOnlyViolation) {
-      this.formError = 'south.workflows.mapping-constant-only';
+    // Mirrors ConfigurationWorkflowService's own server-side check - caught here too so a workflow
+    // that could never actually push anything isn't silently accepted only to fail at save/run time.
+    if (pushToOIAnalytics && !this.isRegistered) {
+      this.formError = 'south.workflows.mode-remote-not-registered';
       return;
     }
 
-    // Every visible, manifest-REQUIRED field must be mapped to something - otherwise a workflow can be
-    // saved in a state item creation would only reject later, at run time (see isMandatoryFieldMissing).
-    const hasMissingMandatoryField = this.itemMappableFields.some(
-      field => this.isItemFieldVisible(field) && this.isMandatoryFieldMissing(field)
-    );
-    if (formValue.itemFieldMappingEnabled && hasMissingMandatoryField) {
-      this.formError = 'south.workflows.mapping-mandatory-missing';
-      return;
-    }
-
-    // A field hidden by an unmet enabling condition keeps whatever value it had while editing (so
-    // toggling the referral back and forth doesn't lose data), but is stripped here at save time - it
-    // isn't actually part of the item this mapping would produce.
-    const visibleItemPaths = new Set(this.itemMappableFields.filter(field => this.isItemFieldVisible(field)).map(field => field.path));
-    const itemFieldMappingValuesToSave: Record<string, string> = {};
-    for (const [path, value] of Object.entries(this.itemFieldMappingValues)) {
-      if (visibleItemPaths.has(path)) {
-        itemFieldMappingValuesToSave[path] = value;
+    let itemFieldMapping: Record<string, string> | null = null;
+    if (!pushToOIAnalytics) {
+      // A field other fields depend on for their own visibility, plus the schedule/group fields, must be
+      // knowable while editing (or reference something real) rather than resolved per-record at run time -
+      // a select-type one of these can't even reach this state through the UI (its {{ }} option is
+      // omitted), but a free-text one still could.
+      const hasConstantOnlyViolation = this.itemMappableFields.some(
+        field => !this.allowsVariable(field) && (this.itemFieldMappingValues[field.path] ?? '').includes('{{')
+      );
+      if (hasConstantOnlyViolation) {
+        this.formError = 'south.workflows.mapping-constant-only';
+        return;
       }
-    }
-    const itemFieldMapping = formValue.itemFieldMappingEnabled ? nonEmptyEntries(itemFieldMappingValuesToSave) : null;
 
-    let remoteFieldMapping: Record<string, string> | null = null;
-    if (formValue.remoteFieldMappingEnabled) {
-      remoteFieldMapping = nonEmptyEntries(this.remoteFieldMappingValues);
-      for (const row of this.remoteFieldMappingExtraRows) {
-        const key = row.key.trim();
-        if (key) {
-          remoteFieldMapping[key] = row.value;
+      // Every visible, manifest-REQUIRED field must be mapped to something - otherwise a workflow can be
+      // saved in a state item creation would only reject later, at run time (see isMandatoryFieldMissing).
+      const hasMissingMandatoryField = this.itemMappableFields.some(
+        field => this.isItemFieldVisible(field) && this.isMandatoryFieldMissing(field)
+      );
+      if (hasMissingMandatoryField) {
+        this.formError = 'south.workflows.mapping-mandatory-missing';
+        return;
+      }
+
+      // A field hidden by an unmet enabling condition keeps whatever value it had while editing (so
+      // toggling the referral back and forth doesn't lose data), but is stripped here at save time - it
+      // isn't actually part of the item this mapping would produce.
+      const visibleItemPaths = new Set(this.itemMappableFields.filter(field => this.isItemFieldVisible(field)).map(field => field.path));
+      const itemFieldMappingValuesToSave: Record<string, string> = {};
+      for (const [path, value] of Object.entries(this.itemFieldMappingValues)) {
+        if (visibleItemPaths.has(path)) {
+          itemFieldMappingValuesToSave[path] = value;
         }
       }
+      itemFieldMapping = nonEmptyEntries(itemFieldMappingValuesToSave);
     }
 
     const command: ConfigurationWorkflowCommandDTO = {
       name: formValue.name,
-      targetItemId: formValue.targetItemId || null,
       discoveryScope,
       identityKeyFields: this.identityKeyFields,
       eligibilityFilter: this.eligibilityFilter,
       itemFieldMapping,
-      remoteFieldMapping,
+      pushToOIAnalytics,
       scanModeId: formValue.scanModeId || null,
       enabled: formValue.enabled
     };
