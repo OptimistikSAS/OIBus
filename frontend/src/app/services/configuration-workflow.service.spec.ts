@@ -16,12 +16,11 @@ const workflow: ConfigurationWorkflowDTO = {
   id: WORKFLOW_ID,
   name: 'Reactor discovery',
   southId: SOUTH_ID,
-  targetItemId: null,
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
   eligibilityFilter: [],
   itemFieldMapping: { name: '{{name}}' },
-  remoteFieldMapping: null,
+  pushToOIAnalytics: false,
   scanMode: null,
   enabled: true,
   createdBy: { id: 'user1', friendlyName: 'User 1' },
@@ -32,12 +31,11 @@ const workflow: ConfigurationWorkflowDTO = {
 
 const command: ConfigurationWorkflowCommandDTO = {
   name: 'Reactor discovery',
-  targetItemId: null,
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
   eligibilityFilter: [],
   itemFieldMapping: { name: '{{name}}' },
-  remoteFieldMapping: null,
+  pushToOIAnalytics: false,
   scanModeId: null,
   enabled: true
 };
@@ -138,7 +136,7 @@ describe('ConfigurationWorkflowService', () => {
   });
 
   test('should preview a workflow without running it', () => {
-    const previewResult = { discoveredCount: 2, eligibleCount: 1, entries: [] };
+    const previewResult = { discoveredCount: 2, eligibleCount: 1, entries: [], records: [] };
     let result: unknown;
     service.preview(SOUTH_ID, WORKFLOW_ID).subscribe(r => (result = r));
 

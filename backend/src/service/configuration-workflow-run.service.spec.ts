@@ -8,6 +8,8 @@ import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/s
 import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
+import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import OIAnalyticsRegistrationServiceMock from '../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 import testData from '../tests/utils/test-data';
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import { ItemPointMetadataEntity } from '../model/item-point-metadata.model';
@@ -21,12 +23,11 @@ const baseWorkflow: ConfigurationWorkflowEntity = {
   id: WORKFLOW_ID,
   name: 'Reactor discovery',
   southId: SOUTH_ID,
-  targetItemId: null,
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
   eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
   itemFieldMapping: { name: '{{name}}', 'settings.nodeId': '{{nodeId}}' },
-  remoteFieldMapping: null,
+  pushToOIAnalytics: false,
   scanMode: null,
   enabled: true,
   createdBy: 'userTest',
@@ -78,6 +79,8 @@ let southConnectorRepository: SouthConnectorRepositoryMock;
 let southService: SouthServiceMock;
 let engine: DataStreamEngineMock;
 let south: SouthConnectorMock;
+let oIAnalyticsMessageService: OIAnalyticsMessageServiceMock;
+let oIAnalyticsRegistrationService: OIAnalyticsRegistrationServiceMock;
 let service: ConfigurationWorkflowRunService;
 
 describe('Configuration Workflow Run Service', () => {
@@ -89,6 +92,8 @@ describe('Configuration Workflow Run Service', () => {
     southService = new SouthServiceMock();
     engine = new DataStreamEngineMock();
     south = new SouthConnectorMock(testData.south.list[0]);
+    oIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
+    oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
 
     workflowRunRepository.start.mock.mockImplementation(() => startedRun);
     workflowRunRepository.findById.mock.mockImplementation(() => startedRun);
@@ -100,7 +105,9 @@ describe('Configuration Workflow Run Service', () => {
     south.hasConfigurationDiscovery.mock.mockImplementation(() => true);
     south.discover.mock.mockImplementation(async () => []);
     southConnectorRepository.findItemById.mock.mockImplementation(() => runningItem as never);
+    southConnectorRepository.findSouthById.mock.mockImplementation(() => testData.south.list[0] as never);
     southService.createItem.mock.mockImplementation(async () => ({ ...runningItem, id: 'createdItemId' }) as never);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => ({ status: 'REGISTERED' }) as never);
 
     service = new ConfigurationWorkflowRunService(
       configurationWorkflowService as never,
@@ -108,7 +115,9 @@ describe('Configuration Workflow Run Service', () => {
       itemPointMetadataRepository,
       southConnectorRepository,
       southService as never,
-      engine as never
+      engine as never,
+      oIAnalyticsMessageService,
+      oIAnalyticsRegistrationService
     );
   });
 
@@ -234,7 +243,7 @@ describe('Configuration Workflow Run Service', () => {
     assert.strictEqual(command.enabled, 'yes');
   });
 
-  it("should create a tracking point row even when remoteFieldMapping is null, for the next run's diff", async () => {
+  it("should create a tracking point row for a brand-new entry, for the next run's diff", async () => {
     south.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' }]);
     await service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
     assert.strictEqual(itemPointMetadataRepository.create.mock.calls.length, 1);
@@ -250,16 +259,8 @@ describe('Configuration Workflow Run Service', () => {
       southItemId: 'existingItemId',
       discoveredEntryKey: 'nodeId=ns=1;s=Temperature',
       discoveredMetadata: { nodeId: 'ns=1;s=Temperature', name: 'Old Name', type: 'Variable' },
-      description: null,
-      unit: null,
-      minAcceptableValue: null,
-      maxAcceptableValue: null,
-      resolution: null,
-      resamplingMethod: null,
-      remoteMetadataExtra: null,
       status: 'active',
-      orphanedAt: null,
-      lastPushedAt: null
+      orphanedAt: null
     };
     itemPointMetadataRepository.findAllByWorkflow.mock.mockImplementation(() => [previousPoint]);
     south.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' }]);
@@ -288,16 +289,8 @@ describe('Configuration Workflow Run Service', () => {
       southItemId: 'existingItemId',
       discoveredEntryKey: 'nodeId=ns=1;s=Temperature',
       discoveredMetadata: { nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' },
-      description: null,
-      unit: null,
-      minAcceptableValue: null,
-      maxAcceptableValue: null,
-      resolution: null,
-      resamplingMethod: null,
-      remoteMetadataExtra: null,
       status: 'active',
-      orphanedAt: null,
-      lastPushedAt: null
+      orphanedAt: null
     };
     itemPointMetadataRepository.findAllByWorkflow.mock.mockImplementation(() => [previousPoint]);
     south.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' }]);
@@ -317,16 +310,8 @@ describe('Configuration Workflow Run Service', () => {
       southItemId: 'existingItemId',
       discoveredEntryKey: 'nodeId=ns=1;s=Temperature',
       discoveredMetadata: { nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' },
-      description: null,
-      unit: null,
-      minAcceptableValue: null,
-      maxAcceptableValue: null,
-      resolution: null,
-      resamplingMethod: null,
-      remoteMetadataExtra: null,
       status: 'orphaned',
-      orphanedAt: '2024-01-02T00:00:00.000Z',
-      lastPushedAt: null
+      orphanedAt: '2024-01-02T00:00:00.000Z'
     };
     itemPointMetadataRepository.findAllByWorkflow.mock.mockImplementation(() => [previousPoint]);
     south.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' }]);
@@ -344,16 +329,8 @@ describe('Configuration Workflow Run Service', () => {
       southItemId: 'existingItemId',
       discoveredEntryKey: 'nodeId=ns=1;s=Temperature',
       discoveredMetadata: { nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' },
-      description: null,
-      unit: null,
-      minAcceptableValue: null,
-      maxAcceptableValue: null,
-      resolution: null,
-      resamplingMethod: null,
-      remoteMetadataExtra: null,
       status: 'active',
-      orphanedAt: null,
-      lastPushedAt: null
+      orphanedAt: null
     };
     itemPointMetadataRepository.findAllByWorkflow.mock.mockImplementation(() => [previousPoint]);
     itemPointMetadataRepository.findBySouthItemId.mock.mockImplementation(() => [{ ...previousPoint, status: 'orphaned' as const }]);
@@ -380,16 +357,8 @@ describe('Configuration Workflow Run Service', () => {
       southItemId: 'sharedItemId',
       discoveredEntryKey: 'col=missing',
       discoveredMetadata: { col: 'missing' },
-      description: null,
-      unit: null,
-      minAcceptableValue: null,
-      maxAcceptableValue: null,
-      resolution: null,
-      resamplingMethod: null,
-      remoteMetadataExtra: null,
       status: 'active',
-      orphanedAt: null,
-      lastPushedAt: null
+      orphanedAt: null
     };
     const siblingPoint: ItemPointMetadataEntity = {
       ...orphanedPoint,
@@ -419,16 +388,8 @@ describe('Configuration Workflow Run Service', () => {
       southItemId: 'existingItemId',
       discoveredEntryKey: 'nodeId=ns=1;s=Gone',
       discoveredMetadata: { nodeId: 'ns=1;s=Gone' },
-      description: null,
-      unit: null,
-      minAcceptableValue: null,
-      maxAcceptableValue: null,
-      resolution: null,
-      resamplingMethod: null,
-      remoteMetadataExtra: null,
       status: 'orphaned',
-      orphanedAt: '2024-01-02T00:00:00.000Z',
-      lastPushedAt: null
+      orphanedAt: '2024-01-02T00:00:00.000Z'
     };
     itemPointMetadataRepository.findAllByWorkflow.mock.mockImplementation(() => [orphanedPoint]);
     south.discover.mock.mockImplementation(async () => []);
@@ -438,60 +399,61 @@ describe('Configuration Workflow Run Service', () => {
     assert.strictEqual(itemPointMetadataRepository.markOrphaned.mock.calls.length, 0);
   });
 
-  it('should always update the single target item for a targetItemId workflow, never creating one', async () => {
-    configurationWorkflowService.findById.mock.mockImplementation(() => ({
+  describe('remote (push-to-OIAnalytics) mode', () => {
+    const remoteWorkflow: ConfigurationWorkflowEntity = {
       ...baseWorkflow,
-      targetItemId: 'existingItemId',
-      itemFieldMapping: { 'settings.nodeId': '{{nodeId}}' }
-    }));
-    south.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' }]);
-
-    await service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
-
-    assert.strictEqual(southService.createItem.mock.calls.length, 0);
-    assert.strictEqual(southService.updateItem.mock.calls.length, 1);
-    assert.strictEqual(southService.updateItem.mock.calls[0].arguments[1], 'existingItemId');
-  });
-
-  it('should write remote point metadata, referencing the acted-on item, without touching items when itemFieldMapping is null', async () => {
-    configurationWorkflowService.findById.mock.mockImplementation(() => ({
-      ...baseWorkflow,
-      targetItemId: 'existingItemId',
       itemFieldMapping: null,
-      remoteFieldMapping: { unit: '{{unit}}', description: 'Point for {{item.name}}' }
-    }));
-    south.discover.mock.mockImplementation(async () => [
-      { nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable', unit: '°C' }
-    ]);
-
-    await service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
-
-    assert.strictEqual(southService.createItem.mock.calls.length, 0);
-    assert.strictEqual(southService.updateItem.mock.calls.length, 0);
-    assert.strictEqual(itemPointMetadataRepository.create.mock.calls.length, 1);
-    const write = itemPointMetadataRepository.create.mock.calls[0].arguments[0] as {
-      southItemId: string;
-      unit: string;
-      description: string;
+      pushToOIAnalytics: true
     };
-    assert.strictEqual(write.southItemId, 'existingItemId');
-    assert.strictEqual(write.unit, '°C');
-    assert.strictEqual(write.description, 'Point for Temperature');
-  });
 
-  it('should route unmapped remoteFieldMapping keys into remoteMetadataExtra', async () => {
-    configurationWorkflowService.findById.mock.mockImplementation(() => ({
-      ...baseWorkflow,
-      targetItemId: 'existingItemId',
-      itemFieldMapping: null,
-      remoteFieldMapping: { customField: '{{customValue}}' }
-    }));
-    south.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', type: 'Variable', customValue: 'hello' }]);
+    it('should never touch items, and queue one message with the raw eligible records', async () => {
+      configurationWorkflowService.findById.mock.mockImplementation(() => remoteWorkflow);
+      south.discover.mock.mockImplementation(async () => [
+        { nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable', unit: '°C' },
+        { nodeId: 'ns=1;s=Folder', name: 'Folder', type: 'Object' } // filtered out by eligibilityFilter
+      ]);
 
-    await service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
+      await service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
 
-    const write = itemPointMetadataRepository.create.mock.calls[0].arguments[0] as { remoteMetadataExtra: Record<string, unknown> | null };
-    assert.deepStrictEqual(write.remoteMetadataExtra, { customField: 'hello' });
+      assert.strictEqual(southService.createItem.mock.calls.length, 0);
+      assert.strictEqual(southService.updateItem.mock.calls.length, 0);
+      assert.strictEqual(itemPointMetadataRepository.create.mock.calls.length, 0);
+      assert.strictEqual(itemPointMetadataRepository.findAllByWorkflow.mock.calls.length, 0);
+
+      assert.strictEqual(oIAnalyticsMessageService.createConfigurationWorkflowResultMessage.mock.calls.length, 1);
+      const call = oIAnalyticsMessageService.createConfigurationWorkflowResultMessage.mock.calls[0];
+      assert.strictEqual(call.arguments[0], 'runId1');
+      const payload = JSON.parse(call.arguments[1] as string);
+      assert.strictEqual(payload.southId, SOUTH_ID);
+      assert.strictEqual(payload.workflowId, WORKFLOW_ID);
+      assert.deepStrictEqual(payload.identityKeyFields, ['nodeId']);
+      assert.deepStrictEqual(payload.records, [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable', unit: '°C' }]);
+
+      const counts = workflowRunRepository.complete.mock.calls[0].arguments[1] as {
+        pushedCount: number;
+        createdCount: number;
+        updatedCount: number;
+        disabledCount: number;
+      };
+      assert.strictEqual(counts.pushedCount, 1);
+      assert.strictEqual(counts.createdCount, 0);
+      assert.strictEqual(counts.updatedCount, 0);
+      assert.strictEqual(counts.disabledCount, 0);
+    });
+
+    it('should fail the run rather than queue a message when OIBus is no longer registered', async () => {
+      configurationWorkflowService.findById.mock.mockImplementation(() => remoteWorkflow);
+      oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => ({ status: 'NOT_REGISTERED' }) as never);
+      south.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', type: 'Variable' }]);
+
+      await assert.rejects(
+        service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest'),
+        new OIBusValidationError('OIBus is not registered with OIAnalytics - the configuration workflow result cannot be sent')
+      );
+
+      assert.strictEqual(oIAnalyticsMessageService.createConfigurationWorkflowResultMessage.mock.calls.length, 0);
+      assert.strictEqual(workflowRunRepository.fail.mock.calls.length, 1);
+    });
   });
 
   it('should mark the run ERRORED and rethrow when discovery itself fails', async () => {
@@ -544,6 +506,26 @@ describe('Configuration Workflow Run Service', () => {
       assert.strictEqual(itemPointMetadataRepository.markOrphaned.mock.calls.length, 0);
     });
 
+    it('should return the raw eligible records with no entries, for a remote workflow', async () => {
+      configurationWorkflowService.findById.mock.mockImplementation(() => ({
+        ...baseWorkflow,
+        itemFieldMapping: null,
+        pushToOIAnalytics: true
+      }));
+      south.discover.mock.mockImplementation(async () => [
+        { nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' },
+        { nodeId: 'ns=1;s=Folder', name: 'Folder', type: 'Object' }
+      ]);
+
+      const result = await service.preview(SOUTH_ID, WORKFLOW_ID);
+
+      assert.strictEqual(result.discoveredCount, 2);
+      assert.strictEqual(result.eligibleCount, 1);
+      assert.deepStrictEqual(result.entries, []);
+      assert.deepStrictEqual(result.records, [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' }]);
+      assert.strictEqual(itemPointMetadataRepository.findAllByWorkflow.mock.calls.length, 0);
+    });
+
     it('should classify a brand-new entry as "new"', async () => {
       south.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' }]);
 
@@ -564,13 +546,6 @@ describe('Configuration Workflow Run Service', () => {
         southItemId: 'itemA',
         discoveredEntryKey: 'nodeId=unchanged',
         discoveredMetadata: { nodeId: 'unchanged', name: 'Same', type: 'Variable' },
-        description: null,
-        unit: null,
-        minAcceptableValue: null,
-        maxAcceptableValue: null,
-        resolution: null,
-        resamplingMethod: null,
-        remoteMetadataExtra: null,
         status: 'active',
         orphanedAt: null,
         lastPushedAt: null

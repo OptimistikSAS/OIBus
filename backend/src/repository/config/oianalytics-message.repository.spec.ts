@@ -1,9 +1,11 @@
 import { before, after, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { Database } from 'better-sqlite3';
-import { emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
 import OIAnalyticsMessageRepository from './oianalytics-message.repository';
+import ConfigurationWorkflowRepository from './configuration-workflow.repository';
+import WorkflowRunRepository from './workflow-run.repository';
 import { createPageFromArray } from '../../../shared/model/types';
 
 const TEST_DB_PATH = 'src/tests/test-config-message.db';
@@ -113,6 +115,39 @@ describe('OIAnalyticsMessageRepository', () => {
       error: null,
       completedDate: null
     });
+  });
+
+  it('should create configuration-workflow-result message with its run and payload', () => {
+    const workflowRepository = new ConfigurationWorkflowRepository(database, createAuditServiceMock());
+    const workflow = workflowRepository.create(
+      {
+        name: 'Message repository test workflow',
+        southId: testData.south.list[0].id,
+        discoveryScope: { query: 'SELECT tag_name FROM metadata_table' },
+        identityKeyFields: ['tagName'],
+        eligibilityFilter: [],
+        itemFieldMapping: null,
+        pushToOIAnalytics: true,
+        scanMode: null,
+        enabled: true
+      },
+      'userTest'
+    );
+    const run = new WorkflowRunRepository(database).start(workflow.id, 'manual', 'userTest');
+    const payload = JSON.stringify({ southId: testData.south.list[0].id, workflowId: workflow.id, records: [{ tagName: 'a' }] });
+
+    const created = repository.create({ type: 'configuration-workflow-result', workflowRunId: run.id, payload });
+
+    assert.deepStrictEqual(stripAuditFields(created), {
+      id: created.id,
+      type: 'configuration-workflow-result',
+      status: 'PENDING',
+      error: null,
+      completedDate: null,
+      workflowRunId: run.id,
+      payload
+    });
+    assert.deepStrictEqual(stripAuditFields(repository.findById(created.id)), stripAuditFields(created));
   });
 
   it('should mark a command as COMPLETED', () => {
