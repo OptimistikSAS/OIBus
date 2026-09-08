@@ -41091,7 +41091,7 @@
 				"additionalProperties": false
 			},
 			"ConfigurationWorkflowDTO": {
-				"description": "A Configuration Workflow: discovers a data source, decides which of what it found actually\nwarrants a configuration change, and maps that into south item settings and/or remote point\nmetadata — run once by hand or recurringly on a scan mode.",
+				"description": "A Configuration Workflow: discovers a data source, decides which of what it found actually\nwarrants a configuration change, and either creates/updates south items from it or forwards the raw\neligible records to OIAnalytics — run once by hand or recurringly on a scan mode.\n\nExactly one of `itemFieldMapping`/`pushToOIAnalytics` applies — a workflow is either local\n(`itemFieldMapping` set, `pushToOIAnalytics` false) or remote (`itemFieldMapping` null,\n`pushToOIAnalytics` true), enforced at the service layer. Remote additionally requires OIBus to be\nregistered with OIAnalytics.",
 				"properties": {
 					"id": {
 						"type": "string",
@@ -41126,12 +41126,6 @@
 						"description": "The south connector this workflow discovers from.",
 						"example": "b7f8e6d2-1c3a-4b5d-9e0f-2a3b4c5d6e7f"
 					},
-					"targetItemId": {
-						"type": "string",
-						"nullable": true,
-						"description": "Set: the workflow manages exactly one pre-existing item's point metadata (e.g. a SQL query item,\nor a single node someone already created by hand). Null: the workflow is self-scoping and owns\nwhatever items its own discovery creates.",
-						"example": null
-					},
 					"discoveryScope": {
 						"$ref": "#/components/schemas/Record_string.unknown_",
 						"description": "What to (re-)discover — connector-specific (e.g. `{ rootNodeId: \"ns=1;s=Root\" }` for OPC-UA,\n`{ query: \"SELECT ...\" }` for SQL)."
@@ -41160,23 +41154,15 @@
 							}
 						],
 						"nullable": true,
-						"description": "Discovered record → item name/settings, as a key → expression bag. Null: this workflow never\ncreates/updates items.",
+						"description": "Local mode: discovered record → item name/settings, as a key → expression bag. Null when this\nworkflow is remote (`pushToOIAnalytics` true) instead.",
 						"example": {
 							"name": "{{name}}",
 							"settings.nodeId": "{{nodeId}}"
 						}
 					},
-					"remoteFieldMapping": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Record_string.string_"
-							}
-						],
-						"nullable": true,
-						"description": "Discovered record + item fields → remote (OIAnalytics) point metadata, as a key → expression\nbag. Null: no remote push is configured for this workflow.",
-						"example": {
-							"unit": "{{unit}}"
-						}
+					"pushToOIAnalytics": {
+						"type": "boolean",
+						"description": "Remote mode: forward every run's raw eligible records to OIAnalytics as-is (no mapping, no local\nitem, no per-record diffing) instead of creating/updating items locally. Requires OIBus to be\nregistered with OIAnalytics."
 					},
 					"scanMode": {
 						"allOf": [
@@ -41199,12 +41185,11 @@
 					"updatedAt",
 					"name",
 					"southId",
-					"targetItemId",
 					"discoveryScope",
 					"identityKeyFields",
 					"eligibilityFilter",
 					"itemFieldMapping",
-					"remoteFieldMapping",
+					"pushToOIAnalytics",
 					"scanMode",
 					"enabled"
 				],
@@ -41215,10 +41200,6 @@
 				"properties": {
 					"name": {
 						"type": "string"
-					},
-					"targetItemId": {
-						"type": "string",
-						"nullable": true
 					},
 					"discoveryScope": {
 						"$ref": "#/components/schemas/Record_string.unknown_"
@@ -41243,13 +41224,8 @@
 						],
 						"nullable": true
 					},
-					"remoteFieldMapping": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Record_string.string_"
-							}
-						],
-						"nullable": true
+					"pushToOIAnalytics": {
+						"type": "boolean"
 					},
 					"scanModeId": {
 						"type": "string",
@@ -41263,12 +41239,11 @@
 				},
 				"required": [
 					"name",
-					"targetItemId",
 					"discoveryScope",
 					"identityKeyFields",
 					"eligibilityFilter",
 					"itemFieldMapping",
-					"remoteFieldMapping",
+					"pushToOIAnalytics",
 					"scanModeId",
 					"enabled"
 				],
@@ -41420,7 +41395,7 @@
 				"additionalProperties": false
 			},
 			"WorkflowPreviewResultDTO": {
-				"description": "A dry run of a Configuration Workflow: identical discovery and Decide-step classification as a real\nrun, but nothing is written - no items, no point metadata, no `workflow_runs` record. Discovery\nitself is a real round-trip to the data source, so a preview costs what a run costs minus the writes.",
+				"description": "A dry run of a Configuration Workflow: identical discovery as a real run, but nothing is written - no\nitems, no point metadata, no `workflow_runs` record, no OIAnalytics push. Discovery itself is a real\nround-trip to the data source, so a preview costs what a run costs minus the writes.",
 				"properties": {
 					"discoveredCount": {
 						"type": "number",
@@ -41434,13 +41409,22 @@
 						"items": {
 							"$ref": "#/components/schemas/WorkflowPreviewEntryDTO"
 						},
-						"type": "array"
+						"type": "array",
+						"description": "Local (item-creating) workflow only - the per-entry new/changed/unchanged/missing classification\nagainst the previous run. Empty for a remote workflow."
+					},
+					"records": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusRecord"
+						},
+						"type": "array",
+						"description": "Remote (push-to-OIAnalytics) workflow only - the raw eligible records that would be sent, exactly\nas discovered, with no mapping or diffing applied. Empty for a local workflow."
 					}
 				},
 				"required": [
 					"discoveredCount",
 					"eligibleCount",
-					"entries"
+					"entries",
+					"records"
 				],
 				"type": "object",
 				"additionalProperties": false

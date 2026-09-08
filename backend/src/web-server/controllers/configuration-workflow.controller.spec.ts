@@ -31,12 +31,11 @@ const workflowEntity: ConfigurationWorkflowEntity = {
   id: 'workflowId1',
   name: 'Reactor discovery',
   southId: SOUTH_ID,
-  targetItemId: null,
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
   eligibilityFilter: [],
   itemFieldMapping: { name: '{{name}}' },
-  remoteFieldMapping: null,
+  pushToOIAnalytics: false,
   scanMode: null,
   enabled: true,
   createdBy: 'userTest',
@@ -47,12 +46,11 @@ const workflowEntity: ConfigurationWorkflowEntity = {
 
 const command: ConfigurationWorkflowCommandDTO = {
   name: 'Reactor discovery',
-  targetItemId: null,
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
   eligibilityFilter: [],
   itemFieldMapping: { name: '{{name}}' },
-  remoteFieldMapping: null,
+  pushToOIAnalytics: false,
   scanModeId: null,
   enabled: true
 };
