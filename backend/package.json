@@ -82,7 +82,7 @@
     "mongodb": "7.6.0",
     "mqtt": "5.15.2",
     "mssql": "12.7.0",
-    "multer": "2.2.0",
+    "multer": "2.3.0",
     "mysql2": "3.24.2",
     "node-forge": "1.4.0",
     "node-opcua": "2.178.0",
