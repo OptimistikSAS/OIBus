@@ -5,6 +5,7 @@ import { CustomExpressRequest } from '../express';
 import { createMockServices, fixTsoaModuleResolution, reloadModule } from '../../tests/utils/test-utils';
 import ConfigurationWorkflowServiceMock from '../../tests/__mocks__/service/configuration-workflow-service.mock';
 import ConfigurationWorkflowRunServiceMock from '../../tests/__mocks__/service/configuration-workflow-run-service.mock';
+import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
 import testData from '../../tests/utils/test-data';
 import { ConfigurationWorkflowEntity } from '../../model/configuration-workflow.model';
 import { WorkflowRunEntity } from '../../model/workflow-run.model';
@@ -68,6 +69,8 @@ const runEntity: WorkflowRunEntity = {
   updatedCount: 1,
   disabledCount: 0,
   pushedCount: 0,
+  entries: [],
+  records: [],
   error: null,
   triggeredBy: 'userTest'
 };
@@ -76,13 +79,16 @@ describe('ConfigurationWorkflowController', () => {
   let controller: ConfigurationWorkflowControllerShape;
   let configurationWorkflowService: ConfigurationWorkflowServiceMock;
   let configurationWorkflowRunService: ConfigurationWorkflowRunServiceMock;
+  let userService: UserServiceMock;
   let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
     configurationWorkflowService = new ConfigurationWorkflowServiceMock();
     configurationWorkflowRunService = new ConfigurationWorkflowRunServiceMock();
+    userService = new UserServiceMock();
+    userService.getUserInfo.mock.mockImplementation((userId: string) => ({ id: userId, friendlyName: `Friendly ${userId}` }));
     mockRequest = {
-      services: createMockServices({ configurationWorkflowService, configurationWorkflowRunService }),
+      services: createMockServices({ configurationWorkflowService, configurationWorkflowRunService, userService }),
       user: { id: 'userTest', login: 'testUser' }
     } as Partial<CustomExpressRequest>;
     controller = new ConfigurationWorkflowController();
@@ -164,6 +170,20 @@ describe('ConfigurationWorkflowController', () => {
       assert.strictEqual(result.id, 'runId1');
       assert.strictEqual(result.status, 'COMPLETED');
       assert.strictEqual(result.createdCount, 1);
+      assert.deepStrictEqual(result.triggeredBy, { id: 'userTest', friendlyName: 'Friendly userTest' });
+    });
+
+    it('should leave triggeredBy null for a scheduled run', async () => {
+      configurationWorkflowRunService.runNow = mock.fn(async () => ({
+        ...runEntity,
+        triggerType: 'scheduled' as const,
+        triggeredBy: null
+      }));
+
+      const result = await controller.run(SOUTH_ID, 'workflowId1', mockRequest as CustomExpressRequest);
+
+      assert.strictEqual(result.triggeredBy, null);
+      assert.strictEqual(userService.getUserInfo.mock.calls.length, 0);
     });
   });
 
@@ -172,7 +192,8 @@ describe('ConfigurationWorkflowController', () => {
       const previewResult: WorkflowPreviewResultDTO = {
         discoveredCount: 2,
         eligibleCount: 1,
-        entries: [{ key: 'nodeId=x', status: 'new', record: { nodeId: 'x' }, previousMetadata: null }]
+        entries: [{ key: 'nodeId=x', status: 'new', record: { nodeId: 'x' }, previousMetadata: null }],
+        records: []
       };
       configurationWorkflowRunService.preview = mock.fn(async () => previewResult);
 
@@ -190,17 +211,69 @@ describe('ConfigurationWorkflowController', () => {
 
       const result = controller.listRuns(SOUTH_ID, 'workflowId1', mockRequest as CustomExpressRequest, 1);
 
-      assert.deepStrictEqual(configurationWorkflowRunService.findRuns.mock.calls[0].arguments, [SOUTH_ID, 'workflowId1', 1]);
+      assert.deepStrictEqual(configurationWorkflowRunService.findRuns.mock.calls[0].arguments, [
+        SOUTH_ID,
+        'workflowId1',
+        { page: 1, start: undefined, end: undefined, statuses: [], triggerTypes: [] }
+      ]);
       assert.strictEqual(result.content.length, 1);
       assert.strictEqual(result.content[0].id, 'runId1');
+      assert.deepStrictEqual(result.content[0].triggeredBy, { id: 'userTest', friendlyName: 'Friendly userTest' });
     });
 
-    it('should default page to 0', () => {
+    it('should default page to 0 and every filter to empty', () => {
       configurationWorkflowRunService.findRuns = mock.fn(() => createPageFromArray([], 50, 0));
 
       controller.listRuns(SOUTH_ID, 'workflowId1', mockRequest as CustomExpressRequest);
 
-      assert.strictEqual(configurationWorkflowRunService.findRuns.mock.calls[0].arguments[2], 0);
+      assert.deepStrictEqual(configurationWorkflowRunService.findRuns.mock.calls[0].arguments[2], {
+        page: 0,
+        start: undefined,
+        end: undefined,
+        statuses: [],
+        triggerTypes: []
+      });
+    });
+
+    it('should parse comma-separated status/triggerType filters and pass the date range through as-is', () => {
+      configurationWorkflowRunService.findRuns = mock.fn(() => createPageFromArray([], 50, 0));
+
+      controller.listRuns(
+        SOUTH_ID,
+        'workflowId1',
+        mockRequest as CustomExpressRequest,
+        0,
+        '2024-01-01T00:00:00.000Z',
+        '2024-01-02T00:00:00.000Z',
+        'COMPLETED,ERRORED',
+        'manual,scheduled'
+      );
+
+      assert.deepStrictEqual(configurationWorkflowRunService.findRuns.mock.calls[0].arguments[2], {
+        page: 0,
+        start: '2024-01-01T00:00:00.000Z',
+        end: '2024-01-02T00:00:00.000Z',
+        statuses: ['COMPLETED', 'ERRORED'],
+        triggerTypes: ['manual', 'scheduled']
+      });
+    });
+  });
+
+  describe('getRun()', () => {
+    it("should return one run's full detail, including its discovered payload", () => {
+      const withPayload: WorkflowRunEntity = {
+        ...runEntity,
+        entries: [{ key: 'nodeId=x', status: 'new', record: { nodeId: 'x' }, previousMetadata: null }]
+      };
+      configurationWorkflowRunService.findRunById = mock.fn(() => withPayload);
+
+      const result = controller.getRun(SOUTH_ID, 'workflowId1', 'runId1', mockRequest as CustomExpressRequest);
+
+      assert.deepStrictEqual(configurationWorkflowRunService.findRunById.mock.calls[0].arguments, [SOUTH_ID, 'workflowId1', 'runId1']);
+      assert.strictEqual(result.id, 'runId1');
+      assert.deepStrictEqual(result.entries, withPayload.entries);
+      assert.deepStrictEqual(result.records, []);
+      assert.deepStrictEqual(result.triggeredBy, { id: 'userTest', friendlyName: 'Friendly userTest' });
     });
   });
 });

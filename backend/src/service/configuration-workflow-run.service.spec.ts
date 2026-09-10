@@ -161,7 +161,7 @@ describe('Configuration Workflow Run Service', () => {
     );
   });
 
-  it('should start a run, then complete it with zeroed counts when discovery finds nothing', async () => {
+  it('should start a run, then complete it with zeroed counts and an empty payload when discovery finds nothing', async () => {
     const result = await service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
     assert.strictEqual(result, startedRun);
     assert.deepStrictEqual(workflowRunRepository.start.mock.calls[0].arguments, [WORKFLOW_ID, 'manual', 'userTest']);
@@ -175,6 +175,44 @@ describe('Configuration Workflow Run Service', () => {
       disabledCount: 0,
       pushedCount: 0
     });
+    assert.deepStrictEqual(completeCall.arguments[2], { entries: [], records: [] });
+  });
+
+  it("should persist the full new/changed/reactivated/missing/unchanged classification as the completed run's payload", async () => {
+    const unchangedPoint: ItemPointMetadataEntity = {
+      id: 'p1',
+      workflowId: WORKFLOW_ID,
+      southItemId: 'itemA',
+      discoveredEntryKey: 'nodeId=unchanged',
+      discoveredMetadata: { nodeId: 'unchanged', name: 'Same', type: 'Variable' },
+      status: 'active',
+      orphanedAt: null
+    };
+    const missingPoint: ItemPointMetadataEntity = {
+      ...unchangedPoint,
+      id: 'p4',
+      southItemId: 'existingItemId',
+      discoveredEntryKey: 'nodeId=missing',
+      discoveredMetadata: { nodeId: 'missing', name: 'Gone' }
+    };
+    itemPointMetadataRepository.findAllByWorkflow.mock.mockImplementation(() => [unchangedPoint, missingPoint]);
+    itemPointMetadataRepository.findBySouthItemId.mock.mockImplementation(() => [{ ...missingPoint, status: 'orphaned' as const }]);
+    south.discover.mock.mockImplementation(async () => [
+      { nodeId: 'unchanged', name: 'Same', type: 'Variable' },
+      { nodeId: 'newOne', name: 'Brand new', type: 'Variable' }
+    ]);
+
+    await service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
+
+    const payload = workflowRunRepository.complete.mock.calls[0].arguments[2] as {
+      entries: Array<{ key: string; status: string }>;
+      records: Array<unknown>;
+    };
+    const byKey = new Map(payload.entries.map(entry => [entry.key, entry.status]));
+    assert.strictEqual(byKey.get('nodeId=unchanged'), 'unchanged');
+    assert.strictEqual(byKey.get('nodeId=newOne'), 'new');
+    assert.strictEqual(byKey.get('nodeId=missing'), 'missing');
+    assert.deepStrictEqual(payload.records, []);
   });
 
   it('should filter out ineligible records before counting/acting', async () => {
@@ -439,6 +477,15 @@ describe('Configuration Workflow Run Service', () => {
       assert.strictEqual(counts.createdCount, 0);
       assert.strictEqual(counts.updatedCount, 0);
       assert.strictEqual(counts.disabledCount, 0);
+
+      // The run's persisted payload carries the exact same records forwarded to OIAnalytics - no
+      // separate diffing/entries, matching the workflow's own exclusive remote mode.
+      const runPayload = workflowRunRepository.complete.mock.calls[0].arguments[2] as {
+        entries: Array<unknown>;
+        records: Array<unknown>;
+      };
+      assert.deepStrictEqual(runPayload.entries, []);
+      assert.deepStrictEqual(runPayload.records, [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable', unit: '°C' }]);
     });
 
     it('should fail the run rather than queue a message when OIBus is no longer registered', async () => {
@@ -490,6 +537,14 @@ describe('Configuration Workflow Run Service', () => {
     const counts = failCall.arguments[2] as { createdCount: number; discoveredCount: number };
     assert.strictEqual(counts.discoveredCount, 2);
     assert.strictEqual(counts.createdCount, 1);
+    // The entry that succeeded before the second one threw is still captured in the payload passed to
+    // fail() - a mid-run failure doesn't lose what was already classified/decided.
+    const payload = failCall.arguments[3] as { entries: Array<{ key: string; status: string }> };
+    assert.strictEqual(payload.entries.length, 2);
+    assert.deepStrictEqual(
+      payload.entries.map(entry => entry.status),
+      ['new', 'new']
+    );
   });
 
   describe('preview', () => {
@@ -599,6 +654,55 @@ describe('Configuration Workflow Run Service', () => {
         service.preview(SOUTH_ID, WORKFLOW_ID),
         new OIBusValidationError(`South connector "${SOUTH_ID}" is not running - start it before running a workflow`)
       );
+    });
+  });
+
+  describe('findRuns', () => {
+    it('should check ownership and pass the search params straight through to the repository', () => {
+      const page = { content: [], size: 50, number: 0, totalElements: 0, totalPages: 0 };
+      workflowRunRepository.findByWorkflowId.mock.mockImplementation(() => page);
+      const searchParams = {
+        page: 1,
+        start: '2024-01-01T00:00:00.000Z',
+        end: undefined,
+        statuses: ['COMPLETED' as const],
+        triggerTypes: []
+      };
+
+      const result = service.findRuns(SOUTH_ID, WORKFLOW_ID, searchParams);
+
+      assert.strictEqual(result, page);
+      assert.deepStrictEqual(configurationWorkflowService.findById.mock.calls[0].arguments, [SOUTH_ID, WORKFLOW_ID]);
+      assert.deepStrictEqual(workflowRunRepository.findByWorkflowId.mock.calls[0].arguments, [WORKFLOW_ID, searchParams]);
+    });
+  });
+
+  describe('findRunById', () => {
+    it('should return the run when it exists and belongs to this workflow', () => {
+      const detailedRun = { ...startedRun, workflowId: WORKFLOW_ID, entries: [], records: [] };
+      workflowRunRepository.findById.mock.mockImplementation(() => detailedRun as never);
+
+      const result = service.findRunById(SOUTH_ID, WORKFLOW_ID, 'runId1');
+
+      assert.strictEqual(result, detailedRun);
+      assert.deepStrictEqual(configurationWorkflowService.findById.mock.calls[0].arguments, [SOUTH_ID, WORKFLOW_ID]);
+      assert.deepStrictEqual(workflowRunRepository.findById.mock.calls[0].arguments, ['runId1']);
+    });
+
+    it('should throw NotFoundError when the run does not exist', () => {
+      workflowRunRepository.findById.mock.mockImplementation(() => null);
+
+      assert.throws(() => service.findRunById(SOUTH_ID, WORKFLOW_ID, 'nonExistingId'), {
+        message: 'Configuration workflow run "nonExistingId" not found'
+      });
+    });
+
+    it('should throw NotFoundError when the run belongs to a different workflow', () => {
+      workflowRunRepository.findById.mock.mockImplementation(() => ({ ...startedRun, workflowId: 'otherWorkflowId' }) as never);
+
+      assert.throws(() => service.findRunById(SOUTH_ID, WORKFLOW_ID, 'runId1'), {
+        message: 'Configuration workflow run "runId1" not found'
+      });
     });
   });
 
