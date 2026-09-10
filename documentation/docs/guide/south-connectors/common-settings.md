@@ -378,13 +378,32 @@ the writes.
 ### Run History {#run-history}
 
 Every run — manual or scheduled, whether it succeeds or fails — is recorded. The **Run history** page (reachable
-from the workflow list) shows, per run:
+from the workflow list) opens with a search form for narrowing the list down, always shown in full (no need to
+expand anything first):
 
-| Column           | Description                                                                          |
-| ----------------- | --------------------------------------------------------------------------------------- |
-| **Status**        | `Running`, `Completed`, or `Errored`.                                                    |
-| **Trigger type**  | `Manual` (via Run now) or `Scheduled`.                                                   |
-| **Started/Completed at** | When the run started, and when it finished (if it has).                          |
-| **Triggered by**  | The user who clicked Run now; empty for a scheduled run.                                 |
-| **Counts**        | Discovered / Eligible / Created / Updated / Disabled. For a remote (Push to OIAnalytics) workflow, Created/Updated/Disabled stay at zero — that mode never touches items. |
-| **Error**         | The failure message, if the run errored.                                                 |
+- **Started after / Started before** — a date range on when the run started.
+- **Status** and **Trigger type** — clickable filter chips (click again to remove one, or use **Clear** to remove
+  them all). Each status chip carries its own icon as well as its color (a spinner for Running, a check for
+  Completed, a cross for Errored), so the table's own status badges stay distinguishable without relying on color
+  alone.
+
+The table itself shows, per run:
+
+| Column                    | Description                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Status**                 | `Running`, `Completed`, or `Errored`.                                                             |
+| **Trigger type**           | `Manual` (via Run now) or `Scheduled`.                                                            |
+| **Started/Completed at**   | When the run started, and when it finished (if it has).                                          |
+| **Triggered by**           | The name of the user who clicked Run now; empty for a scheduled run.                              |
+| **Discovered**             | How many records this run's discovery step found in total, before eligibility filtering.         |
+| **Error**                  | The failure message, if the run errored — shown as **Ø** when there wasn't one.                   |
+
+The table deliberately shows only the discovered count - everything else the run decided or did (Eligible /
+Created / Updated / Disabled / Pushed, plus the full discovered payload itself) lives one click away, behind the
+**View payload** (👁) action on a row. It opens a larger modal: for a local workflow, every record it decided on,
+classified exactly like **Preview** does (**New**, **Changed**, **Unchanged**, **Reactivated**, **Missing**) with
+the classification leading on the left and the full JSON payload given the rest of the modal's width; for a remote
+workflow, the raw records it forwarded to OIAnalytics; and — for either mode — the created/updated/disabled/pushed
+counts themselves. This is the same data the run itself acted on, persisted at the time it ran - not a live
+re-query - so it stays accurate even if the data source has since changed. Unavailable while a run is still
+`Running`.

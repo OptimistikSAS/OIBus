@@ -230,7 +230,7 @@ export default class ManageWorkflowsModalComponent {
   onPreview(workflow: ConfigurationWorkflowDTO) {
     this.configurationWorkflowService.preview(this.southId, workflow.id).subscribe({
       next: result => {
-        const modalRef = this.modalService.open(PreviewWorkflowModalComponent, { size: 'lg' });
+        const modalRef = this.modalService.open(PreviewWorkflowModalComponent, { size: 'xl' });
         const component: PreviewWorkflowModalComponent = modalRef.componentInstance;
         component.prepare(workflow.name, result);
       },
