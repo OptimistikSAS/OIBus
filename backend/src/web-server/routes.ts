@@ -9096,7 +9096,7 @@ const models: TsoaRoute.Models = {
             "startedAt": {"dataType":"string","required":true},
             "completedAt": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "error": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "triggeredBy": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "triggeredBy": {"dataType":"union","subSchemas":[{"ref":"UserInfo"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -9136,6 +9136,29 @@ const models: TsoaRoute.Models = {
             "size": {"dataType":"double","required":true},
             "number": {"dataType":"double","required":true},
             "totalPages": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "WorkflowRunDetailDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "discoveredCount": {"dataType":"double","required":true},
+            "eligibleCount": {"dataType":"double","required":true},
+            "createdCount": {"dataType":"double","required":true},
+            "updatedCount": {"dataType":"double","required":true},
+            "disabledCount": {"dataType":"double","required":true},
+            "pushedCount": {"dataType":"double","required":true},
+            "id": {"dataType":"string","required":true},
+            "workflowId": {"dataType":"string","required":true},
+            "triggerType": {"ref":"WorkflowRunTriggerType","required":true},
+            "status": {"ref":"WorkflowRunStatus","required":true},
+            "startedAt": {"dataType":"string","required":true},
+            "completedAt": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "error": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "triggeredBy": {"dataType":"union","subSchemas":[{"ref":"UserInfo"},{"dataType":"enum","enums":[null]}],"required":true},
+            "entries": {"dataType":"array","array":{"dataType":"refObject","ref":"WorkflowPreviewEntryDTO"},"required":true},
+            "records": {"dataType":"array","array":{"dataType":"refAlias","ref":"OIBusRecord"},"required":true},
         },
         "additionalProperties": false,
     },
@@ -14099,6 +14122,10 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 workflowId: {"in":"path","name":"workflowId","required":true,"dataType":"string"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
                 page: {"default":0,"in":"query","name":"page","dataType":"double"},
+                start: {"in":"query","name":"start","ref":"Instant"},
+                end: {"in":"query","name":"end","ref":"Instant"},
+                statuses: {"in":"query","name":"statuses","dataType":"string"},
+                triggerTypes: {"in":"query","name":"triggerTypes","dataType":"string"},
         };
         app.get('/api/south/:southId/workflows/:workflowId/runs',
             ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController)),
@@ -14116,6 +14143,39 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'listRuns',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsConfigurationWorkflowController_getRun: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                workflowId: {"in":"path","name":"workflowId","required":true,"dataType":"string"},
+                runId: {"in":"path","name":"runId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/south/:southId/workflows/:workflowId/runs/:runId',
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController)),
+            ...(fetchMiddlewares<RequestHandler>(ConfigurationWorkflowController.prototype.getRun)),
+
+            async function ConfigurationWorkflowController_getRun(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsConfigurationWorkflowController_getRun, request, response });
+
+                const controller = new ConfigurationWorkflowController();
+
+              await templateService.apiHandler({
+                methodName: 'getRun',
                 controller,
                 response,
                 next,

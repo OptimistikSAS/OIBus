@@ -41320,9 +41320,13 @@
 						"description": "Set only when `status` is `ERRORED`."
 					},
 					"triggeredBy": {
-						"type": "string",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/UserInfo"
+							}
+						],
 						"nullable": true,
-						"description": "The user who triggered a manual run; null for a scheduled one."
+						"description": "The user who triggered a manual run, resolved to a display name; null for a scheduled one."
 					}
 				},
 				"required": [
@@ -41470,6 +41474,101 @@
 					"size",
 					"number",
 					"totalPages"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"WorkflowRunDetailDTO": {
+				"description": "One run's full detail, including the full discovered payload behind its summary counts - fetched on\ndemand (not part of the paginated run list, which stays lean) since it can be sizeable for a\nworkflow with many discovered records. Shape mirrors `WorkflowPreviewResultDTO`: local (item-creating)\nworkflow populates `entries` (empty for remote); remote (push-to-OIAnalytics) workflow populates\n`records` (empty for local). Both are empty for a run that errored before Retrieve completed, or one\nstill `RUNNING`.",
+				"properties": {
+					"discoveredCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"eligibleCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"createdCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"updatedCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"disabledCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"pushedCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"id": {
+						"type": "string"
+					},
+					"workflowId": {
+						"type": "string"
+					},
+					"triggerType": {
+						"$ref": "#/components/schemas/WorkflowRunTriggerType"
+					},
+					"status": {
+						"$ref": "#/components/schemas/WorkflowRunStatus"
+					},
+					"startedAt": {
+						"type": "string"
+					},
+					"completedAt": {
+						"type": "string",
+						"nullable": true,
+						"description": "Null while `status` is `RUNNING`."
+					},
+					"error": {
+						"type": "string",
+						"nullable": true,
+						"description": "Set only when `status` is `ERRORED`."
+					},
+					"triggeredBy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/UserInfo"
+							}
+						],
+						"nullable": true,
+						"description": "The user who triggered a manual run, resolved to a display name; null for a scheduled one."
+					},
+					"entries": {
+						"items": {
+							"$ref": "#/components/schemas/WorkflowPreviewEntryDTO"
+						},
+						"type": "array"
+					},
+					"records": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusRecord"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"discoveredCount",
+					"eligibleCount",
+					"createdCount",
+					"updatedCount",
+					"disabledCount",
+					"pushedCount",
+					"id",
+					"workflowId",
+					"triggerType",
+					"status",
+					"startedAt",
+					"completedAt",
+					"error",
+					"triggeredBy",
+					"entries",
+					"records"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -47551,7 +47650,7 @@
 						}
 					}
 				},
-				"description": "Lists a configuration workflow's run history, most recent first.",
+				"description": "Lists a configuration workflow's run history, most recent first, optionally narrowed by any\ncombination of the filters below.",
 				"summary": "List a configuration workflow's run history",
 				"tags": [
 					"Configuration Workflows"
@@ -47583,6 +47682,91 @@
 							"default": 0,
 							"format": "double",
 							"type": "number"
+						}
+					},
+					{
+						"description": "ISO 8601 lower bound on `startedAt` - omit to not filter by a lower bound.",
+						"in": "query",
+						"name": "start",
+						"required": false,
+						"schema": {
+							"$ref": "#/components/schemas/Instant"
+						}
+					},
+					{
+						"description": "ISO 8601 upper bound on `startedAt` - omit to not filter by an upper bound.",
+						"in": "query",
+						"name": "end",
+						"required": false,
+						"schema": {
+							"$ref": "#/components/schemas/Instant"
+						}
+					},
+					{
+						"description": "Comma-separated list of statuses to include (e.g. `COMPLETED,ERRORED`). Valid values: `RUNNING`, `COMPLETED`, `ERRORED`.",
+						"in": "query",
+						"name": "statuses",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Comma-separated list of trigger types to include (e.g. `manual,scheduled`). Valid values: `manual`, `scheduled`.",
+						"in": "query",
+						"name": "triggerTypes",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/south/{southId}/workflows/{workflowId}/runs/{runId}": {
+			"get": {
+				"operationId": "GetRun",
+				"responses": {
+					"200": {
+						"description": "The run, with its full discovered payload",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/WorkflowRunDetailDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Gets one run's full detail, including the full discovered payload behind its summary counts -\nfetched on demand (not part of the paginated run list, which stays lean) since a heavily-discovered\nrun's payload can be sizeable.",
+				"summary": "Get a configuration workflow run's full detail",
+				"tags": [
+					"Configuration Workflows"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "workflowId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "runId",
+						"required": true,
+						"schema": {
+							"type": "string"
 						}
 					}
 				]
