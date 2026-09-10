@@ -10,7 +10,7 @@ import {
   WorkflowPreviewEntryStatus,
   WorkflowPreviewResultDTO
 } from '../../shared/model/configuration-workflow.model';
-import { WorkflowRunCounts, WorkflowRunEntity, WorkflowRunTriggerType } from '../model/workflow-run.model';
+import { WorkflowRunCounts, WorkflowRunEntity, WorkflowRunSearchParam, WorkflowRunTriggerType } from '../model/workflow-run.model';
 import { ItemPointMetadataEntity } from '../model/item-point-metadata.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import { SouthConnectorItemCommandDTO } from '../../shared/model/south-connector.model';
@@ -18,7 +18,7 @@ import { SouthItemSettings, SouthSettings } from '../../shared/model/south-setti
 import { OIBusRecord } from '../../shared/model/engine.model';
 import { OIBusConfigurationWorkflowResultCommandDTO } from './oia/oianalytics.model';
 import { Page } from '../../shared/model/types';
-import { OIBusValidationError } from '../model/types';
+import { NotFoundError, OIBusValidationError } from '../model/types';
 
 // Minimal slices of SouthService/DataStreamEngine/OIAnalyticsMessageService/OIAnalyticsRegistrationService
 // this orchestrator actually calls - kept as local interfaces (matching the ISouthService/IHistoryEngine
@@ -167,6 +167,10 @@ export default class ConfigurationWorkflowRunService {
   ): Promise<WorkflowRunEntity> {
     const run = this.workflowRunRepository.start(workflow.id, triggerType, triggeredBy);
     const counts: WorkflowRunCounts = { ...ZERO_COUNTS };
+    // The full discovered payload behind those counts - built up as Decide/Act progress, so whatever
+    // was actually classified survives even if a later record in the loop throws (see the catch below).
+    const entries: Array<WorkflowPreviewEntryDTO> = [];
+    let records: Array<OIBusRecord> = [];
     // workflow_runs.triggeredBy stays null for a scheduled run (whose column means "the user who
     // triggered a MANUAL run"), but the item/point mutations Act performs still need a real
     // createdBy/updatedBy string - 'system' is the codebase's existing sentinel for that (see
@@ -179,7 +183,8 @@ export default class ConfigurationWorkflowRunService {
       counts.eligibleCount = eligibleByKey.map.size;
 
       if (workflow.pushToOIAnalytics) {
-        this.actRemote(southId, workflow, run.id, [...eligibleByKey.map.values()], counts);
+        records = [...eligibleByKey.map.values()];
+        this.actRemote(southId, workflow, run.id, records, counts);
       } else {
         // Computed once per run, from this connector's own manifest, so a mapped constant lands on the
         // item command with the type the manifest actually declares (a boolean checkbox field, a
@@ -190,8 +195,10 @@ export default class ConfigurationWorkflowRunService {
 
         for (const [key, record] of eligibleByKey.map) {
           const previous = previousByKey.get(key) ?? null;
-          if (previous !== null && previous.status === 'active' && isSameMetadata(previous.discoveredMetadata, record)) {
-            continue; // Unchanged - nothing to act on, not even a metadata-snapshot refresh.
+          const status = classifyEntry(previous, record);
+          entries.push({ key, status, record, previousMetadata: previous?.discoveredMetadata ?? null });
+          if (status === 'unchanged') {
+            continue; // Nothing to act on, not even a metadata-snapshot refresh.
           }
           await this.actOnRecord(southId, workflow, key, record, previous, actingUser, counts, itemFieldKinds);
         }
@@ -200,13 +207,14 @@ export default class ConfigurationWorkflowRunService {
           if (point.status === 'orphaned' || eligibleByKey.map.has(point.discoveredEntryKey)) {
             continue;
           }
+          entries.push({ key: point.discoveredEntryKey, status: 'missing', record: null, previousMetadata: point.discoveredMetadata });
           this.orphanPoint(southId, point, actingUser, counts);
         }
       }
 
-      this.workflowRunRepository.complete(run.id, counts);
+      this.workflowRunRepository.complete(run.id, counts, { entries, records });
     } catch (error) {
-      this.workflowRunRepository.fail(run.id, error instanceof Error ? error.message : String(error), counts);
+      this.workflowRunRepository.fail(run.id, error instanceof Error ? error.message : String(error), counts, { entries, records });
       throw error;
     }
 
@@ -249,9 +257,23 @@ export default class ConfigurationWorkflowRunService {
     return { discoveredCount: eligibleByKey.discoveredCount, eligibleCount: eligibleByKey.map.size, entries, records: [] };
   }
 
-  findRuns(southId: string, workflowId: string, page: number): Page<WorkflowRunEntity> {
+  findRuns(southId: string, workflowId: string, searchParams: WorkflowRunSearchParam): Page<WorkflowRunEntity> {
     this.configurationWorkflowService.findById(southId, workflowId); // Ownership check
-    return this.workflowRunRepository.findByWorkflowId(workflowId, page);
+    return this.workflowRunRepository.findByWorkflowId(workflowId, searchParams);
+  }
+
+  /**
+   * One run's full detail, including its full discovered payload - fetched on demand (unlike
+   * `findRuns`' paginated list, which stays lean) since a heavily-discovered run's payload can be
+   * sizeable.
+   */
+  findRunById(southId: string, workflowId: string, runId: string): WorkflowRunEntity {
+    this.configurationWorkflowService.findById(southId, workflowId); // Ownership check
+    const run = this.workflowRunRepository.findById(runId);
+    if (!run || run.workflowId !== workflowId) {
+      throw new NotFoundError(`Configuration workflow run "${runId}" not found`);
+    }
+    return run;
   }
 
   /** Trigger + Retrieve + Decide's eligibility filter - shared by `runNow`, `preview` and remote Act. */

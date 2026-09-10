@@ -6,7 +6,7 @@ import {
   ConfigurationWorkflowDTO,
   WorkflowPreviewResultDTO
 } from '../../../../backend/shared/model/configuration-workflow.model';
-import { WorkflowRunDTO } from '../../../../backend/shared/model/workflow-run.model';
+import { WorkflowRunDetailDTO, WorkflowRunDTO, WorkflowRunSearchParam } from '../../../../backend/shared/model/workflow-run.model';
 import { Page } from '../../../../backend/shared/model/types';
 import { ignoreErrorIfStatusIs } from '../shared/error-interceptor.service';
 
@@ -76,9 +76,31 @@ export class ConfigurationWorkflowService {
   }
 
   /**
-   * Retrieve a configuration workflow's run history, most recent first
+   * Retrieve a configuration workflow's run history, most recent first, optionally narrowed by any
+   * combination of `searchParams`' filters
    */
-  listRuns(southId: string, workflowId: string, page: number): Observable<Page<WorkflowRunDTO>> {
-    return this.http.get<Page<WorkflowRunDTO>>(`/api/south/${southId}/workflows/${workflowId}/runs`, { params: { page } });
+  listRuns(southId: string, workflowId: string, searchParams: WorkflowRunSearchParam): Observable<Page<WorkflowRunDTO>> {
+    const params: Record<string, string | Array<string>> = { page: `${searchParams.page || 0}` };
+    if (searchParams.start) {
+      params['start'] = searchParams.start;
+    }
+    if (searchParams.end) {
+      params['end'] = searchParams.end;
+    }
+    if (searchParams.statuses.length > 0) {
+      params['statuses'] = searchParams.statuses.join(',');
+    }
+    if (searchParams.triggerTypes.length > 0) {
+      params['triggerTypes'] = searchParams.triggerTypes.join(',');
+    }
+    return this.http.get<Page<WorkflowRunDTO>>(`/api/south/${southId}/workflows/${workflowId}/runs`, { params });
+  }
+
+  /**
+   * Get one run's full detail, including its full discovered payload - fetched on demand since it can
+   * be sizeable for a workflow with many discovered records.
+   */
+  getRun(southId: string, workflowId: string, runId: string): Observable<WorkflowRunDetailDTO> {
+    return this.http.get<WorkflowRunDetailDTO>(`/api/south/${southId}/workflows/${workflowId}/runs/${runId}`);
   }
 }

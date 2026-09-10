@@ -2,13 +2,81 @@
   <div class="oib-header-container">
     <div class="row mb-3">
       <div class="col">
-        <button type="button" class="btn btn-link px-0" id="back-button" (click)="back()">
-          <span class="fa fa-arrow-left me-1"></span>
-          <span translate="common.back"></span>
-        </button>
         <h1 id="title" [translate]="'south.workflows.run-history-title'" [translateParams]="{ name: workflow()?.name || '' }"></h1>
       </div>
     </div>
+
+    <form class="p-3 oib-search-form oib-inner-form mb-4" id="run-search-form" [formGroup]="searchForm" (ngSubmit)="triggerSearch()">
+      <!-- Main filter row: date pickers, and the search button pushed far right -->
+      <div class="d-flex flex-wrap align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <label for="run-search-start" class="col-form-label text-nowrap" translate="south.workflows.run-search.start"></label>
+          <oib-datetimepicker formControlName="start" id="run-search-start" />
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <label for="run-search-end" class="col-form-label text-nowrap" translate="south.workflows.run-search.end"></label>
+          <div>
+            <oib-datetimepicker formControlName="end" id="run-search-end" />
+            <val-errors [control]="searchForm" />
+          </div>
+        </div>
+
+        <div class="search-buttons ms-auto d-flex gap-2 align-items-center flex-shrink-0">
+          <button class="btn btn-primary" id="run-search-button" [disabled]="loading()">
+            @if (loading()) {
+              <span class="fa fa-spin fa-spinner"></span>
+            } @else {
+              <span translate="common.search"></span>
+            }
+          </button>
+        </div>
+      </div>
+
+      <!-- Status and trigger-type filter chips — clickable legend, doubling as the filter -->
+      <div class="d-flex align-items-center gap-1 flex-wrap mt-3">
+        <span class="filter-label text-muted" translate="south.workflows.run-search.status"></span>
+        @for (status of statuses; track status) {
+          <button
+            type="button"
+            class="filter-chip d-flex align-items-center gap-1 px-2 py-1"
+            [class.active]="activeStatuses()!.includes(status)"
+            [class.inactive]="hasActiveStatuses() && !activeStatuses()!.includes(status)"
+            (click)="toggleStatus(status)"
+          >
+            <i [class]="getStatusIconClass(status)"></i>
+            <span class="filter-chip-label">{{ 'south.workflows.run-status.' + status | translate }}</span>
+          </button>
+        }
+        @if (hasActiveStatuses()) {
+          <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-statuses-button" (click)="clearStatuses()">
+            <span class="fa fa-times me-1"></span>
+            <span translate="common.clear"></span>
+          </button>
+        }
+
+        <div class="vr mx-2"></div>
+
+        <span class="filter-label text-muted" translate="south.workflows.run-search.trigger-type"></span>
+        @for (triggerType of triggerTypes; track triggerType) {
+          <button
+            type="button"
+            class="filter-chip d-flex align-items-center px-2 py-1"
+            [class.active]="activeTriggerTypes()!.includes(triggerType)"
+            [class.inactive]="hasActiveTriggerTypes() && !activeTriggerTypes()!.includes(triggerType)"
+            (click)="toggleTriggerType(triggerType)"
+          >
+            <span class="filter-chip-label">{{ 'south.workflows.run-trigger.' + triggerType | translate }}</span>
+          </button>
+        }
+        @if (hasActiveTriggerTypes()) {
+          <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-trigger-types-button" (click)="clearTriggerTypes()">
+            <span class="fa fa-times me-1"></span>
+            <span translate="common.clear"></span>
+          </button>
+        }
+      </div>
+    </form>
 
     @if (runs().totalElements !== 0) {
       <div class="d-flex justify-content-end mb-2">
@@ -18,26 +86,21 @@
         <table class="table table-sm table-hover oib-table">
           <thead>
             <tr>
-              <th translate="south.workflows.run-status"></th>
+              <th translate="south.workflows.run-status-label"></th>
               <th translate="south.workflows.run-trigger-type"></th>
               <th translate="south.workflows.run-started-at"></th>
               <th translate="south.workflows.run-completed-at"></th>
               <th translate="south.workflows.run-triggered-by"></th>
-              <th translate="south.workflows.run-counts"></th>
+              <th translate="south.workflows.run-discovered-count"></th>
               <th translate="south.workflows.run-error"></th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             @for (run of runs().content; track run.id) {
               <tr class="data">
                 <td>
-                  <span
-                    class="badge"
-                    [class.bg-primary]="run.status === 'RUNNING'"
-                    [class.bg-success]="run.status === 'COMPLETED'"
-                    [class.bg-danger]="run.status === 'ERRORED'"
-                    [translate]="'south.workflows.run-status.' + run.status"
-                  ></span>
+                  <span class="badge" [class]="getStatusClass(run.status)" [translate]="'south.workflows.run-status.' + run.status"></span>
                 </td>
                 <td>{{ 'south.workflows.run-trigger.' + run.triggerType | translate }}</td>
                 <td class="text-nowrap">{{ run.startedAt | datetime: 'ff' }}</td>
@@ -46,19 +109,31 @@
                     {{ run.completedAt | datetime: 'ff' }}
                   }
                 </td>
-                <td>{{ run.triggeredBy || '-' }}</td>
+                <td>{{ run.triggeredBy?.friendlyName || '-' }}</td>
+                <td>{{ run.discoveredCount }}</td>
+                <td class="small" [class.text-danger]="run.error">{{ run.error || 'Ø' }}</td>
                 <td>
-                  {{ run.discoveredCount }} / {{ run.eligibleCount }} / {{ run.createdCount }} / {{ run.updatedCount }} /
-                  {{ run.disabledCount }}
+                  @if (run.status !== 'RUNNING') {
+                    <button
+                      type="button"
+                      class="btn btn-link view-payload px-1 py-0"
+                      [ngbTooltip]="'south.workflows.run-payload' | translate"
+                      (click)="onViewPayload(run)"
+                    >
+                      <span class="fa fa-eye"></span>
+                    </button>
+                  }
                 </td>
-                <td class="text-danger small">{{ run.error }}</td>
               </tr>
             }
           </tbody>
         </table>
       </div>
     } @else if (!loading()) {
-      <div class="oi-details empty" translate="south.workflows.run-history-none"></div>
+      <div
+        class="oi-details empty"
+        [translate]="hasActiveFilters() ? 'south.workflows.run-history-none-match' : 'south.workflows.run-history-none'"
+      ></div>
     }
   </div>
 </div>
