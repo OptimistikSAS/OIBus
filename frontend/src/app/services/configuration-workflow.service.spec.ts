@@ -54,7 +54,7 @@ const run: WorkflowRunDTO = {
   disabledCount: 0,
   pushedCount: 0,
   error: null,
-  triggeredBy: 'user1'
+  triggeredBy: { id: 'user1', friendlyName: 'User One' }
 };
 
 describe('ConfigurationWorkflowService', () => {
@@ -169,12 +169,47 @@ describe('ConfigurationWorkflowService', () => {
   test('should list run history with the given page', () => {
     const page = toPage([run]);
     let result: unknown;
-    service.listRuns(SOUTH_ID, WORKFLOW_ID, 2).subscribe(r => (result = r));
+    service
+      .listRuns(SOUTH_ID, WORKFLOW_ID, { page: 2, start: undefined, end: undefined, statuses: [], triggerTypes: [] })
+      .subscribe(r => (result = r));
 
-    const req = http.expectOne(`/api/south/${SOUTH_ID}/workflows/${WORKFLOW_ID}/runs?page=2`);
-    expect(req.request.method).toBe('GET');
+    const req = http.expectOne({ url: `/api/south/${SOUTH_ID}/workflows/${WORKFLOW_ID}/runs?page=2`, method: 'GET' });
     req.flush(page);
 
     expect(result).toEqual(page);
+  });
+
+  test('should only send the search filters that are actually set', () => {
+    const page = toPage([run]);
+    service
+      .listRuns(SOUTH_ID, WORKFLOW_ID, {
+        page: 0,
+        start: '2024-01-01T00:00:00.000Z',
+        end: '2024-01-02T00:00:00.000Z',
+        statuses: ['COMPLETED', 'ERRORED'],
+        triggerTypes: ['manual']
+      })
+      .subscribe();
+
+    http
+      .expectOne({
+        url:
+          `/api/south/${SOUTH_ID}/workflows/${WORKFLOW_ID}/runs?page=0&start=2024-01-01T00:00:00.000Z` +
+          `&end=2024-01-02T00:00:00.000Z&statuses=COMPLETED,ERRORED&triggerTypes=manual`,
+        method: 'GET'
+      })
+      .flush(page);
+  });
+
+  test("should get one run's full detail, including its discovered payload", () => {
+    const runDetail = { ...run, entries: [], records: [{ nodeId: 'a' }] };
+    let result: unknown;
+    service.getRun(SOUTH_ID, WORKFLOW_ID, 'runId1').subscribe(r => (result = r));
+
+    const req = http.expectOne(`/api/south/${SOUTH_ID}/workflows/${WORKFLOW_ID}/runs/runId1`);
+    expect(req.request.method).toBe('GET');
+    req.flush(runDetail);
+
+    expect(result).toEqual(runDetail);
   });
 });
