@@ -3169,14 +3169,14 @@ describe('SouthOPCUA', () => {
   });
 
   it('discover should flatten a recursive walk into one record per Variable, never descending into a Variable itself', async () => {
-    const explore = mock.fn(async (parentId: string | null) => {
+    const browseForDiscovery = mock.fn(async (parentId: string | null) => {
       if (parentId === null) {
         return [
           { id: 'ns=1;s=Folder', name: 'Folder', metadata: { nodeId: 'ns=1;s=Folder', type: 'Object' }, hasChildren: true },
           {
             id: 'ns=1;s=Temperature',
             name: 'Temperature',
-            metadata: { nodeId: 'ns=1;s=Temperature', type: 'Variable', value: '21.5', unit: '°C' },
+            metadata: { nodeId: 'ns=1;s=Temperature', type: 'Variable' },
             hasChildren: true
           }
         ];
@@ -3186,50 +3186,81 @@ describe('SouthOPCUA', () => {
           {
             id: 'ns=1;s=Folder.Pressure',
             name: 'Pressure',
-            metadata: { nodeId: 'ns=1;s=Folder.Pressure', type: 'Variable', value: '3.2' },
+            metadata: { nodeId: 'ns=1;s=Folder.Pressure', type: 'Variable' },
             hasChildren: false
           }
         ];
       }
       // Would only be reached if discover() incorrectly descended into a Variable's own properties.
-      throw new Error(`unexpected explore(${parentId})`);
+      throw new Error(`unexpected browseForDiscovery(${parentId})`);
     });
-    south.explore = explore;
+    south.browseForDiscovery = browseForDiscovery;
 
     const records = await south.discover({ rootNodeId: null });
 
     // Depth-first: the root's first entry (the folder) is fully walked — pushing its Pressure leaf —
     // before the loop moves on to the root's second entry (Temperature).
     assert.deepStrictEqual(records, [
-      { id: 'ns=1;s=Folder.Pressure', name: 'Pressure', nodeId: 'ns=1;s=Folder.Pressure', type: 'Variable', value: '3.2' },
-      { id: 'ns=1;s=Temperature', name: 'Temperature', nodeId: 'ns=1;s=Temperature', type: 'Variable', value: '21.5', unit: '°C' }
+      { id: 'ns=1;s=Folder.Pressure', name: 'Pressure', nodeId: 'ns=1;s=Folder.Pressure', type: 'Variable' },
+      { id: 'ns=1;s=Temperature', name: 'Temperature', nodeId: 'ns=1;s=Temperature', type: 'Variable' }
     ]);
-    assert.strictEqual(explore.mock.calls.length, 2);
+    assert.strictEqual(browseForDiscovery.mock.calls.length, 2);
   });
 
   it('discover should default to browsing from the root when the scope has no rootNodeId', async () => {
-    const explore = mock.fn(async () => []);
-    south.explore = explore;
+    const browseForDiscovery = mock.fn(async () => []);
+    south.browseForDiscovery = browseForDiscovery;
 
     await south.discover({});
 
-    assert.strictEqual(explore.mock.calls[0].arguments[0], null);
+    assert.strictEqual(browseForDiscovery.mock.calls[0].arguments[0], null);
   });
 
   it('discover should start from the configured rootNodeId', async () => {
-    const explore = mock.fn(async () => []);
-    south.explore = explore;
+    const browseForDiscovery = mock.fn(async () => []);
+    south.browseForDiscovery = browseForDiscovery;
 
     await south.discover({ rootNodeId: 'ns=1;s=CustomRoot' });
 
-    assert.strictEqual(explore.mock.calls[0].arguments[0], 'ns=1;s=CustomRoot');
+    assert.strictEqual(browseForDiscovery.mock.calls[0].arguments[0], 'ns=1;s=CustomRoot');
   });
 
   it('discover should return an empty array for an empty subtree', async () => {
-    south.explore = mock.fn(async () => []);
+    south.browseForDiscovery = mock.fn(async () => []);
 
     const records = await south.discover({ rootNodeId: 'ns=1;s=Empty' });
 
     assert.deepStrictEqual(records, []);
+  });
+
+  it('discover should never read live values - only structural NodeId/DisplayName/NodeClass, unlike explore', async () => {
+    const read = mock.fn(async () => {
+      throw new Error('discover() must never call session.read()');
+    });
+    const mockedClient = {
+      close: mock.fn(async () => undefined),
+      read,
+      browse: mock.fn(async (_nodeId: string) => ({
+        references: [
+          {
+            nodeId: 'ns=1;s=Temperature',
+            displayName: { text: 'Temperature' },
+            browseName: { toString: () => 'Temperature' },
+            nodeClass: NodeClass.Variable
+          }
+        ],
+        continuationPoint: null
+      })),
+      browseNext: mock.fn(async () => ({ references: [], continuationPoint: null }))
+    };
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    await south.connect();
+
+    const records = await south.discover({ rootNodeId: null });
+
+    assert.strictEqual(read.mock.calls.length, 0);
+    // No `value` (or `unit`/`min`/`max`) - a monitored node's identity in the diff never depends on its
+    // live value, which would otherwise change on every single run.
+    assert.deepStrictEqual(records, [{ id: 'ns=1;s=Temperature', name: 'Temperature', nodeId: 'ns=1;s=Temperature', type: 'Variable' }]);
   });
 });

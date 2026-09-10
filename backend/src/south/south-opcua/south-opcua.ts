@@ -413,7 +413,10 @@ export default class SouthOPCUA
    * Browse the OPC-UA address space one level at a time for the interactive explore feature. For every
    * Variable found in the level, also fetches its current value and, when the server exposes them (the
    * OPC-UA "AnalogItem" convention), its engineering unit and acceptable range — done eagerly, before
-   * returning, so the tree shows this metadata immediately rather than requiring a separate step.
+   * returning, so the tree shows this metadata immediately rather than requiring a separate step. This
+   * live enrichment is deliberately exclusive to this interactive, one-off, human-driven browse — see
+   * `browseForDiscovery()`'s own doc comment for why the Configuration Workflow's `discover()` must
+   * never read live values.
    * @param parentId - the node id to expand, or null to browse the Objects folder root (ns=0;i=85)
    */
   async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
@@ -424,36 +427,13 @@ export default class SouthOPCUA
       this.session = await this.createSession();
     }
     const session = this.session;
-    const nodeToBrowse = parentId ?? 'ns=0;i=85';
     try {
-      const references: Array<ReferenceDescription> = [];
-      const browseResult = await session.browse(nodeToBrowse);
-      references.push(...(browseResult.references ?? []));
-      let continuationPoint = browseResult.continuationPoint;
-      while (continuationPoint && continuationPoint.length > 0) {
-        const nextResult = await session.browseNext(continuationPoint, false);
-        references.push(...(nextResult.references ?? []));
-        continuationPoint = nextResult.continuationPoint;
-      }
-
+      const references = await this.browseReferences(session, parentId);
       const liveData = await this.readVariableLiveData(
         session,
         references.filter(reference => reference.nodeClass === NodeClass.Variable)
       );
-
-      return references.map(reference => {
-        const nodeIdString = reference.nodeId.toString();
-        return {
-          id: nodeIdString,
-          name: reference.displayName?.text ?? reference.browseName?.toString() ?? nodeIdString,
-          metadata: {
-            nodeId: nodeIdString,
-            type: NodeClass[reference.nodeClass] ?? String(reference.nodeClass),
-            ...liveData.get(nodeIdString)
-          },
-          hasChildren: reference.nodeClass === NodeClass.Object || reference.nodeClass === NodeClass.Variable
-        };
-      });
+      return this.mapReferencesToEntries(references, liveData);
     } catch (error) {
       if (isSessionError(error)) {
         // The session is dead: release it so a later browse reconnects instead of
@@ -463,6 +443,72 @@ export default class SouthOPCUA
       }
       throw error;
     }
+  }
+
+  /**
+   * Browse the OPC-UA address space one level at a time for the Configuration Workflow's `discover()` -
+   * structural only (NodeId, DisplayName, NodeClass/"type"), deliberately never reading live values,
+   * unlike `explore()`. `discover()`'s result feeds an identity-key diff against the *previous* run: a
+   * Variable's live value changes constantly, so reading it here would make every discovered entry look
+   * "changed" on every single run, even when nothing about the tag itself actually changed - which
+   * would defeat the whole point of the diff (and of the monitored node list staying stable between
+   * runs).
+   * @param parentId - the node id to expand, or null to browse the Objects folder root (ns=0;i=85)
+   */
+  async browseForDiscovery(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
+    // Same lazy-connect rationale as explore() - discover() runs against the engine's live south
+    // instance, which may not have an open session yet (e.g. right after a scheduled tick starts).
+    if (this.session === null) {
+      this.session = await this.createSession();
+    }
+    const session = this.session;
+    try {
+      const references = await this.browseReferences(session, parentId);
+      return this.mapReferencesToEntries(references, new Map());
+    } catch (error) {
+      if (isSessionError(error)) {
+        await this.disconnect();
+        throw new Error(`OPCUA discovery session expired, please restart the configuration workflow run: ${(error as Error).message}`);
+      }
+      throw error;
+    }
+  }
+
+  /** The raw browse+browseNext loop shared by `explore()` and `browseForDiscovery()` - one level's
+   *  references, with no interpretation of what they mean (that's `mapReferencesToEntries()`'s job). */
+  private async browseReferences(session: ClientSession, parentId: string | null): Promise<Array<ReferenceDescription>> {
+    const nodeToBrowse = parentId ?? 'ns=0;i=85';
+    const references: Array<ReferenceDescription> = [];
+    const browseResult = await session.browse(nodeToBrowse);
+    references.push(...(browseResult.references ?? []));
+    let continuationPoint = browseResult.continuationPoint;
+    while (continuationPoint && continuationPoint.length > 0) {
+      const nextResult = await session.browseNext(continuationPoint, false);
+      references.push(...(nextResult.references ?? []));
+      continuationPoint = nextResult.continuationPoint;
+    }
+    return references;
+  }
+
+  /** Maps raw browse references to explore entries, merging in `liveData` (empty for discovery, so its
+   *  entries carry only structural metadata). */
+  private mapReferencesToEntries(
+    references: Array<ReferenceDescription>,
+    liveData: Map<string, { value?: string; unit?: string; min?: number; max?: number }>
+  ): Array<SouthConnectorExploreEntry> {
+    return references.map(reference => {
+      const nodeIdString = reference.nodeId.toString();
+      return {
+        id: nodeIdString,
+        name: reference.displayName?.text ?? reference.browseName?.toString() ?? nodeIdString,
+        metadata: {
+          nodeId: nodeIdString,
+          type: NodeClass[reference.nodeClass] ?? String(reference.nodeClass),
+          ...liveData.get(nodeIdString)
+        },
+        hasChildren: reference.nodeClass === NodeClass.Object || reference.nodeClass === NodeClass.Variable
+      };
+    });
   }
 
   /**
@@ -557,10 +603,12 @@ export default class SouthOPCUA
    * Retrieve step of a Configuration Workflow run: a full recursive walk of the address space under
    * `scope.rootNodeId` (or the Objects folder root, matching `explore()`'s own default, if omitted),
    * flattened into one record per Variable node — Object/folder nodes are walked into, never recorded
-   * themselves. Reuses `explore()` level by level rather than a bespoke traversal, so a Variable's
-   * value/unit/min/max already come from the same enrichment `explore()` itself does; this assumes
-   * `rootNodeId` names a folder/Object, not a Variable directly — pointing it at a leaf Variable would
-   * walk into that Variable's own EngineeringUnits/EURange properties as if they were data points.
+   * themselves. Deliberately structural only (NodeId/DisplayName/NodeClass), via `browseForDiscovery()`
+   * rather than `explore()` itself - a Variable's live value changes on every run, so reading it here
+   * would make the node look "changed" against the previous run's identity-key diff every single time,
+   * even though nothing about the monitored node itself actually changed. This assumes `rootNodeId`
+   * names a folder/Object, not a Variable directly — pointing it at a leaf Variable would walk into
+   * that Variable's own EngineeringUnits/EURange properties as if they were data points.
    */
   async discover(scope: Record<string, unknown>): Promise<Array<OIBusRecord>> {
     const rootNodeId = (scope.rootNodeId as string | undefined) ?? null;
@@ -570,7 +618,7 @@ export default class SouthOPCUA
   }
 
   private async walkForDiscovery(parentId: string | null, records: Array<OIBusRecord>): Promise<void> {
-    const entries = await this.explore(parentId);
+    const entries = await this.browseForDiscovery(parentId);
     for (const entry of entries) {
       if (entry.metadata.type === 'Variable') {
         records.push({ id: entry.id, name: entry.name, ...entry.metadata });
