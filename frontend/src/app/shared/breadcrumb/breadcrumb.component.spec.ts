@@ -6,10 +6,12 @@ import { BreadcrumbComponent } from './breadcrumb.component';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
+import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
 import { of, throwError, Subject } from 'rxjs';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { SouthConnectorDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
+import { ConfigurationWorkflowDTO } from '../../../../../backend/shared/model/configuration-workflow.model';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { createMock, MockObject, stubRoute } from '../../../test/vitest-create-mock';
@@ -31,6 +33,7 @@ describe('BreadcrumbComponent', () => {
   let northConnectorService: MockObject<NorthConnectorService>;
   let southConnectorService: MockObject<SouthConnectorService>;
   let historyQueryService: MockObject<HistoryQueryService>;
+  let configurationWorkflowService: MockObject<ConfigurationWorkflowService>;
   let routerEvents: Subject<RouterEvent>;
   let currentUrl: string;
 
@@ -114,6 +117,23 @@ describe('BreadcrumbComponent', () => {
     }
   } as HistoryQueryDTO;
 
+  const mockWorkflow: ConfigurationWorkflowDTO = {
+    id: 'workflow-1',
+    name: 'Reactor discovery',
+    southId: 'south-1',
+    discoveryScope: {},
+    identityKeyFields: ['nodeId'],
+    eligibilityFilter: [],
+    itemFieldMapping: { name: '{{name}}' },
+    pushToOIAnalytics: false,
+    scanMode: null,
+    enabled: true,
+    createdAt: '',
+    updatedAt: '',
+    createdBy: { id: '', friendlyName: '' },
+    updatedBy: { id: '', friendlyName: '' }
+  };
+
   beforeEach(() => {
     currentUrl = '/';
     routerEvents = new Subject<RouterEvent>();
@@ -130,6 +150,7 @@ describe('BreadcrumbComponent', () => {
     northConnectorService = createMock(NorthConnectorService);
     southConnectorService = createMock(SouthConnectorService);
     historyQueryService = createMock(HistoryQueryService);
+    configurationWorkflowService = createMock(ConfigurationWorkflowService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -139,7 +160,8 @@ describe('BreadcrumbComponent', () => {
         { provide: ActivatedRoute, useValue: stubRoute() },
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: SouthConnectorService, useValue: southConnectorService },
-        { provide: HistoryQueryService, useValue: historyQueryService }
+        { provide: HistoryQueryService, useValue: historyQueryService },
+        { provide: ConfigurationWorkflowService, useValue: configurationWorkflowService }
       ]
     });
   });
@@ -282,6 +304,45 @@ describe('BreadcrumbComponent', () => {
       tester.fixture.detectChanges();
 
       await expectBreadcrumbTexts(['South', 'south-1']);
+    });
+
+    test('should show breadcrumb for a workflow run history page, with the south connector name and workflow name', async () => {
+      currentUrl = '/south/south-1/workflows/workflow-1/history';
+      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { southId: 'south-1', workflowId: 'workflow-1' } }) });
+      southConnectorService.findById.mockReturnValue(of(mockSouthConnector));
+      configurationWorkflowService.get.mockReturnValue(of(mockWorkflow));
+      tester = new BreadcrumbComponentTester();
+
+      tester.fixture.detectChanges();
+
+      await expectBreadcrumbTexts(['South', 'test-south (mqtt)', 'Reactor discovery', 'Run history']);
+      expect(configurationWorkflowService.get).toHaveBeenCalledWith('south-1', 'workflow-1');
+    });
+
+    test('should fall back to the workflow id when it cannot be loaded for the run history breadcrumb', async () => {
+      currentUrl = '/south/south-1/workflows/workflow-1/history';
+      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { southId: 'south-1', workflowId: 'workflow-1' } }) });
+      southConnectorService.findById.mockReturnValue(of(mockSouthConnector));
+      configurationWorkflowService.get.mockReturnValue(throwError(() => new Error('Not found')));
+      tester = new BreadcrumbComponentTester();
+
+      tester.fixture.detectChanges();
+
+      await expectBreadcrumbTexts(['South', 'test-south (mqtt)', 'workflow-1', 'Run history']);
+    });
+
+    test('should make the south connector name clickable (linked to its detail page) on the run history breadcrumb', async () => {
+      currentUrl = '/south/south-1/workflows/workflow-1/history';
+      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { southId: 'south-1', workflowId: 'workflow-1' } }) });
+      southConnectorService.findById.mockReturnValue(of(mockSouthConnector));
+      configurationWorkflowService.get.mockReturnValue(of(mockWorkflow));
+      tester = new BreadcrumbComponentTester();
+
+      tester.fixture.detectChanges();
+
+      await expect.element(tester.breadcrumbLinks).toHaveLength(2);
+      await expect.element(tester.item(1).getByCss('a')).toHaveTextContent('test-south (mqtt)');
+      await expect.element(tester.item(3).getByCss('a')).toHaveLength(0);
     });
   });
 
@@ -434,7 +495,8 @@ describe('BreadcrumbComponent', () => {
           { provide: ActivatedRoute, useValue: stubRoute() },
           { provide: NorthConnectorService, useValue: northConnectorService },
           { provide: SouthConnectorService, useValue: southConnectorService },
-          { provide: HistoryQueryService, useValue: historyQueryService }
+          { provide: HistoryQueryService, useValue: historyQueryService },
+          { provide: ConfigurationWorkflowService, useValue: configurationWorkflowService }
         ]
       });
 
