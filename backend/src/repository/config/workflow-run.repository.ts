@@ -1,6 +1,13 @@
 import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
-import { WorkflowRunCounts, WorkflowRunEntity, WorkflowRunStatus, WorkflowRunTriggerType } from '../../model/workflow-run.model';
+import {
+  WorkflowRunCounts,
+  WorkflowRunEntity,
+  WorkflowRunPayload,
+  WorkflowRunSearchParam,
+  WorkflowRunStatus,
+  WorkflowRunTriggerType
+} from '../../model/workflow-run.model';
 import { Page } from '../../../shared/model/types';
 
 const WORKFLOW_RUNS_TABLE = 'workflow_runs';
@@ -14,6 +21,8 @@ const ZERO_COUNTS: WorkflowRunCounts = {
   disabledCount: 0,
   pushedCount: 0
 };
+
+const EMPTY_PAYLOAD: WorkflowRunPayload = { entries: [], records: [] };
 
 /**
  * Repository used for Configuration Workflow run history. This table *is* the audit trail for a run
@@ -29,13 +38,34 @@ export default class WorkflowRunRepository {
     return result ? toWorkflowRun(result) : null;
   }
 
-  findByWorkflowId(workflowId: string, page: number): Page<WorkflowRunEntity> {
+  /** Paginated, most-recent-first run history for one workflow, optionally narrowed by `searchParams` -
+   *  mirrors LogRepository's own search() shape/conventions (a base WHERE clause, extended per active filter). */
+  findByWorkflowId(workflowId: string, searchParams: WorkflowRunSearchParam): Page<WorkflowRunEntity> {
+    const queryParams: Array<unknown> = [workflowId];
+    let whereClause = `WHERE workflow_id = ?`;
+    if (searchParams.start) {
+      whereClause += ` AND started_at >= ?`;
+      queryParams.push(searchParams.start);
+    }
+    if (searchParams.end) {
+      whereClause += ` AND started_at <= ?`;
+      queryParams.push(searchParams.end);
+    }
+    if (searchParams.statuses.length > 0) {
+      whereClause += ` AND status IN (${searchParams.statuses.map(() => '?')})`;
+      queryParams.push(...searchParams.statuses);
+    }
+    if (searchParams.triggerTypes.length > 0) {
+      whereClause += ` AND trigger_type IN (${searchParams.triggerTypes.map(() => '?')})`;
+      queryParams.push(...searchParams.triggerTypes);
+    }
+
     const results: Array<WorkflowRunEntity> = this.database
-      .prepare(`SELECT * FROM ${WORKFLOW_RUNS_TABLE} WHERE workflow_id = ? ORDER BY started_at DESC LIMIT ${PAGE_SIZE} OFFSET ?;`)
-      .all(workflowId, PAGE_SIZE * page)
+      .prepare(`SELECT * FROM ${WORKFLOW_RUNS_TABLE} ${whereClause} ORDER BY started_at DESC LIMIT ${PAGE_SIZE} OFFSET ?;`)
+      .all(...queryParams, PAGE_SIZE * searchParams.page)
       .map(result => toWorkflowRun(result as Record<string, unknown>));
     const totalElements = (
-      this.database.prepare(`SELECT COUNT(*) as count FROM ${WORKFLOW_RUNS_TABLE} WHERE workflow_id = ?`).get(workflowId) as {
+      this.database.prepare(`SELECT COUNT(*) as count FROM ${WORKFLOW_RUNS_TABLE} ${whereClause}`).get(...queryParams) as {
         count: number;
       }
     ).count;
@@ -43,7 +73,7 @@ export default class WorkflowRunRepository {
     return {
       content: results,
       size: PAGE_SIZE,
-      number: page,
+      number: searchParams.page,
       totalElements,
       totalPages: Math.ceil(totalElements / PAGE_SIZE)
     };
@@ -63,11 +93,12 @@ export default class WorkflowRunRepository {
     return created;
   }
 
-  /** Marks a run `COMPLETED` with its final counts. */
-  complete(id: string, counts: WorkflowRunCounts): void {
+  /** Marks a run `COMPLETED` with its final counts and full discovered payload. */
+  complete(id: string, counts: WorkflowRunCounts, payload: WorkflowRunPayload): void {
     const query =
       `UPDATE ${WORKFLOW_RUNS_TABLE} SET status = 'COMPLETED', completed_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), ` +
-      `discovered_count = ?, eligible_count = ?, created_count = ?, updated_count = ?, disabled_count = ?, pushed_count = ? WHERE id = ?;`;
+      `discovered_count = ?, eligible_count = ?, created_count = ?, updated_count = ?, disabled_count = ?, pushed_count = ?, ` +
+      `payload = ? WHERE id = ?;`;
     this.database
       .prepare(query)
       .run(
@@ -77,19 +108,21 @@ export default class WorkflowRunRepository {
         counts.updatedCount,
         counts.disabledCount,
         counts.pushedCount,
+        JSON.stringify(payload),
         id
       );
   }
 
   /**
-   * Marks a run `ERRORED` with whatever counts it reached before failing — `counts` defaults to all
-   * zero so a failure during Retrieve itself (before any count is known) doesn't need a caller to
-   * fill one in by hand.
+   * Marks a run `ERRORED` with whatever counts/payload it reached before failing — both default to
+   * empty so a failure during Retrieve itself (before anything is known) doesn't need a caller to fill
+   * one in by hand.
    */
-  fail(id: string, error: string, counts: WorkflowRunCounts = ZERO_COUNTS): void {
+  fail(id: string, error: string, counts: WorkflowRunCounts = ZERO_COUNTS, payload: WorkflowRunPayload = EMPTY_PAYLOAD): void {
     const query =
       `UPDATE ${WORKFLOW_RUNS_TABLE} SET status = 'ERRORED', completed_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), error = ?, ` +
-      `discovered_count = ?, eligible_count = ?, created_count = ?, updated_count = ?, disabled_count = ?, pushed_count = ? WHERE id = ?;`;
+      `discovered_count = ?, eligible_count = ?, created_count = ?, updated_count = ?, disabled_count = ?, pushed_count = ?, ` +
+      `payload = ? WHERE id = ?;`;
     this.database
       .prepare(query)
       .run(
@@ -100,24 +133,31 @@ export default class WorkflowRunRepository {
         counts.updatedCount,
         counts.disabledCount,
         counts.pushedCount,
+        JSON.stringify(payload),
         id
       );
   }
 }
 
-export const toWorkflowRun = (result: Record<string, unknown>): WorkflowRunEntity => ({
-  id: result.id as string,
-  workflowId: result.workflow_id as string,
-  triggerType: result.trigger_type as WorkflowRunTriggerType,
-  status: result.status as WorkflowRunStatus,
-  startedAt: result.started_at as string,
-  completedAt: (result.completed_at as string | null) ?? null,
-  discoveredCount: result.discovered_count as number,
-  eligibleCount: result.eligible_count as number,
-  createdCount: result.created_count as number,
-  updatedCount: result.updated_count as number,
-  disabledCount: result.disabled_count as number,
-  pushedCount: result.pushed_count as number,
-  error: (result.error as string | null) ?? null,
-  triggeredBy: (result.triggered_by as string | null) ?? null
-});
+export const toWorkflowRun = (result: Record<string, unknown>): WorkflowRunEntity => {
+  // Null while the run is still RUNNING (payload is only ever written by complete()/fail()).
+  const payload: WorkflowRunPayload = result.payload ? JSON.parse(result.payload as string) : EMPTY_PAYLOAD;
+  return {
+    id: result.id as string,
+    workflowId: result.workflow_id as string,
+    triggerType: result.trigger_type as WorkflowRunTriggerType,
+    status: result.status as WorkflowRunStatus,
+    startedAt: result.started_at as string,
+    completedAt: (result.completed_at as string | null) ?? null,
+    discoveredCount: result.discovered_count as number,
+    eligibleCount: result.eligible_count as number,
+    createdCount: result.created_count as number,
+    updatedCount: result.updated_count as number,
+    disabledCount: result.disabled_count as number,
+    pushedCount: result.pushed_count as number,
+    entries: payload.entries,
+    records: payload.records,
+    error: (result.error as string | null) ?? null,
+    triggeredBy: (result.triggered_by as string | null) ?? null
+  };
+};

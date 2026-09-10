@@ -241,6 +241,7 @@ describe('ManageWorkflowsModalComponent', () => {
 
     fixture.componentInstance.onPreview(workflows[0]);
 
+    expect(modalService.open).toHaveBeenCalledWith(expect.anything(), { size: 'xl' });
     expect(configurationWorkflowService.preview).toHaveBeenCalledWith('southId1', 'workflow1');
     expect(previewModalInstance.prepare).toHaveBeenCalledWith('Alpha', previewResult);
   });

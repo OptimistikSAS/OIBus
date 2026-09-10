@@ -5,6 +5,7 @@ import { filter, map, switchMap, catchError, of } from 'rxjs';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
+import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
 
 interface BreadcrumbItem {
   label: string;
@@ -25,6 +26,7 @@ export class BreadcrumbComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);
   private southConnectorService = inject(SouthConnectorService);
   private historyQueryService = inject(HistoryQueryService);
+  private configurationWorkflowService = inject(ConfigurationWorkflowService);
 
   breadcrumbs: Array<BreadcrumbItem> = [];
 
@@ -155,27 +157,45 @@ export class BreadcrumbComponent implements OnInit {
 
       if (params['southId']) {
         return this.southConnectorService.findById(params['southId']).pipe(
-          map(southConnector => {
-            if (southConnector) {
-              const result: Array<BreadcrumbItem> = [
-                ...breadcrumbs,
-                {
-                  label: `${southConnector.name} (${southConnector.type})`,
-                  route: `/south/${params['southId']}`
-                }
-              ];
-
-              if (url.includes('/edit')) {
-                result.push({
-                  label: 'common.edit',
-                  route: null,
-                  translateKey: true
-                });
-              }
-
-              return result;
+          switchMap(southConnector => {
+            if (!southConnector) {
+              return of(breadcrumbs);
             }
-            return breadcrumbs;
+            const result: Array<BreadcrumbItem> = [
+              ...breadcrumbs,
+              {
+                label: `${southConnector.name} (${southConnector.type})`,
+                route: `/south/${params['southId']}`
+              }
+            ];
+
+            if (url.includes('/edit')) {
+              result.push({
+                label: 'common.edit',
+                route: null,
+                translateKey: true
+              });
+              return of(result);
+            }
+
+            if (url.includes('/workflows/') && params['workflowId']) {
+              return this.configurationWorkflowService.get(params['southId'], params['workflowId']).pipe(
+                map(workflow => [
+                  ...result,
+                  { label: workflow.name, route: null },
+                  { label: 'south.workflows.run-history', route: null, translateKey: true }
+                ]),
+                catchError(() =>
+                  of([
+                    ...result,
+                    { label: params['workflowId'], route: null },
+                    { label: 'south.workflows.run-history', route: null, translateKey: true }
+                  ])
+                )
+              );
+            }
+
+            return of(result);
           }),
           catchError(() => {
             // If we can't load the connector, just show the ID

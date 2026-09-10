@@ -1,6 +1,12 @@
 import { mock } from 'node:test';
 import type { Database } from 'better-sqlite3';
-import { WorkflowRunCounts, WorkflowRunEntity, WorkflowRunTriggerType } from '../../../../model/workflow-run.model';
+import {
+  WorkflowRunCounts,
+  WorkflowRunEntity,
+  WorkflowRunPayload,
+  WorkflowRunSearchParam,
+  WorkflowRunTriggerType
+} from '../../../../model/workflow-run.model';
 import { Page } from '../../../../../shared/model/types';
 import WorkflowRunRepository from '../../../../repository/config/workflow-run.repository';
 
@@ -12,7 +18,7 @@ export default class WorkflowRunRepositoryMock extends WorkflowRunRepository {
     super({} as Database);
   }
   override findById = mock.fn((_id: string): WorkflowRunEntity | null => null);
-  override findByWorkflowId = mock.fn((_workflowId: string, _page: number): Page<WorkflowRunEntity> => ({
+  override findByWorkflowId = mock.fn((_workflowId: string, _searchParams: WorkflowRunSearchParam): Page<WorkflowRunEntity> => ({
     content: [],
     size: 50,
     number: 0,
@@ -22,6 +28,6 @@ export default class WorkflowRunRepositoryMock extends WorkflowRunRepository {
   override start = mock.fn(
     (_workflowId: string, _triggerType: WorkflowRunTriggerType, _triggeredBy: string | null): WorkflowRunEntity => ({}) as WorkflowRunEntity
   );
-  override complete = mock.fn((_id: string, _counts: WorkflowRunCounts): void => undefined);
-  override fail = mock.fn((_id: string, _error: string, _counts?: WorkflowRunCounts): void => undefined);
+  override complete = mock.fn((_id: string, _counts: WorkflowRunCounts, _payload: WorkflowRunPayload): void => undefined);
+  override fail = mock.fn((_id: string, _error: string, _counts?: WorkflowRunCounts, _payload?: WorkflowRunPayload): void => undefined);
 }

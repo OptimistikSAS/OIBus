@@ -16,6 +16,12 @@ const CONFIGURATION_WORKFLOWS_TABLE = 'configuration_workflows';
  * `created_count`/`updated_count`/`disabled_count`; a remote workflow instead forwards every eligible
  * record as-is, reflected in `pushed_count`. All default to 0 so a run that errors before reaching a
  * step still has well-defined counts rather than nulls.
+ *
+ * `payload` is the full discovered payload behind those counts - not just their summary - so a run
+ * stays fully reviewable after the fact instead of only showing "what changed" in aggregate. It's a
+ * JSON blob mirroring `WorkflowPreviewResultDTO`'s own `entries`/`records` shape (one populated, one
+ * empty, per the workflow's exclusive mode), written once at `complete`/`fail` time - null while a run
+ * is still `RUNNING`.
  */
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable(WORKFLOW_RUNS_TABLE, table => {
@@ -31,6 +37,7 @@ export async function up(knex: Knex): Promise<void> {
     table.integer('updated_count').notNullable().defaultTo(0);
     table.integer('disabled_count').notNullable().defaultTo(0);
     table.integer('pushed_count').notNullable().defaultTo(0);
+    table.text('payload').nullable();
     table.text('error').nullable();
     table.string('triggered_by').nullable();
     table.index(['workflow_id', 'started_at']);
