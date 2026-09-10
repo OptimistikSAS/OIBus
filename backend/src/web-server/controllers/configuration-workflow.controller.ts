@@ -4,8 +4,14 @@ import {
   ConfigurationWorkflowDTO,
   WorkflowPreviewResultDTO
 } from '../../../shared/model/configuration-workflow.model';
-import { WorkflowRunDTO } from '../../../shared/model/workflow-run.model';
-import { GetUserInfo, Page } from '../../../shared/model/types';
+import {
+  WorkflowRunDetailDTO,
+  WorkflowRunDTO,
+  WorkflowRunSearchParam,
+  WorkflowRunStatus,
+  WorkflowRunTriggerType
+} from '../../../shared/model/workflow-run.model';
+import { GetUserInfo, Instant, Page } from '../../../shared/model/types';
 import { CustomExpressRequest } from '../express';
 import { ConfigurationWorkflowEntity } from '../../model/configuration-workflow.model';
 import { WorkflowRunEntity } from '../../model/workflow-run.model';
@@ -30,7 +36,7 @@ export function toConfigurationWorkflowDTO(entity: ConfigurationWorkflowEntity, 
   };
 }
 
-export function toWorkflowRunDTO(entity: WorkflowRunEntity): WorkflowRunDTO {
+export function toWorkflowRunDTO(entity: WorkflowRunEntity, getUserInfo: GetUserInfo): WorkflowRunDTO {
   return {
     id: entity.id,
     workflowId: entity.workflowId,
@@ -45,7 +51,15 @@ export function toWorkflowRunDTO(entity: WorkflowRunEntity): WorkflowRunDTO {
     disabledCount: entity.disabledCount,
     pushedCount: entity.pushedCount,
     error: entity.error,
-    triggeredBy: entity.triggeredBy
+    triggeredBy: entity.triggeredBy ? getUserInfo(entity.triggeredBy) : null
+  };
+}
+
+export function toWorkflowRunDetailDTO(entity: WorkflowRunEntity, getUserInfo: GetUserInfo): WorkflowRunDetailDTO {
+  return {
+    ...toWorkflowRunDTO(entity, getUserInfo),
+    entries: entity.entries,
+    records: entity.records
   };
 }
 
@@ -137,7 +151,7 @@ export class ConfigurationWorkflowController extends Controller {
   @Post('/{southId}/workflows/{workflowId}/run')
   async run(@Path() southId: string, @Path() workflowId: string, @Request() request: CustomExpressRequest): Promise<WorkflowRunDTO> {
     const run = await request.services.configurationWorkflowRunService.runNow(southId, workflowId, request.user.id);
-    return toWorkflowRunDTO(run);
+    return toWorkflowRunDTO(run, id => request.services.userService.getUserInfo(id));
   }
 
   /**
@@ -157,9 +171,14 @@ export class ConfigurationWorkflowController extends Controller {
   }
 
   /**
-   * Lists a configuration workflow's run history, most recent first.
+   * Lists a configuration workflow's run history, most recent first, optionally narrowed by any
+   * combination of the filters below.
    * @summary List a configuration workflow's run history
    * @param page The zero-based page number to fetch.
+   * @param start ISO 8601 lower bound on `startedAt` - omit to not filter by a lower bound.
+   * @param end ISO 8601 upper bound on `startedAt` - omit to not filter by an upper bound.
+   * @param statuses Comma-separated list of statuses to include (e.g. `COMPLETED,ERRORED`). Valid values: `RUNNING`, `COMPLETED`, `ERRORED`.
+   * @param triggerTypes Comma-separated list of trigger types to include (e.g. `manual,scheduled`). Valid values: `manual`, `scheduled`.
    * @returns {Page<WorkflowRunDTO>} Paginated list of runs
    */
   @Get('/{southId}/workflows/{workflowId}/runs')
@@ -167,15 +186,47 @@ export class ConfigurationWorkflowController extends Controller {
     @Path() southId: string,
     @Path() workflowId: string,
     @Request() request: CustomExpressRequest,
-    @Query() page = 0
+    @Query() page = 0,
+    @Query() start?: Instant,
+    @Query() end?: Instant,
+    @Query() statuses?: string,
+    @Query() triggerTypes?: string
   ): Page<WorkflowRunDTO> {
-    const result = request.services.configurationWorkflowRunService.findRuns(southId, workflowId, page);
+    const searchParams: WorkflowRunSearchParam = {
+      page,
+      start,
+      end,
+      statuses: statuses ? (statuses.split(',').filter(status => status.trim() !== '') as Array<WorkflowRunStatus>) : [],
+      triggerTypes: triggerTypes
+        ? (triggerTypes.split(',').filter(triggerType => triggerType.trim() !== '') as Array<WorkflowRunTriggerType>)
+        : []
+    };
+    const result = request.services.configurationWorkflowRunService.findRuns(southId, workflowId, searchParams);
     return {
-      content: result.content.map(run => toWorkflowRunDTO(run)),
+      content: result.content.map(run => toWorkflowRunDTO(run, id => request.services.userService.getUserInfo(id))),
       totalElements: result.totalElements,
       size: result.size,
       number: result.number,
       totalPages: result.totalPages
     };
+  }
+
+  /**
+   * Gets one run's full detail, including the full discovered payload behind its summary counts -
+   * fetched on demand (not part of the paginated run list, which stays lean) since a heavily-discovered
+   * run's payload can be sizeable.
+   * @summary Get a configuration workflow run's full detail
+   * @returns {WorkflowRunDetailDTO} The run, with its full discovered payload
+   */
+  @Get('/{southId}/workflows/{workflowId}/runs/{runId}')
+  getRun(
+    @Path() southId: string,
+    @Path() workflowId: string,
+    @Path() runId: string,
+    @Request() request: CustomExpressRequest
+  ): WorkflowRunDetailDTO {
+    return toWorkflowRunDetailDTO(request.services.configurationWorkflowRunService.findRunById(southId, workflowId, runId), id =>
+      request.services.userService.getUserInfo(id)
+    );
   }
 }

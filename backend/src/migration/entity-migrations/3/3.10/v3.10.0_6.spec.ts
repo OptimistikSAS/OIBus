@@ -59,6 +59,7 @@ describe('Entity migration v3.10.0_6', () => {
       assert.strictEqual(row.updated_count, 0);
       assert.strictEqual(row.disabled_count, 0);
       assert.strictEqual(row.pushed_count, 0);
+      assert.strictEqual(row.payload, null);
       assert.strictEqual(row.error, null);
       assert.strictEqual(row.triggered_by, 'user1');
     });
@@ -79,6 +80,10 @@ describe('Entity migration v3.10.0_6', () => {
         updated_count: 2,
         disabled_count: 1,
         pushed_count: 5,
+        payload: JSON.stringify({
+          entries: [{ key: 'nodeId=a', status: 'new', record: { nodeId: 'a' }, previousMetadata: null }],
+          records: []
+        }),
         triggered_by: null
       });
 
@@ -91,6 +96,10 @@ describe('Entity migration v3.10.0_6', () => {
       assert.strictEqual(row.updated_count, 2);
       assert.strictEqual(row.disabled_count, 1);
       assert.strictEqual(row.pushed_count, 5);
+      assert.deepStrictEqual(JSON.parse(row.payload), {
+        entries: [{ key: 'nodeId=a', status: 'new', record: { nodeId: 'a' }, previousMetadata: null }],
+        records: []
+      });
     });
 
     it('records an errored run with a partial count and an error message', async () => {

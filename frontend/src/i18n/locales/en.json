@@ -2887,6 +2887,7 @@
       },
       "run-history": "Run history",
       "run-history-title": "Run history: {{name}}",
+      "run-status-label": "Status",
       "run-status": {
         "RUNNING": "Running",
         "COMPLETED": "Completed",
@@ -2900,9 +2901,21 @@
       "run-completed-at": "Completed",
       "run-trigger-type": "Trigger",
       "run-triggered-by": "Triggered by",
-      "run-counts": "Discovered / Eligible / Created / Updated / Disabled",
+      "run-discovered-count": "Discovered",
       "run-error": "Error",
-      "run-history-none": "No runs yet"
+      "run-history-none": "No runs yet",
+      "run-history-none-match": "No runs match the current filters",
+      "run-payload": "View payload",
+      "run-payload-title": "Run payload: {{name}}",
+      "run-payload-none": "Nothing was created, changed, reactivated, or missing in this run",
+      "run-payload-error": "Error loading run payload: {{error}}",
+      "run-payload-counts": "{{created}} created, {{updated}} updated, {{disabled}} disabled, {{pushed}} pushed",
+      "run-search": {
+        "start": "Started after",
+        "end": "Started before",
+        "status": "Status",
+        "trigger-type": "Trigger type"
+      }
     },
     "monitoring": {
       "title": "{{ name }} metrics",
