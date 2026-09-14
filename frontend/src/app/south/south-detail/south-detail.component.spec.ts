@@ -101,7 +101,7 @@ describe('SouthDetailComponent', () => {
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('#title')).toHaveTextContent(southConnector.name);
+    await expect.element(root.getByCss('#title')).toMatchTextContent(southConnector.name);
   });
 
   test('should poll the south connector metrics', async () => {

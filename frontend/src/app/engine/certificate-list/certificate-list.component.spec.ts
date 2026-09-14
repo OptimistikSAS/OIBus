@@ -70,16 +70,16 @@ describe('CertificateListComponent', () => {
     });
 
     test('should display a list of certificates', async () => {
-      await expect.element(tester.title).toHaveTextContent('Certificates');
+      await expect.element(tester.title).toMatchTextContent('Certificates');
       await expect.element(tester.certificates).toHaveLength(2);
 
       const secondCertificateCells = tester.certificates.nth(1).getByCss('td');
       await expect.element(tester.certificates.nth(0).getByCss('td')).toHaveLength(9);
-      await expect.element(secondCertificateCells.nth(0)).toHaveTextContent('Certificate 2');
-      await expect.element(secondCertificateCells.nth(1)).toHaveTextContent('');
-      await expect.element(secondCertificateCells.nth(2)).toHaveTextContent('public key');
-      await expect.element(secondCertificateCells.nth(4)).toHaveTextContent('certificate');
-      await expect.element(secondCertificateCells.nth(6)).toHaveTextContent('20 Mar 2020');
+      await expect.element(secondCertificateCells.nth(0)).toMatchTextContent('Certificate 2');
+      await expect.element(secondCertificateCells.nth(1)).toMatchTextContent('');
+      await expect.element(secondCertificateCells.nth(2)).toMatchTextContent('public key');
+      await expect.element(secondCertificateCells.nth(4)).toMatchTextContent('certificate');
+      await expect.element(secondCertificateCells.nth(6)).toMatchTextContent('20 Mar 2020');
       await expect.element(tester.editButtons).toHaveLength(2);
       await expect.element(tester.deleteButtons).toHaveLength(2);
     });
@@ -154,7 +154,7 @@ describe('CertificateListComponent', () => {
       certificateService.list.mockReturnValue(of([]));
       tester = new CertificateListComponentTester();
 
-      await expect.element(tester.noCertificate).toHaveTextContent('No certificate');
+      await expect.element(tester.noCertificate).toMatchTextContent('No certificate');
     });
   });
 });

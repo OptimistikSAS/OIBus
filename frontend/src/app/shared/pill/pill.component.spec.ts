@@ -35,7 +35,7 @@ describe('PillComponent', () => {
     const tester = new PillComponentTester();
     tester.fixture.detectChanges();
 
-    await expect.element(tester.pill).toHaveTextContent('Pill content');
+    await expect.element(tester.pill).toMatchTextContent('Pill content');
     await expect.element(tester.pill).toHaveClass('badge-primary');
     await expect.element(tester.pill).toHaveAttribute('tabindex', '0');
 
@@ -48,7 +48,7 @@ describe('PillComponent', () => {
     tester.fixture.componentInstance.removable = false;
     tester.fixture.detectChanges();
 
-    await expect.element(tester.pill).toHaveTextContent('Pill content');
+    await expect.element(tester.pill).toMatchTextContent('Pill content');
     await expect.element(tester.removeButton).not.toBeInTheDocument();
     await expect.element(tester.pill).toHaveAttribute('tabindex', '-1');
   });

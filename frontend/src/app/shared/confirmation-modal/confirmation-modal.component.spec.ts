@@ -37,23 +37,23 @@ describe('ConfirmationModalComponent and ConfirmationService', () => {
   test('should display a modal dialog when confirming and use default title key', async () => {
     confirmationService.confirm({ message: 'Really?' });
     await expect.element(modalWindow).toBeInTheDocument();
-    await expect.element(modalTitle).toHaveTextContent('Confirmation');
-    await expect.element(modalBody).toHaveTextContent('Really?');
+    await expect.element(modalTitle).toMatchTextContent('Confirmation');
+    await expect.element(modalBody).toMatchTextContent('Really?');
   });
 
   test('should honor the title option', async () => {
     confirmationService.confirm({ message: 'Really?', title: 'foo' });
-    await expect.element(modalTitle).toHaveTextContent('foo');
+    await expect.element(modalTitle).toMatchTextContent('foo');
   });
 
   test('should honor the titleKey option', async () => {
     confirmationService.confirm({ message: 'Really?', titleKey: 'common.save' });
-    await expect.element(modalTitle).toHaveTextContent('Save');
+    await expect.element(modalTitle).toMatchTextContent('Save');
   });
 
   test('should honor the messageKey option', async () => {
     confirmationService.confirm({ messageKey: 'common.save' });
-    await expect.element(modalBody).toHaveTextContent('Save');
+    await expect.element(modalBody).toMatchTextContent('Save');
   });
 
   test('should emit when confirming', async () => {
