@@ -19,6 +19,7 @@ import { OIBusRecord } from '../../shared/model/engine.model';
 import { OIBusConfigurationWorkflowResultCommandDTO } from './oia/oianalytics.model';
 import { Page } from '../../shared/model/types';
 import { NotFoundError, OIBusValidationError } from '../model/types';
+import type { ILogger } from '../model/logger.model';
 
 // Minimal slices of SouthService/DataStreamEngine/OIAnalyticsMessageService/OIAnalyticsRegistrationService
 // this orchestrator actually calls - kept as local interfaces (matching the ISouthService/IHistoryEngine
@@ -36,6 +37,7 @@ interface IConfigurationWorkflowSouthService {
 interface IDataStreamEngine {
   hasSouth(southId: string): boolean;
   getSouth(southId: string): { south: SouthConnector<SouthSettings, SouthItemSettings> };
+  readonly logger: ILogger;
 }
 
 interface IConfigurationWorkflowService {
@@ -307,7 +309,9 @@ export default class ConfigurationWorkflowRunService {
   /**
    * Remote Act: forward every eligible record, raw, as one message. Registration is checked again
    * here (not just at save time in ConfigurationWorkflowService) since it could have been revoked
-   * since - failing the run clearly beats silently queuing a message that would never actually send.
+   * since - but unlike the save-time check, an unregistered OIBus no longer fails the run: discovery
+   * and eligibility filtering still succeeded, so the run still completes (with pushedCount left at
+   * 0), just with a warning logged that this run's result was never actually sent.
    */
   private actRemote(
     southId: string,
@@ -317,7 +321,11 @@ export default class ConfigurationWorkflowRunService {
     counts: WorkflowRunCounts
   ): void {
     if (this.oIAnalyticsRegistrationService.getRegistrationSettings()?.status !== 'REGISTERED') {
-      throw new OIBusValidationError('OIBus is not registered with OIAnalytics - the configuration workflow result cannot be sent');
+      this.engine.logger.warn(
+        `Configuration workflow "${workflow.name}" (${workflow.id}) is set to push to OIAnalytics, but OIBus is not registered with ` +
+          'OIAnalytics - skipping the push for this run'
+      );
+      return;
     }
     const south = this.southConnectorRepository.findSouthById(southId)!;
     const payload: OIBusConfigurationWorkflowResultCommandDTO = {
