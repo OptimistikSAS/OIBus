@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -7,12 +7,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { WorkflowRunHistoryComponent } from './workflow-run-history.component';
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { ModalService } from '../../../shared/modal.service';
-import { NotificationService } from '../../../shared/notification.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject, stubRoute } from '../../../../test/vitest-create-mock';
 import { toPage } from '../../../shared/test-utils';
 import { ConfigurationWorkflowDTO } from '../../../../../../backend/shared/model/configuration-workflow.model';
-import { WorkflowRunDetailDTO, WorkflowRunDTO } from '../../../../../../backend/shared/model/workflow-run.model';
+import { WorkflowRunDTO } from '../../../../../../backend/shared/model/workflow-run.model';
 
 const workflow: ConfigurationWorkflowDTO = {
   id: 'workflowId1',
@@ -54,7 +53,6 @@ describe('WorkflowRunHistoryComponent', () => {
   let configurationWorkflowService: MockObject<ConfigurationWorkflowService>;
   let router: MockObject<Router>;
   let modalService: MockObject<ModalService>;
-  let notificationService: MockObject<NotificationService>;
 
   function createComponent(queryParams: Record<string, unknown> = {}) {
     TestBed.overrideProvider(ActivatedRoute, {
@@ -69,7 +67,6 @@ describe('WorkflowRunHistoryComponent', () => {
     configurationWorkflowService = createMock(ConfigurationWorkflowService);
     router = createMock(Router);
     modalService = createMock(ModalService);
-    notificationService = createMock(NotificationService);
     configurationWorkflowService.get.mockReturnValue(of(workflow));
     configurationWorkflowService.listRuns.mockReturnValue(of(toPage([run])));
 
@@ -79,7 +76,6 @@ describe('WorkflowRunHistoryComponent', () => {
         { provide: ConfigurationWorkflowService, useValue: configurationWorkflowService },
         { provide: Router, useValue: router },
         { provide: ModalService, useValue: modalService },
-        { provide: NotificationService, useValue: notificationService },
         { provide: ActivatedRoute, useValue: stubRoute({ params: { southId: 'southId1', workflowId: 'workflowId1' } }) }
       ]
     });
@@ -173,27 +169,18 @@ describe('WorkflowRunHistoryComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('.view-payload').length).toBe(1);
   });
 
-  test("should fetch and show one run's full payload in a large modal, labeled for a past run", () => {
-    const detail: WorkflowRunDetailDTO = { ...run, entries: [], records: [{ nodeId: 'a' }] };
-    configurationWorkflowService.getRun.mockReturnValue(of(detail));
-    const previewModalInstance = { prepare: vi.fn() };
+  test("should open a large modal immediately, labeled for a past run, letting it fetch the run's full payload itself", () => {
+    const previewModalInstance = { prepareForRunPayload: vi.fn() };
     modalService.open.mockReturnValue({ componentInstance: previewModalInstance } as never);
     const fixture = createComponent();
 
     fixture.componentInstance.onViewPayload(run);
 
     expect(modalService.open).toHaveBeenCalledWith(expect.anything(), { size: 'xl' });
-    expect(configurationWorkflowService.getRun).toHaveBeenCalledWith('southId1', 'workflowId1', 'runId1');
-    expect(previewModalInstance.prepare).toHaveBeenCalledWith('Reactor discovery', detail, 'run-payload');
-  });
-
-  test("should show an error notification when fetching a run's payload fails", () => {
-    configurationWorkflowService.getRun.mockReturnValue(throwError(() => ({ error: { message: 'not found' } })));
-    const fixture = createComponent();
-
-    fixture.componentInstance.onViewPayload(run);
-
-    expect(notificationService.error).toHaveBeenCalledWith('south.workflows.run-payload-error', { error: 'not found' });
+    expect(previewModalInstance.prepareForRunPayload).toHaveBeenCalledWith('southId1', 'workflowId1', 'runId1', 'Reactor discovery');
+    // The request itself is PreviewWorkflowModalComponent's own responsibility now - this modal is
+    // opened up front, with its own loading spinner, rather than waiting on it here first.
+    expect(configurationWorkflowService.getRun).not.toHaveBeenCalled();
   });
 
   test('should toggle a status filter and immediately apply the search', () => {

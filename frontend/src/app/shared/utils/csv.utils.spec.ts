@@ -2,6 +2,7 @@ import Papa from 'papaparse';
 import {
   convertCsvDelimiter,
   exportArrayElements,
+  flattenPlainObject,
   validateArrayElementsImport,
   getElementName,
   findArrayAttributeInAttributes
@@ -288,6 +289,32 @@ describe('csv.utils', () => {
 
       expect(result.errors.length).toBe(1);
       expect(result.errors[0].error).toContain('Invalid number value');
+    });
+  });
+
+  describe('flattenPlainObject', () => {
+    test('should keep scalar leaves as-is (stringified)', () => {
+      expect(flattenPlainObject({ name: 'a', value: 42, active: true })).toEqual({ name: 'a', value: '42', active: 'true' });
+    });
+
+    test('should underscore-join nested object keys, at any depth', () => {
+      expect(flattenPlainObject({ a: { b: { c: 1 } } })).toEqual({ a_b_c: '1' });
+    });
+
+    test('should stringify arrays instead of expanding them into columns', () => {
+      expect(flattenPlainObject({ list: [1, 2, 3] })).toEqual({ list: '[1,2,3]' });
+    });
+
+    test('should turn null/undefined leaves into an empty string', () => {
+      expect(flattenPlainObject({ a: null, b: undefined })).toEqual({ a: '', b: '' });
+    });
+
+    test('should turn an empty nested object into an empty string rather than dropping the column', () => {
+      expect(flattenPlainObject({ a: {} })).toEqual({ a: '' });
+    });
+
+    test('should support a custom prefix for the whole value', () => {
+      expect(flattenPlainObject({ b: 1 }, 'a')).toEqual({ a_b: '1' });
     });
   });
 

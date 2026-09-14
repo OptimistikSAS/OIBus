@@ -20,8 +20,6 @@ import { ConfigurationWorkflowService } from '../../../services/configuration-wo
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { ModalService } from '../../../shared/modal.service';
-import { NotificationService } from '../../../shared/notification.service';
-import { extractErrorMessage } from '../../../shared/extract-error-message';
 import PreviewWorkflowModalComponent from '../preview-workflow-modal/preview-workflow-modal.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DatetimepickerComponent } from '../../../shared/datetimepicker/datetimepicker.component';
@@ -58,7 +56,6 @@ export class WorkflowRunHistoryComponent implements OnInit, OnDestroy {
   private pageLoader = inject(PageLoader);
   private configurationWorkflowService = inject(ConfigurationWorkflowService);
   private modalService = inject(ModalService);
-  private notificationService = inject(NotificationService);
   private fb = inject(NonNullableFormBuilder);
 
   southId!: string;
@@ -227,18 +224,13 @@ export class WorkflowRunHistoryComponent implements OnInit, OnDestroy {
   /**
    * Fetches this one run's full detail (fetched on demand - not part of the paginated list, which
    * stays lean) and shows it in the same modal a live Preview uses, just labeled for a past run
-   * instead of a hypothetical next one.
+   * instead of a hypothetical next one. Opened immediately, with its own loading spinner, rather than
+   * waiting for the fetch to resolve first - see PreviewWorkflowModalComponent.prepareForRunPayload,
+   * which makes the request itself.
    */
   onViewPayload(run: WorkflowRunDTO): void {
-    this.configurationWorkflowService.getRun(this.southId, this.workflowId, run.id).subscribe({
-      next: detail => {
-        const modalRef = this.modalService.open(PreviewWorkflowModalComponent, { size: 'xl' });
-        const component: PreviewWorkflowModalComponent = modalRef.componentInstance;
-        component.prepare(this.workflow()?.name ?? '', detail, 'run-payload');
-      },
-      error: error => {
-        this.notificationService.error('south.workflows.run-payload-error', { error: extractErrorMessage(error) });
-      }
-    });
+    const modalRef = this.modalService.open(PreviewWorkflowModalComponent, { size: 'xl' });
+    const component: PreviewWorkflowModalComponent = modalRef.componentInstance;
+    component.prepareForRunPayload(this.southId, this.workflowId, run.id, this.workflow()?.name ?? '');
   }
 }
