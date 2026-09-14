@@ -61,8 +61,8 @@ describe('HomeComponent', () => {
   test('should display titles', async () => {
     const tester = new HomeComponentTester();
     tester.fixture.detectChanges();
-    await expect.element(tester.northTitle).toHaveTextContent('North');
-    await expect.element(tester.engineTitle).toHaveTextContent('Engine');
-    await expect.element(tester.southTitle).toHaveTextContent('South');
+    await expect.element(tester.northTitle).toMatchTextContent('North');
+    await expect.element(tester.engineTitle).toMatchTextContent('Engine');
+    await expect.element(tester.southTitle).toMatchTextContent('South');
   });
 });

@@ -89,17 +89,17 @@ describe('ManageWorkflowsModalComponent', () => {
 
     expect(configurationWorkflowService.list).toHaveBeenCalledWith('southId1');
     const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('.modal-title')).toHaveTextContent('Configuration workflows (2)');
-    await expect.element(root.getByCss('tbody')).toHaveTextContent('Alpha');
-    await expect.element(root.getByCss('tbody')).toHaveTextContent('Beta');
+    await expect.element(root.getByCss('.modal-title')).toMatchTextContent('Configuration workflows (2)');
+    await expect.element(root.getByCss('tbody')).toMatchTextContent('Alpha');
+    await expect.element(root.getByCss('tbody')).toMatchTextContent('Beta');
   });
 
   test('should show a manual-only placeholder and the local/remote mode for each workflow', async () => {
     const fixture = createComponent();
 
     const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('tbody')).toHaveTextContent('Manual only');
-    await expect.element(root.getByCss('tbody')).toHaveTextContent('Create/update items locally');
+    await expect.element(root.getByCss('tbody')).toMatchTextContent('Manual only');
+    await expect.element(root.getByCss('tbody')).toMatchTextContent('Create/update items locally');
   });
 
   test('should filter the displayed workflows by name', () => {

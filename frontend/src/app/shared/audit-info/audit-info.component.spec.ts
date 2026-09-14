@@ -34,18 +34,18 @@ describe('AuditInfoComponent', () => {
   });
 
   test('should display the updated date', async () => {
-    await expect.element(tester.value).toHaveTextContent('2024');
+    await expect.element(tester.value).toMatchTextContent('2024');
   });
 
   test('should display the audit trail in a tooltip with bold labels', async () => {
     tester.openTooltip();
 
     const tooltipWindow = page.elementLocator(document.body).getByCss('ngb-tooltip-window');
-    await expect.element(tooltipWindow).toHaveTextContent('Created on');
-    await expect.element(tooltipWindow).toHaveTextContent('Created by');
-    await expect.element(tooltipWindow).toHaveTextContent('Updated by');
-    await expect.element(tooltipWindow).toHaveTextContent('Alice');
-    await expect.element(tooltipWindow).toHaveTextContent('Bob');
+    await expect.element(tooltipWindow).toMatchTextContent('Created on');
+    await expect.element(tooltipWindow).toMatchTextContent('Created by');
+    await expect.element(tooltipWindow).toMatchTextContent('Updated by');
+    await expect.element(tooltipWindow).toMatchTextContent('Alice');
+    await expect.element(tooltipWindow).toMatchTextContent('Bob');
 
     // Labels are rendered bold
     await expect.element(tooltipWindow.getByText('Created on')).toHaveClass('fw-bold');

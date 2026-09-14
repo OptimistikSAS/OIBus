@@ -111,11 +111,11 @@ describe('EngineDetailComponent', () => {
     const tester = new EngineDetailComponentTester();
     tester.fixture.detectChanges();
 
-    await expect.element(tester.generalSettings.nth(0)).toHaveTextContent('OIBus Test');
-    await expect.element(tester.generalSettings.nth(1)).toHaveTextContent('2223');
-    await expect.element(tester.generalSettings.nth(2)).toHaveTextContent('7 days');
-    await expect.element(tester.generalSettings.nth(3)).toHaveTextContent('8888');
-    await expect.element(tester.generalSettings.nth(4)).toHaveTextContent('silent');
+    await expect.element(tester.generalSettings.nth(0)).toMatchTextContent('OIBus Test');
+    await expect.element(tester.generalSettings.nth(1)).toMatchTextContent('2223');
+    await expect.element(tester.generalSettings.nth(2)).toMatchTextContent('7 days');
+    await expect.element(tester.generalSettings.nth(3)).toMatchTextContent('8888');
+    await expect.element(tester.generalSettings.nth(4)).toMatchTextContent('silent');
   });
 
   test('should restart', () => {

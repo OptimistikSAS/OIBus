@@ -68,8 +68,8 @@ describe('OIBusScanModeFormControlComponent', () => {
 
   test('should display options for each selectable value', async () => {
     await expect.element(tester.options).toHaveLength(4); // One for the null option and one for each value
-    await expect.element(tester.options.nth(1)).toHaveTextContent('scanMode1');
-    await expect.element(tester.options.nth(2)).toHaveTextContent('scanMode2');
-    await expect.element(tester.options.nth(3)).toHaveTextContent('Subscription');
+    await expect.element(tester.options.nth(1)).toMatchTextContent('scanMode1');
+    await expect.element(tester.options.nth(2)).toMatchTextContent('scanMode2');
+    await expect.element(tester.options.nth(3)).toMatchTextContent('Subscription');
   });
 });
