@@ -2,7 +2,12 @@
   <h4 class="modal-title" [translate]="'south.workflows.' + context + '-title'" [translateParams]="{ name: workflowName }"></h4>
 </div>
 <div class="modal-body">
-  @if (result) {
+  @if (loading()) {
+    <div class="text-center">
+      <oib-loading-spinner />
+      <div translate="south.workflows.preview-loading"></div>
+    </div>
+  } @else if (result) {
     <div class="text-muted mb-2" id="preview-counts">
       {{ 'south.workflows.preview-discovered' | translate: { discovered: result.discoveredCount, eligible: result.eligibleCount } }}
     </div>
@@ -20,7 +25,7 @@
         }}
       </div>
     }
-    @if (result.entries.length > 0) {
+    @if (paginatedEntries; as entries) {
       <!-- Local (item-creating) workflow: each entry classified against the previous run. Status leads
            (leftmost) since it's the one thing every row must be scanned for; the payload column is left
            unconstrained so it gets the rest of the (now wider) modal's width. -->
@@ -33,7 +38,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (entry of result.entries; track entry.key) {
+          @for (entry of entries.content; track entry.key) {
             <tr>
               <td>
                 <span
@@ -54,11 +59,12 @@
           }
         </tbody>
       </table>
-    } @else if (result.records.length > 0) {
+      <oib-pagination class="d-flex justify-content-end" [page]="entries" (pageChanged)="entries.gotoPage($event)" />
+    } @else if (paginatedRecords; as records) {
       <!-- Remote (push-to-OIAnalytics) workflow: no diffing at all - just the raw records that would be sent. -->
       <table class="table table-sm table-hover oib-table" id="preview-records-table">
         <tbody>
-          @for (record of result.records; track $index) {
+          @for (record of records.content; track $index) {
             <tr>
               <td>
                 <pre class="mb-0">{{ record | json }}</pre>
@@ -67,11 +73,22 @@
           }
         </tbody>
       </table>
+      <oib-pagination class="d-flex justify-content-end" [page]="records" (pageChanged)="records.gotoPage($event)" />
     } @else {
       <div class="oib-grey-container" id="preview-none" [translate]="'south.workflows.' + context + '-none'"></div>
     }
   }
 </div>
 <div class="modal-footer">
+  @if (!loading()) {
+    <button
+      type="button"
+      class="btn btn-secondary"
+      id="export-csv-button"
+      [disabled]="!hasExportableRows"
+      (click)="exportCsv()"
+      translate="south.workflows.preview-export"
+    ></button>
+  }
   <button type="button" class="btn btn-primary" (click)="close()" translate="common.close" id="close-button"></button>
 </div>

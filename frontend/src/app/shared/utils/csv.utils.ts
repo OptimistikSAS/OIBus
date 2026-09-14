@@ -38,6 +38,41 @@ export const exportArrayElements = (arrayAttribute: OIBusArrayAttribute, element
   return new Blob([csv.unparse(flattenedElements, { columns: Array.from(columns), delimiter })], { type: 'text/csv' });
 };
 
+/**
+ * Flattens an arbitrary plain value (nested objects included) into CSV-ready columns, one
+ * underscore-joined key per leaf value - e.g. `{ a: { b: 1 } }` becomes `{ a_b: '1' }`. An array value
+ * (at any depth) is stringified as one column rather than expanded into columns of its own, since a
+ * variable-length list has no fixed set of columns to expand into.
+ *
+ * Unlike `flattenObject` above, this needs no `OIBusAttribute` schema to know what to descend into: it
+ * walks whatever shape the value actually has. Use this for exporting free-form JSON that has no form
+ * schema of its own to flatten against - e.g. a Configuration Workflow's discovered records.
+ */
+export const flattenPlainObject = (value: unknown, prefix = ''): Record<string, string> => {
+  const flattened: Record<string, string> = {};
+  flattenPlainValue(value, prefix, flattened);
+  return flattened;
+};
+
+const flattenPlainValue = (value: unknown, key: string, flattened: Record<string, string>): void => {
+  if (Array.isArray(value)) {
+    flattened[key] = JSON.stringify(value);
+    return;
+  }
+  if (value !== null && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>);
+    if (entries.length === 0) {
+      flattened[key] = '';
+      return;
+    }
+    for (const [subKey, subValue] of entries) {
+      flattenPlainValue(subValue, key ? `${key}_${subKey}` : subKey, flattened);
+    }
+    return;
+  }
+  flattened[key] = value === null || value === undefined ? '' : String(value);
+};
+
 const joinAttributeKey = (prefix: Array<string>, key: string): string => [...prefix, key].filter(Boolean).join('_');
 
 const flattenObject = (
