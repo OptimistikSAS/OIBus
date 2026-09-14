@@ -166,13 +166,13 @@ describe('EditWorkflowModalComponent', () => {
 
     const root = page.elementLocator(fixture.nativeElement);
     await expect.element(root.getByCss('#workflow-name')).toHaveValue('Reactor discovery');
-    await expect.element(root.getByCss('#identity-key-fields-list')).toHaveTextContent('nodeId');
-    await expect.element(root.getByCss('#eligibility-filter-table')).toHaveTextContent('type');
+    await expect.element(root.getByCss('#identity-key-fields-list')).toMatchTextContent('nodeId');
+    await expect.element(root.getByCss('#eligibility-filter-table')).toMatchTextContent('type');
     await expect.element(root.getByCss('#item-field-mapping-field-name')).toHaveValue('{{name}}');
     expect(fixture.componentInstance.form!.controls.pushToOIAnalytics.value).toBe(false);
     // discoveryScope.rootNodeId is read back for the node picker (manifest is tree-based: explore: true).
     expect(fixture.componentInstance.discoveryRootNodeId).toBe('ns=1;s=Root');
-    await expect.element(root.getByCss('#discovery-root-node-id')).toHaveTextContent('ns=1;s=Root');
+    await expect.element(root.getByCss('#discovery-root-node-id')).toMatchTextContent('ns=1;s=Root');
   });
 
   test('should prefill a duplicate with the source workflow settings, a "-copy" name, and create-mode uniqueness', async () => {
@@ -182,9 +182,9 @@ describe('EditWorkflowModalComponent', () => {
 
     expect(fixture.componentInstance.mode).toBe('copy');
     const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('.modal-title')).toHaveTextContent('Duplicate configuration workflow');
+    await expect.element(root.getByCss('.modal-title')).toMatchTextContent('Duplicate configuration workflow');
     await expect.element(root.getByCss('#workflow-name')).toHaveValue('Reactor discovery-copy');
-    await expect.element(root.getByCss('#identity-key-fields-list')).toHaveTextContent('nodeId');
+    await expect.element(root.getByCss('#identity-key-fields-list')).toMatchTextContent('nodeId');
     await expect.element(root.getByCss('#item-field-mapping-field-name')).toHaveValue('{{name}}');
     expect(fixture.componentInstance.discoveryRootNodeId).toBe('ns=1;s=Root');
 

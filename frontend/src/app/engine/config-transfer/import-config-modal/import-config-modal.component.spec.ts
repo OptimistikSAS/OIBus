@@ -113,7 +113,7 @@ describe('ImportConfigModalComponent', () => {
     tester.fixture.detectChanges();
 
     expect(tester.componentInstance.error()).toBe('boom');
-    await expect.element(tester.error).toHaveTextContent('boom');
+    await expect.element(tester.error).toMatchTextContent('boom');
   });
 
   test('should show the per-entity validation errors when the import fails validation', async () => {
@@ -137,8 +137,8 @@ describe('ImportConfigModalComponent', () => {
     expect(tester.componentInstance.validationErrors()).toEqual([
       { scope: 'south:sqlite:item', entityId: 'SC1', entityName: 'All logs', message: 'must be a string' }
     ]);
-    await expect.element(tester.validationErrorsList).toHaveTextContent('All logs');
-    await expect.element(tester.validationErrorsList).toHaveTextContent('must be a string');
+    await expect.element(tester.validationErrorsList).toMatchTextContent('All logs');
+    await expect.element(tester.validationErrorsList).toMatchTextContent('must be a string');
   });
 
   test('should reject a file that is too large', () => {

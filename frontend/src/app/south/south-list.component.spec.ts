@@ -50,7 +50,7 @@ describe('SouthListComponent', () => {
     const root = page.elementLocator(fixture.nativeElement);
     const rows = root.getByCss('tbody tr');
     await expect.element(rows).toHaveLength(southConnectors.length);
-    await expect.element(rows.nth(0).getByCss('td').nth(1)).toHaveTextContent(southConnectors[0].name);
+    await expect.element(rows.nth(0).getByCss('td').nth(1)).toMatchTextContent(southConnectors[0].name);
   });
 
   test('should toggle connector stop', () => {

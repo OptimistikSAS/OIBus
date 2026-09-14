@@ -74,7 +74,7 @@ class CacheExploreComponentTester {
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly snapshotWarning = this.root.getByCss('.alert-info');
   readonly dirtyWarning = this.root.getByCss('.alert-warning');
-  readonly saveButton = this.root.getByRole('button', { name: 'Save' });
+  readonly saveButton = this.root.getByRole('button', { name: 'Save changes' });
   readonly cacheContent = this.root.getByCss('oib-cache-content');
   readonly spinner = this.root.getByCss('.fa-spinner');
 
@@ -101,7 +101,7 @@ describe('CacheExploreComponent', () => {
   });
 
   test('should display snapshot warning initially', async () => {
-    await expect.element(tester.snapshotWarning).toHaveTextContent('The state of the cache may have changed in OIBus since the search.');
+    await expect.element(tester.snapshotWarning).toMatchTextContent('The state of the cache may have changed in OIBus since the search.');
   });
 
   test('should NOT display dirty warning or save button initially', async () => {
