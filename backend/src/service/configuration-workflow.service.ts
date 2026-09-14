@@ -110,8 +110,9 @@ export default class ConfigurationWorkflowService {
   }
 
   /** Exactly one of itemFieldMapping (local)/pushToOIAnalytics (remote) applies - never both, never neither.
-   *  Remote additionally requires OIBus to already be registered with OIAnalytics: a workflow that can never
-   *  actually push anything isn't a workflow anyone should be able to save, let alone run. */
+   *  Remote doesn't require OIBus to already be registered with OIAnalytics to be saved - a workflow can be
+   *  authored and scheduled ahead of registration - but a remote workflow saved while unregistered can never
+   *  actually push anything yet, so that case is logged as a warning rather than rejected outright. */
   private checkMode(command: ConfigurationWorkflowCommandDTO): void {
     if (command.itemFieldMapping !== null && command.pushToOIAnalytics) {
       throw new OIBusValidationError('A configuration workflow cannot both create/update items and push to OIAnalytics');
@@ -120,7 +121,10 @@ export default class ConfigurationWorkflowService {
       throw new OIBusValidationError('A configuration workflow must either create/update items or push to OIAnalytics');
     }
     if (command.pushToOIAnalytics && this.oIAnalyticsRegistrationService.getRegistrationSettings()?.status !== 'REGISTERED') {
-      throw new OIBusValidationError('OIBus must be registered with OIAnalytics to push a configuration workflow result');
+      this.engine.logger.warn(
+        `Configuration workflow "${command.name}" is set to push to OIAnalytics, but OIBus is not registered with OIAnalytics - ` +
+          'nothing will be pushed until it is registered'
+      );
     }
   }
 
