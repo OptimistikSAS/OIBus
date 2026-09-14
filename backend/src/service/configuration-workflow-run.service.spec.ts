@@ -488,18 +488,19 @@ describe('Configuration Workflow Run Service', () => {
       assert.deepStrictEqual(runPayload.records, [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable', unit: '°C' }]);
     });
 
-    it('should fail the run rather than queue a message when OIBus is no longer registered', async () => {
+    it('should complete the run and log a warning instead of queuing a message when OIBus is no longer registered', async () => {
       configurationWorkflowService.findById.mock.mockImplementation(() => remoteWorkflow);
       oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => ({ status: 'NOT_REGISTERED' }) as never);
       south.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', type: 'Variable' }]);
 
-      await assert.rejects(
-        service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest'),
-        new OIBusValidationError('OIBus is not registered with OIAnalytics - the configuration workflow result cannot be sent')
-      );
+      await service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
 
       assert.strictEqual(oIAnalyticsMessageService.createConfigurationWorkflowResultMessage.mock.calls.length, 0);
-      assert.strictEqual(workflowRunRepository.fail.mock.calls.length, 1);
+      assert.strictEqual(workflowRunRepository.fail.mock.calls.length, 0);
+      assert.strictEqual(workflowRunRepository.complete.mock.calls.length, 1);
+      const counts = workflowRunRepository.complete.mock.calls[0].arguments[1] as { pushedCount: number };
+      assert.strictEqual(counts.pushedCount, 0);
+      assert.strictEqual(engine.logger.warn.mock.calls.length, 1);
     });
   });
 
