@@ -228,16 +228,11 @@ export default class ManageWorkflowsModalComponent {
   }
 
   onPreview(workflow: ConfigurationWorkflowDTO) {
-    this.configurationWorkflowService.preview(this.southId, workflow.id).subscribe({
-      next: result => {
-        const modalRef = this.modalService.open(PreviewWorkflowModalComponent, { size: 'xl' });
-        const component: PreviewWorkflowModalComponent = modalRef.componentInstance;
-        component.prepare(workflow.name, result);
-      },
-      error: error => {
-        this.notificationService.error('south.workflows.preview-error', { error: extractErrorMessage(error) });
-      }
-    });
+    // Opened immediately, with its own loading spinner, rather than waiting for the preview request to
+    // resolve first - see PreviewWorkflowModalComponent.prepareForPreview, which makes the request itself.
+    const modalRef = this.modalService.open(PreviewWorkflowModalComponent, { size: 'xl' });
+    const component: PreviewWorkflowModalComponent = modalRef.componentInstance;
+    component.prepareForPreview(this.southId, workflow.id, workflow.name);
   }
 
   onViewHistory(workflow: ConfigurationWorkflowDTO) {
