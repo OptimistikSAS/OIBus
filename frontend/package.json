@@ -54,8 +54,8 @@
     "@angular/compiler-cli": "22.1.5",
     "@types/luxon": "3.7.5",
     "@types/papaparse": "5.5.2",
-    "@vitest/browser-playwright": "4.1.11",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/browser-playwright": "5.0.0",
+    "@vitest/coverage-v8": "^5.0.0",
     "angular-eslint": "22.5.0",
     "eslint": "9.39.5",
     "eslint-config-prettier": "10.1.8",
@@ -64,7 +64,7 @@
     "prettier": "3.9.6",
     "typescript": "6.0.3",
     "typescript-eslint": "8.70.0",
-    "vitest": "4.1.11"
+    "vitest": "5.0.0"
   },
   "allowScripts": {
     "fsevents@2.3.2": true,
