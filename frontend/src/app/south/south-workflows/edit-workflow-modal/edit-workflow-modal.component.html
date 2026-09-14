@@ -8,11 +8,24 @@
         <div class="alert alert-danger py-1 px-2" id="form-error" [translate]="formError"></div>
       }
 
-      <!-- Name -->
-      <div class="form-group">
-        <label class="form-label" for="workflow-name" translate="south.workflows.name"></label>
-        <input formControlName="name" id="workflow-name" class="form-control" />
-        <val-errors controlName="name" />
+      <div class="row">
+        <!-- Name -->
+        <div class="col-8">
+          <div class="form-group">
+            <label class="form-label" for="workflow-name" translate="south.workflows.name"></label>
+            <input formControlName="name" id="workflow-name" class="form-control" />
+            <val-errors controlName="name" />
+          </div>
+        </div>
+        <div class="col">
+          <!-- Enabled -->
+          <div class="form-group">
+            <div class="form-check form-switch padded">
+              <input formControlName="enabled" id="workflow-enabled" type="checkbox" class="form-check-input" />
+              <label class="form-check-label" for="workflow-enabled" translate="south.workflows.enabled"></label>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Discovery scope -->
@@ -101,20 +114,8 @@
             <label class="form-check-label" for="mode-local" translate="south.workflows.mode-local"></label>
           </div>
           <div class="form-check">
-            <input
-              class="form-check-input"
-              type="radio"
-              id="mode-remote"
-              formControlName="pushToOIAnalytics"
-              [value]="true"
-              (click)="blockRemoteModeClickIfNotRegistered($event)"
-            />
-            <label
-              class="form-check-label"
-              [class.text-muted]="!isRegistered"
-              for="mode-remote"
-              translate="south.workflows.mode-remote"
-            ></label>
+            <input class="form-check-input" type="radio" id="mode-remote" formControlName="pushToOIAnalytics" [value]="true" />
+            <label class="form-check-label" for="mode-remote" translate="south.workflows.mode-remote"></label>
           </div>
         }
         @if (form.controls.pushToOIAnalytics.value && !isRegistered) {
@@ -205,37 +206,45 @@
                         />
                       }
                     </td>
-                    <td class="text-nowrap">
-                      <button type="button" class="btn btn-link px-1 py-0 save-eligibility-condition" (click)="saveEligibilityCondition()">
-                        <span class="fa fa-check"></span>
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn-link px-1 py-0 cancel-eligibility-condition"
-                        (click)="cancelEditEligibilityCondition()"
-                      >
-                        <span class="fa fa-times"></span>
-                      </button>
+                    <td>
+                      <div class="text-nowrap pull-right">
+                        <button
+                          type="button"
+                          class="btn btn-link px-1 py-0 save-eligibility-condition"
+                          (click)="saveEligibilityCondition()"
+                        >
+                          <span class="fa fa-check"></span>
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-link px-1 py-0 cancel-eligibility-condition"
+                          (click)="cancelEditEligibilityCondition()"
+                        >
+                          <span class="fa fa-times"></span>
+                        </button>
+                      </div>
                     </td>
                   } @else {
                     <td>{{ condition.field }}</td>
                     <td>{{ 'south.workflows.operator.' + condition.operator | translate }}</td>
                     <td>{{ condition.value }}</td>
-                    <td class="text-nowrap">
-                      <button
-                        type="button"
-                        class="btn btn-link px-1 py-0 edit-eligibility-condition"
-                        (click)="startEditEligibilityCondition($index)"
-                      >
-                        <span class="fa fa-pencil"></span>
-                      </button>
-                      <button
-                        type="button"
-                        class="btn btn-link px-1 py-0 remove-eligibility-condition"
-                        (click)="removeEligibilityCondition($index)"
-                      >
-                        <span class="fa fa-trash"></span>
-                      </button>
+                    <td>
+                      <div class="text-nowrap pull-right">
+                        <button
+                          type="button"
+                          class="btn btn-link px-1 py-0 edit-eligibility-condition"
+                          (click)="startEditEligibilityCondition($index)"
+                        >
+                          <span class="fa fa-pencil"></span>
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-link px-1 py-0 remove-eligibility-condition"
+                          (click)="removeEligibilityCondition($index)"
+                        >
+                          <span class="fa fa-trash"></span>
+                        </button>
+                      </div>
                     </td>
                   }
                 </tr>
@@ -277,7 +286,8 @@
       </div>
 
       <!-- Item field mapping - local mode only. Never rendered for a SQL-family connector (always
-           remote, see buildForm()'s own comment) or while "Push to OIAnalytics" is picked. -->
+           remote, see buildForm()'s own comment) or while "Push to OIAnalytics" is picked - that mode is
+           already explained by the mode section above, so nothing needs to be shown here in that case. -->
       @if (!form.controls.pushToOIAnalytics.value) {
         <div class="form-group">
           <label class="form-label" translate="south.workflows.item-field-mapping"></label>
@@ -396,18 +406,7 @@
             </tbody>
           </table>
         </div>
-      } @else {
-        <div class="form-group">
-          <label class="form-label" translate="south.workflows.mode-remote"></label>
-          <div class="form-text" translate="south.workflows.mode-remote-hint"></div>
-        </div>
       }
-
-      <!-- Enabled -->
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="workflow-enabled" formControlName="enabled" />
-        <label class="form-check-label" for="workflow-enabled" translate="south.workflows.enabled"></label>
-      </div>
     </form>
   </div>
 }
