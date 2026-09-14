@@ -232,18 +232,18 @@ describe('ManageWorkflowsModalComponent', () => {
     expect(onWorkflowRun).not.toHaveBeenCalled();
   });
 
-  test('should preview a workflow and open the preview modal with the result', () => {
+  test('should open the preview modal immediately, letting it fetch the preview itself', () => {
     const fixture = createComponent();
-    const previewResult = { discoveredCount: 1, eligibleCount: 1, entries: [], records: [] };
-    configurationWorkflowService.preview.mockReturnValue(of(previewResult));
-    const previewModalInstance = { prepare: vi.fn() };
+    const previewModalInstance = { prepareForPreview: vi.fn() };
     modalService.open.mockReturnValue({ componentInstance: previewModalInstance } as never);
 
     fixture.componentInstance.onPreview(workflows[0]);
 
     expect(modalService.open).toHaveBeenCalledWith(expect.anything(), { size: 'xl' });
-    expect(configurationWorkflowService.preview).toHaveBeenCalledWith('southId1', 'workflow1');
-    expect(previewModalInstance.prepare).toHaveBeenCalledWith('Alpha', previewResult);
+    expect(previewModalInstance.prepareForPreview).toHaveBeenCalledWith('southId1', 'workflow1', 'Alpha');
+    // The request itself is PreviewWorkflowModalComponent's own responsibility now - this modal is
+    // opened up front, with its own loading spinner, rather than waiting on it here first.
+    expect(configurationWorkflowService.preview).not.toHaveBeenCalled();
   });
 
   test('should navigate to the run history page and close the modal', () => {
