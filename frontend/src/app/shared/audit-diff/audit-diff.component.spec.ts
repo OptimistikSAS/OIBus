@@ -29,27 +29,27 @@ describe('AuditDiffComponent', () => {
   test('should render a diff with one changed and one unchanged field', async () => {
     setInputs({ name: 'old-name', settings: 'same' }, { name: 'new-name', settings: 'same' });
 
-    await expect.element(tester.rows.nth(0)).toHaveTextContent('name');
-    await expect.element(tester.rows.nth(0)).toHaveTextContent('old-name');
-    await expect.element(tester.rows.nth(0)).toHaveTextContent('new-name');
+    await expect.element(tester.rows.nth(0)).toMatchTextContent('name');
+    await expect.element(tester.rows.nth(0)).toMatchTextContent('old-name');
+    await expect.element(tester.rows.nth(0)).toMatchTextContent('new-name');
     await expect.element(tester.rows.nth(0)).toHaveClass('table-warning');
 
-    await expect.element(tester.rows.nth(1)).toHaveTextContent('settings');
+    await expect.element(tester.rows.nth(1)).toMatchTextContent('settings');
     await expect.element(tester.rows.nth(1)).not.toHaveClass('table-warning');
   });
 
   test('should render a dash for every "before" cell on CREATE (previousState is null)', async () => {
     setInputs(null, { name: 'new-name', settings: 'same' });
 
-    await expect.element(tester.rows.nth(0)).toHaveTextContent('—');
-    await expect.element(tester.rows.nth(1)).toHaveTextContent('—');
+    await expect.element(tester.rows.nth(0)).toMatchTextContent('—');
+    await expect.element(tester.rows.nth(1)).toMatchTextContent('—');
   });
 
   test('should render a dash for every "after" cell on DELETE (newState is null)', async () => {
     setInputs({ name: 'old-name', settings: 'same' }, null);
 
     const cells = tester.root.getByCss('tbody tr td:last-child');
-    await expect.element(cells.nth(0)).toHaveTextContent('—');
-    await expect.element(cells.nth(1)).toHaveTextContent('—');
+    await expect.element(cells.nth(0)).toMatchTextContent('—');
+    await expect.element(cells.nth(1)).toMatchTextContent('—');
   });
 });

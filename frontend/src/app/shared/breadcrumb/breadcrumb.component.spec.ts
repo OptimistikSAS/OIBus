@@ -168,7 +168,7 @@ describe('BreadcrumbComponent', () => {
 
   async function expectBreadcrumbTexts(texts: Array<string>) {
     await expect.element(tester.breadcrumbItems).toHaveLength(texts.length);
-    await Promise.all(texts.map((text, index) => expect.element(tester.item(index)).toHaveTextContent(text)));
+    await Promise.all(texts.map((text, index) => expect.element(tester.item(index)).toMatchTextContent(text)));
   }
 
   test('should not show breadcrumbs on home page', async () => {
@@ -341,7 +341,7 @@ describe('BreadcrumbComponent', () => {
       tester.fixture.detectChanges();
 
       await expect.element(tester.breadcrumbLinks).toHaveLength(2);
-      await expect.element(tester.item(1).getByCss('a')).toHaveTextContent('test-south (mqtt)');
+      await expect.element(tester.item(1).getByCss('a')).toMatchTextContent('test-south (mqtt)');
       await expect.element(tester.item(3).getByCss('a')).toHaveLength(0);
     });
   });
@@ -520,7 +520,7 @@ describe('BreadcrumbComponent', () => {
 
       await expectBreadcrumbTexts(['North', 'console-test (console)']);
       await expect.element(tester.breadcrumbLinks).toHaveLength(1);
-      await expect.element(tester.breadcrumbLinks.nth(0)).toHaveTextContent('North');
+      await expect.element(tester.breadcrumbLinks.nth(0)).toMatchTextContent('North');
       await expect.element(tester.item(1).getByCss('a')).toHaveLength(0);
     });
 
@@ -534,7 +534,7 @@ describe('BreadcrumbComponent', () => {
       tester.fixture.detectChanges();
 
       await expect.element(tester.item(2).getByCss('a')).toHaveLength(0);
-      await expect.element(tester.item(2)).toHaveTextContent('Cache');
+      await expect.element(tester.item(2)).toMatchTextContent('Cache');
     });
   });
 });

@@ -47,11 +47,11 @@ describe('AboutComponent', () => {
 
     tester = new AboutComponentTester();
 
-    await expect.element(tester.officialSite).toHaveTextContent('Official site');
-    await expect.element(tester.license).toHaveTextContent('License');
-    await expect.element(tester.version).toHaveTextContent('Version');
+    await expect.element(tester.officialSite).toMatchTextContent('Official site');
+    await expect.element(tester.license).toMatchTextContent('License');
+    await expect.element(tester.version).toMatchTextContent('Version');
     await expect.element(tester.versionSpinner).toBeInTheDocument();
-    await expect.element(tester.launcherVersion).toHaveTextContent('Launcher version');
+    await expect.element(tester.launcherVersion).toMatchTextContent('Launcher version');
     await expect.element(tester.launcherVersionSpinner).toBeInTheDocument();
   });
 
@@ -60,17 +60,17 @@ describe('AboutComponent', () => {
 
     tester = new AboutComponentTester();
 
-    await expect.element(tester.officialSite).toHaveTextContent('Official site');
-    await expect.element(tester.license).toHaveTextContent('License');
-    await expect.element(tester.version).toHaveTextContent('Version: 3.4.9');
+    await expect.element(tester.officialSite).toMatchTextContent('Official site');
+    await expect.element(tester.license).toMatchTextContent('License');
+    await expect.element(tester.version).toMatchTextContent('Version: 3.4.9');
     await expect.element(tester.versionSpinner).not.toBeInTheDocument();
-    await expect.element(tester.launcherVersion).toHaveTextContent('Launcher version: 3.4.9');
+    await expect.element(tester.launcherVersion).toMatchTextContent('Launcher version: 3.4.9');
     await expect.element(tester.launcherVersionSpinner).not.toBeInTheDocument();
-    await expect.element(tester.executable).toHaveTextContent('Executable: binary-directory');
-    await expect.element(tester.dataFolder).toHaveTextContent('Data folder: data-directory');
-    await expect.element(tester.processId).toHaveTextContent('Process ID: pid');
-    await expect.element(tester.architecture).toHaveTextContent('Architecture: x64');
-    await expect.element(tester.operatingSystem).toHaveTextContent('Operating system: win');
-    await expect.element(tester.hostname).toHaveTextContent('Hostname: host name');
+    await expect.element(tester.executable).toMatchTextContent('Executable: binary-directory');
+    await expect.element(tester.dataFolder).toMatchTextContent('Data folder: data-directory');
+    await expect.element(tester.processId).toMatchTextContent('Process ID: pid');
+    await expect.element(tester.architecture).toMatchTextContent('Architecture: x64');
+    await expect.element(tester.operatingSystem).toMatchTextContent('Operating system: win');
+    await expect.element(tester.hostname).toMatchTextContent('Hostname: host name');
   });
 });

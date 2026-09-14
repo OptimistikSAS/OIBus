@@ -117,7 +117,7 @@ describe('LogsComponent', () => {
     logService.search.mockReturnValue(of(emptyLogPage));
     tester.fixture.detectChanges();
 
-    await expect.element(tester.emptyContainer).toHaveTextContent('No log found');
+    await expect.element(tester.emptyContainer).toMatchTextContent('No log found');
   });
 
   test('should have log page', async () => {
@@ -141,19 +141,19 @@ describe('LogsComponent', () => {
     await expect.element(tester.logs).toHaveLength(2);
 
     await expect.element(tester.cells(0)).toHaveLength(7);
-    await expect.element(tester.cells(0).nth(1)).toHaveTextContent('1 Jan 2023, 01:00:00');
-    await expect.element(tester.cells(0).nth(2)).toHaveTextContent('Internal');
+    await expect.element(tester.cells(0).nth(1)).toMatchTextContent('1 Jan 2023, 01:00:00');
+    await expect.element(tester.cells(0).nth(2)).toMatchTextContent('Internal');
     expect(tester.cells(0).nth(3).element().textContent?.trim()).toBe('');
     expect(tester.cells(0).nth(4).element().textContent?.trim()).toBe('');
     expect(tester.cells(0).nth(5).element().textContent?.trim()).toBe('');
-    await expect.element(tester.cells(0).nth(6)).toHaveTextContent('my log 1');
+    await expect.element(tester.cells(0).nth(6)).toMatchTextContent('my log 1');
 
-    await expect.element(tester.cells(1).nth(1)).toHaveTextContent('2 Jan 2023, 01:00:00');
-    await expect.element(tester.cells(1).nth(2)).toHaveTextContent('South');
-    await expect.element(tester.cells(1).nth(3)).toHaveTextContent('My South');
+    await expect.element(tester.cells(1).nth(1)).toMatchTextContent('2 Jan 2023, 01:00:00');
+    await expect.element(tester.cells(1).nth(2)).toMatchTextContent('South');
+    await expect.element(tester.cells(1).nth(3)).toMatchTextContent('My South');
     expect(tester.cells(1).nth(4).element().textContent?.trim()).toBe('');
     expect(tester.cells(1).nth(5).element().textContent?.trim()).toBe('');
-    await expect.element(tester.cells(1).nth(6)).toHaveTextContent('my log 2');
+    await expect.element(tester.cells(1).nth(6)).toMatchTextContent('my log 2');
   });
 
   test('should add selected scope and clear input on typeahead selection', () => {

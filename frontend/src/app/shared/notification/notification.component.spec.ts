@@ -38,7 +38,7 @@ describe('NotificationComponent', () => {
     await vi.advanceTimersByTimeAsync(2500);
     await expect.element(tester.toasts).toHaveLength(1);
     await expect.element(tester.toasts.nth(0)).toHaveClass('bg-success');
-    await expect.element(tester.toasts.nth(0)).toHaveTextContent('Save');
+    await expect.element(tester.toasts.nth(0)).toMatchTextContent('Save');
 
     notificationService.success('common.cancel');
     tester.fixture.detectChanges();
@@ -61,7 +61,7 @@ describe('NotificationComponent', () => {
     await vi.advanceTimersByTimeAsync(500);
     await expect.element(tester.toasts).toHaveLength(1);
     await expect.element(tester.toasts.nth(0)).toHaveClass('bg-danger');
-    await expect.element(tester.toasts.nth(0)).toHaveTextContent('Save');
+    await expect.element(tester.toasts.nth(0)).toMatchTextContent('Save');
     await vi.advanceTimersByTimeAsync(5000);
     tester.fixture.detectChanges();
     await expect.element(tester.toasts).toHaveLength(0);
@@ -75,7 +75,7 @@ describe('NotificationComponent', () => {
     await vi.advanceTimersByTimeAsync(500);
     await expect.element(tester.toasts).toHaveLength(1);
     await expect.element(tester.toasts.nth(0)).toHaveClass('bg-danger');
-    await expect.element(tester.toasts.nth(0)).toHaveTextContent('common.save');
+    await expect.element(tester.toasts.nth(0)).toMatchTextContent('common.save');
     await vi.advanceTimersByTimeAsync(5000);
     tester.fixture.detectChanges();
     await expect.element(tester.toasts).toHaveLength(0);
@@ -89,7 +89,7 @@ describe('NotificationComponent', () => {
     await vi.advanceTimersByTimeAsync(500);
     await expect.element(tester.toasts).toHaveLength(1);
     await expect.element(tester.toasts.nth(0)).toHaveClass('bg-success');
-    await expect.element(tester.toasts.nth(0)).toHaveTextContent('Engine settings updated');
+    await expect.element(tester.toasts.nth(0)).toMatchTextContent('Engine settings updated');
     await vi.advanceTimersByTimeAsync(5000);
     tester.fixture.detectChanges();
     await expect.element(tester.toasts).toHaveLength(0);

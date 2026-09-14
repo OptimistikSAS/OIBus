@@ -60,7 +60,7 @@ describe('SaveButton', () => {
     });
 
     test('should display the button by default', async () => {
-      await expect.element(tester.saveButton).toHaveTextContent('Save');
+      await expect.element(tester.saveButton).toMatchTextContent('Save');
       await expect.element(tester.saveButton).toHaveClass('btn');
       await expect.element(tester.saveButton).toHaveClass('btn-primary');
       await expect.element(tester.saveButton).toHaveAttribute('form', 'test-form');
@@ -75,7 +75,7 @@ describe('SaveButton', () => {
       await tester.saveButton.click();
       tester.fixture.detectChanges();
 
-      await expect.element(tester.saveButton).toHaveTextContent('Save');
+      await expect.element(tester.saveButton).toMatchTextContent('Save');
       await expect.element(tester.saveButton).toBeDisabled();
       await expect.element(tester.spinner).toBeInTheDocument();
       await expect.element(tester.saveIcon).not.toBeInTheDocument();
@@ -90,7 +90,7 @@ describe('SaveButton', () => {
       await tester.saveButton.click();
       tester.fixture.detectChanges();
 
-      await expect.element(tester.saveButton).toHaveTextContent('Save');
+      await expect.element(tester.saveButton).toMatchTextContent('Save');
       await expect.element(tester.saveButton).toBeDisabled();
       await expect.element(tester.spinner).toBeInTheDocument();
       await expect.element(tester.saveIcon).not.toBeInTheDocument();
@@ -131,7 +131,7 @@ describe('SaveButton', () => {
     });
 
     test('should have no form attribute and the specified id the button by default', async () => {
-      await expect.element(tester.saveButton).toHaveTextContent('Save');
+      await expect.element(tester.saveButton).toMatchTextContent('Save');
       await expect.element(tester.saveButton).not.toHaveAttribute('form');
       await expect.element(tester.saveButton).toHaveAttribute('id', 'foo');
     });

@@ -1,8 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Observable, of } from 'rxjs';
 import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { MockedFunction } from '@vitest/spy';
+import { beforeEach, describe, expect, test, vi, MockedFunction } from 'vitest';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 import ManageGroupsModalComponent from './manage-groups-modal.component';
@@ -72,10 +71,10 @@ describe('ManageGroupsModalComponent', () => {
     const fixture = createComponent();
 
     const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('.modal-title')).toHaveTextContent('Groups (2)');
-    await expect.element(root.getByCss('tbody')).toHaveTextContent('Alpha');
-    await expect.element(root.getByCss('tbody')).toHaveTextContent('Beta');
-    await expect.element(root.getByCss('tbody')).toHaveTextContent('3');
+    await expect.element(root.getByCss('.modal-title')).toMatchTextContent('Groups (2)');
+    await expect.element(root.getByCss('tbody')).toMatchTextContent('Alpha');
+    await expect.element(root.getByCss('tbody')).toMatchTextContent('Beta');
+    await expect.element(root.getByCss('tbody')).toMatchTextContent('3');
   });
 
   test('should filter groups by search text', () => {

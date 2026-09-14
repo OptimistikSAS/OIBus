@@ -1,6 +1,5 @@
 import { Type } from '@angular/core';
-import { vi } from 'vitest';
-import { MockedFunction } from '@vitest/spy';
+import { vi, MockedFunction } from 'vitest';
 import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
 import { of } from 'rxjs';
 
