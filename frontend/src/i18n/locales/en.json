@@ -2874,9 +2874,11 @@
       "run-now-error": "Error running configuration workflow: {{error}}",
       "preview": "Preview",
       "preview-title": "Preview: {{name}}",
+      "preview-loading": "Loading…",
       "preview-error": "Error previewing configuration workflow: {{error}}",
       "preview-discovered": "{{discovered}} discovered, {{eligible}} eligible",
       "preview-none": "Nothing new, changed, reactivated, or missing - the next run would have nothing to do",
+      "preview-export": "Export CSV",
       "preview-status": {
         "new": "New",
         "changed": "Changed",
