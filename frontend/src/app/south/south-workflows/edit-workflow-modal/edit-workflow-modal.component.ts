@@ -382,24 +382,15 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     };
   }
 
-  /** Refreshes whether OIBus is currently registered with OIAnalytics - gates the "Push to
-   *  OIAnalytics" mode. Fire-and-forget: the template re-renders once this resolves, same as any
+  /** Refreshes whether OIBus is currently registered with OIAnalytics - drives the "not registered yet"
+   *  warning shown next to the "Push to OIAnalytics" mode, never blocks picking or saving it (a workflow
+   *  can be authored and scheduled ahead of registration; it simply won't push anything until then, see
+   *  save()'s own comment). Fire-and-forget: the template re-renders once this resolves, same as any
    *  other one-shot fetch this modal makes. */
   private refreshRegistrationStatus() {
     this.engineService.getRegistrationSettings().subscribe(settings => {
       this.isRegistered = settings.status === 'REGISTERED';
     });
-  }
-
-  /** Blocks picking the "Push to OIAnalytics" radio while OIBus isn't registered. Deliberately not a plain
-   *  [disabled] binding - that fights the FormControlName directive, which manages a bound control's own
-   *  disabled state and silently overrides a template-level [disabled] on one of several radios sharing it
-   *  back to enabled. preventDefault() on the click stops the browser from checking the radio at all,
-   *  matching the effect a true disabled attribute would have had. */
-  blockRemoteModeClickIfNotRegistered(event: Event) {
-    if (!this.isRegistered) {
-      event.preventDefault();
-    }
   }
 
   private buildForm() {
@@ -775,12 +766,10 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       this.formError = 'south.workflows.identity-key-fields-none';
       return;
     }
-    // Mirrors ConfigurationWorkflowService's own server-side check - caught here too so a workflow
-    // that could never actually push anything isn't silently accepted only to fail at save/run time.
-    if (pushToOIAnalytics && !this.isRegistered) {
-      this.formError = 'south.workflows.mode-remote-not-registered';
-      return;
-    }
+    // Deliberately not blocked here when pushToOIAnalytics is picked while OIBus isn't registered -
+    // mirrors ConfigurationWorkflowService's own server-side behavior, which likewise now only warns
+    // (see its checkMode()'s own comment). The "mode-remote-not-registered" alert shown next to the
+    // mode picker already surfaces this to the user without preventing them from saving.
 
     let itemFieldMapping: Record<string, string> | null = null;
     if (!pushToOIAnalytics) {
