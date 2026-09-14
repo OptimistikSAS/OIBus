@@ -759,37 +759,26 @@ describe('EditWorkflowModalComponent', () => {
     expect(fixture.componentInstance.itemFieldMappingValues).toEqual({});
   });
 
-  test('should refresh the OIAnalytics registration status when preparing the modal, allowing a click on the remote radio through', () => {
+  test('should refresh the OIAnalytics registration status when preparing the modal', () => {
     engineService.getRegistrationSettings.mockReturnValue(of(registered));
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
     fixture.detectChanges();
 
     expect(fixture.componentInstance.isRegistered).toBe(true);
-    fixture.componentInstance.blockRemoteModeClickIfNotRegistered(new Event('click'));
-    expect(fixture.componentInstance.isRegistered).toBe(true);
   });
 
-  test('should block a click on the remote radio while OIBus is not registered, but still show a warning if picked anyway', async () => {
+  test('should allow picking the remote radio while OIBus is not registered, and show a warning instead of blocking it', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('#mode-remote-not-registered')).toBeNull();
 
-    // preventDefault() on the click, before the browser applies the radio's own default action, stops it
-    // from becoming checked at all - the same effect a true disabled attribute would have had (see
-    // blockRemoteModeClickIfNotRegistered's own doc comment for why a plain [disabled] binding can't be
-    // used here instead).
-    const clickEvent = new Event('click', { cancelable: true });
-    fixture.componentInstance.blockRemoteModeClickIfNotRegistered(clickEvent);
-    expect(clickEvent.defaultPrevented).toBe(true);
-
-    // A pre-existing workflow can still be loaded already in remote mode (e.g. OIBus was unregistered
-    // after it was saved) - the warning covers that case even though a fresh click can never reach it.
-    fixture.componentInstance.form!.controls.pushToOIAnalytics.setValue(true);
+    const root = page.elementLocator(fixture.nativeElement);
+    await root.getByCss('#mode-remote').click();
     fixture.detectChanges();
 
-    const root = page.elementLocator(fixture.nativeElement);
+    expect(fixture.componentInstance.form!.controls.pushToOIAnalytics.value).toBe(true);
     await expect.element(root.getByCss('#mode-remote-not-registered')).toBeInTheDocument();
   });
 
@@ -922,7 +911,7 @@ describe('EditWorkflowModalComponent', () => {
     expect(activeModal.close).not.toHaveBeenCalled();
   });
 
-  test('should reject saving remote mode when OIBus is not registered with OIAnalytics', () => {
+  test('should still save remote mode when OIBus is not registered with OIAnalytics', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
     fixture.detectChanges();
@@ -932,8 +921,8 @@ describe('EditWorkflowModalComponent', () => {
 
     fixture.componentInstance.save();
 
-    expect(fixture.componentInstance.formError).toBe('south.workflows.mode-remote-not-registered');
-    expect(activeModal.close).not.toHaveBeenCalled();
+    expect(fixture.componentInstance.formError).toBeNull();
+    expect(activeModal.close).toHaveBeenCalledWith(expect.objectContaining({ pushToOIAnalytics: true }));
   });
 
   test("should reject saving when a SQL connector's metadata query is blank", () => {

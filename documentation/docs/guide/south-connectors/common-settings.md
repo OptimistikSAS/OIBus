@@ -236,9 +236,10 @@ workflow is created:
 - **Create/update items locally** — the workflow owns whatever items its own discovery creates, updating them on
   later runs and disabling (never deleting) ones no longer discovered.
 - **Push to OIAnalytics** — every run forwards the raw eligible records to OIAnalytics as-is, with no field mapping,
-  no local item, and no diffing against a previous run. Requires OIBus to be
-  [registered with OIAnalytics](../installation/oianalytics.mdx) — this is the only mode available for SQL-family
-  connectors (see [Mode: Local vs Remote](#mode-local-vs-remote)).
+  no local item, and no diffing against a previous run. Can be picked and saved even before OIBus is
+  [registered with OIAnalytics](../installation/oianalytics.mdx) — a warning is shown (and, on each run, logged) that
+  nothing will actually be pushed until then. This is the only mode available for SQL-family connectors (see [Mode:
+  Local vs Remote](#mode-local-vs-remote)).
 
 ### Opening the Workflow List {#opening-the-workflow-list}
 
@@ -330,8 +331,10 @@ edit form's own group dropdown; picking a group is exempt from the scan-mode fie
 the item then inherits the group's schedule instead.
 
 **Push to OIAnalytics** forwards every run's raw eligible records to OIAnalytics as-is — no field mapping, no local
-item, and no per-record decision beyond the eligibility filter itself. It requires OIBus to be
-[registered with OIAnalytics](../installation/oianalytics.mdx); saving (and later, running) is blocked otherwise.
+item, and no per-record decision beyond the eligibility filter itself. Saving and running are never blocked by
+registration status, but a run's push only actually happens once OIBus is
+[registered with OIAnalytics](../installation/oianalytics.mdx) — while unregistered, a warning is shown when editing
+the workflow, and each run that would have pushed logs a warning and completes with nothing sent instead.
 
 :::note Fixed to Push to OIAnalytics for SQL-family connectors
 For a SQL-family connector, one item is one free-form query, and a query can return several distinct points in a

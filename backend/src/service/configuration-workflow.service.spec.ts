@@ -135,18 +135,23 @@ describe('Configuration Workflow Service', () => {
       );
     });
 
-    it('should throw when pushToOIAnalytics is set but OIBus is not registered', () => {
+    it('should still create the workflow, logging a warning, when pushToOIAnalytics is set but OIBus is not registered', () => {
       oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => ({ status: 'NOT_REGISTERED' }) as never);
-      assert.throws(
-        () => service.create(testData.south.list[0].id, { ...localCommand, itemFieldMapping: null, pushToOIAnalytics: true }, 'userTest'),
-        new OIBusValidationError('OIBus must be registered with OIAnalytics to push a configuration workflow result')
+      const created = service.create(
+        testData.south.list[0].id,
+        { ...localCommand, itemFieldMapping: null, pushToOIAnalytics: true },
+        'userTest'
       );
+      assert.strictEqual(created, existingWorkflow);
+      assert.strictEqual(configurationWorkflowRepository.create.mock.calls.length, 1);
+      assert.strictEqual(engine.logger.warn.mock.calls.length, 1);
     });
 
-    it('should allow pushToOIAnalytics when OIBus is registered', () => {
+    it('should allow pushToOIAnalytics when OIBus is registered, without logging a warning', () => {
       oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => ({ status: 'REGISTERED' }) as never);
       service.create(testData.south.list[0].id, { ...localCommand, itemFieldMapping: null, pushToOIAnalytics: true }, 'userTest');
       assert.strictEqual(configurationWorkflowRepository.create.mock.calls.length, 1);
+      assert.strictEqual(engine.logger.warn.mock.calls.length, 0);
     });
 
     it('should throw when a workflow with the same name already exists for this south connector', () => {
