@@ -140,7 +140,7 @@ describe('ManifestAttributesArrayComponent', () => {
 
     test('should show empty state when no attributes', async () => {
       await expect.element(tester.attributesTable).not.toBeInTheDocument();
-      await expect.element(tester.emptyState).toHaveTextContent('No attributes defined');
+      await expect.element(tester.emptyState).toMatchTextContent('No attributes defined');
     });
 
     test('should display box', async () => {
@@ -355,7 +355,7 @@ describe('ManifestAttributesArrayComponent', () => {
       tester.fixture.detectChanges();
 
       await expect.element(tester.attributesTable).not.toBeInTheDocument();
-      await expect.element(tester.emptyState).toHaveTextContent('No attributes defined');
+      await expect.element(tester.emptyState).toMatchTextContent('No attributes defined');
     });
   });
 
@@ -398,7 +398,7 @@ describe('ManifestAttributesArrayComponent', () => {
 
     test('should format boolean values correctly', async () => {
       // Boolean values are translated, so we check for the presence of the cell
-      await expect.element(tester.tableRows.nth(2)).toHaveTextContent('booleanKey');
+      await expect.element(tester.tableRows.nth(2)).toMatchTextContent('booleanKey');
     });
   });
 
@@ -440,7 +440,7 @@ describe('ManifestAttributesArrayComponent', () => {
     test('should handle empty control value', async () => {
       tester.setAttributes([]);
 
-      await expect.element(tester.emptyState).toHaveTextContent('No attributes defined');
+      await expect.element(tester.emptyState).toMatchTextContent('No attributes defined');
     });
 
     test('should handle modal service errors gracefully', async () => {

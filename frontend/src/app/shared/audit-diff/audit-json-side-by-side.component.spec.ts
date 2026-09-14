@@ -27,28 +27,28 @@ describe('AuditJsonSideBySideComponent', () => {
     setInputs({ name: 'old-name' }, { name: 'new-name' });
 
     const editors = tester.root.getByCss('.cm-editor');
-    await expect.element(editors.nth(0)).toHaveTextContent('old-name');
-    await expect.element(editors.nth(1)).toHaveTextContent('new-name');
+    await expect.element(editors.nth(0)).toMatchTextContent('old-name');
+    await expect.element(editors.nth(1)).toMatchTextContent('new-name');
   });
 
   test('should render an empty object on the left for CREATE (previousState is null)', async () => {
     setInputs(null, { name: 'new-name' });
 
     const editors = tester.root.getByCss('.cm-editor');
-    await expect.element(editors.nth(1)).toHaveTextContent('new-name');
+    await expect.element(editors.nth(1)).toMatchTextContent('new-name');
   });
 
   test('should render an empty object on the right for DELETE (newState is null)', async () => {
     setInputs({ name: 'old-name' }, null);
 
     const editors = tester.root.getByCss('.cm-editor');
-    await expect.element(editors.nth(0)).toHaveTextContent('old-name');
+    await expect.element(editors.nth(0)).toMatchTextContent('old-name');
   });
 
   test('should destroy the previous merge view and render the new content when inputs change on a mounted instance', async () => {
     setInputs({ name: 'alpha-value' }, { name: 'beta-value' });
     const editors = tester.root.getByCss('.cm-editor');
-    await expect.element(editors.nth(1)).toHaveTextContent('beta-value');
+    await expect.element(editors.nth(1)).toMatchTextContent('beta-value');
 
     const destroySpy = vi.spyOn(MergeView.prototype, 'destroy');
 
@@ -57,9 +57,9 @@ describe('AuditJsonSideBySideComponent', () => {
     tester.fixture.detectChanges();
 
     expect(destroySpy).toHaveBeenCalledTimes(1);
-    await expect.element(editors.nth(0)).toHaveTextContent('gamma-value');
-    await expect.element(editors.nth(1)).toHaveTextContent('delta-value');
-    await expect.element(editors.nth(0)).not.toHaveTextContent('alpha-value');
+    await expect.element(editors.nth(0)).toMatchTextContent('gamma-value');
+    await expect.element(editors.nth(1)).toMatchTextContent('delta-value');
+    await expect.element(editors.nth(0)).not.toMatchTextContent('alpha-value');
 
     destroySpy.mockRestore();
   });

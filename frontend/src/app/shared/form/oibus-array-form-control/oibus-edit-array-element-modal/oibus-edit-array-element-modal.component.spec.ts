@@ -59,7 +59,7 @@ describe('OIBusEditArrayElementModalComponent', () => {
   test('should create an element', async () => {
     tester.component.prepareForCreation(scanModes, certificates, form, objectAttribute);
     tester.fixture.detectChanges();
-    await expect.element(tester.title).toHaveTextContent('Create an element');
+    await expect.element(tester.title).toMatchTextContent('Create an element');
     await expect.element(tester.settings).toBeInTheDocument();
     await tester.save.click();
     expect(fakeActiveModal.close).toHaveBeenCalledWith(undefined);
@@ -68,7 +68,7 @@ describe('OIBusEditArrayElementModalComponent', () => {
   test('should edit an element', async () => {
     tester.component.prepareForEdition(scanModes, certificates, form, {}, objectAttribute);
     tester.fixture.detectChanges();
-    await expect.element(tester.title).toHaveTextContent('Edit an element');
+    await expect.element(tester.title).toMatchTextContent('Edit an element');
     await expect.element(tester.settings).toBeInTheDocument();
     await tester.save.click();
     expect(fakeActiveModal.close).toHaveBeenCalledWith(undefined);
@@ -77,7 +77,7 @@ describe('OIBusEditArrayElementModalComponent', () => {
   test('should copy an element', async () => {
     tester.component.prepareForCopy(scanModes, certificates, form, {}, objectAttribute);
     tester.fixture.detectChanges();
-    await expect.element(tester.title).toHaveTextContent('Create an element');
+    await expect.element(tester.title).toMatchTextContent('Create an element');
     await expect.element(tester.settings).toBeInTheDocument();
     await tester.save.click();
     expect(fakeActiveModal.close).toHaveBeenCalledWith(undefined);

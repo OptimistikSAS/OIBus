@@ -121,7 +121,7 @@ describe('ImportCertificateModalComponent', () => {
     tester.fixture.detectChanges();
 
     expect(tester.componentInstance.error()).toBe('boom');
-    await expect.element(tester.error).toHaveTextContent('boom');
+    await expect.element(tester.error).toMatchTextContent('boom');
     expect(activeModal.close).not.toHaveBeenCalled();
   });
 
