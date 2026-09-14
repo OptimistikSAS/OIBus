@@ -178,7 +178,7 @@ describe('ExploreTreeComponent', () => {
     tester.component.prepare(southConnector.id, southConnector.settings, southConnector.type);
     tester.fixture.detectChanges();
 
-    await expect.element(tester.error).toHaveTextContent('boom');
+    await expect.element(tester.error).toMatchTextContent('boom');
   });
 
   test('should expand a node and load its children', () => {

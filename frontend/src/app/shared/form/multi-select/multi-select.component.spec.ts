@@ -102,13 +102,13 @@ describe('MultiSelectComponent', () => {
     test('should display placeholder if placeholder and no selection', async () => {
       tester.component.placeholder = 'Choose a user';
       tester.fixture.detectChanges();
-      await expect.element(tester.multiSelect).toHaveTextContent('Choose a user');
+      await expect.element(tester.multiSelect).toMatchTextContent('Choose a user');
     });
 
     test('should display the selection, ordered the same way as the options', async () => {
       tester.usersCtrl.setValue([tester.component.users[2].id, tester.component.users[0].id]);
       tester.fixture.detectChanges();
-      await expect.element(tester.multiSelect).toHaveTextContent('Cedric, Marouane');
+      await expect.element(tester.multiSelect).toMatchTextContent('Cedric, Marouane');
     });
 
     test('should be pristine and not touched initially', () => {
@@ -143,7 +143,7 @@ describe('MultiSelectComponent', () => {
     test('should select and de-select values by clicking options', async () => {
       tester.fixture.detectChanges();
       await tester.toggle();
-      await expect.element(tester.option(0)).toHaveTextContent('Cedric');
+      await expect.element(tester.option(0)).toMatchTextContent('Cedric');
       await expect.element(tester.option(0)).not.toHaveClass('selected');
       await expect.element(tester.option(0).getByCss('.fa-check')).not.toBeInTheDocument();
 
@@ -154,7 +154,7 @@ describe('MultiSelectComponent', () => {
       await expect.element(tester.option(0).getByCss('.fa-check')).toBeInTheDocument();
       await expect.element(tester.option(1)).toHaveClass('selected');
       expect(tester.usersCtrl.value!.sort()).toEqual([1, 2]);
-      await expect.element(tester.multiSelect).toHaveTextContent('Cedric, JB');
+      await expect.element(tester.multiSelect).toMatchTextContent('Cedric, JB');
 
       tester.clickOption(0);
       await expect.element(tester.option(0)).not.toHaveClass('selected');
@@ -224,13 +224,13 @@ describe('MultiSelectComponent', () => {
     test('should display the selection, ordered the same way as the options', async () => {
       tester.usersCtrl.setValue([{ ...tester.component.users[2] }, { ...tester.component.users[0] }]);
       tester.fixture.detectChanges();
-      await expect.element(tester.multiSelect).toHaveTextContent('Cedric, Marouane');
+      await expect.element(tester.multiSelect).toMatchTextContent('Cedric, Marouane');
     });
 
     test('should select and de-select values by clicking options', async () => {
       tester.fixture.detectChanges();
       await tester.toggle();
-      await expect.element(tester.option(0)).toHaveTextContent('Cedric');
+      await expect.element(tester.option(0)).toMatchTextContent('Cedric');
       await expect.element(tester.option(0)).not.toHaveClass('selected');
       await expect.element(tester.option(0).getByCss('.fa-check')).not.toBeInTheDocument();
 
@@ -240,7 +240,7 @@ describe('MultiSelectComponent', () => {
       await expect.element(tester.option(0)).toHaveClass('selected');
       await expect.element(tester.option(0).getByCss('.fa-check')).toBeInTheDocument();
       await expect.element(tester.option(1)).toHaveClass('selected');
-      await expect.element(tester.multiSelect).toHaveTextContent('Cedric, JB');
+      await expect.element(tester.multiSelect).toMatchTextContent('Cedric, JB');
 
       tester.clickOption(0);
       await expect.element(tester.option(0)).not.toHaveClass('selected');

@@ -54,7 +54,7 @@ describe('HistoryQueryListComponent', () => {
     const firstRowCells = rows.nth(0).getByCss('td');
     await expect
       .element(firstRowCells.nth(1))
-      .toHaveTextContent((testData.historyQueries.listLight[0] as unknown as HistoryQueryLightDTO).name);
+      .toMatchTextContent((testData.historyQueries.listLight[0] as unknown as HistoryQueryLightDTO).name);
   });
 
   test('should create without error', () => {
@@ -77,8 +77,8 @@ describe('HistoryQueryListComponent', () => {
 
     const root = page.elementLocator(fixture.nativeElement);
     const firstRowCells = root.getByCss('tbody tr').nth(0).getByCss('td');
-    await expect.element(firstRowCells.nth(3)).toHaveTextContent('Microsoft SQL Server');
-    await expect.element(firstRowCells.nth(4)).toHaveTextContent('OIAnalytics');
+    await expect.element(firstRowCells.nth(3)).toMatchTextContent('Microsoft SQL Server');
+    await expect.element(firstRowCells.nth(4)).toMatchTextContent('OIAnalytics');
   });
 
   test('should filter the list by toggling a status filter', async () => {
@@ -145,7 +145,7 @@ describe('HistoryQueryListComponent', () => {
 
     const root = page.elementLocator(fixture.nativeElement);
     const firstRowCells = root.getByCss('tbody tr').nth(0).getByCss('td');
-    await expect.element(firstRowCells.nth(0)).toHaveTextContent('(3 / 10)');
+    await expect.element(firstRowCells.nth(0)).toMatchTextContent('(3 / 10)');
   });
 
   test('should not display the item progress indicator when numberOfItems is not set', async () => {

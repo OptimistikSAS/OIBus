@@ -70,7 +70,7 @@ describe('TestConnectionResultModalComponent', () => {
       tester.fixture.detectChanges();
 
       expect(southConnectorService.testConnection).toHaveBeenCalledWith(southConnector.id, southConnector.settings, southConnector.type);
-      await expect.element(tester.success).toHaveTextContent('Connection successfully tested');
+      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.error).not.toBeInTheDocument();
       expect(tester.component.testResult).toEqual({ items: [] });
@@ -82,7 +82,7 @@ describe('TestConnectionResultModalComponent', () => {
       tester.component.runTest('south', southConnector.id, southConnector.settings, southConnector.type);
       tester.fixture.detectChanges();
 
-      await expect.element(tester.success).toHaveTextContent('Connection successfully tested');
+      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
       expect(tester.component.testResult).toEqual({ items: [{ key: 'Version', value: '1.2.3' }] });
       await expect.element(tester.table).toBeInTheDocument();
     });
@@ -92,7 +92,7 @@ describe('TestConnectionResultModalComponent', () => {
       tester.fixture.detectChanges();
 
       expect(southConnectorService.testConnection).toHaveBeenCalledWith('create', southConnector.settings, southConnector.type);
-      await expect.element(tester.success).toHaveTextContent('Connection successfully tested');
+      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.error).not.toBeInTheDocument();
     });
@@ -102,7 +102,7 @@ describe('TestConnectionResultModalComponent', () => {
       tester.component.runTest('south', southConnector.id, southConnector.settings, southConnector.type);
 
       tester.fixture.detectChanges();
-      await expect.element(tester.error).toHaveTextContent('failure');
+      await expect.element(tester.error).toMatchTextContent('failure');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.success).not.toBeInTheDocument();
     });
@@ -141,7 +141,7 @@ describe('TestConnectionResultModalComponent', () => {
       tester.fixture.detectChanges();
 
       expect(northConnectorService.testConnection).toHaveBeenCalledWith(northConnector.id, northConnector.settings, northConnector.type);
-      await expect.element(tester.success).toHaveTextContent('Connection successfully tested');
+      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.error).not.toBeInTheDocument();
     });
@@ -151,7 +151,7 @@ describe('TestConnectionResultModalComponent', () => {
       tester.fixture.detectChanges();
 
       expect(northConnectorService.testConnection).toHaveBeenCalledWith('create', northConnector.settings, northConnector.type);
-      await expect.element(tester.success).toHaveTextContent('Connection successfully tested');
+      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.error).not.toBeInTheDocument();
     });
@@ -161,7 +161,7 @@ describe('TestConnectionResultModalComponent', () => {
       tester.component.runTest('north', northConnector.id, northConnector.settings, northConnector.type);
 
       tester.fixture.detectChanges();
-      await expect.element(tester.error).toHaveTextContent('failure');
+      await expect.element(tester.error).toMatchTextContent('failure');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.success).not.toBeInTheDocument();
     });
@@ -200,7 +200,7 @@ describe('TestConnectionResultModalComponent', () => {
       tester.fixture.detectChanges();
 
       expect(historyQueryService.testNorthConnection).toHaveBeenCalledWith('historyId', northCommand.settings, northCommand.type, null);
-      await expect.element(tester.success).toHaveTextContent('Connection successfully tested');
+      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.error).not.toBeInTheDocument();
 
@@ -213,7 +213,7 @@ describe('TestConnectionResultModalComponent', () => {
         northCommand.type,
         'fromNorthId'
       );
-      await expect.element(tester.success).toHaveTextContent('Connection successfully tested');
+      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.error).not.toBeInTheDocument();
     });
@@ -223,7 +223,7 @@ describe('TestConnectionResultModalComponent', () => {
       tester.fixture.detectChanges();
 
       expect(historyQueryService.testNorthConnection).toHaveBeenCalledWith('create', northCommand.settings, northCommand.type, null);
-      await expect.element(tester.success).toHaveTextContent('Connection successfully tested');
+      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.error).not.toBeInTheDocument();
 
@@ -236,7 +236,7 @@ describe('TestConnectionResultModalComponent', () => {
         northCommand.type,
         'fromNorthId'
       );
-      await expect.element(tester.success).toHaveTextContent('Connection successfully tested');
+      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.error).not.toBeInTheDocument();
     });
@@ -246,7 +246,7 @@ describe('TestConnectionResultModalComponent', () => {
       tester.component.runHistoryQueryTest('north', 'historyId', northCommand.settings, northCommand.type);
 
       tester.fixture.detectChanges();
-      await expect.element(tester.error).toHaveTextContent('failure');
+      await expect.element(tester.error).toMatchTextContent('failure');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.success).not.toBeInTheDocument();
     });
@@ -285,7 +285,7 @@ describe('TestConnectionResultModalComponent', () => {
       tester.fixture.detectChanges();
 
       expect(historyQueryService.testSouthConnection).toHaveBeenCalledWith('historyId', southCommand.settings, southCommand.type, null);
-      await expect.element(tester.success).toHaveTextContent('Connection successfully tested');
+      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.error).not.toBeInTheDocument();
 
@@ -298,7 +298,7 @@ describe('TestConnectionResultModalComponent', () => {
         southCommand.type,
         'fromSouthId'
       );
-      await expect.element(tester.success).toHaveTextContent('Connection successfully tested');
+      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.error).not.toBeInTheDocument();
     });
@@ -308,7 +308,7 @@ describe('TestConnectionResultModalComponent', () => {
       tester.fixture.detectChanges();
 
       expect(historyQueryService.testSouthConnection).toHaveBeenCalledWith('create', southCommand.settings, southCommand.type, null);
-      await expect.element(tester.success).toHaveTextContent('Connection successfully tested');
+      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.error).not.toBeInTheDocument();
 
@@ -321,7 +321,7 @@ describe('TestConnectionResultModalComponent', () => {
         southCommand.type,
         'fromSouthId'
       );
-      await expect.element(tester.success).toHaveTextContent('Connection successfully tested');
+      await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.error).not.toBeInTheDocument();
     });
@@ -331,7 +331,7 @@ describe('TestConnectionResultModalComponent', () => {
       tester.component.runHistoryQueryTest('south', 'historyId', southCommand.settings, southCommand.type);
 
       tester.fixture.detectChanges();
-      await expect.element(tester.error).toHaveTextContent('failure');
+      await expect.element(tester.error).toMatchTextContent('failure');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.success).not.toBeInTheDocument();
     });

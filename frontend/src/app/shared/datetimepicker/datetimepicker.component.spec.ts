@@ -190,7 +190,7 @@ describe('DatetimepickerComponent', () => {
       await expect.element(tester.second).toHaveValue('00');
 
       await tester.toggler.click();
-      await expect.element(tester.firstWeekDay).toHaveTextContent('S');
+      await expect.element(tester.firstWeekDay).toMatchTextContent('S');
     });
   });
 });

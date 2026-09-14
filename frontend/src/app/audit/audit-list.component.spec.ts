@@ -101,7 +101,7 @@ describe('AuditListComponent', () => {
     auditService.search.mockReturnValue(of(emptyAuditPage));
     tester.fixture.detectChanges();
 
-    await expect.element(tester.emptyContainer).toHaveTextContent('No audit log found');
+    await expect.element(tester.emptyContainer).toMatchTextContent('No audit log found');
   });
 
   test('should load the default search on init and render results', async () => {
@@ -120,9 +120,9 @@ describe('AuditListComponent', () => {
     tester.fixture.detectChanges();
 
     await expect.element(tester.rows).toHaveLength(2);
-    await expect.element(tester.cells(0).nth(0)).toHaveTextContent('South connector');
-    await expect.element(tester.cells(0).nth(1)).toHaveTextContent('south1');
-    await expect.element(tester.cells(0).nth(3)).toHaveTextContent('admin');
+    await expect.element(tester.cells(0).nth(0)).toMatchTextContent('South connector');
+    await expect.element(tester.cells(0).nth(1)).toMatchTextContent('south1');
+    await expect.element(tester.cells(0).nth(3)).toMatchTextContent('admin');
   });
 
   test('should trigger a new search with the selected entity type filter', () => {

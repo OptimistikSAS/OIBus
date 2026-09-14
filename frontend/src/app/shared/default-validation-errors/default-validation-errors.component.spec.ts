@@ -53,17 +53,17 @@ describe('DefaultValidationErrorsComponent', () => {
   });
 
   test('should display validation error with default message', async () => {
-    await expect.element(tester.root).not.toHaveTextContent('This field is required');
+    await expect.element(tester.root).not.toMatchTextContent('This field is required');
     await tester.submit.click();
     tester.fixture.detectChanges();
-    await expect.element(tester.root).toHaveTextContent('This field is required');
+    await expect.element(tester.root).toMatchTextContent('This field is required');
   });
 
   test('should display validation error with i18ned labeled message', async () => {
-    await expect.element(tester.root).not.toHaveTextContent('Save must be at least 18');
+    await expect.element(tester.root).not.toMatchTextContent('Save must be at least 18');
     await tester.age.fill('15');
     tester.age.element().dispatchEvent(new Event('blur'));
     tester.fixture.detectChanges();
-    await expect.element(tester.root).toHaveTextContent('Save must be at least 18');
+    await expect.element(tester.root).toMatchTextContent('Save must be at least 18');
   });
 });

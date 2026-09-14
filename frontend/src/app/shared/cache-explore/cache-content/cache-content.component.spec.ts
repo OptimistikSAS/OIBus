@@ -122,8 +122,8 @@ describe('CacheContentComponent', () => {
     tester.setFiles(sampleFiles);
 
     await expect.element(tester.tableRows).toHaveLength(2);
-    await expect.element(tester.tableRows.nth(0)).toHaveTextContent('file-B.txt');
-    await expect.element(tester.tableRows.nth(1)).toHaveTextContent('file-A.txt');
+    await expect.element(tester.tableRows.nth(0)).toMatchTextContent('file-B.txt');
+    await expect.element(tester.tableRows.nth(1)).toMatchTextContent('file-A.txt');
   });
 
   describe('Selection Logic', () => {
@@ -246,16 +246,16 @@ describe('CacheContentComponent', () => {
     test('should sort by date', async () => {
       tester.setFiles(sampleFiles);
 
-      await expect.element(tester.tableRows.nth(0)).toHaveTextContent('file-B.txt');
+      await expect.element(tester.tableRows.nth(0)).toMatchTextContent('file-B.txt');
 
       await tester.sortDateBtn.click();
       tester.fixture.detectChanges();
-      await expect.element(tester.tableRows.nth(0)).toHaveTextContent('file-A.txt');
+      await expect.element(tester.tableRows.nth(0)).toMatchTextContent('file-A.txt');
 
       await tester.sortDateBtn.click();
       await tester.sortDateBtn.click();
       tester.fixture.detectChanges();
-      await expect.element(tester.tableRows.nth(0)).toHaveTextContent('file-B.txt');
+      await expect.element(tester.tableRows.nth(0)).toMatchTextContent('file-B.txt');
     });
   });
 });

@@ -50,7 +50,7 @@ describe('NorthListComponent', () => {
     await expect.element(rows).toHaveLength(testData.north.list.length);
 
     const firstRowCells = rows.nth(0).getByCss('td');
-    await expect.element(firstRowCells.nth(1)).toHaveTextContent((testData.north.list[0] as unknown as NorthConnectorLightDTO).name);
+    await expect.element(firstRowCells.nth(1)).toMatchTextContent((testData.north.list[0] as unknown as NorthConnectorLightDTO).name);
   });
 
   test('should toggle north connector', async () => {

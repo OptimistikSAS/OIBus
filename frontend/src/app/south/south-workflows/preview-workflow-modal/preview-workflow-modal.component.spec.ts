@@ -55,7 +55,7 @@ describe('PreviewWorkflowModalComponent', () => {
     expect(fixture.nativeElement.querySelector('oib-loading-spinner')).toBeNull();
     await expect
       .element(page.elementLocator(fixture.nativeElement).getByCss('#preview-counts'))
-      .toHaveTextContent('3 discovered, 0 eligible');
+      .toMatchTextContent('3 discovered, 0 eligible');
   });
 
   test('should show the discovered/eligible counts and a message when there are no entries', async () => {
@@ -67,8 +67,8 @@ describe('PreviewWorkflowModalComponent', () => {
 
     expect(configurationWorkflowService.preview).toHaveBeenCalledWith('southId1', 'workflowId1');
     const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('.modal-title')).toHaveTextContent('Preview: Reactor discovery');
-    await expect.element(root.getByCss('#preview-counts')).toHaveTextContent('3 discovered, 0 eligible');
+    await expect.element(root.getByCss('.modal-title')).toMatchTextContent('Preview: Reactor discovery');
+    await expect.element(root.getByCss('#preview-counts')).toMatchTextContent('3 discovered, 0 eligible');
     await expect.element(root.getByCss('#preview-none')).toBeInTheDocument();
   });
 
@@ -88,10 +88,10 @@ describe('PreviewWorkflowModalComponent', () => {
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('tbody')).toHaveTextContent('nodeId=a');
-    await expect.element(root.getByCss('tbody')).toHaveTextContent('New');
-    await expect.element(root.getByCss('tbody')).toHaveTextContent('nodeId=b');
-    await expect.element(root.getByCss('tbody')).toHaveTextContent('Missing');
+    await expect.element(root.getByCss('tbody')).toMatchTextContent('nodeId=a');
+    await expect.element(root.getByCss('tbody')).toMatchTextContent('New');
+    await expect.element(root.getByCss('tbody')).toMatchTextContent('nodeId=b');
+    await expect.element(root.getByCss('tbody')).toMatchTextContent('Missing');
   });
 
   test('should paginate a large list of entries, 20 per page', async () => {
@@ -167,8 +167,8 @@ describe('PreviewWorkflowModalComponent', () => {
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('#preview-records-table')).toHaveTextContent('"nodeId": "a"');
-    await expect.element(root.getByCss('#preview-records-table')).toHaveTextContent('"nodeId": "b"');
+    await expect.element(root.getByCss('#preview-records-table')).toMatchTextContent('"nodeId": "a"');
+    await expect.element(root.getByCss('#preview-records-table')).toMatchTextContent('"nodeId": "b"');
   });
 
   test('should close the modal and notify when the preview request fails', () => {
@@ -190,10 +190,10 @@ describe('PreviewWorkflowModalComponent', () => {
 
     expect(configurationWorkflowService.getRun).toHaveBeenCalledWith('southId1', 'workflowId1', 'runId1');
     const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('.modal-title')).toHaveTextContent('Run payload: Reactor discovery');
+    await expect.element(root.getByCss('.modal-title')).toMatchTextContent('Run payload: Reactor discovery');
     await expect
       .element(root.getByCss('#preview-none'))
-      .toHaveTextContent('Nothing was created, changed, reactivated, or missing in this run');
+      .toMatchTextContent('Nothing was created, changed, reactivated, or missing in this run');
   });
 
   test("should show the created/updated/disabled/pushed breakdown for a past run's payload", async () => {
@@ -221,7 +221,7 @@ describe('PreviewWorkflowModalComponent', () => {
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('#run-payload-counts')).toHaveTextContent('1 created, 1 updated, 0 disabled, 0 pushed');
+    await expect.element(root.getByCss('#run-payload-counts')).toMatchTextContent('1 created, 1 updated, 0 disabled, 0 pushed');
   });
 
   test('should never show the created/updated/disabled/pushed breakdown for a live preview - it never acts on anything', () => {

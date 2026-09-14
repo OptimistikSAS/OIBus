@@ -111,16 +111,16 @@ describe('WorkflowRunHistoryComponent', () => {
     const fixture = createComponent();
 
     const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('#title')).toHaveTextContent('Run history: Reactor discovery');
-    await expect.element(root.getByCss('tbody')).toHaveTextContent('Completed');
-    await expect.element(root.getByCss('tbody')).toHaveTextContent('Manual');
+    await expect.element(root.getByCss('#title')).toMatchTextContent('Run history: Reactor discovery');
+    await expect.element(root.getByCss('tbody')).toMatchTextContent('Completed');
+    await expect.element(root.getByCss('tbody')).toMatchTextContent('Manual');
   });
 
   test("should show the triggering user's friendly name, not their raw id", async () => {
     const fixture = createComponent();
 
     const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('tbody')).toHaveTextContent('User One');
+    await expect.element(root.getByCss('tbody')).toMatchTextContent('User One');
   });
 
   test('should show a dash when a scheduled run has no triggering user', async () => {
@@ -129,7 +129,7 @@ describe('WorkflowRunHistoryComponent', () => {
     const fixture = createComponent();
 
     const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('tbody')).toHaveTextContent('-');
+    await expect.element(root.getByCss('tbody')).toMatchTextContent('-');
   });
 
   test('should show only the discovered count in the table - the rest lives in the payload modal', async () => {
@@ -138,7 +138,7 @@ describe('WorkflowRunHistoryComponent', () => {
     const root = page.elementLocator(fixture.nativeElement);
     const discoveredHeader = fixture.nativeElement.querySelectorAll('thead th')[5];
     expect(discoveredHeader.textContent.trim()).toBe('Discovered');
-    await expect.element(root.getByCss('tbody')).toHaveTextContent('3');
+    await expect.element(root.getByCss('tbody')).toMatchTextContent('3');
     expect(fixture.nativeElement.querySelector('tbody').textContent).not.toContain('3 / 2');
   });
 

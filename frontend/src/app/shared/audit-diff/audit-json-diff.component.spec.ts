@@ -26,25 +26,25 @@ describe('AuditJsonDiffComponent', () => {
   test('should render both the removed and added values for an update', async () => {
     setInputs({ name: 'old-name' }, { name: 'new-name' });
 
-    await expect.element(tester.root.getByCss('.cm-editor')).toHaveTextContent('old-name');
-    await expect.element(tester.root.getByCss('.cm-editor')).toHaveTextContent('new-name');
+    await expect.element(tester.root.getByCss('.cm-editor')).toMatchTextContent('old-name');
+    await expect.element(tester.root.getByCss('.cm-editor')).toMatchTextContent('new-name');
   });
 
   test('should render only the new state on CREATE (previousState is null)', async () => {
     setInputs(null, { name: 'new-name' });
 
-    await expect.element(tester.root.getByCss('.cm-editor')).toHaveTextContent('new-name');
+    await expect.element(tester.root.getByCss('.cm-editor')).toMatchTextContent('new-name');
   });
 
   test('should render only the previous state on DELETE (newState is null)', async () => {
     setInputs({ name: 'old-name' }, null);
 
-    await expect.element(tester.root.getByCss('.cm-editor')).toHaveTextContent('old-name');
+    await expect.element(tester.root.getByCss('.cm-editor')).toMatchTextContent('old-name');
   });
 
   test('should destroy the previous editor view and render the new content when inputs change on a mounted instance', async () => {
     setInputs({ name: 'alpha-value' }, { name: 'beta-value' });
-    await expect.element(tester.root.getByCss('.cm-editor')).toHaveTextContent('beta-value');
+    await expect.element(tester.root.getByCss('.cm-editor')).toMatchTextContent('beta-value');
 
     const destroySpy = vi.spyOn(EditorView.prototype, 'destroy');
 
@@ -53,9 +53,9 @@ describe('AuditJsonDiffComponent', () => {
     tester.fixture.detectChanges();
 
     expect(destroySpy).toHaveBeenCalledTimes(1);
-    await expect.element(tester.root.getByCss('.cm-editor')).toHaveTextContent('gamma-value');
-    await expect.element(tester.root.getByCss('.cm-editor')).toHaveTextContent('delta-value');
-    await expect.element(tester.root.getByCss('.cm-editor')).not.toHaveTextContent('alpha-value');
+    await expect.element(tester.root.getByCss('.cm-editor')).toMatchTextContent('gamma-value');
+    await expect.element(tester.root.getByCss('.cm-editor')).toMatchTextContent('delta-value');
+    await expect.element(tester.root.getByCss('.cm-editor')).not.toMatchTextContent('alpha-value');
 
     destroySpy.mockRestore();
   });

@@ -67,7 +67,7 @@ describe('EditUserSettingsComponent', () => {
   test('should display a populated form', async () => {
     const tester = new EditUserSettingsComponentTester();
     tester.fixture.detectChanges();
-    await expect.element(tester.title).toHaveTextContent('admin');
+    await expect.element(tester.title).toMatchTextContent('admin');
     await expect.element(tester.firstName).toHaveValue('Admin');
     await expect.element(tester.lastName).toHaveValue('Admin');
     await expect.element(tester.timezone).toHaveValue('Europe/Paris');
