@@ -36,8 +36,8 @@ describe('BoxComponent', () => {
   describe('with string title', () => {
     test('should display string title', async () => {
       const tester = new BoxComponentTester();
-      await expect.element(tester.title).toHaveTextContent('Yes');
-      await expect.element(tester.content).toHaveTextContent('This is the content');
+      await expect.element(tester.title).toMatchTextContent('Yes');
+      await expect.element(tester.content).toMatchTextContent('This is the content');
       await expect.element(tester.content).toBeVisible();
     });
   });
@@ -58,8 +58,8 @@ describe('BoxComponent', () => {
 
     test('should display template title', async () => {
       const tester = new BoxComponentTester();
-      await expect.element(tester.title).toHaveTextContent('Hello from template');
-      await expect.element(tester.content).toHaveTextContent('This is the content');
+      await expect.element(tester.title).toMatchTextContent('Hello from template');
+      await expect.element(tester.content).toMatchTextContent('This is the content');
       await expect.element(tester.content).toBeVisible();
     });
   });

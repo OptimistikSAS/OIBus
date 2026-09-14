@@ -92,6 +92,6 @@ describe('LoginComponent', () => {
     expect(currentUserService.loginWithPassword).toHaveBeenCalledWith('johndoe', 'passw0rd');
     expect(router.navigateByUrl).not.toHaveBeenCalled();
     expect(windowService.reload).not.toHaveBeenCalled();
-    await expect.element(tester.alert).toHaveTextContent('Invalid username or password');
+    await expect.element(tester.alert).toMatchTextContent('Invalid username or password');
   });
 });

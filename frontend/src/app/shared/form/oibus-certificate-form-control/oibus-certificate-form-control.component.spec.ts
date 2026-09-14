@@ -63,12 +63,12 @@ describe('OIBusCertificateFormControlComponent', () => {
   test('should display a select with the correct form control name', async () => {
     await tester.field.selectOptions('certificate1');
     await expect.element(tester.field).toHaveValue('certificate1');
-    await expect.element(tester.options.nth(1)).toHaveTextContent('Certificate 1');
+    await expect.element(tester.options.nth(1)).toMatchTextContent('Certificate 1');
   });
 
   test('should display options for each selectable value', async () => {
     await expect.element(tester.options).toHaveLength(3); // One for the null option and one for each value
-    await expect.element(tester.options.nth(1)).toHaveTextContent('Certificate 1');
-    await expect.element(tester.options.nth(2)).toHaveTextContent('Certificate 2');
+    await expect.element(tester.options.nth(1)).toMatchTextContent('Certificate 1');
+    await expect.element(tester.options.nth(2)).toMatchTextContent('Certificate 2');
   });
 });
