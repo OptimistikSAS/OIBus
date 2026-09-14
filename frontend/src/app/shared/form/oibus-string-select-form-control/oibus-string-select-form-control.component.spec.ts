@@ -61,12 +61,12 @@ describe('OIBusStringSelectFormControlComponent', () => {
   test('should display a select with the correct form control name', async () => {
     await tester.field.selectOptions('iso-string');
     await expect.element(tester.field).toHaveValue('iso-string');
-    await expect.element(tester.options.nth(1)).toHaveTextContent('ISO String');
+    await expect.element(tester.options.nth(1)).toMatchTextContent('ISO String');
   });
 
   test('should display options for each selectable value', async () => {
     await expect.element(tester.options).toHaveLength(3); // One for the null option and one for each value
-    await expect.element(tester.options.nth(1)).toHaveTextContent('ISO String');
-    await expect.element(tester.options.nth(2)).toHaveTextContent('UNIX epoch (s)');
+    await expect.element(tester.options.nth(1)).toMatchTextContent('ISO String');
+    await expect.element(tester.options.nth(2)).toMatchTextContent('UNIX epoch (s)');
   });
 });

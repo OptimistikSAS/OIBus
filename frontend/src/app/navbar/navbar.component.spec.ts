@@ -51,19 +51,19 @@ describe('NavbarComponent', () => {
     const tester = new NavbarComponentTester();
     tester.fixture.detectChanges();
     await expect.element(tester.navItems).toHaveLength(11);
-    await expect.element(tester.navItems.nth(0)).toHaveTextContent('Engine');
-    await expect.element(tester.navItems.nth(1)).toHaveTextContent('North');
-    await expect.element(tester.navItems.nth(2)).toHaveTextContent('South');
-    await expect.element(tester.navItems.nth(3)).toHaveTextContent('History');
-    await expect.element(tester.navItems.nth(4)).toHaveTextContent('Logs');
-    await expect.element(tester.navItems.nth(5)).toHaveTextContent('About');
+    await expect.element(tester.navItems.nth(0)).toMatchTextContent('Engine');
+    await expect.element(tester.navItems.nth(1)).toMatchTextContent('North');
+    await expect.element(tester.navItems.nth(2)).toMatchTextContent('South');
+    await expect.element(tester.navItems.nth(3)).toMatchTextContent('History');
+    await expect.element(tester.navItems.nth(4)).toMatchTextContent('Logs');
+    await expect.element(tester.navItems.nth(5)).toMatchTextContent('About');
   });
 
   test('should display version when it is available and there is a user', async () => {
     currentUserService.get.mockReturnValue(of(currentUser));
     const tester = new NavbarComponentTester();
     tester.fixture.detectChanges();
-    await expect.element(tester.version).toHaveTextContent('Version: 3.0');
+    await expect.element(tester.version).toMatchTextContent('Version: 3.0');
   });
 
   test('should logout when logout is called', () => {

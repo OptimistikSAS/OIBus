@@ -56,7 +56,7 @@ describe('ChooseNorthConnectorTypeModalComponent', () => {
     const buttons = root.getByCss('.category-button');
     await expect.element(buttons.nth(0).getByCss('.beta-badge')).not.toBeInTheDocument();
     await expect.element(buttons.nth(1).getByCss('.beta-badge')).toBeInTheDocument();
-    await expect.element(buttons.nth(1).getByCss('.beta-badge')).toHaveTextContent('Beta');
+    await expect.element(buttons.nth(1).getByCss('.beta-badge')).toMatchTextContent('Beta');
     await expect.element(buttons.nth(1).getByCss('.beta-badge')).toHaveClass('bg-secondary');
   });
 

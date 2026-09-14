@@ -1,6 +1,19 @@
-import { expect } from 'vitest';
-import { BrowserPage, Locator, locators } from 'vitest/browser';
+import { afterEach, expect } from 'vitest';
+import { BrowserPage, Locator, locators, page } from 'vitest/browser';
 import { LocalDate } from '../../../backend/shared/model/types';
+
+// Browser-mode interactions use a real mouse pointer, which keeps its position between tests. If a test hovers or
+// clicks an element under a tooltip trigger, the tooltip can still be open when the next test runs, intercepting
+// clicks meant for another element in the same spot. Reset the pointer after every test so tooltip overlays close
+// through their normal lifecycle.
+async function resetPointer() {
+  const hoveredElements = page.getByCss(':hover');
+  if (hoveredElements.elements().length > 0) {
+    await hoveredElements.last().unhover();
+  }
+}
+
+afterEach(resetPointer);
 
 expect.extend({
   toHaveDisplayedDate(received: Element, expected: string) {
@@ -74,6 +87,6 @@ interface CustomMatchers<R = unknown> {
 }
 
 declare module 'vitest' {
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  interface Matchers<T = any> extends CustomMatchers<T> {}
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-unused-vars
+  interface Matchers<R, T> extends CustomMatchers<R> {}
 }
