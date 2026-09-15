@@ -54,7 +54,7 @@ export default class SouthCacheRepository {
     // Dedicated to the caching-strategy feature's own last-cached-value/instant, kept in separate
     // columns from `value`/`tracked_instant` (used for the windowed-history cursor and the legacy
     // direct-query "last value" write) so the two mechanisms never clobber each other — see the
-    // south-cache-migrations/3/3.11/v3.11.0.ts migration doc comment for the history here. Reuses
+    // south-cache-migrations/3/3.10/v3.10.0.ts migration doc comment for the history here. Reuses
     // `INSERT OR REPLACE` on the same `(south_id, item_id)` primary key as `upsertStmt`, but only
     // ever targets `item_id`-keyed rows (never NULL), so the group-row NULL-uniqueness caveat that
     // forces `updateGroupStmt`'s update-then-insert dance doesn't apply here.
