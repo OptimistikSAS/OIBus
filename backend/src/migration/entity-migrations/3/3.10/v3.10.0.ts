@@ -1,0 +1,721 @@
+import { Knex } from 'knex';
+import { generateRandomId } from '../../../../service/utils';
+
+const SCAN_MODES_TABLE = 'scan_modes';
+const CERTIFICATES_TABLE = 'certificates';
+const TRANSFORMERS_TABLE = 'transformers';
+const SOUTH_CONNECTORS_TABLE = 'south_connectors';
+const SOUTH_ITEMS_TABLE = 'south_items';
+const SOUTH_ITEM_GROUPS_TABLE = 'south_item_groups';
+const GROUP_ITEMS_TABLE = 'group_items';
+const NORTH_CONNECTORS_TABLE = 'north_connectors';
+const NORTH_TRANSFORMERS_TABLE = 'north_transformers';
+const NORTH_TRANSFORMERS_ITEMS_TABLE = 'north_transformers_items';
+const HISTORY_QUERIES_TABLE = 'history_queries';
+const HISTORY_ITEMS_TABLE = 'history_items';
+const HISTORY_QUERY_TRANSFORMERS_TABLE = 'history_query_transformers';
+const HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE = 'history_query_transformers_items';
+const AUDIT_LOGS_TABLE = 'audit_logs';
+const ENGINES_TABLE = 'engines';
+const CONFIGURATION_WORKFLOWS_TABLE = 'configuration_workflows';
+const WORKFLOW_RUNS_TABLE = 'workflow_runs';
+const ITEM_POINT_METADATA_TABLE = 'item_point_metadata';
+const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
+
+// The SQL-family souths reworked to emit 'record-list' content instead of pre-serialized CSV.
+// south-odbc and south-oledb are intentionally excluded (their CSV building happens in an external
+// .NET agent, outside this refactor's scope).
+const SQL_SOUTH_TYPES = ['mysql', 'postgresql', 'mssql', 'oracle', 'sqlite'];
+
+// "IoT family" south connector types: OPC UA, Modbus, ADS, OPC classic, S7 and MQTT. These connectors
+// forward every value they read/receive straight into the cache with no built-in deduplication, so they
+// are the only ones for which a per-item caching strategy is meaningful. Mirrors
+// IOT_FAMILY_SOUTH_TYPES in shared/model/south-connector.model.ts.
+const IOT_FAMILY_SOUTH_TYPES = ['opcua', 'modbus', 'ads', 'opc', 's7', 'mqtt'];
+
+interface OldDateTimeField {
+  fieldName: string;
+  useAsReference: boolean;
+  type: string;
+  timezone?: string | null;
+  format?: string | null;
+  locale?: string | null;
+}
+
+interface OldSerialization {
+  type: 'csv';
+  filename: string;
+  delimiter: string;
+  compression: boolean;
+  outputTimestampFormat: string;
+  outputTimezone: string;
+}
+
+interface OldSqlItemSettings {
+  dateTimeFields?: Array<OldDateTimeField> | null;
+  serialization?: OldSerialization;
+  [key: string]: unknown;
+}
+
+/**
+ * 3.10.0 bundles several unrelated features/fixes:
+ *
+ *  1. Scan modes gain a second scheduling mechanism (fixed interval, alongside cron) plus an optional
+ *     activation window; certificates gain an optional certificate_chain for externally-issued certs.
+ *  2. SQL-family souths (mysql/postgresql/mssql/oracle/sqlite) stop serializing rows into CSV
+ *     themselves, moving that responsibility to a north-side `record-list-to-csv` transformer.
+ *  3. Introduces the audit trail feature (`audit_logs` + `engines.audit_retention_duration`).
+ *  4-7. Introduces Configuration Workflows (discover a data source, then either create/update south
+ *     items locally from what's found, or push the raw discovered records to OIAnalytics):
+ *     `configuration_workflows`, the ownership/disable columns it needs on `south_items`,
+ *     `workflow_runs` (run history) and `item_point_metadata` (cross-run discovery diffing).
+ *  8. Gives a workflow run's OIAnalytics message (`configuration-workflow-result`) its own columns on
+ *     `oianalytics_messages`.
+ *  9. Introduces the caching-strategy feature: `south_item_groups`/`south_items` gain
+ *     `caching_strategy` (plus threshold/range/max-interval columns), defaulted to 'allValues' for
+ *     IoT-family south connectors, for which a per-item caching strategy is meaningful.
+ */
+export async function up(knex: Knex): Promise<void> {
+  // --- 1. Scan mode scheduling + certificate chain ---------------------------------------------
+  //
+  // Scan modes gained a second scheduling mechanism: besides a cron expression they can now tick on a
+  // fixed interval. Every scan mode created before this migration was cron-driven, so `type` is
+  // backfilled to 'cron' and `interval` stays null — behavior is unchanged after upgrading.
+  //
+  // `activation_window` is a new optional gate (JSON: an absolute date range and/or a recurring
+  // day-of-week + time-of-day rule with its IANA timezone) evaluated on every tick. Null means
+  // "always active", which is the pre-existing behavior, so nothing is backfilled.
+  //
+  // The columns are added nullable and then backfilled rather than declared NOT NULL: SQLite cannot
+  // add a NOT NULL column to a populated table without a default, and the repository is the only
+  // write path, so it enforces the invariant instead.
+  //
+  // Also adds certificate_chain to certificates, holding a PEM bundle of intermediate/root CAs
+  // supplied when importing an externally-issued certificate. Null for self-signed certificates
+  // generated by OIBus.
+  await knex.schema.alterTable(SCAN_MODES_TABLE, table => {
+    table.string('type');
+    table.string('interval');
+    table.string('activation_window');
+  });
+
+  // Includes the reserved 'subscription' row, whose empty cron is never scheduled anyway.
+  await knex(SCAN_MODES_TABLE).update({ type: 'cron' });
+
+  await knex.schema.alterTable(CERTIFICATES_TABLE, t => {
+    t.string('certificate_chain').nullable();
+  });
+
+  // --- 2. SQL-family souths: record-list refactor -----------------------------------------------
+  //
+  // SQL-family souths (mysql/postgresql/mssql/oracle/sqlite) stopped serializing rows into CSV
+  // themselves — they now emit `record-list` content (raw rows) and rely on a north-side
+  // `record-list-to-csv` transformer to do the CSV encoding that `item.settings.serialization` used
+  // to do inline. This step:
+  //
+  //  1. Rewrites every affected item's settings: `dateTimeFields` + `serialization` are replaced by a
+  //     single `trackingInstant` (mirroring south-rest's own trackingInstant shape), used only to
+  //     compute the incremental query cursor. The CSV-rendering config itself (filename, delimiter,
+  //     compression, per-column datetime formatting) moves to a transformer.
+  //  2. For every north connector — enabled or not, so a currently-disabled one is already correctly
+  //     wired up whenever it's re-enabled later; content fans out to every north connector
+  //     unconditionally once enabled, see `DataStreamEngine.addContent` — and every affected item,
+  //     preserves today's behavior by attaching a `record-list-to-csv` transformer, scoped to that one
+  //     item, carrying the old per-item CSV settings as its options — but only where doing so doesn't
+  //     override a deliberate user choice:
+  //       - No transformer currently resolves for that (north, item) → attach one (today the north
+  //         silently receives the pre-built CSV file untouched; after this migration, without a
+  //         transformer it would receive a raw JSON dump instead of the SQL south's actual CSV text).
+  //       - The resolved transformer is 'iso' (pure passthrough) → attach one anyway: passthrough only
+  //         behaved like the old CSV export because the south itself already produced CSV bytes; now
+  //         that the south emits raw records, 'iso' alone would leak them through unrendered.
+  //       - The resolved transformer is 'ignore' → leave it, it's still a deliberate "drop this" choice.
+  //       - Any other transformer (csv-to-mqtt, csv-to-time-values, json-to-csv, custom, ...) → leave it
+  //         untouched; it was configured against the old CSV/'any' shape and needs a human to re-check
+  //         it against the new record-list shape — an edge case explicitly left for manual follow-up.
+  //  3. The same two steps for history queries against `history_items`/`history_query_transformers(_items)`
+  //     — history queries route through the exact same transformer resolution machinery (they build a
+  //     real `NorthConnector` under the hood), just without a south-item-group concept.
+  //
+  // Not reversible: once dateTimeFields/serialization are folded into per-item transformer rows (or an
+  // existing 'iso' row is shadowed by a new item-level one), the original settings shape can't be
+  // reconstructed from that state alone.
+  const recordListToCsvTransformerId = await ensureRecordListToCsvTransformer(knex);
+
+  const northIds = (await knex(NORTH_CONNECTORS_TABLE).select('id')).map(n => n.id as string);
+
+  for (const southType of SQL_SOUTH_TYPES) {
+    const souths: Array<{ id: string }> = await knex(SOUTH_CONNECTORS_TABLE).select('id').where('type', southType);
+    for (const south of souths) {
+      await migrateSouthConnectorItems(knex, south.id, northIds, recordListToCsvTransformerId);
+    }
+  }
+
+  await migrateHistoryQueries(knex, recordListToCsvTransformerId);
+
+  // --- 3. Audit trail ------------------------------------------------------------------------
+  //
+  //  1. A new `audit_logs` table recording every create/update/delete performed on an audited entity
+  //     (south/north connectors, items, scan modes, users, ...). `previous_state`/`new_state` hold a
+  //     JSON snapshot of the entity before/after the change — null for `CREATE` (no previous state) and
+  //     `DELETE` (no new state) respectively. Indexed by `(entity_type, entity_id)` for per-entity
+  //     history lookups, and by `created_at` for retention pruning and time-ranged searches.
+  //  2. `engines.audit_retention_duration`, the number of days audit log rows are kept before being
+  //     pruned (null/0 meaning "keep forever"), backfilled to 90 on the existing row.
+  await knex.schema.createTable(AUDIT_LOGS_TABLE, table => {
+    table.string('id').primary();
+    table.string('entity_type').notNullable();
+    table.string('entity_id').notNullable();
+    table.string('action').notNullable();
+    table.text('previous_state').nullable();
+    table.text('new_state').nullable();
+    table.string('user_id').notNullable();
+    table.string('created_at').notNullable();
+    table.index(['entity_type', 'entity_id']);
+    table.index(['created_at']);
+  });
+
+  await knex.schema.alterTable(ENGINES_TABLE, table => {
+    table.integer('audit_retention_duration').nullable();
+  });
+
+  await knex(ENGINES_TABLE).update({ audit_retention_duration: 90 });
+
+  // --- 4. Configuration workflows: `configuration_workflows` table ---------------------------
+  //
+  // The first piece of the Configuration Workflow feature (discover a data source, then either
+  // create/update south items locally from what's found, or push the raw discovered records to
+  // OIAnalytics, on demand or on a schedule).
+  //
+  // `south_id` is always populated (a workflow is always created from a specific south connector's
+  // context). A workflow is self-scoping — it owns whatever items its own discovery creates, tracked via
+  // `south_items.created_by_workflow_id` (added below — deliberately not a group, see the design note
+  // this feature was built from) — there's no "targets one pre-existing item" case: local mode only
+  // ever creates/updates its own items, and remote mode has no local item at all.
+  //
+  // `discovery_scope`, `identity_key_fields`, `eligibility_filter` and `item_field_mapping` are stored as
+  // JSON text rather than normalized columns: they're connector-specific and open-ended (an OPC-UA root
+  // node id, a folder subtree, a dedicated SQL metadata query, ...), the same way `south_items.settings`
+  // already stores connector-specific item configuration as JSON.
+  //
+  // A workflow is exactly one of two modes, enforced at the service layer (no CHECK constraints are used
+  // anywhere in this schema for that kind of invariant): `item_field_mapping` set and
+  // `push_to_oi_analytics` false (local — create/update items from what's discovered), or
+  // `item_field_mapping` null and `push_to_oi_analytics` true (remote — forward the raw eligible records
+  // to OIAnalytics on each run, requiring OIBus to be registered).
+  await knex.schema.createTable(CONFIGURATION_WORKFLOWS_TABLE, table => {
+    table.string('id', 36).primary();
+    table.datetime('created_at').notNullable();
+    table.datetime('updated_at').notNullable();
+    table.string('created_by');
+    table.string('updated_by');
+    table.string('name').notNullable();
+    table.string('south_id', 36).notNullable().references('id').inTable(SOUTH_CONNECTORS_TABLE).onDelete('CASCADE');
+    table.text('discovery_scope').notNullable();
+    table.text('identity_key_fields').notNullable();
+    table.text('eligibility_filter').notNullable();
+    table.text('item_field_mapping').nullable();
+    table.boolean('push_to_oi_analytics').notNullable().defaultTo(false);
+    table.string('scan_mode_id', 36).nullable().references('id').inTable(SCAN_MODES_TABLE).onDelete('SET NULL');
+    table.boolean('enabled').notNullable().defaultTo(true);
+    table.unique(['south_id', 'name']);
+  });
+
+  // --- 5. Configuration workflows: `south_items` ownership/disable columns -------------------
+  //
+  //  - `created_by_workflow_id` — the *only* ownership record for a self-scoping (multi-item) workflow's
+  //    items: `ON DELETE SET NULL` so an item outlives the workflow that created it, only the ownership
+  //    link is cleared. Never set by the normal item create/update path (only by workflow-specific
+  //    repository methods added alongside this).
+  //  - `disabled_reason` — set only when a workflow auto-disables an item because its discovery no longer
+  //    finds the entry it corresponds to. A person's own manual disable (`disableItem()`) leaves this
+  //    null, so the two are never confused without needing a second boolean alongside the existing
+  //    `enabled` column.
+  //
+  // Uses raw single-statement `ALTER TABLE ... ADD COLUMN` (an in-place metadata change on SQLite)
+  // instead of knex's schema builder. Adding a column with a `.references()` FK via knex's builder
+  // makes it rebuild the whole table (CREATE __new + COPY + DROP TABLE + RENAME), and that rebuild can
+  // fail with a foreign key constraint error if some other table's live FK already points into this one
+  // and would be left dangling by the intermediate DROP TABLE. The raw single-statement form sidesteps
+  // the rebuild entirely: adding a nullable column (even with a REFERENCES clause) or dropping a column
+  // (SQLite >= 3.35) is an in-place metadata edit, with no table rebuild and no DROP TABLE involved - same
+  // reasoning as the raw `ALTER TABLE ... DROP COLUMN` already used in v3.9.0.ts for exactly this class of
+  // problem.
+  await knex.raw(
+    `ALTER TABLE "${SOUTH_ITEMS_TABLE}" ADD COLUMN "created_by_workflow_id" varchar(36) REFERENCES "${CONFIGURATION_WORKFLOWS_TABLE}" ("id") ON DELETE SET NULL`
+  );
+  await knex.raw(`ALTER TABLE "${SOUTH_ITEMS_TABLE}" ADD COLUMN "disabled_reason" text`);
+
+  // --- 6. Configuration workflows: `workflow_runs` table --------------------------------------
+  //
+  // The run history for Configuration Workflows. One row per execution (manual or scheduled),
+  // reviewable independent of whether anyone was watching. Unlike `configuration_workflows`, this
+  // table has no `AuditService` wiring: it *is* the audit trail for a run, the same way `audit_logs`
+  // itself isn't audited.
+  //
+  // Counts mirror the run lifecycle: Retrieve produces `discovered_count` records; the workflow's
+  // `eligibility_filter` narrows that to `eligible_count`. From there, only one of two count groups is
+  // ever populated, matching the workflow's own exclusive local/remote mode: a local (item-creating)
+  // workflow's Act only ever touches new/changed/missing ones, split into
+  // `created_count`/`updated_count`/`disabled_count`; a remote workflow instead forwards every eligible
+  // record as-is, reflected in `pushed_count`. All default to 0 so a run that errors before reaching a
+  // step still has well-defined counts rather than nulls.
+  //
+  // `payload` is the full discovered payload behind those counts - not just their summary - so a run
+  // stays fully reviewable after the fact instead of only showing "what changed" in aggregate. It's a
+  // JSON blob mirroring `WorkflowPreviewResultDTO`'s own `entries`/`records` shape (one populated, one
+  // empty, per the workflow's exclusive mode), written once at `complete`/`fail` time - null while a run
+  // is still `RUNNING`.
+  await knex.schema.createTable(WORKFLOW_RUNS_TABLE, table => {
+    table.string('id', 36).primary();
+    table.string('workflow_id', 36).notNullable().references('id').inTable(CONFIGURATION_WORKFLOWS_TABLE).onDelete('CASCADE');
+    table.string('trigger_type').notNullable();
+    table.string('status').notNullable();
+    table.datetime('started_at').notNullable();
+    table.datetime('completed_at').nullable();
+    table.integer('discovered_count').notNullable().defaultTo(0);
+    table.integer('eligible_count').notNullable().defaultTo(0);
+    table.integer('created_count').notNullable().defaultTo(0);
+    table.integer('updated_count').notNullable().defaultTo(0);
+    table.integer('disabled_count').notNullable().defaultTo(0);
+    table.integer('pushed_count').notNullable().defaultTo(0);
+    table.text('payload').nullable();
+    table.text('error').nullable();
+    table.string('triggered_by').nullable();
+    table.index(['workflow_id', 'started_at']);
+  });
+
+  // --- 7. Configuration workflows: `item_point_metadata` table --------------------------------
+  //
+  // How a local (item-creating) Configuration Workflow recognizes "the same" discovered entry across
+  // runs, one row per south item it created/updated.
+  //
+  // `UNIQUE(workflow_id, discovered_entry_key)` is the one lookup every run's diff uses.
+  // `discovered_metadata` is the previous run's snapshot of the record this row came from, compared
+  // against the new retrieval to classify it new/changed/unchanged/missing, and to decide when to
+  // auto-disable the item (see `status`/`orphaned_at` below). A remote (push-to-OIAnalytics) workflow
+  // never writes here at all — it has no local item to track, and forwards each run's raw discovered
+  // records without diffing against anything.
+  await knex.schema.createTable(ITEM_POINT_METADATA_TABLE, table => {
+    table.string('id', 36).primary();
+    table.string('workflow_id', 36).notNullable().references('id').inTable(CONFIGURATION_WORKFLOWS_TABLE).onDelete('CASCADE');
+    table.string('south_item_id', 36).notNullable().references('id').inTable(SOUTH_ITEMS_TABLE).onDelete('CASCADE');
+    table.text('discovered_entry_key').notNullable();
+    table.text('discovered_metadata').notNullable();
+    table.string('status').notNullable().defaultTo('active');
+    table.datetime('orphaned_at').nullable();
+    table.unique(['workflow_id', 'discovered_entry_key']);
+    table.index(['south_item_id']);
+  });
+
+  // --- 8. Configuration workflows: `oianalytics_messages` columns -----------------------------
+  //
+  // Adds the two columns `oianalytics_messages` needs for a remote (push-to-OIAnalytics) Configuration
+  // Workflow run's own message type (`configuration-workflow-result`):
+  //
+  //  - `workflow_run_id` — which run this message carries the result of; `ON DELETE CASCADE` since a
+  //    message with no run left to report on has nothing meaningful left to send.
+  //  - `payload` — the message's own JSON body, built once at run time and sent verbatim. Unlike
+  //    `full-config`/`history-queries` (which recompute their payload from the *current* configuration
+  //    at send time — see `OIAnalyticsMessageService`'s own comment on why they don't store one), a
+  //    workflow run's discovered records are a one-off snapshot that can't be recomputed later without
+  //    re-running discovery, so this message type must store it directly.
+  //
+  // Both nullable, since neither applies to `full-config`/`history-queries` messages. Uses raw
+  // single-statement `ALTER TABLE ... ADD COLUMN` (an in-place metadata change on SQLite) instead of
+  // knex's schema builder, for the same reason documented above for `south_items.created_by_workflow_id`:
+  // adding a column with a `.references()` FK via knex's builder rebuilds the whole table, which can
+  // fail if some other table's live FK already points into it.
+  await knex.raw(
+    `ALTER TABLE "${OIANALYTICS_MESSAGE_TABLE}" ADD COLUMN "workflow_run_id" varchar(36) REFERENCES "${WORKFLOW_RUNS_TABLE}" ("id") ON DELETE CASCADE`
+  );
+  await knex.raw(`ALTER TABLE "${OIANALYTICS_MESSAGE_TABLE}" ADD COLUMN "payload" text`);
+
+  // --- 9. Caching strategy columns (south_item_groups / south_items) --------------------------
+  await knex.schema.alterTable(SOUTH_ITEM_GROUPS_TABLE, t => {
+    t.string('caching_strategy').nullable();
+  });
+  await knex.schema.alterTable(SOUTH_ITEMS_TABLE, t => {
+    t.string('caching_strategy').nullable();
+    t.string('threshold_type').nullable();
+    t.float('threshold').nullable();
+    t.float('range_low').nullable();
+    t.float('range_high').nullable();
+    t.integer('max_caching_interval').nullable();
+  });
+
+  // Only IoT-family south connectors get a default caching strategy; every other south type keeps
+  // caching_strategy NULL (the field is meaningless outside the IoT family).
+  const iotFamilyConnectorIds = knex(SOUTH_CONNECTORS_TABLE).select('id').whereIn('type', IOT_FAMILY_SOUTH_TYPES);
+  await knex(SOUTH_ITEM_GROUPS_TABLE).whereIn('south_id', iotFamilyConnectorIds).update({ caching_strategy: 'allValues' });
+  await knex(SOUTH_ITEMS_TABLE).whereIn('connector_id', iotFamilyConnectorIds).update({ caching_strategy: 'allValues' });
+}
+
+export async function down(knex: Knex): Promise<void> {
+  // --- undo 9: caching strategy columns ---
+  // Use native SQLite `DROP COLUMN` (single in-place metadata change, available since SQLite 3.35) instead
+  // of knex's `dropColumn()`, which rebuilds the table via CREATE + COPY + DROP TABLE + RENAME. The rebuild's
+  // `DROP TABLE` step fails with a FOREIGN KEY constraint error here because `group_items` and
+  // `north_transformers_items` hold live rows referencing `south_item_groups`/`south_items`, and SQLite
+  // refuses to drop a table that still has other tables pointing into it while `foreign_keys` is enabled.
+  await knex.raw(`ALTER TABLE ${SOUTH_ITEM_GROUPS_TABLE} DROP COLUMN caching_strategy`);
+  await knex.raw(`ALTER TABLE ${SOUTH_ITEMS_TABLE} DROP COLUMN caching_strategy`);
+  await knex.raw(`ALTER TABLE ${SOUTH_ITEMS_TABLE} DROP COLUMN threshold_type`);
+  await knex.raw(`ALTER TABLE ${SOUTH_ITEMS_TABLE} DROP COLUMN threshold`);
+  await knex.raw(`ALTER TABLE ${SOUTH_ITEMS_TABLE} DROP COLUMN range_low`);
+  await knex.raw(`ALTER TABLE ${SOUTH_ITEMS_TABLE} DROP COLUMN range_high`);
+  await knex.raw(`ALTER TABLE ${SOUTH_ITEMS_TABLE} DROP COLUMN max_caching_interval`);
+
+  // --- undo 8: oianalytics_messages columns ---
+  await knex.raw(`ALTER TABLE "${OIANALYTICS_MESSAGE_TABLE}" DROP COLUMN "workflow_run_id"`);
+  await knex.raw(`ALTER TABLE "${OIANALYTICS_MESSAGE_TABLE}" DROP COLUMN "payload"`);
+
+  // --- undo 7: item_point_metadata table ---
+  await knex.schema.dropTableIfExists(ITEM_POINT_METADATA_TABLE);
+
+  // --- undo 6: workflow_runs table ---
+  await knex.schema.dropTableIfExists(WORKFLOW_RUNS_TABLE);
+
+  // --- undo 5: south_items ownership/disable columns ---
+  await knex.raw(`ALTER TABLE "${SOUTH_ITEMS_TABLE}" DROP COLUMN "created_by_workflow_id"`);
+  await knex.raw(`ALTER TABLE "${SOUTH_ITEMS_TABLE}" DROP COLUMN "disabled_reason"`);
+
+  // --- undo 4: configuration_workflows table ---
+  await knex.schema.dropTableIfExists(CONFIGURATION_WORKFLOWS_TABLE);
+
+  // --- undo 3: audit trail ---
+  await knex.schema.dropTableIfExists(AUDIT_LOGS_TABLE);
+
+  await knex.schema.alterTable(ENGINES_TABLE, table => {
+    table.dropColumn('audit_retention_duration');
+  });
+
+  // --- undo 2: SQL-family souths record-list refactor ---
+  // Not reversible - see the doc comment on step 2 above.
+
+  // --- undo 1: scan mode scheduling + certificate chain ---
+  // Raw single-statement `ALTER TABLE ... DROP COLUMN` (see the note on step 5's up() above) instead of
+  // knex's schema builder, which rebuilds the whole table: south_items and south_item_groups hold live
+  // `scan_mode_id` foreign keys into scan_modes, and SQLite refuses to DROP TABLE scan_modes mid-rebuild
+  // while those references are still live.
+  await knex.raw(`ALTER TABLE "${SCAN_MODES_TABLE}" DROP COLUMN "type"`);
+  await knex.raw(`ALTER TABLE "${SCAN_MODES_TABLE}" DROP COLUMN "interval"`);
+  await knex.raw(`ALTER TABLE "${SCAN_MODES_TABLE}" DROP COLUMN "activation_window"`);
+
+  await knex.raw(`ALTER TABLE "${CERTIFICATES_TABLE}" DROP COLUMN "certificate_chain"`);
+}
+
+/**
+ * Ensures a single, shared 'record-list-to-csv' row exists in the transformers catalog (same
+ * idempotent check-then-insert pattern as `createDefaultTransformers` in 3.8.0's migration) so the
+ * `north_transformers`/`history_query_transformers` rows inserted below have something to reference.
+ * Can't rely on `TransformerRepository`'s own startup seeding — that runs after migrations.
+ */
+async function ensureRecordListToCsvTransformer(knex: Knex): Promise<string> {
+  const existing = await knex(TRANSFORMERS_TABLE).select('id').where('function_name', 'record-list-to-csv').first();
+  if (existing) return existing.id as string;
+
+  const id = generateRandomId(6);
+  await knex(TRANSFORMERS_TABLE).insert({
+    id,
+    type: 'standard',
+    function_name: 'record-list-to-csv',
+    input_type: 'record-list',
+    output_type: 'any',
+    created_by: 'system',
+    updated_by: 'system'
+  });
+  return id;
+}
+
+/**
+ * Converts one item's old settings in place: drops `dateTimeFields`/`serialization`, adds
+ * `trackingInstant` derived from whichever dateTimeFields entry (if any) had `useAsReference: true`.
+ */
+function toNewItemSettings(oldSettings: OldSqlItemSettings): Record<string, unknown> {
+  const { dateTimeFields: _dateTimeFields, serialization: _serialization, ...rest } = oldSettings;
+  const referenceField = oldSettings.dateTimeFields?.find(field => field.useAsReference) ?? null;
+  return {
+    ...rest,
+    trackingInstant: referenceField
+      ? {
+          trackInstant: true,
+          fieldName: referenceField.fieldName,
+          dateTimeInput: {
+            type: referenceField.type,
+            timezone: referenceField.timezone ?? null,
+            format: referenceField.format ?? null,
+            locale: referenceField.locale ?? null
+          }
+        }
+      : { trackInstant: false }
+  };
+}
+
+/**
+ * Builds the options for a `record-list-to-csv` transformer that reproduces one item's old CSV
+ * output: same filename/delimiter/compression, and every old dateTimeFields entry (not just the
+ * reference one — the original code rendered all of them) becomes a `fields` entry with
+ * `dataType: 'datetime'`, sharing the item's old `outputTimestampFormat`/`outputTimezone`. Columns
+ * with no entry in `fields` pass through unchanged, same as before.
+ */
+function buildTransformerOptions(oldSettings: OldSqlItemSettings): Record<string, unknown> {
+  const serialization = oldSettings.serialization;
+  return {
+    filename: serialization?.filename ?? '@CurrentDate.csv',
+    encoding: 'UTF_8',
+    header: true,
+    compression: serialization?.compression ?? false,
+    delimiter: serialization?.delimiter ?? 'COMMA',
+    newline: 'LF',
+    quoteChar: 'NONE',
+    escapeChar: 'DOUBLE_QUOTE',
+    nullValue: '',
+    fields: (oldSettings.dateTimeFields ?? []).map(field => ({
+      fieldName: field.fieldName,
+      columnName: null,
+      dataType: 'datetime',
+      fieldProcess: null,
+      datetimeSettings: {
+        inputType: field.type,
+        inputTimezone: field.timezone ?? null,
+        inputFormat: field.format ?? null,
+        inputLocale: field.locale ?? null,
+        outputType: 'string',
+        outputTimezone: serialization?.outputTimezone ?? 'UTC',
+        outputFormat: serialization?.outputTimestampFormat ?? 'yyyy-MM-dd HH:mm:ss.SSS',
+        outputLocale: null
+      }
+    }))
+  };
+}
+
+/**
+ * Writes each `{ id, settings }` pair via chunked `UPDATE ... SET settings = CASE id WHEN ? THEN ? ...
+ * END WHERE id IN (...)` statements — the house pattern for bulk-rewriting many rows' JSON settings
+ * (see 3.8.0's `bulkUpdateSettings`), instead of one UPDATE per row.
+ */
+async function bulkUpdateSettings(
+  knex: Knex,
+  table: string,
+  settingsColumn: string,
+  updates: Array<{ id: string; settings: string }>
+): Promise<void> {
+  for (const batch of chunk(updates, 100)) {
+    const caseSql = batch.map(() => 'when ? then ?').join(' ');
+    const caseBindings = batch.flatMap(u => [u.id, u.settings]);
+    await knex(table)
+      .whereIn(
+        'id',
+        batch.map(u => u.id)
+      )
+      .update({ [settingsColumn]: knex.raw(`case id ${caseSql} end`, caseBindings) });
+  }
+}
+
+function chunk<T>(array: Array<T>, size: number): Array<Array<T>> {
+  const chunks: Array<Array<T>> = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
+interface ExistingTransformerRow {
+  id: string;
+  north_id: string;
+  source_south_group_id: string | null;
+  function_name: string;
+}
+
+/**
+ * Replicates `NorthConnector.rebuildTransformerCache()`'s item → group → south-level priority
+ * lookup, built once from the pre-migration `north_transformers`/`north_transformers_items` rows
+ * scoped to `southId`, across every north (instead of one DB round-trip per (north, item) pair).
+ */
+async function buildTransformerLookup(
+  knex: Knex,
+  southId: string
+): Promise<{
+  itemLevel: Map<string, ExistingTransformerRow>;
+  groupLevel: Map<string, ExistingTransformerRow>;
+  southLevel: Map<string, ExistingTransformerRow>;
+}> {
+  const existingRows: Array<ExistingTransformerRow> = await knex(`${NORTH_TRANSFORMERS_TABLE} as nt`)
+    .join(`${TRANSFORMERS_TABLE} as t`, 't.id', 'nt.transformer_id')
+    .where('nt.source_south_south_id', southId)
+    .select('nt.id', 'nt.north_id', 'nt.source_south_group_id', 't.function_name');
+
+  const itemLinks: Array<{ id: string; item_id: string }> = existingRows.length
+    ? await knex(NORTH_TRANSFORMERS_ITEMS_TABLE)
+        .select('id', 'item_id')
+        .whereIn(
+          'id',
+          existingRows.map(r => r.id)
+        )
+        .whereNotNull('item_id')
+    : [];
+  const itemIdsByRowId = new Map<string, Array<string>>();
+  for (const link of itemLinks) {
+    if (!itemIdsByRowId.has(link.id)) itemIdsByRowId.set(link.id, []);
+    itemIdsByRowId.get(link.id)!.push(link.item_id);
+  }
+
+  const itemLevel = new Map<string, ExistingTransformerRow>();
+  const groupLevel = new Map<string, ExistingTransformerRow>();
+  const southLevel = new Map<string, ExistingTransformerRow>();
+  for (const row of existingRows) {
+    if (row.source_south_group_id) {
+      const key = `${row.north_id}\0${row.source_south_group_id}`;
+      if (!groupLevel.has(key)) groupLevel.set(key, row);
+      continue;
+    }
+    const linkedItemIds = itemIdsByRowId.get(row.id) ?? [];
+    if (linkedItemIds.length > 0) {
+      for (const itemId of linkedItemIds) {
+        const key = `${row.north_id}\0${itemId}`;
+        if (!itemLevel.has(key)) itemLevel.set(key, row);
+      }
+    } else {
+      if (!southLevel.has(row.north_id)) southLevel.set(row.north_id, row);
+    }
+  }
+  return { itemLevel, groupLevel, southLevel };
+}
+
+async function migrateSouthConnectorItems(
+  knex: Knex,
+  southId: string,
+  northIds: Array<string>,
+  recordListToCsvTransformerId: string
+): Promise<void> {
+  const items: Array<{ id: string; settings: string }> = await knex(SOUTH_ITEMS_TABLE)
+    .select('id', 'settings')
+    .where('connector_id', southId);
+  if (items.length === 0) return;
+
+  const groupMemberships: Array<{ item_id: string; group_id: string }> = await knex(`${GROUP_ITEMS_TABLE} as gi`)
+    .join(`${SOUTH_ITEM_GROUPS_TABLE} as sig`, 'sig.id', 'gi.group_id')
+    .where('sig.south_id', southId)
+    .select('gi.item_id', 'gi.group_id');
+  const groupIdByItemId = new Map(groupMemberships.map(g => [g.item_id, g.group_id]));
+
+  const { itemLevel, groupLevel, southLevel } = await buildTransformerLookup(knex, southId);
+
+  const settingsUpdates: Array<{ id: string; settings: string }> = [];
+  const newTransformerRows: Array<Record<string, unknown>> = [];
+  const newTransformerItemLinks: Array<{ id: string; item_id: string }> = [];
+
+  for (const item of items) {
+    const oldSettings: OldSqlItemSettings = JSON.parse(item.settings);
+    settingsUpdates.push({ id: item.id, settings: JSON.stringify(toNewItemSettings(oldSettings)) });
+
+    const transformerOptions = buildTransformerOptions(oldSettings);
+    const groupId = groupIdByItemId.get(item.id) ?? null;
+
+    for (const northId of northIds) {
+      const resolved =
+        itemLevel.get(`${northId}\0${item.id}`) ??
+        (groupId ? groupLevel.get(`${northId}\0${groupId}`) : undefined) ??
+        southLevel.get(northId);
+
+      // No transformer at all, or a bare passthrough that only "worked" because the south used to
+      // hand it pre-built CSV bytes -> attach a record-list-to-csv transformer for this item.
+      // 'ignore' and any other configured transformer are left as a deliberate choice.
+      if (resolved && resolved.function_name !== 'iso') continue;
+
+      const id = generateRandomId(6);
+      newTransformerRows.push({
+        id,
+        north_id: northId,
+        transformer_id: recordListToCsvTransformerId,
+        options: JSON.stringify(transformerOptions),
+        source_type: 'south',
+        source_api_data_source_id: null,
+        source_south_south_id: southId,
+        source_south_group_id: null
+      });
+      newTransformerItemLinks.push({ id, item_id: item.id });
+    }
+  }
+
+  await bulkUpdateSettings(knex, SOUTH_ITEMS_TABLE, 'settings', settingsUpdates);
+  if (newTransformerRows.length > 0) {
+    await knex.batchInsert(NORTH_TRANSFORMERS_TABLE, newTransformerRows, 100);
+    await knex.batchInsert(NORTH_TRANSFORMERS_ITEMS_TABLE, newTransformerItemLinks, 100);
+  }
+}
+
+/**
+ * Same treatment as `migrateSouthConnectorItems`, for history queries. A history query has exactly
+ * one implicit south (its own `south_type`/`south_settings`) and no south-item-group concept, so
+ * resolution is item-level vs. history-level fallback only - no group level.
+ */
+async function migrateHistoryQueries(knex: Knex, recordListToCsvTransformerId: string): Promise<void> {
+  const historyQueries: Array<{ id: string }> = await knex(HISTORY_QUERIES_TABLE).select('id').whereIn('south_type', SQL_SOUTH_TYPES);
+  if (historyQueries.length === 0) return;
+
+  const settingsUpdates: Array<{ id: string; settings: string }> = [];
+  const newTransformerRows: Array<Record<string, unknown>> = [];
+  const newTransformerItemLinks: Array<{ id: string; item_id: string }> = [];
+
+  for (const historyQuery of historyQueries) {
+    const items: Array<{ id: string; settings: string }> = await knex(HISTORY_ITEMS_TABLE)
+      .select('id', 'settings')
+      .where('history_id', historyQuery.id);
+    if (items.length === 0) continue;
+
+    const existingRows: Array<{ id: string; function_name: string }> = await knex(`${HISTORY_QUERY_TRANSFORMERS_TABLE} as ht`)
+      .join(`${TRANSFORMERS_TABLE} as t`, 't.id', 'ht.transformer_id')
+      .where('ht.history_id', historyQuery.id)
+      .select('ht.id', 't.function_name');
+    const itemLinks: Array<{ id: string; item_id: string }> = existingRows.length
+      ? await knex(HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE)
+          .select('id', 'item_id')
+          .whereIn(
+            'id',
+            existingRows.map(r => r.id)
+          )
+      : [];
+    const itemIdsByRowId = new Map<string, Array<string>>();
+    for (const link of itemLinks) {
+      if (!itemIdsByRowId.has(link.id)) itemIdsByRowId.set(link.id, []);
+      itemIdsByRowId.get(link.id)!.push(link.item_id);
+    }
+    const itemLevel = new Map<string, { id: string; function_name: string }>();
+    let historyLevel: { id: string; function_name: string } | undefined;
+    for (const row of existingRows) {
+      const linkedItemIds = itemIdsByRowId.get(row.id) ?? [];
+      if (linkedItemIds.length > 0) {
+        for (const itemId of linkedItemIds) {
+          if (!itemLevel.has(itemId)) itemLevel.set(itemId, row);
+        }
+      } else if (!historyLevel) {
+        historyLevel = row;
+      }
+    }
+
+    for (const item of items) {
+      const oldSettings: OldSqlItemSettings = JSON.parse(item.settings);
+      settingsUpdates.push({ id: item.id, settings: JSON.stringify(toNewItemSettings(oldSettings)) });
+
+      const resolved = itemLevel.get(item.id) ?? historyLevel;
+      if (resolved && resolved.function_name !== 'iso') continue;
+
+      const id = generateRandomId(6);
+      newTransformerRows.push({
+        id,
+        history_id: historyQuery.id,
+        transformer_id: recordListToCsvTransformerId,
+        options: JSON.stringify(buildTransformerOptions(oldSettings))
+      });
+      newTransformerItemLinks.push({ id, item_id: item.id });
+    }
+  }
+
+  await bulkUpdateSettings(knex, HISTORY_ITEMS_TABLE, 'settings', settingsUpdates);
+  if (newTransformerRows.length > 0) {
+    await knex.batchInsert(HISTORY_QUERY_TRANSFORMERS_TABLE, newTransformerRows, 100);
+    await knex.batchInsert(HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE, newTransformerItemLinks, 100);
+  }
+}
