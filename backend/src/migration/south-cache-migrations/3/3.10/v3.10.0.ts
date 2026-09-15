@@ -5,7 +5,7 @@ import { Knex } from 'knex';
  * before this migration: the windowed-history-query cursor (`trackedInstant`, advanced by
  * `queryIntervals()`/`saveTrackedValue()` in south-connector.ts) and the one-shot "last value" shown
  * by the UI for direct-query connectors (`directQueryHandler()`'s legacy write). The caching-strategy
- * feature (entity-migrations v3.11.0) reused those same two columns for a third purpose — the item's
+ * feature (entity-migrations v3.10.0) reused those same two columns for a third purpose — the item's
  * own last *cached* value/instant used by the `onChange`/`threshold` comparison — via
  * `saveItemsLastValues()`/`getItemsLastValues()`. Because all three writers target the exact same
  * row and columns, whichever ran last in a query cycle silently clobbered what the others had just
