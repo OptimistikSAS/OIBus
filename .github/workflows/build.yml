@@ -100,7 +100,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: embedded-documentation
-          path: documentation/build
+          path: backend/dist/documentation
 
   build:
     name: Build for ${{ matrix.config['friendlyName'] }}
