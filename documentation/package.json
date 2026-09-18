@@ -10,7 +10,7 @@
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
     "build": "docusaurus build && node update-agent-version.js",
-    "build:embedded": "cross-env DOCS_BUILD_TARGET=embedded docusaurus build && node update-agent-version.js",
+    "build:embedded": "cross-env DOCS_BUILD_TARGET=embedded docusaurus build --out-dir ../backend/dist/documentation && node update-agent-version.js ../backend/dist/documentation",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus build && node update-agent-version.js && gh-pages -d build",
     "clear": "docusaurus clear",
