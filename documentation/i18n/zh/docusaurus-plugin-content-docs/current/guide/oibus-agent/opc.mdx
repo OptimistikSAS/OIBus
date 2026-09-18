@@ -86,15 +86,15 @@ OPC 客户端是一个访问 OPC 服务器的过程数据、消息和存档的�
 
 请按照以下步骤在客户端启用 COM/DCOM 通信。首先，打开组件服务，并访问该计算机的 *属性*。
 
-<div style={{ textAlign: 'center' }}>![组件服务](../../../../../../static/img/guide/south/opchda/OPCHDA-component-services.png)</div>
+<div style={{ textAlign: 'center' }}>![组件服务](@site/static/img/guide/south/opchda/OPCHDA-component-services.png)</div>
 
 请确保在该计算机上启用 *分布式 COM*（在 *默认属性* 选项卡中）。
 
-<div style={{ textAlign: 'center' }}>![组件属性](../../../../../../static/img/guide/south/opchda/OPCHDA-computer-properties.png)</div>
+<div style={{ textAlign: 'center' }}>![组件属性](@site/static/img/guide/south/opchda/OPCHDA-computer-properties.png)</div>
 
 在 *COM 安全* 选项卡中，编辑默认的 *启动和激活权限*。
 
-<div style={{ textAlign: 'center' }}>![COM 安全](../../../../../../static/img/guide/south/opchda/OPCHDA-COM-security.png)</div>
+<div style={{ textAlign: 'center' }}>![COM 安全](@site/static/img/guide/south/opchda/OPCHDA-COM-security.png)</div>
 
 在 *启动和激活权限* 窗口中，允许以下权限：
 
@@ -103,7 +103,7 @@ OPC 客户端是一个访问 OPC 服务器的过程数据、消息和存档的�
 - 本地激活
 - 远程激活
 
-<div style={{ textAlign: 'center' }}>![访问权限](../../../../../../static/img/guide/south/opchda/OPCHDA-access-permissions.png)</div>
+<div style={{ textAlign: 'center' }}>![访问权限](@site/static/img/guide/south/opchda/OPCHDA-access-permissions.png)</div>
 
 #### 测试通信 {#test-communication}
 
@@ -113,7 +113,7 @@ DCOM 使用 HDA 服务器的 135 端口与客户端进行数据交换。要测�
 tnc localhost -port 135
 ```
 
-<div style={{ textAlign: 'center' }}>![测试 DCOM 通信](../../../../../../static/img/guide/south/opchda/OPCHDA-test-communication.png)</div>
+<div style={{ textAlign: 'center' }}>![测试 DCOM 通信](@site/static/img/guide/south/opchda/OPCHDA-test-communication.png)</div>
 
 #### 身份验证 {#authentication}
 
@@ -132,13 +132,13 @@ OPCHDA 客户端程序将使用服务器的 IP 地址或主机名，加上服务
 通过在 135 端口添加一条规则来配置防火墙。
 
 <div style={{ textAlign: 'center' }}>
-  ![Windows 防火墙配置](../../../../../../static/img/guide/south/opchda/OPCHDA-windows-firewall.png)
+  ![Windows 防火墙配置](@site/static/img/guide/south/opchda/OPCHDA-windows-firewall.png)
 </div>
 
 对于 Lightsail 等云主机，需配置额外的防火墙规则：
 
 <div style={{ textAlign: 'center' }}>
-  ![Lightsail 防火墙配置](../../../../../../static/img/guide/south/opchda/OPCHDA-lightsail-firewall.png)
+  ![Lightsail 防火墙配置](@site/static/img/guide/south/opchda/OPCHDA-lightsail-firewall.png)
 </div>
 
 #### OPCEnum 工具 {#opcenum-tool}
@@ -149,18 +149,18 @@ OPCHDA 客户端程序将使用服务器的 IP 地址或主机名，加上服务
 
 如果 RPC 服务器不可用，请检查你的防火墙并再次测试通信。
 
-<div style={{ textAlign: 'center' }}>![RPC 不可用](../../../../../../static/img/guide/south/opchda/OPCHDA-rpc-unavailable.png)</div>
+<div style={{ textAlign: 'center' }}>![RPC 不可用](@site/static/img/guide/south/opchda/OPCHDA-rpc-unavailable.png)</div>
 
 ##### 访问被拒绝 {#access-denied}
 
 如果访问被拒绝，请检查用户凭据和组成员身份。
 
-<div style={{ textAlign: 'center' }}>![访问被拒绝](../../../../../../static/img/guide/south/opchda/OPCHDA-access-denied.png)</div>
+<div style={{ textAlign: 'center' }}>![访问被拒绝](@site/static/img/guide/south/opchda/OPCHDA-access-denied.png)</div>
 
 ### 服务器设置 {#server-settings}
 
 在 *组件服务* 窗口中检查 OPC 服务器应用程序是否已启用 DCOM。
 
 <div style={{ textAlign: 'center' }}>
-  ![服务器计算机 DCOM 配置](../../../../../../static/img/guide/south/opchda/OPCHDA-server-DCOM-configuration.png)
+  ![服务器计算机 DCOM 配置](@site/static/img/guide/south/opchda/OPCHDA-server-DCOM-configuration.png)
 </div>

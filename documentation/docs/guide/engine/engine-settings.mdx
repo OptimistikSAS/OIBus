@@ -86,7 +86,7 @@ This is independent from the [Authentication](#authentication) settings above: t
 - Configured with an [Azure Blob North Connector](../north-connectors/azure-blob.md) and an [OIAnalytics North Connector](../north-connectors/oianalytics.md).
 - Sends data to Azure and OIAnalytics via **OIBus1**’s proxy server.
 
-<div style={{ textAlign: 'center' }}>![Network proxy example](../../../static/img/guide/engine/proxy-network.svg)</div>
+<div style={{ textAlign: 'center' }}>![Network proxy example](@site/static/img/guide/engine/proxy-network.svg)</div>
 
 #### Configuration {#configuration}
 
@@ -95,14 +95,14 @@ This is independent from the [Authentication](#authentication) settings above: t
 - Enable the proxy server and set it to listen on port `2224`.
 - Authorize **OIBus2**’s IP address in the **IP Filter**.
 
-<div style={{ textAlign: 'center' }}>![Proxy server example](../../../static/img/guide/engine/proxy-server-example.png)</div>
+<div style={{ textAlign: 'center' }}>![Proxy server example](@site/static/img/guide/engine/proxy-server-example.png)</div>
 
 2. **On OIBus2**:
 
 - In the **Azure Blob North Connector** settings, specify the proxy server:
 - **Proxy URL**: `http://oibus1.fr:2224`
 
-<div style={{ textAlign: 'center' }}>![North proxy example](../../../static/img/guide/engine/north-proxy-example.png)</div>
+<div style={{ textAlign: 'center' }}>![North proxy example](@site/static/img/guide/engine/north-proxy-example.png)</div>
 
 :::tip
 If you use a [North OIAnalytics](../north-connectors/oianalytics.md) with [OIAnalytics registration](../installation/oianalytics.mdx), configure the proxy client settings in the **registration settings**.

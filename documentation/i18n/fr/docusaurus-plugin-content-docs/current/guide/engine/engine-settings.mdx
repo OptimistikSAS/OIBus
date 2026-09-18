@@ -105,7 +105,7 @@ serveur proxy (s'il est défini) continue de contrôler quels clients (par exemp
   [connecteur North OIAnalytics](../north-connectors/oianalytics.md).
 - Envoie des données vers Azure et OIAnalytics via le serveur proxy d'**OIBus1**.
 
-<div style={{ textAlign: 'center' }}>![Exemple de proxy réseau](../../../static/img/guide/engine/proxy-network.svg)</div>
+<div style={{ textAlign: 'center' }}>![Exemple de proxy réseau](@site/static/img/guide/engine/proxy-network.svg)</div>
 
 #### Configuration {#configuration}
 
@@ -114,14 +114,14 @@ serveur proxy (s'il est défini) continue de contrôler quels clients (par exemp
 - Activez le serveur proxy et configurez-le pour écouter sur le port `2224`.
 - Autorisez l'adresse IP d'**OIBus2** dans le **IP Filter**.
 
-<div style={{ textAlign: 'center' }}>![Exemple de serveur proxy](../../../static/img/guide/engine/proxy-server-example.png)</div>
+<div style={{ textAlign: 'center' }}>![Exemple de serveur proxy](@site/static/img/guide/engine/proxy-server-example.png)</div>
 
 2. **Sur OIBus2** :
 
 - Dans les paramètres du **connecteur North Azure Blob**, indiquez le serveur proxy :
 - **Proxy URL** : `http://oibus1.fr:2224`
 
-<div style={{ textAlign: 'center' }}>![Exemple de proxy North](../../../static/img/guide/engine/north-proxy-example.png)</div>
+<div style={{ textAlign: 'center' }}>![Exemple de proxy North](@site/static/img/guide/engine/north-proxy-example.png)</div>
 
 :::tip
 Si vous utilisez un [North OIAnalytics](../north-connectors/oianalytics.md) avec un
