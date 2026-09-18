@@ -38,9 +38,10 @@ serves locally, under the `/documentation` path prefix (see `backend/src/web-ser
 is what powers the in-app **Help** links and the documentation viewable from a running OIBus instance with
 no internet access. It differs from the public build in two ways: its base URL is `/documentation/` instead
 of `/`, and it uses a local, offline search index (`@easyops-cn/docusaurus-search-local`) instead of
-Algolia, since an offline instance can't reach Algolia's cloud service. See `.github/workflows/build.yml`'s
-`build-documentation` job for how CI builds this variant and feeds its output into `backend/dist/documentation`
-before the backend is packaged.
+Algolia, since an offline instance can't reach Algolia's cloud service. It also builds straight into
+`backend/dist/documentation` instead of `build`, which is exactly where the backend serves it from — so
+running this one command is enough to make the "Documentation" link work locally, and it's also all that
+`.github/workflows/build.yml`'s `build-documentation` job runs before the backend is packaged.
 
 Both build commands also run `update-agent-version.js` afterwards, which fetches the latest
 [OIBus Agent](https://github.com/OptimistikSAS/OIBusAgentRelease) release tag and substitutes it into the
