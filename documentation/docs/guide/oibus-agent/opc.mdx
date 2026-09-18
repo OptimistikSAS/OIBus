@@ -86,15 +86,15 @@ This page gives some hints on how to set up a communication with COM/DCOM to an 
 
 Follow these steps to enable COM/DCOM communications from the client. First, open the Component services, and access the _Properties_ of the computer.
 
-<div style={{ textAlign: 'center' }}>![Component Services](../../../static/img/guide/south/opchda/OPCHDA-component-services.png)</div>
+<div style={{ textAlign: 'center' }}>![Component Services](@site/static/img/guide/south/opchda/OPCHDA-component-services.png)</div>
 
 Be sure to enable _Distributed COM_ on this computer (on the _Default Properties_ tab).
 
-<div style={{ textAlign: 'center' }}>![Component Properties](../../../static/img/guide/south/opchda/OPCHDA-computer-properties.png)</div>
+<div style={{ textAlign: 'center' }}>![Component Properties](@site/static/img/guide/south/opchda/OPCHDA-computer-properties.png)</div>
 
 On the _COM Security_ tab, edit default _Launch and Activation Permissions_.
 
-<div style={{ textAlign: 'center' }}>![COM Security](../../../static/img/guide/south/opchda/OPCHDA-COM-security.png)</div>
+<div style={{ textAlign: 'center' }}>![COM Security](@site/static/img/guide/south/opchda/OPCHDA-COM-security.png)</div>
 
 On the _Launch and Activation Permissions_ window, allow the following permissions:
 
@@ -103,7 +103,7 @@ On the _Launch and Activation Permissions_ window, allow the following permissio
 - Local Activation
 - Remote Activation
 
-<div style={{ textAlign: 'center' }}>![Access Permissions](../../../static/img/guide/south/opchda/OPCHDA-access-permissions.png)</div>
+<div style={{ textAlign: 'center' }}>![Access Permissions](@site/static/img/guide/south/opchda/OPCHDA-access-permissions.png)</div>
 
 #### Test communication {#test-communication}
 
@@ -113,7 +113,7 @@ DCOM uses port 135 of the HDA server to exchange with the client. To test connec
 tnc localhost -port 135
 ```
 
-<div style={{ textAlign: 'center' }}>![Test DCOM communication](../../../static/img/guide/south/opchda/OPCHDA-test-communication.png)</div>
+<div style={{ textAlign: 'center' }}>![Test DCOM communication](@site/static/img/guide/south/opchda/OPCHDA-test-communication.png)</div>
 
 #### Authentication {#authentication}
 
@@ -132,13 +132,13 @@ If the program runs through a service (such as OIBus), configure the service to 
 Configure the firewall by adding a rule on port 135.
 
 <div style={{ textAlign: 'center' }}>
-  ![Windows Firewall Configuration](../../../static/img/guide/south/opchda/OPCHDA-windows-firewall.png)
+  ![Windows Firewall Configuration](@site/static/img/guide/south/opchda/OPCHDA-windows-firewall.png)
 </div>
 
 For cloud hosts like Lightsail, configure additional firewall rules:
 
 <div style={{ textAlign: 'center' }}>
-  ![Lightsail Firewall Configuration](../../../static/img/guide/south/opchda/OPCHDA-lightsail-firewall.png)
+  ![Lightsail Firewall Configuration](@site/static/img/guide/south/opchda/OPCHDA-lightsail-firewall.png)
 </div>
 
 #### OPCEnum tool {#opcenum-tool}
@@ -149,18 +149,18 @@ The [OPCEnum](https://opcfoundation.org/developer-tools/samples-and-tools-classi
 
 If the RPC server is unavailable, check your firewall and test communication again.
 
-<div style={{ textAlign: 'center' }}>![RPC Unavailable](../../../static/img/guide/south/opchda/OPCHDA-rpc-unavailable.png)</div>
+<div style={{ textAlign: 'center' }}>![RPC Unavailable](@site/static/img/guide/south/opchda/OPCHDA-rpc-unavailable.png)</div>
 
 ##### Access denied {#access-denied}
 
 Check user credentials and group membership if access is denied.
 
-<div style={{ textAlign: 'center' }}>![Access denied](../../../static/img/guide/south/opchda/OPCHDA-access-denied.png)</div>
+<div style={{ textAlign: 'center' }}>![Access denied](@site/static/img/guide/south/opchda/OPCHDA-access-denied.png)</div>
 
 ### Server settings {#server-settings}
 
 Check if DCOM is enabled for the OPC Server application in the _Component Service_ window.
 
 <div style={{ textAlign: 'center' }}>
-  ![Server Machine DCOM Configuration](../../../static/img/guide/south/opchda/OPCHDA-server-DCOM-configuration.png)
+  ![Server Machine DCOM Configuration](@site/static/img/guide/south/opchda/OPCHDA-server-DCOM-configuration.png)
 </div>

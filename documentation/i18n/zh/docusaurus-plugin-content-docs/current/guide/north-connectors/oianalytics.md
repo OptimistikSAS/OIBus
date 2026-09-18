@@ -76,7 +76,7 @@ OIAnalytics® 内置**文件解析器**，无需预处理。解析直接在 SaaS
 3. 复制并安全保存 **API 密钥**及其关联的密码。
 4. 在 OIBus 中输入该 API 密钥和秘密密钥。
 
-![生成 OIAnalytics API 密钥](../../../static/img/guide/north/oianalytics/oia-api-key-gen.png)
+![生成 OIAnalytics API 密钥](@site/static/img/guide/north/oianalytics/oia-api-key-gen.png)
 
 :::danger 密码找回
 该密码在生成 API 密钥期间**仅显示一次**。如果遗失，您必须生成新的 API 密钥。

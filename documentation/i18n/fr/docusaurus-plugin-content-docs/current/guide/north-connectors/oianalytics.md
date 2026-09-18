@@ -80,7 +80,7 @@ Si vous choisissez de ne pas enregistrer OIBus sur OIAnalytics®, obtenez une cl
 3. Copiez et conservez en lieu sûr à la fois la **clé API** et son mot de passe associé.
 4. Saisissez la clé API et la clé secrète dans OIBus.
 
-![Génération d'une clé API OIAnalytics](../../../static/img/guide/north/oianalytics/oia-api-key-gen.png)
+![Génération d'une clé API OIAnalytics](@site/static/img/guide/north/oianalytics/oia-api-key-gen.png)
 
 :::danger Récupération du mot de passe
 Le mot de passe n'est **affiché qu'une seule fois** lors de la génération de la clé API. En cas de perte, vous devez

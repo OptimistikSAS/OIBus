@@ -76,7 +76,7 @@ If you choose not to register OIBus on OIAnalytics®, obtain an API key:
 3. Copy and securely store both the **API key** and its associated password.
 4. Enter the API key and secret key in OIBus.
 
-![Generating an OIAnalytics API Key](../../../static/img/guide/north/oianalytics/oia-api-key-gen.png)
+![Generating an OIAnalytics API Key](@site/static/img/guide/north/oianalytics/oia-api-key-gen.png)
 
 :::danger Password Retrieval
 The password is **only displayed once** during API key generation. If lost, you must generate a new API key.

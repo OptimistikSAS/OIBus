@@ -4,7 +4,7 @@ const path = require('path');
 async function updateVersion() {
   try {
     const repo = 'OptimistikSAS/OIBusAgentRelease';
-    const docsDir = path.join(__dirname, 'build');
+    const docsDir = path.resolve(__dirname, process.argv[2] || 'build');
 
     // Fetch the latest release from GitHub API
     const response = await fetch(`https://api.github.com/repos/${repo}/releases/latest`);

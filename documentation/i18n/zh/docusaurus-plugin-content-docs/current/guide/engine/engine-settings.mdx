@@ -90,7 +90,7 @@ OIBus2 → OIBus1(代理服务器) → 上游代理 → 互联网
   [OIAnalytics 北向连接器](../north-connectors/oianalytics.md)。
 - 通过 **OIBus1** 的代理服务器将数据发送到 Azure 和 OIAnalytics。
 
-<div style={{ textAlign: 'center' }}>![网络代理示例](../../../static/img/guide/engine/proxy-network.svg)</div>
+<div style={{ textAlign: 'center' }}>![网络代理示例](@site/static/img/guide/engine/proxy-network.svg)</div>
 
 #### 配置 {#configuration}
 
@@ -99,14 +99,14 @@ OIBus2 → OIBus1(代理服务器) → 上游代理 → 互联网
 - 启用代理服务器，并将其设置为监听端口 `2224`。
 - 在 **IP 过滤器**中授权 **OIBus2** 的 IP 地址。
 
-<div style={{ textAlign: 'center' }}>![代理服务器示例](../../../static/img/guide/engine/proxy-server-example.png)</div>
+<div style={{ textAlign: 'center' }}>![代理服务器示例](@site/static/img/guide/engine/proxy-server-example.png)</div>
 
 2. **在 OIBus2 上**：
 
 - 在 **Azure Blob 北向连接器**设置中，指定代理服务器：
 - **代理 URL**：`http://oibus1.fr:2224`
 
-<div style={{ textAlign: 'center' }}>![北向代理示例](../../../static/img/guide/engine/north-proxy-example.png)</div>
+<div style={{ textAlign: 'center' }}>![北向代理示例](@site/static/img/guide/engine/north-proxy-example.png)</div>
 
 :::tip
 如果您在使用 [北向 OIAnalytics](../north-connectors/oianalytics.md) 及 [OIAnalytics 注册](../installation/oianalytics.mdx)，
