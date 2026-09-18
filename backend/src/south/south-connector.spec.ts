@@ -634,8 +634,8 @@ describe('SouthConnector', () => {
       south.historyQueryHandler = mock.fn(async (_items: unknown, _startTime: unknown, _endTime: unknown) => undefined);
     });
 
-    it('should report hasExplore() as false for a connector that does not implement SouthExplore', () => {
-      assert.strictEqual(south.hasExplore(), false);
+    it('should report hasExplore() as true now that SouthMSSQL implements explore()', () => {
+      assert.strictEqual(south.hasExplore(), true);
     });
 
     it('should not throw when reassigned a connector entity without items', () => {
