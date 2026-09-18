@@ -415,6 +415,69 @@ describe('SouthMSSQL', () => {
       assert.strictEqual(close.mock.calls.length, 1);
     });
 
+    it('should list every table, schema-qualified, with its column and row counts when exploring the root', async () => {
+      query.mock.mockImplementationOnce(() => ({
+        recordsets: [
+          [
+            { tableSchema: 'dbo', tableName: 'Reactor', columnCount: 3, rowCount: 120 },
+            { tableSchema: 'dbo', tableName: 'Empty', columnCount: 2, rowCount: 0 }
+          ]
+        ]
+      }));
+
+      const result = await south.explore(null);
+
+      assert.ok(query.mock.calls[0].arguments[0].toString().includes('sys.tables'));
+      // No bind params at the root level - only expanding a table needs @tableSchema/@tableName.
+      assert.strictEqual(input.mock.calls.length, 0);
+      assert.strictEqual(close.mock.calls.length, 1);
+      assert.deepStrictEqual(result, [
+        { id: 'dbo.Reactor', name: 'dbo.Reactor', metadata: { columns: 3, rows: 120 }, hasChildren: true },
+        { id: 'dbo.Empty', name: 'dbo.Empty', metadata: { columns: 2, rows: 0 }, hasChildren: true }
+      ]);
+    });
+
+    it('should close the connection and rethrow when exploring the root fails', async () => {
+      const queryError = new Error('bad query');
+      query.mock.mockImplementationOnce(() => {
+        throw queryError;
+      });
+
+      await assert.rejects(south.explore(null), queryError);
+      assert.strictEqual(close.mock.calls.length, 1);
+    });
+
+    it("should list a table's columns, with type/nullability/primary-key/default, when expanding it", async () => {
+      query.mock.mockImplementationOnce(() => ({
+        recordsets: [
+          [
+            { name: 'id', type: 'int', nullable: 'NO', columnDefault: null, isPrimaryKey: 1 },
+            { name: 'value', type: 'float', nullable: 'YES', columnDefault: '0', isPrimaryKey: 0 }
+          ]
+        ]
+      }));
+
+      const result = await south.explore('dbo.Reactor');
+
+      assert.ok(input.mock.calls.some(c => c.arguments[0] === 'tableSchema' && c.arguments[1] === 'dbo'));
+      assert.ok(input.mock.calls.some(c => c.arguments[0] === 'tableName' && c.arguments[1] === 'Reactor'));
+      assert.strictEqual(close.mock.calls.length, 1);
+      assert.deepStrictEqual(result, [
+        { id: 'dbo.Reactor.id', name: 'id', metadata: { type: 'int', nullable: 'no', primaryKey: 'yes' }, hasChildren: false },
+        { id: 'dbo.Reactor.value', name: 'value', metadata: { type: 'float', nullable: 'yes', default: '0' }, hasChildren: false }
+      ]);
+    });
+
+    it("should close the connection and rethrow when exploring a table's columns fails", async () => {
+      const queryError = new Error('bad query');
+      query.mock.mockImplementationOnce(() => {
+        throw queryError;
+      });
+
+      await assert.rejects(south.explore('dbo.Reactor'), queryError);
+      assert.strictEqual(close.mock.calls.length, 1);
+    });
+
     it('should test item without datetimeFields', async () => {
       const formattedInstant = testData.constants.dates.DATE_1;
       const queryDataMock = mock.method(
