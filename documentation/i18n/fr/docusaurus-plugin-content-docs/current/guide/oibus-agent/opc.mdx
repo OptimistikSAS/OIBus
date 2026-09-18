@@ -86,15 +86,15 @@ Cette page donne quelques indications sur la mise en place d'une communication C
 
 Suivez ces étapes pour activer les communications COM/DCOM depuis le client. Ouvrez d'abord les Services de composants, puis accédez aux _Propriétés_ de l'ordinateur.
 
-<div style={{ textAlign: 'center' }}>![Services de composants](../../../static/img/guide/south/opchda/OPCHDA-component-services.png)</div>
+<div style={{ textAlign: 'center' }}>![Services de composants](@site/static/img/guide/south/opchda/OPCHDA-component-services.png)</div>
 
 Assurez-vous d'activer _Distributed COM_ sur cet ordinateur (dans l'onglet _Propriétés par défaut_).
 
-<div style={{ textAlign: 'center' }}>![Propriétés du composant](../../../static/img/guide/south/opchda/OPCHDA-computer-properties.png)</div>
+<div style={{ textAlign: 'center' }}>![Propriétés du composant](@site/static/img/guide/south/opchda/OPCHDA-computer-properties.png)</div>
 
 Dans l'onglet _Sécurité COM_, modifiez les _Autorisations de lancement et d'activation_ par défaut.
 
-<div style={{ textAlign: 'center' }}>![Sécurité COM](../../../static/img/guide/south/opchda/OPCHDA-COM-security.png)</div>
+<div style={{ textAlign: 'center' }}>![Sécurité COM](@site/static/img/guide/south/opchda/OPCHDA-COM-security.png)</div>
 
 Dans la fenêtre _Autorisations de lancement et d'activation_, autorisez les permissions suivantes :
 
@@ -103,7 +103,7 @@ Dans la fenêtre _Autorisations de lancement et d'activation_, autorisez les per
 - Activation locale
 - Activation à distance
 
-<div style={{ textAlign: 'center' }}>![Autorisations d'accès](../../../static/img/guide/south/opchda/OPCHDA-access-permissions.png)</div>
+<div style={{ textAlign: 'center' }}>![Autorisations d'accès](@site/static/img/guide/south/opchda/OPCHDA-access-permissions.png)</div>
 
 #### Tester la communication {#test-communication}
 
@@ -113,7 +113,7 @@ DCOM utilise le port 135 du serveur HDA pour échanger avec le client. Pour test
 tnc localhost -port 135
 ```
 
-<div style={{ textAlign: 'center' }}>![Tester la communication DCOM](../../../static/img/guide/south/opchda/OPCHDA-test-communication.png)</div>
+<div style={{ textAlign: 'center' }}>![Tester la communication DCOM](@site/static/img/guide/south/opchda/OPCHDA-test-communication.png)</div>
 
 #### Authentification {#authentication}
 
@@ -132,13 +132,13 @@ Si le programme s'exécute via un service (comme OIBus), configurez le service p
 Configurez le pare-feu en ajoutant une règle sur le port 135.
 
 <div style={{ textAlign: 'center' }}>
-  ![Configuration du pare-feu Windows](../../../static/img/guide/south/opchda/OPCHDA-windows-firewall.png)
+  ![Configuration du pare-feu Windows](@site/static/img/guide/south/opchda/OPCHDA-windows-firewall.png)
 </div>
 
 Pour les hébergeurs cloud comme Lightsail, configurez des règles de pare-feu supplémentaires :
 
 <div style={{ textAlign: 'center' }}>
-  ![Configuration du pare-feu Lightsail](../../../static/img/guide/south/opchda/OPCHDA-lightsail-firewall.png)
+  ![Configuration du pare-feu Lightsail](@site/static/img/guide/south/opchda/OPCHDA-lightsail-firewall.png)
 </div>
 
 #### Outil OPCEnum {#opcenum-tool}
@@ -149,18 +149,18 @@ L'outil [OPCEnum](https://opcfoundation.org/developer-tools/samples-and-tools-cl
 
 Si le serveur RPC est indisponible, vérifiez votre pare-feu et testez à nouveau la communication.
 
-<div style={{ textAlign: 'center' }}>![Serveur RPC indisponible](../../../static/img/guide/south/opchda/OPCHDA-rpc-unavailable.png)</div>
+<div style={{ textAlign: 'center' }}>![Serveur RPC indisponible](@site/static/img/guide/south/opchda/OPCHDA-rpc-unavailable.png)</div>
 
 ##### Accès refusé {#access-denied}
 
 Vérifiez les identifiants de l'utilisateur et l'appartenance au groupe en cas de refus d'accès.
 
-<div style={{ textAlign: 'center' }}>![Accès refusé](../../../static/img/guide/south/opchda/OPCHDA-access-denied.png)</div>
+<div style={{ textAlign: 'center' }}>![Accès refusé](@site/static/img/guide/south/opchda/OPCHDA-access-denied.png)</div>
 
 ### Paramètres du serveur {#server-settings}
 
 Vérifiez si DCOM est activé pour l'application serveur OPC dans la fenêtre _Services de composants_.
 
 <div style={{ textAlign: 'center' }}>
-  ![Configuration DCOM de la machine serveur](../../../static/img/guide/south/opchda/OPCHDA-server-DCOM-configuration.png)
+  ![Configuration DCOM de la machine serveur](@site/static/img/guide/south/opchda/OPCHDA-server-DCOM-configuration.png)
 </div>
