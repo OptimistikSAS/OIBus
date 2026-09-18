@@ -1,4 +1,4 @@
-import mssql, { config } from 'mssql';
+import mssql, { config, ConnectionPool } from 'mssql';
 
 import SouthConnector from '../south-connector';
 import {
@@ -11,13 +11,17 @@ import {
 } from '../../service/utils';
 import { encryptionService } from '../../service/encryption.service';
 import { Instant } from '../../../shared/model/types';
-import { SouthConfigurationDiscovery, SouthHistoryQuery } from '../south-interface';
+import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthItemSettings, SouthMSSQLItemSettings, SouthMSSQLSettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent, OIBusRecord } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import {
+  SouthConnectorExploreEntry,
+  SouthConnectorItemQueryResult,
+  SouthConnectorItemTestingSettings
+} from '../../../shared/model/south-connector.model';
 import { OIBusTestingError } from '../../model/types';
 
 /**
@@ -28,7 +32,7 @@ import { OIBusTestingError } from '../../model/types';
  */
 export default class SouthMSSQL
   extends SouthConnector<SouthMSSQLSettings, SouthMSSQLItemSettings>
-  implements SouthHistoryQuery, SouthConfigurationDiscovery
+  implements SouthHistoryQuery, SouthExplore, SouthConfigurationDiscovery
 {
   constructor(
     connector: SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>,
@@ -227,6 +231,99 @@ export default class SouthMSSQL
       await pool.close();
       throw error;
     }
+  }
+
+  /**
+   * Browse the database for the interactive explore feature: the root level lists every table, each
+   * schema-qualified as "schema.table" since MSSQL supports multiple schemas per database, with its
+   * column count and an approximate row count read from `sys.partitions` metadata rather than a
+   * `SELECT COUNT(*)` per table - a full table scan would be far too costly to run just for browsing.
+   * Expanding a table lists its columns with their declared type, nullability, primary-key membership
+   * and default value.
+   * @param parentId - a "schema.table" id to list columns for, or null to list every table in the database
+   */
+  async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
+    const config = await this.createConnectionOptions();
+    const pool = await new mssql.ConnectionPool(config).connect();
+    try {
+      const entries = parentId === null ? await this.exploreTables(pool) : await this.exploreColumns(pool, parentId);
+      await pool.close();
+      return entries;
+    } catch (error) {
+      await pool.close();
+      throw error;
+    }
+  }
+
+  /** Root level of `explore()`: every table in the database, schema-qualified. */
+  private async exploreTables(pool: ConnectionPool): Promise<Array<SouthConnectorExploreEntry>> {
+    const {
+      recordsets: [tables]
+    } = await pool.request().query<Array<{ tableSchema: string; tableName: string; columnCount: number; rowCount: number }>>(`
+      SELECT
+        s.name AS tableSchema,
+        t.name AS tableName,
+        (SELECT COUNT(*) FROM sys.columns c WHERE c.object_id = t.object_id) AS columnCount,
+        ISNULL((SELECT SUM(p.rows) FROM sys.partitions p WHERE p.object_id = t.object_id AND p.index_id IN (0, 1)), 0) AS rowCount
+      FROM sys.tables t
+      INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
+      ORDER BY s.name, t.name
+    `);
+
+    return tables.map(table => ({
+      id: `${table.tableSchema}.${table.tableName}`,
+      name: `${table.tableSchema}.${table.tableName}`,
+      metadata: { columns: table.columnCount, rows: table.rowCount },
+      hasChildren: table.columnCount > 0
+    }));
+  }
+
+  /** One level down from `explore()`'s root: every column of the "schema.table" being expanded, with
+   *  its primary-key membership resolved via a single join rather than a second round-trip. */
+  private async exploreColumns(pool: ConnectionPool, parentId: string): Promise<Array<SouthConnectorExploreEntry>> {
+    const dotIndex = parentId.indexOf('.');
+    const tableSchema = dotIndex === -1 ? '' : parentId.slice(0, dotIndex);
+    const tableName = dotIndex === -1 ? parentId : parentId.slice(dotIndex + 1);
+
+    const request = pool.request();
+    request.input('tableSchema', tableSchema);
+    request.input('tableName', tableName);
+    const {
+      recordsets: [columns]
+    } = await request.query<Array<{ name: string; type: string; nullable: string; columnDefault: string | null; isPrimaryKey: number }>>(`
+      SELECT
+        c.COLUMN_NAME AS name,
+        c.DATA_TYPE AS type,
+        c.IS_NULLABLE AS nullable,
+        c.COLUMN_DEFAULT AS columnDefault,
+        CASE WHEN pk.COLUMN_NAME IS NOT NULL THEN 1 ELSE 0 END AS isPrimaryKey
+      FROM INFORMATION_SCHEMA.COLUMNS c
+      LEFT JOIN (
+        SELECT ku.TABLE_SCHEMA, ku.TABLE_NAME, ku.COLUMN_NAME
+        FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+        INNER JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE ku
+          ON tc.CONSTRAINT_NAME = ku.CONSTRAINT_NAME AND tc.CONSTRAINT_SCHEMA = ku.CONSTRAINT_SCHEMA
+        WHERE tc.CONSTRAINT_TYPE = 'PRIMARY KEY'
+      ) pk ON pk.TABLE_SCHEMA = c.TABLE_SCHEMA AND pk.TABLE_NAME = c.TABLE_NAME AND pk.COLUMN_NAME = c.COLUMN_NAME
+      WHERE c.TABLE_SCHEMA = @tableSchema AND c.TABLE_NAME = @tableName
+      ORDER BY c.ORDINAL_POSITION
+    `);
+
+    return columns.map(column => {
+      const metadata: Record<string, string | number> = { type: column.type, nullable: column.nullable === 'YES' ? 'yes' : 'no' };
+      if (column.isPrimaryKey) {
+        metadata.primaryKey = 'yes';
+      }
+      if (column.columnDefault !== null) {
+        metadata.default = column.columnDefault;
+      }
+      return {
+        id: `${parentId}.${column.name}`,
+        name: column.name,
+        metadata,
+        hasChildren: false
+      };
+    });
   }
 
   /**
