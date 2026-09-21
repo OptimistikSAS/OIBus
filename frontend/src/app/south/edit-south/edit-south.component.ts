@@ -184,6 +184,16 @@ export class EditSouthComponent implements CanComponentDeactivate {
           this.southConnector = southConnector;
           if (southConnector) {
             this.southType = southConnector.type;
+            // When duplicating, groups must be recreated rather than pointing at the source
+            // connector's groups, so give each one a fresh temp id (same convention used when
+            // a group is created from the UI) and remap items to the new ids.
+            const isDuplicate = this.mode === 'create' && !!this.duplicateId;
+            const groupIdMap = new Map<string, string>();
+            if (isDuplicate) {
+              southConnector.groups.forEach((group, index) => {
+                groupIdMap.set(group.id, `temp_${Date.now()}_${index}`);
+              });
+            }
             this.inMemoryItems = southConnector.items.map(
               item =>
                 ({
@@ -193,7 +203,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
                   settings: item.settings,
                   scanModeId: item.scanMode?.id || null,
                   scanModeName: item.scanMode?.name || null,
-                  groupId: item.group?.id || null,
+                  groupId: item.group ? (groupIdMap.get(item.group.id) ?? item.group.id) : null,
                   groupName: item.group?.standardSettings.name || null,
                   syncWithGroup: item.syncWithGroup,
                   maxReadInterval: item.maxReadInterval,
@@ -204,7 +214,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
                 }) as SouthConnectorItemCommandDTO
             );
             this.inMemoryGroups = southConnector.groups.map(group => ({
-              id: group.id,
+              id: groupIdMap.get(group.id) ?? group.id,
               standardSettings: {
                 name: group.standardSettings.name,
                 scanModeId: group.standardSettings.scanMode.id
