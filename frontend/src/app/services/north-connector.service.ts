@@ -1,6 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpStatusCode } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { inject, Service } from '@angular/core';
+import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 import {
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
@@ -104,7 +105,9 @@ export class NorthConnectorService {
 
   testConnection(northId: string, settings: NorthSettings, northType: OIBusNorthType): Observable<OIBusConnectionTestResult> {
     return this.http.post<OIBusConnectionTestResult>(`/api/north/${northId}/test/connection`, settings, {
-      params: { northType }
+      params: { northType },
+      // the test connection modal already displays the error inline, so skip the global error notification
+      context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
     });
   }
 
