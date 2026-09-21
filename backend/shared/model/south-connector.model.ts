@@ -3,6 +3,8 @@ import { BaseEntity, Instant } from './types';
 import {
   SouthADSItemSettings,
   SouthADSSettings,
+  SouthBACnetItemSettings,
+  SouthBACnetSettings,
   SouthFolderScannerItemSettings,
   SouthFolderScannerSettings,
   SouthFTPItemSettings,
@@ -72,6 +74,7 @@ export type OIBusSouthCategory = (typeof OIBUS_SOUTH_CATEGORIES)[number];
  */
 export const OIBUS_SOUTH_TYPES = [
   'ads', // Beckhoff ADS protocol
+  'bacnet', // BACnet/IP building automation protocol
   'folder-scanner', // File system folder scanning
   'ftp', // FTP file transfer protocol
   'influxdb', // InfluxDB time series database
@@ -127,7 +130,7 @@ export type SouthCachingThresholdType = 'absolute' | 'percentage';
  * South connector types belonging to the "IoT family" (OPC UA, Modbus, ADS, OPC classic, S7, MQTT), for
  * which per-item caching strategy is available.
  */
-export const IOT_FAMILY_SOUTH_TYPES: Array<OIBusSouthType> = ['opcua', 'modbus', 'ads', 'opc', 's7', 'mqtt'];
+export const IOT_FAMILY_SOUTH_TYPES: Array<OIBusSouthType> = ['opcua', 'modbus', 'ads', 'opc', 's7', 'mqtt', 'bacnet'];
 
 /**
  * South connector types whose Configuration Workflow discoveryScope is a dedicated SQL metadata query
@@ -595,6 +598,10 @@ export interface SouthItemGroupCommandDTO {
 export interface SouthConnectorADSDTO extends SouthConnectorTypedDTO<'ads', SouthADSSettings, SouthADSItemSettings> {
   items: Array<SouthConnectorADSItemDTO>;
 }
+/** South connector configuration for BACnet/IP. */
+export interface SouthConnectorBACnetDTO extends SouthConnectorTypedDTO<'bacnet', SouthBACnetSettings, SouthBACnetItemSettings> {
+  items: Array<SouthConnectorBACnetItemDTO>;
+}
 /** South connector configuration for the Folder Scanner. */
 export interface SouthConnectorFolderScannerDTO extends SouthConnectorTypedDTO<
   'folder-scanner',
@@ -694,6 +701,7 @@ export interface SouthConnectorSQLiteDTO extends SouthConnectorTypedDTO<'sqlite'
  */
 export type SouthConnectorDTO =
   | SouthConnectorADSDTO
+  | SouthConnectorBACnetDTO
   | SouthConnectorFolderScannerDTO
   | SouthConnectorFTPDTO
   | SouthConnectorInfluxDBDTO
@@ -933,6 +941,14 @@ export interface SouthConnectorItemCommandTypedDTO<IS> {
 export interface SouthConnectorADSCommandDTO extends SouthConnectorCommandTypedDTO<'ads', SouthADSSettings, SouthADSItemSettings> {
   items: Array<SouthConnectorADSItemCommandDTO>;
 }
+/** South connector command for BACnet/IP. */
+export interface SouthConnectorBACnetCommandDTO extends SouthConnectorCommandTypedDTO<
+  'bacnet',
+  SouthBACnetSettings,
+  SouthBACnetItemSettings
+> {
+  items: Array<SouthConnectorBACnetItemCommandDTO>;
+}
 /** South connector command for the Folder Scanner. */
 export interface SouthConnectorFolderScannerCommandDTO extends SouthConnectorCommandTypedDTO<
   'folder-scanner',
@@ -1056,6 +1072,7 @@ export interface SouthConnectorSQLiteCommandDTO extends SouthConnectorCommandTyp
  */
 export type SouthConnectorCommandDTO =
   | SouthConnectorADSCommandDTO
+  | SouthConnectorBACnetCommandDTO
   | SouthConnectorFolderScannerCommandDTO
   | SouthConnectorFTPCommandDTO
   | SouthConnectorInfluxDBCommandDTO
@@ -1080,6 +1097,8 @@ export type SouthConnectorCommandDTO =
 // ── Named item DTO variants (tsoa uses these as schema names) ────────────
 /** South connector item DTO for Beckhoff ADS. */
 export interface SouthConnectorADSItemDTO extends SouthConnectorItemTypedDTO<SouthADSItemSettings> {}
+/** South connector item DTO for BACnet/IP. */
+export interface SouthConnectorBACnetItemDTO extends SouthConnectorItemTypedDTO<SouthBACnetItemSettings> {}
 /** South connector item DTO for the Folder Scanner. */
 export interface SouthConnectorFolderScannerItemDTO extends SouthConnectorItemTypedDTO<SouthFolderScannerItemSettings> {}
 /** South connector item DTO for FTP file transfer. */
@@ -1127,6 +1146,7 @@ export interface SouthConnectorSQLiteItemDTO extends SouthConnectorItemTypedDTO<
  */
 export type SouthConnectorItemDTO =
   | SouthConnectorADSItemDTO
+  | SouthConnectorBACnetItemDTO
   | SouthConnectorFolderScannerItemDTO
   | SouthConnectorFTPItemDTO
   | SouthConnectorInfluxDBItemDTO
@@ -1151,6 +1171,8 @@ export type SouthConnectorItemDTO =
 // ── Named item command variants (tsoa uses these as schema names) ─────────
 /** South connector item command for Beckhoff ADS. */
 export interface SouthConnectorADSItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthADSItemSettings> {}
+/** South connector item command for BACnet/IP. */
+export interface SouthConnectorBACnetItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthBACnetItemSettings> {}
 /** South connector item command for the Folder Scanner. */
 export interface SouthConnectorFolderScannerItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthFolderScannerItemSettings> {}
 /** South connector item command for FTP file transfer. */
@@ -1198,6 +1220,7 @@ export interface SouthConnectorSQLiteItemCommandDTO extends SouthConnectorItemCo
  */
 export type SouthConnectorItemCommandDTO =
   | SouthConnectorADSItemCommandDTO
+  | SouthConnectorBACnetItemCommandDTO
   | SouthConnectorFolderScannerItemCommandDTO
   | SouthConnectorFTPItemCommandDTO
   | SouthConnectorInfluxDBItemCommandDTO

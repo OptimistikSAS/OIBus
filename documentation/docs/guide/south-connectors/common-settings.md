@@ -131,7 +131,7 @@ Items retrieve data as files or JSON payloads. Each item has the following field
 
 ## Caching Strategy {#caching-strategy}
 
-For **IoT-family connectors** (OPC UA, Modbus, ADS, OPC Classic, S7, MQTT), each item can filter which
+For **IoT-family connectors** (OPC UA, Modbus, ADS, OPC Classic, S7, MQTT, BACnet/IP), each item can filter which
 collected values are actually cached and forwarded to North connectors, instead of caching every value
 read or received. This reduces cache size and North connector load for stable or slowly-changing points.
 

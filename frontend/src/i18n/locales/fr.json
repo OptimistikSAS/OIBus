@@ -917,6 +917,25 @@
               "fields": "Champs à conserver (séparés par des virgules)"
             }
           },
+          "bacnet": {
+            "local-interface": "Interface locale",
+            "port": "Port",
+            "apdu-timeout": "Délai d'attente APDU",
+            "broadcast-address": "Adresse de diffusion",
+            "retry-interval": "Intervalle de nouvelle tentative",
+            "max-parallel-run": "Requêtes parallèles max",
+            "cov-default-lifetime": "Durée de l'abonnement COV",
+            "cov-renewal-margin": "Marge de renouvellement COV",
+            "max-objects-per-request": "Objets max par requête",
+            "max-number-of-messages": "Nombre de messages avant envoi",
+            "flush-message-timeout": "Délai entre les envois",
+            "bbmd": {
+              "title": "BBMD / Enregistrement en tant que périphérique distant",
+              "enabled": "Activé",
+              "address": "Adresse du BBMD",
+              "foreign-device-ttl": "Durée de vie (TTL) du périphérique distant"
+            }
+          },
           "folder-scanner": {
             "input-folder": "Dossier d'entrée",
             "compression": "Activer la compression",
@@ -1238,6 +1257,31 @@
             "item": "Élément",
             "ads": {
               "address": "Adresse"
+            },
+            "bacnet": {
+              "device-address": "Adresse de l'appareil",
+              "device-instance": "Instance de l'appareil",
+              "object-type": {
+                "title": "Type d'objet",
+                "analog-input": "Entrée analogique",
+                "analog-output": "Sortie analogique",
+                "analog-value": "Valeur analogique",
+                "binary-input": "Entrée binaire",
+                "binary-output": "Sortie binaire",
+                "binary-value": "Valeur binaire",
+                "multi-state-input": "Entrée multi-état",
+                "multi-state-output": "Sortie multi-état",
+                "multi-state-value": "Valeur multi-état"
+              },
+              "object-instance": "Instance d'objet",
+              "property-identifier": {
+                "title": "Propriété",
+                "present-value": "Valeur actuelle",
+                "status-flags": "Indicateurs d'état",
+                "reliability": "Fiabilité",
+                "out-of-service": "Hors service",
+                "units": "Unités"
+              }
             },
             "folder-scanner": {
               "regex": "Regex pour récupérer les fichiers",
@@ -2470,6 +2514,7 @@
     },
     "oibus-south-type": {
       "ads": "ADS - TwinCAT®",
+      "bacnet": "BACnet®/IP",
       "folder-scanner": "Scanner de dossier",
       "ftp": "FTP",
       "influxdb": "InfluxDB",
@@ -2493,6 +2538,7 @@
     },
     "oibus-south-type-description": {
       "ads": "Le protocole ADS utilisé dans les systèmes TwinCAT®",
+      "bacnet": "Découvrir et interroger des appareils de gestion technique du bâtiment BACnet®/IP",
       "folder-scanner": "Lire des fichiers depuis un dossier local ou distant",
       "ftp": "Lire des fichiers depuis un serveur FTP distant",
       "influxdb": "Interroger des bases de données de séries temporelles InfluxDB (v1, v2, v3)",

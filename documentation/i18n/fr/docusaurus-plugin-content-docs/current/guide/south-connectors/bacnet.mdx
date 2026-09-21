@@ -1,0 +1,113 @@
+---
+sidebar_position: 22
+---
+
+# BACnet®/IP
+
+BACnet® (ASHRAE 135) est le protocole de communication standard pour les équipements de gestion technique du
+bâtiment — contrôleurs CVC, comptage, éclairage et équipements similaires. OIBus agit comme un client
+BACnet/IP, communiquant en UDP, à l'aide de la bibliothèque
+[@bacnet-js/client](https://github.com/bacnet-js/client).
+
+## Paramètres spécifiques {#specific-settings}
+
+### Connexion {#connection}
+
+| Paramètre                  | Description                                                                                                                     | Exemple de valeur  |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| **Interface locale**         | IP de l'interface réseau locale à laquelle lier le socket BACnet/IP. Laisser vide pour que le système d'exploitation choisisse celle par défaut. | `192.168.1.50`      |
+| **Port**                     | Port UDP utilisé pour la communication BACnet/IP. `47808` (`0xBAC0`) est le port BACnet/IP standard.                           | `47808`              |
+| **Délai d'attente APDU**     | Temps maximal, en millisecondes, à attendre la réponse d'un appareil à une requête avant de la considérer comme échouée.       | `6000`               |
+| **Adresse de diffusion**     | Adresse de diffusion utilisée pour la découverte d'appareils (`Who-Is`) lorsque le BBMD est désactivé.                         | `255.255.255.255`   |
+| **Intervalle de nouvelle tentative** | Temps d'attente, en millisecondes, avant de se reconnecter après un échec au niveau du transport (par exemple, le socket local lui-même échoue). | `10000` |
+| **Requêtes parallèles max**  | Nombre maximal d'appareils qu'OIBus peut interroger simultanément. Les requêtes vers un même appareil sont toujours envoyées les unes après les autres. | `1` |
+
+### Interrogation et abonnements COV {#polling-and-cov-subscriptions}
+
+Le **mode de scrutation** de chaque élément détermine la façon dont il est collecté, exactement comme pour tout
+autre connecteur South :
+
+- Un mode de scrutation classique (par exemple `Toutes les 1 min`) **interroge** l'élément — OIBus envoie une
+  requête `ReadProperty` ou `ReadPropertyMultiple` à chaque déclenchement du mode de scrutation.
+- Le mode de scrutation réservé **Subscription** bascule l'élément en **Change of Value (COV)** — OIBus
+  s'abonne une seule fois et l'appareil transmet une nouvelle valeur dès qu'elle change, au lieu d'être
+  interrogé.
+
+Les éléments dus au même cycle de scrutation sont regroupés par appareil physique et lus ensemble via une
+seule requête `ReadPropertyMultiple` par lot, plutôt qu'une requête par point.
+
+| Paramètre                        | Description                                                                                                                                      | Exemple de valeur |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| **Objets max par requête**          | Nombre maximal de paires objet/propriété qu'OIBus regroupe dans une seule requête `ReadPropertyMultiple` vers un appareil. Réduisez cette valeur si un appareil rejette les requêtes volumineuses (par exemple, absence de prise en charge de la segmentation APDU). | `20` |
+| **Durée de l'abonnement COV**       | Durée, en secondes, demandée pour un abonnement COV. `0` demande un abonnement sans expiration.                                                 | `300`                |
+| **Marge de renouvellement COV**     | Délai, en secondes, avant l'expiration d'un abonnement COV à durée limitée auquel OIBus le renouvelle. Sans effet lorsque la durée est `0`.     | `60`                 |
+
+### Régulation des données {#data-throttling}
+
+S'applique aux éléments sur le mode de scrutation **Subscription** — les notifications COV entrantes sont
+mises en tampon et transmises aux caches North par lots plutôt qu'une par une.
+
+| Paramètre                             | Description                                                                          | Exemple de valeur |
+| ---------------------------------------- | --------------------------------------------------------------------------------------- | ------------------- |
+| Nombre de messages avant envoi           | Nombre de notifications COV à accumuler avant l'envoi vers les caches North             | `1000`               |
+| Délai entre les envois                   | Délai (en millisecondes) entre les envois automatiques des messages accumulés           | `1000`               |
+
+### BBMD / Enregistrement en tant que périphérique distant {#bbmd-foreign-device-registration}
+
+Un **BBMD** (BACnet Broadcast Management Device) relaie les messages de diffusion — tels que la découverte
+`Who-Is` et les notifications COV — entre des sous-réseaux BACnet/IP distincts. Activez cette option lorsque
+OIBus et les appareils cibles ne se trouvent pas sur le même domaine de diffusion IP local (par exemple,
+sous-réseaux routés, VLAN ou liaison VPN).
+
+| Paramètre                    | Description                                                                                                              | Exemple de valeur   |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| **Activé**                      | Enregistre OIBus en tant que périphérique distant auprès d'un BBMD distant au lieu de diffuser sur le sous-réseau local. | Activé/Désactivé      |
+| **Adresse du BBMD**             | _(Affiché lorsque activé)_ Adresse IP (et port optionnel) du BBMD auprès duquel s'enregistrer.                          | `10.0.0.1:47808`      |
+| **Durée de vie (TTL) du périphérique distant** | _(Affiché lorsque activé)_ Durée de vie, en secondes, de l'enregistrement en tant que périphérique distant. OIBus la renouvelle automatiquement avant son expiration. | `900` |
+
+Lorsque cette option est activée, la découverte d'appareils (**Tester les paramètres**, **Explorer**) est
+acheminée via le BBMD au lieu d'une simple diffusion locale.
+
+## Paramètres des éléments {#item-settings}
+
+Chaque élément cible une propriété d'objet BACnet sur un appareil.
+
+| Paramètre              | Description                                                                                                              | Exemple de valeur   |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| **Adresse de l'appareil**  | Adresse IP (et port optionnel) de l'appareil cible.                                                                     | `192.168.1.10`        |
+| **Instance de l'appareil** | Numéro d'instance BACnet de l'appareil. Utilisé pour l'identification et la journalisation ; les requêtes sont adressées par IP, et non par ce numéro. | `10` |
+| **Type d'objet**           | Type de l'objet BACnet à lire.                                                                                          | `Entrée analogique`   |
+| **Instance d'objet**       | Numéro d'instance de l'objet au sein de l'appareil.                                                                     | `1`                    |
+| **Propriété**              | Propriété de l'objet à lire.                                                                                            | `Valeur actuelle`      |
+
+:::note Type d'objet
+
+`Entrée analogique`, `Sortie analogique`, `Valeur analogique`, `Entrée binaire`, `Sortie binaire`,
+`Valeur binaire`, `Entrée multi-état`, `Sortie multi-état`, `Valeur multi-état`. Ces types couvrent les
+objets exposant une simple valeur scalaire ; les autres types d'objets BACnet (plannings, calendriers,
+journaux de tendance, etc.) ne sont pas pris en charge par ce connecteur.
+
+:::
+
+:::note Propriété
+
+`Valeur actuelle` (par défaut), `Indicateurs d'état`, `Fiabilité`, `Hors service`, `Unités`.
+
+Pour un élément sur le mode de scrutation **Subscription**, le service COV de BACnet transmet toujours la
+valeur actuelle et les indicateurs d'état de l'objet, quelle que soit la **Propriété** sélectionnée ici —
+ne sélectionnez une propriété différente que pour les éléments interrogés par scrutation.
+
+:::
+
+## Découvrir les appareils et les objets {#discovering-devices-and-objects}
+
+Cliquez sur **Explorer** pour parcourir le réseau BACnet de manière interactive plutôt que de saisir
+manuellement les identifiants d'appareils et d'objets :
+
+1. Au niveau racine, OIBus diffuse une requête `Who-Is` (ou l'achemine via le BBMD, si activé) et liste
+   chaque appareil qui répond, avec son nom et son numéro d'instance.
+2. La sélection d'un appareil lit sa liste d'objets et affiche chaque objet qu'il expose, enrichi de sa
+   valeur actuelle lorsqu'elle est disponible.
+
+Utilisez **Tester les paramètres** sur les paramètres du connecteur pour lancer la même découverte
+d'appareils en guise de vérification rapide de la connectivité, sans ouvrir l'explorateur complet.
