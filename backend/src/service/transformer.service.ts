@@ -512,13 +512,19 @@ export const runTransformerOnContent = async (
       results.push(await transformer.transformInMemory(data.content, source, null));
       break;
     case 'any': {
-      // True file-on-disk path stays on the stream API.
       const randomId = generateRandomId(10);
       // Use the logical filename when provided, otherwise fall back to the basename of the disk path.
       const logicalName = data.filename ?? path.basename(data.filePath);
       const { name, ext } = path.parse(logicalName);
       const cacheFilename = `${name}-${randomId}${ext}`;
-      results.push(await transformer.transform(createReadStream(data.filePath), source, cacheFilename));
+      if (data.content !== undefined) {
+        // No file on disk to stream from (e.g. south item / north transformer test runs, which produce
+        // content in memory without writing it to filePath) — use the in-memory content instead.
+        results.push(await transformer.transformInMemory(data.content, source, cacheFilename));
+      } else {
+        // True file-on-disk path stays on the stream API.
+        results.push(await transformer.transform(createReadStream(data.filePath), source, cacheFilename));
+      }
       break;
     }
   }

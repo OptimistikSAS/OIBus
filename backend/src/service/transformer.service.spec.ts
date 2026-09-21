@@ -610,6 +610,24 @@ describe('Transformer Service', () => {
         fsModule['createReadStream'] = orig;
       }
     });
+
+    it('runs any content in memory when no file was written to filePath', async () => {
+      const fsModule = nodeRequire('node:fs') as Record<string, unknown>;
+      const orig = fsModule['createReadStream'];
+      const createReadStreamMock = mock.fn(() => 'stream');
+      fsModule['createReadStream'] = createReadStreamMock;
+      try {
+        const t = buildTransformer();
+        const results = await run()(t, { type: 'any', filePath: 'does-not-exist.csv', content: 'a;b\n1;2' }, { source: 'test' });
+        assert.strictEqual(createReadStreamMock.mock.calls.length, 0);
+        assert.strictEqual(t.transformInMemory.mock.calls.length, 1);
+        assert.strictEqual(t.transformInMemory.mock.calls[0].arguments[0], 'a;b\n1;2');
+        assert.ok((t.transformInMemory.mock.calls[0].arguments[2] as string).includes('random-id'));
+        assert.strictEqual(results.length, 1);
+      } finally {
+        fsModule['createReadStream'] = orig;
+      }
+    });
   });
 
   describe('toTransformedContent', () => {
