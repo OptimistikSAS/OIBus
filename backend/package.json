@@ -50,6 +50,7 @@
     "@azure/identity": "4.13.3",
     "@azure/storage-blob": "12.33.0",
     "@azure/storage-file-datalake": "12.31.0",
+    "@bacnet-js/client": "3.3.2",
     "@influxdata/influxdb-client": "1.35.0",
     "@influxdata/influxdb3-client": "2.4.0",
     "@smithy/node-http-handler": "4.12.1",

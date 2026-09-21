@@ -1,0 +1,109 @@
+---
+sidebar_position: 22
+---
+
+# BACnet®/IP
+
+BACnet® (ASHRAE 135) is the standard communication protocol for building automation and control devices —
+HVAC controllers, metering, lighting, and similar equipment. OIBus acts as a BACnet/IP client, communicating
+over UDP, using the [@bacnet-js/client](https://github.com/bacnet-js/client) library.
+
+## Specific Settings {#specific-settings}
+
+### Connection {#connection}
+
+| Setting               | Description                                                                                                                  | Example Value     |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------ |
+| **Local interface**    | Local network interface IP to bind the BACnet/IP socket to. Leave empty to let the operating system pick the default one.   | `192.168.1.50`     |
+| **Port**               | UDP port used for BACnet/IP communication. `47808` (`0xBAC0`) is the standard BACnet/IP port.                                | `47808`            |
+| **APDU timeout**       | Maximum time, in milliseconds, to wait for a device's response to a request before treating it as failed.                   | `6000`             |
+| **Broadcast address**  | Broadcast address used for device discovery (`Who-Is`) when BBMD is disabled.                                               | `255.255.255.255`  |
+| **Retry interval**     | Time to wait, in milliseconds, before reconnecting after a transport-level failure (e.g. the local socket itself fails).    | `10000`            |
+| **Max parallel queries** | Maximum number of devices OIBus may query concurrently. Requests to a single device are always sent one at a time.        | `1`                |
+
+### Polling and COV Subscriptions {#polling-and-cov-subscriptions}
+
+Each item's **Scan mode** decides how it is collected, exactly as for any other South connector:
+
+- A regular schedule (e.g. `Every 1 min`) **polls** the item — OIBus issues a `ReadProperty` or
+  `ReadPropertyMultiple` request each time the schedule fires.
+- The reserved **Subscription** schedule switches the item to **Change of Value (COV)** — OIBus subscribes
+  once and the device pushes a new value whenever it changes, instead of being polled.
+
+Items due on the same poll tick are grouped per physical device and read together with a single
+`ReadPropertyMultiple` request per chunk, instead of one request per point.
+
+| Setting                     | Description                                                                                                                                   | Example Value |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| **Max objects per request**  | Maximum number of object/property pairs OIBus packs into a single `ReadPropertyMultiple` request to one device. Lower this if a device rejects large requests (e.g. no APDU segmentation support). | `20`           |
+| **COV subscription lifetime** | Lifetime, in seconds, requested for a COV subscription. `0` requests a subscription that never expires.                                     | `300`          |
+| **COV renewal margin**       | How long, in seconds, before a finite-lifetime COV subscription expires that OIBus renews it. Has no effect when lifetime is `0`.             | `60`           |
+
+### Data Throttling {#data-throttling}
+
+Applies to items on the **Subscription** schedule — incoming COV notifications are buffered and flushed to
+North caches in batches rather than one at a time.
+
+| Setting                         | Description                                                                    | Example Value |
+| -------------------------------- | ------------------------------------------------------------------------------ | -------------- |
+| Number of messages before flush | Number of COV notifications to accumulate before flushing to North caches      | `1000`         |
+| Delay between flush             | Time delay (in milliseconds) between automatic flushes of accumulated messages | `1000`         |
+
+### BBMD / Foreign Device Registration {#bbmd-foreign-device-registration}
+
+A **BBMD** (BACnet Broadcast Management Device) forwards broadcast messages — such as `Who-Is` discovery and
+COV notifications — between separate BACnet/IP subnets. Enable this when OIBus and the target devices are
+not on the same local IP broadcast domain (e.g. routed subnets, VLANs, or a VPN link).
+
+| Setting              | Description                                                                                                          | Example Value           |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| **Enabled**           | Registers OIBus as a foreign device with a remote BBMD instead of broadcasting on the local subnet.                  | Enabled/Disabled         |
+| **BBMD address**      | _(Shown when enabled)_ IP address (and optional port) of the BBMD to register with.                                  | `10.0.0.1:47808`         |
+| **Foreign device TTL** | _(Shown when enabled)_ Lifetime, in seconds, of the foreign device registration. OIBus renews it automatically before it expires. | `900`                    |
+
+When enabled, device discovery (**Test settings**, **Explore**) is routed through the BBMD instead of a plain
+local broadcast.
+
+## Item Settings {#item-settings}
+
+Each item targets one BACnet object property on one device.
+
+| Setting              | Description                                                                                                         | Example Value      |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| **Device address**    | IP address (and optional port) of the target device.                                                                | `192.168.1.10`      |
+| **Device instance**   | The device's BACnet instance number. Used for identification and logging; requests are addressed by IP, not by this number. | `10`                |
+| **Object type**       | Type of the BACnet object to read.                                                                                  | `Analog input`      |
+| **Object instance**   | Instance number of the object within the device.                                                                    | `1`                 |
+| **Property**          | Object property to read.                                                                                            | `Present value`     |
+
+:::note Object type
+
+`Analog input`, `Analog output`, `Analog value`, `Binary input`, `Binary output`, `Binary value`,
+`Multi-state input`, `Multi-state output`, `Multi-state value`. These cover the object types that expose a
+simple scalar value; other BACnet object types (schedules, calendars, trend logs, etc.) are not supported by
+this connector.
+
+:::
+
+:::note Property
+
+`Present value` (default), `Status flags`, `Reliability`, `Out of service`, `Units`.
+
+For an item on the **Subscription** schedule, the underlying BACnet COV service always reports the object's
+present value and status flags, regardless of which **Property** is selected here — select a different
+property only for polled items.
+
+:::
+
+## Discovering Devices and Objects {#discovering-devices-and-objects}
+
+Click **Explore** to browse the BACnet network interactively instead of entering device and object
+identifiers by hand:
+
+1. At the root level, OIBus broadcasts a `Who-Is` request (or routes it through the BBMD, if enabled) and
+   lists every device that responds, with its name and instance number.
+2. Selecting a device reads its object list and shows every object it exposes, enriched with its current
+   present value where available.
+
+Use **Test settings** on the connector's own settings to run the same device discovery as a quick
+connectivity check, without opening the full browser.

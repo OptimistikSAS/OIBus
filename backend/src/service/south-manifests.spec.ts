@@ -8,7 +8,7 @@ describe('southManifestList', () => {
   });
 
   it('contains one manifest per registered south connector', () => {
-    assert.equal(southManifestList.length, 21);
+    assert.equal(southManifestList.length, 22);
   });
 
   it('contains only manifests with a non-empty unique id', () => {
@@ -35,6 +35,7 @@ describe('southManifestList', () => {
       'postgresql',
       'sqlite',
       'ads',
+      'bacnet',
       'modbus',
       'oianalytics',
       'osisoft-pi',
