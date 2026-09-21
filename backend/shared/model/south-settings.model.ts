@@ -10,6 +10,28 @@ export type SouthADSSettingsEnumAsText = (typeof SOUTH_A_D_S_SETTINGS_ENUM_AS_TE
 export const SOUTH_A_D_S_SETTINGS_BOOL_AS_TEXTS = ['text', 'integer'] as const;
 export type SouthADSSettingsBoolAsText = (typeof SOUTH_A_D_S_SETTINGS_BOOL_AS_TEXTS)[number];
 
+export const SOUTH_B_A_CNET_ITEM_SETTINGS_OBJECT_TYPES = [
+  'analog-input',
+  'analog-output',
+  'analog-value',
+  'binary-input',
+  'binary-output',
+  'binary-value',
+  'multi-state-input',
+  'multi-state-output',
+  'multi-state-value'
+] as const;
+export type SouthBACnetItemSettingsObjectType = (typeof SOUTH_B_A_CNET_ITEM_SETTINGS_OBJECT_TYPES)[number];
+
+export const SOUTH_B_A_CNET_ITEM_SETTINGS_PROPERTY_IDENTIFIERS = [
+  'present-value',
+  'status-flags',
+  'reliability',
+  'out-of-service',
+  'units'
+] as const;
+export type SouthBACnetItemSettingsPropertyIdentifier = (typeof SOUTH_B_A_CNET_ITEM_SETTINGS_PROPERTY_IDENTIFIERS)[number];
+
 export const SOUTH_F_T_P_SETTINGS_AUTHENTICATIONS = ['none', 'password'] as const;
 export type SouthFTPSettingsAuthentication = (typeof SOUTH_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
 
@@ -286,6 +308,12 @@ export interface SouthADSSettingsStructureFiltering {
   fields: string;
 }
 
+export interface SouthBACnetSettingsBbmd {
+  enabled: boolean;
+  address?: string;
+  foreignDeviceTtl?: number;
+}
+
 export interface SouthMQTTSettingsAuthentication {
   type: SouthMQTTSettingsAuthenticationType;
   username?: string;
@@ -356,6 +384,21 @@ export interface SouthADSSettings {
   enumAsText: SouthADSSettingsEnumAsText;
   boolAsText: SouthADSSettingsBoolAsText;
   structureFiltering: Array<SouthADSSettingsStructureFiltering> | null;
+}
+
+export interface SouthBACnetSettings {
+  localInterface: string | null;
+  port: number;
+  apduTimeout: number;
+  broadcastAddress: string;
+  retryInterval: number;
+  maxParallelRun: number;
+  covDefaultLifetime: number;
+  covRenewalMargin: number;
+  maxObjectsPerRequest: number;
+  maxNumberOfMessages: number;
+  flushMessageTimeout: number;
+  bbmd: SouthBACnetSettingsBbmd;
 }
 
 export interface SouthFolderScannerSettings {
@@ -557,6 +600,7 @@ export interface SouthSQLiteSettings {
 
 export type SouthSettings =
   | SouthADSSettings
+  | SouthBACnetSettings
   | SouthFolderScannerSettings
   | SouthFTPSettings
   | SouthInfluxDBSettings
@@ -769,6 +813,14 @@ export interface SouthADSItemSettings {
   address: string;
 }
 
+export interface SouthBACnetItemSettings {
+  deviceAddress: string;
+  deviceInstance: number;
+  objectType: SouthBACnetItemSettingsObjectType;
+  objectInstance: number;
+  propertyIdentifier: SouthBACnetItemSettingsPropertyIdentifier;
+}
+
 export interface SouthFolderScannerItemSettings {
   regex: string;
   minAge: number;
@@ -904,6 +956,7 @@ export interface SouthSQLiteItemSettings {
 
 export type SouthItemSettings =
   | SouthADSItemSettings
+  | SouthBACnetItemSettings
   | SouthFolderScannerItemSettings
   | SouthFTPItemSettings
   | SouthInfluxDBItemSettings
