@@ -375,6 +375,8 @@ export function buildSouthInterfaceName(connectorId: string, itemInterface: bool
   switch (connectorId) {
     case 'ads':
       return `SouthADS${prefix}Settings`;
+    case 'bacnet':
+      return `SouthBACnet${prefix}Settings`;
     case 'folder-scanner':
       return `SouthFolderScanner${prefix}Settings`;
     case 'ftp':

@@ -14,6 +14,8 @@ import type OIAnalyticsRegistrationRepository from '../repository/config/oianaly
 import type {
   SouthADSItemSettings,
   SouthADSSettings,
+  SouthBACnetItemSettings,
+  SouthBACnetSettings,
   SouthFolderScannerItemSettings,
   SouthFolderScannerSettings,
   SouthFTPItemSettings,
@@ -88,6 +90,7 @@ describe('South Connector Factory', () => {
     };
 
   const MockSouthADS = makeMock('ads');
+  const MockSouthBACnet = makeMock('bacnet');
   const MockSouthFolderScanner = makeMock('folder-scanner');
   const MockSouthModbus = makeMock('modbus');
   const MockSouthMongoDB = makeMock('mongodb');
@@ -114,6 +117,7 @@ describe('South Connector Factory', () => {
   before(() => {
     mockModule(nodeRequire, '../service/utils', utilsExports);
     mockModule(nodeRequire, '../south/south-ads/south-ads', { __esModule: true, default: MockSouthADS });
+    mockModule(nodeRequire, '../south/south-bacnet/south-bacnet', { __esModule: true, default: MockSouthBACnet });
     mockModule(nodeRequire, '../south/south-folder-scanner/south-folder-scanner', { __esModule: true, default: MockSouthFolderScanner });
     mockModule(nodeRequire, '../south/south-modbus/south-modbus', { __esModule: true, default: MockSouthModbus });
     mockModule(nodeRequire, '../south/south-mongodb/south-mongodb', { __esModule: true, default: MockSouthMongoDB });
@@ -187,6 +191,15 @@ describe('South Connector Factory', () => {
       const result = callBuildSouth(settings);
       assert.strictEqual(ctorCalls['ads'], 1);
       assert.ok(result instanceof MockSouthADS);
+    });
+
+    it('should create SouthBACnet for type "bacnet"', () => {
+      const result = callBuildSouth({ ...baseSettings, type: 'bacnet', settings: {} as SouthBACnetSettings } as SouthConnectorEntity<
+        SouthBACnetSettings,
+        SouthBACnetItemSettings
+      >);
+      assert.strictEqual(ctorCalls['bacnet'], 1);
+      assert.ok(result instanceof MockSouthBACnet);
     });
 
     it('should create SouthFolderScanner for type "folder-scanner"', () => {

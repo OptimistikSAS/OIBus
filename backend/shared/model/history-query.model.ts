@@ -5,6 +5,8 @@ import { OIBusSouthType } from './south-connector.model';
 import {
   SouthADSItemSettings,
   SouthADSSettings,
+  SouthBACnetItemSettings,
+  SouthBACnetSettings,
   SouthFolderScannerItemSettings,
   SouthFolderScannerSettings,
   SouthFTPItemSettings,
@@ -333,6 +335,10 @@ export interface HistoryQueryItemTypedDTO<IS> extends BaseEntity {
 export interface HistoryQueryADSSouthDTO extends HistoryQuerySouthTypedDTO<'ads', SouthADSSettings, SouthADSItemSettings> {
   items: Array<HistoryQueryADSItemDTO>;
 }
+/** History query south DTO for BACnet/IP. */
+export interface HistoryQueryBACnetSouthDTO extends HistoryQuerySouthTypedDTO<'bacnet', SouthBACnetSettings, SouthBACnetItemSettings> {
+  items: Array<HistoryQueryBACnetItemDTO>;
+}
 /** History query south DTO for the Folder Scanner. */
 export interface HistoryQueryFolderScannerSouthDTO extends HistoryQuerySouthTypedDTO<
   'folder-scanner',
@@ -461,6 +467,7 @@ export type HistoryQueryDTO = BaseEntity &
   HistoryQueryCommonDTO &
   (
     | HistoryQueryADSSouthDTO
+    | HistoryQueryBACnetSouthDTO
     | HistoryQueryFolderScannerSouthDTO
     | HistoryQueryFTPSouthDTO
     | HistoryQueryInfluxDBSouthDTO
@@ -552,6 +559,14 @@ export interface HistoryQueryItemCommandTypedDTO<IS> {
 /** History query south command for Beckhoff ADS. */
 export interface HistoryQueryADSSouthCommandDTO extends HistoryQuerySouthCommandTypedDTO<'ads', SouthADSSettings, SouthADSItemSettings> {
   items: Array<HistoryQueryADSItemCommandDTO>;
+}
+/** History query south command for BACnet/IP. */
+export interface HistoryQueryBACnetSouthCommandDTO extends HistoryQuerySouthCommandTypedDTO<
+  'bacnet',
+  SouthBACnetSettings,
+  SouthBACnetItemSettings
+> {
+  items: Array<HistoryQueryBACnetItemCommandDTO>;
 }
 /** History query south command for the Folder Scanner. */
 export interface HistoryQueryFolderScannerSouthCommandDTO extends HistoryQuerySouthCommandTypedDTO<
@@ -736,6 +751,7 @@ export interface HistoryQuerySFTPNorthCommandDTO extends HistoryQueryNorthComman
 export type HistoryQueryCommandDTO = HistoryQueryCommandCommonDTO &
   (
     | HistoryQueryADSSouthCommandDTO
+    | HistoryQueryBACnetSouthCommandDTO
     | HistoryQueryFolderScannerSouthCommandDTO
     | HistoryQueryFTPSouthCommandDTO
     | HistoryQueryInfluxDBSouthCommandDTO
@@ -774,6 +790,8 @@ export type HistoryQueryCommandDTO = HistoryQueryCommandCommonDTO &
 // ── Named item DTO variants (tsoa uses these as schema names) ────────────
 /** History query item DTO for Beckhoff ADS. */
 export interface HistoryQueryADSItemDTO extends HistoryQueryItemTypedDTO<SouthADSItemSettings> {}
+/** History query item DTO for BACnet/IP. */
+export interface HistoryQueryBACnetItemDTO extends HistoryQueryItemTypedDTO<SouthBACnetItemSettings> {}
 /** History query item DTO for the Folder Scanner. */
 export interface HistoryQueryFolderScannerItemDTO extends HistoryQueryItemTypedDTO<SouthFolderScannerItemSettings> {}
 /** History query item DTO for FTP file transfer. */
@@ -821,6 +839,7 @@ export interface HistoryQuerySQLiteItemDTO extends HistoryQueryItemTypedDTO<Sout
  */
 export type HistoryQueryItemDTO =
   | HistoryQueryADSItemDTO
+  | HistoryQueryBACnetItemDTO
   | HistoryQueryFolderScannerItemDTO
   | HistoryQueryFTPItemDTO
   | HistoryQueryInfluxDBItemDTO
@@ -845,6 +864,8 @@ export type HistoryQueryItemDTO =
 // ── Named item command variants (tsoa uses these as schema names) ─────────
 /** History query item command for Beckhoff ADS. */
 export interface HistoryQueryADSItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthADSItemSettings> {}
+/** History query item command for BACnet/IP. */
+export interface HistoryQueryBACnetItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthBACnetItemSettings> {}
 /** History query item command for the Folder Scanner. */
 export interface HistoryQueryFolderScannerItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthFolderScannerItemSettings> {}
 /** History query item command for FTP file transfer. */
@@ -892,6 +913,7 @@ export interface HistoryQuerySQLiteItemCommandDTO extends HistoryQueryItemComman
  */
 export type HistoryQueryItemCommandDTO =
   | HistoryQueryADSItemCommandDTO
+  | HistoryQueryBACnetItemCommandDTO
   | HistoryQueryFolderScannerItemCommandDTO
   | HistoryQueryFTPItemCommandDTO
   | HistoryQueryInfluxDBItemCommandDTO
