@@ -6,6 +6,8 @@ import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-
 import {
   SouthADSItemSettings,
   SouthADSSettings,
+  SouthBACnetItemSettings,
+  SouthBACnetSettings,
   SouthFolderScannerItemSettings,
   SouthFolderScannerSettings,
   SouthFTPItemSettings,
@@ -50,6 +52,7 @@ import {
   SouthSQLiteSettings
 } from '../../shared/model/south-settings.model';
 import SouthADS from '../south/south-ads/south-ads';
+import SouthBACnet from '../south/south-bacnet/south-bacnet';
 import SouthFolderScanner from '../south/south-folder-scanner/south-folder-scanner';
 import SouthModbus from '../south/south-modbus/south-modbus';
 import SouthMongoDB from '../south/south-mongodb/south-mongodb';
@@ -93,6 +96,13 @@ export const buildSouth = (
     case 'ads':
       return new SouthADS(
         settings as SouthConnectorEntity<SouthADSSettings, SouthADSItemSettings>,
+        addContent,
+        southCacheRepository,
+        southCacheFolder
+      );
+    case 'bacnet':
+      return new SouthBACnet(
+        settings as SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings>,
         addContent,
         southCacheRepository,
         southCacheFolder

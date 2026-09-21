@@ -336,6 +336,7 @@
     },
     "oibus-south-type": {
       "ads": "ADS - TwinCAT®",
+      "bacnet": "BACnet®/IP",
       "folder-scanner": "Folder scanner",
       "ftp": "FTP",
       "influxdb": "InfluxDB",
@@ -359,6 +360,7 @@
     },
     "oibus-south-type-description": {
       "ads": "The ADS protocol used in TwinCAT® systems",
+      "bacnet": "Discover and poll BACnet®/IP building automation devices",
       "folder-scanner": "Read files from a local or remote folder",
       "ftp": "Read files from a remote FTP server",
       "influxdb": "Query InfluxDB time series databases (v1, v2, v3)",
@@ -1762,6 +1764,25 @@
               "fields": "Fields to keep (comma separated)"
             }
           },
+          "bacnet": {
+            "local-interface": "Local interface",
+            "port": "Port",
+            "apdu-timeout": "APDU timeout",
+            "broadcast-address": "Broadcast address",
+            "retry-interval": "Retry interval",
+            "max-parallel-run": "Max parallel queries",
+            "cov-default-lifetime": "COV subscription lifetime",
+            "cov-renewal-margin": "COV renewal margin",
+            "max-objects-per-request": "Max objects per request",
+            "max-number-of-messages": "Number of messages before flush",
+            "flush-message-timeout": "Delay between flush",
+            "bbmd": {
+              "title": "BBMD / Foreign device registration",
+              "enabled": "Enabled",
+              "address": "BBMD address",
+              "foreign-device-ttl": "Foreign device TTL"
+            }
+          },
           "folder-scanner": {
             "input-folder": "Input folder",
             "compression": "Enable compression",
@@ -2083,6 +2104,31 @@
             "item": "Item",
             "ads": {
               "address": "Address"
+            },
+            "bacnet": {
+              "device-address": "Device address",
+              "device-instance": "Device instance",
+              "object-type": {
+                "title": "Object type",
+                "analog-input": "Analog input",
+                "analog-output": "Analog output",
+                "analog-value": "Analog value",
+                "binary-input": "Binary input",
+                "binary-output": "Binary output",
+                "binary-value": "Binary value",
+                "multi-state-input": "Multi-state input",
+                "multi-state-output": "Multi-state output",
+                "multi-state-value": "Multi-state value"
+              },
+              "object-instance": "Object instance",
+              "property-identifier": {
+                "title": "Property",
+                "present-value": "Present value",
+                "status-flags": "Status flags",
+                "reliability": "Reliability",
+                "out-of-service": "Out of service",
+                "units": "Units"
+              }
             },
             "folder-scanner": {
               "regex": "Regex to pick up files",
