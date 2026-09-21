@@ -917,6 +917,25 @@
               "fields": "要保留的字段（以逗号分隔）"
             }
           },
+          "bacnet": {
+            "local-interface": "本地网卡",
+            "port": "端口",
+            "apdu-timeout": "APDU 超时",
+            "broadcast-address": "广播地址",
+            "retry-interval": "重试间隔",
+            "max-parallel-run": "最大并行查询数",
+            "cov-default-lifetime": "COV 订阅有效期",
+            "cov-renewal-margin": "COV 续订提前量",
+            "max-objects-per-request": "每次请求最大对象数",
+            "max-number-of-messages": "刷新前的消息数",
+            "flush-message-timeout": "刷新间隔",
+            "bbmd": {
+              "title": "BBMD / 外部设备注册",
+              "enabled": "启用",
+              "address": "BBMD 地址",
+              "foreign-device-ttl": "外部设备 TTL"
+            }
+          },
           "folder-scanner": {
             "input-folder": "输入文件夹",
             "compression": "启用压缩",
@@ -1238,6 +1257,31 @@
             "item": "项",
             "ads": {
               "address": "地址"
+            },
+            "bacnet": {
+              "device-address": "设备地址",
+              "device-instance": "设备实例",
+              "object-type": {
+                "title": "对象类型",
+                "analog-input": "模拟输入",
+                "analog-output": "模拟输出",
+                "analog-value": "模拟值",
+                "binary-input": "二进制输入",
+                "binary-output": "二进制输出",
+                "binary-value": "二进制值",
+                "multi-state-input": "多状态输入",
+                "multi-state-output": "多状态输出",
+                "multi-state-value": "多状态值"
+              },
+              "object-instance": "对象实例",
+              "property-identifier": {
+                "title": "属性",
+                "present-value": "当前值",
+                "status-flags": "状态标志",
+                "reliability": "可靠性",
+                "out-of-service": "停用",
+                "units": "单位"
+              }
             },
             "folder-scanner": {
               "regex": "用于匹配文件的正则表达式",
@@ -2470,6 +2514,7 @@
     },
     "oibus-south-type": {
       "ads": "ADS - TwinCAT®",
+      "bacnet": "BACnet®/IP",
       "folder-scanner": "文件夹扫描器",
       "ftp": "FTP",
       "influxdb": "InfluxDB",
@@ -2493,6 +2538,7 @@
     },
     "oibus-south-type-description": {
       "ads": "TwinCAT® 系统中使用的 ADS 协议",
+      "bacnet": "发现并轮询 BACnet®/IP 楼宇自控设备",
       "folder-scanner": "从本地或远程文件夹读取文件",
       "ftp": "从远程 FTP 服务器读取文件",
       "influxdb": "查询 InfluxDB 时序数据库（v1、v2、v3）",

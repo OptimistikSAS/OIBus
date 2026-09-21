@@ -143,7 +143,7 @@ suivants :
 
 ## Stratégie de mise en cache {#caching-strategy}
 
-Pour les **connecteurs de la famille IoT** (OPC UA, Modbus, ADS, OPC Classic, S7, MQTT), chaque élément peut filtrer
+Pour les **connecteurs de la famille IoT** (OPC UA, Modbus, ADS, OPC Classic, S7, MQTT, BACnet/IP), chaque élément peut filtrer
 les valeurs collectées qui sont effectivement mises en cache et transmises aux connecteurs North, au lieu de mettre
 en cache chaque valeur lue ou reçue. Cela réduit la taille du cache et la charge sur le connecteur North pour les
 points stables ou qui évoluent lentement.
