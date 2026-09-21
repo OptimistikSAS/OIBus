@@ -129,7 +129,7 @@ sidebar_position: 0
 
 ## 缓存策略 {#caching-strategy}
 
-对于**IoT 系列连接器**（OPC UA、Modbus、ADS、OPC Classic、S7、MQTT），每个项目都可以过滤实际被
+对于**IoT 系列连接器**（OPC UA、Modbus、ADS、OPC Classic、S7、MQTT、BACnet/IP），每个项目都可以过滤实际被
 缓存并转发到 North 连接器的采集值，而不是缓存每一个读取或接收到的值。这可以减小缓存大小，并
 降低对于稳定或缓慢变化的数据点的 North 连接器负载。
 

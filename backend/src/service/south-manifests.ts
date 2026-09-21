@@ -6,6 +6,7 @@ import modbusManifest from '../south/south-modbus/manifest';
 import mongodbManifest from '../south/south-mongodb/manifest';
 import folderScannerManifest from '../south/south-folder-scanner/manifest';
 import adsManifest from '../south/south-ads/manifest';
+import bacnetManifest from '../south/south-bacnet/manifest';
 import mssqlManifest from '../south/south-mssql/manifest';
 import mysqlManifest from '../south/south-mysql/manifest';
 import postgresqlManifest from '../south/south-postgresql/manifest';
@@ -34,6 +35,7 @@ export const southManifestList: Array<SouthConnectorManifest> = [
   postgresqlManifest,
   sqliteManifest,
   adsManifest,
+  bacnetManifest,
   modbusManifest,
   mongodbManifest,
   oianalyticsManifest,
