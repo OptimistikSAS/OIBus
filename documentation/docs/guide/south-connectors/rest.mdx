@@ -84,18 +84,21 @@ item by disabling **Sync with group**.
 
 ### Query Parameters
 
-Add key/value pairs appended to the request URL as query string parameters. Use the `@StartTime` and `@EndTime`
-variables to inject the query's time window directly into a parameter value.
+Add key/value pairs appended to the request URL as query string parameters. Use the `@StartTime` / `@EndTime`
+or `@PeriodStart` / `@PeriodEnd` variables (see [Time Variables](#time-variables)) to inject a time window
+directly into a parameter value.
 
-| Setting         | Description                                                                                         | Example Value |
-| --------------- | --------------------------------------------------------------------------------------------------- | ------------- |
-| **Key**         | Name of the query parameter.                                                                        | `from`        |
-| **Value**       | Value of the parameter; may contain `@StartTime` or `@EndTime` placeholders.                        | `@StartTime`  |
-| **Date format** | Shown when the value contains `@StartTime` or `@EndTime` — configures how the instant is formatted. | `iso-string`  |
+| Setting            | Description                                                                                                 | Example Value |
+| ------------------ | ------------------------------------------------------------------------------------------------------------ | -------------- |
+| **Key**            | Name of the query parameter.                                                                                 | `from`         |
+| **Value**          | Value of the parameter; may contain `@StartTime`, `@EndTime`, `@PeriodStart`, or `@PeriodEnd` placeholders. | `@PeriodStart` |
+| **Date format**    | Shown when the value contains any of the time variables — configures how the instant is formatted.         | `iso-string`   |
+| **Sliding window** | Shown when the value contains `@PeriodStart` or `@PeriodEnd` — the window size used to compute them.       | `1 hr`         |
 
 #### Date/Time Format for Query Parameters
 
-When a parameter value includes `@StartTime` or `@EndTime`, a date format configuration section appears:
+When a parameter value includes `@StartTime`, `@EndTime`, `@PeriodStart`, or `@PeriodEnd`, a date format
+configuration section appears:
 
 | Setting      | Description                                       | Example Value                                         |
 | ------------ | ------------------------------------------------- | ----------------------------------------------------- |
@@ -103,15 +106,24 @@ When a parameter value includes `@StartTime` or `@EndTime`, a date format config
 | **Timezone** | Timezone for formatting (only for `string` type). | `UTC`, `Europe/Paris`                                 |
 | **Format**   | Custom format pattern (only for `string` type).   | `yyyy-MM-dd HH:mm:ss`                                 |
 
+#### Sliding Window for Query Parameters
+
+When a parameter value includes `@PeriodStart` or `@PeriodEnd`, a sliding window configuration section appears:
+
+| Setting  | Description               | Example Value                 |
+| -------- | -------------------------- | ------------------------------ |
+| **Size** | Numeric size of the window. | `1`                            |
+| **Unit** | Unit for the size value.   | `ms`, `s`, `min`, `hr`, `day`  |
+
 ### Headers
 
-Add custom HTTP headers to the request. Like query parameters, header values support `@StartTime` and `@EndTime`
-substitution with the same date/time format configuration.
+Add custom HTTP headers to the request. Like query parameters, header values support the same time variables
+and, when using `@PeriodStart` / `@PeriodEnd`, the same sliding window configuration.
 
-| Setting   | Description                                                        | Example Value     |
-| --------- | ------------------------------------------------------------------ | ----------------- |
-| **Key**   | Header name.                                                       | `X-Custom-Header` |
-| **Value** | Header value; may contain `@StartTime` or `@EndTime` placeholders. | `Bearer my_token` |
+| Setting   | Description                                                                                        | Example Value     |
+| --------- | --------------------------------------------------------------------------------------------------- | ----------------- |
+| **Key**   | Header name.                                                                                        | `X-Custom-Header` |
+| **Value** | Header value; may contain `@StartTime`, `@EndTime`, `@PeriodStart`, or `@PeriodEnd` placeholders.   | `Bearer my_token` |
 
 :::info Content-Type
 When a body is configured and no `Content-Type` header is explicitly defined, OIBus automatically adds
@@ -120,15 +132,17 @@ When a body is configured and no `Content-Type` header is explicitly defined, OI
 
 ### Request Body
 
-A JSON body can be sent for `POST`, `PUT`, `PATCH`, and `DELETE` requests. The body supports `@StartTime` and
-`@EndTime` placeholders to inject the query time window into the payload.
+A JSON body can be sent for `POST`, `PUT`, `PATCH`, and `DELETE` requests. The body supports the same
+`@StartTime` / `@EndTime` and `@PeriodStart` / `@PeriodEnd` placeholders to inject a time window into the payload.
 
-| Setting         | Description                                                                                        | Example Value            |
-| --------------- | -------------------------------------------------------------------------------------------------- | ------------------------ |
-| **Content**     | JSON body of the request; may contain `@StartTime` or `@EndTime` placeholders.                     | `{"from": "@StartTime"}` |
-| **Date format** | Shown when the body contains `@StartTime` or `@EndTime` — configures how the instant is formatted. | `iso-string`             |
+| Setting            | Description                                                                                                  | Example Value              |
+| ------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------- |
+| **Content**         | JSON body of the request; may contain `@StartTime`, `@EndTime`, `@PeriodStart`, or `@PeriodEnd` placeholders. | `{"from": "@PeriodStart"}` |
+| **Date format**     | Shown when the body contains any of the time variables — configures how the instant is formatted.           | `iso-string`                |
+| **Sliding window**  | Shown when the body contains `@PeriodStart` or `@PeriodEnd` — the window size used to compute them.         | `1 hr`                      |
 
-The date/time format configuration for the body follows the same settings as [query parameters](#datetime-format-for-query-parameters).
+The date/time format and sliding window configuration for the body follow the same settings as
+[query parameters](#datetime-format-for-query-parameters).
 
 ### Response Handling
 
@@ -170,14 +184,43 @@ JSONPath expression, the maximum timestamp among all of them is used as the new 
 
 ## Time Variables
 
-The following variables can be used in query parameter values, header values, and request bodies:
+The following variables can be used in query parameter values, header values, and request bodies. They fall
+into two independent modes — use whichever matches the target API, they are not meant to be combined.
+
+### Query Interval (`@StartTime` / `@EndTime`)
 
 | Setting      | Description                                                                               | Example Value              |
 | ------------ | ----------------------------------------------------------------------------------------- | -------------------------- |
 | `@StartTime` | Start of the current query interval. Updated to the tracked max instant after each query. | `2024-01-15T10:00:00.000Z` |
 | `@EndTime`   | End of the current query interval (capped to the current time or the sub-interval end).   | `2024-01-15T11:00:00.000Z` |
 
+`@StartTime` picks up where the previous query left off — either the last tracked max instant (see
+[Tracking the Maximum Instant](#tracking-the-maximum-instant)) or the last completed query time. This is
+the right choice for APIs that support arbitrary historical ranges, since OIBus can catch up on a backlog
+after downtime by re-querying the missed intervals.
+
 :::info Query Splitting
 When a large time range is requested, OIBus splits it into smaller sub-intervals based on the **Max read interval**
 throttling setting. Each sub-interval gets its own `@StartTime` / `@EndTime` pair.
+:::
+
+### Sliding Window (`@PeriodStart` / `@PeriodEnd`)
+
+| Setting        | Description                                                                        | Example Value              |
+| -------------- | ----------------------------------------------------------------------------------- | -------------------------- |
+| `@PeriodStart` | Start of the sliding window: the current time minus the configured window size.    | `2024-01-15T10:00:00.000Z` |
+| `@PeriodEnd`   | End of the sliding window: the current time when the request is sent.              | `2024-01-15T11:00:00.000Z` |
+
+Unlike `@StartTime` / `@EndTime`, `@PeriodStart` / `@PeriodEnd` are always computed from the current time,
+regardless of when the previous query ran. This suits APIs that only expose a rolling window of recent data
+(e.g. "give me the last 5 minutes"), rather than arbitrary historical ranges.
+
+The window size is configured per field, next to the placeholder that uses it — see **Sliding window** in
+[Query Parameters](#query-parameters), [Headers](#headers), or [Request Body](#request-body).
+
+:::warning No backfill
+Because `@PeriodStart` / `@PeriodEnd` always anchor to "now", this mode does not catch up on missed data.
+If OIBus is stopped or the connection is unavailable for longer than the window size, the gap is lost — the
+next successful query only covers the current window. Use `@StartTime` / `@EndTime` instead if backfilling
+after downtime matters for this item.
 :::

@@ -14,6 +14,9 @@ import { SouthHistoryQuery } from '../south-interface';
 import {
   SouthItemSettings,
   SouthRestItemSettings,
+  SouthRestItemSettingsBodySlidingWindow,
+  SouthRestItemSettingsHeadersSlidingWindow,
+  SouthRestItemSettingsQueryParamsSlidingWindow,
   SouthRestItemSettingsTrackingInstantDateTimeInput,
   SouthRestSettings
 } from '../../../shared/model/south-settings.model';
@@ -135,6 +138,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
   ): Promise<{ filename: string; content: string; maxInstant: Instant | null }> {
     const host = this.connector.settings.host;
     const requestUrl = new URL(item.settings.endpoint, host);
+    const now = DateTime.now();
 
     const query: Record<string, string | number | Array<string | number>> = {};
 
@@ -158,6 +162,25 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
         });
         value = value.replace(/@EndTime/g, String(formattedEndTime));
       }
+      if (value.includes('@PeriodStart')) {
+        const periodStart = this.computePeriodStartInstant(now, queryParam.slidingWindow!);
+        const formattedPeriodStart = formatInstant(periodStart, {
+          type: queryParam.dateTimeInput!.type!,
+          timezone: queryParam.dateTimeInput!.timezone || undefined,
+          format: queryParam.dateTimeInput!.format || undefined,
+          locale: 'en-En'
+        });
+        value = value.replace(/@PeriodStart/g, String(formattedPeriodStart));
+      }
+      if (value.includes('@PeriodEnd')) {
+        const formattedPeriodEnd = formatInstant(now.toUTC().toISO() as Instant, {
+          type: queryParam.dateTimeInput!.type!,
+          timezone: queryParam.dateTimeInput!.timezone || undefined,
+          format: queryParam.dateTimeInput!.format || undefined,
+          locale: 'en-En'
+        });
+        value = value.replace(/@PeriodEnd/g, String(formattedPeriodEnd));
+      }
 
       const existingValue = query[queryParam.key];
       if (existingValue === undefined) {
@@ -172,17 +195,26 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     let body: string | undefined;
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(item.settings.method) && item.settings.body!.content) {
       if (item.settings.body!.dateTimeInput) {
-        const startInstant = formatInstant(startTime, {
+        const bodyDateTimeInput = {
           type: item.settings.body!.dateTimeInput.type!,
           timezone: item.settings.body!.dateTimeInput.timezone || undefined,
           format: item.settings.body!.dateTimeInput.format || undefined
-        });
-        const endInstant = formatInstant(endTime, {
-          type: item.settings.body!.dateTimeInput.type!,
-          timezone: item.settings.body!.dateTimeInput.timezone || undefined,
-          format: item.settings.body!.dateTimeInput.format || undefined
-        });
-        body = item.settings.body!.content.replace(/@StartTime/g, `${startInstant}`).replace(/@EndTime/g, `${endInstant}`);
+        };
+        let bodyContent = item.settings.body!.content;
+        if (bodyContent.includes('@StartTime')) {
+          bodyContent = bodyContent.replace(/@StartTime/g, `${formatInstant(startTime, bodyDateTimeInput)}`);
+        }
+        if (bodyContent.includes('@EndTime')) {
+          bodyContent = bodyContent.replace(/@EndTime/g, `${formatInstant(endTime, bodyDateTimeInput)}`);
+        }
+        if (bodyContent.includes('@PeriodStart')) {
+          const periodStart = this.computePeriodStartInstant(now, item.settings.body!.slidingWindow!);
+          bodyContent = bodyContent.replace(/@PeriodStart/g, `${formatInstant(periodStart, bodyDateTimeInput)}`);
+        }
+        if (bodyContent.includes('@PeriodEnd')) {
+          bodyContent = bodyContent.replace(/@PeriodEnd/g, `${formatInstant(now.toUTC().toISO() as Instant, bodyDateTimeInput)}`);
+        }
+        body = bodyContent;
       } else {
         body = item.settings.body!.content;
       }
@@ -209,6 +241,25 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
           locale: 'en-En'
         });
         headerValue = headerValue.replace(/@EndTime/g, String(formattedEndTime));
+      }
+      if (headerValue.includes('@PeriodStart')) {
+        const periodStart = this.computePeriodStartInstant(now, header.slidingWindow!);
+        const formattedPeriodStart = formatInstant(periodStart, {
+          type: header.dateTimeInput!.type!,
+          timezone: header.dateTimeInput!.timezone || undefined,
+          format: header.dateTimeInput!.format || undefined,
+          locale: 'en-En'
+        });
+        headerValue = headerValue.replace(/@PeriodStart/g, String(formattedPeriodStart));
+      }
+      if (headerValue.includes('@PeriodEnd')) {
+        const formattedPeriodEnd = formatInstant(now.toUTC().toISO() as Instant, {
+          type: header.dateTimeInput!.type!,
+          timezone: header.dateTimeInput!.timezone || undefined,
+          format: header.dateTimeInput!.format || undefined,
+          locale: 'en-En'
+        });
+        headerValue = headerValue.replace(/@PeriodEnd/g, String(formattedPeriodEnd));
       }
       headers[header.key] = headerValue;
     }
@@ -329,6 +380,18 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
         }
         return max;
       }, null);
+  }
+
+  private computePeriodStartInstant(
+    now: DateTime,
+    slidingWindow:
+      SouthRestItemSettingsQueryParamsSlidingWindow | SouthRestItemSettingsHeadersSlidingWindow | SouthRestItemSettingsBodySlidingWindow
+  ): Instant {
+    const unitToLuxonKey = { ms: 'milliseconds', s: 'seconds', min: 'minutes', hr: 'hours', day: 'days' } as const;
+    return now
+      .minus({ [unitToLuxonKey[slidingWindow.unit]]: slidingWindow.size })
+      .toUTC()
+      .toISO() as Instant;
   }
 
   private getProxyOptions(): { proxy: ReqProxyOptions | undefined; acceptUnauthorized: boolean } {

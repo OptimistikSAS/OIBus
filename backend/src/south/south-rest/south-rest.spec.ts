@@ -278,6 +278,47 @@ describe('SouthRestAPI connector', () => {
     });
   });
 
+  it('should replace @PeriodStart and @PeriodEnd in Query Params using the sliding window', async () => {
+    const item = createItem({
+      queryParams: [
+        { key: 'start', value: '@PeriodStart', dateTimeInput: { type: 'iso-string' }, slidingWindow: { size: 1, unit: 'day' } },
+        { key: 'end', value: '@PeriodEnd', dateTimeInput: { type: 'iso-string' }, slidingWindow: { size: 1, unit: 'day' } }
+      ]
+    });
+
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, { data: [] }));
+
+    await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
+
+    const options = getRequestOptions();
+    assert.deepStrictEqual(options.query, {
+      start: '2021-01-01T00:00:00.000Z',
+      end: '2021-01-02T00:00:00.000Z'
+    });
+  });
+
+  it('should replace @StartTime, @EndTime, @PeriodStart and @PeriodEnd when combined in the same field', async () => {
+    const item = createItem({
+      queryParams: [
+        {
+          key: 'range',
+          value: '@StartTime|@EndTime|@PeriodStart|@PeriodEnd',
+          dateTimeInput: { type: 'iso-string' },
+          slidingWindow: { size: 2, unit: 'hr' }
+        }
+      ]
+    });
+
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, { data: [] }));
+
+    await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
+
+    const options = getRequestOptions();
+    assert.deepStrictEqual(options.query, {
+      range: `${testData.constants.dates.DATE_1}|${testData.constants.dates.DATE_2}|2021-01-01T22:00:00.000Z|2021-01-02T00:00:00.000Z`
+    });
+  });
+
   it('should replace @StartTime and @EndTime in Headers', async () => {
     const item = createItem({
       headers: [
@@ -300,6 +341,28 @@ describe('SouthRestAPI connector', () => {
     });
   });
 
+  it('should replace @PeriodStart and @PeriodEnd in Headers using the sliding window', async () => {
+    const item = createItem({
+      headers: [
+        {
+          key: 'X-Window',
+          value: 'From @PeriodStart to @PeriodEnd',
+          dateTimeInput: { type: 'iso-string' },
+          slidingWindow: { size: 30, unit: 'min' }
+        }
+      ]
+    });
+
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, {}));
+
+    await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
+
+    const options = getRequestOptions();
+    assertContains(options.headers as object, {
+      'X-Window': 'From 2021-01-01T23:30:00.000Z to 2021-01-02T00:00:00.000Z'
+    });
+  });
+
   it('should replace @StartTime and @EndTime in Body for POST requests', async () => {
     const item = createItem({
       method: 'POST',
@@ -319,6 +382,24 @@ describe('SouthRestAPI connector', () => {
     const options = getRequestOptions();
     assert.strictEqual(options.body, '{"from": "START", "to": "END"}');
     assertContains(options.headers as object, { 'Content-Type': 'application/json' });
+  });
+
+  it('should replace @PeriodStart and @PeriodEnd in Body for POST requests', async () => {
+    const item = createItem({
+      method: 'POST',
+      body: {
+        content: '{"from": "@PeriodStart", "to": "@PeriodEnd"}',
+        dateTimeInput: { type: 'iso-string' },
+        slidingWindow: { size: 1, unit: 'day' }
+      }
+    });
+
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, {}));
+
+    await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
+
+    const options = getRequestOptions();
+    assert.strictEqual(options.body, '{"from": "2021-01-01T00:00:00.000Z", "to": "2021-01-02T00:00:00.000Z"}');
   });
 
   it('should not replace @StartTime and @EndTime in Body for POST requests', async () => {

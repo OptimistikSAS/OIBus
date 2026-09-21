@@ -9524,6 +9524,33 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthRestItemSettingsQueryParamsSlidingWindowUnit": {
+				"type": "string",
+				"enum": [
+					"ms",
+					"s",
+					"min",
+					"hr",
+					"day"
+				]
+			},
+			"SouthRestItemSettingsQueryParamsSlidingWindow": {
+				"properties": {
+					"size": {
+						"type": "number",
+						"format": "double"
+					},
+					"unit": {
+						"$ref": "#/components/schemas/SouthRestItemSettingsQueryParamsSlidingWindowUnit"
+					}
+				},
+				"required": [
+					"size",
+					"unit"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthRestItemSettingsQueryParams": {
 				"properties": {
 					"key": {
@@ -9536,6 +9563,14 @@
 						"allOf": [
 							{
 								"$ref": "#/components/schemas/SouthRestItemSettingsQueryParamsDateTimeInput"
+							}
+						],
+						"nullable": true
+					},
+					"slidingWindow": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestItemSettingsQueryParamsSlidingWindow"
 							}
 						],
 						"nullable": true
@@ -9586,6 +9621,33 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthRestItemSettingsHeadersSlidingWindowUnit": {
+				"type": "string",
+				"enum": [
+					"ms",
+					"s",
+					"min",
+					"hr",
+					"day"
+				]
+			},
+			"SouthRestItemSettingsHeadersSlidingWindow": {
+				"properties": {
+					"size": {
+						"type": "number",
+						"format": "double"
+					},
+					"unit": {
+						"$ref": "#/components/schemas/SouthRestItemSettingsHeadersSlidingWindowUnit"
+					}
+				},
+				"required": [
+					"size",
+					"unit"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthRestItemSettingsHeaders": {
 				"properties": {
 					"key": {
@@ -9598,6 +9660,14 @@
 						"allOf": [
 							{
 								"$ref": "#/components/schemas/SouthRestItemSettingsHeadersDateTimeInput"
+							}
+						],
+						"nullable": true
+					},
+					"slidingWindow": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestItemSettingsHeadersSlidingWindow"
 							}
 						],
 						"nullable": true
@@ -9648,6 +9718,33 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthRestItemSettingsBodySlidingWindowUnit": {
+				"type": "string",
+				"enum": [
+					"ms",
+					"s",
+					"min",
+					"hr",
+					"day"
+				]
+			},
+			"SouthRestItemSettingsBodySlidingWindow": {
+				"properties": {
+					"size": {
+						"type": "number",
+						"format": "double"
+					},
+					"unit": {
+						"$ref": "#/components/schemas/SouthRestItemSettingsBodySlidingWindowUnit"
+					}
+				},
+				"required": [
+					"size",
+					"unit"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthRestItemSettingsBody": {
 				"properties": {
 					"content": {
@@ -9658,6 +9755,14 @@
 						"allOf": [
 							{
 								"$ref": "#/components/schemas/SouthRestItemSettingsBodyDateTimeInput"
+							}
+						],
+						"nullable": true
+					},
+					"slidingWindow": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestItemSettingsBodySlidingWindow"
 							}
 						],
 						"nullable": true
