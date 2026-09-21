@@ -9524,33 +9524,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthRestItemSettingsQueryParamsSlidingWindowUnit": {
-				"type": "string",
-				"enum": [
-					"ms",
-					"s",
-					"min",
-					"hr",
-					"day"
-				]
-			},
-			"SouthRestItemSettingsQueryParamsSlidingWindow": {
-				"properties": {
-					"size": {
-						"type": "number",
-						"format": "double"
-					},
-					"unit": {
-						"$ref": "#/components/schemas/SouthRestItemSettingsQueryParamsSlidingWindowUnit"
-					}
-				},
-				"required": [
-					"size",
-					"unit"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthRestItemSettingsQueryParams": {
 				"properties": {
 					"key": {
@@ -9563,14 +9536,6 @@
 						"allOf": [
 							{
 								"$ref": "#/components/schemas/SouthRestItemSettingsQueryParamsDateTimeInput"
-							}
-						],
-						"nullable": true
-					},
-					"slidingWindow": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/SouthRestItemSettingsQueryParamsSlidingWindow"
 							}
 						],
 						"nullable": true
@@ -9621,33 +9586,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthRestItemSettingsHeadersSlidingWindowUnit": {
-				"type": "string",
-				"enum": [
-					"ms",
-					"s",
-					"min",
-					"hr",
-					"day"
-				]
-			},
-			"SouthRestItemSettingsHeadersSlidingWindow": {
-				"properties": {
-					"size": {
-						"type": "number",
-						"format": "double"
-					},
-					"unit": {
-						"$ref": "#/components/schemas/SouthRestItemSettingsHeadersSlidingWindowUnit"
-					}
-				},
-				"required": [
-					"size",
-					"unit"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthRestItemSettingsHeaders": {
 				"properties": {
 					"key": {
@@ -9660,14 +9598,6 @@
 						"allOf": [
 							{
 								"$ref": "#/components/schemas/SouthRestItemSettingsHeadersDateTimeInput"
-							}
-						],
-						"nullable": true
-					},
-					"slidingWindow": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/SouthRestItemSettingsHeadersSlidingWindow"
 							}
 						],
 						"nullable": true
@@ -9718,33 +9648,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthRestItemSettingsBodySlidingWindowUnit": {
-				"type": "string",
-				"enum": [
-					"ms",
-					"s",
-					"min",
-					"hr",
-					"day"
-				]
-			},
-			"SouthRestItemSettingsBodySlidingWindow": {
-				"properties": {
-					"size": {
-						"type": "number",
-						"format": "double"
-					},
-					"unit": {
-						"$ref": "#/components/schemas/SouthRestItemSettingsBodySlidingWindowUnit"
-					}
-				},
-				"required": [
-					"size",
-					"unit"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthRestItemSettingsBody": {
 				"properties": {
 					"content": {
@@ -9755,14 +9658,6 @@
 						"allOf": [
 							{
 								"$ref": "#/components/schemas/SouthRestItemSettingsBodyDateTimeInput"
-							}
-						],
-						"nullable": true
-					},
-					"slidingWindow": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/SouthRestItemSettingsBodySlidingWindow"
 							}
 						],
 						"nullable": true
@@ -33976,7 +33871,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "3.9.1",
+		"version": "3.9.2",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"

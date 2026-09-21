@@ -278,11 +278,11 @@ describe('SouthRestAPI connector', () => {
     });
   });
 
-  it('should replace @PeriodStart and @PeriodEnd in Query Params using the sliding window', async () => {
+  it('should apply an inline add() offset to @StartTime and @EndTime in Query Params', async () => {
     const item = createItem({
       queryParams: [
-        { key: 'start', value: '@PeriodStart', dateTimeInput: { type: 'iso-string' }, slidingWindow: { size: 1, unit: 'day' } },
-        { key: 'end', value: '@PeriodEnd', dateTimeInput: { type: 'iso-string' }, slidingWindow: { size: 1, unit: 'day' } }
+        { key: 'start', value: "@StartTime.add(-1, 'day')", dateTimeInput: { type: 'iso-string' } },
+        { key: 'end', value: "@EndTime.add(1, 'day')", dateTimeInput: { type: 'iso-string' } }
       ]
     });
 
@@ -292,19 +292,18 @@ describe('SouthRestAPI connector', () => {
 
     const options = getRequestOptions();
     assert.deepStrictEqual(options.query, {
-      start: '2021-01-01T00:00:00.000Z',
-      end: '2021-01-02T00:00:00.000Z'
+      start: '2020-03-14T00:00:00.000Z',
+      end: '2020-03-21T00:00:00.000Z'
     });
   });
 
-  it('should replace @StartTime, @EndTime, @PeriodStart and @PeriodEnd when combined in the same field', async () => {
+  it('should replace @StartTime and @EndTime, plain and with an add() offset, when combined in the same field', async () => {
     const item = createItem({
       queryParams: [
         {
           key: 'range',
-          value: '@StartTime|@EndTime|@PeriodStart|@PeriodEnd',
-          dateTimeInput: { type: 'iso-string' },
-          slidingWindow: { size: 2, unit: 'hr' }
+          value: "@StartTime|@EndTime|@StartTime.add(-2, 'hour')|@EndTime.add(2, 'hour')",
+          dateTimeInput: { type: 'iso-string' }
         }
       ]
     });
@@ -315,7 +314,7 @@ describe('SouthRestAPI connector', () => {
 
     const options = getRequestOptions();
     assert.deepStrictEqual(options.query, {
-      range: `${testData.constants.dates.DATE_1}|${testData.constants.dates.DATE_2}|2021-01-01T22:00:00.000Z|2021-01-02T00:00:00.000Z`
+      range: `${testData.constants.dates.DATE_1}|${testData.constants.dates.DATE_2}|2020-03-14T22:00:00.000Z|2020-03-20T02:00:00.000Z`
     });
   });
 
@@ -341,14 +340,13 @@ describe('SouthRestAPI connector', () => {
     });
   });
 
-  it('should replace @PeriodStart and @PeriodEnd in Headers using the sliding window', async () => {
+  it('should apply an inline add() offset to @StartTime and @EndTime in Headers', async () => {
     const item = createItem({
       headers: [
         {
           key: 'X-Window',
-          value: 'From @PeriodStart to @PeriodEnd',
-          dateTimeInput: { type: 'iso-string' },
-          slidingWindow: { size: 30, unit: 'min' }
+          value: "From @StartTime.add(-30, 'minute') to @EndTime.add(30, 'minute')",
+          dateTimeInput: { type: 'iso-string' }
         }
       ]
     });
@@ -359,7 +357,7 @@ describe('SouthRestAPI connector', () => {
 
     const options = getRequestOptions();
     assertContains(options.headers as object, {
-      'X-Window': 'From 2021-01-01T23:30:00.000Z to 2021-01-02T00:00:00.000Z'
+      'X-Window': 'From 2020-03-14T23:30:00.000Z to 2020-03-20T00:30:00.000Z'
     });
   });
 
@@ -384,13 +382,12 @@ describe('SouthRestAPI connector', () => {
     assertContains(options.headers as object, { 'Content-Type': 'application/json' });
   });
 
-  it('should replace @PeriodStart and @PeriodEnd in Body for POST requests', async () => {
+  it('should apply an inline add() offset to @StartTime and @EndTime in Body for POST requests', async () => {
     const item = createItem({
       method: 'POST',
       body: {
-        content: '{"from": "@PeriodStart", "to": "@PeriodEnd"}',
-        dateTimeInput: { type: 'iso-string' },
-        slidingWindow: { size: 1, unit: 'day' }
+        content: `{"from": "@StartTime.add(-1, 'day')", "to": "@EndTime.add(1, 'day')"}`,
+        dateTimeInput: { type: 'iso-string' }
       }
     });
 
@@ -399,7 +396,7 @@ describe('SouthRestAPI connector', () => {
     await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
     const options = getRequestOptions();
-    assert.strictEqual(options.body, '{"from": "2021-01-01T00:00:00.000Z", "to": "2021-01-02T00:00:00.000Z"}');
+    assert.strictEqual(options.body, '{"from": "2020-03-14T00:00:00.000Z", "to": "2020-03-21T00:00:00.000Z"}');
   });
 
   it('should not replace @StartTime and @EndTime in Body for POST requests', async () => {
