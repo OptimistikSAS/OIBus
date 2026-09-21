@@ -1,6 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpStatusCode } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { inject, Service } from '@angular/core';
+import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 import {
   OIBusSouthType,
   SouthConnectorCommandDTO,
@@ -106,7 +107,9 @@ export class SouthConnectorService {
 
   testConnection(southId: string, settings: SouthSettings, southType: OIBusSouthType): Observable<OIBusConnectionTestResult> {
     return this.http.post<OIBusConnectionTestResult>(`/api/south/${southId}/test/connection`, settings, {
-      params: { southType }
+      params: { southType },
+      // the test connection modal already displays the error inline, so skip the global error notification
+      context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
     });
   }
 
@@ -122,7 +125,9 @@ export class SouthConnectorService {
       `/api/south/${southId}/items/test`,
       { southSettings, itemSettings, testingSettings },
       {
-        params: { southType, itemName }
+        params: { southType, itemName },
+        // the test panel already displays the error inline, so skip the global error notification
+        context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
       }
     );
   }

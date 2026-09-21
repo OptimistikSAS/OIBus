@@ -1,6 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpStatusCode } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { inject, Service } from '@angular/core';
+import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 import {
   HistoryQueryCommandDTO,
   HistoryQueryDTO,
@@ -115,7 +116,9 @@ export class HistoryQueryService {
     fromNorth: string | null = null
   ): Observable<OIBusConnectionTestResult> {
     return this.http.post<OIBusConnectionTestResult>(`/api/history/${historyId}/test/north`, settings, {
-      params: fromNorth ? { fromNorth, northType } : { northType }
+      params: fromNorth ? { fromNorth, northType } : { northType },
+      // the test connection modal already displays the error inline, so skip the global error notification
+      context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
     });
   }
 
@@ -126,7 +129,9 @@ export class HistoryQueryService {
     fromSouth: string | null = null
   ): Observable<OIBusConnectionTestResult> {
     return this.http.post<OIBusConnectionTestResult>(`/api/history/${historyId}/test/south`, settings, {
-      params: fromSouth ? { fromSouth, southType } : { southType }
+      params: fromSouth ? { fromSouth, southType } : { southType },
+      // the test connection modal already displays the error inline, so skip the global error notification
+      context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
     });
   }
 
@@ -147,7 +152,9 @@ export class HistoryQueryService {
         testingSettings
       },
       {
-        params: fromSouth ? { fromSouth, southType, itemName } : { southType, itemName }
+        params: fromSouth ? { fromSouth, southType, itemName } : { southType, itemName },
+        // the test panel already displays the error inline, so skip the global error notification
+        context: new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => error.status !== HttpStatusCode.Unauthorized)
       }
     );
   }

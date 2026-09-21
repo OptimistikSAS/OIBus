@@ -94,7 +94,7 @@ class SouthItemTestComponent implements AfterContentInit {
   /** Latest test result (raw + optional transformed) feeding the pipeline view. */
   testResult: SouthConnectorItemTestResult | null = null;
 
-  /** Once a test has succeeded, the settings form collapses into a summary chip to leave room for the result. */
+  /** User-toggled: collapses the settings form into a summary chip to leave room for the result. */
   settingsCollapsed = false;
 
   /** Transformer options default to a read-only summary; the edit icon reveals the editable form. */
@@ -324,7 +324,6 @@ class SouthItemTestComponent implements AfterContentInit {
         this.finishTest();
         if (result) {
           this.testResult = result;
-          this.settingsCollapsed = true;
         }
       });
   }
