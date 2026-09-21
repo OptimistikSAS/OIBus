@@ -45,6 +45,11 @@ const editRouteStub = {
   queryParamMap: of({ get: () => null, getAll: () => [] as Array<string> })
 };
 
+const duplicateRouteStub = {
+  paramMap: of({ get: () => null }),
+  queryParamMap: of({ get: (key: string) => (key === 'duplicate' ? southConnector.id : null), getAll: () => [] as Array<string> })
+};
+
 describe('EditSouthComponent', () => {
   let southConnectorService: MockObject<SouthConnectorService>;
   let scanModeService: MockObject<ScanModeService>;
@@ -103,6 +108,26 @@ describe('EditSouthComponent', () => {
 
     const root = page.elementLocator(fixture.nativeElement);
     await expect.element(root.getByCss('#south-name')).toHaveValue(southConnector.name);
+  });
+
+  test('duplicate mode should assign new temp ids to groups and remap items to them', () => {
+    const groupA = buildGroup('group1', 'GroupA', scanModes[0]);
+    const itemWithGroup = { ...southConnector.items[0], group: groupA, syncWithGroup: true };
+    const southConnectorWithGroup = { ...southConnector, groups: [groupA], items: [itemWithGroup, southConnector.items[1]] };
+    southConnectorService.findById.mockReturnValue(of(southConnectorWithGroup as any));
+    TestBed.overrideProvider(ActivatedRoute, { useValue: duplicateRouteStub });
+
+    const fixture = TestBed.createComponent(EditSouthComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.mode).toBe('create');
+    const inMemoryGroup = fixture.componentInstance.inMemoryGroups[0];
+    expect(inMemoryGroup.id).not.toBe('group1');
+    expect(inMemoryGroup.id?.startsWith('temp_')).toBe(true);
+
+    const remappedItem = fixture.componentInstance.inMemoryItems.find(item => item.id === itemWithGroup.id)!;
+    expect(remappedItem.groupId).toBe(inMemoryGroup.id);
+    expect(remappedItem.groupName).toBe('GroupA');
   });
 
   test('deleteGroup should confirm, unassign items referencing the group, and refresh the item list', () => {
