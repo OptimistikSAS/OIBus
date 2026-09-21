@@ -2297,18 +2297,6 @@
                 "timezone": "Timezone",
                 "format": "Format",
                 "locale": "Locale"
-              },
-              "sliding-window": {
-                "title": "Sliding window",
-                "unit": {
-                  "title": "Unit",
-                  "ms": "ms",
-                  "s": "s",
-                  "min": "min",
-                  "hr": "hr",
-                  "day": "day"
-                },
-                "size": "Size"
               }
             },
             "sftp": {

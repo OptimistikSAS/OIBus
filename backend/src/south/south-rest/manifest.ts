@@ -583,13 +583,7 @@ const manifest: SouthConnectorManifest = {
                   {
                     referralPathFromRoot: 'value',
                     targetPathFromRoot: 'dateTimeInput',
-                    values: ['@StartTime', '@EndTime', '@PeriodStart', '@PeriodEnd'],
-                    operator: 'CONTAINS'
-                  },
-                  {
-                    referralPathFromRoot: 'value',
-                    targetPathFromRoot: 'slidingWindow',
-                    values: ['@PeriodStart'],
+                    values: ['@StartTime', '@EndTime'],
                     operator: 'CONTAINS'
                   }
                 ],
@@ -689,59 +683,6 @@ const manifest: SouthConnectorManifest = {
                         }
                       }
                     ]
-                  },
-                  {
-                    type: 'object',
-                    key: 'slidingWindow',
-                    translationKey: 'configuration.oibus.manifest.south.items.rest.sliding-window.title',
-                    displayProperties: {
-                      visible: true,
-                      wrapInBox: true
-                    },
-                    enablingConditions: [],
-                    validators: [],
-                    attributes: [
-                      {
-                        type: 'number',
-                        key: 'size',
-                        translationKey: 'configuration.oibus.manifest.south.items.rest.sliding-window.size',
-                        defaultValue: 1,
-                        unit: null,
-                        validators: [
-                          {
-                            type: 'REQUIRED',
-                            arguments: []
-                          },
-                          {
-                            type: 'POSITIVE_INTEGER',
-                            arguments: []
-                          }
-                        ],
-                        displayProperties: {
-                          row: 0,
-                          columns: 4,
-                          displayInViewMode: false
-                        }
-                      },
-                      {
-                        type: 'string-select',
-                        key: 'unit',
-                        translationKey: 'configuration.oibus.manifest.south.items.rest.sliding-window.unit',
-                        defaultValue: 'hr',
-                        selectableValues: ['ms', 's', 'min', 'hr', 'day'],
-                        validators: [
-                          {
-                            type: 'REQUIRED',
-                            arguments: []
-                          }
-                        ],
-                        displayProperties: {
-                          row: 0,
-                          columns: 4,
-                          displayInViewMode: false
-                        }
-                      }
-                    ]
                   }
                 ]
               }
@@ -770,13 +711,7 @@ const manifest: SouthConnectorManifest = {
                   {
                     referralPathFromRoot: 'value',
                     targetPathFromRoot: 'dateTimeInput',
-                    values: ['@StartTime', '@EndTime', '@PeriodStart', '@PeriodEnd'],
-                    operator: 'CONTAINS'
-                  },
-                  {
-                    referralPathFromRoot: 'value',
-                    targetPathFromRoot: 'slidingWindow',
-                    values: ['@PeriodStart'],
+                    values: ['@StartTime', '@EndTime'],
                     operator: 'CONTAINS'
                   }
                 ],
@@ -876,59 +811,6 @@ const manifest: SouthConnectorManifest = {
                         }
                       }
                     ]
-                  },
-                  {
-                    type: 'object',
-                    key: 'slidingWindow',
-                    translationKey: 'configuration.oibus.manifest.south.items.rest.sliding-window.title',
-                    displayProperties: {
-                      visible: true,
-                      wrapInBox: true
-                    },
-                    enablingConditions: [],
-                    validators: [],
-                    attributes: [
-                      {
-                        type: 'number',
-                        key: 'size',
-                        translationKey: 'configuration.oibus.manifest.south.items.rest.sliding-window.size',
-                        defaultValue: 1,
-                        unit: null,
-                        validators: [
-                          {
-                            type: 'REQUIRED',
-                            arguments: []
-                          },
-                          {
-                            type: 'POSITIVE_INTEGER',
-                            arguments: []
-                          }
-                        ],
-                        displayProperties: {
-                          row: 0,
-                          columns: 4,
-                          displayInViewMode: false
-                        }
-                      },
-                      {
-                        type: 'string-select',
-                        key: 'unit',
-                        translationKey: 'configuration.oibus.manifest.south.items.rest.sliding-window.unit',
-                        defaultValue: 'hr',
-                        selectableValues: ['ms', 's', 'min', 'hr', 'day'],
-                        validators: [
-                          {
-                            type: 'REQUIRED',
-                            arguments: []
-                          }
-                        ],
-                        displayProperties: {
-                          row: 0,
-                          columns: 4,
-                          displayInViewMode: false
-                        }
-                      }
-                    ]
                   }
                 ]
               }
@@ -945,13 +827,7 @@ const manifest: SouthConnectorManifest = {
                 {
                   referralPathFromRoot: 'content',
                   targetPathFromRoot: 'dateTimeInput',
-                  values: ['@StartTime', '@EndTime', '@PeriodStart', '@PeriodEnd'],
-                  operator: 'CONTAINS'
-                },
-                {
-                  referralPathFromRoot: 'content',
-                  targetPathFromRoot: 'slidingWindow',
-                  values: ['@PeriodStart'],
+                  values: ['@StartTime', '@EndTime'],
                   operator: 'CONTAINS'
                 }
               ],
@@ -1023,59 +899,6 @@ const manifest: SouthConnectorManifest = {
                       translationKey: 'configuration.oibus.manifest.south.items.rest.date-time.format',
                       defaultValue: 'yyyy-MM-dd HH:mm:ss',
                       validators: [],
-                      displayProperties: {
-                        row: 0,
-                        columns: 4,
-                        displayInViewMode: true
-                      }
-                    }
-                  ]
-                },
-                {
-                  type: 'object',
-                  key: 'slidingWindow',
-                  translationKey: 'configuration.oibus.manifest.south.items.rest.sliding-window.title',
-                  displayProperties: {
-                    visible: true,
-                    wrapInBox: true
-                  },
-                  enablingConditions: [],
-                  validators: [],
-                  attributes: [
-                    {
-                      type: 'number',
-                      key: 'size',
-                      translationKey: 'configuration.oibus.manifest.south.items.rest.sliding-window.size',
-                      defaultValue: 1,
-                      unit: null,
-                      validators: [
-                        {
-                          type: 'REQUIRED',
-                          arguments: []
-                        },
-                        {
-                          type: 'POSITIVE_INTEGER',
-                          arguments: []
-                        }
-                      ],
-                      displayProperties: {
-                        row: 0,
-                        columns: 4,
-                        displayInViewMode: true
-                      }
-                    },
-                    {
-                      type: 'string-select',
-                      key: 'unit',
-                      translationKey: 'configuration.oibus.manifest.south.items.rest.sliding-window.unit',
-                      defaultValue: 'hr',
-                      selectableValues: ['ms', 's', 'min', 'hr', 'day'],
-                      validators: [
-                        {
-                          type: 'REQUIRED',
-                          arguments: []
-                        }
-                      ],
                       displayProperties: {
                         row: 0,
                         columns: 4,

@@ -288,20 +288,11 @@ export const SOUTH_REST_ITEM_SETTINGS_QUERY_PARAMS_DATE_TIME_INPUT_TYPES = ['iso
 export type SouthRestItemSettingsQueryParamsDateTimeInputType =
   (typeof SOUTH_REST_ITEM_SETTINGS_QUERY_PARAMS_DATE_TIME_INPUT_TYPES)[number];
 
-export const SOUTH_REST_ITEM_SETTINGS_QUERY_PARAMS_SLIDING_WINDOW_UNITS = ['ms', 's', 'min', 'hr', 'day'] as const;
-export type SouthRestItemSettingsQueryParamsSlidingWindowUnit = (typeof SOUTH_REST_ITEM_SETTINGS_QUERY_PARAMS_SLIDING_WINDOW_UNITS)[number];
-
 export const SOUTH_REST_ITEM_SETTINGS_HEADERS_DATE_TIME_INPUT_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
 export type SouthRestItemSettingsHeadersDateTimeInputType = (typeof SOUTH_REST_ITEM_SETTINGS_HEADERS_DATE_TIME_INPUT_TYPES)[number];
 
-export const SOUTH_REST_ITEM_SETTINGS_HEADERS_SLIDING_WINDOW_UNITS = ['ms', 's', 'min', 'hr', 'day'] as const;
-export type SouthRestItemSettingsHeadersSlidingWindowUnit = (typeof SOUTH_REST_ITEM_SETTINGS_HEADERS_SLIDING_WINDOW_UNITS)[number];
-
 export const SOUTH_REST_ITEM_SETTINGS_BODY_DATE_TIME_INPUT_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
 export type SouthRestItemSettingsBodyDateTimeInputType = (typeof SOUTH_REST_ITEM_SETTINGS_BODY_DATE_TIME_INPUT_TYPES)[number];
-
-export const SOUTH_REST_ITEM_SETTINGS_BODY_SLIDING_WINDOW_UNITS = ['ms', 's', 'min', 'hr', 'day'] as const;
-export type SouthRestItemSettingsBodySlidingWindowUnit = (typeof SOUTH_REST_ITEM_SETTINGS_BODY_SLIDING_WINDOW_UNITS)[number];
 
 export const SOUTH_REST_ITEM_SETTINGS_TRACKING_INSTANT_DATE_TIME_INPUT_TYPES = [
   'iso-string',
@@ -755,16 +746,10 @@ export interface SouthRestItemSettingsQueryParamsDateTimeInput {
   format?: string | null;
 }
 
-export interface SouthRestItemSettingsQueryParamsSlidingWindow {
-  size: number;
-  unit: SouthRestItemSettingsQueryParamsSlidingWindowUnit;
-}
-
 export interface SouthRestItemSettingsQueryParams {
   key: string;
   value: string;
   dateTimeInput?: SouthRestItemSettingsQueryParamsDateTimeInput | null;
-  slidingWindow?: SouthRestItemSettingsQueryParamsSlidingWindow | null;
 }
 
 export interface SouthRestItemSettingsHeadersDateTimeInput {
@@ -773,16 +758,10 @@ export interface SouthRestItemSettingsHeadersDateTimeInput {
   format?: string | null;
 }
 
-export interface SouthRestItemSettingsHeadersSlidingWindow {
-  size: number;
-  unit: SouthRestItemSettingsHeadersSlidingWindowUnit;
-}
-
 export interface SouthRestItemSettingsHeaders {
   key: string;
   value: string;
   dateTimeInput?: SouthRestItemSettingsHeadersDateTimeInput | null;
-  slidingWindow?: SouthRestItemSettingsHeadersSlidingWindow | null;
 }
 
 export interface SouthRestItemSettingsBodyDateTimeInput {
@@ -791,15 +770,9 @@ export interface SouthRestItemSettingsBodyDateTimeInput {
   format?: string | null;
 }
 
-export interface SouthRestItemSettingsBodySlidingWindow {
-  size: number;
-  unit: SouthRestItemSettingsBodySlidingWindowUnit;
-}
-
 export interface SouthRestItemSettingsBody {
   content: string | null;
   dateTimeInput?: SouthRestItemSettingsBodyDateTimeInput | null;
-  slidingWindow?: SouthRestItemSettingsBodySlidingWindow | null;
 }
 
 export interface SouthRestItemSettingsTrackingInstantDateTimeInput {

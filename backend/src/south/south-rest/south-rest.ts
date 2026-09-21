@@ -8,15 +8,15 @@ import {
   workUnitLogCtx
 } from '../../service/utils';
 import { JSONPath } from 'jsonpath-plus';
-import { Instant } from '../../../shared/model/types';
-import { DateTime } from 'luxon';
+import { DateTimeType, Instant } from '../../../shared/model/types';
+import { DateTime, DurationLikeObject } from 'luxon';
 import { SouthHistoryQuery } from '../south-interface';
 import {
   SouthItemSettings,
   SouthRestItemSettings,
-  SouthRestItemSettingsBodySlidingWindow,
-  SouthRestItemSettingsHeadersSlidingWindow,
-  SouthRestItemSettingsQueryParamsSlidingWindow,
+  SouthRestItemSettingsBodyDateTimeInput,
+  SouthRestItemSettingsHeadersDateTimeInput,
+  SouthRestItemSettingsQueryParamsDateTimeInput,
   SouthRestItemSettingsTrackingInstantDateTimeInput,
   SouthRestSettings
 } from '../../../shared/model/south-settings.model';
@@ -138,49 +138,11 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
   ): Promise<{ filename: string; content: string; maxInstant: Instant | null }> {
     const host = this.connector.settings.host;
     const requestUrl = new URL(item.settings.endpoint, host);
-    const now = DateTime.now();
 
     const query: Record<string, string | number | Array<string | number>> = {};
 
     for (const queryParam of item.settings.queryParams) {
-      let value = queryParam.value;
-      if (value.includes('@StartTime')) {
-        const formattedStartTime = formatInstant(startTime, {
-          type: queryParam.dateTimeInput!.type!,
-          timezone: queryParam.dateTimeInput!.timezone || undefined,
-          format: queryParam.dateTimeInput!.format || undefined,
-          locale: 'en-En'
-        });
-        value = value.replace(/@StartTime/g, String(formattedStartTime));
-      }
-      if (value.includes('@EndTime')) {
-        const formattedEndTime = formatInstant(endTime, {
-          type: queryParam.dateTimeInput!.type!,
-          timezone: queryParam.dateTimeInput!.timezone || undefined,
-          format: queryParam.dateTimeInput!.format || undefined,
-          locale: 'en-En'
-        });
-        value = value.replace(/@EndTime/g, String(formattedEndTime));
-      }
-      if (value.includes('@PeriodStart')) {
-        const periodStart = this.computePeriodStartInstant(now, queryParam.slidingWindow!);
-        const formattedPeriodStart = formatInstant(periodStart, {
-          type: queryParam.dateTimeInput!.type!,
-          timezone: queryParam.dateTimeInput!.timezone || undefined,
-          format: queryParam.dateTimeInput!.format || undefined,
-          locale: 'en-En'
-        });
-        value = value.replace(/@PeriodStart/g, String(formattedPeriodStart));
-      }
-      if (value.includes('@PeriodEnd')) {
-        const formattedPeriodEnd = formatInstant(now.toUTC().toISO() as Instant, {
-          type: queryParam.dateTimeInput!.type!,
-          timezone: queryParam.dateTimeInput!.timezone || undefined,
-          format: queryParam.dateTimeInput!.format || undefined,
-          locale: 'en-En'
-        });
-        value = value.replace(/@PeriodEnd/g, String(formattedPeriodEnd));
-      }
+      const value = this.replaceDateTimePlaceholders(queryParam.value, startTime, endTime, queryParam.dateTimeInput, 'en-En');
 
       const existingValue = query[queryParam.key];
       if (existingValue === undefined) {
@@ -195,26 +157,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     let body: string | undefined;
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(item.settings.method) && item.settings.body!.content) {
       if (item.settings.body!.dateTimeInput) {
-        const bodyDateTimeInput = {
-          type: item.settings.body!.dateTimeInput.type!,
-          timezone: item.settings.body!.dateTimeInput.timezone || undefined,
-          format: item.settings.body!.dateTimeInput.format || undefined
-        };
-        let bodyContent = item.settings.body!.content;
-        if (bodyContent.includes('@StartTime')) {
-          bodyContent = bodyContent.replace(/@StartTime/g, `${formatInstant(startTime, bodyDateTimeInput)}`);
-        }
-        if (bodyContent.includes('@EndTime')) {
-          bodyContent = bodyContent.replace(/@EndTime/g, `${formatInstant(endTime, bodyDateTimeInput)}`);
-        }
-        if (bodyContent.includes('@PeriodStart')) {
-          const periodStart = this.computePeriodStartInstant(now, item.settings.body!.slidingWindow!);
-          bodyContent = bodyContent.replace(/@PeriodStart/g, `${formatInstant(periodStart, bodyDateTimeInput)}`);
-        }
-        if (bodyContent.includes('@PeriodEnd')) {
-          bodyContent = bodyContent.replace(/@PeriodEnd/g, `${formatInstant(now.toUTC().toISO() as Instant, bodyDateTimeInput)}`);
-        }
-        body = bodyContent;
+        body = this.replaceDateTimePlaceholders(item.settings.body!.content, startTime, endTime, item.settings.body!.dateTimeInput);
       } else {
         body = item.settings.body!.content;
       }
@@ -223,45 +166,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     const headers: Record<string, string> = {};
 
     for (const header of item.settings.headers) {
-      let headerValue = header.value;
-      if (headerValue.includes('@StartTime')) {
-        const formattedStartTime = formatInstant(startTime, {
-          type: header.dateTimeInput!.type!,
-          timezone: header.dateTimeInput!.timezone || undefined,
-          format: header.dateTimeInput!.format || undefined,
-          locale: 'en-En'
-        });
-        headerValue = headerValue.replace(/@StartTime/g, String(formattedStartTime));
-      }
-      if (headerValue.includes('@EndTime')) {
-        const formattedEndTime = formatInstant(endTime, {
-          type: header.dateTimeInput!.type!,
-          timezone: header.dateTimeInput!.timezone || undefined,
-          format: header.dateTimeInput!.format || undefined,
-          locale: 'en-En'
-        });
-        headerValue = headerValue.replace(/@EndTime/g, String(formattedEndTime));
-      }
-      if (headerValue.includes('@PeriodStart')) {
-        const periodStart = this.computePeriodStartInstant(now, header.slidingWindow!);
-        const formattedPeriodStart = formatInstant(periodStart, {
-          type: header.dateTimeInput!.type!,
-          timezone: header.dateTimeInput!.timezone || undefined,
-          format: header.dateTimeInput!.format || undefined,
-          locale: 'en-En'
-        });
-        headerValue = headerValue.replace(/@PeriodStart/g, String(formattedPeriodStart));
-      }
-      if (headerValue.includes('@PeriodEnd')) {
-        const formattedPeriodEnd = formatInstant(now.toUTC().toISO() as Instant, {
-          type: header.dateTimeInput!.type!,
-          timezone: header.dateTimeInput!.timezone || undefined,
-          format: header.dateTimeInput!.format || undefined,
-          locale: 'en-En'
-        });
-        headerValue = headerValue.replace(/@PeriodEnd/g, String(formattedPeriodEnd));
-      }
-      headers[header.key] = headerValue;
+      headers[header.key] = this.replaceDateTimePlaceholders(header.value, startTime, endTime, header.dateTimeInput, 'en-En');
     }
 
     if (body && !headers['Content-Type']) {
@@ -382,16 +287,53 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
       }, null);
   }
 
-  private computePeriodStartInstant(
-    now: DateTime,
-    slidingWindow:
-      SouthRestItemSettingsQueryParamsSlidingWindow | SouthRestItemSettingsHeadersSlidingWindow | SouthRestItemSettingsBodySlidingWindow
-  ): Instant {
-    const unitToLuxonKey = { ms: 'milliseconds', s: 'seconds', min: 'minutes', hr: 'hours', day: 'days' } as const;
-    return now
-      .minus({ [unitToLuxonKey[slidingWindow.unit]]: slidingWindow.size })
-      .toUTC()
-      .toISO() as Instant;
+  private static readonly DURATION_UNITS: Record<string, keyof DurationLikeObject> = {
+    millisecond: 'milliseconds',
+    milliseconds: 'milliseconds',
+    second: 'seconds',
+    seconds: 'seconds',
+    minute: 'minutes',
+    minutes: 'minutes',
+    hour: 'hours',
+    hours: 'hours',
+    day: 'days',
+    days: 'days'
+  };
+
+  /**
+   * Replaces @StartTime and @EndTime placeholders with the query interval instants, optionally shifted by
+   * an inline offset, e.g. "@StartTime.add(-1, 'day')" or "@EndTime.add(2, 'hours')".
+   */
+  private replaceDateTimePlaceholders(
+    value: string,
+    startTime: Instant,
+    endTime: Instant,
+    dateTimeInput:
+      | SouthRestItemSettingsQueryParamsDateTimeInput
+      | SouthRestItemSettingsHeadersDateTimeInput
+      | SouthRestItemSettingsBodyDateTimeInput
+      | null
+      | undefined,
+    locale?: string
+  ): string {
+    return value.replace(
+      /@(StartTime|EndTime)(?:\.add\((-?\d+),\s*'(\w+)'\))?/g,
+      (_match, base: string, amount?: string, unit?: string) => {
+        let instant = DateTime.fromISO(base === 'StartTime' ? startTime : endTime);
+        const luxonUnit = unit ? SouthRest.DURATION_UNITS[unit.toLowerCase()] : undefined;
+        if (amount && luxonUnit) {
+          instant = instant.plus({ [luxonUnit]: Number(amount) });
+        }
+        return String(
+          formatInstant(instant.toUTC().toISO() as Instant, {
+            type: dateTimeInput!.type! as DateTimeType,
+            timezone: dateTimeInput!.timezone || undefined,
+            format: dateTimeInput!.format || undefined,
+            locale
+          })
+        );
+      }
+    );
   }
 
   private getProxyOptions(): { proxy: ReqProxyOptions | undefined; acceptUnauthorized: boolean } {
