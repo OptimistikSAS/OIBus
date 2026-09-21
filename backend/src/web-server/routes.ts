@@ -2547,12 +2547,27 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsQueryParamsSlidingWindowUnit": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["ms"]},{"dataType":"enum","enums":["s"]},{"dataType":"enum","enums":["min"]},{"dataType":"enum","enums":["hr"]},{"dataType":"enum","enums":["day"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsQueryParamsSlidingWindow": {
+        "dataType": "refObject",
+        "properties": {
+            "size": {"dataType":"double","required":true},
+            "unit": {"ref":"SouthRestItemSettingsQueryParamsSlidingWindowUnit","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthRestItemSettingsQueryParams": {
         "dataType": "refObject",
         "properties": {
             "key": {"dataType":"string","required":true},
             "value": {"dataType":"string","required":true},
             "dateTimeInput": {"dataType":"union","subSchemas":[{"ref":"SouthRestItemSettingsQueryParamsDateTimeInput"},{"dataType":"enum","enums":[null]}]},
+            "slidingWindow": {"dataType":"union","subSchemas":[{"ref":"SouthRestItemSettingsQueryParamsSlidingWindow"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
@@ -2572,12 +2587,27 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsHeadersSlidingWindowUnit": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["ms"]},{"dataType":"enum","enums":["s"]},{"dataType":"enum","enums":["min"]},{"dataType":"enum","enums":["hr"]},{"dataType":"enum","enums":["day"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsHeadersSlidingWindow": {
+        "dataType": "refObject",
+        "properties": {
+            "size": {"dataType":"double","required":true},
+            "unit": {"ref":"SouthRestItemSettingsHeadersSlidingWindowUnit","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthRestItemSettingsHeaders": {
         "dataType": "refObject",
         "properties": {
             "key": {"dataType":"string","required":true},
             "value": {"dataType":"string","required":true},
             "dateTimeInput": {"dataType":"union","subSchemas":[{"ref":"SouthRestItemSettingsHeadersDateTimeInput"},{"dataType":"enum","enums":[null]}]},
+            "slidingWindow": {"dataType":"union","subSchemas":[{"ref":"SouthRestItemSettingsHeadersSlidingWindow"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
@@ -2597,11 +2627,26 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsBodySlidingWindowUnit": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["ms"]},{"dataType":"enum","enums":["s"]},{"dataType":"enum","enums":["min"]},{"dataType":"enum","enums":["hr"]},{"dataType":"enum","enums":["day"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsBodySlidingWindow": {
+        "dataType": "refObject",
+        "properties": {
+            "size": {"dataType":"double","required":true},
+            "unit": {"ref":"SouthRestItemSettingsBodySlidingWindowUnit","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthRestItemSettingsBody": {
         "dataType": "refObject",
         "properties": {
             "content": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "dateTimeInput": {"dataType":"union","subSchemas":[{"ref":"SouthRestItemSettingsBodyDateTimeInput"},{"dataType":"enum","enums":[null]}]},
+            "slidingWindow": {"dataType":"union","subSchemas":[{"ref":"SouthRestItemSettingsBodySlidingWindow"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
