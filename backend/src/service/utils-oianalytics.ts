@@ -3,8 +3,12 @@ import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model
 import { NorthOIAnalyticsSettingsSpecificSettings } from '../../shared/model/north-settings.model';
 import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from './http-request.utils';
 import { ClientCertificateCredential, ClientSecretCredential, type TokenCredential } from '@azure/identity';
+import { BoundedCache } from './bounded-cache';
 
-const credentialCache = new Map<string, TokenCredential>();
+// Bounded well above any realistic number of distinct AAD credential configs in use at once, so
+// eviction only ever kicks in for genuinely stale entries left behind by connector reconfiguration.
+const MAX_CACHED_CREDENTIALS = 50;
+const credentialCache = new BoundedCache<string, TokenCredential>(MAX_CACHED_CREDENTIALS);
 
 export function clearOIAnalyticsCredentialCache(): void {
   credentialCache.clear();

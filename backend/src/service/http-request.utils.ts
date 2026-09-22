@@ -1,14 +1,15 @@
 import { request, ProxyAgent, Agent } from 'undici';
 import { encryptionService } from './encryption.service';
 import { version } from '../../package.json';
+import { BoundedCache } from './bounded-cache';
 
-const proxyAgentCache = new Map<string, ProxyAgent>();
+// Bounded well above any realistic number of distinct proxy configs in use at once, so eviction
+// only ever kicks in for genuinely stale entries left behind by connector reconfiguration.
+const MAX_CACHED_PROXY_AGENTS = 50;
+const proxyAgentCache = new BoundedCache<string, ProxyAgent>(MAX_CACHED_PROXY_AGENTS, agent => void agent.destroy?.());
 let noTlsVerifyAgent: Agent | null = null;
 
 export function clearProxyAgentCache(): void {
-  for (const agent of proxyAgentCache.values()) {
-    void agent.destroy?.();
-  }
   proxyAgentCache.clear();
   if (noTlsVerifyAgent) {
     void noTlsVerifyAgent.destroy?.();
