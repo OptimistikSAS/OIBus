@@ -84,7 +84,7 @@ before(() => {
 });
 
 beforeEach(() => {
-  mockHTTPRequest = mock.fn(async () => ({ statusCode: 200, body: { text: async () => '' } }));
+  mockHTTPRequest = mock.fn(async () => ({ statusCode: 200, body: { text: async () => '', dump: async () => undefined } }));
   mockBuildHttpOptions = mock.fn(async () => ({ headers: {} as Record<string, string>, body: null }));
   mockGetUrl = mock.fn(() => 'http://example.com/api/oianalytics/oibus/logs');
   mockEncryptionInit = mock.fn(async () => undefined);
@@ -191,7 +191,7 @@ describe('OianalyticsTransport (createTransport)', () => {
   it('sendOIALogs should log console.error on non-200/non-401 response', async () => {
     mockHTTPRequest = mock.fn(async () => ({
       statusCode: 500,
-      body: { text: async () => 'Server Error' }
+      body: { text: async () => 'Server Error', dump: async () => undefined }
     }));
     const consoleSpy = mock.method(console, 'error', () => undefined);
 

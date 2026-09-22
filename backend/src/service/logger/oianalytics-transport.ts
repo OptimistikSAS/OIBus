@@ -97,7 +97,12 @@ class OianalyticsTransport {
           console.error(`OIAnalytics authentication error on ${url}: ${response.statusCode} - ${await response.body.text()}`);
         } else {
           console.error(`OIAnalytics fetch error on ${url}: ${response.statusCode} - ${response.statusCode} with payload ${dataBuffer}`);
+          // Drain the response body so undici can return the connection to its pool.
+          await response.body.dump();
         }
+      } else {
+        // Drain the response body so undici can return the connection to its pool.
+        await response.body.dump();
       }
     } catch (error) {
       console.error(`Error when sending logs to ${url}. ${error}`);

@@ -33,6 +33,8 @@ export default class OIAnalyticsClient {
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
+    // Drain the response body so undici can return the connection to its pool.
+    await response.body.dump();
   }
 
   async retrieveCancelledCommands(
@@ -152,6 +154,8 @@ export default class OIAnalyticsClient {
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
+    // Drain the response body so undici can return the connection to its pool.
+    await response.body.dump();
   }
 
   async sendHistoryQuery(registrationSettings: OIAnalyticsRegistration, payload: string): Promise<void> {
@@ -167,6 +171,8 @@ export default class OIAnalyticsClient {
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
+    // Drain the response body so undici can return the connection to its pool.
+    await response.body.dump();
   }
 
   async deleteHistoryQuery(registrationSettings: OIAnalyticsRegistration, historyId: string): Promise<void> {
@@ -181,6 +187,8 @@ export default class OIAnalyticsClient {
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
+    // Drain the response body so undici can return the connection to its pool.
+    await response.body.dump();
   }
 
   async downloadFile(registrationSettings: OIAnalyticsRegistration, assetId: string, filename: string): Promise<void> {
