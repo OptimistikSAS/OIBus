@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.9.2](https://github.com/OptimistikSAS/OIBus/compare/v3.9.1...v3.9.2) (2026-09-22)
+
+
+### Bug Fixes
+
+* **south:** duplicate groups when duplicating south ([b0b7734](https://github.com/OptimistikSAS/OIBus/commit/b0b7734e0d85306a4902dba1622e712323e6b714))
+* **south:** fix migration of south opcua items ([90e91eb](https://github.com/OptimistikSAS/OIBus/commit/90e91ebff465c776674e14dd4055d88a5052784a))
+* **south:** manage sliding window in south rest connector ([5085102](https://github.com/OptimistikSAS/OIBus/commit/5085102d6b2848ec6a193550cff0b2b07fd257c5))
+* **south:** use add method in south rest for sliding windows ([baa0919](https://github.com/OptimistikSAS/OIBus/commit/baa0919a58a6b61ad6e2b6f3a5dd3a597ddbf19d))
+* **test:** catch error in modal when testing ([be6a1cd](https://github.com/OptimistikSAS/OIBus/commit/be6a1cd0cb16ec2dda83994809dc57d2686c0cb6))
+* **transformer:** use content when available in file transformers ([a593f62](https://github.com/OptimistikSAS/OIBus/commit/a593f6281770f82ec37d5679ff25ebbbcf5b19fb))
+
 ## [3.9.1](https://github.com/OptimistikSAS/OIBus/compare/v3.9.0...v3.9.1) (2026-09-07)
 
 
