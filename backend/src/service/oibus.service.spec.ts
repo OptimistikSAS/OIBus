@@ -553,15 +553,16 @@ describe('OIBus Service', () => {
     historyQueryService.list.mock.mockImplementation(() => []);
     await service.start();
 
-    assert.strictEqual(engineMetricsRepository.updateMetrics.mock.calls.length, 0);
+    // start() persists a freshly reset metricsStart, so the pre-tick call count is 1, not 0
+    assert.strictEqual(engineMetricsRepository.updateMetrics.mock.calls.length, 1);
     mock.timers.tick(1000);
     mock.timers.tick(1000);
     mock.timers.tick(1000);
     mock.timers.tick(1000);
 
-    assert.strictEqual(engineMetricsRepository.updateMetrics.mock.calls.length, 4);
-    assert.deepStrictEqual(engineMetricsRepository.updateMetrics.mock.calls[3].arguments[1], {
-      metricsStart: '2020-01-01T00:00:00.000',
+    assert.strictEqual(engineMetricsRepository.updateMetrics.mock.calls.length, 5);
+    assert.deepStrictEqual(engineMetricsRepository.updateMetrics.mock.calls[4].arguments[1], {
+      metricsStart: testData.constants.dates.FAKE_NOW,
       processCpuUsageInstant: 0,
       processCpuUsageAverage: 0.0000002,
       processUptime: 10000000,

@@ -113,7 +113,8 @@ export default class OIBusService {
     this.cpuUsageRefInstant = DateTime.now().toMillis(); // Reference between two dates for cpu usage calculation
     this.cpuUsageRef = process.cpuUsage();
     this.engineMetricsRepository.initMetrics(settings.id);
-    this.metrics = this.engineMetricsRepository.getMetrics(settings.id)!;
+    this.metrics = { ...this.engineMetricsRepository.getMetrics(settings.id)!, metricsStart: DateTime.now().toUTC().toISO()! };
+    this.engineMetricsRepository.updateMetrics(settings.id, this.metrics);
     this.engineMetricsSeeded = false;
 
     this.updateEngineMetricsInterval = setInterval(this.updateEngineMetrics.bind(this), UPDATE_ENGINE_METRICS_INTERVAL);
