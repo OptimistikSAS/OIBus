@@ -53,7 +53,8 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
       };
 
       const requestUrl = new URL(`/api/opc/${this.connector.id}/connect`, this.connector.settings.agentUrl);
-      await HTTPRequest(requestUrl, fetchOptions);
+      // Drain the response body so undici can return the connection to its pool.
+      await (await HTTPRequest(requestUrl, fetchOptions)).body.dump();
       this.connected = true;
       this.logger.info(`Connected to OPC agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - connectStart} ms`);
       await super.connect();
@@ -97,7 +98,8 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
       this.logger.info(`OPC server info: ${JSON.stringify(await response.body.json())}`);
 
       const disconnectUrl = new URL(`/api/opc/${this.connector.id}-test/disconnect`, this.connector.settings.agentUrl);
-      await HTTPRequest(disconnectUrl, { method: 'DELETE' });
+      // Drain the response body so undici can return the connection to its pool.
+      await (await HTTPRequest(disconnectUrl, { method: 'DELETE' })).body.dump();
     } else if (connectResponse.statusCode === 400) {
       const errorMessage = await connectResponse.body.text();
       throw new Error(
@@ -272,6 +274,8 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
             const errorMessage = await response.body.text();
             throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}: ${errorMessage}`);
           } else {
+            // Drain the response body so undici can return the connection to its pool.
+            await response.body.dump();
             throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}`);
           }
         }
@@ -298,7 +302,8 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
       try {
         const fetchOptions = { method: 'DELETE' };
         const requestUrl = new URL(`/api/opc/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
-        await HTTPRequest(requestUrl, fetchOptions);
+        // Drain the response body so undici can return the connection to its pool.
+        await (await HTTPRequest(requestUrl, fetchOptions)).body.dump();
         this.logger.info(
           `Disconnected from OPC agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - disconnectStart} ms`
         );

@@ -76,6 +76,8 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
         `HTTP request failed with status code ${response.statusCode}, expected ${successCode}. Message: ${await response.body.text()}`
       );
     }
+    // Drain the response body so undici can return the connection to its pool.
+    await response.body.dump();
     return { items: [] };
   }
 

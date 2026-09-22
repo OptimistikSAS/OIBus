@@ -48,7 +48,8 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       };
 
       const requestUrl = new URL(`/api/pi/${this.connector.id}/connect`, this.connector.settings.agentUrl);
-      await HTTPRequest(requestUrl, fetchOptions);
+      // Drain the response body so undici can return the connection to its pool.
+      await (await HTTPRequest(requestUrl, fetchOptions)).body.dump();
       this.connected = true;
       this.logger.info(`Connected to PI agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - connectStart} ms`);
       await super.connect();
@@ -81,7 +82,8 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     if (response.statusCode === 200) {
       this.logger.info(`Connected to PI agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - connectStart} ms`);
       const disconnectUrl = new URL(`/api/pi/${testSessionId}/disconnect`, this.connector.settings.agentUrl);
-      await HTTPRequest(disconnectUrl, { method: 'DELETE' });
+      // Drain the response body so undici can return the connection to its pool.
+      await (await HTTPRequest(disconnectUrl, { method: 'DELETE' })).body.dump();
     } else if (response.statusCode === 400) {
       const errorMessage = await response.body.text();
       throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}. ${errorMessage}`);
@@ -108,10 +110,13 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     try {
       const connectStart = DateTime.now().toMillis();
       const connectUrl = new URL(`/api/pi/${testSessionId}/connect`, this.connector.settings.agentUrl);
-      await HTTPRequest(connectUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' }
-      });
+      // Drain the response body so undici can return the connection to its pool.
+      await (
+        await HTTPRequest(connectUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' }
+        })
+      ).body.dump();
       const connectionDuration = DateTime.now().toMillis() - connectStart;
 
       const fetchOptions = {
@@ -150,9 +155,12 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       throw new Error(`Error occurred when sending connect command to remote agent. ${response.statusCode}`);
     } finally {
       const disconnectUrl = new URL(`/api/pi/${testSessionId}/disconnect`, this.connector.settings.agentUrl);
-      await HTTPRequest(disconnectUrl, { method: 'DELETE' }).catch(error => {
-        this.logger.error(`Error while sending disconnection HTTP request into agent for test session. ${error}`);
-      });
+      await HTTPRequest(disconnectUrl, { method: 'DELETE' })
+        // Drain the response body so undici can return the connection to its pool.
+        .then(response => response.body.dump())
+        .catch(error => {
+          this.logger.error(`Error while sending disconnection HTTP request into agent for test session. ${error}`);
+        });
     }
   }
 
@@ -219,6 +227,8 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       const errorMessage = await response.body.text();
       throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}: ${errorMessage}`);
     } else {
+      // Drain the response body so undici can return the connection to its pool.
+      await response.body.dump();
       throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}`);
     }
     return { trackedInstant: updatedStartTime, value: result?.content.length > 0 ? result.content[result.content.length - 1] : null };
@@ -235,7 +245,8 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       try {
         const fetchOptions = { method: 'DELETE' };
         const requestUrl = new URL(`/api/pi/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
-        await HTTPRequest(requestUrl, fetchOptions);
+        // Drain the response body so undici can return the connection to its pool.
+        await (await HTTPRequest(requestUrl, fetchOptions)).body.dump();
         this.logger.info(
           `Disconnected from PI agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - disconnectStart} ms`
         );

@@ -59,7 +59,8 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
           })
         };
         const requestUrl = new URL(`/api/odbc/${this.connector.id}/connect`, this.connector.settings.agentUrl);
-        await HTTPRequest(requestUrl, fetchOptions);
+        // Drain the response body so undici can return the connection to its pool.
+        await (await HTTPRequest(requestUrl, fetchOptions)).body.dump();
         this.connected = true;
         this.logger.info(
           `Connected to ODBC agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - connectStart} ms`
@@ -87,7 +88,8 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       try {
         const fetchOptions: ReqOptions = { method: 'DELETE' };
         const requestUrl = new URL(`/api/odbc/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
-        await HTTPRequest(requestUrl, fetchOptions);
+        // Drain the response body so undici can return the connection to its pool.
+        await (await HTTPRequest(requestUrl, fetchOptions)).body.dump();
         this.logger.info(
           `Disconnected from ODBC agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - disconnectStart} ms`
         );
@@ -223,11 +225,14 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     const response = await HTTPRequest(requestUrl, fetchOptions);
     if (response.statusCode === 200) {
       const requestUrl = new URL(`/api/odbc/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
-      await HTTPRequest(requestUrl, { method: 'DELETE' });
+      // Drain the response body so undici can return the connection to its pool.
+      await (await HTTPRequest(requestUrl, { method: 'DELETE' })).body.dump();
     } else if (response.statusCode === 400) {
       const errorMessage = await response.body.text();
       throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}: ${errorMessage}`);
     } else {
+      // Drain the response body so undici can return the connection to its pool.
+      await response.body.dump();
       throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}`);
     }
   }
@@ -317,6 +322,8 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       const errorMessage = await response.body.text();
       throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}: ${errorMessage}`);
     } else {
+      // Drain the response body so undici can return the connection to its pool.
+      await response.body.dump();
       throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}`);
     }
 
