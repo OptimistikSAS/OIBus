@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { ReadStream } from 'node:fs';
 import zlib from 'node:zlib';
+import { PassThrough } from 'node:stream';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule, buildNorthEntity, assertContains } from '../../tests/utils/test-utils';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
@@ -27,13 +28,12 @@ describe('NorthOIAnalytics', () => {
   const certificateRepository = new CertificateRepositoryMock() as unknown as CertificateRepository;
   const oIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock() as unknown as OIAnalyticsRegistrationRepository;
 
-  const mockGzipStream = { pipe: mock.fn() };
-  const readStreamPipeMock = mock.fn(() => mockGzipStream);
-  const mockReadStream = {
-    pipe: readStreamPipeMock,
-    on: mock.fn(),
-    read: mock.fn()
-  } as unknown as ReadStream;
+  // Real streams — gzipStream() now wires the source into the gzip Transform via
+  // pipeline(), which needs genuine stream objects (not plain fake objects with a mocked
+  // .pipe()) to work. Fresh instances are created per test in beforeEach() since pipeline()
+  // actually attaches listeners/consumes these, so they can't safely be reused across tests.
+  let mockGzipStream: PassThrough;
+  let mockReadStream: ReadStream;
 
   const httpRequestMock = mock.fn(async (_url: URL, _options: ReqOptions) => createMockResponse(200));
 
@@ -96,8 +96,10 @@ describe('NorthOIAnalytics', () => {
     testOIAnalyticsConnectionMock.mock.resetCalls();
     createGzipMock.mock.resetCalls();
     gzipSyncMock.mock.resetCalls();
-    readStreamPipeMock.mock.resetCalls();
     (oIAnalyticsRegistrationRepository as unknown as OIAnalyticsRegistrationRepositoryMock).get.mock.resetCalls();
+
+    mockGzipStream = new PassThrough();
+    mockReadStream = new PassThrough() as unknown as ReadStream;
 
     // node:zlib is a built-in module and cannot be patched via mockModule; use mock.method instead
     mock.method(zlib, 'createGzip', createGzipMock as unknown as typeof zlib.createGzip);
@@ -168,7 +170,6 @@ describe('NorthOIAnalytics', () => {
       await north.handleContent(mockReadStream, metadata);
 
       assert.strictEqual(createGzipMock.mock.calls.length, 0);
-      assert.strictEqual(readStreamPipeMock.mock.calls.length, 0);
 
       assert.strictEqual(httpRequestMock.mock.calls.length, 1);
       const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
@@ -185,8 +186,6 @@ describe('NorthOIAnalytics', () => {
 
       // fileStream is piped through createGzip — no synchronous gzip or streamToString
       assert.strictEqual(createGzipMock.mock.calls.length, 1);
-      assert.strictEqual(readStreamPipeMock.mock.calls.length, 1);
-      assert.deepStrictEqual(readStreamPipeMock.mock.calls[0].arguments[0], mockGzipStream);
       assert.strictEqual(gzipSyncMock.mock.calls.length, 0);
 
       assert.strictEqual(httpRequestMock.mock.calls.length, 1);
@@ -236,7 +235,6 @@ describe('NorthOIAnalytics', () => {
 
       await north.handleContent(mockReadStream, metadata);
 
-      assert.strictEqual(readStreamPipeMock.mock.calls.length, 1);
       assert.strictEqual(createGzipMock.mock.calls.length, 1);
       assert.deepStrictEqual(createGzipMock.mock.calls[0].arguments, [{ level: 9 }]);
 
@@ -252,7 +250,6 @@ describe('NorthOIAnalytics', () => {
 
       await north.handleContent(mockReadStream, gzMetadata);
 
-      assert.strictEqual(readStreamPipeMock.mock.calls.length, 0);
       assert.strictEqual(createGzipMock.mock.calls.length, 0);
 
       assert.strictEqual(httpRequestMock.mock.calls.length, 1);

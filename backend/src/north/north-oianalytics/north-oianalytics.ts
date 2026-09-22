@@ -1,7 +1,7 @@
 import NorthConnector from '../north-connector';
 import { ReadStream } from 'node:fs';
 import zlib from 'node:zlib';
-import { Readable } from 'node:stream';
+import { pipeline, Readable } from 'node:stream';
 import { HTTPRequest, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
 import { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
@@ -11,6 +11,25 @@ import OIAnalyticsRegistrationRepository from '../../repository/config/oianalyti
 import { OIBusError } from '../../model/engine.model';
 import type { ICacheService } from '../../model/cache.service.model';
 import { buildHttpOptions, getHost, getUrl, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
+import { getErrorMessage } from '../../service/utils';
+import type { ILogger } from '../../model/logger.model';
+
+/**
+ * Pipe `source` into a freshly created gzip Transform and return it, wired through
+ * `pipeline()` (not a raw `.pipe()`) so that if either stream errors or is destroyed by
+ * whatever consumes the returned Transform (e.g. undici aborting the request), the other
+ * one is torn down too — a raw `.pipe()` here leaves the gzip stream (and its native zlib
+ * buffer) dangling whenever the failure originates on the other side of the pipe.
+ */
+function gzipStream(source: Readable, logger: ILogger, level?: number): zlib.Gzip {
+  const gzip = zlib.createGzip(level === undefined ? undefined : { level });
+  pipeline(source, gzip, error => {
+    if (error) {
+      logger.error(`Error while compressing stream: ${getErrorMessage(error)}`);
+    }
+  });
+  return gzip;
+}
 
 async function* multipartStream(boundary: string, filename: string, dataStream: AsyncIterable<Buffer>) {
   yield Buffer.from(
@@ -88,7 +107,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     );
     // Stream the file directly (or through async gzip) instead of buffering the
     // whole payload in memory and gzipping synchronously on the event loop.
-    httpOptions.body = this.connector.settings.compress ? fileStream.pipe(zlib.createGzip()) : fileStream;
+    httpOptions.body = this.connector.settings.compress ? gzipStream(fileStream, this.logger) : fileStream;
     httpOptions.query = { dataSourceId: this.connector.name };
 
     let response: ReqResponse;
@@ -110,7 +129,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
 
   async handleFile(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
     const compress = this.connector.settings.compress && !cacheMetadata.contentFile.endsWith('.gz');
-    const readStream = compress ? fileStream.pipe(zlib.createGzip({ level: 9 })) : fileStream;
+    const readStream = compress ? gzipStream(fileStream, this.logger, 9) : fileStream;
     const filename = compress ? `${cacheMetadata.contentFile}.gz` : cacheMetadata.contentFile;
 
     const boundary = `OIBusBoundary${Date.now()}`;
