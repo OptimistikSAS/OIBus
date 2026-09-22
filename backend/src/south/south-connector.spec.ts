@@ -221,6 +221,21 @@ describe('SouthConnector', () => {
       assert.strictEqual(warnMock.mock.calls.filter(call => (call.arguments[0] as string).startsWith(message)).length, 2);
     });
 
+    it('should prune stale backpressure-warning entries when items/groups are reconfigured', () => {
+      south['runTask'] = mock.fn(async () => undefined);
+      const scanMode = testData.scanMode.list[0];
+
+      // First tick enqueues the job; second tick while it's still running records a backpressure warning
+      south.trigger(scanMode);
+      south.trigger(scanMode);
+      assert.strictEqual(south['lastBackpressureWarnByUnitId'].size, 1);
+
+      // Reconfiguring with no items rebuilds itemGroupsByScanModeId as empty, so the recorded
+      // work-unit no longer exists and its stale timestamp should be pruned rather than kept forever.
+      south.connectorConfiguration = { ...south.connectorConfiguration, items: [] };
+      assert.strictEqual(south['lastBackpressureWarnByUnitId'].size, 0);
+    });
+
     it('should properly add to queue a new task and not trigger next run if no item', () => {
       const runTaskMock = mock.fn(async () => undefined);
       south['runTask'] = runTaskMock;

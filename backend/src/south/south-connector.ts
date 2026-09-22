@@ -184,6 +184,22 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     for (const [scanModeId, items] of itemsByScanModeId) {
       this.itemGroupsByScanModeId.set(scanModeId, groupItemsByGroup<I>(this.connector.type, items));
     }
+
+    // Drop backpressure-warning timestamps for work-units that no longer exist, so a connector
+    // whose items/groups get added, renamed or recreated over its lifetime doesn't accumulate
+    // stale entries forever — unlike itemStatus/itemGroupsByScanModeId, this map has no other
+    // eviction path.
+    const currentUnitKeys = new Set<string>();
+    for (const groupedItemsList of this.itemGroupsByScanModeId.values()) {
+      for (const items of groupedItemsList) {
+        currentUnitKeys.add(this.getUnitKey(items));
+      }
+    }
+    for (const unitKey of this.lastBackpressureWarnByUnitId.keys()) {
+      if (!currentUnitKeys.has(unitKey)) {
+        this.lastBackpressureWarnByUnitId.delete(unitKey);
+      }
+    }
   }
 
   /**
