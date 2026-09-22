@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.9.3](https://github.com/OptimistikSAS/OIBus/compare/v3.9.2...v3.9.3) (2026-09-22)
+
+
+### Bug Fixes
+
+* **cache:** evict oldest entries in proxy/credential caches once they exceed 50 items ([0ad025e](https://github.com/OptimistikSAS/OIBus/commit/0ad025ef5312df6dafe4f0ae873d5fb461f3a35c))
+* **cache:** release file/zlib handles on compress error instead of hanging ([cc3a588](https://github.com/OptimistikSAS/OIBus/commit/cc3a588e9958ecb9d5de0c8dc9b40f0ff88d8281))
+* **http:** release http resource to clean external / array memory on south/north connectors ([379e1f0](https://github.com/OptimistikSAS/OIBus/commit/379e1f0630503cc4990fb2331365a5f5eb5a2f41))
+* **metrics:** reset engine metrics start at oibus startup ([16ad6c0](https://github.com/OptimistikSAS/OIBus/commit/16ad6c0e196f48956ada4d0ad89ad55e96ebcb3a))
+* **oianalytics:** release gzip stream resource on upload error to clean external / array memory ([9182462](https://github.com/OptimistikSAS/OIBus/commit/918246241e6125bb1fcd159131e4c5b539e87d2a))
+* **oianalytics:** release http resource to clean external / array memory ([9091d23](https://github.com/OptimistikSAS/OIBus/commit/9091d2345cbca427005287e45179caed2883dc3c))
+* **south:** prune stale backpressure-warning entries on item/group reconfiguration ([98b341e](https://github.com/OptimistikSAS/OIBus/commit/98b341ef8909ec7536cb34718e47ff7298168ac0))
+
 ## [3.9.2](https://github.com/OptimistikSAS/OIBus/compare/v3.9.1...v3.9.2) (2026-09-22)
 
 
