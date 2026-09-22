@@ -184,21 +184,9 @@ export const getFilenameWithoutRandomId = (filename: string): string => {
 /**
  * Compress the specified file
  */
-export const compress = (input: string, output: string): Promise<void> =>
-  new Promise((resolve, reject) => {
-    const readStream = createReadStream(input);
-    const writeStream = createWriteStream(output);
-    const gzip = zlib.createGzip({ level: COMPRESSION_LEVEL });
-    readStream
-      .pipe(gzip)
-      .pipe(writeStream)
-      .on('error', error => {
-        reject(error);
-      })
-      .on('finish', () => {
-        resolve();
-      });
-  });
+export const compress = (input: string, output: string): Promise<void> => {
+  return pipeline(createReadStream(input), zlib.createGzip({ level: COMPRESSION_LEVEL }), createWriteStream(output));
+};
 
 export const unzip = (input: string, output: string): Promise<void> => {
   return pipeline(createReadStream(input), unzipper.Extract({ path: output }));

@@ -224,67 +224,36 @@ describe('Service utils', () => {
 
   describe('compress', () => {
     it('should properly compress file', async () => {
-      const onFinish = mock.fn((event: string, handler: () => void) => handler());
-      const onError = mock.fn(() => ({ on: onFinish }));
-      const myReadStream = {
-        pipe: mock.fn(function (this: unknown) {
-          return this;
-        }),
-        on: onError
-      };
-      const createReadStreamMock = mock.method(
-        fsSync,
-        'createReadStream',
-        seq(() => myReadStream as unknown as fsSync.ReadStream)
-      );
-
-      const myWriteStream: { pipe: ReturnType<typeof mock.fn>; on: ReturnType<typeof mock.fn> } = {
-        pipe: mock.fn(function (this: unknown) {
-          return this;
-        }),
-        on: mock.fn((event: string, handler: () => void) => {
-          handler();
-          return myWriteStream;
-        })
-      };
-      mock.method(fsSync, 'createWriteStream', () => myWriteStream as unknown as fsSync.WriteStream);
-      mock.method(zlib, 'createGzip', () => ({}) as zlib.Gzip);
+      const source = new PassThrough();
+      source.end('some data');
+      const gzip = new PassThrough();
+      const dest = new PassThrough();
+      dest.resume(); // drain so pipeline finishes
+      const createReadStreamMock = mock.method(fsSync, 'createReadStream', () => source as unknown as fsSync.ReadStream);
+      const createWriteStreamMock = mock.method(fsSync, 'createWriteStream', () => dest as unknown as fsSync.WriteStream);
+      const createGzipMock = mock.method(zlib, 'createGzip', () => gzip as unknown as zlib.Gzip);
 
       await utils.compress('myInputFile', 'myOutputFile');
 
       assert.strictEqual(createReadStreamMock.mock.calls.length, 1);
       assert.deepStrictEqual(createReadStreamMock.mock.calls[0].arguments, ['myInputFile']);
-      assert.strictEqual(myReadStream.pipe.mock.calls.length, 2);
+      assert.strictEqual(createWriteStreamMock.mock.calls.length, 1);
+      assert.deepStrictEqual(createWriteStreamMock.mock.calls[0].arguments, ['myOutputFile']);
+      assert.strictEqual(createGzipMock.mock.calls.length, 1);
     });
 
     it('should properly manage error when compressing file', async () => {
-      const myReadStream: { pipe: ReturnType<typeof mock.fn>; on: ReturnType<typeof mock.fn> } = {
-        pipe: mock.fn(function (this: unknown) {
-          return this;
-        }),
-        on: mock.fn((event: string, handler: (err: string) => void) => {
-          handler('compression error');
-          return myReadStream;
-        })
-      };
-      const createReadStreamMock = mock.method(
-        fsSync,
-        'createReadStream',
-        seq(() => myReadStream as unknown as fsSync.ReadStream)
-      );
-      mock.method(fsSync, 'createWriteStream', () => ({}) as fsSync.WriteStream);
-      mock.method(zlib, 'createGzip', () => ({}) as zlib.Gzip);
+      const source = new PassThrough();
+      const gzip = new PassThrough();
+      const dest = new PassThrough();
+      mock.method(fsSync, 'createReadStream', () => source as unknown as fsSync.ReadStream);
+      mock.method(fsSync, 'createWriteStream', () => dest as unknown as fsSync.WriteStream);
+      mock.method(zlib, 'createGzip', () => gzip as unknown as zlib.Gzip);
 
-      let expectedError: unknown = null;
-      try {
-        await utils.compress('myInputFile', 'myOutputFile');
-      } catch (error) {
-        expectedError = error;
-      }
-      assert.deepStrictEqual(expectedError, 'compression error');
-      assert.strictEqual(createReadStreamMock.mock.calls.length, 1);
-      assert.deepStrictEqual(createReadStreamMock.mock.calls[0].arguments, ['myInputFile']);
-      assert.strictEqual(myReadStream.pipe.mock.calls.length, 2);
+      // Emit an error on the source after the pipeline has started
+      setImmediate(() => source.destroy(new Error('compression error')));
+
+      await assert.rejects(() => utils.compress('myInputFile', 'myOutputFile'), /compression error/);
     });
   });
 
@@ -594,39 +563,18 @@ describe('Service utils', () => {
     });
 
     describe('with compression', () => {
-      let readStreamMock: {
-        pipe: ReturnType<typeof mock.fn>;
-        on: ReturnType<typeof mock.fn>;
-      };
-
       beforeEach(() => {
-        const onFinish = mock.fn((event: string, handler: () => void) => handler());
-        const onError = mock.fn(() => ({ on: onFinish }));
-
-        readStreamMock = {
-          pipe: mock.fn(function (this: unknown) {
-            return this;
-          }),
-          on: onError
-        };
-
-        mock.method(
-          fsSync,
-          'createReadStream',
-          seq(() => readStreamMock as unknown as fsSync.ReadStream)
-        );
-
-        const myWriteStream: { pipe: ReturnType<typeof mock.fn>; on: ReturnType<typeof mock.fn> } = {
-          pipe: mock.fn(function (this: unknown) {
-            return this;
-          }),
-          on: mock.fn((event: string, handler: () => void) => {
-            handler();
-            return myWriteStream;
-          })
-        };
-        mock.method(fsSync, 'createWriteStream', () => myWriteStream as unknown as fsSync.WriteStream);
-        mock.method(zlib, 'createGzip', () => ({}) as zlib.Gzip);
+        mock.method(fsSync, 'createReadStream', () => {
+          const source = new PassThrough();
+          source.end('some data');
+          return source as unknown as fsSync.ReadStream;
+        });
+        mock.method(fsSync, 'createWriteStream', () => {
+          const dest = new PassThrough();
+          dest.resume(); // drain so pipeline finishes
+          return dest as unknown as fsSync.WriteStream;
+        });
+        mock.method(zlib, 'createGzip', () => new PassThrough() as unknown as zlib.Gzip);
         mock.method(fs, 'writeFile', async () => null);
       });
 
