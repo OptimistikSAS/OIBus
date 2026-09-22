@@ -315,10 +315,14 @@ export const testOIAnalyticsConnection = async (
   // During initial registration, a 401 response is expected and considered successful
   // because the token hasn't been retrieved yet
   if (acceptNotRegistered && response.statusCode === 401) {
+    // Drain the response body so undici can return the connection to its pool.
+    await response.body.dump();
     return;
   }
 
   if (!response.ok) {
     throw new Error(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`);
   }
+  // Drain the response body so undici can return the connection to its pool.
+  await response.body.dump();
 };
