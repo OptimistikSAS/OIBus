@@ -73,6 +73,8 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
         `HTTP request failed with status code ${response.statusCode}, expected ${successCode}. Message: ${await response.body.text()}`
       );
     }
+    // Drain the response body so undici can return the connection to its pool.
+    await response.body.dump();
     return {
       items: [
         { key: 'URL', value: requestUrl.toString() },
@@ -150,6 +152,8 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
         retryableHttpStatusCodes.includes(response.statusCode)
       );
     }
+    // Drain the response body so undici can return the connection to its pool.
+    await response.body.dump();
   }
 
   private getProxyOptions(): { proxy: ReqProxyOptions | undefined; acceptUnauthorized: boolean } {

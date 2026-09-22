@@ -57,7 +57,8 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
         })
       };
       const requestUrl = new URL(`/api/ole/${this.connector.id}/connect`, this.connector.settings.agentUrl);
-      await HTTPRequest(requestUrl, fetchOptions);
+      // Drain the response body so undici can return the connection to its pool.
+      await (await HTTPRequest(requestUrl, fetchOptions)).body.dump();
       this.connected = true;
       this.logger.info(`Connected to OLE agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - connectStart} ms`);
       await super.connect();
@@ -80,7 +81,8 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
       try {
         const fetchOptions = { method: 'DELETE' };
         const requestUrl = new URL(`/api/ole/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
-        await HTTPRequest(requestUrl, fetchOptions);
+        // Drain the response body so undici can return the connection to its pool.
+        await (await HTTPRequest(requestUrl, fetchOptions)).body.dump();
         this.logger.info(
           `Disconnected from OLE agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - disconnectStart} ms`
         );
@@ -110,11 +112,14 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     if (response.statusCode === 200) {
       this.logger.info(`Connected to OLE agent at ${this.connector.settings.agentUrl} in ${DateTime.now().toMillis() - connectStart} ms`);
       const requestUrl = new URL(`/api/ole/${this.connector.id}/disconnect`, this.connector.settings.agentUrl);
-      await HTTPRequest(requestUrl, { method: 'DELETE' });
+      // Drain the response body so undici can return the connection to its pool.
+      await (await HTTPRequest(requestUrl, { method: 'DELETE' })).body.dump();
     } else if (response.statusCode === 400) {
       const errorMessage = await response.body.text();
       throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}: ${errorMessage}`);
     } else {
+      // Drain the response body so undici can return the connection to its pool.
+      await response.body.dump();
       throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}`);
     }
     return { items: [] };
@@ -236,6 +241,8 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
       const errorMessage = await response.body.text();
       throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}: ${errorMessage}`);
     } else {
+      // Drain the response body so undici can return the connection to its pool.
+      await response.body.dump();
       throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}`);
     }
     // For the data stream we only keep the last row as the cached "last value"; the full CSV content
