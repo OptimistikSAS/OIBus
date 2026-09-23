@@ -42338,7 +42338,7 @@
 							"type": "string"
 						},
 						"type": "array",
-						"description": "Discovered-record field(s) — possibly composite — that uniquely identify a record across\nre-runs.",
+						"description": "Local mode only: discovered-record field(s) — possibly composite — that uniquely identify a record\nacross re-runs. Always empty for a remote workflow (`pushToOIAnalytics` true), which never diffs\nagainst a previous run.",
 						"example": [
 							"nodeId"
 						]
@@ -42411,7 +42411,11 @@
 						"items": {
 							"type": "string"
 						},
-						"type": "array"
+						"type": "array",
+						"description": "Local mode: at least one field is required. Remote mode (`pushToOIAnalytics` true): ignored, and\nstored empty — send `[]`.",
+						"example": [
+							"nodeId"
+						]
 					},
 					"eligibilityFilter": {
 						"items": {
