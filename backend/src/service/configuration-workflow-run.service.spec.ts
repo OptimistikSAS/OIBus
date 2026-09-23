@@ -440,6 +440,7 @@ describe('Configuration Workflow Run Service', () => {
   describe('remote (push-to-OIAnalytics) mode', () => {
     const remoteWorkflow: ConfigurationWorkflowEntity = {
       ...baseWorkflow,
+      identityKeyFields: [],
       itemFieldMapping: null,
       pushToOIAnalytics: true
     };
@@ -464,7 +465,7 @@ describe('Configuration Workflow Run Service', () => {
       const payload = JSON.parse(call.arguments[1] as string);
       assert.strictEqual(payload.southId, SOUTH_ID);
       assert.strictEqual(payload.workflowId, WORKFLOW_ID);
-      assert.deepStrictEqual(payload.identityKeyFields, ['nodeId']);
+      assert.strictEqual(payload.identityKeyFields, undefined);
       assert.deepStrictEqual(payload.records, [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable', unit: '°C' }]);
 
       const counts = workflowRunRepository.complete.mock.calls[0].arguments[1] as {
@@ -486,6 +487,25 @@ describe('Configuration Workflow Run Service', () => {
       };
       assert.deepStrictEqual(runPayload.entries, []);
       assert.deepStrictEqual(runPayload.records, [{ nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable', unit: '°C' }]);
+    });
+
+    it('should forward every eligible record without de-duplicating them, having no identity key', async () => {
+      configurationWorkflowService.findById.mock.mockImplementation(() => remoteWorkflow);
+      south.discover.mock.mockImplementation(async () => [
+        { nodeId: 'ns=1;s=Temperature', type: 'Variable' },
+        { nodeId: 'ns=1;s=Pressure', type: 'Variable' }
+      ]);
+
+      await service.runNow(SOUTH_ID, WORKFLOW_ID, 'userTest');
+
+      const payload = JSON.parse(oIAnalyticsMessageService.createConfigurationWorkflowResultMessage.mock.calls[0].arguments[1] as string);
+      assert.deepStrictEqual(payload.records, [
+        { nodeId: 'ns=1;s=Temperature', type: 'Variable' },
+        { nodeId: 'ns=1;s=Pressure', type: 'Variable' }
+      ]);
+      const counts = workflowRunRepository.complete.mock.calls[0].arguments[1] as { eligibleCount: number; pushedCount: number };
+      assert.strictEqual(counts.eligibleCount, 2);
+      assert.strictEqual(counts.pushedCount, 2);
     });
 
     it('should complete the run and log a warning instead of queuing a message when OIBus is no longer registered', async () => {

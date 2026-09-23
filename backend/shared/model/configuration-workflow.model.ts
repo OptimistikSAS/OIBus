@@ -59,8 +59,9 @@ export interface ConfigurationWorkflowDTO extends BaseEntity {
   discoveryScope: Record<string, unknown>;
 
   /**
-   * Discovered-record field(s) — possibly composite — that uniquely identify a record across
-   * re-runs.
+   * Local mode only: discovered-record field(s) — possibly composite — that uniquely identify a record
+   * across re-runs. Always empty for a remote workflow (`pushToOIAnalytics` true), which never diffs
+   * against a previous run.
    * @example ["nodeId"]
    */
   identityKeyFields: Array<string>;
@@ -91,6 +92,12 @@ export interface ConfigurationWorkflowDTO extends BaseEntity {
 export interface ConfigurationWorkflowCommandDTO {
   name: string;
   discoveryScope: Record<string, unknown>;
+
+  /**
+   * Local mode: at least one field is required. Remote mode (`pushToOIAnalytics` true): ignored, and
+   * stored empty — send `[]`.
+   * @example ["nodeId"]
+   */
   identityKeyFields: Array<string>;
   eligibilityFilter: Array<RecordFilterCondition>;
   itemFieldMapping: Record<string, string> | null;

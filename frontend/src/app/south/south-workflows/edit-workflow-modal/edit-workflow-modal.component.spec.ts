@@ -249,6 +249,7 @@ describe('EditWorkflowModalComponent', () => {
     expect(fixture.nativeElement.querySelector('#mode-local')).toBeNull();
     expect(fixture.nativeElement.querySelector('#mode-remote')).toBeNull();
     expect(fixture.nativeElement.querySelector('#item-field-mapping-table')).toBeNull();
+    expect(fixture.nativeElement.querySelector('#identity-key-fields-list')).toBeNull();
     await expect.element(root.getByCss('[translate="south.workflows.mode-sql-fixed"]')).toBeInTheDocument();
     expect(fixture.componentInstance.form!.controls.pushToOIAnalytics.value).toBe(true);
   });
@@ -264,7 +265,9 @@ describe('EditWorkflowModalComponent', () => {
 
     fixture.componentInstance.save();
 
-    expect(activeModal.close).toHaveBeenCalledWith(expect.objectContaining({ pushToOIAnalytics: true, itemFieldMapping: null }));
+    expect(activeModal.close).toHaveBeenCalledWith(
+      expect.objectContaining({ pushToOIAnalytics: true, itemFieldMapping: null, identityKeyFields: [] })
+    );
   });
 
   test('should test the discovery query as currently typed and show the raw rows', () => {
@@ -782,6 +785,22 @@ describe('EditWorkflowModalComponent', () => {
     await expect.element(root.getByCss('#mode-remote-not-registered')).toBeInTheDocument();
   });
 
+  test('should only show identity key fields in local mode', async () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.detectChanges();
+    const root = page.elementLocator(fixture.nativeElement);
+    await expect.element(root.getByCss('#identity-key-fields-list')).toBeInTheDocument();
+
+    await root.getByCss('#mode-remote').click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#identity-key-fields-list')).toBeNull();
+
+    await root.getByCss('#mode-local').click();
+    fixture.detectChanges();
+    await expect.element(root.getByCss('#identity-key-fields-list')).toBeInTheDocument();
+  });
+
   test('should add and remove identity key fields', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
@@ -981,7 +1000,23 @@ describe('EditWorkflowModalComponent', () => {
 
     fixture.componentInstance.save();
 
-    expect(activeModal.close).toHaveBeenCalledWith(expect.objectContaining({ pushToOIAnalytics: true, itemFieldMapping: null }));
+    // Identity keys only apply to local mode - never sent for a remote workflow, even if some were typed before switching.
+    expect(activeModal.close).toHaveBeenCalledWith(
+      expect.objectContaining({ pushToOIAnalytics: true, itemFieldMapping: null, identityKeyFields: [] })
+    );
+  });
+
+  test('should save a remote workflow without any identity key field', () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.detectChanges();
+    fixture.componentInstance.form!.controls.name.setValue('New workflow');
+    fixture.componentInstance.form!.controls.pushToOIAnalytics.setValue(true);
+
+    fixture.componentInstance.save();
+
+    expect(fixture.componentInstance.formError).toBeNull();
+    expect(activeModal.close).toHaveBeenCalledWith(expect.objectContaining({ pushToOIAnalytics: true, identityKeyFields: [] }));
   });
 
   test('should reject saving when a mandatory item field is not mapped', () => {
