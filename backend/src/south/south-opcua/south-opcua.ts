@@ -17,10 +17,12 @@ import {
   ClientSession,
   ClientSubscription,
   DataValue,
+  LocalizedText,
   MessageSecurityMode,
   NodeClass,
   NodeId,
   OPCUAClient,
+  readOperationLimits,
   ReferenceDescription,
   resolveNodeId,
   StatusCode,
@@ -85,6 +87,41 @@ function isSessionError(error: unknown): boolean {
 /**
  * Class SouthOPCUA - Connect to an OPCUA server
  */
+// Fallback batch size for a multi-node read/browse when the server doesn't advertise a limit of its own
+// (ServerCapabilities.OperationLimits), or advertises 0 - which the spec defines as "no limit", but
+// even an unlimited server still caps the size of a single message, so a whole large level is never
+// sent in one request regardless.
+const DEFAULT_MAX_NODES_PER_REQUEST = 1000;
+
+interface OperationLimits {
+  maxNodesPerRead: number;
+  maxNodesPerBrowse: number;
+}
+
+/** Static (and, for explore, live) metadata read for one Variable - every field optional, since servers
+ *  only expose what their information model declares (e.g. no unit/range on a plain BaseDataVariable). */
+interface VariableMetadata {
+  value?: string;
+  description?: string;
+  unit?: string;
+  min?: number;
+  max?: number;
+}
+
+/**
+ * Sends `items` through `request` in consecutive chunks of at most `chunkSize`, concatenating the results
+ * in the original order. Chunks run sequentially rather than in parallel: the point is to stay within
+ * what the server accepts per request, and node-opcua itself warns against flooding one session with
+ * simultaneous requests.
+ */
+export async function requestInChunks<T, R>(items: Array<T>, chunkSize: number, request: (chunk: Array<T>) => Promise<Array<R>>) {
+  const results: Array<R> = [];
+  for (let start = 0; start < items.length; start += chunkSize) {
+    results.push(...(await request(items.slice(start, start + chunkSize))));
+  }
+  return results;
+}
+
 export default class SouthOPCUA
   extends SouthConnector<SouthOPCUASettings, SouthOPCUAItemSettings>
   implements SouthHistoryQuery, SouthDirectQuery, SouthSubscription, SouthExplore, SouthConfigurationDiscovery
@@ -117,6 +154,10 @@ export default class SouthOPCUA
   // concurrent sessions per client at a low number, sometimes exactly 1. A single ClientSession
   // already supports safely overlapping concurrent requests, so nothing is lost by sharing it.
   private session: ClientSession | null = null;
+  // Read once per session (a reconnect may land on a differently configured server), lazily - only
+  // multi-node explore/discovery requests need it. Keyed by the session object itself, so a new session
+  // naturally re-reads it without any reset bookkeeping in connect()/disconnect().
+  private operationLimits = new WeakMap<ClientSession, Promise<OperationLimits>>();
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(
@@ -411,12 +452,12 @@ export default class SouthOPCUA
 
   /**
    * Browse the OPC-UA address space one level at a time for the interactive explore feature. For every
-   * Variable found in the level, also fetches its current value and, when the server exposes them (the
-   * OPC-UA "AnalogItem" convention), its engineering unit and acceptable range — done eagerly, before
-   * returning, so the tree shows this metadata immediately rather than requiring a separate step. This
-   * live enrichment is deliberately exclusive to this interactive, one-off, human-driven browse — see
-   * `browseForDiscovery()`'s own doc comment for why the Configuration Workflow's `discover()` must
-   * never read live values.
+   * Variable found in the level, also fetches its static metadata (see `readVariableMetadata()`) plus its
+   * current value — done eagerly, before returning, so the tree shows this metadata immediately rather
+   * than requiring a separate step. The live value is deliberately exclusive to this interactive,
+   * one-off, human-driven browse — see `browseForDiscovery()`'s own doc comment for why the
+   * Configuration Workflow's `discover()` must never read live values. Best-effort: a metadata read
+   * failure degrades to plain entries rather than failing the browse.
    * @param parentId - the node id to expand, or null to browse the Objects folder root (ns=0;i=85)
    */
   async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
@@ -429,11 +470,15 @@ export default class SouthOPCUA
     const session = this.session;
     try {
       const references = await this.browseReferences(session, parentId);
-      const liveData = await this.readVariableLiveData(
-        session,
-        references.filter(reference => reference.nodeClass === NodeClass.Variable)
-      );
-      return this.mapReferencesToEntries(references, liveData);
+      const variables = references.filter(reference => reference.nodeClass === NodeClass.Variable);
+      let metadata = new Map<string, VariableMetadata>();
+      try {
+        metadata = await this.readVariableMetadata(session, variables, true);
+      } catch (error) {
+        // Never let a metadata read failure (unsupported server, timeout, ...) fail the browse itself.
+        this.logger.debug(`Could not read variable metadata while exploring: ${getErrorMessage(error)}`);
+      }
+      return this.mapReferencesToEntries(references, metadata);
     } catch (error) {
       if (isSessionError(error)) {
         // The session is dead: release it so a later browse reconnects instead of
@@ -447,12 +492,16 @@ export default class SouthOPCUA
 
   /**
    * Browse the OPC-UA address space one level at a time for the Configuration Workflow's `discover()` -
-   * structural only (NodeId, DisplayName, NodeClass/"type"), deliberately never reading live values,
-   * unlike `explore()`. `discover()`'s result feeds an identity-key diff against the *previous* run: a
+   * structure (NodeId, DisplayName, NodeClass/"type") plus each Variable's static metadata (description,
+   * unit, range - see `readVariableMetadata()`), deliberately never reading live values, unlike
+   * `explore()`. `discover()`'s result feeds an identity-key diff against the *previous* run: a
    * Variable's live value changes constantly, so reading it here would make every discovered entry look
-   * "changed" on every single run, even when nothing about the tag itself actually changed - which
-   * would defeat the whole point of the diff (and of the monitored node list staying stable between
-   * runs).
+   * "changed" on every single run, even when nothing about the tag itself actually changed - whereas a
+   * changed unit or range is exactly the kind of change the diff exists to catch.
+   *
+   * Unlike `explore()`, a metadata read failure fails the run instead of degrading: silently dropping a
+   * unit that is really there would make every affected record look "changed" (and its mapped items
+   * lose that field) until the next successful run.
    * @param parentId - the node id to expand, or null to browse the Objects folder root (ns=0;i=85)
    */
   async browseForDiscovery(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
@@ -464,7 +513,8 @@ export default class SouthOPCUA
     const session = this.session;
     try {
       const references = await this.browseReferences(session, parentId);
-      return this.mapReferencesToEntries(references, new Map());
+      const variables = references.filter(reference => reference.nodeClass === NodeClass.Variable);
+      return this.mapReferencesToEntries(references, await this.readVariableMetadata(session, variables, false));
     } catch (error) {
       if (isSessionError(error)) {
         await this.disconnect();
@@ -490,11 +540,10 @@ export default class SouthOPCUA
     return references;
   }
 
-  /** Maps raw browse references to explore entries, merging in `liveData` (empty for discovery, so its
-   *  entries carry only structural metadata). */
+  /** Maps raw browse references to explore entries, merging in each Variable's `metadata`. */
   private mapReferencesToEntries(
     references: Array<ReferenceDescription>,
-    liveData: Map<string, { value?: string; unit?: string; min?: number; max?: number }>
+    metadata: Map<string, VariableMetadata>
   ): Array<SouthConnectorExploreEntry> {
     return references.map(reference => {
       const nodeIdString = reference.nodeId.toString();
@@ -504,7 +553,7 @@ export default class SouthOPCUA
         metadata: {
           nodeId: nodeIdString,
           type: NodeClass[reference.nodeClass] ?? String(reference.nodeClass),
-          ...liveData.get(nodeIdString)
+          ...metadata.get(nodeIdString)
         },
         hasChildren: reference.nodeClass === NodeClass.Object || reference.nodeClass === NodeClass.Variable
       };
@@ -512,101 +561,133 @@ export default class SouthOPCUA
   }
 
   /**
-   * For every browsed Variable, batch-fetch its current value plus, when present, its unit and
-   * acceptable range. Units/ranges are not plain node attributes in OPC-UA: they only exist as child
-   * "EngineeringUnits"/"EURange" Property nodes on servers that model the variable as an AnalogItem, so
-   * finding them costs one extra browse (batched over every variable in the level) before the values
-   * themselves can be read. Regardless of how many variables are in the level, this is at most 3 requests
-   * total (1 value read + 1 property browse, run in parallel, then 1 property-value read) — never a
-   * per-node round trip.
+   * For every browsed Variable, batch-fetch its static metadata and, when `includeValue`, its current value:
+   *  - `description`: the node's own Description attribute (OPC-UA Part 3), a LocalizedText.
+   *  - `unit`: the display name of the `EngineeringUnits` Property (an EUInformation, Part 8 DataAccess).
+   *  - `min`/`max`: the `EURange` Property (a Range, Part 8) - the variable's normal operating range.
+   * Units/ranges are not plain node attributes: they only exist as child Property nodes on servers that
+   * model the variable as an analog item, so finding them costs one extra browse before they can be read.
+   * Regardless of how many variables are in the level, this is 3 logical requests (1 attribute read + 1
+   * property browse, run in parallel, then 1 property-value read) — never a per-node round trip — each
+   * split into chunks within the server's own operation limits (see `getOperationLimits()`).
    *
-   * Best-effort: a server that doesn't support one of these reads/browses degrades to plain entries
-   * rather than failing the whole explore step.
+   * A per-node bad status (e.g. a Description the server doesn't expose) just leaves that field out; a
+   * failed request as a whole throws, for the caller to decide whether to degrade or fail.
    */
-  private async readVariableLiveData(
+  private async readVariableMetadata(
     session: ClientSession,
-    variableReferences: Array<ReferenceDescription>
-  ): Promise<Map<string, { value?: string; unit?: string; min?: number; max?: number }>> {
-    const result = new Map<string, { value?: string; unit?: string; min?: number; max?: number }>();
+    variableReferences: Array<ReferenceDescription>,
+    includeValue: boolean
+  ): Promise<Map<string, VariableMetadata>> {
+    const result = new Map<string, VariableMetadata>();
     if (variableReferences.length === 0) {
       return result;
     }
     const variableNodeIds = variableReferences.map(reference => reference.nodeId.toString());
+    const limits = await this.getOperationLimits(session);
 
-    try {
-      const [valueDataValues, propertyBrowseResults] = await Promise.all([
-        session.read(variableNodeIds.map(nodeId => ({ nodeId, attributeId: AttributeIds.Value }))),
-        session.browse(variableNodeIds)
-      ]);
+    const attributeIds = includeValue ? [AttributeIds.Description, AttributeIds.Value] : [AttributeIds.Description];
+    const attributesToRead = variableNodeIds.flatMap(nodeId => attributeIds.map(attributeId => ({ nodeId, attributeId })));
+    const [attributeDataValues, propertyBrowseResults] = await Promise.all([
+      requestInChunks(attributesToRead, limits.maxNodesPerRead, chunk => session.read(chunk)),
+      requestInChunks(variableNodeIds, limits.maxNodesPerBrowse, chunk => session.browse(chunk))
+    ]);
 
-      variableReferences.forEach((reference, index) => {
-        const dataValue = valueDataValues[index];
-        const entry: { value?: string; unit?: string; min?: number; max?: number } = {};
-        if (dataValue && dataValue.statusCode.value === StatusCodes.Good.value && dataValue.value?.value != null) {
-          const parsedValue = parseOPCUAValue(reference.displayName?.text ?? variableNodeIds[index], dataValue.value, this.logger);
+    variableReferences.forEach((reference, index) => {
+      const entry: VariableMetadata = {};
+      const descriptionDataValue = attributeDataValues[index * attributeIds.length];
+      if (isGood(descriptionDataValue)) {
+        const description = (descriptionDataValue.value.value as LocalizedText).text;
+        if (description) {
+          entry.description = description;
+        }
+      }
+      if (includeValue) {
+        const valueDataValue = attributeDataValues[index * attributeIds.length + 1];
+        if (isGood(valueDataValue)) {
+          const parsedValue = parseOPCUAValue(reference.displayName?.text ?? variableNodeIds[index], valueDataValue.value, this.logger);
           if (parsedValue) {
             entry.value = parsedValue;
           }
         }
-        result.set(variableNodeIds[index], entry);
-      });
-
-      // EngineeringUnits/EURange live as child Property nodes (HasProperty), not as attributes of the
-      // variable itself — locate them per variable from the batched browse above before they can be read.
-      const propertyLookups: Array<{ variableNodeId: string; kind: 'unit' | 'range'; propertyNodeId: string }> = [];
-      propertyBrowseResults.forEach((propertyBrowseResult, index) => {
-        for (const propertyReference of propertyBrowseResult.references ?? []) {
-          const propertyName = propertyReference.browseName?.name;
-          if (propertyName === 'EngineeringUnits' || propertyName === 'EURange') {
-            propertyLookups.push({
-              variableNodeId: variableNodeIds[index],
-              kind: propertyName === 'EngineeringUnits' ? 'unit' : 'range',
-              propertyNodeId: propertyReference.nodeId.toString()
-            });
-          }
-        }
-      });
-
-      if (propertyLookups.length > 0) {
-        const propertyDataValues = await session.read(
-          propertyLookups.map(lookup => ({ nodeId: lookup.propertyNodeId, attributeId: AttributeIds.Value }))
-        );
-        propertyLookups.forEach((lookup, index) => {
-          const dataValue = propertyDataValues[index];
-          if (!dataValue || dataValue.statusCode.value !== StatusCodes.Good.value || dataValue.value?.value == null) {
-            return;
-          }
-          const entry = result.get(lookup.variableNodeId) ?? {};
-          if (lookup.kind === 'unit') {
-            const euInformation = dataValue.value.value as EUInformation;
-            if (euInformation.displayName?.text) {
-              entry.unit = euInformation.displayName.text;
-            }
-          } else {
-            const range = dataValue.value.value as Range;
-            entry.min = range.low;
-            entry.max = range.high;
-          }
-          result.set(lookup.variableNodeId, entry);
-        });
       }
-    } catch (error) {
-      // Never let a value/unit read failure (unsupported server, timeout, ...) fail the browse itself —
-      // the caller falls back to plain entries.
-      this.logger.debug(`Could not read value/unit while exploring: ${getErrorMessage(error)}`);
+      result.set(variableNodeIds[index], entry);
+    });
+
+    // EngineeringUnits/EURange live as child Property nodes (HasProperty), not as attributes of the
+    // variable itself — locate them per variable from the batched browse above before they can be read.
+    const propertyLookups: Array<{ variableNodeId: string; kind: 'unit' | 'range'; propertyNodeId: string }> = [];
+    propertyBrowseResults.forEach((propertyBrowseResult, index) => {
+      for (const propertyReference of propertyBrowseResult.references ?? []) {
+        const propertyName = propertyReference.browseName?.name;
+        if (propertyName === 'EngineeringUnits' || propertyName === 'EURange') {
+          propertyLookups.push({
+            variableNodeId: variableNodeIds[index],
+            kind: propertyName === 'EngineeringUnits' ? 'unit' : 'range',
+            propertyNodeId: propertyReference.nodeId.toString()
+          });
+        }
+      }
+    });
+    if (propertyLookups.length === 0) {
+      return result;
     }
 
+    const propertyDataValues = await requestInChunks(
+      propertyLookups.map(lookup => ({ nodeId: lookup.propertyNodeId, attributeId: AttributeIds.Value })),
+      limits.maxNodesPerRead,
+      chunk => session.read(chunk)
+    );
+    propertyLookups.forEach((lookup, index) => {
+      const dataValue = propertyDataValues[index];
+      if (!isGood(dataValue)) {
+        return;
+      }
+      const entry = result.get(lookup.variableNodeId)!;
+      if (lookup.kind === 'unit') {
+        const euInformation = dataValue.value.value as EUInformation;
+        if (euInformation.displayName?.text) {
+          entry.unit = euInformation.displayName.text;
+        }
+      } else {
+        const range = dataValue.value.value as Range;
+        entry.min = range.low;
+        entry.max = range.high;
+      }
+    });
     return result;
+  }
+
+  /**
+   * The server's own per-request node limits (ServerCapabilities.OperationLimits), read once per session.
+   * A limit the server doesn't advertise (or can't be read at all - it's optional in the address space),
+   * or advertises as 0 ("no limit"), falls back to DEFAULT_MAX_NODES_PER_REQUEST.
+   */
+  private getOperationLimits(session: ClientSession): Promise<OperationLimits> {
+    let limits = this.operationLimits.get(session);
+    if (!limits) {
+      limits = readOperationLimits(session)
+        .catch((error): { maxNodesPerRead?: number; maxNodesPerBrowse?: number } => {
+          this.logger.debug(`Could not read OPCUA server operation limits, using defaults: ${getErrorMessage(error)}`);
+          return {};
+        })
+        .then(advertised => ({
+          maxNodesPerRead: toRequestLimit(advertised.maxNodesPerRead),
+          maxNodesPerBrowse: toRequestLimit(advertised.maxNodesPerBrowse)
+        }));
+      this.operationLimits.set(session, limits);
+    }
+    return limits;
   }
 
   /**
    * Retrieve step of a Configuration Workflow run: a full recursive walk of the address space under
    * `scope.rootNodeId` (or the Objects folder root, matching `explore()`'s own default, if omitted),
    * flattened into one record per Variable node — Object/folder nodes are walked into, never recorded
-   * themselves. Deliberately structural only (NodeId/DisplayName/NodeClass), via `browseForDiscovery()`
-   * rather than `explore()` itself - a Variable's live value changes on every run, so reading it here
-   * would make the node look "changed" against the previous run's identity-key diff every single time,
-   * even though nothing about the monitored node itself actually changed. This assumes `rootNodeId`
+   * themselves. Structure plus static metadata only (NodeId/DisplayName/NodeClass, description, unit,
+   * min/max), via `browseForDiscovery()` rather than `explore()` itself - a Variable's live value changes
+   * on every run, so reading it here would make the node look "changed" against the previous run's
+   * identity-key diff every single time, even though nothing about the monitored node itself changed. This assumes `rootNodeId`
    * names a folder/Object, not a Variable directly — pointing it at a leaf Variable would walk into
    * that Variable's own EngineeringUnits/EURange properties as if they were data points.
    */
@@ -1239,4 +1320,12 @@ export default class SouthOPCUA
       }
     }
   }
+}
+
+function isGood(dataValue: DataValue | undefined): dataValue is DataValue & { value: { value: unknown } } {
+  return !!dataValue && dataValue.statusCode.value === StatusCodes.Good.value && dataValue.value?.value != null;
+}
+
+function toRequestLimit(advertised: number | undefined): number {
+  return advertised && advertised > 0 ? advertised : DEFAULT_MAX_NODES_PER_REQUEST;
 }
