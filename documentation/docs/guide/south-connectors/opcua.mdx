@@ -180,6 +180,30 @@ edit form.
 
 :::
 
+## Node Metadata {#node-metadata}
+
+When browsing the server — with **Explore**, or in a [Configuration Workflow](./common-settings.md#workflow-settings)
+run — OIBus reads the following fields for every Variable node, when the server exposes them:
+
+| Field         | Source in the OPC UA address space                                                      | Explore | Workflow |
+| ------------- | --------------------------------------------------------------------------------------- | :-----: | :------: |
+| `nodeId`      | The node identifier                                                                     |    ✓    |    ✓     |
+| `name`        | The node's display name                                                                 |    ✓    |    ✓     |
+| `type`        | The node class (`Variable`, `Object`, …)                                                |    ✓    |    ✓     |
+| `description` | The node's `Description` attribute                                                      |    ✓    |    ✓     |
+| `unit`        | Display name of the `EngineeringUnits` property (analog items)                          |    ✓    |    ✓     |
+| `min` / `max` | Low / high bounds of the `EURange` property — the normal operating range (analog items) |    ✓    |    ✓     |
+| `value`       | The current value                                                                       |    ✓    |          |
+
+A field the server doesn't expose for a node is simply left out. The current value is never read by a workflow: it
+changes on every run, which would make every node look changed. In a workflow, these fields can be used in the
+eligibility filter and in item field mapping expressions (e.g. `{{unit}}`).
+
+Requests are batched per browsed level and split to respect the server's advertised operation limits
+(`MaxNodesPerRead` / `MaxNodesPerBrowse`), or batches of 1000 nodes when the server doesn't advertise any. If a
+metadata request fails, Explore still shows the nodes without these fields, while a workflow run fails rather than
+record incomplete metadata.
+
 ## Security Configuration {#security-configuration}
 
 ### Communication Certificate {#communication-certificate}
