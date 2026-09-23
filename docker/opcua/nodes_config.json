@@ -3,142 +3,81 @@
   "NodeList": [
     {
       "NodeId": 1023,
-      "NodeClass": "Variable",
+      "Name": "Temperature",
       "DataType": "Double",
       "Value": 20.0,
-      "MinimumSamplingInterval": 1000,
-      "Historizing": true,
-      "ValueRank": -1,
-      "ArrayDimensions": [],
       "Description": "Simulated temperature sensor (Celsius)",
-      "Simulation": {
-        "Type": "RandomWalk",
-        "MinValue": 18.0,
-        "MaxValue": 28.0,
-        "StepSize": 0.5,
-        "Interval": 2000
-      }
+      "EngineeringUnits": { "UneceCode": "CEL", "DisplayName": "°C", "Description": "degree Celsius" },
+      "EURange": { "Low": 0.0, "High": 50.0 },
+      "Simulation": { "Type": "RandomWalk", "MinValue": 18.0, "MaxValue": 28.0, "StepSize": 0.5, "Interval": 2000 }
     },
     {
       "NodeId": 1024,
-      "NodeClass": "Variable",
+      "Name": "Pressure",
       "DataType": "Double",
       "Value": 1013.25,
-      "MinimumSamplingInterval": 1000,
-      "Historizing": true,
-      "ValueRank": -1,
-      "ArrayDimensions": [],
       "Description": "Simulated pressure sensor (hPa)",
-      "Simulation": {
-        "Type": "SineWave",
-        "Amplitude": 10.0,
-        "Period": 10000,
-        "Offset": 1013.25
-      }
+      "EngineeringUnits": { "UneceCode": "A97", "DisplayName": "hPa", "Description": "hectopascal" },
+      "EURange": { "Low": 950.0, "High": 1050.0 },
+      "Simulation": { "Type": "SineWave", "Amplitude": 10.0, "Period": 10000, "Offset": 1013.25, "Interval": 1000 }
     },
     {
       "NodeId": 1025,
-      "NodeClass": "Variable",
+      "Name": "FlowRate",
       "DataType": "Double",
       "Value": 50.0,
-      "MinimumSamplingInterval": 1000,
-      "Historizing": true,
-      "ValueRank": -1,
-      "ArrayDimensions": [],
       "Description": "Simulated flow rate sensor (L/min)",
-      "Simulation": {
-        "Type": "RandomWalk",
-        "MinValue": 40.0,
-        "MaxValue": 60.0,
-        "StepSize": 1.0,
-        "Interval": 3000
-      }
+      "EngineeringUnits": { "UneceCode": "L2", "DisplayName": "L/min", "Description": "litre per minute" },
+      "EURange": { "Low": 0.0, "High": 100.0 },
+      "Simulation": { "Type": "RandomWalk", "MinValue": 40.0, "MaxValue": 60.0, "StepSize": 1.0, "Interval": 3000 }
     },
     {
       "NodeId": 1026,
-      "NodeClass": "Variable",
+      "Name": "Humidity",
       "DataType": "Double",
       "Value": 65.0,
-      "MinimumSamplingInterval": 1000,
-      "Historizing": true,
-      "ValueRank": -1,
-      "ArrayDimensions": [],
       "Description": "Simulated humidity sensor (%)",
-      "Simulation": {
-        "Type": "SineWave",
-        "Amplitude": 15.0,
-        "Period": 15000,
-        "Offset": 65.0
-      }
+      "EngineeringUnits": { "UneceCode": "P1", "DisplayName": "%", "Description": "percent" },
+      "EURange": { "Low": 0.0, "High": 100.0 },
+      "Simulation": { "Type": "SineWave", "Amplitude": 15.0, "Period": 15000, "Offset": 65.0, "Interval": 1000 }
     },
     {
       "NodeId": 1027,
-      "NodeClass": "Variable",
+      "Name": "RotationSpeed",
       "DataType": "Int32",
       "Value": 1500,
-      "MinimumSamplingInterval": 1000,
-      "Historizing": true,
-      "ValueRank": -1,
-      "ArrayDimensions": [],
       "Description": "Simulated RPM sensor",
-      "Simulation": {
-        "Type": "RandomWalk",
-        "MinValue": 1200,
-        "MaxValue": 1800,
-        "StepSize": 50,
-        "Interval": 2500
-      }
+      "EngineeringUnits": { "UneceCode": "RPM", "DisplayName": "rpm", "Description": "revolutions per minute" },
+      "EURange": { "Low": 0, "High": 3000 },
+      "Simulation": { "Type": "RandomWalk", "MinValue": 1200, "MaxValue": 1800, "StepSize": 50, "Interval": 2500 }
     },
     {
       "NodeId": 1028,
-      "NodeClass": "Variable",
+      "Name": "PumpStatus",
       "DataType": "Boolean",
       "Value": true,
-      "MinimumSamplingInterval": 1000,
-      "Historizing": true,
-      "ValueRank": -1,
-      "ArrayDimensions": [],
       "Description": "Simulated pump status",
-      "Simulation": {
-        "Type": "SquareWave",
-        "Period": 20000,
-        "Offset": 0.0
-      }
+      "Simulation": { "Type": "SquareWave", "Period": 20000, "Interval": 1000 }
     },
     {
       "NodeId": 1029,
-      "NodeClass": "Variable",
+      "Name": "Voltage",
       "DataType": "Double",
       "Value": 220.5,
-      "MinimumSamplingInterval": 1000,
-      "Historizing": true,
-      "ValueRank": -1,
-      "ArrayDimensions": [],
       "Description": "Simulated voltage sensor (V)",
-      "Simulation": {
-        "Type": "RandomWalk",
-        "MinValue": 210.0,
-        "MaxValue": 230.0,
-        "StepSize": 0.5,
-        "Interval": 2000
-      }
+      "EngineeringUnits": { "UneceCode": "VLT", "DisplayName": "V", "Description": "volt" },
+      "EURange": { "Low": 200.0, "High": 240.0 },
+      "Simulation": { "Type": "RandomWalk", "MinValue": 210.0, "MaxValue": 230.0, "StepSize": 0.5, "Interval": 2000 }
     },
     {
       "NodeId": 1030,
-      "NodeClass": "Variable",
+      "Name": "Current",
       "DataType": "Double",
       "Value": 15.2,
-      "MinimumSamplingInterval": 1000,
-      "Historizing": true,
-      "ValueRank": -1,
-      "ArrayDimensions": [],
       "Description": "Simulated current sensor (A)",
-      "Simulation": {
-        "Type": "SineWave",
-        "Amplitude": 2.0,
-        "Period": 12000,
-        "Offset": 15.2
-      }
+      "EngineeringUnits": { "UneceCode": "AMP", "DisplayName": "A", "Description": "ampere" },
+      "EURange": { "Low": 0.0, "High": 32.0 },
+      "Simulation": { "Type": "SineWave", "Amplitude": 2.0, "Period": 12000, "Offset": 15.2, "Interval": 1000 }
     }
   ]
 }
