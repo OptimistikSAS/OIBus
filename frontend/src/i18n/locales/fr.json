@@ -2533,7 +2533,7 @@
       "osisoft-pi": "OSIsoft PI System™",
       "postgresql": "PostgreSQL",
       "rest": "API REST",
-      "s7": "Siemens S7",
+      "s7": "Siemens® S7",
       "sftp": "SFTP",
       "sqlite": "SQLite™"
     },
@@ -2557,7 +2557,7 @@
       "osisoft-pi": "Établir une connexion avec un agent OIBus pour accéder aux données d'un PI System™",
       "postgresql": "Interroger des bases de données PostgreSQL",
       "rest": "Collecter des données depuis des points de terminaison d'API REST",
-      "s7": "Accéder aux données d'un automate Siemens S7 via ISO-on-TCP",
+      "s7": "Accéder aux données d'un automate Siemens® S7 via ISO-on-TCP",
       "sftp": "Lire des fichiers depuis un serveur SFTP distant",
       "sqlite": "Interroger des bases de données SQLite™"
     }
