@@ -82,41 +82,49 @@ Tous les services partagent le réseau bridge interne `oibus-network`. Les ports
 
 ### Serveur OPC UA — `opcua-server` {#opc-ua-server--opcua-server}
 
-| Propriété  | Valeur                                                                                                     |
-| ---------- | --------------------------------------------------------------------------------------------------------- |
-| **Image**  | [`mcr.microsoft.com/iotedge/opc-plc`](https://mcr.microsoft.com/en-us/artifact/mar/iotedge/opc-plc/about) |
-| **Port**   | `50000` (OPC UA TCP)                                                                                      |
-| **Config** | `docker/opcua/nodes_config.json`                                                                          |
+| Propriété      | Valeur                                                                |
+| -------------- | --------------------------------------------------------------------- |
+| **Image**      | `python:3.14-slim` exécutant `docker/opcua/opcua_server.py` (asyncua) |
+| **Port**       | `50000` (OPC UA TCP)                                                  |
+| **Config**     | `docker/opcua/nodes_config.json`                                      |
+| **Historique** | SQLite, dans le volume Docker `opcua-history`                         |
 
-Le [simulateur OPC PLC](https://github.com/Azure-Samples/iot-edge-opc-plc) de Microsoft. Il expose un
-serveur OPC UA standard avec des nœuds personnalisés définis dans `nodes_config.json` ainsi qu'un ensemble
-de nœuds intégrés (simulation de chaudière, variables changeant rapidement/lentement, etc.).
+Un petit serveur OPC UA basé sur [asyncua](https://github.com/FreeOpcUa/opcua-asyncio), qui expose les
+nœuds définis dans `nodes_config.json` sous le dossier `OIBus` de la racine Objects. Chaque nœud a une
+description, une valeur simulée et un historique ; les nœuds analogiques sont typés `AnalogItemType` et
+portent les propriétés `EngineeringUnits` et `EURange`, que l'exploration et les workflows de configuration
+d'OIBus lisent pour obtenir leur unité et leur plage.
 
-**Nœuds personnalisés** (dossier `OIBus`, tous avec `Historizing: true`) :
+**Nœuds** (dossier `OIBus`) :
 
-| ID de nœud | Description        | Type de données | Simulation  | Paramètres                          |
-| ---------- | ------------------- | ---------------- | ----------- | ------------------------------------- |
-| `1023`     | Température (°C)   | `Double`         | Marche aléatoire | 18 – 28 °C, pas 0,5, toutes les 2 s |
-| `1024`     | Pression (hPa)      | `Double`         | Onde sinusoïdale | 1013,25 ± 10 hPa, période 10 s   |
-| `1025`     | Débit (L/min)       | `Double`         | Marche aléatoire | 40 – 60 L/min, pas 1, toutes les 3 s |
-| `1026`     | Humidité (%)        | `Double`         | Onde sinusoïdale | 65 ± 15 %, période 15 s          |
-| `1027`     | RPM                 | `Int32`          | Marche aléatoire | 1 200 – 1 800, pas 50, toutes les 2,5 s |
-| `1028`     | État de la pompe    | `Boolean`        | Onde carrée | période 20 s                         |
-| `1029`     | Tension (V)         | `Double`         | Marche aléatoire | 210 – 230 V, pas 0,5, toutes les 2 s |
-| `1030`     | Courant (A)         | `Double`         | Onde sinusoïdale | 15,2 ± 2 A, période 12 s          |
+| ID de nœud | Nom             | Type de données | Unité   | EURange (min – max) | Simulation       | Paramètres                              |
+| ---------- | --------------- | --------------- | ------- | ------------------- | ---------------- | --------------------------------------- |
+| `1023`     | `Temperature`   | `Double`        | `°C`    | 0 – 50              | Marche aléatoire | 18 – 28 °C, pas 0,5, toutes les 2 s     |
+| `1024`     | `Pressure`      | `Double`        | `hPa`   | 950 – 1050          | Onde sinusoïdale | 1013,25 ± 10 hPa, période 10 s          |
+| `1025`     | `FlowRate`      | `Double`        | `L/min` | 0 – 100             | Marche aléatoire | 40 – 60 L/min, pas 1, toutes les 3 s    |
+| `1026`     | `Humidity`      | `Double`        | `%`     | 0 – 100             | Onde sinusoïdale | 65 ± 15 %, période 15 s                 |
+| `1027`     | `RotationSpeed` | `Int32`         | `rpm`   | 0 – 3000            | Marche aléatoire | 1 200 – 1 800, pas 50, toutes les 2,5 s |
+| `1028`     | `PumpStatus`    | `Boolean`       | —       | —                   | Onde carrée      | période 20 s                            |
+| `1029`     | `Voltage`       | `Double`        | `V`     | 200 – 240           | Marche aléatoire | 210 – 230 V, pas 0,5, toutes les 2 s    |
+| `1030`     | `Current`       | `Double`        | `A`     | 0 – 32              | Onde sinusoïdale | 15,2 ± 2 A, période 12 s                |
 
-Les IDs de nœuds suivent l'espace de noms OPC UA `ns=3;i=<NodeId>`. L'adresse OPC UA de la température,
-par exemple, est `ns=3;i=1023`.
+Les identifiants de nœud suivent l'espace de noms OPC UA `ns=3;i=<NodeId>`. L'adresse OPC UA de la
+température, par exemple, est `ns=3;i=1023`. Pour ajouter un nœud, ajoutez-le à `nodes_config.json`
+(`EngineeringUnits` prend un [code UNECE](https://reference.opcfoundation.org/Core/Part8/v105/docs/5.6.3),
+un nom d'affichage et une description ; `EngineeringUnits` et `EURange` sont tous deux facultatifs) puis
+recréez le conteneur.
 
-**Prise en charge de l'historien :** `Historizing: true` active l'accès aux données historiques OPC UA
-(HA) sur chaque nœud personnalisé. Le serveur répond aux requêtes `HistoryRead`, ce qui le rend adapté au
-test du mode de requête historique d'OIBus.
+**Support de l'historien :** chaque nœud est historisé et répond aux requêtes `HistoryRead` brutes, ce qui
+permet de tester le mode history-query d'OIBus. L'historique est conservé dans le volume `opcua-history` —
+il survit donc aux redémarrages — et est limité par nœud :
 
-:::caution Historique en mémoire uniquement
-L'historique est stocké en RAM — il n'est pas persisté sur disque. Toutes les données historiques sont
-perdues au redémarrage du conteneur. Les scénarios nécessitant un rattrapage après un long écart
-(jours/semaines) ne peuvent pas être reproduits avec ce simulateur.
-:::
+| Variable                        | Défaut   | Effet                                                                   |
+| ------------------------------- | -------- | ----------------------------------------------------------------------- |
+| `OPCUA_HISTORY_MAX_VALUES`      | `100000` | Nombre maximal de valeurs par nœud — les plus anciennes sont supprimées |
+| `OPCUA_HISTORY_RETENTION_HOURS` | `168`    | Les valeurs plus anciennes sont aussi supprimées (`0` : jamais)         |
+
+La première limite atteinte s'applique. Lancez `docker volume rm oibus_opcua-history` (conteneur arrêté)
+pour repartir d'un historique vide.
 
 **Authentification :** l'accès anonyme est désactivé. Utilisez les identifiants configurés via les
 variables d'environnement `OPCUA_DEFAULT_PASSWORD` (par défaut `pass`) et `OPCUA_ADMIN_PASSWORD` (par
@@ -125,14 +133,14 @@ défaut `pass`), avec respectivement les noms d'utilisateur `oibus` et `admin` (
 
 **Connexion depuis OIBus :** créez un connecteur South OPC UA avec les paramètres suivants :
 
-| Paramètre                | Valeur                                |
-| ------------------------- | -------------------------------------- |
-| **URL**                   | `opc.tcp://localhost:50000`           |
-| **Mode de sécurité**      | `none`                                 |
-| **Politique de sécurité** | `none`                                 |
-| **Authentification**      | `basic`                                |
-| **Nom d'utilisateur**     | `oibus`                                |
-| **Mot de passe**          | `pass` (ou `$OPCUA_DEFAULT_PASSWORD`) |
+| Paramètre                 | Valeur                                  |
+| ------------------------- | --------------------------------------- |
+| **URL**                   | `opc.tcp://localhost:50000`             |
+| **Mode de sécurité**      | `none` (ou `sign` / `sign-and-encrypt`) |
+| **Politique de sécurité** | `none` (ou `basic256-sha256`, …)        |
+| **Authentification**      | `basic`                                 |
+| **Nom d'utilisateur**     | `oibus`                                 |
+| **Mot de passe**          | `pass` (ou `$OPCUA_DEFAULT_PASSWORD`)   |
 
 <div style={{ display: 'flex', justifyContent: 'center' }}>
   <DownloadButton link="/files/opcua-item-list.csv">Download item list (CSV)</DownloadButton>
