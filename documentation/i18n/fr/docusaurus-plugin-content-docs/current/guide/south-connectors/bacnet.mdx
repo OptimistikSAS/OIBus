@@ -18,9 +18,23 @@ BACnet/IP, communiquant en UDP, à l'aide de la bibliothèque
 | **Interface locale**         | IP de l'interface réseau locale à laquelle lier le socket BACnet/IP. Laisser vide pour que le système d'exploitation choisisse celle par défaut. | `192.168.1.50`      |
 | **Port**                     | Port UDP utilisé pour la communication BACnet/IP. `47808` (`0xBAC0`) est le port BACnet/IP standard.                           | `47808`              |
 | **Délai d'attente APDU**     | Temps maximal, en millisecondes, à attendre la réponse d'un appareil à une requête avant de la considérer comme échouée.       | `6000`               |
-| **Adresse de diffusion**     | Adresse de diffusion utilisée pour la découverte d'appareils (`Who-Is`) lorsque le BBMD est désactivé.                         | `255.255.255.255`   |
+| **Adresse de diffusion**     | Adresse de diffusion utilisée pour la découverte d'appareils (`Who-Is`) lorsque ni l'**Adresse cible de découverte** ni le BBMD ne s'appliquent. | `255.255.255.255`   |
+| **Adresse cible de découverte** | Optionnel. Si renseigné, **Tester les paramètres** et le niveau racine d'**Explorer** envoient `Who-Is` directement à cet appareil (unicast) au lieu de diffuser. Laisser vide pour diffuser sur tout le sous-réseau. | `192.168.1.10` |
 | **Intervalle de nouvelle tentative** | Temps d'attente, en millisecondes, avant de se reconnecter après un échec au niveau du transport (par exemple, le socket local lui-même échoue). | `10000` |
 | **Requêtes parallèles max**  | Nombre maximal d'appareils qu'OIBus peut interroger simultanément. Les requêtes vers un même appareil sont toujours envoyées les unes après les autres. | `1` |
+
+:::tip Découverte en unicast plutôt qu'en diffusion
+
+Certains réseaux ne relaient pas du tout le trafic de diffusion BACnet (sous-réseaux routés, VLAN, ou une
+politique qui le désactive simplement). Comme `ReadProperty`, `ReadPropertyMultiple` et `SubscribeCOV` sont
+déjà en unicast — envoyés directement à l'**Adresse de l'appareil** configurée sur chaque élément — la
+collecte de données réelle fonctionne indépendamment de la disponibilité de la diffusion. Seuls **Tester les
+paramètres** et la liste d'appareils dans **Explorer** reposent sur `Who-Is`/`I-Am`, et seuls ces deux-là
+utilisent la diffusion par défaut. Renseigner l'**Adresse cible de découverte** les redirige vers un appareil
+précis, ce qui ne nécessite qu'un simple routage IP — la même accessibilité déjà requise par `ReadProperty`,
+sans BBMD.
+
+:::
 
 ### Interrogation et abonnements COV {#polling-and-cov-subscriptions}
 
@@ -65,8 +79,22 @@ sous-réseaux routés, VLAN ou liaison VPN).
 | **Adresse du BBMD**             | _(Affiché lorsque activé)_ Adresse IP (et port optionnel) du BBMD auprès duquel s'enregistrer.                          | `10.0.0.1:47808`      |
 | **Durée de vie (TTL) du périphérique distant** | _(Affiché lorsque activé)_ Durée de vie, en secondes, de l'enregistrement en tant que périphérique distant. OIBus la renouvelle automatiquement avant son expiration. | `900` |
 
-Lorsque cette option est activée, la découverte d'appareils (**Tester les paramètres**, **Explorer**) est
-acheminée via le BBMD au lieu d'une simple diffusion locale.
+Lorsque cette option est activée et qu'aucune **Adresse cible de découverte** n'est renseignée, la découverte
+d'appareils (**Tester les paramètres**, niveau racine d'**Explorer**) est acheminée via le BBMD au lieu d'une
+simple diffusion locale.
+
+:::note Le BBMD ne sert pas qu'à la découverte
+
+L'enregistrement en tant que périphérique distant compte aussi pour les **abonnements COV** : un appareil
+envoie généralement sa notification `UnconfirmedCOVNotification` en diffusion locale sur son propre
+sous-réseau, et non en unicast ciblé vers l'abonné. Sans cet enregistrement, ces notifications n'atteignent
+jamais OIBus depuis un sous-réseau distant, même si la requête unicast `SubscribeCOV` ayant créé l'abonnement
+a bien fonctionné. Le BBMD peut donc rester activé même lorsque l'**Adresse cible de découverte** est
+renseignée — les deux paramètres répondent à des besoins différents : l'un concerne la façon dont OIBus émet
+ses requêtes (découverte), l'autre la capacité du trafic de diffusion distant à atteindre OIBus (réception
+COV).
+
+:::
 
 ## Paramètres des éléments {#item-settings}
 
@@ -99,13 +127,26 @@ ne sélectionnez une propriété différente que pour les éléments interrogés
 
 :::
 
+:::note Vérification de la liaison statique lors du test d'un élément
+
+Cliquer sur **Lancer le test** envoie d'abord un `Who-Is` en unicast directement à l'**Adresse de l'appareil**
+de l'élément. Si l'appareil répond, OIBus vérifie que l'instance d'appareil retournée correspond à l'**Instance
+de l'appareil** configurée sur l'élément, et enregistre un avertissement si ce n'est pas le cas — ce qui permet
+de détecter une liaison statique erronée avant qu'elle ne collecte silencieusement des données depuis (ou
+n'attribue des données à) le mauvais appareil. Un appareil qui ne répond pas du tout à `Who-Is` (certains
+profils restreints ne l'implémentent pas) ne fait pas échouer le test — c'est le résultat de `ReadProperty` qui
+détermine réellement la réussite.
+
+:::
+
 ## Découvrir les appareils et les objets {#discovering-devices-and-objects}
 
 Cliquez sur **Explorer** pour parcourir le réseau BACnet de manière interactive plutôt que de saisir
 manuellement les identifiants d'appareils et d'objets :
 
-1. Au niveau racine, OIBus diffuse une requête `Who-Is` (ou l'achemine via le BBMD, si activé) et liste
-   chaque appareil qui répond, avec son nom et son numéro d'instance.
+1. Au niveau racine, OIBus envoie une requête `Who-Is` — directement à l'**Adresse cible de découverte** si
+   elle est renseignée, sinon en diffusion (ou acheminée via le BBMD, si activé) — et liste chaque appareil
+   qui répond, avec son nom et son numéro d'instance.
 2. La sélection d'un appareil lit sa liste d'objets et affiche chaque objet qu'il expose, enrichi de sa
    valeur actuelle lorsqu'elle est disponible.
 

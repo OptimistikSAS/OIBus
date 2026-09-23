@@ -279,6 +279,7 @@ export default class SouthBACnet
         client = await this.createClient();
         connectionDuration = DateTime.now().toMillis() - connectStart;
       }
+      await this.verifyDeviceIdentity(client, item);
       const queryStart = DateTime.now().toMillis();
       const timeValue = await this.readItem(client, item);
       const result: OIBusContent = { type: 'time-values', content: timeValue ? [timeValue] : [] };
@@ -290,7 +291,14 @@ export default class SouthBACnet
     }
   }
 
-  /** Broadcasts Who-Is (direct, or through the configured BBMD) and collects I-Am responses for a fixed window. */
+  /**
+   * Discovers devices via Who-Is and collects I-Am responses for a fixed window. When
+   * `discoveryTargetAddress` is set, the Who-Is is sent directly to that one address (unicast)
+   * instead of broadcasting - this takes priority over BBMD routing, since a unicast request needs
+   * no broadcast forwarding at all (it's plain routed UDP, same reachability requirement as
+   * readProperty/readPropertyMultiple). Otherwise falls back to a broadcast, direct or through the
+   * configured BBMD.
+   */
   private discoverDevices(client: BACnetClient): Promise<Array<IAMResult>> {
     return new Promise<Array<IAMResult>>(resolve => {
       const devices: Array<IAMResult> = [];
@@ -299,8 +307,11 @@ export default class SouthBACnet
       };
       client.on('iAm', onIAm);
 
+      const targetAddress = this.connector.settings.discoveryTargetAddress;
       const bbmd = this.connector.settings.bbmd;
-      if (bbmd.enabled) {
+      if (targetAddress) {
+        client.whoIs({ address: targetAddress });
+      } else if (bbmd.enabled) {
         client.whoIsThroughBBMD({ address: bbmd.address! });
       } else {
         client.whoIs();
@@ -312,6 +323,49 @@ export default class SouthBACnet
         resolve(devices);
       }, windowMs);
     });
+  }
+
+  /**
+   * Sends a unicast Who-Is directly to the item's configured device address and, if an I-Am comes
+   * back, checks its reported device instance against the item's configured `Device instance` -
+   * catching the classic static-binding mistake (wrong IP/instance pairing) before it silently
+   * produces data attributed to the wrong device. Best-effort and never throws: a device that
+   * doesn't answer Who-Is (some restricted profiles don't implement it) must not fail the item test,
+   * since `readProperty` succeeding is the real pass/fail criterion.
+   */
+  private async verifyDeviceIdentity(client: BACnetClient, item: SouthConnectorItemEntity<SouthBACnetItemSettings>): Promise<void> {
+    const targetHost = item.settings.deviceAddress.split(':')[0];
+    const match = await new Promise<IAMResult | null>(resolve => {
+      const onIAm = (content: { payload: IAMResult }) => {
+        if (content.payload.address.split(':')[0] === targetHost) {
+          client.off('iAm', onIAm);
+          clearTimeout(timeoutHandle);
+          resolve(content.payload);
+        }
+      };
+      client.on('iAm', onIAm);
+      client.whoIs({ address: item.settings.deviceAddress });
+      const timeoutHandle = setTimeout(
+        () => {
+          client.off('iAm', onIAm);
+          resolve(null);
+        },
+        Math.max(this.connector.settings.apduTimeout, 3000)
+      );
+    });
+
+    if (!match) {
+      this.logger.debug(`No unicast Who-Is response from ${item.settings.deviceAddress} for item "${item.name}"`);
+    } else if (match.deviceId !== item.settings.deviceInstance) {
+      this.logger.warn(
+        `Unicast Who-Is to ${item.settings.deviceAddress} for item "${item.name}" replied with device instance ${match.deviceId}, ` +
+          `but the item is configured for device instance ${item.settings.deviceInstance} - check the static binding`
+      );
+    } else {
+      this.logger.debug(
+        `Unicast Who-Is confirmed device instance ${match.deviceId} at ${item.settings.deviceAddress} for item "${item.name}"`
+      );
+    }
   }
 
   private async readItem(client: BACnetClient, item: SouthConnectorItemEntity<SouthBACnetItemSettings>): Promise<OIBusTimeValue | null> {

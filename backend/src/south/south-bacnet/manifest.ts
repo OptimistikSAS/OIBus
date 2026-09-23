@@ -160,6 +160,23 @@ const manifest: SouthConnectorManifest = {
         }
       },
       {
+        type: 'string',
+        key: 'discoveryTargetAddress',
+        translationKey: 'configuration.oibus.manifest.south.bacnet.discovery-target-address',
+        defaultValue: null,
+        validators: [
+          {
+            type: 'PATTERN',
+            arguments: ['^\\d{1,3}(\\.\\d{1,3}){3}(:\\d{1,5})?$']
+          }
+        ],
+        displayProperties: {
+          row: 2,
+          columns: 8,
+          displayInViewMode: false
+        }
+      },
+      {
         type: 'number',
         key: 'covDefaultLifetime',
         translationKey: 'configuration.oibus.manifest.south.bacnet.cov-default-lifetime',
@@ -180,7 +197,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 2,
+          row: 3,
           columns: 4,
           displayInViewMode: true
         }
@@ -206,7 +223,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 2,
+          row: 3,
           columns: 4,
           displayInViewMode: false
         }
@@ -232,7 +249,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 2,
+          row: 3,
           columns: 4,
           displayInViewMode: false
         }
@@ -258,7 +275,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 3,
+          row: 4,
           columns: 6,
           displayInViewMode: false
         }
@@ -284,7 +301,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 3,
+          row: 4,
           columns: 6,
           displayInViewMode: false
         }

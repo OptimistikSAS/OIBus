@@ -301,11 +301,53 @@ describe('SouthBACnet', () => {
       // Not reused from a live connection: opened and closed just for the test.
       assert.strictEqual(client.close.mock.calls.length, 1);
     });
+
+    it('should send a unicast Who-Is when discoveryTargetAddress is set', async () => {
+      const targetedConfiguration: SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings> = {
+        ...configuration,
+        settings: { ...configuration.settings, discoveryTargetAddress: '192.168.1.10' }
+      };
+      south = new SouthBACnet(targetedConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+
+      const testPromise = south.testConnection();
+      await flushPromises();
+      const client = lastCreatedClient;
+      mock.timers.tick(3000);
+      await testPromise;
+
+      assert.strictEqual(client.whoIs.mock.calls.length, 1);
+      assert.deepStrictEqual(client.whoIs.mock.calls[0].arguments, [{ address: '192.168.1.10' }]);
+    });
+
+    it('should prefer discoveryTargetAddress over BBMD when both are set', async () => {
+      const targetedConfiguration: SouthConnectorEntity<SouthBACnetSettings, SouthBACnetItemSettings> = {
+        ...configuration,
+        settings: {
+          ...configuration.settings,
+          discoveryTargetAddress: '192.168.1.10',
+          bbmd: { enabled: true, address: '10.0.0.1:47808', foreignDeviceTtl: 900 }
+        }
+      };
+      south = new SouthBACnet(targetedConfiguration, addContentCallback, southCacheRepository, 'cacheFolder');
+
+      const testPromise = south.testConnection();
+      await flushPromises();
+      const client = lastCreatedClient;
+      mock.timers.tick(3000);
+      await testPromise;
+
+      assert.strictEqual(client.whoIs.mock.calls.length, 1);
+      assert.strictEqual(client.whoIsThroughBBMD.mock.calls.length, 0);
+    });
   });
 
   describe('testItem', () => {
     it('should read the configured property and return one time value', async () => {
-      const result = await south.testItem(item1, { history: undefined as never });
+      const testPromise = south.testItem(item1, { history: undefined as never });
+      await flushPromises();
+      // No 'iAm' reply is emitted: the unicast Who-Is verification times out and must not block the test.
+      mock.timers.tick(3000);
+      const result = await testPromise;
 
       assert.strictEqual(result.result.type, 'time-values');
       assert.deepStrictEqual(
@@ -315,6 +357,49 @@ describe('SouthBACnet', () => {
       assert.strictEqual(typeof result.connectionDuration, 'number');
       assert.strictEqual(typeof result.queryDuration, 'number');
       assert.strictEqual(lastCreatedClient.close.mock.calls.length, 1);
+    });
+
+    it('should send a unicast Who-Is to the item device address before reading', async () => {
+      const testPromise = south.testItem(item1, { history: undefined as never });
+      await flushPromises();
+      const client = lastCreatedClient;
+      assert.strictEqual(client.whoIs.mock.calls.length, 1);
+      assert.deepStrictEqual(client.whoIs.mock.calls[0].arguments, [{ address: item1.settings.deviceAddress }]);
+      mock.timers.tick(3000);
+      await testPromise;
+    });
+
+    it('should log a warning when the unicast Who-Is reply reports a different device instance', async () => {
+      const testPromise = south.testItem(item1, { history: undefined as never });
+      await flushPromises();
+      const client = lastCreatedClient;
+      client.emit('iAm', {
+        payload: { address: item1.settings.deviceAddress, deviceId: 999, maxApdu: 1476, segmentation: 0, vendorId: 0 }
+      });
+      await testPromise;
+
+      assert.ok(
+        logger.warn.mock.calls.some(call => typeof call.arguments[0] === 'string' && call.arguments[0].includes('device instance 999'))
+      );
+    });
+
+    it('should not log a warning when the unicast Who-Is reply confirms the configured device instance', async () => {
+      logger.warn.mock.resetCalls();
+      const testPromise = south.testItem(item1, { history: undefined as never });
+      await flushPromises();
+      const client = lastCreatedClient;
+      client.emit('iAm', {
+        payload: {
+          address: item1.settings.deviceAddress,
+          deviceId: item1.settings.deviceInstance,
+          maxApdu: 1476,
+          segmentation: 0,
+          vendorId: 0
+        }
+      });
+      await testPromise;
+
+      assert.strictEqual(logger.warn.mock.calls.length, 0);
     });
   });
 
