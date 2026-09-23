@@ -414,7 +414,7 @@ OIBus 的 South / North 连接器是循序渐进学习代码库的好方式：�
 
 | 容器                          | Profile     | 用途                                                                                |
 | ----------------------------- | ----------- | ------------------------------------------------------------------------------------- |
-| `opcua-server`                | _（默认）_  | 微软的 `opc-plc` — 带有 8 个可配置节点及历史归档支持的 OPC UA 服务器                    |
+| `opcua-server`               | _（默认）_ | asyncua OPC UA 服务器 — 8 个带单位、范围和持久化历史数据的模拟节点 |
 | `modbus-server`                | _（默认）_  | `oitc/modbus-server` — Modbus TCP 服务器                                              |
 | `simulator`                   | _（默认）_  | 一个向 Modbus 和 MQTT 同时写入正弦波数值的 Python 脚本                                |
 | `mqtt-broker`                  | _（默认）_  | Eclipse Mosquitto broker（需身份验证，WebSocket 端口为 9001）                          |
