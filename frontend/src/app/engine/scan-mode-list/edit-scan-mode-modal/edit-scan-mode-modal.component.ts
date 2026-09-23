@@ -149,7 +149,7 @@ export class EditScanModeModalComponent {
         value: this.fb.control<number | null>(null, {
           validators: [Validators.required, Validators.min(1)]
         }),
-        unit: this.fb.control<IntervalUnit>('s', { validators: Validators.required })
+        unit: this.fb.control<IntervalUnit>('min', { validators: Validators.required })
       },
       { validators: [minIntervalValidator] }
     ),
