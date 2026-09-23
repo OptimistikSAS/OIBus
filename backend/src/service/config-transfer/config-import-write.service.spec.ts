@@ -354,7 +354,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
       .map(scanMode => scanMode.id)
       .sort();
 
-    await assert.rejects(() => service.importConfiguration({ formatVersion: 1 }, importerId()));
+    await assert.rejects(() => service.importConfiguration({ oibusVersion: '3.10.0' }, importerId()));
 
     assert.deepStrictEqual(
       scanModeRepository

@@ -54,17 +54,17 @@ est tout-ou-rien.
 
 ## Versions prises en charge {#supported-versions}
 
-Chaque fichier d'export porte un `formatVersion` (un entier décrivant la structure du fichier lui-même) et
-l'`oibusVersion` de l'instance qui l'a produit.
+Chaque fichier d'export porte l'`oibusVersion` de l'instance qui l'a produit. L'export/import de configuration
+est disponible à partir d'OIBus 3.10.0.
 
-- **Version de format** : un import est rejeté d'emblée si le `formatVersion` du fichier est plus récent que la
-  version de format la plus élevée que la version d'OIBus en cours d'import sait lire. Il n'y a pas de borne
-  inférieure — une version de format plus ancienne est toujours acceptée pour traitement.
-- **Version d'OIBus** : il n'y a pas d'`oibusVersion` minimale prise en charge. Avant de valider le fichier, OIBus
-  recherche chaque étape de mise à niveau de paramètres enregistrée pour une version plus récente que l'`oibusVersion`
-  du fichier et applique celles qui correspondent (par type de connecteur South/North, côté de requête d'historique, ou
-  transformateur) pour amener les anciennes structures de paramètres au format attendu par les manifestes de
-  connecteurs actuels. La réponse liste chaque mise à niveau appliquée.
+- **Les exports plus récents sont rejetés** : un import est rejeté d'emblée si l'`oibusVersion` du fichier est plus
+  récente que l'instance OIBus qui l'importe, car il peut contenir des paramètres que cette version ne connaît pas.
+  Une pré-version est considérée comme antérieure à sa version finale (`3.10.0-beta-2` est antérieure à `3.10.0`).
+- **Les exports plus anciens sont mis à niveau** : avant de valider le fichier, OIBus applique chaque étape de mise à
+  niveau de paramètres enregistrée pour une version plus récente que l'`oibusVersion` du fichier (par type de
+  connecteur South/North, côté de requête d'historique, ou transformateur) pour amener les anciennes structures de
+  paramètres au format attendu par les manifestes de connecteurs actuels. La réponse liste chaque mise à niveau
+  appliquée.
 
 Après ces éventuelles mises à niveau, chaque bloc de paramètres du fichier est validé par rapport aux manifestes de
 connecteurs actuels. Si une entité échoue à la validation, l'import complet est rejeté avec une liste d'erreurs par

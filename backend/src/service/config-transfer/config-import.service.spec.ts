@@ -1,6 +1,6 @@
-import { describe, it, beforeEach } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import ConfigImportService, { AppliedUpgrade, ConfigImportError, SUPPORTED_FORMAT_VERSION } from './config-import.service';
+import ConfigImportService, { AppliedUpgrade, ConfigImportError } from './config-import.service';
 import ConfigTransferService from './config-transfer.service';
 import ConfigTransferBuilderService from './config-transfer-builder.service';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
@@ -18,7 +18,8 @@ import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oi
 import EncryptionService from '../encryption.service';
 import { ConfigExportEnvelopeDTO } from '../../../shared/model/config-transfer.model';
 import { OIAnalyticsSouthCommandDTO } from '../oia/oianalytics.model';
-import { SettingsUpgradeEntry } from './settings-upgrades/registry';
+import { SETTINGS_UPGRADE_REGISTRY, SettingsUpgradeEntry } from './settings-upgrades/registry';
+import { version as currentVersion } from '../../../package.json';
 
 describe('Config Import Service', () => {
   let service: ConfigImportService;
@@ -126,7 +127,7 @@ describe('Config Import Service', () => {
 
   /**
    * Reaches into the private `applyUpgrades` method directly. The shared `SETTINGS_UPGRADE_REGISTRY`
-   * only contains `south:opcua`/`historyQuerySouth:opcua` entries today, so exercising every other
+   * is empty today, so exercising every
    * `parseScope`/`applyUpgrades` switch branch (envelope, engine, north, historyQueryNorth,
    * transformer, and an unrecognized scope prefix) requires crafting upgrade entries by hand rather
    * than going through the registry.
@@ -140,7 +141,7 @@ describe('Config Import Service', () => {
 
   it('accepts a well-formed, up-to-date envelope with no upgrades needed', async () => {
     const envelope = cloneEnvelope();
-    envelope.oibusVersion = '99.0.0';
+    envelope.oibusVersion = currentVersion;
     isolateToSingleSouth(envelope, findOpcuaSouth(envelope));
 
     const result = await service.validateAndUpgrade(envelope);
@@ -149,38 +150,83 @@ describe('Config Import Service', () => {
     assert.strictEqual(result.envelope, envelope);
   });
 
-  it('applies a matching settings upgrade and reports it in appliedUpgrades', async () => {
-    const envelope = cloneEnvelope();
-    envelope.oibusVersion = '3.8.0';
-    const opcuaSouth = findOpcuaSouth(envelope);
-    delete (opcuaSouth.settings.settings as { maxParallelRun?: number }).maxParallelRun;
-    isolateToSingleSouth(envelope, opcuaSouth);
+  describe('with a registry upgrade', () => {
+    const upgrade: SettingsUpgradeEntry = {
+      version: '3.11.0-beta-2',
+      scope: 'south:opcua',
+      apply: settings => ({ ...settings, maxParallelRun: settings.maxParallelRun ?? 1 })
+    };
 
-    const result = await service.validateAndUpgrade(envelope);
+    beforeEach(() => {
+      SETTINGS_UPGRADE_REGISTRY.push(upgrade);
+    });
 
-    assert.deepStrictEqual(result.appliedUpgrades, [{ scope: 'south:opcua', version: '3.9.0', entityId: opcuaSouth.oIBusInternalId }]);
-    const upgradedSouth = findOpcuaSouth(result.envelope);
-    assert.strictEqual((upgradedSouth.settings.settings as { maxParallelRun: number }).maxParallelRun, 1);
+    afterEach(() => {
+      SETTINGS_UPGRADE_REGISTRY.splice(SETTINGS_UPGRADE_REGISTRY.indexOf(upgrade), 1);
+    });
+
+    it('applies a matching settings upgrade and reports it in appliedUpgrades', async () => {
+      const envelope = cloneEnvelope();
+      envelope.oibusVersion = '3.10.0';
+      const opcuaSouth = findOpcuaSouth(envelope);
+      delete (opcuaSouth.settings.settings as { maxParallelRun?: number }).maxParallelRun;
+      isolateToSingleSouth(envelope, opcuaSouth);
+
+      const result = await service.validateAndUpgrade(envelope, '3.11.0');
+
+      assert.deepStrictEqual(result.appliedUpgrades, [
+        { scope: 'south:opcua', version: '3.11.0-beta-2', entityId: opcuaSouth.oIBusInternalId }
+      ]);
+      const upgradedSouth = findOpcuaSouth(result.envelope);
+      assert.strictEqual((upgradedSouth.settings.settings as { maxParallelRun: number }).maxParallelRun, 1);
+    });
+
+    it('does not apply an upgrade already covered by the export version', async () => {
+      const envelope = cloneEnvelope();
+      envelope.oibusVersion = '3.11.0-beta-2';
+      isolateToSingleSouth(envelope, findOpcuaSouth(envelope));
+
+      const result = await service.validateAndUpgrade(envelope, '3.11.0');
+
+      assert.deepStrictEqual(result.appliedUpgrades, []);
+    });
   });
 
-  it('rejects an envelope whose formatVersion is newer than this build supports, without attempting anything else', async () => {
+  it('accepts an export from a pre-release of this version', async () => {
     const envelope = cloneEnvelope();
-    envelope.formatVersion = SUPPORTED_FORMAT_VERSION + 1;
+    envelope.oibusVersion = '3.11.0-beta-6';
+    isolateToSingleSouth(envelope, findOpcuaSouth(envelope));
+
+    const result = await service.validateAndUpgrade(envelope, '3.11.0');
+
+    assert.strictEqual(result.envelope, envelope);
+  });
+
+  it('rejects an export produced by a newer OIBus, without attempting anything else', async () => {
+    const envelope = cloneEnvelope();
+    envelope.oibusVersion = '3.11.1';
 
     await assert.rejects(
-      () => service.validateAndUpgrade(envelope),
+      () => service.validateAndUpgrade(envelope, '3.11.0'),
       (error: unknown) => {
         assert.ok(error instanceof ConfigImportError);
-        assert.match(error.message, /format version/i);
+        assert.match(error.message, /newer than this OIBus instance/);
         assert.deepStrictEqual(error.validationErrors, []);
         return true;
       }
     );
   });
 
+  it('rejects an export from a release when running one of its pre-releases', async () => {
+    const envelope = cloneEnvelope();
+    envelope.oibusVersion = '3.11.0';
+
+    await assert.rejects(() => service.validateAndUpgrade(envelope, '3.11.0-beta-6'), ConfigImportError);
+  });
+
   it('rejects malformed input with a clear error before touching any section', async () => {
     await assert.rejects(
-      () => service.validateAndUpgrade({ formatVersion: 1 }),
+      () => service.validateAndUpgrade({ oibusVersion: '3.10.0' }),
       (error: unknown) => {
         assert.ok(error instanceof ConfigImportError);
         assert.match(error.message, /malformed/i);
@@ -191,7 +237,7 @@ describe('Config Import Service', () => {
 
   it('rejects settings that are still invalid after every matching upgrade has been applied, without changing appliedUpgrades semantics', async () => {
     const envelope = cloneEnvelope();
-    envelope.oibusVersion = '99.0.0'; // no upgrade could possibly fix a missing required field
+    envelope.oibusVersion = currentVersion; // no upgrade could possibly fix a missing required field
     const opcuaSouth = findOpcuaSouth(envelope);
     delete (opcuaSouth.settings.settings as { url?: string }).url;
 
@@ -233,7 +279,7 @@ describe('Config Import Service', () => {
 
   it('reports an unknown south connector type as a validation error', async () => {
     const envelope = cloneEnvelope();
-    envelope.oibusVersion = '99.0.0';
+    envelope.oibusVersion = currentVersion;
     const opcuaSouth = findOpcuaSouth(envelope);
     opcuaSouth.type = 'not-a-real-south-type';
     isolateToSingleSouth(envelope, opcuaSouth);
@@ -255,7 +301,7 @@ describe('Config Import Service', () => {
 
   it('reports an unknown north connector type as a validation error', async () => {
     const envelope = cloneEnvelope();
-    envelope.oibusVersion = '99.0.0';
+    envelope.oibusVersion = currentVersion;
     const north = envelope.fullConfiguration.northConnectors[0];
     assert.ok(north, 'expected the fixture to include at least one north connector');
     north.type = 'not-a-real-north-type';
@@ -278,7 +324,7 @@ describe('Config Import Service', () => {
 
   it('reports an unknown south connector type on a history query as a validation error', async () => {
     const envelope = cloneEnvelope();
-    envelope.oibusVersion = '99.0.0';
+    envelope.oibusVersion = currentVersion;
     const historyQuery = envelope.historyQueries.historyQueries[0];
     assert.ok(historyQuery, 'expected the fixture to include at least one history query');
     historyQuery.settings.southType = 'not-a-real-south-type' as unknown as typeof historyQuery.settings.southType;
@@ -301,7 +347,7 @@ describe('Config Import Service', () => {
 
   it('reports an unknown north connector type on a history query as a validation error', async () => {
     const envelope = cloneEnvelope();
-    envelope.oibusVersion = '99.0.0';
+    envelope.oibusVersion = currentVersion;
     const historyQuery = envelope.historyQueries.historyQueries[0];
     assert.ok(historyQuery, 'expected the fixture to include at least one history query');
     historyQuery.settings.northType = 'not-a-real-north-type' as unknown as typeof historyQuery.settings.northType;
@@ -324,7 +370,7 @@ describe('Config Import Service', () => {
 
   it('throws when importConfiguration is invoked on a service constructed without the write-path repositories', async () => {
     const envelope = cloneEnvelope();
-    envelope.oibusVersion = '99.0.0';
+    envelope.oibusVersion = currentVersion;
     isolateToSingleSouth(envelope, findOpcuaSouth(envelope));
 
     await assert.rejects(
@@ -333,7 +379,7 @@ describe('Config Import Service', () => {
     );
   });
 
-  describe('applyUpgrades scope handling (direct, since the shared registry only covers south:opcua today)', () => {
+  describe('applyUpgrades scope handling (direct, since the shared registry is empty today)', () => {
     it('applies an envelope-scope upgrade by merging its result onto the whole envelope', () => {
       const envelope = cloneEnvelope();
       const upgrade: SettingsUpgradeEntry = {

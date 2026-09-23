@@ -1,6 +1,6 @@
 import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import ConfigTransferService, { CONFIG_EXPORT_FORMAT_VERSION } from './config-transfer.service';
+import ConfigTransferService from './config-transfer.service';
 import ConfigTransferBuilderService from './config-transfer-builder.service';
 import testData from '../../tests/utils/test-data';
 import EngineRepositoryMock from '../../tests/__mocks__/repository/config/engine-repository.mock';
@@ -82,14 +82,7 @@ describe('Config Transfer Service', () => {
 
   it('should build an envelope with the expected top-level shape', () => {
     const envelope = service.exportConfiguration();
-    assert.deepStrictEqual(Object.keys(envelope).sort(), [
-      'exportedAt',
-      'formatVersion',
-      'fullConfiguration',
-      'historyQueries',
-      'oibusVersion'
-    ]);
-    assert.strictEqual(envelope.formatVersion, CONFIG_EXPORT_FORMAT_VERSION);
+    assert.deepStrictEqual(Object.keys(envelope).sort(), ['exportedAt', 'fullConfiguration', 'historyQueries', 'oibusVersion']);
     assert.strictEqual(envelope.oibusVersion, testData.engine.settings.version);
     assert.ok(typeof envelope.exportedAt === 'string' && envelope.exportedAt.length > 0);
     assert.strictEqual(envelope.fullConfiguration.southConnectors.length, testData.south.list.length);

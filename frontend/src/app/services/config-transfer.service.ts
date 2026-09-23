@@ -16,7 +16,7 @@ const ENDPOINT = '/api/config-transfer';
 /**
  * Thrown by `ConfigTransferService.import()` on a rejected import. Carries the per-entity
  * `validationErrors` the backend's `ConfigImportError` puts on a failed-validation response
- * (empty for every other rejection reason: malformed file, unsupported format version), so the
+ * (empty for every other rejection reason: malformed file, export from a newer OIBus), so the
  * import modal can show which connector/field is actually at fault instead of a single opaque
  * message.
  */

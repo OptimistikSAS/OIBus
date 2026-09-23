@@ -1,50 +1,75 @@
-import { describe, it } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { SETTINGS_UPGRADE_REGISTRY, getUpgradesNewerThan } from './registry';
-import { opcuaMaxParallelRunUpgrades } from './3.9/v3.9.0';
+import { SETTINGS_UPGRADE_REGISTRY, SettingsUpgradeEntry, getUpgradesNewerThan } from './registry';
+
+/**
+ * Sample inputs for every registry entry, keyed by `${scope}@${version}`: at least one settings
+ * blob in the old shape and one already in the new shape (with a user-set value, so an upgrade
+ * that overwrites instead of defaulting is caught). Required for every entry — see the
+ * idempotency contract on `SettingsUpgradeEntry`.
+ */
+const IDEMPOTENCY_FIXTURES: Record<string, Array<Record<string, unknown>>> = {};
 
 describe('SETTINGS_UPGRADE_REGISTRY', () => {
-  it('contains the opcua maxParallelRun entries', () => {
-    assert.deepStrictEqual(SETTINGS_UPGRADE_REGISTRY, opcuaMaxParallelRunUpgrades);
+  it('has idempotency fixtures for every entry', () => {
+    const missing = SETTINGS_UPGRADE_REGISTRY.map(entry => `${entry.scope}@${entry.version}`).filter(
+      key => !IDEMPOTENCY_FIXTURES[key]?.length
+    );
+    assert.deepStrictEqual(missing, [], `add IDEMPOTENCY_FIXTURES for: ${missing.join(', ')}`);
+  });
+
+  it('only contains upgrades that are safe to run twice', () => {
+    for (const entry of SETTINGS_UPGRADE_REGISTRY) {
+      for (const fixture of IDEMPOTENCY_FIXTURES[`${entry.scope}@${entry.version}`] ?? []) {
+        const once = entry.apply(structuredClone(fixture));
+        const twice = entry.apply(structuredClone(once));
+        assert.deepStrictEqual(twice, once, `${entry.scope}@${entry.version} is not idempotent for ${JSON.stringify(fixture)}`);
+      }
+    }
   });
 });
 
 describe('getUpgradesNewerThan', () => {
-  it('returns entries strictly newer than the given version', () => {
-    const upgrades = getUpgradesNewerThan('3.8.0');
+  const testEntries: Array<SettingsUpgradeEntry> = [
+    { version: '3.11.0', scope: 'south:test', apply: settings => settings },
+    { version: '3.10.1', scope: 'south:test', apply: settings => settings },
+    { version: '3.11.0-beta-3', scope: 'north:test', apply: settings => settings }
+  ];
+  let originalEntries: Array<SettingsUpgradeEntry>;
 
-    assert.strictEqual(upgrades.length, 2);
-    assert.ok(upgrades.every(entry => entry.version === '3.9.0'));
+  beforeEach(() => {
+    originalEntries = SETTINGS_UPGRADE_REGISTRY.splice(0, SETTINGS_UPGRADE_REGISTRY.length, ...testEntries);
   });
 
-  it('includes entries of a release when importing an export from one of its pre-releases', () => {
-    const upgrades = getUpgradesNewerThan('3.9.0-beta-6');
+  afterEach(() => {
+    SETTINGS_UPGRADE_REGISTRY.splice(0, SETTINGS_UPGRADE_REGISTRY.length, ...originalEntries);
+  });
 
-    assert.strictEqual(upgrades.length, 2);
-    assert.ok(upgrades.every(entry => entry.version === '3.9.0'));
+  it('returns entries strictly newer than the given version, sorted ascending', () => {
+    const upgrades = getUpgradesNewerThan('3.10.0');
+
+    assert.deepStrictEqual(
+      upgrades.map(entry => entry.version),
+      ['3.10.1', '3.11.0-beta-3', '3.11.0']
+    );
   });
 
   it('excludes entries at exactly the given version (strictly newer, not newer-or-equal)', () => {
-    const upgrades = getUpgradesNewerThan('3.9.0');
-
-    assert.deepStrictEqual(upgrades, []);
+    assert.deepStrictEqual(
+      getUpgradesNewerThan('3.11.0-beta-3').map(entry => entry.version),
+      ['3.11.0']
+    );
   });
 
-  it('excludes entries older than the given version', () => {
-    const upgrades = getUpgradesNewerThan('3.10.0');
-
-    assert.deepStrictEqual(upgrades, []);
+  it("includes a release's entries when importing an export from one of its pre-releases", () => {
+    assert.deepStrictEqual(
+      getUpgradesNewerThan('3.11.0-beta-1').map(entry => entry.version),
+      ['3.11.0-beta-3', '3.11.0']
+    );
   });
 
-  it('returns entries sorted ascending by version', () => {
-    const upgrades = getUpgradesNewerThan('0.0.0');
-
-    const versions = upgrades.map(entry => entry.version);
-    const sorted = [...versions].sort();
-    // All current entries share the same version (3.9.0), so this mainly pins the
-    // filter+sort contract; it will start exercising real reordering once a second
-    // version is added to the registry.
-    assert.deepStrictEqual(versions, sorted);
-    assert.strictEqual(upgrades.length, SETTINGS_UPGRADE_REGISTRY.length);
+  it('returns nothing for an export at or above the newest entry', () => {
+    assert.deepStrictEqual(getUpgradesNewerThan('3.11.0'), []);
+    assert.deepStrictEqual(getUpgradesNewerThan('3.12.0'), []);
   });
 });
