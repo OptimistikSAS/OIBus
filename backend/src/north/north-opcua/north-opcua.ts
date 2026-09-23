@@ -14,7 +14,7 @@ import {
 } from 'node-opcua';
 import { OIBusOPCUAValue } from '../../transformers/connector-types.model';
 import type { ICacheService } from '../../model/cache.service.model';
-import { createSessionConfigs } from '../../service/utils-opcua';
+import { createOPCUASession, createSessionConfigs } from '../../service/utils-opcua';
 import { OIBusError } from '../../model/engine.model';
 import { ReadStream } from 'node:fs';
 import { streamToString } from '../../service/utils';
@@ -182,7 +182,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
       undefined
     );
     this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
-    return await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
+    return await createOPCUASession(this.connector.settings.url, userIdentity, options);
   }
 
   async handleContent(fileStream: ReadStream, _cacheMetadata: CacheMetadata): Promise<void> {
