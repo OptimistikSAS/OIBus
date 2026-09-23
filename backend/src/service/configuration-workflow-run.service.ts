@@ -180,14 +180,16 @@ export default class ConfigurationWorkflowRunService {
     const actingUser = triggeredBy ?? 'system';
 
     try {
-      const eligibleByKey = await this.retrieve(southId, workflow);
-      counts.discoveredCount = eligibleByKey.discoveredCount;
-      counts.eligibleCount = eligibleByKey.map.size;
+      const retrieved = await this.retrieve(southId, workflow);
+      counts.discoveredCount = retrieved.discoveredCount;
 
       if (workflow.pushToOIAnalytics) {
-        records = [...eligibleByKey.map.values()];
+        records = retrieved.eligible;
+        counts.eligibleCount = records.length;
         this.actRemote(southId, workflow, run.id, records, counts);
       } else {
+        const eligibleByKey = keyByIdentity(retrieved.eligible, workflow.identityKeyFields);
+        counts.eligibleCount = eligibleByKey.size;
         // Computed once per run, from this connector's own manifest, so a mapped constant lands on the
         // item command with the type the manifest actually declares (a boolean checkbox field, a
         // numeric setting, ...) instead of the raw string every mapping expression is written as.
@@ -195,7 +197,7 @@ export default class ConfigurationWorkflowRunService {
         const previousPoints = this.itemPointMetadataRepository.findAllByWorkflow(workflow.id);
         const previousByKey = new Map(previousPoints.map(point => [point.discoveredEntryKey, point]));
 
-        for (const [key, record] of eligibleByKey.map) {
+        for (const [key, record] of eligibleByKey) {
           const previous = previousByKey.get(key) ?? null;
           const status = classifyEntry(previous, record);
           entries.push({ key, status, record, previousMetadata: previous?.discoveredMetadata ?? null });
@@ -206,7 +208,7 @@ export default class ConfigurationWorkflowRunService {
         }
 
         for (const point of previousPoints) {
-          if (point.status === 'orphaned' || eligibleByKey.map.has(point.discoveredEntryKey)) {
+          if (point.status === 'orphaned' || eligibleByKey.has(point.discoveredEntryKey)) {
             continue;
           }
           entries.push({ key: point.discoveredEntryKey, status: 'missing', record: null, previousMetadata: point.discoveredMetadata });
@@ -230,33 +232,35 @@ export default class ConfigurationWorkflowRunService {
    */
   async preview(southId: string, workflowId: string): Promise<WorkflowPreviewResultDTO> {
     const workflow = this.configurationWorkflowService.findById(southId, workflowId); // Ownership check
-    const eligibleByKey = await this.retrieve(southId, workflow);
+    const retrieved = await this.retrieve(southId, workflow);
 
     if (workflow.pushToOIAnalytics) {
       return {
-        discoveredCount: eligibleByKey.discoveredCount,
-        eligibleCount: eligibleByKey.map.size,
+        discoveredCount: retrieved.discoveredCount,
+        eligibleCount: retrieved.eligible.length,
         entries: [],
-        records: [...eligibleByKey.map.values()]
+        records: retrieved.eligible
       };
     }
+
+    const eligibleByKey = keyByIdentity(retrieved.eligible, workflow.identityKeyFields);
 
     const previousPoints = this.itemPointMetadataRepository.findAllByWorkflow(workflow.id);
     const previousByKey = new Map(previousPoints.map(point => [point.discoveredEntryKey, point]));
 
     const entries: Array<WorkflowPreviewEntryDTO> = [];
-    for (const [key, record] of eligibleByKey.map) {
+    for (const [key, record] of eligibleByKey) {
       const previous = previousByKey.get(key) ?? null;
       entries.push({ key, status: classifyEntry(previous, record), record, previousMetadata: previous?.discoveredMetadata ?? null });
     }
     for (const point of previousPoints) {
-      if (point.status === 'orphaned' || eligibleByKey.map.has(point.discoveredEntryKey)) {
+      if (point.status === 'orphaned' || eligibleByKey.has(point.discoveredEntryKey)) {
         continue;
       }
       entries.push({ key: point.discoveredEntryKey, status: 'missing', record: null, previousMetadata: point.discoveredMetadata });
     }
 
-    return { discoveredCount: eligibleByKey.discoveredCount, eligibleCount: eligibleByKey.map.size, entries, records: [] };
+    return { discoveredCount: retrieved.discoveredCount, eligibleCount: eligibleByKey.size, entries, records: [] };
   }
 
   findRuns(southId: string, workflowId: string, searchParams: WorkflowRunSearchParam): Page<WorkflowRunEntity> {
@@ -282,7 +286,7 @@ export default class ConfigurationWorkflowRunService {
   private async retrieve(
     southId: string,
     workflow: ConfigurationWorkflowEntity
-  ): Promise<{ map: Map<string, OIBusRecord>; discoveredCount: number }> {
+  ): Promise<{ eligible: Array<OIBusRecord>; discoveredCount: number }> {
     if (!this.engine.hasSouth(southId)) {
       throw new OIBusValidationError(`South connector "${southId}" is not running - start it before running a workflow`);
     }
@@ -292,18 +296,8 @@ export default class ConfigurationWorkflowRunService {
     }
 
     const records = await south.discover(workflow.discoveryScope);
-
-    // Later duplicates of the same identity key overwrite earlier ones - a workflow's identityKeyFields
-    // are expected to actually identify records uniquely; a collision is a misconfiguration, not
-    // something worth failing the whole run over.
-    const map = new Map<string, OIBusRecord>();
-    for (const record of records) {
-      if (isEligible(record, workflow.eligibilityFilter)) {
-        map.set(computeIdentityKey(record, workflow.identityKeyFields), record);
-      }
-    }
-
-    return { map, discoveredCount: records.length };
+    const eligible = records.filter(record => isEligible(record, workflow.eligibilityFilter));
+    return { eligible, discoveredCount: records.length };
   }
 
   /**
@@ -333,7 +327,6 @@ export default class ConfigurationWorkflowRunService {
       southName: south.name,
       workflowId: workflow.id,
       workflowName: workflow.name,
-      identityKeyFields: workflow.identityKeyFields,
       records
     };
     this.oIAnalyticsMessageService.createConfigurationWorkflowResultMessage(runId, JSON.stringify(payload));
@@ -539,4 +532,14 @@ function toNumberOrNull(value: unknown): number | null {
   }
   const numericValue = Number(value);
   return Number.isNaN(numericValue) ? null : numericValue;
+}
+
+/**
+ * Local mode only: eligible records keyed by their identity key, for the diff against the previous run.
+ * Later duplicates of the same key overwrite earlier ones - a workflow's identityKeyFields are expected
+ * to actually identify records uniquely; a collision is a misconfiguration, not something worth failing
+ * the whole run over.
+ */
+function keyByIdentity(records: Array<OIBusRecord>, identityKeyFields: Array<string>): Map<string, OIBusRecord> {
+  return new Map(records.map(record => [computeIdentityKey(record, identityKeyFields), record]));
 }

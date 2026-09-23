@@ -46,8 +46,8 @@ export interface ConfigurationWorkflowEntity extends BaseEntity {
   discoveryScope: Record<string, unknown>;
 
   /**
-   * Discovered-record field(s) — possibly composite — that uniquely identify a record across re-runs
-   * (e.g. `["nodeId"]`, `["tagName"]`).
+   * Local mode only: discovered-record field(s) — possibly composite — that uniquely identify a record
+   * across re-runs (e.g. `["nodeId"]`, `["tagName"]`). Always empty for a remote workflow.
    */
   identityKeyFields: Array<string>;
 
