@@ -393,6 +393,7 @@ export interface SouthBACnetSettings {
   broadcastAddress: string;
   retryInterval: number;
   maxParallelRun: number;
+  discoveryTargetAddress: string | null;
   covDefaultLifetime: number;
   covRenewalMargin: number;
   maxObjectsPerRequest: number;
