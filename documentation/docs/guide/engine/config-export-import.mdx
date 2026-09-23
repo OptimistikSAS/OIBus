@@ -55,17 +55,16 @@ written**: the import is all-or-nothing.
 
 ## Supported versions {#supported-versions}
 
-Every export file is stamped with a `formatVersion` (an integer describing the shape of the file
-itself) and the `oibusVersion` of the instance that produced it.
+Every export file is stamped with the `oibusVersion` of the instance that produced it. Configuration
+export/import is available from OIBus 3.10.0 onwards.
 
-- **Format version**: an import is rejected outright if the file's `formatVersion` is newer than
-  the highest format version the importing OIBus build knows how to read. There is no lower bound —
-  an older format version is always accepted for processing.
-- **OIBus version**: there is no minimum supported `oibusVersion`. Before validating the file, OIBus
-  looks up every settings-upgrade step registered for a version newer than the file's `oibusVersion`
-  and applies the matching ones (per south/north connector type, history query side, or transformer)
-  to bring older settings shapes forward to what the current connector manifests expect. The
-  response lists every upgrade that was applied.
+- **Newer exports are rejected**: an import is rejected outright if the file's `oibusVersion` is
+  newer than the importing OIBus instance, since it may contain settings this version does not know.
+  A pre-release counts as older than its release (`3.10.0-beta-2` is older than `3.10.0`).
+- **Older exports are upgraded**: before validating the file, OIBus applies every settings-upgrade
+  step registered for a version newer than the file's `oibusVersion` (per south/north connector type,
+  history query side, or transformer), to bring older settings shapes forward to what the current
+  connector manifests expect. The response lists every upgrade that was applied.
 
 After any such upgrades, every settings blob in the file is validated against the current connector
 manifests. If any entity fails validation, the whole import is rejected with a per-entity list of
