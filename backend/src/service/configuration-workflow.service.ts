@@ -55,7 +55,7 @@ export default class ConfigurationWorkflowService {
       name: command.name,
       southId,
       discoveryScope: command.discoveryScope,
-      identityKeyFields: command.identityKeyFields,
+      identityKeyFields: this.resolveIdentityKeyFields(command),
       eligibilityFilter: command.eligibilityFilter,
       itemFieldMapping: command.itemFieldMapping,
       pushToOIAnalytics: command.pushToOIAnalytics,
@@ -78,7 +78,7 @@ export default class ConfigurationWorkflowService {
       {
         name: command.name,
         discoveryScope: command.discoveryScope,
-        identityKeyFields: command.identityKeyFields,
+        identityKeyFields: this.resolveIdentityKeyFields(command),
         eligibilityFilter: command.eligibilityFilter,
         itemFieldMapping: command.itemFieldMapping,
         pushToOIAnalytics: command.pushToOIAnalytics,
@@ -120,12 +120,21 @@ export default class ConfigurationWorkflowService {
     if (command.itemFieldMapping === null && !command.pushToOIAnalytics) {
       throw new OIBusValidationError('A configuration workflow must either create/update items or push to OIAnalytics');
     }
+    if (!command.pushToOIAnalytics && command.identityKeyFields.length === 0) {
+      throw new OIBusValidationError('A configuration workflow creating/updating items requires at least one identity key field');
+    }
     if (command.pushToOIAnalytics && this.oIAnalyticsRegistrationService.getRegistrationSettings()?.status !== 'REGISTERED') {
       this.engine.logger.warn(
         `Configuration workflow "${command.name}" is set to push to OIAnalytics, but OIBus is not registered with OIAnalytics - ` +
           'nothing will be pushed until it is registered'
       );
     }
+  }
+
+  /** Identity keys only drive the local diff against the previous run - a remote workflow never performs it,
+   *  so whatever it was sent with is discarded rather than stored as meaningless configuration. */
+  private resolveIdentityKeyFields(command: ConfigurationWorkflowCommandDTO): Array<string> {
+    return command.pushToOIAnalytics ? [] : command.identityKeyFields;
   }
 
   private checkNameNotTaken(southId: string, name: string, ignoreWorkflowId: string | null): void {

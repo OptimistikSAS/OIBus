@@ -127,37 +127,40 @@
         }
       </div>
 
-      <!-- Identity key fields -->
-      <div class="form-group">
-        <label class="form-label" translate="south.workflows.identity-key-fields"></label>
-        <div class="form-text" translate="south.workflows.identity-key-fields-hint"></div>
-        <div class="d-flex flex-wrap gap-1 mb-2" id="identity-key-fields-list">
-          @for (field of identityKeyFields; track field) {
-            <span class="badge bg-secondary d-flex align-items-center">
-              {{ field }}
-              <button
-                type="button"
-                class="btn-close btn-close-white ms-1"
-                style="font-size: 0.6rem"
-                (click)="removeIdentityKeyField(field)"
-              ></button>
-            </span>
-          }
+      <!-- Identity key fields - local mode only: they key the new/changed/unchanged/missing diff against the
+           previous run, which a remote workflow never performs (it forwards every eligible record as-is). -->
+      @if (!form.controls.pushToOIAnalytics.value) {
+        <div class="form-group">
+          <label class="form-label" translate="south.workflows.identity-key-fields"></label>
+          <div class="form-text" translate="south.workflows.identity-key-fields-hint"></div>
+          <div class="d-flex flex-wrap gap-1 mb-2" id="identity-key-fields-list">
+            @for (field of identityKeyFields; track field) {
+              <span class="badge bg-secondary d-flex align-items-center">
+                {{ field }}
+                <button
+                  type="button"
+                  class="btn-close btn-close-white ms-1"
+                  style="font-size: 0.6rem"
+                  (click)="removeIdentityKeyField(field)"
+                ></button>
+              </span>
+            }
+          </div>
+          <div class="input-group input-group-sm" style="max-width: 20rem">
+            <input
+              class="form-control"
+              id="new-identity-key-field"
+              [(ngModel)]="newIdentityKeyField"
+              [ngModelOptions]="{ standalone: true }"
+              [placeholder]="'south.workflows.identity-key-fields-add-placeholder' | translate"
+              (keydown.enter)="$event.preventDefault(); addIdentityKeyField()"
+            />
+            <button type="button" class="btn btn-secondary" id="add-identity-key-field" (click)="addIdentityKeyField()">
+              <span class="fa fa-plus"></span>
+            </button>
+          </div>
         </div>
-        <div class="input-group input-group-sm" style="max-width: 20rem">
-          <input
-            class="form-control"
-            id="new-identity-key-field"
-            [(ngModel)]="newIdentityKeyField"
-            [ngModelOptions]="{ standalone: true }"
-            [placeholder]="'south.workflows.identity-key-fields-add-placeholder' | translate"
-            (keydown.enter)="$event.preventDefault(); addIdentityKeyField()"
-          />
-          <button type="button" class="btn btn-secondary" id="add-identity-key-field" (click)="addIdentityKeyField()">
-            <span class="fa fa-plus"></span>
-          </button>
-        </div>
-      </div>
+      }
 
       <!-- Eligibility filter -->
       <div class="form-group">

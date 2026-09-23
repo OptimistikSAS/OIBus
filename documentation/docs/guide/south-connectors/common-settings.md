@@ -277,23 +277,23 @@ while writing the query.
 | **Name**                | Unique label for this workflow within the South connector.                                                                                    | `Reactor OPC-UA discovery` |
 | **Schedule**            | Scan mode driving scheduled runs. Leave as **Manual only** to run this workflow exclusively via **Run now**.                                  | `Every 1 hour`              |
 | **Mode**                | **Create/update items locally** or **Push to OIAnalytics** — see [below](#mode-local-vs-remote). Fixed to Push to OIAnalytics, and hidden, for SQL-family connectors. | `Create/update items locally` |
-| **Identity key fields** | One or more discovered-record field names whose combined value uniquely identifies a record — see [below](#identity-key-fields).             | `nodeId`                    |
+| **Identity key fields** | Create/update items locally only. One or more discovered-record field names whose combined value uniquely identifies a record — see [below](#identity-key-fields). | `nodeId`                    |
 | **Eligibility filter**  | Conditions a discovered record must all satisfy to be acted on — see [below](#eligibility-filter).                                            | `type equals Variable`     |
 | **Enabled**             | Whether scheduled runs fire at all. **Run now** still works while disabled.                                                                   | Enabled/Disabled           |
 
 ### Identity Key Fields {#identity-key-fields}
 
 **Identity key fields** name the discovered-record field(s) (e.g. `nodeId` for OPC UA, a `column_name` returned by a
-metadata query for SQL) whose combined value uniquely identifies a record. At least one is required, regardless of
-mode, but each mode uses it differently:
+metadata query for SQL) whose combined value uniquely identifies a record. They are only shown, and at least one is
+required, in **Create/update items locally** mode:
 
-- **Create/update items locally** re-discovers its data source on every run, so it needs a way to recognize "the
-  same" record from one run to the next — otherwise every run would look like an all-new set of records. Matched
-  against the previous run, a record is new, changed, or unchanged, and a previously-seen key that no longer comes
-  back is treated as missing (see [Running a Workflow](#running-a-workflow)).
-- **Push to OIAnalytics** never compares against a previous run — the identity key fields are only used to
-  de-duplicate records discovered more than once within the *same* run (a later duplicate overwrites an earlier one)
-  and are sent to OIAnalytics alongside the records themselves, so it knows which fields form each record's identity.
+- A local workflow re-discovers its data source on every run, so it needs a way to recognize "the same" record from
+  one run to the next — otherwise every run would look like an all-new set of records. Matched against the previous
+  run, a record is new, changed, or unchanged, and a previously-seen key that no longer comes back is treated as
+  missing (see [Running a Workflow](#running-a-workflow)). If two records of the same run share a key, the later one
+  wins.
+- **Push to OIAnalytics** never compares against a previous run, so it has no identity key fields at all: every
+  eligible record is forwarded as-is, and correlating records across runs is left to OIAnalytics.
 
 ### Eligibility Filter {#eligibility-filter}
 
@@ -362,8 +362,8 @@ A run always starts with **Retrieve** (discover the data source, exactly as the 
   anything no longer discovered, with the reason recorded as "Configuration workflow no longer discovers this
   entry".
 - **Push to OIAnalytics** does neither — it never compares against a previous run, so nothing is ever created,
-  updated, or disabled. The eligible records (de-duplicated by identity key, see [Identity Key
-  Fields](#identity-key-fields)) are simply forwarded to OIAnalytics as one message, once per run.
+  updated, or disabled. The eligible records are simply forwarded, as-is, to OIAnalytics as one message, once per
+  run.
 
 :::tip Run now works even on a disabled connector or item
 Building and testing a workflow shouldn't require switching the connector on first — **Run now** works the same
