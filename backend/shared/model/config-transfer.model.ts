@@ -6,9 +6,12 @@ import { OIBusFullConfigurationCommandDTO, OIBusHistoryQueriesCommandDTO } from 
  * config export endpoint and consumed by the config import endpoint. History queries are kept as
  * a peer field rather than nested inside `fullConfiguration`, mirroring how the two are built and
  * sent to OIAnalytics as separate messages.
+ *
+ * `oibusVersion` is the only version stamp: it tells the importing instance which settings upgrades
+ * to apply (every registry entry newer than it), and an import is rejected when it is newer than the
+ * importing instance itself.
  */
 export interface ConfigExportEnvelopeDTO {
-  formatVersion: number;
   oibusVersion: string;
   exportedAt: Instant;
   fullConfiguration: OIBusFullConfigurationCommandDTO;
