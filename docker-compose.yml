@@ -235,10 +235,24 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pass}
       POSTGRES_DB: oibus-db
       POSTGRES_UPDATE_INTERVAL: 10
+      FTP_HOST: ftp-server
+      FTP_PORT: 21
+      FTP_USER: oibus
+      FTP_PASSWORD: ${FTP_PASSWORD:-pass}
+      FTP_REMOTE_DIR: /
+      SFTP_HOST: sftp-server
+      SFTP_PORT: 22
+      SFTP_USER: oibus
+      SFTP_PASSWORD: ${SFTP_PASSWORD:-pass}
+      SFTP_REMOTE_DIR: /upload
+      # Rolling CSV files uploaded to the FTP and SFTP servers: one every FILE_UPDATE_INTERVAL seconds,
+      # only the FILE_MAX_COUNT most recent kept on each server.
+      FILE_UPDATE_INTERVAL: 60
+      FILE_MAX_COUNT: 10
       RETRY_INTERVAL: 10
     working_dir: /app
     command: >
-      sh -c "pip install --quiet paho-mqtt 'pymodbus==3.6.9' influxdb-client psycopg2-binary
+      sh -c "pip install --quiet --root-user-action=ignore paho-mqtt 'pymodbus==3.6.9' influxdb-client psycopg2-binary paramiko
       && python -u simulator.py"
     networks:
       - oibus-network

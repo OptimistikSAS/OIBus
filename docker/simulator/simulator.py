@@ -55,8 +55,34 @@ PostgreSQL:
   single "sensor_readings" table (created on first connect if missing), one row per sensor
   every cycle, with workshop/sensor_id/measurement columns standing in for InfluxDB's tags so
   OIBus's SQL south connector has a realistic wide time-series table to query.
+
+FTP:
+  FTP_HOST                  (default: ftp-server)
+  FTP_PORT                  (default: 21)
+  FTP_USER                  (default: oibus)
+  FTP_PASSWORD              (default: pass)
+  FTP_REMOTE_DIR            (default: /)
+
+SFTP:
+  SFTP_HOST                 (default: sftp-server)
+  SFTP_PORT                 (default: 22)
+  SFTP_USER                 (default: oibus)
+  SFTP_PASSWORD             (default: pass)
+  SFTP_REMOTE_DIR           (default: /upload)
+
+Rolling files (shared by the FTP and SFTP workers):
+  FILE_UPDATE_INTERVAL      seconds between two generated files (default: 60)
+  FILE_MAX_COUNT            files kept on each server, oldest deleted first (default: 10)
+
+  The FTP and SFTP workers each upload a CSV file named "sensors-<UTC timestamp>.csv" every
+  cycle, with a random number of rows of SENSOR_READINGS spread over the elapsed interval.
+  Files are uploaded under a ".tmp" name then renamed, so OIBus's FTP/SFTP south never picks
+  up a partially written file. Only the FILE_MAX_COUNT most recent files are kept; files that
+  OIBus already retrieved (and deleted) are simply no longer counted.
 """
 
+import csv
+import io
 import json
 import math
 import os
@@ -162,6 +188,24 @@ POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "pass")
 POSTGRES_DB = os.getenv("POSTGRES_DB", "oibus-db")
 POSTGRES_UPDATE_INTERVAL = int(os.getenv("POSTGRES_UPDATE_INTERVAL", 10))
 POSTGRES_TABLE = "sensor_readings"
+
+# ─── FTP / SFTP configuration ─────────────────────────────────────────────────
+FTP_HOST = os.getenv("FTP_HOST", "ftp-server")
+FTP_PORT = int(os.getenv("FTP_PORT", 21))
+FTP_USER = os.getenv("FTP_USER", "oibus")
+FTP_PASSWORD = os.getenv("FTP_PASSWORD", "pass")
+FTP_REMOTE_DIR = os.getenv("FTP_REMOTE_DIR", "/")
+
+SFTP_HOST = os.getenv("SFTP_HOST", "sftp-server")
+SFTP_PORT = int(os.getenv("SFTP_PORT", 22))
+SFTP_USER = os.getenv("SFTP_USER", "oibus")
+SFTP_PASSWORD = os.getenv("SFTP_PASSWORD", "pass")
+SFTP_REMOTE_DIR = os.getenv("SFTP_REMOTE_DIR", "/upload")
+
+FILE_UPDATE_INTERVAL = int(os.getenv("FILE_UPDATE_INTERVAL", 60))
+FILE_MAX_COUNT = int(os.getenv("FILE_MAX_COUNT", 10))
+FILE_PREFIX = "sensors-"
+FILE_SUFFIX = ".csv"
 
 # Sensor readings shared by the InfluxDB and PostgreSQL workers: (workshop, sensor_id,
 # measurement, base, amplitude, period_s). Each row becomes one InfluxDB point (measurement=
@@ -557,6 +601,110 @@ def postgres_worker() -> None:
             time.sleep(RETRY_INTERVAL)
 
 
+# ─── Rolling CSV files (FTP / SFTP) ───────────────────────────────────────────
+
+def build_csv_file(t: float, interval: float) -> tuple:
+    """Return (filename, content bytes) of a CSV holding a random number of SENSOR_READINGS rows,
+    timestamped randomly over the last `interval` seconds and sorted by timestamp."""
+    now = datetime.now(timezone.utc)
+    rows = []
+    for _ in range(random.randint(5, 30)):
+        workshop, sensor_id, measurement, base, amplitude, period = random.choice(SENSOR_READINGS)
+        offset = random.uniform(0, interval)
+        timestamp = datetime.fromtimestamp(now.timestamp() - offset, timezone.utc)
+        value = round(simulate_value(t - offset, base, amplitude, period), 2)
+        rows.append((timestamp.isoformat(timespec="milliseconds"), workshop, sensor_id, measurement, value))
+    rows.sort(key=lambda row: row[0])
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer, lineterminator="\n")
+    writer.writerow(["timestamp", "workshop", "sensor_id", "measurement", "value"])
+    writer.writerows(rows)
+    filename = f"{FILE_PREFIX}{now.strftime('%Y%m%dT%H%M%S')}Z{FILE_SUFFIX}"
+    return filename, buffer.getvalue().encode("utf-8")
+
+
+def files_to_prune(names: list) -> list:
+    """Generated files beyond the FILE_MAX_COUNT most recent ones (names sort chronologically)."""
+    generated = sorted(
+        name for name in (n.rsplit("/", 1)[-1] for n in names)
+        if name.startswith(FILE_PREFIX) and name.endswith(FILE_SUFFIX)
+    )
+    return generated[:-FILE_MAX_COUNT] if FILE_MAX_COUNT > 0 else generated
+
+
+def ftp_worker() -> None:
+    import ftplib
+
+    t = 0.0
+    while True:
+        print(f"[ftp] Connecting to {FTP_HOST}:{FTP_PORT} ...")
+        ftp = ftplib.FTP()
+        try:
+            # ftplib ignores the address advertised in PASV replies (vsftpd advertises 127.0.0.1 for the host) and
+            # reuses the control connection host, so passive mode works from inside the docker network.
+            ftp.connect(FTP_HOST, FTP_PORT, timeout=RETRY_INTERVAL)
+            ftp.login(FTP_USER, FTP_PASSWORD)
+            ftp.cwd(FTP_REMOTE_DIR)
+            print("[ftp] Connected.")
+
+            while True:
+                filename, content = build_csv_file(t, FILE_UPDATE_INTERVAL)
+                ftp.storbinary(f"STOR {filename}.tmp", io.BytesIO(content))
+                ftp.rename(f"{filename}.tmp", filename)
+                print(f"[ftp]   uploaded {FTP_REMOTE_DIR.rstrip('/')}/{filename} ({len(content)} bytes)")
+
+                try:
+                    names = ftp.nlst()
+                except ftplib.error_perm:  # some servers answer 550 on an empty directory
+                    names = []
+                for name in files_to_prune(names):
+                    ftp.delete(name)
+                    print(f"[ftp]   deleted {name}")
+
+                t += FILE_UPDATE_INTERVAL
+                time.sleep(FILE_UPDATE_INTERVAL)
+
+        except Exception as exc:
+            print(f"[ftp] Error: {exc}. Retrying in {RETRY_INTERVAL}s ...")
+            ftp.close()
+            time.sleep(RETRY_INTERVAL)
+
+
+def sftp_worker() -> None:
+    import paramiko
+
+    t = 0.0
+    while True:
+        print(f"[sftp] Connecting to {SFTP_HOST}:{SFTP_PORT} ...")
+        transport = None
+        try:
+            transport = paramiko.Transport((SFTP_HOST, SFTP_PORT))
+            transport.connect(username=SFTP_USER, password=SFTP_PASSWORD)
+            sftp = paramiko.SFTPClient.from_transport(transport)
+            sftp.chdir(SFTP_REMOTE_DIR)
+            print("[sftp] Connected.")
+
+            while True:
+                filename, content = build_csv_file(t, FILE_UPDATE_INTERVAL)
+                sftp.putfo(io.BytesIO(content), f"{filename}.tmp")
+                sftp.rename(f"{filename}.tmp", filename)
+                print(f"[sftp]   uploaded {SFTP_REMOTE_DIR.rstrip('/')}/{filename} ({len(content)} bytes)")
+
+                for name in files_to_prune(sftp.listdir()):
+                    sftp.remove(name)
+                    print(f"[sftp]   deleted {name}")
+
+                t += FILE_UPDATE_INTERVAL
+                time.sleep(FILE_UPDATE_INTERVAL)
+
+        except Exception as exc:
+            print(f"[sftp] Error: {exc}. Retrying in {RETRY_INTERVAL}s ...")
+            if transport is not None:
+                transport.close()
+            time.sleep(RETRY_INTERVAL)
+
+
 # ─── Entry point ──────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -565,6 +713,8 @@ if __name__ == "__main__":
         threading.Thread(target=mqtt_worker,     name="mqtt",     daemon=True),
         threading.Thread(target=influxdb_worker, name="influxdb", daemon=True),
         threading.Thread(target=postgres_worker, name="postgres", daemon=True),
+        threading.Thread(target=ftp_worker,      name="ftp",      daemon=True),
+        threading.Thread(target=sftp_worker,     name="sftp",     daemon=True),
     ]
     for w in workers:
         w.start()
