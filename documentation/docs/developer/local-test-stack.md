@@ -68,6 +68,9 @@ Services are grouped into **Docker Compose profiles**:
 The `simulator` profile requires the `iot` and `database` profile services to be running (Modbus
 server, MQTT broker, InfluxDB and PostgreSQL). Always start them together: `--profile iot --profile
 database --profile simulator` (or use `npm run docker:simulator`, which does this automatically).
+
+The simulator also generates [rolling CSV files](#ftp--sftp-threads) on the FTP and SFTP servers, but
+only while the `ftp` profile is up. Add `--profile ftp` to your command if you need those files.
 :::
 
 All services share the internal bridge network `oibus-network`. Ports are forwarded to `localhost` so
@@ -386,8 +389,12 @@ from(bucket: "oibus-bucket")
 | **Image** | [`fauria/vsftpd`](https://hub.docker.com/r/fauria/vsftpd) |
 | **Ports** | `20`, `21`, `21100–21110` (passive)                       |
 
-Passive-mode vsftpd. Credentials: `oibus` / `pass` (override the password via `FTP_PASSWORD`). Files
-land in `docker/ftp/data/`.
+Passive-mode vsftpd. Credentials: `oibus` / `pass` (override the password via `FTP_PASSWORD`). The
+`oibus` user's home directory is mounted at `docker/ftp/data/oibus/`.
+
+When the [Simulator](#unified-simulator--simulator) is running, it uploads a
+[rolling CSV file](#ftp--sftp-threads) to the root of the home directory (`/`) every minute. To collect
+these files, point an OIBus FTP south at `localhost:21` and use the remote folder `/`.
 
 ---
 
@@ -399,7 +406,11 @@ land in `docker/ftp/data/`.
 | **Port**  | `2222` (SSH)                                        |
 
 Single-user SFTP server. Credentials: `oibus` / `pass` (override the password via `SFTP_PASSWORD`).
-Upload directory: `docker/sftp/data/`.
+The server's `/upload` directory is mounted at `docker/sftp/data/`.
+
+When the [Simulator](#unified-simulator--simulator) is running, it uploads a
+[rolling CSV file](#ftp--sftp-threads) to `/upload` every minute. To collect these files, point an
+OIBus SFTP south at `localhost:2222` and use the remote folder `/upload`.
 
 ---
 
@@ -431,15 +442,15 @@ certificates in `docker/nginx/certs/`. Only needed when testing the full TLS / r
 
 ### Unified Simulator — `simulator` {#unified-simulator--simulator}
 
-| Property      | Value                                                                |
-| ------------- | -------------------------------------------------------------------- |
-| **Image**     | [`python:3.14-slim`](https://hub.docker.com/_/python)                |
-| **Script**    | `docker/simulator/simulator.py`                                      |
-| **Libraries** | `pymodbus==3.6.9`, `paho-mqtt`, `influxdb-client`, `psycopg2-binary` |
+| Property      | Value                                                                            |
+| ------------- | -------------------------------------------------------------------------------- |
+| **Image**     | [`python:3.14-slim`](https://hub.docker.com/_/python)                            |
+| **Script**    | `docker/simulator/simulator.py`                                                  |
+| **Libraries** | `pymodbus==3.6.9`, `paho-mqtt`, `influxdb-client`, `psycopg2-binary`, `paramiko` |
 
-A single Python script that drives the Modbus server, the MQTT broker, InfluxDB and PostgreSQL. It runs
-one daemon thread per source, each with its own independent retry loop so a failure in one source does
-not affect the others.
+A single Python script that drives the Modbus server, the MQTT broker, InfluxDB, PostgreSQL and the
+FTP/SFTP servers. It runs one daemon thread per target. Each thread has its own retry loop, so a failure
+in one target, or a target whose profile isn't running, doesn't affect the others.
 
 #### Modbus thread {#modbus-thread}
 
@@ -605,6 +616,40 @@ exact same sensor list as the InfluxDB thread, with `workshop`/`sensor_id`/`meas
 standing in for InfluxDB's tags — so both databases end up with the same data, shaped for their
 respective query models (Flux/InfluxQL tags vs a SQL `WHERE` clause).
 
+#### FTP / SFTP threads {#ftp--sftp-threads}
+
+Two threads, one for the [FTP server](#ftp-server--ftp-server-profile-ftp) and one for the
+[SFTP server](#sftp-server--sftp-server-profile-ftp), each upload a new CSV file every
+`FILE_UPDATE_INTERVAL` seconds (default **60 s**). They keep retrying until their server is reachable,
+so files are only generated while the `ftp` profile is up.
+
+- **File name:** `sensors-<UTC timestamp>Z.csv`, for example `sensors-20260923T103401Z.csv`. Names sort
+  chronologically.
+- **Destination:** `/` on the FTP server (`docker/ftp/data/oibus/` on the host), and `/upload` on the
+  SFTP server (`docker/sftp/data/` on the host).
+- **Content:** a header row followed by 5 to 30 random rows. Each row is a reading from one of the
+  [sensors used by the InfluxDB thread](#influxdb-thread). Timestamps are spread over the elapsed
+  interval and sorted:
+
+```csv title="sensors-20260923T103408Z.csv"
+timestamp,workshop,sensor_id,measurement,value
+2026-09-23T10:34:06.364+00:00,workshop1,sensor1,temperature,23.76
+2026-09-23T10:34:06.618+00:00,workshop2,sensor3,co2,519.6
+2026-09-23T10:34:06.945+00:00,workshop2,sensor3,co2,517.47
+2026-09-23T10:34:07.099+00:00,workshop2,sensor1,temperature,21.59
+```
+
+- **Atomic upload:** each file is uploaded as `<name>.tmp` and then renamed. A south connector filtering
+  on `.*\.csv` never picks up a partially written file.
+- **Rolling window:** after each upload, only the `FILE_MAX_COUNT` most recent `sensors-*.csv` files
+  (default **10**) are kept on each server, and older ones are deleted. Files that OIBus has already
+  retrieved and deleted no longer count toward the limit.
+
+:::tip Faster iterations
+To test a south connector without waiting a minute between files, lower the interval for a single run:
+`docker compose --profile simulator run --rm -e FILE_UPDATE_INTERVAL=5 simulator`.
+:::
+
 #### Environment variables {#environment-variables}
 
 | Variable                   | Default                | Description                                             |
@@ -630,6 +675,18 @@ respective query models (Flux/InfluxQL tags vs a SQL `WHERE` clause).
 | `POSTGRES_PASSWORD`        | `pass`                 | PostgreSQL password (also set via `$POSTGRES_PASSWORD`) |
 | `POSTGRES_DB`              | `oibus-db`             | PostgreSQL database name                                |
 | `POSTGRES_UPDATE_INTERVAL` | `10`                   | Seconds between PostgreSQL write cycles                 |
+| `FTP_HOST`                 | `ftp-server`           | Hostname of the FTP server                              |
+| `FTP_PORT`                 | `21`                   | FTP port                                                |
+| `FTP_USER`                 | `oibus`                | FTP username                                            |
+| `FTP_PASSWORD`             | `pass`                 | FTP password (also set via `$FTP_PASSWORD`)             |
+| `FTP_REMOTE_DIR`           | `/`                    | FTP directory where CSV files are uploaded              |
+| `SFTP_HOST`                | `sftp-server`          | Hostname of the SFTP server                             |
+| `SFTP_PORT`                | `22`                   | SFTP port (inside the Docker network)                   |
+| `SFTP_USER`                | `oibus`                | SFTP username                                           |
+| `SFTP_PASSWORD`            | `pass`                 | SFTP password (also set via `$SFTP_PASSWORD`)           |
+| `SFTP_REMOTE_DIR`          | `/upload`              | SFTP directory where CSV files are uploaded             |
+| `FILE_UPDATE_INTERVAL`     | `60`                   | Seconds between two generated FTP/SFTP files            |
+| `FILE_MAX_COUNT`           | `10`                   | Generated files kept on each server (oldest deleted)    |
 
 ---
 
@@ -664,7 +721,10 @@ DOMAIN=oibus.example.com
 # Start the recommended development stack (IoT servers + simulator + database)
 npm run docker:dev
 
-# Tail simulator logs (Modbus + MQTT writes)
+# Development stack + FTP/SFTP servers with rolling CSV files
+docker compose --profile iot --profile database --profile ftp --profile simulator up -d
+
+# Tail simulator logs (Modbus, MQTT, InfluxDB, PostgreSQL and FTP/SFTP writes)
 docker compose logs -f simulator
 
 # Restart the simulator after changing docker/simulator/simulator.py

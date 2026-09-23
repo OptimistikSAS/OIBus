@@ -10,6 +10,9 @@
 /docker/opcua/pki/*
 /docker/nginx/certs/*
 /docker/nginx/conf.d/*
+/docker/ftp/data/*/*
+/docker/sftp/data/*
+/docker/simulator/__pycache__/
 
 # Node
 /node_modules
