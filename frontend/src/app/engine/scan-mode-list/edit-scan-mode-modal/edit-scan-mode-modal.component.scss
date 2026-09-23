@@ -21,3 +21,13 @@
 .oib-window-timezone {
   padding-left: 1.5rem;
 }
+
+// .btn-link is globally styled white for the (dark) oib-box-title bars; the "Clear" bound buttons
+// sit on the light activation-window panel, so they need their own color to stay visible.
+.btn-link.oib-clear-bound {
+  color: $darkGrey;
+
+  &:hover {
+    color: var(--bs-body-color);
+  }
+}
