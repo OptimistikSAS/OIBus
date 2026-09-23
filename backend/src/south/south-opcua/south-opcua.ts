@@ -31,7 +31,14 @@ import {
   UserTokenType
 } from 'node-opcua';
 import { EUInformation, HistoryDataOptions, HistoryReadValueIdOptions, Range } from 'node-opcua-types/source/_generated_opcua_types';
-import { createSessionConfigs, getHistoryReadRequest, getTimestamp, logMessages, parseOPCUAValue } from '../../service/utils-opcua';
+import {
+  createOPCUASession,
+  createSessionConfigs,
+  getHistoryReadRequest,
+  getTimestamp,
+  logMessages,
+  parseOPCUAValue
+} from '../../service/utils-opcua';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
 import { shouldCacheValue } from '../../service/south-caching-strategy.service';
 
@@ -445,7 +452,7 @@ export default class SouthOPCUA
     );
     this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
     const connectStart = DateTime.now().toMillis();
-    const session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
+    const session = await createOPCUASession(this.connector.settings.url, userIdentity, options);
     this.logger.info(`Connected to OPCUA server ${this.connector.settings.url} in ${DateTime.now().toMillis() - connectStart} ms`);
     return session;
   }
