@@ -17,6 +17,13 @@ describe('getUpgradesNewerThan', () => {
     assert.ok(upgrades.every(entry => entry.version === '3.9.0'));
   });
 
+  it('includes entries of a release when importing an export from one of its pre-releases', () => {
+    const upgrades = getUpgradesNewerThan('3.9.0-beta-6');
+
+    assert.strictEqual(upgrades.length, 2);
+    assert.ok(upgrades.every(entry => entry.version === '3.9.0'));
+  });
+
   it('excludes entries at exactly the given version (strictly newer, not newer-or-equal)', () => {
     const upgrades = getUpgradesNewerThan('3.9.0');
 
