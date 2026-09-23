@@ -3,9 +3,19 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import { DataType, DataValue, InMemoryCertificateStore, TimestampsToReturn, UserTokenType, Variant } from 'node-opcua';
+import {
+  ClientSession,
+  DataType,
+  DataValue,
+  InMemoryCertificateStore,
+  OPCUAClient,
+  TimestampsToReturn,
+  UserTokenType,
+  Variant
+} from 'node-opcua';
 import { encryptionService } from './encryption.service';
 import {
+  createOPCUASession,
   createSessionConfigs,
   getHistoryReadRequest,
   getOPCUAApplicationUri,
@@ -27,6 +37,79 @@ import { DateTime } from 'luxon';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 
 describe('Service utils OPCUA', () => {
+  describe('createOPCUASession', () => {
+    const userIdentity = { type: UserTokenType.UserName, userName: 'oibus', password: 'pass' } as const;
+    let closeSession: ReturnType<typeof mock.fn>;
+    let client: {
+      connect: ReturnType<typeof mock.fn>;
+      createSession2: ReturnType<typeof mock.fn>;
+      disconnect: ReturnType<typeof mock.fn>;
+    };
+
+    beforeEach(() => {
+      closeSession = mock.fn(async () => undefined);
+      client = {
+        connect: mock.fn(async () => undefined),
+        createSession2: mock.fn(async () => ({ close: closeSession })),
+        disconnect: mock.fn(async () => undefined)
+      };
+      mock.method(OPCUAClient, 'create', () => client);
+    });
+
+    afterEach(() => {
+      mock.restoreAll();
+    });
+
+    it('should connect, open a session, and disconnect the client once the session is closed', async () => {
+      const session = await createOPCUASession('opc.tcp://localhost:50000', userIdentity, { applicationName: 'OIBus' });
+
+      assert.deepStrictEqual(client.connect.mock.calls[0].arguments, ['opc.tcp://localhost:50000']);
+      assert.deepStrictEqual(client.createSession2.mock.calls[0].arguments, [userIdentity]);
+      assert.strictEqual(client.disconnect.mock.calls.length, 0);
+
+      await session.close();
+
+      assert.deepStrictEqual(closeSession.mock.calls[0].arguments, [true]);
+      assert.strictEqual(client.disconnect.mock.calls.length, 1);
+    });
+
+    it('should still disconnect the client when closing the session fails', async () => {
+      closeSession.mock.mockImplementation(async () => {
+        throw new Error('BadSessionClosed');
+      });
+      const session: ClientSession = await createOPCUASession('opc.tcp://localhost:50000', userIdentity, {});
+
+      await assert.rejects(() => session.close(false), { message: 'BadSessionClosed' });
+
+      assert.deepStrictEqual(closeSession.mock.calls[0].arguments, [false]);
+      assert.strictEqual(client.disconnect.mock.calls.length, 1);
+    });
+
+    it('should disconnect the client, instead of leaking it, when the session cannot be created', async () => {
+      client.createSession2.mock.mockImplementation(async () => {
+        throw new Error('BadUserAccessDenied');
+      });
+
+      await assert.rejects(() => createOPCUASession('opc.tcp://localhost:50000', userIdentity, {}), { message: 'BadUserAccessDenied' });
+
+      assert.strictEqual(client.disconnect.mock.calls.length, 1);
+    });
+
+    it('should report the connection error, not a disconnect error, when connecting fails', async () => {
+      client.connect.mock.mockImplementation(async () => {
+        throw new Error('ECONNREFUSED');
+      });
+      client.disconnect.mock.mockImplementation(async () => {
+        throw new Error('not connected');
+      });
+
+      await assert.rejects(() => createOPCUASession('opc.tcp://localhost:50000', userIdentity, {}), { message: 'ECONNREFUSED' });
+
+      assert.strictEqual(client.createSession2.mock.calls.length, 0);
+      assert.strictEqual(client.disconnect.mock.calls.length, 1);
+    });
+  });
+
   describe('toOPCUASecurityPolicy', () => {
     it('should properly convert into OPCUA SecurityPolicy', () => {
       assert.strictEqual(toOPCUASecurityPolicy('none'), 'none');

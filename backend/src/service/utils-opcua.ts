@@ -14,10 +14,12 @@ import {
 import { encryptionService } from './encryption.service';
 import {
   AggregateFunction,
+  ClientSession,
   DataType,
   DataValue,
   HistoryReadRequest,
   InMemoryCertificateStore,
+  OPCUAClient,
   OPCUAClientOptions,
   ReadProcessedDetails,
   ReadRawModifiedDetails,
@@ -148,6 +150,42 @@ export const createSessionConfigs = async (
   }
 
   return { options, userIdentity };
+};
+
+/**
+ * Same as node-opcua's `OPCUAClient.createSession(endpointUrl, userIdentity, options)` - connect a client,
+ * open a session on it, and disconnect that client when the session is closed - except that the client
+ * is also disconnected when connecting or creating the session fails. node-opcua's static helper leaves
+ * the client connected in that case (e.g. a rejected user or certificate): nothing references it anymore,
+ * so it can never be closed and keeps reconnecting to the server in the background for the lifetime of
+ * the process, silently - while every later attempt opens yet another one.
+ */
+export const createOPCUASession = async (
+  endpointUrl: string,
+  userIdentity: UserIdentityInfo,
+  options: OPCUAClientOptions
+): Promise<ClientSession> => {
+  const client = OPCUAClient.create(options);
+  let session: ClientSession;
+  try {
+    await client.connect(endpointUrl);
+    session = await client.createSession2(userIdentity);
+  } catch (error: unknown) {
+    await client.disconnect().catch(() => {
+      /* already broken - the original error is the one worth reporting */
+    });
+    throw error;
+  }
+  const closeSession = session.close.bind(session) as (deleteSubscriptions?: boolean) => Promise<void>;
+  // Only the promise form of close() is used in OIBus - no callback overload to forward.
+  session.close = (async (deleteSubscriptions?: boolean) => {
+    try {
+      await closeSession(deleteSubscriptions ?? true);
+    } finally {
+      await client.disconnect();
+    }
+  }) as ClientSession['close'];
+  return session;
 };
 
 export const getHistoryReadRequest = (

@@ -76,6 +76,7 @@ describe('SouthOPCUA', () => {
 
   const utilsOpcuaExports = {
     createSessionConfigs: mock.fn(() => ({ options: opcuaOptions, userIdentity: opcuaUserIdentity })),
+    createOPCUASession: mock.fn(async (..._args: Array<unknown>): Promise<ClientSession> => ({}) as ClientSession),
     getHistoryReadRequest: mock.fn(() => ({ requestHeader: {} }) as unknown as HistoryReadRequest),
     getTimestamp: mock.fn(() => testData.constants.dates.FAKE_NOW),
     logMessages: mock.fn(),
@@ -426,14 +427,14 @@ describe('SouthOPCUA', () => {
 
   it('should properly create a real OPCUA session', async () => {
     const createdSession = { close: mock.fn(async () => undefined) };
-    nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementationOnce(async () => createdSession as unknown as ClientSession);
+    utilsOpcuaExports.createOPCUASession.mock.mockImplementationOnce(async () => createdSession as unknown as ClientSession);
 
     const session = await south.createSession();
 
     assert.strictEqual(session, createdSession);
     assert.strictEqual(utilsOpcuaExports.createSessionConfigs.mock.calls.length, 1);
-    assert.strictEqual(nodeOPCUAMock.OPCUAClient.createSession.mock.calls.length, 1);
-    assert.deepStrictEqual(nodeOPCUAMock.OPCUAClient.createSession.mock.calls[0].arguments, [
+    assert.strictEqual(utilsOpcuaExports.createOPCUASession.mock.calls.length, 1);
+    assert.deepStrictEqual(utilsOpcuaExports.createOPCUASession.mock.calls[0].arguments, [
       configuration.settings.url,
       opcuaUserIdentity,
       opcuaOptions

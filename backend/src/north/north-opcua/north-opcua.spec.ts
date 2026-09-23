@@ -73,7 +73,8 @@ describe('NorthOPCUA', () => {
   };
 
   const utilsOpcuaExports = {
-    createSessionConfigs: createSessionConfigsFn
+    createSessionConfigs: createSessionConfigsFn,
+    createOPCUASession: mock.fn(async (..._args: Array<unknown>): Promise<unknown> => ({}))
   };
 
   before(() => {
@@ -110,8 +111,8 @@ describe('NorthOPCUA', () => {
     transformerExports.createTransformer.mock.resetCalls();
     transformerExports.createTransformer.mock.mockImplementation(() => oiBusTransformer);
 
-    nodeOPCUAMock.OPCUAClient.createSession.mock.resetCalls();
-    nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementation(async () => mockSession);
+    utilsOpcuaExports.createOPCUASession.mock.resetCalls();
+    utilsOpcuaExports.createOPCUASession.mock.mockImplementation(async () => mockSession);
     nodeOPCUAMock.OPCUAClient.create.mock.resetCalls();
     nodeOPCUAMock.OPCUAClient.create.mock.mockImplementation(() => null as unknown);
 
@@ -148,7 +149,7 @@ describe('NorthOPCUA', () => {
     } as unknown as ClientSession;
 
     // Re-apply createSession to pick up the new mockSession
-    nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementation(async () => mockSession);
+    utilsOpcuaExports.createOPCUASession.mock.mockImplementation(async () => mockSession);
 
     north = new NorthOPCUA(configuration, cacheService);
   });
@@ -170,7 +171,7 @@ describe('NorthOPCUA', () => {
     await north.connect();
 
     assert.strictEqual(createSessionConfigsFn.mock.calls.length, 1);
-    assert.strictEqual(nodeOPCUAMock.OPCUAClient.createSession.mock.calls.length, 1);
+    assert.strictEqual(utilsOpcuaExports.createOPCUASession.mock.calls.length, 1);
     assert.ok(logger.info.mock.calls.some(c => (c.arguments[0] as string).includes('connected')));
     // reconnectTimeout cleared — should be null after successful connect
     assert.strictEqual((north as unknown as { reconnectTimeout: null })['reconnectTimeout'], null);
@@ -179,7 +180,7 @@ describe('NorthOPCUA', () => {
 
   it('should handle connection error and trigger reconnect', async () => {
     const error = new Error('Session creation failed');
-    nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementationOnce(async () => {
+    utilsOpcuaExports.createOPCUASession.mock.mockImplementationOnce(async () => {
       throw error;
     });
     const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
@@ -193,7 +194,7 @@ describe('NorthOPCUA', () => {
   });
 
   it('should not reconnect if disconnecting', async () => {
-    nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementationOnce(async () => {
+    utilsOpcuaExports.createOPCUASession.mock.mockImplementationOnce(async () => {
       throw new Error('Fail');
     });
     (north as unknown as { disconnecting: boolean })['disconnecting'] = true;
@@ -390,17 +391,17 @@ describe('NorthOPCUA', () => {
 
   it('should properly test connection', async () => {
     const mockSessionClose = mock.fn(async () => undefined);
-    nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementation(async () => ({ close: mockSessionClose }));
+    utilsOpcuaExports.createOPCUASession.mock.mockImplementation(async () => ({ close: mockSessionClose }));
 
     await north.testConnection();
 
-    assert.strictEqual(nodeOPCUAMock.OPCUAClient.createSession.mock.calls.length, 1);
+    assert.strictEqual(utilsOpcuaExports.createOPCUASession.mock.calls.length, 1);
     assert.strictEqual(mockSessionClose.mock.calls.length, 1);
   });
 
   it('should discover endpoints and populate security info in test connection', async () => {
     const mockSessionClose = mock.fn(async () => undefined);
-    nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementation(async () => ({ close: mockSessionClose, read: sessionReadMock }));
+    utilsOpcuaExports.createOPCUASession.mock.mockImplementation(async () => ({ close: mockSessionClose, read: sessionReadMock }));
 
     const mockEndpointClient = {
       connect: mock.fn(async () => undefined),
@@ -441,7 +442,7 @@ describe('NorthOPCUA', () => {
       { statusCode: { value: StatusCodes.Good.value }, value: { value: '42' } } // BuildNumber
     ];
     const buildInfoReadMock = mock.fn(async () => goodDataValues);
-    nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementation(async () => ({ close: mockSessionClose, read: buildInfoReadMock }));
+    utilsOpcuaExports.createOPCUASession.mock.mockImplementation(async () => ({ close: mockSessionClose, read: buildInfoReadMock }));
 
     const result = await north.testConnection();
 
@@ -481,7 +482,7 @@ describe('NorthOPCUA', () => {
       { statusCode: { value: StatusCodes.Good.value }, value: { value: 42 } } // State -> unknown, falls back to String(raw)
     ];
     const buildInfoReadMock = mock.fn(async () => unknownStateDataValues);
-    nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementation(async () => ({ close: mockSessionClose, read: buildInfoReadMock }));
+    utilsOpcuaExports.createOPCUASession.mock.mockImplementation(async () => ({ close: mockSessionClose, read: buildInfoReadMock }));
 
     const result = await north.testConnection();
 
@@ -493,7 +494,7 @@ describe('NorthOPCUA', () => {
 
   it('should fall back to raw values for endpoint discovery when security mode, policy uri and identity tokens are unmapped or missing', async () => {
     const mockSessionClose = mock.fn(async () => undefined);
-    nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementation(async () => ({ close: mockSessionClose, read: sessionReadMock }));
+    utilsOpcuaExports.createOPCUASession.mock.mockImplementation(async () => ({ close: mockSessionClose, read: sessionReadMock }));
 
     const mockEndpointClient = {
       connect: mock.fn(async () => undefined),
@@ -524,7 +525,7 @@ describe('NorthOPCUA', () => {
   });
 
   it('should throw error if test fails', async () => {
-    nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementation(async () => {
+    utilsOpcuaExports.createOPCUASession.mock.mockImplementation(async () => {
       throw new Error('Auth failed');
     });
 
