@@ -133,11 +133,11 @@ describe('PreviewWorkflowModalComponent', () => {
     expect(fixture.nativeElement.querySelector('ngb-pagination')).toBeNull();
   });
 
-  test('should show the status badge as the leftmost column, with the payload column last', () => {
+  test('should show the status badge and identity key as the leftmost columns, followed by one column per record field', () => {
     const result: WorkflowPreviewResultDTO = {
       discoveredCount: 1,
       eligibleCount: 1,
-      entries: [{ key: 'nodeId=a', status: 'new', record: { nodeId: 'a' }, previousMetadata: null }],
+      entries: [{ key: 'nodeId=a', status: 'new', record: { nodeId: 'a', unit: 'C' }, previousMetadata: null }],
       records: []
     };
     configurationWorkflowService.preview.mockReturnValue(of(result));
@@ -145,10 +145,46 @@ describe('PreviewWorkflowModalComponent', () => {
     fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
     fixture.detectChanges();
 
+    const headers = Array.from(fixture.nativeElement.querySelectorAll('#preview-entries-table thead th') as NodeListOf<HTMLElement>);
+    expect(headers.slice(2).map(header => header.textContent!.trim())).toEqual(['nodeId', 'unit']);
     const cells = fixture.nativeElement.querySelectorAll('tbody td');
     expect(cells[0].querySelector('.badge')).not.toBeNull();
     expect(cells[1].textContent.trim()).toBe('nodeId=a');
-    expect(cells[2].querySelector('pre')).not.toBeNull();
+    expect(cells[2].textContent.trim()).toBe('a');
+    expect(cells[3].textContent.trim()).toBe('C');
+  });
+
+  test('should show a composite identity key with a readable separator', () => {
+    const result: WorkflowPreviewResultDTO = {
+      discoveredCount: 1,
+      eligibleCount: 1,
+      entries: [{ key: `ns=1${String.fromCharCode(1)}tag=a`, status: 'new', record: { ns: '1', tag: 'a' }, previousMetadata: null }],
+      records: []
+    };
+    configurationWorkflowService.preview.mockReturnValue(of(result));
+    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
+    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.preview-key').textContent.trim()).toBe('ns=1, tag=a');
+  });
+
+  test('should highlight only the cells of a changed entry that differ from the previous run', () => {
+    const result: WorkflowPreviewResultDTO = {
+      discoveredCount: 1,
+      eligibleCount: 1,
+      entries: [{ key: 'nodeId=a', status: 'changed', record: { nodeId: 'a', unit: 'F' }, previousMetadata: { nodeId: 'a', unit: 'C' } }],
+      records: []
+    };
+    configurationWorkflowService.preview.mockReturnValue(of(result));
+    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
+    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
+    fixture.detectChanges();
+
+    const changed = fixture.nativeElement.querySelectorAll('.preview-changed-cell');
+    expect(changed.length).toBe(1);
+    expect(changed[0].textContent.trim()).toBe('F');
+    expect(changed[0].getAttribute('title')).toBe('Previous value: C');
   });
 
   test('should render the raw records for a remote (push-to-OIAnalytics) workflow', async () => {
@@ -167,8 +203,34 @@ describe('PreviewWorkflowModalComponent', () => {
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
-    await expect.element(root.getByCss('#preview-records-table')).toMatchTextContent('"nodeId": "a"');
-    await expect.element(root.getByCss('#preview-records-table')).toMatchTextContent('"nodeId": "b"');
+    await expect.element(root.getByCss('#preview-records-table thead')).toMatchTextContent('nodeIdvalue');
+    const rows = fixture.nativeElement.querySelectorAll('#preview-records-table tbody tr');
+    expect(rows.length).toBe(2);
+    expect(Array.from(rows[1].querySelectorAll('td') as NodeListOf<HTMLElement>).map(cell => cell.textContent!.trim())).toEqual(['b', '2']);
+  });
+
+  test("should use the union of every record's fields as columns, and leave missing cells empty", () => {
+    const result: WorkflowPreviewResultDTO = {
+      discoveredCount: 2,
+      eligibleCount: 2,
+      entries: [],
+      records: [
+        { nodeId: 'a', type: 'Variable' },
+        { nodeId: 'b', unit: 'C' }
+      ]
+    };
+    configurationWorkflowService.preview.mockReturnValue(of(result));
+    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
+    fixture.componentInstance.prepareForPreview('southId1', 'workflowId1', 'Reactor discovery');
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.columns).toEqual(['nodeId', 'type', 'unit']);
+    const rows = fixture.nativeElement.querySelectorAll('#preview-records-table tbody tr');
+    expect(Array.from(rows[1].querySelectorAll('td') as NodeListOf<HTMLElement>).map(cell => cell.textContent!.trim())).toEqual([
+      'b',
+      '',
+      'C'
+    ]);
   });
 
   test('should close the modal and notify when the preview request fails', () => {
