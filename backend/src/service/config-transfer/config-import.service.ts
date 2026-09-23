@@ -5,7 +5,8 @@ import { Database } from 'better-sqlite3';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
 import { scanModeSchema, ipFilterSchema, userSchema } from '../../web-server/controllers/validators/oibus-validation-schema';
 import { getUpgradesNewerThan, SettingsUpgradeEntry } from './settings-upgrades/registry';
-import { CONFIG_EXPORT_FORMAT_VERSION } from './config-transfer.service';
+import { compareVersions } from './settings-upgrades/version-compare';
+import { version as currentOIBusVersion } from '../../../package.json';
 import {
   ConfigExportEnvelopeDTO,
   ConfigImportEntityValidationError,
@@ -38,14 +39,6 @@ import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-se
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { OIAnalyticsNorthCommandDTO, OIAnalyticsSouthCommandDTO } from '../oia/oianalytics.model';
 import { TransformerSourceCommandDTO } from '../../../shared/model/transformer.model';
-
-/**
- * The highest export `formatVersion` this build of OIBus knows how to import. Deliberately the
- * same constant the export endpoint stamps onto every envelope it produces (`config-transfer.service.ts`)
- * — an import is only ever rejected for being newer than what *this* build can produce, never for
- * being older (older envelopes are what the settings-upgrade registry exists to bring forward).
- */
-export const SUPPORTED_FORMAT_VERSION = CONFIG_EXPORT_FORMAT_VERSION;
 
 /**
  * The reserved scan mode id push-driven south connectors (MQTT, OPC-UA DA subscriptions, …) and the
@@ -126,7 +119,6 @@ const TRANSFORMER_ENTRY_SCHEMA = Joi.object({
 }).unknown(true);
 
 const ENVELOPE_SHAPE_SCHEMA = Joi.object({
-  formatVersion: Joi.number().integer().required(),
   oibusVersion: Joi.string().required(),
   exportedAt: Joi.string().required(),
   fullConfiguration: Joi.object({
@@ -215,12 +207,21 @@ export default class ConfigImportService {
     private userRepository?: UserRepository
   ) {}
 
-  async validateAndUpgrade(rawInput: unknown): Promise<{ envelope: ConfigExportEnvelopeDTO; appliedUpgrades: Array<AppliedUpgrade> }> {
+  /**
+   * `currentVersion` defaults to this build's own version; it is only a parameter so tests can pin
+   * it independently of `package.json`.
+   */
+  async validateAndUpgrade(
+    rawInput: unknown,
+    currentVersion: string = currentOIBusVersion
+  ): Promise<{ envelope: ConfigExportEnvelopeDTO; appliedUpgrades: Array<AppliedUpgrade> }> {
     const envelope = await this.parseEnvelope(rawInput);
 
-    if (envelope.formatVersion > SUPPORTED_FORMAT_VERSION) {
+    // Upgrades only ever move settings forward: an export from a newer OIBus may carry settings
+    // shapes this build has never heard of, so it is rejected rather than half-understood.
+    if (compareVersions(envelope.oibusVersion, currentVersion) > 0) {
       throw new ConfigImportError(
-        `Unsupported export format version ${envelope.formatVersion}: this OIBus instance supports up to format version ${SUPPORTED_FORMAT_VERSION}`
+        `Unsupported export: it was produced by OIBus ${envelope.oibusVersion}, which is newer than this OIBus instance (${currentVersion})`
       );
     }
 

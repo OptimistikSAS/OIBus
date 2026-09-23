@@ -55,8 +55,7 @@ describe('ConfigTransferController', () => {
 
   it('should export the configuration as a downloadable, secret-free JSON file', () => {
     const envelope: ConfigExportEnvelopeDTO = {
-      formatVersion: 1,
-      oibusVersion: '3.9.0',
+      oibusVersion: '3.10.0',
       exportedAt: '2026-08-25T00:00:00.000Z',
       fullConfiguration: {} as ConfigExportEnvelopeDTO['fullConfiguration'],
       historyQueries: { historyQueries: [] }
@@ -75,8 +74,8 @@ describe('ConfigTransferController', () => {
   describe('importConfiguration', () => {
     it('should import a well-formed export file and clean up the temp file', async () => {
       const file = { path: 'importPath' } as Express.Multer.File;
-      const parsedEnvelope = { formatVersion: 1 };
-      const response: ConfigImportResponseDTO = { appliedUpgrades: [{ scope: 'south:opcua', version: '3.9.0' }], warnings: ['a warning'] };
+      const parsedEnvelope = { oibusVersion: '3.10.0' };
+      const response: ConfigImportResponseDTO = { appliedUpgrades: [{ scope: 'south:opcua', version: '3.10.0' }], warnings: ['a warning'] };
       const readFileMock = mock.method(fs, 'readFile', async () => JSON.stringify(parsedEnvelope));
       const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
       configImportService.importConfiguration = mock.fn(async () => response);
