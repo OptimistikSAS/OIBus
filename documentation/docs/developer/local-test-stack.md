@@ -79,40 +79,47 @@ OIBus running outside Docker (i.e. `npm start` in the `backend/` directory) can 
 
 ### OPC UA Server — `opcua-server` {#opc-ua-server--opcua-server}
 
-| Property   | Value                                                                                                     |
-| ---------- | --------------------------------------------------------------------------------------------------------- |
-| **Image**  | [`mcr.microsoft.com/iotedge/opc-plc`](https://mcr.microsoft.com/en-us/artifact/mar/iotedge/opc-plc/about) |
-| **Port**   | `50000` (OPC UA TCP)                                                                                      |
-| **Config** | `docker/opcua/nodes_config.json`                                                                          |
+| Property    | Value                                                               |
+| ----------- | ------------------------------------------------------------------- |
+| **Image**   | `python:3.14-slim` running `docker/opcua/opcua_server.py` (asyncua) |
+| **Port**    | `50000` (OPC UA TCP)                                                |
+| **Config**  | `docker/opcua/nodes_config.json`                                    |
+| **History** | SQLite, in the `opcua-history` Docker volume                        |
 
-Microsoft's [OPC PLC simulator](https://github.com/Azure-Samples/iot-edge-opc-plc). It exposes a
-standard OPC UA server with custom nodes defined in `nodes_config.json` as well as a set of built-in
-nodes (boiler simulation, fast/slow changing variables, etc.).
+A small OPC UA server built on [asyncua](https://github.com/FreeOpcUa/opcua-asyncio), exposing the nodes
+defined in `nodes_config.json` under the `OIBus` folder of the Objects root. Every node has a Description,
+a simulated value and history; analog nodes are typed `AnalogItemType` and carry the `EngineeringUnits`
+and `EURange` properties, so OIBus's Explore and Configuration Workflows can read their unit and range.
 
-**Custom nodes** (folder `OIBus`, all with `Historizing: true`):
+**Nodes** (folder `OIBus`):
 
-| Node ID | Description       | Data type | Simulation  | Parameters                          |
-| ------- | ----------------- | --------- | ----------- | ----------------------------------- |
-| `1023`  | Temperature (°C)  | `Double`  | Random Walk | 18 – 28 °C, step 0.5, every 2 s     |
-| `1024`  | Pressure (hPa)    | `Double`  | Sine Wave   | 1013.25 ± 10 hPa, period 10 s       |
-| `1025`  | Flow rate (L/min) | `Double`  | Random Walk | 40 – 60 L/min, step 1, every 3 s    |
-| `1026`  | Humidity (%)      | `Double`  | Sine Wave   | 65 ± 15 %, period 15 s              |
-| `1027`  | RPM               | `Int32`   | Random Walk | 1 200 – 1 800, step 50, every 2.5 s |
-| `1028`  | Pump status       | `Boolean` | Square Wave | period 20 s                         |
-| `1029`  | Voltage (V)       | `Double`  | Random Walk | 210 – 230 V, step 0.5, every 2 s    |
-| `1030`  | Current (A)       | `Double`  | Sine Wave   | 15.2 ± 2 A, period 12 s             |
+| Node ID | Name            | Data type | Unit    | EURange (min – max) | Simulation  | Parameters                          |
+| ------- | --------------- | --------- | ------- | ------------------- | ----------- | ----------------------------------- |
+| `1023`  | `Temperature`   | `Double`  | `°C`    | 0 – 50              | Random Walk | 18 – 28 °C, step 0.5, every 2 s     |
+| `1024`  | `Pressure`      | `Double`  | `hPa`   | 950 – 1050          | Sine Wave   | 1013.25 ± 10 hPa, period 10 s       |
+| `1025`  | `FlowRate`      | `Double`  | `L/min` | 0 – 100             | Random Walk | 40 – 60 L/min, step 1, every 3 s    |
+| `1026`  | `Humidity`      | `Double`  | `%`     | 0 – 100             | Sine Wave   | 65 ± 15 %, period 15 s              |
+| `1027`  | `RotationSpeed` | `Int32`   | `rpm`   | 0 – 3000            | Random Walk | 1 200 – 1 800, step 50, every 2.5 s |
+| `1028`  | `PumpStatus`    | `Boolean` | —       | —                   | Square Wave | period 20 s                         |
+| `1029`  | `Voltage`       | `Double`  | `V`     | 200 – 240           | Random Walk | 210 – 230 V, step 0.5, every 2 s    |
+| `1030`  | `Current`       | `Double`  | `A`     | 0 – 32              | Sine Wave   | 15.2 ± 2 A, period 12 s             |
 
 Node IDs follow the OPC UA namespace `ns=3;i=<NodeId>`. The OPC UA address of temperature, for
-example, is `ns=3;i=1023`.
+example, is `ns=3;i=1023`. To add a node, append it to `nodes_config.json` (`EngineeringUnits` takes a
+[UNECE code](https://reference.opcfoundation.org/Core/Part8/v105/docs/5.6.3), a display name and a
+description; `EngineeringUnits` and `EURange` are both optional) and recreate the container.
 
-**Historian support:** `Historizing: true` enables OPC UA Historical Data Access (HA) on every custom
-node. The server answers `HistoryRead` requests, making it suitable to test OIBus history-query mode.
+**Historian support:** every node is historized and answers raw `HistoryRead` requests, making the
+server suitable to test OIBus history-query mode. History is persisted in the `opcua-history` volume, so
+it survives restarts, and is capped per node:
 
-:::caution In-memory history only
-History is stored in RAM — it is not persisted to disk. All historical data is lost when the container
-restarts. Scenarios that require catch-up after a long gap (days/weeks) cannot be reproduced with this
-simulator.
-:::
+| Variable                        | Default  | Effect                                              |
+| ------------------------------- | -------- | --------------------------------------------------- |
+| `OPCUA_HISTORY_MAX_VALUES`      | `100000` | Max values kept per node — the oldest are dropped   |
+| `OPCUA_HISTORY_RETENTION_HOURS` | `168`    | Values older than this are dropped too (`0`: never) |
+
+Whichever limit is reached first applies. Run `docker volume rm oibus_opcua-history` (container
+stopped) to start again from an empty history.
 
 **Authentication:** anonymous access is disabled. Use the credentials configured via the environment
 variables `OPCUA_DEFAULT_PASSWORD` (default `pass`) and `OPCUA_ADMIN_PASSWORD` (default `pass`), with
@@ -120,14 +127,14 @@ the usernames `oibus` and `admin` respectively (set in `docker-compose.yml`).
 
 **Connecting from OIBus:** create a South OPC UA connector with the following settings:
 
-| Setting             | Value                                 |
-| ------------------- | ------------------------------------- |
-| **URL**             | `opc.tcp://localhost:50000`           |
-| **Security mode**   | `none`                                |
-| **Security policy** | `none`                                |
-| **Authentication**  | `basic`                               |
-| **Username**        | `oibus`                               |
-| **Password**        | `pass` (or `$OPCUA_DEFAULT_PASSWORD`) |
+| Setting             | Value                                   |
+| ------------------- | --------------------------------------- |
+| **URL**             | `opc.tcp://localhost:50000`             |
+| **Security mode**   | `none` (or `sign` / `sign-and-encrypt`) |
+| **Security policy** | `none` (or `basic256-sha256`, …)        |
+| **Authentication**  | `basic`                                 |
+| **Username**        | `oibus`                                 |
+| **Password**        | `pass` (or `$OPCUA_DEFAULT_PASSWORD`)   |
 
 <div style={{ display: 'flex', justifyContent: 'center' }}>
   <DownloadButton link="/files/opcua-item-list.csv">Download item list (CSV)</DownloadButton>

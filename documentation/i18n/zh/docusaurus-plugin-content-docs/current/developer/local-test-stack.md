@@ -78,40 +78,44 @@ Docker 外部运行的 OIBus（即在 `backend/` 目录下执行 `npm start`）�
 
 ### OPC UA 服务器 — `opcua-server` {#opc-ua-server--opcua-server}
 
-| 属性       | 值                                                                                                          |
-| ---------- | --------------------------------------------------------------------------------------------------------- |
-| **镜像**   | [`mcr.microsoft.com/iotedge/opc-plc`](https://mcr.microsoft.com/en-us/artifact/mar/iotedge/opc-plc/about) |
-| **端口**   | `50000`（OPC UA TCP）                                                                                      |
-| **配置**   | `docker/opcua/nodes_config.json`                                                                          |
+| 属性         | 值                                                                  |
+| ------------ | ------------------------------------------------------------------- |
+| **镜像**     | 运行 `docker/opcua/opcua_server.py`（asyncua）的 `python:3.14-slim` |
+| **端口**     | `50000`（OPC UA TCP）                                               |
+| **配置**     | `docker/opcua/nodes_config.json`                                    |
+| **历史数据** | SQLite，保存在 Docker 卷 `opcua-history` 中                         |
 
-微软的 [OPC PLC 模拟器](https://github.com/Azure-Samples/iot-edge-opc-plc)。它暴露了一个
-标准的 OPC UA 服务器，其中包含在 `nodes_config.json` 中定义的自定义节点，以及一组
-内置节点（锅炉模拟、快/慢变化变量等）。
+一个基于 [asyncua](https://github.com/FreeOpcUa/opcua-asyncio) 的小型 OPC UA 服务器，在 Objects 根目录的
+`OIBus` 文件夹下暴露 `nodes_config.json` 中定义的节点。每个节点都有描述、模拟值和历史数据；模拟量节点的类型为
+`AnalogItemType`，并带有 `EngineeringUnits` 和 `EURange` 属性，OIBus 的浏览（Explore）和配置工作流可以读取其单位和范围。
 
-**自定义节点**（位于 `OIBus` 文件夹中，全部设置了 `Historizing: true`）：
+**节点**（文件夹 `OIBus`）：
 
-| 节点 ID | 描述           | 数据类型 | 模拟方式    | 参数                                   |
-| ------- | -------------- | -------- | ----------- | --------------------------------------- |
-| `1023`  | 温度（°C）     | `Double` | 随机游走    | 18 – 28 °C，步进 0.5，每 2 秒          |
-| `1024`  | 压力（hPa）    | `Double` | 正弦波      | 1013.25 ± 10 hPa，周期 10 秒            |
-| `1025`  | 流量（L/min）  | `Double` | 随机游走    | 40 – 60 L/min，步进 1，每 3 秒          |
-| `1026`  | 湿度（%）      | `Double` | 正弦波      | 65 ± 15 %，周期 15 秒                   |
-| `1027`  | 转速（RPM）    | `Int32`  | 随机游走    | 1 200 – 1 800，步进 50，每 2.5 秒       |
-| `1028`  | 泵状态         | `Boolean`| 方波        | 周期 20 秒                              |
-| `1029`  | 电压（V）      | `Double` | 随机游走    | 210 – 230 V，步进 0.5，每 2 秒          |
-| `1030`  | 电流（A）      | `Double` | 正弦波      | 15.2 ± 2 A，周期 12 秒                  |
+| 节点 ID | 名称            | 数据类型  | 单位    | EURange（最小 – 最大） | 模拟     | 参数                              |
+| ------- | --------------- | --------- | ------- | ---------------------- | -------- | --------------------------------- |
+| `1023`  | `Temperature`   | `Double`  | `°C`    | 0 – 50                 | 随机游走 | 18 – 28 °C，步长 0.5，每 2 秒     |
+| `1024`  | `Pressure`      | `Double`  | `hPa`   | 950 – 1050             | 正弦波   | 1013.25 ± 10 hPa，周期 10 秒      |
+| `1025`  | `FlowRate`      | `Double`  | `L/min` | 0 – 100                | 随机游走 | 40 – 60 L/min，步长 1，每 3 秒    |
+| `1026`  | `Humidity`      | `Double`  | `%`     | 0 – 100                | 正弦波   | 65 ± 15 %，周期 15 秒             |
+| `1027`  | `RotationSpeed` | `Int32`   | `rpm`   | 0 – 3000               | 随机游走 | 1 200 – 1 800，步长 50，每 2.5 秒 |
+| `1028`  | `PumpStatus`    | `Boolean` | —       | —                      | 方波     | 周期 20 秒                        |
+| `1029`  | `Voltage`       | `Double`  | `V`     | 200 – 240              | 随机游走 | 210 – 230 V，步长 0.5，每 2 秒    |
+| `1030`  | `Current`       | `Double`  | `A`     | 0 – 32                 | 正弦波   | 15.2 ± 2 A，周期 12 秒            |
 
-节点 ID 遵循 OPC UA 命名空间 `ns=3;i=<NodeId>`。例如，温度的 OPC UA 地址
-是 `ns=3;i=1023`。
+节点 ID 遵循 OPC UA 命名空间 `ns=3;i=<NodeId>`。例如，温度的 OPC UA 地址为 `ns=3;i=1023`。
+要添加节点，请将其加入 `nodes_config.json`（`EngineeringUnits` 需要一个
+[UNECE 代码](https://reference.opcfoundation.org/Core/Part8/v105/docs/5.6.3)、显示名称和描述；
+`EngineeringUnits` 和 `EURange` 均为可选），然后重新创建容器。
 
-**历史归档支持：** `Historizing: true` 会在每个自定义节点上启用 OPC UA 历史数据访问
-（HA）功能。该服务器会响应 `HistoryRead` 请求，因此适合用来测试 OIBus 的历史查询
-模式。
+**历史数据支持：** 每个节点都会记录历史并响应原始 `HistoryRead` 请求，适合测试 OIBus 的历史查询模式。
+历史数据保存在 `opcua-history` 卷中，因此重启后仍然保留，并按节点设有上限：
 
-:::caution In-memory history only
-历史数据存储在内存中——不会持久化到磁盘。容器重启时，所有历史数据都会丢失。
-需要在长时间间隔（数天/数周）之后进行数据补齐的场景，无法使用该模拟器复现。
-:::
+| 变量                            | 默认值   | 作用                                       |
+| ------------------------------- | -------- | ------------------------------------------ |
+| `OPCUA_HISTORY_MAX_VALUES`      | `100000` | 每个节点保留的最大值数量——最旧的值会被删除 |
+| `OPCUA_HISTORY_RETENTION_HOURS` | `168`    | 早于该时长的值也会被删除（`0`：从不）      |
+
+以先达到的限制为准。停止容器后运行 `docker volume rm oibus_opcua-history` 即可从空的历史数据重新开始。
 
 **身份验证：** 匿名访问已被禁用。请使用通过环境变量配置的凭据
 `OPCUA_DEFAULT_PASSWORD`（默认为 `pass`）和 `OPCUA_ADMIN_PASSWORD`（默认为 `pass`），
@@ -119,14 +123,14 @@ Docker 外部运行的 OIBus（即在 `backend/` 目录下执行 `npm start`）�
 
 **从 OIBus 连接：** 创建一个 South OPC UA 连接器，使用以下设置：
 
-| 设置            | 值                                     |
-| --------------- | -------------------------------------- |
-| **URL**         | `opc.tcp://localhost:50000`            |
-| **安全模式**    | `none`                                 |
-| **安全策略**    | `none`                                 |
-| **身份验证**    | `basic`                                |
-| **用户名**      | `oibus`                                |
-| **密码**        | `pass`（或 `$OPCUA_DEFAULT_PASSWORD`） |
+| 设置         | 值                                       |
+| ------------ | ---------------------------------------- |
+| **URL**      | `opc.tcp://localhost:50000`              |
+| **安全模式** | `none`（或 `sign` / `sign-and-encrypt`） |
+| **安全策略** | `none`（或 `basic256-sha256` 等）        |
+| **身份验证** | `basic`                                  |
+| **用户名**   | `oibus`                                  |
+| **密码**     | `pass`（或 `$OPCUA_DEFAULT_PASSWORD`）   |
 
 <div style={{ display: 'flex', justifyContent: 'center' }}>
   <DownloadButton link="/files/opcua-item-list.csv">Download item list (CSV)</DownloadButton>

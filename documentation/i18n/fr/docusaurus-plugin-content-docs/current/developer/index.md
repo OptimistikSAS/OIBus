@@ -427,7 +427,7 @@ travail accessible :
 
 | Conteneur                    | Profil      | Objectif                                                                            |
 | ----------------------------- | ----------- | ------------------------------------------------------------------------------------ |
-| `opcua-server`                | _(par défaut)_ | `opc-plc` de Microsoft — serveur OPC UA avec 8 nœuds configurables et prise en charge de l'historien |
+| `opcua-server`               | _(par défaut)_ | serveur OPC UA asyncua — 8 nœuds simulés avec unités, plages et historique persistant  |
 | `modbus-server`                | _(par défaut)_ | `oitc/modbus-server` — serveur Modbus TCP                                            |
 | `simulator`                   | _(par défaut)_ | Script Python écrivant des valeurs sinusoïdales sur Modbus et MQTT                   |
 | `mqtt-broker`                  | _(par défaut)_ | Broker Eclipse Mosquitto (authentifié, WebSocket sur le port 9001)                   |

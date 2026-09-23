@@ -1,23 +1,32 @@
 services:
   opcua-server:
-    image: mcr.microsoft.com/iotedge/opc-plc:latest
-    container_name: oibus_opcua-plc
+    # Python asyncua server (docker/opcua/opcua_server.py) rather than opc-plc, whose nodes file supports
+    # neither simulation, history, nor EngineeringUnits/EURange properties.
+    image: python:3.14-slim
+    container_name: oibus_opcua-server
     hostname: opcua-server
     ports:
       - "50000:50000"
     volumes:
+      - ./docker/opcua/opcua_server.py:/app/opcua_server.py
       - ./docker/opcua/nodes_config.json:/app/nodes_config.json
       - ./docker/opcua/pki:/app/pki
-    command:
-      - --nodesfile=/app/nodes_config.json
-      - --autoaccept
-      - --disableanonymousauth
-      - --adminuser=admin
-      - --adminpassword=${OPCUA_ADMIN_PASSWORD:-pass}
-      - --defaultuser=oibus
-      - --defaultpassword=${OPCUA_DEFAULT_PASSWORD:-pass}
+      - opcua-history:/data
+    working_dir: /app
+    command: >
+      sh -c "pip install --quiet --root-user-action=ignore 'asyncua==2.0.1'
+      && python -u opcua_server.py"
     environment:
-      - OPCUA_SERVER_PORT=50000
+      OPCUA_PORT: 50000
+      OPCUA_HOSTNAME: opcua-server
+      OPCUA_ADMIN_USER: admin
+      OPCUA_ADMIN_PASSWORD: ${OPCUA_ADMIN_PASSWORD:-pass}
+      OPCUA_DEFAULT_USER: oibus
+      OPCUA_DEFAULT_PASSWORD: ${OPCUA_DEFAULT_PASSWORD:-pass}
+      # History size limit: at most this many values kept per node (oldest dropped first), and none
+      # older than the retention - whichever limit is hit first.
+      OPCUA_HISTORY_MAX_VALUES: ${OPCUA_HISTORY_MAX_VALUES:-100000}
+      OPCUA_HISTORY_RETENTION_HOURS: ${OPCUA_HISTORY_RETENTION_HOURS:-168}
     networks:
       - oibus-network
     restart: unless-stopped
@@ -234,6 +243,9 @@ services:
     networks:
       - oibus-network
     profiles: [ "simulator" ]
+
+volumes:
+  opcua-history:
 
 networks:
   oibus-network:
