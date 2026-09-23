@@ -147,6 +147,28 @@ describe('Configuration Workflow Service', () => {
       assert.strictEqual(engine.logger.warn.mock.calls.length, 1);
     });
 
+    it('should throw when a local workflow has no identity key field', () => {
+      assert.throws(
+        () => service.create(testData.south.list[0].id, { ...localCommand, identityKeyFields: [] }, 'userTest'),
+        new OIBusValidationError('A configuration workflow creating/updating items requires at least one identity key field')
+      );
+    });
+
+    it('should store no identity key field for a remote workflow, whatever it was sent with', () => {
+      service.create(testData.south.list[0].id, { ...localCommand, itemFieldMapping: null, pushToOIAnalytics: true }, 'userTest');
+      const createCall = configurationWorkflowRepository.create.mock.calls[0];
+      assert.deepStrictEqual((createCall.arguments[0] as ConfigurationWorkflowEntity).identityKeyFields, []);
+    });
+
+    it('should allow a remote workflow without any identity key field', () => {
+      service.create(
+        testData.south.list[0].id,
+        { ...localCommand, identityKeyFields: [], itemFieldMapping: null, pushToOIAnalytics: true },
+        'userTest'
+      );
+      assert.strictEqual(configurationWorkflowRepository.create.mock.calls.length, 1);
+    });
+
     it('should allow pushToOIAnalytics when OIBus is registered, without logging a warning', () => {
       oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => ({ status: 'REGISTERED' }) as never);
       service.create(testData.south.list[0].id, { ...localCommand, itemFieldMapping: null, pushToOIAnalytics: true }, 'userTest');
@@ -227,6 +249,24 @@ describe('Configuration Workflow Service', () => {
         () => service.update(testData.south.list[0].id, existingWorkflow.id, { ...localCommand, pushToOIAnalytics: true }, 'updateUser'),
         new OIBusValidationError('A configuration workflow cannot both create/update items and push to OIAnalytics')
       );
+    });
+
+    it('should throw when updating a local workflow to have no identity key field', () => {
+      assert.throws(
+        () => service.update(testData.south.list[0].id, existingWorkflow.id, { ...localCommand, identityKeyFields: [] }, 'updateUser'),
+        new OIBusValidationError('A configuration workflow creating/updating items requires at least one identity key field')
+      );
+    });
+
+    it('should clear identity key fields when switching a workflow to remote', () => {
+      service.update(
+        testData.south.list[0].id,
+        existingWorkflow.id,
+        { ...localCommand, itemFieldMapping: null, pushToOIAnalytics: true },
+        'updateUser'
+      );
+      const updateCall = configurationWorkflowRepository.update.mock.calls[0];
+      assert.deepStrictEqual((updateCall.arguments[1] as { identityKeyFields: Array<string> }).identityKeyFields, []);
     });
 
     it('should update and return the refreshed workflow', () => {
