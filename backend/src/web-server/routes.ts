@@ -911,6 +911,7 @@ const models: TsoaRoute.Models = {
             "broadcastAddress": {"dataType":"string","required":true},
             "retryInterval": {"dataType":"double","required":true},
             "maxParallelRun": {"dataType":"double","required":true},
+            "discoveryTargetAddress": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "covDefaultLifetime": {"dataType":"double","required":true},
             "covRenewalMargin": {"dataType":"double","required":true},
             "maxObjectsPerRequest": {"dataType":"double","required":true},
