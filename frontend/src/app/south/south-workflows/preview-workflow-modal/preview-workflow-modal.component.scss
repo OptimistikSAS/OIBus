@@ -1,0 +1,44 @@
+.preview-table-container {
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.preview-table {
+  // oib-table's fixed layout (and fixed-width last column) suits a known set of columns - these are
+  // whatever the discovered records carry, so let each size to its content and scroll horizontally.
+  table-layout: auto;
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    white-space: nowrap;
+    background-color: var(--bs-body-bg);
+
+    &:last-child {
+      width: auto;
+    }
+  }
+
+  td {
+    max-width: 24rem;
+    overflow-wrap: anywhere;
+  }
+
+  // oib-table right-aligns the last cell for its action buttons - this table has none, so its last
+  // column is plain data, aligned like every other one.
+  tbody tr td:last-child {
+    text-align: left;
+    padding-right: 0.25rem;
+  }
+
+  .preview-key {
+    font-family: var(--bs-font-monospace);
+    font-size: 0.8rem;
+  }
+
+  .preview-changed-cell {
+    background-color: var(--bs-warning-bg-subtle);
+    cursor: help;
+  }
+}
