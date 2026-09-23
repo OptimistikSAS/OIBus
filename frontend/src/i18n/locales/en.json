@@ -1769,6 +1769,7 @@
             "port": "Port",
             "apdu-timeout": "APDU timeout",
             "broadcast-address": "Broadcast address",
+            "discovery-target-address": "Discovery target address",
             "retry-interval": "Retry interval",
             "max-parallel-run": "Max parallel queries",
             "cov-default-lifetime": "COV subscription lifetime",

@@ -3237,6 +3237,10 @@
 						"type": "number",
 						"format": "double"
 					},
+					"discoveryTargetAddress": {
+						"type": "string",
+						"nullable": true
+					},
 					"covDefaultLifetime": {
 						"type": "number",
 						"format": "double"
@@ -3268,6 +3272,7 @@
 					"broadcastAddress",
 					"retryInterval",
 					"maxParallelRun",
+					"discoveryTargetAddress",
 					"covDefaultLifetime",
 					"covRenewalMargin",
 					"maxObjectsPerRequest",
