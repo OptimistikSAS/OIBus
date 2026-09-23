@@ -1,12 +1,10 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { JsonPipe } from '@angular/common';
 import csv from 'papaparse';
 import { DateTime } from 'luxon';
 import { WorkflowPreviewEntryDTO, WorkflowPreviewResultDTO } from '../../../../../../backend/shared/model/configuration-workflow.model';
 import { WorkflowRunDetailDTO } from '../../../../../../backend/shared/model/workflow-run.model';
-import { OIBusRecord } from '../../../../../../backend/shared/model/engine.model';
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { NotificationService } from '../../../shared/notification.service';
 import { extractErrorMessage } from '../../../shared/extract-error-message';
@@ -31,12 +29,24 @@ export type PreviewModalContext = 'preview' | 'run-payload';
  *  for display, matching manifest-attributes-array.component.ts's own choice of page size. */
 const PAGE_SIZE = 20;
 
+// Mirrors the backend's IDENTITY_KEY_FIELD_SEPARATOR (configuration-workflow.utils.ts).
+const IDENTITY_KEY_FIELD_SEPARATOR = String.fromCharCode(1);
+
+/** One local-workflow entry, with its payload (the fresh record, or the previous snapshot for a
+ *  `missing` entry) already flattened into the table's columns. */
+export interface PreviewEntryRow {
+  entry: WorkflowPreviewEntryDTO;
+  values: Record<string, string>;
+  /** The previous run's snapshot, flattened - only for a `changed` entry, to highlight what changed. */
+  previousValues: Record<string, string> | null;
+}
+
 @Component({
   selector: 'oib-preview-workflow-modal',
   templateUrl: './preview-workflow-modal.component.html',
   styleUrl: './preview-workflow-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [TranslateDirective, TranslatePipe, JsonPipe, LoadingSpinnerComponent, PaginationComponent]
+  imports: [TranslateDirective, TranslatePipe, LoadingSpinnerComponent, PaginationComponent]
 })
 export default class PreviewWorkflowModalComponent {
   private modal = inject(NgbActiveModal);
@@ -55,8 +65,14 @@ export default class PreviewWorkflowModalComponent {
   // than on result.entries/records directly) is what picks which table (or the empty state) to show.
   // Built once, when `result` is set - never rebuilt afterward, since `result` itself never changes
   // again for the lifetime of one modal open (see prepareForPreview/prepareForRunPayload).
-  paginatedEntries: ArrayPage<WorkflowPreviewEntryDTO> | null = null;
-  paginatedRecords: ArrayPage<OIBusRecord> | null = null;
+  paginatedEntries: ArrayPage<PreviewEntryRow> | null = null;
+  paginatedRecords: ArrayPage<Record<string, string>> | null = null;
+  /** Union of every row's flattened keys, in first-seen order - rows can have different shapes (e.g.
+   *  different node types carry different metadata fields), so every row lines up under one header.
+   *  Shared by the table and the CSV export, so both always show the same columns. */
+  columns: Array<string> = [];
+  private entryRows: Array<PreviewEntryRow> = [];
+  private recordRows: Array<Record<string, string>> = [];
 
   /** A live dry-run preview: discover + classify against the previous run, nothing persisted. */
   prepareForPreview(southId: string, workflowId: string, workflowName: string): void {
@@ -90,9 +106,27 @@ export default class PreviewWorkflowModalComponent {
 
   private applyResult(result: WorkflowPreviewResultDTO | WorkflowRunDetailDTO): void {
     this.result = result;
-    this.paginatedEntries = result.entries.length > 0 ? new ArrayPage(result.entries, PAGE_SIZE) : null;
-    this.paginatedRecords = result.records.length > 0 ? new ArrayPage(result.records, PAGE_SIZE) : null;
+    this.entryRows = result.entries.map(entry => ({
+      entry,
+      values: flattenPlainObject(entry.record ?? entry.previousMetadata ?? {}),
+      previousValues: entry.status === 'changed' && entry.previousMetadata ? flattenPlainObject(entry.previousMetadata) : null
+    }));
+    this.recordRows = result.records.map(record => flattenPlainObject(record));
+    this.columns = collectColumns(this.entryRows.length > 0 ? this.entryRows.map(row => row.values) : this.recordRows);
+    this.paginatedEntries = this.entryRows.length > 0 ? new ArrayPage(this.entryRows, PAGE_SIZE) : null;
+    this.paginatedRecords = this.recordRows.length > 0 ? new ArrayPage(this.recordRows, PAGE_SIZE) : null;
     this.loading.set(false);
+  }
+
+  /** The identity key as shown in the table - its segments are joined by an invisible control character
+   *  (see the backend's computeIdentityKey), replaced here by a readable separator. */
+  displayKey(key: string): string {
+    return key.split(IDENTITY_KEY_FIELD_SEPARATOR).join(', ');
+  }
+
+  /** True when a `changed` entry's cell differs from the previous run's value for that same column. */
+  isChangedCell(row: PreviewEntryRow, column: string): boolean {
+    return !!row.previousValues && (row.previousValues[column] ?? '') !== (row.values[column] ?? '');
   }
 
   /** The full created/updated/disabled/pushed breakdown behind a run's summary - only available (and
@@ -118,26 +152,13 @@ export default class PreviewWorkflowModalComponent {
     if (!this.result) {
       return;
     }
-    const rows: Array<Record<string, string>> =
-      this.result.entries.length > 0
-        ? this.result.entries.map(entry => ({
-            key: entry.key,
-            status: entry.status,
-            ...flattenPlainObject(entry.record ?? entry.previousMetadata ?? {})
-          }))
-        : this.result.records.map(record => flattenPlainObject(record));
+    const isEntries = this.entryRows.length > 0;
+    const rows: Array<Record<string, string>> = isEntries
+      ? this.entryRows.map(row => ({ key: row.entry.key, status: row.entry.status, ...row.values }))
+      : this.recordRows;
+    const columns = isEntries ? ['key', 'status', ...this.columns.filter(column => column !== 'key' && column !== 'status')] : this.columns;
 
-    // Rows can have different shapes (e.g. different node types carry different metadata fields) - the
-    // column list passed to unparse() is the union across every row, matching exportArrayElements' own
-    // approach, so every row lines up under the same header instead of only the first row's own keys.
-    const columns = new Set<string>();
-    for (const row of rows) {
-      for (const column of Object.keys(row)) {
-        columns.add(column);
-      }
-    }
-
-    const content = csv.unparse(rows, { columns: Array.from(columns), delimiter: ',' });
+    const content = csv.unparse(rows, { columns, delimiter: ',' });
     const blob = new Blob([content], { type: 'text/csv' });
     const namePrefix = this.context === 'run-payload' ? 'run-payload' : 'preview';
     const workflowSlug = this.workflowName.replace(/[^a-zA-Z0-9-_]+/g, '_');
@@ -148,4 +169,14 @@ export default class PreviewWorkflowModalComponent {
   close() {
     this.modal.close();
   }
+}
+
+function collectColumns(rows: Array<Record<string, string>>): Array<string> {
+  const columns = new Set<string>();
+  for (const row of rows) {
+    for (const column of Object.keys(row)) {
+      columns.add(column);
+    }
+  }
+  return Array.from(columns);
 }
