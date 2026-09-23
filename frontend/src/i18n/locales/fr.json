@@ -922,6 +922,7 @@
             "port": "Port",
             "apdu-timeout": "Délai d'attente APDU",
             "broadcast-address": "Adresse de diffusion",
+            "discovery-target-address": "Adresse cible de découverte",
             "retry-interval": "Intervalle de nouvelle tentative",
             "max-parallel-run": "Requêtes parallèles max",
             "cov-default-lifetime": "Durée de l'abonnement COV",

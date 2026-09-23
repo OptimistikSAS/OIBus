@@ -922,6 +922,7 @@
             "port": "端口",
             "apdu-timeout": "APDU 超时",
             "broadcast-address": "广播地址",
+            "discovery-target-address": "发现目标地址",
             "retry-interval": "重试间隔",
             "max-parallel-run": "最大并行查询数",
             "cov-default-lifetime": "COV 订阅有效期",
