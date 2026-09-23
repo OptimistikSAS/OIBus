@@ -762,10 +762,6 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       discoveryScope = {};
     }
 
-    if (this.identityKeyFields.length === 0) {
-      this.formError = 'south.workflows.identity-key-fields-none';
-      return;
-    }
     // Deliberately not blocked here when pushToOIAnalytics is picked while OIBus isn't registered -
     // mirrors ConfigurationWorkflowService's own server-side behavior, which likewise now only warns
     // (see its checkMode()'s own comment). The "mode-remote-not-registered" alert shown next to the
@@ -773,6 +769,12 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
     let itemFieldMapping: Record<string, string> | null = null;
     if (!pushToOIAnalytics) {
+      // Identity keys only drive the local diff against the previous run - a remote workflow has none.
+      if (this.identityKeyFields.length === 0) {
+        this.formError = 'south.workflows.identity-key-fields-none';
+        return;
+      }
+
       // A field other fields depend on for their own visibility, plus the schedule/group fields, must be
       // knowable while editing (or reference something real) rather than resolved per-record at run time -
       // a select-type one of these can't even reach this state through the UI (its {{ }} option is
@@ -811,7 +813,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     const command: ConfigurationWorkflowCommandDTO = {
       name: formValue.name,
       discoveryScope,
-      identityKeyFields: this.identityKeyFields,
+      identityKeyFields: pushToOIAnalytics ? [] : this.identityKeyFields,
       eligibilityFilter: this.eligibilityFilter,
       itemFieldMapping,
       pushToOIAnalytics,
