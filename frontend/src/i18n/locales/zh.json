@@ -2533,7 +2533,7 @@
       "osisoft-pi": "OSIsoft PI System™",
       "postgresql": "PostgreSQL",
       "rest": "REST API",
-      "s7": "Siemens S7",
+      "s7": "Siemens® S7",
       "sftp": "SFTP",
       "sqlite": "SQLite™"
     },
@@ -2557,7 +2557,7 @@
       "osisoft-pi": "与 OIBus Agent 建立连接以访问 PI System™ 数据",
       "postgresql": "查询 PostgreSQL 数据库",
       "rest": "从 REST API 端点采集数据",
-      "s7": "通过 ISO-on-TCP 访问 Siemens S7 PLC 数据",
+      "s7": "通过 ISO-on-TCP 访问 Siemens® S7 PLC 数据",
       "sftp": "从远程 SFTP 服务器读取文件",
       "sqlite": "查询 SQLite™ 数据库"
     }
