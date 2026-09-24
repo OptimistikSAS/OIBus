@@ -379,6 +379,7 @@ export interface TransformerJsonToOianalyticsSettings {
   pointId: string;
   value: string;
   timestamp: string;
+  referenceProcess: string | null;
   datetimeSettings: TransformerJsonToOianalyticsSettingsDatetimeSettings | null;
 }
 
@@ -440,6 +441,7 @@ export interface TransformerTimeValuesToMqttSettings {
 
 export interface TransformerTimeValuesToOianalyticsSettings {
   precision: TransformerTimeValuesToOianalyticsSettingsPrecision;
+  referenceProcess: string | null;
 }
 
 export interface TransformerTimeValuesToOpcuaSettings {
