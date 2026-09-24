@@ -251,7 +251,8 @@ Mapping: `plant/valve1 → 0x0010 (coil)`, `plant/speed → 0x0020 (register)`
 
 Prepares readings for the OIAnalytics North connector. Timestamps can be truncated to a chosen precision to reduce
 storage footprint. Only the `pointId`, `timestamp`, and `data.value` fields are forwarded — extra quality fields
-are stripped.
+are stripped. To save bandwidth, the readings are written in the OIAnalytics **compact format**: three parallel arrays
+of the same size (`timestamps`, `values`, `references`), the i-th reading being made of the i-th element of each array.
 
 ##### Settings {#settings-3}
 
@@ -270,7 +271,7 @@ are stripped.
 **Output** — milliseconds are zeroed, `quality` is stripped
 
 ```json
-[{ "pointId": "tag/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } }]
+{ "timestamps": ["2024-01-15T10:00:00.000Z"], "values": ["23.5"], "references": ["tag/temp1"] }
 ```
 
 ---
@@ -501,8 +502,9 @@ one row per nested match, so a single message holding several readings splits in
 
 #### OIAnalytics (from JSON) {#oianalytics-from-json}
 
-Extracts point ID, value, and timestamp from an arbitrary JSON structure via JSONPath expressions and produces a
-standard OIBus time-values array — the same shape produced by PLC/historian South connectors. A **row iterator
+Extracts point ID, value, and timestamp from an arbitrary JSON structure via JSONPath expressions and produces
+time-values in the OIAnalytics compact format (`timestamps`, `values` and `references` parallel arrays) — the same
+output as the [OIAnalytics (select time precision)](#oianalytics-select-time-precision) transformer. A **row iterator
 path** identifies which part of the payload becomes one row (one time-value) per match; the point ID, value, and
 timestamp paths are then resolved relative to that row.
 
@@ -557,11 +559,11 @@ handles a single-metric message and a multi-metric message alike.
 **Output** — three rows: two from the first message, one from the second
 
 ```json
-[
-  { "pointId": "PLANT.UNIT1.TANK3.LEVEL", "timestamp": "2026-07-16T08:50:18.808Z", "data": { "value": 52.2936 } },
-  { "pointId": "PLANT.UNIT1.TANK3.TEMP", "timestamp": "2026-07-16T08:50:19.001Z", "data": { "value": 18.4 } },
-  { "pointId": "PLANT.UNIT2.PUMP1.SPEED", "timestamp": "2026-07-16T08:50:20.500Z", "data": { "value": 1450 } }
-]
+{
+  "timestamps": ["2026-07-16T08:50:18.808Z", "2026-07-16T08:50:19.001Z", "2026-07-16T08:50:20.500Z"],
+  "values": [52.2936, 18.4, 1450],
+  "references": ["PLANT.UNIT1.TANK3.LEVEL", "PLANT.UNIT1.TANK3.TEMP", "PLANT.UNIT2.PUMP1.SPEED"]
+}
 ```
 
 ---
