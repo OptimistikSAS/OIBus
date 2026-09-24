@@ -57,13 +57,11 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
 
     assert.deepStrictEqual(result, {
       output: Buffer.from(
-        JSON.stringify(
-          dataChunks.map(value => ({
-            pointId: value.pointId,
-            timestamp: value.timestamp,
-            data: { value: value.data.value }
-          }))
-        )
+        JSON.stringify({
+          timestamps: dataChunks.map(value => value.timestamp),
+          values: dataChunks.map(value => value.data.value),
+          references: dataChunks.map(value => value.pointId)
+        })
       ),
       metadata: {
         contentFile: 'randomId.json',
@@ -91,10 +89,11 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
     assert.deepStrictEqual(
       result.output,
       Buffer.from(
-        JSON.stringify([
-          { pointId: 'p1', timestamp: dataChunks[0].timestamp, data: { value: '1' } },
-          { pointId: 'p2', timestamp: dataChunks[1].timestamp, data: { value: '2' } }
-        ])
+        JSON.stringify({
+          timestamps: [dataChunks[0].timestamp, dataChunks[1].timestamp],
+          values: ['1', '2'],
+          references: ['p1', 'p2']
+        })
       )
     );
     assert.strictEqual(result.metadata.numberOfElement, 2);
@@ -111,9 +110,28 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
 
     assert.deepStrictEqual(
       result.output,
-      Buffer.from(JSON.stringify([{ pointId: 'p1', timestamp: dataChunks[0].timestamp, data: { value: '1' } }]))
+      Buffer.from(JSON.stringify({ timestamps: [dataChunks[0].timestamp], values: ['1'], references: ['p1'] }))
     );
     assert.strictEqual(result.metadata.numberOfElement, 1);
+  });
+
+  it('should truncate timestamps according to the precision in the compact output', async () => {
+    const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], { precision: 'min' });
+
+    const result = await transformer.transformInMemory(
+      [
+        { pointId: 'p1', timestamp: '2020-03-15T12:34:56.789Z', data: { value: 1 } },
+        { pointId: 'p2', timestamp: '2020-03-15T12:35:01.000Z', data: { value: 2 } }
+      ],
+      { source: 'test' },
+      null
+    );
+
+    assert.deepStrictEqual(JSON.parse(result.output.toString()), {
+      timestamps: ['2020-03-15T12:34:00.000Z', '2020-03-15T12:35:00.000Z'],
+      values: [1, 2],
+      references: ['p1', 'p2']
+    });
   });
 
   it('should properly format instant with precision', () => {

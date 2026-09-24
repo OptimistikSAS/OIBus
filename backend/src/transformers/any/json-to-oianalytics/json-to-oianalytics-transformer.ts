@@ -8,6 +8,7 @@ import { Instant } from '../../../model/types';
 import { DateTimeType } from '../../../../shared/model/types';
 import { TransformerJsonToOianalyticsSettings } from '../../../../shared/model/transformer-settings.model';
 import { resolveJsonPath, resolveJsonPathRows } from '../../json-path';
+import { toCompactTimeValues } from '../../../service/oia/compact-time-values';
 
 export default class JSONToOIAnalyticsTransformer extends OIBusTransformer {
   public static transformerName = 'json-to-oianalytics';
@@ -28,7 +29,8 @@ export default class JSONToOIAnalyticsTransformer extends OIBusTransformer {
   /**
    * In-memory fast path. The any-content payload reaching the North is already a serialised JSON
    * string, so tolerate both a parsed object and the raw string. Each row matched by
-   * `rowIteratorPath` is mapped to an OIAnalytics time-value `{ pointId, timestamp, data: { value } }`.
+   * `rowIteratorPath` is mapped to an OIAnalytics time-value, and the result is sent in the OIAnalytics compact format
+   * `{ timestamps, values, references }`.
    */
   override transformInMemory(
     data: unknown,
@@ -59,7 +61,7 @@ export default class JSONToOIAnalyticsTransformer extends OIBusTransformer {
       contentType: 'oianalytics'
     };
     return Promise.resolve({
-      output: Buffer.from(JSON.stringify(values)),
+      output: Buffer.from(JSON.stringify(toCompactTimeValues(values))),
       metadata
     });
   }

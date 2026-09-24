@@ -6,6 +6,7 @@ import { generateRandomId, streamToString } from '../../../service/utils';
 import { Instant } from '../../../model/types';
 import { DateTime } from 'luxon';
 import { TransformerTimeValuesToOianalyticsSettings } from '../../../../shared/model/transformer-settings.model';
+import { toCompactTimeValues } from '../../../service/oia/compact-time-values';
 
 export default class OIBusTimeValuesToOIAnalyticsTransformer extends OIBusTransformer {
   public static transformerName = 'time-values-to-oianalytics';
@@ -42,22 +43,15 @@ export default class OIBusTimeValuesToOIAnalyticsTransformer extends OIBusTransf
       ? (data as Array<OIBusTimeValue>)
       : (JSON.parse(String(data)) as Array<OIBusTimeValue>);
 
+    // Only the pointId, the (truncated) timestamp and the value are forwarded, in the OIAnalytics compact format
     const precision = this.options.precision;
-    const content = new Array<{ pointId: string; timestamp: Instant; data: { value: unknown } }>(values.length);
-    for (let i = 0; i < values.length; i++) {
-      const v = values[i];
-      content[i] = {
-        pointId: v.pointId,
-        timestamp: this.formatInstant(v.timestamp, precision),
-        data: { value: v.data.value }
-      };
-    }
+    const content = toCompactTimeValues(values, timestamp => this.formatInstant(timestamp, precision));
 
     const metadata: CacheMetadata = {
       contentFile: `${generateRandomId(10)}.json`,
       contentSize: 0, // It will be set outside the transformer, once the file is written
       createdAt: '', // It will be set outside the transformer, once the file is written
-      numberOfElement: content.length,
+      numberOfElement: values.length,
       contentType: 'oianalytics'
     };
     return Promise.resolve({
