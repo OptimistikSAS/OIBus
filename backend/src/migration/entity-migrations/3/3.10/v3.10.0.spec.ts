@@ -1813,4 +1813,106 @@ describe('Entity migration v3.10.0', () => {
       assert.deepStrictEqual(groupItemsRows, [{ group_id: 'group-1', item_id: 'item-1' }], 'group_items row is preserved');
     });
   });
+
+  describe('OIAnalytics transformers referenceProcess option', () => {
+    let db: Knex;
+
+    after(async () => {
+      await db?.destroy();
+    });
+
+    beforeEach(async () => {
+      await db?.destroy();
+      db = knex({ client: 'better-sqlite3', connection: { filename: ':memory:' }, useNullAsDefault: true });
+      await buildPreMigrationSchema(db, 'v3.10.0');
+
+      await db('scan_modes').insert({ id: 'sm1', name: 'sm1', description: '', cron: '* * * * * *' });
+      const cachingDefaults = {
+        caching_trigger_schedule: 'sm1',
+        caching_trigger_number_of_elements: 1000,
+        caching_trigger_number_of_files: 1,
+        caching_throttling_cache_max_size: 0,
+        caching_throttling_max_number_of_elements: 10_000,
+        caching_error_retry_interval: 5000,
+        caching_error_retry_count: 3,
+        caching_archive_enabled: false,
+        caching_archive_retention_duration: 0
+      };
+      await db('north_connectors').insert({
+        ...cachingDefaults,
+        id: 'north1',
+        name: 'North 1',
+        type: 'oianalytics',
+        enabled: true,
+        settings: '{}'
+      });
+      await db('history_queries').insert({
+        ...cachingDefaults,
+        id: 'hq1',
+        name: 'HQ 1',
+        start_time: NOW,
+        end_time: NOW,
+        south_type: 'opcua',
+        north_type: 'oianalytics',
+        south_settings: '{}',
+        north_settings: '{}'
+      });
+      await db('transformers').insert([
+        {
+          id: 'tv-to-oia',
+          type: 'standard',
+          function_name: 'time-values-to-oianalytics',
+          input_type: 'time-values',
+          output_type: 'oianalytics'
+        },
+        { id: 'json-to-oia', type: 'standard', function_name: 'json-to-oianalytics', input_type: 'any', output_type: 'oianalytics' },
+        { id: 'tv-to-csv', type: 'standard', function_name: 'time-values-to-csv', input_type: 'time-values', output_type: 'any' }
+      ]);
+    });
+
+    async function insertNorthTransformer(id: string, transformerId: string, options: string | null): Promise<void> {
+      await db('north_transformers').insert({ id, north_id: 'north1', transformer_id: transformerId, options, source_type: 'south' });
+    }
+
+    async function optionsOf(table: string, id: string): Promise<unknown> {
+      const row = await db(table).where('id', id).first();
+      return row.options === null ? null : JSON.parse(row.options);
+    }
+
+    it('adds referenceProcess: null to north and history query OIAnalytics transformers', async () => {
+      await insertNorthTransformer('nt-tv', 'tv-to-oia', JSON.stringify({ precision: 's' }));
+      await insertNorthTransformer('nt-json', 'json-to-oia', JSON.stringify({ rowIteratorPath: '$[*]', pointId: '$[*].id' }));
+      await insertNorthTransformer('nt-null', 'tv-to-oia', null);
+      await db('history_query_transformers').insert({
+        id: 'hqt-tv',
+        history_id: 'hq1',
+        transformer_id: 'tv-to-oia',
+        options: '{"precision":"ms"}'
+      });
+
+      await up(db);
+
+      assert.deepStrictEqual(await optionsOf('north_transformers', 'nt-tv'), { precision: 's', referenceProcess: null });
+      assert.deepStrictEqual(await optionsOf('north_transformers', 'nt-json'), {
+        rowIteratorPath: '$[*]',
+        pointId: '$[*].id',
+        referenceProcess: null
+      });
+      assert.deepStrictEqual(await optionsOf('north_transformers', 'nt-null'), { referenceProcess: null });
+      assert.deepStrictEqual(await optionsOf('history_query_transformers', 'hqt-tv'), { precision: 'ms', referenceProcess: null });
+    });
+
+    it('leaves other transformers and already migrated options untouched', async () => {
+      await insertNorthTransformer('nt-csv', 'tv-to-csv', JSON.stringify({ pointIdProcess: null }));
+      await insertNorthTransformer('nt-done', 'tv-to-oia', JSON.stringify({ precision: 'ms', referenceProcess: 'value.toUpperCase()' }));
+
+      await up(db);
+
+      assert.deepStrictEqual(await optionsOf('north_transformers', 'nt-csv'), { pointIdProcess: null });
+      assert.deepStrictEqual(await optionsOf('north_transformers', 'nt-done'), {
+        precision: 'ms',
+        referenceProcess: 'value.toUpperCase()'
+      });
+    });
+  });
 });

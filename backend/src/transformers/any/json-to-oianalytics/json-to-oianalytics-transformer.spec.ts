@@ -176,6 +176,21 @@ describe('JSONToOIAnalyticsTransformer', () => {
     assert.deepStrictEqual(parsed.timestamps, ['2020-01-01T00:00:00.000Z']);
   });
 
+  it('should apply the reference process to the references', async () => {
+    const transformer = new JSONToOIAnalyticsTransformer(logger, testData.transformers.list[0], {
+      ...options,
+      referenceProcess: "'plant/' + value"
+    });
+    const inputData = [
+      { id: 'point-1', ts: '2020-01-01T00:00:00.000Z', val: 1 },
+      { id: 'point-2', ts: '2020-01-01T00:00:01.000Z', val: 2 }
+    ];
+
+    const result = await transformer.transformInMemory(inputData, { source: 'test' }, null);
+
+    assert.deepStrictEqual(JSON.parse(result.output.toString()).references, ['plant/point-1', 'plant/point-2']);
+  });
+
   it('should properly format instant with precision', () => {
     const transformer = new JSONToOIAnalyticsTransformer(logger, testData.transformers.list[0], options);
 

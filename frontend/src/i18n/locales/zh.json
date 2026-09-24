@@ -825,6 +825,7 @@
             "point-id": "点位 ID JSONPath",
             "value": "值 JSONPath",
             "timestamp": "时间戳 JSONPath",
+            "reference-process": "引用处理（JS 表达式，例如 value.toUpperCase()）",
             "datetime-settings": {
               "title": "日期时间设置",
               "input-type": {
@@ -853,7 +854,8 @@
               "s": "秒",
               "min": "分钟",
               "hr": "小时"
-            }
+            },
+            "reference-process": "引用处理（JS 表达式，例如 value.toUpperCase()）"
           },
           "time-values-to-opcua": {
             "mapping": {

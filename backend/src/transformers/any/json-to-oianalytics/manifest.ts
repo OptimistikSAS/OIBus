@@ -78,6 +78,18 @@ const manifest: TransformerManifest = {
         }
       },
       {
+        type: 'string',
+        key: 'referenceProcess',
+        translationKey: 'configuration.oibus.manifest.transformers.json-to-oianalytics.reference-process',
+        defaultValue: null,
+        validators: [],
+        displayProperties: {
+          row: 2,
+          columns: 12,
+          displayInViewMode: false
+        }
+      },
+      {
         type: 'object',
         key: 'datetimeSettings',
         translationKey: 'configuration.oibus.manifest.transformers.json-to-oianalytics.datetime-settings.title',
