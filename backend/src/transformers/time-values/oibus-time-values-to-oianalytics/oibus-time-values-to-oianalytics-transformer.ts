@@ -7,6 +7,7 @@ import { Instant } from '../../../model/types';
 import { DateTime } from 'luxon';
 import { TransformerTimeValuesToOianalyticsSettings } from '../../../../shared/model/transformer-settings.model';
 import { toCompactTimeValues } from '../../../service/oia/compact-time-values';
+import { createStringFieldProcess } from '../../field-process';
 
 export default class OIBusTimeValuesToOIAnalyticsTransformer extends OIBusTransformer {
   public static transformerName = 'time-values-to-oianalytics';
@@ -43,9 +44,13 @@ export default class OIBusTimeValuesToOIAnalyticsTransformer extends OIBusTransf
       ? (data as Array<OIBusTimeValue>)
       : (JSON.parse(String(data)) as Array<OIBusTimeValue>);
 
-    // Only the pointId, the (truncated) timestamp and the value are forwarded, in the OIAnalytics compact format
+    // Only the (processed) pointId, the (truncated) timestamp and the value are forwarded, in the OIAnalytics compact format
     const precision = this.options.precision;
-    const content = toCompactTimeValues(values, timestamp => this.formatInstant(timestamp, precision));
+    const content = toCompactTimeValues(
+      values,
+      timestamp => this.formatInstant(timestamp, precision),
+      createStringFieldProcess(this.options.referenceProcess)
+    );
 
     const metadata: CacheMetadata = {
       contentFile: `${generateRandomId(10)}.json`,

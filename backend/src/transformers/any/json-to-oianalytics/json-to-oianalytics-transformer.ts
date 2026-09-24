@@ -9,6 +9,7 @@ import { DateTimeType } from '../../../../shared/model/types';
 import { TransformerJsonToOianalyticsSettings } from '../../../../shared/model/transformer-settings.model';
 import { resolveJsonPath, resolveJsonPathRows } from '../../json-path';
 import { toCompactTimeValues } from '../../../service/oia/compact-time-values';
+import { createStringFieldProcess } from '../../field-process';
 
 export default class JSONToOIAnalyticsTransformer extends OIBusTransformer {
   public static transformerName = 'json-to-oianalytics';
@@ -40,6 +41,7 @@ export default class JSONToOIAnalyticsTransformer extends OIBusTransformer {
     const content: object = typeof data === 'string' ? (JSON.parse(data) as object) : (data as object);
 
     const rows = resolveJsonPathRows(this.options.rowIteratorPath, content);
+    const referenceProcess = createStringFieldProcess(this.options.referenceProcess);
 
     const values = rows.map(row => {
       const pointId = resolveJsonPath(injectIndices(this.options.pointId, row.indices), content);
@@ -61,7 +63,7 @@ export default class JSONToOIAnalyticsTransformer extends OIBusTransformer {
       contentType: 'oianalytics'
     };
     return Promise.resolve({
-      output: Buffer.from(JSON.stringify(toCompactTimeValues(values))),
+      output: Buffer.from(JSON.stringify(toCompactTimeValues(values, undefined, referenceProcess))),
       metadata
     });
   }

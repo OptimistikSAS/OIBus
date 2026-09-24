@@ -1672,6 +1672,7 @@
             "point-id": "Point ID JSONPath",
             "value": "Value JSONPath",
             "timestamp": "Timestamp JSONPath",
+            "reference-process": "Reference process (JS expression, e.g. value.toUpperCase())",
             "datetime-settings": {
               "title": "Datetime Settings",
               "input-type": {
@@ -1700,7 +1701,8 @@
               "s": "Second",
               "min": "Minute",
               "hr": "Hour"
-            }
+            },
+            "reference-process": "Reference process (JS expression, e.g. value.toUpperCase())"
           },
           "time-values-to-opcua": {
             "mapping": {

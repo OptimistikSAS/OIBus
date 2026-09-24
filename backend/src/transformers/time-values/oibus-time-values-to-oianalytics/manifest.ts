@@ -26,6 +26,18 @@ const manifest: TransformerManifest = {
           columns: 4,
           displayInViewMode: true
         }
+      },
+      {
+        type: 'string',
+        key: 'referenceProcess',
+        translationKey: 'configuration.oibus.manifest.transformers.time-values-to-oianalytics.reference-process',
+        defaultValue: null,
+        validators: [],
+        displayProperties: {
+          row: 1,
+          columns: 12,
+          displayInViewMode: false
+        }
       }
     ],
     enablingConditions: [],
