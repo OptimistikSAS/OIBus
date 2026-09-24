@@ -159,52 +159,138 @@ describe('NorthOIAnalytics', () => {
   });
 
   describe('handleValues (time-values/oianalytics)', () => {
-    const metadata = {
+    const timeValuesMetadata = {
       contentFile: 'file.json',
       contentSize: 100,
-      numberOfElement: 1,
+      numberOfElement: 2,
       createdAt: '2020-02-02T02:02:02.222Z',
       contentType: 'time-values'
     };
+    const oianalyticsMetadata = { ...timeValuesMetadata, contentType: 'oianalytics' };
+    const timeValues = [
+      { pointId: 'ref1', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 1.5, quality: 'good' } },
+      { pointId: 'ref2', timestamp: '2020-01-01T00:01:00.000Z', data: { value: null } }
+    ];
+    const compactTimeValues = {
+      timestamps: ['2020-01-01T00:00:00.000Z', '2020-01-01T00:01:00.000Z'],
+      values: [1.5, null],
+      references: ['ref1', 'ref2']
+    };
 
-    it('should send values as JSON without compression', async () => {
-      await north.handleContent(mockReadStream, metadata);
+    const fileStreamOf = (content: string): ReadStream => Readable.from([Buffer.from(content)]) as unknown as ReadStream;
+    const readBody = async (body: unknown): Promise<string> => {
+      const chunks: Array<Buffer> = [];
+      for await (const chunk of body as AsyncIterable<Buffer>) {
+        chunks.push(Buffer.from(chunk));
+      }
+      return Buffer.concat(chunks).toString('utf8');
+    };
+
+    it('should convert time values into the compact format and send them without compression', async () => {
+      await north.handleContent(fileStreamOf(JSON.stringify(timeValues)), timeValuesMetadata);
 
       assert.strictEqual(createGzipMock.mock.calls.length, 0);
 
       assert.strictEqual(httpRequestMock.mock.calls.length, 1);
       const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
-      assert.ok(url.href.includes('/api/oianalytics/oibus/time-values'));
-      assertContains(options, { body: mockReadStream });
+      assert.strictEqual(url.pathname, '/api/oianalytics/oibus/time-values/compact');
+      assert.deepStrictEqual(JSON.parse(await readBody(options.body)), compactTimeValues);
       assertContains(options.headers as Record<string, unknown>, { 'Content-Type': 'application/json' });
-      assertContains(options.query as Record<string, unknown>, { dataSourceId: configuration.name });
+      assert.strictEqual(options.query, undefined);
+    });
+
+    it('should stream compact oianalytics content as is', async () => {
+      const content = `  ${JSON.stringify(compactTimeValues)}`;
+      const fileStream = fileStreamOf(content);
+
+      await north.handleContent(fileStream, oianalyticsMetadata);
+
+      const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
+      assert.strictEqual(url.pathname, '/api/oianalytics/oibus/time-values/compact');
+      // The file stream itself is sent (not buffered), and the peeked chunk is not lost
+      assert.strictEqual(options.body, fileStream);
+      assert.strictEqual(await readBody(options.body), content);
+    });
+
+    it('should convert legacy array oianalytics content into the compact format', async () => {
+      const legacy = timeValues.map(timeValue => ({
+        pointId: timeValue.pointId,
+        timestamp: timeValue.timestamp,
+        data: { value: timeValue.data.value }
+      }));
+
+      await north.handleContent(fileStreamOf(`\n${JSON.stringify(legacy)}`), oianalyticsMetadata);
+
+      const [, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
+      assert.deepStrictEqual(JSON.parse(await readBody(options.body)), compactTimeValues);
+    });
+
+    it('should stream empty oianalytics content as is', async () => {
+      const fileStream = fileStreamOf('');
+      await north.handleContent(fileStream, oianalyticsMetadata);
+
+      const [, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
+      assert.strictEqual(options.body, fileStream);
+    });
+
+    it('should reject when the oianalytics content cannot be read', async () => {
+      const fileStream = new PassThrough() as unknown as ReadStream;
+      const promise = north.handleContent(fileStream, oianalyticsMetadata);
+      fileStream.destroy(new Error('read error'));
+
+      await assert.rejects(promise, /read error/);
+      assert.strictEqual(httpRequestMock.mock.calls.length, 0);
+    });
+
+    it('should wait for data before peeking oianalytics content', async () => {
+      const fileStream = new PassThrough() as unknown as ReadStream;
+      const promise = north.handleContent(fileStream, oianalyticsMetadata);
+      // Let the peek subscribe before any data is available
+      await new Promise(resolve => setImmediate(resolve));
+      (fileStream as unknown as PassThrough).end(JSON.stringify(compactTimeValues));
+      await promise;
+
+      const [, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
+      assert.deepStrictEqual(JSON.parse(await readBody(options.body)), compactTimeValues);
     });
 
     it('should send values with compression if enabled', async () => {
       north['connector'].settings.compress = true;
 
-      await north.handleContent(mockReadStream, metadata);
+      await north.handleContent(fileStreamOf(JSON.stringify(timeValues)), timeValuesMetadata);
 
-      // fileStream is piped through createGzip — no synchronous gzip or streamToString
+      // the body is piped through createGzip — no synchronous gzip
       assert.strictEqual(createGzipMock.mock.calls.length, 1);
       assert.strictEqual(gzipSyncMock.mock.calls.length, 0);
 
       assert.strictEqual(httpRequestMock.mock.calls.length, 1);
       const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
-      assert.ok(url.href.includes('/api/oianalytics/oibus/time-values/compressed'));
+      assert.strictEqual(url.pathname, '/api/oianalytics/oibus/time-values/compact/compressed');
       assertContains(options, { body: mockGzipStream });
+      assert.deepStrictEqual(JSON.parse(await readBody(mockGzipStream)), compactTimeValues);
+    });
+
+    it('should throw an error when time values content is not valid JSON', async () => {
+      await assert.rejects(async () => north.handleContent(fileStreamOf('not json'), timeValuesMetadata), SyntaxError);
+      assert.strictEqual(httpRequestMock.mock.calls.length, 0);
     });
 
     it('should throw OIBusError on fetch failure', async () => {
       httpRequestMock.mock.mockImplementation(async (_url: URL, _options: ReqOptions) => {
         throw new Error('Network Error');
       });
-      await assert.rejects(async () => north.handleContent(mockReadStream, metadata), /Fail to reach values endpoint/);
+      await assert.rejects(
+        async () => north.handleContent(fileStreamOf(JSON.stringify(timeValues)), timeValuesMetadata),
+        /Fail to reach values endpoint/
+      );
     });
 
     it('should throw OIBusError on non-ok response', async () => {
       httpRequestMock.mock.mockImplementation(async (_url: URL, _options: ReqOptions) => createMockResponse(500, 'Internal Server Error'));
-      await assert.rejects(async () => north.handleContent(mockReadStream, metadata), /Error 500: Internal Server Error/);
+      await assert.rejects(
+        async () => north.handleContent(fileStreamOf(JSON.stringify(timeValues)), timeValuesMetadata),
+        /Error 500: Internal Server Error/
+      );
     });
   });
 
@@ -236,8 +322,8 @@ describe('NorthOIAnalytics', () => {
 
       assert.strictEqual(httpRequestMock.mock.calls.length, 1);
       const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
-      assert.ok(url.href.includes('/api/oianalytics/file-uploads'));
-      assertContains(options.query as Record<string, unknown>, { dataSourceId: configuration.name });
+      assert.strictEqual(url.pathname, '/api/oianalytics/oibus/file');
+      assert.strictEqual(options.query, undefined);
       assert.ok((options.headers as Record<string, string>)['content-type'].startsWith('multipart/form-data; boundary=OIBusBoundary'));
 
       mock.timers.reset();
@@ -253,7 +339,7 @@ describe('NorthOIAnalytics', () => {
 
       assert.strictEqual(httpRequestMock.mock.calls.length, 1);
       const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
-      assert.ok(url.href.includes('/api/oianalytics/file-uploads'));
+      assert.strictEqual(url.pathname, '/api/oianalytics/oibus/file');
       assert.ok((options.headers as Record<string, string>)['content-type'].startsWith('multipart/form-data; boundary=OIBusBoundary'));
     });
 
@@ -267,7 +353,7 @@ describe('NorthOIAnalytics', () => {
 
       assert.strictEqual(httpRequestMock.mock.calls.length, 1);
       const [url] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
-      assert.ok(url.href.includes('/api/oianalytics/file-uploads'));
+      assert.strictEqual(url.pathname, '/api/oianalytics/oibus/file');
     });
 
     it('should throw OIBusError on fetch failure', async () => {
