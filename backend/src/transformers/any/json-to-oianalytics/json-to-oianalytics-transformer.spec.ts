@@ -50,7 +50,7 @@ describe('JSONToOIAnalyticsTransformer', () => {
     mock.timers.reset();
   });
 
-  it('should transform a JSON array from a stream into the OIAnalytics format', async () => {
+  it('should transform a JSON array from a stream into the OIAnalytics compact format', async () => {
     const transformer = new JSONToOIAnalyticsTransformer(logger, testData.transformers.list[0], options);
     const inputData = [
       { id: 'point-1', ts: '2020-01-01T00:00:00.000Z', val: 42 },
@@ -65,10 +65,11 @@ describe('JSONToOIAnalyticsTransformer', () => {
     await flushPromises();
     const result = await promise;
 
-    assert.deepStrictEqual(JSON.parse(result.output.toString()), [
-      { pointId: 'point-1', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 42 } },
-      { pointId: 'point-2', timestamp: '2020-01-02T00:00:00.000Z', data: { value: 'on' } }
-    ]);
+    assert.deepStrictEqual(JSON.parse(result.output.toString()), {
+      timestamps: ['2020-01-01T00:00:00.000Z', '2020-01-02T00:00:00.000Z'],
+      values: [42, 'on'],
+      references: ['point-1', 'point-2']
+    });
     assert.deepStrictEqual(result.metadata, {
       contentFile: 'randomId.json',
       contentSize: 0,
@@ -87,9 +88,11 @@ describe('JSONToOIAnalyticsTransformer', () => {
 
     const result = await transformer.transformInMemory(JSON.stringify(inputData), { source: 'test' }, null);
 
-    assert.deepStrictEqual(JSON.parse(result.output.toString()), [
-      { pointId: 'point-1', timestamp: '2020-01-01T12:34:00.000Z', data: { value: 1 } }
-    ]);
+    assert.deepStrictEqual(JSON.parse(result.output.toString()), {
+      timestamps: ['2020-01-01T12:34:00.000Z'],
+      values: [1],
+      references: ['point-1']
+    });
     assert.strictEqual(result.metadata.numberOfElement, 1);
     assert.strictEqual(result.metadata.contentType, 'oianalytics');
   });
@@ -108,9 +111,11 @@ describe('JSONToOIAnalyticsTransformer', () => {
 
     const result = await transformer.transformInMemory(inputData, { source: 'test' }, null);
 
-    assert.deepStrictEqual(JSON.parse(result.output.toString()), [
-      { pointId: 'sensor-A', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 21.5 } }
-    ]);
+    assert.deepStrictEqual(JSON.parse(result.output.toString()), {
+      timestamps: ['2020-01-01T00:00:00.000Z'],
+      values: [21.5],
+      references: ['sensor-A']
+    });
   });
 
   it('should split multiple metrics embedded in a single JSON-stringified MQTT message into separate rows', async () => {
@@ -136,11 +141,11 @@ describe('JSONToOIAnalyticsTransformer', () => {
 
     const result = await transformer.transformInMemory(inputData, { source: 'test' }, null);
 
-    assert.deepStrictEqual(JSON.parse(result.output.toString()), [
-      { pointId: 'TAG.A', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 1.1 } },
-      { pointId: 'TAG.B', timestamp: '2020-01-01T00:00:01.000Z', data: { value: 2.2 } },
-      { pointId: 'TAG.C', timestamp: '2020-01-01T00:00:02.000Z', data: { value: 3.3 } }
-    ]);
+    assert.deepStrictEqual(JSON.parse(result.output.toString()), {
+      timestamps: ['2020-01-01T00:00:00.000Z', '2020-01-01T00:00:01.000Z', '2020-01-01T00:00:02.000Z'],
+      values: [1.1, 2.2, 3.3],
+      references: ['TAG.A', 'TAG.B', 'TAG.C']
+    });
     assert.strictEqual(result.metadata.numberOfElement, 3);
   });
 
@@ -151,8 +156,8 @@ describe('JSONToOIAnalyticsTransformer', () => {
     const result = await transformer.transformInMemory(inputData, { source: 'test' }, null);
 
     const parsed = JSON.parse(result.output.toString());
-    assert.strictEqual(parsed[0].pointId, 'point-1');
-    assert.strictEqual(parsed[0].timestamp, testData.constants.dates.FAKE_NOW);
+    assert.deepStrictEqual(parsed.references, ['point-1']);
+    assert.deepStrictEqual(parsed.timestamps, [testData.constants.dates.FAKE_NOW]);
   });
 
   it('should fall back to plain ISO parsing and "ms" precision when no datetimeSettings are configured', async () => {
@@ -167,8 +172,8 @@ describe('JSONToOIAnalyticsTransformer', () => {
     const result = await transformer.transformInMemory(inputData, { source: 'test' }, null);
 
     const parsed = JSON.parse(result.output.toString());
-    assert.strictEqual(parsed[0].pointId, 'point-1');
-    assert.strictEqual(parsed[0].timestamp, '2020-01-01T00:00:00.000Z');
+    assert.deepStrictEqual(parsed.references, ['point-1']);
+    assert.deepStrictEqual(parsed.timestamps, ['2020-01-01T00:00:00.000Z']);
   });
 
   it('should properly format instant with precision', () => {

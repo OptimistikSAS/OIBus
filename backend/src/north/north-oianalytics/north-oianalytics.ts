@@ -11,8 +11,9 @@ import OIAnalyticsRegistrationRepository from '../../repository/config/oianalyti
 import { OIBusError } from '../../model/engine.model';
 import type { ICacheService } from '../../model/cache.service.model';
 import { buildHttpOptions, getHost, getUrl, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
-import { getErrorMessage } from '../../service/utils';
+import { getErrorMessage, streamToString } from '../../service/utils';
 import type { ILogger } from '../../model/logger.model';
+import { TimeValueLike, toCompactTimeValues } from '../../service/oia/compact-time-values';
 
 /**
  * Pipe `source` into a freshly created gzip Transform and return it, wired through
@@ -39,6 +40,46 @@ async function* multipartStream(boundary: string, filename: string, dataStream: 
     yield chunk;
   }
   yield Buffer.from(`\r\n--${boundary}--\r\n`);
+}
+
+/**
+ * Read the first available chunk of `stream` and push it back at the front of the stream, so the stream can still be
+ * consumed from the beginning afterward. Resolves to null for an empty stream.
+ */
+function peekFirstChunk(stream: Readable): Promise<Buffer | null> {
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      stream.off('readable', onReadable);
+      stream.off('end', onEnd);
+      stream.off('error', onError);
+    };
+    const onReadable = () => {
+      const chunk = stream.read() as Buffer | string | null;
+      if (chunk === null) return; // nothing buffered yet: wait for the next 'readable' or 'end' event
+      cleanup();
+      stream.unshift(chunk);
+      resolve(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    };
+    const onEnd = () => {
+      cleanup();
+      resolve(null);
+    };
+    const onError = (error: Error) => {
+      cleanup();
+      reject(error);
+    };
+    stream.on('readable', onReadable);
+    stream.on('end', onEnd);
+    stream.on('error', onError);
+  });
+}
+
+/**
+ * Whether the JSON document starting with `chunk` is an array (legacy `[{ pointId, timestamp, data }]` format) rather
+ * than the OIAnalytics compact object format. Leading whitespaces (and UTF-8 BOM) are ignored.
+ */
+function isJsonArray(chunk: Buffer | null): boolean {
+  return chunk !== null && chunk.toString('utf8').trimStart().startsWith('[');
 }
 
 /**
@@ -79,14 +120,21 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
 
       case 'time-values':
       case 'oianalytics':
-        return this.handleValues(fileStream);
+        return this.handleValues(fileStream, cacheMetadata);
 
       default:
         return Promise.resolve();
     }
   }
 
-  async handleValues(fileStream: ReadStream): Promise<void> {
+  /**
+   * Send time values to OIAnalytics in the compact format `{ timestamps, values, references }`.
+   * - `oianalytics` content is already in the compact format (produced by the OIAnalytics transformers) and is streamed
+   *   as is. Content still in the legacy array format (e.g. from a custom transformer) is converted on the fly.
+   * - `time-values` content is an array of OIBus time values that is converted into the compact format.
+   */
+  async handleValues(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
+    const body = await this.toCompactBody(fileStream, cacheMetadata);
     const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
     const httpOptions = await buildHttpOptions(
       'POST',
@@ -98,17 +146,15 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     );
     (httpOptions.headers! as Record<string, string>)['Content-Type'] = 'application/json';
     const endpoint = this.connector.settings.compress
-      ? '/api/oianalytics/oibus/time-values/compressed'
-      : '/api/oianalytics/oibus/time-values';
+      ? '/api/oianalytics/oibus/time-values/compact/compressed'
+      : '/api/oianalytics/oibus/time-values/compact';
     const url = getUrl(
       endpoint,
       getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings),
       { useApiGateway: registrationSettings.useApiGateway, apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint }
     );
-    // Stream the file directly (or through async gzip) instead of buffering the
-    // whole payload in memory and gzipping synchronously on the event loop.
-    httpOptions.body = this.connector.settings.compress ? gzipStream(fileStream, this.logger) : fileStream;
-    httpOptions.query = { dataSourceId: this.connector.name };
+    // Stream the body directly (or through async gzip) instead of gzipping synchronously on the event loop.
+    httpOptions.body = this.connector.settings.compress ? gzipStream(body, this.logger) : body;
 
     let response: ReqResponse;
     try {
@@ -125,6 +171,15 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     }
     // Drain the response body so undici can return the connection to its pool.
     await response.body.dump();
+  }
+
+  private async toCompactBody(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<Readable> {
+    if (cacheMetadata.contentType === 'oianalytics' && !isJsonArray(await peekFirstChunk(fileStream))) {
+      // Already compact: stream the file without buffering it in memory
+      return fileStream;
+    }
+    const timeValues = JSON.parse(await streamToString(fileStream)) as Array<TimeValueLike>;
+    return Readable.from([Buffer.from(JSON.stringify(toCompactTimeValues(timeValues)))]);
   }
 
   async handleFile(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
@@ -144,12 +199,11 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       this.certificateRepository
     );
     const url = getUrl(
-      '/api/oianalytics/file-uploads',
+      '/api/oianalytics/oibus/file',
       getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings),
       { useApiGateway: registrationSettings.useApiGateway, apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint }
     );
     httpOptions.body = Readable.from(multipartStream(boundary, filename, readStream));
-    httpOptions.query = { dataSourceId: this.connector.name };
     httpOptions.headers = { ...httpOptions.headers, 'content-type': `multipart/form-data; boundary=${boundary}` };
     let response: ReqResponse;
     try {
