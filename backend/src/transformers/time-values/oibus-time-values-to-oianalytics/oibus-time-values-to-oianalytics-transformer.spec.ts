@@ -134,6 +134,42 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
     });
   });
 
+  it('should apply the reference process to the references', async () => {
+    const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], {
+      precision: 'ms',
+      referenceProcess: "value.replace('plant/', '').toUpperCase()"
+    });
+
+    const result = await transformer.transformInMemory(
+      [
+        { pointId: 'plant/temp1', timestamp: '2020-03-15T12:34:56.789Z', data: { value: 1 } },
+        { pointId: 'plant/temp2', timestamp: '2020-03-15T12:35:01.000Z', data: { value: 2 } },
+        { pointId: 'plant/temp1', timestamp: '2020-03-15T12:36:01.000Z', data: { value: 3 } }
+      ],
+      { source: 'test' },
+      null
+    );
+
+    assert.deepStrictEqual(JSON.parse(result.output.toString()).references, ['TEMP1', 'TEMP2', 'TEMP1']);
+  });
+
+  it('should throw when the reference process fails', async () => {
+    const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], {
+      precision: 'ms',
+      referenceProcess: 'value.boom()'
+    });
+
+    await assert.rejects(
+      async () =>
+        transformer.transformInMemory(
+          [{ pointId: 'p1', timestamp: '2020-03-15T12:34:56.789Z', data: { value: 1 } }],
+          { source: 'test' },
+          null
+        ),
+      /Field process evaluation failed/
+    );
+  });
+
   it('should properly format instant with precision', () => {
     const options = { precision: 'ms' };
     const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], options);
@@ -149,5 +185,6 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
     assert.strictEqual(timeValuesToOianalyticsManifest.settings.type, 'object');
     assert.strictEqual(timeValuesToOianalyticsManifest.settings.key, 'options');
     assert.strictEqual(timeValuesToOianalyticsManifest.settings.attributes[0].key, 'precision');
+    assert.strictEqual(timeValuesToOianalyticsManifest.settings.attributes[1].key, 'referenceProcess');
   });
 });

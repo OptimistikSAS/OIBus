@@ -26,6 +26,15 @@ describe('toCompactTimeValues', () => {
     );
   });
 
+  it('should format references with the given function', () => {
+    assert.deepStrictEqual(
+      toCompactTimeValues([{ pointId: 'ref1', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 'a' } }], undefined, reference =>
+        reference.toUpperCase()
+      ),
+      { timestamps: ['2020-01-01T00:00:00.000Z'], values: ['a'], references: ['REF1'] }
+    );
+  });
+
   it('should convert an empty array', () => {
     assert.deepStrictEqual(toCompactTimeValues([]), { timestamps: [], values: [], references: [] });
   });
