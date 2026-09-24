@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { applyFieldProcess } from './field-process';
+import { applyFieldProcess, createStringFieldProcess } from './field-process';
 
 describe('applyFieldProcess', () => {
   // ─── No-op cases ────────────────────────────────────────────────────────────
@@ -126,5 +126,29 @@ describe('applyFieldProcess', () => {
     assert.strictEqual(applyFieldProcess('a', 'value.toUpperCase()'), 'A');
     assert.strictEqual(applyFieldProcess('b', 'value.toUpperCase()'), 'B');
     assert.strictEqual(applyFieldProcess('c', 'value.toUpperCase()'), 'C');
+  });
+});
+
+describe('createStringFieldProcess', () => {
+  it('should return values unchanged without expression', () => {
+    assert.strictEqual(createStringFieldProcess(null)('ref'), 'ref');
+    assert.strictEqual(createStringFieldProcess(undefined)('ref'), 'ref');
+    assert.strictEqual(createStringFieldProcess('  ')('ref'), 'ref');
+  });
+
+  it('should apply the expression and convert the result into a string', () => {
+    const process = createStringFieldProcess("value.replace('plant/', '').length");
+    assert.strictEqual(process('plant/temp'), '4');
+  });
+
+  it('should memoize results per value', () => {
+    const process = createStringFieldProcess('value + Math.random()');
+    const first = process('ref1');
+    assert.strictEqual(process('ref1'), first);
+    assert.notStrictEqual(process('ref2'), first);
+  });
+
+  it('should throw when the expression fails', () => {
+    assert.throws(() => createStringFieldProcess('value.boom()')('ref'), /Field process evaluation failed/);
   });
 });

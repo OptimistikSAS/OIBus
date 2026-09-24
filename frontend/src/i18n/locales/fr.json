@@ -825,6 +825,7 @@
             "point-id": "JSONPath de l'ID du point",
             "value": "JSONPath de la valeur",
             "timestamp": "JSONPath de l'horodatage",
+            "reference-process": "Traitement de la référence (expression JS, ex. value.toUpperCase())",
             "datetime-settings": {
               "title": "Paramètres de date/heure",
               "input-type": {
@@ -853,7 +854,8 @@
               "s": "Seconde",
               "min": "Minute",
               "hr": "Heure"
-            }
+            },
+            "reference-process": "Traitement de la référence (expression JS, ex. value.toUpperCase())"
           },
           "time-values-to-opcua": {
             "mapping": {

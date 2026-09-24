@@ -24,7 +24,8 @@ export interface TimeValueLike {
 
 export const toCompactTimeValues = (
   timeValues: Array<TimeValueLike>,
-  formatTimestamp: (timestamp: Instant) => Instant = timestamp => timestamp
+  formatTimestamp: (timestamp: Instant) => Instant = timestamp => timestamp,
+  formatReference: (reference: string) => string = reference => reference
 ): OIAnalyticsCompactTimeValues => {
   const compact: OIAnalyticsCompactTimeValues = {
     timestamps: new Array<Instant>(timeValues.length),
@@ -36,7 +37,7 @@ export const toCompactTimeValues = (
     compact.timestamps[i] = formatTimestamp(timeValue.timestamp);
     // undefined is not valid JSON in an array (it would be serialized as null anyway): make it explicit
     compact.values[i] = timeValue.data?.value ?? null;
-    compact.references[i] = timeValue.pointId;
+    compact.references[i] = formatReference(timeValue.pointId);
   }
   return compact;
 };
