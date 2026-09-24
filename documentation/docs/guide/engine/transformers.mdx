@@ -256,9 +256,10 @@ of the same size (`timestamps`, `values`, `references`), the i-th reading being 
 
 ##### Settings {#settings-3}
 
-| Setting       | Description                                                |
-| ------------- | ---------------------------------------------------------- |
-| **Precision** | Timestamp precision: `ms` (unchanged), `s`, `min`, or `hr` |
+| Setting               | Description                                                                                                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Precision**         | Timestamp precision: `ms` (unchanged), `s`, `min`, or `hr`                                                                                                                |
+| **Reference process** | Optional JavaScript expression applied to each point ID to build the OIAnalytics reference, `value` being the point ID (e.g. `value.replace('plant/', '').toUpperCase()`) |
 
 ##### Example — Precision `s` {#example--precision-s}
 
@@ -520,6 +521,7 @@ OIAnalytics North connector without writing a custom transformer.
 | **Point ID JSONPath**     | JSONPath to the point identifier within the current row (e.g. `$[*].id`); wildcards (`[*]`) are resolved to the current row's indices                                                                                                                                                |
 | **Value JSONPath**        | JSONPath to the value within the current row                                                                                                                                                                                                                                         |
 | **Timestamp JSONPath**    | JSONPath to the raw timestamp within the current row. Falls back to the current time if it cannot be resolved                                                                                                                                                                        |
+| **Reference process**     | Optional JavaScript expression applied to each resolved point ID to build the OIAnalytics reference, `value` being the point ID (e.g. `value.replace('plant/', '').toUpperCase()`)                                                                                                   |
 | **Timestamp input type**  | Format of the raw timestamp: `String`, `ISO string`, `Unix epoch (s)`, or `Unix epoch (ms)`                                                                                                                                                                                          |
 | **Timezone**              | Timezone used when parsing (only used when input type is `String`)                                                                                                                                                                                                                   |
 | **Format**                | Custom datetime pattern (only used when input type is `String`, e.g. `yyyy-MM-dd HH:mm:ss`)                                                                                                                                                                                          |

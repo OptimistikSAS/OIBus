@@ -33,6 +33,9 @@ const SQL_SOUTH_TYPES = ['mysql', 'postgresql', 'mssql', 'oracle', 'sqlite'];
 // IOT_FAMILY_SOUTH_TYPES in shared/model/south-connector.model.ts.
 const IOT_FAMILY_SOUTH_TYPES = ['opcua', 'modbus', 'ads', 'opc', 's7', 'mqtt'];
 
+// Standard transformers producing 'oianalytics' content, which gain the `referenceProcess` option in 3.10.
+const OIANALYTICS_TRANSFORMER_FUNCTION_NAMES = ['time-values-to-oianalytics', 'json-to-oianalytics'];
+
 interface OldDateTimeField {
   fieldName: string;
   useAsReference: boolean;
@@ -74,6 +77,8 @@ interface OldSqlItemSettings {
  *  9. Introduces the caching-strategy feature: `south_item_groups`/`south_items` gain
  *     `caching_strategy` (plus threshold/range/max-interval columns), defaulted to 'allValues' for
  *     IoT-family south connectors, for which a per-item caching strategy is meaningful.
+ * 10. The OIAnalytics transformers (`time-values-to-oianalytics`, `json-to-oianalytics`) gain a
+ *     `referenceProcess` option, backfilled to null on existing north and history query transformers.
  */
 export async function up(knex: Knex): Promise<void> {
   // --- 1. Scan mode scheduling + certificate chain ---------------------------------------------
@@ -349,9 +354,14 @@ export async function up(knex: Knex): Promise<void> {
   const iotFamilyConnectorIds = knex(SOUTH_CONNECTORS_TABLE).select('id').whereIn('type', IOT_FAMILY_SOUTH_TYPES);
   await knex(SOUTH_ITEM_GROUPS_TABLE).whereIn('south_id', iotFamilyConnectorIds).update({ caching_strategy: 'allValues' });
   await knex(SOUTH_ITEMS_TABLE).whereIn('connector_id', iotFamilyConnectorIds).update({ caching_strategy: 'allValues' });
+
+  // --- 10. OIAnalytics transformers: `referenceProcess` option --------------------------------
+  await addOIAnalyticsReferenceProcess(knex);
 }
 
 export async function down(knex: Knex): Promise<void> {
+  // --- undo 10: nothing to do, a leftover `referenceProcess: null` option is ignored ---
+
   // --- undo 9: caching strategy columns ---
   // Use native SQLite `DROP COLUMN` (single in-place metadata change, available since SQLite 3.35) instead
   // of knex's `dropColumn()`, which rebuilds the table via CREATE + COPY + DROP TABLE + RENAME. The rebuild's
@@ -717,5 +727,28 @@ async function migrateHistoryQueries(knex: Knex, recordListToCsvTransformerId: s
   if (newTransformerRows.length > 0) {
     await knex.batchInsert(HISTORY_QUERY_TRANSFORMERS_TABLE, newTransformerRows, 100);
     await knex.batchInsert(HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE, newTransformerItemLinks, 100);
+  }
+}
+
+/**
+ * Add the new optional `referenceProcess` option (a JS expression applied to each point ID to build the OIAnalytics
+ * reference) to every existing OIAnalytics transformer instance, so that the stored options match the manifest.
+ * Null means "no process": references are sent unchanged, which is the pre-existing behavior.
+ * Instances that already define the option are left untouched.
+ */
+async function addOIAnalyticsReferenceProcess(knex: Knex): Promise<void> {
+  const transformerIds = knex(TRANSFORMERS_TABLE).select('id').whereIn('function_name', OIANALYTICS_TRANSFORMER_FUNCTION_NAMES);
+  for (const table of [NORTH_TRANSFORMERS_TABLE, HISTORY_QUERY_TRANSFORMERS_TABLE]) {
+    const instances: Array<{ id: string; options: string | null }> = await knex(table)
+      .select('id', 'options')
+      .whereIn('transformer_id', transformerIds);
+    for (const instance of instances) {
+      const options = (instance.options ? JSON.parse(instance.options) : {}) as Record<string, unknown>;
+      if (options.referenceProcess !== undefined) continue;
+      options.referenceProcess = null;
+      await knex(table)
+        .where('id', instance.id)
+        .update({ options: JSON.stringify(options) });
+    }
   }
 }
