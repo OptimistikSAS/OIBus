@@ -433,6 +433,8 @@ export default class HistoryQueryRepository {
     }
 
     const after = this.findTransformersForHistory(historyId).find(t => t.id === transformerWithOptions.id) ?? null;
+    // Saving a history query re-saves all its transformers: only record the ones that actually changed
+    if (!wasNew && JSON.stringify(before) === JSON.stringify(after)) return;
     this.auditService.record(
       'history_query_transformer',
       transformerWithOptions.id,
