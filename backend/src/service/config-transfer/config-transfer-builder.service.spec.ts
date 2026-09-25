@@ -11,6 +11,8 @@ import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/c
 import UserRepositoryMock from '../../tests/__mocks__/repository/config/user-repository.mock';
 import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
 import TransformerRepositoryMock from '../../tests/__mocks__/repository/config/transformer-repository.mock';
+import ConfigurationWorkflowRepositoryMock from '../../tests/__mocks__/repository/config/configuration-workflow-repository.mock';
+import { ConfigurationWorkflowEntity } from '../../model/configuration-workflow.model';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { StandardTransformer } from '../../model/transformer.model';
 import IsoTransformer from '../../transformers/iso-transformer';
@@ -34,6 +36,7 @@ describe('Config Transfer Builder Service', () => {
   let northRepository: NorthConnectorRepositoryMock;
   let historyQueryRepository: HistoryQueryRepositoryMock;
   let transformerRepository: TransformerRepositoryMock;
+  let configurationWorkflowRepository: ConfigurationWorkflowRepositoryMock;
   let encryptionService: EncryptionServiceMock;
   let service: ConfigTransferBuilderService;
 
@@ -47,6 +50,7 @@ describe('Config Transfer Builder Service', () => {
     northRepository = new NorthConnectorRepositoryMock();
     historyQueryRepository = new HistoryQueryRepositoryMock();
     transformerRepository = new TransformerRepositoryMock();
+    configurationWorkflowRepository = new ConfigurationWorkflowRepositoryMock();
     encryptionService = new EncryptionServiceMock('', '');
 
     engineRepository.get = () => testData.engine.settings;
@@ -73,10 +77,87 @@ describe('Config Transfer Builder Service', () => {
       northRepository,
       historyQueryRepository,
       transformerRepository,
+      configurationWorkflowRepository,
       encryptionService as unknown as EncryptionService,
       false,
       false
     );
+  });
+
+  it('should attach each south connector its configuration workflows and the items they own', () => {
+    const south = testData.south.list[0];
+    const [ownedItem, otherItem] = south.items;
+    southRepository.findAllSouthFull = () => [
+      {
+        ...south,
+        items: [
+          { ...ownedItem, createdByWorkflowId: 'workflow1', disabledReason: 'not found anymore' },
+          { ...otherItem, createdByWorkflowId: null, disabledReason: null }
+        ]
+      }
+    ];
+    const baseWorkflow: ConfigurationWorkflowEntity = {
+      id: 'workflow1',
+      name: 'local workflow',
+      southId: south.id,
+      discoveryScope: { rootNodeId: 'ns=1;s=Root' },
+      identityKeyFields: ['nodeId'],
+      eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
+      itemFieldMapping: { name: '{{name}}' },
+      pushToOIAnalytics: false,
+      scanMode: testData.scanMode.list[0],
+      enabled: true,
+      createdBy: 'creator',
+      updatedBy: 'updater',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-02T00:00:00.000Z'
+    };
+    configurationWorkflowRepository.findAll.mock.mockImplementation(() => [
+      baseWorkflow,
+      { ...baseWorkflow, id: 'workflow2', name: 'remote workflow', itemFieldMapping: null, pushToOIAnalytics: true, scanMode: null },
+      { ...baseWorkflow, id: 'workflow3', southId: 'another south' }
+    ]);
+
+    const configuration = service.buildFullConfiguration(testData.oIAnalytics.registration.completed);
+
+    assert.deepStrictEqual(configuration.southConnectors[0].settings.configurationWorkflows, [
+      {
+        oIBusInternalId: 'workflow1',
+        oIBusCreatedBy: 'creator',
+        oIBusUpdatedBy: 'updater',
+        oIBusCreatedAt: '2026-01-01T00:00:00.000Z',
+        oIBusUpdatedAt: '2026-01-02T00:00:00.000Z',
+        settings: {
+          name: 'local workflow',
+          discoveryScope: { rootNodeId: 'ns=1;s=Root' },
+          identityKeyFields: ['nodeId'],
+          eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
+          itemFieldMapping: { name: '{{name}}' },
+          pushToOIAnalytics: false,
+          scanModeId: testData.scanMode.list[0].id,
+          enabled: true
+        },
+        ownedItems: [{ id: ownedItem.id, disabledReason: 'not found anymore' }]
+      },
+      {
+        oIBusInternalId: 'workflow2',
+        oIBusCreatedBy: 'creator',
+        oIBusUpdatedBy: 'updater',
+        oIBusCreatedAt: '2026-01-01T00:00:00.000Z',
+        oIBusUpdatedAt: '2026-01-02T00:00:00.000Z',
+        settings: {
+          name: 'remote workflow',
+          discoveryScope: { rootNodeId: 'ns=1;s=Root' },
+          identityKeyFields: ['nodeId'],
+          eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
+          itemFieldMapping: null,
+          pushToOIAnalytics: true,
+          scanModeId: null,
+          enabled: true
+        },
+        ownedItems: []
+      }
+    ]);
   });
 
   it('should build the engine command, stripping proxy and loki passwords', () => {

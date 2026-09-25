@@ -13,9 +13,10 @@ import { OIBusValidationError } from '../../model/types';
  */
 export class ConfigTransferController extends Controller {
   /**
-   * Exports the full OIBus configuration (engine, scan modes, ip filters, certificates, south and
-   * north connectors, history queries, transformers and users) as a single, secret-free,
-   * version-stamped JSON file
+   * Exports the full OIBus configuration (engine, scan modes, ip filters, certificates, south
+   * connectors with their configuration workflows, north connectors, history queries, transformers
+   * and users) as a single, secret-free JSON file: the same DTOs OIBus sends to OIAnalytics, under
+   * `config`, stamped with the `oibusVersion` they come from
    * @summary Export configuration
    * @responseHeader Content-Type application/json
    * @responseHeader Content-Disposition attachment; filename=oibus-config-export.json
@@ -31,13 +32,14 @@ export class ConfigTransferController extends Controller {
   }
 
   /**
-   * Imports a previously exported configuration file, transactionally wiping and recreating every
-   * in-scope section of the local configuration (scan modes, ip filters, certificates, transformers,
-   * south and north connectors, history queries and users) from it, preserving each entity's original
-   * id. This is a full replace, not a merge, and cannot be undone. The engine's own settings and the
-   * OIAnalytics registration are never touched. Older exports are brought forward with the
-   * settings-upgrade registry before being applied; nothing is written if the file is malformed, too
-   * new for this OIBus version, or fails validation after any upgrades.
+   * Imports a configuration export file (from OIBus or OIAnalytics), transactionally wiping and
+   * recreating every in-scope section of the local configuration (scan modes, ip filters, certificates,
+   * transformers, south connectors and their configuration workflows, north connectors, history queries
+   * and users) from it, preserving each entity's original id. This is a full replace, not a merge, and
+   * cannot be undone. The engine's own settings and the OIAnalytics registration are never touched.
+   * A configuration from an older OIBus is brought to the current shape by the config upgrade chain
+   * before being applied; nothing is written if the file is malformed, comes from a newer OIBus (or one
+   * older than 3.9.0), or fails validation after the upgrades.
    *
    * On success, OIBus restarts itself so the running engine picks up the newly written configuration
    * — the wipe+recreate only touches the database, and the in-memory south/north connectors and

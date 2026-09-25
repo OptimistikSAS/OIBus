@@ -564,6 +564,35 @@ describe('SouthConnectorRepository', () => {
     assert.deepStrictEqual(call.arguments.slice(0, 3), ['south_item', itemId, 'UPDATE']);
   });
 
+  it('should restore the workflow ownership and disabled reason of an item, without auditing it', () => {
+    const southId = testData.south.list[0].id;
+    const itemId = testData.south.list[0].items[0].id;
+    const workflowRepository = new ConfigurationWorkflowRepository(database, auditService);
+    const workflow = workflowRepository.create(
+      {
+        name: `Restore ownership workflow ${itemId}`,
+        southId,
+        discoveryScope: {},
+        identityKeyFields: ['nodeId'],
+        eligibilityFilter: [],
+        itemFieldMapping: { name: '{{name}}' },
+        pushToOIAnalytics: false,
+        scanMode: null,
+        enabled: true
+      },
+      'workflowUser'
+    );
+    const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
+    const auditCallCount = recordMock.mock.calls.length;
+
+    repository.restoreItemWorkflowOwnership(itemId, workflow.id, 'not found anymore');
+
+    const found = repository.findItemById(southId, itemId)!;
+    assert.strictEqual(found.createdByWorkflowId, workflow.id);
+    assert.strictEqual(found.disabledReason, 'not found anymore');
+    assert.strictEqual(recordMock.mock.calls.length, auditCallCount);
+  });
+
   it('should clear created_by_workflow_id (not delete the item) when the owning workflow is deleted', () => {
     const southId = testData.south.list[0].id;
     const itemId = testData.south.list[0].items[0].id;
