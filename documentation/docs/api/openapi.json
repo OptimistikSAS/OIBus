@@ -42944,6 +42944,33 @@
 				],
 				"description": "Type representing an audit action."
 			},
+			"AuditEntityInfoDTO": {
+				"description": "Information about the entity an audit log entry relates to, resolved at read time.",
+				"properties": {
+					"exists": {
+						"type": "boolean",
+						"description": "Whether the audited entity still exists in the configuration."
+					},
+					"name": {
+						"type": "string",
+						"nullable": true,
+						"description": "Current name of the entity if it exists, otherwise its last known name from the recorded snapshots.",
+						"example": "My South connector"
+					},
+					"parentId": {
+						"type": "string",
+						"nullable": true,
+						"description": "Identifier of the owning entity (south connector, north connector or history query) for child entities\n(items, groups, configuration workflows, transformers). `null` otherwise, or when the entity no longer exists."
+					}
+				},
+				"required": [
+					"exists",
+					"name",
+					"parentId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"AuditLogDTO": {
 				"description": "Data Transfer Object for an audit log entry.\nRepresents a single create/update/delete event recorded against an audited entity.",
 				"properties": {
@@ -42983,9 +43010,13 @@
 						"nullable": true,
 						"description": "A JSON snapshot of the entity after the change. `null` for `DELETE`."
 					},
-					"userId": {
-						"type": "string",
-						"description": "The identifier of the user who performed the change."
+					"entity": {
+						"$ref": "#/components/schemas/AuditEntityInfoDTO",
+						"description": "Information about the audited entity (name, existence, owning entity)."
+					},
+					"user": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who performed the change."
 					},
 					"createdAt": {
 						"type": "string",
@@ -43000,7 +43031,8 @@
 					"action",
 					"previousState",
 					"newState",
-					"userId",
+					"entity",
+					"user",
 					"createdAt"
 				],
 				"type": "object",

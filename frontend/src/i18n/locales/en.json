@@ -3136,7 +3136,9 @@
       }
     },
     "tooltips": {
-      "view": "View audit log details"
+      "view": "View audit log details",
+      "entity-id": "ID: {{id}}",
+      "deleted-entity": "Deleted entity (ID: {{id}})"
     },
     "actions": {
       "CREATE": "Create",
@@ -3156,11 +3158,13 @@
       "all-entity-types": "All entity types",
       "all-actions": "All actions"
     },
-    "entity-type": "Entity type",
-    "entity-id": "Entity ID",
-    "action": "Action",
+    "entity": "Entity",
+    "action-date": "Action / Date",
     "user": "User",
-    "date": "Date"
+    "users": {
+      "oianalytics": "OIAnalytics",
+      "system": "System"
+    }
   },
   "logs": {
     "title": "Logs",

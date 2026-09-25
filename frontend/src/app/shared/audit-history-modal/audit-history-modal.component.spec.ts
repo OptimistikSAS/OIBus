@@ -29,7 +29,8 @@ describe('AuditHistoryModalComponent', () => {
       action: 'UPDATE',
       previousState: { name: 'old-name' },
       newState: { name: 'new-name' },
-      userId: 'userId1',
+      entity: { exists: true, name: 'new-name', parentId: null },
+      user: { id: 'oianalytics', friendlyName: 'OIAnalytics' },
       createdAt: '2024-02-02T09:00:00.000Z'
     },
     {
@@ -39,7 +40,8 @@ describe('AuditHistoryModalComponent', () => {
       action: 'CREATE',
       previousState: null,
       newState: { name: 'old-name' },
-      userId: 'userId1',
+      entity: { exists: true, name: 'new-name', parentId: null },
+      user: { id: 'oianalytics', friendlyName: 'OIAnalytics' },
       createdAt: '2024-01-01T08:00:00.000Z'
     }
   ];
@@ -66,6 +68,7 @@ describe('AuditHistoryModalComponent', () => {
     expect(auditService.getHistory).toHaveBeenCalledWith('south_connector', 'entityId1');
     await expect.element(tester.rows.nth(0)).toBeInTheDocument();
     await expect.element(tester.rows.nth(1)).toBeInTheDocument();
+    await expect.element(tester.rows.nth(0).getByCss('.text-muted')).toHaveTextContent('OIAnalytics');
   });
 
   test('should display an empty state message when there is no history', async () => {
@@ -86,7 +89,7 @@ describe('AuditHistoryModalComponent', () => {
     tester.fixture.componentInstance.toggleRow('id1');
     tester.fixture.detectChanges();
     expect(tester.fixture.componentInstance.expandedRowId()).toEqual('id1');
-    await expect.element(tester.root.getByCss('oib-audit-diff')).toBeInTheDocument();
+    await expect.element(tester.root.getByCss('oib-audit-json-diff')).toBeInTheDocument();
 
     tester.fixture.componentInstance.toggleRow('id1');
     tester.fixture.detectChanges();
@@ -100,11 +103,12 @@ describe('AuditHistoryModalComponent', () => {
 
     tester.fixture.componentInstance.toggleRow('id1');
     tester.fixture.detectChanges();
-    await expect.element(tester.root.getByCss('oib-audit-diff')).toBeInTheDocument();
-
-    tester.fixture.componentInstance.changeMode('json-diff');
-    tester.fixture.detectChanges();
+    // JSON diff is the default mode
     await expect.element(tester.root.getByCss('oib-audit-json-diff')).toBeInTheDocument();
+
+    tester.fixture.componentInstance.changeMode('table');
+    tester.fixture.detectChanges();
+    await expect.element(tester.root.getByCss('oib-audit-diff')).toBeInTheDocument();
 
     tester.fixture.componentInstance.changeMode('json-side-by-side');
     tester.fixture.detectChanges();
