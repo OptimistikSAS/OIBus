@@ -17,6 +17,7 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 
 @Component({
   selector: 'oib-north-transformers',
@@ -174,6 +175,14 @@ export class NorthTransformersComponent {
         }
         this.inMemoryTransformersWithOptions.emit(this.transformersWithOptions);
       });
+  }
+
+  /**
+   * Open a modal to view the audit history of a transformer of the north connector
+   */
+  showAudit(transformer: TransformerDTOWithOptions) {
+    const modalRef = this.modalService.open(AuditHistoryModalComponent, { size: 'xl' });
+    modalRef.componentInstance.prepare('north_transformer', transformer.id);
   }
 
   formatTransformerSource(transformer: TransformerDTOWithOptions) {

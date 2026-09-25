@@ -146,6 +146,32 @@ describe('HistoryQueryRepository', () => {
     assert.strictEqual(transformerCreateCalls.length, 1);
     assert.strictEqual(transformerCreateCalls[0].arguments[5], 'transformerUser');
 
+    // Re-saving an unchanged transformer (as done when saving the history query) records nothing
+    recordMock.mock.resetCalls();
+    repository.addOrEditTransformer(newHistoryWithoutTransformerId, createdHistoryWithTransformer.northTransformers[0], 'transformerUser');
+    assert.strictEqual(recordMock.mock.calls.length, 0);
+
+    // A changed transformer is recorded as an update
+    repository.addOrEditTransformer(
+      newHistoryWithoutTransformerId,
+      { ...createdHistoryWithTransformer.northTransformers[0], options: { field: 'value' } },
+      'transformerUser'
+    );
+    const updatedTransformer = repository.findHistoryById(newHistoryWithoutTransformerId)!.northTransformers[0];
+    assert.deepStrictEqual(
+      recordMock.mock.calls.map(call => call.arguments),
+      [
+        [
+          'history_query_transformer',
+          transformerId,
+          'UPDATE',
+          createdHistoryWithTransformer.northTransformers[0],
+          updatedTransformer,
+          'transformerUser'
+        ]
+      ]
+    );
+
     recordMock.mock.resetCalls();
     repository.removeTransformer(transformerId, 'removeUser');
     const createdHistoryWithRemovedTransformer = repository.findHistoryById(newHistoryWithoutTransformerId)!;
