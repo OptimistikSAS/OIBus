@@ -328,6 +328,8 @@ export default class NorthConnectorRepository {
     }
 
     const after = this.findTransformersForNorth(northId).find(t => t.id === transformerWithOptions.id) ?? null;
+    // Saving a north connector re-saves all its transformers: only record the ones that actually changed
+    if (!wasNew && JSON.stringify(before) === JSON.stringify(after)) return;
     this.auditService.record(
       'north_transformer',
       transformerWithOptions.id,
