@@ -60,6 +60,40 @@ describe('Audit Service', () => {
     ]);
   });
 
+  it('should strip tracking fields from sub entities, keeping their ids', () => {
+    const tracking = {
+      createdAt: '2020-01-01T00:00:00.000Z',
+      createdBy: 'user1',
+      updatedAt: '2020-01-02T00:00:00.000Z',
+      updatedBy: 'user1'
+    };
+    const entity = {
+      id: 'south1',
+      ...tracking,
+      name: 'my south',
+      settings: { port: 502 },
+      items: [
+        {
+          id: 'item1',
+          ...tracking,
+          name: 'item',
+          scanMode: { id: 'scanMode1', ...tracking, name: 'every second' },
+          group: null
+        }
+      ]
+    };
+
+    service.record('south_connector', 'south1', 'CREATE', null, entity, 'user1');
+
+    assert.deepStrictEqual(auditRepository.record.mock.calls[0].arguments[4], {
+      name: 'my south',
+      settings: { port: 502 },
+      items: [{ id: 'item1', name: 'item', scanMode: { id: 'scanMode1', name: 'every second' }, group: null }]
+    });
+    // The recorded entity is not altered
+    assert.strictEqual(entity.items[0].createdBy, 'user1');
+  });
+
   it('should not call the repository when the userId is "system"', () => {
     service.record('south_connector', 'id1', 'CREATE', null, { name: 'my south' }, 'system');
 
