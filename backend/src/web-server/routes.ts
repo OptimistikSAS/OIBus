@@ -9435,7 +9435,9 @@ const models: TsoaRoute.Models = {
     "ConfigImportResponseDTO": {
         "dataType": "refObject",
         "properties": {
-            "appliedUpgrades": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"entityId":{"dataType":"string"},"version":{"dataType":"string","required":true},"scope":{"dataType":"string","required":true}}},"required":true},
+            "fromVersion": {"dataType":"string","required":true},
+            "toVersion": {"dataType":"string","required":true},
+            "appliedUpgrades": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"description":{"dataType":"string","required":true},"version":{"dataType":"string","required":true}}},"required":true},
             "warnings": {"dataType":"array","array":{"dataType":"string"},"required":true},
         },
         "additionalProperties": false,

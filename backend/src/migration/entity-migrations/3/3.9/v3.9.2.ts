@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import { removeEmptyTimestampOrigin } from '../../../../service/config-transfer/config-upgrades/3.9/v3.9.2';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';
@@ -11,6 +12,8 @@ const HISTORY_ITEMS_TABLE = 'history_items';
  * 'ha' mode). The field is a strict 'oibus' | 'point' | 'server' enum, so a stored '' fails
  * validation as soon as the connector or history query is saved, blocking any edit to it. Strip the
  * stray empty value so existing items validate again, matching what the UI itself sends today.
+ *
+ * Shared with the config upgrade of the same version (applied to imported configurations).
  */
 export async function up(knex: Knex): Promise<void> {
   const opcuaConnectorIds = knex(SOUTH_CONNECTORS_TABLE).select('id').where('type', 'opcua');
@@ -19,11 +22,11 @@ export async function up(knex: Knex): Promise<void> {
     .whereIn('connector_id', opcuaConnectorIds);
   for (const item of southItems) {
     const settings = JSON.parse(item.settings) as Record<string, unknown>;
-    if (settings.timestampOrigin === '') {
-      delete settings.timestampOrigin;
+    const upgraded = removeEmptyTimestampOrigin(settings);
+    if (upgraded !== settings) {
       await knex(SOUTH_ITEMS_TABLE)
         .where('id', item.id)
-        .update({ settings: JSON.stringify(settings) });
+        .update({ settings: JSON.stringify(upgraded) });
     }
   }
 
@@ -33,11 +36,11 @@ export async function up(knex: Knex): Promise<void> {
     .whereIn('history_id', opcuaHistoryQueryIds);
   for (const item of historyItems) {
     const settings = JSON.parse(item.settings) as Record<string, unknown>;
-    if (settings.timestampOrigin === '') {
-      delete settings.timestampOrigin;
+    const upgraded = removeEmptyTimestampOrigin(settings);
+    if (upgraded !== settings) {
       await knex(HISTORY_ITEMS_TABLE)
         .where('id', item.id)
-        .update({ settings: JSON.stringify(settings) });
+        .update({ settings: JSON.stringify(upgraded) });
     }
   }
 }

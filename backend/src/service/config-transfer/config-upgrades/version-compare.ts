@@ -11,7 +11,7 @@
  * identifier, numerically where both are numbers ("3.9.0-beta-9" < "3.9.0-beta-10").
  *
  * Shared by the entity-migration directory ordering (`migration-service.ts`) and the
- * settings-upgrade registry (`getUpgradesNewerThan`), which both need the same "3.9" < "3.10"
+ * config-upgrade chain (`getUpgradesBetween`), which both need the same "3.9" < "3.10"
  * semantics.
  */
 export function compareVersions(a: string, b: string): number {

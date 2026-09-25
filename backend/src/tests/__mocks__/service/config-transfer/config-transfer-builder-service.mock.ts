@@ -8,7 +8,7 @@ import { OIAnalyticsRegistration } from '../../../../model/oianalytics-registrat
  */
 export default class ConfigTransferBuilderServiceMock extends ConfigTransferBuilderService {
   constructor() {
-    super(null!, null!, null!, null!, null!, null!, null!, null!, null!, null!, false, false);
+    super(null!, null!, null!, null!, null!, null!, null!, null!, null!, null!, null!, false, false);
   }
   override buildFullConfiguration = mock.fn(
     (_registration: OIAnalyticsRegistration): OIBusFullConfigurationCommandDTO => ({}) as OIBusFullConfigurationCommandDTO
