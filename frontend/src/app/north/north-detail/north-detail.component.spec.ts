@@ -3,6 +3,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
 
 import { NorthDetailComponent } from './north-detail.component';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -15,13 +16,18 @@ import { ModalService } from '../../shared/modal.service';
 import { WindowService } from '../../shared/window.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { OIBusInfo } from '../../../../../backend/shared/model/engine.model';
 
 describe('NorthDetailComponent', () => {
+  let northConnectorService: MockObject<NorthConnectorService>;
+  let modalService: MockObject<ModalService>;
+
   beforeEach(() => {
-    const northConnectorService = createMock(NorthConnectorService);
+    northConnectorService = createMock(NorthConnectorService);
+    modalService = createMock(ModalService);
     const scanModeService = createMock(ScanModeService);
     const certificateService = createMock(CertificateService);
     const transformerService = createMock(TransformerService);
@@ -55,7 +61,7 @@ describe('NorthDetailComponent', () => {
         { provide: TransformerService, useValue: transformerService },
         { provide: EngineService, useValue: engineService },
         { provide: NotificationService, useValue: createMock(NotificationService) },
-        { provide: ModalService, useValue: createMock(ModalService) },
+        { provide: ModalService, useValue: modalService },
         { provide: WindowService, useValue: createMock(WindowService) }
       ]
     });
@@ -65,6 +71,24 @@ describe('NorthDetailComponent', () => {
     const fixture = TestBed.createComponent(NorthDetailComponent);
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  test('should open the audit history of the north connector', async () => {
+    northConnectorService.getNorthManifest.mockReturnValue(of(testData.north.manifest));
+    function MockEventSource(this: { addEventListener: () => void; close: () => void }) {
+      this.addEventListener = vi.fn();
+      this.close = vi.fn();
+    }
+    Object.defineProperty(window, 'EventSource', { value: MockEventSource, writable: true, configurable: true });
+    const prepare = vi.fn();
+    modalService.open.mockReturnValue({ componentInstance: { prepare } } as any);
+    const fixture = TestBed.createComponent(NorthDetailComponent);
+    fixture.detectChanges();
+
+    await page.elementLocator(fixture.nativeElement).getByCss('#show-audit-button').click();
+
+    expect(modalService.open).toHaveBeenCalledWith(AuditHistoryModalComponent, { size: 'xl' });
+    expect(prepare).toHaveBeenCalledWith('north_connector', testData.north.list[0].id);
   });
 
   test('should poll the north connector metrics', async () => {
