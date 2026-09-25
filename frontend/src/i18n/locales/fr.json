@@ -1965,7 +1965,10 @@
       "max-caching-interval": "Intervalle de mise en cache maximal",
       "scan-mode-change-warning": "Changer la planification lorsque l'instant maximal par élément est désactivé peut entraîner une duplication ou une perte de données.",
       "sync-with-group": "Synchroniser avec le groupe",
-      "not-synced-notice": "L'élément utilise ses propres paramètres d'historisation (non synchronisé avec le groupe)"
+      "not-synced-notice": "L'élément utilise ses propres paramètres d'historisation (non synchronisé avec le groupe)",
+      "tooltips": {
+        "audit": "Voir l'historique d'audit de l'élément"
+      }
     },
     "groups": {
       "create-title": "Créer un nouveau groupe",
@@ -2680,7 +2683,8 @@
         "add": "Ajouter un nouvel élément",
         "edit": "Modifier l'élément",
         "duplicate": "Dupliquer l'élément",
-        "delete": "Supprimer l'élément"
+        "delete": "Supprimer l'élément",
+        "audit": "Voir l'historique d'audit de l'élément"
       }
     },
     "monitoring": {
