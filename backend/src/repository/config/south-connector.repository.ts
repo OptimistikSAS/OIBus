@@ -21,7 +21,7 @@ import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { ScanMode } from '../../model/scan-mode.model';
 import { scanModeAliasedColumns, scanModeColumns, toScanMode, toScanModeFromPrefixedRow } from './scan-mode.repository';
 import SouthItemGroupRepository from './south-item-group.repository';
-import AuditService from '../../service/audit.service';
+import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
 import { encryptionService } from '../../service/encryption.service';
 import { southManifestList } from '../../service/south-manifests';
 
@@ -312,7 +312,13 @@ export default class SouthConnectorRepository {
               item.updatedBy
             );
             const created = this.findItemById(south.id, item.id);
-            this.auditService.record('south_item', item.id, 'CREATE', null, this.redactItem(created, south.type), item.updatedBy);
+            this.auditService.record(
+              'south_item',
+              item.id,
+              'CREATE',
+              ...redactAuditSnapshots(null, created, entity => this.redactItem(entity, south.type)),
+              item.updatedBy
+            );
           } else {
             const existing = existingItemsById.get(item.id);
             const hasChanged =
@@ -359,8 +365,7 @@ export default class SouthConnectorRepository {
                 'south_item',
                 item.id,
                 'UPDATE',
-                this.redactItem(beforeItemsById.get(item.id) ?? null, south.type),
-                this.redactItem(after, south.type),
+                ...redactAuditSnapshots(beforeItemsById.get(item.id) ?? null, after, entity => this.redactItem(entity, south.type)),
                 item.updatedBy
               );
             }
@@ -404,8 +409,7 @@ export default class SouthConnectorRepository {
         'south_connector',
         south.id,
         isNewConnector ? 'CREATE' : 'UPDATE',
-        this.redactConnector(beforeConnector),
-        this.redactConnector(afterConnector),
+        ...redactAuditSnapshots(beforeConnector, afterConnector, connector => this.redactConnector(connector)),
         south.updatedBy
       );
     });
@@ -637,8 +641,7 @@ export default class SouthConnectorRepository {
       'south_item',
       southItem.id,
       wasNew ? 'CREATE' : 'UPDATE',
-      southType ? this.redactItem(before, southType) : (before as unknown as Record<string, unknown> | null),
-      southType ? this.redactItem(after, southType) : (after as unknown as Record<string, unknown>),
+      ...redactAuditSnapshots(before, after, entity => this.redactAuditItem(entity, southType)),
       southItem.updatedBy
     );
   }
@@ -745,8 +748,7 @@ export default class SouthConnectorRepository {
       'south_item',
       itemId,
       'UPDATE',
-      southType ? this.redactItem(before, southType) : (before as unknown as Record<string, unknown> | null),
-      southType ? this.redactItem(after, southType) : (after as unknown as Record<string, unknown> | null),
+      ...redactAuditSnapshots(before, after, entity => this.redactAuditItem(entity, southType)),
       updatedBy
     );
   }
@@ -769,8 +771,7 @@ export default class SouthConnectorRepository {
       'south_item',
       itemId,
       'UPDATE',
-      southType ? this.redactItem(before, southType) : (before as unknown as Record<string, unknown> | null),
-      southType ? this.redactItem(after, southType) : (after as unknown as Record<string, unknown> | null),
+      ...redactAuditSnapshots(before, after, entity => this.redactAuditItem(entity, southType)),
       updatedBy
     );
   }
@@ -840,6 +841,13 @@ export default class SouthConnectorRepository {
    * Returns a shallow copy of the south item with its settings' secret fields redacted, using the
    * same item-level manifest lookup as toSouthConnectorItemDTO in south-connector-dto.utils.ts.
    */
+  private redactAuditItem(
+    entity: SouthConnectorItemEntity<SouthItemSettings>,
+    southType: string | undefined
+  ): Record<string, unknown> | null {
+    return southType ? this.redactItem(entity, southType) : (entity as unknown as Record<string, unknown>);
+  }
+
   private redactItem(entity: SouthConnectorItemEntity<SouthItemSettings> | null, southType: string): Record<string, unknown> | null {
     if (!entity) return null;
     const manifest = southManifestList.find(element => element.id === southType);

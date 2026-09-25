@@ -2323,7 +2323,8 @@
       }
     },
     "tooltips": {
-      "edit": "Modifier les paramètres du moteur"
+      "edit": "Modifier les paramètres du moteur",
+      "audit": "Voir l'historique d'audit"
     }
   },
   "enums": {
@@ -2359,7 +2360,10 @@
       "certificate": "Certificat",
       "user": "Utilisateur",
       "transformer": "Transformateur",
-      "engine": "Moteur",
+      "engine_general": "Moteur – paramètres généraux",
+      "engine_web_server": "Moteur – serveur web",
+      "engine_proxy_server": "Moteur – serveur proxy",
+      "engine_logging": "Moteur – journalisation et audit",
       "oianalytics_registration": "Enregistrement OIAnalytics"
     },
     "internal-scope-ids": {

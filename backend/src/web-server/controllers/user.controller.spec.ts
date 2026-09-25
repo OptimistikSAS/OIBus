@@ -118,7 +118,7 @@ describe('UserController', () => {
     await controller.updatePassword(userId, command, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(userService.updatePassword.mock.calls.length, 1);
-    assert.deepStrictEqual(userService.updatePassword.mock.calls[0].arguments, [userId, 'newPassword']);
+    assert.deepStrictEqual(userService.updatePassword.mock.calls[0].arguments, [userId, 'newPassword', testData.users.list[0].id]);
   });
 
   it('should delete a user', async () => {
