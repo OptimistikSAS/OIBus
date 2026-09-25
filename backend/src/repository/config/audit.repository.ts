@@ -34,7 +34,10 @@ const ENTITY_REFERENCE_QUERIES: Record<AuditEntityType, string> = {
   certificate: `SELECT name, NULL AS parent_id FROM certificates WHERE id = ?;`,
   user: `SELECT login AS name, NULL AS parent_id FROM users WHERE id = ?;`,
   transformer: `SELECT name, NULL AS parent_id FROM transformers WHERE id = ?;`,
-  engine: `SELECT name, NULL AS parent_id FROM engines WHERE id = ?;`,
+  engine_general: `SELECT name, NULL AS parent_id FROM engines WHERE id = ?;`,
+  engine_web_server: `SELECT name, NULL AS parent_id FROM engines WHERE id = ?;`,
+  engine_proxy_server: `SELECT name, NULL AS parent_id FROM engines WHERE id = ?;`,
+  engine_logging: `SELECT name, NULL AS parent_id FROM engines WHERE id = ?;`,
   oianalytics_registration: `SELECT host AS name, NULL AS parent_id FROM registrations WHERE id = ?;`
 };
 

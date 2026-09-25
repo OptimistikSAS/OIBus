@@ -88,7 +88,7 @@ export class UserController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const userService = request.services.userService;
-    await userService.updatePassword(userId, command.newPassword);
+    await userService.updatePassword(userId, command.newPassword, request.user.id);
   }
 
   /**

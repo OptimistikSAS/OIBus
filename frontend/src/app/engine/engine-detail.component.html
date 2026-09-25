@@ -54,15 +54,26 @@
           <ng-template oibBoxTitle>
             <div class="d-flex align-items-center justify-content-between">
               <span translate="engine.general-settings.title"></span>
-              <button
-                type="button"
-                class="btn btn-sm btn-primary"
-                id="edit-name-button"
-                (click)="openNameModal()"
-                [ngbTooltip]="'engine.tooltips.edit' | translate"
-              >
-                <i class="fa fa-pencil"></i>
-              </button>
+              <div class="d-flex gap-1">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary"
+                  id="show-audit-general-button"
+                  (click)="showAudit('engine_general')"
+                  [ngbTooltip]="'engine.tooltips.audit' | translate"
+                >
+                  <i class="fa fa-history"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary"
+                  id="edit-name-button"
+                  (click)="openNameModal()"
+                  [ngbTooltip]="'engine.tooltips.edit' | translate"
+                >
+                  <i class="fa fa-pencil"></i>
+                </button>
+              </div>
             </div>
           </ng-template>
           <table class="table table-sm table-hover oib-table mb-3">
@@ -80,15 +91,26 @@
           <ng-template oibBoxTitle>
             <div class="d-flex align-items-center justify-content-between">
               <span translate="engine.web-server-settings.title"></span>
-              <button
-                type="button"
-                class="btn btn-sm btn-primary"
-                id="edit-web-server-button"
-                (click)="openWebServerModal()"
-                [ngbTooltip]="'engine.tooltips.edit' | translate"
-              >
-                <i class="fa fa-pencil"></i>
-              </button>
+              <div class="d-flex gap-1">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary"
+                  id="show-audit-web-server-button"
+                  (click)="showAudit('engine_web_server')"
+                  [ngbTooltip]="'engine.tooltips.audit' | translate"
+                >
+                  <i class="fa fa-history"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary"
+                  id="edit-web-server-button"
+                  (click)="openWebServerModal()"
+                  [ngbTooltip]="'engine.tooltips.edit' | translate"
+                >
+                  <i class="fa fa-pencil"></i>
+                </button>
+              </div>
             </div>
           </ng-template>
           <table class="table table-sm table-hover oib-table mb-3">
@@ -110,15 +132,26 @@
           <ng-template oibBoxTitle>
             <div class="d-flex align-items-center justify-content-between">
               <span translate="engine.proxy-settings.title"></span>
-              <button
-                type="button"
-                class="btn btn-sm btn-primary"
-                id="edit-proxy-button"
-                (click)="openProxyModal()"
-                [ngbTooltip]="'engine.tooltips.edit' | translate"
-              >
-                <i class="fa fa-pencil"></i>
-              </button>
+              <div class="d-flex gap-1">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary"
+                  id="show-audit-proxy-button"
+                  (click)="showAudit('engine_proxy_server')"
+                  [ngbTooltip]="'engine.tooltips.audit' | translate"
+                >
+                  <i class="fa fa-history"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary"
+                  id="edit-proxy-button"
+                  (click)="openProxyModal()"
+                  [ngbTooltip]="'engine.tooltips.edit' | translate"
+                >
+                  <i class="fa fa-pencil"></i>
+                </button>
+              </div>
             </div>
           </ng-template>
           <table class="table table-sm table-hover oib-table mb-3">
@@ -144,15 +177,26 @@
           <ng-template oibBoxTitle>
             <div class="d-flex align-items-center justify-content-between">
               <span translate="engine.logger.title"></span>
-              <button
-                type="button"
-                class="btn btn-sm btn-primary"
-                id="edit-logger-button"
-                (click)="openLoggerModal()"
-                [ngbTooltip]="'engine.tooltips.edit' | translate"
-              >
-                <i class="fa fa-pencil"></i>
-              </button>
+              <div class="d-flex gap-1">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary"
+                  id="show-audit-logger-button"
+                  (click)="showAudit('engine_logging')"
+                  [ngbTooltip]="'engine.tooltips.audit' | translate"
+                >
+                  <i class="fa fa-history"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary"
+                  id="edit-logger-button"
+                  (click)="openLoggerModal()"
+                  [ngbTooltip]="'engine.tooltips.edit' | translate"
+                >
+                  <i class="fa fa-pencil"></i>
+                </button>
+              </div>
             </div>
           </ng-template>
           <table class="table table-sm table-hover oib-table mb-3">

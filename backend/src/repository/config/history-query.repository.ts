@@ -13,7 +13,7 @@ import { toTransformer } from './transformer.repository';
 import { ScanMode } from '../../model/scan-mode.model';
 import { scanModeColumns, toScanMode } from './scan-mode.repository';
 import { SouthConnectorItemEntityLight } from '../../model/south-connector.model';
-import AuditService from '../../service/audit.service';
+import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
 import { encryptionService } from '../../service/encryption.service';
 import { southManifestList } from '../../service/south-manifests';
 import { northManifestList } from '../../service/north-manifests';
@@ -231,8 +231,7 @@ export default class HistoryQueryRepository {
               'history_query_item',
               item.id,
               'CREATE',
-              null,
-              this.redactItem(created, history.southType),
+              ...redactAuditSnapshots(null, created, entity => this.redactItem(entity, history.southType)),
               item.updatedBy
             );
           } else {
@@ -249,8 +248,7 @@ export default class HistoryQueryRepository {
                 'history_query_item',
                 item.id,
                 'UPDATE',
-                this.redactItem(beforeItemsById.get(item.id) ?? null, history.southType),
-                this.redactItem(after, history.southType),
+                ...redactAuditSnapshots(beforeItemsById.get(item.id) ?? null, after, entity => this.redactItem(entity, history.southType)),
                 item.updatedBy
               );
             }
@@ -348,8 +346,7 @@ export default class HistoryQueryRepository {
         'history_query',
         history.id,
         isNew ? 'CREATE' : 'UPDATE',
-        this.redactHistory(beforeHistory),
-        this.redactHistory(afterHistory),
+        ...redactAuditSnapshots(beforeHistory, afterHistory, entity => this.redactHistory(entity)),
         history.updatedBy
       );
     });
@@ -581,10 +578,9 @@ export default class HistoryQueryRepository {
       'history_query_item',
       item.id,
       wasNew ? 'CREATE' : 'UPDATE',
-      southType
-        ? this.redactItem(before as unknown as HistoryQueryItemEntity<SouthItemSettings> | null, southType)
-        : (before as unknown as Record<string, unknown> | null),
-      southType ? this.redactItem(after, southType) : (after as unknown as Record<string, unknown>),
+      ...redactAuditSnapshots(before as unknown as HistoryQueryItemEntity<SouthItemSettings> | null, after, entity =>
+        southType ? this.redactItem(entity, southType) : (entity as unknown as Record<string, unknown>)
+      ),
       item.updatedBy
     );
   }
