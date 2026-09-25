@@ -1,7 +1,7 @@
 import knex, { Knex } from 'knex';
 import path from 'node:path';
 import { readdirSync } from 'node:fs';
-import { compareVersions as compareVersionDirNames } from '../service/config-transfer/settings-upgrades/version-compare';
+import { compareVersions as compareVersionDirNames } from '../service/config-transfer/config-upgrades/version-compare';
 
 /**
  * Recursively finds all leaf directories under `base` (i.e. directories that

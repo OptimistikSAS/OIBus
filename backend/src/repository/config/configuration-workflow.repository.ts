@@ -29,6 +29,17 @@ export default class ConfigurationWorkflowRepository {
     return result ? toConfigurationWorkflow(result) : null;
   }
 
+  findAll(): Array<ConfigurationWorkflowEntity> {
+    const query =
+      `SELECT ${SELECT_COLUMNS}, ${scanModeAliasedColumns('s', 'sm_')} ` +
+      `FROM ${CONFIGURATION_WORKFLOWS_TABLE} w LEFT JOIN ${SCAN_MODE_TABLE} s ON w.scan_mode_id = s.id ` +
+      `ORDER BY w.south_id, w.created_at;`;
+    return this.database
+      .prepare(query)
+      .all()
+      .map(result => toConfigurationWorkflow(result as Record<string, unknown>));
+  }
+
   findBySouthId(southId: string): Array<ConfigurationWorkflowEntity> {
     const query =
       `SELECT ${SELECT_COLUMNS}, ${scanModeAliasedColumns('s', 'sm_')} ` +

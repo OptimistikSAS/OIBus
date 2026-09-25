@@ -1,0 +1,3644 @@
+{
+  "oibusVersion": "3.9.0",
+  "exportedAt": "2026-01-01T00:00:00.000Z",
+  "config": {
+    "engine": {
+      "oIBusInternalId": "oibusId1",
+      "oIBusCreatedBy": "",
+      "oIBusUpdatedBy": "",
+      "oIBusCreatedAt": "",
+      "oIBusUpdatedAt": "",
+      "name": "OIBus",
+      "softwareVersion": "3.9.0",
+      "launcherVersion": "3.9.0",
+      "architecture": "x64",
+      "operatingSystem": "linux",
+      "dataFolder": "/oibus/data",
+      "binaryFolder": "/oibus/bin",
+      "ignoreIpFilters": false,
+      "ignoreRemoteUpdate": false,
+      "settings": {
+        "general": {
+          "name": "OIBus"
+        },
+        "webServer": {
+          "port": 2223,
+          "authTokenDuration": "7d"
+        },
+        "proxyServer": {
+          "enabled": true,
+          "port": 9000,
+          "username": "proxy-server-user",
+          "password": null,
+          "forward": {
+            "enabled": true,
+            "url": "http://forward-proxy:3128",
+            "username": "proxy-user",
+            "password": null
+          }
+        },
+        "logger": {
+          "console": {
+            "level": "info"
+          },
+          "file": {
+            "level": "info",
+            "maxFileSize": 50,
+            "numberOfFiles": 5
+          },
+          "database": {
+            "level": "info",
+            "maxNumberOfLogs": 100000
+          },
+          "loki": {
+            "level": "info",
+            "interval": 60,
+            "address": "http://localhost:8080",
+            "username": "",
+            "password": ""
+          },
+          "oia": {
+            "level": "info",
+            "interval": 10
+          },
+          "syslog": {
+            "level": "info",
+            "host": "syslog.example.com",
+            "port": 514,
+            "protocol": "udp4"
+          }
+        }
+      }
+    },
+    "registration": {
+      "oIBusInternalId": "registrationId1",
+      "oIBusCreatedBy": "",
+      "oIBusUpdatedBy": "",
+      "oIBusCreatedAt": "",
+      "oIBusUpdatedAt": "",
+      "publicKey": "public key",
+      "settings": {
+        "commandRefreshInterval": 10,
+        "commandRetryInterval": 5,
+        "messageRetryInterval": 5,
+        "commandPermissions": {
+          "updateVersion": true,
+          "restartEngine": true,
+          "regenerateCipherKeys": true,
+          "updateEngineSettings": true,
+          "updateRegistrationSettings": true,
+          "createScanMode": true,
+          "updateScanMode": true,
+          "deleteScanMode": true,
+          "createIpFilter": true,
+          "updateIpFilter": true,
+          "deleteIpFilter": true,
+          "createCertificate": true,
+          "updateCertificate": true,
+          "deleteCertificate": true,
+          "createHistoryQuery": true,
+          "updateHistoryQuery": true,
+          "deleteHistoryQuery": true,
+          "createOrUpdateHistoryItemsFromCsv": true,
+          "testHistoryNorthConnection": true,
+          "testHistorySouthConnection": true,
+          "testHistorySouthItem": true,
+          "createSouth": true,
+          "updateSouth": true,
+          "deleteSouth": true,
+          "createOrUpdateSouthItemsFromCsv": true,
+          "testSouthConnection": true,
+          "testSouthItem": true,
+          "createNorth": true,
+          "updateNorth": true,
+          "deleteNorth": true,
+          "testNorthConnection": true,
+          "setpoint": true,
+          "searchHistoryCacheContent": true,
+          "getHistoryCacheFileContent": true,
+          "updateHistoryCacheContent": true,
+          "searchNorthCacheContent": true,
+          "getNorthCacheFileContent": true,
+          "updateNorthCacheContent": true,
+          "createCustomTransformer": true,
+          "updateCustomTransformer": true,
+          "deleteCustomTransformer": true,
+          "testCustomTransformer": true
+        }
+      }
+    },
+    "scanModes": [
+      {
+        "oIBusInternalId": "scanModeId1",
+        "oIBusCreatedBy": "",
+        "oIBusUpdatedBy": "",
+        "oIBusCreatedAt": "",
+        "oIBusUpdatedAt": "",
+        "settings": {
+          "name": "scanMode1",
+          "description": "my first scanMode",
+          "cron": "* * * * * *"
+        }
+      },
+      {
+        "oIBusInternalId": "scanModeId2",
+        "oIBusCreatedBy": "",
+        "oIBusUpdatedBy": "",
+        "oIBusCreatedAt": "",
+        "oIBusUpdatedAt": "",
+        "settings": {
+          "name": "scanMode2",
+          "description": "my second scanMode",
+          "cron": "0 * * * * *"
+        }
+      },
+      {
+        "oIBusInternalId": "subscription",
+        "oIBusCreatedBy": "",
+        "oIBusUpdatedBy": "",
+        "oIBusCreatedAt": "",
+        "oIBusUpdatedAt": "",
+        "settings": {
+          "name": "Subscription",
+          "description": "Subscription",
+          "cron": "subscription"
+        }
+      }
+    ],
+    "ipFilters": [
+      {
+        "oIBusInternalId": "ipFilterId1",
+        "oIBusCreatedBy": "",
+        "oIBusUpdatedBy": "",
+        "oIBusCreatedAt": "",
+        "oIBusUpdatedAt": "",
+        "settings": {
+          "description": "my first ip filter",
+          "address": "192.168.1.1"
+        }
+      },
+      {
+        "oIBusInternalId": "ipFilterId2",
+        "oIBusCreatedBy": "",
+        "oIBusUpdatedBy": "",
+        "oIBusCreatedAt": "",
+        "oIBusUpdatedAt": "",
+        "settings": {
+          "description": "All ips",
+          "address": "*"
+        }
+      }
+    ],
+    "certificates": [
+      {
+        "oIBusInternalId": "certificate1",
+        "oIBusCreatedBy": "",
+        "oIBusUpdatedBy": "",
+        "oIBusCreatedAt": "",
+        "oIBusUpdatedAt": "",
+        "settings": {
+          "name": "Certificate 1",
+          "description": "",
+          "publicKey": "public key",
+          "certificate": "certificate",
+          "expiry": "2020-03-15T00:00:00.000Z"
+        }
+      },
+      {
+        "oIBusInternalId": "certificate2",
+        "oIBusCreatedBy": "",
+        "oIBusUpdatedBy": "",
+        "oIBusCreatedAt": "",
+        "oIBusUpdatedAt": "",
+        "settings": {
+          "name": "Certificate 2",
+          "description": "",
+          "publicKey": "public key",
+          "certificate": "certificate",
+          "expiry": "2020-03-20T00:00:00.000Z"
+        }
+      }
+    ],
+    "southConnectors": [
+      {
+        "oIBusInternalId": "southId1",
+        "oIBusCreatedBy": null,
+        "oIBusUpdatedBy": null,
+        "oIBusCreatedAt": "2026-09-25T14:25:23.926Z",
+        "oIBusUpdatedAt": "2026-09-25T14:25:23.926Z",
+        "type": "folder-scanner",
+        "settings": {
+          "type": "folder-scanner",
+          "name": "South 1",
+          "description": "my folder scanner",
+          "enabled": true,
+          "settings": {
+            "inputFolder": "input",
+            "compression": true,
+            "username": null,
+            "password": "",
+            "domain": null
+          },
+          "items": [
+            {
+              "id": "southItemId1",
+              "oIBusCreatedBy": null,
+              "oIBusUpdatedBy": null,
+              "oIBusCreatedAt": "2026-09-25T14:25:23.927Z",
+              "oIBusUpdatedAt": "2026-09-25T14:25:23.927Z",
+              "name": "item1",
+              "enabled": true,
+              "scanModeId": "scanModeId1",
+              "scanModeName": null,
+              "groupId": null,
+              "groupName": null,
+              "settings": {},
+              "syncWithGroup": false,
+              "maxReadInterval": null,
+              "readDelay": null,
+              "startTimeOffset": 0,
+              "endTimeOffset": 0,
+              "recoveryStrategy": null
+            },
+            {
+              "id": "southItemId2",
+              "oIBusCreatedBy": null,
+              "oIBusUpdatedBy": null,
+              "oIBusCreatedAt": "2026-09-25T14:25:23.927Z",
+              "oIBusUpdatedAt": "2026-09-25T14:25:23.927Z",
+              "name": "item2",
+              "enabled": true,
+              "scanModeId": "scanModeId1",
+              "scanModeName": null,
+              "groupId": "fixtureGroup",
+              "groupName": null,
+              "settings": {},
+              "syncWithGroup": true,
+              "maxReadInterval": null,
+              "readDelay": null,
+              "startTimeOffset": 0,
+              "endTimeOffset": 0,
+              "recoveryStrategy": null
+            }
+          ],
+          "groups": [
+            {
+              "id": "fixtureGroup",
+              "standardSettings": {
+                "name": "Fixture group",
+                "scanModeId": "scanModeId1"
+              },
+              "historySettings": {
+                "startTimeOffset": 0,
+                "endTimeOffset": 0,
+                "maxReadInterval": 3600,
+                "readDelay": 200,
+                "recoveryStrategy": "oldest"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "oIBusInternalId": "southId2",
+        "oIBusCreatedBy": null,
+        "oIBusUpdatedBy": null,
+        "oIBusCreatedAt": "2026-09-25T14:25:23.928Z",
+        "oIBusUpdatedAt": "2026-09-25T14:25:23.928Z",
+        "type": "mssql",
+        "settings": {
+          "type": "mssql",
+          "name": "South 2",
+          "description": "my MSSQL south connector",
+          "enabled": false,
+          "settings": {
+            "host": "host",
+            "port": 1433,
+            "connectionTimeout": 1000,
+            "database": "database",
+            "username": "oibus",
+            "password": "",
+            "domain": "domain",
+            "encryption": true,
+            "trustServerCertificate": true,
+            "requestTimeout": 5000
+          },
+          "items": [
+            {
+              "id": "southItemId3",
+              "oIBusCreatedBy": null,
+              "oIBusUpdatedBy": null,
+              "oIBusCreatedAt": "2026-09-25T14:25:23.928Z",
+              "oIBusUpdatedAt": "2026-09-25T14:25:23.928Z",
+              "name": "item3",
+              "enabled": true,
+              "scanModeId": "scanModeId1",
+              "scanModeName": null,
+              "groupId": null,
+              "groupName": null,
+              "settings": {
+                "query": "SELECT * FROM logs WHERE timestamp > @StartTime AND timestamp <= @EndTime",
+                "dateTimeFields": [
+                  {
+                    "fieldName": "timestamp",
+                    "useAsReference": true,
+                    "type": "iso-string",
+                    "timezone": null,
+                    "format": null,
+                    "locale": null
+                  },
+                  {
+                    "fieldName": "created",
+                    "useAsReference": false,
+                    "type": "string",
+                    "timezone": "Europe/Paris",
+                    "format": "yyyy-MM-dd HH:mm:ss",
+                    "locale": "en-En"
+                  }
+                ],
+                "serialization": {
+                  "type": "csv",
+                  "filename": "logs-@CurrentDate.csv",
+                  "delimiter": "SEMI_COLON",
+                  "compression": true,
+                  "outputTimestampFormat": "yyyy-MM-dd HH:mm:ss.SSS",
+                  "outputTimezone": "Europe/Paris"
+                }
+              },
+              "syncWithGroup": false,
+              "maxReadInterval": 3600,
+              "readDelay": 200,
+              "startTimeOffset": 0,
+              "endTimeOffset": null,
+              "recoveryStrategy": null
+            },
+            {
+              "id": "southItemId4",
+              "oIBusCreatedBy": null,
+              "oIBusUpdatedBy": null,
+              "oIBusCreatedAt": "2026-09-25T14:25:23.929Z",
+              "oIBusUpdatedAt": "2026-09-25T14:25:23.929Z",
+              "name": "item4",
+              "enabled": true,
+              "scanModeId": "scanModeId1",
+              "scanModeName": null,
+              "groupId": "fixtureMssqlGroup",
+              "groupName": null,
+              "settings": {
+                "query": "SELECT * FROM values",
+                "dateTimeFields": null,
+                "serialization": {
+                  "type": "csv",
+                  "filename": "values.csv",
+                  "delimiter": "COMMA",
+                  "compression": false,
+                  "outputTimestampFormat": "yyyy-MM-dd HH:mm:ss.SSS",
+                  "outputTimezone": "UTC"
+                }
+              },
+              "syncWithGroup": true,
+              "maxReadInterval": 3600,
+              "readDelay": 200,
+              "startTimeOffset": 0,
+              "endTimeOffset": null,
+              "recoveryStrategy": null
+            }
+          ],
+          "groups": [
+            {
+              "id": "fixtureMssqlGroup",
+              "standardSettings": {
+                "name": "Fixture mssql group",
+                "scanModeId": "scanModeId1"
+              },
+              "historySettings": {
+                "startTimeOffset": null,
+                "endTimeOffset": null,
+                "maxReadInterval": null,
+                "readDelay": 0,
+                "recoveryStrategy": null
+              }
+            }
+          ]
+        }
+      },
+      {
+        "oIBusInternalId": "southId3",
+        "oIBusCreatedBy": null,
+        "oIBusUpdatedBy": null,
+        "oIBusCreatedAt": "2026-09-25T14:25:23.930Z",
+        "oIBusUpdatedAt": "2026-09-25T14:25:23.930Z",
+        "type": "opcua",
+        "settings": {
+          "type": "opcua",
+          "name": "South 3",
+          "description": "my OPCUA south connector",
+          "enabled": true,
+          "settings": {
+            "url": "opc.tcp://localhost:666/OPCUA/SimulationServer",
+            "retryInterval": 10000,
+            "readTimeout": 15000,
+            "maxParallelRun": 1,
+            "flushMessageTimeout": 1000,
+            "maxNumberOfMessages": 1000,
+            "authentication": {
+              "type": "none",
+              "password": ""
+            },
+            "securityMode": "none",
+            "securityPolicy": "none",
+            "keepSessionAlive": false
+          },
+          "items": [
+            {
+              "id": "southItemId7",
+              "oIBusCreatedBy": null,
+              "oIBusUpdatedBy": null,
+              "oIBusCreatedAt": "2026-09-25T14:25:23.932Z",
+              "oIBusUpdatedAt": "2026-09-25T14:25:23.932Z",
+              "name": "opcua da",
+              "enabled": true,
+              "scanModeId": "scanModeId2",
+              "scanModeName": null,
+              "groupId": null,
+              "groupName": null,
+              "settings": {
+                "mode": "da"
+              },
+              "syncWithGroup": false,
+              "maxReadInterval": 3600,
+              "readDelay": 200,
+              "startTimeOffset": 10,
+              "endTimeOffset": null,
+              "recoveryStrategy": null
+            },
+            {
+              "id": "southItemId5",
+              "oIBusCreatedBy": null,
+              "oIBusUpdatedBy": null,
+              "oIBusCreatedAt": "2026-09-25T14:25:23.931Z",
+              "oIBusUpdatedAt": "2026-09-25T14:25:23.931Z",
+              "name": "opcua ha",
+              "enabled": true,
+              "scanModeId": "scanModeId1",
+              "scanModeName": null,
+              "groupId": null,
+              "groupName": null,
+              "settings": {
+                "mode": "ha",
+                "timestampOrigin": ""
+              },
+              "syncWithGroup": false,
+              "maxReadInterval": 3600,
+              "readDelay": 200,
+              "startTimeOffset": 10,
+              "endTimeOffset": null,
+              "recoveryStrategy": null
+            },
+            {
+              "id": "southItemId8",
+              "oIBusCreatedBy": null,
+              "oIBusUpdatedBy": null,
+              "oIBusCreatedAt": "2026-09-25T14:25:23.933Z",
+              "oIBusUpdatedAt": "2026-09-25T14:25:23.933Z",
+              "name": "opcua ha 2",
+              "enabled": true,
+              "scanModeId": "scanModeId1",
+              "scanModeName": null,
+              "groupId": null,
+              "groupName": null,
+              "settings": {
+                "mode": "ha"
+              },
+              "syncWithGroup": false,
+              "maxReadInterval": 3600,
+              "readDelay": 200,
+              "startTimeOffset": 10,
+              "endTimeOffset": null,
+              "recoveryStrategy": null
+            },
+            {
+              "id": "southItemId6",
+              "oIBusCreatedBy": null,
+              "oIBusUpdatedBy": null,
+              "oIBusCreatedAt": "2026-09-25T14:25:23.932Z",
+              "oIBusUpdatedAt": "2026-09-25T14:25:23.932Z",
+              "name": "opcua sub",
+              "enabled": true,
+              "scanModeId": "subscription",
+              "scanModeName": null,
+              "groupId": null,
+              "groupName": null,
+              "settings": {
+                "mode": "da"
+              },
+              "syncWithGroup": false,
+              "maxReadInterval": 3600,
+              "readDelay": 200,
+              "startTimeOffset": 10,
+              "endTimeOffset": null,
+              "recoveryStrategy": null
+            }
+          ],
+          "groups": []
+        }
+      }
+    ],
+    "northConnectors": [
+      {
+        "oIBusInternalId": "northId1",
+        "oIBusCreatedBy": null,
+        "oIBusUpdatedBy": null,
+        "oIBusCreatedAt": "2026-09-25T14:25:23.934Z",
+        "oIBusUpdatedAt": "2026-09-25T14:25:23.934Z",
+        "type": "file-writer",
+        "settings": {
+          "type": "file-writer",
+          "name": "North 1",
+          "description": "my file writer",
+          "enabled": true,
+          "settings": {
+            "outputFolder": "output-folder",
+            "prefix": "prefix-",
+            "suffix": "-suffix",
+            "username": null,
+            "password": "",
+            "domain": null
+          },
+          "caching": {
+            "trigger": {
+              "scanModeId": "scanModeId1",
+              "scanModeName": null,
+              "numberOfElements": 250,
+              "numberOfFiles": 1
+            },
+            "throttling": {
+              "runMinDelay": 200,
+              "maxSize": 30,
+              "maxNumberOfElements": 10000
+            },
+            "error": {
+              "retryInterval": 1000,
+              "retryCount": 3,
+              "retentionDuration": 24
+            },
+            "archive": {
+              "enabled": false,
+              "retentionDuration": 72
+            }
+          },
+          "transformers": [
+            {
+              "id": "northTransformerId1",
+              "transformerId": "transformerId1",
+              "source": {
+                "type": "south",
+                "southId": "southId1",
+                "items": [
+                  {
+                    "id": "southItemId1",
+                    "name": "item1",
+                    "enabled": true
+                  }
+                ]
+              },
+              "options": {}
+            },
+            {
+              "id": "northTransformerId2",
+              "transformerId": "transformerId2",
+              "source": {
+                "type": "oibus-api",
+                "dataSourceId": "dataSourceId1"
+              },
+              "options": {}
+            },
+            {
+              "id": "northTransformerId3",
+              "transformerId": "transformerId3",
+              "source": {
+                "type": "south",
+                "southId": "southId2",
+                "items": []
+              },
+              "options": {}
+            },
+            {
+              "id": "fixtureLink3",
+              "transformerId": "RfzYaZ",
+              "source": {
+                "type": "south",
+                "southId": "southId2",
+                "groupId": "fixtureMssqlGroup",
+                "items": []
+              },
+              "options": {}
+            }
+          ]
+        }
+      },
+      {
+        "oIBusInternalId": "northId2",
+        "oIBusCreatedBy": null,
+        "oIBusUpdatedBy": null,
+        "oIBusCreatedAt": "2026-09-25T14:25:23.936Z",
+        "oIBusUpdatedAt": "2026-09-25T14:25:23.936Z",
+        "type": "oianalytics",
+        "settings": {
+          "type": "oianalytics",
+          "name": "North 2",
+          "description": "my oianalytics",
+          "enabled": false,
+          "settings": {
+            "useOiaModule": true,
+            "timeout": 5000,
+            "compress": true
+          },
+          "caching": {
+            "trigger": {
+              "scanModeId": "scanModeId2",
+              "scanModeName": null,
+              "numberOfElements": 1000,
+              "numberOfFiles": 1
+            },
+            "throttling": {
+              "runMinDelay": 200,
+              "maxSize": 30,
+              "maxNumberOfElements": 10000
+            },
+            "error": {
+              "retryInterval": 1000,
+              "retryCount": 1,
+              "retentionDuration": 24
+            },
+            "archive": {
+              "enabled": false,
+              "retentionDuration": 72
+            }
+          },
+          "transformers": [
+            {
+              "id": "fixtureLink1",
+              "transformerId": "OcHBt6",
+              "source": {
+                "type": "south",
+                "southId": "southId2",
+                "items": [
+                  {
+                    "id": "southItemId3",
+                    "name": "item3",
+                    "enabled": true
+                  }
+                ]
+              },
+              "options": {}
+            },
+            {
+              "id": "fixtureLink2",
+              "transformerId": "RfzYaZ",
+              "source": {
+                "type": "south",
+                "southId": "southId2",
+                "items": []
+              },
+              "options": {}
+            },
+            {
+              "id": "fixtureLink4",
+              "transformerId": "8yVydz",
+              "source": {
+                "type": "south",
+                "southId": "southId3",
+                "items": []
+              },
+              "options": {
+                "precision": "ms"
+              }
+            },
+            {
+              "id": "fixtureLink5",
+              "transformerId": "8dkvpg",
+              "source": {
+                "type": "south",
+                "southId": "southId3",
+                "items": []
+              },
+              "options": {
+                "referenceProcess": "reference"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "users": [
+      {
+        "oIBusInternalId": "user1",
+        "oIBusCreatedBy": "",
+        "oIBusUpdatedBy": "",
+        "oIBusCreatedAt": "",
+        "oIBusUpdatedAt": "",
+        "settings": {
+          "login": "admin",
+          "firstName": null,
+          "lastName": null,
+          "email": null,
+          "language": "en",
+          "timezone": "Europe/Paris"
+        }
+      },
+      {
+        "oIBusInternalId": "user2",
+        "oIBusCreatedBy": "",
+        "oIBusUpdatedBy": "",
+        "oIBusCreatedAt": "",
+        "oIBusUpdatedAt": "",
+        "settings": {
+          "login": "secondUser",
+          "firstName": "first name",
+          "lastName": "last name",
+          "email": "email",
+          "language": "fr",
+          "timezone": "Europe/Paris"
+        }
+      }
+    ],
+    "transformers": [
+      {
+        "oIBusInternalId": "827fed",
+        "type": "standard",
+        "settings": {
+          "functionName": "csv-to-mqtt",
+          "inputType": "any",
+          "outputType": "mqtt"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "options",
+          "translationKey": "configuration.oibus.manifest.transformers.options",
+          "attributes": [
+            {
+              "type": "string-select",
+              "key": "delimiter",
+              "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.delimiter",
+              "defaultValue": "SEMI_COLON",
+              "selectableValues": [
+                "DOT",
+                "SEMI_COLON",
+                "COLON",
+                "COMMA",
+                "NON_BREAKING_SPACE",
+                "SLASH",
+                "TAB",
+                "PIPE"
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 0,
+                "columns": 6,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "boolean",
+              "key": "hasHeader",
+              "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.has-header",
+              "defaultValue": true,
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 0,
+                "columns": 6,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string",
+              "key": "topicColumn",
+              "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.topic-column",
+              "defaultValue": "topic",
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 1,
+                "columns": 6,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string-select",
+              "key": "payloadType",
+              "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.payload-type",
+              "defaultValue": "object",
+              "selectableValues": [
+                "string",
+                "number",
+                "boolean",
+                "datetime",
+                "object"
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 1,
+                "columns": 6,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string",
+              "key": "valueColumn",
+              "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.value-column",
+              "defaultValue": "value",
+              "validators": [],
+              "displayProperties": {
+                "row": 2,
+                "columns": 4,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "object",
+              "key": "datetimeSettings",
+              "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.title",
+              "displayProperties": {
+                "visible": true,
+                "wrapInBox": true
+              },
+              "enablingConditions": [
+                {
+                  "referralPathFromRoot": "inputType",
+                  "targetPathFromRoot": "inputTimezone",
+                  "values": [
+                    "string"
+                  ]
+                },
+                {
+                  "referralPathFromRoot": "inputType",
+                  "targetPathFromRoot": "inputFormat",
+                  "values": [
+                    "string"
+                  ]
+                },
+                {
+                  "referralPathFromRoot": "inputType",
+                  "targetPathFromRoot": "inputLocale",
+                  "values": [
+                    "string"
+                  ]
+                },
+                {
+                  "referralPathFromRoot": "outputType",
+                  "targetPathFromRoot": "outputTimezone",
+                  "values": [
+                    "string"
+                  ]
+                },
+                {
+                  "referralPathFromRoot": "outputType",
+                  "targetPathFromRoot": "outputFormat",
+                  "values": [
+                    "string"
+                  ]
+                },
+                {
+                  "referralPathFromRoot": "outputType",
+                  "targetPathFromRoot": "outputLocale",
+                  "values": [
+                    "string"
+                  ]
+                }
+              ],
+              "validators": [],
+              "attributes": [
+                {
+                  "type": "string-select",
+                  "key": "inputType",
+                  "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.input-type",
+                  "defaultValue": "iso-string",
+                  "selectableValues": [
+                    "iso-string",
+                    "unix-epoch",
+                    "unix-epoch-ms",
+                    "string"
+                  ],
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 3,
+                    "displayInViewMode": true
+                  }
+                },
+                {
+                  "type": "timezone",
+                  "key": "inputTimezone",
+                  "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.timezone",
+                  "defaultValue": "UTC",
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 3,
+                    "displayInViewMode": true
+                  }
+                },
+                {
+                  "type": "string",
+                  "key": "inputFormat",
+                  "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.format",
+                  "defaultValue": "yyyy-MM-dd HH:mm:ss",
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 3,
+                    "displayInViewMode": false
+                  }
+                },
+                {
+                  "type": "string",
+                  "key": "inputLocale",
+                  "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.locale",
+                  "defaultValue": "en-En",
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 3,
+                    "displayInViewMode": false
+                  }
+                },
+                {
+                  "type": "string-select",
+                  "key": "outputType",
+                  "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.output-type",
+                  "defaultValue": "iso-string",
+                  "selectableValues": [
+                    "iso-string",
+                    "unix-epoch",
+                    "unix-epoch-ms",
+                    "string"
+                  ],
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 1,
+                    "columns": 3,
+                    "displayInViewMode": true
+                  }
+                },
+                {
+                  "type": "timezone",
+                  "key": "outputTimezone",
+                  "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.timezone",
+                  "defaultValue": "UTC",
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 1,
+                    "columns": 3,
+                    "displayInViewMode": true
+                  }
+                },
+                {
+                  "type": "string",
+                  "key": "outputFormat",
+                  "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.format",
+                  "defaultValue": "yyyy-MM-dd HH:mm:ss",
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 1,
+                    "columns": 3,
+                    "displayInViewMode": false
+                  }
+                },
+                {
+                  "type": "string",
+                  "key": "outputLocale",
+                  "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.locale",
+                  "defaultValue": "en-En",
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 1,
+                    "columns": 3,
+                    "displayInViewMode": false
+                  }
+                }
+              ]
+            },
+            {
+              "type": "array",
+              "key": "objectFields",
+              "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.object-fields.title",
+              "paginate": false,
+              "numberOfElementPerPage": 20,
+              "validators": [],
+              "rootAttribute": {
+                "type": "object",
+                "key": "field",
+                "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.object-fields.item.title",
+                "displayProperties": {
+                  "visible": true,
+                  "wrapInBox": true
+                },
+                "enablingConditions": [
+                  {
+                    "referralPathFromRoot": "dataType",
+                    "targetPathFromRoot": "datetimeSettings",
+                    "values": [
+                      "datetime"
+                    ]
+                  }
+                ],
+                "validators": [],
+                "attributes": [
+                  {
+                    "type": "string",
+                    "key": "key",
+                    "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.object-fields.key",
+                    "defaultValue": "key",
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  },
+                  {
+                    "type": "string",
+                    "key": "column",
+                    "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.object-fields.column",
+                    "defaultValue": "val",
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  },
+                  {
+                    "type": "string-select",
+                    "key": "dataType",
+                    "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.object-fields.data-type",
+                    "defaultValue": "string",
+                    "selectableValues": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "datetime"
+                    ],
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "key": "datetimeSettings",
+                    "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.object-fields.datetime-settings.title",
+                    "displayProperties": {
+                      "visible": true,
+                      "wrapInBox": false
+                    },
+                    "enablingConditions": [
+                      {
+                        "referralPathFromRoot": "inputType",
+                        "targetPathFromRoot": "inputTimezone",
+                        "values": [
+                          "string"
+                        ]
+                      },
+                      {
+                        "referralPathFromRoot": "inputType",
+                        "targetPathFromRoot": "inputFormat",
+                        "values": [
+                          "string"
+                        ]
+                      },
+                      {
+                        "referralPathFromRoot": "inputType",
+                        "targetPathFromRoot": "inputLocale",
+                        "values": [
+                          "string"
+                        ]
+                      },
+                      {
+                        "referralPathFromRoot": "outputType",
+                        "targetPathFromRoot": "outputTimezone",
+                        "values": [
+                          "string"
+                        ]
+                      },
+                      {
+                        "referralPathFromRoot": "outputType",
+                        "targetPathFromRoot": "outputFormat",
+                        "values": [
+                          "string"
+                        ]
+                      },
+                      {
+                        "referralPathFromRoot": "outputType",
+                        "targetPathFromRoot": "outputLocale",
+                        "values": [
+                          "string"
+                        ]
+                      }
+                    ],
+                    "validators": [],
+                    "attributes": [
+                      {
+                        "type": "string-select",
+                        "key": "inputType",
+                        "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.input-type",
+                        "defaultValue": "iso-string",
+                        "selectableValues": [
+                          "iso-string",
+                          "unix-epoch",
+                          "unix-epoch-ms",
+                          "string"
+                        ],
+                        "validators": [
+                          {
+                            "type": "REQUIRED",
+                            "arguments": []
+                          }
+                        ],
+                        "displayProperties": {
+                          "row": 0,
+                          "columns": 3,
+                          "displayInViewMode": true
+                        }
+                      },
+                      {
+                        "type": "timezone",
+                        "key": "inputTimezone",
+                        "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.timezone",
+                        "defaultValue": "UTC",
+                        "validators": [
+                          {
+                            "type": "REQUIRED",
+                            "arguments": []
+                          }
+                        ],
+                        "displayProperties": {
+                          "row": 0,
+                          "columns": 3,
+                          "displayInViewMode": true
+                        }
+                      },
+                      {
+                        "type": "string",
+                        "key": "inputFormat",
+                        "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.format",
+                        "defaultValue": "yyyy-MM-dd HH:mm:ss",
+                        "validators": [
+                          {
+                            "type": "REQUIRED",
+                            "arguments": []
+                          }
+                        ],
+                        "displayProperties": {
+                          "row": 0,
+                          "columns": 3,
+                          "displayInViewMode": false
+                        }
+                      },
+                      {
+                        "type": "string",
+                        "key": "inputLocale",
+                        "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.locale",
+                        "defaultValue": "en-En",
+                        "validators": [
+                          {
+                            "type": "REQUIRED",
+                            "arguments": []
+                          }
+                        ],
+                        "displayProperties": {
+                          "row": 0,
+                          "columns": 3,
+                          "displayInViewMode": false
+                        }
+                      },
+                      {
+                        "type": "string-select",
+                        "key": "outputType",
+                        "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.output-type",
+                        "defaultValue": "iso-string",
+                        "selectableValues": [
+                          "iso-string",
+                          "unix-epoch",
+                          "unix-epoch-ms",
+                          "string"
+                        ],
+                        "validators": [
+                          {
+                            "type": "REQUIRED",
+                            "arguments": []
+                          }
+                        ],
+                        "displayProperties": {
+                          "row": 1,
+                          "columns": 3,
+                          "displayInViewMode": true
+                        }
+                      },
+                      {
+                        "type": "timezone",
+                        "key": "outputTimezone",
+                        "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.timezone",
+                        "defaultValue": "UTC",
+                        "validators": [
+                          {
+                            "type": "REQUIRED",
+                            "arguments": []
+                          }
+                        ],
+                        "displayProperties": {
+                          "row": 1,
+                          "columns": 3,
+                          "displayInViewMode": true
+                        }
+                      },
+                      {
+                        "type": "string",
+                        "key": "outputFormat",
+                        "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.format",
+                        "defaultValue": "yyyy-MM-dd HH:mm:ss",
+                        "validators": [
+                          {
+                            "type": "REQUIRED",
+                            "arguments": []
+                          }
+                        ],
+                        "displayProperties": {
+                          "row": 1,
+                          "columns": 3,
+                          "displayInViewMode": false
+                        }
+                      },
+                      {
+                        "type": "string",
+                        "key": "outputLocale",
+                        "translationKey": "configuration.oibus.manifest.transformers.csv-to-mqtt.datetime-settings.locale",
+                        "defaultValue": "en-En",
+                        "validators": [
+                          {
+                            "type": "REQUIRED",
+                            "arguments": []
+                          }
+                        ],
+                        "displayProperties": {
+                          "row": 1,
+                          "columns": 3,
+                          "displayInViewMode": false
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "enablingConditions": [
+            {
+              "referralPathFromRoot": "payloadType",
+              "targetPathFromRoot": "datetimeSettings",
+              "values": [
+                "datetime"
+              ]
+            },
+            {
+              "referralPathFromRoot": "payloadType",
+              "targetPathFromRoot": "objectFields",
+              "values": [
+                "object"
+              ]
+            },
+            {
+              "referralPathFromRoot": "payloadType",
+              "targetPathFromRoot": "valueColumn",
+              "values": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            }
+          ],
+          "validators": [],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": true
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "f2b4H1",
+        "type": "standard",
+        "settings": {
+          "functionName": "csv-to-time-values",
+          "inputType": "any",
+          "outputType": "time-values"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "options",
+          "translationKey": "configuration.oibus.manifest.transformers.options",
+          "attributes": [
+            {
+              "type": "string-select",
+              "key": "delimiter",
+              "translationKey": "configuration.oibus.manifest.transformers.csv-to-time-values.delimiter",
+              "defaultValue": "SEMI_COLON",
+              "selectableValues": [
+                "DOT",
+                "SEMI_COLON",
+                "COLON",
+                "COMMA",
+                "NON_BREAKING_SPACE",
+                "SLASH",
+                "TAB",
+                "PIPE"
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 0,
+                "columns": 6,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "boolean",
+              "key": "hasHeader",
+              "translationKey": "configuration.oibus.manifest.transformers.csv-to-time-values.has-header",
+              "defaultValue": true,
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 0,
+                "columns": 6,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string",
+              "key": "pointIdColumn",
+              "translationKey": "configuration.oibus.manifest.transformers.csv-to-time-values.point-id-column",
+              "defaultValue": "id",
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 1,
+                "columns": 4,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string",
+              "key": "timestampColumn",
+              "translationKey": "configuration.oibus.manifest.transformers.csv-to-time-values.timestamp-column",
+              "defaultValue": "timestamp",
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 1,
+                "columns": 4,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string",
+              "key": "valueColumn",
+              "translationKey": "configuration.oibus.manifest.transformers.csv-to-time-values.value-column",
+              "defaultValue": "value",
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 1,
+                "columns": 4,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "object",
+              "key": "timestampSettings",
+              "translationKey": "configuration.oibus.manifest.transformers.csv-to-time-values.timestamp-settings.title",
+              "displayProperties": {
+                "visible": true,
+                "wrapInBox": true
+              },
+              "enablingConditions": [
+                {
+                  "referralPathFromRoot": "type",
+                  "targetPathFromRoot": "timezone",
+                  "values": [
+                    "string"
+                  ]
+                },
+                {
+                  "referralPathFromRoot": "type",
+                  "targetPathFromRoot": "format",
+                  "values": [
+                    "string"
+                  ]
+                },
+                {
+                  "referralPathFromRoot": "type",
+                  "targetPathFromRoot": "locale",
+                  "values": [
+                    "string"
+                  ]
+                }
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "attributes": [
+                {
+                  "type": "string-select",
+                  "key": "type",
+                  "translationKey": "configuration.oibus.manifest.transformers.csv-to-time-values.timestamp-settings.type",
+                  "defaultValue": "iso-string",
+                  "selectableValues": [
+                    "iso-string",
+                    "unix-epoch",
+                    "unix-epoch-ms",
+                    "string"
+                  ],
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 3,
+                    "displayInViewMode": true
+                  }
+                },
+                {
+                  "type": "timezone",
+                  "key": "timezone",
+                  "translationKey": "configuration.oibus.manifest.transformers.csv-to-time-values.timestamp-settings.timezone",
+                  "defaultValue": "UTC",
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 3,
+                    "displayInViewMode": true
+                  }
+                },
+                {
+                  "type": "string",
+                  "key": "format",
+                  "translationKey": "configuration.oibus.manifest.transformers.csv-to-time-values.timestamp-settings.format",
+                  "defaultValue": "yyyy-MM-dd HH:mm:ss",
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 3,
+                    "displayInViewMode": false
+                  }
+                },
+                {
+                  "type": "string",
+                  "key": "locale",
+                  "translationKey": "configuration.oibus.manifest.transformers.csv-to-time-values.timestamp-settings.locale",
+                  "defaultValue": "en-En",
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 3,
+                    "displayInViewMode": false
+                  }
+                }
+              ]
+            }
+          ],
+          "enablingConditions": [],
+          "validators": [],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": true
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "OcHBt6",
+        "type": "standard",
+        "settings": {
+          "functionName": "ignore",
+          "inputType": "any",
+          "outputType": "any"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "options",
+          "translationKey": "configuration.oibus.manifest.transformers.options",
+          "attributes": [],
+          "enablingConditions": [],
+          "validators": [],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": false
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "RfzYaZ",
+        "type": "standard",
+        "settings": {
+          "functionName": "iso",
+          "inputType": "any",
+          "outputType": "any"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "options",
+          "translationKey": "configuration.oibus.manifest.transformers.options",
+          "attributes": [],
+          "enablingConditions": [],
+          "validators": [],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": false
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "hqTupn",
+        "type": "standard",
+        "settings": {
+          "functionName": "json-to-csv",
+          "inputType": "any",
+          "outputType": "any"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "options",
+          "translationKey": "configuration.oibus.manifest.transformers.options",
+          "attributes": [
+            {
+              "type": "string",
+              "key": "filename",
+              "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.filename",
+              "defaultValue": "@CurrentDate.csv",
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 0,
+                "columns": 6,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string-select",
+              "key": "encoding",
+              "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.encoding",
+              "defaultValue": "UTF_8",
+              "selectableValues": [
+                "UTF_8",
+                "UTF_8_BOM",
+                "LATIN_1",
+                "UTF_16_LE"
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 0,
+                "columns": 3,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "boolean",
+              "key": "header",
+              "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.header",
+              "defaultValue": true,
+              "validators": [],
+              "displayProperties": {
+                "row": 0,
+                "columns": 3,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string-select",
+              "key": "delimiter",
+              "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.delimiter",
+              "defaultValue": "SEMI_COLON",
+              "selectableValues": [
+                "DOT",
+                "SEMI_COLON",
+                "COLON",
+                "COMMA",
+                "NON_BREAKING_SPACE",
+                "SLASH",
+                "TAB",
+                "PIPE"
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 1,
+                "columns": 3,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string-select",
+              "key": "newline",
+              "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.newline",
+              "defaultValue": "LF",
+              "selectableValues": [
+                "CRLF",
+                "LF",
+                "CR"
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 1,
+                "columns": 3,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string-select",
+              "key": "quoteChar",
+              "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.quote-char",
+              "defaultValue": "NONE",
+              "selectableValues": [
+                "DOUBLE_QUOTE",
+                "SINGLE_QUOTE",
+                "NONE"
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 1,
+                "columns": 3,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string-select",
+              "key": "escapeChar",
+              "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.escape-char",
+              "defaultValue": "DOUBLE_QUOTE",
+              "selectableValues": [
+                "BACKSLASH",
+                "DOUBLE_QUOTE"
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 1,
+                "columns": 3,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string",
+              "key": "nullValue",
+              "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.null-value",
+              "defaultValue": "",
+              "validators": [],
+              "displayProperties": {
+                "row": 2,
+                "columns": 3,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string",
+              "key": "rowIteratorPath",
+              "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.row-iterator-path",
+              "defaultValue": "$[*]",
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 2,
+                "columns": 6,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "array",
+              "key": "fields",
+              "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.fields.title",
+              "paginate": false,
+              "numberOfElementPerPage": 20,
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "rootAttribute": {
+                "type": "object",
+                "key": "fieldItem",
+                "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.fields.item.title",
+                "displayProperties": {
+                  "visible": true,
+                  "wrapInBox": true
+                },
+                "enablingConditions": [
+                  {
+                    "referralPathFromRoot": "dataType",
+                    "targetPathFromRoot": "datetimeSettings",
+                    "values": [
+                      "datetime"
+                    ]
+                  },
+                  {
+                    "referralPathFromRoot": "dataType",
+                    "targetPathFromRoot": "fieldProcess",
+                    "values": [
+                      "datetime"
+                    ],
+                    "operator": "NOT_EQUAL"
+                  }
+                ],
+                "validators": [],
+                "attributes": [
+                  {
+                    "type": "string",
+                    "key": "columnName",
+                    "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.fields.column-name",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  },
+                  {
+                    "type": "string",
+                    "key": "jsonPath",
+                    "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.fields.json-path",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  },
+                  {
+                    "type": "string-select",
+                    "key": "dataType",
+                    "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.fields.data-type",
+                    "defaultValue": "string",
+                    "selectableValues": [
+                      "string",
+                      "number",
+                      "datetime",
+                      "array",
+                      "boolean",
+                      "object"
+                    ],
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  },
+                  {
+                    "type": "string",
+                    "key": "fieldProcess",
+                    "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.fields.field-process",
+                    "defaultValue": null,
+                    "validators": [],
+                    "displayProperties": {
+                      "row": 1,
+                      "columns": 12,
+                      "displayInViewMode": false
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "key": "datetimeSettings",
+                    "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.fields.datetime-settings.title",
+                    "displayProperties": {
+                      "visible": true,
+                      "wrapInBox": false
+                    },
+                    "enablingConditions": [
+                      {
+                        "referralPathFromRoot": "inputType",
+                        "targetPathFromRoot": "inputTimezone",
+                        "values": [
+                          "string"
+                        ]
+                      },
+                      {
+                        "referralPathFromRoot": "inputType",
+                        "targetPathFromRoot": "inputFormat",
+                        "values": [
+                          "string"
+                        ]
+                      },
+                      {
+                        "referralPathFromRoot": "inputType",
+                        "targetPathFromRoot": "inputLocale",
+                        "values": [
+                          "string"
+                        ]
+                      },
+                      {
+                        "referralPathFromRoot": "outputType",
+                        "targetPathFromRoot": "outputTimezone",
+                        "values": [
+                          "string"
+                        ]
+                      },
+                      {
+                        "referralPathFromRoot": "outputType",
+                        "targetPathFromRoot": "outputFormat",
+                        "values": [
+                          "string"
+                        ]
+                      },
+                      {
+                        "referralPathFromRoot": "outputType",
+                        "targetPathFromRoot": "outputLocale",
+                        "values": [
+                          "string"
+                        ]
+                      }
+                    ],
+                    "validators": [],
+                    "attributes": [
+                      {
+                        "type": "string-select",
+                        "key": "inputType",
+                        "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.fields.datetime-settings.input-type",
+                        "defaultValue": "iso-string",
+                        "selectableValues": [
+                          "iso-string",
+                          "unix-epoch",
+                          "unix-epoch-ms",
+                          "string"
+                        ],
+                        "validators": [
+                          {
+                            "type": "REQUIRED",
+                            "arguments": []
+                          }
+                        ],
+                        "displayProperties": {
+                          "row": 0,
+                          "columns": 3,
+                          "displayInViewMode": false
+                        }
+                      },
+                      {
+                        "type": "timezone",
+                        "key": "inputTimezone",
+                        "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.fields.datetime-settings.timezone",
+                        "defaultValue": "UTC",
+                        "validators": [
+                          {
+                            "type": "REQUIRED",
+                            "arguments": []
+                          }
+                        ],
+                        "displayProperties": {
+                          "row": 0,
+                          "columns": 3,
+                          "displayInViewMode": false
+                        }
+                      },
+                      {
+                        "type": "string",
+                        "key": "inputFormat",
+                        "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.fields.datetime-settings.format",
+                        "defaultValue": "yyyy-MM-dd HH:mm:ss",
+                        "validators": [
+                          {
+                            "type": "REQUIRED",
+                            "arguments": []
+                          }
+                        ],
+                        "displayProperties": {
+                          "row": 0,
+                          "columns": 3,
+                          "displayInViewMode": false
+                        }
+                      },
+                      {
+                        "type": "string",
+                        "key": "inputLocale",
+                        "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.fields.datetime-settings.locale",
+                        "defaultValue": "en-En",
+                        "validators": [
+                          {
+                            "type": "REQUIRED",
+                            "arguments": []
+                          }
+                        ],
+                        "displayProperties": {
+                          "row": 0,
+                          "columns": 3,
+                          "displayInViewMode": false
+                        }
+                      },
+                      {
+                        "type": "string-select",
+                        "key": "outputType",
+                        "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.fields.datetime-settings.output-type",
+                        "defaultValue": "iso-string",
+                        "selectableValues": [
+                          "iso-string",
+                          "unix-epoch",
+                          "unix-epoch-ms",
+                          "string"
+                        ],
+                        "validators": [
+                          {
+                            "type": "REQUIRED",
+                            "arguments": []
+                          }
+                        ],
+                        "displayProperties": {
+                          "row": 1,
+                          "columns": 3,
+                          "displayInViewMode": false
+                        }
+                      },
+                      {
+                        "type": "timezone",
+                        "key": "outputTimezone",
+                        "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.fields.datetime-settings.timezone",
+                        "defaultValue": "UTC",
+                        "validators": [
+                          {
+                            "type": "REQUIRED",
+                            "arguments": []
+                          }
+                        ],
+                        "displayProperties": {
+                          "row": 1,
+                          "columns": 3,
+                          "displayInViewMode": false
+                        }
+                      },
+                      {
+                        "type": "string",
+                        "key": "outputFormat",
+                        "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.fields.datetime-settings.format",
+                        "defaultValue": "yyyy-MM-dd HH:mm:ss",
+                        "validators": [
+                          {
+                            "type": "REQUIRED",
+                            "arguments": []
+                          }
+                        ],
+                        "displayProperties": {
+                          "row": 1,
+                          "columns": 3,
+                          "displayInViewMode": false
+                        }
+                      },
+                      {
+                        "type": "string",
+                        "key": "outputLocale",
+                        "translationKey": "configuration.oibus.manifest.transformers.json-to-csv.fields.datetime-settings.locale",
+                        "defaultValue": "en-En",
+                        "validators": [
+                          {
+                            "type": "REQUIRED",
+                            "arguments": []
+                          }
+                        ],
+                        "displayProperties": {
+                          "row": 1,
+                          "columns": 3,
+                          "displayInViewMode": false
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "enablingConditions": [],
+          "validators": [],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": true
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "Uo2Ubv",
+        "type": "standard",
+        "settings": {
+          "functionName": "time-values-to-csv",
+          "inputType": "time-values",
+          "outputType": "any"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "options",
+          "translationKey": "configuration.oibus.manifest.transformers.options",
+          "attributes": [
+            {
+              "type": "string",
+              "key": "filename",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-csv.filename",
+              "defaultValue": "@CurrentDate.csv",
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 0,
+                "columns": 6,
+                "displayInViewMode": false
+              }
+            },
+            {
+              "type": "string-select",
+              "key": "encoding",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-csv.encoding",
+              "defaultValue": "UTF_8",
+              "selectableValues": [
+                "UTF_8",
+                "UTF_8_BOM",
+                "LATIN_1",
+                "UTF_16_LE"
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 0,
+                "columns": 3,
+                "displayInViewMode": false
+              }
+            },
+            {
+              "type": "boolean",
+              "key": "header",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-csv.header",
+              "defaultValue": true,
+              "validators": [],
+              "displayProperties": {
+                "row": 0,
+                "columns": 3,
+                "displayInViewMode": false
+              }
+            },
+            {
+              "type": "string-select",
+              "key": "delimiter",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-csv.delimiter",
+              "defaultValue": "COMMA",
+              "selectableValues": [
+                "DOT",
+                "SEMI_COLON",
+                "COLON",
+                "COMMA",
+                "NON_BREAKING_SPACE",
+                "SLASH",
+                "TAB",
+                "PIPE"
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 1,
+                "columns": 3,
+                "displayInViewMode": false
+              }
+            },
+            {
+              "type": "string-select",
+              "key": "newline",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-csv.newline",
+              "defaultValue": "LF",
+              "selectableValues": [
+                "CRLF",
+                "LF",
+                "CR"
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 1,
+                "columns": 3,
+                "displayInViewMode": false
+              }
+            },
+            {
+              "type": "string-select",
+              "key": "quoteChar",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-csv.quote-char",
+              "defaultValue": "NONE",
+              "selectableValues": [
+                "DOUBLE_QUOTE",
+                "SINGLE_QUOTE",
+                "NONE"
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 1,
+                "columns": 3,
+                "displayInViewMode": false
+              }
+            },
+            {
+              "type": "string-select",
+              "key": "escapeChar",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-csv.escape-char",
+              "defaultValue": "DOUBLE_QUOTE",
+              "selectableValues": [
+                "BACKSLASH",
+                "DOUBLE_QUOTE"
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 1,
+                "columns": 3,
+                "displayInViewMode": false
+              }
+            },
+            {
+              "type": "string",
+              "key": "pointIdColumnTitle",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-csv.point-id",
+              "defaultValue": "Reference",
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 2,
+                "columns": 4,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string",
+              "key": "valueColumnTitle",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-csv.value",
+              "defaultValue": "Value",
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 2,
+                "columns": 4,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string",
+              "key": "timestampColumnTitle",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-csv.timestamp",
+              "defaultValue": "Timestamp",
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 2,
+                "columns": 4,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string-select",
+              "key": "timestampType",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-csv.timestamp-type",
+              "defaultValue": "iso-string",
+              "selectableValues": [
+                "string",
+                "iso-string",
+                "unix-epoch",
+                "unix-epoch-ms"
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 3,
+                "columns": 4,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string",
+              "key": "timestampFormat",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-csv.timestamp-format",
+              "defaultValue": "yyyy-MM-dd HH:mm:ss.SSS",
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 3,
+                "columns": 4,
+                "displayInViewMode": false
+              }
+            },
+            {
+              "type": "timezone",
+              "key": "timezone",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-csv.timezone",
+              "defaultValue": "UTC",
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 3,
+                "columns": 4,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string",
+              "key": "pointIdProcess",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-csv.point-id-process",
+              "defaultValue": null,
+              "validators": [],
+              "displayProperties": {
+                "row": 4,
+                "columns": 12,
+                "displayInViewMode": false
+              }
+            }
+          ],
+          "enablingConditions": [
+            {
+              "referralPathFromRoot": "timestampType",
+              "targetPathFromRoot": "timezone",
+              "values": [
+                "string"
+              ]
+            },
+            {
+              "referralPathFromRoot": "timestampType",
+              "targetPathFromRoot": "timestampFormat",
+              "values": [
+                "string"
+              ]
+            }
+          ],
+          "validators": [
+            {
+              "type": "REQUIRED",
+              "arguments": []
+            }
+          ],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": true
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "KCR34P",
+        "type": "standard",
+        "settings": {
+          "functionName": "time-values-to-json",
+          "inputType": "time-values",
+          "outputType": "any"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "options",
+          "translationKey": "configuration.oibus.manifest.transformers.options",
+          "attributes": [],
+          "enablingConditions": [],
+          "validators": [],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": false
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "K3Dq77",
+        "type": "standard",
+        "settings": {
+          "functionName": "time-values-to-modbus",
+          "inputType": "time-values",
+          "outputType": "modbus"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "options",
+          "translationKey": "configuration.oibus.manifest.transformers.options",
+          "attributes": [
+            {
+              "type": "array",
+              "key": "mapping",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-modbus.mapping.title",
+              "paginate": true,
+              "numberOfElementPerPage": 20,
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "rootAttribute": {
+                "type": "object",
+                "key": "item",
+                "translationKey": "configuration.oibus.manifest.transformers.time-values-to-modbus.mapping.title",
+                "displayProperties": {
+                  "visible": true,
+                  "wrapInBox": false
+                },
+                "enablingConditions": [],
+                "validators": [],
+                "attributes": [
+                  {
+                    "type": "string",
+                    "key": "pointId",
+                    "translationKey": "configuration.oibus.manifest.transformers.time-values-to-modbus.mapping.point-id",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  },
+                  {
+                    "type": "string",
+                    "key": "address",
+                    "translationKey": "configuration.oibus.manifest.transformers.time-values-to-modbus.mapping.address",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  },
+                  {
+                    "type": "string-select",
+                    "key": "modbusType",
+                    "translationKey": "configuration.oibus.manifest.transformers.time-values-to-modbus.mapping.modbus-type",
+                    "defaultValue": "register",
+                    "selectableValues": [
+                      "coil",
+                      "register"
+                    ],
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "enablingConditions": [],
+          "validators": [],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": false
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "UwP1iB",
+        "type": "standard",
+        "settings": {
+          "functionName": "time-values-to-mqtt",
+          "inputType": "time-values",
+          "outputType": "mqtt"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "options",
+          "translationKey": "configuration.oibus.manifest.transformers.options",
+          "attributes": [
+            {
+              "type": "array",
+              "key": "mapping",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-mqtt.mapping.title",
+              "paginate": true,
+              "numberOfElementPerPage": 20,
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "rootAttribute": {
+                "type": "object",
+                "key": "item",
+                "translationKey": "configuration.oibus.manifest.transformers.time-values-to-mqtt.mapping.title",
+                "displayProperties": {
+                  "visible": true,
+                  "wrapInBox": false
+                },
+                "enablingConditions": [],
+                "validators": [],
+                "attributes": [
+                  {
+                    "type": "string",
+                    "key": "pointId",
+                    "translationKey": "configuration.oibus.manifest.transformers.time-values-to-mqtt.mapping.point-id",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 6,
+                      "displayInViewMode": true
+                    }
+                  },
+                  {
+                    "type": "string",
+                    "key": "topic",
+                    "translationKey": "configuration.oibus.manifest.transformers.time-values-to-mqtt.mapping.topic",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 6,
+                      "displayInViewMode": true
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "enablingConditions": [],
+          "validators": [],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": false
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "8yVydz",
+        "type": "standard",
+        "settings": {
+          "functionName": "time-values-to-oianalytics",
+          "inputType": "time-values",
+          "outputType": "oianalytics"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "options",
+          "translationKey": "configuration.oibus.manifest.transformers.options",
+          "attributes": [
+            {
+              "type": "string-select",
+              "key": "precision",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-oianalytics.precision",
+              "defaultValue": "ms",
+              "selectableValues": [
+                "ms",
+                "s",
+                "min",
+                "hr"
+              ],
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 0,
+                "columns": 4,
+                "displayInViewMode": true
+              }
+            }
+          ],
+          "enablingConditions": [],
+          "validators": [],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": true
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "Vkhbve",
+        "type": "standard",
+        "settings": {
+          "functionName": "time-values-to-opcua",
+          "inputType": "time-values",
+          "outputType": "opcua"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "options",
+          "translationKey": "configuration.oibus.manifest.transformers.options",
+          "attributes": [
+            {
+              "type": "array",
+              "key": "mapping",
+              "translationKey": "configuration.oibus.manifest.transformers.time-values-to-opcua.mapping.title",
+              "paginate": true,
+              "numberOfElementPerPage": 20,
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "rootAttribute": {
+                "type": "object",
+                "key": "item",
+                "translationKey": "configuration.oibus.manifest.transformers.time-values-to-opcua.mapping.title",
+                "displayProperties": {
+                  "visible": true,
+                  "wrapInBox": false
+                },
+                "enablingConditions": [],
+                "validators": [],
+                "attributes": [
+                  {
+                    "type": "string",
+                    "key": "pointId",
+                    "translationKey": "configuration.oibus.manifest.transformers.time-values-to-opcua.mapping.point-id",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  },
+                  {
+                    "type": "string",
+                    "key": "nodeId",
+                    "translationKey": "configuration.oibus.manifest.transformers.time-values-to-opcua.mapping.node-id",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "enablingConditions": [],
+          "validators": [],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": false
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "hHo18K",
+        "type": "standard",
+        "settings": {
+          "functionName": "setpoint-to-modbus",
+          "inputType": "setpoint",
+          "outputType": "modbus"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "options",
+          "translationKey": "configuration.oibus.manifest.transformers.options",
+          "attributes": [
+            {
+              "type": "array",
+              "key": "mapping",
+              "translationKey": "configuration.oibus.manifest.transformers.setpoint-to-modbus.mapping.title",
+              "paginate": true,
+              "numberOfElementPerPage": 20,
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "rootAttribute": {
+                "type": "object",
+                "key": "item",
+                "translationKey": "configuration.oibus.manifest.transformers.setpoint-to-modbus.mapping.title",
+                "displayProperties": {
+                  "visible": true,
+                  "wrapInBox": false
+                },
+                "enablingConditions": [],
+                "validators": [],
+                "attributes": [
+                  {
+                    "type": "string",
+                    "key": "reference",
+                    "translationKey": "configuration.oibus.manifest.transformers.setpoint-to-modbus.mapping.reference",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  },
+                  {
+                    "type": "string",
+                    "key": "address",
+                    "translationKey": "configuration.oibus.manifest.transformers.setpoint-to-modbus.mapping.address",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  },
+                  {
+                    "type": "string-select",
+                    "key": "modbusType",
+                    "translationKey": "configuration.oibus.manifest.transformers.setpoint-to-modbus.mapping.modbus-type",
+                    "defaultValue": "register",
+                    "selectableValues": [
+                      "coil",
+                      "register"
+                    ],
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "enablingConditions": [],
+          "validators": [],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": false
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "5DyO3T",
+        "type": "standard",
+        "settings": {
+          "functionName": "setpoint-to-mqtt",
+          "inputType": "setpoint",
+          "outputType": "mqtt"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "options",
+          "translationKey": "configuration.oibus.manifest.transformers.options",
+          "attributes": [
+            {
+              "type": "array",
+              "key": "mapping",
+              "translationKey": "configuration.oibus.manifest.transformers.setpoint-to-mqtt.mapping.title",
+              "paginate": true,
+              "numberOfElementPerPage": 20,
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "rootAttribute": {
+                "type": "object",
+                "key": "item",
+                "translationKey": "configuration.oibus.manifest.transformers.setpoint-to-mqtt.mapping.title",
+                "displayProperties": {
+                  "visible": true,
+                  "wrapInBox": false
+                },
+                "enablingConditions": [],
+                "validators": [],
+                "attributes": [
+                  {
+                    "type": "string",
+                    "key": "reference",
+                    "translationKey": "configuration.oibus.manifest.transformers.setpoint-to-mqtt.mapping.reference",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 6,
+                      "displayInViewMode": true
+                    }
+                  },
+                  {
+                    "type": "string",
+                    "key": "topic",
+                    "translationKey": "configuration.oibus.manifest.transformers.setpoint-to-mqtt.mapping.topic",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 6,
+                      "displayInViewMode": true
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "enablingConditions": [],
+          "validators": [
+            {
+              "type": "REQUIRED",
+              "arguments": []
+            }
+          ],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": false
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "S2IGeN",
+        "type": "standard",
+        "settings": {
+          "functionName": "setpoint-to-opcua",
+          "inputType": "setpoint",
+          "outputType": "opcua"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "options",
+          "translationKey": "configuration.oibus.manifest.transformers.options",
+          "attributes": [
+            {
+              "type": "array",
+              "key": "mapping",
+              "translationKey": "configuration.oibus.manifest.transformers.setpoint-to-opcua.mapping.title",
+              "paginate": true,
+              "numberOfElementPerPage": 20,
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "rootAttribute": {
+                "type": "object",
+                "key": "item",
+                "translationKey": "configuration.oibus.manifest.transformers.setpoint-to-opcua.mapping.title",
+                "displayProperties": {
+                  "visible": true,
+                  "wrapInBox": false
+                },
+                "enablingConditions": [],
+                "validators": [],
+                "attributes": [
+                  {
+                    "type": "string",
+                    "key": "reference",
+                    "translationKey": "configuration.oibus.manifest.transformers.setpoint-to-opcua.mapping.reference",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  },
+                  {
+                    "type": "string",
+                    "key": "nodeId",
+                    "translationKey": "configuration.oibus.manifest.transformers.setpoint-to-opcua.mapping.node-id",
+                    "defaultValue": null,
+                    "validators": [
+                      {
+                        "type": "REQUIRED",
+                        "arguments": []
+                      }
+                    ],
+                    "displayProperties": {
+                      "row": 0,
+                      "columns": 4,
+                      "displayInViewMode": true
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "enablingConditions": [],
+          "validators": [
+            {
+              "type": "REQUIRED",
+              "arguments": []
+            }
+          ],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": false
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "transformerId1",
+        "oIBusCreatedBy": null,
+        "oIBusUpdatedBy": null,
+        "oIBusCreatedAt": "2026-09-25T14:25:23.924Z",
+        "oIBusUpdatedAt": "2026-09-25T14:25:23.924Z",
+        "type": "custom",
+        "settings": {
+          "name": "my transformer 1",
+          "description": "description",
+          "inputType": "time-values",
+          "language": "javascript",
+          "timeout": 2000,
+          "outputType": "any",
+          "customCode": "console.log(\"Hello World\");"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "transformers.options",
+          "translationKey": "",
+          "attributes": [],
+          "enablingConditions": [],
+          "validators": [],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": false
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "transformerId2",
+        "oIBusCreatedBy": null,
+        "oIBusUpdatedBy": null,
+        "oIBusCreatedAt": "2026-09-25T14:25:23.925Z",
+        "oIBusUpdatedAt": "2026-09-25T14:25:23.925Z",
+        "type": "custom",
+        "settings": {
+          "name": "my transformer 2",
+          "description": "description",
+          "inputType": "any",
+          "language": "javascript",
+          "timeout": 2000,
+          "outputType": "any",
+          "customCode": "console.log(\"Hello World\");"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "transformers.options",
+          "translationKey": "",
+          "attributes": [],
+          "enablingConditions": [],
+          "validators": [],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": false
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "transformerId3",
+        "oIBusCreatedBy": null,
+        "oIBusUpdatedBy": null,
+        "oIBusCreatedAt": "2026-09-25T14:25:23.926Z",
+        "oIBusUpdatedAt": "2026-09-25T14:25:23.926Z",
+        "type": "custom",
+        "settings": {
+          "name": "my transformer 3",
+          "description": "description",
+          "inputType": "setpoint",
+          "language": "javascript",
+          "timeout": 2000,
+          "outputType": "any",
+          "customCode": "console.log(\"Hello World\");"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "transformers.options",
+          "translationKey": "",
+          "attributes": [],
+          "enablingConditions": [],
+          "validators": [],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": false
+          }
+        }
+      },
+      {
+        "oIBusInternalId": "8dkvpg",
+        "type": "standard",
+        "settings": {
+          "functionName": "json-to-oianalytics",
+          "inputType": "any",
+          "outputType": "oianalytics"
+        },
+        "manifest": {
+          "type": "object",
+          "key": "options",
+          "translationKey": "configuration.oibus.manifest.transformers.options",
+          "attributes": [
+            {
+              "type": "string",
+              "key": "rowIteratorPath",
+              "translationKey": "configuration.oibus.manifest.transformers.json-to-oianalytics.row-iterator-path",
+              "defaultValue": "$[*]",
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 0,
+                "columns": 6,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string",
+              "key": "pointId",
+              "translationKey": "configuration.oibus.manifest.transformers.json-to-oianalytics.point-id",
+              "defaultValue": null,
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 1,
+                "columns": 4,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string",
+              "key": "value",
+              "translationKey": "configuration.oibus.manifest.transformers.json-to-oianalytics.value",
+              "defaultValue": null,
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 1,
+                "columns": 4,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "string",
+              "key": "timestamp",
+              "translationKey": "configuration.oibus.manifest.transformers.json-to-oianalytics.timestamp",
+              "defaultValue": null,
+              "validators": [
+                {
+                  "type": "REQUIRED",
+                  "arguments": []
+                }
+              ],
+              "displayProperties": {
+                "row": 1,
+                "columns": 4,
+                "displayInViewMode": true
+              }
+            },
+            {
+              "type": "object",
+              "key": "datetimeSettings",
+              "translationKey": "configuration.oibus.manifest.transformers.json-to-oianalytics.datetime-settings.title",
+              "displayProperties": {
+                "visible": true,
+                "wrapInBox": false
+              },
+              "enablingConditions": [
+                {
+                  "referralPathFromRoot": "inputType",
+                  "targetPathFromRoot": "inputTimezone",
+                  "values": [
+                    "string"
+                  ]
+                },
+                {
+                  "referralPathFromRoot": "inputType",
+                  "targetPathFromRoot": "inputFormat",
+                  "values": [
+                    "string"
+                  ]
+                },
+                {
+                  "referralPathFromRoot": "inputType",
+                  "targetPathFromRoot": "inputLocale",
+                  "values": [
+                    "string"
+                  ]
+                }
+              ],
+              "validators": [],
+              "attributes": [
+                {
+                  "type": "string-select",
+                  "key": "inputType",
+                  "translationKey": "configuration.oibus.manifest.transformers.json-to-oianalytics.datetime-settings.input-type",
+                  "defaultValue": "iso-string",
+                  "selectableValues": [
+                    "iso-string",
+                    "unix-epoch",
+                    "unix-epoch-ms",
+                    "string"
+                  ],
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 3,
+                    "displayInViewMode": false
+                  }
+                },
+                {
+                  "type": "timezone",
+                  "key": "inputTimezone",
+                  "translationKey": "configuration.oibus.manifest.transformers.json-to-oianalytics.datetime-settings.timezone",
+                  "defaultValue": "UTC",
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 3,
+                    "displayInViewMode": false
+                  }
+                },
+                {
+                  "type": "string",
+                  "key": "inputFormat",
+                  "translationKey": "configuration.oibus.manifest.transformers.json-to-oianalytics.datetime-settings.format",
+                  "defaultValue": "yyyy-MM-dd HH:mm:ss",
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 3,
+                    "displayInViewMode": false
+                  }
+                },
+                {
+                  "type": "string",
+                  "key": "inputLocale",
+                  "translationKey": "configuration.oibus.manifest.transformers.json-to-oianalytics.datetime-settings.locale",
+                  "defaultValue": "en-En",
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 0,
+                    "columns": 3,
+                    "displayInViewMode": false
+                  }
+                },
+                {
+                  "type": "string-select",
+                  "key": "outputPrecision",
+                  "translationKey": "configuration.oibus.manifest.transformers.json-to-oianalytics.datetime-settings.output-precision",
+                  "defaultValue": "ms",
+                  "selectableValues": [
+                    "ms",
+                    "s",
+                    "min",
+                    "hr"
+                  ],
+                  "validators": [
+                    {
+                      "type": "REQUIRED",
+                      "arguments": []
+                    }
+                  ],
+                  "displayProperties": {
+                    "row": 1,
+                    "columns": 3,
+                    "displayInViewMode": true
+                  }
+                }
+              ]
+            }
+          ],
+          "enablingConditions": [],
+          "validators": [],
+          "displayProperties": {
+            "visible": true,
+            "wrapInBox": true
+          }
+        }
+      }
+    ],
+    "historyQueries": [
+      {
+        "oIBusInternalId": "historyId1",
+        "oIBusCreatedBy": null,
+        "oIBusUpdatedBy": null,
+        "oIBusCreatedAt": "2026-09-25T14:25:23.937Z",
+        "oIBusUpdatedAt": "2026-09-25T14:25:23.937Z",
+        "settings": {
+          "name": "my first History Query",
+          "description": "description",
+          "status": "RUNNING",
+          "southType": "mssql",
+          "southSettings": {
+            "host": "host",
+            "port": 1433,
+            "connectionTimeout": 1000,
+            "database": "database",
+            "username": "oibus",
+            "password": "",
+            "domain": "domain",
+            "encryption": true,
+            "trustServerCertificate": true,
+            "requestTimeout": 5000
+          },
+          "queryTimeRange": {
+            "startTime": "2020-03-15T00:00:00.000Z",
+            "endTime": "2020-03-20T00:00:00.000Z",
+            "maxReadInterval": 3600,
+            "readDelay": 200
+          },
+          "northType": "oianalytics",
+          "northSettings": {
+            "useOiaModule": true,
+            "timeout": 5000,
+            "compress": true
+          },
+          "caching": {
+            "trigger": {
+              "scanModeId": "scanModeId1",
+              "scanModeName": null,
+              "numberOfElements": 100,
+              "numberOfFiles": 1
+            },
+            "throttling": {
+              "runMinDelay": 200,
+              "maxSize": 10000,
+              "maxNumberOfElements": 1000
+            },
+            "error": {
+              "retryInterval": 1000,
+              "retryCount": 3,
+              "retentionDuration": 24
+            },
+            "archive": {
+              "enabled": true,
+              "retentionDuration": 1000
+            }
+          },
+          "items": [
+            {
+              "id": "historyQueryItem1",
+              "oIBusCreatedBy": null,
+              "oIBusUpdatedBy": null,
+              "oIBusCreatedAt": "2026-09-25T14:25:23.938Z",
+              "oIBusUpdatedAt": "2026-09-25T14:25:23.938Z",
+              "name": "item1",
+              "enabled": true,
+              "settings": {
+                "query": "SELECT * FROM table1",
+                "dateTimeFields": null,
+                "serialization": {
+                  "type": "csv",
+                  "filename": "item1.csv",
+                  "delimiter": "COMMA",
+                  "compression": false,
+                  "outputTimestampFormat": "yyyy-MM-dd HH:mm:ss.SSS",
+                  "outputTimezone": "UTC"
+                }
+              }
+            },
+            {
+              "id": "historyQueryItem2",
+              "oIBusCreatedBy": null,
+              "oIBusUpdatedBy": null,
+              "oIBusCreatedAt": "2026-09-25T14:25:23.939Z",
+              "oIBusUpdatedAt": "2026-09-25T14:25:23.939Z",
+              "name": "item2",
+              "enabled": true,
+              "settings": {
+                "query": "SELECT * FROM table2",
+                "dateTimeFields": null,
+                "serialization": {
+                  "type": "csv",
+                  "filename": "item2.csv",
+                  "delimiter": "COMMA",
+                  "compression": false,
+                  "outputTimestampFormat": "yyyy-MM-dd HH:mm:ss.SSS",
+                  "outputTimezone": "UTC"
+                }
+              }
+            }
+          ],
+          "northTransformers": [
+            {
+              "id": "historyTransformerId1",
+              "transformerId": "transformerId1",
+              "options": {},
+              "items": [
+                {
+                  "id": "historyQueryItem2",
+                  "name": "item2",
+                  "enabled": true,
+                  "createdBy": null,
+                  "updatedBy": null,
+                  "createdAt": "2026-09-25T14:25:23.939Z",
+                  "updatedAt": "2026-09-25T14:25:23.939Z"
+                }
+              ]
+            },
+            {
+              "id": "historyTransformerId2",
+              "transformerId": "transformerId2",
+              "options": {},
+              "items": []
+            }
+          ]
+        }
+      },
+      {
+        "oIBusInternalId": "historyId2",
+        "oIBusCreatedBy": null,
+        "oIBusUpdatedBy": null,
+        "oIBusCreatedAt": "2026-09-25T14:25:23.941Z",
+        "oIBusUpdatedAt": "2026-09-25T14:25:23.941Z",
+        "settings": {
+          "name": "My second History Query",
+          "description": "description",
+          "status": "PENDING",
+          "southType": "mssql",
+          "southSettings": {
+            "host": "host",
+            "port": 1433,
+            "connectionTimeout": 1000,
+            "database": "database",
+            "username": "oibus",
+            "password": "",
+            "domain": "domain",
+            "encryption": true,
+            "trustServerCertificate": true,
+            "requestTimeout": 5000
+          },
+          "queryTimeRange": {
+            "startTime": "2020-03-15T00:00:00.000Z",
+            "endTime": "2020-03-20T00:00:00.000Z",
+            "maxReadInterval": 3600,
+            "readDelay": 200
+          },
+          "northType": "file-writer",
+          "northSettings": {
+            "outputFolder": "output-folder",
+            "prefix": "prefix-",
+            "suffix": "-suffix",
+            "username": null,
+            "password": "",
+            "domain": null
+          },
+          "caching": {
+            "trigger": {
+              "scanModeId": "scanModeId1",
+              "scanModeName": null,
+              "numberOfElements": 100,
+              "numberOfFiles": 0
+            },
+            "throttling": {
+              "runMinDelay": 200,
+              "maxSize": 10000,
+              "maxNumberOfElements": 1000
+            },
+            "error": {
+              "retryInterval": 1000,
+              "retryCount": 3,
+              "retentionDuration": 24
+            },
+            "archive": {
+              "enabled": true,
+              "retentionDuration": 1000
+            }
+          },
+          "items": [
+            {
+              "id": "historyQueryItem3",
+              "oIBusCreatedBy": null,
+              "oIBusUpdatedBy": null,
+              "oIBusCreatedAt": "2026-09-25T14:25:23.942Z",
+              "oIBusUpdatedAt": "2026-09-25T14:25:23.942Z",
+              "name": "item3",
+              "enabled": true,
+              "settings": {
+                "query": "SELECT * FROM table3",
+                "dateTimeFields": null,
+                "serialization": {
+                  "type": "csv",
+                  "filename": "item3.csv",
+                  "delimiter": "COMMA",
+                  "compression": false,
+                  "outputTimestampFormat": "yyyy-MM-dd HH:mm:ss.SSS",
+                  "outputTimezone": "UTC"
+                }
+              }
+            }
+          ],
+          "northTransformers": [
+            {
+              "id": "fixtureHistoryLink1",
+              "transformerId": "RfzYaZ",
+              "options": {},
+              "items": []
+            },
+            {
+              "id": "fixtureHistoryLink2",
+              "transformerId": "8yVydz",
+              "options": {},
+              "items": []
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

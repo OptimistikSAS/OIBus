@@ -42782,22 +42782,27 @@
 			},
 			"ConfigImportResponseDTO": {
 				"properties": {
+					"fromVersion": {
+						"type": "string",
+						"description": "`oibusVersion` of the imported file."
+					},
+					"toVersion": {
+						"type": "string",
+						"description": "Version of the OIBus instance the configuration was upgraded to and imported into."
+					},
 					"appliedUpgrades": {
 						"items": {
 							"properties": {
-								"entityId": {
+								"description": {
 									"type": "string"
 								},
 								"version": {
 									"type": "string"
-								},
-								"scope": {
-									"type": "string"
 								}
 							},
 							"required": [
-								"version",
-								"scope"
+								"description",
+								"version"
 							],
 							"type": "object"
 						},
@@ -42811,6 +42816,8 @@
 					}
 				},
 				"required": [
+					"fromVersion",
+					"toVersion",
 					"appliedUpgrades",
 					"warnings"
 				],
@@ -49022,7 +49029,7 @@
 						"description": "Configuration exported successfully"
 					}
 				},
-				"description": "Exports the full OIBus configuration (engine, scan modes, ip filters, certificates, south and\nnorth connectors, history queries, transformers and users) as a single, secret-free,\nversion-stamped JSON file",
+				"description": "Exports the full OIBus configuration (engine, scan modes, ip filters, certificates, south\nconnectors with their configuration workflows, north connectors, history queries, transformers\nand users) as a single, secret-free JSON file: the same DTOs OIBus sends to OIAnalytics, under\n`config`, stamped with the `oibusVersion` they come from",
 				"summary": "Export configuration",
 				"tags": [
 					"Config Transfer"
@@ -49046,7 +49053,7 @@
 						}
 					}
 				},
-				"description": "Imports a previously exported configuration file, transactionally wiping and recreating every\nin-scope section of the local configuration (scan modes, ip filters, certificates, transformers,\nsouth and north connectors, history queries and users) from it, preserving each entity's original\nid. This is a full replace, not a merge, and cannot be undone. The engine's own settings and the\nOIAnalytics registration are never touched. Older exports are brought forward with the\nsettings-upgrade registry before being applied; nothing is written if the file is malformed, too\nnew for this OIBus version, or fails validation after any upgrades.\n\nOn success, OIBus restarts itself so the running engine picks up the newly written configuration\n— the wipe+recreate only touches the database, and the in-memory south/north connectors and\nhistory queries the engine is already running would otherwise keep operating against rows that\nno longer exist.",
+				"description": "Imports a configuration export file (from OIBus or OIAnalytics), transactionally wiping and\nrecreating every in-scope section of the local configuration (scan modes, ip filters, certificates,\ntransformers, south connectors and their configuration workflows, north connectors, history queries\nand users) from it, preserving each entity's original id. This is a full replace, not a merge, and\ncannot be undone. The engine's own settings and the OIAnalytics registration are never touched.\nA configuration from an older OIBus is brought to the current shape by the config upgrade chain\nbefore being applied; nothing is written if the file is malformed, comes from a newer OIBus (or one\nolder than 3.10.0), or fails validation after the upgrades.\n\nOn success, OIBus restarts itself so the running engine picks up the newly written configuration\n— the wipe+recreate only touches the database, and the in-memory south/north connectors and\nhistory queries the engine is already running would otherwise keep operating against rows that\nno longer exist.",
 				"summary": "Import configuration",
 				"tags": [
 					"Config Transfer"
