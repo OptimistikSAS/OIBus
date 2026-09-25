@@ -4,6 +4,8 @@ import { Database } from 'better-sqlite3';
 import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import AuditRepository from './audit.repository';
 import { AuditLog } from '../../model/audit.model';
+import { AUDIT_ENTITY_TYPES } from '../../../shared/model/audit.model';
+import testData from '../../tests/utils/test-data';
 
 const TEST_DB_PATH = 'src/tests/test-config-audit.db';
 
@@ -284,6 +286,95 @@ describe('AuditRepository', () => {
 
       const remaining = repository.search({ page: 0 });
       assert.deepStrictEqual(remaining.content.map(element => element.id).sort(), ['audit2', 'audit3']);
+    });
+  });
+
+  describe('findEntityReference()', () => {
+    it('should return the name of a top-level entity without parent', () => {
+      assert.deepStrictEqual(repository.findEntityReference('south_connector', testData.south.list[0].id), {
+        name: testData.south.list[0].name,
+        parentId: null
+      });
+      assert.deepStrictEqual(repository.findEntityReference('north_connector', testData.north.list[0].id), {
+        name: testData.north.list[0].name,
+        parentId: null
+      });
+      assert.deepStrictEqual(repository.findEntityReference('history_query', testData.historyQueries.list[0].id), {
+        name: testData.historyQueries.list[0].name,
+        parentId: null
+      });
+    });
+
+    it('should return the name and owning entity id of child entities', () => {
+      assert.deepStrictEqual(repository.findEntityReference('south_item', testData.south.list[0].items[0].id), {
+        name: testData.south.list[0].items[0].name,
+        parentId: testData.south.list[0].id
+      });
+      assert.deepStrictEqual(repository.findEntityReference('history_query_item', testData.historyQueries.list[0].items[0].id), {
+        name: testData.historyQueries.list[0].items[0].name,
+        parentId: testData.historyQueries.list[0].id
+      });
+      assert.deepStrictEqual(repository.findEntityReference('north_transformer', testData.north.list[0].transformers[0].id), {
+        name: (testData.transformers.list[0] as { name: string }).name,
+        parentId: testData.north.list[0].id
+      });
+      assert.deepStrictEqual(
+        repository.findEntityReference('history_query_transformer', testData.historyQueries.list[0].northTransformers[0].id),
+        {
+          name: (testData.transformers.list[0] as { name: string }).name,
+          parentId: testData.historyQueries.list[0].id
+        }
+      );
+    });
+
+    it('should use the function name of standard transformers referenced by north transformers', () => {
+      database
+        .prepare(
+          `INSERT INTO transformers (id, type, input_type, output_type, function_name) VALUES ('standardTransformerId', 'standard', 'time-values', 'any', 'iso');`
+        )
+        .run();
+      database
+        .prepare(
+          `INSERT INTO north_transformers (id, north_id, transformer_id, options) VALUES ('standardNorthTransformerId', ?, 'standardTransformerId', '{}');`
+        )
+        .run(testData.north.list[0].id);
+
+      assert.deepStrictEqual(repository.findEntityReference('north_transformer', 'standardNorthTransformerId'), {
+        name: 'iso',
+        parentId: testData.north.list[0].id
+      });
+      database.prepare(`DELETE FROM north_transformers WHERE id = 'standardNorthTransformerId';`).run();
+      database.prepare(`DELETE FROM transformers WHERE id = 'standardTransformerId';`).run();
+    });
+
+    it('should use the relevant column as name for entities without name', () => {
+      assert.strictEqual(
+        repository.findEntityReference('ip_filter', testData.ipFilters.list[0].id)!.name,
+        testData.ipFilters.list[0].address
+      );
+      assert.strictEqual(repository.findEntityReference('user', testData.users.list[0].id)!.name, testData.users.list[0].login);
+      assert.strictEqual(
+        repository.findEntityReference('oianalytics_registration', testData.oIAnalytics.registration.completed.id)!.name,
+        testData.oIAnalytics.registration.completed.host
+      );
+    });
+
+    it('should return null when the entity does not exist, for every entity type', () => {
+      for (const entityType of AUDIT_ENTITY_TYPES) {
+        assert.strictEqual(repository.findEntityReference(entityType, 'unknown'), null, entityType);
+      }
+    });
+
+    it('should resolve engine-level entities', () => {
+      assert.strictEqual(repository.findEntityReference('scan_mode', testData.scanMode.list[0].id)!.name, testData.scanMode.list[0].name);
+      assert.strictEqual(
+        repository.findEntityReference('certificate', testData.certificates.list[0].id)!.name,
+        testData.certificates.list[0].name
+      );
+      assert.strictEqual(
+        repository.findEntityReference('engine', testData.engine.settings.id)!.name,
+        testData.engine.settings.general.name
+      );
     });
   });
 });
