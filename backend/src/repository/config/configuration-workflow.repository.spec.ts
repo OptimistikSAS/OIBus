@@ -99,6 +99,23 @@ describe('Configuration Workflow Repository', () => {
       assert.ok(found.every(workflow => workflow.southId === testData.south.list[0].id));
     });
 
+    it('should find every workflow, across souths', () => {
+      const first = repository.create({ ...localCommand, name: 'Workflow all A' }, 'userTest');
+      const second = repository.create({ ...localCommand, name: 'Workflow all B', southId: testData.south.list[1].id }, 'userTest');
+
+      const found = repository.findAll();
+      assert.deepStrictEqual(
+        found
+          .filter(workflow => [first.id, second.id].includes(workflow.id))
+          .map(workflow => [workflow.id, workflow.southId])
+          .sort(),
+        [
+          [first.id, testData.south.list[0].id],
+          [second.id, testData.south.list[1].id]
+        ].sort()
+      );
+    });
+
     it('should return an empty array when finding workflows for a non-existing south id', () => {
       assert.deepStrictEqual(repository.findBySouthId('nonExistingSouthId'), []);
     });

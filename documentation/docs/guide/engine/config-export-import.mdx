@@ -13,21 +13,26 @@ Both actions are available from **Engine > Settings**, via the **Export configur
 
 ## What gets exported {#what-gets-exported}
 
-The export file (`oibus-config-export.json`) is a versioned envelope containing:
+The export file (`oibus-config-export.json`) has three top-level fields:
 
-- Scan modes
-- IP filters
-- Certificates
-- Transformers
-- South connectors (including items and groups)
-- North connectors
-- History queries
-- Users
-- The OIAnalytics registration settings (for informational purposes only — see
-  [Registration](#registration-is-not-imported) below)
+- `oibusVersion`: the version of the OIBus the configuration comes from.
+- `exportedAt`: when the file was produced, for information only.
+- `config`: the configuration itself, made of the same sections OIBus sends to OIAnalytics:
+  - Scan modes
+  - IP filters
+  - Certificates
+  - Transformers
+  - South connectors (including items, groups and configuration workflows)
+  - North connectors
+  - History queries
+  - Users
+  - The engine settings and the OIAnalytics registration settings, for information only: they are
+    never imported (see [Registration](#registration-is-not-imported) below)
 
-The engine's own settings (name, port, proxy server, authentication duration, etc.) are **not**
-included in the export and are never touched by an import.
+Because `config` uses the same format as the configuration OIBus sends to OIAnalytics, a file
+produced by OIAnalytics from the configuration it holds for an OIBus can be imported the same way
+as a file exported by OIBus. Its `oibusVersion` is then the version of that OIBus, not of
+OIAnalytics.
 
 ### Secrets are always stripped {#secrets-are-always-stripped}
 
@@ -43,8 +48,8 @@ means those fields must be re-entered manually after an import — see
 Importing a configuration file **wipes every in-scope section of the target instance's local
 configuration and recreates it from the file**, preserving each entity's original internal ID.
 This is destructive and cannot be undone: every south connector, north connector, history query,
-scan mode, IP filter, transformer, certificate and user currently on the instance is deleted before
-the imported ones are created. The UI requires an explicit confirmation, restating this, before an
+configuration workflow, scan mode, IP filter, transformer, certificate and user currently on the
+instance is deleted before the imported ones are created. The UI requires an explicit confirmation, restating this, before an
 import is submitted.
 
 The engine's own settings and the OIAnalytics registration are never wiped or overwritten by an
@@ -55,20 +60,24 @@ written**: the import is all-or-nothing.
 
 ## Supported versions {#supported-versions}
 
-Every export file is stamped with the `oibusVersion` of the instance that produced it. Configuration
-export/import is available from OIBus 3.10.0 onwards.
+Configuration export is available from OIBus 3.10.0 onwards, but a file can hold the configuration
+of an OIBus as old as 3.9.0 (for example a file produced by OIAnalytics). A file can be imported into
+any OIBus at least as recent as the one its `oibusVersion` names:
 
-- **Newer exports are rejected**: an import is rejected outright if the file's `oibusVersion` is
+- **Newer files are rejected**: an import is rejected outright if the file's `oibusVersion` is
   newer than the importing OIBus instance, since it may contain settings this version does not know.
   A pre-release counts as older than its release (`3.10.0-beta-2` is older than `3.10.0`).
-- **Older exports are upgraded**: before validating the file, OIBus applies every settings-upgrade
-  step registered for a version newer than the file's `oibusVersion` (per south/north connector type,
-  history query side, or transformer), to bring older settings shapes forward to what the current
-  connector manifests expect. The response lists every upgrade that was applied.
+- **Files older than 3.9.0 are rejected**, including files from 3.9.0 pre-releases.
+- **Older files are upgraded**: before validating the file, OIBus brings its configuration from its
+  `oibusVersion` to the shape the importing version expects, applying in order every configuration
+  upgrade step of the versions in between. These steps do to the configuration what the database
+  migrations of those versions do to an existing installation. The import result lists every upgrade
+  that was applied.
 
-After any such upgrades, every settings blob in the file is validated against the current connector
-manifests. If any entity fails validation, the whole import is rejected with a per-entity list of
-errors and, again, nothing is written.
+After the upgrades, the whole configuration is validated: its structure (every section, entity and
+field), then every connector and item settings against the current connector manifests. If
+anything fails validation, the whole import is rejected with a per-entity list of errors and, again,
+nothing is written.
 
 ## Manual steps after import {#manual-steps-after-import}
 
@@ -85,6 +94,8 @@ Because secrets are never exported, an imported configuration is not immediately
   certificate can be used for TLS.
 - **Users are recreated with a random password**, since passwords are never exported. Every
   imported user must have their password reset before they can sign in again.
+- **Configuration workflows are imported disabled**, with the items they created still attached to
+  them. Their run history is not exported. Re-enable each one once its south connector is configured.
 - **Standard transformers are matched by function name**, not recreated — they are seeded once when
   OIBus starts and matched to the imported configuration by their `functionName`. If the target
   instance doesn't have a standard transformer with a matching function name (for example, an older
