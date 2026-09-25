@@ -178,7 +178,10 @@
       "certificate": "Certificate",
       "user": "User",
       "transformer": "Transformer",
-      "engine": "Engine",
+      "engine_general": "Engine – general settings",
+      "engine_web_server": "Engine – web server",
+      "engine_proxy_server": "Engine – proxy server",
+      "engine_logging": "Engine – logging and audit",
       "oianalytics_registration": "OIAnalytics registration"
     },
     "internal-scope-ids": {
@@ -843,7 +846,8 @@
       }
     },
     "tooltips": {
-      "edit": "Edit engine settings"
+      "edit": "Edit engine settings",
+      "audit": "View audit history"
     }
   },
   "configuration": {

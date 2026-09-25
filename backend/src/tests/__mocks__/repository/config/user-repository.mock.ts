@@ -35,6 +35,6 @@ export default class UserRepositoryMock extends UserRepository {
     ): Promise<User> => ({}) as User
   );
   override update = mock.fn((_id: string, _command: UserCommandDTO, _updatedBy: string): void => undefined);
-  override updatePassword = mock.fn(async (_id: string, _password: string): Promise<void> => undefined);
+  override updatePassword = mock.fn(async (_id: string, _password: string, _updatedBy: string): Promise<void> => undefined);
   override delete = mock.fn((_id: string, _deletedBy: string): void => undefined);
 }

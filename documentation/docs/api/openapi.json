@@ -42930,7 +42930,10 @@
 					"ip_filter",
 					"user",
 					"transformer",
-					"engine",
+					"engine_general",
+					"engine_web_server",
+					"engine_proxy_server",
+					"engine_logging",
 					"oianalytics_registration"
 				],
 				"description": "Type representing an audited entity type."

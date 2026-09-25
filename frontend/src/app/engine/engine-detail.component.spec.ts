@@ -21,6 +21,7 @@ import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { EngineSettingsDTO } from '../../../../backend/shared/model/engine.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
+import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
 
 class EngineDetailComponentTester {
   readonly fixture = TestBed.createComponent(EngineDetailComponent);
@@ -56,7 +57,7 @@ describe('EngineDetailComponent', () => {
   let certificateService: MockObject<CertificateService>;
   let transformerService: MockObject<TransformerService>;
   let configTransferService: MockObject<ConfigTransferService>;
-  let modalService: MockModalService<ImportConfigModalComponent>;
+  let modalService: MockModalService<ImportConfigModalComponent | AuditHistoryModalComponent>;
 
   beforeEach(() => {
     engineService = createMock(EngineService);
@@ -116,6 +117,22 @@ describe('EngineDetailComponent', () => {
     await expect.element(tester.generalSettings.nth(2)).toMatchTextContent('7 days');
     await expect.element(tester.generalSettings.nth(3)).toMatchTextContent('8888');
     await expect.element(tester.generalSettings.nth(4)).toMatchTextContent('silent');
+  });
+
+  test.each([
+    ['#show-audit-general-button', 'engine_general'],
+    ['#show-audit-web-server-button', 'engine_web_server'],
+    ['#show-audit-proxy-button', 'engine_proxy_server'],
+    ['#show-audit-logger-button', 'engine_logging']
+  ])('should open the audit history of an engine settings section with %s', async (button, section) => {
+    const fakeAuditComponent = createMock(AuditHistoryModalComponent);
+    modalService.mockClosedModal(fakeAuditComponent);
+    const tester = new EngineDetailComponentTester();
+    tester.fixture.detectChanges();
+
+    await tester.root.getByCss(button).click();
+
+    expect(fakeAuditComponent.prepare).toHaveBeenCalledWith(section, engineSettings.id);
   });
 
   test('should restart', () => {

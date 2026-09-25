@@ -28,7 +28,10 @@ export const AUDIT_ENTITY_TYPES = [
   'certificate',
   'user',
   'transformer',
-  'engine',
+  'engine_general',
+  'engine_web_server',
+  'engine_proxy_server',
+  'engine_logging',
   'oianalytics_registration'
 ] as const;
 /**

@@ -1,22 +1,6 @@
-export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE';
+import { AuditAction, AuditEntityType } from '../../shared/model/audit.model';
 
-export type AuditEntityType =
-  | 'south_connector'
-  | 'south_item'
-  | 'south_item_group'
-  | 'configuration_workflow'
-  | 'north_connector'
-  | 'north_transformer'
-  | 'history_query'
-  | 'history_query_item'
-  | 'history_query_transformer'
-  | 'scan_mode'
-  | 'ip_filter'
-  | 'certificate'
-  | 'user'
-  | 'transformer'
-  | 'engine'
-  | 'oianalytics_registration';
+export type { AuditAction, AuditEntityType };
 
 export interface AuditLog {
   id: string;
