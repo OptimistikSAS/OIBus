@@ -2814,7 +2814,9 @@
       }
     },
     "tooltips": {
-      "view": "Voir les détails du journal d'audit"
+      "view": "Voir les détails du journal d'audit",
+      "entity-id": "ID : {{id}}",
+      "deleted-entity": "Entité supprimée (ID : {{id}})"
     },
     "actions": {
       "CREATE": "Créer",
@@ -2834,11 +2836,13 @@
       "all-entity-types": "Tous les types d'entité",
       "all-actions": "Toutes les actions"
     },
-    "entity-type": "Type d'entité",
-    "entity-id": "ID de l'entité",
-    "action": "Action",
+    "entity": "Entité",
+    "action-date": "Action / Date",
     "user": "Utilisateur",
-    "date": "Date"
+    "users": {
+      "oianalytics": "OIAnalytics",
+      "system": "Système"
+    }
   },
   "logs": {
     "title": "Journaux",

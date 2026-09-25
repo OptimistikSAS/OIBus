@@ -28,8 +28,16 @@ Certificate, User, Transformer, Engine, and OIAnalytics registration.
 ### The Audit Page {#the-audit-page}
 
 Open the account menu (top right) and select **Audit** to see every audit log entry across the whole
-OIBus instance. Filter by **Entity type**, **Action**, and a **Start**/**End** date range, then click the
-🔍 icon on any row to open its full history.
+OIBus instance. Filter by **Entity type**, **Action**, and a **Start**/**End** date range (the last week by
+default), then click the 🔍 icon on any row to open its full history.
+
+The **Entity** column shows the entity name. When the entity still exists, the name links to the page where it
+can be found: the connector or history query page for connectors, history queries and their items, groups,
+configuration workflows and transformers; the Engine page for scan modes, IP filters, certificates, transformers
+and engine settings. Deleted entities are greyed out and show their last known name.
+
+The **User** column shows the name of the user who performed the change, or **OIAnalytics** when the change was
+pushed from OIAnalytics.
 
 ### From an Entity's Own List {#from-an-entitys-own-list}
 
@@ -42,11 +50,11 @@ going through the global Audit page.
 The history view lists every change recorded for the entity, most recent first. Expand a row to see what
 changed, in one of three modes (switch between them with the dropdown at the top):
 
-| Mode                  | Description                                                                                 |
-| --------------------- | ------------------------------------------------------------------------------------------- |
-| **Table** (default)   | One row per field, with its value **Before** and **After**. Changed fields are highlighted. |
-| **JSON diff**         | A unified diff of the two JSON snapshots.                                                   |
-| **JSON side by side** | The two JSON snapshots shown side by side.                                                  |
+| Mode                    | Description                                                                                 |
+| ----------------------- | ------------------------------------------------------------------------------------------- |
+| **JSON diff** (default) | A unified diff of the two JSON snapshots.                                                   |
+| **Table**               | One row per field, with its value **Before** and **After**. Changed fields are highlighted. |
+| **JSON side by side**   | The two JSON snapshots shown side by side.                                                  |
 
 ## Retention {#retention}
 

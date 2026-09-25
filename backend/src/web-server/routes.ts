@@ -9482,6 +9482,16 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["DELETE"]},{"dataType":"enum","enums":["CREATE"]},{"dataType":"enum","enums":["UPDATE"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AuditEntityInfoDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "exists": {"dataType":"boolean","required":true},
+            "name": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "parentId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "AuditLogDTO": {
         "dataType": "refObject",
         "properties": {
@@ -9491,7 +9501,8 @@ const models: TsoaRoute.Models = {
             "action": {"ref":"AuditAction","required":true},
             "previousState": {"dataType":"union","subSchemas":[{"ref":"Record_string.unknown_"},{"dataType":"enum","enums":[null]}],"required":true},
             "newState": {"dataType":"union","subSchemas":[{"ref":"Record_string.unknown_"},{"dataType":"enum","enums":[null]}],"required":true},
-            "userId": {"dataType":"string","required":true},
+            "entity": {"ref":"AuditEntityInfoDTO","required":true},
+            "user": {"ref":"UserInfo","required":true},
             "createdAt": {"dataType":"string","required":true},
         },
         "additionalProperties": false,

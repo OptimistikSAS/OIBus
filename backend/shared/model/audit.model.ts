@@ -1,3 +1,5 @@
+import { UserInfo } from './types';
+
 /**
  * List of possible audit actions.
  */
@@ -34,6 +36,28 @@ export const AUDIT_ENTITY_TYPES = [
  * @example 'south_connector'
  */
 export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];
+
+/**
+ * Information about the entity an audit log entry relates to, resolved at read time.
+ */
+export interface AuditEntityInfoDTO {
+  /**
+   * Whether the audited entity still exists in the configuration.
+   */
+  exists: boolean;
+
+  /**
+   * Current name of the entity if it exists, otherwise its last known name from the recorded snapshots.
+   * @example "My South connector"
+   */
+  name: string | null;
+
+  /**
+   * Identifier of the owning entity (south connector, north connector or history query) for child entities
+   * (items, groups, configuration workflows, transformers). `null` otherwise, or when the entity no longer exists.
+   */
+  parentId: string | null;
+}
 
 /**
  * Data Transfer Object for an audit log entry.
@@ -73,9 +97,14 @@ export interface AuditLogDTO {
   newState: Record<string, unknown> | null;
 
   /**
-   * The identifier of the user who performed the change.
+   * Information about the audited entity (name, existence, owning entity).
    */
-  userId: string;
+  entity: AuditEntityInfoDTO;
+
+  /**
+   * The user who performed the change.
+   */
+  user: UserInfo;
 
   /**
    * ISO timestamp of when the change was recorded.

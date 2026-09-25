@@ -63,30 +63,49 @@
         <table class="table table-sm table-hover oib-table">
           <thead>
             <tr>
-              <th translate="audit.entity-type"></th>
-              <th translate="audit.entity-id"></th>
-              <th translate="audit.action"></th>
+              <th translate="audit.action-date"></th>
               <th translate="audit.user"></th>
-              <th translate="audit.date"></th>
+              <th translate="audit.entity"></th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             @for (entry of entries().content; track entry.id) {
               <tr class="data">
-                <td>{{ entry.entityType | auditEntityTypesEnum }}</td>
-                <td>{{ entry.entityId }}</td>
-                <td>
+                <td class="text-nowrap">
                   <span
-                    class="badge"
+                    class="badge me-2"
                     [class.bg-success]="entry.action === 'CREATE'"
                     [class.bg-primary]="entry.action === 'UPDATE'"
                     [class.bg-danger]="entry.action === 'DELETE'"
                     [translate]="'audit.actions.' + entry.action"
                   ></span>
+                  <span>{{ entry.createdAt | datetime: 'ff' }}</span>
                 </td>
-                <td>{{ entry.userId }}</td>
-                <td class="text-nowrap">{{ entry.createdAt | datetime: 'ff' }}</td>
+                <td>{{ entry.user | auditUser }}</td>
+                <td>
+                  <span class="entity-type">{{ entry.entityType | auditEntityTypesEnum }}{{ 'common.colon-separator' | translate }}</span>
+                  @let entityName = entry.entity.name || entry.entityId;
+                  @let link = entityLink(entry);
+                  @if (link) {
+                    <a
+                      class="entity-link"
+                      [routerLink]="link"
+                      [ngbTooltip]="'audit.tooltips.entity-id' | translate: { id: entry.entityId }"
+                      >{{ entityName }}</a
+                    >
+                  } @else {
+                    <span
+                      class="entity-name"
+                      [class.text-muted]="!entry.entity.exists"
+                      [ngbTooltip]="
+                        (entry.entity.exists ? 'audit.tooltips.entity-id' : 'audit.tooltips.deleted-entity')
+                          | translate: { id: entry.entityId }
+                      "
+                      >{{ entityName }}</span
+                    >
+                  }
+                </td>
                 <td>
                   <button
                     type="button"

@@ -1,5 +1,5 @@
 import { mock } from 'node:test';
-import { AuditAction, AuditEntityType, AuditLog, AuditSearchParam } from '../../../model/audit.model';
+import { AuditAction, AuditEntityInfo, AuditEntityType, AuditLog, AuditSearchParam } from '../../../model/audit.model';
 import { Page } from '../../../../shared/model/types';
 
 const EMPTY_PAGE: Page<AuditLog> = { content: [], size: 50, number: 0, totalElements: 0, totalPages: 0 };
@@ -20,4 +20,9 @@ export default class AuditServiceMock {
   );
   search = mock.fn((_searchParams: AuditSearchParam): Page<AuditLog> => EMPTY_PAGE);
   findByEntity = mock.fn((_entityType: AuditEntityType, _entityId: string): Array<AuditLog> => []);
+  getEntityInfo = mock.fn((_auditLog: AuditLog): AuditEntityInfo => ({
+    exists: false,
+    name: null,
+    parentId: null
+  }));
 }
