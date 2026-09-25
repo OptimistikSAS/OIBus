@@ -21,7 +21,15 @@ Each audit log entry records:
 
 The following entity types are audited: South connector, South item, South item group, North connector,
 North transformer, History query, History query item, History query transformer, Scan mode, IP filter,
-Certificate, User, Transformer, Engine, and OIAnalytics registration.
+Certificate, User, Transformer, and OIAnalytics registration.
+
+Engine settings are audited per section, matching what is edited on the Engine page: **general settings**,
+**web server**, **proxy server**, and **logging and audit**. Each entry only contains the settings of its section,
+and saving a section without any change does not record anything.
+
+Secrets (passwords, tokens, private keys…) are never recorded in the audit trail. When a secret is modified — or
+set on creation — its value is replaced by `<changed>` in the **After** snapshot, so you can still see that it
+changed.
 
 ## Viewing the Audit Trail {#viewing-the-audit-trail}
 
@@ -43,7 +51,8 @@ pushed from OIAnalytics.
 
 Most configuration list pages — South, North, History Queries, Scan modes, IP filters, Certificates, and
 Transformers — also have an audit icon on each row, opening that entity's own history directly without
-going through the global Audit page.
+going through the global Audit page. On the Engine page, each settings section has its own audit icon next to its
+edit button.
 
 ## Reading a History Entry {#reading-a-history-entry}
 

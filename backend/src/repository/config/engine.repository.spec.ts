@@ -11,24 +11,31 @@ import UserRepository from './user.repository';
 import AuditService from '../../service/audit.service';
 import { EngineSettings } from '../../model/engine.model';
 
+type EngineSection = 'engine_general' | 'engine_web_server' | 'engine_proxy_server' | 'engine_logging';
+
 /**
- * Mirrors EngineRepository's private redact(): the audit trail must never carry
- * proxyServer.password, proxyServer.forward.password or logger.loki.password in the clear.
+ * Mirrors EngineRepository's audited sections: the audit trail must never carry proxyServer.password,
+ * proxyServer.forward.password or logger.loki.password in the clear.
  */
-function redactEngineForAudit(settings: EngineSettings | null): unknown {
-  if (!settings) return null;
-  return {
-    ...settings,
-    proxyServer: {
-      ...settings.proxyServer,
-      password: '',
-      forward: { ...settings.proxyServer.forward, password: '' }
-    },
-    logger: {
-      ...settings.logger,
-      loki: { ...settings.logger.loki, password: '' }
-    }
-  };
+function auditedSection(settings: EngineSettings | null, section: EngineSection): Record<string, unknown> {
+  switch (section) {
+    case 'engine_general':
+      return { ...settings!.general };
+    case 'engine_web_server':
+      return { ...settings!.webServer };
+    case 'engine_proxy_server':
+      return { ...settings!.proxyServer, password: '', forward: { ...settings!.proxyServer.forward, password: '' } };
+    case 'engine_logging':
+      return {
+        ...settings!.logger,
+        loki: { ...settings!.logger.loki, password: '' },
+        auditRetentionDuration: settings!.auditRetentionDuration
+      };
+  }
+}
+
+function recordCalls(auditService: AuditService): Array<Array<unknown>> {
+  return (auditService.record as unknown as ReturnType<typeof mock.fn>).mock.calls.map(call => call.arguments);
 }
 
 const TEST_DB_PATH = 'src/tests/test-config-engine.db';
@@ -85,28 +92,41 @@ describe('EngineRepository with populated database', () => {
         logger: loggerOnly
       });
 
-      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-      assert.strictEqual(recordMock.mock.calls.length, 1);
-      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
-        'engine',
+      // One audit entry per changed section: the web server settings are unchanged, so not recorded
+      const calls = recordCalls(auditService);
+      assert.deepStrictEqual(
+        calls.map(call => call[0]),
+        ['engine_general', 'engine_proxy_server', 'engine_logging']
+      );
+      assert.deepStrictEqual(calls[0], [
+        'engine_general',
         after!.id,
         'UPDATE',
-        redactEngineForAudit(before),
-        redactEngineForAudit(after),
+        { name: before!.general.name },
+        { name: 'updated engine' },
         testData.users.list[0].id
       ]);
-      // Password fields must never be persisted in the audit trail
-      const [, , , recordedBefore, recordedAfter] = recordMock.mock.calls[0].arguments as [
-        string,
-        string,
-        string,
-        { proxyServer: { password: string }; logger: { loki: { password: string } } },
-        { proxyServer: { password: string }; logger: { loki: { password: string } } }
-      ];
-      assert.strictEqual(recordedBefore.proxyServer.password, '');
-      assert.strictEqual(recordedBefore.logger.loki.password, '');
-      assert.strictEqual(recordedAfter.proxyServer.password, '');
-      assert.strictEqual(recordedAfter.logger.loki.password, '');
+      // Passwords are never recorded, but their change is (they are cleared by this command)
+      assert.deepStrictEqual(calls[1], [
+        'engine_proxy_server',
+        after!.id,
+        'UPDATE',
+        auditedSection(before, 'engine_proxy_server'),
+        {
+          ...auditedSection(after, 'engine_proxy_server'),
+          password: '<changed>',
+          forward: { ...after!.proxyServer.forward, password: '<changed>' }
+        },
+        testData.users.list[0].id
+      ]);
+      assert.deepStrictEqual(calls[2], [
+        'engine_logging',
+        after!.id,
+        'UPDATE',
+        auditedSection(before, 'engine_logging'),
+        { ...auditedSection(after, 'engine_logging'), loki: { ...after!.logger.loki, password: '<changed>' } },
+        testData.users.list[0].id
+      ]);
     });
 
     it('should round-trip auditRetentionDuration on update', () => {
@@ -126,15 +146,15 @@ describe('EngineRepository with populated database', () => {
       const after = repository.get();
       assert.strictEqual(after!.general.name, 'my new name');
 
-      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-      assert.strictEqual(recordMock.mock.calls.length, 1);
-      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
-        'engine',
-        after!.id,
-        'UPDATE',
-        redactEngineForAudit(before),
-        redactEngineForAudit(after),
-        testData.users.list[0].id
+      assert.deepStrictEqual(recordCalls(auditService), [
+        [
+          'engine_general',
+          after!.id,
+          'UPDATE',
+          auditedSection(before, 'engine_general'),
+          auditedSection(after, 'engine_general'),
+          testData.users.list[0].id
+        ]
       ]);
     });
 
@@ -144,15 +164,15 @@ describe('EngineRepository with populated database', () => {
       const after = repository.get();
       assert.strictEqual(after!.webServer.port, testData.engine.webServerCommand.port);
 
-      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-      assert.strictEqual(recordMock.mock.calls.length, 1);
-      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
-        'engine',
-        after!.id,
-        'UPDATE',
-        redactEngineForAudit(before),
-        redactEngineForAudit(after),
-        testData.users.list[0].id
+      assert.deepStrictEqual(recordCalls(auditService), [
+        [
+          'engine_web_server',
+          after!.id,
+          'UPDATE',
+          auditedSection(before, 'engine_web_server'),
+          auditedSection(after, 'engine_web_server'),
+          testData.users.list[0].id
+        ]
       ]);
     });
 
@@ -178,15 +198,15 @@ describe('EngineRepository with populated database', () => {
       assert.strictEqual(result.proxyServer.enabled, false);
       assert.strictEqual(result.proxyServer.port, null);
 
-      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-      assert.strictEqual(recordMock.mock.calls.length, 1);
-      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
-        'engine',
-        result.id,
-        'UPDATE',
-        redactEngineForAudit(before),
-        redactEngineForAudit(result),
-        testData.users.list[0].id
+      assert.deepStrictEqual(recordCalls(auditService), [
+        [
+          'engine_proxy_server',
+          result.id,
+          'UPDATE',
+          auditedSection(before, 'engine_proxy_server'),
+          auditedSection(result, 'engine_proxy_server'),
+          testData.users.list[0].id
+        ]
       ]);
     });
 
@@ -217,15 +237,15 @@ describe('EngineRepository with populated database', () => {
       assert.deepStrictEqual(after!.logger, loggerOnly);
       assert.strictEqual(after!.auditRetentionDuration, auditRetentionDuration);
 
-      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-      assert.strictEqual(recordMock.mock.calls.length, 1);
-      assert.deepStrictEqual(recordMock.mock.calls[0].arguments, [
-        'engine',
-        after!.id,
-        'UPDATE',
-        redactEngineForAudit(before),
-        redactEngineForAudit(after),
-        testData.users.list[0].id
+      assert.deepStrictEqual(recordCalls(auditService), [
+        [
+          'engine_logging',
+          after!.id,
+          'UPDATE',
+          auditedSection(before, 'engine_logging'),
+          auditedSection(after, 'engine_logging'),
+          testData.users.list[0].id
+        ]
       ]);
     });
 
@@ -249,20 +269,37 @@ describe('EngineRepository with populated database', () => {
       // The password is genuinely stored (readable back through get())...
       assert.strictEqual(after!.logger.loki.password, 'super-secret-loki-password');
 
-      // ...but never persisted in clear in the audit trail
-      const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
-      assert.strictEqual(recordMock.mock.calls.length, 1);
-      const [, , , , recordedAfter] = recordMock.mock.calls[0].arguments as [
-        string,
-        string,
-        string,
-        unknown,
-        { logger: { loki: { password: string } } }
-      ];
-      assert.strictEqual(recordedAfter.logger.loki.password, '');
+      // ...but never persisted in clear in the audit trail: only its change is
+      const calls = recordCalls(auditService);
+      assert.strictEqual(calls.length, 1);
+      assert.strictEqual(calls[0][0], 'engine_logging');
+      assert.deepStrictEqual((calls[0][3] as { loki: { password: string } }).loki.password, '');
+      assert.deepStrictEqual((calls[0][4] as { loki: { password: string } }).loki.password, '<changed>');
 
       // Reset back to the shared fixture so subsequent tests are unaffected
       repository.updateLogger(testData.engine.loggerCommand, testData.users.list[0].id);
+    });
+
+    it('should not record anything when a section is saved without changes', () => {
+      const current = repository.get()!;
+      repository.updateName(current.general.name, testData.users.list[0].id);
+      repository.updateWebServer(current.webServer, testData.users.list[0].id);
+      assert.deepStrictEqual(recordCalls(auditService), []);
+    });
+
+    it('should record a proxy password only change without the password', () => {
+      const current = repository.get()!;
+      repository.updateProxy({ ...current.proxyServer, password: 'new-hashed-password' }, testData.users.list[0].id);
+      assert.deepStrictEqual(recordCalls(auditService), [
+        [
+          'engine_proxy_server',
+          current.id,
+          'UPDATE',
+          auditedSection(current, 'engine_proxy_server'),
+          { ...auditedSection(current, 'engine_proxy_server'), password: '<changed>' },
+          testData.users.list[0].id
+        ]
+      ]);
     });
 
     it('should not call the audit service when updating the version', () => {

@@ -3,7 +3,7 @@ import { Database } from 'better-sqlite3';
 import { Instant } from '../../../shared/model/types';
 import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
 import { RegistrationStatus } from '../../../shared/model/engine.model';
-import AuditService from '../../service/audit.service';
+import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
 
 const REGISTRATIONS_TABLE = 'registrations';
 
@@ -294,7 +294,13 @@ export default class OIAnalyticsRegistrationRepository {
         updatedBy
       );
     const after = this.get();
-    this.auditService.record('oianalytics_registration', after!.id, 'UPDATE', this.redact(before), this.redact(after), updatedBy);
+    this.auditService.record(
+      'oianalytics_registration',
+      after!.id,
+      'UPDATE',
+      ...redactAuditSnapshots(before, after, r => this.redact(r)),
+      updatedBy
+    );
   }
 
   updateKeys(privateKey: string, publicKey: string, updatedBy: string): void {
@@ -302,7 +308,13 @@ export default class OIAnalyticsRegistrationRepository {
     const query = `UPDATE ${REGISTRATIONS_TABLE} SET private_key = ?, public_key = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database.prepare(query).run(privateKey, publicKey);
     const after = this.get();
-    this.auditService.record('oianalytics_registration', after!.id, 'UPDATE', this.redact(before), this.redact(after), updatedBy);
+    this.auditService.record(
+      'oianalytics_registration',
+      after!.id,
+      'UPDATE',
+      ...redactAuditSnapshots(before, after, r => this.redact(r)),
+      updatedBy
+    );
   }
 
   protected createDefault(command: OIAnalyticsRegistrationEditCommand): void {
@@ -399,11 +411,11 @@ export default class OIAnalyticsRegistrationRepository {
     if (!registration) return null;
     return {
       ...registration,
-      publicCipherKey: '[REDACTED]',
-      privateCipherKey: '[REDACTED]',
-      token: '[REDACTED]',
-      proxyPassword: '[REDACTED]',
-      apiGatewayHeaderValue: '[REDACTED]'
+      publicCipherKey: '',
+      privateCipherKey: '',
+      token: '',
+      proxyPassword: '',
+      apiGatewayHeaderValue: ''
     };
   }
 

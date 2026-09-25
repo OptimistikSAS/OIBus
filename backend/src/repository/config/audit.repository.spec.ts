@@ -371,10 +371,12 @@ describe('AuditRepository', () => {
         repository.findEntityReference('certificate', testData.certificates.list[0].id)!.name,
         testData.certificates.list[0].name
       );
-      assert.strictEqual(
-        repository.findEntityReference('engine', testData.engine.settings.id)!.name,
-        testData.engine.settings.general.name
-      );
+      for (const entityType of ['engine_general', 'engine_web_server', 'engine_proxy_server', 'engine_logging'] as const) {
+        assert.strictEqual(
+          repository.findEntityReference(entityType, testData.engine.settings.id)!.name,
+          testData.engine.settings.general.name
+        );
+      }
     });
   });
 });

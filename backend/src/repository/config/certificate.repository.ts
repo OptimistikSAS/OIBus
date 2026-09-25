@@ -1,6 +1,6 @@
 import { Database } from 'better-sqlite3';
 import { Certificate } from '../../model/certificate.model';
-import AuditService from '../../service/audit.service';
+import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
 
 const CERTIFICATES_TABLE = 'certificates';
 
@@ -90,8 +90,7 @@ export default class CertificateRepository {
       'certificate',
       created.id,
       'CREATE',
-      null,
-      this.redact(created) as unknown as Record<string, unknown>,
+      ...redactAuditSnapshots(null, created, c => this.redact(c)),
       created.createdBy
     );
     return created;
@@ -120,8 +119,7 @@ export default class CertificateRepository {
       'certificate',
       certificate.id,
       'UPDATE',
-      this.redact(before) as unknown as Record<string, unknown>,
-      this.redact(after) as unknown as Record<string, unknown>,
+      ...redactAuditSnapshots(before, after, c => this.redact(c)),
       certificate.updatedBy
     );
   }
@@ -140,8 +138,7 @@ export default class CertificateRepository {
       'certificate',
       certificateId,
       'UPDATE',
-      this.redact(before) as unknown as Record<string, unknown>,
-      this.redact(after) as unknown as Record<string, unknown>,
+      ...redactAuditSnapshots(before, after, c => this.redact(c)),
       updatedBy
     );
   }

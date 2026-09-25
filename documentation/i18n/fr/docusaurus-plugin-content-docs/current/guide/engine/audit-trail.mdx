@@ -21,8 +21,15 @@ Chaque entrée du journal d'audit enregistre :
 
 Les types d'entités suivants sont audités : connecteur South, élément South, groupe d'éléments South, connecteur
 North, transformateur North, requête d'historique, élément de requête d'historique, transformateur de requête
-d'historique, mode de scan, filtre IP, certificat, utilisateur, transformateur, moteur (Engine), et enregistrement
-OIAnalytics.
+d'historique, mode de scan, filtre IP, certificat, utilisateur, transformateur, et enregistrement OIAnalytics.
+
+Les paramètres du moteur sont audités par section, comme ils sont modifiés sur la page Engine : **paramètres
+généraux**, **serveur web**, **serveur proxy**, et **journalisation et audit**. Chaque entrée ne contient que les
+paramètres de sa section, et enregistrer une section sans modification n'ajoute aucune entrée.
+
+Les secrets (mots de passe, jetons, clés privées…) ne sont jamais enregistrés dans la piste d'audit. Lorsqu'un secret
+est modifié — ou défini à la création — sa valeur est remplacée par `<changed>` dans l'instantané **Après**, pour
+indiquer qu'il a changé.
 
 ## Consulter la piste d'audit {#viewing-the-audit-trail}
 
@@ -46,7 +53,8 @@ changement a été envoyé depuis OIAnalytics.
 
 La plupart des pages de liste de configuration — South, North, Requêtes d'historique, Modes de scan, Filtres IP,
 Certificats, et Transformateurs — disposent également d'une icône d'audit sur chaque ligne, ouvrant directement
-l'historique propre à cette entité sans passer par la page Audit globale.
+l'historique propre à cette entité sans passer par la page Audit globale. Sur la page Engine, chaque section de
+paramètres dispose de sa propre icône d'audit à côté de son bouton de modification.
 
 ## Lire une entrée d'historique {#reading-a-history-entry}
 

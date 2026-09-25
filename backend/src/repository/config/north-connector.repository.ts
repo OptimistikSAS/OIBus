@@ -11,7 +11,7 @@ import { ScanMode } from '../../model/scan-mode.model';
 import { scanModeAliasedColumns, scanModeColumns, toScanMode } from './scan-mode.repository';
 import { OIBusSouthType } from '../../../shared/model/south-connector.model';
 import { toSouthItemGroup } from './south-item-group.repository';
-import AuditService from '../../service/audit.service';
+import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
 import { encryptionService } from '../../service/encryption.service';
 import { northManifestList } from '../../service/north-manifests';
 
@@ -201,8 +201,7 @@ export default class NorthConnectorRepository {
         'north_connector',
         north.id,
         isNewConnector ? 'CREATE' : 'UPDATE',
-        this.redactConnector(beforeConnector),
-        this.redactConnector(afterConnector),
+        ...redactAuditSnapshots(beforeConnector, afterConnector, connector => this.redactConnector(connector)),
         north.updatedBy
       );
     });
