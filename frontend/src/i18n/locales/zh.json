@@ -1965,7 +1965,10 @@
       "max-caching-interval": "最大缓存间隔",
       "scan-mode-change-warning": "在禁用每项最大即时值的情况下更改计划，可能会导致数据重复或丢失。",
       "sync-with-group": "与组同步",
-      "not-synced-notice": "此项使用其自身的历史查询设置（未与组同步）"
+      "not-synced-notice": "此项使用其自身的历史查询设置（未与组同步）",
+      "tooltips": {
+        "audit": "查看项目审计历史"
+      }
     },
     "groups": {
       "create-title": "创建新组",
@@ -2680,7 +2683,8 @@
         "add": "添加新项目",
         "edit": "编辑项目",
         "duplicate": "复制项目",
-        "delete": "删除项目"
+        "delete": "删除项目",
+        "audit": "查看项目审计历史"
       }
     },
     "monitoring": {
