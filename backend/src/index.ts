@@ -130,6 +130,7 @@ export async function bootstrap(): Promise<void> {
     repositoryService.northConnectorRepository,
     repositoryService.historyQueryRepository,
     repositoryService.transformerRepository,
+    repositoryService.configurationWorkflowRepository,
     encryptionService,
     ignoreIpFilters,
     ignoreRemoteUpdate
@@ -158,7 +159,8 @@ export async function bootstrap(): Promise<void> {
     repositoryService.southConnectorRepository,
     repositoryService.northConnectorRepository,
     repositoryService.historyQueryRepository,
-    repositoryService.userRepository
+    repositoryService.userRepository,
+    repositoryService.configurationWorkflowRepository
   );
 
   const dataStreamEngine = new DataStreamEngine(

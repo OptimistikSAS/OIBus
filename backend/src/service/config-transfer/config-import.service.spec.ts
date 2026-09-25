@@ -1,6 +1,6 @@
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import ConfigImportService, { AppliedUpgrade, ConfigImportError } from './config-import.service';
+import ConfigImportService, { ConfigImportError } from './config-import.service';
 import ConfigTransferService from './config-transfer.service';
 import ConfigTransferBuilderService from './config-transfer-builder.service';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
@@ -14,16 +14,20 @@ import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/c
 import UserRepositoryMock from '../../tests/__mocks__/repository/config/user-repository.mock';
 import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
 import TransformerRepositoryMock from '../../tests/__mocks__/repository/config/transformer-repository.mock';
+import ConfigurationWorkflowRepositoryMock from '../../tests/__mocks__/repository/config/configuration-workflow-repository.mock';
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 import EncryptionService from '../encryption.service';
-import { ConfigExportEnvelopeDTO } from '../../../shared/model/config-transfer.model';
-import { OIAnalyticsSouthCommandDTO } from '../oia/oianalytics.model';
-import { SETTINGS_UPGRADE_REGISTRY, SettingsUpgradeEntry } from './settings-upgrades/registry';
-import { version as currentVersion } from '../../../package.json';
+import { ConfigExportDTO, OIBusConfigurationDTO } from '../../../shared/model/config-transfer.model';
+import { OIAnalyticsConfigurationWorkflowCommandDTO, OIAnalyticsSouthCommandDTO } from '../oia/oianalytics.model';
+import { CONFIG_UPGRADES } from './config-upgrades/registry';
+import { ConfigUpgrade, forEachSouth, JsonObject } from './config-upgrades/config-upgrade';
+
+/** Version of the importing OIBus the tests pin, independently of `package.json`. */
+const CURRENT_VERSION = '3.11.0';
 
 describe('Config Import Service', () => {
   let service: ConfigImportService;
-  let realEnvelope: ConfigExportEnvelopeDTO;
+  let exportedFile: ConfigExportDTO;
 
   beforeEach(() => {
     const engineRepository = new EngineRepositoryMock();
@@ -65,467 +69,386 @@ describe('Config Import Service', () => {
       northRepository,
       historyQueryRepository,
       transformerRepository,
+      new ConfigurationWorkflowRepositoryMock(),
       encryptionService,
       false,
       false
     );
     const transferService = new ConfigTransferService(builderService, engineRepository, oIAnalyticsRegistrationService as never);
 
-    realEnvelope = transferService.exportConfiguration();
+    exportedFile = { ...transferService.exportConfiguration(), oibusVersion: CURRENT_VERSION };
     service = new ConfigImportService(new JoiValidator());
   });
 
-  const cloneEnvelope = (): ConfigExportEnvelopeDTO => structuredClone(realEnvelope);
+  const cloneFile = (): ConfigExportDTO => structuredClone(exportedFile);
 
-  const findOpcuaSouth = (envelope: ConfigExportEnvelopeDTO): OIAnalyticsSouthCommandDTO => {
-    const south = envelope.fullConfiguration.southConnectors.find(candidate => candidate.type === 'opcua');
-    assert.ok(south, 'expected fixture to contain an opcua south connector');
+  const findSouth = (config: OIBusConfigurationDTO, type: string): OIAnalyticsSouthCommandDTO => {
+    const south = config.southConnectors.find(candidate => candidate.type === type);
+    assert.ok(south, `expected fixture to contain a ${type} south connector`);
     return south;
   };
 
   /**
-   * Trims a cloned envelope down to just one south connector (with its items dropped, since the
-   * fixture's item settings are test-only placeholders that don't satisfy real item manifests) and
-   * no north connectors/history queries, so a test can assert on upgrade/validation behavior for
-   * that one connector without also having to make the rest of the (unrelated) fixture manifest-valid.
+   * Trims a cloned file down to just one south connector (with its items dropped, since the fixture's
+   * item settings are test-only placeholders that don't satisfy real item manifests) and no north
+   * connectors/history queries, so a test can assert on upgrade/validation behavior for that one
+   * connector without also having to make the rest of the (unrelated) fixture manifest-valid.
    */
-  const isolateToSingleSouth = (envelope: ConfigExportEnvelopeDTO, south: OIAnalyticsSouthCommandDTO): void => {
+  const isolateToSingleSouth = (file: ConfigExportDTO, south: OIAnalyticsSouthCommandDTO): void => {
     south.settings.items = [];
-    envelope.fullConfiguration.southConnectors = [south];
-    envelope.fullConfiguration.northConnectors = [];
-    envelope.historyQueries.historyQueries = [];
+    file.config.southConnectors = [south];
+    file.config.northConnectors = [];
+    file.config.historyQueries = [];
   };
 
-  /**
-   * Same idea as `isolateToSingleSouth`, but keeps only one north connector and drops every other
-   * section, so a test can assert on north-only validation/upgrade behavior without also having to
-   * make the rest of the (unrelated) fixture manifest-valid.
-   */
-  const isolateToSingleNorth = (
-    envelope: ConfigExportEnvelopeDTO,
-    north: ConfigExportEnvelopeDTO['fullConfiguration']['northConnectors'][number]
-  ): void => {
-    envelope.fullConfiguration.southConnectors = [];
-    envelope.fullConfiguration.northConnectors = [north];
-    envelope.historyQueries.historyQueries = [];
+  /** Same idea as `isolateToSingleSouth`, keeping only one north connector. */
+  const isolateToSingleNorth = (file: ConfigExportDTO, north: OIBusConfigurationDTO['northConnectors'][number]): void => {
+    file.config.southConnectors = [];
+    file.config.northConnectors = [north];
+    file.config.historyQueries = [];
   };
 
-  /**
-   * Same idea as `isolateToSingleSouth`, but keeps only one history query (with its items dropped,
-   * for the same reason `isolateToSingleSouth` drops a south connector's items) and no south/north
-   * connectors.
-   */
-  const isolateToSingleHistoryQuery = (
-    envelope: ConfigExportEnvelopeDTO,
-    historyQuery: ConfigExportEnvelopeDTO['historyQueries']['historyQueries'][number]
-  ): void => {
+  /** Same idea as `isolateToSingleSouth`, keeping only one history query (without its items). */
+  const isolateToSingleHistoryQuery = (file: ConfigExportDTO, historyQuery: OIBusConfigurationDTO['historyQueries'][number]): void => {
     historyQuery.settings.items = [];
-    envelope.fullConfiguration.southConnectors = [];
-    envelope.fullConfiguration.northConnectors = [];
-    envelope.historyQueries.historyQueries = [historyQuery];
+    file.config.southConnectors = [];
+    file.config.northConnectors = [];
+    file.config.historyQueries = [historyQuery];
   };
 
-  /**
-   * Reaches into the private `applyUpgrades` method directly. The shared `SETTINGS_UPGRADE_REGISTRY`
-   * is empty today, so exercising every
-   * `parseScope`/`applyUpgrades` switch branch (envelope, engine, north, historyQueryNorth,
-   * transformer, and an unrecognized scope prefix) requires crafting upgrade entries by hand rather
-   * than going through the registry.
-   */
-  const applyUpgradesDirect = (envelope: ConfigExportEnvelopeDTO, upgrades: Array<SettingsUpgradeEntry>): Array<AppliedUpgrade> =>
-    (
-      service as unknown as {
-        applyUpgrades: (e: ConfigExportEnvelopeDTO, u: Array<SettingsUpgradeEntry>) => Array<AppliedUpgrade>;
-      }
-    ).applyUpgrades(envelope, upgrades);
+  /** An opcua-only file that passes every validation. */
+  const validFile = (): ConfigExportDTO => {
+    const file = cloneFile();
+    isolateToSingleSouth(file, findSouth(file.config, 'opcua'));
+    return file;
+  };
 
-  it('accepts a well-formed, up-to-date envelope with no upgrades needed', async () => {
-    const envelope = cloneEnvelope();
-    envelope.oibusVersion = currentVersion;
-    isolateToSingleSouth(envelope, findOpcuaSouth(envelope));
-
-    const result = await service.validateAndUpgrade(envelope);
-
-    assert.deepStrictEqual(result.appliedUpgrades, []);
-    assert.strictEqual(result.envelope, envelope);
+  const localWorkflow = (): OIAnalyticsConfigurationWorkflowCommandDTO => ({
+    oIBusInternalId: 'workflow1',
+    oIBusCreatedBy: '',
+    oIBusUpdatedBy: '',
+    oIBusCreatedAt: '',
+    oIBusUpdatedAt: '',
+    settings: {
+      name: 'workflow',
+      discoveryScope: { rootNodeId: 'ns=1;s=Root' },
+      identityKeyFields: ['nodeId'],
+      eligibilityFilter: [],
+      itemFieldMapping: { name: '{{name}}' },
+      pushToOIAnalytics: false,
+      scanModeId: null,
+      enabled: true
+    },
+    ownedItems: []
   });
 
-  describe('with a registry upgrade', () => {
-    const upgrade: SettingsUpgradeEntry = {
-      version: '3.11.0-beta-2',
-      scope: 'south:opcua',
-      apply: settings => ({ ...settings, maxParallelRun: settings.maxParallelRun ?? 1 })
+  const rejection = async (file: unknown, currentVersion = CURRENT_VERSION): Promise<ConfigImportError> => {
+    try {
+      await service.validateAndUpgrade(file, currentVersion);
+    } catch (error: unknown) {
+      assert.ok(error instanceof ConfigImportError, `expected a ConfigImportError, got ${error}`);
+      return error;
+    }
+    assert.fail('expected the import to be rejected');
+  };
+
+  describe('versions', () => {
+    it('accepts a well-formed export of the current version, without upgrades nor mutating the file', async () => {
+      const file = validFile();
+      const original = structuredClone(file);
+
+      const result = await service.validateAndUpgrade(file, CURRENT_VERSION);
+
+      assert.strictEqual(result.fromVersion, CURRENT_VERSION);
+      assert.strictEqual(result.toVersion, CURRENT_VERSION);
+      assert.deepStrictEqual(result.appliedUpgrades, []);
+      assert.deepStrictEqual(result.config, file.config);
+      assert.deepStrictEqual(file, original);
+    });
+
+    it('accepts an export from a pre-release of the current version', async () => {
+      const file = { ...validFile(), oibusVersion: '3.11.0-beta-6' };
+
+      const result = await service.validateAndUpgrade(file, CURRENT_VERSION);
+
+      assert.strictEqual(result.fromVersion, '3.11.0-beta-6');
+    });
+
+    it('rejects an export produced by a newer OIBus', async () => {
+      const error = await rejection({ ...validFile(), oibusVersion: '3.11.1' });
+
+      assert.match(error.message, /newer than this OIBus instance/);
+      assert.deepStrictEqual(error.validationErrors, []);
+    });
+
+    it('rejects an export from a release when running one of its pre-releases', async () => {
+      const error = await rejection({ ...validFile(), oibusVersion: '3.11.0' }, '3.11.0-beta-6');
+
+      assert.match(error.message, /newer than this OIBus instance/);
+    });
+
+    it('rejects a configuration older than 3.9.0, including a 3.9.0 pre-release', async () => {
+      for (const oibusVersion of ['3.8.8', '3.9.0-beta-6']) {
+        const error = await rejection({ ...validFile(), oibusVersion });
+        assert.match(error.message, /only supported from OIBus 3\.9\.0/);
+      }
+    });
+
+    it('accepts a configuration from 3.9.0, applying the upgrades of every version since', async () => {
+      const result = await service.validateAndUpgrade({ ...validFile(), oibusVersion: '3.9.0' }, CURRENT_VERSION);
+
+      assert.strictEqual(result.fromVersion, '3.9.0');
+      assert.deepStrictEqual(
+        result.appliedUpgrades.map(upgrade => upgrade.version),
+        ['3.9.2', '3.10.0']
+      );
+    });
+
+    it('rejects a malformed file before anything else', async () => {
+      assert.match((await rejection({ oibusVersion: CURRENT_VERSION })).message, /Malformed configuration export file/);
+      assert.match((await rejection({ config: {} })).message, /Malformed configuration export file/);
+      assert.match((await rejection('not an object')).message, /Malformed configuration export file/);
+    });
+  });
+
+  describe('upgrade chain', () => {
+    const upgrades: Array<ConfigUpgrade> = [];
+    const register = (upgrade: ConfigUpgrade): void => {
+      upgrades.push(upgrade);
+      CONFIG_UPGRADES.push(upgrade);
     };
 
-    beforeEach(() => {
-      SETTINGS_UPGRADE_REGISTRY.push(upgrade);
-    });
-
     afterEach(() => {
-      SETTINGS_UPGRADE_REGISTRY.splice(SETTINGS_UPGRADE_REGISTRY.indexOf(upgrade), 1);
+      for (const upgrade of upgrades.splice(0)) {
+        CONFIG_UPGRADES.splice(CONFIG_UPGRADES.indexOf(upgrade), 1);
+      }
     });
 
-    it('applies a matching settings upgrade and reports it in appliedUpgrades', async () => {
-      const envelope = cloneEnvelope();
-      envelope.oibusVersion = '3.10.0';
-      const opcuaSouth = findOpcuaSouth(envelope);
-      delete (opcuaSouth.settings.settings as { maxParallelRun?: number }).maxParallelRun;
-      isolateToSingleSouth(envelope, opcuaSouth);
+    it('applies, oldest first, every step newer than the export and not newer than this OIBus, and reports them', async () => {
+      const calls: Array<string> = [];
+      const step =
+        (version: string) =>
+        (config: JsonObject): JsonObject => {
+          calls.push(version);
+          forEachSouth(config, 'opcua', south => {
+            (south.settings as JsonObject).description = `upgraded to ${version}`;
+          });
+          return config;
+        };
+      register({ version: '3.11.0', description: 'second', apply: step('3.11.0') });
+      register({ version: '3.10.1', description: 'first', apply: step('3.10.1') });
+      register({ version: '3.10.0', description: 'already in the export', apply: step('3.10.0') });
+      register({ version: '3.11.1', description: 'newer than this OIBus', apply: step('3.11.1') });
 
-      const result = await service.validateAndUpgrade(envelope, '3.11.0');
+      const result = await service.validateAndUpgrade({ ...validFile(), oibusVersion: '3.10.0' }, CURRENT_VERSION);
 
-      assert.deepStrictEqual(result.appliedUpgrades, [
-        { scope: 'south:opcua', version: '3.11.0-beta-2', entityId: opcuaSouth.oIBusInternalId }
-      ]);
-      const upgradedSouth = findOpcuaSouth(result.envelope);
-      assert.strictEqual((upgradedSouth.settings.settings as { maxParallelRun: number }).maxParallelRun, 1);
+      assert.deepStrictEqual(calls, ['3.10.1', '3.11.0']);
+      assert.deepStrictEqual(
+        result.appliedUpgrades.map(upgrade => [upgrade.version, upgrade.description]),
+        [
+          ['3.10.1', 'first'],
+          ['3.11.0', 'second']
+        ]
+      );
+      assert.strictEqual(findSouth(result.config, 'opcua').settings.description, 'upgraded to 3.11.0');
     });
 
-    it('does not apply an upgrade already covered by the export version', async () => {
-      const envelope = cloneEnvelope();
-      envelope.oibusVersion = '3.11.0-beta-2';
-      isolateToSingleSouth(envelope, findOpcuaSouth(envelope));
+    it('validates the upgraded configuration, not the exported one', async () => {
+      // The export lacks a field the current shape requires, and the step adds it back.
+      const file = { ...validFile(), oibusVersion: '3.10.0' };
+      delete (findSouth(file.config, 'opcua').settings as Partial<OIAnalyticsSouthCommandDTO['settings']>).configurationWorkflows;
+      register({
+        version: '3.11.0',
+        description: 'add configuration workflows',
+        apply: config => {
+          forEachSouth(config, null, south => ((south.settings as JsonObject).configurationWorkflows ??= []));
+          return config;
+        }
+      });
 
-      const result = await service.validateAndUpgrade(envelope, '3.11.0');
+      const result = await service.validateAndUpgrade(file, CURRENT_VERSION);
 
-      assert.deepStrictEqual(result.appliedUpgrades, []);
+      assert.deepStrictEqual(findSouth(result.config, 'opcua').settings.configurationWorkflows, []);
+    });
+
+    it('rejects the import when a step throws, naming the step', async () => {
+      register({
+        version: '3.11.0',
+        description: 'broken step',
+        apply: () => {
+          throw new Error('boom');
+        }
+      });
+
+      const error = await rejection({ ...validFile(), oibusVersion: '3.10.0' });
+
+      assert.match(error.message, /Could not upgrade the configuration to OIBus 3\.11\.0 \(broken step\): boom/);
     });
   });
 
-  it('accepts an export from a pre-release of this version', async () => {
-    const envelope = cloneEnvelope();
-    envelope.oibusVersion = '3.11.0-beta-6';
-    isolateToSingleSouth(envelope, findOpcuaSouth(envelope));
+  describe('structural validation', () => {
+    it('rejects an entity missing a required field, attributing every error to its entity', async () => {
+      const file = validFile();
+      const opcua = findSouth(file.config, 'opcua');
+      delete (opcua.settings as Partial<OIAnalyticsSouthCommandDTO['settings']>).groups;
+      delete (opcua.settings as Partial<OIAnalyticsSouthCommandDTO['settings']>).configurationWorkflows;
+      delete (file.config.scanModes[1].settings as { name?: string }).name;
 
-    const result = await service.validateAndUpgrade(envelope, '3.11.0');
+      const error = await rejection(file);
 
-    assert.strictEqual(result.envelope, envelope);
+      assert.match(error.message, /failed validation/);
+      const southErrors = error.validationErrors.filter(entry => entry.scope === 'south:opcua');
+      assert.deepStrictEqual(
+        southErrors.map(entry => [entry.entityId, entry.entityName]),
+        [
+          [opcua.oIBusInternalId, opcua.settings.name],
+          [opcua.oIBusInternalId, opcua.settings.name]
+        ]
+      );
+      assert.ok(southErrors.some(entry => /groups/.test(entry.message)));
+      assert.ok(southErrors.some(entry => /configurationWorkflows/.test(entry.message)));
+      assert.ok(
+        error.validationErrors.some(entry => entry.scope === 'scanMode' && entry.entityId === file.config.scanModes[1].oIBusInternalId)
+      );
+    });
+
+    it('reports a missing section at configuration level', async () => {
+      const file = validFile();
+      delete (file.config as Partial<OIBusConfigurationDTO>).historyQueries;
+
+      const error = await rejection(file);
+
+      assert.deepStrictEqual(
+        error.validationErrors.map(entry => entry.scope),
+        ['config']
+      );
+      assert.match(error.validationErrors[0].message, /historyQueries/);
+    });
+
+    it('accepts keys it does not know, such as metadata added by OIAnalytics', async () => {
+      const file = validFile() as ConfigExportDTO & { source: string };
+      file.source = 'oianalytics';
+      (findSouth(file.config, 'opcua') as unknown as JsonObject).oIAnalyticsId = 'abc';
+
+      await service.validateAndUpgrade(file, CURRENT_VERSION);
+    });
+
+    it('accepts local and remote configuration workflows', async () => {
+      const file = validFile();
+      findSouth(file.config, 'opcua').settings.configurationWorkflows = [
+        localWorkflow(),
+        {
+          ...localWorkflow(),
+          oIBusInternalId: 'workflow2',
+          settings: { ...localWorkflow().settings, name: 'remote', itemFieldMapping: null, pushToOIAnalytics: true, identityKeyFields: [] }
+        }
+      ];
+
+      await service.validateAndUpgrade(file, CURRENT_VERSION);
+    });
+
+    it('rejects a configuration workflow that is neither local nor remote, or local without identity key fields', async () => {
+      const file = validFile();
+      findSouth(file.config, 'opcua').settings.configurationWorkflows = [
+        { ...localWorkflow(), settings: { ...localWorkflow().settings, pushToOIAnalytics: true } },
+        { ...localWorkflow(), settings: { ...localWorkflow().settings, itemFieldMapping: null } },
+        { ...localWorkflow(), settings: { ...localWorkflow().settings, identityKeyFields: [] } }
+      ];
+
+      const error = await rejection(file);
+
+      assert.deepStrictEqual(
+        error.validationErrors.map(entry => entry.message),
+        [
+          'A configuration workflow cannot both create/update items and push to OIAnalytics',
+          'A configuration workflow must either create/update items or push to OIAnalytics',
+          'A configuration workflow creating/updating items requires at least one identity key field'
+        ]
+      );
+    });
   });
 
-  it('rejects an export produced by a newer OIBus, without attempting anything else', async () => {
-    const envelope = cloneEnvelope();
-    envelope.oibusVersion = '3.11.1';
+  describe('settings validation', () => {
+    it('rejects settings that do not match their manifest', async () => {
+      const file = validFile();
+      const opcua = findSouth(file.config, 'opcua');
+      delete (opcua.settings.settings as { url?: string }).url;
 
-    await assert.rejects(
-      () => service.validateAndUpgrade(envelope, '3.11.0'),
-      (error: unknown) => {
-        assert.ok(error instanceof ConfigImportError);
-        assert.match(error.message, /newer than this OIBus instance/);
-        assert.deepStrictEqual(error.validationErrors, []);
-        return true;
-      }
-    );
-  });
+      const error = await rejection(file);
 
-  it('rejects an export from a release when running one of its pre-releases', async () => {
-    const envelope = cloneEnvelope();
-    envelope.oibusVersion = '3.11.0';
+      assert.ok(
+        error.validationErrors.some(entry => entry.scope === 'south:opcua' && entry.entityId === opcua.oIBusInternalId),
+        `expected a validation error for south:opcua, got ${JSON.stringify(error.validationErrors)}`
+      );
+    });
 
-    await assert.rejects(() => service.validateAndUpgrade(envelope, '3.11.0-beta-6'), ConfigImportError);
-  });
+    it('collects every failure rather than stopping at the first', async () => {
+      const file = cloneFile();
+      const opcua = findSouth(file.config, 'opcua');
+      const folderScanner = findSouth(file.config, 'folder-scanner');
+      opcua.settings.items = [];
+      folderScanner.settings.items = [];
+      file.config.southConnectors = [opcua, folderScanner];
+      file.config.northConnectors = [];
+      file.config.historyQueries = [];
+      delete (opcua.settings.settings as { url?: string }).url;
+      delete (folderScanner.settings.settings as { inputFolder?: string }).inputFolder;
 
-  it('rejects malformed input with a clear error before touching any section', async () => {
-    await assert.rejects(
-      () => service.validateAndUpgrade({ oibusVersion: '3.10.0' }),
-      (error: unknown) => {
-        assert.ok(error instanceof ConfigImportError);
-        assert.match(error.message, /malformed/i);
-        return true;
-      }
-    );
-  });
+      const error = await rejection(file);
 
-  it('rejects settings that are still invalid after every matching upgrade has been applied, without changing appliedUpgrades semantics', async () => {
-    const envelope = cloneEnvelope();
-    envelope.oibusVersion = currentVersion; // no upgrade could possibly fix a missing required field
-    const opcuaSouth = findOpcuaSouth(envelope);
-    delete (opcuaSouth.settings.settings as { url?: string }).url;
+      assert.deepStrictEqual(error.validationErrors.map(entry => entry.scope).sort(), ['south:folder-scanner', 'south:opcua']);
+    });
 
-    await assert.rejects(
-      () => service.validateAndUpgrade(envelope),
-      (error: unknown) => {
-        assert.ok(error instanceof ConfigImportError);
-        assert.ok(error.validationErrors.length > 0);
-        assert.ok(
-          error.validationErrors.some(entry => entry.scope === 'south:opcua' && entry.entityId === opcuaSouth.oIBusInternalId),
-          `expected a validation error for south:opcua, got ${JSON.stringify(error.validationErrors)}`
-        );
-        return true;
-      }
-    );
-  });
+    it('reports an unknown south connector type', async () => {
+      const file = validFile();
+      file.config.southConnectors[0].type = 'not-a-real-south-type';
 
-  it('rejects an old export whose version gap the registry has no entry for, collecting every failure rather than stopping at the first', async () => {
-    const envelope = cloneEnvelope();
-    envelope.oibusVersion = '1.0.0'; // far older than anything the registry actually covers
-    const opcuaSouth = findOpcuaSouth(envelope);
-    delete (opcuaSouth.settings.settings as { url?: string }).url;
-    const folderScannerSouth = envelope.fullConfiguration.southConnectors.find(candidate => candidate.type === 'folder-scanner');
-    assert.ok(folderScannerSouth, 'expected fixture to contain a folder-scanner south connector');
-    delete (folderScannerSouth.settings.settings as { inputFolder?: string }).inputFolder;
+      const error = await rejection(file);
 
-    await assert.rejects(
-      () => service.validateAndUpgrade(envelope),
-      (error: unknown) => {
-        assert.ok(error instanceof ConfigImportError);
-        assert.ok(
-          error.validationErrors.length >= 2,
-          `expected at least 2 collected failures, got ${JSON.stringify(error.validationErrors)}`
-        );
-        return true;
-      }
-    );
-  });
+      assert.ok(
+        error.validationErrors.some(
+          entry => entry.scope === 'south:not-a-real-south-type' && /Unknown south connector type/.test(entry.message)
+        ),
+        JSON.stringify(error.validationErrors)
+      );
+    });
 
-  it('reports an unknown south connector type as a validation error', async () => {
-    const envelope = cloneEnvelope();
-    envelope.oibusVersion = currentVersion;
-    const opcuaSouth = findOpcuaSouth(envelope);
-    opcuaSouth.type = 'not-a-real-south-type';
-    isolateToSingleSouth(envelope, opcuaSouth);
+    it('reports an unknown north connector type', async () => {
+      const file = cloneFile();
+      const north = file.config.northConnectors[0];
+      north.type = 'not-a-real-north-type';
+      isolateToSingleNorth(file, north);
 
-    await assert.rejects(
-      () => service.validateAndUpgrade(envelope),
-      (error: unknown) => {
-        assert.ok(error instanceof ConfigImportError);
-        assert.ok(
-          error.validationErrors.some(
-            entry => entry.scope === 'south:not-a-real-south-type' && /Unknown south connector type/.test(entry.message)
-          ),
-          `expected an "unknown south connector type" validation error, got ${JSON.stringify(error.validationErrors)}`
-        );
-        return true;
-      }
-    );
-  });
+      const error = await rejection(file);
 
-  it('reports an unknown north connector type as a validation error', async () => {
-    const envelope = cloneEnvelope();
-    envelope.oibusVersion = currentVersion;
-    const north = envelope.fullConfiguration.northConnectors[0];
-    assert.ok(north, 'expected the fixture to include at least one north connector');
-    north.type = 'not-a-real-north-type';
-    isolateToSingleNorth(envelope, north);
+      assert.ok(
+        error.validationErrors.some(
+          entry => entry.scope === 'north:not-a-real-north-type' && /Unknown north connector type/.test(entry.message)
+        ),
+        JSON.stringify(error.validationErrors)
+      );
+    });
 
-    await assert.rejects(
-      () => service.validateAndUpgrade(envelope),
-      (error: unknown) => {
-        assert.ok(error instanceof ConfigImportError);
-        assert.ok(
-          error.validationErrors.some(
-            entry => entry.scope === 'north:not-a-real-north-type' && /Unknown north connector type/.test(entry.message)
-          ),
-          `expected an "unknown north connector type" validation error, got ${JSON.stringify(error.validationErrors)}`
-        );
-        return true;
-      }
-    );
-  });
+    it('reports unknown south and north connector types on a history query', async () => {
+      const file = cloneFile();
+      const historyQuery = file.config.historyQueries[0];
+      historyQuery.settings.southType = 'not-a-real-south-type' as unknown as typeof historyQuery.settings.southType;
+      historyQuery.settings.northType = 'not-a-real-north-type' as unknown as typeof historyQuery.settings.northType;
+      isolateToSingleHistoryQuery(file, historyQuery);
 
-  it('reports an unknown south connector type on a history query as a validation error', async () => {
-    const envelope = cloneEnvelope();
-    envelope.oibusVersion = currentVersion;
-    const historyQuery = envelope.historyQueries.historyQueries[0];
-    assert.ok(historyQuery, 'expected the fixture to include at least one history query');
-    historyQuery.settings.southType = 'not-a-real-south-type' as unknown as typeof historyQuery.settings.southType;
-    isolateToSingleHistoryQuery(envelope, historyQuery);
+      const error = await rejection(file);
 
-    await assert.rejects(
-      () => service.validateAndUpgrade(envelope),
-      (error: unknown) => {
-        assert.ok(error instanceof ConfigImportError);
-        assert.ok(
-          error.validationErrors.some(
-            entry => entry.scope === 'historyQuerySouth:not-a-real-south-type' && /Unknown south connector type/.test(entry.message)
-          ),
-          `expected an "unknown south connector type" validation error on the history query, got ${JSON.stringify(error.validationErrors)}`
-        );
-        return true;
-      }
-    );
-  });
-
-  it('reports an unknown north connector type on a history query as a validation error', async () => {
-    const envelope = cloneEnvelope();
-    envelope.oibusVersion = currentVersion;
-    const historyQuery = envelope.historyQueries.historyQueries[0];
-    assert.ok(historyQuery, 'expected the fixture to include at least one history query');
-    historyQuery.settings.northType = 'not-a-real-north-type' as unknown as typeof historyQuery.settings.northType;
-    isolateToSingleHistoryQuery(envelope, historyQuery);
-
-    await assert.rejects(
-      () => service.validateAndUpgrade(envelope),
-      (error: unknown) => {
-        assert.ok(error instanceof ConfigImportError);
-        assert.ok(
-          error.validationErrors.some(
-            entry => entry.scope === 'historyQueryNorth:not-a-real-north-type' && /Unknown north connector type/.test(entry.message)
-          ),
-          `expected an "unknown north connector type" validation error on the history query, got ${JSON.stringify(error.validationErrors)}`
-        );
-        return true;
-      }
-    );
+      assert.deepStrictEqual(
+        error.validationErrors.map(entry => entry.scope),
+        ['historyQuerySouth:not-a-real-south-type', 'historyQueryNorth:not-a-real-north-type']
+      );
+    });
   });
 
   it('throws when importConfiguration is invoked on a service constructed without the write-path repositories', async () => {
-    const envelope = cloneEnvelope();
-    envelope.oibusVersion = currentVersion;
-    isolateToSingleSouth(envelope, findOpcuaSouth(envelope));
-
     await assert.rejects(
-      () => service.importConfiguration(envelope, 'some-user-id'),
+      () => service.importConfiguration({ ...validFile(), oibusVersion: '3.10.0' }, 'some-user-id'),
       /constructed without the repositories required to write an import/
     );
-  });
-
-  describe('applyUpgrades scope handling (direct, since the shared registry is empty today)', () => {
-    it('applies an envelope-scope upgrade by merging its result onto the whole envelope', () => {
-      const envelope = cloneEnvelope();
-      const upgrade: SettingsUpgradeEntry = {
-        version: '99.0.0',
-        scope: 'envelope',
-        apply: section => ({ ...section, oibusVersion: 'patched-by-upgrade' })
-      };
-
-      const applied = applyUpgradesDirect(envelope, [upgrade]);
-
-      assert.strictEqual(envelope.oibusVersion, 'patched-by-upgrade');
-      assert.deepStrictEqual(applied, [{ scope: 'envelope', version: '99.0.0' }]);
-    });
-
-    it('applies an engine-scope upgrade to the engine settings and records the engine entity id', () => {
-      const envelope = cloneEnvelope();
-      const upgrade: SettingsUpgradeEntry = {
-        version: '99.0.0',
-        scope: 'engine',
-        apply: settings => ({ ...settings, patchedByUpgrade: true })
-      };
-
-      const applied = applyUpgradesDirect(envelope, [upgrade]);
-
-      assert.strictEqual((envelope.fullConfiguration.engine.settings as unknown as { patchedByUpgrade: boolean }).patchedByUpgrade, true);
-      assert.deepStrictEqual(applied, [
-        { scope: 'engine', version: '99.0.0', entityId: envelope.fullConfiguration.engine.oIBusInternalId }
-      ]);
-    });
-
-    it('applies a north-scope upgrade only to north connectors of the matching type', () => {
-      const envelope = cloneEnvelope();
-      const northType = envelope.fullConfiguration.northConnectors[0].type;
-      const matching = envelope.fullConfiguration.northConnectors.filter(north => north.type === northType);
-      assert.ok(matching.length > 0);
-      const nonMatchingCountBefore = envelope.fullConfiguration.northConnectors.length - matching.length;
-
-      const upgrade: SettingsUpgradeEntry = {
-        version: '99.0.0',
-        scope: `north:${northType}`,
-        apply: settings => ({ ...settings, patchedByUpgrade: true })
-      };
-
-      const applied = applyUpgradesDirect(envelope, [upgrade]);
-
-      assert.strictEqual(applied.length, matching.length);
-      for (const north of matching) {
-        assert.strictEqual((north.settings.settings as unknown as { patchedByUpgrade: boolean }).patchedByUpgrade, true);
-      }
-      const nonMatchingAfter = envelope.fullConfiguration.northConnectors.filter(north => north.type !== northType);
-      assert.strictEqual(nonMatchingAfter.length, nonMatchingCountBefore);
-      for (const north of nonMatchingAfter) {
-        assert.strictEqual((north.settings.settings as unknown as { patchedByUpgrade?: boolean }).patchedByUpgrade, undefined);
-      }
-    });
-
-    it('applies a historyQuerySouth-scope upgrade only to history queries whose southType matches', () => {
-      const envelope = cloneEnvelope();
-      const historyQuery = envelope.historyQueries.historyQueries[0];
-      assert.ok(historyQuery, 'expected the fixture to include at least one history query');
-      const matchingSouthType = historyQuery.settings.southType;
-      const matching = envelope.historyQueries.historyQueries.filter(candidate => candidate.settings.southType === matchingSouthType);
-      const upgrade: SettingsUpgradeEntry = {
-        version: '99.0.0',
-        scope: `historyQuerySouth:${matchingSouthType}`,
-        apply: settings => ({ ...settings, patchedByUpgrade: true })
-      };
-
-      const applied = applyUpgradesDirect(envelope, [upgrade]);
-
-      assert.deepStrictEqual(
-        applied,
-        matching.map(entry => ({ scope: upgrade.scope, version: '99.0.0', entityId: entry.oIBusInternalId }))
-      );
-      for (const entry of matching) {
-        assert.strictEqual((entry.settings.southSettings as unknown as { patchedByUpgrade: boolean }).patchedByUpgrade, true);
-      }
-      for (const entry of envelope.historyQueries.historyQueries.filter(candidate => candidate.settings.southType !== matchingSouthType)) {
-        assert.strictEqual((entry.settings.southSettings as unknown as { patchedByUpgrade?: boolean }).patchedByUpgrade, undefined);
-      }
-    });
-
-    it('applies a historyQueryNorth-scope upgrade only to history queries whose northType matches', () => {
-      const envelope = cloneEnvelope();
-      const historyQuery = envelope.historyQueries.historyQueries[0];
-      assert.ok(historyQuery, 'expected the fixture to include at least one history query');
-      const upgrade: SettingsUpgradeEntry = {
-        version: '99.0.0',
-        scope: `historyQueryNorth:${historyQuery.settings.northType}`,
-        apply: settings => ({ ...settings, patchedByUpgrade: true })
-      };
-
-      const applied = applyUpgradesDirect(envelope, [upgrade]);
-
-      assert.deepStrictEqual(applied, [{ scope: upgrade.scope, version: '99.0.0', entityId: historyQuery.oIBusInternalId }]);
-      assert.strictEqual((historyQuery.settings.northSettings as unknown as { patchedByUpgrade: boolean }).patchedByUpgrade, true);
-    });
-
-    it('applies a transformer-scope upgrade only to standard transformers with the matching functionName', () => {
-      const envelope = cloneEnvelope();
-      envelope.fullConfiguration.transformers = [
-        {
-          oIBusInternalId: 'standard-transformer-1',
-          type: 'standard',
-          settings: { functionName: 'target-function' },
-          manifest: { type: 'object', key: '', translationKey: '', attributes: [], enablingConditions: [], validators: [] }
-        } as unknown as ConfigExportEnvelopeDTO['fullConfiguration']['transformers'][number],
-        {
-          oIBusInternalId: 'standard-transformer-2',
-          type: 'standard',
-          settings: { functionName: 'other-function' },
-          manifest: { type: 'object', key: '', translationKey: '', attributes: [], enablingConditions: [], validators: [] }
-        } as unknown as ConfigExportEnvelopeDTO['fullConfiguration']['transformers'][number]
-      ];
-
-      const upgrade: SettingsUpgradeEntry = {
-        version: '99.0.0',
-        scope: 'transformer:target-function',
-        apply: settings => ({ ...settings, patchedByUpgrade: true })
-      };
-
-      const applied = applyUpgradesDirect(envelope, [upgrade]);
-
-      assert.deepStrictEqual(applied, [{ scope: 'transformer:target-function', version: '99.0.0', entityId: 'standard-transformer-1' }]);
-      const [matched, unmatched] = envelope.fullConfiguration.transformers;
-      assert.strictEqual((matched.settings as unknown as { patchedByUpgrade: boolean }).patchedByUpgrade, true);
-      assert.strictEqual((unmatched.settings as unknown as { patchedByUpgrade?: boolean }).patchedByUpgrade, undefined);
-    });
-
-    it('wraps an unrecognized upgrade scope prefix in a ConfigImportError instead of silently mis-applying it', () => {
-      const envelope = cloneEnvelope();
-      const upgrade = {
-        version: '99.0.0',
-        scope: 'not-a-real-scope-prefix:foo',
-        apply: (settings: Record<string, unknown>) => settings
-      } as unknown as SettingsUpgradeEntry;
-
-      assert.throws(
-        () => applyUpgradesDirect(envelope, [upgrade]),
-        (error: unknown) => {
-          assert.ok(error instanceof ConfigImportError);
-          assert.match(error.message, /Invalid settings-upgrade registry entry "not-a-real-scope-prefix:foo@99\.0\.0"/);
-          assert.match(error.message, /Unknown settings-upgrade scope/);
-          return true;
-        }
-      );
-    });
   });
 });

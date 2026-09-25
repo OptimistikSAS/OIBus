@@ -57,7 +57,7 @@ describe('ImportConfigModalComponent', () => {
 
   test('should ask for confirmation before importing', async () => {
     confirmationService.confirm.mockReturnValue(of(undefined));
-    const response: ConfigImportResponseDTO = { appliedUpgrades: [], warnings: [] };
+    const response: ConfigImportResponseDTO = { fromVersion: '3.10.0', toVersion: '3.10.0', appliedUpgrades: [], warnings: [] };
     configTransferService.import.mockReturnValue(of(response));
 
     const file = new File(['{}'], 'export.json');
@@ -85,7 +85,9 @@ describe('ImportConfigModalComponent', () => {
   test('should display the applied upgrades and warnings after a successful import', async () => {
     confirmationService.confirm.mockReturnValue(of(undefined));
     const response: ConfigImportResponseDTO = {
-      appliedUpgrades: [{ scope: 'south:opcua', version: '3.9.0', entityId: 'south1' }],
+      fromVersion: '3.10.0',
+      toVersion: '3.11.0',
+      appliedUpgrades: [{ version: '3.11.0', description: 'Add a field' }],
       warnings: ['something to check']
     };
     configTransferService.import.mockReturnValue(of(response));
@@ -99,6 +101,10 @@ describe('ImportConfigModalComponent', () => {
 
     expect(tester.componentInstance.result()).toEqual(response);
     await expect.element(tester.closeButton).toBeInTheDocument();
+    const element = tester.fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('#upgraded-versions')?.textContent).toContain('3.10.0');
+    expect(element.querySelector('#upgraded-versions')?.textContent).toContain('3.11.0');
+    expect(element.querySelector('#applied-upgrades-list')?.textContent?.trim()).toBe('3.11.0: Add a field');
   });
 
   test('should show the backend error message when the import fails', async () => {
@@ -121,7 +127,7 @@ describe('ImportConfigModalComponent', () => {
     configTransferService.import.mockReturnValue(
       throwError(
         () =>
-          new ConfigImportFailure('Imported configuration failed validation after applying settings upgrades; nothing was imported', [
+          new ConfigImportFailure('Imported configuration failed validation after applying config upgrades; nothing was imported', [
             { scope: 'south:sqlite:item', entityId: 'SC1', entityName: 'All logs', message: 'must be a string' }
           ])
       )
@@ -157,7 +163,7 @@ describe('ImportConfigModalComponent', () => {
 
   test('should close with the result once import succeeded', async () => {
     confirmationService.confirm.mockReturnValue(of(undefined));
-    const response: ConfigImportResponseDTO = { appliedUpgrades: [], warnings: [] };
+    const response: ConfigImportResponseDTO = { fromVersion: '3.10.0', toVersion: '3.10.0', appliedUpgrades: [], warnings: [] };
     configTransferService.import.mockReturnValue(of(response));
 
     const file = new File(['{}'], 'export.json');

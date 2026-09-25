@@ -12,6 +12,7 @@ import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/c
 import UserRepositoryMock from '../../tests/__mocks__/repository/config/user-repository.mock';
 import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
 import TransformerRepositoryMock from '../../tests/__mocks__/repository/config/transformer-repository.mock';
+import ConfigurationWorkflowRepositoryMock from '../../tests/__mocks__/repository/config/configuration-workflow-repository.mock';
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 import EncryptionService from '../encryption.service';
 import { southManifestList } from '../south-manifests';
@@ -72,6 +73,7 @@ describe('Config Transfer Service', () => {
       northRepository,
       historyQueryRepository,
       transformerRepository,
+      new ConfigurationWorkflowRepositoryMock(),
       encryptionService,
       false,
       false
@@ -82,11 +84,23 @@ describe('Config Transfer Service', () => {
 
   it('should build an envelope with the expected top-level shape', () => {
     const envelope = service.exportConfiguration();
-    assert.deepStrictEqual(Object.keys(envelope).sort(), ['exportedAt', 'fullConfiguration', 'historyQueries', 'oibusVersion']);
+    assert.deepStrictEqual(Object.keys(envelope).sort(), ['config', 'exportedAt', 'oibusVersion']);
     assert.strictEqual(envelope.oibusVersion, testData.engine.settings.version);
     assert.ok(typeof envelope.exportedAt === 'string' && envelope.exportedAt.length > 0);
-    assert.strictEqual(envelope.fullConfiguration.southConnectors.length, testData.south.list.length);
-    assert.strictEqual(envelope.historyQueries.historyQueries.length, testData.historyQueries.list.length);
+    assert.deepStrictEqual(Object.keys(envelope.config).sort(), [
+      'certificates',
+      'engine',
+      'historyQueries',
+      'ipFilters',
+      'northConnectors',
+      'registration',
+      'scanModes',
+      'southConnectors',
+      'transformers',
+      'users'
+    ]);
+    assert.strictEqual(envelope.config.southConnectors.length, testData.south.list.length);
+    assert.strictEqual(envelope.config.historyQueries.length, testData.historyQueries.list.length);
   });
 
   it('should never leak a secret-shaped value anywhere in the serialized envelope', () => {
@@ -115,7 +129,7 @@ describe('Config Transfer Service', () => {
       return keys;
     };
 
-    for (const southConnector of envelope.fullConfiguration.southConnectors) {
+    for (const southConnector of envelope.config.southConnectors) {
       const manifest = southManifestList.find(manifest => manifest.id === southConnector.type)!;
       const secretKeys = collectSecretKeys(manifest.settings);
       const settings = southConnector.settings.settings as Record<string, unknown>;
@@ -126,7 +140,7 @@ describe('Config Transfer Service', () => {
       }
     }
 
-    for (const northConnector of envelope.fullConfiguration.northConnectors) {
+    for (const northConnector of envelope.config.northConnectors) {
       const manifest = northManifestList.find(manifest => manifest.id === northConnector.type)!;
       const secretKeys = collectSecretKeys(manifest.settings);
       const settings = northConnector.settings.settings as Record<string, unknown>;

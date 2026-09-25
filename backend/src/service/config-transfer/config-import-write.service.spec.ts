@@ -17,9 +17,15 @@ import SouthConnectorRepository from '../../repository/config/south-connector.re
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import HistoryQueryRepository from '../../repository/config/history-query.repository';
 import TransformerRepository from '../../repository/config/transformer.repository';
+import ConfigurationWorkflowRepository from '../../repository/config/configuration-workflow.repository';
+import { version as currentVersion } from '../../../package.json';
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 import AuditService from '../../service/audit.service';
-import { ConfigExportEnvelopeDTO } from '../../../shared/model/config-transfer.model';
+import { ConfigExportDTO } from '../../../shared/model/config-transfer.model';
+import {
+  SouthConnectorFolderScannerCommandDTO,
+  SouthConnectorFolderScannerItemCommandDTO
+} from '../../../shared/model/south-connector.model';
 
 const TEST_DB_PATH = 'src/tests/test-config-import-write.db';
 
@@ -42,8 +48,9 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
   let northConnectorRepository: NorthConnectorRepository;
   let historyQueryRepository: HistoryQueryRepository;
   let transformerRepository: TransformerRepository;
+  let configurationWorkflowRepository: ConfigurationWorkflowRepository;
   let service: ConfigImportService;
-  let baselineEnvelope: ConfigExportEnvelopeDTO;
+  let baselineEnvelope: ConfigExportDTO;
 
   before(async () => {
     database = await initDatabase('config', true, TEST_DB_PATH);
@@ -65,6 +72,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     northConnectorRepository = new NorthConnectorRepository(database, auditService);
     historyQueryRepository = new HistoryQueryRepository(database, auditService);
     transformerRepository = new TransformerRepository(database, auditService);
+    configurationWorkflowRepository = new ConfigurationWorkflowRepository(database, auditService);
 
     // The real, pure EncryptionService/JoiValidator (neither needs init) so secret-stripping and
     // manifest validation are exercised for real, matching how the export/import endpoints actually
@@ -80,6 +88,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
       northConnectorRepository,
       historyQueryRepository,
       transformerRepository,
+      configurationWorkflowRepository,
       encryptionService,
       false,
       false
@@ -88,22 +97,23 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     oIAnalyticsRegistrationService.getRegistrationSettings = () => testData.oIAnalytics.registration.completed;
     const transferService = new ConfigTransferService(builderService, engineRepository, oIAnalyticsRegistrationService as never);
 
-    baselineEnvelope = transferService.exportConfiguration();
+    // Stamped with the running version: the seeded engine row carries an older one
+    baselineEnvelope = { ...transferService.exportConfiguration(), oibusVersion: currentVersion };
     // The shared fixture's item settings are test-only placeholders that don't satisfy the real
     // item manifests (see config-import.service.spec.ts's isolateToSingleSouth) — clear them so the
     // envelope passes the same manifest validation the import pipeline runs before ever writing.
     // A south-sourced transformer link's item/group references are cleared alongside, since they'd
     // otherwise point at south items this fixture-sanitizing step just removed.
-    for (const south of baselineEnvelope.fullConfiguration.southConnectors) {
+    for (const south of baselineEnvelope.config.southConnectors) {
       south.settings.items = [];
     }
-    for (const historyQuery of baselineEnvelope.historyQueries.historyQueries) {
+    for (const historyQuery of baselineEnvelope.config.historyQueries) {
       historyQuery.settings.items = [];
       for (const transformer of historyQuery.settings.northTransformers) {
         transformer.items = [];
       }
     }
-    for (const north of baselineEnvelope.fullConfiguration.northConnectors) {
+    for (const north of baselineEnvelope.config.northConnectors) {
       for (const transformer of north.settings.transformers) {
         if (transformer.source.type === 'south') {
           transformer.source.items = [];
@@ -122,7 +132,8 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
       southConnectorRepository,
       northConnectorRepository,
       historyQueryRepository,
-      userRepository
+      userRepository,
+      configurationWorkflowRepository
     );
   });
 
@@ -130,7 +141,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     mock.restoreAll();
   });
 
-  const cloneEnvelope = (): ConfigExportEnvelopeDTO => structuredClone(baselineEnvelope);
+  const cloneEnvelope = (): ConfigExportDTO => structuredClone(baselineEnvelope);
 
   /**
    * `importConfiguration` requires `importedBy` to be an existing user id (the account running the
@@ -225,7 +236,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
 
   it('preserves a custom transformer under its original id and maps a standard transformer by function name', async () => {
     const envelope = cloneEnvelope();
-    const customEntry = envelope.fullConfiguration.transformers.find(transformer => transformer.type === 'custom');
+    const customEntry = envelope.config.transformers.find(transformer => transformer.type === 'custom');
     assert.ok(customEntry, 'expected the fixture to include a custom transformer');
 
     await service.importConfiguration(envelope, importerId());
@@ -237,7 +248,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
 
   it('skips a north connector transformer link that cannot be matched locally, and warns about it', async () => {
     const envelope = cloneEnvelope();
-    const north = envelope.fullConfiguration.northConnectors.find(candidate => candidate.settings.transformers.length > 0);
+    const north = envelope.config.northConnectors.find(candidate => candidate.settings.transformers.length > 0);
     assert.ok(north, 'expected the fixture to include a north connector with at least one transformer');
     const transformerEntry = north.settings.transformers[0];
     transformerEntry.transformerId = 'does-not-exist-locally';
@@ -261,7 +272,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
 
   it('recreates a north connector transformer sourced from oianalytics-setpoint', async () => {
     const envelope = cloneEnvelope();
-    const north = envelope.fullConfiguration.northConnectors.find(candidate => candidate.settings.transformers.length > 0);
+    const north = envelope.config.northConnectors.find(candidate => candidate.settings.transformers.length > 0);
     assert.ok(north, 'expected the fixture to include a north connector with at least one transformer');
     const transformerEntry = north.settings.transformers[0];
     transformerEntry.source = { type: 'oianalytics-setpoint' };
@@ -277,8 +288,8 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
 
   it('imports a certificate under its original id but with an empty private key, and warns about it', async () => {
     const envelope = cloneEnvelope();
-    assert.ok(envelope.fullConfiguration.certificates.length > 0, 'expected the fixture to include a certificate');
-    const certificateEntry = envelope.fullConfiguration.certificates[0];
+    assert.ok(envelope.config.certificates.length > 0, 'expected the fixture to include a certificate');
+    const certificateEntry = envelope.config.certificates[0];
 
     const result = await service.importConfiguration(envelope, importerId());
 
@@ -314,9 +325,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
 
   it('preserves the reserved "subscription" scan mode even when the envelope omits it', async () => {
     const envelope = cloneEnvelope();
-    envelope.fullConfiguration.scanModes = envelope.fullConfiguration.scanModes.filter(
-      scanMode => scanMode.oIBusInternalId !== 'subscription'
-    );
+    envelope.config.scanModes = envelope.config.scanModes.filter(scanMode => scanMode.oIBusInternalId !== 'subscription');
 
     await service.importConfiguration(envelope, importerId());
 
@@ -325,7 +334,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
 
   it('updates the reserved "subscription" scan mode in place when the envelope does describe it', async () => {
     const envelope = cloneEnvelope();
-    const subscriptionEntry = envelope.fullConfiguration.scanModes.find(scanMode => scanMode.oIBusInternalId === 'subscription');
+    const subscriptionEntry = envelope.config.scanModes.find(scanMode => scanMode.oIBusInternalId === 'subscription');
     assert.ok(subscriptionEntry, 'expected the fixture to include the reserved "subscription" scan mode');
     subscriptionEntry.settings.description = 'updated via import';
 
@@ -336,9 +345,111 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     assert.strictEqual(recreated.description, 'updated via import');
   });
 
+  it('recreates configuration workflows disabled, with the items they own, and replaces the existing ones', async () => {
+    const envelope = cloneEnvelope();
+    const south = envelope.config.southConnectors.find(candidate => candidate.type === 'folder-scanner');
+    assert.ok(south, 'expected the fixture to include a folder-scanner south connector');
+    const item = (id: string, name: string): SouthConnectorFolderScannerItemCommandDTO => ({
+      id,
+      name,
+      enabled: false,
+      settings: { regex: '.*', minAge: 1000, preserveFiles: true, ignoreModifiedDate: false, maxFiles: 100, maxSize: 0, recursive: false },
+      scanModeId: envelope.config.scanModes.find(scanMode => scanMode.oIBusInternalId !== 'subscription')!.oIBusInternalId,
+      scanModeName: null,
+      groupId: null,
+      groupName: null,
+      syncWithGroup: false,
+      maxReadInterval: null,
+      readDelay: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null,
+      cachingStrategy: null,
+      thresholdType: null,
+      threshold: null,
+      rangeLow: null,
+      rangeHigh: null,
+      maxCachingInterval: null
+    });
+    (south.settings as SouthConnectorFolderScannerCommandDTO).items = [item('ownedItem', 'owned'), item('manualItem', 'manual')];
+    const auditFields = { oIBusCreatedBy: '', oIBusUpdatedBy: '', oIBusCreatedAt: '', oIBusUpdatedAt: '' };
+    south.settings.configurationWorkflows = [
+      {
+        ...auditFields,
+        oIBusInternalId: 'localWorkflow',
+        settings: {
+          name: 'local',
+          discoveryScope: { folder: 'input' },
+          identityKeyFields: ['name'],
+          eligibilityFilter: [{ field: 'name', operator: 'contains', value: 'csv' }],
+          itemFieldMapping: { name: '{{name}}' },
+          pushToOIAnalytics: false,
+          scanModeId: south.settings.items[0].scanModeId,
+          enabled: true
+        },
+        ownedItems: [{ id: 'ownedItem', disabledReason: 'not found by the last discovery' }]
+      },
+      {
+        ...auditFields,
+        oIBusInternalId: 'remoteWorkflow',
+        settings: {
+          name: 'remote',
+          discoveryScope: {},
+          identityKeyFields: ['ignored for a remote workflow'],
+          eligibilityFilter: [],
+          itemFieldMapping: null,
+          pushToOIAnalytics: true,
+          scanModeId: null,
+          enabled: true
+        },
+        ownedItems: []
+      }
+    ];
+    // A workflow existing before the import, on another south, must be replaced
+    const otherSouth = southConnectorRepository.findAllSouth().find(candidate => candidate.id !== south.oIBusInternalId)!;
+    configurationWorkflowRepository.create(
+      {
+        name: 'pre-existing',
+        southId: otherSouth.id,
+        discoveryScope: {},
+        identityKeyFields: [],
+        eligibilityFilter: [],
+        itemFieldMapping: null,
+        pushToOIAnalytics: true,
+        scanMode: null,
+        enabled: true
+      },
+      'someone',
+      'preExistingWorkflow'
+    );
+
+    const result = await service.importConfiguration(envelope, importerId());
+
+    assert.deepStrictEqual(
+      configurationWorkflowRepository.findAll().map(workflow => [workflow.id, workflow.southId, workflow.enabled]),
+      [
+        ['localWorkflow', south.oIBusInternalId, false],
+        ['remoteWorkflow', south.oIBusInternalId, false]
+      ]
+    );
+    const local = configurationWorkflowRepository.findById('localWorkflow')!;
+    assert.deepStrictEqual(local.eligibilityFilter, [{ field: 'name', operator: 'contains', value: 'csv' }]);
+    assert.strictEqual(local.scanMode?.id, south.settings.items[0].scanModeId);
+    assert.deepStrictEqual(configurationWorkflowRepository.findById('remoteWorkflow')!.identityKeyFields, []);
+    const items = southConnectorRepository.findSouthById(south.oIBusInternalId)!.items;
+    assert.deepStrictEqual(items.map(candidate => [candidate.id, candidate.createdByWorkflowId, candidate.disabledReason]).sort(), [
+      ['manualItem', null, null],
+      ['ownedItem', 'localWorkflow', 'not found by the last discovery']
+    ]);
+    assert.ok(
+      result.warnings.some(warning => /2 configuration workflow\(s\) were imported disabled/.test(warning)),
+      JSON.stringify(result.warnings)
+    );
+  });
+
   it('warns that every imported south/north connector was disabled', async () => {
     const envelope = cloneEnvelope();
-    assert.ok(envelope.fullConfiguration.southConnectors.length > 0 || envelope.fullConfiguration.northConnectors.length > 0);
+    assert.ok(envelope.config.southConnectors.length > 0 || envelope.config.northConnectors.length > 0);
 
     const result = await service.importConfiguration(envelope, importerId());
 
@@ -367,7 +478,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
 
   it('rolls back the entire wipe+recreate atomically when a failure happens partway through recreation (fault injection)', async () => {
     const envelope = cloneEnvelope();
-    assert.ok(envelope.fullConfiguration.northConnectors.length > 0, 'expected the fixture to include a north connector');
+    assert.ok(envelope.config.northConnectors.length > 0, 'expected the fixture to include a north connector');
 
     const beforeScanModes = scanModeRepository.findAll();
     const beforeIpFilters = ipFilterRepository.list();
@@ -400,7 +511,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     // Deliberately NOT the reserved "subscription" entry: that one is always `update()`d in place
     // (idempotent, see recreateConfiguration), so duplicating it wouldn't reproduce the collision —
     // every other scan mode goes through `create()`, which does collide on a repeated id.
-    const original = envelope.fullConfiguration.scanModes.find(scanMode => scanMode.oIBusInternalId !== 'subscription');
+    const original = envelope.config.scanModes.find(scanMode => scanMode.oIBusInternalId !== 'subscription');
     assert.ok(original, 'expected the fixture to include a non-reserved scan mode');
     const beforeScanModeIds = scanModeRepository
       .findAll()
@@ -410,7 +521,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     // Nothing in `validateAndUpgrade` checks id uniqueness within a section, so a hand-edited/corrupted
     // file with two entries sharing an id passes validation cleanly and only fails once
     // `recreateConfiguration` tries to insert the second one under an id the first one just took.
-    envelope.fullConfiguration.scanModes.push(structuredClone(original));
+    envelope.config.scanModes.push(structuredClone(original));
 
     await assert.rejects(
       () => service.importConfiguration(envelope, importerId()),
@@ -429,7 +540,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
 
   it('rejects a malformed reserved "subscription" scan mode entry as a clean ConfigImportError, not a raw DB error', async () => {
     const envelope = cloneEnvelope();
-    const subscriptionEntry = envelope.fullConfiguration.scanModes.find(scanMode => scanMode.oIBusInternalId === 'subscription');
+    const subscriptionEntry = envelope.config.scanModes.find(scanMode => scanMode.oIBusInternalId === 'subscription');
     assert.ok(subscriptionEntry, 'expected the fixture to include the reserved "subscription" scan mode');
     const beforeSubscription = scanModeRepository.findById('subscription');
     assert.ok(beforeSubscription);
@@ -460,7 +571,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
       .sort();
 
     const envelope = cloneEnvelope();
-    const adminEntry = envelope.fullConfiguration.users.find(user => user.oIBusInternalId === admin.id);
+    const adminEntry = envelope.config.users.find(user => user.oIBusInternalId === admin.id);
     assert.ok(adminEntry, "expected the envelope to include the importing admin's own user entry");
     // Simulates the envelope having been exported before the importer's login changed: same id,
     // different login. Matching only by login (not id) would fail to exclude this entry from

@@ -58,6 +58,9 @@ export default class SouthConnectorRepositoryMock extends SouthConnectorReposito
   override claimItemForWorkflow = mock.fn(
     (_southConnectorId: string, _itemId: string, _workflowId: string, _updatedBy: string): void => undefined
   );
+  override restoreItemWorkflowOwnership = mock.fn(
+    (_itemId: string, _workflowId: string, _disabledReason: string | null): void => undefined
+  );
   override disableItemWithReason = mock.fn(
     (_southConnectorId: string, _itemId: string, _reason: string, _updatedBy: string): void => undefined
   );

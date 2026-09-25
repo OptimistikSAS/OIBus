@@ -61,7 +61,7 @@ describe('ConfigTransferService', () => {
   test('should import a configuration', () => {
     let importResponse: ConfigImportResponseDTO | null = null;
     const configFile = new File(['{}'], 'oibus-config-export.json');
-    const expectedResponse: ConfigImportResponseDTO = { appliedUpgrades: [], warnings: [] };
+    const expectedResponse: ConfigImportResponseDTO = { fromVersion: '3.10.0', toVersion: '3.10.0', appliedUpgrades: [], warnings: [] };
 
     service.import(configFile).subscribe(response => (importResponse = response));
 

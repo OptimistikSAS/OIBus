@@ -3,14 +3,16 @@ import argon2 from 'argon2';
 import crypto from 'node:crypto';
 import { Database } from 'better-sqlite3';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
-import { scanModeSchema, ipFilterSchema, userSchema } from '../../web-server/controllers/validators/oibus-validation-schema';
-import { getUpgradesNewerThan, SettingsUpgradeEntry } from './settings-upgrades/registry';
-import { compareVersions } from './settings-upgrades/version-compare';
+import { CONFIG_SCHEMA, EXPORT_FILE_SCHEMA, RESERVED_SCAN_MODE_ID } from './config-schema';
+import { getUpgradesBetween } from './config-upgrades/registry';
+import { ConfigUpgrade, JsonObject } from './config-upgrades/config-upgrade';
+import { compareVersions } from './config-upgrades/version-compare';
 import { version as currentOIBusVersion } from '../../../package.json';
 import {
-  ConfigExportEnvelopeDTO,
+  ConfigExportDTO,
   ConfigImportEntityValidationError,
-  ConfigImportResponseDTO
+  ConfigImportResponseDTO,
+  OIBusConfigurationDTO
 } from '../../../shared/model/config-transfer.model';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { southManifestList } from '../south-manifests';
@@ -23,6 +25,7 @@ import SouthConnectorRepository from '../../repository/config/south-connector.re
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import HistoryQueryRepository from '../../repository/config/history-query.repository';
 import UserRepository from '../../repository/config/user.repository';
+import ConfigurationWorkflowRepository from '../../repository/config/configuration-workflow.repository';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthItemGroupEntityLight } from '../../model/south-connector.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { HistoryQueryEntity, HistoryQueryItemEntity } from '../../model/histor-query.model';
@@ -41,24 +44,10 @@ import { OIAnalyticsNorthCommandDTO, OIAnalyticsSouthCommandDTO } from '../oia/o
 import { TransformerSourceCommandDTO } from '../../../shared/model/transformer.model';
 
 /**
- * The reserved scan mode id push-driven south connectors (MQTT, OPC-UA DA subscriptions, …) and the
- * engine special-case by id. `ScanModeRepository` only reseeds it (and the other defaults) when the
- * table is completely empty at construction time — never after an import — so it must never be
- * deleted here, or it is gone for the life of the process.
- */
-const RESERVED_SCAN_MODE_ID = 'subscription';
-
-export interface AppliedUpgrade {
-  scope: string;
-  version: string;
-  entityId?: string;
-}
-
-/**
- * Raised at any rejection point of the import pipeline (malformed input, unsupported format
- * version, post-upgrade validation failures). `validationErrors` is only populated for the
- * validation-failure case — every other rejection is a single top-level `message`. Never carries
- * any indication that repository writes happened, because this pipeline never performs any.
+ * Raised at any rejection point of the import pipeline (malformed file, export from a newer OIBus,
+ * failing upgrade step, validation failures). `validationErrors` is only populated for the
+ * validation-failure case — every other rejection is a single top-level `message`. Nothing has been
+ * written when it is raised.
  */
 export class ConfigImportError extends Error {
   constructor(
@@ -71,131 +60,51 @@ export class ConfigImportError extends Error {
 }
 
 /**
- * `oIBusInternalId` plus a `settings` sub-schema, matching the `BaseAuditFields & { settings: T }`
- * shape every non-manifest-driven section of the envelope uses. South/north connectors and history
- * queries are NOT covered by this helper — those get full manifest-driven validation in
- * `validateEnvelope` once settings-upgrades have had a chance to run, so a bare shape check here
- * would be redundant. Every other section (scan modes, ip filters, certificates, users) never goes
- * through manifest validation at all, so this is the only check standing between a malformed entry
- * and an unhandled exception mid-transaction in `recreateConfiguration` — hence `settings.required()`
- * with the real per-type schema, not just `Joi.object()`.
+ * The oldest configuration an import accepts. Config export shipped in 3.10.0, but OIAnalytics can
+ * produce a file from the configuration messages any OIBus sent it, down to 3.9.0 (pre-releases of
+ * 3.9.0 excluded).
  */
-const auditedEntrySchema = (settingsSchema: Joi.Schema): Joi.ObjectSchema =>
-  Joi.object({
-    oIBusInternalId: Joi.string().required(),
-    settings: settingsSchema.required()
-  }).unknown(true);
+export const MINIMUM_SUPPORTED_VERSION = '3.9.0';
 
-const CERTIFICATE_SETTINGS_SCHEMA = Joi.object({
-  name: Joi.string().required(),
-  description: Joi.string().required().allow(null, ''),
-  publicKey: Joi.string().required().allow(''),
-  certificate: Joi.string().required().allow(''),
-  certificateChain: Joi.string().required().allow(null, ''),
-  expiry: Joi.string().required().allow(null, '')
-}).unknown(true);
-
-/**
- * The reserved `'subscription'` scan mode is seeded with `type: 'cron'` but an empty `cron` string
- * (nothing ever schedules it — it's referenced by id, not run) — a shape `scanModeSchema`'s cron
- * validator, built for real user-submitted scan modes, rejects. Its envelope entry is only ever
- * matched back to the local reserved row by id (see `recreateConfiguration`), so its `settings` are
- * not meaningfully validated here regardless of what an export happens to contain for it.
- */
-const SCAN_MODE_ENTRY_SCHEMA = Joi.object({
-  oIBusInternalId: Joi.string().required(),
-  settings: Joi.when('oIBusInternalId', {
-    is: RESERVED_SCAN_MODE_ID,
-    then: Joi.object().unknown(true).required(),
-    otherwise: scanModeSchema.required()
-  })
-}).unknown(true);
-
-const TRANSFORMER_ENTRY_SCHEMA = Joi.object({
-  oIBusInternalId: Joi.string().required(),
-  type: Joi.string().valid('custom', 'standard').required(),
-  settings: Joi.object().required(),
-  manifest: Joi.object().required()
-}).unknown(true);
-
-const ENVELOPE_SHAPE_SCHEMA = Joi.object({
-  oibusVersion: Joi.string().required(),
-  exportedAt: Joi.string().required(),
-  fullConfiguration: Joi.object({
-    engine: Joi.object().required(),
-    registration: Joi.object().required(),
-    scanModes: Joi.array().items(SCAN_MODE_ENTRY_SCHEMA).required(),
-    ipFilters: Joi.array().items(auditedEntrySchema(ipFilterSchema)).required(),
-    certificates: Joi.array().items(auditedEntrySchema(CERTIFICATE_SETTINGS_SCHEMA)).required(),
-    southConnectors: Joi.array().required(),
-    northConnectors: Joi.array().required(),
-    users: Joi.array().items(auditedEntrySchema(userSchema)).required(),
-    transformers: Joi.array().items(TRANSFORMER_ENTRY_SCHEMA).required()
-  })
-    .required()
-    .unknown(true),
-  historyQueries: Joi.object({
-    historyQueries: Joi.array().required()
-  })
-    .required()
-    .unknown(true)
-})
-  .required()
-  .unknown(true);
-
-/**
- * Result of `parseScope`: which section of the envelope a `SettingsUpgradeEntry`/validation
- * failure applies to, and (for the type-keyed scopes) which connector/transformer `type` /
- * `functionName` it is restricted to.
- */
-type ParsedScope =
-  | { kind: 'envelope' }
-  | { kind: 'engine' }
-  | { kind: 'south'; connectorType: string }
-  | { kind: 'north'; connectorType: string }
-  | { kind: 'historyQuerySouth'; connectorType: string }
-  | { kind: 'historyQueryNorth'; connectorType: string }
-  | { kind: 'transformer'; functionName: string };
-
-function parseScope(scope: string): ParsedScope {
-  if (scope === 'envelope') return { kind: 'envelope' };
-  if (scope === 'engine') return { kind: 'engine' };
-  const [prefix, ...rest] = scope.split(':');
-  const suffix = rest.join(':');
-  switch (prefix) {
-    case 'south':
-      return { kind: 'south', connectorType: suffix };
-    case 'north':
-      return { kind: 'north', connectorType: suffix };
-    case 'historyQuerySouth':
-      return { kind: 'historyQuerySouth', connectorType: suffix };
-    case 'historyQueryNorth':
-      return { kind: 'historyQueryNorth', connectorType: suffix };
-    case 'transformer':
-      return { kind: 'transformer', functionName: suffix };
-    default:
-      // A scope prefix the registry declares but this switch was never updated for. Throwing here
-      // (rather than silently falling back to envelope-scope, which would `Object.assign` the
-      // upgrade's return value onto the whole envelope) turns a registry/code drift bug into a
-      // loud, nothing-written rejection instead of silent top-level corruption.
-      throw new Error(`Unknown settings-upgrade scope "${scope}"`);
-  }
+export interface UpgradedConfiguration {
+  fromVersion: string;
+  toVersion: string;
+  appliedUpgrades: Array<ConfigUpgrade>;
+  config: OIBusConfigurationDTO;
 }
 
+const settingsField = (entry: JsonObject, field: string): unknown => (entry.settings as JsonObject | undefined)?.[field];
+
+/** How to attribute a structural validation error to an entry of each configuration section. */
+const SECTION_SCOPES: Record<string, (entry: JsonObject) => { scope: string; entityName: unknown }> = {
+  scanModes: entry => ({ scope: 'scanMode', entityName: settingsField(entry, 'name') }),
+  ipFilters: entry => ({ scope: 'ipFilter', entityName: settingsField(entry, 'address') }),
+  certificates: entry => ({ scope: 'certificate', entityName: settingsField(entry, 'name') }),
+  users: entry => ({ scope: 'user', entityName: settingsField(entry, 'login') }),
+  transformers: entry => ({ scope: `transformer:${entry.type}`, entityName: settingsField(entry, 'name') }),
+  southConnectors: entry => ({ scope: `south:${entry.type}`, entityName: settingsField(entry, 'name') }),
+  northConnectors: entry => ({ scope: `north:${entry.type}`, entityName: settingsField(entry, 'name') }),
+  historyQueries: entry => ({ scope: 'historyQuery', entityName: settingsField(entry, 'name') })
+};
+
 /**
- * Runs the upgrade-then-validate half of the config import pipeline: brings an older exported
- * envelope's settings blobs up to the shape current manifests expect (via the shared
- * settings-upgrade registry), then validates every settings blob against those manifests with the
- * same `JoiValidator` the create/update endpoints use. Performs no repository writes of its own —
- * it hands back the (possibly rewritten) envelope and the list of upgrades that were applied so a
- * later stage can transactionally wipe and recreate the local configuration from it.
+ * Imports a configuration export file (produced by OIBus or by OIAnalytics, see `ConfigExportDTO`),
+ * whatever OIBus version it comes from, as long as it is not newer than this one:
+ *
+ *  1. The file's top-level shape is checked, and it is rejected when its `oibusVersion` is newer than
+ *     this instance.
+ *  2. The config upgrade chain brings its configuration from `oibusVersion` to the current shape.
+ *  3. The result is validated: structurally against `CONFIG_SCHEMA`, then every connector/item settings
+ *     blob against its manifest.
+ *  4. The local configuration is transactionally wiped and recreated from it.
+ *
+ * Nothing is written unless every step succeeds.
  */
 export default class ConfigImportService {
   constructor(
     private validator: JoiValidator,
     // The remaining constructor params are only used by `importConfiguration` (the transactional
-    // wipe+recreate write path) — `validateAndUpgrade` alone needs none of them, which is why the
-    // 4a-era test suite can keep constructing this service with only a validator.
+    // wipe+recreate write path) — `validateAndUpgrade` alone needs none of them.
     private database?: Database,
     private scanModeRepository?: ScanModeRepository,
     private ipFilterRepository?: IpFilterRepository,
@@ -204,211 +113,106 @@ export default class ConfigImportService {
     private southConnectorRepository?: SouthConnectorRepository,
     private northConnectorRepository?: NorthConnectorRepository,
     private historyQueryRepository?: HistoryQueryRepository,
-    private userRepository?: UserRepository
+    private userRepository?: UserRepository,
+    private configurationWorkflowRepository?: ConfigurationWorkflowRepository
   ) {}
 
   /**
-   * `currentVersion` defaults to this build's own version; it is only a parameter so tests can pin
-   * it independently of `package.json`.
+   * Runs steps 1–3 of the pipeline (see the class doc) and returns the upgraded, validated
+   * configuration, without writing anything or mutating `rawInput`. `currentVersion` defaults to this
+   * build's own version; it is only a parameter so tests can pin it independently of `package.json`.
    */
-  async validateAndUpgrade(
-    rawInput: unknown,
-    currentVersion: string = currentOIBusVersion
-  ): Promise<{ envelope: ConfigExportEnvelopeDTO; appliedUpgrades: Array<AppliedUpgrade> }> {
-    const envelope = await this.parseEnvelope(rawInput);
+  async validateAndUpgrade(rawInput: unknown, currentVersion: string = currentOIBusVersion): Promise<UpgradedConfiguration> {
+    const { error } = EXPORT_FILE_SCHEMA.validate(rawInput, { allowUnknown: true });
+    if (error) {
+      throw new ConfigImportError(`Malformed configuration export file: ${error.message}`);
+    }
+    const file = rawInput as ConfigExportDTO;
 
-    // Upgrades only ever move settings forward: an export from a newer OIBus may carry settings
-    // shapes this build has never heard of, so it is rejected rather than half-understood.
-    if (compareVersions(envelope.oibusVersion, currentVersion) > 0) {
+    // Upgrades only ever move a configuration forward: an export from a newer OIBus may carry shapes
+    // this build has never heard of, so it is rejected rather than half-understood.
+    if (compareVersions(file.oibusVersion, currentVersion) > 0) {
       throw new ConfigImportError(
-        `Unsupported export: it was produced by OIBus ${envelope.oibusVersion}, which is newer than this OIBus instance (${currentVersion})`
+        `Unsupported export: it was produced by OIBus ${file.oibusVersion}, which is newer than this OIBus instance (${currentVersion})`
       );
     }
 
-    const upgrades = getUpgradesNewerThan(envelope.oibusVersion);
-    const appliedUpgrades = this.applyUpgrades(envelope, upgrades);
-
-    const validationErrors = await this.validateEnvelope(envelope);
-    if (validationErrors.length > 0) {
+    if (compareVersions(file.oibusVersion, MINIMUM_SUPPORTED_VERSION) < 0) {
       throw new ConfigImportError(
-        'Imported configuration failed validation after applying settings upgrades; nothing was imported',
-        validationErrors
+        `Unsupported export: it was produced by OIBus ${file.oibusVersion}, but configuration import is only supported from OIBus ${MINIMUM_SUPPORTED_VERSION}`
       );
     }
 
-    return { envelope, appliedUpgrades };
-  }
-
-  /**
-   * Validates only the top-level envelope shape (presence and basic type of every section the
-   * rest of the pipeline reaches into) — not the manifest-specific settings blobs inside those
-   * sections, which `validateEnvelope` handles once upgrades have had a chance to run.
-   */
-  private async parseEnvelope(rawInput: unknown): Promise<ConfigExportEnvelopeDTO> {
-    try {
-      await this.validator.validate(ENVELOPE_SHAPE_SCHEMA, rawInput as object);
-    } catch (error: unknown) {
-      throw new ConfigImportError(`Malformed configuration export file: ${(error as Error).message}`);
-    }
-    return rawInput as ConfigExportEnvelopeDTO;
-  }
-
-  /**
-   * Applies every upgrade entry (ascending) to every matching section of the envelope, mutating it
-   * in place, and returns the flattened list of what was applied (one entry per matching
-   * connector/history query/transformer instance, not one per registry entry).
-   */
-  private applyUpgrades(envelope: ConfigExportEnvelopeDTO, upgrades: Array<SettingsUpgradeEntry>): Array<AppliedUpgrade> {
-    const applied: Array<AppliedUpgrade> = [];
-
-    for (const upgrade of upgrades) {
-      let scope: ParsedScope;
+    const appliedUpgrades = getUpgradesBetween(file.oibusVersion, currentVersion);
+    let config = structuredClone(file.config) as unknown as JsonObject;
+    for (const upgrade of appliedUpgrades) {
       try {
-        scope = parseScope(upgrade.scope);
-      } catch (error: unknown) {
-        // A registry entry this build's `parseScope` doesn't understand is a code/registry drift
-        // bug, not bad user input — but it must still fail the whole import loudly (nothing
-        // written) rather than silently mis-applying the upgrade, per the "registry gap fails
-        // import loudly" requirement.
+        config = upgrade.apply(config);
+      } catch (upgradeError: unknown) {
         throw new ConfigImportError(
-          `Invalid settings-upgrade registry entry "${upgrade.scope}@${upgrade.version}": ${(error as Error).message}`
+          `Could not upgrade the configuration to OIBus ${upgrade.version} (${upgrade.description}): ${(upgradeError as Error).message}`
         );
       }
-
-      switch (scope.kind) {
-        case 'envelope': {
-          Object.assign(envelope, upgrade.apply(envelope as unknown as Record<string, unknown>));
-          applied.push({ scope: upgrade.scope, version: upgrade.version });
-          break;
-        }
-
-        case 'engine': {
-          const engine = envelope.fullConfiguration.engine;
-          engine.settings = upgrade.apply(engine.settings as unknown as Record<string, unknown>) as unknown as typeof engine.settings;
-          applied.push({ scope: upgrade.scope, version: upgrade.version, entityId: engine.oIBusInternalId });
-          break;
-        }
-
-        case 'south': {
-          const connectorType = scope.connectorType;
-          applied.push(
-            ...this.applyToMatchingEntities(
-              envelope.fullConfiguration.southConnectors,
-              south => south.type === connectorType,
-              south => south.settings.settings,
-              (south, settings) => (south.settings.settings = settings as unknown as typeof south.settings.settings),
-              south => south.oIBusInternalId,
-              upgrade
-            )
-          );
-          break;
-        }
-
-        case 'north': {
-          const connectorType = scope.connectorType;
-          applied.push(
-            ...this.applyToMatchingEntities(
-              envelope.fullConfiguration.northConnectors,
-              north => north.type === connectorType,
-              north => north.settings.settings,
-              (north, settings) => (north.settings.settings = settings as unknown as typeof north.settings.settings),
-              north => north.oIBusInternalId,
-              upgrade
-            )
-          );
-          break;
-        }
-
-        case 'historyQuerySouth': {
-          const connectorType = scope.connectorType;
-          applied.push(
-            ...this.applyToMatchingEntities(
-              envelope.historyQueries.historyQueries,
-              historyQuery => historyQuery.settings.southType === connectorType,
-              historyQuery => historyQuery.settings.southSettings,
-              (historyQuery, settings) =>
-                (historyQuery.settings.southSettings = settings as unknown as typeof historyQuery.settings.southSettings),
-              historyQuery => historyQuery.oIBusInternalId,
-              upgrade
-            )
-          );
-          break;
-        }
-
-        case 'historyQueryNorth': {
-          const connectorType = scope.connectorType;
-          applied.push(
-            ...this.applyToMatchingEntities(
-              envelope.historyQueries.historyQueries,
-              historyQuery => historyQuery.settings.northType === connectorType,
-              historyQuery => historyQuery.settings.northSettings,
-              (historyQuery, settings) =>
-                (historyQuery.settings.northSettings = settings as unknown as typeof historyQuery.settings.northSettings),
-              historyQuery => historyQuery.oIBusInternalId,
-              upgrade
-            )
-          );
-          break;
-        }
-
-        case 'transformer': {
-          const functionName = scope.functionName;
-          applied.push(
-            ...this.applyToMatchingEntities(
-              envelope.fullConfiguration.transformers,
-              transformer =>
-                transformer.type === 'standard' &&
-                (transformer.settings as unknown as { functionName: string }).functionName === functionName,
-              transformer => transformer.settings,
-              (transformer, settings) => (transformer.settings = settings as unknown as typeof transformer.settings),
-              transformer => transformer.oIBusInternalId,
-              upgrade
-            )
-          );
-          break;
-        }
-      }
     }
 
-    return applied;
+    // Settings are only validated once the structure is known to be sound, since manifest validation
+    // reaches into it.
+    const structureErrors = this.validateStructure(config);
+    if (structureErrors.length > 0) {
+      throw new ConfigImportError(this.validationFailureMessage(appliedUpgrades), structureErrors);
+    }
+    const upgraded = config as unknown as OIBusConfigurationDTO;
+    const settingsErrors = await this.validateSettings(upgraded);
+    if (settingsErrors.length > 0) {
+      throw new ConfigImportError(this.validationFailureMessage(appliedUpgrades), settingsErrors);
+    }
+
+    return { fromVersion: file.oibusVersion, toVersion: currentVersion, appliedUpgrades, config: upgraded };
+  }
+
+  private validationFailureMessage(appliedUpgrades: Array<ConfigUpgrade>): string {
+    return appliedUpgrades.length > 0
+      ? 'Imported configuration failed validation after applying config upgrades; nothing was imported'
+      : 'Imported configuration failed validation; nothing was imported';
   }
 
   /**
-   * Shared by every type-keyed `applyUpgrades` branch (south, north, historyQuerySouth,
-   * historyQueryNorth, transformer): filters `entities` down to the ones this upgrade's scope
-   * matches, runs `upgrade.apply` on the one settings field `getSettings`/`setSettings` read and
-   * write, and records one `AppliedUpgrade` per matching entity.
+   * Validates the whole configuration against `CONFIG_SCHEMA`, collecting every failure (not just the
+   * first) and attributing each to the entity it belongs to.
    */
-  private applyToMatchingEntities<T>(
-    entities: Array<T>,
-    matches: (entity: T) => boolean,
-    getSettings: (entity: T) => unknown,
-    setSettings: (entity: T, settings: Record<string, unknown>) => void,
-    getEntityId: (entity: T) => string,
-    upgrade: SettingsUpgradeEntry
-  ): Array<AppliedUpgrade> {
-    const applied: Array<AppliedUpgrade> = [];
-    for (const entity of entities) {
-      if (!matches(entity)) continue;
-      setSettings(entity, upgrade.apply(getSettings(entity) as Record<string, unknown>));
-      applied.push({ scope: upgrade.scope, version: upgrade.version, entityId: getEntityId(entity) });
+  private validateStructure(config: JsonObject): Array<ConfigImportEntityValidationError> {
+    const { error } = CONFIG_SCHEMA.validate(config, { abortEarly: false, allowUnknown: true });
+    if (!error) return [];
+    return error.details.map(detail => this.toValidationError(config, detail));
+  }
+
+  private toValidationError(config: JsonObject, detail: Joi.ValidationErrorItem): ConfigImportEntityValidationError {
+    const [section, index] = detail.path;
+    const describe = typeof section === 'string' ? SECTION_SCOPES[section] : undefined;
+    const entries = typeof section === 'string' ? config[section] : undefined;
+    const entry = Array.isArray(entries) && typeof index === 'number' ? (entries[index] as unknown) : undefined;
+    if (!describe || !entry || typeof entry !== 'object') {
+      return { scope: 'config', message: detail.message };
     }
-    return applied;
+    const { scope, entityName } = describe(entry as JsonObject);
+    const entityId = (entry as JsonObject).oIBusInternalId;
+    return {
+      scope,
+      entityId: typeof entityId === 'string' ? entityId : undefined,
+      entityName: typeof entityName === 'string' ? entityName : undefined,
+      message: detail.message
+    };
   }
 
   /**
-   * Validates every manifest-driven settings blob in the envelope against the current manifest for
-   * its type, using the exact same `JoiValidator.validateSettings` the create/update endpoints use.
-   * Runs every check rather than stopping at the first failure, so a rejected import reports every
-   * problem at once. Transformer settings are not manifest-validated here: a transformer's own
-   * `settings` (name/description/functionName/customCode/…) has no `JoiValidator`-checked schema
-   * anywhere in the codebase today — only the `options` a south/north/history query passes *into* a
-   * transformer are schema-checked, and that is out of scope for this pipeline.
+   * Validates every manifest-driven settings blob against the current manifest for its type, using the
+   * exact same `JoiValidator.validateSettings` the create/update endpoints use. Runs every check rather
+   * than stopping at the first failure, so a rejected import reports every problem at once.
    */
-  private async validateEnvelope(envelope: ConfigExportEnvelopeDTO): Promise<Array<ConfigImportEntityValidationError>> {
+  private async validateSettings(config: OIBusConfigurationDTO): Promise<Array<ConfigImportEntityValidationError>> {
     const errors: Array<ConfigImportEntityValidationError> = [];
 
-    for (const south of envelope.fullConfiguration.southConnectors) {
+    for (const south of config.southConnectors) {
       const manifest = southManifestList.find(candidate => candidate.id === south.type);
       if (!manifest) {
         errors.push({
@@ -433,7 +237,7 @@ export default class ConfigImportService {
       }
     }
 
-    for (const north of envelope.fullConfiguration.northConnectors) {
+    for (const north of config.northConnectors) {
       const manifest = northManifestList.find(candidate => candidate.id === north.type);
       if (!manifest) {
         errors.push({
@@ -449,7 +253,7 @@ export default class ConfigImportService {
       );
     }
 
-    for (const historyQuery of envelope.historyQueries.historyQueries) {
+    for (const historyQuery of config.historyQueries) {
       const southManifest = southManifestList.find(candidate => candidate.id === historyQuery.settings.southType);
       const northManifest = northManifestList.find(candidate => candidate.id === historyQuery.settings.northType);
 
@@ -524,33 +328,31 @@ export default class ConfigImportService {
 
   /**
    * Runs the full config import pipeline: upgrade + validate (see `validateAndUpgrade`), then
-   * transactionally wipes every in-scope section of the local configuration and recreates it from
-   * the (possibly upgraded) envelope, preserving every entity's original id. Nothing is written if
-   * `validateAndUpgrade` rejects the envelope.
+   * transactionally wipes every in-scope section of the local configuration and recreates it from the
+   * upgraded configuration, preserving every entity's original id. Nothing is written if
+   * `validateAndUpgrade` rejects the file.
    *
-   * Out of scope by design, per the issue: the engine's own settings and the OIAnalytics
-   * registration are exported for informational purposes only and are never written back here.
+   * Out of scope by design: the engine's own settings and the OIAnalytics registration are exported for
+   * informational purposes only and are never written back here.
    *
-   * Every imported south/north connector settings blob is exactly as validated in
-   * `validateAndUpgrade` — but every secret-shaped field in it is an empty string, because secrets
-   * are never exported (`EncryptionService.filterSecrets`, used by the export side, strips them the
-   * same way the local `settings` column already represents "no secret configured"). Left enabled,
+   * Every secret-shaped field of an imported connector settings blob is empty, because secrets are
+   * never exported (`EncryptionService.filterSecrets` strips them on the export side). Left enabled,
    * such a connector would immediately fail to connect with empty credentials, or — worse for a
    * write-capable protocol — connect successfully to a real target with no meaningful settings. Every
-   * imported south and north connector is therefore forced `enabled: false` here regardless of the
-   * exported value; the response's `warnings` says so once, not per connector, so the caller must
-   * re-enter credentials and re-enable each connector manually before it runs again.
+   * imported south and north connector, and every configuration workflow, is therefore forced
+   * `enabled: false` regardless of the exported value; the response's `warnings` says so once per
+   * section, so the caller must re-enter credentials and re-enable each of them manually.
    *
    * Two sections get special handling so the import can never lock its own caller out or delete a
    * reserved id nothing reseeds after startup:
-   *  - The user calling this (`importedBy`) is never deleted or recreated, and any envelope user
-   *    sharing their login is skipped, so the account used to run the import always keeps working
-   *    with its existing password.
+   *  - The user calling this (`importedBy`) is never deleted or recreated, and any imported user
+   *    sharing their id or login is skipped, so the account used to run the import always keeps
+   *    working with its existing password.
    *  - The reserved `'subscription'` scan mode (used by push-driven south connectors) is never
-   *    deleted; if the envelope also describes it, it is updated in place instead of recreated.
+   *    deleted; if the configuration also describes it, it is updated in place instead of recreated.
    */
   async importConfiguration(rawInput: unknown, importedBy: string): Promise<ConfigImportResponseDTO> {
-    const { envelope, appliedUpgrades } = await this.validateAndUpgrade(rawInput);
+    const { fromVersion, toVersion, appliedUpgrades, config } = await this.validateAndUpgrade(rawInput);
     if (
       !this.database ||
       !this.scanModeRepository ||
@@ -560,7 +362,8 @@ export default class ConfigImportService {
       !this.southConnectorRepository ||
       !this.northConnectorRepository ||
       !this.historyQueryRepository ||
-      !this.userRepository
+      !this.userRepository ||
+      !this.configurationWorkflowRepository
     ) {
       throw new Error('ConfigImportService was constructed without the repositories required to write an import');
     }
@@ -572,16 +375,13 @@ export default class ConfigImportService {
 
     const warnings: Array<string> = [];
 
-    // Excluded on EITHER match, not just login: `wipeConfiguration` below preserves the local row
-    // by `id` (it's the only stable key across a login rename), so an envelope entry whose id
-    // matches the importer's own id must never be recreated — that row was never deleted, and
-    // re-inserting it would collide on the primary key. The login match is kept alongside it for
-    // the (rarer, but `login` is UNIQUE at the DB level too) case of an envelope entry describing a
-    // different id but the same login as the importer.
-    const usersToImport = envelope.fullConfiguration.users.filter(
-      user => user.oIBusInternalId !== currentUser.id && user.settings.login !== currentUser.login
-    );
-    if (usersToImport.length < envelope.fullConfiguration.users.length) {
+    // Excluded on EITHER match, not just login: `wipeConfiguration` below preserves the local row by
+    // `id` (it's the only stable key across a login rename), so an entry whose id matches the importer's
+    // own id must never be recreated — that row was never deleted, and re-inserting it would collide on
+    // the primary key. The login match covers an entry describing a different id but the same (UNIQUE)
+    // login as the importer.
+    const usersToImport = config.users.filter(user => user.oIBusInternalId !== currentUser.id && user.settings.login !== currentUser.login);
+    if (usersToImport.length < config.users.length) {
       warnings.push(
         `The account you are signed in with ("${currentUser.login}") was preserved with its existing password and was not ` +
           `overwritten by the import, so you are not locked out.`
@@ -604,49 +404,56 @@ export default class ConfigImportService {
       );
     }
 
-    const importedConnectorCount = envelope.fullConfiguration.southConnectors.length + envelope.fullConfiguration.northConnectors.length;
+    const importedConnectorCount = config.southConnectors.length + config.northConnectors.length;
     if (importedConnectorCount > 0) {
       warnings.push(
         `${importedConnectorCount} south/north connector(s) were imported without credentials (secrets are never exported) and have ` +
           `been disabled; re-enter their settings and re-enable each one manually before they run again.`
       );
     }
+    const importedWorkflowCount = config.southConnectors.reduce((count, south) => count + south.settings.configurationWorkflows.length, 0);
+    if (importedWorkflowCount > 0) {
+      warnings.push(
+        `${importedWorkflowCount} configuration workflow(s) were imported disabled; re-enable each one manually once its south ` +
+          `connector is configured.`
+      );
+    }
 
     const runImport = this.database.transaction(() => {
       this.wipeConfiguration(importedBy, currentUser.id);
-      this.recreateConfiguration(envelope, importedBy, hashedUserPasswords, warnings);
+      this.recreateConfiguration(config, importedBy, hashedUserPasswords, warnings);
     });
     try {
       runImport();
     } catch (error: unknown) {
-      // Nothing that reaches this point was caught by `validateAndUpgrade`'s manifest validation —
-      // e.g. two envelope entries sharing an id, or a malformed reserved scan mode entry — so it
-      // surfaces here as a raw repository/SQLite error instead. better-sqlite3's `transaction()`
-      // wrapper has already rolled back everything (including `wipeConfiguration`) by the time this
-      // catch runs, so the local configuration is guaranteed untouched; this only replaces an
-      // unhandled 500 with the same clean, structured rejection every other failure mode in this
-      // pipeline produces.
+      // Nothing that reaches this point was caught by `validateAndUpgrade` — e.g. two entries sharing
+      // an id, or a reference to an entity missing from the file — so it surfaces here as a raw
+      // repository/SQLite error instead. better-sqlite3's `transaction()` wrapper has already rolled
+      // back everything (including `wipeConfiguration`) by the time this catch runs, so the local
+      // configuration is guaranteed untouched; this only replaces an unhandled 500 with the same clean,
+      // structured rejection every other failure mode in this pipeline produces.
       throw new ConfigImportError(
         `Config import failed while writing the new configuration: ${(error as Error).message}. The local configuration was not modified.`
       );
     }
 
     return {
-      appliedUpgrades: appliedUpgrades.map(upgrade => ({ scope: upgrade.scope, version: upgrade.version, entityId: upgrade.entityId })),
+      fromVersion,
+      toVersion,
+      appliedUpgrades: appliedUpgrades.map(upgrade => ({ version: upgrade.version, description: upgrade.description })),
       warnings
     };
   }
 
   /**
    * Deletes every row in every section this import writes to, in the reverse of the creation order
-   * `recreateConfiguration` uses — so a row is always deleted before whatever it references. Loops
-   * existing per-id `delete*` methods inside the enclosing transaction rather than adding new bulk
-   * `deleteAll` repository methods, per the plan's default (only add one if looping proves
-   * insufficient — it hasn't).
+   * `recreateConfiguration` uses — so a row is always deleted before whatever it references.
    *
    * `preserveUserId` is never deleted (the account running the import must keep working), and the
-   * reserved `'subscription'` scan mode is never deleted (nothing reseeds it after process startup,
-   * so once gone it stays gone).
+   * reserved `'subscription'` scan mode is never deleted (nothing reseeds it after process startup, so
+   * once gone it stays gone). Configuration workflows are deleted explicitly (and audited) before their
+   * south connector, instead of silently going with it through the foreign key cascade; deleting one
+   * also cascades to its run history and point metadata, which are runtime state and not exported.
    */
   private wipeConfiguration(deletedBy: string, preserveUserId: string): void {
     for (const user of this.userRepository!.list()) {
@@ -658,6 +465,9 @@ export default class ConfigImportService {
     }
     for (const north of this.northConnectorRepository!.findAllNorth()) {
       this.northConnectorRepository!.deleteNorth(north.id, deletedBy);
+    }
+    for (const workflow of this.configurationWorkflowRepository!.findAll()) {
+      this.configurationWorkflowRepository!.delete(workflow.id, deletedBy);
     }
     for (const south of this.southConnectorRepository!.findAllSouth()) {
       this.southConnectorRepository!.deleteSouth(south.id, deletedBy);
@@ -680,18 +490,18 @@ export default class ConfigImportService {
   }
 
   /**
-   * Recreates every in-scope section from the envelope, in FK-safe order: scan modes → ip filters →
-   * certificates → transformers → south connectors (+ items/groups) → north connectors → history
-   * queries → users. Every entity is written under its original exported id — see the id-preservation
-   * patches in each repository's `save*`/`create` method for how that is made safe.
+   * Recreates every in-scope section from the configuration, in FK-safe order: scan modes → ip filters →
+   * certificates → transformers → south connectors (+ items/groups, then their configuration workflows
+   * and item ownership) → north connectors → history queries → users. Every entity is written under its
+   * original exported id.
    */
   private recreateConfiguration(
-    envelope: ConfigExportEnvelopeDTO,
+    config: OIBusConfigurationDTO,
     importedBy: string,
-    hashedUserPasswords: Array<{ user: ConfigExportEnvelopeDTO['fullConfiguration']['users'][number]; hashedPassword: string }>,
+    hashedUserPasswords: Array<{ user: OIBusConfigurationDTO['users'][number]; hashedPassword: string }>,
     warnings: Array<string>
   ): void {
-    for (const scanMode of envelope.fullConfiguration.scanModes) {
+    for (const scanMode of config.scanModes) {
       // The reserved scan mode was never deleted by `wipeConfiguration`, so it must be updated in
       // place rather than (re)created, or the insert would collide with the still-existing row.
       if (scanMode.oIBusInternalId === RESERVED_SCAN_MODE_ID) {
@@ -701,14 +511,14 @@ export default class ConfigImportService {
       }
     }
 
-    for (const ipFilter of envelope.fullConfiguration.ipFilters) {
+    for (const ipFilter of config.ipFilters) {
       this.ipFilterRepository!.create(ipFilter.settings, importedBy, ipFilter.oIBusInternalId);
     }
 
-    for (const certificate of envelope.fullConfiguration.certificates) {
+    for (const certificate of config.certificates) {
       // Private keys are never exported (`CertificateDTO` has no such field) — the certificate is
-      // still recreated under its original id, so anything referencing it by id keeps resolving,
-      // but with an empty private key that makes it unusable for TLS until re-imported.
+      // still recreated under its original id, so anything referencing it by id keeps resolving, but
+      // with an empty private key that makes it unusable for TLS until re-imported.
       this.certificateRepository!.create({
         id: certificate.oIBusInternalId,
         name: certificate.settings.name,
@@ -724,22 +534,23 @@ export default class ConfigImportService {
       warnings.push(`Certificate "${certificate.settings.name}" was imported without its private key; re-import its private key manually.`);
     }
 
-    const transformerIdMap = this.recreateTransformers(envelope, importedBy, warnings);
+    const transformerIdMap = this.recreateTransformers(config, importedBy, warnings);
 
     // Always a create: `wipeConfiguration` has already deleted every row this loop could otherwise
-    // collide with. Passing `isNew: true` explicitly (rather than letting the repository infer it
-    // from existence) means a genuine id collision — e.g. two envelope entries sharing an id —
-    // surfaces as a real INSERT constraint error instead of silently taking the UPDATE branch; the
-    // caller (`importConfiguration`) turns that into a clean `ConfigImportError`.
-    for (const south of envelope.fullConfiguration.southConnectors) {
+    // collide with. Passing `isNew: true` explicitly (rather than letting the repository infer it from
+    // existence) means a genuine id collision — e.g. two entries sharing an id — surfaces as a real
+    // INSERT constraint error instead of silently taking the UPDATE branch; the caller
+    // (`importConfiguration`) turns that into a clean `ConfigImportError`.
+    for (const south of config.southConnectors) {
       this.southConnectorRepository!.saveSouth(this.buildSouthEntity(south, importedBy), true);
+      this.recreateConfigurationWorkflows(south, importedBy);
     }
 
-    for (const north of envelope.fullConfiguration.northConnectors) {
+    for (const north of config.northConnectors) {
       this.northConnectorRepository!.saveNorth(this.buildNorthEntity(north, importedBy, transformerIdMap, warnings), true);
     }
 
-    for (const historyQuery of envelope.historyQueries.historyQueries) {
+    for (const historyQuery of config.historyQueries) {
       this.historyQueryRepository!.saveHistory(this.buildHistoryEntity(historyQuery, importedBy, transformerIdMap, warnings), true);
     }
 
@@ -761,16 +572,44 @@ export default class ConfigImportService {
   }
 
   /**
+   * Recreates a south connector's configuration workflows under their original ids (disabled, see
+   * `importConfiguration`), then restores which of the connector's just-created items each one owns.
+   */
+  private recreateConfigurationWorkflows(south: OIAnalyticsSouthCommandDTO, importedBy: string): void {
+    for (const workflow of south.settings.configurationWorkflows) {
+      this.configurationWorkflowRepository!.create(
+        {
+          name: workflow.settings.name,
+          southId: south.oIBusInternalId,
+          discoveryScope: workflow.settings.discoveryScope,
+          // Same as `ConfigurationWorkflowService`: a remote workflow never diffs against a previous run
+          identityKeyFields: workflow.settings.pushToOIAnalytics ? [] : workflow.settings.identityKeyFields,
+          eligibilityFilter: workflow.settings.eligibilityFilter,
+          itemFieldMapping: workflow.settings.itemFieldMapping,
+          pushToOIAnalytics: workflow.settings.pushToOIAnalytics,
+          scanMode: workflow.settings.scanModeId ? ({ id: workflow.settings.scanModeId } as ScanMode) : null,
+          enabled: false
+        },
+        importedBy,
+        workflow.oIBusInternalId
+      );
+      for (const ownedItem of workflow.ownedItems) {
+        this.southConnectorRepository!.restoreItemWorkflowOwnership(ownedItem.id, workflow.oIBusInternalId, ownedItem.disabledReason);
+      }
+    }
+  }
+
+  /**
    * Recreates every custom transformer under its original id, and builds a map from every exported
    * transformer's original id (custom or standard) to the id it should be referenced by locally.
-   * Standard transformers are never recreated (they are seeded once at process startup with their
-   * own, independently generated ids) — they are instead matched to the equivalent local standard
+   * Standard transformers are never recreated (they are seeded once at process startup with their own,
+   * independently generated ids) — they are instead matched to the equivalent local standard
    * transformer by `functionName`, since that is the only stable identity they have across installs.
    */
-  private recreateTransformers(envelope: ConfigExportEnvelopeDTO, importedBy: string, warnings: Array<string>): Map<string, string> {
+  private recreateTransformers(config: OIBusConfigurationDTO, importedBy: string, warnings: Array<string>): Map<string, string> {
     const transformerIdMap = new Map<string, string>();
 
-    for (const transformer of envelope.fullConfiguration.transformers) {
+    for (const transformer of config.transformers) {
       if (transformer.type === 'standard') {
         const functionName = (transformer.settings as unknown as { functionName: string }).functionName;
         const local = this.transformerRepository!.findByFunctionName(functionName);
@@ -967,10 +806,10 @@ export default class ConfigImportService {
   }
 
   /**
-   * Builds a `TransformerSource` from its exported command shape. Only `.id` (and, for a south
-   * source, the south/group/item ids threaded through it) is ever read back out of these objects by
-   * `NorthConnectorRepository`'s persistence SQL, so the south/group/item objects here are
-   * deliberately minimal id-only stand-ins rather than full entities re-read from the repositories.
+   * Builds a `TransformerSource` from its exported command shape. Only `.id` (and, for a south source,
+   * the south/group/item ids threaded through it) is ever read back out of these objects by
+   * `NorthConnectorRepository`'s persistence SQL, so the south/group/item objects here are deliberately
+   * minimal id-only stand-ins rather than full entities re-read from the repositories.
    */
   private buildTransformerSource(source: TransformerSourceCommandDTO): TransformerSource {
     switch (source.type) {
@@ -989,7 +828,7 @@ export default class ConfigImportService {
   }
 
   private buildHistoryEntity(
-    entry: ConfigExportEnvelopeDTO['historyQueries']['historyQueries'][number],
+    entry: OIBusConfigurationDTO['historyQueries'][number],
     importedBy: string,
     transformerIdMap: Map<string, string>,
     warnings: Array<string>

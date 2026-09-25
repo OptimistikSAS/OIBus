@@ -42,14 +42,14 @@
 
     <h6 translate="engine.config-transfer.import.applied-upgrades"></h6>
     @if (result()!.appliedUpgrades.length > 0) {
+      <p
+        id="upgraded-versions"
+        translate="engine.config-transfer.import.upgraded-versions"
+        [translateParams]="{ fromVersion: result()!.fromVersion, toVersion: result()!.toVersion }"
+      ></p>
       <ul id="applied-upgrades-list">
-        @for (upgrade of result()!.appliedUpgrades; track upgrade.scope + upgrade.version + (upgrade.entityId || '')) {
-          <li>
-            {{ upgrade.scope }} &rarr; {{ upgrade.version }}
-            @if (upgrade.entityId) {
-              ({{ upgrade.entityId }})
-            }
-          </li>
+        @for (upgrade of result()!.appliedUpgrades; track upgrade.version) {
+          <li>{{ upgrade.version }}: {{ upgrade.description }}</li>
         }
       </ul>
     } @else {

@@ -12,6 +12,7 @@ export default class ConfigurationWorkflowRepositoryMock extends ConfigurationWo
     super({} as Database, createAuditServiceMock());
   }
   override findById = mock.fn((_id: string): ConfigurationWorkflowEntity | null => null);
+  override findAll = mock.fn((): Array<ConfigurationWorkflowEntity> => []);
   override findBySouthId = mock.fn((_southId: string): Array<ConfigurationWorkflowEntity> => []);
   override findByNameAndSouthId = mock.fn((_name: string, _southId: string): ConfigurationWorkflowEntity | null => null);
   override create = mock.fn(
