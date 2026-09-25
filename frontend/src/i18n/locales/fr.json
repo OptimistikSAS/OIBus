@@ -2632,7 +2632,12 @@
       "added": "Transformateur ajouté",
       "edited": "Options du transformateur modifiées",
       "confirm-deletion": "Êtes-vous sûr de vouloir supprimer ce transformateur de cette requête d'historique ?",
-      "removed": "Transformateur supprimé"
+      "removed": "Transformateur supprimé",
+      "tooltips": {
+        "edit": "Modifier le transformateur",
+        "delete": "Supprimer le transformateur",
+        "audit": "Voir l'historique d'audit du transformateur"
+      }
     },
     "items": {
       "title": "Éléments",
@@ -2973,6 +2978,11 @@
         "source-paste": "Coller des données",
         "source-item": "À partir d'un élément source",
         "item": "Élément"
+      },
+      "tooltips": {
+        "edit": "Modifier le transformateur",
+        "delete": "Supprimer le transformateur",
+        "audit": "Voir l'historique d'audit du transformateur"
       }
     },
     "monitoring": {
