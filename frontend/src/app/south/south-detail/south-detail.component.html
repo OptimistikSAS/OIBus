@@ -9,6 +9,15 @@
               <button class="btn btn-primary" id="edit-link" routerLink="edit" [ngbTooltip]="'south.tooltips.edit' | translate">
                 <i class="fa fa-pencil"></i>
               </button>
+              <button
+                type="button"
+                class="btn btn-primary ms-1"
+                id="show-audit-button"
+                [ngbTooltip]="'south.tooltips.audit' | translate"
+                (click)="showAudit('south_connector', southConnector.id)"
+              >
+                <i class="fa fa-history"></i>
+              </button>
             </span>
             <button
               class="btn btn-primary pull-right me-2"
@@ -456,6 +465,15 @@
                             (click)="deleteItem(item)"
                           >
                             <span class="fa fa-trash"></span>
+                          </button>
+                          <!-- Audit history button -->
+                          <button
+                            type="button"
+                            class="btn btn-link show-audit-item px-1 py-0"
+                            [ngbTooltip]="'south.items.tooltips.audit' | translate"
+                            (click)="showAudit('south_item', item.id)"
+                          >
+                            <span class="fa fa-history"></span>
                           </button>
                         </div>
                       </td>
