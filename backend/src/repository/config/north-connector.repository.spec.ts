@@ -142,6 +142,36 @@ describe('NorthConnectorRepository', () => {
       'transformerUser'
     ]);
 
+    // Re-saving an unchanged transformer (as done when saving the north connector) records nothing
+    recordMock.mock.resetCalls();
+    repository.addOrEditTransformer(
+      newNorthConnectorWithoutTransformer.id,
+      createdConnectorWithTransformer.transformers[0],
+      'transformerUser'
+    );
+    assert.strictEqual(recordMock.mock.calls.length, 0);
+
+    // A changed transformer is recorded as an update
+    repository.addOrEditTransformer(
+      newNorthConnectorWithoutTransformer.id,
+      { ...createdConnectorWithTransformer.transformers[0], options: { field: 'value' } },
+      'transformerUser'
+    );
+    const updatedTransformer = repository.findNorthById(newNorthConnectorWithoutTransformer.id)!.transformers[0];
+    assert.deepStrictEqual(
+      recordMock.mock.calls.map(call => call.arguments),
+      [
+        [
+          'north_transformer',
+          transformerId,
+          'UPDATE',
+          createdConnectorWithTransformer.transformers[0],
+          updatedTransformer,
+          'transformerUser'
+        ]
+      ]
+    );
+
     recordMock.mock.resetCalls();
     repository.removeTransformer(transformerId, 'removeUser');
     const createdConnectorWithRemovedTransformer = repository.findNorthById(newNorthConnectorWithoutTransformer.id)!;

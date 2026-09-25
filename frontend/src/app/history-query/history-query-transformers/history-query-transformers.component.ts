@@ -17,6 +17,7 @@ import { HistoryQueryDTO, HistoryQueryItemCommandDTO } from '../../../../../back
 import { HistoryQueryService } from '../../services/history-query.service';
 import { ItemLightDTO, OIBusSouthType } from '../../../../../backend/shared/model/south-connector.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 
 @Component({
   selector: 'oib-history-query-transformers',
@@ -185,6 +186,14 @@ export class HistoryQueryTransformersComponent {
         }
         this.inMemoryTransformersWithOptions.emit(this.transformersWithOptions);
       });
+  }
+
+  /**
+   * Open a modal to view the audit history of a transformer of the history query
+   */
+  showAudit(transformer: HistoryTransformerDTOWithOptions) {
+    const modalRef = this.modalService.open(AuditHistoryModalComponent, { size: 'xl' });
+    modalRef.componentInstance.prepare('history_query_transformer', transformer.id);
   }
 
   getHistorySourceItemLabel(transformer: HistoryTransformerDTOWithOptions): string | null {

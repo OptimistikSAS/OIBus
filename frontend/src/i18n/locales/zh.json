@@ -2632,7 +2632,12 @@
       "added": "转换器已添加",
       "edited": "转换器选项已编辑",
       "confirm-deletion": "确定要从此历史查询中删除此转换器吗？",
-      "removed": "转换器已移除"
+      "removed": "转换器已移除",
+      "tooltips": {
+        "edit": "编辑转换器",
+        "delete": "删除转换器",
+        "audit": "查看转换器审计历史"
+      }
     },
     "items": {
       "title": "项目",
@@ -2973,6 +2978,11 @@
         "source-paste": "粘贴数据",
         "source-item": "来自源项",
         "item": "项"
+      },
+      "tooltips": {
+        "edit": "编辑转换器",
+        "delete": "删除转换器",
+        "audit": "查看转换器审计历史"
       }
     },
     "monitoring": {
