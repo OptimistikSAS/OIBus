@@ -2,18 +2,33 @@ import AuditRepository from '../repository/config/audit.repository';
 import { AuditAction, AuditEntityInfo, AuditEntityType, AuditLog, AuditSearchParam } from '../model/audit.model';
 import { Page } from '../../shared/model/types';
 
-const BOOKKEEPING_FIELDS = ['id', 'createdAt', 'createdBy', 'updatedAt', 'updatedBy'] as const;
+// Tracking fields, removed from every level of the snapshots (the entity itself and its sub entities: items, groups,
+// scan modes…) since the audit log records by itself who changed what and when
+const TRACKING_FIELDS = new Set(['createdAt', 'createdBy', 'updatedAt', 'updatedBy']);
 // 'system' is the only non-real-user sentinel used for created_by/updated_by across the codebase
 // (bootstrap/migrations, see user.repository.ts, scan-mode.repository.ts, engine.repository.ts,
 // oianalytics-message.repository.ts, oianalytics-registration.repository.ts). 'oianalytics' is a
 // genuine actor (changes pushed from OIAnalytics) and must remain auditable.
 const NON_AUDITABLE_USER_IDS = new Set(['system']);
 
+function stripTrackingFields(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stripTrackingFields);
+  if (typeof value !== 'object' || value === null) return value;
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key]) => !TRACKING_FIELDS.has(key))
+      .map(([key, element]) => [key, stripTrackingFields(element)])
+  );
+}
+
+/**
+ * Remove the entity id (already recorded as the audit log entity id) and the tracking fields of the entity and of
+ * its sub entities. Sub entity ids are kept to identify them.
+ */
 function strip(entity: Record<string, unknown> | null): Record<string, unknown> | null {
   if (!entity) return null;
-  const clone = { ...entity };
-  for (const field of BOOKKEEPING_FIELDS) delete clone[field];
-  return clone;
+  const { id: _id, ...rest } = entity;
+  return stripTrackingFields(rest) as Record<string, unknown>;
 }
 
 /**
