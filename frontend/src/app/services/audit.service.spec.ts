@@ -31,7 +31,8 @@ describe('AuditService', () => {
         action: 'CREATE',
         previousState: null,
         newState: { name: 'my south' },
-        userId: 'userId1',
+        entity: { exists: true, name: 'South 1', parentId: null },
+        user: { id: 'userId1', friendlyName: 'User 1' },
         createdAt: '2023-01-01T00:00:00.000Z'
       }
     ]);
@@ -81,7 +82,8 @@ describe('AuditService', () => {
         action: 'UPDATE',
         previousState: { name: 'old' },
         newState: { name: 'new' },
-        userId: 'userId1',
+        entity: { exists: true, name: 'South 1', parentId: null },
+        user: { id: 'userId1', friendlyName: 'User 1' },
         createdAt: '2023-01-01T00:00:00.000Z'
       }
     ];

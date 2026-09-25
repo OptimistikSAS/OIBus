@@ -8,6 +8,7 @@ import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.comp
 import { AuditDiffComponent } from '../audit-diff/audit-diff.component';
 import { AuditJsonDiffComponent } from '../audit-diff/audit-json-diff.component';
 import { AuditJsonSideBySideComponent } from '../audit-diff/audit-json-side-by-side.component';
+import { AuditUserPipe } from '../audit-user.pipe';
 
 export type AuditDiffMode = 'table' | 'json-diff' | 'json-side-by-side';
 
@@ -27,7 +28,8 @@ export type AuditDiffMode = 'table' | 'json-diff' | 'json-side-by-side';
     AuditJsonDiffComponent,
     AuditJsonSideBySideComponent,
     NgbTooltip,
-    NgbDropdownModule
+    NgbDropdownModule,
+    AuditUserPipe
   ],
   changeDetection: ChangeDetectionStrategy.Eager
 })
@@ -38,9 +40,9 @@ export class AuditHistoryModalComponent {
   readonly history = signal<Array<AuditLogDTO>>([]);
   readonly loading = signal(true);
   readonly expandedRowId = signal<string | null>(null);
-  readonly mode = signal<AuditDiffMode>('table');
+  readonly mode = signal<AuditDiffMode>('json-diff');
 
-  readonly modes: Array<AuditDiffMode> = ['table', 'json-diff', 'json-side-by-side'];
+  readonly modes: Array<AuditDiffMode> = ['json-diff', 'json-side-by-side', 'table'];
   readonly modeIcons: Record<AuditDiffMode, string> = {
     table: 'fa-table',
     'json-diff': 'fa-code',

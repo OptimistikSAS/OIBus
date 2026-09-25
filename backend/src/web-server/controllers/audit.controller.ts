@@ -1,13 +1,17 @@
 import { Controller, Get, Path, Query, Request, Route, Tags } from 'tsoa';
-import { Page } from '../../../shared/model/types';
+import { Page, UserInfo } from '../../../shared/model/types';
 import { AuditLogDTO } from '../../../shared/model/audit.model';
-import { AuditAction, AuditEntityType, AuditLog, AuditSearchParam } from '../../model/audit.model';
+import { AuditAction, AuditEntityInfo, AuditEntityType, AuditLog, AuditSearchParam } from '../../model/audit.model';
 import { CustomExpressRequest } from '../express';
 
 /**
  * Maps an internal AuditLog to its DTO representation.
  */
-export function toAuditLogDTO(auditLog: AuditLog): AuditLogDTO {
+export function toAuditLogDTO(
+  auditLog: AuditLog,
+  getEntityInfo: (auditLog: AuditLog) => AuditEntityInfo,
+  getUserInfo: (userId: string) => UserInfo
+): AuditLogDTO {
   return {
     id: auditLog.id,
     entityType: auditLog.entityType,
@@ -15,9 +19,25 @@ export function toAuditLogDTO(auditLog: AuditLog): AuditLogDTO {
     action: auditLog.action,
     previousState: auditLog.previousState,
     newState: auditLog.newState,
-    userId: auditLog.userId,
+    entity: getEntityInfo(auditLog),
+    user: getUserInfo(auditLog.userId),
     createdAt: auditLog.createdAt
   };
+}
+
+/**
+ * Build a DTO mapper resolving each user only once, since the same users appear on many audit log entries.
+ */
+function buildMapper(request: CustomExpressRequest): (auditLog: AuditLog) => AuditLogDTO {
+  const users = new Map<string, UserInfo>();
+  const getUserInfo = (userId: string): UserInfo => {
+    if (!users.has(userId)) {
+      users.set(userId, request.services.userService.getUserInfo(userId));
+    }
+    return users.get(userId)!;
+  };
+  const getEntityInfo = (auditLog: AuditLog) => request.services.auditService.getEntityInfo(auditLog);
+  return auditLog => toAuditLogDTO(auditLog, getEntityInfo, getUserInfo);
 }
 
 @Route('/api/audit')
@@ -60,7 +80,7 @@ export class AuditController extends Controller {
     const pageResult = auditService.search(searchParams);
 
     return {
-      content: pageResult.content.map(auditLog => toAuditLogDTO(auditLog)),
+      content: pageResult.content.map(buildMapper(request)),
       totalElements: pageResult.totalElements,
       size: pageResult.size,
       number: pageResult.number,
@@ -78,6 +98,6 @@ export class AuditController extends Controller {
   @Get('/{entityType}/{entityId}')
   history(@Request() request: CustomExpressRequest, @Path() entityType: string, @Path() entityId: string): Array<AuditLogDTO> {
     const auditService = request.services.auditService;
-    return auditService.findByEntity(entityType as AuditEntityType, entityId).map(auditLog => toAuditLogDTO(auditLog));
+    return auditService.findByEntity(entityType as AuditEntityType, entityId).map(buildMapper(request));
   }
 }

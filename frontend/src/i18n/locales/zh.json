@@ -2814,7 +2814,9 @@
       }
     },
     "tooltips": {
-      "view": "查看审计日志详情"
+      "view": "查看审计日志详情",
+      "entity-id": "ID：{{id}}",
+      "deleted-entity": "已删除的实体（ID：{{id}}）"
     },
     "actions": {
       "CREATE": "创建",
@@ -2834,11 +2836,13 @@
       "all-entity-types": "所有实体类型",
       "all-actions": "所有操作"
     },
-    "entity-type": "实体类型",
-    "entity-id": "实体 ID",
-    "action": "操作",
+    "entity": "实体",
+    "action-date": "操作 / 日期",
     "user": "用户",
-    "date": "日期"
+    "users": {
+      "oianalytics": "OIAnalytics",
+      "system": "系统"
+    }
   },
   "logs": {
     "title": "日志",

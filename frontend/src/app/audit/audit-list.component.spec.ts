@@ -5,7 +5,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { AuditListComponent } from './audit-list.component';
+import { auditEntityLink, AuditListComponent } from './audit-list.component';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { AuditService } from '../services/audit.service';
 import { ModalService, Modal } from '../shared/modal.service';
@@ -48,7 +48,8 @@ describe('AuditListComponent', () => {
       action: 'CREATE',
       previousState: null,
       newState: { name: 'My South' },
-      userId: 'admin',
+      entity: { exists: true, name: 'My South', parentId: null },
+      user: { id: 'user1', friendlyName: 'John Doe (john)' },
       createdAt: '2023-01-01T00:00:00.000Z'
     },
     {
@@ -58,8 +59,20 @@ describe('AuditListComponent', () => {
       action: 'UPDATE',
       previousState: { name: 'Old' },
       newState: { name: 'New' },
-      userId: 'admin',
+      entity: { exists: false, name: 'New', parentId: null },
+      user: { id: 'oianalytics', friendlyName: 'OIAnalytics' },
       createdAt: '2023-01-02T00:00:00.000Z'
+    },
+    {
+      id: '3',
+      entityType: 'north_transformer',
+      entityId: 'northTransformer1',
+      action: 'CREATE',
+      previousState: null,
+      newState: { options: {} },
+      entity: { exists: true, name: 'My transformer', parentId: 'north2' },
+      user: { id: 'system', friendlyName: 'System' },
+      createdAt: '2023-01-03T00:00:00.000Z'
     }
   ]);
 
@@ -119,10 +132,31 @@ describe('AuditListComponent', () => {
     });
     tester.fixture.detectChanges();
 
-    await expect.element(tester.rows).toHaveLength(2);
-    await expect.element(tester.cells(0).nth(0)).toMatchTextContent('South connector');
-    await expect.element(tester.cells(0).nth(1)).toMatchTextContent('south1');
-    await expect.element(tester.cells(0).nth(3)).toMatchTextContent('admin');
+    await expect.element(tester.rows).toHaveLength(3);
+    // action and date in the same column
+    await expect.element(tester.cells(0).nth(0).getByCss('.badge')).toHaveTextContent('Create');
+    await expect.element(tester.cells(0).nth(0)).toMatchTextContent(/Create.*2023/);
+    await expect.element(tester.cells(0).nth(1)).toMatchTextContent('John Doe (john)');
+    // entity type and entity name in the same column
+    await expect.element(tester.cells(0).nth(2)).toMatchTextContent('South connector: My South');
+    await expect.element(tester.cells(0).nth(2).getByCss('a')).toHaveAttribute('href', '/south/south1');
+
+    // deleted entity: last known name, no link
+    await expect.element(tester.cells(1).nth(1)).toMatchTextContent('OIAnalytics');
+    await expect.element(tester.cells(1).nth(2)).toMatchTextContent('North connector: New');
+    await expect.element(tester.cells(1).nth(2).getByCss('a')).not.toBeInTheDocument();
+    await expect.element(tester.cells(1).nth(2).getByCss('.text-muted')).toBeInTheDocument();
+
+    // child entity linked to its owning connector
+    await expect.element(tester.cells(2).nth(1)).toMatchTextContent('System');
+    await expect.element(tester.cells(2).nth(2).getByCss('a')).toHaveAttribute('href', '/north/north2');
+  });
+
+  test('should search the last week by default', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2023-01-10T12:00:30.000Z'));
+    const params = tester.component.toSearchParams(stubRoute({ queryParams: {} }) as unknown as ActivatedRoute);
+    expect(new Date(params.start!).toISOString()).toBe('2023-01-03T12:00:59.999Z');
   });
 
   test('should trigger a new search with the selected entity type filter', () => {
@@ -158,6 +192,48 @@ describe('AuditListComponent', () => {
 
     expect(modalService.open).toHaveBeenCalledWith(AuditHistoryModalComponent, { size: 'xl' });
     expect(modalInstance.prepare).toHaveBeenCalledWith('south_connector', 'south1');
+  });
+
+  describe('auditEntityLink()', () => {
+    const entry = (entityType: AuditLogDTO['entityType'], exists = true, parentId: string | null = 'parent1'): AuditLogDTO => ({
+      id: '1',
+      entityType,
+      entityId: 'entity1',
+      action: 'UPDATE',
+      previousState: null,
+      newState: null,
+      entity: { exists, name: 'name', parentId },
+      user: { id: 'user1', friendlyName: 'user' },
+      createdAt: '2023-01-01T00:00:00.000Z'
+    });
+
+    test('should link connectors and history queries to their page', () => {
+      expect(auditEntityLink(entry('south_connector', true, null))).toEqual(['/south', 'entity1']);
+      expect(auditEntityLink(entry('north_connector', true, null))).toEqual(['/north', 'entity1']);
+      expect(auditEntityLink(entry('history_query', true, null))).toEqual(['/history-queries', 'entity1']);
+    });
+
+    test('should link child entities to their owning entity page', () => {
+      expect(auditEntityLink(entry('south_item'))).toEqual(['/south', 'parent1']);
+      expect(auditEntityLink(entry('south_item_group'))).toEqual(['/south', 'parent1']);
+      expect(auditEntityLink(entry('configuration_workflow'))).toEqual(['/south', 'parent1']);
+      expect(auditEntityLink(entry('north_transformer'))).toEqual(['/north', 'parent1']);
+      expect(auditEntityLink(entry('history_query_item'))).toEqual(['/history-queries', 'parent1']);
+      expect(auditEntityLink(entry('history_query_transformer'))).toEqual(['/history-queries', 'parent1']);
+      expect(auditEntityLink(entry('south_item', true, null))).toBeNull();
+    });
+
+    test('should link engine-level entities to the engine page', () => {
+      for (const entityType of ['scan_mode', 'ip_filter', 'certificate', 'transformer', 'engine'] as const) {
+        expect(auditEntityLink(entry(entityType, true, null))).toEqual(['/engine']);
+      }
+      expect(auditEntityLink(entry('oianalytics_registration', true, null))).toEqual(['/engine', 'oianalytics']);
+    });
+
+    test('should not link users nor deleted entities', () => {
+      expect(auditEntityLink(entry('user', true, null))).toBeNull();
+      expect(auditEntityLink(entry('south_connector', false, null))).toBeNull();
+    });
   });
 
   test('ngOnDestroy should unsubscribe the subscription', () => {
