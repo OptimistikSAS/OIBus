@@ -2323,7 +2323,8 @@
       }
     },
     "tooltips": {
-      "edit": "编辑引擎设置"
+      "edit": "编辑引擎设置",
+      "audit": "查看审计历史"
     }
   },
   "enums": {
@@ -2359,7 +2360,10 @@
       "certificate": "证书",
       "user": "用户",
       "transformer": "转换器",
-      "engine": "引擎",
+      "engine_general": "引擎 – 常规设置",
+      "engine_web_server": "引擎 – Web 服务器",
+      "engine_proxy_server": "引擎 – 代理服务器",
+      "engine_logging": "引擎 – 日志与审计",
       "oianalytics_registration": "OIAnalytics 注册"
     },
     "internal-scope-ids": {

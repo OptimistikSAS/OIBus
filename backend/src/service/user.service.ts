@@ -54,12 +54,12 @@ export default class UserService {
     this.userRepository.update(user.id, command, updatedBy);
   }
 
-  async updatePassword(userId: string, newPassword: string | undefined): Promise<void> {
+  async updatePassword(userId: string, newPassword: string | undefined, updatedBy: string): Promise<void> {
     const user = this.findById(userId);
     if (!newPassword) {
       throw new OIBusValidationError('Password is required');
     }
-    await this.userRepository.updatePassword(user.id, newPassword);
+    await this.userRepository.updatePassword(user.id, newPassword, updatedBy);
   }
 
   delete(userId: string, deletedBy: string): void {

@@ -10,11 +10,46 @@ import {
 } from '../../../shared/model/engine.model';
 import { version } from '../../../package.json';
 import { LogLevel } from '../../../shared/model/logs.model';
-import AuditService from '../../service/audit.service';
+import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
+import { AuditEntityType } from '../../model/audit.model';
 
 const ENGINES_TABLE = 'engines';
 
 const DISABLED_FORWARD = { enabled: false, url: null, username: null, password: null };
+
+type EngineAuditSection = Extract<AuditEntityType, 'engine_general' | 'engine_web_server' | 'engine_proxy_server' | 'engine_logging'>;
+const ALL_ENGINE_SECTIONS: Array<EngineAuditSection> = ['engine_general', 'engine_web_server', 'engine_proxy_server', 'engine_logging'];
+
+/**
+ * Each engine settings section is audited as its own entity, matching what users edit (engine name, web server,
+ * proxy server and logging settings), so that the audit trail only shows the settings of the edited section.
+ */
+const ENGINE_SECTIONS: Record<
+  EngineAuditSection,
+  { extract: (settings: EngineSettings) => Record<string, unknown>; redact: (section: Record<string, unknown>) => Record<string, unknown> }
+> = {
+  engine_general: {
+    extract: settings => ({ ...settings.general }),
+    redact: section => section
+  },
+  engine_web_server: {
+    extract: settings => ({ ...settings.webServer }),
+    redact: section => section
+  },
+  engine_proxy_server: {
+    extract: settings => ({ ...settings.proxyServer }),
+    redact: section => ({
+      ...section,
+      password: '',
+      forward: { ...(section.forward as EngineSettings['proxyServer']['forward']), password: '' }
+    })
+  },
+  engine_logging: {
+    // The audit retention duration is edited along with the logging settings
+    extract: settings => ({ ...settings.logger, auditRetentionDuration: settings.auditRetentionDuration }),
+    redact: section => ({ ...section, loki: { ...(section.loki as EngineSettings['logger']['loki']), password: '' } })
+  }
+};
 
 const DEFAULT_ENGINE_SETTINGS: Omit<
   EngineSettings,
@@ -172,8 +207,7 @@ export default class EngineRepository {
         command.logger.syslog.protocol,
         updatedBy
       );
-    const after = this.get();
-    this.auditService.record('engine', after!.id, 'UPDATE', this.redact(before), this.redact(after), updatedBy);
+    this.recordSectionChanges(before, this.get(), updatedBy, ALL_ENGINE_SECTIONS);
   }
 
   updateName(name: string, updatedBy: string): void {
@@ -182,8 +216,7 @@ export default class EngineRepository {
       `UPDATE ${ENGINES_TABLE} SET name = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
     this.database.prepare(query).run(name, updatedBy);
-    const after = this.get();
-    this.auditService.record('engine', after!.id, 'UPDATE', this.redact(before), this.redact(after), updatedBy);
+    this.recordSectionChanges(before, this.get(), updatedBy, ['engine_general']);
   }
 
   updateWebServer(command: EngineWebServerCommandDTO, updatedBy: string): void {
@@ -192,8 +225,7 @@ export default class EngineRepository {
       `UPDATE ${ENGINES_TABLE} SET port = ?, auth_token_duration = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
     this.database.prepare(query).run(command.port, command.authTokenDuration, updatedBy);
-    const after = this.get();
-    this.auditService.record('engine', after!.id, 'UPDATE', this.redact(before), this.redact(after), updatedBy);
+    this.recordSectionChanges(before, this.get(), updatedBy, ['engine_web_server']);
   }
 
   updateProxy(command: EngineProxyCommandDTO, updatedBy: string): void {
@@ -217,8 +249,7 @@ export default class EngineRepository {
         command.password,
         updatedBy
       );
-    const after = this.get();
-    this.auditService.record('engine', after!.id, 'UPDATE', this.redact(before), this.redact(after), updatedBy);
+    this.recordSectionChanges(before, this.get(), updatedBy, ['engine_proxy_server']);
   }
 
   updateLogger(command: EngineLoggerCommandDTO, updatedBy: string): void {
@@ -268,8 +299,7 @@ export default class EngineRepository {
         command.oia.interval,
         updatedBy
       );
-    const after = this.get();
-    this.auditService.record('engine', after!.id, 'UPDATE', this.redact(before), this.redact(after), updatedBy);
+    this.recordSectionChanges(before, this.get(), updatedBy, ['engine_logging']);
   }
 
   updateVersion(version: string, launcherVersion: string): void {
@@ -340,20 +370,24 @@ export default class EngineRepository {
    * proxyServer.forward.password and logger.loki.password before exposing settings to the frontend),
    * so real secrets never end up persisted in the audit trail.
    */
-  private redact(settings: EngineSettings | null): Record<string, unknown> | null {
-    if (!settings) return null;
-    return {
-      ...settings,
-      proxyServer: {
-        ...settings.proxyServer,
-        password: '',
-        forward: { ...settings.proxyServer.forward, password: '' }
-      },
-      logger: {
-        ...settings.logger,
-        loki: { ...settings.logger.loki, password: '' }
-      }
-    };
+  /**
+   * Record an audit log entry for each given engine settings section that changed
+   */
+  private recordSectionChanges(
+    before: EngineSettings | null,
+    after: EngineSettings | null,
+    updatedBy: string,
+    sections: Array<EngineAuditSection>
+  ): void {
+    if (!before || !after) return;
+    for (const section of sections) {
+      const { extract, redact } = ENGINE_SECTIONS[section];
+      const previousSection = extract(before);
+      const newSection = extract(after);
+      if (JSON.stringify(previousSection) === JSON.stringify(newSection)) continue;
+      const [previousState, newState] = redactAuditSnapshots(previousSection, newSection, redact);
+      this.auditService.record(section, after.id, 'UPDATE', previousState, newState, updatedBy);
+    }
   }
 
   private toEngineSettings(result: Record<string, string | number>): EngineSettings {

@@ -224,7 +224,16 @@ describe('AuditListComponent', () => {
     });
 
     test('should link engine-level entities to the engine page', () => {
-      for (const entityType of ['scan_mode', 'ip_filter', 'certificate', 'transformer', 'engine'] as const) {
+      for (const entityType of [
+        'scan_mode',
+        'ip_filter',
+        'certificate',
+        'transformer',
+        'engine_general',
+        'engine_web_server',
+        'engine_proxy_server',
+        'engine_logging'
+      ] as const) {
         expect(auditEntityLink(entry(entityType, true, null))).toEqual(['/engine']);
       }
       expect(auditEntityLink(entry('oianalytics_registration', true, null))).toEqual(['/engine', 'oianalytics']);

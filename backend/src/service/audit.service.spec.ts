@@ -1,6 +1,6 @@
 import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import AuditService from './audit.service';
+import AuditService, { redactAuditSnapshots } from './audit.service';
 import AuditRepository from '../repository/config/audit.repository';
 import { AuditLog } from '../model/audit.model';
 
@@ -207,6 +207,89 @@ describe('Audit Service', () => {
         name: null,
         parentId: null
       });
+    });
+  });
+
+  describe('redactAuditSnapshots()', () => {
+    const redact = (entity: Record<string, unknown>) => ({
+      ...entity,
+      password: '',
+      nested: { ...(entity.nested as Record<string, unknown>), token: '' },
+      list: (entity.list as Array<Record<string, unknown>>).map(element => ({ ...element, secret: '' }))
+    });
+    const entity = {
+      name: 'name',
+      password: 'pass',
+      nested: { token: 'token', port: 1 },
+      list: [{ key: 'a', secret: 's1' }]
+    };
+
+    it('should hide unchanged secrets', () => {
+      assert.deepStrictEqual(redactAuditSnapshots(entity, { ...entity, name: 'new name' }, redact), [
+        { name: 'name', password: '', nested: { token: '', port: 1 }, list: [{ key: 'a', secret: '' }] },
+        { name: 'new name', password: '', nested: { token: '', port: 1 }, list: [{ key: 'a', secret: '' }] }
+      ]);
+    });
+
+    it('should mark changed secrets, including nested and array ones', () => {
+      const [previousState, newState] = redactAuditSnapshots(
+        entity,
+        {
+          ...entity,
+          password: 'new pass',
+          nested: { token: 'new token', port: 1 },
+          list: [
+            { key: 'a', secret: 's1' },
+            { key: 'b', secret: 's2' }
+          ]
+        },
+        redact
+      );
+      assert.deepStrictEqual(previousState, {
+        name: 'name',
+        password: '',
+        nested: { token: '', port: 1 },
+        list: [{ key: 'a', secret: '' }]
+      });
+      assert.deepStrictEqual(newState, {
+        name: 'name',
+        password: '<changed>',
+        nested: { token: '<changed>', port: 1 },
+        list: [
+          { key: 'a', secret: '' },
+          { key: 'b', secret: '<changed>' }
+        ]
+      });
+    });
+
+    it('should mark a cleared secret as changed', () => {
+      const [, newState] = redactAuditSnapshots(entity, { ...entity, password: '' }, redact);
+      assert.strictEqual(newState!.password, '<changed>');
+    });
+
+    it('should mark secrets set on creation, but not empty ones', () => {
+      const [previousState, newState] = redactAuditSnapshots(null, { ...entity, password: null, nested: { token: '', port: 1 } }, redact);
+      assert.strictEqual(previousState, null);
+      assert.deepStrictEqual(newState, {
+        name: 'name',
+        password: '',
+        nested: { token: '', port: 1 },
+        list: [{ key: 'a', secret: '<changed>' }]
+      });
+    });
+
+    it('should only redact the previous state on deletion', () => {
+      assert.deepStrictEqual(redactAuditSnapshots(entity, null, redact), [
+        { name: 'name', password: '', nested: { token: '', port: 1 }, list: [{ key: 'a', secret: '' }] },
+        null
+      ]);
+    });
+
+    it('should not alter the raw entities', () => {
+      const newEntity = { ...entity, password: 'new pass' };
+      redactAuditSnapshots(entity, newEntity, redact);
+      assert.strictEqual(entity.password, 'pass');
+      assert.strictEqual(newEntity.password, 'new pass');
     });
   });
 });

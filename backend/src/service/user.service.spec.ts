@@ -129,16 +129,22 @@ describe('User Service', () => {
   it('should update a user password', async () => {
     userRepository.findById.mock.mockImplementationOnce(() => testData.users.list[0]);
 
-    await service.updatePassword(testData.users.list[0].id, 'new password');
+    await service.updatePassword(testData.users.list[0].id, 'new password', 'updaterUser');
 
     assert.deepStrictEqual(userRepository.findById.mock.calls[0].arguments, [testData.users.list[0].id]);
-    assert.deepStrictEqual(userRepository.updatePassword.mock.calls[0].arguments, [testData.users.list[0].id, 'new password']);
+    assert.deepStrictEqual(userRepository.updatePassword.mock.calls[0].arguments, [
+      testData.users.list[0].id,
+      'new password',
+      'updaterUser'
+    ]);
   });
 
   it('should not update a user password if the password is not provided', async () => {
     userRepository.findById.mock.mockImplementationOnce(() => testData.users.list[0]);
 
-    await assert.rejects(() => service.updatePassword(testData.users.list[0].id, undefined), { message: `Password is required` });
+    await assert.rejects(() => service.updatePassword(testData.users.list[0].id, undefined, 'updaterUser'), {
+      message: `Password is required`
+    });
     assert.deepStrictEqual(userRepository.findById.mock.calls[0].arguments, [testData.users.list[0].id]);
     assert.strictEqual(userRepository.updatePassword.mock.calls.length, 0);
   });
@@ -146,7 +152,7 @@ describe('User Service', () => {
   it('should not update the password if the user is not found', async () => {
     userRepository.findById.mock.mockImplementationOnce(() => null);
 
-    await assert.rejects(() => service.updatePassword(testData.users.list[0].id, 'new password'), {
+    await assert.rejects(() => service.updatePassword(testData.users.list[0].id, 'new password', 'updaterUser'), {
       message: `User "${testData.users.list[0].id}" (id) not found`
     });
 

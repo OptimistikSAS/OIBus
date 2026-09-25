@@ -57,10 +57,10 @@ describe('CertificateRepository', () => {
       created.id,
       'CREATE',
       null,
-      { ...created, privateKey: '' },
+      { ...created, privateKey: '<changed>' },
       created.createdBy
     ]);
-    // The private key itself must never be persisted in the audit trail
+    // The private key itself must never be persisted in the audit trail, only the fact that it is set
     assert.notStrictEqual((recordMock.mock.calls[0].arguments[4] as { privateKey: string }).privateKey, created.privateKey);
   });
 
@@ -84,7 +84,7 @@ describe('CertificateRepository', () => {
       updateCertificate.id,
       'UPDATE',
       { ...before, privateKey: '' },
-      { ...result, privateKey: '' },
+      { ...result, privateKey: '<changed>' },
       updateCertificate.updatedBy
     ]);
     // The private key itself must never be persisted in the audit trail, before or after

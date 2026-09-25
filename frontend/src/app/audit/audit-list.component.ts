@@ -55,7 +55,10 @@ export function auditEntityLink(entry: AuditLogDTO): Array<string> | null {
     case 'ip_filter':
     case 'certificate':
     case 'transformer':
-    case 'engine':
+    case 'engine_general':
+    case 'engine_web_server':
+    case 'engine_proxy_server':
+    case 'engine_logging':
       return ['/engine'];
   }
 }

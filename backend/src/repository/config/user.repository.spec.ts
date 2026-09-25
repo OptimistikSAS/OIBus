@@ -107,10 +107,21 @@ describe('UserRepository', () => {
     assert.strictEqual(recordMock.mock.calls.length, 1);
     assert.deepStrictEqual(recordMock.mock.calls[0].arguments, ['user', createdId, 'UPDATE', before, result, 'updaterUser']);
 
-    await repository.updatePassword(createdId, 'new password');
+    await repository.updatePassword(createdId, 'new password', 'updaterUser');
 
     const newPassword = repository.getHashedPasswordByLogin(newCommand.login)!;
     assert.strictEqual(newPassword, 'new password');
+
+    // The password change is audited without ever recording the password hash
+    assert.strictEqual(recordMock.mock.calls.length, 2);
+    assert.deepStrictEqual(recordMock.mock.calls[1].arguments, [
+      'user',
+      createdId,
+      'UPDATE',
+      { ...result, password: '' },
+      { ...result, password: '<changed>' },
+      'updaterUser'
+    ]);
   });
 
   it('should delete a user', () => {
