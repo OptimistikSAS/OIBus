@@ -175,7 +175,7 @@ describe('EngineDetailComponent', () => {
 
   test('should open the import config modal and reload the page once it closes with a result', async () => {
     const fakeImportComponent = createMock(ImportConfigModalComponent);
-    modalService.mockClosedModal(fakeImportComponent, { appliedUpgrades: [], warnings: [] });
+    modalService.mockClosedModal(fakeImportComponent, { fromVersion: '3.10.0', toVersion: '3.10.0', appliedUpgrades: [], warnings: [] });
 
     const tester = new EngineDetailComponentTester();
     tester.fixture.detectChanges();
@@ -190,7 +190,12 @@ describe('EngineDetailComponent', () => {
     fakeImportComponent.canDismiss.mockReturnValue(true);
     // `result` is a signal field, not a prototype method, so createMock (which only mocks prototype
     // methods) never touches it — stub it by hand the same way the real component's signal getter behaves.
-    (fakeImportComponent as unknown as { result: () => unknown }).result = () => ({ appliedUpgrades: [], warnings: [] });
+    (fakeImportComponent as unknown as { result: () => unknown }).result = () => ({
+      fromVersion: '3.10.0',
+      toVersion: '3.10.0',
+      appliedUpgrades: [],
+      warnings: []
+    });
     // A dismissal (unlike an explicit close) resolves with no value, so `modalRef.result.subscribe`'s
     // next handler never fires — isolating this test to the `beforeDismiss` reload path being added.
     modalService.mockDismissedModal(fakeImportComponent);

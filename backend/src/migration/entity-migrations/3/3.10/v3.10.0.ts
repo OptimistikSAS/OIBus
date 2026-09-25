@@ -1,5 +1,16 @@
 import { Knex } from 'knex';
 import { generateRandomId } from '../../../../service/utils';
+// The configuration changes are shared with the config upgrade of the same version (applied to imported configurations)
+import {
+  buildRecordListToCsvOptions,
+  IOT_FAMILY_SOUTH_TYPES,
+  keepsResolvedTransformer,
+  OIANALYTICS_TRANSFORMER_FUNCTION_NAMES,
+  OldSqlItemSettings,
+  RECORD_LIST_TO_CSV_FUNCTION_NAME,
+  SQL_SOUTH_TYPES,
+  toNewSqlItemSettings
+} from '../../../../service/config-transfer/config-upgrades/3.10/v3.10.0';
 
 const SCAN_MODES_TABLE = 'scan_modes';
 const CERTIFICATES_TABLE = 'certificates';
@@ -21,44 +32,6 @@ const CONFIGURATION_WORKFLOWS_TABLE = 'configuration_workflows';
 const WORKFLOW_RUNS_TABLE = 'workflow_runs';
 const ITEM_POINT_METADATA_TABLE = 'item_point_metadata';
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
-
-// The SQL-family souths reworked to emit 'record-list' content instead of pre-serialized CSV.
-// south-odbc and south-oledb are intentionally excluded (their CSV building happens in an external
-// .NET agent, outside this refactor's scope).
-const SQL_SOUTH_TYPES = ['mysql', 'postgresql', 'mssql', 'oracle', 'sqlite'];
-
-// "IoT family" south connector types: OPC UA, Modbus, ADS, OPC classic, S7 and MQTT. These connectors
-// forward every value they read/receive straight into the cache with no built-in deduplication, so they
-// are the only ones for which a per-item caching strategy is meaningful. Mirrors
-// IOT_FAMILY_SOUTH_TYPES in shared/model/south-connector.model.ts.
-const IOT_FAMILY_SOUTH_TYPES = ['opcua', 'modbus', 'ads', 'opc', 's7', 'mqtt'];
-
-// Standard transformers producing 'oianalytics' content, which gain the `referenceProcess` option in 3.10.
-const OIANALYTICS_TRANSFORMER_FUNCTION_NAMES = ['time-values-to-oianalytics', 'json-to-oianalytics'];
-
-interface OldDateTimeField {
-  fieldName: string;
-  useAsReference: boolean;
-  type: string;
-  timezone?: string | null;
-  format?: string | null;
-  locale?: string | null;
-}
-
-interface OldSerialization {
-  type: 'csv';
-  filename: string;
-  delimiter: string;
-  compression: boolean;
-  outputTimestampFormat: string;
-  outputTimezone: string;
-}
-
-interface OldSqlItemSettings {
-  dateTimeFields?: Array<OldDateTimeField> | null;
-  serialization?: OldSerialization;
-  [key: string]: unknown;
-}
 
 /**
  * 3.10.0 bundles several unrelated features/fixes:
@@ -422,82 +395,20 @@ export async function down(knex: Knex): Promise<void> {
  * Can't rely on `TransformerRepository`'s own startup seeding — that runs after migrations.
  */
 async function ensureRecordListToCsvTransformer(knex: Knex): Promise<string> {
-  const existing = await knex(TRANSFORMERS_TABLE).select('id').where('function_name', 'record-list-to-csv').first();
+  const existing = await knex(TRANSFORMERS_TABLE).select('id').where('function_name', RECORD_LIST_TO_CSV_FUNCTION_NAME).first();
   if (existing) return existing.id as string;
 
   const id = generateRandomId(6);
   await knex(TRANSFORMERS_TABLE).insert({
     id,
     type: 'standard',
-    function_name: 'record-list-to-csv',
+    function_name: RECORD_LIST_TO_CSV_FUNCTION_NAME,
     input_type: 'record-list',
     output_type: 'any',
     created_by: 'system',
     updated_by: 'system'
   });
   return id;
-}
-
-/**
- * Converts one item's old settings in place: drops `dateTimeFields`/`serialization`, adds
- * `trackingInstant` derived from whichever dateTimeFields entry (if any) had `useAsReference: true`.
- */
-function toNewItemSettings(oldSettings: OldSqlItemSettings): Record<string, unknown> {
-  const { dateTimeFields: _dateTimeFields, serialization: _serialization, ...rest } = oldSettings;
-  const referenceField = oldSettings.dateTimeFields?.find(field => field.useAsReference) ?? null;
-  return {
-    ...rest,
-    trackingInstant: referenceField
-      ? {
-          trackInstant: true,
-          fieldName: referenceField.fieldName,
-          dateTimeInput: {
-            type: referenceField.type,
-            timezone: referenceField.timezone ?? null,
-            format: referenceField.format ?? null,
-            locale: referenceField.locale ?? null
-          }
-        }
-      : { trackInstant: false }
-  };
-}
-
-/**
- * Builds the options for a `record-list-to-csv` transformer that reproduces one item's old CSV
- * output: same filename/delimiter/compression, and every old dateTimeFields entry (not just the
- * reference one — the original code rendered all of them) becomes a `fields` entry with
- * `dataType: 'datetime'`, sharing the item's old `outputTimestampFormat`/`outputTimezone`. Columns
- * with no entry in `fields` pass through unchanged, same as before.
- */
-function buildTransformerOptions(oldSettings: OldSqlItemSettings): Record<string, unknown> {
-  const serialization = oldSettings.serialization;
-  return {
-    filename: serialization?.filename ?? '@CurrentDate.csv',
-    encoding: 'UTF_8',
-    header: true,
-    compression: serialization?.compression ?? false,
-    delimiter: serialization?.delimiter ?? 'COMMA',
-    newline: 'LF',
-    quoteChar: 'NONE',
-    escapeChar: 'DOUBLE_QUOTE',
-    nullValue: '',
-    fields: (oldSettings.dateTimeFields ?? []).map(field => ({
-      fieldName: field.fieldName,
-      columnName: null,
-      dataType: 'datetime',
-      fieldProcess: null,
-      datetimeSettings: {
-        inputType: field.type,
-        inputTimezone: field.timezone ?? null,
-        inputFormat: field.format ?? null,
-        inputLocale: field.locale ?? null,
-        outputType: 'string',
-        outputTimezone: serialization?.outputTimezone ?? 'UTC',
-        outputFormat: serialization?.outputTimestampFormat ?? 'yyyy-MM-dd HH:mm:ss.SSS',
-        outputLocale: null
-      }
-    }))
-  };
 }
 
 /**
@@ -618,9 +529,9 @@ async function migrateSouthConnectorItems(
 
   for (const item of items) {
     const oldSettings: OldSqlItemSettings = JSON.parse(item.settings);
-    settingsUpdates.push({ id: item.id, settings: JSON.stringify(toNewItemSettings(oldSettings)) });
+    settingsUpdates.push({ id: item.id, settings: JSON.stringify(toNewSqlItemSettings(oldSettings)) });
 
-    const transformerOptions = buildTransformerOptions(oldSettings);
+    const transformerOptions = buildRecordListToCsvOptions(oldSettings);
     const groupId = groupIdByItemId.get(item.id) ?? null;
 
     for (const northId of northIds) {
@@ -632,7 +543,7 @@ async function migrateSouthConnectorItems(
       // No transformer at all, or a bare passthrough that only "worked" because the south used to
       // hand it pre-built CSV bytes -> attach a record-list-to-csv transformer for this item.
       // 'ignore' and any other configured transformer are left as a deliberate choice.
-      if (resolved && resolved.function_name !== 'iso') continue;
+      if (keepsResolvedTransformer(resolved ? resolved.function_name : undefined)) continue;
 
       const id = generateRandomId(6);
       newTransformerRows.push({
@@ -707,17 +618,17 @@ async function migrateHistoryQueries(knex: Knex, recordListToCsvTransformerId: s
 
     for (const item of items) {
       const oldSettings: OldSqlItemSettings = JSON.parse(item.settings);
-      settingsUpdates.push({ id: item.id, settings: JSON.stringify(toNewItemSettings(oldSettings)) });
+      settingsUpdates.push({ id: item.id, settings: JSON.stringify(toNewSqlItemSettings(oldSettings)) });
 
       const resolved = itemLevel.get(item.id) ?? historyLevel;
-      if (resolved && resolved.function_name !== 'iso') continue;
+      if (keepsResolvedTransformer(resolved ? resolved.function_name : undefined)) continue;
 
       const id = generateRandomId(6);
       newTransformerRows.push({
         id,
         history_id: historyQuery.id,
         transformer_id: recordListToCsvTransformerId,
-        options: JSON.stringify(buildTransformerOptions(oldSettings))
+        options: JSON.stringify(buildRecordListToCsvOptions(oldSettings))
       });
       newTransformerItemLinks.push({ id, item_id: item.id });
     }

@@ -2,6 +2,7 @@ import { getOIBusInfo } from '../utils';
 import EncryptionService from '../encryption.service';
 import {
   OIAnalyticsCertificateCommandDTO,
+  OIAnalyticsConfigurationWorkflowCommandDTO,
   OIAnalyticsEngineCommandDTO,
   OIAnalyticsIPFilterCommandDTO,
   OIAnalyticsNorthCommandDTO,
@@ -25,6 +26,8 @@ import UserRepository from '../../repository/config/user.repository';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import HistoryQueryRepository from '../../repository/config/history-query.repository';
 import TransformerRepository from '../../repository/config/transformer.repository';
+import ConfigurationWorkflowRepository from '../../repository/config/configuration-workflow.repository';
+import { ConfigurationWorkflowEntity } from '../../model/configuration-workflow.model';
 import { getStandardManifest } from '../transformer.service';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
@@ -58,6 +61,7 @@ export default class ConfigTransferBuilderService {
     private northRepository: NorthConnectorRepository,
     private historyQueryRepository: HistoryQueryRepository,
     private transformerRepository: TransformerRepository,
+    private configurationWorkflowRepository: ConfigurationWorkflowRepository,
     private encryptionService: EncryptionService,
     private readonly ignoreIpFilters: boolean,
     private readonly ignoreRemoteUpdate: boolean
@@ -327,6 +331,10 @@ export default class ConfigTransferBuilderService {
     // re-hydrated one `findSouthById` round-trip per connector (mirrors `createNorthConnectorsCommand`
     // below).
     const souths = this.southRepository.findAllSouthFull();
+    const workflowsBySouth = new Map<string, Array<ConfigurationWorkflowEntity>>();
+    for (const workflow of this.configurationWorkflowRepository.findAll()) {
+      workflowsBySouth.set(workflow.southId, [...(workflowsBySouth.get(workflow.southId) ?? []), workflow]);
+    }
     return souths.map(south => {
       const manifest = southManifestList.find(manifest => manifest.id === south.type)!;
       const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
@@ -385,12 +393,41 @@ export default class ConfigTransferBuilderService {
               recoveryStrategy: group.recoveryStrategy,
               cachingStrategy: group.cachingStrategy
             }
-          }))
+          })),
+          configurationWorkflows: (workflowsBySouth.get(south.id) ?? []).map(workflow =>
+            this.buildConfigurationWorkflowCommand(workflow, south.items)
+          )
         }
       };
       // Type assertion is safe because we know the type field matches the settings and items at runtime
       return result as OIAnalyticsSouthCommandDTO;
     });
+  }
+
+  private buildConfigurationWorkflowCommand(
+    workflow: ConfigurationWorkflowEntity,
+    southItems: Array<{ id: string; createdByWorkflowId?: string | null; disabledReason?: string | null }>
+  ): OIAnalyticsConfigurationWorkflowCommandDTO {
+    return {
+      oIBusInternalId: workflow.id,
+      oIBusCreatedBy: workflow.createdBy,
+      oIBusUpdatedBy: workflow.updatedBy,
+      oIBusCreatedAt: workflow.createdAt,
+      oIBusUpdatedAt: workflow.updatedAt,
+      settings: {
+        name: workflow.name,
+        discoveryScope: workflow.discoveryScope,
+        identityKeyFields: workflow.identityKeyFields,
+        eligibilityFilter: workflow.eligibilityFilter,
+        itemFieldMapping: workflow.itemFieldMapping,
+        pushToOIAnalytics: workflow.pushToOIAnalytics,
+        scanModeId: workflow.scanMode?.id ?? null,
+        enabled: workflow.enabled
+      },
+      ownedItems: southItems
+        .filter(item => item.createdByWorkflowId === workflow.id)
+        .map(item => ({ id: item.id, disabledReason: item.disabledReason ?? null }))
+    };
   }
 
   private createNorthConnectorsCommand(): Array<OIAnalyticsNorthCommandDTO> {

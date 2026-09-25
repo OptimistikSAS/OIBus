@@ -754,6 +754,17 @@ export default class SouthConnectorRepository {
   }
 
   /**
+   * Restores a workflow's ownership of an item (and the reason it auto-disabled it, if any) exactly as
+   * exported, when a config import recreates both. Unlike `claimItemForWorkflow`, it is not audited on
+   * its own: it only completes the item the same import just created (and audited).
+   */
+  restoreItemWorkflowOwnership(itemId: string, workflowId: string, disabledReason: string | null): void {
+    this.database
+      .prepare(`UPDATE ${SOUTH_ITEMS_TABLE} SET created_by_workflow_id = ?, disabled_reason = ? WHERE id = ?;`)
+      .run(workflowId, disabledReason, itemId);
+  }
+
+  /**
    * Auto-disables an item because a Configuration Workflow's discovery no longer finds the entry it
    * corresponds to — distinct from a person's manual disableItem(), which leaves disabled_reason null
    * so the two are never confused.
