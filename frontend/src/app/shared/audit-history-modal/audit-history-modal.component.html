@@ -41,7 +41,7 @@
                 [translate]="'audit.actions.' + row.action"
               ></span>
               <span>{{ row.createdAt | datetime: 'ff' }}</span>
-              <span class="text-muted">{{ row.userId }}</span>
+              <span class="text-muted">{{ row.user | auditUser }}</span>
             </div>
             <button
               type="button"
@@ -62,14 +62,14 @@
           @if (expandedRowId() === row.id) {
             <div class="mt-2">
               @switch (mode()) {
-                @case ('json-diff') {
-                  <oib-audit-json-diff [previousState]="row.previousState" [newState]="row.newState" />
+                @case ('table') {
+                  <oib-audit-diff [previousState]="row.previousState" [newState]="row.newState" />
                 }
                 @case ('json-side-by-side') {
                   <oib-audit-json-side-by-side [previousState]="row.previousState" [newState]="row.newState" />
                 }
                 @default {
-                  <oib-audit-diff [previousState]="row.previousState" [newState]="row.newState" />
+                  <oib-audit-json-diff [previousState]="row.previousState" [newState]="row.newState" />
                 }
               }
             </div>

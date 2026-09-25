@@ -30,7 +30,17 @@ OIAnalytics.
 
 Ouvrez le menu du compte (en haut à droite) et sélectionnez **Audit** pour voir chaque entrée du journal d'audit
 sur l'ensemble de l'instance OIBus. Filtrez par **Type d'entité**, **Action**, et une plage de dates
-**Début**/**Fin**, puis cliquez sur l'icône 🔍 de n'importe quelle ligne pour ouvrir son historique complet.
+**Début**/**Fin** (la dernière semaine par défaut), puis cliquez sur l'icône 🔍 de n'importe quelle ligne pour
+ouvrir son historique complet.
+
+La colonne **Entité** affiche le nom de l'entité. Lorsque l'entité existe toujours, son nom est un lien vers la
+page où elle se trouve : la page du connecteur ou de la requête d'historique pour les connecteurs, les requêtes
+d'historique et leurs items, groupes, workflows de configuration et transformateurs ; la page Engine pour les modes
+de scan, filtres IP, certificats, transformateurs et paramètres du moteur. Les entités supprimées sont grisées et
+affichent leur dernier nom connu.
+
+La colonne **Utilisateur** affiche le nom de l'utilisateur à l'origine du changement, ou **OIAnalytics** lorsque le
+changement a été envoyé depuis OIAnalytics.
 
 ### Depuis la liste propre à une entité {#from-an-entitys-own-list}
 
@@ -43,11 +53,11 @@ l'historique propre à cette entité sans passer par la page Audit globale.
 La vue d'historique liste chaque changement enregistré pour l'entité, du plus récent au plus ancien. Développez une
 ligne pour voir ce qui a changé, selon l'un des trois modes (basculez entre eux avec le menu déroulant en haut) :
 
-| Mode                     | Description                                                                                           |
-| ------------------------ | ----------------------------------------------------------------------------------------------------- |
-| **Tableau** (par défaut) | Une ligne par champ, avec sa valeur **Avant** et **Après**. Les champs modifiés sont mis en évidence. |
-| **Diff JSON**            | Un diff unifié des deux instantanés JSON.                                                             |
-| **JSON côte à côte**     | Les deux instantanés JSON affichés côte à côte.                                                       |
+| Mode                       | Description                                                                                           |
+| -------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Diff JSON** (par défaut) | Un diff unifié des deux instantanés JSON.                                                             |
+| **Tableau**                | Une ligne par champ, avec sa valeur **Avant** et **Après**. Les champs modifiés sont mis en évidence. |
+| **JSON côte à côte**       | Les deux instantanés JSON affichés côte à côte.                                                       |
 
 ## Rétention {#retention}
 

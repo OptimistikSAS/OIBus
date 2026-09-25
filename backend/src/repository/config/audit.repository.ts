@@ -7,6 +7,37 @@ const AUDIT_LOGS_TABLE = 'audit_logs';
 
 const PAGE_SIZE = 50;
 
+interface EntityReferenceRow {
+  name: string | null;
+  parent_id: string | null;
+}
+
+/**
+ * Per entity type, the query retrieving the current name of an entity and the id of its owning entity (if any).
+ * `oianalytics_registration` has a single row, and its host is used as name. Standard transformers have no name,
+ * their function name is used instead.
+ */
+const ENTITY_REFERENCE_QUERIES: Record<AuditEntityType, string> = {
+  south_connector: `SELECT name, NULL AS parent_id FROM south_connectors WHERE id = ?;`,
+  south_item: `SELECT name, connector_id AS parent_id FROM south_items WHERE id = ?;`,
+  south_item_group: `SELECT name, south_id AS parent_id FROM south_item_groups WHERE id = ?;`,
+  configuration_workflow: `SELECT name, south_id AS parent_id FROM configuration_workflows WHERE id = ?;`,
+  north_connector: `SELECT name, NULL AS parent_id FROM north_connectors WHERE id = ?;`,
+  north_transformer: `SELECT COALESCE(t.name, t.function_name) AS name, nt.north_id AS parent_id
+                      FROM north_transformers nt JOIN transformers t ON t.id = nt.transformer_id WHERE nt.id = ?;`,
+  history_query: `SELECT name, NULL AS parent_id FROM history_queries WHERE id = ?;`,
+  history_query_item: `SELECT name, history_id AS parent_id FROM history_items WHERE id = ?;`,
+  history_query_transformer: `SELECT COALESCE(t.name, t.function_name) AS name, ht.history_id AS parent_id
+                              FROM history_query_transformers ht JOIN transformers t ON t.id = ht.transformer_id WHERE ht.id = ?;`,
+  scan_mode: `SELECT name, NULL AS parent_id FROM scan_modes WHERE id = ?;`,
+  ip_filter: `SELECT address AS name, NULL AS parent_id FROM ip_filters WHERE id = ?;`,
+  certificate: `SELECT name, NULL AS parent_id FROM certificates WHERE id = ?;`,
+  user: `SELECT login AS name, NULL AS parent_id FROM users WHERE id = ?;`,
+  transformer: `SELECT name, NULL AS parent_id FROM transformers WHERE id = ?;`,
+  engine: `SELECT name, NULL AS parent_id FROM engines WHERE id = ?;`,
+  oianalytics_registration: `SELECT host AS name, NULL AS parent_id FROM registrations WHERE id = ?;`
+};
+
 /**
  * Repository used for recording and searching audit log entries
  */
@@ -97,6 +128,17 @@ export default class AuditRepository {
       .prepare(query)
       .all(entityType, entityId)
       .map(result => this.toAuditLog(result as Record<string, string>));
+  }
+
+  /**
+   * Retrieve the current name and owning entity id of an audited entity, or null if it does not exist anymore
+   */
+  findEntityReference(entityType: AuditEntityType, entityId: string): { name: string | null; parentId: string | null } | null {
+    const query = ENTITY_REFERENCE_QUERIES[entityType];
+    if (!query) return null;
+    const result = this.database.prepare(query).get(entityId) as EntityReferenceRow | undefined;
+    if (!result) return null;
+    return { name: result.name, parentId: result.parent_id };
   }
 
   deleteOlderThan(cutoffIso: string): void {

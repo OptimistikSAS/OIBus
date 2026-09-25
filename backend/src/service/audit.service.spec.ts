@@ -4,7 +4,12 @@ import AuditService from './audit.service';
 import AuditRepository from '../repository/config/audit.repository';
 import { AuditLog } from '../model/audit.model';
 
-let auditRepository: { record: ReturnType<typeof mock.fn>; search: ReturnType<typeof mock.fn>; findByEntity: ReturnType<typeof mock.fn> };
+let auditRepository: {
+  record: ReturnType<typeof mock.fn>;
+  search: ReturnType<typeof mock.fn>;
+  findByEntity: ReturnType<typeof mock.fn>;
+  findEntityReference: ReturnType<typeof mock.fn>;
+};
 let service: AuditService;
 
 describe('Audit Service', () => {
@@ -12,7 +17,8 @@ describe('Audit Service', () => {
     auditRepository = {
       record: mock.fn(),
       search: mock.fn(),
-      findByEntity: mock.fn()
+      findByEntity: mock.fn(),
+      findEntityReference: mock.fn(() => null)
     };
     service = new AuditService(auditRepository as unknown as AuditRepository);
   });
@@ -119,5 +125,88 @@ describe('Audit Service', () => {
 
     assert.deepStrictEqual(auditRepository.findByEntity.mock.calls[0].arguments, ['south_connector', 'id1']);
     assert.strictEqual(result, expectedResult);
+  });
+
+  describe('getEntityInfo()', () => {
+    const baseLog: AuditLog = {
+      id: 'audit1',
+      entityType: 'south_connector',
+      entityId: 'id1',
+      action: 'UPDATE',
+      previousState: { name: 'old name' },
+      newState: { name: 'new name' },
+      userId: 'user1',
+      createdAt: '2020-01-01T00:00:00.000Z'
+    };
+
+    it('should return the current reference when the entity exists', () => {
+      auditRepository.findEntityReference.mock.mockImplementationOnce(() => ({
+        name: 'current name',
+        parentId: null
+      }));
+
+      assert.deepStrictEqual(service.getEntityInfo(baseLog), {
+        exists: true,
+        name: 'current name',
+        parentId: null
+      });
+      assert.deepStrictEqual(auditRepository.findEntityReference.mock.calls[0].arguments, ['south_connector', 'id1']);
+    });
+
+    it('should fall back on the new state name, then the previous state name, when the entity does not exist', () => {
+      assert.deepStrictEqual(service.getEntityInfo(baseLog), {
+        exists: false,
+        name: 'new name',
+        parentId: null
+      });
+      assert.deepStrictEqual(service.getEntityInfo({ ...baseLog, action: 'DELETE', newState: null }), {
+        exists: false,
+        name: 'old name',
+        parentId: null
+      });
+      assert.deepStrictEqual(service.getEntityInfo({ ...baseLog, previousState: null, newState: null }), {
+        exists: false,
+        name: null,
+        parentId: null
+      });
+    });
+
+    it('should use the relevant snapshot field for entities without name', () => {
+      assert.strictEqual(service.getEntityInfo({ ...baseLog, entityType: 'ip_filter', newState: { address: '1.1.1.1' } }).name, '1.1.1.1');
+      assert.strictEqual(service.getEntityInfo({ ...baseLog, entityType: 'user', newState: { login: 'john' } }).name, 'john');
+      assert.strictEqual(
+        service.getEntityInfo({ ...baseLog, entityType: 'oianalytics_registration', newState: { host: 'http://oia' } }).name,
+        'http://oia'
+      );
+      assert.strictEqual(service.getEntityInfo({ ...baseLog, newState: { name: 42 } }).name, null);
+    });
+
+    it('should retrieve transformer names from north/history transformer snapshots', () => {
+      assert.deepStrictEqual(
+        service.getEntityInfo({ ...baseLog, entityType: 'transformer', newState: { type: 'custom', name: 'my transformer' } }),
+        { exists: false, name: 'my transformer', parentId: null }
+      );
+      assert.deepStrictEqual(
+        service.getEntityInfo({
+          ...baseLog,
+          entityType: 'north_transformer',
+          newState: { transformer: { type: 'custom', name: 'my transformer' } }
+        }),
+        { exists: false, name: 'my transformer', parentId: null }
+      );
+      assert.deepStrictEqual(
+        service.getEntityInfo({
+          ...baseLog,
+          entityType: 'north_transformer',
+          newState: { transformer: { type: 'standard', functionName: 'iso' } }
+        }),
+        { exists: false, name: 'iso', parentId: null }
+      );
+      assert.deepStrictEqual(service.getEntityInfo({ ...baseLog, entityType: 'history_query_transformer', newState: { options: {} } }), {
+        exists: false,
+        name: null,
+        parentId: null
+      });
+    });
   });
 });

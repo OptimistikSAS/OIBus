@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { catchError, EMPTY, Subscription, switchMap } from 'rxjs';
 import { DateTime } from 'luxon';
@@ -18,6 +18,47 @@ import { AuditEntityTypesEnumPipe } from '../shared/audit-entity-types-enum.pipe
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
 import { ModalService } from '../shared/modal.service';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
+import { AuditUserPipe } from '../shared/audit-user.pipe';
+
+/**
+ * Router link to the page displaying an audited entity: its own page for connectors and history queries, the
+ * page of its owning connector or history query for child entities (items, groups, workflows, transformers),
+ * and the engine page for engine-level entities (scan modes, IP filters, certificates…).
+ * Returns null when the entity does not exist anymore, or has no page to display it (users).
+ */
+export function auditEntityLink(entry: AuditLogDTO): Array<string> | null {
+  if (!entry.entity.exists) {
+    return null;
+  }
+  const parentId = entry.entity.parentId;
+  switch (entry.entityType) {
+    case 'south_connector':
+      return ['/south', entry.entityId];
+    case 'south_item':
+    case 'south_item_group':
+    case 'configuration_workflow':
+      return parentId ? ['/south', parentId] : null;
+    case 'north_connector':
+      return ['/north', entry.entityId];
+    case 'north_transformer':
+      return parentId ? ['/north', parentId] : null;
+    case 'history_query':
+      return ['/history-queries', entry.entityId];
+    case 'history_query_item':
+    case 'history_query_transformer':
+      return parentId ? ['/history-queries', parentId] : null;
+    case 'oianalytics_registration':
+      return ['/engine', 'oianalytics'];
+    case 'user':
+      return null;
+    case 'scan_mode':
+    case 'ip_filter':
+    case 'certificate':
+    case 'transformer':
+    case 'engine':
+      return ['/engine'];
+  }
+}
 
 /**
  * Standalone, server-paginated page listing every recorded audit log entry, with filters on
@@ -35,7 +76,9 @@ import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-
     DatetimePipe,
     AuditEntityTypesEnumPipe,
     OI_FORM_VALIDATION_DIRECTIVES,
-    NgbTooltip
+    NgbTooltip,
+    RouterLink,
+    AuditUserPipe
   ],
   templateUrl: './audit-list.component.html',
   styleUrl: './audit-list.component.scss',
@@ -52,6 +95,7 @@ export class AuditListComponent implements OnInit, OnDestroy {
   // Kept in sync with AuditEntityType in backend/shared/model/audit.model.ts
   readonly entityTypes: ReadonlyArray<AuditEntityType> = AUDIT_ENTITY_TYPES;
   readonly actions: ReadonlyArray<AuditAction> = AUDIT_ACTIONS;
+  readonly entityLink = auditEntityLink;
 
   readonly searchForm = inject(NonNullableFormBuilder).group(
     {
@@ -103,7 +147,7 @@ export class AuditListComponent implements OnInit, OnDestroy {
     const queryParamMap = route.snapshot.queryParamMap;
     const entityType = (queryParamMap.get('entityType') as AuditEntityType | null) || undefined;
     const action = (queryParamMap.get('action') as AuditAction | null) || undefined;
-    const start = queryParamMap.get('start') ?? now.minus({ days: 1 }).toISO();
+    const start = queryParamMap.get('start') ?? now.minus({ weeks: 1 }).toISO();
     const end = queryParamMap.get('end') || undefined;
     const page = queryParamMap.get('page') ? parseInt(queryParamMap.get('page')!, 10) : 0;
     return { entityType, action, start: start ?? undefined, end, page };
