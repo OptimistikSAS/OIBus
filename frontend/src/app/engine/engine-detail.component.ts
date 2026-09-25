@@ -25,6 +25,8 @@ import { EditEngineLoggerModalComponent } from './edit-engine-logger-modal/edit-
 import { AuthTokenDuration } from '../../../../backend/shared/model/engine.model';
 import { ConfigTransferService } from '../services/config-transfer.service';
 import { ImportConfigModalComponent } from './config-transfer/import-config-modal/import-config-modal.component';
+import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
+import { AuditEntityType } from '../../../../backend/shared/model/audit.model';
 
 @Component({
   selector: 'oib-engine-detail',
@@ -77,6 +79,14 @@ export class EngineDetailComponent {
     const modal = this.modalService.open(EditEngineNameModalComponent);
     modal.componentInstance.initialize(this.engineSettings()!);
     modal.result.subscribe(() => this.refresh$.next());
+  }
+
+  /**
+   * Open a modal to view the audit history of an engine settings section
+   */
+  showAudit(section: Extract<AuditEntityType, 'engine_general' | 'engine_web_server' | 'engine_proxy_server' | 'engine_logging'>) {
+    const modalRef = this.modalService.open(AuditHistoryModalComponent, { size: 'xl' });
+    modalRef.componentInstance.prepare(section, this.engineSettings()!.id);
   }
 
   authTokenDurationLabelKey(duration: AuthTokenDuration): string {

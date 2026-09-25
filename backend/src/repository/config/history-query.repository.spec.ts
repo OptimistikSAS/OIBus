@@ -103,11 +103,11 @@ describe('HistoryQueryRepository', () => {
       newHistoryId,
       'CREATE',
       null,
-      { ...createdHistoryQuery, southSettings: { ...createdHistoryQuery.southSettings, password: '' } },
+      { ...createdHistoryQuery, southSettings: { ...createdHistoryQuery.southSettings, password: '<changed>' } },
       newHistoryQuery.updatedBy
     ]);
-    // The south settings' secret field must never be persisted in the audit trail
-    assert.strictEqual((historyCreateCalls[0].arguments[4] as { southSettings: { password: string } }).southSettings.password, '');
+    // The south settings' secret field must never be persisted in the audit trail, only the fact that it is set
+    assert.strictEqual((historyCreateCalls[0].arguments[4] as { southSettings: { password: string } }).southSettings.password, '<changed>');
 
     const newHistoryWithoutTransformer: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
       JSON.stringify(testData.historyQueries.list[0])

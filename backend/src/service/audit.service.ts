@@ -16,6 +16,62 @@ function strip(entity: Record<string, unknown> | null): Record<string, unknown> 
   return clone;
 }
 
+/**
+ * Value recorded in place of a secret (password, token, key…) whose value changed. Secrets are never stored in the
+ * audit trail, but this marker lets users know a secret was modified (or set on creation).
+ */
+export const CHANGED_SECRET = '<changed>';
+
+const isContainer = (value: unknown): value is Record<string, unknown> | Array<unknown> => typeof value === 'object' && value !== null;
+const isSame = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
+const isEmptySecret = (value: unknown): boolean => value === undefined || value === null || value === '';
+const childOf = (value: unknown, key: string | number): unknown =>
+  isContainer(value) ? (value as Record<string | number, unknown>)[key] : undefined;
+
+/**
+ * Walk the redacted new snapshot alongside the raw ones. A value is a secret when the redaction altered it (in the
+ * previous or new snapshot); when its raw value differs between both snapshots, it is replaced by CHANGED_SECRET.
+ * Returns a new structure: redacted snapshots may share nested references with the raw entities.
+ */
+function markChangedSecrets(rawPrevious: unknown, rawNew: unknown, redactedPrevious: unknown, redactedNew: unknown): unknown {
+  if (Array.isArray(redactedNew)) {
+    return redactedNew.map((value, index) =>
+      markChangedSecrets(childOf(rawPrevious, index), childOf(rawNew, index), childOf(redactedPrevious, index), value)
+    );
+  }
+  if (isContainer(redactedNew) && isContainer(rawNew)) {
+    return Object.fromEntries(
+      Object.entries(redactedNew).map(([key, value]) => [
+        key,
+        markChangedSecrets(childOf(rawPrevious, key), childOf(rawNew, key), childOf(redactedPrevious, key), value)
+      ])
+    );
+  }
+  const isSecret = !isSame(rawNew, redactedNew) || (rawPrevious !== undefined && !isSame(rawPrevious, redactedPrevious));
+  const changed = !isSame(rawPrevious, rawNew) && !(isEmptySecret(rawPrevious) && isEmptySecret(rawNew));
+  return isSecret && changed ? CHANGED_SECRET : redactedNew;
+}
+
+/**
+ * Build the audit snapshots of an entity whose secrets are removed by `redact`. Secrets whose value changed between
+ * both states (or that are set on creation) are recorded as CHANGED_SECRET in the new snapshot.
+ */
+export function redactAuditSnapshots<T>(
+  previousEntity: T | null,
+  newEntity: T | null,
+  redact: (entity: T) => Record<string, unknown> | null
+): [Record<string, unknown> | null, Record<string, unknown> | null] {
+  const redactedPrevious = previousEntity ? redact(previousEntity) : null;
+  const redactedNew = newEntity ? redact(newEntity) : null;
+  if (!redactedNew) {
+    return [redactedPrevious, null];
+  }
+  return [
+    redactedPrevious,
+    markChangedSecrets(previousEntity ?? undefined, newEntity, redactedPrevious ?? undefined, redactedNew) as Record<string, unknown>
+  ];
+}
+
 // Snapshot field holding the display name of an entity, when it is not `name`
 const SNAPSHOT_NAME_FIELDS: Partial<Record<AuditEntityType, string>> = {
   ip_filter: 'address',

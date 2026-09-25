@@ -5,7 +5,7 @@ import { generateRandomId } from '../../service/utils';
 import { Language, Page } from '../../../shared/model/types';
 import { User } from '../../model/user.model';
 import { UserCommandDTO, UserSearchParam } from '../../../shared/model/user.model';
-import AuditService from '../../service/audit.service';
+import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
 
 const USERS_TABLE = 'users';
 const PAGE_SIZE = 50;
@@ -142,11 +142,26 @@ export default class UserRepository {
     return result;
   }
 
-  async updatePassword(id: string, password: string): Promise<void> {
+  async updatePassword(id: string, password: string, updatedBy: string): Promise<void> {
+    const user = this.findById(id);
+    const previous = this.database.prepare(`SELECT password FROM ${USERS_TABLE} WHERE id = ?;`).get(id) as { password: string } | undefined;
     const hash = await argon2.hash(password);
 
     const queryUpdate = `UPDATE ${USERS_TABLE} SET password = ? WHERE id = ?;`;
     this.database.prepare(queryUpdate).run(hash, id);
+    if (user) {
+      // The password hash is never recorded: only the fact that it changed
+      this.auditService.record(
+        'user',
+        id,
+        'UPDATE',
+        ...redactAuditSnapshots({ ...user, password: previous?.password ?? null }, { ...user, password: hash }, entity => ({
+          ...this.toAuditableUser(entity),
+          password: ''
+        })),
+        updatedBy
+      );
+    }
   }
 
   update(id: string, command: UserCommandDTO, updatedBy: string): void {

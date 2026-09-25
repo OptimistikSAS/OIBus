@@ -112,18 +112,18 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
     assert.strictEqual(entityId, result.id);
     assert.strictEqual(action, 'UPDATE');
     assert.strictEqual(userId, testData.users.list[0].id);
-    assert.strictEqual(previousState.publicCipherKey, '[REDACTED]');
-    assert.strictEqual(previousState.privateCipherKey, '[REDACTED]');
-    assert.strictEqual(newState.publicCipherKey, '[REDACTED]');
-    assert.strictEqual(newState.privateCipherKey, '[REDACTED]');
-    // The token, proxy password and api gateway header value must never be persisted in the audit trail
-    assert.strictEqual(previousState.token, '[REDACTED]');
-    assert.strictEqual(previousState.proxyPassword, '[REDACTED]');
-    assert.strictEqual(previousState.apiGatewayHeaderValue, '[REDACTED]');
-    assert.strictEqual(newState.token, '[REDACTED]');
-    assert.notStrictEqual(newState.proxyPassword, specificCommand.proxyPassword);
-    assert.strictEqual(newState.proxyPassword, '[REDACTED]');
-    assert.strictEqual(newState.apiGatewayHeaderValue, '[REDACTED]');
+    assert.strictEqual(previousState.publicCipherKey, '');
+    assert.strictEqual(previousState.privateCipherKey, '');
+    assert.strictEqual(newState.publicCipherKey, '');
+    assert.strictEqual(newState.privateCipherKey, '');
+    // The token, proxy password and api gateway header value must never be persisted in the audit trail:
+    // only a change of the proxy password is recorded
+    assert.strictEqual(previousState.token, '');
+    assert.strictEqual(previousState.proxyPassword, '');
+    assert.strictEqual(previousState.apiGatewayHeaderValue, '');
+    assert.strictEqual(newState.token, '');
+    assert.strictEqual(newState.proxyPassword, '<changed>');
+    assert.strictEqual(newState.apiGatewayHeaderValue, '');
     // Unrelated fields pass through unchanged
     assert.strictEqual(newState.useProxy, specificCommand.useProxy);
     assert.strictEqual(newState.proxyUrl, specificCommand.proxyUrl);
@@ -131,11 +131,11 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
   });
 
   it('should update keys', () => {
-    repository.updateKeys('private key', 'public key', testData.users.list[0].id);
+    repository.updateKeys('new private key', 'new public key', testData.users.list[0].id);
 
     const result = repository.get()!;
-    assert.strictEqual(result.privateCipherKey, 'private key');
-    assert.strictEqual(result.publicCipherKey, 'public key');
+    assert.strictEqual(result.privateCipherKey, 'new private key');
+    assert.strictEqual(result.publicCipherKey, 'new public key');
 
     const recordMock = auditService.record as unknown as ReturnType<typeof mock.fn>;
     assert.strictEqual(recordMock.mock.calls.length, 1);
@@ -151,10 +151,10 @@ describe('OianalyticsRegistrationRepository with populated database', () => {
     assert.strictEqual(entityId, result.id);
     assert.strictEqual(action, 'UPDATE');
     assert.strictEqual(userId, testData.users.list[0].id);
-    assert.strictEqual(previousState.publicCipherKey, '[REDACTED]');
-    assert.strictEqual(previousState.privateCipherKey, '[REDACTED]');
-    assert.strictEqual(newState.publicCipherKey, '[REDACTED]');
-    assert.strictEqual(newState.privateCipherKey, '[REDACTED]');
+    assert.strictEqual(previousState.publicCipherKey, '');
+    assert.strictEqual(previousState.privateCipherKey, '');
+    assert.strictEqual(newState.publicCipherKey, '<changed>');
+    assert.strictEqual(newState.privateCipherKey, '<changed>');
   });
 });
 
