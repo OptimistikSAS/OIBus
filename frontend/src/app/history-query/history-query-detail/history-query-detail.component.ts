@@ -28,6 +28,8 @@ import { ObservableState } from '../../shared/save-button/save-button.component'
 import { EngineService } from '../../services/engine.service';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { ModalService } from '../../shared/modal.service';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { AuditEntityType } from '../../../../../backend/shared/model/audit.model';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { LogsComponent } from '../../logs/logs.component';
@@ -675,5 +677,13 @@ export class HistoryQueryDetailComponent {
         this.updateSelectionState();
         this.refreshHistoryQuery();
       });
+  }
+
+  /**
+   * Open a modal to view the audit history of the history query or one of its items
+   */
+  showAudit(entityType: Extract<AuditEntityType, 'history_query' | 'history_query_item'>, entityId: string) {
+    const modalRef = this.modalService.open(AuditHistoryModalComponent, { size: 'xl' });
+    modalRef.componentInstance.prepare(entityType, entityId);
   }
 }

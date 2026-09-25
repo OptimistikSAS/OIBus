@@ -16,6 +16,8 @@ import { WindowService } from '../../shared/window.service';
 import { NorthConnectorMetrics, OIBusInfo } from '../../../../../backend/shared/model/engine.model';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { ModalService } from '../../shared/modal.service';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { AuditEntityType } from '../../../../../backend/shared/model/audit.model';
 import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
 import { EngineService } from '../../services/engine.service';
 import { LogsComponent } from '../../logs/logs.component';
@@ -205,5 +207,13 @@ export class NorthDetailComponent {
     } else {
       this.notificationService.error('north.cache-path-copy.error');
     }
+  }
+
+  /**
+   * Open a modal to view the audit history of the connector
+   */
+  showAudit(entityType: Extract<AuditEntityType, 'north_connector'>, entityId: string) {
+    const modalRef = this.modalService.open(AuditHistoryModalComponent, { size: 'xl' });
+    modalRef.componentInstance.prepare(entityType, entityId);
   }
 }
