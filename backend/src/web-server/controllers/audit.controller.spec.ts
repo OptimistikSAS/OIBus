@@ -4,7 +4,8 @@ import { createRequire } from 'node:module';
 import { CustomExpressRequest } from '../express';
 import { createMockServices, fixTsoaModuleResolution, reloadModule } from '../../tests/utils/test-utils';
 import AuditServiceMock from '../../tests/__mocks__/service/audit-service.mock';
-import { AuditSearchParam } from '../../model/audit.model';
+import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import { AuditLog, AuditSearchParam } from '../../model/audit.model';
 import { createPageFromArray } from '../../../shared/model/types';
 import type { AuditController as AuditControllerShape } from './audit.controller';
 
@@ -39,15 +40,27 @@ const auditLog2 = {
   createdAt: '2020-01-02T00:00:00.000Z'
 };
 
+const entityInfo = { exists: true, name: 'My South', parentId: null };
+const userInfo = { id: 'user1', friendlyName: 'John Doe (john)' };
+
+function toExpectedDTO(auditLog: AuditLog) {
+  const { userId: _userId, ...rest } = auditLog;
+  return { ...rest, entity: entityInfo, user: userInfo };
+}
+
 describe('AuditController', () => {
   let controller: AuditControllerShape;
   let auditService: AuditServiceMock;
+  let userService: UserServiceMock;
   let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
     auditService = new AuditServiceMock();
+    auditService.getEntityInfo = mock.fn(() => entityInfo);
+    userService = new UserServiceMock();
+    userService.getUserInfo = mock.fn(() => userInfo);
     mockRequest = {
-      services: createMockServices({ auditService })
+      services: createMockServices({ auditService, userService })
     } as Partial<CustomExpressRequest>;
     controller = new AuditController();
   });
@@ -77,8 +90,13 @@ describe('AuditController', () => {
         page: 1
       };
       assert.deepStrictEqual(auditService.search.mock.calls[0].arguments[0], searchParams);
+      assert.deepStrictEqual(auditService.getEntityInfo.mock.calls.length, 2);
+      assert.deepStrictEqual(auditService.getEntityInfo.mock.calls[0].arguments, [auditLog1]);
+      // Same user on both entries: resolved only once
+      assert.deepStrictEqual(userService.getUserInfo.mock.calls.length, 1);
+      assert.deepStrictEqual(userService.getUserInfo.mock.calls[0].arguments, ['user1']);
       assert.deepStrictEqual(result, {
-        content: [auditLog1, auditLog2],
+        content: [toExpectedDTO(auditLog1), toExpectedDTO(auditLog2)],
         totalElements: expectedResult.totalElements,
         size: expectedResult.size,
         number: expectedResult.number,
@@ -113,7 +131,7 @@ describe('AuditController', () => {
 
       assert.strictEqual(auditService.findByEntity.mock.calls.length, 1);
       assert.deepStrictEqual(auditService.findByEntity.mock.calls[0].arguments, ['south_connector', 'south1']);
-      assert.deepStrictEqual(result, [auditLog2, auditLog1]);
+      assert.deepStrictEqual(result, [toExpectedDTO(auditLog2), toExpectedDTO(auditLog1)]);
     });
   });
 });
