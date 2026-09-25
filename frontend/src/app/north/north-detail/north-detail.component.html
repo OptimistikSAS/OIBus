@@ -9,6 +9,15 @@
               <button class="btn btn-primary" id="edit-link" routerLink="edit" [ngbTooltip]="'north.tooltips.edit' | translate">
                 <i class="fa fa-pencil"></i>
               </button>
+              <button
+                type="button"
+                class="btn btn-primary ms-1"
+                id="show-audit-button"
+                [ngbTooltip]="'north.tooltips.audit' | translate"
+                (click)="showAudit('north_connector', northConnector.id)"
+              >
+                <i class="fa fa-history"></i>
+              </button>
             </span>
             <button
               class="btn btn-primary pull-right me-2"

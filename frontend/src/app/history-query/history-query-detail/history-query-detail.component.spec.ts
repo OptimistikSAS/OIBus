@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { page } from 'vitest/browser';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -120,6 +121,23 @@ describe('HistoryQueryDetailComponent', () => {
 
     const root = page.elementLocator(fixture.nativeElement);
     await expect.element(root.getByCss('#explore')).not.toBeInTheDocument();
+  });
+
+  test('should open the audit history of the history query and of its items', async () => {
+    northConnectorService.getNorthManifest.mockReturnValue(of(testData.north.manifest));
+    southConnectorService.getSouthManifest.mockReturnValue(of(testData.south.manifest));
+    const prepare = vi.fn();
+    modalService.open.mockReturnValue({ componentInstance: { prepare } } as any);
+    const fixture = TestBed.createComponent(HistoryQueryDetailComponent);
+    fixture.detectChanges();
+    const root = page.elementLocator(fixture.nativeElement);
+
+    await root.getByCss('#show-audit-button').click();
+    expect(modalService.open).toHaveBeenCalledWith(AuditHistoryModalComponent, { size: 'xl' });
+    expect(prepare).toHaveBeenCalledWith('history_query', fixture.componentInstance.historyQuery!.id);
+
+    await root.getByCss('.show-audit-item').first().click();
+    expect(prepare).toHaveBeenLastCalledWith('history_query_item', fixture.componentInstance.displayedItems.content[0].id);
   });
 
   test('explore should open the explore modal wired to the history query explore endpoints', () => {

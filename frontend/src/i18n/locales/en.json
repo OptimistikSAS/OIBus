@@ -2817,7 +2817,10 @@
       "max-caching-interval": "Max caching interval",
       "scan-mode-change-warning": "Changing scan mode when max instant per item is disabled might lead to data duplication or loss.",
       "sync-with-group": "Sync with group",
-      "not-synced-notice": "Item uses its own historian settings (not synchronized with group)"
+      "not-synced-notice": "Item uses its own historian settings (not synchronized with group)",
+      "tooltips": {
+        "audit": "View item audit history"
+      }
     },
     "groups": {
       "create-title": "Create a new group",
@@ -3316,7 +3319,8 @@
         "add": "Add a new item",
         "edit": "Edit item",
         "duplicate": "Duplicate item",
-        "delete": "Delete item"
+        "delete": "Delete item",
+        "audit": "View item audit history"
       }
     },
     "monitoring": {

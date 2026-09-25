@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { page } from 'vitest/browser';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -220,6 +221,21 @@ describe('SouthDetailComponent', () => {
     expect(callOrder).toEqual(['delete', 'findById']);
     expect(fixture.componentInstance.filteredItems.find(item => item.id === itemWithGroup.id)?.group).toBeNull();
     expect(notificationService.success).toHaveBeenCalledWith('south.groups.deleted');
+  });
+
+  test('should open the audit history of the south connector and of its items', async () => {
+    const prepare = vi.fn();
+    modalService.open.mockReturnValue({ componentInstance: { prepare } } as any);
+    const fixture = TestBed.createComponent(SouthDetailComponent);
+    fixture.detectChanges();
+    const root = page.elementLocator(fixture.nativeElement);
+
+    await root.getByCss('#show-audit-button').click();
+    expect(modalService.open).toHaveBeenCalledWith(AuditHistoryModalComponent, { size: 'xl' });
+    expect(prepare).toHaveBeenCalledWith('south_connector', southConnector.id);
+
+    await root.getByCss('.show-audit-item').first().click();
+    expect(prepare).toHaveBeenLastCalledWith('south_item', fixture.componentInstance.displayedItems.content[0].id);
   });
 
   test('manageGroups should open the manage groups modal with the current groups and items', () => {

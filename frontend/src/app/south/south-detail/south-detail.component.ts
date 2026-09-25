@@ -23,6 +23,8 @@ import { NotificationService } from '../../shared/notification.service';
 import { OIBusInfo, SouthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
 import { WindowService } from '../../shared/window.service';
 import { ModalService } from '../../shared/modal.service';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { AuditEntityType } from '../../../../../backend/shared/model/audit.model';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { EngineService } from '../../services/engine.service';
@@ -994,5 +996,13 @@ export class SouthDetailComponent {
         }
       }))
     } as SouthConnectorCommandDTO;
+  }
+
+  /**
+   * Open a modal to view the audit history of the connector or one of its items
+   */
+  showAudit(entityType: Extract<AuditEntityType, 'south_connector' | 'south_item'>, entityId: string) {
+    const modalRef = this.modalService.open(AuditHistoryModalComponent, { size: 'xl' });
+    modalRef.componentInstance.prepare(entityType, entityId);
   }
 }
