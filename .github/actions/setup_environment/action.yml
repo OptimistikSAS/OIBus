@@ -29,6 +29,8 @@ runs:
     #
     # • hash(package-lock.json) — automatic invalidation: any dependency change
     #   rewrites the lock file, producing a different hash → cache miss → npm ci.
+    # • hash(backend/patches/**) — backend only: patch-package patches are applied
+    #   into node_modules, so adding/changing/removing one must bust the cache.
     # • cache_version            — manual escape hatch: bump GH_ACTIONS_CACHE_KEY
     #   in GitHub Secrets to force a clean install (e.g. after cache corruption or
     #   a security advisory) without touching any source file.
@@ -56,7 +58,7 @@ runs:
       uses: actions/cache@v6
       with:
         path: backend/node_modules
-        key: backend-deps-${{ inputs.platform_arch }}-${{ inputs.cache_version }}-${{ hashFiles('backend/package-lock.json') }}
+        key: backend-deps-${{ inputs.platform_arch }}-${{ inputs.cache_version }}-${{ hashFiles('backend/package-lock.json', 'backend/patches/**') }}
 
     - name: Cache frontend dependencies
       id: cache-frontend
@@ -87,7 +89,10 @@ runs:
       if: ${{ steps.cache-backend.outputs.cache-hit != 'true' }}
       working-directory: backend
       shell: bash
-      run: npm ci --ignore-scripts
+      # --ignore-scripts also skips our own postinstall, so apply patch-package patches explicitly
+      run: |
+        npm ci --ignore-scripts
+        npx patch-package --error-on-fail
 
     - name: Rebuild native backend modules
       if: ${{ steps.cache-backend.outputs.cache-hit != 'true' }}
