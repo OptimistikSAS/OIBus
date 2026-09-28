@@ -1,0 +1,23 @@
+diff --git a/node_modules/@yao-pkg/pkg/lib-es5/esm-transformer.js b/node_modules/@yao-pkg/pkg/lib-es5/esm-transformer.js
+--- a/node_modules/@yao-pkg/pkg/lib-es5/esm-transformer.js
++++ b/node_modules/@yao-pkg/pkg/lib-es5/esm-transformer.js
+@@ -106,7 +106,8 @@ function detectESMFeatures(code, filename) {
+                         parent.isFunctionExpression() ||
+                         parent.isArrowFunctionExpression() ||
+                         parent.isObjectMethod() ||
+-                        parent.isClassMethod()) {
++                        parent.isClassMethod() ||
++                        parent.isClassPrivateMethod()) {
+                         isTopLevel = false;
+                         break;
+                     }
+@@ -130,7 +131,8 @@ function detectESMFeatures(code, filename) {
+                             parent.isFunctionExpression() ||
+                             parent.isArrowFunctionExpression() ||
+                             parent.isObjectMethod() ||
+-                            parent.isClassMethod()) {
++                            parent.isClassMethod() ||
++                            parent.isClassPrivateMethod()) {
+                             isTopLevel = false;
+                             break;
+                         }
