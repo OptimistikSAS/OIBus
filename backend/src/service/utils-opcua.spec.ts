@@ -14,6 +14,7 @@ import {
   Variant
 } from 'node-opcua';
 import { encryptionService } from './encryption.service';
+import { mockModule, reloadModule } from '../tests/utils/test-utils';
 import {
   createOPCUASession,
   createSessionConfigs,
@@ -136,7 +137,26 @@ describe('Service utils OPCUA', () => {
   });
 
   describe('getOPCUAApplicationUri', () => {
+    // node-opcua-crypto is ESM-only: its namespace object is immutable, so the module is replaced in the
+    // require cache and utils-opcua is reloaded to pick up the mocked exports.
+    let exploreCertificateMock: ReturnType<typeof mock.fn>;
+    let getApplicationUri: typeof getOPCUAApplicationUri;
+
+    beforeEach(() => {
+      exploreCertificateMock = mock.fn();
+      mockModule(nodeRequire, 'node-opcua-crypto', {
+        ...nodeOpcuaCryptoModule,
+        convertPEMtoDER: mock.fn(() => Buffer.from('der')),
+        exploreCertificate: exploreCertificateMock
+      });
+      getApplicationUri = reloadModule<{ getOPCUAApplicationUri: typeof getOPCUAApplicationUri }>(
+        nodeRequire,
+        './utils-opcua'
+      ).getOPCUAApplicationUri;
+    });
+
     afterEach(() => {
+      mockModule(nodeRequire, 'node-opcua-crypto', nodeOpcuaCryptoModule);
       mock.restoreAll();
     });
 
@@ -144,14 +164,13 @@ describe('Service utils OPCUA', () => {
       mock.method(fs, 'readFile', async () => {
         throw new Error('ENOENT');
       });
-      const result = await getOPCUAApplicationUri();
+      const result = await getApplicationUri();
       assert.strictEqual(result, undefined);
     });
 
     it('should return the applicationUri extracted from the certificate subjectAltName', async () => {
       mock.method(fs, 'readFile', async () => 'pem-content');
-      mock.method(nodeOpcuaCryptoModule, 'convertPEMtoDER', () => Buffer.from('der'));
-      mock.method(nodeOpcuaCryptoModule, 'exploreCertificate', () => ({
+      exploreCertificateMock.mock.mockImplementation(() => ({
         tbsCertificate: {
           extensions: {
             subjectAltName: {
@@ -161,20 +180,19 @@ describe('Service utils OPCUA', () => {
         }
       }));
 
-      const result = await getOPCUAApplicationUri();
+      const result = await getApplicationUri();
       assert.strictEqual(result, 'urn:oibus:test');
     });
 
     it('should return undefined when the certificate has no subjectAltName', async () => {
       mock.method(fs, 'readFile', async () => 'pem-content');
-      mock.method(nodeOpcuaCryptoModule, 'convertPEMtoDER', () => Buffer.from('der'));
-      mock.method(nodeOpcuaCryptoModule, 'exploreCertificate', () => ({
+      exploreCertificateMock.mock.mockImplementation(() => ({
         tbsCertificate: {
           extensions: {}
         }
       }));
 
-      const result = await getOPCUAApplicationUri();
+      const result = await getApplicationUri();
       assert.strictEqual(result, undefined);
     });
   });
