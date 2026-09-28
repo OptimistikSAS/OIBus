@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of, Subject } from 'rxjs';
+import { EMPTY, of, Subject } from 'rxjs';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { provideRouter } from '@angular/router';
@@ -24,6 +24,7 @@ class EngineDetailComponentTester {
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly generalSettings = this.root.getByCss('table tr');
   readonly restartButton = this.root.getByCss('#restart');
+  readonly memoryDumpButton = this.root.getByCss('#memory-dump');
 }
 
 const engineSettings: EngineSettingsDTO = {
@@ -121,5 +122,35 @@ describe('EngineDetailComponent', () => {
 
     expect(engineService.restart).toHaveBeenCalled();
     expect(notificationService.success).toHaveBeenCalledWith('engine.restart-complete');
+  });
+
+  test('should dump memory after confirmation', async () => {
+    engineService.dumpMemory.mockReturnValue(of({ filename: 'oibus-memory-dump.heapsnapshot' }));
+    confirmationService.confirm.mockReturnValue(of(undefined));
+
+    const tester = new EngineDetailComponentTester();
+    tester.fixture.detectChanges();
+
+    await tester.memoryDumpButton.click();
+
+    expect(confirmationService.confirm).toHaveBeenCalledWith({
+      titleKey: 'engine.confirm-memory-dump-title',
+      messageKey: 'engine.confirm-memory-dump'
+    });
+    expect(engineService.dumpMemory).toHaveBeenCalled();
+    expect(notificationService.success).toHaveBeenCalledWith('engine.memory-dump-complete', {
+      filename: 'oibus-memory-dump.heapsnapshot'
+    });
+  });
+
+  test('should not dump memory if not confirmed', async () => {
+    confirmationService.confirm.mockReturnValue(EMPTY);
+
+    const tester = new EngineDetailComponentTester();
+    tester.fixture.detectChanges();
+
+    await tester.memoryDumpButton.click();
+
+    expect(engineService.dumpMemory).not.toHaveBeenCalled();
   });
 });

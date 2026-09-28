@@ -82,6 +82,15 @@ describe('EngineController', () => {
     assert.strictEqual(oIBusService.restart.mock.calls.length, 1);
   });
 
+  it('should dump OIBus memory', async () => {
+    oIBusService.dumpMemory = mock.fn(() => ({ filename: 'oibus-memory-dump.heapsnapshot' }));
+
+    const result = await controller.dumpMemory(mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(oIBusService.dumpMemory.mock.calls.length, 1);
+    assert.deepStrictEqual(result, { filename: 'oibus-memory-dump.heapsnapshot' });
+  });
+
   it('should return OIBus info', async () => {
     const mockInfo = testData.engine.oIBusInfo;
     oIBusService.getInfo = mock.fn(() => mockInfo);

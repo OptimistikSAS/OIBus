@@ -3,6 +3,7 @@ import { Observable, shareReplay } from 'rxjs';
 import { Service, inject } from '@angular/core';
 import {
   EngineLoggerCommandDTO,
+  EngineMemoryDumpDTO,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
@@ -62,6 +63,10 @@ export class EngineService {
 
   restart(): Observable<void> {
     return this.http.post<void>('/api/engine/restart', null);
+  }
+
+  dumpMemory(): Observable<EngineMemoryDumpDTO> {
+    return this.http.post<EngineMemoryDumpDTO>('/api/engine/memory-dump', null);
   }
 
   readonly info$: Observable<OIBusInfo> = this.http.get<OIBusInfo>('/api/engine/info').pipe(shareReplay(1));

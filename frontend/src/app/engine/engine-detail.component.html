@@ -168,6 +168,22 @@
         <div class="mt-2">
           <oib-transformer-list />
         </div>
+        <div class="mt-2 d-flex justify-content-end">
+          <button
+            (click)="dumpMemory()"
+            type="button"
+            [disabled]="dumpingMemory.isPending | async"
+            class="btn btn-outline-danger"
+            id="memory-dump"
+          >
+            @if (dumpingMemory.isPending | async) {
+              <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            } @else {
+              <span class="fa fa-download me-1" aria-hidden="true"></span>
+            }
+            <span translate="engine.memory-dump"></span>
+          </button>
+        </div>
       </div>
     </div>
   </div>

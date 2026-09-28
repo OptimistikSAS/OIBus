@@ -2,6 +2,8 @@ import { describe, it, beforeEach, afterEach, before, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import os from 'node:os';
+import path from 'node:path';
+import v8 from 'node:v8';
 
 import testData from '../tests/utils/test-data';
 import { mockModule, reloadModule } from '../tests/utils/test-utils';
@@ -502,6 +504,19 @@ describe('OIBus Service', () => {
     await service.restart();
     mock.timers.tick(100);
     assert.strictEqual(processExitSpy.mock.calls.length, 1);
+  });
+
+  it('should dump memory in the data folder', () => {
+    const writeHeapSnapshotSpy = mock.method(v8, 'writeHeapSnapshot', (filePath: string) => filePath);
+    const expectedFilename = 'oibus-memory-dump-2021-01-02_00-00-00.heapsnapshot';
+
+    const result = service.dumpMemory();
+
+    assert.deepStrictEqual(result, { filename: expectedFilename });
+    assert.strictEqual(writeHeapSnapshotSpy.mock.calls.length, 1);
+    assert.deepStrictEqual(writeHeapSnapshotSpy.mock.calls[0].arguments, [path.resolve(process.cwd(), expectedFilename)]);
+    assert.strictEqual((logger.warn as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((logger.info as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
   it('should log health signal', async () => {
