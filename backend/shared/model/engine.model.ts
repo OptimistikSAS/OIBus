@@ -1194,6 +1194,18 @@ export interface EngineSettingsUpdateResultDTO {
 }
 
 /**
+ * Memory dump result Data Transfer Object.
+ * Returned after a heap snapshot has been written in the OIBus data folder.
+ */
+export interface EngineMemoryDumpDTO {
+  /**
+   * The name of the heap snapshot file, written at the root of the OIBus data folder.
+   * @example "oibus-memory-dump-2026-09-28_14-30-00.heapsnapshot"
+   */
+  filename: string;
+}
+
+/**
  * Information about the OIBus instance.
  */
 export interface OIBusInfo {

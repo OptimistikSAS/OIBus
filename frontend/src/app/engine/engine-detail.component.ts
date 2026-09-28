@@ -57,6 +57,7 @@ export class EngineDetailComponent {
   readonly engineSettings = toSignal(this.refresh$.pipe(switchMap(() => this.engineService.getEngineSettings())));
   metrics = signal<EngineMetrics | null>(null);
   restarting = new ObservableState();
+  dumpingMemory = new ObservableState();
 
   constructor() {
     const token = this.windowService.getStorageItem('oibus-token');
@@ -109,6 +110,18 @@ export class EngineDetailComponent {
       )
       .subscribe(() => {
         this.notificationService.success('engine.restart-complete');
+      });
+  }
+
+  dumpMemory() {
+    this.confirmationService
+      .confirm({
+        titleKey: 'engine.confirm-memory-dump-title',
+        messageKey: 'engine.confirm-memory-dump'
+      })
+      .pipe(switchMap(() => this.engineService.dumpMemory().pipe(this.dumpingMemory.pendingUntilFinalization())))
+      .subscribe(result => {
+        this.notificationService.success('engine.memory-dump-complete', { filename: result.filename });
       });
   }
 }

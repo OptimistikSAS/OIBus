@@ -5,6 +5,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { EngineService } from './engine.service';
 import {
   EngineLoggerCommandDTO,
+  EngineMemoryDumpDTO,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsDTO,
@@ -119,6 +120,16 @@ describe('EngineService', () => {
     const testRequest = http.expectOne({ method: 'POST', url: '/api/engine/restart' });
     testRequest.flush(null);
     expect(done).toBe(true);
+  });
+
+  test('should dump memory', () => {
+    let result: EngineMemoryDumpDTO | null = null;
+
+    service.dumpMemory().subscribe(dump => (result = dump));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/engine/memory-dump' });
+    expect(testRequest.request.body).toBeNull();
+    testRequest.flush({ filename: 'oibus-memory-dump.heapsnapshot' });
+    expect(result).toEqual({ filename: 'oibus-memory-dump.heapsnapshot' });
   });
 
   test('should reset metrics', () => {

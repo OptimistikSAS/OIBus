@@ -531,6 +531,10 @@
     "restart": "Restart",
     "restart-complete": "OIBus restarted",
     "confirm-restart": "Are you sure you want to restart OIBus engine?",
+    "memory-dump": "Dump memory",
+    "memory-dump-complete": "Memory dump written in the data folder: {{ filename }}",
+    "confirm-memory-dump-title": "Dump OIBus memory",
+    "confirm-memory-dump": "A heap snapshot of OIBus memory will be written in the data folder. OIBus is frozen while the dump is written, which may disrupt data flows (it can take from a few seconds to several minutes), and the file can be as large as the memory in use. Do you really want to continue?",
     "updated": "Engine settings updated",
     "port-changed": {
       "title": "Port Changed",

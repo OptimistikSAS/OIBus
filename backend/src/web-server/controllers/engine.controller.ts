@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post, Put, Request, Route, SuccessResponse, Tags } from 'tsoa';
 import {
   EngineLoggerCommandDTO,
+  EngineMemoryDumpDTO,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
@@ -117,6 +118,19 @@ export class EngineController extends Controller {
   async restart(@Request() request: CustomExpressRequest): Promise<void> {
     const oIBusService = request.services.oIBusService;
     await oIBusService.restart();
+  }
+
+  /**
+   * Writes a heap snapshot of the OIBus process memory in the data folder.
+   * The whole process is blocked while the snapshot is written, which may disrupt data flows
+   * @summary Dump OIBus memory
+   * @returns {EngineMemoryDumpDTO} The name of the heap snapshot file written in the data folder
+   */
+  @Post('/engine/memory-dump')
+  @SuccessResponse(200, 'Memory dump written successfully')
+  dumpMemory(@Request() request: CustomExpressRequest): EngineMemoryDumpDTO {
+    const oIBusService = request.services.oIBusService;
+    return oIBusService.dumpMemory();
   }
 
   /**

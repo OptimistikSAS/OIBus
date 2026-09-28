@@ -6,6 +6,7 @@ import {
   CacheSearchResult,
   DataFolderType,
   EngineLoggerCommandDTO,
+  EngineMemoryDumpDTO,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
@@ -37,6 +38,7 @@ export default class OIBusServiceMock {
   updateEngineLogger = mock.fn(async (_command: EngineLoggerCommandDTO, _updatedBy: string): Promise<void> => undefined);
   updateOIBusVersion = mock.fn((_version: string, _launcherVersion: string): void => undefined);
   restart = mock.fn(async (): Promise<void> => undefined);
+  dumpMemory = mock.fn((): EngineMemoryDumpDTO => ({ filename: '' }));
   stop = mock.fn(async (): Promise<void> => undefined);
   addExternalContent = mock.fn(async (_northId: string, _dataSourceId: string, _content: OIBusContent): Promise<void> => undefined);
   logHealthSignal = mock.fn((): void => undefined);

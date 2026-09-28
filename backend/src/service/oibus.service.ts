@@ -5,6 +5,7 @@ import {
   CacheSearchResult,
   DataFolderType,
   EngineLoggerCommandDTO,
+  EngineMemoryDumpDTO,
   EngineMetrics,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
@@ -36,6 +37,8 @@ import ProxyServer from '../web-server/proxy-server';
 import { DateTime } from 'luxon';
 import process from 'node:process';
 import os from 'node:os';
+import path from 'node:path';
+import v8 from 'node:v8';
 import { PassThrough } from 'node:stream';
 import EngineMetricsRepository from '../repository/metrics/engine-metrics.repository';
 import { getOIBusInfo } from './utils';
@@ -286,6 +289,21 @@ export default class OIBusService {
     setTimeout(() => {
       process.exit();
     }, 100); // wait a bit to let the HTTP answer trigger
+  }
+
+  /**
+   * Write a V8 heap snapshot at the root of the data folder (the process working directory).
+   * The snapshot is synchronous: the whole process (and therefore every data flow) is blocked until the file is written,
+   * and it may temporarily require as much memory as the current heap size.
+   */
+  dumpMemory(): EngineMemoryDumpDTO {
+    const filename = `oibus-memory-dump-${DateTime.now().toUTC().toFormat('yyyy-MM-dd_HH-mm-ss')}.heapsnapshot`;
+    const filePath = path.resolve(process.cwd(), filename);
+    this.logger.warn(`Writing memory dump to "${filePath}". Data flows are paused until the dump completes`);
+    const start = DateTime.now().toMillis();
+    v8.writeHeapSnapshot(filePath);
+    this.logger.info(`Memory dump "${filename}" written in ${DateTime.now().toMillis() - start} ms`);
+    return { filename };
   }
 
   async stop(): Promise<void> {

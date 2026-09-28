@@ -33714,6 +33714,21 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"EngineMemoryDumpDTO": {
+				"description": "Memory dump result Data Transfer Object.\nReturned after a heap snapshot has been written in the OIBus data folder.",
+				"properties": {
+					"filename": {
+						"type": "string",
+						"description": "The name of the heap snapshot file, written at the root of the OIBus data folder.",
+						"example": "oibus-memory-dump-2026-09-28_14-30-00.heapsnapshot"
+					}
+				},
+				"required": [
+					"filename"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"OIBusInfo": {
 				"description": "Information about the OIBus instance.",
 				"properties": {
@@ -38880,6 +38895,30 @@
 				},
 				"description": "Restarts the OIBus process",
 				"summary": "Restart OIBus process",
+				"tags": [
+					"Engine"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/api/engine/memory-dump": {
+			"post": {
+				"operationId": "DumpMemory",
+				"responses": {
+					"200": {
+						"description": "Memory dump written successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/EngineMemoryDumpDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Writes a heap snapshot of the OIBus process memory in the data folder.\nThe whole process is blocked while the snapshot is written, which may disrupt data flows",
+				"summary": "Dump OIBus memory",
 				"tags": [
 					"Engine"
 				],
