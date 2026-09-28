@@ -703,21 +703,32 @@ export default class SouthOPCUA
     // Mirror the HA path: cap the read so a hanging PLC/server cannot leave the
     // connector stuck in run() indefinitely (runProgress$ set but never resolved).
     // BadTimeout is classified as a device error → session kept, no reconnect.
-    let timeoutId: NodeJS.Timeout | undefined;
-    const readPromise = session.read(nodesToRead) as Promise<Array<DataValue>>;
-    const dataValues = await Promise.race([
-      readPromise.finally(() => clearTimeout(timeoutId)),
-      new Promise<never>((_, reject) => {
-        timeoutId = setTimeout(() => {
-          // Silence any late rejection from the still-pending read so it doesn't
-          // become an unhandled rejection after the timeout fires.
-          readPromise.catch(() => {
-            /* empty */
-          });
-          reject(new Error(`BadTimeout: DA read timed out after ${timeoutMs} ms`));
-        }, timeoutMs);
-      })
-    ]);
+    //
+    // Wired through a single Promise with manual resolve/reject (rather than
+    // Promise.race([readPromise, timeoutPromise])) so neither branch is ever left
+    // permanently pending: with Promise.race, whichever promise loses the race never
+    // settles once the timer that would have rejected it is cleared, and V8 only
+    // reclaims a pending Promise's closure (and whatever it keeps reachable — here,
+    // the resolved DataValue array) on a full GC pass, not eagerly. Called on every
+    // scheduled DA read across every group, this leaked a little off-heap memory per
+    // call — small per call, but adding up steadily across many groups polled
+    // frequently, until an eventual full GC released it all at once.
+    const dataValues = await new Promise<Array<DataValue>>((resolve, reject) => {
+      const readPromise = session.read(nodesToRead) as Promise<Array<DataValue>>;
+      const timeoutId = setTimeout(() => {
+        reject(new Error(`BadTimeout: DA read timed out after ${timeoutMs} ms`));
+      }, timeoutMs);
+      readPromise.then(
+        result => {
+          clearTimeout(timeoutId);
+          resolve(result);
+        },
+        error => {
+          clearTimeout(timeoutId);
+          reject(error);
+        }
+      );
+    });
     const requestDuration = DateTime.now().toMillis() - startRequest;
     this.logger.debug(logCtx, `Found ${dataValues.length} results for ${nodesToRead.length} items (DA mode) in ${requestDuration} ms`);
     if (dataValues.length !== nodesToRead.length) {

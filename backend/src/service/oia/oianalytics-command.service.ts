@@ -237,25 +237,31 @@ const TEST_COMMAND_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
  * Does NOT cancel the underlying operation — Node has no universal cancellation
  * primitive — but it does unblock the caller so the command lock is released.
  *
- * The silent `.catch()` on `promise` ensures that if the underlying operation
- * eventually rejects *after* the timeout has already won the race, that
- * rejection is handled and does not become an UnhandledPromiseRejection (which
- * would terminate the process in Node v24+).
+ * Wired through a single Promise with manual resolve/reject (rather than
+ * Promise.race([promise, timeout])) so neither branch is ever left permanently
+ * pending: with Promise.race, whichever promise loses never settles once its
+ * timer is cleared, and a pending Promise (plus whatever it keeps reachable) is
+ * only reclaimed on a full GC pass, not eagerly. Attaching `.then(resolve, reject)`
+ * directly to `promise` also means it always has a rejection handler, so a late
+ * rejection after the timeout has already won can never become an
+ * UnhandledPromiseRejection (which would terminate the process in Node v24+).
  */
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
-  let timeoutId: NodeJS.Timeout;
-  const timeout = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => {
-      // Attach a no-op rejection handler only now that the timeout has won the
-      // race. Any rejection that `promise` emits later would otherwise be
-      // unhandled (the settled Promise.race no longer consumes it).
-      promise.catch(() => {
-        /* empty */
-      });
+  return new Promise<T>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
       reject(new Error(`${label} timed out after ${ms / 1000}s`));
     }, ms);
+    promise.then(
+      result => {
+        clearTimeout(timeoutId);
+        resolve(result);
+      },
+      error => {
+        clearTimeout(timeoutId);
+        reject(error);
+      }
+    );
   });
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
 }
 
 export default class OIAnalyticsCommandService {
