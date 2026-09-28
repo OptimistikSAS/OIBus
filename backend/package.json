@@ -170,9 +170,9 @@
     "oracledb@7.0.1": true,
     "argon2@0.45.1": true,
     "cpu-features@0.0.10": true,
-    "protobufjs@7.6.5": true,
     "better-sqlite3@13.0.3": true,
     "esbuild@0.28.2": true,
-    "isolated-vm@7.0.1": true
+    "isolated-vm@7.0.1": true,
+    "protobufjs@7.6.6": true
   }
 }
