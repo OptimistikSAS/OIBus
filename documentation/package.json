@@ -43,7 +43,7 @@
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.1.1",
     "gh-pages": "6.3.0",
-    "prettier": "3.9.6"
+    "prettier": "3.9.9"
   },
   "browserslist": {
     "production": [
