@@ -105,6 +105,80 @@ describe('SouthConnectorRepository', () => {
     );
   });
 
+  it('should save a new south connector with its configuration workflows, and leave them untouched when none are given', () => {
+    const newSouthConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+    newSouthConnector.id = '';
+    newSouthConnector.name = 'connector with workflows';
+    newSouthConnector.items = [];
+    newSouthConnector.groups = [];
+    const workflow = {
+      id: null,
+      name: 'workflow',
+      discoveryScope: {},
+      identityKeyFields: [],
+      eligibilityFilter: [],
+      itemFieldMapping: null,
+      pushToOIAnalytics: true,
+      scanMode: null,
+      enabled: true
+    };
+    repository.saveSouth(newSouthConnector, true, [workflow]);
+
+    const workflowRepository = new ConfigurationWorkflowRepository(database, auditService);
+    const created = workflowRepository.findBySouthId(newSouthConnector.id);
+    assert.deepStrictEqual(
+      created.map(entity => entity.name),
+      ['workflow']
+    );
+
+    repository.saveSouth({ ...newSouthConnector, description: 'updated' }, false);
+    assert.deepStrictEqual(workflowRepository.findBySouthId(newSouthConnector.id), created);
+
+    repository.saveSouth(newSouthConnector, false, []);
+    assert.deepStrictEqual(workflowRepository.findBySouthId(newSouthConnector.id), []);
+  });
+
+  it('should remap a workflow mapping items to a group created in the same save onto that group', () => {
+    const newSouthConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+    newSouthConnector.id = '';
+    newSouthConnector.name = 'connector with a workflow mapping to a new group';
+    newSouthConnector.items = [];
+    newSouthConnector.groups = [
+      {
+        id: 'temp_1',
+        name: 'new group',
+        scanMode: testData.scanMode.list[0],
+        startTimeOffset: null,
+        endTimeOffset: null,
+        maxReadInterval: null,
+        readDelay: null,
+        recoveryStrategy: null,
+        cachingStrategy: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ];
+    const workflow = {
+      id: null,
+      name: 'workflow',
+      discoveryScope: {},
+      identityKeyFields: ['name'],
+      eligibilityFilter: [],
+      itemFieldMapping: { name: '{{name}}', groupId: 'temp_1' },
+      pushToOIAnalytics: false,
+      scanMode: null,
+      enabled: true
+    };
+    repository.saveSouth(newSouthConnector, true, [workflow]);
+
+    const [group] = repository.findGroupBySouthId(newSouthConnector.id);
+    assert.notStrictEqual(group.id, 'temp_1');
+    const [created] = new ConfigurationWorkflowRepository(database, auditService).findBySouthId(newSouthConnector.id);
+    assert.deepStrictEqual(created.itemFieldMapping, { name: '{{name}}', groupId: group.id });
+  });
+
   it('should preserve caller-supplied ids for the connector, its groups and its items (config import)', () => {
     const southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
     southConnector.id = 'preserved-south-id';

@@ -1,9 +1,59 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeIdentityKey, isEligible, resolveFieldMapping } from './configuration-workflow.utils';
+import {
+  checkWorkflowMode,
+  computeIdentityKey,
+  isEligible,
+  resolveFieldMapping,
+  resolveIdentityKeyFields
+} from './configuration-workflow.utils';
+import { ConfigurationWorkflowCommandDTO } from '../../shared/model/configuration-workflow.model';
+import { OIBusValidationError } from '../model/types';
 import { RecordFilterCondition } from '../model/configuration-workflow.model';
 
 describe('configuration-workflow.utils', () => {
+  const localCommand: ConfigurationWorkflowCommandDTO = {
+    id: null,
+    name: 'workflow',
+    discoveryScope: {},
+    identityKeyFields: ['nodeId'],
+    eligibilityFilter: [],
+    itemFieldMapping: { name: '{{name}}' },
+    pushToOIAnalytics: false,
+    scanModeId: null,
+    enabled: true
+  };
+  const remoteCommand: ConfigurationWorkflowCommandDTO = { ...localCommand, itemFieldMapping: null, pushToOIAnalytics: true };
+
+  describe('checkWorkflowMode', () => {
+    it('should accept a local or a remote workflow', () => {
+      checkWorkflowMode(localCommand);
+      checkWorkflowMode({ ...remoteCommand, identityKeyFields: [] });
+    });
+
+    it('should reject a workflow that is both, neither, or local without identity key fields', () => {
+      assert.throws(
+        () => checkWorkflowMode({ ...localCommand, pushToOIAnalytics: true }),
+        new OIBusValidationError('A configuration workflow cannot both create/update items and push to OIAnalytics')
+      );
+      assert.throws(
+        () => checkWorkflowMode({ ...localCommand, itemFieldMapping: null }),
+        new OIBusValidationError('A configuration workflow must either create/update items or push to OIAnalytics')
+      );
+      assert.throws(
+        () => checkWorkflowMode({ ...localCommand, identityKeyFields: [] }),
+        new OIBusValidationError('A configuration workflow creating/updating items requires at least one identity key field')
+      );
+    });
+  });
+
+  describe('resolveIdentityKeyFields', () => {
+    it('should keep the identity key fields of a local workflow and discard those of a remote one', () => {
+      assert.deepStrictEqual(resolveIdentityKeyFields(localCommand), ['nodeId']);
+      assert.deepStrictEqual(resolveIdentityKeyFields(remoteCommand), []);
+    });
+  });
+
   describe('isEligible', () => {
     it('should be eligible when there are no conditions', () => {
       assert.strictEqual(isEligible({ type: 'Variable' }, []), true);

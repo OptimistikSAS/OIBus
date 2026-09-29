@@ -19,7 +19,7 @@ import {
   SouthItemGroupEntity
 } from '../../../model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusAnyContent, OIBusConnectionTestResult, SouthConnectorMetrics } from '../../../../shared/model/engine.model';
+import { OIBusAnyContent, OIBusConnectionTestResult, OIBusRecord } from '../../../../shared/model/engine.model';
 import { Page } from '../../../../shared/model/types';
 
 /**
@@ -86,6 +86,9 @@ export default class SouthServiceMock {
   );
   updateItem = mock.fn(
     async (_southId: string, _itemId: string, _command: SouthConnectorItemCommandDTO, _updatedBy: string): Promise<void> => undefined
+  );
+  discover = mock.fn(
+    async (_southId: string, _southType: string, _settings: unknown, _scope: Record<string, unknown>): Promise<Array<OIBusRecord>> => []
   );
   enableItem = mock.fn(async (_southId: string, _itemId: string): Promise<void> => undefined);
   disableItem = mock.fn(async (_southId: string, _itemId: string): Promise<void> => undefined);

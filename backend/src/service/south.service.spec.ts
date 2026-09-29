@@ -33,11 +33,12 @@ import {
   SouthConnectorItemEntity,
   SouthConnectorEntity
 } from '../model/south-connector.model';
-import { SouthItemGroupCommandDTO, SouthConnectorItemCommandDTO } from '../../shared/model/south-connector.model';
+import { SouthConnectorCommandDTO, SouthItemGroupCommandDTO, SouthConnectorItemCommandDTO } from '../../shared/model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { toScanModeDTO } from './scan-mode.service';
 import { OIBusContent } from '../../shared/model/engine.model';
+import { ConfigurationWorkflowCommandDTO } from '../../shared/model/configuration-workflow.model';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -97,6 +98,18 @@ before(() => {
   toSouthItemGroupDTO = mod.toSouthItemGroupDTO;
   copySouthItemCommandToSouthItemEntity = mod.copySouthItemCommandToSouthItemEntity;
 });
+
+const localWorkflowCommand: ConfigurationWorkflowCommandDTO = {
+  id: null,
+  name: 'local',
+  discoveryScope: { rootNodeId: 'ns=1;s=Root' },
+  identityKeyFields: ['nodeId'],
+  eligibilityFilter: [],
+  itemFieldMapping: { name: '{{name}}' },
+  pushToOIAnalytics: false,
+  scanModeId: testData.scanMode.list[0].id,
+  enabled: true
+};
 
 describe('South Service', () => {
   let service: InstanceType<typeof SouthServiceType>;
@@ -217,6 +230,38 @@ describe('South Service', () => {
     assert.strictEqual((service.retrieveSecretsFromSouth as Mock<typeof service.retrieveSecretsFromSouth>).mock.calls.length, 1);
     assert.strictEqual(engine.createSouth.mock.calls.length, 1);
     assert.strictEqual(engine.startSouth.mock.calls.length, 1);
+  });
+
+  it("should leave a south connector's workflows untouched when its command predates them", async () => {
+    const { configurationWorkflows: _configurationWorkflows, ...commandWithoutWorkflows } = testData.south.command;
+
+    await service.create(commandWithoutWorkflows as SouthConnectorCommandDTO, null, 'userTest');
+    await service.update(testData.south.list[0].id, commandWithoutWorkflows as SouthConnectorCommandDTO, 'userTest');
+
+    assert.strictEqual(southConnectorRepository.saveSouth.mock.calls[0].arguments[2], undefined);
+    assert.strictEqual(southConnectorRepository.saveSouth.mock.calls[1].arguments[2], undefined);
+    assert.strictEqual(engine.reloadWorkflows.mock.calls.length, 0);
+  });
+
+  it('should create a south connector with its configuration workflows', async () => {
+    service.retrieveSecretsFromSouth = mock.fn(() => null);
+
+    await service.create({ ...testData.south.command, configurationWorkflows: [localWorkflowCommand] }, null, 'userTest');
+
+    assert.deepStrictEqual(southConnectorRepository.saveSouth.mock.calls[0].arguments[2], [
+      {
+        id: null,
+        name: 'local',
+        discoveryScope: { rootNodeId: 'ns=1;s=Root' },
+        identityKeyFields: ['nodeId'],
+        eligibilityFilter: [],
+        itemFieldMapping: { name: '{{name}}' },
+        pushToOIAnalytics: false,
+        scanMode: testData.scanMode.list[0],
+        enabled: true
+      }
+    ]);
+    assert.strictEqual(engine.reloadWorkflows.mock.calls.length, 1);
   });
 
   it('should create a south connector with items having groupName and create group when it does not exist', async () => {
@@ -351,6 +396,60 @@ describe('South Service', () => {
     assert.strictEqual(southConnectorRepository.saveSouth.mock.calls.length, 1);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
     assert.strictEqual(engine.reloadSouth.mock.calls.length, 1);
+  });
+
+  it('should update a south connector and sync its configuration workflows', async () => {
+    const remoteWorkflowCommand: ConfigurationWorkflowCommandDTO = {
+      ...localWorkflowCommand,
+      id: 'workflowId1',
+      name: 'remote',
+      identityKeyFields: ['discarded for a remote workflow'],
+      itemFieldMapping: null,
+      pushToOIAnalytics: true,
+      scanModeId: null
+    };
+
+    await service.update(
+      testData.south.list[0].id,
+      { ...testData.south.command, configurationWorkflows: [localWorkflowCommand, remoteWorkflowCommand] },
+      'userTest'
+    );
+
+    const workflows = southConnectorRepository.saveSouth.mock.calls[0].arguments[2]!;
+    assert.deepStrictEqual(
+      workflows.map(workflow => ({ id: workflow.id, identityKeyFields: workflow.identityKeyFields, scanMode: workflow.scanMode })),
+      [
+        { id: null, identityKeyFields: ['nodeId'], scanMode: testData.scanMode.list[0] },
+        { id: 'workflowId1', identityKeyFields: [], scanMode: null }
+      ]
+    );
+    assert.deepStrictEqual(engine.reloadWorkflows.mock.calls[0].arguments, [testData.south.list[0].id]);
+    // Saving a remote workflow while unregistered is allowed, but warned about
+    assert.strictEqual((engine.logger.warn as unknown as Mock<() => void>).mock.calls.length, 1);
+  });
+
+  it('should reject a south connector command with two configuration workflows of the same name', async () => {
+    await assert.rejects(
+      service.update(
+        testData.south.list[0].id,
+        { ...testData.south.command, configurationWorkflows: [localWorkflowCommand, { ...localWorkflowCommand, id: 'workflowId1' }] },
+        'userTest'
+      ),
+      new OIBusValidationError('A configuration workflow with name "local" already exists for this south connector')
+    );
+    assert.strictEqual(southConnectorRepository.saveSouth.mock.calls.length, 0);
+  });
+
+  it('should reject a south connector command with an invalid configuration workflow', async () => {
+    await assert.rejects(
+      service.update(
+        testData.south.list[0].id,
+        { ...testData.south.command, configurationWorkflows: [{ ...localWorkflowCommand, identityKeyFields: [] }] },
+        'userTest'
+      ),
+      new OIBusValidationError('A configuration workflow creating/updating items requires at least one identity key field')
+    );
+    assert.strictEqual(southConnectorRepository.saveSouth.mock.calls.length, 0);
   });
 
   it('should update a south connector with a new unique name', async () => {
@@ -527,6 +626,39 @@ describe('South Service', () => {
     assert.strictEqual(mockBuildSouth.mock.calls.length, 1);
     assert.deepStrictEqual(mockedSouth1.discover.mock.calls[0].arguments, [{ query: 'SELECT 1' }]);
     assert.deepStrictEqual(result, [{ name: 'sensor1', unit: 'C' }]);
+  });
+
+  it('should discover on a throwaway connector and stop it afterward', async () => {
+    (mockedSouth1.hasConfigurationDiscovery as unknown as Mock<() => boolean>).mock.mockImplementation(() => true);
+    mockedSouth1.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature' }]);
+
+    const result = await service.discover('create', testData.south.command.type, testData.south.command.settings, { rootNodeId: 'root' });
+
+    assert.deepStrictEqual(result, [{ nodeId: 'ns=1;s=Temperature' }]);
+    assert.deepStrictEqual(mockedSouth1.discover.mock.calls[0].arguments, [{ rootNodeId: 'root' }]);
+    assert.strictEqual(mockedSouth1.stop.mock.calls.length, 1);
+  });
+
+  it('should stop the throwaway connector even when discovery fails', async () => {
+    (mockedSouth1.hasConfigurationDiscovery as unknown as Mock<() => boolean>).mock.mockImplementation(() => true);
+    mockedSouth1.discover.mock.mockImplementation(async () => {
+      throw new Error('browse failed');
+    });
+
+    await assert.rejects(service.discover('create', testData.south.command.type, testData.south.command.settings, {}), /browse failed/);
+    assert.strictEqual(mockedSouth1.stop.mock.calls.length, 1);
+  });
+
+  it('should discover on the live instance when its settings already match, without stopping it', async () => {
+    (mockedSouth1.hasConfigurationDiscovery as unknown as Mock<() => boolean>).mock.mockImplementation(() => true);
+    engine.hasSouth.mock.mockImplementation(() => true);
+    engine.getSouth.mock.mockImplementation(() => ({ south: mockedSouth1, metrics: {} }) as never);
+
+    await service.discover(testData.south.list[0].id, testData.south.command.type, testData.south.list[0].settings, {});
+
+    assert.strictEqual(mockBuildSouth.mock.calls.length, 0);
+    assert.strictEqual(mockedSouth1.discover.mock.calls.length, 1);
+    assert.strictEqual(mockedSouth1.stop.mock.calls.length, 0);
   });
 
   it('should throw when testing a discovery query on a connector that does not support it', async () => {

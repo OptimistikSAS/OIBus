@@ -46,6 +46,14 @@ import { OIBusObjectAttribute } from '../../../../../backend/shared/model/form.m
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
+import ManageWorkflowsModalComponent, {
+  toConfigurationWorkflowCommand
+} from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
+import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
+import {
+  ConfigurationWorkflowCommandDTO,
+  ConfigurationWorkflowDTO
+} from '../../../../../backend/shared/model/configuration-workflow.model';
 
 const PAGE_SIZE = 20;
 
@@ -95,6 +103,7 @@ export interface TableData {
 })
 export class EditSouthComponent implements CanComponentDeactivate {
   private southConnectorService = inject(SouthConnectorService);
+  private configurationWorkflowService = inject(ConfigurationWorkflowService);
   private fb = inject(NonNullableFormBuilder);
   private confirmationService = inject(ConfirmationService);
   private notificationService = inject(NotificationService);
@@ -140,6 +149,9 @@ export class EditSouthComponent implements CanComponentDeactivate {
   statusFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
 
   inMemoryGroups: Array<SouthItemGroupCommandDTO> = [];
+
+  /** The connector's Configuration Workflows, edited in memory and saved along with the connector. */
+  inMemoryWorkflows: Array<ConfigurationWorkflowCommandDTO> = [];
 
   /** The item currently hovered in the list — drives the schedule details tooltip. */
   tooltipItem: SouthConnectorItemCommandDTO | null = null;
@@ -192,6 +204,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
         }),
         switchMap(southConnector => {
           this.southConnector = southConnector;
+          let workflows$: Observable<Array<ConfigurationWorkflowCommandDTO>> = of([]);
           if (southConnector) {
             this.southType = southConnector.type;
             // When duplicating, groups must be recreated rather than pointing at the source
@@ -244,14 +257,24 @@ export class EditSouthComponent implements CanComponentDeactivate {
                 cachingStrategy: group.historySettings.cachingStrategy
               }
             }));
+            // Workflows aren't part of SouthConnectorDTO - loaded separately (from the duplicated
+            // connector when duplicating, then recreated like its groups).
+            workflows$ = this.configurationWorkflowService
+              .list(southConnector.id)
+              .pipe(
+                map(workflows =>
+                  workflows.map((workflow, index) => this.toInMemoryWorkflow(workflow, isDuplicate ? index : null, groupIdMap))
+                )
+              );
           }
-          return this.southConnectorService.getSouthManifest(this.southType!);
+          return combineLatest([this.southConnectorService.getSouthManifest(this.southType!), workflows$]);
         })
       )
-      .subscribe(manifest => {
+      .subscribe(([manifest, workflows]) => {
         if (!manifest) {
           return;
         }
+        this.inMemoryWorkflows = workflows;
         this.manifest = manifest;
         this.resetPage();
         this.buildForm();
@@ -589,6 +612,15 @@ export class EditSouthComponent implements CanComponentDeactivate {
                 : item.recoveryStrategy
             };
           });
+          // A workflow mapping its items into the deleted group now maps them into no group at all. Updated
+          // in place: an open ManageWorkflowsModalComponent (whose edit modal may have triggered this
+          // deletion) works on this very array.
+          this.inMemoryWorkflows.forEach((workflow, index) => {
+            if (workflow.itemFieldMapping?.['groupId'] === group.id) {
+              const { groupId: _groupId, syncWithGroup: _syncWithGroup, ...itemFieldMapping } = workflow.itemFieldMapping;
+              this.inMemoryWorkflows[index] = { ...workflow, itemFieldMapping };
+            }
+          });
           this.resetPage();
         }),
         map(() => undefined)
@@ -608,6 +640,47 @@ export class EditSouthComponent implements CanComponentDeactivate {
       this.deleteGroup.bind(this)
     );
     modalRef.result.subscribe(() => {
+      this.resetPage();
+    });
+  }
+
+  /**
+   * A persisted workflow as edited in memory. When duplicating (`duplicateIndex` set), it gets a fresh
+   * temp id so it's created for the new connector rather than matched against the source's, and a
+   * group mapped as its constant groupId is remapped to that group's own recreated (temp id) copy.
+   */
+  private toInMemoryWorkflow(
+    workflow: ConfigurationWorkflowDTO,
+    duplicateIndex: number | null,
+    groupIdMap: Map<string, string>
+  ): ConfigurationWorkflowCommandDTO {
+    const command = toConfigurationWorkflowCommand(workflow);
+    if (duplicateIndex === null) {
+      return command;
+    }
+    const mappedGroupId = command.itemFieldMapping?.['groupId'];
+    const itemFieldMapping =
+      command.itemFieldMapping && mappedGroupId && groupIdMap.has(mappedGroupId)
+        ? { ...command.itemFieldMapping, groupId: groupIdMap.get(mappedGroupId)! }
+        : command.itemFieldMapping;
+    return { ...command, id: `temp_${Date.now()}_${duplicateIndex}`, itemFieldMapping };
+  }
+
+  manageWorkflows() {
+    const modalRef = this.modalService.open(ManageWorkflowsModalComponent, { size: 'xl', backdrop: 'static' });
+    const component: ManageWorkflowsModalComponent = modalRef.componentInstance;
+    component.prepareForInMemory(
+      this.inMemoryWorkflows,
+      this.southConnector?.id || 'create',
+      this.formSouthConnectorCommand.settings,
+      this.scanModes,
+      this.manifest!,
+      this.inMemoryGroups,
+      this.addOrEditGroup.bind(this),
+      this.deleteGroup.bind(this)
+    );
+    modalRef.result.subscribe(() => {
+      // A group may have been created/deleted from a workflow's group mapping field
       this.resetPage();
     });
   }
@@ -663,7 +736,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
       enabled: formValue.enabled!,
       settings: extractFormValue(formValue.settings)!,
       items: this.inMemoryItems,
-      groups: this.inMemoryGroups
+      groups: this.inMemoryGroups,
+      configurationWorkflows: this.inMemoryWorkflows
     } as SouthConnectorCommandDTO;
   }
 

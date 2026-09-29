@@ -893,7 +893,8 @@ const southConnectorCommand: SouthConnectorCommandDTO = {
       maxCachingInterval: null
     }
   ],
-  groups: []
+  groups: [],
+  configurationWorkflows: []
 };
 const southConnectorItemCommand: SouthConnectorItemCommandDTO = {
   id: 'newSouthItemId',
