@@ -20,6 +20,7 @@ let oIAnalyticsRegistrationService: OIAnalyticsRegistrationServiceMock;
 let service: ConfigurationWorkflowService;
 
 const localCommand: ConfigurationWorkflowCommandDTO = {
+  id: null,
   name: 'Reactor discovery',
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],

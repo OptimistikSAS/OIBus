@@ -264,9 +264,9 @@ describe('SouthDetailComponent', () => {
     expect(getItemCount('group1')).toBe(1);
   });
 
-  test('manageWorkflows should open the manage workflows modal with the south id, scan modes, and items', () => {
-    const prepare = vi.fn();
-    modalService.open.mockReturnValue({ componentInstance: { prepare } } as any);
+  test('manageWorkflows should open the manage workflows modal in direct mode with the south id, settings, scan modes, and groups', () => {
+    const prepareForDirectSave = vi.fn();
+    modalService.open.mockReturnValue({ componentInstance: { prepareForDirectSave } } as any);
 
     const fixture = TestBed.createComponent(SouthDetailComponent);
     fixture.detectChanges();
@@ -274,11 +274,10 @@ describe('SouthDetailComponent', () => {
     fixture.componentInstance.manageWorkflows();
 
     expect(modalService.open).toHaveBeenCalledWith(ManageWorkflowsModalComponent, expect.anything());
-    expect(prepare).toHaveBeenCalledWith(
+    expect(prepareForDirectSave).toHaveBeenCalledWith(
       southConnector.id,
       southConnector.settings,
       scanModes,
-      southConnector.items,
       manifest,
       southConnector.groups,
       expect.any(Function),
@@ -288,8 +287,8 @@ describe('SouthDetailComponent', () => {
   });
 
   test('manageWorkflows should reload the south connector when a workflow run finishes, so the item list reflects it', () => {
-    const prepare = vi.fn();
-    modalService.open.mockReturnValue({ componentInstance: { prepare } } as any);
+    const prepareForDirectSave = vi.fn();
+    modalService.open.mockReturnValue({ componentInstance: { prepareForDirectSave } } as any);
     const newItem = { ...southConnector.items[0], id: 'newItem', name: 'New' };
     const southConnectorAfterRun = { ...southConnector, items: [...southConnector.items, newItem] };
     southConnectorService.findById.mockReturnValue(of(southConnectorAfterRun as any));
@@ -297,7 +296,7 @@ describe('SouthDetailComponent', () => {
     const fixture = TestBed.createComponent(SouthDetailComponent);
     fixture.detectChanges();
     fixture.componentInstance.manageWorkflows();
-    const onWorkflowRun = prepare.mock.calls[0][8];
+    const onWorkflowRun = prepareForDirectSave.mock.calls[0][7];
 
     onWorkflowRun();
 

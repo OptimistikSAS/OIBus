@@ -90,6 +90,14 @@ export interface ConfigurationWorkflowDTO extends BaseEntity {
 }
 
 export interface ConfigurationWorkflowCommandDTO {
+  /**
+   * The ID of the workflow - null (or a `temp_`-prefixed id minted client-side) when creating a new one.
+   * Only meaningful when the workflow is sent as part of a south connector command; ignored by the
+   * standalone workflow endpoints, which take the id from the path.
+   * @example null
+   */
+  id: string | null;
+
   name: string;
   discoveryScope: Record<string, unknown>;
 

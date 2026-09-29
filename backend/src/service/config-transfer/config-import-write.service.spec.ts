@@ -371,38 +371,35 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
       rangeHigh: null,
       maxCachingInterval: null
     });
-    (south.settings as SouthConnectorFolderScannerCommandDTO).items = [item('ownedItem', 'owned'), item('manualItem', 'manual')];
-    const auditFields = { oIBusCreatedBy: '', oIBusUpdatedBy: '', oIBusCreatedAt: '', oIBusUpdatedAt: '' };
+    // Ownership is exported on the item itself, next to its oIBus* audit fields (not part of the item command DTO)
+    const ownedItem = {
+      ...item('ownedItem', 'owned'),
+      createdByWorkflowId: 'localWorkflow',
+      disabledReason: 'not found by the last discovery'
+    };
+    (south.settings as SouthConnectorFolderScannerCommandDTO).items = [ownedItem, item('manualItem', 'manual')];
     south.settings.configurationWorkflows = [
       {
-        ...auditFields,
-        oIBusInternalId: 'localWorkflow',
-        settings: {
-          name: 'local',
-          discoveryScope: { folder: 'input' },
-          identityKeyFields: ['name'],
-          eligibilityFilter: [{ field: 'name', operator: 'contains', value: 'csv' }],
-          itemFieldMapping: { name: '{{name}}' },
-          pushToOIAnalytics: false,
-          scanModeId: south.settings.items[0].scanModeId,
-          enabled: true
-        },
-        ownedItems: [{ id: 'ownedItem', disabledReason: 'not found by the last discovery' }]
+        id: 'localWorkflow',
+        name: 'local',
+        discoveryScope: { folder: 'input' },
+        identityKeyFields: ['name'],
+        eligibilityFilter: [{ field: 'name', operator: 'contains', value: 'csv' }],
+        itemFieldMapping: { name: '{{name}}' },
+        pushToOIAnalytics: false,
+        scanModeId: south.settings.items[0].scanModeId,
+        enabled: true
       },
       {
-        ...auditFields,
-        oIBusInternalId: 'remoteWorkflow',
-        settings: {
-          name: 'remote',
-          discoveryScope: {},
-          identityKeyFields: ['ignored for a remote workflow'],
-          eligibilityFilter: [],
-          itemFieldMapping: null,
-          pushToOIAnalytics: true,
-          scanModeId: null,
-          enabled: true
-        },
-        ownedItems: []
+        id: 'remoteWorkflow',
+        name: 'remote',
+        discoveryScope: {},
+        identityKeyFields: ['ignored for a remote workflow'],
+        eligibilityFilter: [],
+        itemFieldMapping: null,
+        pushToOIAnalytics: true,
+        scanModeId: null,
+        enabled: true
       }
     ];
     // A workflow existing before the import, on another south, must be replaced

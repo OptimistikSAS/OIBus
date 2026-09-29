@@ -106,7 +106,9 @@ const southItemEntry = Joi.object({
   threshold: nullableNumber,
   rangeLow: nullableNumber,
   rangeHigh: nullableNumber,
-  maxCachingInterval: nullableNumber
+  maxCachingInterval: nullableNumber,
+  createdByWorkflowId: Joi.string().allow(null),
+  disabledReason: Joi.string().allow(null)
 });
 
 const southGroupEntry = Joi.object({
@@ -131,43 +133,36 @@ const southGroupEntry = Joi.object({
  * nor neither.
  */
 const configurationWorkflowEntry = Joi.object({
-  ...auditFields,
-  settings: Joi.object({
-    name: Joi.string().required(),
-    discoveryScope: Joi.object().required(),
-    identityKeyFields: Joi.array().items(Joi.string()).required(),
-    eligibilityFilter: Joi.array()
-      .items(
-        Joi.object({
-          field: Joi.string().required(),
-          operator: Joi.string()
-            .valid(...RECORD_FILTER_OPERATORS)
-            .required(),
-          value: Joi.string().allow('')
-        })
-      )
-      .required(),
-    itemFieldMapping: Joi.object().pattern(Joi.string(), Joi.string().allow('')).allow(null).required(),
-    pushToOIAnalytics: Joi.boolean().required(),
-    scanModeId: Joi.string().allow(null).required(),
-    enabled: Joi.boolean().required()
-  })
-    .custom((settings: { itemFieldMapping: object | null; pushToOIAnalytics: boolean; identityKeyFields: Array<string> }, helpers) => {
-      if (settings.itemFieldMapping !== null && settings.pushToOIAnalytics) {
-        return helpers.message({ custom: 'A configuration workflow cannot both create/update items and push to OIAnalytics' });
-      }
-      if (settings.itemFieldMapping === null && !settings.pushToOIAnalytics) {
-        return helpers.message({ custom: 'A configuration workflow must either create/update items or push to OIAnalytics' });
-      }
-      if (!settings.pushToOIAnalytics && settings.identityKeyFields.length === 0) {
-        return helpers.message({ custom: 'A configuration workflow creating/updating items requires at least one identity key field' });
-      }
-      return settings;
-    })
+  id: Joi.string().required(),
+  name: Joi.string().required(),
+  discoveryScope: Joi.object().required(),
+  identityKeyFields: Joi.array().items(Joi.string()).required(),
+  eligibilityFilter: Joi.array()
+    .items(
+      Joi.object({
+        field: Joi.string().required(),
+        operator: Joi.string()
+          .valid(...RECORD_FILTER_OPERATORS)
+          .required(),
+        value: Joi.string().allow('')
+      })
+    )
     .required(),
-  ownedItems: Joi.array()
-    .items(Joi.object({ id: Joi.string().required(), disabledReason: Joi.string().allow(null).required() }))
-    .required()
+  itemFieldMapping: Joi.object().pattern(Joi.string(), Joi.string().allow('')).allow(null).required(),
+  pushToOIAnalytics: Joi.boolean().required(),
+  scanModeId: Joi.string().allow(null).required(),
+  enabled: Joi.boolean().required()
+}).custom((workflow: { itemFieldMapping: object | null; pushToOIAnalytics: boolean; identityKeyFields: Array<string> }, helpers) => {
+  if (workflow.itemFieldMapping !== null && workflow.pushToOIAnalytics) {
+    return helpers.message({ custom: 'A configuration workflow cannot both create/update items and push to OIAnalytics' });
+  }
+  if (workflow.itemFieldMapping === null && !workflow.pushToOIAnalytics) {
+    return helpers.message({ custom: 'A configuration workflow must either create/update items or push to OIAnalytics' });
+  }
+  if (!workflow.pushToOIAnalytics && workflow.identityKeyFields.length === 0) {
+    return helpers.message({ custom: 'A configuration workflow creating/updating items requires at least one identity key field' });
+  }
+  return workflow;
 });
 
 const southEntry = Joi.object({

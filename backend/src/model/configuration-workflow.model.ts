@@ -87,3 +87,11 @@ export interface ConfigurationWorkflowCommand {
   scanMode: ScanMode | null;
   enabled: boolean;
 }
+
+/**
+ * A workflow saved as part of its south connector (see `SouthConnectorRepository.saveSouth`) - `id` null,
+ * `temp_`-prefixed, or not one of the connector's existing workflows means "create".
+ */
+export interface ConfigurationWorkflowSouthCommand extends Omit<ConfigurationWorkflowCommand, 'southId'> {
+  id: string | null;
+}
