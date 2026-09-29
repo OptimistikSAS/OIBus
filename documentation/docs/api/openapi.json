@@ -15404,6 +15404,123 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"Record_string.unknown_": {
+				"properties": {},
+				"additionalProperties": {},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"RecordFilterOperator": {
+				"type": "string",
+				"enum": [
+					"equals",
+					"notEquals",
+					"contains",
+					"matches",
+					"exists",
+					"greaterThan",
+					"lessThan"
+				],
+				"example": "equals",
+				"description": "How one condition of a workflow's eligibility filter compares a discovered record's field."
+			},
+			"RecordFilterCondition": {
+				"description": "One condition of a Configuration Workflow's eligibility filter, evaluated against a single\ndiscovered record. `value` is omitted for the `exists` operator, which only checks presence.",
+				"properties": {
+					"field": {
+						"type": "string",
+						"description": "A key of the discovered record to test.",
+						"example": "type"
+					},
+					"operator": {
+						"$ref": "#/components/schemas/RecordFilterOperator"
+					},
+					"value": {
+						"type": "string",
+						"description": "The value to compare against — not used for `exists`.",
+						"example": "Variable"
+					}
+				},
+				"required": [
+					"field",
+					"operator"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Record_string.string_": {
+				"properties": {},
+				"additionalProperties": {
+					"type": "string"
+				},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
+			"ConfigurationWorkflowCommandDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the workflow - null (or a `temp_`-prefixed id minted client-side) when creating a new one.\nOnly meaningful when the workflow is sent as part of a south connector command; ignored by the\nstandalone workflow endpoints, which take the id from the path.",
+						"example": null
+					},
+					"name": {
+						"type": "string"
+					},
+					"discoveryScope": {
+						"$ref": "#/components/schemas/Record_string.unknown_"
+					},
+					"identityKeyFields": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array",
+						"description": "Local mode: at least one field is required. Remote mode (`pushToOIAnalytics` true): ignored, and\nstored empty — send `[]`.",
+						"example": [
+							"nodeId"
+						]
+					},
+					"eligibilityFilter": {
+						"items": {
+							"$ref": "#/components/schemas/RecordFilterCondition"
+						},
+						"type": "array"
+					},
+					"itemFieldMapping": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Record_string.string_"
+							}
+						],
+						"nullable": true
+					},
+					"pushToOIAnalytics": {
+						"type": "boolean"
+					},
+					"scanModeId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the scan mode to use for this workflow, or null for manual-only.",
+						"example": null
+					},
+					"enabled": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"discoveryScope",
+					"identityKeyFields",
+					"eligibilityFilter",
+					"itemFieldMapping",
+					"pushToOIAnalytics",
+					"scanModeId",
+					"enabled"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthConnectorADSCommandDTO": {
 				"description": "South connector command for Beckhoff ADS.",
 				"properties": {
@@ -15448,6 +15565,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -15457,7 +15581,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -15833,6 +15958,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -15842,7 +15974,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -16218,6 +16351,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -16227,7 +16367,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -16603,6 +16744,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -16612,7 +16760,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -16988,6 +17137,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -16997,7 +17153,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -17373,6 +17530,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -17382,7 +17546,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -17758,6 +17923,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -17767,7 +17939,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -18143,6 +18316,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -18152,7 +18332,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -18528,6 +18709,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -18537,7 +18725,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -18913,6 +19102,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -18922,7 +19118,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -19298,6 +19495,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -19307,7 +19511,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -19683,6 +19888,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -19692,7 +19904,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -20068,6 +20281,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -20077,7 +20297,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -20453,6 +20674,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -20462,7 +20690,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -20838,6 +21067,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -20847,7 +21083,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -21223,6 +21460,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -21232,7 +21476,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -21608,6 +21853,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -21617,7 +21869,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -21993,6 +22246,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -22002,7 +22262,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -22378,6 +22639,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -22387,7 +22655,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -22763,6 +23032,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -22772,7 +23048,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -23148,6 +23425,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -23157,7 +23441,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -23533,6 +23818,13 @@
 						},
 						"type": "array",
 						"description": "List of groups used to gather items"
+					},
+					"configurationWorkflows": {
+						"items": {
+							"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO"
+						},
+						"type": "array",
+						"description": "Configuration workflows of this connector. Workflows missing from this list are deleted, those\nwith an id matching one of the connector's existing workflows are updated, and the others are\ncreated."
 					}
 				},
 				"required": [
@@ -23542,7 +23834,8 @@
 					"enabled",
 					"settings",
 					"items",
-					"groups"
+					"groups",
+					"configurationWorkflows"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -23868,12 +24161,6 @@
 					}
 				]
 			},
-			"Record_string.unknown_": {
-				"properties": {},
-				"additionalProperties": {},
-				"type": "object",
-				"description": "Construct a type with a set of properties K of type T"
-			},
 			"SouthConnectorItemTestingSettings": {
 				"description": "Settings for testing a South connector item.\nUsed when manually testing data collection for an item.",
 				"properties": {
@@ -23952,6 +24239,115 @@
 				"required": [
 					"southSettings",
 					"query"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"WorkflowPreviewEntryStatus": {
+				"type": "string",
+				"enum": [
+					"new",
+					"changed",
+					"unchanged",
+					"reactivated",
+					"missing"
+				],
+				"example": "new",
+				"description": "How a preview classifies one discovered/tracked entry against the workflow's previous run - the same\nclassification a real run's Decide step uses, before Act would touch anything."
+			},
+			"WorkflowPreviewEntryDTO": {
+				"description": "One entry of a workflow preview - a discovered record classified against what the previous run last\nsaw for the same identity key, without writing anything.",
+				"properties": {
+					"key": {
+						"type": "string",
+						"description": "The identity key computed from the workflow's `identityKeyFields`."
+					},
+					"status": {
+						"$ref": "#/components/schemas/WorkflowPreviewEntryStatus"
+					},
+					"record": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/OIBusRecord"
+							}
+						],
+						"nullable": true,
+						"description": "The freshly discovered record - null for `missing` entries, which weren't found this time."
+					},
+					"previousMetadata": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Record_string.unknown_"
+							}
+						],
+						"nullable": true,
+						"description": "The previous run's snapshot for this key - null for a brand new (`new`) entry."
+					}
+				},
+				"required": [
+					"key",
+					"status",
+					"record",
+					"previousMetadata"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"WorkflowPreviewResultDTO": {
+				"description": "A dry run of a Configuration Workflow: identical discovery as a real run, but nothing is written - no\nitems, no point metadata, no `workflow_runs` record, no OIAnalytics push. Discovery itself is a real\nround-trip to the data source, so a preview costs what a run costs minus the writes.",
+				"properties": {
+					"discoveredCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"eligibleCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"entries": {
+						"items": {
+							"$ref": "#/components/schemas/WorkflowPreviewEntryDTO"
+						},
+						"type": "array",
+						"description": "Local (item-creating) workflow only - the per-entry new/changed/unchanged/missing classification\nagainst the previous run. Empty for a remote workflow."
+					},
+					"records": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusRecord"
+						},
+						"type": "array",
+						"description": "Remote (push-to-OIAnalytics) workflow only - the raw eligible records that would be sent, exactly\nas discovered, with no mapping or diffing applied. Empty for a local workflow."
+					}
+				},
+				"required": [
+					"discoveredCount",
+					"eligibleCount",
+					"entries",
+					"records"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthWorkflowPreviewRequest": {
+				"properties": {
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthSettings",
+						"description": "South connector settings, as currently edited"
+					},
+					"workflowId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The saved workflow being edited, to classify entries against its previous run - null for a workflow not saved yet"
+					},
+					"workflow": {
+						"$ref": "#/components/schemas/ConfigurationWorkflowCommandDTO",
+						"description": "The workflow as currently edited"
+					}
+				},
+				"required": [
+					"southSettings",
+					"workflowId",
+					"workflow"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -24363,14 +24759,6 @@
 				],
 				"type": "object",
 				"additionalProperties": false
-			},
-			"Record_string.string_": {
-				"properties": {},
-				"additionalProperties": {
-					"type": "string"
-				},
-				"type": "object",
-				"description": "Construct a type with a set of properties K of type T"
 			},
 			"SouthCsvImportResponse": {
 				"properties": {
@@ -42894,44 +43282,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"RecordFilterOperator": {
-				"type": "string",
-				"enum": [
-					"equals",
-					"notEquals",
-					"contains",
-					"matches",
-					"exists",
-					"greaterThan",
-					"lessThan"
-				],
-				"example": "equals",
-				"description": "How one condition of a workflow's eligibility filter compares a discovered record's field."
-			},
-			"RecordFilterCondition": {
-				"description": "One condition of a Configuration Workflow's eligibility filter, evaluated against a single\ndiscovered record. `value` is omitted for the `exists` operator, which only checks presence.",
-				"properties": {
-					"field": {
-						"type": "string",
-						"description": "A key of the discovered record to test.",
-						"example": "type"
-					},
-					"operator": {
-						"$ref": "#/components/schemas/RecordFilterOperator"
-					},
-					"value": {
-						"type": "string",
-						"description": "The value to compare against — not used for `exists`.",
-						"example": "Variable"
-					}
-				},
-				"required": [
-					"field",
-					"operator"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"ConfigurationWorkflowDTO": {
 				"description": "A Configuration Workflow: discovers a data source, decides which of what it found actually\nwarrants a configuration change, and either creates/updates south items from it or forwards the raw\neligible records to OIAnalytics — run once by hand or recurringly on a scan mode.\n\nExactly one of `itemFieldMapping`/`pushToOIAnalytics` applies — a workflow is either local\n(`itemFieldMapping` set, `pushToOIAnalytics` false) or remote (`itemFieldMapping` null,\n`pushToOIAnalytics` true), enforced at the service layer. Remote additionally requires OIBus to be\nregistered with OIAnalytics.",
 				"properties": {
@@ -43038,64 +43388,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"ConfigurationWorkflowCommandDTO": {
-				"properties": {
-					"name": {
-						"type": "string"
-					},
-					"discoveryScope": {
-						"$ref": "#/components/schemas/Record_string.unknown_"
-					},
-					"identityKeyFields": {
-						"items": {
-							"type": "string"
-						},
-						"type": "array",
-						"description": "Local mode: at least one field is required. Remote mode (`pushToOIAnalytics` true): ignored, and\nstored empty — send `[]`.",
-						"example": [
-							"nodeId"
-						]
-					},
-					"eligibilityFilter": {
-						"items": {
-							"$ref": "#/components/schemas/RecordFilterCondition"
-						},
-						"type": "array"
-					},
-					"itemFieldMapping": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Record_string.string_"
-							}
-						],
-						"nullable": true
-					},
-					"pushToOIAnalytics": {
-						"type": "boolean"
-					},
-					"scanModeId": {
-						"type": "string",
-						"nullable": true,
-						"description": "The ID of the scan mode to use for this workflow, or null for manual-only.",
-						"example": null
-					},
-					"enabled": {
-						"type": "boolean"
-					}
-				},
-				"required": [
-					"name",
-					"discoveryScope",
-					"identityKeyFields",
-					"eligibilityFilter",
-					"itemFieldMapping",
-					"pushToOIAnalytics",
-					"scanModeId",
-					"enabled"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"WorkflowRunTriggerType": {
 				"type": "string",
 				"enum": [
@@ -43190,91 +43482,6 @@
 					"completedAt",
 					"error",
 					"triggeredBy"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"WorkflowPreviewEntryStatus": {
-				"type": "string",
-				"enum": [
-					"new",
-					"changed",
-					"unchanged",
-					"reactivated",
-					"missing"
-				],
-				"example": "new",
-				"description": "How a preview classifies one discovered/tracked entry against the workflow's previous run - the same\nclassification a real run's Decide step uses, before Act would touch anything."
-			},
-			"WorkflowPreviewEntryDTO": {
-				"description": "One entry of a workflow preview - a discovered record classified against what the previous run last\nsaw for the same identity key, without writing anything.",
-				"properties": {
-					"key": {
-						"type": "string",
-						"description": "The identity key computed from the workflow's `identityKeyFields`."
-					},
-					"status": {
-						"$ref": "#/components/schemas/WorkflowPreviewEntryStatus"
-					},
-					"record": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/OIBusRecord"
-							}
-						],
-						"nullable": true,
-						"description": "The freshly discovered record - null for `missing` entries, which weren't found this time."
-					},
-					"previousMetadata": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/Record_string.unknown_"
-							}
-						],
-						"nullable": true,
-						"description": "The previous run's snapshot for this key - null for a brand new (`new`) entry."
-					}
-				},
-				"required": [
-					"key",
-					"status",
-					"record",
-					"previousMetadata"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"WorkflowPreviewResultDTO": {
-				"description": "A dry run of a Configuration Workflow: identical discovery as a real run, but nothing is written - no\nitems, no point metadata, no `workflow_runs` record, no OIAnalytics push. Discovery itself is a real\nround-trip to the data source, so a preview costs what a run costs minus the writes.",
-				"properties": {
-					"discoveredCount": {
-						"type": "number",
-						"format": "double"
-					},
-					"eligibleCount": {
-						"type": "number",
-						"format": "double"
-					},
-					"entries": {
-						"items": {
-							"$ref": "#/components/schemas/WorkflowPreviewEntryDTO"
-						},
-						"type": "array",
-						"description": "Local (item-creating) workflow only - the per-entry new/changed/unchanged/missing classification\nagainst the previous run. Empty for a remote workflow."
-					},
-					"records": {
-						"items": {
-							"$ref": "#/components/schemas/OIBusRecord"
-						},
-						"type": "array",
-						"description": "Remote (push-to-OIAnalytics) workflow only - the raw eligible records that would be sent, exactly\nas discovered, with no mapping or diffing applied. Empty for a local workflow."
-					}
-				},
-				"required": [
-					"discoveredCount",
-					"eligibleCount",
-					"entries",
-					"records"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -44851,6 +45058,58 @@
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/SouthDiscoveryQueryTestRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/south/{southId}/test/workflow-preview": {
+			"post": {
+				"operationId": "TestWorkflowPreview",
+				"responses": {
+					"200": {
+						"description": "What a run would find and how it would classify it",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/WorkflowPreviewResultDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Dry-runs a configuration workflow as currently edited (possibly never saved) against the south\nconnector settings as currently edited: identical discovery and classification as a real run, but\nnothing is written. Used from the south connector edit page, where workflows can be previewed but not run.",
+				"summary": "Preview a configuration workflow before saving it",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The south connector id, or \"create\" for a connector not created yet",
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "southType",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/OIBusSouthType"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SouthWorkflowPreviewRequest"
 							}
 						}
 					}
@@ -49863,7 +50122,7 @@
 						}
 					}
 				},
-				"description": "Imports a configuration export file (from OIBus or OIAnalytics), transactionally wiping and\nrecreating every in-scope section of the local configuration (scan modes, ip filters, certificates,\ntransformers, south connectors and their configuration workflows, north connectors, history queries\nand users) from it, preserving each entity's original id. This is a full replace, not a merge, and\ncannot be undone. The engine's own settings and the OIAnalytics registration are never touched.\nA configuration from an older OIBus is brought to the current shape by the config upgrade chain\nbefore being applied; nothing is written if the file is malformed, comes from a newer OIBus (or one\nolder than 3.10.0), or fails validation after the upgrades.\n\nOn success, OIBus restarts itself so the running engine picks up the newly written configuration\n— the wipe+recreate only touches the database, and the in-memory south/north connectors and\nhistory queries the engine is already running would otherwise keep operating against rows that\nno longer exist.",
+				"description": "Imports a configuration export file (from OIBus or OIAnalytics), transactionally wiping and\nrecreating every in-scope section of the local configuration (scan modes, ip filters, certificates,\ntransformers, south connectors and their configuration workflows, north connectors, history queries\nand users) from it, preserving each entity's original id. This is a full replace, not a merge, and\ncannot be undone. The engine's own settings and the OIAnalytics registration are never touched.\nA configuration from an older OIBus is brought to the current shape by the config upgrade chain\nbefore being applied; nothing is written if the file is malformed, comes from a newer OIBus (or one\nolder than 3.9.0), or fails validation after the upgrades.\n\nOn success, OIBus restarts itself so the running engine picks up the newly written configuration\n— the wipe+recreate only touches the database, and the in-memory south/north connectors and\nhistory queries the engine is already running would otherwise keep operating against rows that\nno longer exist.",
 				"summary": "Import configuration",
 				"tags": [
 					"Config Transfer"

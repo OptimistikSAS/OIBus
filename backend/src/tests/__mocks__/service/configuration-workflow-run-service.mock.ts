@@ -1,6 +1,6 @@
 import { mock } from 'node:test';
 import { WorkflowRunEntity, WorkflowRunSearchParam } from '../../../model/workflow-run.model';
-import { WorkflowPreviewResultDTO } from '../../../../shared/model/configuration-workflow.model';
+import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '../../../../shared/model/configuration-workflow.model';
 import { Page } from '../../../../shared/model/types';
 
 /**
@@ -16,6 +16,20 @@ export default class ConfigurationWorkflowRunServiceMock {
     entries: [],
     records: []
   }));
+  previewCommand = mock.fn(
+    async (
+      _southId: string,
+      _southType: string,
+      _southSettings: unknown,
+      _workflowId: string | null,
+      _command: ConfigurationWorkflowCommandDTO
+    ): Promise<WorkflowPreviewResultDTO> => ({
+      discoveredCount: 0,
+      eligibleCount: 0,
+      entries: [],
+      records: []
+    })
+  );
   findRuns = mock.fn((_southId: string, _workflowId: string, _searchParams: WorkflowRunSearchParam): Page<WorkflowRunEntity> => ({
     content: [],
     size: 50,

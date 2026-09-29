@@ -1,7 +1,11 @@
 import { mock } from 'node:test';
 import type { Database } from 'better-sqlite3';
 import { createAuditServiceMock } from '../../../utils/test-utils';
-import { ConfigurationWorkflowCommand, ConfigurationWorkflowEntity } from '../../../../model/configuration-workflow.model';
+import {
+  ConfigurationWorkflowCommand,
+  ConfigurationWorkflowEntity,
+  ConfigurationWorkflowSouthCommand
+} from '../../../../model/configuration-workflow.model';
 import ConfigurationWorkflowRepository from '../../../../repository/config/configuration-workflow.repository';
 
 /**
@@ -19,5 +23,8 @@ export default class ConfigurationWorkflowRepositoryMock extends ConfigurationWo
     (_command: ConfigurationWorkflowCommand, _createdBy: string): ConfigurationWorkflowEntity => ({}) as ConfigurationWorkflowEntity
   );
   override update = mock.fn((_id: string, _command: Omit<ConfigurationWorkflowCommand, 'southId'>, _updatedBy: string): void => undefined);
+  override syncForSouth = mock.fn(
+    (_southId: string, _workflows: Array<ConfigurationWorkflowSouthCommand>, _updatedBy: string): void => undefined
+  );
   override delete = mock.fn((_id: string, _deletedBy: string): void => undefined);
 }

@@ -415,7 +415,12 @@
 }
 <div class="modal-footer">
   <div class="btn-group">
-    <button [oib-save-button]="state" form="workflow-form" translationKey="common.save" iconClass="fa-save"></button>
+    <button
+      [oib-save-button]="state"
+      form="workflow-form"
+      [translationKey]="directSave ? 'common.save' : 'common.ok'"
+      [iconClass]="directSave ? 'fa-save' : 'fa-check'"
+    ></button>
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>
