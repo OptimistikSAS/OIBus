@@ -13,18 +13,13 @@ import { SouthConnectorService } from '../../../services/south-connector.service
 import { EngineService } from '../../../services/engine.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import { ConfigurationWorkflowDTO } from '../../../../../../backend/shared/model/configuration-workflow.model';
+import { ConfigurationWorkflowCommandDTO } from '../../../../../../backend/shared/model/configuration-workflow.model';
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
-import {
-  SouthConnectorItemDTO,
-  SouthConnectorManifest,
-  SouthItemGroupDTO
-} from '../../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorManifest, SouthItemGroupDTO } from '../../../../../../backend/shared/model/south-connector.model';
 import { RegistrationSettingsDTO } from '../../../../../../backend/shared/model/engine.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
-const items = [{ id: 'item1', name: 'Temperature' }] as unknown as Array<SouthConnectorItemDTO>;
 const groups = [{ id: 'group1', standardSettings: { name: 'Group 1' } }] as unknown as Array<SouthItemGroupDTO>;
 const southId = 'southId1';
 const southSettings = testData.south.list[0].settings;
@@ -104,21 +99,16 @@ const enablingManifest = {
   }
 } as unknown as SouthConnectorManifest;
 
-const existingWorkflow: ConfigurationWorkflowDTO = {
+const existingWorkflow: ConfigurationWorkflowCommandDTO = {
   id: 'workflowId1',
   name: 'Reactor discovery',
-  southId: 'southId1',
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
   eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
   itemFieldMapping: { name: '{{name}}' },
   pushToOIAnalytics: false,
-  scanMode: scanModes[0],
-  enabled: true,
-  createdAt: '',
-  updatedAt: '',
-  createdBy: { id: '', friendlyName: '' },
-  updatedBy: { id: '', friendlyName: '' }
+  scanModeId: scanModes[0].id,
+  enabled: true
 };
 
 const notRegistered: RegistrationSettingsDTO = { status: 'NOT_REGISTERED' } as unknown as RegistrationSettingsDTO;
@@ -161,7 +151,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should populate the form and dynamic lists in edit mode', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForEdition(scanModes, items, [existingWorkflow], manifest, existingWorkflow, southId, southSettings);
+    fixture.componentInstance.prepareForEdition(scanModes, [existingWorkflow], manifest, existingWorkflow, southId, southSettings);
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
@@ -177,7 +167,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should prefill a duplicate with the source workflow settings, a "-copy" name, and create-mode uniqueness', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCopy(scanModes, items, [existingWorkflow], manifest, existingWorkflow, southId, southSettings);
+    fixture.componentInstance.prepareForCopy(scanModes, [existingWorkflow], manifest, existingWorkflow, southId, southSettings);
     fixture.detectChanges();
 
     expect(fixture.componentInstance.mode).toBe('copy');
@@ -194,9 +184,67 @@ describe('EditWorkflowModalComponent', () => {
     expect(fixture.componentInstance.form!.controls.name.errors).toEqual({ mustBeUnique: true });
   });
 
+  test("should keep the edited workflow's own id on save, whether persisted or an in-memory temp one", () => {
+    const inMemoryWorkflow: ConfigurationWorkflowCommandDTO = { ...existingWorkflow, id: 'temp_123' };
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForEdition(scanModes, [inMemoryWorkflow], manifest, inMemoryWorkflow, 'create', southSettings);
+    fixture.detectChanges();
+    fixture.componentInstance.itemFieldMappingValues['scanModeId'] = scanModes[0].id;
+
+    fixture.componentInstance.save();
+
+    expect(activeModal.close).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'temp_123', name: 'Reactor discovery', scanModeId: scanModes[0].id })
+    );
+  });
+
+  test('should save a duplicate with a null id, leaving the caller to decide what to give it', () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCopy(scanModes, [existingWorkflow], manifest, existingWorkflow, southId, southSettings);
+    fixture.detectChanges();
+    fixture.componentInstance.itemFieldMappingValues['scanModeId'] = scanModes[0].id;
+
+    fixture.componentInstance.save();
+
+    expect(activeModal.close).toHaveBeenCalledWith(expect.objectContaining({ id: null, name: 'Reactor discovery-copy' }));
+  });
+
+  test('should only exclude the edited workflow itself from the name uniqueness check', () => {
+    const other = { id: 'temp_other', name: 'Other discovery' };
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForEdition(scanModes, [existingWorkflow, other], manifest, existingWorkflow, southId, southSettings);
+    fixture.detectChanges();
+
+    fixture.componentInstance.form!.controls.name.setValue('Reactor discovery');
+    expect(fixture.componentInstance.form!.controls.name.errors).toBeNull();
+    fixture.componentInstance.form!.controls.name.setValue('other discovery');
+    expect(fixture.componentInstance.form!.controls.name.errors).toEqual({ mustBeUnique: true });
+  });
+
+  test('should label the confirm button "OK" rather than "Save" when the caller keeps workflows in memory', async () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.directSave = false;
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, 'create', southSettings);
+    fixture.detectChanges();
+
+    await expect.element(page.elementLocator(fixture.nativeElement).getByCss('.modal-footer')).toMatchTextContent(/OK/);
+  });
+
+  test('should test the discovery query against the "create" south id when the connector is being created', () => {
+    const fixture = TestBed.createComponent(EditWorkflowModalComponent);
+    fixture.componentInstance.prepareForCreation(scanModes, [], sqlManifest, 'create', southSettings);
+    fixture.detectChanges();
+    fixture.componentInstance.discoveryQuery = 'SELECT 1';
+    southConnectorService.testDiscoveryQuery.mockReturnValue(of([]));
+
+    fixture.componentInstance.testDiscoveryQuery();
+
+    expect(southConnectorService.testDiscoveryQuery).toHaveBeenCalledWith('create', sqlManifest.id, southSettings, 'SELECT 1');
+  });
+
   test('should show the node picker for a tree-based connector, and open the explore modal in selectable mode', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
@@ -219,7 +267,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should clear a picked root node back to "browse from the true root"', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.discoveryRootNodeId = 'ns=1;s=Reactor';
 
@@ -230,7 +278,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should show a query-only editor, with no reference tree, for a SQL-family connector without explore()', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], sqlManifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], sqlManifest, southId, southSettings);
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
@@ -242,7 +290,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should force "Push to OIAnalytics" and hide the mode picker and item field mapping for a SQL-family connector', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], sqlManifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], sqlManifest, southId, southSettings);
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
@@ -257,7 +305,7 @@ describe('EditWorkflowModalComponent', () => {
   test('should always push to OIAnalytics (never build itemFieldMapping) when saving a SQL-family workflow', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     engineService.getRegistrationSettings.mockReturnValue(of(registered));
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], sqlManifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], sqlManifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.form!.controls.name.setValue('SQL workflow');
     fixture.componentInstance.discoveryQuery = 'SELECT column_name FROM my_metadata_table';
@@ -272,7 +320,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should test the discovery query as currently typed and show the raw rows', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], sqlManifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], sqlManifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.discoveryQuery = 'SELECT name, unit FROM metadata';
     southConnectorService.testDiscoveryQuery.mockReturnValue(of([{ name: 'sensor1', unit: 'C' }]));
@@ -292,7 +340,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should show an error when the discovery query test fails', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], sqlManifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], sqlManifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.discoveryQuery = 'SELECT * FROM nope';
     southConnectorService.testDiscoveryQuery.mockReturnValue(throwError(() => ({ error: { message: 'no such table: nope' } })));
@@ -306,7 +354,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should not test a blank discovery query', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], sqlManifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], sqlManifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.discoveryQuery = '   ';
 
@@ -317,7 +365,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should show the reference explore tree above the query editor for SQLite', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], sqliteManifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], sqliteManifest, southId, southSettings);
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
@@ -328,7 +376,7 @@ describe('EditWorkflowModalComponent', () => {
   test('should show an unsupported-connector message when the connector is neither tree-based nor SQL-family', () => {
     const unsupportedManifest = { ...manifest, id: 'mqtt', explore: false } as unknown as SouthConnectorManifest;
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], unsupportedManifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], unsupportedManifest, southId, southSettings);
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('#discovery-scope-unsupported')).not.toBeNull();
@@ -337,9 +385,13 @@ describe('EditWorkflowModalComponent', () => {
   });
 
   test('should read discoveryScope.query back for a SQL-family workflow being edited', () => {
-    const sqlWorkflow: ConfigurationWorkflowDTO = { ...existingWorkflow, discoveryScope: { query: 'SELECT 1' }, pushToOIAnalytics: true };
+    const sqlWorkflow: ConfigurationWorkflowCommandDTO = {
+      ...existingWorkflow,
+      discoveryScope: { query: 'SELECT 1' },
+      pushToOIAnalytics: true
+    };
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForEdition(scanModes, items, [sqlWorkflow], sqlManifest, sqlWorkflow, southId, southSettings);
+    fixture.componentInstance.prepareForEdition(scanModes, [sqlWorkflow], sqlManifest, sqlWorkflow, southId, southSettings);
     fixture.detectChanges();
 
     expect(fixture.componentInstance.discoveryQuery).toBe('SELECT 1');
@@ -348,7 +400,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should list every field the manifest exposes for item field mapping, not just the mapped ones', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
 
     const paths = fixture.componentInstance.itemMappableFields.map(field => field.path);
@@ -377,7 +429,6 @@ describe('EditWorkflowModalComponent', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
     fixture.componentInstance.prepareForCreation(
       scanModes,
-      items,
       [],
       { ...manifest, modes: { ...manifest.modes, history: false } },
       southId,
@@ -392,7 +443,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should render a select (not a text box) for boolean, scan-mode, and string-select fields', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings, groups);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings, groups);
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
@@ -411,7 +462,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test("should render the group field as a dropdown listing this south connector's own groups, with a create-new-group action", async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings, groups);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings, groups);
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
@@ -424,7 +475,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should map the group field to a constant when a group is picked from the dropdown', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings, groups);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings, groups);
     fixture.detectChanges();
 
     fixture.componentInstance.onSelectGroup('group1');
@@ -445,17 +496,7 @@ describe('EditWorkflowModalComponent', () => {
     const deleteGroup = vi.fn();
     const createdGroup = { id: 'group2', standardSettings: { name: 'Group 2' } } as unknown as SouthItemGroupDTO;
     addOrEditGroup.mockReturnValue(of(createdGroup));
-    fixture.componentInstance.prepareForCreation(
-      scanModes,
-      items,
-      [],
-      manifest,
-      southId,
-      southSettings,
-      ownGroups,
-      addOrEditGroup,
-      deleteGroup
-    );
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings, ownGroups, addOrEditGroup, deleteGroup);
     fixture.detectChanges();
     const groupModalInstance = { prepareForCreation: vi.fn() };
     modalService.open.mockReturnValue({ componentInstance: groupModalInstance, result: of({ mode: 'create', group: {} }) } as never);
@@ -463,6 +504,7 @@ describe('EditWorkflowModalComponent', () => {
     fixture.componentInstance.onAddGroup();
 
     expect(addOrEditGroup).toHaveBeenCalledWith({ mode: 'create', group: {} });
+    expect((groupModalInstance as { directSave?: boolean }).directSave).toBe(true);
     expect(fixture.componentInstance.groups).toContainEqual(createdGroup);
     expect(fixture.componentInstance.itemFieldMappingValues['groupId']).toBe('group2');
   });
@@ -473,30 +515,23 @@ describe('EditWorkflowModalComponent', () => {
     const addOrEditGroup = vi.fn();
     const deleteGroup = vi.fn();
     deleteGroup.mockReturnValue(of(undefined));
-    fixture.componentInstance.prepareForCreation(
-      scanModes,
-      items,
-      [],
-      manifest,
-      southId,
-      southSettings,
-      ownGroups,
-      addOrEditGroup,
-      deleteGroup
-    );
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings, ownGroups, addOrEditGroup, deleteGroup);
     fixture.detectChanges();
     fixture.componentInstance.onSelectGroup('group1');
 
-    fixture.componentInstance.onDeleteGroup(ownGroups[0], new Event('click'));
+    const group1 = ownGroups[0];
+    fixture.componentInstance.onDeleteGroup(group1, new Event('click'));
 
-    expect(deleteGroup).toHaveBeenCalledWith(ownGroups[0]);
+    expect(deleteGroup).toHaveBeenCalledWith(group1);
     expect(fixture.componentInstance.groups).toEqual([]);
+    // Removed from the caller's own list too, not just from a copy of it
+    expect(ownGroups).toEqual([]);
     expect(fixture.componentInstance.itemFieldMappingValues['groupId']).toBe('');
   });
 
   test('should append .title to a manifest string-select field label, but not to the flat-string hardcoded ones', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
 
     // A manifest string-select's translationKey is a namespace object ({ title, <value>: ... }, e.g. OPC-UA's
@@ -518,7 +553,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should flag a field referenced by an enablingCondition and omit its {{ }} option, forcing a constant', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], enablingManifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], enablingManifest, southId, southSettings);
     fixture.detectChanges();
 
     const modeField = fixture.componentInstance.itemMappableFields.find(field => field.path === 'settings.mode')!;
@@ -535,7 +570,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should hide a field gated by an enablingCondition until the referral constant matches, then show it', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], enablingManifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], enablingManifest, southId, southSettings);
     fixture.detectChanges();
 
     const targetSelector = '[id="item-field-mapping-field-settings.haMode.aggregate"]';
@@ -556,7 +591,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should reject saving when a field that gates other fields is mapped to a {{ }} expression', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], enablingManifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], enablingManifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.form!.controls.name.setValue('New workflow');
     fixture.componentInstance.identityKeyFields = ['nodeId'];
@@ -572,7 +607,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should never offer {{ }} for the schedule field - it must always reference a real scan mode', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
 
     const scanModeIdField = fixture.componentInstance.itemMappableFields.find(field => field.path === 'scanModeId')!;
@@ -583,7 +618,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should never offer {{ }} for recoveryStrategy/syncWithGroup, and hint "constant value" on the other historian fields', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings, groups);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings, groups);
     fixture.detectChanges();
 
     const byPath = (path: string) => fixture.componentInstance.itemMappableFields.find(field => field.path === path)!;
@@ -605,7 +640,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should reject saving when a constant-only historian field is mapped to a {{ }} expression', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.form!.controls.name.setValue('New workflow');
     fixture.componentInstance.identityKeyFields = ['nodeId'];
@@ -619,7 +654,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test("should keep a hidden field's value while editing, but strip it from the mapping at save time", () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], enablingManifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], enablingManifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.form!.controls.name.setValue('New workflow');
     fixture.componentInstance.identityKeyFields = ['nodeId'];
@@ -644,7 +679,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should record ancestor labels for a field nested beyond the top-level settings wrapper, but not for settings itself', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], enablingManifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], enablingManifest, southId, southSettings);
     fixture.detectChanges();
 
     const modeField = fixture.componentInstance.itemMappableFields.find(field => field.path === 'settings.mode')!;
@@ -655,7 +690,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should show the item-owned historian fields and hide syncWithGroup while the item is not mapped into a group', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings, groups);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings, groups);
     fixture.detectChanges();
 
     const byPath = (path: string) => fixture.componentInstance.itemMappableFields.find(field => field.path === path)!;
@@ -671,7 +706,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should still show the item-owned historian fields once grouped, as long as the item is not synced with the group', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings, groups);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings, groups);
     fixture.detectChanges();
 
     fixture.componentInstance.onSelectGroup('group1');
@@ -691,7 +726,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should hide the item-owned historian fields once the item is actually synced with its group', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings, groups);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings, groups);
     fixture.detectChanges();
 
     fixture.componentInstance.onSelectGroup('group1');
@@ -709,7 +744,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should switch a select-type field into variable mode and expose an expression input when the sentinel is chosen', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings, groups);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings, groups);
     fixture.detectChanges();
 
     const enabledField = fixture.componentInstance.itemMappableFields.find(field => field.path === 'enabled')!;
@@ -729,21 +764,12 @@ describe('EditWorkflowModalComponent', () => {
   });
 
   test('should treat an existing {{...}} value on a select-type field as already in variable mode when editing', async () => {
-    const workflowWithVariableBoolean: ConfigurationWorkflowDTO = {
+    const workflowWithVariableBoolean: ConfigurationWorkflowCommandDTO = {
       ...existingWorkflow,
       itemFieldMapping: { enabled: '{{isEnabled}}' }
     };
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForEdition(
-      scanModes,
-      items,
-      [],
-      manifest,
-      workflowWithVariableBoolean,
-      southId,
-      southSettings,
-      groups
-    );
+    fixture.componentInstance.prepareForEdition(scanModes, [], manifest, workflowWithVariableBoolean, southId, southSettings, groups);
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
@@ -752,7 +778,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should render an empty form in create mode, defaulting to local (item-creating) mode', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
 
     const controls = fixture.componentInstance.form!.controls;
@@ -765,7 +791,7 @@ describe('EditWorkflowModalComponent', () => {
   test('should refresh the OIAnalytics registration status when preparing the modal', () => {
     engineService.getRegistrationSettings.mockReturnValue(of(registered));
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
 
     expect(fixture.componentInstance.isRegistered).toBe(true);
@@ -773,7 +799,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should allow picking the remote radio while OIBus is not registered, and show a warning instead of blocking it', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('#mode-remote-not-registered')).toBeNull();
 
@@ -787,7 +813,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should only show identity key fields in local mode', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
     const root = page.elementLocator(fixture.nativeElement);
     await expect.element(root.getByCss('#identity-key-fields-list')).toBeInTheDocument();
@@ -803,7 +829,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should add and remove identity key fields', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
 
     fixture.componentInstance.newIdentityKeyField = 'nodeId';
@@ -821,7 +847,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should not add an eligibility condition with an empty field', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
 
     fixture.componentInstance.newEligibilityField = '  ';
@@ -831,7 +857,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should not set a value on an "exists" eligibility condition', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
 
     fixture.componentInstance.newEligibilityField = 'unit';
@@ -844,7 +870,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should edit an eligibility condition in place', async () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.eligibilityFilter = [{ field: 'type', operator: 'equals', value: 'Variable' }];
     fixture.detectChanges();
@@ -869,7 +895,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should not save an eligibility edit with a blank field, and should clear the value when switching to "exists"', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.eligibilityFilter = [{ field: 'type', operator: 'equals', value: 'Variable' }];
 
@@ -890,7 +916,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should cancel an in-progress eligibility edit without changing the condition', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.eligibilityFilter = [{ field: 'type', operator: 'equals', value: 'Variable' }];
 
@@ -904,7 +930,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should drop an in-progress eligibility edit when a condition is removed, since indices shift', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.eligibilityFilter = [
       { field: 'a', operator: 'equals', value: '1' },
@@ -920,7 +946,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should reject saving when identityKeyFields is empty', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.form!.controls.name.setValue('New workflow');
 
@@ -932,7 +958,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should still save remote mode when OIBus is not registered with OIAnalytics', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.form!.controls.name.setValue('New workflow');
     fixture.componentInstance.identityKeyFields = ['nodeId'];
@@ -946,7 +972,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test("should reject saving when a SQL connector's metadata query is blank", () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], sqlManifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], sqlManifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.form!.controls.name.setValue('New workflow');
     fixture.componentInstance.identityKeyFields = ['nodeId'];
@@ -959,7 +985,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should close the modal with a valid command when everything is filled in', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
 
     fixture.componentInstance.form!.controls.name.setValue('New workflow');
@@ -975,6 +1001,7 @@ describe('EditWorkflowModalComponent', () => {
     fixture.componentInstance.save();
 
     expect(activeModal.close).toHaveBeenCalledWith({
+      id: null,
       name: 'New workflow',
       discoveryScope: { rootNodeId: 'ns=1;s=Root' },
       identityKeyFields: ['nodeId'],
@@ -989,7 +1016,7 @@ describe('EditWorkflowModalComponent', () => {
   test('should close the modal with a valid command when remote (push to OIAnalytics) mode is picked and OIBus is registered', () => {
     engineService.getRegistrationSettings.mockReturnValue(of(registered));
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
 
     fixture.componentInstance.form!.controls.name.setValue('New workflow');
@@ -1008,7 +1035,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should save a remote workflow without any identity key field', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.form!.controls.name.setValue('New workflow');
     fixture.componentInstance.form!.controls.pushToOIAnalytics.setValue(true);
@@ -1021,7 +1048,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should reject saving when a mandatory item field is not mapped', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.form!.controls.name.setValue('New workflow');
     fixture.componentInstance.identityKeyFields = ['nodeId'];
@@ -1036,7 +1063,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should not require scanModeId once the item is mapped into a group', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings, groups);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings, groups);
     fixture.detectChanges();
     fixture.componentInstance.form!.controls.name.setValue('New workflow');
     fixture.componentInstance.identityKeyFields = ['nodeId'];
@@ -1052,7 +1079,7 @@ describe('EditWorkflowModalComponent', () => {
   test('should build a query discoveryScope, trimmed, when saving a SQL-family workflow', () => {
     engineService.getRegistrationSettings.mockReturnValue(of(registered));
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], sqlManifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], sqlManifest, southId, southSettings);
     fixture.detectChanges();
     fixture.componentInstance.form!.controls.name.setValue('SQL workflow');
     fixture.componentInstance.discoveryQuery = '  SELECT column_name FROM my_metadata_table  ';
@@ -1067,7 +1094,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should default a tree-based connector to an empty discoveryScope when no root node was picked, when saving', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings, groups);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings, groups);
     fixture.detectChanges();
     fixture.componentInstance.form!.controls.name.setValue('New workflow');
     fixture.componentInstance.identityKeyFields = ['nodeId'];
@@ -1082,7 +1109,7 @@ describe('EditWorkflowModalComponent', () => {
 
   test('should cancel by dismissing the modal', () => {
     const fixture = TestBed.createComponent(EditWorkflowModalComponent);
-    fixture.componentInstance.prepareForCreation(scanModes, items, [], manifest, southId, southSettings);
+    fixture.componentInstance.prepareForCreation(scanModes, [], manifest, southId, southSettings);
     fixture.detectChanges();
 
     fixture.componentInstance.cancel();

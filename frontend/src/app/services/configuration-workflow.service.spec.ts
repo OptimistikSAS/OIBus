@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { ConfigurationWorkflowService } from './configuration-workflow.service';
 import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '../../../../backend/shared/model/configuration-workflow.model';
 import { WorkflowRunDTO } from '../../../../backend/shared/model/workflow-run.model';
+import { SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 import { toPage } from '../shared/test-utils';
 import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 
@@ -30,6 +31,7 @@ const workflow: ConfigurationWorkflowDTO = {
 };
 
 const command: ConfigurationWorkflowCommandDTO = {
+  id: null,
   name: 'Reactor discovery',
   discoveryScope: { rootNodeId: 'ns=1;s=Root' },
   identityKeyFields: ['nodeId'],
@@ -147,15 +149,39 @@ describe('ConfigurationWorkflowService', () => {
     expect(result).toEqual(previewResult);
   });
 
+  test('should preview an unsaved workflow command against the given south settings', () => {
+    const previewResult = { discoveredCount: 2, eligibleCount: 1, entries: [], records: [] };
+    const southSettings = { inputFolder: './input' } as unknown as SouthSettings;
+    let result: unknown;
+    service.previewCommand(SOUTH_ID, 'opcua', southSettings, WORKFLOW_ID, command).subscribe(r => (result = r));
+
+    const req = http.expectOne({ url: `/api/south/${SOUTH_ID}/test/workflow-preview?southType=opcua`, method: 'POST' });
+    expect(req.request.body).toEqual({ southSettings, workflowId: WORKFLOW_ID, workflow: command });
+    req.flush(previewResult);
+
+    expect(result).toEqual(previewResult);
+  });
+
+  test('should preview a workflow command of a connector being created, with no persisted workflow id', () => {
+    const southSettings = { inputFolder: './input' } as unknown as SouthSettings;
+    service.previewCommand('create', 'opcua', southSettings, null, command).subscribe();
+
+    const req = http.expectOne({ url: `/api/south/create/test/workflow-preview?southType=opcua`, method: 'POST' });
+    expect(req.request.body).toEqual({ southSettings, workflowId: null, workflow: command });
+    req.flush({ discoveredCount: 0, eligibleCount: 0, entries: [], records: [] });
+  });
+
   test('should tell the global error interceptor to skip 400/404 errors on run/preview/delete, since the caller shows its own notification', () => {
     service.runNow(SOUTH_ID, WORKFLOW_ID).subscribe({ error: () => {} });
     service.preview(SOUTH_ID, WORKFLOW_ID).subscribe({ error: () => {} });
     service.delete(SOUTH_ID, WORKFLOW_ID).subscribe({ error: () => {} });
+    service.previewCommand(SOUTH_ID, 'opcua', {} as SouthSettings, null, command).subscribe({ error: () => {} });
 
     const requests = [
       http.expectOne(`/api/south/${SOUTH_ID}/workflows/${WORKFLOW_ID}/run`),
       http.expectOne(`/api/south/${SOUTH_ID}/workflows/${WORKFLOW_ID}/preview`),
-      http.expectOne(`/api/south/${SOUTH_ID}/workflows/${WORKFLOW_ID}`)
+      http.expectOne(`/api/south/${SOUTH_ID}/workflows/${WORKFLOW_ID}`),
+      http.expectOne(`/api/south/${SOUTH_ID}/test/workflow-preview?southType=opcua`)
     ];
     for (const req of requests) {
       const shouldIgnore = req.request.context.get(SHOULD_IGNORE_ERROR_PREDICATE);

@@ -1,4 +1,5 @@
 import { mock } from 'node:test';
+import { ConfigurationWorkflowSouthCommand } from '../../../../model/configuration-workflow.model';
 import type { Database } from 'better-sqlite3';
 import { createAuditServiceMock } from '../../../utils/test-utils';
 import {
@@ -24,7 +25,13 @@ export default class SouthConnectorRepositoryMock extends SouthConnectorReposito
   override findAllSouth = mock.fn((): Array<SouthConnectorEntityLight> => []);
   override findAllSouthFull = mock.fn((): Array<SouthConnectorEntity<SouthSettings, SouthItemSettings>> => []);
   override findSouthById = mock.fn((_id: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null => null);
-  override saveSouth = mock.fn((_south: SouthConnectorEntity<SouthSettings, SouthItemSettings>): void => undefined);
+  override saveSouth = mock.fn(
+    (
+      _south: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
+      _isNewConnector: boolean,
+      _configurationWorkflows?: Array<ConfigurationWorkflowSouthCommand>
+    ): void => undefined
+  );
   override start = mock.fn((_id: string): void => undefined);
   override stop = mock.fn((_id: string): void => undefined);
   override deleteSouth = mock.fn((_id: string, _deletedBy: string): void => undefined);

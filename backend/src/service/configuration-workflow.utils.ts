@@ -1,5 +1,30 @@
 import { OIBusRecord } from '../../shared/model/engine.model';
 import { RecordFilterCondition } from '../model/configuration-workflow.model';
+import { ConfigurationWorkflowCommandDTO } from '../../shared/model/configuration-workflow.model';
+import { OIBusValidationError } from '../model/types';
+
+/**
+ * Exactly one of itemFieldMapping (local)/pushToOIAnalytics (remote) applies - never both, never neither -
+ * and a local workflow needs at least one identity key field to diff against its previous run. Shared by
+ * every path that saves a workflow (the standalone workflow endpoints and the south connector command).
+ */
+export function checkWorkflowMode(command: ConfigurationWorkflowCommandDTO): void {
+  if (command.itemFieldMapping !== null && command.pushToOIAnalytics) {
+    throw new OIBusValidationError('A configuration workflow cannot both create/update items and push to OIAnalytics');
+  }
+  if (command.itemFieldMapping === null && !command.pushToOIAnalytics) {
+    throw new OIBusValidationError('A configuration workflow must either create/update items or push to OIAnalytics');
+  }
+  if (!command.pushToOIAnalytics && command.identityKeyFields.length === 0) {
+    throw new OIBusValidationError('A configuration workflow creating/updating items requires at least one identity key field');
+  }
+}
+
+/** Identity keys only drive the local diff against the previous run - a remote workflow never performs it,
+ *  so whatever it was sent with is discarded rather than stored as meaningless configuration. */
+export function resolveIdentityKeyFields(command: ConfigurationWorkflowCommandDTO): Array<string> {
+  return command.pushToOIAnalytics ? [] : command.identityKeyFields;
+}
 
 /**
  * Evaluates one workflow's `eligibilityFilter` against a single discovered record - every condition
