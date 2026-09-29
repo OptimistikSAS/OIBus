@@ -19,6 +19,7 @@ import SouthServiceMock from '../../tests/__mocks__/service/south-service.mock';
 import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import ConfigurationWorkflowRunServiceMock from '../../tests/__mocks__/service/configuration-workflow-run-service.mock';
 import { OIBusContent } from '../../../shared/model/engine.model';
 import { OIBusTestingError } from '../../model/types';
 import type { SouthConnectorController as SouthConnectorControllerShape } from './south-connector.controller';
@@ -370,6 +371,60 @@ describe('SouthConnectorController', () => {
       assert.strictEqual((error as OIBusTestingError).message, 'Discovery query failure');
     }
     assert.strictEqual(southService.testDiscoveryQuery.mock.calls.length, 1);
+  });
+
+  it('should preview a configuration workflow as currently edited', async () => {
+    const workflowRunService = mockRequest.services!.configurationWorkflowRunService as unknown as ConfigurationWorkflowRunServiceMock;
+    const requestBody = {
+      southSettings: testData.south.command.settings,
+      workflowId: 'workflowId1',
+      workflow: {
+        id: 'workflowId1',
+        name: 'workflow',
+        discoveryScope: {},
+        identityKeyFields: [],
+        eligibilityFilter: [],
+        itemFieldMapping: null,
+        pushToOIAnalytics: true,
+        scanModeId: null,
+        enabled: true
+      }
+    };
+    const previewResult = { discoveredCount: 1, eligibleCount: 1, entries: [], records: [{ name: 'sensor1' }] };
+    workflowRunService.previewCommand.mock.mockImplementation(async () => previewResult);
+
+    const result = await controller.testWorkflowPreview(
+      testData.south.list[0].id,
+      testData.south.command.type,
+      requestBody,
+      mockRequest as CustomExpressRequest
+    );
+
+    assert.deepStrictEqual(workflowRunService.previewCommand.mock.calls[0].arguments, [
+      testData.south.list[0].id,
+      testData.south.command.type,
+      requestBody.southSettings,
+      'workflowId1',
+      requestBody.workflow
+    ]);
+    assert.deepStrictEqual(result, previewResult);
+  });
+
+  it('should wrap errors when previewing a configuration workflow as currently edited', async () => {
+    const workflowRunService = mockRequest.services!.configurationWorkflowRunService as unknown as ConfigurationWorkflowRunServiceMock;
+    workflowRunService.previewCommand.mock.mockImplementation(async () => {
+      throw new Error('Preview failure');
+    });
+
+    await assert.rejects(
+      controller.testWorkflowPreview(
+        'create',
+        testData.south.command.type,
+        { southSettings: testData.south.command.settings, workflowId: null, workflow: {} as never },
+        mockRequest as CustomExpressRequest
+      ),
+      new OIBusTestingError('Preview failure')
+    );
   });
 
   it('should start a south explore session', async () => {

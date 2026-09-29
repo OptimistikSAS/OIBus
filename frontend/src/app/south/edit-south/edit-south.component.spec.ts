@@ -7,6 +7,9 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { EditSouthComponent } from './edit-south.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
+import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
+import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
+import { ConfigurationWorkflowDTO } from '../../../../../backend/shared/model/configuration-workflow.model';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ScanModeService } from '../../services/scan-mode.service';
@@ -59,8 +62,27 @@ const duplicateRouteStub = {
   queryParamMap: of({ get: (key: string) => (key === 'duplicate' ? southConnector.id : null), getAll: () => [] as Array<string> })
 };
 
+const buildWorkflow = (id: string, name: string, overrides: Partial<ConfigurationWorkflowDTO> = {}): ConfigurationWorkflowDTO => ({
+  id,
+  name,
+  southId: southConnector.id,
+  discoveryScope: { rootNodeId: 'ns=1;s=Root' },
+  identityKeyFields: ['nodeId'],
+  eligibilityFilter: [],
+  itemFieldMapping: { name: '{{name}}' },
+  pushToOIAnalytics: false,
+  scanMode: null,
+  enabled: true,
+  createdAt: '',
+  updatedAt: '',
+  createdBy: { id: '', friendlyName: '' },
+  updatedBy: { id: '', friendlyName: '' },
+  ...overrides
+});
+
 describe('EditSouthComponent', () => {
   let southConnectorService: MockObject<SouthConnectorService>;
+  let configurationWorkflowService: MockObject<ConfigurationWorkflowService>;
   let scanModeService: MockObject<ScanModeService>;
   let certificateService: MockObject<CertificateService>;
   let confirmationService: MockObject<ConfirmationService>;
@@ -68,6 +90,8 @@ describe('EditSouthComponent', () => {
 
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
+    configurationWorkflowService = createMock(ConfigurationWorkflowService);
+    configurationWorkflowService.list.mockReturnValue(of([]));
     scanModeService = createMock(ScanModeService);
     certificateService = createMock(CertificateService);
     const notificationService = createMock(NotificationService);
@@ -89,6 +113,7 @@ describe('EditSouthComponent', () => {
         provideRouter([]),
         provideHttpClientTesting(),
         { provide: SouthConnectorService, useValue: southConnectorService },
+        { provide: ConfigurationWorkflowService, useValue: configurationWorkflowService },
         { provide: ScanModeService, useValue: scanModeService },
         { provide: CertificateService, useValue: certificateService },
         { provide: NotificationService, useValue: notificationService },
@@ -297,5 +322,148 @@ describe('EditSouthComponent', () => {
 
     expect(modalService.open).toHaveBeenCalledWith(SouthExploreModalComponent, expect.anything());
     expect(fakeModal.componentInstance.prepare).toHaveBeenCalled();
+  });
+  describe('configuration workflows', () => {
+    test('should start with no workflows in plain create mode, without loading any', async () => {
+      TestBed.overrideProvider(ActivatedRoute, { useValue: createRouteStub });
+      const fixture = TestBed.createComponent(EditSouthComponent);
+      fixture.detectChanges();
+
+      expect(configurationWorkflowService.list).not.toHaveBeenCalled();
+      expect(fixture.componentInstance.inMemoryWorkflows).toEqual([]);
+      expect(fixture.componentInstance.formSouthConnectorCommand.configurationWorkflows).toEqual([]);
+      const root = page.elementLocator(fixture.nativeElement);
+      await expect.element(root.getByCss('#manage-workflows-button')).toMatchTextContent(/Manage sync configuration\s*0/);
+    });
+
+    test("should load the connector's workflows in edit mode, keeping their ids, and include them in the command", async () => {
+      southConnectorService.findById.mockReturnValue(of(southConnector as any));
+      configurationWorkflowService.list.mockReturnValue(
+        of([buildWorkflow('workflow1', 'Alpha', { scanMode: scanModes[0] }), buildWorkflow('workflow2', 'Beta')])
+      );
+      TestBed.overrideProvider(ActivatedRoute, { useValue: editRouteStub });
+      const fixture = TestBed.createComponent(EditSouthComponent);
+      fixture.detectChanges();
+
+      expect(configurationWorkflowService.list).toHaveBeenCalledWith(southConnector.id);
+      expect(fixture.componentInstance.inMemoryWorkflows).toEqual([
+        {
+          id: 'workflow1',
+          name: 'Alpha',
+          discoveryScope: { rootNodeId: 'ns=1;s=Root' },
+          identityKeyFields: ['nodeId'],
+          eligibilityFilter: [],
+          itemFieldMapping: { name: '{{name}}' },
+          pushToOIAnalytics: false,
+          scanModeId: scanModes[0].id,
+          enabled: true
+        },
+        expect.objectContaining({ id: 'workflow2', name: 'Beta', scanModeId: null })
+      ]);
+      expect(fixture.componentInstance.formSouthConnectorCommand.configurationWorkflows).toBe(fixture.componentInstance.inMemoryWorkflows);
+      const root = page.elementLocator(fixture.nativeElement);
+      await expect.element(root.getByCss('#manage-workflows-button')).toMatchTextContent(/Manage sync configuration\s*2/);
+    });
+
+    test('should send the in-memory workflows along with the connector on save', () => {
+      southConnectorService.findById.mockReturnValue(of(southConnector as any));
+      southConnectorService.update.mockReturnValue(of(undefined) as any);
+      configurationWorkflowService.list.mockReturnValue(of([buildWorkflow('workflow1', 'Alpha')]));
+      TestBed.overrideProvider(ActivatedRoute, { useValue: editRouteStub });
+      const fixture = TestBed.createComponent(EditSouthComponent);
+      fixture.detectChanges();
+      fixture.componentInstance.inMemoryWorkflows.push({ ...fixture.componentInstance.inMemoryWorkflows[0], id: 'temp_1', name: 'New' });
+
+      fixture.componentInstance.submit('save');
+
+      expect(southConnectorService.update).toHaveBeenCalledWith(
+        southConnector.id,
+        expect.objectContaining({
+          configurationWorkflows: [expect.objectContaining({ id: 'workflow1' }), expect.objectContaining({ id: 'temp_1', name: 'New' })]
+        })
+      );
+    });
+
+    test("duplicate mode should load the source's workflows with fresh temp ids, remapping a mapped group to its copy", () => {
+      const groupA = buildGroup('group1', 'GroupA', scanModes[0]);
+      southConnectorService.findById.mockReturnValue(of({ ...southConnector, groups: [groupA] } as any));
+      configurationWorkflowService.list.mockReturnValue(
+        of([
+          buildWorkflow('workflow1', 'Alpha', { itemFieldMapping: { name: '{{name}}', groupId: 'group1' } }),
+          buildWorkflow('workflow2', 'Beta', { pushToOIAnalytics: true, itemFieldMapping: null })
+        ])
+      );
+      TestBed.overrideProvider(ActivatedRoute, { useValue: duplicateRouteStub });
+      const fixture = TestBed.createComponent(EditSouthComponent);
+      fixture.detectChanges();
+
+      expect(configurationWorkflowService.list).toHaveBeenCalledWith(southConnector.id);
+      const [alpha, beta] = fixture.componentInstance.inMemoryWorkflows;
+      expect(alpha.id).toMatch(/^temp_/);
+      expect(beta.id).toMatch(/^temp_/);
+      expect(alpha.id).not.toBe(beta.id);
+      expect(alpha.itemFieldMapping).toEqual({ name: '{{name}}', groupId: fixture.componentInstance.inMemoryGroups[0].id });
+      expect(beta.itemFieldMapping).toBeNull();
+    });
+
+    test('deleteGroup should unmap the deleted group from every in-memory workflow mapping items into it', () => {
+      const groupA = buildGroup('group1', 'GroupA', scanModes[0]);
+      southConnectorService.findById.mockReturnValue(of({ ...southConnector, groups: [groupA] } as any));
+      configurationWorkflowService.list.mockReturnValue(
+        of([
+          buildWorkflow('workflow1', 'Alpha', { itemFieldMapping: { name: '{{name}}', groupId: 'group1', syncWithGroup: 'true' } }),
+          buildWorkflow('workflow2', 'Beta', { itemFieldMapping: { name: '{{name}}', groupId: 'otherGroup' } })
+        ])
+      );
+      confirmationService.confirm.mockReturnValue(of(undefined));
+      TestBed.overrideProvider(ActivatedRoute, { useValue: editRouteStub });
+      const fixture = TestBed.createComponent(EditSouthComponent);
+      fixture.detectChanges();
+
+      const workflowsBefore = fixture.componentInstance.inMemoryWorkflows;
+
+      fixture.componentInstance.deleteGroup(fixture.componentInstance.inMemoryGroups[0]).subscribe();
+
+      // Same array, updated in place - an open manage workflows modal works on it
+      expect(fixture.componentInstance.inMemoryWorkflows).toBe(workflowsBefore);
+      const [alpha, beta] = fixture.componentInstance.inMemoryWorkflows;
+      expect(alpha.itemFieldMapping).toEqual({ name: '{{name}}' });
+      expect(beta.itemFieldMapping).toEqual({ name: '{{name}}', groupId: 'otherGroup' });
+    });
+
+    test('manageWorkflows should open the manage workflows modal in memory mode, against the unsaved settings', () => {
+      southConnectorService.findById.mockReturnValue(of(southConnector as any));
+      TestBed.overrideProvider(ActivatedRoute, { useValue: editRouteStub });
+      const prepareForInMemory = vi.fn();
+      modalService.open.mockReturnValue({ componentInstance: { prepareForInMemory }, result: of(undefined) } as any);
+      const fixture = TestBed.createComponent(EditSouthComponent);
+      fixture.detectChanges();
+
+      fixture.componentInstance.manageWorkflows();
+
+      expect(modalService.open).toHaveBeenCalledWith(ManageWorkflowsModalComponent, expect.anything());
+      expect(prepareForInMemory).toHaveBeenCalledWith(
+        fixture.componentInstance.inMemoryWorkflows,
+        southConnector.id,
+        fixture.componentInstance.formSouthConnectorCommand.settings,
+        scanModes,
+        manifest,
+        fixture.componentInstance.inMemoryGroups,
+        expect.any(Function),
+        expect.any(Function)
+      );
+    });
+
+    test("manageWorkflows should use the 'create' south id for a connector being created", () => {
+      TestBed.overrideProvider(ActivatedRoute, { useValue: createRouteStub });
+      const prepareForInMemory = vi.fn();
+      modalService.open.mockReturnValue({ componentInstance: { prepareForInMemory }, result: of(undefined) } as any);
+      const fixture = TestBed.createComponent(EditSouthComponent);
+      fixture.detectChanges();
+
+      fixture.componentInstance.manageWorkflows();
+
+      expect(prepareForInMemory.mock.calls[0][1]).toBe('create');
+    });
   });
 });

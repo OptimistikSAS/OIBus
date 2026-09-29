@@ -1,40 +1,40 @@
 version: '3.5'
 services:
-    mysql:
-        container_name: oibus-mysql
-        image: 'mysql/mysql-server'
-        ports:
-            - ${MYSQL_PORT:-5306}:3306
-        environment:
-            TZ: 'Europe/Paris'
-            MYSQL_ROOT_PASSWORD: '${MYSQL_PASSWORD:-oibus123}'
-            MYSQL_DATABASE: '${MYSQL_DATABASE:-oibus}'
-            MYSQL_USER: '${MYSQL_USERNAME:-oibus}'
-            MYSQL_PASSWORD: '${MYSQL_PASSWORD:-oibus123}'
-        volumes:
-            - /var/lib/mysql
+  mysql:
+    container_name: oibus-mysql
+    image: 'mysql/mysql-server'
+    ports:
+      - ${MYSQL_PORT:-5306}:3306
+    environment:
+      TZ: 'Europe/Paris'
+      MYSQL_ROOT_PASSWORD: '${MYSQL_PASSWORD:-oibus123}'
+      MYSQL_DATABASE: '${MYSQL_DATABASE:-oibus}'
+      MYSQL_USER: '${MYSQL_USERNAME:-oibus}'
+      MYSQL_PASSWORD: '${MYSQL_PASSWORD:-oibus123}'
+    volumes:
+      - /var/lib/mysql
 
-    postgresql:
-         container_name: oibus-postgresql
-         image: postgres
-         volumes:
-             - /var/lib/postgresql/data
-         ports:
-             - ${POSTGRESQL_PORT:-5432}:5432
-         environment:
-             - TZ=Europe/Paris
-             - POSTGRES_USER=${POSTGRESQL_USERNAME:-oibus}
-             - POSTGRES_PASSWORD=${POSTGRESQL_PASSWORD:-oibus123}
-             - POSTGRES_DB=${POSTGRESQL_DATABASE:-oibus}
+  postgresql:
+    container_name: oibus-postgresql
+    image: postgres
+    volumes:
+      - /var/lib/postgresql/data
+    ports:
+      - ${POSTGRESQL_PORT:-5432}:5432
+    environment:
+      - TZ=Europe/Paris
+      - POSTGRES_USER=${POSTGRESQL_USERNAME:-oibus}
+      - POSTGRES_PASSWORD=${POSTGRESQL_PASSWORD:-oibus123}
+      - POSTGRES_DB=${POSTGRESQL_DATABASE:-oibus}
 
-    mssql:
-         container_name: oibus-mssql
-         image: mcr.microsoft.com/azure-sql-edge:latest
-         ports:
-             - ${MSSQL_PORT:-1433}:1433
-         environment:
-             SA_PASSWORD: ${MSSQL_PASSWORD:-Oibus123@}
-             ACCEPT_EULA: "Y"
+  mssql:
+    container_name: oibus-mssql
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    ports:
+      - ${MSSQL_PORT:-1433}:1433
+    environment:
+      SA_PASSWORD: ${MSSQL_PASSWORD:-Oibus123@}
+      ACCEPT_EULA: 'Y'
 
 #    rabbitmq:
 #         container_name: oibus-rabbitmq

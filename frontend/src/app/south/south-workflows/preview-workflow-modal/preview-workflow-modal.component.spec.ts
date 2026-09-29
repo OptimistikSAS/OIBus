@@ -10,7 +10,11 @@ import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { NotificationService } from '../../../shared/notification.service';
 import { DownloadService } from '../../../services/download.service';
-import { WorkflowPreviewResultDTO } from '../../../../../../backend/shared/model/configuration-workflow.model';
+import {
+  ConfigurationWorkflowCommandDTO,
+  WorkflowPreviewResultDTO
+} from '../../../../../../backend/shared/model/configuration-workflow.model';
+import { SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import { WorkflowRunDetailDTO } from '../../../../../../backend/shared/model/workflow-run.model';
 
 describe('PreviewWorkflowModalComponent', () => {
@@ -240,6 +244,49 @@ describe('PreviewWorkflowModalComponent', () => {
     fixture.detectChanges();
 
     expect(notificationService.error).toHaveBeenCalledWith('south.workflows.preview-error', { error: expect.any(String) });
+    expect(activeModal.close).toHaveBeenCalled();
+  });
+
+  test('should preview an unsaved workflow command against the given south settings, with the same result display', async () => {
+    const southSettings = { inputFolder: './input' } as unknown as SouthSettings;
+    const command: ConfigurationWorkflowCommandDTO = {
+      id: 'temp_1',
+      name: 'Unsaved discovery',
+      discoveryScope: {},
+      identityKeyFields: ['nodeId'],
+      eligibilityFilter: [],
+      itemFieldMapping: { name: '{{nodeId}}' },
+      pushToOIAnalytics: false,
+      scanModeId: null,
+      enabled: true
+    };
+    const result: WorkflowPreviewResultDTO = {
+      discoveredCount: 1,
+      eligibleCount: 1,
+      entries: [{ key: 'nodeId=a', status: 'new', record: { nodeId: 'a' }, previousMetadata: null }],
+      records: []
+    };
+    configurationWorkflowService.previewCommand.mockReturnValue(of(result));
+    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
+    fixture.componentInstance.prepareForCommandPreview('create', 'opcua', southSettings, null, command, 'Unsaved discovery');
+    fixture.detectChanges();
+
+    expect(configurationWorkflowService.previewCommand).toHaveBeenCalledWith('create', 'opcua', southSettings, null, command);
+    expect(configurationWorkflowService.preview).not.toHaveBeenCalled();
+    expect(fixture.componentInstance.context).toBe('preview');
+    const root = page.elementLocator(fixture.nativeElement);
+    await expect.element(root.getByCss('.modal-title')).toMatchTextContent('Preview: Unsaved discovery');
+    await expect.element(root.getByCss('#preview-counts')).toMatchTextContent('1 discovered, 1 eligible');
+    await expect.element(root.getByCss('tbody')).toMatchTextContent('nodeId=a');
+  });
+
+  test('should close the modal and notify when an unsaved workflow command preview fails', () => {
+    configurationWorkflowService.previewCommand.mockReturnValue(throwError(() => ({ error: { message: 'cannot connect' } })));
+    const fixture = TestBed.createComponent(PreviewWorkflowModalComponent);
+    fixture.componentInstance.prepareForCommandPreview('southId1', 'opcua', {} as SouthSettings, 'workflowId1', {} as never, 'Discovery');
+    fixture.detectChanges();
+
+    expect(notificationService.error).toHaveBeenCalledWith('south.workflows.preview-error', { error: 'cannot connect' });
     expect(activeModal.close).toHaveBeenCalled();
   });
 
