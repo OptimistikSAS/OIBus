@@ -12,6 +12,7 @@ import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianal
 import OIAnalyticsRegistrationServiceMock from '../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 import testData from '../tests/utils/test-data';
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
+import { ConfigurationWorkflowCommandDTO } from '../../shared/model/configuration-workflow.model';
 import { ItemPointMetadataEntity } from '../model/item-point-metadata.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import { OIBusValidationError } from '../model/types';
@@ -675,6 +676,99 @@ describe('Configuration Workflow Run Service', () => {
         service.preview(SOUTH_ID, WORKFLOW_ID),
         new OIBusValidationError(`South connector "${SOUTH_ID}" is not running - start it before running a workflow`)
       );
+    });
+  });
+
+  describe('previewCommand', () => {
+    const southSettings = testData.south.list[0].settings;
+    const command: ConfigurationWorkflowCommandDTO = {
+      id: null,
+      name: 'Unsaved discovery',
+      discoveryScope: { rootNodeId: 'ns=1;s=Root' },
+      identityKeyFields: ['nodeId'],
+      eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
+      itemFieldMapping: { name: '{{name}}' },
+      pushToOIAnalytics: false,
+      scanModeId: null,
+      enabled: true
+    };
+
+    it('should discover with the settings as edited and classify every entry as new for a workflow not saved yet', async () => {
+      southService.discover.mock.mockImplementation(async () => [
+        { nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' },
+        { nodeId: 'ns=1;s=Folder', name: 'Folder', type: 'Object' }
+      ]);
+
+      const result = await service.previewCommand('create', 'opcua', southSettings, null, command);
+
+      assert.deepStrictEqual(southService.discover.mock.calls[0].arguments, ['create', 'opcua', southSettings, command.discoveryScope]);
+      assert.strictEqual(configurationWorkflowService.findById.mock.calls.length, 0);
+      assert.strictEqual(itemPointMetadataRepository.findAllByWorkflow.mock.calls.length, 0);
+      assert.strictEqual(engine.getSouth.mock.calls.length, 0);
+      assert.deepStrictEqual(result, {
+        discoveredCount: 2,
+        eligibleCount: 1,
+        entries: [
+          {
+            key: 'nodeId=ns=1;s=Temperature',
+            status: 'new',
+            record: { nodeId: 'ns=1;s=Temperature', name: 'Temperature', type: 'Variable' },
+            previousMetadata: null
+          }
+        ],
+        records: []
+      });
+      assert.strictEqual(workflowRunRepository.start.mock.calls.length, 0);
+    });
+
+    it('should check ownership and classify against the previous run of the saved workflow being edited', async () => {
+      itemPointMetadataRepository.findAllByWorkflow.mock.mockImplementation(() => [
+        {
+          id: 'p1',
+          workflowId: WORKFLOW_ID,
+          southItemId: 'itemA',
+          discoveredEntryKey: 'nodeId=gone',
+          discoveredMetadata: { nodeId: 'gone' },
+          status: 'active',
+          orphanedAt: null,
+          lastPushedAt: null
+        }
+      ]);
+      southService.discover.mock.mockImplementation(async () => []);
+
+      const result = await service.previewCommand(SOUTH_ID, 'opcua', southSettings, WORKFLOW_ID, command);
+
+      assert.deepStrictEqual(configurationWorkflowService.findById.mock.calls[0].arguments, [SOUTH_ID, WORKFLOW_ID]);
+      assert.deepStrictEqual(itemPointMetadataRepository.findAllByWorkflow.mock.calls[0].arguments, [WORKFLOW_ID]);
+      assert.deepStrictEqual(result.entries, [
+        { key: 'nodeId=gone', status: 'missing', record: null, previousMetadata: { nodeId: 'gone' } }
+      ]);
+    });
+
+    it('should return the raw eligible records for a remote workflow', async () => {
+      southService.discover.mock.mockImplementation(async () => [{ nodeId: 'ns=1;s=Temperature', type: 'Variable' }]);
+
+      const result = await service.previewCommand(SOUTH_ID, 'opcua', southSettings, null, {
+        ...command,
+        itemFieldMapping: null,
+        pushToOIAnalytics: true,
+        identityKeyFields: []
+      });
+
+      assert.deepStrictEqual(result, {
+        discoveredCount: 1,
+        eligibleCount: 1,
+        entries: [],
+        records: [{ nodeId: 'ns=1;s=Temperature', type: 'Variable' }]
+      });
+    });
+
+    it('should reject a workflow that is neither local nor remote, before discovering anything', async () => {
+      await assert.rejects(
+        service.previewCommand(SOUTH_ID, 'opcua', southSettings, null, { ...command, itemFieldMapping: null }),
+        new OIBusValidationError('A configuration workflow must either create/update items or push to OIAnalytics')
+      );
+      assert.strictEqual(southService.discover.mock.calls.length, 0);
     });
   });
 

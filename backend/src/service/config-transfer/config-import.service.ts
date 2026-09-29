@@ -579,22 +579,29 @@ export default class ConfigImportService {
     for (const workflow of south.settings.configurationWorkflows) {
       this.configurationWorkflowRepository!.create(
         {
-          name: workflow.settings.name,
+          name: workflow.name,
           southId: south.oIBusInternalId,
-          discoveryScope: workflow.settings.discoveryScope,
+          discoveryScope: workflow.discoveryScope,
           // Same as `ConfigurationWorkflowService`: a remote workflow never diffs against a previous run
-          identityKeyFields: workflow.settings.pushToOIAnalytics ? [] : workflow.settings.identityKeyFields,
-          eligibilityFilter: workflow.settings.eligibilityFilter,
-          itemFieldMapping: workflow.settings.itemFieldMapping,
-          pushToOIAnalytics: workflow.settings.pushToOIAnalytics,
-          scanMode: workflow.settings.scanModeId ? ({ id: workflow.settings.scanModeId } as ScanMode) : null,
+          identityKeyFields: workflow.pushToOIAnalytics ? [] : workflow.identityKeyFields,
+          eligibilityFilter: workflow.eligibilityFilter,
+          itemFieldMapping: workflow.itemFieldMapping,
+          pushToOIAnalytics: workflow.pushToOIAnalytics,
+          scanMode: workflow.scanModeId ? ({ id: workflow.scanModeId } as ScanMode) : null,
           enabled: false
         },
         importedBy,
-        workflow.oIBusInternalId
+        workflow.id!
       );
-      for (const ownedItem of workflow.ownedItems) {
-        this.southConnectorRepository!.restoreItemWorkflowOwnership(ownedItem.id, workflow.oIBusInternalId, ownedItem.disabledReason);
+    }
+    // Ownership is exported on the items (see ConfigTransferBuilderService), next to their oIBus* audit fields.
+    for (const item of south.settings.items as Array<{
+      id: string | null;
+      createdByWorkflowId?: string | null;
+      disabledReason?: string | null;
+    }>) {
+      if (item.createdByWorkflowId) {
+        this.southConnectorRepository!.restoreItemWorkflowOwnership(item.id!, item.createdByWorkflowId, item.disabledReason ?? null);
       }
     }
   }

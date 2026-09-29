@@ -8,6 +8,8 @@ import {
 } from '../../../../backend/shared/model/configuration-workflow.model';
 import { WorkflowRunDetailDTO, WorkflowRunDTO, WorkflowRunSearchParam } from '../../../../backend/shared/model/workflow-run.model';
 import { Page } from '../../../../backend/shared/model/types';
+import { OIBusSouthType } from '../../../../backend/shared/model/south-connector.model';
+import { SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 import { ignoreErrorIfStatusIs } from '../shared/error-interceptor.service';
 
 /**
@@ -73,6 +75,29 @@ export class ConfigurationWorkflowService {
     // Same reasoning as delete() above.
     const context = ignoreErrorIfStatusIs(HttpStatusCode.BadRequest, HttpStatusCode.NotFound);
     return this.http.post<WorkflowPreviewResultDTO>(`/api/south/${southId}/workflows/${workflowId}/preview`, null, { context });
+  }
+
+  /**
+   * Dry-run a not-yet-saved configuration workflow (as currently edited) against possibly not-yet-saved
+   * south settings - mirrors SouthConnectorService.testDiscoveryQuery: `southId` is the connector id, or
+   * `create` for a connector that doesn't exist yet. `workflowId` is the persisted workflow's id when it
+   * already exists (its entries are then classified against its previous run), null otherwise (every
+   * entry is then `new`).
+   */
+  previewCommand(
+    southId: string,
+    southType: OIBusSouthType,
+    southSettings: SouthSettings,
+    workflowId: string | null,
+    command: ConfigurationWorkflowCommandDTO
+  ): Observable<WorkflowPreviewResultDTO> {
+    // Same reasoning as delete() above - the preview modal shows its own tailored notification.
+    const context = ignoreErrorIfStatusIs(HttpStatusCode.BadRequest, HttpStatusCode.NotFound);
+    return this.http.post<WorkflowPreviewResultDTO>(
+      `/api/south/${southId}/test/workflow-preview`,
+      { southSettings, workflowId, workflow: command },
+      { params: { southType }, context }
+    );
   }
 
   /**

@@ -21,6 +21,8 @@ import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { ScanMode } from '../../model/scan-mode.model';
 import { scanModeAliasedColumns, scanModeColumns, toScanMode, toScanModeFromPrefixedRow } from './scan-mode.repository';
 import SouthItemGroupRepository from './south-item-group.repository';
+import ConfigurationWorkflowRepository from './configuration-workflow.repository';
+import { ConfigurationWorkflowSouthCommand } from '../../model/configuration-workflow.model';
 import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
 import { encryptionService } from '../../service/encryption.service';
 import { southManifestList } from '../../service/south-manifests';
@@ -60,12 +62,14 @@ const ITEM_JOIN_FROM =
 
 export default class SouthConnectorRepository {
   private groupRepository: SouthItemGroupRepository;
+  private configurationWorkflowRepository: ConfigurationWorkflowRepository;
 
   constructor(
     private readonly database: Database,
     private readonly auditService: AuditService
   ) {
     this.groupRepository = new SouthItemGroupRepository(database, auditService);
+    this.configurationWorkflowRepository = new ConfigurationWorkflowRepository(database, auditService);
   }
 
   findAllSouth(): Array<SouthConnectorEntityLight> {
@@ -112,7 +116,15 @@ export default class SouthConnectorRepository {
    * connector from the UI) or the id of a connector it just read back from this repository, so this
    * is not a behavior change for them.
    */
-  saveSouth(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>, isNewConnector: boolean): void {
+  /**
+   * @param configurationWorkflows - when set, the connector's workflows are synced to it in the same
+   * transaction (see `ConfigurationWorkflowRepository.syncForSouth`); left untouched when undefined.
+   */
+  saveSouth(
+    south: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
+    isNewConnector: boolean,
+    configurationWorkflows?: Array<ConfigurationWorkflowSouthCommand>
+  ): void {
     const beforeConnector = isNewConnector ? null : this.findSouthById(south.id);
     if (!isNewConnector && !beforeConnector) {
       // The caller believes this is an update of an existing connector, but a fresh check right
@@ -181,6 +193,12 @@ export default class SouthConnectorRepository {
         for (const item of south.items) {
           if (item.group?.id === groupToCreate.id) {
             item.group.id = newGroup.id;
+          }
+        }
+        // A workflow can map the items it creates to a group created in this same save (a constant groupId)
+        for (const workflow of configurationWorkflows ?? []) {
+          if (workflow.itemFieldMapping?.groupId === groupToCreate.id) {
+            workflow.itemFieldMapping.groupId = newGroup.id;
           }
         }
         south.groups[south.groups.findIndex(group => group.id === groupToCreate.id)] = newGroup;
@@ -402,6 +420,10 @@ export default class SouthConnectorRepository {
         for (const existingGroup of existingGroups) {
           this.groupRepository.delete(existingGroup.id, south.updatedBy);
         }
+      }
+
+      if (configurationWorkflows) {
+        this.configurationWorkflowRepository.syncForSouth(south.id, configurationWorkflows, south.updatedBy);
       }
 
       const afterConnector = this.findSouthById(south.id);

@@ -1,6 +1,10 @@
 import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
-import { ConfigurationWorkflowCommand, ConfigurationWorkflowEntity } from '../../model/configuration-workflow.model';
+import {
+  ConfigurationWorkflowCommand,
+  ConfigurationWorkflowEntity,
+  ConfigurationWorkflowSouthCommand
+} from '../../model/configuration-workflow.model';
 import { scanModeAliasedColumns, toScanModeFromPrefixedRow } from './scan-mode.repository';
 import AuditService from '../../service/audit.service';
 
@@ -127,6 +131,29 @@ export default class ConfigurationWorkflowRepository {
       after as unknown as Record<string, unknown>,
       updatedBy
     );
+  }
+
+  /**
+   * Makes a south connector's workflows match `workflows`: existing workflows missing from it are deleted,
+   * those it references by id are updated, and the others are created with a fresh id. Deletions run
+   * first, so a workflow can take the name of one removed in the same call. Not wrapped in its own
+   * transaction - called from within `SouthConnectorRepository.saveSouth`'s.
+   */
+  syncForSouth(southId: string, workflows: Array<ConfigurationWorkflowSouthCommand>, updatedBy: string): void {
+    const existingIds = new Set(this.findBySouthId(southId).map(workflow => workflow.id));
+    const incomingIds = new Set(workflows.map(workflow => workflow.id).filter(id => id !== null && existingIds.has(id)));
+    for (const existingId of existingIds) {
+      if (!incomingIds.has(existingId)) {
+        this.delete(existingId, updatedBy);
+      }
+    }
+    for (const { id, ...command } of workflows) {
+      if (id !== null && incomingIds.has(id)) {
+        this.update(id, command, updatedBy);
+      } else {
+        this.create({ ...command, southId }, updatedBy);
+      }
+    }
   }
 
   delete(id: string, deletedBy: string): void {

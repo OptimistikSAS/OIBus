@@ -84,7 +84,7 @@ describe('Config Transfer Builder Service', () => {
     );
   });
 
-  it('should attach each south connector its configuration workflows and the items they own', () => {
+  it('should attach each south connector its configuration workflows, and each item the workflow owning it', () => {
     const south = testData.south.list[0];
     const [ownedItem, otherItem] = south.items;
     southRepository.findAllSouthFull = () => [
@@ -122,42 +122,38 @@ describe('Config Transfer Builder Service', () => {
 
     assert.deepStrictEqual(configuration.southConnectors[0].settings.configurationWorkflows, [
       {
-        oIBusInternalId: 'workflow1',
-        oIBusCreatedBy: 'creator',
-        oIBusUpdatedBy: 'updater',
-        oIBusCreatedAt: '2026-01-01T00:00:00.000Z',
-        oIBusUpdatedAt: '2026-01-02T00:00:00.000Z',
-        settings: {
-          name: 'local workflow',
-          discoveryScope: { rootNodeId: 'ns=1;s=Root' },
-          identityKeyFields: ['nodeId'],
-          eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
-          itemFieldMapping: { name: '{{name}}' },
-          pushToOIAnalytics: false,
-          scanModeId: testData.scanMode.list[0].id,
-          enabled: true
-        },
-        ownedItems: [{ id: ownedItem.id, disabledReason: 'not found anymore' }]
+        id: 'workflow1',
+        name: 'local workflow',
+        discoveryScope: { rootNodeId: 'ns=1;s=Root' },
+        identityKeyFields: ['nodeId'],
+        eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
+        itemFieldMapping: { name: '{{name}}' },
+        pushToOIAnalytics: false,
+        scanModeId: testData.scanMode.list[0].id,
+        enabled: true
       },
       {
-        oIBusInternalId: 'workflow2',
-        oIBusCreatedBy: 'creator',
-        oIBusUpdatedBy: 'updater',
-        oIBusCreatedAt: '2026-01-01T00:00:00.000Z',
-        oIBusUpdatedAt: '2026-01-02T00:00:00.000Z',
-        settings: {
-          name: 'remote workflow',
-          discoveryScope: { rootNodeId: 'ns=1;s=Root' },
-          identityKeyFields: ['nodeId'],
-          eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
-          itemFieldMapping: null,
-          pushToOIAnalytics: true,
-          scanModeId: null,
-          enabled: true
-        },
-        ownedItems: []
+        id: 'workflow2',
+        name: 'remote workflow',
+        discoveryScope: { rootNodeId: 'ns=1;s=Root' },
+        identityKeyFields: ['nodeId'],
+        eligibilityFilter: [{ field: 'type', operator: 'equals', value: 'Variable' }],
+        itemFieldMapping: null,
+        pushToOIAnalytics: true,
+        scanModeId: null,
+        enabled: true
       }
     ]);
+    const exportedItems = configuration.southConnectors[0].settings.items as Array<
+      Record<string, unknown> & { createdByWorkflowId: string | null; disabledReason: string | null }
+    >;
+    assert.deepStrictEqual(
+      exportedItems.map(item => ({ id: item.id, createdByWorkflowId: item.createdByWorkflowId, disabledReason: item.disabledReason })),
+      [
+        { id: ownedItem.id, createdByWorkflowId: 'workflow1', disabledReason: 'not found anymore' },
+        { id: otherItem.id, createdByWorkflowId: null, disabledReason: null }
+      ]
+    );
   });
 
   it('should build the engine command, stripping proxy and loki passwords', () => {

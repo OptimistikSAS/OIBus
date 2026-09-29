@@ -49,6 +49,7 @@ import {
 import { ScanModeDTO } from './scan-mode.model';
 import { OIBusArrayAttribute, OIBusObjectAttribute } from './form.model';
 import { OIBusContent } from './engine.model';
+import { ConfigurationWorkflowCommandDTO } from './configuration-workflow.model';
 
 /**
  * List of available categories for OIBus South connectors.
@@ -766,6 +767,13 @@ export interface SouthConnectorCommandTypedDTO<T extends OIBusSouthType, S, IS> 
    * List of groups used to gather items
    */
   groups: Array<SouthItemGroupCommandDTO>;
+
+  /**
+   * Configuration workflows of this connector. Workflows missing from this list are deleted, those
+   * with an id matching one of the connector's existing workflows are updated, and the others are
+   * created.
+   */
+  configurationWorkflows: Array<ConfigurationWorkflowCommandDTO>;
 }
 
 export interface SouthConnectorItemCommandTypedDTO<IS> {

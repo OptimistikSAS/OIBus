@@ -297,7 +297,15 @@ export const upgrade: ConfigUpgrade = {
       const defaultCachingStrategy = IOT_FAMILY_SOUTH_TYPES.includes(south.type as string) ? 'allValues' : null;
       for (const item of asObjects(settings.items)) {
         setMissing(item, 'cachingStrategy', defaultCachingStrategy);
-        for (const key of ['thresholdType', 'threshold', 'rangeLow', 'rangeHigh', 'maxCachingInterval']) {
+        for (const key of [
+          'thresholdType',
+          'threshold',
+          'rangeLow',
+          'rangeHigh',
+          'maxCachingInterval',
+          'createdByWorkflowId',
+          'disabledReason'
+        ]) {
           setMissing(item, key, null);
         }
       }

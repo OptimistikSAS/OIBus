@@ -57,19 +57,22 @@
               </td>
               <td class="text-nowrap action-buttons">
                 <div class="pull-right">
-                  <button
-                    type="button"
-                    class="btn btn-link run-workflow px-1 py-0"
-                    [disabled]="runningWorkflowId === workflow.id"
-                    [ngbTooltip]="'south.workflows.run-now' | translate"
-                    (click)="onRunNow(workflow)"
-                  >
-                    @if (runningWorkflowId === workflow.id) {
-                      <span class="spinner-border spinner-border-sm"></span>
-                    } @else {
-                      <span class="fa fa-play"></span>
-                    }
-                  </button>
+                  <!-- Run now/run history only exist for a persisted workflow of a persisted connector (direct mode) -->
+                  @if (directSave) {
+                    <button
+                      type="button"
+                      class="btn btn-link run-workflow px-1 py-0"
+                      [disabled]="runningWorkflowId === workflow.id"
+                      [ngbTooltip]="'south.workflows.run-now' | translate"
+                      (click)="onRunNow(workflow)"
+                    >
+                      @if (runningWorkflowId === workflow.id) {
+                        <span class="spinner-border spinner-border-sm"></span>
+                      } @else {
+                        <span class="fa fa-play"></span>
+                      }
+                    </button>
+                  }
                   <button
                     type="button"
                     class="btn btn-link preview-workflow px-1 py-0"
@@ -78,14 +81,16 @@
                   >
                     <span class="fa fa-eye"></span>
                   </button>
-                  <button
-                    type="button"
-                    class="btn btn-link history-workflow px-1 py-0"
-                    [ngbTooltip]="'south.workflows.run-history' | translate"
-                    (click)="onViewHistory(workflow)"
-                  >
-                    <span class="fa fa-history"></span>
-                  </button>
+                  @if (directSave) {
+                    <button
+                      type="button"
+                      class="btn btn-link history-workflow px-1 py-0"
+                      [ngbTooltip]="'south.workflows.run-history' | translate"
+                      (click)="onViewHistory(workflow)"
+                    >
+                      <span class="fa fa-history"></span>
+                    </button>
+                  }
                   <button
                     type="button"
                     class="btn btn-link edit-workflow px-1 py-0"

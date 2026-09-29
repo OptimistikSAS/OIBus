@@ -167,5 +167,37 @@ describe('Configuration Workflow Repository', () => {
 
       assert.strictEqual((auditService.record as unknown as ReturnType<typeof mock.fn>).mock.calls.length, 0);
     });
+
+    it("should sync a south connector's workflows: delete the missing ones, update the known ones, create the others", () => {
+      const southId = testData.south.list[1].id;
+      for (const workflow of repository.findBySouthId(southId)) {
+        repository.delete(workflow.id, 'cleanup');
+      }
+      const { southId: _southId, ...command } = localCommand;
+      const kept = repository.create({ ...localCommand, southId, name: 'kept' }, 'userTest');
+      const removed = repository.create({ ...localCommand, southId, name: 'removed' }, 'userTest');
+      // Another south's workflow must never be updated through this south, even when referenced by id
+      const foreign = repository.create({ ...localCommand, name: 'foreign' }, 'userTest');
+
+      repository.syncForSouth(
+        southId,
+        [
+          { ...command, id: kept.id, name: 'kept renamed' },
+          // Takes the name of the workflow deleted by this same call
+          { ...command, id: null, name: 'removed' },
+          { ...command, id: 'temp_123', name: 'temp' },
+          { ...command, id: foreign.id, name: 'foreign copy' }
+        ],
+        'syncUser'
+      );
+
+      const workflows = repository.findBySouthId(southId);
+      assert.deepStrictEqual(workflows.map(workflow => workflow.name).sort(), ['foreign copy', 'kept renamed', 'removed', 'temp']);
+      assert.strictEqual(workflows.find(workflow => workflow.name === 'kept renamed')!.id, kept.id);
+      assert.strictEqual(workflows.find(workflow => workflow.name === 'kept renamed')!.updatedBy, 'syncUser');
+      assert.ok(!workflows.some(workflow => [removed.id, 'temp_123', foreign.id].includes(workflow.id)));
+      assert.strictEqual(repository.findById(removed.id), null);
+      assert.strictEqual(repository.findById(foreign.id)!.name, 'foreign');
+    });
   });
 });

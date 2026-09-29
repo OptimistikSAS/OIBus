@@ -861,11 +861,10 @@ export class SouthDetailComponent {
   manageWorkflows() {
     const modalRef = this.modalService.open(ManageWorkflowsModalComponent, { size: 'xl', backdrop: 'static' });
     const component: ManageWorkflowsModalComponent = modalRef.componentInstance;
-    component.prepare(
+    component.prepareForDirectSave(
       this.southConnector!.id,
       this.southConnector!.settings,
       this.scanModes,
-      this.southConnector!.items,
       this.manifest!,
       this.southConnector!.groups,
       this.addOrEditGroup.bind(this),
@@ -994,7 +993,10 @@ export class SouthDetailComponent {
           recoveryStrategy: group.historySettings.recoveryStrategy,
           cachingStrategy: group.historySettings.cachingStrategy
         }
-      }))
+      })),
+      // Only ever used to test items against the connector's settings - never sent as an update of the
+      // connector itself (which would then sync its workflows to this list), so they aren't loaded here.
+      configurationWorkflows: []
     } as SouthConnectorCommandDTO;
   }
 

@@ -255,6 +255,11 @@ workflows for that connector, then use the **+** button to create one. Each row 
 | **Duplicate**    | Open the create form pre-filled with this workflow's settings (name suffixed `-copy`), saved as an independent copy.  |
 | **Delete**       | Remove the workflow. Items and point metadata it already produced are **not** deleted.                                |
 
+Workflows can also be managed from the South connector's create/edit page, with the same **Manage sync configuration**
+button. There, changes are only kept in the page and saved together with the connector (like items and groups), and
+**Preview** runs against the connector settings as currently edited — so a workflow can be tried before the connector
+itself is saved. **Run now** and **Run history** are only available from the connector's page, once it is saved.
+
 ### Discovery Scope {#discovery-scope}
 
 What a workflow (re-)browses or queries depends on the South connector's type:
