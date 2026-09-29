@@ -46,6 +46,8 @@ import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.mo
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
 import { checkGroups, checkScanMode, stringToBoolean } from './utils';
+import { checkWorkflowMode, resolveIdentityKeyFields } from './configuration-workflow.utils';
+import { ConfigurationWorkflowSouthCommand } from '../model/configuration-workflow.model';
 import { ScanMode } from '../model/scan-mode.model';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import csv from 'papaparse';
@@ -134,11 +136,12 @@ export default class SouthService {
 
     // Create a minimal south entity first to get the ID, then create groups
     const southEntity = {} as SouthConnectorEntity<SouthSettings, SouthItemSettings>;
+    const scanModes = this.scanModeRepository.findAll();
     await copySouthConnectorCommandToSouthEntity(
       southEntity,
       command,
       this.retrieveSecretsFromSouth(retrieveSecretsFromSouth, manifest),
-      this.scanModeRepository.findAll(),
+      scanModes,
       [], // in create mode, there is no group attached to the south yet
       !!retrieveSecretsFromSouth
     );
@@ -149,9 +152,13 @@ export default class SouthService {
       item.createdBy = createdBy;
       item.updatedBy = createdBy;
     }
-    this.southConnectorRepository.saveSouth(southEntity, true);
+    const configurationWorkflows = this.toConfigurationWorkflowCommands(command, scanModes);
+    this.southConnectorRepository.saveSouth(southEntity, true, configurationWorkflows);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.createSouth(southEntity.id);
+    if (configurationWorkflows) {
+      this.engine.reloadWorkflows(southEntity.id);
+    }
     if (southEntity.enabled) {
       await this.engine.startSouth(southEntity.id);
     }
@@ -179,11 +186,12 @@ export default class SouthService {
     }
 
     const southEntity = { id: previousSettings.id } as SouthConnectorEntity<SouthSettings, SouthItemSettings>;
+    const scanModes = this.scanModeRepository.findAll();
     await copySouthConnectorCommandToSouthEntity(
       southEntity,
       command,
       previousSettings,
-      this.scanModeRepository.findAll(),
+      scanModes,
       this.southItemGroupRepository.findBySouthId(southEntity.id),
       false
     );
@@ -195,9 +203,53 @@ export default class SouthService {
       }
       item.updatedBy = updatedBy;
     }
-    this.southConnectorRepository.saveSouth(southEntity, false);
+    const configurationWorkflows = this.toConfigurationWorkflowCommands(command, scanModes);
+    this.southConnectorRepository.saveSouth(southEntity, false, configurationWorkflows);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouth(southEntity);
+    if (configurationWorkflows) {
+      this.engine.reloadWorkflows(southEntity.id);
+    }
+  }
+
+  /**
+   * Validates a connector command's configuration workflows the same way the standalone workflow endpoints
+   * do (see ConfigurationWorkflowService), and resolves their scan modes. Undefined - a command that
+   * predates workflows being part of it, e.g. from an older OIAnalytics - leaves the connector's
+   * workflows untouched rather than deleting them all.
+   */
+  private toConfigurationWorkflowCommands(
+    command: SouthConnectorCommandDTO,
+    scanModes: Array<ScanMode>
+  ): Array<ConfigurationWorkflowSouthCommand> | undefined {
+    if (!command.configurationWorkflows) {
+      return undefined;
+    }
+    const names = new Set<string>();
+    return command.configurationWorkflows.map(workflow => {
+      checkWorkflowMode(workflow);
+      if (names.has(workflow.name)) {
+        throw new OIBusValidationError(`A configuration workflow with name "${workflow.name}" already exists for this south connector`);
+      }
+      names.add(workflow.name);
+      if (workflow.pushToOIAnalytics && this.oIAnalyticsRegistrationRepository.get()?.status !== 'REGISTERED') {
+        this.engine.logger.warn(
+          `Configuration workflow "${workflow.name}" is set to push to OIAnalytics, but OIBus is not registered with OIAnalytics - ` +
+            'nothing will be pushed until it is registered'
+        );
+      }
+      return {
+        id: workflow.id,
+        name: workflow.name,
+        discoveryScope: workflow.discoveryScope,
+        identityKeyFields: resolveIdentityKeyFields(workflow),
+        eligibilityFilter: workflow.eligibilityFilter,
+        itemFieldMapping: workflow.itemFieldMapping,
+        pushToOIAnalytics: workflow.pushToOIAnalytics,
+        scanMode: workflow.scanModeId ? checkScanMode(scanModes, workflow.scanModeId, null) : null,
+        enabled: workflow.enabled
+      };
+    });
   }
 
   async delete(southId: string, userId: string): Promise<void> {
@@ -306,11 +358,32 @@ export default class SouthService {
     settingsToTest: SouthSettings,
     query: string
   ): Promise<Array<OIBusRecord>> {
+    return await this.discover(southId, southType, settingsToTest, { query });
+  }
+
+  /**
+   * Run a Configuration Workflow's discovery against raw (possibly not yet saved) connector settings - on
+   * the live instance when it already runs with these exact settings (see `buildEphemeralSouth`),
+   * otherwise on a throwaway one, stopped afterward so a session it opened (e.g. OPC-UA) doesn't leak.
+   */
+  async discover(
+    southId: string,
+    southType: OIBusSouthType,
+    settingsToTest: SouthSettings,
+    scope: Record<string, unknown>
+  ): Promise<Array<OIBusRecord>> {
     const south = await this.buildEphemeralSouth(southId, southType, settingsToTest);
     if (!south.hasConfigurationDiscovery()) {
       throw new Error(`South connector of type "${southType}" does not support configuration discovery`);
     }
-    return await south.discover({ query });
+    const isLiveInstance = this.engine.hasSouth(southId) && this.engine.getSouth(southId).south === south;
+    try {
+      return await south.discover(scope);
+    } finally {
+      if (!isLiveInstance) {
+        await south.stop();
+      }
+    }
   }
 
   /**

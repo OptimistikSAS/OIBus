@@ -26,7 +26,6 @@ import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus 
 import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../../shared/model/transformer.model';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { OIBusTestTransformerItemCommandContent } from '../../model/oianalytics-command.model';
-import { ConfigurationWorkflowCommandDTO } from '../../../shared/model/configuration-workflow.model';
 
 interface BaseAuditFields {
   oIBusInternalId: string;
@@ -116,22 +115,13 @@ export interface OIAnalyticsEngineCommandDTO extends BaseAuditFields {
 }
 
 /**
- * A Configuration Workflow of a south connector. `ownedItems` lists the south items the workflow
- * created and owns (`south_items.created_by_workflow_id`), with the reason it auto-disabled any of
- * them, so ownership survives a config export/import.
- */
-export interface OIAnalyticsConfigurationWorkflowCommandDTO extends BaseAuditFields {
-  settings: ConfigurationWorkflowCommandDTO;
-  ownedItems: Array<{ id: string; disabledReason: string | null }>;
-}
-
-/**
- * `settings.configurationWorkflows` sits next to the connector's items and groups, inside the settings
- * OIAnalytics stores as they are sent.
+ * The connector's configuration workflows are part of `settings` (see `SouthConnectorCommandDTO`). Each
+ * item additionally carries `createdByWorkflowId`/`disabledReason` (like its `oIBus*` audit fields), so
+ * the workflow owning it survives a config export/import.
  */
 export interface OIAnalyticsSouthCommandDTO extends BaseAuditFields {
   type: string;
-  settings: SouthConnectorCommandDTO & { configurationWorkflows: Array<OIAnalyticsConfigurationWorkflowCommandDTO> };
+  settings: SouthConnectorCommandDTO;
 }
 
 export interface OIAnalyticsNorthCommandDTO extends BaseAuditFields {

@@ -4,6 +4,7 @@ import ScanModeRepository from '../repository/config/scan-mode.repository';
 import { ConfigurationWorkflowCommand, ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import { ConfigurationWorkflowCommandDTO } from '../../shared/model/configuration-workflow.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
+import { checkWorkflowMode, resolveIdentityKeyFields } from './configuration-workflow.utils';
 import { ScanMode } from '../model/scan-mode.model';
 import { checkScanMode } from './utils';
 import type DataStreamEngine from '../engine/data-stream-engine';
@@ -55,7 +56,7 @@ export default class ConfigurationWorkflowService {
       name: command.name,
       southId,
       discoveryScope: command.discoveryScope,
-      identityKeyFields: this.resolveIdentityKeyFields(command),
+      identityKeyFields: resolveIdentityKeyFields(command),
       eligibilityFilter: command.eligibilityFilter,
       itemFieldMapping: command.itemFieldMapping,
       pushToOIAnalytics: command.pushToOIAnalytics,
@@ -78,7 +79,7 @@ export default class ConfigurationWorkflowService {
       {
         name: command.name,
         discoveryScope: command.discoveryScope,
-        identityKeyFields: this.resolveIdentityKeyFields(command),
+        identityKeyFields: resolveIdentityKeyFields(command),
         eligibilityFilter: command.eligibilityFilter,
         itemFieldMapping: command.itemFieldMapping,
         pushToOIAnalytics: command.pushToOIAnalytics,
@@ -109,32 +110,17 @@ export default class ConfigurationWorkflowService {
     }
   }
 
-  /** Exactly one of itemFieldMapping (local)/pushToOIAnalytics (remote) applies - never both, never neither.
-   *  Remote doesn't require OIBus to already be registered with OIAnalytics to be saved - a workflow can be
+  /** Remote doesn't require OIBus to already be registered with OIAnalytics to be saved - a workflow can be
    *  authored and scheduled ahead of registration - but a remote workflow saved while unregistered can never
    *  actually push anything yet, so that case is logged as a warning rather than rejected outright. */
   private checkMode(command: ConfigurationWorkflowCommandDTO): void {
-    if (command.itemFieldMapping !== null && command.pushToOIAnalytics) {
-      throw new OIBusValidationError('A configuration workflow cannot both create/update items and push to OIAnalytics');
-    }
-    if (command.itemFieldMapping === null && !command.pushToOIAnalytics) {
-      throw new OIBusValidationError('A configuration workflow must either create/update items or push to OIAnalytics');
-    }
-    if (!command.pushToOIAnalytics && command.identityKeyFields.length === 0) {
-      throw new OIBusValidationError('A configuration workflow creating/updating items requires at least one identity key field');
-    }
+    checkWorkflowMode(command);
     if (command.pushToOIAnalytics && this.oIAnalyticsRegistrationService.getRegistrationSettings()?.status !== 'REGISTERED') {
       this.engine.logger.warn(
         `Configuration workflow "${command.name}" is set to push to OIAnalytics, but OIBus is not registered with OIAnalytics - ` +
           'nothing will be pushed until it is registered'
       );
     }
-  }
-
-  /** Identity keys only drive the local diff against the previous run - a remote workflow never performs it,
-   *  so whatever it was sent with is discarded rather than stored as meaningless configuration. */
-  private resolveIdentityKeyFields(command: ConfigurationWorkflowCommandDTO): Array<string> {
-    return command.pushToOIAnalytics ? [] : command.identityKeyFields;
   }
 
   private checkNameNotTaken(southId: string, name: string, ignoreWorkflowId: string | null): void {

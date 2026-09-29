@@ -34,6 +34,7 @@ import {
   SouthType
 } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
+import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '../../../shared/model/configuration-workflow.model';
 import { CustomExpressRequest } from '../express';
 import SouthService, {
   toSouthConnectorDTO,
@@ -69,6 +70,19 @@ interface SouthDiscoveryQueryTestRequest {
   southSettings: SouthSettings;
   /** The dedicated metadata query to run, as currently typed (before the workflow is saved) */
   query: string;
+}
+
+/**
+ * @interface SouthWorkflowPreviewRequest
+ * @description Request body for previewing a Configuration Workflow as currently edited
+ */
+interface SouthWorkflowPreviewRequest {
+  /** South connector settings, as currently edited */
+  southSettings: SouthSettings;
+  /** The saved workflow being edited, to classify entries against its previous run - null for a workflow not saved yet */
+  workflowId: string | null;
+  /** The workflow as currently edited */
+  workflow: ConfigurationWorkflowCommandDTO;
 }
 
 /**
@@ -288,6 +302,34 @@ export class SouthConnectorController extends Controller {
     const southService = request.services.southService as SouthService;
     try {
       return await southService.testDiscoveryQuery(southId, southType, command.southSettings, command.query);
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
+  }
+
+  /**
+   * Dry-runs a configuration workflow as currently edited (possibly never saved) against the south
+   * connector settings as currently edited: identical discovery and classification as a real run, but
+   * nothing is written. Used from the south connector edit page, where workflows can be previewed but not run.
+   * @summary Preview a configuration workflow before saving it
+   * @param southId The south connector id, or "create" for a connector not created yet
+   * @returns {Promise<WorkflowPreviewResultDTO>} What a run would find and how it would classify it
+   */
+  @Post('/{southId}/test/workflow-preview')
+  async testWorkflowPreview(
+    @Path() southId: string,
+    @Query() southType: OIBusSouthType,
+    @Body() command: SouthWorkflowPreviewRequest,
+    @Request() request: CustomExpressRequest
+  ): Promise<WorkflowPreviewResultDTO> {
+    try {
+      return await request.services.configurationWorkflowRunService.previewCommand(
+        southId,
+        southType,
+        command.southSettings,
+        command.workflowId,
+        command.workflow
+      );
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }

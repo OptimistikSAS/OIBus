@@ -18,7 +18,8 @@ import ConfigurationWorkflowRepositoryMock from '../../tests/__mocks__/repositor
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 import EncryptionService from '../encryption.service';
 import { ConfigExportDTO, OIBusConfigurationDTO } from '../../../shared/model/config-transfer.model';
-import { OIAnalyticsConfigurationWorkflowCommandDTO, OIAnalyticsSouthCommandDTO } from '../oia/oianalytics.model';
+import { OIAnalyticsSouthCommandDTO } from '../oia/oianalytics.model';
+import { ConfigurationWorkflowCommandDTO } from '../../../shared/model/configuration-workflow.model';
 import { CONFIG_UPGRADES } from './config-upgrades/registry';
 import { ConfigUpgrade, forEachSouth, JsonObject } from './config-upgrades/config-upgrade';
 
@@ -123,23 +124,16 @@ describe('Config Import Service', () => {
     return file;
   };
 
-  const localWorkflow = (): OIAnalyticsConfigurationWorkflowCommandDTO => ({
-    oIBusInternalId: 'workflow1',
-    oIBusCreatedBy: '',
-    oIBusUpdatedBy: '',
-    oIBusCreatedAt: '',
-    oIBusUpdatedAt: '',
-    settings: {
-      name: 'workflow',
-      discoveryScope: { rootNodeId: 'ns=1;s=Root' },
-      identityKeyFields: ['nodeId'],
-      eligibilityFilter: [],
-      itemFieldMapping: { name: '{{name}}' },
-      pushToOIAnalytics: false,
-      scanModeId: null,
-      enabled: true
-    },
-    ownedItems: []
+  const localWorkflow = (): ConfigurationWorkflowCommandDTO => ({
+    id: 'workflow1',
+    name: 'workflow',
+    discoveryScope: { rootNodeId: 'ns=1;s=Root' },
+    identityKeyFields: ['nodeId'],
+    eligibilityFilter: [],
+    itemFieldMapping: { name: '{{name}}' },
+    pushToOIAnalytics: false,
+    scanModeId: null,
+    enabled: true
   });
 
   const rejection = async (file: unknown, currentVersion = CURRENT_VERSION): Promise<ConfigImportError> => {
@@ -337,11 +331,7 @@ describe('Config Import Service', () => {
       const file = validFile();
       findSouth(file.config, 'opcua').settings.configurationWorkflows = [
         localWorkflow(),
-        {
-          ...localWorkflow(),
-          oIBusInternalId: 'workflow2',
-          settings: { ...localWorkflow().settings, name: 'remote', itemFieldMapping: null, pushToOIAnalytics: true, identityKeyFields: [] }
-        }
+        { ...localWorkflow(), id: 'workflow2', name: 'remote', itemFieldMapping: null, pushToOIAnalytics: true, identityKeyFields: [] }
       ];
 
       await service.validateAndUpgrade(file, CURRENT_VERSION);
@@ -350,9 +340,9 @@ describe('Config Import Service', () => {
     it('rejects a configuration workflow that is neither local nor remote, or local without identity key fields', async () => {
       const file = validFile();
       findSouth(file.config, 'opcua').settings.configurationWorkflows = [
-        { ...localWorkflow(), settings: { ...localWorkflow().settings, pushToOIAnalytics: true } },
-        { ...localWorkflow(), settings: { ...localWorkflow().settings, itemFieldMapping: null } },
-        { ...localWorkflow(), settings: { ...localWorkflow().settings, identityKeyFields: [] } }
+        { ...localWorkflow(), pushToOIAnalytics: true },
+        { ...localWorkflow(), itemFieldMapping: null },
+        { ...localWorkflow(), identityKeyFields: [] }
       ];
 
       const error = await rejection(file);

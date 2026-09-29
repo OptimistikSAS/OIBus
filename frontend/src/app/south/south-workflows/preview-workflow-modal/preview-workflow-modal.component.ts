@@ -3,7 +3,14 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import csv from 'papaparse';
 import { DateTime } from 'luxon';
-import { WorkflowPreviewEntryDTO, WorkflowPreviewResultDTO } from '../../../../../../backend/shared/model/configuration-workflow.model';
+import { Observable } from 'rxjs';
+import {
+  ConfigurationWorkflowCommandDTO,
+  WorkflowPreviewEntryDTO,
+  WorkflowPreviewResultDTO
+} from '../../../../../../backend/shared/model/configuration-workflow.model';
+import { OIBusSouthType } from '../../../../../../backend/shared/model/south-connector.model';
+import { SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import { WorkflowRunDetailDTO } from '../../../../../../backend/shared/model/workflow-run.model';
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { NotificationService } from '../../../shared/notification.service';
@@ -74,11 +81,36 @@ export default class PreviewWorkflowModalComponent {
   private entryRows: Array<PreviewEntryRow> = [];
   private recordRows: Array<Record<string, string>> = [];
 
-  /** A live dry-run preview: discover + classify against the previous run, nothing persisted. */
+  /** A live dry-run preview of a persisted workflow: discover + classify against the previous run, nothing persisted. */
   prepareForPreview(southId: string, workflowId: string, workflowName: string): void {
+    this.subscribeToPreview(this.configurationWorkflowService.preview(southId, workflowId), workflowName);
+  }
+
+  /**
+   * A live dry-run preview of a workflow as currently edited (possibly never saved), against the south
+   * connector's settings as currently edited (possibly never saved either) - used from the south
+   * create/edit page, where neither is persisted yet. `southId` is the connector id, or `create` for a
+   * connector being created. `workflowId` is the persisted workflow's id when it already exists (entries
+   * are then classified against its previous run), null for a new one (every entry is then `new`).
+   */
+  prepareForCommandPreview(
+    southId: string,
+    southType: OIBusSouthType,
+    southSettings: SouthSettings,
+    workflowId: string | null,
+    command: ConfigurationWorkflowCommandDTO,
+    workflowName: string
+  ): void {
+    this.subscribeToPreview(
+      this.configurationWorkflowService.previewCommand(southId, southType, southSettings, workflowId, command),
+      workflowName
+    );
+  }
+
+  private subscribeToPreview(preview: Observable<WorkflowPreviewResultDTO>, workflowName: string): void {
     this.workflowName = workflowName;
     this.context = 'preview';
-    this.configurationWorkflowService.preview(southId, workflowId).subscribe({
+    preview.subscribe({
       next: result => {
         this.applyResult(result);
       },

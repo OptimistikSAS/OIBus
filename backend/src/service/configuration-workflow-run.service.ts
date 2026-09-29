@@ -3,9 +3,16 @@ import ItemPointMetadataRepository from '../repository/config/item-point-metadat
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import type SouthConnector from '../south/south-connector';
 import { southManifestList } from './south-manifests';
-import { isEligible, computeIdentityKey, resolveFieldMapping } from './configuration-workflow.utils';
+import {
+  checkWorkflowMode,
+  computeIdentityKey,
+  isEligible,
+  resolveFieldMapping,
+  resolveIdentityKeyFields
+} from './configuration-workflow.utils';
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import {
+  ConfigurationWorkflowCommandDTO,
   WorkflowPreviewEntryDTO,
   WorkflowPreviewEntryStatus,
   WorkflowPreviewResultDTO
@@ -13,7 +20,7 @@ import {
 import { WorkflowRunCounts, WorkflowRunEntity, WorkflowRunSearchParam, WorkflowRunTriggerType } from '../model/workflow-run.model';
 import { ItemPointMetadataEntity } from '../model/item-point-metadata.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
-import { SouthConnectorItemCommandDTO } from '../../shared/model/south-connector.model';
+import { OIBusSouthType, SouthConnectorItemCommandDTO } from '../../shared/model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { OIBusRecord } from '../../shared/model/engine.model';
 import { OIBusConfigurationWorkflowResultCommandDTO } from './oia/oianalytics.model';
@@ -32,6 +39,12 @@ interface IConfigurationWorkflowSouthService {
     createdBy: string
   ): Promise<SouthConnectorItemEntity<SouthItemSettings>>;
   updateItem(southId: string, itemId: string, command: SouthConnectorItemCommandDTO, updatedBy: string): Promise<void>;
+  discover(
+    southId: string,
+    southType: OIBusSouthType,
+    settings: SouthSettings,
+    scope: Record<string, unknown>
+  ): Promise<Array<OIBusRecord>>;
 }
 
 interface IDataStreamEngine {
@@ -233,7 +246,41 @@ export default class ConfigurationWorkflowRunService {
   async preview(southId: string, workflowId: string): Promise<WorkflowPreviewResultDTO> {
     const workflow = this.configurationWorkflowService.findById(southId, workflowId); // Ownership check
     const retrieved = await this.retrieve(southId, workflow);
+    return this.classifyForPreview(workflow, workflow.id, retrieved);
+  }
 
+  /**
+   * The same dry run as `preview`, but for a workflow as currently edited - possibly never saved - against
+   * connector settings as currently edited: discovery goes through `SouthService.discover`, so the
+   * connector itself doesn't need to be saved or running. `workflowId` classifies entries against that
+   * saved workflow's previous run; null (a workflow not saved yet) classifies every entry as new.
+   */
+  async previewCommand(
+    southId: string,
+    southType: OIBusSouthType,
+    southSettings: SouthSettings,
+    workflowId: string | null,
+    command: ConfigurationWorkflowCommandDTO
+  ): Promise<WorkflowPreviewResultDTO> {
+    checkWorkflowMode(command);
+    if (workflowId !== null) {
+      this.configurationWorkflowService.findById(southId, workflowId); // Ownership check
+    }
+    const records = await this.southService.discover(southId, southType, southSettings, command.discoveryScope);
+    const eligible = records.filter(record => isEligible(record, command.eligibilityFilter));
+    return this.classifyForPreview(
+      { pushToOIAnalytics: command.pushToOIAnalytics, identityKeyFields: resolveIdentityKeyFields(command) },
+      workflowId,
+      { eligible, discoveredCount: records.length }
+    );
+  }
+
+  /** Decide without Act - shared by `preview` and `previewCommand`. */
+  private classifyForPreview(
+    workflow: Pick<ConfigurationWorkflowEntity, 'pushToOIAnalytics' | 'identityKeyFields'>,
+    workflowId: string | null,
+    retrieved: { eligible: Array<OIBusRecord>; discoveredCount: number }
+  ): WorkflowPreviewResultDTO {
     if (workflow.pushToOIAnalytics) {
       return {
         discoveredCount: retrieved.discoveredCount,
@@ -245,7 +292,7 @@ export default class ConfigurationWorkflowRunService {
 
     const eligibleByKey = keyByIdentity(retrieved.eligible, workflow.identityKeyFields);
 
-    const previousPoints = this.itemPointMetadataRepository.findAllByWorkflow(workflow.id);
+    const previousPoints = workflowId !== null ? this.itemPointMetadataRepository.findAllByWorkflow(workflowId) : [];
     const previousByKey = new Map(previousPoints.map(point => [point.discoveredEntryKey, point]));
 
     const entries: Array<WorkflowPreviewEntryDTO> = [];

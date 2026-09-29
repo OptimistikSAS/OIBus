@@ -16,14 +16,12 @@ import { Observable, switchMap } from 'rxjs';
 import { OIBusRecordListContent } from '../../../../../../backend/shared/model/engine.model';
 import {
   ConfigurationWorkflowCommandDTO,
-  ConfigurationWorkflowDTO,
   RECORD_FILTER_OPERATORS,
   RecordFilterCondition,
   RecordFilterOperator
 } from '../../../../../../backend/shared/model/configuration-workflow.model';
 import {
   SouthConnectorExploreEntry,
-  SouthConnectorItemDTO,
   SouthConnectorManifest,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO,
@@ -193,11 +191,15 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
   mode: 'create' | 'edit' | 'copy' = 'create';
   state = new ObservableState();
+  /** True when opened from south-detail (the caller saves the workflow straight to the API); false when
+   *  opened from edit-south (the caller keeps it in memory until the connector itself is saved) - only
+   *  changes the confirm button's wording/icon, like EditSouthItemModalComponent's own directSave. */
+  directSave = true;
   scanModes: Array<ScanModeDTO> = [];
-  items: Array<SouthConnectorItemDTO> = [];
   groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
-  workflow: ConfigurationWorkflowDTO | null = null;
-  existingWorkflows: Array<ConfigurationWorkflowDTO> = [];
+  workflow: ConfigurationWorkflowCommandDTO | null = null;
+  /** Every other workflow of the connector, for the name uniqueness check. */
+  existingWorkflows: Array<{ id: string | null; name: string }> = [];
   private currentManifest!: SouthConnectorManifest;
   private southId!: string;
   private southSettings!: SouthSettings;
@@ -217,8 +219,9 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
    *  refreshed each time this modal is prepared (registration can change between two workflow edits). */
   isRegistered = false;
 
-  // Saves directly against the live south connector, exactly like EditSouthItemModalComponent's own
-  // group dropdown - bound from south-detail.component.ts and passed down through prepare().
+  // Saves through the page's own group callbacks, exactly like EditSouthItemModalComponent's own group
+  // dropdown - bound from south-detail.component.ts (direct) or edit-south.component.ts (in memory) and
+  // passed down through prepare().
   private addOrEditGroup!: (command: {
     mode: 'create' | 'edit';
     group: SouthItemGroupCommandDTO;
@@ -257,8 +260,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
   prepareForCreation(
     scanModes: Array<ScanModeDTO>,
-    items: Array<SouthConnectorItemDTO>,
-    existingWorkflows: Array<ConfigurationWorkflowDTO>,
+    existingWorkflows: Array<{ id: string | null; name: string }>,
     manifest: SouthConnectorManifest,
     southId: string,
     southSettings: SouthSettings,
@@ -271,7 +273,6 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   ) {
     this.mode = 'create';
     this.scanModes = scanModes;
-    this.items = items;
     this.groups = groups;
     this.addOrEditGroup = addOrEditGroup!;
     this.deleteGroup = deleteGroup!;
@@ -292,10 +293,9 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
 
   prepareForEdition(
     scanModes: Array<ScanModeDTO>,
-    items: Array<SouthConnectorItemDTO>,
-    existingWorkflows: Array<ConfigurationWorkflowDTO>,
+    existingWorkflows: Array<{ id: string | null; name: string }>,
     manifest: SouthConnectorManifest,
-    workflow: ConfigurationWorkflowDTO,
+    workflow: ConfigurationWorkflowCommandDTO,
     southId: string,
     southSettings: SouthSettings,
     groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [],
@@ -307,7 +307,6 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   ) {
     this.mode = 'edit';
     this.scanModes = scanModes;
-    this.items = items;
     this.groups = groups;
     this.addOrEditGroup = addOrEditGroup!;
     this.deleteGroup = deleteGroup!;
@@ -341,10 +340,9 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
    */
   prepareForCopy(
     scanModes: Array<ScanModeDTO>,
-    items: Array<SouthConnectorItemDTO>,
-    existingWorkflows: Array<ConfigurationWorkflowDTO>,
+    existingWorkflows: Array<{ id: string | null; name: string }>,
     manifest: SouthConnectorManifest,
-    workflow: ConfigurationWorkflowDTO,
+    workflow: ConfigurationWorkflowCommandDTO,
     southId: string,
     southSettings: SouthSettings,
     groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [],
@@ -354,19 +352,8 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>,
     deleteGroup?: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>
   ) {
-    const clone: ConfigurationWorkflowDTO = { ...JSON.parse(JSON.stringify(workflow)), id: '', name: `${workflow.name}-copy` };
-    this.prepareForEdition(
-      scanModes,
-      items,
-      existingWorkflows,
-      manifest,
-      clone,
-      southId,
-      southSettings,
-      groups,
-      addOrEditGroup,
-      deleteGroup
-    );
+    const clone: ConfigurationWorkflowCommandDTO = { ...JSON.parse(JSON.stringify(workflow)), id: null, name: `${workflow.name}-copy` };
+    this.prepareForEdition(scanModes, existingWorkflows, manifest, clone, southId, southSettings, groups, addOrEditGroup, deleteGroup);
     this.mode = 'copy';
   }
 
@@ -375,8 +362,10 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
       if (!control.value) {
         return null;
       }
+      // Only an edited workflow excludes itself - a copy's (or a new one's) name must differ from every other.
+      const ownId = this.mode === 'edit' ? this.workflow?.id : undefined;
       const isDuplicate = this.existingWorkflows.some(
-        workflow => workflow.name.toLowerCase() === control.value.toLowerCase() && workflow.id !== this.workflow?.id
+        workflow => workflow.name.toLowerCase() === control.value.toLowerCase() && (ownId == null || workflow.id !== ownId)
       );
       return isDuplicate ? { mustBeUnique: true } : null;
     };
@@ -400,7 +389,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     // choice is hidden from the template for these.
     this.form = this.fb.group({
       name: [this.workflow?.name ?? '', [Validators.required, this.checkUniqueness()]],
-      scanModeId: this.fb.control<string | null>(this.workflow?.scanMode?.id ?? null),
+      scanModeId: this.fb.control<string | null>(this.workflow?.scanModeId ?? null),
       pushToOIAnalytics: this.fb.control<boolean>(this.isSqlFamily ? true : (this.workflow?.pushToOIAnalytics ?? false)),
       enabled: this.fb.control<boolean>(this.workflow?.enabled ?? true)
     });
@@ -582,12 +571,13 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     this.itemFieldMappingValues['groupId'] = groupId ?? '';
   }
 
-  /** Mirrors EditSouthItemModalComponent's own onAddGroup - opens the same group modal, saves it directly
-   *  against the live south connector via the callback threaded in from south-detail, then maps the newly
-   *  created group as this field's constant. */
+  /** Mirrors EditSouthItemModalComponent's own onAddGroup - opens the same group modal, saves it via the
+   *  callback threaded in from the page (directly against the live south connector from south-detail, in
+   *  memory from edit-south), then maps the newly created group as this field's constant. */
   onAddGroup() {
     const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
     const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
+    component.directSave = this.directSave;
     component.prepareForCreation(this.scanModes, this.groups, this.currentManifest);
     modalRef.result.pipe(switchMap(result => this.addOrEditGroup(result))).subscribe(groupResult => {
       this.groups.push(groupResult);
@@ -599,6 +589,7 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     event.stopPropagation();
     const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
     const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
+    component.directSave = this.directSave;
     component.prepareForEdition(this.scanModes, this.groups, this.currentManifest, group);
     modalRef.result.pipe(switchMap(result => this.addOrEditGroup(result))).subscribe(groupResult => {
       const index = this.groups.findIndex(existing => existing.id === groupResult.id);
@@ -613,7 +604,12 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
   onDeleteGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO, event: Event) {
     event.stopPropagation();
     this.deleteGroup(group).subscribe(() => {
-      this.groups = this.groups.filter(existing => existing.id !== group.id);
+      // Removed in place - `groups` is the page's own list (edit-south's in-memory groups), which must
+      // lose the deleted group too.
+      const index = this.groups.findIndex(existing => existing.id === group.id);
+      if (index >= 0) {
+        this.groups.splice(index, 1);
+      }
       if (this.itemFieldMappingValues['groupId'] === group.id) {
         this.onSelectGroup(null);
       }
@@ -811,6 +807,9 @@ export default class EditWorkflowModalComponent implements AfterViewInit {
     }
 
     const command: ConfigurationWorkflowCommandDTO = {
+      // The edited workflow keeps its own id (real, or a caller-minted temp_ one for a not-yet-saved
+      // workflow) - a new one or a copy has none yet, the caller decides what to give it.
+      id: this.mode === 'edit' ? (this.workflow?.id ?? null) : null,
       name: formValue.name,
       discoveryScope,
       identityKeyFields: pushToOIAnalytics ? [] : this.identityKeyFields,
