@@ -77,7 +77,7 @@
     "isolated-vm": "7.0.1",
     "joi": "18.2.9",
     "jsmodbus": "5.0.0",
-    "jsonpath-plus": "10.4.0",
+    "jsonpath-plus": "11.0.0",
     "jsonwebtoken": "9.0.3",
     "knex": "3.3.0",
     "luxon": "3.7.2",
