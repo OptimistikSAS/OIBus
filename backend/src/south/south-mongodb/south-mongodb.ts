@@ -171,10 +171,10 @@ export default class SouthMongoDB extends SouthConnector<SouthMongoDBSettings, S
     if (!item.settings.trackingInstant?.trackInstant) return null;
     const { jsonPath, dateTimeInput } = item.settings.trackingInstant;
 
-    const rawValues = JSONPath({ json: docs, path: jsonPath! });
+    const rawValues = JSONPath({ json: docs, path: jsonPath! }) as Array<unknown> | undefined;
     if (!rawValues || rawValues.length === 0) return null;
 
-    return (rawValues as Array<unknown>)
+    return rawValues
       .map(value => {
         if (value === null || value === undefined) return null;
         return convertDateTimeToInstant(value as string | number | Date, {
