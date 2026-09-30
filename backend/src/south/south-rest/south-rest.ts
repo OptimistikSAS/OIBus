@@ -260,7 +260,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
   ): Instant | null {
     // 1. Extract ALL raw values at once using the library
     // This returns an array of found values (e.g., ["2023-01-01", "2023-01-02"])
-    const rawValues = JSONPath({ json: httpResult, path: jsonPath });
+    const rawValues = JSONPath({ json: httpResult, path: jsonPath }) as Array<unknown> | undefined;
 
     // 2. Early exit if nothing was found
     if (!rawValues || rawValues.length === 0) {
