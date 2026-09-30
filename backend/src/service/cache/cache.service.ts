@@ -291,14 +291,18 @@ export default class CacheService {
       }
 
       // 2. Accumulate Data (Read)
+      const cacheSizeBefore = this.cacheSize.cache;
       const { newListOfContent, remainder, compactedFiles } = await this.accumulateContent(copiedQueue, maxGroupCount);
+      // Size of every file about to be rewritten or deleted, taken before overwriteCacheFile swaps their metadata
+      const previousSize = compactedFiles.reduce((total, element) => total + element.metadata.contentSize, 0);
+      let newSize = 0;
 
       // 3. Write Main Batch
       if (compactedFiles.length > 0) {
         // Reuse the first filename for the main batch
         // shift() removes it from the array so it doesn't get deleted later
         const firstElement = compactedFiles.shift()!;
-        await this.overwriteCacheFile(firstElement, newListOfContent);
+        newSize += await this.overwriteCacheFile(firstElement, newListOfContent);
       }
 
       // 4. Write Remainder (if any)
@@ -306,7 +310,7 @@ export default class CacheService {
         // Reuse the last filename for the remainder
         // pop() removes it from the array so it doesn't get deleted later
         const lastElement = compactedFiles.pop()!;
-        await this.overwriteCacheFile(lastElement, remainder);
+        newSize += await this.overwriteCacheFile(lastElement, remainder);
       }
 
       // 5. Cleanup Intermediate Files
@@ -322,6 +326,13 @@ export default class CacheService {
       // delta.
       this.queue = this.queue.filter(el => !compactedFiles.includes(el));
       this.recomputeQueueCounters();
+
+      // 7. Resync the cache size: merged files drop their per-file JSON brackets, and unreadable
+      // files were deleted, so the bytes on disk no longer match what was counted when they were added
+      this.cacheSize.cache += newSize - previousSize;
+      if (this.cacheSize.cache !== cacheSizeBefore) {
+        this.cacheSizeEventEmitter.emit('cache-size', this.cacheSize);
+      }
     } finally {
       this.updateCache$.resolve();
       this.updateCache$ = null;
@@ -709,13 +720,15 @@ export default class CacheService {
         this.logger.error(`Error while reading file "${data.filename}": ${(error as Error).message}`);
         await this.deleteCacheEntry('cache', data.filename); // Helper to delete metadata/content
         this.removeCacheContentFromQueue(data.filename);
+        this.cacheSize.cache -= data.metadata.contentSize;
       }
     }
 
     return { newListOfContent, remainder, compactedFiles };
   }
 
-  private async overwriteCacheFile(fileData: { filename: string; metadata: CacheMetadata }, newContent: Array<object>): Promise<void> {
+  /** Rewrite a cache file with `newContent` and return its new size in bytes. */
+  private async overwriteCacheFile(fileData: { filename: string; metadata: CacheMetadata }, newContent: Array<object>): Promise<number> {
     const contentPath = path.join(this.cacheFolder, CONTENT_FOLDER, fileData.filename);
     const metadataPath = path.join(this.cacheFolder, METADATA_FOLDER, fileData.filename);
 
@@ -740,6 +753,7 @@ export default class CacheService {
     if (queueElement) {
       queueElement.metadata = newMetadata;
     }
+    return fileStat.size;
   }
 
   private async deleteCacheEntry(folder: DataFolderType, filename: string): Promise<void> {
