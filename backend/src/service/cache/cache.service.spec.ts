@@ -1177,4 +1177,36 @@ describe('CacheService', () => {
     assert.strictEqual(logger.error.mock.calls.length, 6);
     assert.ok(emitEventMock.mock.calls.some(c => c.arguments[0] === 'cache-size'));
   });
+
+  it('should release the update lock when emptying the cache fails', async () => {
+    readdirMock.mock.mockImplementation(async () => {
+      throw new Error('readdir error');
+    });
+
+    await assert.rejects(service.removeAllCacheContent(), /readdir error/);
+
+    assert.strictEqual(priv()['updateCache$'], null);
+    // The next send is not blocked behind the failed reset
+    priv()['queue'] = [];
+    assert.strictEqual(await service.getCacheContentToSend(100), null);
+  });
+
+  it('should release the update lock when a cache update fails', async () => {
+    priv()['removeContent'] = mock.fn(async () => {
+      throw new Error('remove error');
+    });
+
+    await assert.rejects(
+      service.updateCacheContent({
+        cache: { remove: ['file1'], move: [] },
+        error: { remove: [], move: [] },
+        archive: { remove: [], move: [] }
+      }),
+      /remove error/
+    );
+
+    assert.strictEqual(priv()['updateCache$'], null);
+    priv()['queue'] = [];
+    assert.strictEqual(await service.getCacheContentToSend(100), null);
+  });
 });

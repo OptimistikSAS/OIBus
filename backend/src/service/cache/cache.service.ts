@@ -406,30 +406,33 @@ export default class CacheService {
     await this.waitCacheUpdateTasks();
     this.updateCache$ = new DeferredPromise();
 
-    // REMOVE
-    for (const filename of updateCommand.cache.remove) {
-      await this.removeContent('cache', filename);
-    }
-    for (const filename of updateCommand.error.remove) {
-      await this.removeContent('error', filename);
-    }
-    for (const filename of updateCommand.archive.remove) {
-      await this.removeContent('archive', filename);
-    }
+    try {
+      // REMOVE
+      for (const filename of updateCommand.cache.remove) {
+        await this.removeContent('cache', filename);
+      }
+      for (const filename of updateCommand.error.remove) {
+        await this.removeContent('error', filename);
+      }
+      for (const filename of updateCommand.archive.remove) {
+        await this.removeContent('archive', filename);
+      }
 
-    // MOVE
-    for (const operation of updateCommand.cache.move) {
-      await this.moveContent('cache', operation.to, operation.filename);
+      // MOVE
+      for (const operation of updateCommand.cache.move) {
+        await this.moveContent('cache', operation.to, operation.filename);
+      }
+      for (const operation of updateCommand.error.move) {
+        await this.moveContent('error', operation.to, operation.filename);
+      }
+      for (const operation of updateCommand.archive.move) {
+        await this.moveContent('archive', operation.to, operation.filename);
+      }
+    } finally {
+      // Always release: an unreleased lock blocks getCacheContentToSend forever and the north stops sending
+      this.updateCache$.resolve();
+      this.updateCache$ = null;
     }
-    for (const operation of updateCommand.error.move) {
-      await this.moveContent('error', operation.to, operation.filename);
-    }
-    for (const operation of updateCommand.archive.move) {
-      await this.moveContent('archive', operation.to, operation.filename);
-    }
-
-    this.updateCache$.resolve();
-    this.updateCache$ = null;
     this.cacheSizeEventEmitter.emit('cache-size', this.cacheSize);
   }
 
@@ -539,39 +542,46 @@ export default class CacheService {
     await this.waitCacheUpdateTasks();
     this.updateCache$ = new DeferredPromise();
 
-    const folderList: Array<DataFolderType> = ['cache', 'error', 'archive'];
-    for (const folder of folderList) {
-      const metadataFolder = path.join(this.getFolder(folder), METADATA_FOLDER);
-      const metadataFiles = await fs.readdir(metadataFolder);
-      for (const file of metadataFiles) {
-        await fs
-          .rm(path.join(metadataFolder, file), { force: true, recursive: true })
-          .catch(err =>
-            this.logger.error(`Could not remove file "${file}" from ${path.join(this.getFolder(folder), METADATA_FOLDER)}: ${err.message}`)
-          );
-      }
+    try {
+      const folderList: Array<DataFolderType> = ['cache', 'error', 'archive'];
+      for (const folder of folderList) {
+        const metadataFolder = path.join(this.getFolder(folder), METADATA_FOLDER);
+        const metadataFiles = await fs.readdir(metadataFolder);
+        for (const file of metadataFiles) {
+          await fs
+            .rm(path.join(metadataFolder, file), { force: true, recursive: true })
+            .catch(err =>
+              this.logger.error(
+                `Could not remove file "${file}" from ${path.join(this.getFolder(folder), METADATA_FOLDER)}: ${err.message}`
+              )
+            );
+        }
 
-      const contentFolder = path.join(this.getFolder(folder), CONTENT_FOLDER);
-      const contentFiles = await fs.readdir(contentFolder);
-      for (const file of contentFiles) {
-        await fs
-          .rm(path.join(contentFolder, file), { force: true, recursive: true })
-          .catch(err =>
-            this.logger.error(`Could not remove file "${file}" from ${path.join(this.getFolder(folder), CONTENT_FOLDER)}: ${err.message}`)
-          );
+        const contentFolder = path.join(this.getFolder(folder), CONTENT_FOLDER);
+        const contentFiles = await fs.readdir(contentFolder);
+        for (const file of contentFiles) {
+          await fs
+            .rm(path.join(contentFolder, file), { force: true, recursive: true })
+            .catch(err =>
+              this.logger.error(`Could not remove file "${file}" from ${path.join(this.getFolder(folder), CONTENT_FOLDER)}: ${err.message}`)
+            );
+        }
       }
+      this.queue = [];
+      this._queuedElementsCount = 0;
+      this._queuedRawFilesCount = 0;
+      this.cacheSize = {
+        cache: 0,
+        error: 0,
+        archive: 0
+      };
+      this.cacheSizeEventEmitter.emit('cache-size', this.cacheSize);
+    } finally {
+      // Always release, even if a folder cannot be listed: an unreleased lock blocks getCacheContentToSend
+      // forever and the north stops sending
+      this.updateCache$.resolve();
+      this.updateCache$ = null;
     }
-    this.queue = [];
-    this._queuedElementsCount = 0;
-    this._queuedRawFilesCount = 0;
-    this.cacheSize = {
-      cache: 0,
-      error: 0,
-      archive: 0
-    };
-    this.cacheSizeEventEmitter.emit('cache-size', this.cacheSize);
-    this.updateCache$.resolve();
-    this.updateCache$ = null;
   }
 
   get cacheSizeEventEmitter(): TypedEventEmitter<CacheSizeEvents> {
