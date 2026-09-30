@@ -83,11 +83,17 @@ export default class HomeMetricsService {
    */
   get stream(): PassThrough {
     this._stream?.destroy();
-    this._stream = new PassThrough();
+    const stream = new PassThrough();
+    // Drop the reference once the stream closes (SSE client gone, or replaced by a newer
+    // subscriber): later writes would otherwise pile up unread in its buffer forever.
+    stream.on('close', () => {
+      if (this._stream === stream) this._stream = null;
+    });
+    this._stream = stream;
 
     setTimeout(() => {
       this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
     }, 100);
-    return this._stream;
+    return stream;
   }
 }

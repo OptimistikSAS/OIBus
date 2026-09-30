@@ -108,6 +108,26 @@ describe('SouthConnectorMetricsService', () => {
     assert.ok(service.stream);
   });
 
+  it('should release the stream once it closes so later metrics are not buffered', async () => {
+    const stream = service.stream;
+    const writeSpy = mock.method(stream, 'write', () => true);
+    stream.destroy();
+    await new Promise(resolve => stream.once('close', resolve));
+
+    assert.strictEqual(service['_stream'], null);
+    service.updateMetrics();
+    mock.timers.tick(1000);
+    assert.strictEqual(writeSpy.mock.calls.length, 0);
+  });
+
+  it('should keep the newest stream when a replaced one closes', async () => {
+    const first = service.stream;
+    const second = service.stream;
+    await new Promise(resolve => first.once('close', resolve));
+
+    assert.strictEqual(service['_stream'], second);
+  });
+
   it('should debounce stream writes alongside DB writes', () => {
     const stream = service.stream;
     const writeSpy = mock.method(stream, 'write', () => true);
