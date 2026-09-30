@@ -857,6 +857,29 @@ describe('NorthConnector', () => {
     assert.strictEqual(handleNoTransformerMock.mock.calls.length, 1);
   });
 
+  it('should trigger a run check after caching content', async () => {
+    north['handleNoTransformer'] = mock.fn(async (_data: OIBusContent) => undefined);
+    const triggerRunIfNecessaryMock = mock.fn(async (_timeToWait: number) => undefined);
+    north['triggerRunIfNecessary'] = triggerRunIfNecessaryMock;
+    await north.cacheContent(testData.oibusContent[0], { source: 'test' });
+
+    assert.strictEqual(triggerRunIfNecessaryMock.mock.calls.length, 1);
+    assert.strictEqual(triggerRunIfNecessaryMock.mock.calls[0].arguments[0], 0);
+  });
+
+  it('should not trigger an immediate retry after caching content while a send is failing', async () => {
+    north['errorCount'] = 1;
+    const handleNoTransformerMock = mock.fn(async (_data: OIBusContent) => undefined);
+    north['handleNoTransformer'] = handleNoTransformerMock;
+    const triggerRunIfNecessaryMock = mock.fn(async (_timeToWait: number) => undefined);
+    north['triggerRunIfNecessary'] = triggerRunIfNecessaryMock;
+    await north.cacheContent(testData.oibusContent[0], { source: 'test' });
+
+    // Content is still cached, but the retry stays paced by run() and caching.error.retryInterval
+    assert.strictEqual(handleNoTransformerMock.mock.calls.length, 1);
+    assert.strictEqual(triggerRunIfNecessaryMock.mock.calls.length, 0);
+  });
+
   it('should cache json content and handle ignore transform', async () => {
     const findTransformerMock = mock.fn(
       (_metadataSource: CacheMetadataSource) =>

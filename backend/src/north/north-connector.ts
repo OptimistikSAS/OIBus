@@ -461,7 +461,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    *
    * After caching, `triggerRunIfNecessary(0)` is called so a configured
    * trigger threshold (file count, element count) can promote this batch to
-   * an immediate send instead of waiting for the next cron tick.
+   * an immediate send instead of waiting for the next cron tick. Skipped while
+   * a send is failing: the retry is paced by `caching.error.retryInterval`.
    */
   async cacheContent(data: OIBusContent, source: CacheMetadataSource): Promise<void> {
     if (this.cacheService.cacheIsFull(this.connector.caching.throttling.maxSize)) {
@@ -476,6 +477,11 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       await this.applyTransformer(group.data, group.transformer, group.source);
     }
 
+    // While a send is failing, `run()` already schedules the retry after `caching.error.retryInterval`.
+    // Triggering here would retry immediately, at the pace data arrives, instead of honouring that interval.
+    if (this.errorCount > 0) {
+      return;
+    }
     // No delay needed here, we check for trigger right now, once the cache is updated for every group
     await this.triggerRunIfNecessary(0);
   }
