@@ -28,14 +28,19 @@ const makeReq = (path: string, extra: Record<string, unknown> = {}) => ({
 });
 
 const makeRes = () => {
+  const listeners: Record<string, Array<() => void>> = {};
   const res = {
     set: mock.fn(),
     status: mock.fn(),
     end: mock.fn(),
-    pipe: mock.fn()
+    pipe: mock.fn(),
+    on: mock.fn((event: string, handler: () => void) => {
+      (listeners[event] ??= []).push(handler);
+      return res;
+    })
   } as Record<string, ReturnType<typeof mock.fn>>;
   res.status = mock.fn(() => res);
-  return res;
+  return Object.assign(res, { emit: (event: string) => (listeners[event] ?? []).forEach(handler => handler()) });
 };
 
 describe('sseMiddleware', () => {
@@ -164,6 +169,26 @@ describe('sseMiddleware', () => {
       (services.historyQueryService.getHistoryDataStream as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
       'hq1'
     );
+  });
+
+  it('should destroy the stream when the client disconnects', () => {
+    const stream = makeMockStream();
+    services.southService = { getSouthDataStream: mock.fn(() => stream) } as unknown as SouthService;
+    const middleware = sseMiddleware(
+      services.southService,
+      services.northService,
+      services.oIBusService,
+      services.homeMetricsService,
+      services.historyQueryService
+    ) as LooseMiddlewareFn;
+    const res = makeRes();
+    mock.method(stream, 'pipe', () => stream);
+
+    middleware(makeReq('/sse/south/south1'), res, mockNext);
+    assert.strictEqual(stream.destroyed, false);
+
+    res.emit('close');
+    assert.strictEqual(stream.destroyed, true);
   });
 
   it('should call next() for /sse path that matches no sub-route', () => {

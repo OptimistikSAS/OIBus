@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { PassThrough } from 'node:stream';
 import SouthService from '../../service/south.service';
 import NorthService from '../../service/north.service';
 import OIBusService from '../../service/oibus.service';
@@ -28,33 +29,38 @@ const createSSEMiddleware = (config: SSEConfig) => {
       Connection: 'keep-alive'
     });
 
+    // When the browser closes the tab or navigates away, pipe() detaches from `res` but the
+    // metrics service keeps writing into the stream. Destroy it so the service releases it.
+    const pipeToClient = (stream: PassThrough) => {
+      res.on('close', () => stream.destroy());
+      return stream.pipe(res);
+    };
+
     try {
       if (req.path.startsWith('/sse/south/')) {
         const splitString = req.path.split('/');
         const stream = config.southService.getSouthDataStream(splitString[3])!;
-        return stream.pipe(res);
+        return pipeToClient(stream);
       }
 
       if (req.path.startsWith('/sse/north/')) {
         const splitString = req.path.split('/');
         const stream = config.northService.getNorthDataStream(splitString[3])!;
-        return stream.pipe(res);
+        return pipeToClient(stream);
       }
 
       if (req.path.startsWith('/sse/engine')) {
-        const stream = config.oIBusService.stream;
-        return stream.pipe(res);
+        return pipeToClient(config.oIBusService.stream);
       }
 
       if (req.path.startsWith('/sse/home')) {
-        const stream = config.homeMetricsService.stream;
-        return stream.pipe(res);
+        return pipeToClient(config.homeMetricsService.stream);
       }
 
       if (req.path.startsWith('/sse/history-queries/')) {
         const splitString = req.path.split('/');
         const stream = config.historyQueryService.getHistoryDataStream(splitString[3])!;
-        return stream.pipe(res);
+        return pipeToClient(stream);
       }
 
       return next();
