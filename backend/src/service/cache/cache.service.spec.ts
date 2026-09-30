@@ -10,7 +10,7 @@ import testData from '../../tests/utils/test-data';
 import type CacheServiceType from './cache.service';
 import { CacheContentUpdateCommand, CacheMetadata } from '../../../shared/model/engine.model';
 import DeferredPromise from '../deferred-promise';
-import { CONTENT_FOLDER, METADATA_FOLDER } from '../../model/engine.model';
+import { CacheSize, CONTENT_FOLDER, METADATA_FOLDER } from '../../model/engine.model';
 
 const nodeRequire = createRequire(import.meta.url);
 let CacheService: typeof CacheServiceType;
@@ -754,6 +754,7 @@ describe('CacheService', () => {
 
       // Inject queue into service so removeCacheContentFromQueue works
       priv()['queue'] = [...queueItems];
+      priv()['cacheSize'] = { cache: 1000, error: 0, archive: 0 };
 
       readFileMock.mock.mockImplementation(
         seq(
@@ -788,6 +789,7 @@ describe('CacheService', () => {
         (priv()['queue'] as Array<{ filename: string }>).find(f => f.filename === 'bad.json'),
         undefined
       );
+      assert.strictEqual((priv()['cacheSize'] as CacheSize).cache, 1000 - fileList[1].metadata.contentSize);
     });
   });
 
@@ -804,8 +806,12 @@ describe('CacheService', () => {
       writeFileMock.mock.mockImplementation(async () => undefined);
       statMock.mock.mockImplementation(async () => ({ size: newSize }));
 
-      await (priv()['overwriteCacheFile'] as unknown as (file: unknown, content: Array<unknown>) => Promise<void>)(fileData, newContent);
+      const writtenSize = await (priv()['overwriteCacheFile'] as unknown as (file: unknown, content: Array<unknown>) => Promise<number>)(
+        fileData,
+        newContent
+      );
 
+      assert.strictEqual(writtenSize, newSize);
       assert.ok(writeFileMock.mock.calls.some(c => String(c.arguments[0]).includes(path.join('content', 'test.json'))));
 
       assert.ok(
@@ -877,9 +883,12 @@ describe('CacheService', () => {
 
     it('should orchestrate accumulation, writing, and cleanup', async () => {
       // Setup: 2 items in queue, merge them into 1
-      const item1 = { filename: '1.json', metadata: { contentType: 'typeA' } };
-      const item2 = { filename: '2.json', metadata: { contentType: 'typeA' } };
+      const item1 = { filename: '1.json', metadata: { contentType: 'typeA', contentSize: 10 } };
+      const item2 = { filename: '2.json', metadata: { contentType: 'typeA', contentSize: 12 } };
       priv()['queue'] = [item1, item2] as Array<{ filename: string; metadata: CacheMetadata }>;
+      priv()['cacheSize'] = { cache: 22, error: 0, archive: 0 };
+      const cacheSizeListener = mock.fn();
+      service.cacheSizeEventEmitter.on('cache-size', cacheSizeListener);
 
       // Mocks for helper methods
       priv()['accumulateContent'] = mock.fn(async () => ({
@@ -887,7 +896,8 @@ describe('CacheService', () => {
         remainder: [],
         compactedFiles: [item1, item2] // Both processed
       }));
-      priv()['overwriteCacheFile'] = mock.fn(async () => undefined);
+      // Merged file is smaller than the sum of its parts: one pair of JSON brackets is gone
+      priv()['overwriteCacheFile'] = mock.fn(async () => 21);
       priv()['deleteCacheEntry'] = mock.fn(async () => undefined);
 
       await service.compactQueue(100, 'typeB'); // nothing to do on this type
@@ -912,19 +922,31 @@ describe('CacheService', () => {
       // 5. Queue updated: should remove '2.json' (intermediate) but keep '1.json' (reused)
       assert.strictEqual((priv()['queue'] as Array<unknown>).length, 1);
       assert.strictEqual((priv()['queue'] as Array<unknown>)[0], item1);
+
+      // 6. Cache size resynced with what is now on disk
+      assert.strictEqual((priv()['cacheSize'] as CacheSize).cache, 21);
+      assert.strictEqual(cacheSizeListener.mock.calls.length, 1);
     });
 
     it('should handle remainder by writing to last file', async () => {
-      const item1 = { filename: '1.json', metadata: { contentType: 'typeA' } };
-      const item2 = { filename: '2.json', metadata: { contentType: 'typeA' } };
+      const item1 = { filename: '1.json', metadata: { contentType: 'typeA', contentSize: 10 } };
+      const item2 = { filename: '2.json', metadata: { contentType: 'typeA', contentSize: 12 } };
       priv()['queue'] = [item1, item2] as Array<{ filename: string; metadata: CacheMetadata }>;
+      priv()['cacheSize'] = { cache: 22, error: 0, archive: 0 };
+      const cacheSizeListener = mock.fn();
+      service.cacheSizeEventEmitter.on('cache-size', cacheSizeListener);
 
       priv()['accumulateContent'] = mock.fn(async () => ({
         newListOfContent: [{ a: 1 }],
         remainder: [{ b: 2 }],
         compactedFiles: [item1, item2]
       }));
-      priv()['overwriteCacheFile'] = mock.fn(async () => undefined);
+      priv()['overwriteCacheFile'] = mock.fn(
+        seq(
+          async () => 11,
+          async () => 11
+        )
+      );
       priv()['deleteCacheEntry'] = mock.fn(async () => undefined);
 
       await service.compactQueue(1, 'typeA');
@@ -935,6 +957,9 @@ describe('CacheService', () => {
 
       // Queue update: Both should remain in queue because shift() removed item1 and pop() removed item2 from the list to delete
       assert.strictEqual((priv()['queue'] as Array<unknown>).length, 2);
+      // Same bytes, split differently: size unchanged, no event
+      assert.strictEqual((priv()['cacheSize'] as CacheSize).cache, 22);
+      assert.strictEqual(cacheSizeListener.mock.calls.length, 0);
     });
 
     it('should orchestrate accumulation with no file compacted', async () => {
