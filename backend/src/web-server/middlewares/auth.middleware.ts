@@ -81,29 +81,6 @@ const createAuthMiddleware = (config: AuthConfig) => {
           return createAuthError(res, 'Invalid token', 403, shouldChallenge);
         }
       }
-      // SSE Token Auth
-      else if (req.url?.startsWith('/sse') && req.query?.token) {
-        try {
-          const token = req.query.token as string;
-          const verifiedToken: JwtPayload = jwt.verify(token, await config.encryptionService.getPublicKey(), {
-            algorithms: ['RS256'],
-            issuer: 'oibus'
-          }) as JwtPayload;
-
-          if (!verifiedToken?.login) {
-            return createAuthError(res, unauthorizedMessage, unauthorizedStatus, shouldChallenge);
-          }
-
-          headerUser = { name: verifiedToken.login, pass: verifiedToken.password };
-          const hashedPassword = config.userService.getHashedPasswordByLogin(headerUser.name);
-
-          if (!hashedPassword || hashedPassword !== verifiedToken.password) {
-            return createAuthError(res, unauthorizedMessage, unauthorizedStatus, shouldChallenge);
-          }
-        } catch {
-          return createAuthError(res, 'Invalid token', 403, shouldChallenge);
-        }
-      }
       // No auth provided
       else {
         return createAuthError(res, unauthorizedMessage, unauthorizedStatus, shouldChallenge);

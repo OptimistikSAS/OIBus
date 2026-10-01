@@ -2,7 +2,12 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClient, HttpContext, HttpStatusCode, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { errorInterceptor, ignoreErrorIfStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from './error-interceptor.service';
+import {
+  errorInterceptor,
+  ignoreErrorIfStatusIs,
+  ignoreErrorUnlessStatusIs,
+  SHOULD_IGNORE_ERROR_PREDICATE
+} from './error-interceptor.service';
 import { NotificationService } from './notification.service';
 import { WindowService } from './window.service';
 import { CurrentUserService } from './current-user.service';
@@ -108,5 +113,22 @@ describe('ErrorInterceptorService', () => {
     httpClient.get('/test', { context }).subscribe({ error: noop });
     http.expectOne('/test').flush({ message: 'olala' }, { status: 500, statusText: 'Server Error' });
     expect(notificationService.errorMessage).toHaveBeenCalled();
+  });
+
+  test('should ignore every error except the listed ones if ignoreErrorUnlessStatusIs is used as a context', () => {
+    const context = ignoreErrorUnlessStatusIs(HttpStatusCode.Unauthorized);
+    httpClient.get('/test', { context }).subscribe({ error: noop });
+    http.expectOne('/test').error(new ProgressEvent('error'));
+    httpClient.get('/test', { context }).subscribe({ error: noop });
+    http.expectOne('/test').flush({ message: 'olala' }, { status: 404, statusText: 'Not Found' });
+    httpClient.get('/test', { context }).subscribe({ error: noop });
+    http.expectOne('/test').flush({ message: 'olala' }, { status: 500, statusText: 'Server Error' });
+    expect(notificationService.error).not.toHaveBeenCalled();
+    expect(notificationService.errorMessage).not.toHaveBeenCalled();
+
+    httpClient.get('/test', { context }).subscribe({ error: noop });
+    http.expectOne('/test').flush(null, { status: 401, statusText: 'Unauthorized' });
+    expect(currentUserService.logout).toHaveBeenCalled();
+    expect(windowService.redirectTo).toHaveBeenCalledWith('/login?error=401');
   });
 });

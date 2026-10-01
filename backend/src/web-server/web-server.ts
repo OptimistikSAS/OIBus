@@ -4,7 +4,6 @@ import bodyParser from 'body-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import authMiddleware from './middlewares/auth.middleware';
-import sseMiddleware from './middlewares/sse.middleware';
 import EncryptionService from '../service/encryption.service';
 import * as Http from 'http';
 import SouthService from '../service/south.service';
@@ -15,7 +14,6 @@ import IPFilterService from '../service/ip-filter.service';
 import OIAnalyticsCommandService from '../service/oia/oianalytics-command.service';
 import OIAnalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
 import HistoryQueryService from '../service/history-query.service';
-import HomeMetricsService from '../service/metrics/home-metrics.service';
 import CertificateService from '../service/certificate.service';
 import UserService from '../service/user.service';
 import LogService from '../service/log.service';
@@ -60,7 +58,6 @@ export default class WebServer {
     private readonly northService: NorthService,
     private readonly transformerService: TransformerService,
     private readonly historyQueryService: HistoryQueryService,
-    private readonly homeMetricsService: HomeMetricsService,
     private readonly ignoreIpFilters: boolean,
     logger: ILogger
   ) {
@@ -172,9 +169,8 @@ export default class WebServer {
       skip: req => {
         // Skip rate limiting for:
         // - Content endpoints (unpredictable call frequency)
-        // - SSE endpoints (long-lived connections)
         // - Non-API routes
-        return req.path.startsWith('/api/content') || req.path.startsWith('/sse') || !req.path.startsWith('/api/');
+        return req.path.startsWith('/api/content') || !req.path.startsWith('/api/');
       }
     });
 
@@ -187,9 +183,6 @@ export default class WebServer {
       }
       return next();
     });
-
-    // SSE middleware
-    this.app.use(sseMiddleware(this.southService, this.northService, this.oIBusService, this.homeMetricsService, this.historyQueryService));
 
     // Routes
     this.setupRoutes(this.app);

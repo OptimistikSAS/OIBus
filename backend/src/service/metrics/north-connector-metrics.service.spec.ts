@@ -117,31 +117,8 @@ describe('NorthConnectorMetricsService', () => {
     assert.deepStrictEqual(northConnectorMetricsRepository.initMetrics.mock.calls[0].arguments, [testData.north.list[0].id]);
   });
 
-  it('should get stream', () => {
-    const stream = service.stream;
-    const writeSpy = mock.method(stream, 'write', () => true);
-    mock.timers.tick(100);
-    assert.strictEqual(writeSpy.mock.calls.length, 1);
-    assert.ok(service.stream);
-  });
-
-  it('should debounce stream writes alongside DB writes', () => {
-    const stream = service.stream;
-    const writeSpy = mock.method(stream, 'write', () => true);
-    mock.timers.tick(100); // drain the stream-init write
-    writeSpy.mock.resetCalls(); // start counting from 0
-
-    service.updateMetrics();
-    mock.timers.tick(1000);
-    assert.strictEqual(writeSpy.mock.calls.length, 1);
-    service.initMetrics();
-    assert.strictEqual(writeSpy.mock.calls.length, 2);
-  });
-
   it('should properly clean up listeners on destroy', () => {
     const metricsEventOffSpy = mock.method(northMock.metricsEvent, 'off');
-    const stream = service.stream;
-    const streamDestroySpy = mock.method(stream, 'destroy');
 
     service.destroy();
 
@@ -151,7 +128,5 @@ describe('NorthConnectorMetricsService', () => {
     assert.ok(offEvents.includes('connect'));
     assert.ok(offEvents.includes('run-start'));
     assert.ok(offEvents.includes('run-end'));
-    assert.ok(streamDestroySpy.mock.calls.length > 0);
-    assert.strictEqual(service['_stream'], null);
   });
 });

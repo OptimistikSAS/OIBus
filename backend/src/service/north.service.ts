@@ -23,7 +23,6 @@ import { NorthSettings } from '../../shared/model/north-settings.model';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import type DataStreamEngine from '../engine/data-stream-engine';
-import { PassThrough } from 'node:stream';
 import {
   CacheMetadataSource,
   NorthConnectorMetrics,
@@ -188,11 +187,7 @@ export default class NorthService {
     await this.engine.stopNorth(northConnector.id);
   }
 
-  getNorthDataStream(northId: string): PassThrough | null {
-    return this.engine.getNorthSSE(northId);
-  }
-
-  getNorthMetric(northId: string): NorthConnectorMetrics | null {
+  getNorthMetric(northId: string): NorthConnectorMetrics {
     return this.engine.getNorthMetrics(northId);
   }
 

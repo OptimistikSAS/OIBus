@@ -7,12 +7,14 @@ import {
   DataFolderType,
   EngineLoggerCommandDTO,
   EngineMemoryDumpDTO,
+  EngineMetrics,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
   EngineSettingsUpdateResultDTO,
   EngineWebServerCommandDTO,
   FileCacheContent,
+  HomeMetrics,
   OIBusContent,
   OIBusInfo
 } from '../../../../shared/model/engine.model';
@@ -44,6 +46,8 @@ export default class OIBusServiceMock {
   logHealthSignal = mock.fn((): void => undefined);
   updateEngineMetrics = mock.fn((): void => undefined);
   resetEngineMetrics = mock.fn((): void => undefined);
+  getEngineMetrics = mock.fn((): EngineMetrics => ({}) as EngineMetrics);
+  getHomeMetrics = mock.fn((): HomeMetrics => ({}) as HomeMetrics);
   resetNorthMetrics = mock.fn((_northId: string): void => undefined);
   resetSouthMetrics = mock.fn((_southId: string): void => undefined);
   searchCacheContent = mock.fn(
@@ -57,7 +61,6 @@ export default class OIBusServiceMock {
   updateCacheContent = mock.fn(
     async (_type: 'north' | 'history', _id: string, _updateCommand: CacheContentUpdateCommand): Promise<void> => undefined
   );
-  stream = new EventEmitter();
   loggerEvent = new EventEmitter();
   portChangeEvent = new EventEmitter();
 }

@@ -28,7 +28,6 @@ import type SouthService from '../service/south.service';
 import type NorthService from '../service/north.service';
 import type TransformerService from '../service/transformer.service';
 import type HistoryQueryService from '../service/history-query.service';
-import type HomeMetricsService from '../service/metrics/home-metrics.service';
 import type EncryptionService from '../service/encryption.service';
 import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model/types';
 
@@ -37,14 +36,6 @@ const nodeRequire = createRequire(import.meta.url);
 let ValidateError: typeof import('tsoa').ValidateError;
 
 const TEST_PORT = 19998;
-
-interface HomeMetricsMockType {
-  getHomeMetrics: ReturnType<typeof mock.fn>;
-}
-
-function buildHomeMetricsMock(): HomeMetricsMockType {
-  return { getHomeMetrics: mock.fn() };
-}
 
 function buildEncryptionMock() {
   return {
@@ -63,7 +54,6 @@ describe('WebServer', () => {
   let ipFilterService: IpFilterServiceMock;
   let oIBusService: OIBusServiceMock;
   let encryptionMock: ReturnType<typeof buildEncryptionMock>;
-  let homeMetricsMock: HomeMetricsMockType;
   const loggerMock = new PinoLogger();
 
   before(() => {
@@ -88,7 +78,6 @@ describe('WebServer', () => {
     ipFilterService = new IpFilterServiceMock();
     oIBusService = new OIBusServiceMock();
     encryptionMock = buildEncryptionMock();
-    homeMetricsMock = buildHomeMetricsMock();
 
     webServer = new WebServer(
       TEST_PORT,
@@ -105,7 +94,6 @@ describe('WebServer', () => {
       new NorthServiceMock() as unknown as NorthService,
       new TransformerServiceMock() as unknown as TransformerService,
       new HistoryQueryServiceMock() as unknown as HistoryQueryService,
-      homeMetricsMock as unknown as HomeMetricsService,
       false,
       loggerMock
     );
@@ -139,7 +127,6 @@ describe('WebServer', () => {
       new NorthServiceMock() as unknown as NorthService,
       new TransformerServiceMock() as unknown as TransformerService,
       new HistoryQueryServiceMock() as unknown as HistoryQueryService,
-      homeMetricsMock as unknown as HomeMetricsService,
       false,
       loggerMock
     );

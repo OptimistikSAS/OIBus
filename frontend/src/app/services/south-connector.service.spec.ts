@@ -230,6 +230,13 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
+  test('should get South metrics', () => {
+    let result: unknown = null;
+    service.getMetrics('id1').subscribe(metrics => (result = metrics));
+    http.expectOne({ method: 'GET', url: '/api/south/id1/metrics' }).flush(testData.south.metrics);
+    expect(result).toEqual(testData.south.metrics);
+  });
+
   test('should download csv items', () => {
     let downloaded = false;
 

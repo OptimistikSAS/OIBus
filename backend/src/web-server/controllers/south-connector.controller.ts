@@ -40,7 +40,7 @@ import SouthService, {
 } from '../../service/south.service';
 import { itemToFlattenedCSV } from '../../service/utils';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, SouthConnectorMetrics } from '../../../shared/model/engine.model';
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 import fs from 'node:fs/promises';
 
@@ -200,7 +200,17 @@ export class SouthConnectorController extends Controller {
   }
 
   /**
-   * Resets all metrics for a north connector
+   * Retrieves the current metrics of a south connector
+   * @summary Get south connector metrics
+   * @returns {SouthConnectorMetrics} The south connector metrics
+   */
+  @Get('/{southId}/metrics')
+  getMetrics(@Path() southId: string, @Request() request: CustomExpressRequest): SouthConnectorMetrics {
+    return request.services.southService.getSouthMetric(southId);
+  }
+
+  /**
+   * Resets all metrics for a south connector
    * @summary Reset south connector metrics
    */
   @Post('/{southId}/metrics/reset')

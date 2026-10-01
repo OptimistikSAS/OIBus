@@ -13,7 +13,7 @@ const webClientMiddleware = () => {
       console.info(`${req.method} ${req.path} - Serving static file`);
       staticMiddleware(req, res, next);
       return;
-    } else if (!req.path.startsWith('/api/') && !req.path.startsWith('/sse/') && req.method === 'GET') {
+    } else if (!req.path.startsWith('/api/') && req.method === 'GET') {
       console.info(`${req.method} ${req.path} - Serving index.html`);
       return res.sendFile(path.join(root, 'index.html'));
     } else {

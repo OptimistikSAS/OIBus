@@ -4084,6 +4084,21 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorADSCommandDTO"},{"ref":"SouthConnectorFolderScannerCommandDTO"},{"ref":"SouthConnectorFTPCommandDTO"},{"ref":"SouthConnectorInfluxDBCommandDTO"},{"ref":"SouthConnectorModbusCommandDTO"},{"ref":"SouthConnectorMQTTCommandDTO"},{"ref":"SouthConnectorMSSQLCommandDTO"},{"ref":"SouthConnectorMySQLCommandDTO"},{"ref":"SouthConnectorODBCCommandDTO"},{"ref":"SouthConnectorOIAnalyticsCommandDTO"},{"ref":"SouthConnectorOLEDBCommandDTO"},{"ref":"SouthConnectorOPCCommandDTO"},{"ref":"SouthConnectorOPCUACommandDTO"},{"ref":"SouthConnectorOracleCommandDTO"},{"ref":"SouthConnectorOsisoftPICommandDTO"},{"ref":"SouthConnectorPostgreSQLCommandDTO"},{"ref":"SouthConnectorRESTCommandDTO"},{"ref":"SouthConnectorSFTPCommandDTO"},{"ref":"SouthConnectorSQLiteCommandDTO"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthConnectorMetrics": {
+        "dataType": "refObject",
+        "properties": {
+            "metricsStart": {"ref":"Instant","required":true},
+            "lastConnection": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "lastRunStart": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "lastRunDuration": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "numberOfValuesRetrieved": {"dataType":"double","required":true},
+            "numberOfFilesRetrieved": {"dataType":"double","required":true},
+            "lastValueRetrieved": {"dataType":"union","subSchemas":[{"ref":"OIBusTimeValue"},{"dataType":"enum","enums":[null]}],"required":true},
+            "lastFileRetrieved": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusConnectionTestResult": {
         "dataType": "refObject",
         "properties": {
@@ -6730,6 +6745,25 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"union","subSchemas":[{"ref":"NorthConnectorAmazonS3DTO"},{"ref":"NorthConnectorAzureBlobDTO"},{"ref":"NorthConnectorConsoleDTO"},{"ref":"NorthConnectorFileWriterDTO"},{"ref":"NorthConnectorModbusDTO"},{"ref":"NorthConnectorMQTTDTO"},{"ref":"NorthConnectorOIAnalyticsDTO"},{"ref":"NorthConnectorOPCUADTO"},{"ref":"NorthConnectorRESTDTO"},{"ref":"NorthConnectorSFTPDTO"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "NorthConnectorMetrics": {
+        "dataType": "refObject",
+        "properties": {
+            "metricsStart": {"ref":"Instant","required":true},
+            "lastConnection": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "lastRunStart": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
+            "lastRunDuration": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+            "contentSentSize": {"dataType":"double","required":true},
+            "contentErroredSize": {"dataType":"double","required":true},
+            "contentArchivedSize": {"dataType":"double","required":true},
+            "contentCachedSize": {"dataType":"double","required":true},
+            "lastContentSent": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "currentCacheSize": {"dataType":"double","required":true},
+            "currentErrorSize": {"dataType":"double","required":true},
+            "currentArchiveSize": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "NorthSettings": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"ref":"NorthAmazonS3Settings"},{"ref":"NorthAzureBlobSettings"},{"ref":"NorthConsoleSettings"},{"ref":"NorthFileWriterSettings"},{"ref":"NorthModbusSettings"},{"ref":"NorthMQTTSettings"},{"ref":"NorthOIAnalyticsSettings"},{"ref":"NorthOPCUASettings"},{"ref":"NorthRESTSettings"},{"ref":"NorthSFTPSettings"}],"validators":{}},
@@ -7760,6 +7794,17 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"intersection","subSchemas":[{"ref":"BaseEntity"},{"ref":"HistoryQueryCommonDTO"},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryADSSouthDTO"},{"ref":"HistoryQueryFolderScannerSouthDTO"},{"ref":"HistoryQueryFTPSouthDTO"},{"ref":"HistoryQueryInfluxDBSouthDTO"},{"ref":"HistoryQueryModbusSouthDTO"},{"ref":"HistoryQueryMQTTSouthDTO"},{"ref":"HistoryQueryMSSQLSouthDTO"},{"ref":"HistoryQueryMySQLSouthDTO"},{"ref":"HistoryQueryODBCSouthDTO"},{"ref":"HistoryQueryOIAnalyticsSouthDTO"},{"ref":"HistoryQueryOLEDBSouthDTO"},{"ref":"HistoryQueryOPCSouthDTO"},{"ref":"HistoryQueryOPCUASouthDTO"},{"ref":"HistoryQueryOracleSouthDTO"},{"ref":"HistoryQueryOsisoftPISouthDTO"},{"ref":"HistoryQueryPostgreSQLSouthDTO"},{"ref":"HistoryQueryRESTSouthDTO"},{"ref":"HistoryQuerySFTPSouthDTO"},{"ref":"HistoryQuerySQLiteSouthDTO"}]},{"dataType":"union","subSchemas":[{"ref":"HistoryQueryAmazonS3NorthDTO"},{"ref":"HistoryQueryAzureBlobNorthDTO"},{"ref":"HistoryQueryConsoleNorthDTO"},{"ref":"HistoryQueryFileWriterNorthDTO"},{"ref":"HistoryQueryModbusNorthDTO"},{"ref":"HistoryQueryMQTTNorthDTO"},{"ref":"HistoryQueryOIAnalyticsNorthDTO"},{"ref":"HistoryQueryOPCUANorthDTO"},{"ref":"HistoryQueryRESTNorthDTO"},{"ref":"HistoryQuerySFTPNorthDTO"}]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "HistoryQueryMetrics": {
+        "dataType": "refObject",
+        "properties": {
+            "metricsStart": {"ref":"Instant","required":true},
+            "north": {"dataType":"nestedObjectLiteral","nestedProperties":{"currentArchiveSize":{"dataType":"double","required":true},"currentErrorSize":{"dataType":"double","required":true},"currentCacheSize":{"dataType":"double","required":true},"lastContentSent":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"contentCachedSize":{"dataType":"double","required":true},"contentArchivedSize":{"dataType":"double","required":true},"contentErroredSize":{"dataType":"double","required":true},"contentSentSize":{"dataType":"double","required":true},"lastRunDuration":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"lastRunStart":{"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},"lastConnection":{"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true}},"required":true},
+            "south": {"dataType":"nestedObjectLiteral","nestedProperties":{"lastFileRetrieved":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"lastValueRetrieved":{"dataType":"union","subSchemas":[{"ref":"OIBusTimeValue"},{"dataType":"enum","enums":[null]}],"required":true},"numberOfFilesRetrieved":{"dataType":"double","required":true},"numberOfValuesRetrieved":{"dataType":"double","required":true},"lastRunDuration":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"lastRunStart":{"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},"lastConnection":{"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true}},"required":true},
+            "historyMetrics": {"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfIntervals":{"dataType":"double","required":true},"currentIntervalNumber":{"dataType":"double","required":true},"currentIntervalEnd":{"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},"currentIntervalStart":{"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},"intervalProgress":{"dataType":"double","required":true},"running":{"dataType":"boolean","required":true}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "HistorySouthItemTestRequest": {
         "dataType": "refObject",
         "properties": {
@@ -7838,6 +7883,54 @@ const models: TsoaRoute.Models = {
             "webServer": {"ref":"EngineWebServerCommandDTO","required":true},
             "proxyServer": {"ref":"EngineProxyCommandDTO","required":true},
             "logger": {"ref":"EngineLoggerCommandDTO","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "EngineMetrics": {
+        "dataType": "refObject",
+        "properties": {
+            "metricsStart": {"ref":"Instant","required":true},
+            "processCpuUsageInstant": {"dataType":"double","required":true},
+            "processCpuUsageAverage": {"dataType":"double","required":true},
+            "processUptime": {"dataType":"double","required":true},
+            "freeMemory": {"dataType":"double","required":true},
+            "totalMemory": {"dataType":"double","required":true},
+            "minRss": {"dataType":"double","required":true},
+            "currentRss": {"dataType":"double","required":true},
+            "maxRss": {"dataType":"double","required":true},
+            "minHeapTotal": {"dataType":"double","required":true},
+            "currentHeapTotal": {"dataType":"double","required":true},
+            "maxHeapTotal": {"dataType":"double","required":true},
+            "minHeapUsed": {"dataType":"double","required":true},
+            "currentHeapUsed": {"dataType":"double","required":true},
+            "maxHeapUsed": {"dataType":"double","required":true},
+            "minExternal": {"dataType":"double","required":true},
+            "currentExternal": {"dataType":"double","required":true},
+            "maxExternal": {"dataType":"double","required":true},
+            "minArrayBuffers": {"dataType":"double","required":true},
+            "currentArrayBuffers": {"dataType":"double","required":true},
+            "maxArrayBuffers": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Record_string.NorthConnectorMetrics_": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"ref":"NorthConnectorMetrics"},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Record_string.SouthConnectorMetrics_": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"ref":"SouthConnectorMetrics"},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "HomeMetrics": {
+        "dataType": "refObject",
+        "properties": {
+            "norths": {"ref":"Record_string.NorthConnectorMetrics_","required":true},
+            "engine": {"ref":"EngineMetrics","required":true},
+            "souths": {"ref":"Record_string.SouthConnectorMetrics_","required":true},
         },
         "additionalProperties": false,
     },
@@ -8711,6 +8804,37 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 next,
                 validatedArgs,
                 successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsSouthConnectorController_getMetrics: Record<string, TsoaRoute.ParameterSchema> = {
+                southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/south/:southId/metrics',
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(SouthConnectorController.prototype.getMetrics)),
+
+            async function SouthConnectorController_getMetrics(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsSouthConnectorController_getMetrics, request, response });
+
+                const controller = new SouthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'getMetrics',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
               });
             } catch (err) {
                 return next(err);
@@ -10265,6 +10389,37 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsNorthConnectorController_getMetrics: Record<string, TsoaRoute.ParameterSchema> = {
+                northId: {"in":"path","name":"northId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/north/:northId/metrics',
+            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController)),
+            ...(fetchMiddlewares<RequestHandler>(NorthConnectorController.prototype.getMetrics)),
+
+            async function NorthConnectorController_getMetrics(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsNorthConnectorController_getMetrics, request, response });
+
+                const controller = new NorthConnectorController();
+
+              await templateService.apiHandler({
+                methodName: 'getMetrics',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsNorthConnectorController_resetMetrics: Record<string, TsoaRoute.ParameterSchema> = {
                 northId: {"in":"path","name":"northId","required":true,"dataType":"string"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
@@ -11090,6 +11245,37 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 next,
                 validatedArgs,
                 successStatus: 204,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsHistoryQueryController_getMetrics: Record<string, TsoaRoute.ParameterSchema> = {
+                historyId: {"in":"path","name":"historyId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/history/:historyId/metrics',
+            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController)),
+            ...(fetchMiddlewares<RequestHandler>(HistoryQueryController.prototype.getMetrics)),
+
+            async function HistoryQueryController_getMetrics(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsHistoryQueryController_getMetrics, request, response });
+
+                const controller = new HistoryQueryController();
+
+              await templateService.apiHandler({
+                methodName: 'getMetrics',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
               });
             } catch (err) {
                 return next(err);
@@ -12082,6 +12268,66 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 next,
                 validatedArgs,
                 successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsEngineController_getEngineMetrics: Record<string, TsoaRoute.ParameterSchema> = {
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/engine/metrics',
+            ...(fetchMiddlewares<RequestHandler>(EngineController)),
+            ...(fetchMiddlewares<RequestHandler>(EngineController.prototype.getEngineMetrics)),
+
+            async function EngineController_getEngineMetrics(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsEngineController_getEngineMetrics, request, response });
+
+                const controller = new EngineController();
+
+              await templateService.apiHandler({
+                methodName: 'getEngineMetrics',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsEngineController_getHomeMetrics: Record<string, TsoaRoute.ParameterSchema> = {
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/engine/home-metrics',
+            ...(fetchMiddlewares<RequestHandler>(EngineController)),
+            ...(fetchMiddlewares<RequestHandler>(EngineController.prototype.getHomeMetrics)),
+
+            async function EngineController_getHomeMetrics(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsEngineController_getHomeMetrics, request, response });
+
+                const controller = new EngineController();
+
+              await templateService.apiHandler({
+                methodName: 'getHomeMetrics',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
               });
             } catch (err) {
                 return next(err);

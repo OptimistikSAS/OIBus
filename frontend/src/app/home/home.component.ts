@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
@@ -9,8 +9,8 @@ import { NorthConnectorService } from '../services/north-connector.service';
 import { EngineMetricsComponent } from '../engine/engine-metrics/engine-metrics.component';
 import { NorthMetricsComponent } from '../north/north-metrics/north-metrics.component';
 import { SouthMetricsComponent } from '../south/south-detail/south-metrics/south-metrics.component';
-import { HomeMetrics } from '../../../../backend/shared/model/engine.model';
-import { WindowService } from '../shared/window.service';
+import { EngineService } from '../services/engine.service';
+import { pollMetrics } from '../shared/metrics-polling';
 
 const NUMBER_OF_COLUMN = 3;
 
@@ -35,15 +35,10 @@ export class HomeComponent {
 
   readonly southRows = computed(() => toRows(this.souths().filter(s => s.enabled)));
   readonly northRows = computed(() => toRows(this.norths().filter(n => n.enabled)));
-  readonly homeMetrics = signal<HomeMetrics | null>(null);
+  private readonly engineService = inject(EngineService);
+  readonly homeMetrics = toSignal(
+    pollMetrics(() => this.engineService.getHomeMetrics()),
+    { initialValue: null }
+  );
   readonly copyrightYear = new Date().getFullYear();
-
-  constructor() {
-    const token = inject(WindowService).getStorageItem('oibus-token');
-    const stream = new EventSource(`/sse/home?token=${token}`, { withCredentials: true });
-    stream.onmessage = (event: MessageEvent) => {
-      if (event?.data) this.homeMetrics.set(JSON.parse(event.data) as HomeMetrics);
-    };
-    inject(DestroyRef).onDestroy(() => stream.close());
-  }
 }

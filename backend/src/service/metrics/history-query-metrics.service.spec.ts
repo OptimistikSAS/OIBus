@@ -157,32 +157,8 @@ describe('HistoryMetricsService', () => {
     assert.ok(historyQueryMetricsRepository.initMetrics.mock.calls.length > 0);
   });
 
-  it('should get stream', () => {
-    const stream = service.stream;
-    const writeSpy = mock.method(stream, 'write', () => true);
-    mock.timers.tick(100);
-    assert.strictEqual(writeSpy.mock.calls.length, 1);
-    assert.ok(service.stream);
-  });
-
-  it('should debounce stream writes alongside DB writes', () => {
-    const stream = service.stream;
-    const writeSpy = mock.method(stream, 'write', () => true);
-
-    mock.timers.tick(100); // drain the stream-init write
-    writeSpy.mock.resetCalls(); // start counting from 0
-
-    service.updateMetrics();
-    mock.timers.tick(1000);
-    assert.strictEqual(writeSpy.mock.calls.length, 1);
-    service.initMetrics();
-    assert.strictEqual(writeSpy.mock.calls.length, 2);
-  });
-
   it('should properly clean up listeners on destroy', () => {
     const metricsEventOffSpy = mock.method(historyQueryMock.metricsEvent, 'off');
-    const stream = service.stream;
-    const streamDestroySpy = mock.method(stream, 'destroy');
 
     service.destroy();
 
@@ -200,7 +176,5 @@ describe('HistoryMetricsService', () => {
     assert.ok(offEvents.includes('south-history-query-stop'));
     assert.ok(offEvents.includes('south-add-values'));
     assert.ok(offEvents.includes('south-add-file'));
-    assert.ok(streamDestroySpy.mock.calls.length > 0);
-    assert.strictEqual(service['_stream'], null);
   });
 });

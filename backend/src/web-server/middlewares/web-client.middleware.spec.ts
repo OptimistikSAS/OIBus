@@ -67,15 +67,6 @@ describe('webClientMiddleware', () => {
     assert.strictEqual(mockRes.sendFile.mock.calls.length, 0);
   });
 
-  it('should call next() for SSE paths', () => {
-    const middleware = webClientMiddleware();
-    const req = makeReq('GET', '/sse/engine');
-
-    middleware(req, mockRes, mockNext);
-
-    assert.strictEqual(mockNext.mock.calls.length, 1);
-  });
-
   it('should call next() for non-GET requests to non-static paths', () => {
     const middleware = webClientMiddleware();
     const req = makeReq('POST', '/some-path');

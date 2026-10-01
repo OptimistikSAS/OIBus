@@ -1,15 +1,18 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpStatusCode } from '@angular/common/http';
 import { Observable, shareReplay } from 'rxjs';
 import { Service, inject } from '@angular/core';
+import { ignoreErrorUnlessStatusIs } from '../shared/error-interceptor.service';
 import {
   EngineLoggerCommandDTO,
   EngineMemoryDumpDTO,
+  EngineMetrics,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
   EngineSettingsDTO,
   EngineSettingsUpdateResultDTO,
   EngineWebServerCommandDTO,
+  HomeMetrics,
   OIBusInfo,
   RegistrationSettingsCommandDTO,
   RegistrationSettingsDTO
@@ -59,6 +62,20 @@ export class EngineService {
    */
   resetEngineMetrics(): Observable<void> {
     return this.http.post<void>(`/api/engine/metrics/reset`, null);
+  }
+
+  /**
+   * Get the current Engine metrics. Polled in the background, so only an expired session is notified
+   */
+  getEngineMetrics(): Observable<EngineMetrics> {
+    return this.http.get<EngineMetrics>(`/api/engine/metrics`, { context: ignoreErrorUnlessStatusIs(HttpStatusCode.Unauthorized) });
+  }
+
+  /**
+   * Get the metrics displayed on the home page. Polled in the background, so only an expired session is notified
+   */
+  getHomeMetrics(): Observable<HomeMetrics> {
+    return this.http.get<HomeMetrics>(`/api/engine/home-metrics`, { context: ignoreErrorUnlessStatusIs(HttpStatusCode.Unauthorized) });
   }
 
   restart(): Observable<void> {

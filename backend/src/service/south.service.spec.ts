@@ -426,9 +426,9 @@ describe('South Service', () => {
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
   });
 
-  it('should get a south data stream for metrics', () => {
-    service.getSouthDataStream(testData.south.list[0].id);
-    assert.deepStrictEqual(engine.getSouthSSE.mock.calls[0].arguments, [testData.south.list[0].id]);
+  it('should get a south metric', () => {
+    service.getSouthMetric(testData.south.list[0].id);
+    assert.deepStrictEqual(engine.getSouthMetrics.mock.calls[0].arguments, [testData.south.list[0].id]);
   });
 
   it('should test a south connector in creation mode', async () => {

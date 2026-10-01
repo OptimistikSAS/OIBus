@@ -12,7 +12,7 @@ import {
 } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { combineLatest, firstValueFrom, map, merge, Observable, of, switchMap, tap } from 'rxjs';
+import { combineLatest, firstValueFrom, map, merge, Observable, of, Subscription, switchMap, tap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
@@ -21,7 +21,7 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { NotificationService } from '../../shared/notification.service';
 import { OIBusInfo, SouthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
-import { WindowService } from '../../shared/window.service';
+import { pollMetrics } from '../../shared/metrics-polling';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { EngineService } from '../../services/engine.service';
@@ -94,7 +94,6 @@ export interface TableData {
   providers: [PageLoader]
 })
 export class SouthDetailComponent {
-  private windowService = inject(WindowService);
   private southConnectorService = inject(SouthConnectorService);
   private scanModeService = inject(ScanModeService);
   private certificateService = inject(CertificateService);
@@ -123,7 +122,7 @@ export class SouthDetailComponent {
   certificates: Array<CertificateDTO> = [];
 
   connectorMetrics = signal<SouthConnectorMetrics | null>(null);
-  connectorStream: EventSource | null = null;
+  private metricsSubscription: Subscription | null = null;
   oibusInfo: OIBusInfo | null = null;
 
   // Mass action properties
@@ -197,15 +196,9 @@ export class SouthDetailComponent {
           });
         this.resetPage();
 
-        const token = this.windowService.getStorageItem('oibus-token');
-        this.connectorStream = new EventSource(`/sse/south/${this.southConnector!.id}?token=${token}`, { withCredentials: true });
-        this.connectorStream.addEventListener('message', (event: MessageEvent) => {
-          if (event && event.data) {
-            this.connectorMetrics.set(JSON.parse(event.data));
-          }
-        });
-        this.destroyRef.onDestroy(() => this.connectorStream?.close());
+        this.startMetricsPolling(this.southConnector!.id);
       });
+    this.destroyRef.onDestroy(() => this.metricsSubscription?.unsubscribe());
 
     // Subscribe to filter control changes
     merge(
@@ -216,6 +209,13 @@ export class SouthDetailComponent {
     ).subscribe(() => {
       this.resetPage();
     });
+  }
+
+  private startMetricsPolling(southId: string) {
+    this.metricsSubscription?.unsubscribe();
+    this.metricsSubscription = pollMetrics(() => this.southConnectorService.getMetrics(southId)).subscribe(metrics =>
+      this.connectorMetrics.set(metrics)
+    );
   }
 
   addItem() {

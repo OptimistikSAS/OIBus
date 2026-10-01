@@ -163,6 +163,16 @@ describe('NorthConnectorController', () => {
     assert.deepStrictEqual(northService.stop.mock.calls[0].arguments[0], northId);
   });
 
+  it('should get north connector metrics', async () => {
+    const northId = testData.north.list[0].id;
+    northService.getNorthMetric = mock.fn(() => testData.north.metrics);
+
+    const result = controller.getMetrics(northId, mockRequest as CustomExpressRequest);
+
+    assert.deepStrictEqual(northService.getNorthMetric.mock.calls[0].arguments, [northId]);
+    assert.deepStrictEqual(result, testData.north.metrics);
+  });
+
   it('should reset north connector metrics', async () => {
     const northId = testData.north.list[0].id;
     oIBusService.resetNorthMetrics = mock.fn(async () => undefined);

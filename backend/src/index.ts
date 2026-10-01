@@ -25,7 +25,6 @@ import OIAnalyticsMessageService from './service/oia/oianalytics-message.service
 import JoiValidator from './web-server/controllers/validators/joi.validator';
 import ScanModeService from './service/scan-mode.service';
 import IPFilterService from './service/ip-filter.service';
-import HomeMetricsService from './service/metrics/home-metrics.service';
 import OIAnalyticsClient from './service/oia/oianalytics-client.service';
 import CertificateService from './service/certificate.service';
 import UserService from './service/user.service';
@@ -217,8 +216,6 @@ export async function bootstrap(): Promise<void> {
   );
   await oIBusService.start();
 
-  const homeMetricsService = new HomeMetricsService(oIBusService, dataStreamEngine);
-
   const scanModeService = new ScanModeService(
     new JoiValidator(),
     repositoryService.scanModeRepository,
@@ -282,7 +279,6 @@ export async function bootstrap(): Promise<void> {
     northService,
     transformerService,
     historyQueryService,
-    homeMetricsService,
     ignoreIpFilters,
     loggerService.createChildLogger('internal', 'web-server')
   );

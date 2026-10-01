@@ -457,11 +457,6 @@ describe('DataStreamEngine', () => {
       assert.ok(testData.north.list[1].id in metrics);
     });
 
-    it('should get north SSE stream', () => {
-      const sse = engine.getNorthSSE(testData.north.list[0].id);
-      assert.ok(sse !== undefined && sse !== null);
-    });
-
     it('should reload north connector', async () => {
       const northEntity = testData.north.list[0];
       const spyStop = mock.method(engine, 'stopNorth');
@@ -542,9 +537,9 @@ describe('DataStreamEngine', () => {
       assert.ok(testData.south.list[0].id in metrics);
     });
 
-    it('should get south SSE stream', () => {
-      const sse = engine.getSouthSSE(testData.south.list[0].id);
-      assert.ok(sse !== undefined && sse !== null);
+    it('should get south metrics', () => {
+      const metrics = engine.getSouthMetrics(testData.south.list[0].id);
+      assert.ok(metrics !== undefined && metrics !== null);
     });
 
     it('should report whether a south connector is present in the engine', () => {
@@ -763,12 +758,10 @@ describe('DataStreamEngine', () => {
       assert.throws(() => engine.getHistoryQuery(config.id));
     });
 
-    it('should get metrics and SSE', () => {
+    it('should get metrics', () => {
       const id = testData.historyQueries.list[0].id;
       const metrics = engine.getHistoryMetrics(id);
       assert.ok(metrics !== undefined && metrics !== null);
-      const sse = engine.getHistoryQuerySSE(id);
-      assert.ok(sse !== undefined && sse !== null);
     });
   });
 

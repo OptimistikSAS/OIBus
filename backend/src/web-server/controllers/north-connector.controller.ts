@@ -15,6 +15,7 @@ import {
   CacheSearchResult,
   DataFolderType,
   FileCacheContent,
+  NorthConnectorMetrics,
   OIBusConnectionTestResult
 } from '../../../shared/model/engine.model';
 import { TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
@@ -155,6 +156,17 @@ export class NorthConnectorController extends Controller {
   async stop(@Path() northId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const northService = request.services.northService as NorthService;
     await northService.stop(northId);
+  }
+
+  /**
+   * Retrieves the current metrics of a north connector
+   * @summary Get north connector metrics
+   * @returns {NorthConnectorMetrics} The north connector metrics
+   */
+  @Get('/{northId}/metrics')
+  getMetrics(@Path() northId: string, @Request() request: CustomExpressRequest): NorthConnectorMetrics {
+    const northService = request.services.northService as NorthService;
+    return northService.getNorthMetric(northId);
   }
 
   /**

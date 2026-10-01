@@ -1,5 +1,4 @@
 import { CacheMetadata, HistoryQueryMetrics, OIBusTimeValue } from '../../../shared/model/engine.model';
-import { PassThrough } from 'node:stream';
 import HistoryQuery from '../../engine/history-query';
 import HistoryQueryMetricsRepository, { PersistedHistoryQueryMetrics } from '../../repository/metrics/history-query-metrics.repository';
 import { DateTime } from 'luxon';
@@ -7,14 +6,13 @@ import { Instant } from '../../model/types';
 import { applyNorthCacheContentSize, applyNorthConnect, applyNorthRunEnd, applyNorthRunStart } from './north-metrics-accumulator';
 
 /**
- * Coalesce DB + SSE writes. Same rationale as south/north metrics services:
+ * Coalesce DB writes. Same rationale as south/north metrics services:
  * high-rate HA reads emit many metric events per second; we collapse them into
  * a single coalesced write per window. In-memory `_metrics` is always current.
  */
 const METRICS_FLUSH_INTERVAL_MS = 1000;
 
 export default class HistoryQueryMetricsService {
-  private _stream: PassThrough | null = null;
   private metricsFlushTimer: NodeJS.Timeout | null = null;
   // Persisted fields only; the north current cache/error/archive sizes are added live in snapshot().
   private _metrics: PersistedHistoryQueryMetrics = {
@@ -86,8 +84,8 @@ export default class HistoryQueryMetricsService {
 
   private onNorthCacheSize = () => {
     // Current sizes are read live from the cache service at serialization time
-    // (see snapshot()); this listener only triggers a debounced flush so the SSE
-    // stream and the persisted row reflect a cache-size change promptly.
+    // (see snapshot()); this listener only triggers a debounced flush so the
+    // persisted row reflects a cache-size change promptly.
     this.updateMetrics();
   };
 
@@ -166,7 +164,6 @@ export default class HistoryQueryMetricsService {
   initMetrics(): void {
     this.historyQueryMetricsRepository.initMetrics(this.historyQuery.historyQueryConfiguration.id);
     this._metrics = this.historyQueryMetricsRepository.getMetrics(this.historyQuery.historyQueryConfiguration.id)!;
-    this._stream?.write(`data: ${JSON.stringify(this.snapshot())}\n\n`);
   }
 
   /** Debounced flush. See METRICS_FLUSH_INTERVAL_MS. */
@@ -179,9 +176,8 @@ export default class HistoryQueryMetricsService {
   }
 
   private flushMetrics(): void {
-    // Persist only the persisted fields; the SSE push carries the full snapshot (with live sizes).
+    // Persist only the persisted fields; the live cache sizes are added when the metrics are read (snapshot()).
     this.historyQueryMetricsRepository.updateMetrics(this.historyQuery.historyQueryConfiguration.id, this._metrics);
-    this._stream?.write(`data: ${JSON.stringify(this.snapshot())}\n\n`);
   }
 
   resetMetrics(): void {
@@ -215,30 +211,9 @@ export default class HistoryQueryMetricsService {
       this.metricsFlushTimer = null;
       this.flushMetrics();
     }
-    this._stream?.destroy();
-    this._stream = null;
   }
 
   get metrics(): HistoryQueryMetrics {
     return this.snapshot();
-  }
-
-  /**
-   * Create a PassThrough object used to send a data to a stream to the frontend
-   * The timeout is used to auto-initialize the stream at creation
-   */
-  get stream(): PassThrough {
-    this._stream?.destroy();
-    const stream = new PassThrough();
-    // Drop the reference once the stream closes (SSE client gone, or replaced by a newer
-    // subscriber): later writes would otherwise pile up unread in its buffer forever.
-    stream.on('close', () => {
-      if (this._stream === stream) this._stream = null;
-    });
-    this._stream = stream;
-    setTimeout(() => {
-      this._stream?.write(`data: ${JSON.stringify(this.snapshot())}\n\n`);
-    }, 100);
-    return stream;
   }
 }

@@ -23,7 +23,7 @@ import {
 
 import { southManifestList } from './south-manifests';
 export { southManifestList } from './south-manifests';
-import { OIBusConnectionTestResult, OIBusContent } from '../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent, SouthConnectorMetrics } from '../../shared/model/engine.model';
 import {
   SouthConnectorEntity,
   SouthConnectorEntityLight,
@@ -48,7 +48,6 @@ import csv from 'papaparse';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
 import type DataStreamEngine from '../engine/data-stream-engine';
-import { PassThrough } from 'node:stream';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import { toScanModeDTO } from './scan-mode-dto.utils';
 import { toSouthConnectorItemDTO } from './south-connector-dto.utils';
@@ -219,8 +218,8 @@ export default class SouthService {
     await this.engine.stopSouth(southConnector.id);
   }
 
-  getSouthDataStream(southId: string): PassThrough | null {
-    return this.engine.getSouthSSE(southId);
+  getSouthMetric(southId: string): SouthConnectorMetrics {
+    return this.engine.getSouthMetrics(southId);
   }
 
   async testSouth(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<OIBusConnectionTestResult> {

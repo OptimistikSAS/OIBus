@@ -609,45 +609,17 @@ describe('OIBus Service', () => {
     assert.strictEqual((priv()['updateEngineMetrics'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
-  it('should get stream', () => {
-    const stream = service.stream;
-    const writeSpy = mock.method(stream, 'write', () => true);
-    mock.timers.tick(100);
-    assert.strictEqual(writeSpy.mock.calls.length, 1);
+  it('should get engine metrics', () => {
+    assert.deepStrictEqual(service.getEngineMetrics(), testData.engine.metrics);
+  });
 
-    // The timer tick wrote this.metrics (= testData.engine.metrics) as the first call.
-    // updateEngineMetrics() writes newly computed values as the second call.
-    // The original Jest test used toHaveBeenCalledWith which matches ANY call, so we check
-    // the first write (index 0) which has the unmodified testData.engine.metrics values.
-    service.updateEngineMetrics();
-    assert.strictEqual(
-      writeSpy.mock.calls[0].arguments[0],
-      `data: ${JSON.stringify({
-        metricsStart: '2020-01-01T00:00:00.000',
-        processCpuUsageInstant: 0,
-        processCpuUsageAverage: 0.0000002,
-        processUptime: 10000,
-        freeMemory: 2_000_000,
-        totalMemory: 16_000_000,
-        minRss: 5,
-        currentRss: 5,
-        maxRss: 5,
-        minHeapTotal: 5,
-        currentHeapTotal: 5,
-        maxHeapTotal: 5,
-        minHeapUsed: 5,
-        currentHeapUsed: 5,
-        maxHeapUsed: 5,
-        minExternal: 5,
-        currentExternal: 5,
-        maxExternal: 5,
-        minArrayBuffers: 5,
-        currentArrayBuffers: 5,
-        maxArrayBuffers: 5
-      })}\n\n`
-    );
+  it('should get home metrics', () => {
+    const northMetrics = { [testData.north.list[0].id]: testData.north.metrics };
+    const southMetrics = { [testData.south.list[0].id]: testData.south.metrics };
+    engine.getAllNorthMetrics.mock.mockImplementation(() => northMetrics);
+    engine.getAllSouthMetrics.mock.mockImplementation(() => southMetrics);
 
-    assert.ok(service.stream !== undefined && service.stream !== null);
+    assert.deepStrictEqual(service.getHomeMetrics(), { norths: northMetrics, engine: testData.engine.metrics, souths: southMetrics });
   });
 
   it('should get OIBus info', () => {
