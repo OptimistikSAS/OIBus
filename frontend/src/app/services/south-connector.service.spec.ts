@@ -224,7 +224,7 @@ describe('SouthConnectorService', () => {
     let done = false;
 
     service.resetMetrics('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/id1/metrics/reset' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/metrics/reset' });
     expect(testRequest.request.body).toBeNull();
     testRequest.flush(null);
     expect(done).toBe(true);

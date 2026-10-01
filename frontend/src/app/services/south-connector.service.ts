@@ -102,7 +102,7 @@ export class SouthConnectorService {
    * @param southId - the ID of the South connector to reset
    */
   resetMetrics(southId: string): Observable<void> {
-    return this.http.put<void>(`/api/south/${southId}/metrics/reset`, null);
+    return this.http.post<void>(`/api/south/${southId}/metrics/reset`, null);
   }
 
   /**
