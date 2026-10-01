@@ -118,6 +118,26 @@ describe('VersionCheckService', () => {
     expect(callCountAfter).toBe(callCountBefore);
   });
 
+  test('should not poll while the page is hidden', () => {
+    vi.useFakeTimers();
+    let visibilityState: DocumentVisibilityState = 'visible';
+    const visibilitySpy = vi.spyOn(document, 'visibilityState', 'get').mockImplementation(() => visibilityState);
+    engineService.getInfo.mockReturnValue(of(mockOIBusInfo));
+    engineService.fetchInfo.mockReturnValue(of(mockOIBusInfo));
+    service.startMonitoring();
+
+    visibilityState = 'hidden';
+    document.dispatchEvent(new Event('visibilitychange'));
+    vi.advanceTimersByTime(60_000);
+    expect(engineService.fetchInfo).not.toHaveBeenCalled();
+
+    visibilityState = 'visible';
+    document.dispatchEvent(new Event('visibilitychange'));
+    vi.advanceTimersByTime(10_000);
+    expect(engineService.fetchInfo).toHaveBeenCalledTimes(1);
+    visibilitySpy.mockRestore();
+  });
+
   test('should not start monitoring twice', () => {
     vi.useFakeTimers();
     engineService.getInfo.mockReturnValue(of(mockOIBusInfo));
