@@ -21,7 +21,7 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { HistoryMetricsComponent } from './history-metrics/history-metrics.component';
 import { HistoryQueryMetrics, OIBusInfo } from '../../../../../backend/shared/model/engine.model';
-import { pollMetrics } from '../../shared/metrics-polling';
+import { pollMetrics } from '../../shared/polling';
 import { NotificationService } from '../../shared/notification.service';
 import { ObservableState } from '../../shared/save-button/save-button.component';
 import { EngineService } from '../../services/engine.service';

@@ -21,7 +21,7 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { NotificationService } from '../../shared/notification.service';
 import { OIBusInfo, SouthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
-import { pollMetrics } from '../../shared/metrics-polling';
+import { pollMetrics } from '../../shared/polling';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { EngineService } from '../../services/engine.service';

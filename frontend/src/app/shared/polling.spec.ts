@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
-import { METRICS_REFRESH_INTERVAL_MS, pollMetrics } from './metrics-polling';
+import { METRICS_REFRESH_INTERVAL_MS, pollMetrics, visibleTimer } from './polling';
 
-describe('pollMetrics', () => {
+describe('polling', () => {
   let visibilityState: DocumentVisibilityState;
   let subscription: Subscription;
 
@@ -77,5 +77,34 @@ describe('pollMetrics', () => {
 
     vi.advanceTimersByTime(METRICS_REFRESH_INTERVAL_MS * 3);
     expect(request).toHaveBeenCalledTimes(1);
+  });
+
+  test('visibleTimer should wait for the initial delay at start and each time the page becomes visible again', () => {
+    const tick = vi.fn();
+    subscription = visibleTimer(10_000, 3_000).subscribe(tick);
+
+    vi.advanceTimersByTime(2_999);
+    expect(tick).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(tick).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(10_000);
+    expect(tick).toHaveBeenCalledTimes(2);
+
+    setVisibility('hidden');
+    vi.advanceTimersByTime(60_000);
+    expect(tick).toHaveBeenCalledTimes(2);
+
+    setVisibility('visible');
+    vi.advanceTimersByTime(3_000);
+    expect(tick).toHaveBeenCalledTimes(3);
+  });
+
+  test('visibleTimer should not tick when the page is hidden from the start', () => {
+    visibilityState = 'hidden';
+    const tick = vi.fn();
+    subscription = visibleTimer(10_000).subscribe(tick);
+
+    vi.advanceTimersByTime(60_000);
+    expect(tick).not.toHaveBeenCalled();
   });
 });

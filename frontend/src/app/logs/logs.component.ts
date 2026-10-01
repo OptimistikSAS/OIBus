@@ -30,8 +30,7 @@ import {
   of,
   Subscription,
   switchMap,
-  tap,
-  timer
+  tap
 } from 'rxjs';
 import { emptyPage } from '../shared/test-utils';
 import { LogService } from '../services/log.service';
@@ -45,6 +44,7 @@ import { NgOptimizedImage } from '@angular/common';
 import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/form/typeahead';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { visibleTimer } from '../shared/polling';
 
 @Component({
   selector: 'oib-logs',
@@ -245,9 +245,10 @@ export class LogsComponent implements OnInit, OnDestroy {
       this.pageLoader.pageLoads$
         .pipe(
           switchMap(page =>
-            timer(0, 10_000).pipe(
-              // Always fire the initial tick (0); subsequent ticks respect the paused state.
-              filter(tick => tick === 0 || !this.paused()),
+            // Refresh while the page is visible only, so a forgotten tab does not keep querying OIBus
+            visibleTimer(10_000).pipe(
+              // Always fire the initial tick; subsequent ticks respect the paused state.
+              filter((_, index) => index === 0 || !this.paused()),
               map(() => page)
             )
           ),

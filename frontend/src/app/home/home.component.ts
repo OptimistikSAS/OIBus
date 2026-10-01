@@ -10,7 +10,7 @@ import { EngineMetricsComponent } from '../engine/engine-metrics/engine-metrics.
 import { NorthMetricsComponent } from '../north/north-metrics/north-metrics.component';
 import { SouthMetricsComponent } from '../south/south-detail/south-metrics/south-metrics.component';
 import { EngineService } from '../services/engine.service';
-import { pollMetrics } from '../shared/metrics-polling';
+import { pollMetrics } from '../shared/polling';
 
 const NUMBER_OF_COLUMN = 3;
 

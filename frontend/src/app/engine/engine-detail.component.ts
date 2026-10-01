@@ -11,7 +11,7 @@ import { BehaviorSubject, switchMap } from 'rxjs';
 import { ObservableState } from '../shared/save-button/save-button.component';
 import { BoxComponent, BoxTitleDirective } from '../shared/box/box.component';
 import { EngineMetricsComponent } from './engine-metrics/engine-metrics.component';
-import { pollMetrics } from '../shared/metrics-polling';
+import { pollMetrics } from '../shared/polling';
 import { RouterLink } from '@angular/router';
 import { CertificateListComponent } from './certificate-list/certificate-list.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

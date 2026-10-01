@@ -1,6 +1,7 @@
 import { Service, inject } from '@angular/core';
-import { interval, Subject, Subscription, switchMap, filter, catchError, EMPTY } from 'rxjs';
+import { Subject, Subscription, switchMap, filter, catchError, EMPTY } from 'rxjs';
 import { EngineService } from '../services/engine.service';
+import { visibleTimer } from './polling';
 
 /**
  * Service that monitors the OIBus version and detects when it changes.
@@ -20,7 +21,7 @@ export class VersionCheckService {
 
   /**
    * Start monitoring for version changes.
-   * Polls the backend every 10 seconds to check for version updates.
+   * Polls the backend every 10 seconds to check for version updates, while the page is visible only.
    */
   startMonitoring(): void {
     if (this.monitoringSubscription) {
@@ -32,8 +33,8 @@ export class VersionCheckService {
       this.initialVersion = info.version;
     });
 
-    // Poll every 10 seconds
-    this.monitoringSubscription = interval(10000)
+    // Poll every 10 seconds, first check after 10 seconds too (the initial version has just been fetched)
+    this.monitoringSubscription = visibleTimer(10000, 10000)
       .pipe(
         switchMap(() =>
           this.engineService.fetchInfo().pipe(

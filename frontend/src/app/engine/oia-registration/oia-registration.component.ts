@@ -6,7 +6,7 @@ import { RegistrationSettingsDTO } from '../../../../../backend/shared/model/eng
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { RegisterOibusModalComponent } from './register-oibus-modal/register-oibus-modal.component';
-import { catchError, EMPTY, exhaustMap, map, Subscription, switchMap, tap, timer } from 'rxjs';
+import { catchError, EMPTY, exhaustMap, map, Subscription, switchMap, tap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NotificationService } from '../../shared/notification.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
@@ -29,6 +29,7 @@ import { OibusCommandTypeEnumPipe } from '../../shared/oibus-command-type-enum.p
 import { OibusCommandStatusEnumPipe } from '../../shared/oibus-command-status-enum.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { OiaCommandDetailsModalComponent } from './oibus-command-details-modal/oia-command-details-modal.component';
+import { visibleTimer } from '../../shared/polling';
 
 const REGISTRATION_CHECK_DURATION = 3000;
 
@@ -81,7 +82,7 @@ export class OIARegistrationComponent {
         switchMap(page => {
           // only reload the page if the page is 0
           if (page === 0) {
-            return timer(0, 10_000).pipe(map(() => page));
+            return visibleTimer(10_000).pipe(map(() => page));
           }
           return [page];
         }),
@@ -120,7 +121,7 @@ export class OIARegistrationComponent {
     this.registrationSubscription.unsubscribe();
     this.registrationSubscription = new Subscription();
     this.registrationSubscription.add(
-      timer(0, REGISTRATION_CHECK_DURATION)
+      visibleTimer(REGISTRATION_CHECK_DURATION)
         .pipe(
           exhaustMap(() => {
             return this.oibusService.getRegistrationSettings();

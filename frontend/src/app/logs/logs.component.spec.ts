@@ -238,6 +238,29 @@ describe('LogsComponent', () => {
     expect(logService.search).toHaveBeenCalledTimes(3);
   });
 
+  test('should not refresh the logs while the page is hidden', async () => {
+    vi.useFakeTimers();
+    let visibilityState: DocumentVisibilityState = 'visible';
+    const visibilitySpy = vi.spyOn(document, 'visibilityState', 'get').mockImplementation(() => visibilityState);
+    logService.search.mockReturnValue(of(logPage));
+
+    tester.fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(logService.search).toHaveBeenCalledTimes(1);
+
+    visibilityState = 'hidden';
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(logService.search).toHaveBeenCalledTimes(1);
+
+    // Back to the tab: immediate refresh
+    visibilityState = 'visible';
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(logService.search).toHaveBeenCalledTimes(2);
+    visibilitySpy.mockRestore();
+  });
+
   describe('Pause/resume functionality', () => {
     beforeEach(() => {
       logService.search.mockReturnValue(of(logPage));
