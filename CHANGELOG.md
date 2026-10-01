@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.9.4](https://github.com/OptimistikSAS/OIBus/compare/v3.9.3...v3.9.4) (2026-10-01)
+
+
+### Bug Fixes
+
+* **cache:** always release update lock so a failed cache reset cannot block the north ([d319a64](https://github.com/OptimistikSAS/OIBus/commit/d319a64a3b165a35a014c76517cf90b2a911abe1))
+* **cache:** keep cache size in sync with disk after queue compaction ([b4533d2](https://github.com/OptimistikSAS/OIBus/commit/b4533d212cf2ba63ff99f192267aa6bc07edd2b2))
+* **engine:** dump memory from oibus engine page ([0b750ef](https://github.com/OptimistikSAS/OIBus/commit/0b750ef20ca7394ddfbbd8da8edd4732b39ac745))
+* **engine:** remove sse metrics from memory ([1663b79](https://github.com/OptimistikSAS/OIBus/commit/1663b7901f556be4e0dc87e301aae26e98cb6cd8))
+* **engine:** replace sse metrics streams with polled metrics endpoints ([30aef70](https://github.com/OptimistikSAS/OIBus/commit/30aef700d46f358cb34d9e32e90a24ddff044f85))
+* **north:** do not trigger north when on error ([3fda711](https://github.com/OptimistikSAS/OIBus/commit/3fda7112350dc621de480ea5d104edda9de24e99))
+* **south:** manual resolve/reject of timeout promise on south opcua and oianalytics commands ([2125429](https://github.com/OptimistikSAS/OIBus/commit/212542944c99fb81bf1afb594f10ae19a3ddcb17))
+* **south:** use POST to reset south metrics ([c5415de](https://github.com/OptimistikSAS/OIBus/commit/c5415de94a4a4743fef605e9db779ef8c0ff34ec))
+* **web-client:** poll only when tab is visible ([7b69e23](https://github.com/OptimistikSAS/OIBus/commit/7b69e23271c0aa0e206224c5540fa0fae240b477))
+
 ## [3.9.3](https://github.com/OptimistikSAS/OIBus/compare/v3.9.2...v3.9.3) (2026-09-22)
 
 
