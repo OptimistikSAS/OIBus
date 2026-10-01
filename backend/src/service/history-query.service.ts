@@ -36,7 +36,6 @@ import { ScanMode } from '../model/scan-mode.model';
 import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import csv from 'papaparse';
 import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
-import { PassThrough } from 'node:stream';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import { toTransformerDTO } from './transformer.service';
@@ -78,7 +77,6 @@ interface IHistoryEngine {
   ): Promise<void>;
   deleteHistoryQuery(historyEntity: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): Promise<void>;
   stopHistoryQuery(historyId: string): Promise<void>;
-  getHistoryQuerySSE(historyId: string): PassThrough;
   getHistoryMetrics(historyId: string): HistoryQueryMetrics;
   logger: ILogger;
 }
@@ -308,11 +306,7 @@ export default class HistoryQueryService {
     await this.engine.stopHistoryQuery(historyQuery.id);
   }
 
-  getHistoryDataStream(historyId: string): PassThrough | null {
-    return this.engine.getHistoryQuerySSE(historyId);
-  }
-
-  getHistoryMetric(historyId: string): HistoryQueryMetrics | null {
+  getHistoryMetric(historyId: string): HistoryQueryMetrics {
     return this.engine.getHistoryMetrics(historyId);
   }
 

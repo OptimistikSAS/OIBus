@@ -200,6 +200,16 @@ describe('HistoryQueryController', () => {
     assert.deepStrictEqual(historyQueryService.pause.mock.calls[0].arguments[0], historyId);
   });
 
+  it('should get history query metrics', async () => {
+    const historyId = testData.historyQueries.list[0].id;
+    historyQueryService.getHistoryMetric = mock.fn(() => testData.historyQueries.metrics);
+
+    const result = controller.getMetrics(historyId, mockRequest as CustomExpressRequest);
+
+    assert.deepStrictEqual(historyQueryService.getHistoryMetric.mock.calls[0].arguments, [historyId]);
+    assert.deepStrictEqual(result, testData.historyQueries.metrics);
+  });
+
   it('should test north connection', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const northType = testData.north.command.type;

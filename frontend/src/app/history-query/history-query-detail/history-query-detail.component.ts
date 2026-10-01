@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, DestroyRef, inject, ChangeDetectionStrate
 import { AsyncPipe } from '@angular/common';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { combineLatest, firstValueFrom, merge, of, switchMap } from 'rxjs';
+import { combineLatest, firstValueFrom, merge, of, Subscription, switchMap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
 import { NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -21,7 +21,7 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { HistoryMetricsComponent } from './history-metrics/history-metrics.component';
 import { HistoryQueryMetrics, OIBusInfo } from '../../../../../backend/shared/model/engine.model';
-import { WindowService } from '../../shared/window.service';
+import { pollMetrics } from '../../shared/metrics-polling';
 import { NotificationService } from '../../shared/notification.service';
 import { ObservableState } from '../../shared/save-button/save-button.component';
 import { EngineService } from '../../services/engine.service';
@@ -108,7 +108,6 @@ export class HistoryQueryDetailComponent {
   private engineService = inject(EngineService);
   protected router = inject(Router);
   private route = inject(ActivatedRoute);
-  private windowService = inject(WindowService);
   private cd = inject(ChangeDetectorRef);
   private translateService = inject(TranslateService);
   private destroyRef = inject(DestroyRef);
@@ -124,7 +123,7 @@ export class HistoryQueryDetailComponent {
   southManifest: SouthConnectorManifest | null = null;
 
   historyMetrics: HistoryQueryMetrics | null = null;
-  historyStream: EventSource | null = null;
+  private metricsSubscription: Subscription | null = null;
   state = new ObservableState();
   oibusInfo: OIBusInfo | null = null;
   historyQueryId: string | null = null;
@@ -188,7 +187,7 @@ export class HistoryQueryDetailComponent {
         }
         this.northManifest = northManifest;
         this.southManifest = southManifest;
-        this.connectToEventSource();
+        this.startMetricsPolling();
 
         // Initialize display settings for items
         const settingsAttribute = southManifest.items.rootAttribute.attributes.find(
@@ -254,7 +253,7 @@ export class HistoryQueryDetailComponent {
 
     this.destroyRef.onDestroy(() => {
       routeSub.unsubscribe();
-      this.historyStream?.close();
+      this.stopMetricsPolling();
     });
   }
 
@@ -269,23 +268,22 @@ export class HistoryQueryDetailComponent {
     });
   }
 
-  connectToEventSource(): void {
-    if (this.historyStream) {
-      this.historyStream.close();
-    }
+  startMetricsPolling(): void {
+    this.stopMetricsPolling();
+    const historyId = this.historyQuery!.id;
+    this.metricsSubscription = pollMetrics(() => this.historyQueryService.getMetrics(historyId)).subscribe(metrics => {
+      this.historyMetrics = metrics;
+      this.cd.detectChanges();
 
-    const token = this.windowService.getStorageItem('oibus-token');
-    this.historyStream = new EventSource(`/sse/history-queries/${this.historyQuery!.id}?token=${token}`, { withCredentials: true });
-    this.historyStream.addEventListener('message', (event: MessageEvent) => {
-      if (event && event.data) {
-        this.historyMetrics = JSON.parse(event.data);
-        this.cd.detectChanges();
-
-        if (this.historyQuery && this.historyQueryFinishedByMetrics) {
-          this.historyQuery.status = 'FINISHED';
-        }
+      if (this.historyQuery && this.historyQueryFinishedByMetrics) {
+        this.historyQuery.status = 'FINISHED';
       }
     });
+  }
+
+  stopMetricsPolling(): void {
+    this.metricsSubscription?.unsubscribe();
+    this.metricsSubscription = null;
   }
 
   toggleHistoryQuery(newStatus: HistoryQueryStatus) {
@@ -301,7 +299,7 @@ export class HistoryQueryDetailComponent {
         .subscribe(updatedHistoryQuery => {
           this.historyQuery = updatedHistoryQuery;
           this.notificationService.success('history-query.started', { name: this.historyQuery!.name });
-          this.connectToEventSource();
+          this.startMetricsPolling();
         });
     } else {
       this.historyQueryService
@@ -315,7 +313,7 @@ export class HistoryQueryDetailComponent {
         .subscribe(updatedHistoryQuery => {
           this.historyQuery = updatedHistoryQuery;
           this.notificationService.success('history-query.paused', { name: this.historyQuery!.name });
-          this.historyStream?.close();
+          this.stopMetricsPolling();
         });
     }
   }

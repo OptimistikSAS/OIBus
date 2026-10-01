@@ -2,12 +2,14 @@ import { Body, Controller, Get, Post, Put, Request, Route, SuccessResponse, Tags
 import {
   EngineLoggerCommandDTO,
   EngineMemoryDumpDTO,
+  EngineMetrics,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
   EngineSettingsDTO,
   EngineSettingsUpdateResultDTO,
   EngineWebServerCommandDTO,
+  HomeMetrics,
   OIBusInfo
 } from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
@@ -96,6 +98,26 @@ export class EngineController extends Controller {
   @SuccessResponse(200, 'Engine logger settings updated successfully')
   async updateEngineLogger(@Body() command: EngineLoggerCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
     return await request.services.oIBusService.updateEngineLogger(command, request.user.id);
+  }
+
+  /**
+   * Returns the current metrics of the OIBus engine (CPU, memory, uptime), refreshed every second
+   * @summary Retrieve engine metrics
+   * @returns {EngineMetrics} The engine metrics
+   */
+  @Get('/engine/metrics')
+  getEngineMetrics(@Request() request: CustomExpressRequest): EngineMetrics {
+    return request.services.oIBusService.getEngineMetrics();
+  }
+
+  /**
+   * Returns the metrics displayed on the home page: the engine metrics and the metrics of every north and south connector
+   * @summary Retrieve home page metrics
+   * @returns {HomeMetrics} The engine, north and south connector metrics
+   */
+  @Get('/engine/home-metrics')
+  getHomeMetrics(@Request() request: CustomExpressRequest): HomeMetrics {
+    return request.services.oIBusService.getHomeMetrics();
   }
 
   /**

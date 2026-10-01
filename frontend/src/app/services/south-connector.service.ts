@@ -1,7 +1,7 @@
 import { HttpClient, HttpContext, HttpStatusCode } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { inject, Service } from '@angular/core';
-import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
+import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 import {
   OIBusSouthType,
   SouthConnectorCommandDTO,
@@ -19,7 +19,7 @@ import {
 } from '../../../../backend/shared/model/south-connector.model';
 import { Page } from '../../../../backend/shared/model/types';
 import { DownloadService } from './download.service';
-import { OIBusConnectionTestResult } from '../../../../backend/shared/model/engine.model';
+import { OIBusConnectionTestResult, SouthConnectorMetrics } from '../../../../backend/shared/model/engine.model';
 import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 
 /**
@@ -103,6 +103,16 @@ export class SouthConnectorService {
    */
   resetMetrics(southId: string): Observable<void> {
     return this.http.put<void>(`/api/south/${southId}/metrics/reset`, null);
+  }
+
+  /**
+   * Get the current metrics of the selected South. Polled in the background, so only an expired session is notified
+   * @param southId - the ID of the South connector
+   */
+  getMetrics(southId: string): Observable<SouthConnectorMetrics> {
+    return this.http.get<SouthConnectorMetrics>(`/api/south/${southId}/metrics`, {
+      context: ignoreErrorUnlessStatusIs(HttpStatusCode.Unauthorized)
+    });
   }
 
   testConnection(southId: string, settings: SouthSettings, southType: OIBusSouthType): Observable<OIBusConnectionTestResult> {

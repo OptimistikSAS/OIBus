@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { HistoryQueryDetailComponent } from './history-query-detail.component';
 import { HistoryQueryService } from '../../services/history-query.service';
@@ -17,7 +17,7 @@ import { ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { WindowService } from '../../shared/window.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { createMock } from '../../../test/vitest-create-mock';
+import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
 import { NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
@@ -35,8 +35,9 @@ describe('HistoryQueryDetailComponent', () => {
     const engineService = createMock(EngineService);
 
     historyQueryService.findById.mockReturnValue(of(testData.historyQueries.list[0] as unknown as HistoryQueryDTO));
+    historyQueryService.getMetrics.mockReturnValue(of(testData.historyQueries.metrics));
     // Return null for both manifests — subscribe callback exits early via `if (!northManifest || !southManifest) return`
-    // This prevents connectToEventSource() from being called in tests
+    // This prevents startMetricsPolling() from being called in tests
     northConnectorService.getNorthManifest.mockReturnValue(of(null as unknown as NorthConnectorManifest));
     southConnectorService.getSouthManifest.mockReturnValue(of(null as unknown as SouthConnectorManifest));
     (engineService as any).info$ = of(testData.engine.oIBusInfo as unknown as OIBusInfo);
@@ -76,5 +77,18 @@ describe('HistoryQueryDetailComponent', () => {
     const fixture = TestBed.createComponent(HistoryQueryDetailComponent);
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  test('should poll the history query metrics until stopped', async () => {
+    const fixture = TestBed.createComponent(HistoryQueryDetailComponent);
+    fixture.detectChanges();
+    const historyQueryService = TestBed.inject(HistoryQueryService) as MockObject<HistoryQueryService>;
+
+    fixture.componentInstance.startMetricsPolling();
+    await vi.waitFor(() => expect(historyQueryService.getMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id));
+    expect(fixture.componentInstance.historyMetrics).toEqual(testData.historyQueries.metrics);
+
+    fixture.componentInstance.stopMetricsPolling();
+    expect(fixture.componentInstance['metricsSubscription']).toBeNull();
   });
 });

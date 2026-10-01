@@ -142,6 +142,20 @@ describe('EngineService', () => {
     expect(done).toBe(true);
   });
 
+  test('should get engine metrics', () => {
+    let result: unknown = null;
+    service.getEngineMetrics().subscribe(metrics => (result = metrics));
+    http.expectOne({ method: 'GET', url: '/api/engine/metrics' }).flush(testData.engine.metrics);
+    expect(result).toEqual(testData.engine.metrics);
+  });
+
+  test('should get home metrics', () => {
+    let result: unknown = null;
+    service.getHomeMetrics().subscribe(metrics => (result = metrics));
+    http.expectOne({ method: 'GET', url: '/api/engine/home-metrics' }).flush({ norths: {}, engine: testData.engine.metrics, souths: {} });
+    expect(result).toEqual({ norths: {}, engine: testData.engine.metrics, souths: {} });
+  });
+
   test('should register', () => {
     let done = false;
     const command = testData.oIAnalytics.registration.command;

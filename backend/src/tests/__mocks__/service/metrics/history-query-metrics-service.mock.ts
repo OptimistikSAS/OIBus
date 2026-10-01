@@ -1,6 +1,5 @@
 import { mock } from 'node:test';
 import { HistoryQueryMetrics } from '../../../../../shared/model/engine.model';
-import { PassThrough } from 'node:stream';
 import HistoryQueryMetricsService from '../../../../service/metrics/history-query-metrics.service';
 import HistoryQueryMock from '../../history-query.mock';
 import type HistoryQueryMetricsRepository from '../../../../repository/metrics/history-query-metrics.repository';
@@ -31,8 +30,5 @@ export default class HistoryQueryMetricsServiceMock extends HistoryQueryMetricsS
   override destroy = mock.fn((): void => undefined);
   override get metrics(): HistoryQueryMetrics {
     return { north: {} } as unknown as HistoryQueryMetrics;
-  }
-  override get stream(): PassThrough {
-    return new PassThrough();
   }
 }

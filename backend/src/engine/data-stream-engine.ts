@@ -24,7 +24,6 @@ import SouthConnectorMetricsService from '../service/metrics/south-connector-met
 import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
 import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
 import NorthConnectorMetricsService from '../service/metrics/north-connector-metrics.service';
-import { PassThrough } from 'node:stream';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
@@ -237,10 +236,6 @@ export default class DataStreamEngine {
     return north;
   }
 
-  getNorthSSE(northId: string): PassThrough {
-    return this.getNorth(northId).metrics.stream;
-  }
-
   getNorthMetrics(northId: string): NorthConnectorMetrics {
     return this.getNorth(northId).metrics.metrics;
   }
@@ -328,8 +323,8 @@ export default class DataStreamEngine {
     return this.southConnectors.has(southId);
   }
 
-  getSouthSSE(southId: string): PassThrough {
-    return this.getSouth(southId).metrics.stream;
+  getSouthMetrics(southId: string): SouthConnectorMetrics {
+    return this.getSouth(southId).metrics.metrics;
   }
 
   getAllSouthMetrics(): Record<string, SouthConnectorMetrics> {
@@ -427,10 +422,6 @@ export default class DataStreamEngine {
         `Error while starting History query "${historyQuery.historyQueryConfiguration.name}" of South type "${historyQuery.historyQueryConfiguration.southType}" and North type ${historyQuery.historyQueryConfiguration.northType} (${historyQuery.historyQueryConfiguration.id}): ${error.message}`
       );
     });
-  }
-
-  getHistoryQuerySSE(historyId: string): PassThrough {
-    return this.getHistoryQuery(historyId).metrics.stream;
   }
 
   getHistoryMetrics(historyId: string): HistoryQueryMetrics {

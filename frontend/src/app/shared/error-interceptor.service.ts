@@ -28,6 +28,19 @@ export function ignoreErrorIfStatusIs(...statusCodes: Array<HttpStatusCode>) {
   return new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => statusCodes.includes(error.status));
 }
 
+/**
+ * Shorthand function to define a SHOULD_IGNORE_ERROR_PREDICATE context that ignores every HTTP error
+ * (including network errors) except the given ones. Used by background requests, such as metrics polling,
+ * which must not notify the user on every failed tick but must still handle an expired session
+ * ```
+ * const context = ignoreErrorUnlessStatusIs(HttpStatusCode.Unauthorized);
+ * return this.http.get('/api/engine/metrics', { context });
+ * ```
+ */
+export function ignoreErrorUnlessStatusIs(...statusCodes: Array<HttpStatusCode>) {
+  return new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => !statusCodes.includes(error.status));
+}
+
 export function getMessageFromHttpErrorResponse(errorResponse: HttpErrorResponse): string {
   let message = `${errorResponse.status} - ${errorResponse.message}`;
   if (errorResponse.error && errorResponse.error.message) {

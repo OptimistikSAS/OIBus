@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { NorthDetailComponent } from './north-detail.component';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -14,7 +14,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { ModalService } from '../../shared/modal.service';
 import { WindowService } from '../../shared/window.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { createMock } from '../../../test/vitest-create-mock';
+import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { OIBusInfo } from '../../../../../backend/shared/model/engine.model';
@@ -28,7 +28,8 @@ describe('NorthDetailComponent', () => {
     const engineService = createMock(EngineService);
 
     northConnectorService.findById.mockReturnValue(of(testData.north.list[0] as unknown as NorthConnectorDTO));
-    // Return null to skip connectToEventSource() — the subscribe callback exits early when manifest is null
+    northConnectorService.getMetrics.mockReturnValue(of(testData.north.metrics));
+    // Return null to skip startMetricsPolling() — the subscribe callback exits early when manifest is null
     northConnectorService.getNorthManifest.mockReturnValue(of(null as unknown as NorthConnectorManifest));
     (engineService as any).info$ = of(testData.engine.oIBusInfo as unknown as OIBusInfo);
     scanModeService.list.mockReturnValue(of([]));
@@ -64,5 +65,16 @@ describe('NorthDetailComponent', () => {
     const fixture = TestBed.createComponent(NorthDetailComponent);
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  test('should poll the north connector metrics', async () => {
+    const fixture = TestBed.createComponent(NorthDetailComponent);
+    fixture.detectChanges();
+    const northConnectorService = TestBed.inject(NorthConnectorService) as MockObject<NorthConnectorService>;
+
+    fixture.componentInstance.startMetricsPolling('id1');
+
+    await vi.waitFor(() => expect(northConnectorService.getMetrics).toHaveBeenCalledWith('id1'));
+    expect(fixture.componentInstance.connectorMetrics).toEqual(testData.north.metrics);
   });
 });

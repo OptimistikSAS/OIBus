@@ -25,6 +25,7 @@ class EngineDetailComponentTester {
   readonly generalSettings = this.root.getByCss('table tr');
   readonly restartButton = this.root.getByCss('#restart');
   readonly memoryDumpButton = this.root.getByCss('#memory-dump');
+  readonly engineMetrics = this.root.getByCss('oib-engine-metrics');
 }
 
 const engineSettings: EngineSettingsDTO = {
@@ -68,17 +69,7 @@ describe('EngineDetailComponent', () => {
     ipFilterService.list.mockReturnValue(of([]));
     certificateService.list.mockReturnValue(of([]));
     transformerService.list.mockReturnValue(of([]));
-    windowService.getStorageItem.mockReturnValue('token');
-
-    function MockEventSource(this: { onmessage: null; close: () => void }) {
-      this.onmessage = null;
-      this.close = vi.fn();
-    }
-    Object.defineProperty(window, 'EventSource', {
-      value: MockEventSource,
-      writable: true,
-      configurable: true
-    });
+    engineService.getEngineMetrics.mockReturnValue(of(testData.engine.metrics));
 
     TestBed.configureTestingModule({
       providers: [
@@ -106,6 +97,16 @@ describe('EngineDetailComponent', () => {
     await expect.element(tester.generalSettings.nth(2)).toHaveTextContent('7 days');
     await expect.element(tester.generalSettings.nth(3)).toHaveTextContent('8888');
     await expect.element(tester.generalSettings.nth(4)).toHaveTextContent('silent');
+  });
+
+  test('should display the polled engine metrics', async () => {
+    const tester = new EngineDetailComponentTester();
+    tester.fixture.detectChanges();
+
+    // The first poll fires on the next macrotask
+    await vi.waitFor(() => expect(engineService.getEngineMetrics).toHaveBeenCalledTimes(1));
+    tester.fixture.detectChanges();
+    await expect.element(tester.engineMetrics).toBeInTheDocument();
   });
 
   test('should restart', () => {

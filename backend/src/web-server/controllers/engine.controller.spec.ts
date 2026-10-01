@@ -66,6 +66,25 @@ describe('EngineController', () => {
     assert.deepStrictEqual(oIBusService.updateEngineSettings.mock.calls[0].arguments, [command, testData.users.list[0].id]);
   });
 
+  it('should return engine metrics', async () => {
+    oIBusService.getEngineMetrics = mock.fn(() => testData.engine.metrics);
+
+    const result = controller.getEngineMetrics(mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(oIBusService.getEngineMetrics.mock.calls.length, 1);
+    assert.deepStrictEqual(result, testData.engine.metrics);
+  });
+
+  it('should return home metrics', async () => {
+    const homeMetrics = { norths: {}, engine: testData.engine.metrics, souths: {} };
+    oIBusService.getHomeMetrics = mock.fn(() => homeMetrics);
+
+    const result = controller.getHomeMetrics(mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(oIBusService.getHomeMetrics.mock.calls.length, 1);
+    assert.deepStrictEqual(result, homeMetrics);
+  });
+
   it('should reset engine metrics', async () => {
     oIBusService.resetEngineMetrics = mock.fn(async () => undefined);
 

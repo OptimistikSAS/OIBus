@@ -1,7 +1,7 @@
 import { HttpClient, HttpContext, HttpStatusCode } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { inject, Service } from '@angular/core';
-import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
+import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 import {
   HistoryQueryCommandDTO,
   HistoryQueryDTO,
@@ -23,6 +23,7 @@ import {
   CacheSearchResult,
   DataFolderType,
   FileCacheContent,
+  HistoryQueryMetrics,
   OIBusConnectionTestResult
 } from '../../../../backend/shared/model/engine.model';
 import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
@@ -107,6 +108,16 @@ export class HistoryQueryService {
 
   pause(historyId: string): Observable<void> {
     return this.http.post<void>(`/api/history/${historyId}/pause`, null);
+  }
+
+  /**
+   * Get the current metrics of the selected history query. Polled in the background, so only an expired session is notified
+   * @param historyId - the ID of the history query
+   */
+  getMetrics(historyId: string): Observable<HistoryQueryMetrics> {
+    return this.http.get<HistoryQueryMetrics>(`/api/history/${historyId}/metrics`, {
+      context: ignoreErrorUnlessStatusIs(HttpStatusCode.Unauthorized)
+    });
   }
 
   testNorthConnection(

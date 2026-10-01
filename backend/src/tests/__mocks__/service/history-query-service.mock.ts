@@ -13,7 +13,6 @@ import { SouthConnectorItemTestResult } from '../../../../shared/model/south-con
 import { OIBusAnyContent, OIBusConnectionTestResult } from '../../../../shared/model/engine.model';
 import { HistoryQueryMetrics } from '../../../../shared/model/engine.model';
 import { Page } from '../../../../shared/model/types';
-import { PassThrough } from 'node:stream';
 
 /**
  * Create a mock object for History Query Service
@@ -34,8 +33,7 @@ export default class HistoryQueryServiceMock {
   delete = mock.fn(async (_historyId: string): Promise<void> => undefined);
   start = mock.fn(async (_historyId: string): Promise<void> => undefined);
   pause = mock.fn(async (_historyId: string): Promise<void> => undefined);
-  getHistoryDataStream = mock.fn((_historyId: string): PassThrough | null => null);
-  getHistoryMetric = mock.fn((_historyId: string): HistoryQueryMetrics | null => null);
+  getHistoryMetric = mock.fn((_historyId: string): HistoryQueryMetrics => ({}) as HistoryQueryMetrics);
   getHistoryMetrics = mock.fn((_historyId: string): HistoryQueryMetrics | null => null);
   getAllHistoryMetrics = mock.fn((): unknown => ({}));
   testNorth = mock.fn(async (): Promise<OIBusConnectionTestResult> => ({ items: [] }) as unknown as OIBusConnectionTestResult);

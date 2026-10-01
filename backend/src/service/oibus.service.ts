@@ -14,6 +14,7 @@ import {
   EngineSettingsUpdateResultDTO,
   EngineWebServerCommandDTO,
   FileCacheContent,
+  HomeMetrics,
   OIBusContent,
   OIBusInfo
 } from '../../shared/model/engine.model';
@@ -39,7 +40,6 @@ import process from 'node:process';
 import os from 'node:os';
 import path from 'node:path';
 import v8 from 'node:v8';
-import { PassThrough } from 'node:stream';
 import EngineMetricsRepository from '../repository/metrics/engine-metrics.repository';
 import { getOIBusInfo } from './utils';
 import SouthService from './south.service';
@@ -53,8 +53,6 @@ const HEALTH_SIGNAL_INTERVAL = 1_800_000; // 30 minutes
 const UPDATE_ENGINE_METRICS_INTERVAL = 1000; // every second
 
 export default class OIBusService {
-  private _stream: PassThrough | null = null;
-
   private healthSignalInterval: NodeJS.Timeout | null = null;
   private updateEngineMetricsInterval: NodeJS.Timeout | null = null;
   private metrics: EngineMetrics;
@@ -378,7 +376,6 @@ export default class OIBusService {
     };
 
     this.engineMetricsRepository.updateMetrics(this.getEngineSettings().id, this.metrics);
-    this._stream?.write(`data: ${JSON.stringify(this.metrics)}\n\n`);
   }
 
   resetEngineMetrics(): void {
@@ -411,23 +408,18 @@ export default class OIBusService {
     return await this.engine.updateCacheContent(type, id, updateCommand);
   }
 
-  /**
-   * Create a PassThrough object used to send a data to a stream to the frontend
-   * The timeout is used to auto-initialize the stream at creation
-   */
-  get stream(): PassThrough {
-    this._stream?.destroy();
-    const stream = new PassThrough();
-    // Drop the reference once the stream closes (SSE client gone, or replaced by a newer
-    // subscriber): later writes would otherwise pile up unread in its buffer forever.
-    stream.on('close', () => {
-      if (this._stream === stream) this._stream = null;
-    });
-    this._stream = stream;
-    setTimeout(() => {
-      this._stream?.write(`data: ${JSON.stringify(this.metrics)}\n\n`);
-    }, 100);
-    return stream;
+  /** Current engine metrics, refreshed every second by `updateEngineMetrics`. */
+  getEngineMetrics(): EngineMetrics {
+    return this.metrics;
+  }
+
+  /** Metrics shown on the home page: the engine plus every north and south connector. */
+  getHomeMetrics(): HomeMetrics {
+    return {
+      norths: this.engine.getAllNorthMetrics(),
+      engine: this.metrics,
+      souths: this.engine.getAllSouthMetrics()
+    };
   }
 }
 

@@ -1,6 +1,5 @@
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { PassThrough } from 'node:stream';
 import SouthConnectorMetricsRepository from '../../repository/metrics/south-connector-metrics.repository';
 import { OIBusTimeValue, SouthConnectorMetrics } from '../../../shared/model/engine.model';
 import SouthConnector from '../../south/south-connector';
@@ -9,13 +8,12 @@ import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-se
 /**
  * Coalesce DB writes for metrics updates. With a high-rate South (MQTT msg
  * after-flush, OPC UA HA continuation reads), every event used to trigger a
- * synchronous SQLite UPDATE; the in-memory metrics + the SSE stream stay
- * live, while the persisted copy is flushed at most once per interval.
+ * synchronous SQLite UPDATE; the in-memory metrics stay live (and are what
+ * the web UI polls), while the persisted copy is flushed at most once per interval.
  */
 const METRICS_FLUSH_INTERVAL_MS = 1000;
 
 export default class SouthConnectorMetricsService {
-  private _stream: PassThrough | null = null;
   private metricsFlushTimer: NodeJS.Timeout | null = null;
 
   private _metrics: SouthConnectorMetrics = {
@@ -71,15 +69,12 @@ export default class SouthConnectorMetricsService {
   initMetrics(): void {
     this.southConnectorMetricsRepository.initMetrics(this.southConnector.connectorConfiguration.id);
     this._metrics = this.southConnectorMetricsRepository.getMetrics(this.southConnector.connectorConfiguration.id)!;
-    this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
   /**
-   * Called by every metric event handler. Both the DB write and the SSE push
-   * are debounced through the same timer — there's no point streaming a value
-   * to the dashboard 100 times when the underlying persisted state only gets
-   * one snapshot per window. `_metrics` is always current in memory so
-   * `get metrics()` callers (REST polls, etc.) never lag.
+   * Called by every metric event handler. The DB write is debounced: the
+   * persisted state only gets one snapshot per window. `_metrics` is always
+   * current in memory so `get metrics()` callers (REST polls, etc.) never lag.
    */
   updateMetrics(): void {
     if (this.metricsFlushTimer) return;
@@ -91,7 +86,6 @@ export default class SouthConnectorMetricsService {
 
   private flushMetrics(): void {
     this.southConnectorMetricsRepository.updateMetrics(this.southConnector.connectorConfiguration.id, this._metrics);
-    this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
   resetMetrics(): void {
@@ -118,30 +112,9 @@ export default class SouthConnectorMetricsService {
       this.metricsFlushTimer = null;
       this.flushMetrics();
     }
-    this._stream?.destroy();
-    this._stream = null;
   }
 
   get metrics(): SouthConnectorMetrics {
     return this._metrics;
-  }
-
-  /**
-   * Create a PassThrough object used to send a data to a stream to the frontend
-   * The timeout is used to auto-initialize the stream at creation
-   */
-  get stream(): PassThrough {
-    this._stream?.destroy();
-    const stream = new PassThrough();
-    // Drop the reference once the stream closes (SSE client gone, or replaced by a newer
-    // subscriber): later writes would otherwise pile up unread in its buffer forever.
-    stream.on('close', () => {
-      if (this._stream === stream) this._stream = null;
-    });
-    this._stream = stream;
-    setTimeout(() => {
-      this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
-    }, 100);
-    return stream;
   }
 }

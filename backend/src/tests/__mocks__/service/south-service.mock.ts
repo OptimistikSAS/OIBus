@@ -17,9 +17,8 @@ import {
   SouthItemGroupEntity
 } from '../../../model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusAnyContent, OIBusConnectionTestResult } from '../../../../shared/model/engine.model';
+import { OIBusAnyContent, OIBusConnectionTestResult, SouthConnectorMetrics } from '../../../../shared/model/engine.model';
 import { Page } from '../../../../shared/model/types';
-import { PassThrough } from 'node:stream';
 
 /**
  * Create a mock object for South Service
@@ -43,7 +42,7 @@ export default class SouthServiceMock {
   delete = mock.fn(async (_southId: string): Promise<void> => undefined);
   start = mock.fn(async (_southId: string): Promise<void> => undefined);
   stop = mock.fn(async (_southId: string): Promise<void> => undefined);
-  getSouthDataStream = mock.fn((_southId: string): PassThrough | null => null);
+  getSouthMetric = mock.fn((_southId: string): SouthConnectorMetrics => ({}) as SouthConnectorMetrics);
   testSouth = mock.fn(
     async (_southId: string, _southType: OIBusSouthType, _settingsToTest: SouthSettings): Promise<OIBusConnectionTestResult> =>
       ({ items: [] }) as unknown as OIBusConnectionTestResult

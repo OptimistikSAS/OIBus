@@ -212,6 +212,16 @@ describe('SouthConnectorController', () => {
     assert.deepStrictEqual(southService.stop.mock.calls[0].arguments[0], southId);
   });
 
+  it('should get south connector metrics', async () => {
+    const southId = testData.south.list[0].id;
+    southService.getSouthMetric = mock.fn(() => testData.south.metrics);
+
+    const result = controller.getMetrics(southId, mockRequest as CustomExpressRequest);
+
+    assert.deepStrictEqual(southService.getSouthMetric.mock.calls[0].arguments, [southId]);
+    assert.deepStrictEqual(result, testData.south.metrics);
+  });
+
   it('should reset south connector metrics', async () => {
     const southId = testData.south.list[0].id;
     oIBusService.resetSouthMetrics = mock.fn(async () => undefined);

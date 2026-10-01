@@ -231,39 +231,17 @@ describe('authMiddleware', () => {
     });
   });
 
-  describe('SSE Token Auth', () => {
-    it('should call next() with valid SSE token', async () => {
-      userService.getHashedPasswordByLogin = mock.fn(() => HASHED);
-      userService.findByLogin = mock.fn(() => FAKE_USER);
-      mock.method(jwt, 'verify', () => ({ login: 'alice', password: HASHED }));
+  describe('Query string token', () => {
+    it('should not authenticate a token passed in the query string', async () => {
+      const verifySpy = mock.method(jwt, 'verify', () => ({ login: 'alice', password: HASHED }));
 
-      const req = { ...makeReq('/sse/engine'), url: '/sse/engine?token=abc', query: { token: 'abc' } };
-      const res = makeRes();
-      await buildMiddleware()(req, res, mockNext);
-
-      assert.strictEqual(mockNext.mock.calls.length, 1);
-    });
-
-    it('should return 403 when SSE jwt.verify throws', async () => {
-      mock.method(jwt, 'verify', () => {
-        throw new Error('expired');
-      });
-
-      const req = { ...makeReq('/sse/engine'), url: '/sse/engine?token=bad', query: { token: 'bad' } };
-      const res = makeRes();
-      await buildMiddleware()(req, res, mockNext);
-
-      assert.strictEqual(res.status.mock.calls[0].arguments[0], 403);
-    });
-
-    it('should return 401 when SSE token has no login', async () => {
-      mock.method(jwt, 'verify', () => ({ sub: 'no-login' }));
-
-      const req = { ...makeReq('/sse/engine'), url: '/sse/engine?token=t', query: { token: 't' } };
+      const req = { ...makeReq('/api/engine/metrics'), url: '/api/engine/metrics?token=abc', query: { token: 'abc' } };
       const res = makeRes();
       await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 401);
+      assert.strictEqual(verifySpy.mock.calls.length, 0);
+      assert.strictEqual(mockNext.mock.calls.length, 0);
     });
   });
 

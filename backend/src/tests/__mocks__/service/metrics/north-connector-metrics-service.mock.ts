@@ -1,6 +1,5 @@
 import { mock } from 'node:test';
 import { NorthConnectorMetrics } from '../../../../../shared/model/engine.model';
-import { PassThrough } from 'node:stream';
 import NorthConnectorMetricsService from '../../../../service/metrics/north-connector-metrics.service';
 import NorthConnectorMock from '../../north-connector.mock';
 import type NorthConnectorMetricsRepository from '../../../../repository/metrics/north-connector-metrics.repository';
@@ -25,8 +24,5 @@ export default class NorthConnectorMetricsServiceMock extends NorthConnectorMetr
   override destroy = mock.fn((): void => undefined);
   override get metrics(): NorthConnectorMetrics {
     return {} as NorthConnectorMetrics;
-  }
-  override get stream(): PassThrough {
-    return new PassThrough();
   }
 }

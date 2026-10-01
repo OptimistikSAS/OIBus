@@ -6,7 +6,6 @@ import { NorthTransformerWithOptions, TransformerSource } from '../../../model/t
 import { TransformerSourceCommandDTO } from '../../../../shared/model/transformer.model';
 import { OIBusConnectionTestResult } from '../../../../shared/model/engine.model';
 import { NorthConnectorMetrics } from '../../../../shared/model/engine.model';
-import { PassThrough } from 'node:stream';
 
 /**
  * Create a mock object for North Service
@@ -27,8 +26,7 @@ export default class NorthServiceMock {
   delete = mock.fn(async (_northId: string): Promise<void> => undefined);
   start = mock.fn(async (_northId: string): Promise<void> => undefined);
   stop = mock.fn(async (_northId: string): Promise<void> => undefined);
-  getNorthDataStream = mock.fn((_northId: string): PassThrough | null => null);
-  getNorthMetric = mock.fn((_northId: string): NorthConnectorMetrics | null => null);
+  getNorthMetric = mock.fn((_northId: string): NorthConnectorMetrics => ({}) as NorthConnectorMetrics);
   testNorth = mock.fn(
     async (_northId: string, _northType: OIBusNorthType, _settingsToTest: NorthSettings): Promise<OIBusConnectionTestResult> =>
       ({ items: [] }) as unknown as OIBusConnectionTestResult

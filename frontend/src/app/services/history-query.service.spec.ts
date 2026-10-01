@@ -294,6 +294,13 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
+  test('should get History query metrics', () => {
+    let result: unknown = null;
+    service.getMetrics('id1').subscribe(metrics => (result = metrics));
+    http.expectOne({ method: 'GET', url: '/api/history/id1/metrics' }).flush(testData.historyQueries.metrics);
+    expect(result).toEqual(testData.historyQueries.metrics);
+  });
+
   test('should test a History query North connector connection', () => {
     let done = false;
     const command = testData.north.command;

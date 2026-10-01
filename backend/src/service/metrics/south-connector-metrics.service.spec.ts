@@ -100,51 +100,15 @@ describe('SouthConnectorMetricsService', () => {
     assert.deepStrictEqual(southConnectorMetricsRepository.initMetrics.mock.calls[0].arguments, [testData.south.list[0].id]);
   });
 
-  it('should get stream', () => {
-    const stream = service.stream;
-    const writeSpy = mock.method(stream, 'write', () => true);
-    mock.timers.tick(100);
-    assert.strictEqual(writeSpy.mock.calls.length, 1);
-    assert.ok(service.stream);
-  });
+  it('should expose the live in-memory metrics without waiting for the DB flush', () => {
+    southMock.metricsEvent.emit('add-values', { numberOfValuesRetrieved: 3, lastValueRetrieved: null });
 
-  it('should release the stream once it closes so later metrics are not buffered', async () => {
-    const stream = service.stream;
-    const writeSpy = mock.method(stream, 'write', () => true);
-    stream.destroy();
-    await new Promise(resolve => stream.once('close', resolve));
-
-    assert.strictEqual(service['_stream'], null);
-    service.updateMetrics();
-    mock.timers.tick(1000);
-    assert.strictEqual(writeSpy.mock.calls.length, 0);
-  });
-
-  it('should keep the newest stream when a replaced one closes', async () => {
-    const first = service.stream;
-    const second = service.stream;
-    await new Promise(resolve => first.once('close', resolve));
-
-    assert.strictEqual(service['_stream'], second);
-  });
-
-  it('should debounce stream writes alongside DB writes', () => {
-    const stream = service.stream;
-    const writeSpy = mock.method(stream, 'write', () => true);
-    mock.timers.tick(100); // drain the stream-init write
-    writeSpy.mock.resetCalls(); // start counting from 0
-
-    service.updateMetrics();
-    mock.timers.tick(1000);
-    assert.strictEqual(writeSpy.mock.calls.length, 1);
-    service.initMetrics();
-    assert.strictEqual(writeSpy.mock.calls.length, 2);
+    assert.strictEqual(service.metrics.numberOfValuesRetrieved, testData.south.metrics.numberOfValuesRetrieved + 3);
+    assert.strictEqual(southConnectorMetricsRepository.updateMetrics.mock.calls.length, 0);
   });
 
   it('should properly clean up listeners on destroy', () => {
     const metricsEventOffSpy = mock.method(southMock.metricsEvent, 'off');
-    const stream = service.stream;
-    const streamDestroySpy = mock.method(stream, 'destroy');
 
     service.destroy();
 
@@ -154,7 +118,5 @@ describe('SouthConnectorMetricsService', () => {
     assert.ok(offEvents.includes('run-end'));
     assert.ok(offEvents.includes('add-values'));
     assert.ok(offEvents.includes('add-file'));
-    assert.ok(streamDestroySpy.mock.calls.length > 0);
-    assert.strictEqual(service['_stream'], null);
   });
 });

@@ -2,15 +2,18 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { NorthConnectorService } from '../services/north-connector.service';
+import { EngineService } from '../services/engine.service';
 import { WindowService } from '../shared/window.service';
 import { HomeComponent } from './home.component';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { NorthConnectorLightDTO } from '../../../../backend/shared/model/north-connector.model';
+import { HomeMetrics } from '../../../../backend/shared/model/engine.model';
+import testData from '../../../../backend/src/tests/utils/test-data';
 
 class HomeComponentTester {
   readonly fixture = TestBed.createComponent(HomeComponent);
@@ -18,18 +21,21 @@ class HomeComponentTester {
   readonly northTitle = this.root.getByCss('#north-title');
   readonly engineTitle = this.root.getByCss('#engine-title');
   readonly southTitle = this.root.getByCss('#south-title');
+  readonly engineMetrics = this.root.getByCss('oib-engine-metrics');
 }
 
 describe('HomeComponent', () => {
   let southService: MockObject<SouthConnectorService>;
   let northService: MockObject<NorthConnectorService>;
   let windowService: MockObject<WindowService>;
+  let engineService: MockObject<EngineService>;
 
   beforeEach(() => {
     southService = createMock(SouthConnectorService);
     northService = createMock(NorthConnectorService);
     windowService = createMock(WindowService);
-    windowService.getStorageItem.mockReturnValue('test-token');
+    engineService = createMock(EngineService);
+    engineService.getHomeMetrics.mockReturnValue(of({ norths: {}, engine: testData.engine.metrics, souths: {} } as unknown as HomeMetrics));
 
     southService.list.mockReturnValue(
       of([
@@ -53,6 +59,7 @@ describe('HomeComponent', () => {
         provideI18nTesting(),
         { provide: SouthConnectorService, useValue: southService },
         { provide: NorthConnectorService, useValue: northService },
+        { provide: EngineService, useValue: engineService },
         { provide: WindowService, useValue: windowService }
       ]
     });
@@ -64,5 +71,14 @@ describe('HomeComponent', () => {
     await expect.element(tester.northTitle).toHaveTextContent('North');
     await expect.element(tester.engineTitle).toHaveTextContent('Engine');
     await expect.element(tester.southTitle).toHaveTextContent('South');
+  });
+
+  test('should display the polled home metrics', async () => {
+    const tester = new HomeComponentTester();
+    tester.fixture.detectChanges();
+    // The first poll fires on the next macrotask
+    await vi.waitFor(() => expect(engineService.getHomeMetrics).toHaveBeenCalledTimes(1));
+    tester.fixture.detectChanges();
+    await expect.element(tester.engineMetrics).toBeInTheDocument();
   });
 });

@@ -40,6 +40,7 @@ import {
   CacheSearchResult,
   DataFolderType,
   FileCacheContent,
+  HistoryQueryMetrics,
   OIBusConnectionTestResult
 } from '../../../shared/model/engine.model';
 import { HistoryTransformerDTOWithOptions } from '../../../shared/model/transformer.model';
@@ -181,6 +182,17 @@ export class HistoryQueryController extends Controller {
   async pause(@Path() historyId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     await historyQueryService.pause(historyId);
+  }
+
+  /**
+   * Retrieves the current metrics of a history query
+   * @summary Get history query metrics
+   * @returns {HistoryQueryMetrics} The history query metrics
+   */
+  @Get('/{historyId}/metrics')
+  getMetrics(@Path() historyId: string, @Request() request: CustomExpressRequest): HistoryQueryMetrics {
+    const historyQueryService = request.services.historyQueryService as HistoryQueryService;
+    return historyQueryService.getHistoryMetric(historyId);
   }
 
   /**

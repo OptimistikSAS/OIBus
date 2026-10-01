@@ -1,7 +1,7 @@
 import { HttpClient, HttpContext, HttpStatusCode } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { inject, Service } from '@angular/core';
-import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
+import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 import {
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
@@ -17,6 +17,7 @@ import {
   CacheSearchResult,
   DataFolderType,
   FileCacheContent,
+  NorthConnectorMetrics,
   OIBusConnectionTestResult
 } from '../../../../backend/shared/model/engine.model';
 import { TransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
@@ -101,6 +102,16 @@ export class NorthConnectorService {
    */
   resetMetrics(northId: string): Observable<void> {
     return this.http.post<void>(`/api/north/${northId}/metrics/reset`, null);
+  }
+
+  /**
+   * Get the current metrics of the selected North. Polled in the background, so only an expired session is notified
+   * @param northId - the ID of the North connector
+   */
+  getMetrics(northId: string): Observable<NorthConnectorMetrics> {
+    return this.http.get<NorthConnectorMetrics>(`/api/north/${northId}/metrics`, {
+      context: ignoreErrorUnlessStatusIs(HttpStatusCode.Unauthorized)
+    });
   }
 
   testConnection(northId: string, settings: NorthSettings, northType: OIBusNorthType): Observable<OIBusConnectionTestResult> {

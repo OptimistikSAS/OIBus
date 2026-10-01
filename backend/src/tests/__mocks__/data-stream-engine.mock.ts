@@ -1,5 +1,4 @@
 import { mock } from 'node:test';
-import { PassThrough } from 'node:stream';
 import { mockBaseFolders } from '../utils/test-utils';
 import type NorthConnector from '../../north/north-connector';
 import type { NorthSettings } from '../../../shared/model/north-settings.model';
@@ -41,7 +40,6 @@ export default class DataStreamEngineMock {
     (_northId: string): { north: NorthConnector<NorthSettings>; metrics: NorthConnectorMetricsService } =>
       ({}) as { north: NorthConnector<NorthSettings>; metrics: NorthConnectorMetricsService }
   );
-  getNorthSSE = mock.fn((_northId: string): PassThrough => new PassThrough());
   getNorthMetrics = mock.fn((_northId: string): NorthConnectorMetrics => ({}) as NorthConnectorMetrics);
   getAllNorthMetrics = mock.fn((): Record<string, NorthConnectorMetrics> => ({}));
   resetNorthMetrics = mock.fn((_northId: string): void => undefined);
@@ -58,7 +56,7 @@ export default class DataStreamEngineMock {
       ({}) as { south: SouthConnector<SouthSettings, SouthItemSettings>; metrics: SouthConnectorMetricsService }
   );
   hasSouth = mock.fn((_southId: string): boolean => false);
-  getSouthSSE = mock.fn((_southId: string): PassThrough => new PassThrough());
+  getSouthMetrics = mock.fn((_southId: string): SouthConnectorMetrics => ({}) as SouthConnectorMetrics);
   getAllSouthMetrics = mock.fn((): Record<string, SouthConnectorMetrics> => ({}));
   resetSouthMetrics = mock.fn((_southId: string): void => undefined);
   reloadSouth = mock.fn(async (_southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>): Promise<void> => undefined);
@@ -71,7 +69,6 @@ export default class DataStreamEngineMock {
     (_historyId: string): { historyQuery: HistoryQuery; metrics: HistoryQueryMetricsService } =>
       ({}) as { historyQuery: HistoryQuery; metrics: HistoryQueryMetricsService }
   );
-  getHistoryQuerySSE = mock.fn((_historyId: string): PassThrough => new PassThrough());
   getHistoryMetrics = mock.fn((_historyId: string): HistoryQueryMetrics => ({}) as HistoryQueryMetrics);
   reloadHistoryQuery = mock.fn(
     async (_historyQueryConfig: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>, _resetCache: boolean): Promise<void> =>

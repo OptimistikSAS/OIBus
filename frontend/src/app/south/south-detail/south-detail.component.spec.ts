@@ -66,17 +66,7 @@ describe('SouthDetailComponent', () => {
     southConnectorService.getGroups.mockReturnValue(of([]));
     southConnectorService.start.mockReturnValue(of(undefined));
     southConnectorService.stop.mockReturnValue(of(undefined));
-    windowService.getStorageItem.mockReturnValue('token');
-
-    function MockEventSource(this: { addEventListener: () => void; close: () => void }) {
-      this.addEventListener = vi.fn();
-      this.close = vi.fn();
-    }
-    Object.defineProperty(window, 'EventSource', {
-      value: MockEventSource,
-      writable: true,
-      configurable: true
-    });
+    southConnectorService.getMetrics.mockReturnValue(of(testData.south.metrics));
 
     TestBed.configureTestingModule({
       providers: [
@@ -102,6 +92,14 @@ describe('SouthDetailComponent', () => {
 
     const root = page.elementLocator(fixture.nativeElement);
     await expect.element(root.getByCss('#title')).toHaveTextContent(southConnector.name);
+  });
+
+  test('should poll the south connector metrics', async () => {
+    const fixture = TestBed.createComponent(SouthDetailComponent);
+    fixture.detectChanges();
+
+    await vi.waitFor(() => expect(southConnectorService.getMetrics).toHaveBeenCalledWith(southConnector.id));
+    expect(fixture.componentInstance.connectorMetrics()).toEqual(testData.south.metrics);
   });
 
   test('should toggle connector on', () => {

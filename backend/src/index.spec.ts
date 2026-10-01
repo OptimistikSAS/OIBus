@@ -245,11 +245,6 @@ describe('index.ts bootstrap()', () => {
       }
     });
 
-    mockModule(nodeRequire, './service/metrics/home-metrics.service', {
-      __esModule: true,
-      default: class FakeHomeMetricsService {}
-    });
-
     mockModule(nodeRequire, './service/scan-mode.service', {
       __esModule: true,
       default: class FakeScanModeService {}

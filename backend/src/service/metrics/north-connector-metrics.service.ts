@@ -1,6 +1,5 @@
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { PassThrough } from 'node:stream';
 import { CacheMetadata, NorthConnectorMetrics } from '../../../shared/model/engine.model';
 import NorthConnectorMetricsRepository, {
   PersistedNorthConnectorMetrics
@@ -12,7 +11,6 @@ import { applyNorthCacheContentSize, applyNorthConnect, applyNorthRunEnd, applyN
 const METRICS_FLUSH_INTERVAL_MS = 1000;
 
 export default class NorthConnectorMetricsService {
-  private _stream: PassThrough | null = null;
   private metricsFlushTimer: NodeJS.Timeout | null = null;
 
   // Persisted fields only; the current cache/error/archive sizes are added live in snapshot().
@@ -42,8 +40,8 @@ export default class NorthConnectorMetricsService {
 
   private onCacheSize = () => {
     // Current sizes are read live from the cache service at serialization time
-    // (see snapshot()); this listener only triggers a debounced flush so the SSE
-    // stream and the persisted row reflect a cache-size change promptly.
+    // (see snapshot()); this listener only triggers a debounced flush so the
+    // persisted row reflects a cache-size change promptly.
     this.updateMetrics();
   };
 
@@ -80,10 +78,9 @@ export default class NorthConnectorMetricsService {
   initMetrics(): void {
     this.northConnectorMetricsRepository.initMetrics(this.northConnector.connectorConfiguration.id);
     this._metrics = this.northConnectorMetricsRepository.getMetrics(this.northConnector.connectorConfiguration.id)!;
-    this._stream?.write(`data: ${JSON.stringify(this.snapshot())}\n\n`);
   }
 
-  /** Both the DB write and the SSE push are debounced through the same timer. */
+  /** The DB write is debounced; the in-memory metrics stay current. */
   updateMetrics(): void {
     if (this.metricsFlushTimer) return;
     this.metricsFlushTimer = setTimeout(() => {
@@ -93,9 +90,8 @@ export default class NorthConnectorMetricsService {
   }
 
   private flushMetrics(): void {
-    // Persist only the persisted fields; the SSE push carries the full snapshot (with live sizes).
+    // Persist only the persisted fields; the live cache sizes are added when the metrics are read (snapshot()).
     this.northConnectorMetricsRepository.updateMetrics(this.northConnector.connectorConfiguration.id, this._metrics);
-    this._stream?.write(`data: ${JSON.stringify(this.snapshot())}\n\n`);
   }
 
   resetMetrics(): void {
@@ -121,30 +117,9 @@ export default class NorthConnectorMetricsService {
       this.metricsFlushTimer = null;
       this.flushMetrics();
     }
-    this._stream?.destroy();
-    this._stream = null;
   }
 
   get metrics(): NorthConnectorMetrics {
     return this.snapshot();
-  }
-
-  /**
-   * Create a PassThrough object used to send a data to a stream to the frontend
-   * The timeout is used to auto-initialize the stream at creation
-   */
-  get stream(): PassThrough {
-    this._stream?.destroy();
-    const stream = new PassThrough();
-    // Drop the reference once the stream closes (SSE client gone, or replaced by a newer
-    // subscriber): later writes would otherwise pile up unread in its buffer forever.
-    stream.on('close', () => {
-      if (this._stream === stream) this._stream = null;
-    });
-    this._stream = stream;
-    setTimeout(() => {
-      this._stream?.write(`data: ${JSON.stringify(this.snapshot())}\n\n`);
-    }, 100);
-    return stream;
   }
 }

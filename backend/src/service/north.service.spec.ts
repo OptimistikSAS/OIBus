@@ -454,11 +454,6 @@ describe('North Service', () => {
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
   });
 
-  it('should get a north stream for metrics', () => {
-    service.getNorthDataStream(testData.north.list[0].id);
-    assert.deepStrictEqual(engine.getNorthSSE.mock.calls[0].arguments, [testData.north.list[0].id]);
-  });
-
   it('should get a north metric', () => {
     service.getNorthMetric(testData.north.list[0].id);
     assert.deepStrictEqual(engine.getNorthMetrics.mock.calls[0].arguments, [testData.north.list[0].id]);

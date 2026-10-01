@@ -171,6 +171,13 @@ describe('NorthConnectorService', () => {
     expect(done).toBe(true);
   });
 
+  test('should get North metrics', () => {
+    let result: unknown = null;
+    service.getMetrics('id1').subscribe(metrics => (result = metrics));
+    http.expectOne({ method: 'GET', url: '/api/north/id1/metrics' }).flush(testData.north.metrics);
+    expect(result).toEqual(testData.north.metrics);
+  });
+
   test('should test a North connector connection', () => {
     let done = false;
     const command = testData.north.command;

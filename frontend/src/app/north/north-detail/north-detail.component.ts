@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, DestroyRef, inject, ChangeDetectionStrate
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { combineLatest, of, switchMap, tap } from 'rxjs';
+import { combineLatest, of, Subscription, switchMap, tap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -12,7 +12,7 @@ import { NorthMetricsComponent } from '../north-metrics/north-metrics.component'
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { NotificationService } from '../../shared/notification.service';
-import { WindowService } from '../../shared/window.service';
+import { pollMetrics } from '../../shared/metrics-polling';
 import { NorthConnectorMetrics, OIBusInfo } from '../../../../../backend/shared/model/engine.model';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { ModalService } from '../../shared/modal.service';
@@ -51,7 +51,6 @@ import { CertificateDTO } from '../../../../../backend/shared/model/certificate.
 })
 export class NorthDetailComponent {
   private destroyRef = inject(DestroyRef);
-  private windowService = inject(WindowService);
   private northConnectorService = inject(NorthConnectorService);
   private scanModeService = inject(ScanModeService);
   private certificateService = inject(CertificateService);
@@ -69,7 +68,7 @@ export class NorthDetailComponent {
   certificates: Array<CertificateDTO> = [];
   transformers: Array<TransformerDTO> = [];
   manifest: NorthConnectorManifest | null = null;
-  connectorStream: EventSource | null = null;
+  private metricsSubscription: Subscription | null = null;
   connectorMetrics: NorthConnectorMetrics | null = null;
   oibusInfo: OIBusInfo | null = null;
   northId: string | null = null;
@@ -108,7 +107,7 @@ export class NorthDetailComponent {
         if (!manifest) {
           return;
         }
-        this.connectToEventSource();
+        this.startMetricsPolling(this.northConnector!.id);
         const northSettings: Record<string, string | boolean> = JSON.parse(JSON.stringify(this.northConnector!.settings));
         this.displayedSettings = manifest.settings.attributes
           .filter(setting => isDisplayableAttribute(setting))
@@ -136,7 +135,7 @@ export class NorthDetailComponent {
       });
     this.destroyRef.onDestroy(() => {
       routeSub.unsubscribe();
-      this.connectorStream?.close();
+      this.metricsSubscription?.unsubscribe();
     });
   }
 
@@ -188,15 +187,12 @@ export class NorthDetailComponent {
     }
   }
 
-  connectToEventSource(): void {
-    const token = this.windowService.getStorageItem('oibus-token');
-    this.connectorStream = new EventSource(`/sse/north/${this.northConnector!.id}?token=${token}`, { withCredentials: true });
-    this.connectorStream.onmessage = (event: MessageEvent) => {
-      if (event && event.data) {
-        this.connectorMetrics = JSON.parse(event.data);
-        this.cd.detectChanges();
-      }
-    };
+  startMetricsPolling(northId: string): void {
+    this.metricsSubscription?.unsubscribe();
+    this.metricsSubscription = pollMetrics(() => this.northConnectorService.getMetrics(northId)).subscribe(metrics => {
+      this.connectorMetrics = metrics;
+      this.cd.detectChanges();
+    });
   }
 
   onClipboardCopy(result: boolean) {

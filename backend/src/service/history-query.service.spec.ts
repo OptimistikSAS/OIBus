@@ -131,7 +131,6 @@ describe('History Query service', () => {
     engine.reloadHistoryQuery.mock.resetCalls();
     engine.stopHistoryQuery.mock.resetCalls();
     engine.deleteHistoryQuery.mock.resetCalls();
-    engine.getHistoryQuerySSE.mock.resetCalls();
     engine.getHistoryMetrics.mock.resetCalls();
     northService.getManifest.mock.resetCalls();
     northService.findById.mock.resetCalls();
@@ -352,11 +351,6 @@ describe('History Query service', () => {
     ]);
     assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
     assert.deepStrictEqual(engine.stopHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
-  });
-
-  it('should get history query data stream', () => {
-    service.getHistoryDataStream(testData.historyQueries.list[0].id);
-    assert.deepStrictEqual(engine.getHistoryQuerySSE.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
   });
 
   it('should get history query metric', () => {

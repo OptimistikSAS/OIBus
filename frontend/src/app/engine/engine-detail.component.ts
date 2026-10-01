@@ -1,8 +1,7 @@
-import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { EngineService } from '../services/engine.service';
-import { EngineMetrics } from '../../../../backend/shared/model/engine.model';
 import { AsyncPipe } from '@angular/common';
 import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component';
 import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
@@ -12,7 +11,7 @@ import { BehaviorSubject, switchMap } from 'rxjs';
 import { ObservableState } from '../shared/save-button/save-button.component';
 import { BoxComponent, BoxTitleDirective } from '../shared/box/box.component';
 import { EngineMetricsComponent } from './engine-metrics/engine-metrics.component';
-import { WindowService } from '../shared/window.service';
+import { pollMetrics } from '../shared/metrics-polling';
 import { RouterLink } from '@angular/router';
 import { CertificateListComponent } from './certificate-list/certificate-list.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -46,29 +45,19 @@ import { AuthTokenDuration } from '../../../../backend/shared/model/engine.model
 })
 export class EngineDetailComponent {
   private engineService = inject(EngineService);
-  private windowService = inject(WindowService);
   private notificationService = inject(NotificationService);
   private confirmationService = inject(ConfirmationService);
   private modalService = inject(ModalService);
-  private destroyRef = inject(DestroyRef);
 
   private readonly refresh$ = new BehaviorSubject<void>(undefined);
 
   readonly engineSettings = toSignal(this.refresh$.pipe(switchMap(() => this.engineService.getEngineSettings())));
-  metrics = signal<EngineMetrics | null>(null);
+  readonly metrics = toSignal(
+    pollMetrics(() => this.engineService.getEngineMetrics()),
+    { initialValue: null }
+  );
   restarting = new ObservableState();
   dumpingMemory = new ObservableState();
-
-  constructor() {
-    const token = this.windowService.getStorageItem('oibus-token');
-    const stream = new EventSource(`/sse/engine?token=${token}`, { withCredentials: true });
-    stream.onmessage = (event: MessageEvent) => {
-      if (event && event.data) {
-        this.metrics.set(JSON.parse(event.data));
-      }
-    };
-    this.destroyRef.onDestroy(() => stream.close());
-  }
 
   openNameModal() {
     const modal = this.modalService.open(EditEngineNameModalComponent);
