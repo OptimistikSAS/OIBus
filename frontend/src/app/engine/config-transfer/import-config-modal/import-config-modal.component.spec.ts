@@ -7,8 +7,9 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { ImportConfigModalComponent } from './import-config-modal.component';
 import { ConfigImportFailure, ConfigTransferService } from '../../../services/config-transfer.service';
 import { ConfirmationService } from '../../../shared/confirmation.service';
+import { TransformerService } from '../../../services/transformer.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { ConfigImportResponseDTO } from '../../../../../../backend/shared/model/config-transfer.model';
+import { ConfigImportPreviewDTO, ConfigImportResponseDTO } from '../../../../../../backend/shared/model/config-transfer.model';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 
 class ImportConfigModalComponentTester {
@@ -20,11 +21,30 @@ class ImportConfigModalComponentTester {
   readonly error = this.root.getByCss('.alert-danger');
   readonly validationErrorsList = this.root.getByCss('#validation-errors-list');
   readonly closeButton = this.root.getByCss('#close-button');
+  readonly importPreview = this.root.getByCss('#import-preview');
 
   constructor() {
     this.fixture.detectChanges();
   }
 }
+
+const preview = {
+  fromVersion: '3.10.0',
+  toVersion: '3.10.0',
+  appliedUpgrades: [],
+  config: {
+    engine: { settings: {} },
+    registration: {},
+    scanModes: [],
+    ipFilters: [],
+    certificates: [],
+    southConnectors: [],
+    northConnectors: [],
+    users: [],
+    transformers: [],
+    historyQueries: []
+  }
+} as unknown as ConfigImportPreviewDTO;
 
 describe('ImportConfigModalComponent', () => {
   let tester: ImportConfigModalComponentTester;
@@ -36,13 +56,17 @@ describe('ImportConfigModalComponent', () => {
     activeModal = createMock(NgbActiveModal);
     configTransferService = createMock(ConfigTransferService);
     confirmationService = createMock(ConfirmationService);
+    const transformerService = createMock(TransformerService);
+    transformerService.list.mockReturnValue(of([]));
+    configTransferService.preview.mockReturnValue(of(preview));
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: activeModal },
         { provide: ConfigTransferService, useValue: configTransferService },
-        { provide: ConfirmationService, useValue: confirmationService }
+        { provide: ConfirmationService, useValue: confirmationService },
+        { provide: TransformerService, useValue: transformerService }
       ]
     });
 
@@ -55,9 +79,60 @@ describe('ImportConfigModalComponent', () => {
     expect(configTransferService.import).not.toHaveBeenCalled();
   });
 
+  test('should preview the selected file before allowing the import', async () => {
+    const file = new File(['{}'], 'export.json');
+    tester.componentInstance.onFileSelected(file);
+    tester.fixture.detectChanges();
+
+    expect(configTransferService.preview).toHaveBeenCalledWith(file);
+    expect(tester.componentInstance.preview()).toEqual(preview);
+    await expect.element(tester.importPreview).toBeInTheDocument();
+    await expect.element(tester.importButton).toBeEnabled();
+    expect(configTransferService.import).not.toHaveBeenCalled();
+  });
+
+  test('should keep the import disabled and show the errors when the preview fails', async () => {
+    configTransferService.preview.mockReturnValue(
+      throwError(
+        () =>
+          new ConfigImportFailure('Imported configuration failed validation; nothing was imported', [
+            { scope: 'scanMode', entityName: 'every second', message: 'invalid cron' }
+          ])
+      )
+    );
+
+    tester.componentInstance.onFileSelected(new File(['{}'], 'export.json'));
+    tester.fixture.detectChanges();
+
+    expect(tester.componentInstance.preview()).toBeNull();
+    await expect.element(tester.importButton).toBeDisabled();
+    await expect.element(tester.importPreview).not.toBeInTheDocument();
+    await expect.element(tester.validationErrorsList).toMatchTextContent('every second');
+    await expect.element(tester.validationErrorsList).toMatchTextContent('invalid cron');
+  });
+
+  test('should preview again when another file is selected', () => {
+    configTransferService.preview.mockReturnValueOnce(throwError(() => 'boom'));
+    tester.componentInstance.onFileSelected(new File(['{}'], 'broken.json'));
+    expect(tester.componentInstance.error()).toBe('boom');
+
+    const file = new File(['{}'], 'export.json');
+    tester.componentInstance.onFileSelected(file);
+
+    expect(configTransferService.preview).toHaveBeenLastCalledWith(file);
+    expect(tester.componentInstance.error()).toBeNull();
+    expect(tester.componentInstance.preview()).toEqual(preview);
+  });
+
   test('should ask for confirmation before importing', async () => {
     confirmationService.confirm.mockReturnValue(of(undefined));
-    const response: ConfigImportResponseDTO = { fromVersion: '3.10.0', toVersion: '3.10.0', appliedUpgrades: [], warnings: [] };
+    const response: ConfigImportResponseDTO = {
+      fromVersion: '3.10.0',
+      toVersion: '3.10.0',
+      appliedUpgrades: [],
+      warnings: [],
+      newPort: null
+    };
     configTransferService.import.mockReturnValue(of(response));
 
     const file = new File(['{}'], 'export.json');
@@ -88,7 +163,8 @@ describe('ImportConfigModalComponent', () => {
       fromVersion: '3.10.0',
       toVersion: '3.11.0',
       appliedUpgrades: [{ version: '3.11.0', description: 'Add a field' }],
-      warnings: ['something to check']
+      warnings: ['something to check'],
+      newPort: null
     };
     configTransferService.import.mockReturnValue(of(response));
 
@@ -105,6 +181,26 @@ describe('ImportConfigModalComponent', () => {
     expect(element.querySelector('#upgraded-versions')?.textContent).toContain('3.10.0');
     expect(element.querySelector('#upgraded-versions')?.textContent).toContain('3.11.0');
     expect(element.querySelector('#applied-upgrades-list')?.textContent?.trim()).toBe('3.11.0: Add a field');
+  });
+
+  test('should announce the redirect when the import changed the web server port', async () => {
+    confirmationService.confirm.mockReturnValue(of(undefined));
+    const response: ConfigImportResponseDTO = {
+      fromVersion: '3.10.0',
+      toVersion: '3.10.0',
+      appliedUpgrades: [],
+      warnings: [],
+      newPort: 2224
+    };
+    configTransferService.import.mockReturnValue(of(response));
+
+    tester.componentInstance.onFileSelected(new File(['{}'], 'export.json'));
+    tester.fixture.detectChanges();
+    await tester.importButton.click();
+    tester.fixture.detectChanges();
+
+    await expect.element(tester.root.getByCss('#port-changed-hint')).toMatchTextContent('port 2224');
+    await expect.element(tester.closeButton).toHaveTextContent('Close and redirect');
   });
 
   test('should show the backend error message when the import fails', async () => {
@@ -163,7 +259,13 @@ describe('ImportConfigModalComponent', () => {
 
   test('should close with the result once import succeeded', async () => {
     confirmationService.confirm.mockReturnValue(of(undefined));
-    const response: ConfigImportResponseDTO = { fromVersion: '3.10.0', toVersion: '3.10.0', appliedUpgrades: [], warnings: [] };
+    const response: ConfigImportResponseDTO = {
+      fromVersion: '3.10.0',
+      toVersion: '3.10.0',
+      appliedUpgrades: [],
+      warnings: [],
+      newPort: null
+    };
     configTransferService.import.mockReturnValue(of(response));
 
     const file = new File(['{}'], 'export.json');

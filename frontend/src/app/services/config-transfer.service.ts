@@ -2,7 +2,11 @@ import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/h
 import { map, Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Service, inject } from '@angular/core';
-import { ConfigImportEntityValidationError, ConfigImportResponseDTO } from '../../../../backend/shared/model/config-transfer.model';
+import {
+  ConfigImportEntityValidationError,
+  ConfigImportPreviewDTO,
+  ConfigImportResponseDTO
+} from '../../../../backend/shared/model/config-transfer.model';
 import { DownloadService } from './download.service';
 import {
   getMessageFromHttpErrorResponse,
@@ -48,6 +52,20 @@ export class ConfigTransferService {
       map(response => this.downloadService.download(response, filename)),
       catchError(rethrowServerMessage)
     );
+  }
+
+  /**
+   * Upgrade and validate a previously exported configuration file without importing it, returning
+   * every entity the import would write. Rejects with a `ConfigImportFailure` exactly like `import()`.
+   */
+  preview(file: File): Observable<ConfigImportPreviewDTO> {
+    const formData = new FormData();
+    formData.set('file', file);
+
+    const context = ignoreErrorIfStatusIs(HttpStatusCode.BadRequest, HttpStatusCode.NotFound);
+    return this.http
+      .post<ConfigImportPreviewDTO>(`${ENDPOINT}/preview`, formData, { context })
+      .pipe(catchError(errorResponse => this.rethrowImportFailure(errorResponse)));
   }
 
   /**

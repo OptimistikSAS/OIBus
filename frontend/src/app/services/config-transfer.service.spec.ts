@@ -3,7 +3,11 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { ConfigImportFailure, ConfigTransferService } from './config-transfer.service';
-import { ConfigImportEntityValidationError, ConfigImportResponseDTO } from '../../../../backend/shared/model/config-transfer.model';
+import {
+  ConfigImportEntityValidationError,
+  ConfigImportPreviewDTO,
+  ConfigImportResponseDTO
+} from '../../../../backend/shared/model/config-transfer.model';
 import { DownloadService } from './download.service';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 
@@ -61,7 +65,13 @@ describe('ConfigTransferService', () => {
   test('should import a configuration', () => {
     let importResponse: ConfigImportResponseDTO | null = null;
     const configFile = new File(['{}'], 'oibus-config-export.json');
-    const expectedResponse: ConfigImportResponseDTO = { fromVersion: '3.10.0', toVersion: '3.10.0', appliedUpgrades: [], warnings: [] };
+    const expectedResponse: ConfigImportResponseDTO = {
+      fromVersion: '3.10.0',
+      toVersion: '3.10.0',
+      appliedUpgrades: [],
+      warnings: [],
+      newPort: null
+    };
 
     service.import(configFile).subscribe(response => (importResponse = response));
 
@@ -105,6 +115,43 @@ describe('ConfigTransferService', () => {
     );
 
     expect(receivedError!).toBeInstanceOf(ConfigImportFailure);
+    expect(receivedError!.validationErrors).toEqual(validationErrors);
+  });
+
+  test('should preview a configuration file', () => {
+    let previewResponse: ConfigImportPreviewDTO | null = null;
+    const configFile = new File(['{}'], 'oibus-config-export.json');
+    const expectedResponse = {
+      fromVersion: '3.9.0',
+      toVersion: '3.10.0',
+      appliedUpgrades: [{ version: '3.10.0', description: 'an upgrade' }],
+      config: {}
+    } as ConfigImportPreviewDTO;
+
+    service.preview(configFile).subscribe(response => (previewResponse = response));
+
+    const testRequest = http.expectOne({ url: '/api/config-transfer/preview', method: 'POST' });
+    expect((testRequest.request.body as FormData).get('file')).toBe(configFile);
+    testRequest.flush(expectedResponse);
+    expect(previewResponse!).toEqual(expectedResponse);
+  });
+
+  test('should surface per-entity validation errors when previewing fails validation', () => {
+    let receivedError: ConfigImportFailure | null = null;
+    const validationErrors: Array<ConfigImportEntityValidationError> = [
+      { scope: 'scanMode', entityName: 'every second', message: 'bad cron' }
+    ];
+
+    service.preview(new File(['{}'], 'oibus-config-export.json')).subscribe({ error: (err: ConfigImportFailure) => (receivedError = err) });
+
+    const testRequest = http.expectOne({ url: '/api/config-transfer/preview', method: 'POST' });
+    testRequest.flush(
+      { message: 'Imported configuration failed validation; nothing was imported', validationErrors },
+      { status: 400, statusText: 'Bad Request' }
+    );
+
+    expect(receivedError!).toBeInstanceOf(ConfigImportFailure);
+    expect(receivedError!.message).toBe('Imported configuration failed validation; nothing was imported');
     expect(receivedError!.validationErrors).toEqual(validationErrors);
   });
 });

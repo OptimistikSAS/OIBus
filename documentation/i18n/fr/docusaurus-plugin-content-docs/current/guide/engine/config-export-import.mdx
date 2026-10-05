@@ -26,8 +26,9 @@ Le fichier d'export (`oibus-config-export.json`) comporte trois champs de premie
   - Les connecteurs North
   - Les requêtes d'historique
   - Les utilisateurs
-  - Les paramètres du moteur et les paramètres d'enregistrement OIAnalytics, à titre informatif uniquement : ils ne
-    sont jamais importés (voir [Enregistrement](#registration-is-not-imported) ci-dessous)
+  - Les paramètres du moteur : nom, serveur web, serveur proxy et logs
+  - Les paramètres d'enregistrement OIAnalytics, à titre informatif uniquement : ils ne sont jamais importés (voir
+    [Enregistrement](#registration-is-not-imported) ci-dessous)
 
 Comme `config` utilise le même format que la configuration qu'OIBus envoie à OIAnalytics, un fichier produit par
 OIAnalytics à partir de la configuration qu'il détient pour un OIBus s'importe de la même manière qu'un fichier
@@ -47,11 +48,25 @@ Importer un fichier de configuration **efface toutes les sections concernées de
 l'instance cible et les recrée à partir du fichier**, en conservant l'ID interne d'origine de chaque entité. Cette
 opération est destructrice et ne peut pas être annulée : chaque connecteur South, connecteur North, requête
 d'historique, workflow de configuration, mode de scan, filtre IP, transformateur, certificat et utilisateur actuellement présent sur
-l'instance est supprimé avant que les éléments importés ne soient créés. L'interface exige une confirmation
+l'instance est supprimé avant que les éléments importés ne soient créés, et les paramètres du moteur de l'instance
+(nom, serveur web, serveur proxy et logs) sont remplacés par ceux importés. L'interface exige une confirmation
 explicite, rappelant ce point, avant qu'un import ne soit soumis.
 
-Les paramètres propres au moteur et l'enregistrement OIAnalytics ne sont jamais effacés ni écrasés par un import —
-voir [Enregistrement](#registration-is-not-imported).
+L'enregistrement OIAnalytics n'est jamais effacé ni écrasé par un import — voir
+[Enregistrement](#registration-is-not-imported).
+
+Si l'import modifie le port du serveur web, OIBus écoute sur le nouveau port une fois redémarré : l'interface y
+redirige à la fermeture de la fenêtre d'import. Le nouveau port doit être libre sur la machine cible.
+
+### Prévisualiser un import {#previewing-an-import}
+
+Sélectionner un fichier dans la fenêtre **Importer la configuration** ne l'importe pas encore : OIBus le met d'abord à
+niveau et le valide exactement comme le ferait l'import, sans rien écrire, et affiche tout ce qu'il s'apprête à
+importer — connecteurs South (avec leur configuration, leurs items, groupes d'items et workflows de configuration),
+connecteurs North (avec leur configuration, leur cache et leurs transformateurs), requêtes d'historique, modes de scan,
+filtres IP, certificats, transformateurs, utilisateurs et paramètres du moteur. Chaque section peut être dépliée pour
+en consulter le contenu. Un fichier invalide affiche ses erreurs immédiatement, et l'import ne peut être confirmé
+qu'une fois la prévisualisation réussie.
 
 Si le fichier téléversé est mal formé, ou est rejeté pour l'une des raisons ci-dessous, **rien n'est écrit** : l'import
 est tout-ou-rien.
@@ -90,6 +105,11 @@ quelle :
   certificat, chaîne de certificats, expiration) est recréée sous son ID d'origine afin que tout ce qui y fait
   référence continue de fonctionner, mais la clé privée doit être réimportée manuellement avant que le certificat
   puisse être utilisé pour TLS.
+- **Les mots de passe du moteur ne sont conservés que si ce à quoi ils servent est inchangé.** Le mot de passe Loki
+  est conservé si les paramètres de logs importés ciblent la même adresse et le même utilisateur Loki que l'instance,
+  celui du serveur proxy si l'utilisateur du serveur proxy est le même, et celui du proxy de redirection si son URL et
+  son utilisateur sont les mêmes. Sinon le mot de passe est effacé plutôt que réutilisé pour un autre serveur ou
+  utilisateur, et un avertissement demande de le ressaisir dans les paramètres du moteur.
 - **Les utilisateurs sont recréés avec un mot de passe aléatoire**, puisque les mots de passe ne sont jamais
   exportés. Chaque utilisateur importé doit réinitialiser son mot de passe avant de pouvoir se reconnecter.
 - **Les workflows de configuration sont importés désactivés**, avec les éléments qu'ils ont créés toujours rattachés.
