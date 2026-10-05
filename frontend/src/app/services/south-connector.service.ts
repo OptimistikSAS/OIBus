@@ -22,7 +22,7 @@ import {
 } from '../../../../backend/shared/model/south-connector.model';
 import { Page } from '../../../../backend/shared/model/types';
 import { DownloadService } from './download.service';
-import { OIBusConnectionTestResult, OIBusRecord } from '../../../../backend/shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusRecord, SouthConnectorMetrics } from '../../../../backend/shared/model/engine.model';
 import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 
 /**
