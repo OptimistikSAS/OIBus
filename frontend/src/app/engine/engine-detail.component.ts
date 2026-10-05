@@ -55,7 +55,6 @@ export class EngineDetailComponent {
   private confirmationService = inject(ConfirmationService);
   private modalService = inject(ModalService);
   private configTransferService = inject(ConfigTransferService);
-  private destroyRef = inject(DestroyRef);
 
   private readonly refresh$ = new BehaviorSubject<void>(undefined);
 
@@ -67,17 +66,6 @@ export class EngineDetailComponent {
   restarting = new ObservableState();
   exporting = new ObservableState();
   dumpingMemory = new ObservableState();
-
-  constructor() {
-    const token = this.windowService.getStorageItem('oibus-token');
-    const stream = new EventSource(`/sse/engine?token=${token}`, { withCredentials: true });
-    stream.onmessage = (event: MessageEvent) => {
-      if (event && event.data) {
-        this.metrics.set(JSON.parse(event.data));
-      }
-    };
-    this.destroyRef.onDestroy(() => stream.close());
-  }
 
   openNameModal() {
     const modal = this.modalService.open(EditEngineNameModalComponent);
