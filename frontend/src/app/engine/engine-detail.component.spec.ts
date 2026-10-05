@@ -16,6 +16,8 @@ import { CertificateService } from '../services/certificate.service';
 import { TransformerService } from '../services/transformer.service';
 import { ConfigTransferService } from '../services/config-transfer.service';
 import { ImportConfigModalComponent } from './config-transfer/import-config-modal/import-config-modal.component';
+import { PortRedirectModalComponent } from '../shared/port-redirect-modal/port-redirect-modal.component';
+import { Modal } from '../shared/modal.service';
 import { MockModalService, provideModalTesting } from '../shared/mock-modal.service.testing';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
@@ -207,7 +209,13 @@ describe('EngineDetailComponent', () => {
 
   test('should open the import config modal and reload the page once it closes with a result', async () => {
     const fakeImportComponent = createMock(ImportConfigModalComponent);
-    modalService.mockClosedModal(fakeImportComponent, { fromVersion: '3.10.0', toVersion: '3.10.0', appliedUpgrades: [], warnings: [] });
+    modalService.mockClosedModal(fakeImportComponent, {
+      fromVersion: '3.10.0',
+      toVersion: '3.10.0',
+      appliedUpgrades: [],
+      warnings: [],
+      newPort: null
+    });
 
     const tester = new EngineDetailComponentTester();
     tester.fixture.detectChanges();
@@ -226,7 +234,8 @@ describe('EngineDetailComponent', () => {
       fromVersion: '3.10.0',
       toVersion: '3.10.0',
       appliedUpgrades: [],
-      warnings: []
+      warnings: [],
+      newPort: null
     });
     // A dismissal (unlike an explicit close) resolves with no value, so `modalRef.result.subscribe`'s
     // next handler never fires — isolating this test to the `beforeDismiss` reload path being added.
@@ -258,6 +267,24 @@ describe('EngineDetailComponent', () => {
     const beforeDismiss = openSpy.mock.calls[0][1]?.beforeDismiss as () => Promise<boolean>;
     await beforeDismiss();
 
+    expect(windowService.reload).not.toHaveBeenCalled();
+  });
+
+  test('should redirect to the new port instead of reloading when the import changed the web server port', async () => {
+    const fakeImportComponent = createMock(ImportConfigModalComponent);
+    const result = { fromVersion: '3.10.0', toVersion: '3.10.0', appliedUpgrades: [], warnings: [], newPort: 2224 };
+    const redirectComponent = { initialize: vi.fn() };
+    const openSpy = vi
+      .spyOn(modalService, 'open')
+      .mockReturnValueOnce({ componentInstance: fakeImportComponent, result: of(result) } as unknown as Modal<ImportConfigModalComponent>)
+      .mockReturnValueOnce({ componentInstance: redirectComponent, result: of() } as unknown as Modal<ImportConfigModalComponent>);
+
+    const tester = new EngineDetailComponentTester();
+    tester.fixture.detectChanges();
+    await tester.importConfigButton.click();
+
+    expect(openSpy.mock.calls[1][0]).toBe(PortRedirectModalComponent);
+    expect(redirectComponent.initialize).toHaveBeenCalledWith(2224);
     expect(windowService.reload).not.toHaveBeenCalled();
   });
 });

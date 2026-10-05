@@ -6,10 +6,12 @@ import { ConfigImportResponseDTO } from '../../../../shared/model/config-transfe
  */
 export default class ConfigImportServiceMock {
   validateAndUpgrade = mock.fn();
+  previewConfiguration = mock.fn();
   importConfiguration = mock.fn((): ConfigImportResponseDTO => ({
     fromVersion: '3.10.0',
     toVersion: '3.10.0',
     appliedUpgrades: [],
-    warnings: []
+    warnings: [],
+    newPort: null
   }));
 }

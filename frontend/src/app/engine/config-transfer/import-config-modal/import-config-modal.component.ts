@@ -1,11 +1,18 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AsyncPipe } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, switchMap } from 'rxjs';
+import { Observable, Subscription, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective } from '@ngx-translate/core';
-import { ConfigImportEntityValidationError, ConfigImportResponseDTO } from '../../../../../../backend/shared/model/config-transfer.model';
+import {
+  ConfigImportEntityValidationError,
+  ConfigImportPreviewDTO,
+  ConfigImportResponseDTO
+} from '../../../../../../backend/shared/model/config-transfer.model';
 import { ConfigImportFailure, ConfigTransferService } from '../../../services/config-transfer.service';
 import { ConfirmationService } from '../../../shared/confirmation.service';
+import { ConfigImportPreviewComponent } from '../config-import-preview/config-import-preview.component';
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
 
@@ -14,14 +21,18 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
   templateUrl: './import-config-modal.component.html',
   styleUrl: './import-config-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [TranslateDirective, SaveButtonComponent]
+  imports: [TranslateDirective, SaveButtonComponent, AsyncPipe, ConfigImportPreviewComponent]
 })
 export class ImportConfigModalComponent {
   private modal = inject(NgbActiveModal);
   private configTransferService = inject(ConfigTransferService);
   private confirmationService = inject(ConfirmationService);
+  private destroyRef = inject(DestroyRef);
 
   state = new ObservableState();
+  previewState = new ObservableState();
+  preview = signal<ConfigImportPreviewDTO | null>(null);
+  private previewSubscription: Subscription | null = null;
   error = signal<string | null>(null);
   validationErrors = signal<Array<ConfigImportEntityValidationError>>([]);
   fileError = signal<string | null>(null);
@@ -30,8 +41,9 @@ export class ImportConfigModalComponent {
   readonly initializeFile = new File([''], 'Choose a file');
   file: File = this.initializeFile;
 
+  /** Only a file whose preview succeeded can be imported: the user must have seen what it contains. */
   get canImport(): boolean {
-    return this.file !== this.initializeFile;
+    return this.file !== this.initializeFile && this.preview() !== null;
   }
 
   onFileSelected(file: File) {
@@ -41,6 +53,35 @@ export class ImportConfigModalComponent {
     }
     this.fileError.set(null);
     this.file = file;
+    this.loadPreview();
+  }
+
+  /**
+   * Upgrades and validates the selected file on the backend without importing it, so every entity it
+   * would write can be reviewed (and any validation error shown) before the import is confirmed. A
+   * newer selection cancels the preview of the previous one.
+   */
+  private loadPreview() {
+    this.previewSubscription?.unsubscribe();
+    this.preview.set(null);
+    this.error.set(null);
+    this.validationErrors.set([]);
+    this.previewSubscription = this.configTransferService
+      .preview(this.file)
+      .pipe(this.previewState.pendingUntilFinalization(), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (preview: ConfigImportPreviewDTO) => this.preview.set(preview),
+        error: (err: ConfigImportFailure | string) => this.showFailure(err)
+      });
+  }
+
+  private showFailure(err: ConfigImportFailure | string) {
+    if (err instanceof ConfigImportFailure) {
+      this.error.set(err.message);
+      this.validationErrors.set(err.validationErrors);
+    } else {
+      this.error.set(err);
+    }
   }
 
   onDragOver(e: Event) {
@@ -90,14 +131,7 @@ export class ImportConfigModalComponent {
       .pipe(switchMap(() => this.configTransferService.import(this.file).pipe(this.state.pendingUntilFinalization())))
       .subscribe({
         next: (response: ConfigImportResponseDTO) => this.result.set(response),
-        error: (err: ConfigImportFailure | string) => {
-          if (err instanceof ConfigImportFailure) {
-            this.error.set(err.message);
-            this.validationErrors.set(err.validationErrors);
-          } else {
-            this.error.set(err);
-          }
-        }
+        error: (err: ConfigImportFailure | string) => this.showFailure(err)
       });
   }
 

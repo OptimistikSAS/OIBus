@@ -7,7 +7,7 @@ import { fixTsoaModuleResolution, reloadModule, createMockServices } from '../..
 import ConfigTransferServiceMock from '../../tests/__mocks__/service/config-transfer-service.mock';
 import ConfigImportServiceMock from '../../tests/__mocks__/service/config-import-service.mock';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
-import { ConfigExportDTO, ConfigImportResponseDTO } from '../../../shared/model/config-transfer.model';
+import { ConfigExportDTO, ConfigImportPreviewDTO, ConfigImportResponseDTO } from '../../../shared/model/config-transfer.model';
 import { ConfigImportError } from '../../service/config-transfer/config-import.service';
 import type { ConfigTransferController as ConfigTransferControllerShape } from './config-transfer.controller';
 
@@ -70,6 +70,48 @@ describe('ConfigTransferController', () => {
     assert.deepStrictEqual(mockRes.send.mock.calls[0].arguments, [JSON.stringify(envelope, null, 2)]);
   });
 
+  describe('previewConfiguration', () => {
+    it('should preview a well-formed export file, clean up the temp file and not restart', async () => {
+      const file = { path: 'previewPath' } as Express.Multer.File;
+      const parsedEnvelope = { oibusVersion: '3.10.0' };
+      const preview: ConfigImportPreviewDTO = {
+        fromVersion: '3.10.0',
+        toVersion: '3.10.1',
+        appliedUpgrades: [{ version: '3.10.1', description: 'an upgrade' }],
+        config: {} as ConfigImportPreviewDTO['config']
+      };
+      mock.method(fs, 'readFile', async () => JSON.stringify(parsedEnvelope));
+      const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
+      configImportService.previewConfiguration = mock.fn(async () => preview);
+
+      const result = await controller.previewConfiguration(file, mockRequest as CustomExpressRequest);
+
+      assert.deepStrictEqual(configImportService.previewConfiguration.mock.calls[0].arguments, [parsedEnvelope]);
+      assert.deepStrictEqual(unlinkMock.mock.calls[0].arguments, ['previewPath']);
+      assert.deepStrictEqual(result, preview);
+      assert.strictEqual(configImportService.importConfiguration.mock.calls.length, 0);
+      assert.strictEqual(oIBusService.restart.mock.calls.length, 0);
+    });
+
+    it('should reject with a validation error when the file is missing', async () => {
+      await assert.rejects(
+        controller.previewConfiguration(undefined as unknown as Express.Multer.File, mockRequest as CustomExpressRequest),
+        { message: 'Missing file "file"' }
+      );
+    });
+
+    it('should reject with a validation error when the file is not valid JSON', async () => {
+      const file = { path: 'previewPath' } as Express.Multer.File;
+      mock.method(fs, 'readFile', async () => 'not json{');
+      const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
+
+      await assert.rejects(controller.previewConfiguration(file, mockRequest as CustomExpressRequest), {
+        message: 'Uploaded file is not valid JSON'
+      });
+      assert.strictEqual(unlinkMock.mock.calls.length, 1);
+    });
+  });
+
   describe('importConfiguration', () => {
     it('should import a well-formed export file and clean up the temp file', async () => {
       const file = { path: 'importPath' } as Express.Multer.File;
@@ -78,7 +120,8 @@ describe('ConfigTransferController', () => {
         fromVersion: '3.10.0',
         toVersion: '3.10.1',
         appliedUpgrades: [{ version: '3.10.1', description: 'an upgrade' }],
-        warnings: ['a warning']
+        warnings: ['a warning'],
+        newPort: null
       };
       const readFileMock = mock.method(fs, 'readFile', async () => JSON.stringify(parsedEnvelope));
       const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
@@ -149,7 +192,13 @@ describe('ConfigTransferController', () => {
       mock.method(fs, 'unlink', async () => {
         throw new Error('unlink failed');
       });
-      const response: ConfigImportResponseDTO = { fromVersion: '3.10.0', toVersion: '3.10.0', appliedUpgrades: [], warnings: [] };
+      const response: ConfigImportResponseDTO = {
+        fromVersion: '3.10.0',
+        toVersion: '3.10.0',
+        appliedUpgrades: [],
+        warnings: [],
+        newPort: null
+      };
       configImportService.importConfiguration = mock.fn(async () => response);
 
       const result = await controller.importConfiguration(file, mockRequest as CustomExpressRequest);

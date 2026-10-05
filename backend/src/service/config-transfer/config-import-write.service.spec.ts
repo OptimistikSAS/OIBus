@@ -133,7 +133,8 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
       northConnectorRepository,
       historyQueryRepository,
       userRepository,
-      configurationWorkflowRepository
+      configurationWorkflowRepository,
+      engineRepository
     );
   });
 
@@ -302,9 +303,177 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
     );
   });
 
-  it('does not touch the engine settings or the OIAnalytics registration', async () => {
+  it('imports the engine name, web server, proxy server and logging settings', async () => {
+    const beforeEngine = engineRepository.get()!;
+    const envelope = cloneEnvelope();
+    const importedSettings = envelope.config.engine.settings;
+    importedSettings.general.name = 'imported name';
+    importedSettings.webServer = { port: beforeEngine.webServer.port + 1, authTokenDuration: '1d' };
+    importedSettings.proxyServer = {
+      enabled: true,
+      port: 8888,
+      username: null,
+      password: null,
+      forward: { enabled: false, url: null, username: null, password: null }
+    };
+    importedSettings.logger.console.level = 'debug';
+    importedSettings.logger.file = { level: 'error', maxFileSize: 12, numberOfFiles: 7 };
+    importedSettings.logger.syslog = { level: 'warn', host: 'syslog.example.com', port: 1514, protocol: 'tcp' };
+    importedSettings.logger.auditRetentionDuration = 30;
+
+    const result = await service.importConfiguration(envelope, importerId());
+
+    const afterEngine = engineRepository.get()!;
+    assert.strictEqual(afterEngine.general.name, 'imported name');
+    assert.deepStrictEqual(afterEngine.webServer, { port: beforeEngine.webServer.port + 1, authTokenDuration: '1d' });
+    assert.strictEqual(afterEngine.proxyServer.enabled, true);
+    assert.strictEqual(afterEngine.proxyServer.port, 8888);
+    assert.strictEqual(afterEngine.logger.console.level, 'debug');
+    assert.deepStrictEqual(afterEngine.logger.file, { level: 'error', maxFileSize: 12, numberOfFiles: 7 });
+    assert.deepStrictEqual(afterEngine.logger.syslog, { level: 'warn', host: 'syslog.example.com', port: 1514, protocol: 'tcp' });
+    assert.strictEqual(afterEngine.auditRetentionDuration, 30);
+    // The UI must be reached on the new port once OIBus restarts
+    assert.strictEqual(result.newPort, beforeEngine.webServer.port + 1);
+    assert.ok(result.warnings.some(warning => warning.includes(`port ${beforeEngine.webServer.port + 1}`)));
+  });
+
+  it('reports no new port when the web server port is unchanged', async () => {
+    const envelope = cloneEnvelope();
+    envelope.config.engine.settings.webServer.port = engineRepository.get()!.webServer.port;
+
+    const result = await service.importConfiguration(envelope, importerId());
+
+    assert.strictEqual(result.newPort, null);
+  });
+
+  it('keeps the local proxy passwords when the imported proxy settings target the same users and forward proxy', async () => {
+    const forward = { enabled: true, url: 'http://forward:3128', username: 'forward-user', password: 'encrypted-forward' };
+    engineRepository.updateProxy(
+      { enabled: true, port: 9000, username: 'proxy-user', password: 'hashed-proxy-password', forward },
+      importerId()
+    );
+    const envelope = cloneEnvelope();
+    envelope.config.engine.settings.proxyServer = {
+      enabled: true,
+      port: 9001,
+      username: 'proxy-user',
+      password: null,
+      forward: { ...forward, password: null }
+    };
+
+    const result = await service.importConfiguration(envelope, importerId());
+
+    const proxy = engineRepository.get()!.proxyServer;
+    assert.strictEqual(proxy.port, 9001);
+    assert.strictEqual(proxy.password, 'hashed-proxy-password');
+    assert.strictEqual(proxy.forward.password, 'encrypted-forward');
+    assert.ok(!result.warnings.some(warning => /proxy password/i.test(warning)));
+  });
+
+  it('clears the proxy passwords and warns when the imported proxy settings target other users or another forward proxy', async () => {
+    engineRepository.updateProxy(
+      {
+        enabled: true,
+        port: 9000,
+        username: 'proxy-user',
+        password: 'hashed-proxy-password',
+        forward: { enabled: true, url: 'http://forward:3128', username: 'forward-user', password: 'encrypted-forward' }
+      },
+      importerId()
+    );
+    const envelope = cloneEnvelope();
+    envelope.config.engine.settings.proxyServer = {
+      enabled: true,
+      port: 9000,
+      username: 'another-user',
+      password: null,
+      forward: { enabled: true, url: 'http://other-forward:3128', username: 'forward-user', password: null }
+    };
+
+    const result = await service.importConfiguration(envelope, importerId());
+
+    const proxy = engineRepository.get()!.proxyServer;
+    assert.strictEqual(proxy.password, null);
+    assert.strictEqual(proxy.forward.password, null);
+    assert.ok(result.warnings.some(warning => warning.includes('proxy server password') && warning.includes('another-user')));
+    assert.ok(result.warnings.some(warning => warning.includes('forward proxy password') && warning.includes('http://other-forward:3128')));
+  });
+
+  it('rejects a proxy server listening on the web server port without writing anything', async () => {
     const beforeEngine = engineRepository.get();
-    await service.importConfiguration(cloneEnvelope(), importerId());
+    const envelope = cloneEnvelope();
+    const { webServer, proxyServer } = envelope.config.engine.settings;
+    proxyServer.enabled = true;
+    proxyServer.port = webServer.port;
+
+    await assert.rejects(
+      () => service.importConfiguration(envelope, importerId()),
+      (error: unknown) =>
+        error instanceof ConfigImportError &&
+        error.validationErrors.some(
+          validationError => validationError.scope === 'engine' && /can not be the same/.test(validationError.message)
+        )
+    );
+    assert.deepStrictEqual(engineRepository.get(), beforeEngine);
+  });
+
+  it('keeps the local Loki password when the imported logging settings target the same Loki endpoint', async () => {
+    const localLogger = { ...cloneEnvelope().config.engine.settings.logger };
+    localLogger.loki = { level: 'info', interval: 60, address: 'http://loki:3100', username: 'oibus', password: 'encrypted-password' };
+    engineRepository.updateLogger(localLogger, importerId());
+    const envelope = cloneEnvelope();
+    envelope.config.engine.settings.logger.loki = {
+      level: 'info',
+      interval: 30,
+      address: 'http://loki:3100',
+      username: 'oibus',
+      password: ''
+    };
+
+    const result = await service.importConfiguration(envelope, importerId());
+
+    const loki = engineRepository.get()!.logger.loki;
+    assert.strictEqual(loki.interval, 30);
+    assert.strictEqual(loki.password, 'encrypted-password');
+    assert.ok(!result.warnings.some(warning => warning.includes('Loki')));
+  });
+
+  it('clears the Loki password and warns when the imported logging settings target another Loki endpoint', async () => {
+    const localLogger = { ...cloneEnvelope().config.engine.settings.logger };
+    localLogger.loki = { level: 'info', interval: 60, address: 'http://loki:3100', username: 'oibus', password: 'encrypted-password' };
+    engineRepository.updateLogger(localLogger, importerId());
+    const envelope = cloneEnvelope();
+    envelope.config.engine.settings.logger.loki = {
+      level: 'info',
+      interval: 60,
+      address: 'http://other-loki:3100',
+      username: 'oibus',
+      password: ''
+    };
+
+    const result = await service.importConfiguration(envelope, importerId());
+
+    const loki = engineRepository.get()!.logger.loki;
+    assert.strictEqual(loki.address, 'http://other-loki:3100');
+    assert.strictEqual(loki.password, '');
+    assert.ok(
+      result.warnings.some(warning => warning.includes('Loki') && warning.includes('http://other-loki:3100')),
+      `expected a Loki password warning, got ${JSON.stringify(result.warnings)}`
+    );
+  });
+
+  it('rejects engine settings that fail validation without writing anything', async () => {
+    const beforeEngine = engineRepository.get();
+    const envelope = cloneEnvelope();
+    (envelope.config.engine.settings.logger.file as { numberOfFiles: number }).numberOfFiles = 0;
+    (envelope.config.engine.settings.webServer as { authTokenDuration: string }).authTokenDuration = 'forever';
+
+    await assert.rejects(
+      () => service.importConfiguration(envelope, importerId()),
+      (error: unknown) =>
+        error instanceof ConfigImportError &&
+        error.validationErrors.filter(validationError => validationError.scope === 'engine').length === 2
+    );
     assert.deepStrictEqual(engineRepository.get(), beforeEngine);
   });
 

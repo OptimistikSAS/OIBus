@@ -1,5 +1,13 @@
 import Joi from 'joi';
-import { ipFilterSchema, scanModeSchema, userSchema } from '../../web-server/controllers/validators/oibus-validation-schema';
+import {
+  engineLoggerSchema,
+  engineNameSchema,
+  engineProxySchema,
+  engineWebServerSchema,
+  ipFilterSchema,
+  scanModeSchema,
+  userSchema
+} from '../../web-server/controllers/validators/oibus-validation-schema';
 import { RECORD_FILTER_OPERATORS } from '../../../shared/model/configuration-workflow.model';
 import { HISTORY_QUERY_STATUS } from '../../../shared/model/history-query.model';
 
@@ -276,9 +284,25 @@ const historyQueryEntry = Joi.object({
   }).required()
 });
 
+/**
+ * The engine's name, web server, proxy server and logging settings are imported (see
+ * `ConfigImportService.importConfiguration`). Every logger sub-section is required here, unlike on the
+ * update endpoint, since an import writes all of them at once.
+ */
+const importedEngineLoggerSchema = engineLoggerSchema.fork(
+  ['auditRetentionDuration', 'console', 'file', 'database', 'loki', 'oia', 'syslog'],
+  schema => schema.required()
+);
+
 export const CONFIG_SCHEMA = Joi.object({
-  // Informational only: never imported (see `ConfigImportService.importConfiguration`)
-  engine: Joi.object().required(),
+  engine: Joi.object({
+    settings: Joi.object({
+      general: engineNameSchema.required(),
+      webServer: engineWebServerSchema.required(),
+      proxyServer: engineProxySchema.required(),
+      logger: importedEngineLoggerSchema.required()
+    }).required()
+  }).required(),
   registration: Joi.object().required(),
   scanModes: Joi.array().items(scanModeEntry).required(),
   ipFilters: Joi.array()

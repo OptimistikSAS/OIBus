@@ -161,7 +161,8 @@ export async function bootstrap(): Promise<void> {
     repositoryService.northConnectorRepository,
     repositoryService.historyQueryRepository,
     repositoryService.userRepository,
-    repositoryService.configurationWorkflowRepository
+    repositoryService.configurationWorkflowRepository,
+    repositoryService.engineRepository
   );
 
   const dataStreamEngine = new DataStreamEngine(

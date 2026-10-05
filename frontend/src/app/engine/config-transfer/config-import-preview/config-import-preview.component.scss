@@ -1,0 +1,92 @@
+.preview-sections {
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+}
+
+.preview-section + .preview-section {
+  border-top: 1px solid var(--bs-border-color-translucent);
+}
+
+.preview-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+
+  &:hover {
+    background-color: var(--bs-tertiary-bg);
+  }
+
+  &[aria-expanded='true'] > .preview-title {
+    font-weight: 600;
+  }
+}
+
+.toggle-icon {
+  font-size: 0.75rem;
+  color: var(--bs-secondary-color);
+}
+
+.preview-title {
+  overflow-wrap: anywhere;
+}
+
+.preview-subtitle {
+  font-size: 0.875rem;
+}
+
+.preview-count {
+  margin-left: auto;
+}
+
+.preview-content {
+  padding: 0.25rem 0.6rem 0.6rem 1.75rem;
+
+  .preview-sections,
+  > .preview-section {
+    border: 1px solid var(--bs-border-color-translucent);
+    border-radius: var(--bs-border-radius-sm);
+  }
+
+  > .preview-section + .preview-section {
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
+  > .preview-section:has(+ .preview-section) {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}
+
+.preview-json {
+  max-height: 20rem;
+  overflow: auto;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  background-color: var(--bs-tertiary-bg);
+  border-radius: var(--bs-border-radius-sm);
+}
+
+// `.oib-table` sizes and right-aligns its last column for action buttons and never wraps cells: here every column holds
+// data, so they share the width and long values (dates, addresses, emails) wrap instead of overflowing.
+.preview-table {
+  thead th:last-child {
+    width: auto;
+  }
+
+  tbody td {
+    white-space: normal;
+    overflow-wrap: anywhere;
+
+    &:last-child {
+      text-align: left;
+    }
+  }
+}
