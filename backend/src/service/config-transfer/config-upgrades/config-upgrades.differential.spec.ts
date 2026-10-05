@@ -14,12 +14,17 @@ import { getUpgradesBetween } from './registry';
 import { JsonObject } from './config-upgrade';
 import { CONFIG_SCHEMA } from '../config-schema';
 import { ConfigExportDTO, OIBusConfigurationDTO } from '../../../../shared/model/config-transfer.model';
-import { version as currentVersion } from '../../../../package.json';
 
 const fixtureVersions = fs
   .readdirSync(CONFIG_TRANSFER_FIXTURES_DIR, { withFileTypes: true })
   .filter(entry => entry.isDirectory())
   .map(entry => entry.name);
+
+/**
+ * Version the fixtures are upgraded and migrated to, pinned independently of `package.json` (only bumped by
+ * release-please at release time). It must not be older than the newest config upgrade step.
+ */
+const currentVersion = '3.11.0';
 
 /**
  * Uses the entity migrations as the reference for the config upgrade chain. For every frozen fixture

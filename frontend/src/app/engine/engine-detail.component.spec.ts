@@ -31,6 +31,7 @@ class EngineDetailComponentTester {
   readonly exportConfigButton = this.root.getByCss('#export-config');
   readonly importConfigButton = this.root.getByCss('#import-config');
   readonly memoryDumpButton = this.root.getByCss('#memory-dump');
+  readonly engineMetrics = this.root.getByCss('oib-engine-metrics');
 }
 
 const engineSettings: EngineSettingsDTO = {

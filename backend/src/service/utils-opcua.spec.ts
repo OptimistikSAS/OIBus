@@ -28,9 +28,9 @@ import {
   toOPCUASecurityMode,
   toOPCUASecurityPolicy
 } from './utils-opcua';
-import { mockModule, reloadModule } from '../tests/utils/test-utils';
 
 const nodeRequire = createRequire(import.meta.url);
+const nodeOpcuaCryptoModule = nodeRequire('node-opcua-crypto');
 import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../shared/model/south-settings.model';
 import { NorthOPCUASettings } from '../../shared/model/north-settings.model';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
@@ -168,20 +168,6 @@ describe('Service utils OPCUA', () => {
       assert.strictEqual(result, undefined);
     });
 
-    // node-opcua-crypto is ESM-only: its namespace exports cannot be patched with mock.method, so inject a
-    // fake module in the require cache and reload utils-opcua against it
-    const loadWithCertificateInfo = (certificateInfo: unknown): typeof getOPCUAApplicationUri => {
-      const nodeOpcuaCryptoModule = nodeRequire('node-opcua-crypto');
-      mockModule(nodeRequire, 'node-opcua-crypto', {
-        ...nodeOpcuaCryptoModule,
-        convertPEMtoDER: () => Buffer.from('der'),
-        exploreCertificate: () => certificateInfo
-      });
-      const reloaded = reloadModule<{ getOPCUAApplicationUri: typeof getOPCUAApplicationUri }>(nodeRequire, './utils-opcua');
-      mockModule(nodeRequire, 'node-opcua-crypto', nodeOpcuaCryptoModule);
-      return reloaded.getOPCUAApplicationUri;
-    };
-
     it('should return the applicationUri extracted from the certificate subjectAltName', async () => {
       mock.method(fs, 'readFile', async () => 'pem-content');
       exploreCertificateMock.mock.mockImplementation(() => ({
@@ -192,7 +178,7 @@ describe('Service utils OPCUA', () => {
             }
           }
         }
-      });
+      }));
 
       const result = await getApplicationUri();
       assert.strictEqual(result, 'urn:oibus:test');
@@ -204,7 +190,7 @@ describe('Service utils OPCUA', () => {
         tbsCertificate: {
           extensions: {}
         }
-      });
+      }));
 
       const result = await getApplicationUri();
       assert.strictEqual(result, undefined);

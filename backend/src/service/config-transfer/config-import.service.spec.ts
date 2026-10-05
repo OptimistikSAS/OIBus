@@ -1,4 +1,4 @@
-import { describe, it, beforeEach, afterEach } from 'node:test';
+import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import ConfigImportService, { ConfigImportError } from './config-import.service';
 import ConfigTransferService from './config-transfer.service';
@@ -436,6 +436,9 @@ describe('Config Import Service', () => {
   });
 
   it('throws when importConfiguration is invoked on a service constructed without the write-path repositories', async () => {
+    // importConfiguration upgrades to this build's own version: pin it instead of depending on package.json
+    const validateAndUpgrade = service.validateAndUpgrade.bind(service);
+    mock.method(service, 'validateAndUpgrade', (rawInput: unknown) => validateAndUpgrade(rawInput, CURRENT_VERSION));
     await assert.rejects(
       () => service.importConfiguration({ ...validFile(), oibusVersion: '3.10.0' }, 'some-user-id'),
       /constructed without the repositories required to write an import/
