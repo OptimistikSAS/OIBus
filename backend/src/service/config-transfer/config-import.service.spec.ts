@@ -435,6 +435,29 @@ describe('Config Import Service', () => {
     });
   });
 
+  describe('preview', () => {
+    it('returns the upgraded configuration and its applied upgrades without writing anything', async () => {
+      const validateAndUpgrade = service.validateAndUpgrade.bind(service);
+      mock.method(service, 'validateAndUpgrade', (rawInput: unknown) => validateAndUpgrade(rawInput, CURRENT_VERSION));
+      const file = { ...validFile(), oibusVersion: '3.9.0' };
+
+      const result = await service.previewConfiguration(file);
+
+      assert.strictEqual(result.fromVersion, '3.9.0');
+      assert.strictEqual(result.toVersion, CURRENT_VERSION);
+      assert.deepStrictEqual(
+        result.appliedUpgrades.map(upgrade => upgrade.version),
+        ['3.9.2', '3.10.0']
+      );
+      assert.ok(result.appliedUpgrades.every(upgrade => Object.keys(upgrade).sort().join() === 'description,version'));
+      assert.strictEqual(result.config.southConnectors.length, 1);
+    });
+
+    it('rejects a file the import would reject', async () => {
+      await assert.rejects(() => service.previewConfiguration({ config: {} }), ConfigImportError);
+    });
+  });
+
   it('throws when importConfiguration is invoked on a service constructed without the write-path repositories', async () => {
     // importConfiguration upgrades to this build's own version: pin it instead of depending on package.json
     const validateAndUpgrade = service.validateAndUpgrade.bind(service);

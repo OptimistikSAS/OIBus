@@ -25,6 +25,8 @@ import { EditEngineLoggerModalComponent } from './edit-engine-logger-modal/edit-
 import { AuthTokenDuration } from '../../../../backend/shared/model/engine.model';
 import { ConfigTransferService } from '../services/config-transfer.service';
 import { ImportConfigModalComponent } from './config-transfer/import-config-modal/import-config-modal.component';
+import { PortRedirectModalComponent } from '../shared/port-redirect-modal/port-redirect-modal.component';
+import { ConfigImportResponseDTO } from '../../../../backend/shared/model/config-transfer.model';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
 import { AuditEntityType } from '../../../../backend/shared/model/audit.model';
 
@@ -141,27 +143,40 @@ export class EngineDetailComponent {
 
   openImportConfigModal() {
     const modalRef = this.modalService.open(ImportConfigModalComponent, {
-      size: 'lg',
+      size: 'xl',
+      scrollable: true,
       beforeDismiss: async () => {
         const component: ImportConfigModalComponent = modalRef.componentInstance;
         const canDismissResult = component.canDismiss();
         const canDismiss = typeof canDismissResult === 'boolean' ? canDismissResult : await firstValueFrom(canDismissResult);
-        if (canDismiss && component.result()) {
+        const result = component.result();
+        if (canDismiss && result) {
           // A successful import was already showing when the user dismissed via Escape or the
           // backdrop instead of clicking "Close and reload": `modalRef.result` below only reloads
           // on an explicit close(), and a dismissal never reaches it (see ModalService), so without
           // this the backend would have already wiped and recreated the configuration while the SPA
           // keeps displaying stale pre-import data until the user thinks to refresh manually.
-          this.windowService.reload();
+          this.refreshAfterImport(result);
         }
         return canDismiss;
       }
     });
-    modalRef.result.subscribe(() => {
-      // the import wipes and recreates most of the local configuration; a full reload is the
-      // safest way to refresh every affected part of the app (scan modes, certificates, ip
-      // filters, transformers, connectors, ...) rather than granularly refreshing each of them
+    modalRef.result.subscribe((result: ConfigImportResponseDTO) => this.refreshAfterImport(result));
+  }
+
+  /**
+   * The import wipes and recreates most of the local configuration; a full reload is the safest way to
+   * refresh every affected part of the app (scan modes, certificates, ip filters, transformers,
+   * connectors, ...) rather than granularly refreshing each of them. When the import changed the web
+   * server port, OIBus is only reachable on the new port once restarted, so the app redirects there
+   * instead (after the same countdown as when the port is edited directly).
+   */
+  private refreshAfterImport(result: ConfigImportResponseDTO) {
+    if (result.newPort) {
+      const redirectModal = this.modalService.open(PortRedirectModalComponent, { backdrop: 'static', keyboard: false });
+      redirectModal.componentInstance.initialize(result.newPort);
+    } else {
       this.windowService.reload();
-    });
+    }
   }
 }

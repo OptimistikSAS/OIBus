@@ -11,6 +11,7 @@ import { version as currentOIBusVersion } from '../../../package.json';
 import {
   ConfigExportDTO,
   ConfigImportEntityValidationError,
+  ConfigImportPreviewDTO,
   ConfigImportResponseDTO,
   OIBusConfigurationDTO
 } from '../../../shared/model/config-transfer.model';
@@ -26,6 +27,7 @@ import NorthConnectorRepository from '../../repository/config/north-connector.re
 import HistoryQueryRepository from '../../repository/config/history-query.repository';
 import UserRepository from '../../repository/config/user.repository';
 import ConfigurationWorkflowRepository from '../../repository/config/configuration-workflow.repository';
+import EngineRepository from '../../repository/config/engine.repository';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthItemGroupEntityLight } from '../../model/south-connector.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { HistoryQueryEntity, HistoryQueryItemEntity } from '../../model/histor-query.model';
@@ -114,7 +116,8 @@ export default class ConfigImportService {
     private northConnectorRepository?: NorthConnectorRepository,
     private historyQueryRepository?: HistoryQueryRepository,
     private userRepository?: UserRepository,
-    private configurationWorkflowRepository?: ConfigurationWorkflowRepository
+    private configurationWorkflowRepository?: ConfigurationWorkflowRepository,
+    private engineRepository?: EngineRepository
   ) {}
 
   /**
@@ -170,6 +173,22 @@ export default class ConfigImportService {
     return { fromVersion: file.oibusVersion, toVersion: currentVersion, appliedUpgrades, config: upgraded };
   }
 
+  /**
+   * Runs the same upgrade + validation as `importConfiguration` and returns what it would write,
+   * without writing anything. Rejects exactly like `importConfiguration` would (same
+   * `ConfigImportError`), so a file that previews successfully only fails to import on a write-time
+   * conflict (e.g. two entries sharing an id).
+   */
+  async previewConfiguration(rawInput: unknown): Promise<ConfigImportPreviewDTO> {
+    const { fromVersion, toVersion, appliedUpgrades, config } = await this.validateAndUpgrade(rawInput);
+    return {
+      fromVersion,
+      toVersion,
+      appliedUpgrades: appliedUpgrades.map(upgrade => ({ version: upgrade.version, description: upgrade.description })),
+      config
+    };
+  }
+
   private validationFailureMessage(appliedUpgrades: Array<ConfigUpgrade>): string {
     return appliedUpgrades.length > 0
       ? 'Imported configuration failed validation after applying config upgrades; nothing was imported'
@@ -188,6 +207,9 @@ export default class ConfigImportService {
 
   private toValidationError(config: JsonObject, detail: Joi.ValidationErrorItem): ConfigImportEntityValidationError {
     const [section, index] = detail.path;
+    if (section === 'engine') {
+      return { scope: 'engine', message: detail.message };
+    }
     const describe = typeof section === 'string' ? SECTION_SCOPES[section] : undefined;
     const entries = typeof section === 'string' ? config[section] : undefined;
     const entry = Array.isArray(entries) && typeof index === 'number' ? (entries[index] as unknown) : undefined;
@@ -211,6 +233,12 @@ export default class ConfigImportService {
    */
   private async validateSettings(config: OIBusConfigurationDTO): Promise<Array<ConfigImportEntityValidationError>> {
     const errors: Array<ConfigImportEntityValidationError> = [];
+
+    // Same cross-field rule as the engine settings update endpoints
+    const { webServer, proxyServer } = config.engine.settings;
+    if (proxyServer.enabled && proxyServer.port === webServer.port) {
+      errors.push({ scope: 'engine', message: `Web server port and proxy port can not be the same (${webServer.port})` });
+    }
 
     for (const south of config.southConnectors) {
       const manifest = southManifestList.find(candidate => candidate.id === south.type);
@@ -332,8 +360,9 @@ export default class ConfigImportService {
    * upgraded configuration, preserving every entity's original id. Nothing is written if
    * `validateAndUpgrade` rejects the file.
    *
-   * Out of scope by design: the engine's own settings and the OIAnalytics registration are exported for
-   * informational purposes only and are never written back here.
+   * The engine's own settings (name, web server, proxy server, logging) overwrite the local ones, see
+   * `importEngineSettings`; the OIAnalytics registration is exported for informational purposes only and
+   * is never written back here.
    *
    * Every secret-shaped field of an imported connector settings blob is empty, because secrets are
    * never exported (`EncryptionService.filterSecrets` strips them on the export side). Left enabled,
@@ -363,7 +392,8 @@ export default class ConfigImportService {
       !this.northConnectorRepository ||
       !this.historyQueryRepository ||
       !this.userRepository ||
-      !this.configurationWorkflowRepository
+      !this.configurationWorkflowRepository ||
+      !this.engineRepository
     ) {
       throw new Error('ConfigImportService was constructed without the repositories required to write an import');
     }
@@ -419,9 +449,11 @@ export default class ConfigImportService {
       );
     }
 
+    let newPort: number | null = null;
     const runImport = this.database.transaction(() => {
       this.wipeConfiguration(importedBy, currentUser.id);
       this.recreateConfiguration(config, importedBy, hashedUserPasswords, warnings);
+      newPort = this.importEngineSettings(config, importedBy, warnings);
     });
     try {
       runImport();
@@ -441,8 +473,66 @@ export default class ConfigImportService {
       fromVersion,
       toVersion,
       appliedUpgrades: appliedUpgrades.map(upgrade => ({ version: upgrade.version, description: upgrade.description })),
-      warnings
+      warnings,
+      newPort
     };
+  }
+
+  /**
+   * Overwrites the local engine settings (name, web server, proxy server, logging) with the imported
+   * ones, and returns the new web server port when it changed (null otherwise), since the UI must then
+   * be reached on that port once OIBus restarts after the import.
+   *
+   * Passwords are secrets, so they are never exported. Each local one (Loki, proxy server, forward
+   * proxy) is kept as long as the imported settings still target the same endpoint and user, and
+   * cleared otherwise rather than reused for a different server; a warning then asks to re-enter it
+   * when the imported settings actually need it.
+   */
+  private importEngineSettings(config: OIBusConfigurationDTO, importedBy: string, warnings: Array<string>): number | null {
+    const local = this.engineRepository!.get()!;
+    const imported = structuredClone(config.engine.settings);
+    const same = (a: string | null | undefined, b: string | null | undefined) => (a ?? '') === (b ?? '');
+
+    const logger = imported.logger;
+    const sameLoki = same(logger.loki.address, local.logger.loki.address) && same(logger.loki.username, local.logger.loki.username);
+    logger.loki.password = sameLoki ? local.logger.loki.password : '';
+    if (!sameLoki && logger.loki.level !== 'silent' && logger.loki.username) {
+      warnings.push(
+        `The Loki logging password was not imported (secrets are never exported); re-enter it in the engine logging settings ` +
+          `before logs can be sent to "${logger.loki.address}".`
+      );
+    }
+
+    const proxy = imported.proxyServer;
+    const sameProxyUser = same(proxy.username, local.proxyServer.username);
+    proxy.password = sameProxyUser ? local.proxyServer.password : null;
+    if (!sameProxyUser && proxy.enabled && proxy.username) {
+      warnings.push(
+        `The proxy server password of user "${proxy.username}" was not imported (secrets are never exported); re-enter it in the ` +
+          `engine proxy server settings.`
+      );
+    }
+
+    const forward = proxy.forward ?? { enabled: false, url: null, username: null, password: null };
+    const sameForward = same(forward.url, local.proxyServer.forward.url) && same(forward.username, local.proxyServer.forward.username);
+    forward.password = sameForward ? local.proxyServer.forward.password : null;
+    if (!sameForward && forward.enabled && forward.username) {
+      warnings.push(
+        `The forward proxy password was not imported (secrets are never exported); re-enter it in the engine proxy server settings ` +
+          `before requests can be forwarded to "${forward.url}".`
+      );
+    }
+    proxy.forward = forward;
+
+    this.engineRepository!.update({ ...imported, auditRetentionDuration: logger.auditRetentionDuration }, importedBy);
+
+    if (imported.webServer.port === local.webServer.port) {
+      return null;
+    }
+    warnings.push(
+      `The web server port changed from ${local.webServer.port} to ${imported.webServer.port}: once restarted, OIBus is reached on port ${imported.webServer.port}.`
+    );
+    return imported.webServer.port;
   }
 
   /**

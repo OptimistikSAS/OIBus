@@ -1,0 +1,750 @@
+<ng-template #header let-key="key" let-title="title" let-subtitle="subtitle" let-count="count">
+  <button type="button" class="preview-toggle" [attr.data-section]="key" [attr.aria-expanded]="isExpanded(key)" (click)="toggle(key)">
+    <span class="fa fa-fw toggle-icon" [class.fa-chevron-right]="!isExpanded(key)" [class.fa-chevron-down]="isExpanded(key)"></span>
+    <span class="preview-title">{{ title }}</span>
+    @if (subtitle) {
+      <span class="text-muted preview-subtitle">{{ subtitle }}</span>
+    }
+    @if (count !== undefined) {
+      <span class="badge rounded-pill text-bg-secondary preview-count">{{ count }}</span>
+    }
+  </button>
+</ng-template>
+
+<ng-template #json let-value>
+  <pre class="preview-json mb-0">{{ value | json }}</pre>
+</ng-template>
+
+<ng-template #entry let-key="key" let-title="title" let-subtitle="subtitle" let-value="value">
+  <div class="preview-section">
+    <ng-container *ngTemplateOutlet="header; context: { key: key, title: title, subtitle: subtitle }" />
+    @if (isExpanded(key)) {
+      <div class="preview-content">
+        @if (isEmptyObject(value)) {
+          <p class="text-muted small mb-0" translate="engine.config-transfer.import.preview.no-settings"></p>
+        } @else {
+          <ng-container *ngTemplateOutlet="json; context: { $implicit: value }" />
+        }
+      </div>
+    }
+  </div>
+</ng-template>
+
+<ng-template #empty>
+  <p class="text-muted mb-0" translate="engine.config-transfer.import.preview.empty"></p>
+</ng-template>
+
+@let cfg = config();
+
+<p id="preview-versions" class="mb-1">
+  @if (preview().appliedUpgrades.length > 0) {
+    <span
+      translate="engine.config-transfer.import.upgraded-versions"
+      [translateParams]="{ fromVersion: preview().fromVersion, toVersion: preview().toVersion }"
+    ></span>
+  } @else {
+    <span translate="engine.config-transfer.import.preview.same-version" [translateParams]="{ version: preview().fromVersion }"></span>
+  }
+</p>
+@if (preview().appliedUpgrades.length > 0) {
+  <ul id="preview-upgrades-list" class="small">
+    @for (upgrade of preview().appliedUpgrades; track upgrade.version) {
+      <li>{{ upgrade.version }}: {{ upgrade.description }}</li>
+    }
+  </ul>
+}
+
+<div class="preview-sections">
+  <!-- South connectors -->
+  <div class="preview-section">
+    <ng-container
+      *ngTemplateOutlet="
+        header;
+        context: { key: 'south', title: 'engine.config-transfer.import.preview.south' | translate, count: cfg.southConnectors.length }
+      "
+    />
+    @if (isExpanded('south')) {
+      <div class="preview-content">
+        @for (south of cfg.southConnectors; track south.oIBusInternalId) {
+          @let southKey = 'south:' + south.oIBusInternalId;
+          <div class="preview-section">
+            <ng-container
+              *ngTemplateOutlet="
+                header;
+                context: { key: southKey, title: south.settings.name, subtitle: south.settings.type | oIBusSouthTypeEnum }
+              "
+            />
+            @if (isExpanded(southKey)) {
+              <div class="preview-content">
+                @if (south.settings.description) {
+                  <p class="text-muted small mb-2">{{ south.settings.description }}</p>
+                }
+                <div class="preview-section">
+                  <ng-container
+                    *ngTemplateOutlet="
+                      header;
+                      context: { key: southKey + ':settings', title: 'engine.config-transfer.import.preview.configuration' | translate }
+                    "
+                  />
+                  @if (isExpanded(southKey + ':settings')) {
+                    <div class="preview-content">
+                      <ng-container *ngTemplateOutlet="json; context: { $implicit: south.settings.settings }" />
+                    </div>
+                  }
+                </div>
+
+                <div class="preview-section">
+                  <ng-container
+                    *ngTemplateOutlet="
+                      header;
+                      context: {
+                        key: southKey + ':items',
+                        title: 'engine.config-transfer.import.preview.items' | translate,
+                        count: south.settings.items.length
+                      }
+                    "
+                  />
+                  @if (isExpanded(southKey + ':items')) {
+                    <div class="preview-content">
+                      @if (south.settings.items.length > 0) {
+                        @let southPage = southItemsPage(southKey + ':items', south);
+                        <div class="preview-items">
+                          @for (item of southPage.content; track $index) {
+                            <ng-container
+                              *ngTemplateOutlet="
+                                entry;
+                                context: {
+                                  key: southKey + ':item:' + item.id,
+                                  title: item.name,
+                                  subtitle: southItemSubtitle(south, item),
+                                  value: item
+                                }
+                              "
+                            />
+                          }
+                        </div>
+                        <oib-pagination [page]="southPage" (pageChanged)="changePage(southKey + ':items', $event)" />
+                      } @else {
+                        <ng-container *ngTemplateOutlet="empty" />
+                      }
+                    </div>
+                  }
+                </div>
+
+                <div class="preview-section">
+                  <ng-container
+                    *ngTemplateOutlet="
+                      header;
+                      context: {
+                        key: southKey + ':groups',
+                        title: 'engine.config-transfer.import.preview.groups' | translate,
+                        count: south.settings.groups.length
+                      }
+                    "
+                  />
+                  @if (isExpanded(southKey + ':groups')) {
+                    <div class="preview-content">
+                      @if (south.settings.groups.length > 0) {
+                        @for (group of south.settings.groups; track $index) {
+                          <ng-container
+                            *ngTemplateOutlet="
+                              entry;
+                              context: {
+                                key: southKey + ':group:' + group.id,
+                                title: group.standardSettings.name,
+                                subtitle: scanModeName(group.standardSettings.scanModeId),
+                                value: group
+                              }
+                            "
+                          />
+                        }
+                      } @else {
+                        <ng-container *ngTemplateOutlet="empty" />
+                      }
+                    </div>
+                  }
+                </div>
+
+                <div class="preview-section">
+                  <ng-container
+                    *ngTemplateOutlet="
+                      header;
+                      context: {
+                        key: southKey + ':workflows',
+                        title: 'engine.config-transfer.import.preview.configuration-workflows' | translate,
+                        count: south.settings.configurationWorkflows.length
+                      }
+                    "
+                  />
+                  @if (isExpanded(southKey + ':workflows')) {
+                    <div class="preview-content">
+                      @for (workflow of south.settings.configurationWorkflows; track $index) {
+                        <ng-container
+                          *ngTemplateOutlet="
+                            entry;
+                            context: {
+                              key: southKey + ':workflow:' + $index,
+                              title: workflow.name,
+                              subtitle:
+                                (workflow.pushToOIAnalytics
+                                  ? 'engine.config-transfer.import.preview.workflow-remote'
+                                  : 'engine.config-transfer.import.preview.workflow-local'
+                                ) | translate,
+                              value: workflow
+                            }
+                          "
+                        />
+                      } @empty {
+                        <ng-container *ngTemplateOutlet="empty" />
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        } @empty {
+          <ng-container *ngTemplateOutlet="empty" />
+        }
+      </div>
+    }
+  </div>
+
+  <!-- North connectors -->
+  <div class="preview-section">
+    <ng-container
+      *ngTemplateOutlet="
+        header;
+        context: { key: 'north', title: 'engine.config-transfer.import.preview.north' | translate, count: cfg.northConnectors.length }
+      "
+    />
+    @if (isExpanded('north')) {
+      <div class="preview-content">
+        @for (north of cfg.northConnectors; track north.oIBusInternalId) {
+          @let northKey = 'north:' + north.oIBusInternalId;
+          <div class="preview-section">
+            <ng-container
+              *ngTemplateOutlet="
+                header;
+                context: { key: northKey, title: north.settings.name, subtitle: north.settings.type | oIBusNorthTypeEnum }
+              "
+            />
+            @if (isExpanded(northKey)) {
+              <div class="preview-content">
+                @if (north.settings.description) {
+                  <p class="text-muted small mb-2">{{ north.settings.description }}</p>
+                }
+                <div class="preview-section">
+                  <ng-container
+                    *ngTemplateOutlet="
+                      header;
+                      context: { key: northKey + ':settings', title: 'engine.config-transfer.import.preview.configuration' | translate }
+                    "
+                  />
+                  @if (isExpanded(northKey + ':settings')) {
+                    <div class="preview-content">
+                      <ng-container *ngTemplateOutlet="json; context: { $implicit: north.settings.settings }" />
+                    </div>
+                  }
+                </div>
+
+                <div class="preview-section">
+                  <ng-container
+                    *ngTemplateOutlet="
+                      header;
+                      context: { key: northKey + ':caching', title: 'engine.config-transfer.import.preview.caching' | translate }
+                    "
+                  />
+                  @if (isExpanded(northKey + ':caching')) {
+                    <div class="preview-content">
+                      <ng-container *ngTemplateOutlet="json; context: { $implicit: north.settings.caching }" />
+                    </div>
+                  }
+                </div>
+
+                <div class="preview-section">
+                  <ng-container
+                    *ngTemplateOutlet="
+                      header;
+                      context: {
+                        key: northKey + ':transformers',
+                        title: 'engine.config-transfer.import.preview.north-transformers' | translate,
+                        count: north.settings.transformers.length
+                      }
+                    "
+                  />
+                  @if (isExpanded(northKey + ':transformers')) {
+                    <div class="preview-content">
+                      @if (north.settings.transformers.length > 0) {
+                        @for (transformer of north.settings.transformers; track $index) {
+                          <ng-container
+                            *ngTemplateOutlet="
+                              entry;
+                              context: {
+                                key: northKey + ':transformer:' + $index,
+                                title: transformerName(transformer.transformerId),
+                                subtitle: transformerSource(transformer.source),
+                                value: transformer.options
+                              }
+                            "
+                          />
+                        }
+                      } @else {
+                        <ng-container *ngTemplateOutlet="empty" />
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        } @empty {
+          <ng-container *ngTemplateOutlet="empty" />
+        }
+      </div>
+    }
+  </div>
+
+  <!-- History queries -->
+  <div class="preview-section">
+    <ng-container
+      *ngTemplateOutlet="
+        header;
+        context: { key: 'history', title: 'engine.config-transfer.import.preview.history' | translate, count: cfg.historyQueries.length }
+      "
+    />
+    @if (isExpanded('history')) {
+      <div class="preview-content">
+        @for (history of cfg.historyQueries; track history.oIBusInternalId) {
+          @let historyKey = 'history:' + history.oIBusInternalId;
+          <div class="preview-section">
+            <ng-container
+              *ngTemplateOutlet="
+                header;
+                context: {
+                  key: historyKey,
+                  title: history.settings.name,
+                  subtitle: (history.settings.southType | oIBusSouthTypeEnum) + ' → ' + (history.settings.northType | oIBusNorthTypeEnum)
+                }
+              "
+            />
+            @if (isExpanded(historyKey)) {
+              <div class="preview-content">
+                @if (history.settings.description) {
+                  <p class="text-muted small mb-2">{{ history.settings.description }}</p>
+                }
+                <div class="preview-section">
+                  <ng-container
+                    *ngTemplateOutlet="
+                      header;
+                      context: { key: historyKey + ':time-range', title: 'engine.config-transfer.import.preview.time-range' | translate }
+                    "
+                  />
+                  @if (isExpanded(historyKey + ':time-range')) {
+                    <div class="preview-content">
+                      <ng-container *ngTemplateOutlet="json; context: { $implicit: history.settings.queryTimeRange }" />
+                    </div>
+                  }
+                </div>
+
+                <div class="preview-section">
+                  <ng-container
+                    *ngTemplateOutlet="
+                      header;
+                      context: {
+                        key: historyKey + ':south-settings',
+                        title: 'engine.config-transfer.import.preview.south-configuration' | translate
+                      }
+                    "
+                  />
+                  @if (isExpanded(historyKey + ':south-settings')) {
+                    <div class="preview-content">
+                      <ng-container *ngTemplateOutlet="json; context: { $implicit: history.settings.southSettings }" />
+                    </div>
+                  }
+                </div>
+
+                <div class="preview-section">
+                  <ng-container
+                    *ngTemplateOutlet="
+                      header;
+                      context: {
+                        key: historyKey + ':north-settings',
+                        title: 'engine.config-transfer.import.preview.north-configuration' | translate
+                      }
+                    "
+                  />
+                  @if (isExpanded(historyKey + ':north-settings')) {
+                    <div class="preview-content">
+                      <ng-container *ngTemplateOutlet="json; context: { $implicit: history.settings.northSettings }" />
+                    </div>
+                  }
+                </div>
+
+                <div class="preview-section">
+                  <ng-container
+                    *ngTemplateOutlet="
+                      header;
+                      context: {
+                        key: historyKey + ':items',
+                        title: 'engine.config-transfer.import.preview.items' | translate,
+                        count: history.settings.items.length
+                      }
+                    "
+                  />
+                  @if (isExpanded(historyKey + ':items')) {
+                    <div class="preview-content">
+                      @if (history.settings.items.length > 0) {
+                        @let historyPage = historyItemsPage(historyKey + ':items', history);
+                        <div class="preview-items">
+                          @for (item of historyPage.content; track $index) {
+                            <ng-container
+                              *ngTemplateOutlet="
+                                entry;
+                                context: {
+                                  key: historyKey + ':item:' + item.id,
+                                  title: item.name,
+                                  subtitle: enabledLabel(item.enabled),
+                                  value: item
+                                }
+                              "
+                            />
+                          }
+                        </div>
+                        <oib-pagination [page]="historyPage" (pageChanged)="changePage(historyKey + ':items', $event)" />
+                      } @else {
+                        <ng-container *ngTemplateOutlet="empty" />
+                      }
+                    </div>
+                  }
+                </div>
+
+                <div class="preview-section">
+                  <ng-container
+                    *ngTemplateOutlet="
+                      header;
+                      context: {
+                        key: historyKey + ':transformers',
+                        title: 'engine.config-transfer.import.preview.north-transformers' | translate,
+                        count: history.settings.northTransformers.length
+                      }
+                    "
+                  />
+                  @if (isExpanded(historyKey + ':transformers')) {
+                    <div class="preview-content">
+                      @if (history.settings.northTransformers.length > 0) {
+                        @for (transformer of history.settings.northTransformers; track $index) {
+                          <ng-container
+                            *ngTemplateOutlet="
+                              entry;
+                              context: {
+                                key: historyKey + ':transformer:' + $index,
+                                title: transformerName(transformer.transformerId),
+                                subtitle: historyTransformerItems(transformer.items),
+                                value: transformer.options
+                              }
+                            "
+                          />
+                        }
+                      } @else {
+                        <ng-container *ngTemplateOutlet="empty" />
+                      }
+                    </div>
+                  }
+                </div>
+
+                <div class="preview-section">
+                  <ng-container
+                    *ngTemplateOutlet="
+                      header;
+                      context: { key: historyKey + ':caching', title: 'engine.config-transfer.import.preview.caching' | translate }
+                    "
+                  />
+                  @if (isExpanded(historyKey + ':caching')) {
+                    <div class="preview-content">
+                      <ng-container *ngTemplateOutlet="json; context: { $implicit: history.settings.caching }" />
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        } @empty {
+          <ng-container *ngTemplateOutlet="empty" />
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Scan modes -->
+  <div class="preview-section">
+    <ng-container
+      *ngTemplateOutlet="
+        header;
+        context: { key: 'scan-modes', title: 'engine.config-transfer.import.preview.scan-modes' | translate, count: cfg.scanModes.length }
+      "
+    />
+    @if (isExpanded('scan-modes')) {
+      <div class="preview-content">
+        @if (cfg.scanModes.length > 0) {
+          <table class="table table-sm oib-table preview-table mb-0">
+            <thead class="light">
+              <tr>
+                <th translate="engine.config-transfer.import.preview.name"></th>
+                <th translate="engine.config-transfer.import.preview.description"></th>
+                <th translate="engine.config-transfer.import.preview.schedule"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (scanMode of cfg.scanModes; track scanMode.oIBusInternalId) {
+                <tr>
+                  <td>{{ scanMode.settings.name }}</td>
+                  <td>{{ scanMode.settings.description }}</td>
+                  <td>{{ asScanMode(scanMode) | scanModeSchedule }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <ng-container *ngTemplateOutlet="empty" />
+        }
+      </div>
+    }
+  </div>
+
+  <!-- IP filters -->
+  <div class="preview-section">
+    <ng-container
+      *ngTemplateOutlet="
+        header;
+        context: { key: 'ip-filters', title: 'engine.config-transfer.import.preview.ip-filters' | translate, count: cfg.ipFilters.length }
+      "
+    />
+    @if (isExpanded('ip-filters')) {
+      <div class="preview-content">
+        @if (cfg.ipFilters.length > 0) {
+          <table class="table table-sm oib-table preview-table mb-0">
+            <thead class="light">
+              <tr>
+                <th translate="engine.config-transfer.import.preview.address"></th>
+                <th translate="engine.config-transfer.import.preview.description"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (ipFilter of cfg.ipFilters; track ipFilter.oIBusInternalId) {
+                <tr>
+                  <td>{{ ipFilter.settings.address }}</td>
+                  <td>{{ ipFilter.settings.description }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <ng-container *ngTemplateOutlet="empty" />
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Certificates -->
+  <div class="preview-section">
+    <ng-container
+      *ngTemplateOutlet="
+        header;
+        context: {
+          key: 'certificates',
+          title: 'engine.config-transfer.import.preview.certificates' | translate,
+          count: cfg.certificates.length
+        }
+      "
+    />
+    @if (isExpanded('certificates')) {
+      <div class="preview-content">
+        @if (cfg.certificates.length > 0) {
+          <table class="table table-sm oib-table preview-table mb-0">
+            <thead class="light">
+              <tr>
+                <th translate="engine.config-transfer.import.preview.name"></th>
+                <th translate="engine.config-transfer.import.preview.description"></th>
+                <th translate="engine.config-transfer.import.preview.expiry"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (certificate of cfg.certificates; track certificate.oIBusInternalId) {
+                <tr>
+                  <td>{{ certificate.settings.name }}</td>
+                  <td>{{ certificate.settings.description }}</td>
+                  <td>{{ certificate.settings.expiry }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <ng-container *ngTemplateOutlet="empty" />
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Transformers: only custom ones are imported, standard ones are matched by function name -->
+  <div class="preview-section">
+    <ng-container
+      *ngTemplateOutlet="
+        header;
+        context: {
+          key: 'transformers',
+          title: 'engine.config-transfer.import.preview.transformers' | translate,
+          count: customTransformers().length
+        }
+      "
+    />
+    @if (isExpanded('transformers')) {
+      <div class="preview-content">
+        @for (transformer of customTransformers(); track transformer.oIBusInternalId) {
+          <ng-container
+            *ngTemplateOutlet="
+              entry;
+              context: {
+                key: 'transformer:' + transformer.oIBusInternalId,
+                title: transformerLabel(transformer),
+                subtitle: transformer.settings.inputType + ' → ' + transformer.settings.outputType,
+                value: transformer.settings
+              }
+            "
+          />
+        } @empty {
+          <ng-container *ngTemplateOutlet="empty" />
+        }
+        @if (standardTransformers().length > 0) {
+          <p
+            id="preview-standard-transformers"
+            class="text-muted small mt-2 mb-0"
+            translate="engine.config-transfer.import.preview.standard-transformers"
+            [translateParams]="{ count: standardTransformers().length }"
+          ></p>
+        }
+        @if (missingStandardTransformers().length > 0) {
+          <div id="preview-missing-standard-transformers" class="alert alert-warning small mt-2 mb-0">
+            <span translate="engine.config-transfer.import.preview.missing-standard-transformers"></span>
+            <ul class="mb-0">
+              @for (transformer of missingStandardTransformers(); track transformer.oIBusInternalId) {
+                <li>{{ transformerLabel(transformer) }}</li>
+              }
+            </ul>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Users -->
+  <div class="preview-section">
+    <ng-container
+      *ngTemplateOutlet="
+        header;
+        context: { key: 'users', title: 'engine.config-transfer.import.preview.users' | translate, count: cfg.users.length }
+      "
+    />
+    @if (isExpanded('users')) {
+      <div class="preview-content">
+        @if (cfg.users.length > 0) {
+          <table class="table table-sm oib-table preview-table mb-0">
+            <thead class="light">
+              <tr>
+                <th translate="engine.config-transfer.import.preview.login"></th>
+                <th translate="engine.config-transfer.import.preview.name"></th>
+                <th translate="engine.config-transfer.import.preview.email"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of cfg.users; track user.oIBusInternalId) {
+                <tr>
+                  <td>{{ user.settings.login }}</td>
+                  <td>{{ user.settings.firstName }} {{ user.settings.lastName }}</td>
+                  <td>{{ user.settings.email }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <ng-container *ngTemplateOutlet="empty" />
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Engine settings: name, web server, proxy server and logging -->
+  @let engine = cfg.engine.settings;
+  <div class="preview-section">
+    <ng-container
+      *ngTemplateOutlet="header; context: { key: 'engine', title: 'engine.config-transfer.import.preview.engine' | translate }"
+    />
+    @if (isExpanded('engine')) {
+      <div class="preview-content">
+        <p class="text-muted small mb-2" translate="engine.config-transfer.import.preview.engine-hint"></p>
+        <ng-container
+          *ngTemplateOutlet="
+            entry;
+            context: {
+              key: 'engine:general',
+              title: 'engine.config-transfer.import.preview.general' | translate,
+              subtitle: engine.general.name,
+              value: engine.general
+            }
+          "
+        />
+        <ng-container
+          *ngTemplateOutlet="
+            entry;
+            context: {
+              key: 'engine:web-server',
+              title: 'engine.config-transfer.import.preview.web-server' | translate,
+              subtitle: ('engine.general-settings.port' | translate) + ' ' + engine.webServer.port,
+              value: engine.webServer
+            }
+          "
+        />
+        <ng-container
+          *ngTemplateOutlet="
+            entry;
+            context: {
+              key: 'engine:proxy-server',
+              title: 'engine.config-transfer.import.preview.proxy-server' | translate,
+              subtitle: (engine.proxyServer.enabled ? 'common.enabled' : 'common.disabled') | translate,
+              value: proxyServerDetails()
+            }
+          "
+        />
+        <div class="preview-section">
+          <ng-container
+            *ngTemplateOutlet="
+              header;
+              context: { key: 'engine:logging', title: 'engine.config-transfer.import.preview.logging' | translate }
+            "
+          />
+          @if (isExpanded('engine:logging')) {
+            <div class="preview-content">
+              <div class="preview-logging">
+                @for (output of loggerOutputs(); track output.output) {
+                  <ng-container
+                    *ngTemplateOutlet="
+                      entry;
+                      context: {
+                        key: 'logging:' + output.output,
+                        title: 'engine.general-settings.' + output.output | translate: { level: output.level | logLevelsEnum },
+                        value: output.details
+                      }
+                    "
+                  />
+                }
+              </div>
+              <p id="preview-audit-retention" class="small mt-2 mb-0">
+                <span translate="engine.logger.audit-retention-duration"></span>: {{ engine.logger.auditRetentionDuration }}
+              </p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

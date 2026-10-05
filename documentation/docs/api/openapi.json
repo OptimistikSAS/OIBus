@@ -42162,6 +42162,56 @@
 					}
 				]
 			},
+			"HistoryQueryItemStatus": {
+				"description": "Runtime status of a single item within a history query run, for progress-monitoring UIs.",
+				"properties": {
+					"itemId": {
+						"type": "string",
+						"description": "The item ID.",
+						"example": "e4f7e3f0-1234-4567-8901-abcdef123456"
+					},
+					"itemName": {
+						"type": "string",
+						"description": "The item name.",
+						"example": "item1"
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"pending",
+							"running",
+							"done"
+						],
+						"description": "The item's runtime status within the run.",
+						"example": "running"
+					},
+					"lastValueTimestamp": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The timestamp of the last value retrieved for this item.",
+						"example": "2023-01-01T00:00:00Z"
+					},
+					"recordsCount": {
+						"type": "number",
+						"format": "double",
+						"description": "The number of records (values or files) retrieved for this item so far.",
+						"example": 42
+					}
+				},
+				"required": [
+					"itemId",
+					"itemName",
+					"status",
+					"lastValueTimestamp",
+					"recordsCount"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQueryMetrics": {
 				"description": "Metrics for a history query.",
 				"properties": {
@@ -42342,6 +42392,48 @@
 					},
 					"historyMetrics": {
 						"properties": {
+							"itemsStatus": {
+								"items": {
+									"$ref": "#/components/schemas/HistoryQueryItemStatus"
+								},
+								"type": "array",
+								"description": "The runtime status of every item in the run. Only set for connectors that query items one at\na time (SOUTH_SINGLE_ITEMS)."
+							},
+							"itemNumberOfIntervals": {
+								"type": "number",
+								"format": "double",
+								"description": "The total number of intervals in the current lead's own interval list (raw, not ratcheted).\nOnly set for connectors that query items one at a time (SOUTH_SINGLE_ITEMS).",
+								"example": 34
+							},
+							"itemIntervalNumber": {
+								"type": "number",
+								"format": "double",
+								"description": "The 1-based index of the current lead's own interval, within its own interval list (raw, not\nratcheted) — same source data as `itemIntervalProgress`, surfaced raw for display. Only set\nfor connectors that query items one at a time (SOUTH_SINGLE_ITEMS).",
+								"example": 12
+							},
+							"itemIntervalProgress": {
+								"type": "number",
+								"format": "double",
+								"description": "The progress of the current item's own interval list as a fraction [0, 1], scoped to that\nitem only (not ratcheted, unlike `intervalProgress`). Only set for connectors that query\nitems one at a time (SOUTH_SINGLE_ITEMS).",
+								"example": 0.25
+							},
+							"numberOfItems": {
+								"type": "number",
+								"format": "double",
+								"description": "The total number of enabled items in the run. Only set for connectors that query items one\nat a time (SOUTH_SINGLE_ITEMS).",
+								"example": 10
+							},
+							"currentItemNumber": {
+								"type": "number",
+								"format": "double",
+								"description": "The 1-based index of the item currently being queried, among the run's enabled items. Only\nset for connectors that query items one at a time (SOUTH_SINGLE_ITEMS).",
+								"example": 3
+							},
+							"itemName": {
+								"type": "string",
+								"description": "The name of the item currently being queried. Only set for connectors that query items one\nat a time (SOUTH_SINGLE_ITEMS).",
+								"example": "item1"
+							},
 							"numberOfIntervals": {
 								"type": "number",
 								"format": "double",
@@ -43626,6 +43718,699 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"OIAnalyticsEngineCommandDTO": {
+				"properties": {
+					"oIBusInternalId": {
+						"type": "string"
+					},
+					"oIBusCreatedBy": {
+						"type": "string"
+					},
+					"oIBusUpdatedBy": {
+						"type": "string"
+					},
+					"oIBusCreatedAt": {
+						"type": "string"
+					},
+					"oIBusUpdatedAt": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"softwareVersion": {
+						"type": "string"
+					},
+					"launcherVersion": {
+						"type": "string"
+					},
+					"architecture": {
+						"type": "string"
+					},
+					"operatingSystem": {
+						"type": "string"
+					},
+					"dataFolder": {
+						"type": "string"
+					},
+					"binaryFolder": {
+						"type": "string"
+					},
+					"ignoreIpFilters": {
+						"type": "boolean"
+					},
+					"ignoreRemoteUpdate": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/EngineSettingsCommandDTO"
+					}
+				},
+				"required": [
+					"oIBusInternalId",
+					"oIBusCreatedBy",
+					"oIBusUpdatedBy",
+					"oIBusCreatedAt",
+					"oIBusUpdatedAt",
+					"name",
+					"softwareVersion",
+					"launcherVersion",
+					"architecture",
+					"operatingSystem",
+					"dataFolder",
+					"binaryFolder",
+					"ignoreIpFilters",
+					"ignoreRemoteUpdate",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIAnalyticsRegistrationCommandDTO": {
+				"properties": {
+					"oIBusInternalId": {
+						"type": "string"
+					},
+					"oIBusCreatedBy": {
+						"type": "string"
+					},
+					"oIBusUpdatedBy": {
+						"type": "string"
+					},
+					"oIBusCreatedAt": {
+						"type": "string"
+					},
+					"oIBusUpdatedAt": {
+						"type": "string"
+					},
+					"publicKey": {
+						"type": "string"
+					},
+					"settings": {
+						"properties": {
+							"commandPermissions": {
+								"properties": {
+									"deleteNorth": {
+										"type": "boolean"
+									},
+									"updateNorth": {
+										"type": "boolean"
+									},
+									"createNorth": {
+										"type": "boolean"
+									},
+									"createOrUpdateSouthItemsFromCsv": {
+										"type": "boolean"
+									},
+									"deleteSouth": {
+										"type": "boolean"
+									},
+									"updateSouth": {
+										"type": "boolean"
+									},
+									"createSouth": {
+										"type": "boolean"
+									},
+									"createOrUpdateHistoryItemsFromCsv": {
+										"type": "boolean"
+									},
+									"deleteHistoryQuery": {
+										"type": "boolean"
+									},
+									"updateHistoryQuery": {
+										"type": "boolean"
+									},
+									"createHistoryQuery": {
+										"type": "boolean"
+									},
+									"deleteCertificate": {
+										"type": "boolean"
+									},
+									"updateCertificate": {
+										"type": "boolean"
+									},
+									"createCertificate": {
+										"type": "boolean"
+									},
+									"deleteIpFilter": {
+										"type": "boolean"
+									},
+									"updateIpFilter": {
+										"type": "boolean"
+									},
+									"createIpFilter": {
+										"type": "boolean"
+									},
+									"deleteScanMode": {
+										"type": "boolean"
+									},
+									"updateScanMode": {
+										"type": "boolean"
+									},
+									"createScanMode": {
+										"type": "boolean"
+									},
+									"updateRegistrationSettings": {
+										"type": "boolean"
+									},
+									"updateEngineSettings": {
+										"type": "boolean"
+									},
+									"regenerateCipherKeys": {
+										"type": "boolean"
+									},
+									"restartEngine": {
+										"type": "boolean"
+									},
+									"updateVersion": {
+										"type": "boolean"
+									}
+								},
+								"required": [
+									"deleteNorth",
+									"updateNorth",
+									"createNorth",
+									"createOrUpdateSouthItemsFromCsv",
+									"deleteSouth",
+									"updateSouth",
+									"createSouth",
+									"createOrUpdateHistoryItemsFromCsv",
+									"deleteHistoryQuery",
+									"updateHistoryQuery",
+									"createHistoryQuery",
+									"deleteCertificate",
+									"updateCertificate",
+									"createCertificate",
+									"deleteIpFilter",
+									"updateIpFilter",
+									"createIpFilter",
+									"deleteScanMode",
+									"updateScanMode",
+									"createScanMode",
+									"updateRegistrationSettings",
+									"updateEngineSettings",
+									"regenerateCipherKeys",
+									"restartEngine",
+									"updateVersion"
+								],
+								"type": "object"
+							},
+							"messageRetryInterval": {
+								"type": "number",
+								"format": "double"
+							},
+							"commandRetryInterval": {
+								"type": "number",
+								"format": "double"
+							},
+							"commandRefreshInterval": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"commandPermissions",
+							"messageRetryInterval",
+							"commandRetryInterval",
+							"commandRefreshInterval"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"oIBusInternalId",
+					"oIBusCreatedBy",
+					"oIBusUpdatedBy",
+					"oIBusCreatedAt",
+					"oIBusUpdatedAt",
+					"publicKey",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIAnalyticsScanModeCommandDTO": {
+				"properties": {
+					"oIBusInternalId": {
+						"type": "string"
+					},
+					"oIBusCreatedBy": {
+						"type": "string"
+					},
+					"oIBusUpdatedBy": {
+						"type": "string"
+					},
+					"oIBusCreatedAt": {
+						"type": "string"
+					},
+					"oIBusUpdatedAt": {
+						"type": "string"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/ScanModeCommandDTO"
+					}
+				},
+				"required": [
+					"oIBusInternalId",
+					"oIBusCreatedBy",
+					"oIBusUpdatedBy",
+					"oIBusCreatedAt",
+					"oIBusUpdatedAt",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIAnalyticsIPFilterCommandDTO": {
+				"properties": {
+					"oIBusInternalId": {
+						"type": "string"
+					},
+					"oIBusCreatedBy": {
+						"type": "string"
+					},
+					"oIBusUpdatedBy": {
+						"type": "string"
+					},
+					"oIBusCreatedAt": {
+						"type": "string"
+					},
+					"oIBusUpdatedAt": {
+						"type": "string"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/IPFilterCommandDTO"
+					}
+				},
+				"required": [
+					"oIBusInternalId",
+					"oIBusCreatedBy",
+					"oIBusUpdatedBy",
+					"oIBusCreatedAt",
+					"oIBusUpdatedAt",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Pick_CertificateDTO.Exclude_keyofCertificateDTO.id-or-createdAt-or-createdBy-or-updatedAt-or-updatedBy__": {
+				"properties": {
+					"certificate": {
+						"type": "string",
+						"description": "The certificate in PEM format.",
+						"example": "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKoK/heBjcOuMA0GCSqGSIb3DQEBBQUAMEUx..."
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the certificate.",
+						"example": "Server SSL Certificate"
+					},
+					"description": {
+						"type": "string",
+						"description": "A description of the certificate's purpose or usage.",
+						"example": "SSL certificate for securing server communications"
+					},
+					"publicKey": {
+						"type": "string",
+						"description": "The public key of the certificate in PEM format.",
+						"example": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA..."
+					},
+					"expiry": {
+						"type": "string",
+						"description": "The expiry date and time of the certificate in ISO 8601 format.",
+						"example": "2026-01-01T00:00:00.000Z"
+					},
+					"certificateChain": {
+						"type": "string",
+						"description": "The PEM bundle of intermediate/root CA certificates supplied when importing an externally-issued\ncertificate. Null for self-signed certificates generated by OIBus.",
+						"example": "-----BEGIN CERTIFICATE-----\nMIIDXTCCAkWgAwIBAgIJAKoK/heBjcOuMA0GCSqGSIb3DQEBBQUAMEUx...\n-----END CERTIFICATE-----"
+					}
+				},
+				"required": [
+					"certificate",
+					"name",
+					"description",
+					"publicKey",
+					"expiry",
+					"certificateChain"
+				],
+				"type": "object",
+				"description": "From T, pick a set of properties whose keys are in the union K"
+			},
+			"Omit_CertificateDTO.id-or-createdAt-or-createdBy-or-updatedAt-or-updatedBy_": {
+				"$ref": "#/components/schemas/Pick_CertificateDTO.Exclude_keyofCertificateDTO.id-or-createdAt-or-createdBy-or-updatedAt-or-updatedBy__",
+				"description": "Construct a type with the properties of T except for those in type K."
+			},
+			"OIAnalyticsCertificateCommandDTO": {
+				"properties": {
+					"oIBusInternalId": {
+						"type": "string"
+					},
+					"oIBusCreatedBy": {
+						"type": "string"
+					},
+					"oIBusUpdatedBy": {
+						"type": "string"
+					},
+					"oIBusCreatedAt": {
+						"type": "string"
+					},
+					"oIBusUpdatedAt": {
+						"type": "string"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/Omit_CertificateDTO.id-or-createdAt-or-createdBy-or-updatedAt-or-updatedBy_"
+					}
+				},
+				"required": [
+					"oIBusInternalId",
+					"oIBusCreatedBy",
+					"oIBusUpdatedBy",
+					"oIBusCreatedAt",
+					"oIBusUpdatedAt",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIAnalyticsSouthCommandDTO": {
+				"description": "The connector's configuration workflows are part of `settings` (see `SouthConnectorCommandDTO`). Each\nitem additionally carries `createdByWorkflowId`/`disabledReason` (like its `oIBus*` audit fields), so\nthe workflow owning it survives a config export/import.",
+				"properties": {
+					"oIBusInternalId": {
+						"type": "string"
+					},
+					"oIBusCreatedBy": {
+						"type": "string"
+					},
+					"oIBusUpdatedBy": {
+						"type": "string"
+					},
+					"oIBusCreatedAt": {
+						"type": "string"
+					},
+					"oIBusUpdatedAt": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthConnectorCommandDTO"
+					}
+				},
+				"required": [
+					"oIBusInternalId",
+					"oIBusCreatedBy",
+					"oIBusUpdatedBy",
+					"oIBusCreatedAt",
+					"oIBusUpdatedAt",
+					"type",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIAnalyticsNorthCommandDTO": {
+				"properties": {
+					"oIBusInternalId": {
+						"type": "string"
+					},
+					"oIBusCreatedBy": {
+						"type": "string"
+					},
+					"oIBusUpdatedBy": {
+						"type": "string"
+					},
+					"oIBusCreatedAt": {
+						"type": "string"
+					},
+					"oIBusUpdatedAt": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/NorthConnectorCommandDTO"
+					}
+				},
+				"required": [
+					"oIBusInternalId",
+					"oIBusCreatedBy",
+					"oIBusUpdatedBy",
+					"oIBusCreatedAt",
+					"oIBusUpdatedAt",
+					"type",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIAnalyticsUserCommandDTO": {
+				"properties": {
+					"oIBusInternalId": {
+						"type": "string"
+					},
+					"oIBusCreatedBy": {
+						"type": "string"
+					},
+					"oIBusUpdatedBy": {
+						"type": "string"
+					},
+					"oIBusCreatedAt": {
+						"type": "string"
+					},
+					"oIBusUpdatedAt": {
+						"type": "string"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/UserCommandDTO"
+					}
+				},
+				"required": [
+					"oIBusInternalId",
+					"oIBusCreatedBy",
+					"oIBusUpdatedBy",
+					"oIBusCreatedAt",
+					"oIBusUpdatedAt",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Pick_CustomTransformerCommandDTO-or-StandardTransformerCommandDTO.Exclude_keyofCustomTransformerCommandDTO-or-StandardTransformerCommandDTO.type__": {
+				"properties": {
+					"inputType": {
+						"type": "string",
+						"description": "The input data type that the transformer accepts.",
+						"example": "string"
+					},
+					"outputType": {
+						"type": "string",
+						"description": "The output data type that the transformer produces.",
+						"example": "number"
+					}
+				},
+				"required": [
+					"inputType",
+					"outputType"
+				],
+				"type": "object",
+				"description": "From T, pick a set of properties whose keys are in the union K"
+			},
+			"Omit_CustomTransformerCommandDTO-or-StandardTransformerCommandDTO.type_": {
+				"$ref": "#/components/schemas/Pick_CustomTransformerCommandDTO-or-StandardTransformerCommandDTO.Exclude_keyofCustomTransformerCommandDTO-or-StandardTransformerCommandDTO.type__",
+				"description": "Construct a type with the properties of T except for those in type K."
+			},
+			"OIAnalyticsTransformerCommandDTO": {
+				"properties": {
+					"oIBusInternalId": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"custom",
+							"standard"
+						]
+					},
+					"settings": {
+						"$ref": "#/components/schemas/Omit_CustomTransformerCommandDTO-or-StandardTransformerCommandDTO.type_"
+					},
+					"manifest": {
+						"$ref": "#/components/schemas/OIBusObjectAttribute"
+					}
+				},
+				"required": [
+					"oIBusInternalId",
+					"type",
+					"settings",
+					"manifest"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusFullConfigurationCommandDTO": {
+				"properties": {
+					"engine": {
+						"$ref": "#/components/schemas/OIAnalyticsEngineCommandDTO"
+					},
+					"registration": {
+						"$ref": "#/components/schemas/OIAnalyticsRegistrationCommandDTO"
+					},
+					"scanModes": {
+						"items": {
+							"$ref": "#/components/schemas/OIAnalyticsScanModeCommandDTO"
+						},
+						"type": "array"
+					},
+					"ipFilters": {
+						"items": {
+							"$ref": "#/components/schemas/OIAnalyticsIPFilterCommandDTO"
+						},
+						"type": "array"
+					},
+					"certificates": {
+						"items": {
+							"$ref": "#/components/schemas/OIAnalyticsCertificateCommandDTO"
+						},
+						"type": "array"
+					},
+					"southConnectors": {
+						"items": {
+							"$ref": "#/components/schemas/OIAnalyticsSouthCommandDTO"
+						},
+						"type": "array"
+					},
+					"northConnectors": {
+						"items": {
+							"$ref": "#/components/schemas/OIAnalyticsNorthCommandDTO"
+						},
+						"type": "array"
+					},
+					"users": {
+						"items": {
+							"$ref": "#/components/schemas/OIAnalyticsUserCommandDTO"
+						},
+						"type": "array"
+					},
+					"transformers": {
+						"items": {
+							"$ref": "#/components/schemas/OIAnalyticsTransformerCommandDTO"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"engine",
+					"registration",
+					"scanModes",
+					"ipFilters",
+					"certificates",
+					"southConnectors",
+					"northConnectors",
+					"users",
+					"transformers"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusHistoryQueriesCommandDTO": {
+				"properties": {
+					"historyQueries": {
+						"items": {
+							"properties": {
+								"settings": {
+									"$ref": "#/components/schemas/HistoryQueryCommandDTO"
+								},
+								"oIBusUpdatedAt": {
+									"type": "string"
+								},
+								"oIBusCreatedAt": {
+									"type": "string"
+								},
+								"oIBusUpdatedBy": {
+									"type": "string"
+								},
+								"oIBusCreatedBy": {
+									"type": "string"
+								},
+								"oIBusInternalId": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"settings",
+								"oIBusUpdatedAt",
+								"oIBusCreatedAt",
+								"oIBusUpdatedBy",
+								"oIBusCreatedBy",
+								"oIBusInternalId"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"historyQueries"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusConfigurationDTO": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/OIBusFullConfigurationCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusHistoryQueriesCommandDTO"
+					}
+				],
+				"description": "The configuration itself: every section of the `full-config` message OIBus sends to OIAnalytics,\nplus the `historyQueries` of its `history-queries` message, side by side. Using the OIAnalytics\nDTOs as-is means a file produced by OIAnalytics (from the messages it received) and a file exported\nby OIBus share one format."
+			},
+			"ConfigImportPreviewDTO": {
+				"description": "What a config import would write, returned by the import preview endpoint without writing anything:\nthe file's configuration once brought to the current shape by the config upgrade chain and\nvalidated, so the caller can review every entity before confirming the actual import.",
+				"properties": {
+					"fromVersion": {
+						"type": "string",
+						"description": "`oibusVersion` of the previewed file."
+					},
+					"toVersion": {
+						"type": "string",
+						"description": "Version of the OIBus instance the configuration was upgraded to."
+					},
+					"appliedUpgrades": {
+						"items": {
+							"properties": {
+								"description": {
+									"type": "string"
+								},
+								"version": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"description",
+								"version"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"config": {
+						"$ref": "#/components/schemas/OIBusConfigurationDTO"
+					}
+				},
+				"required": [
+					"fromVersion",
+					"toVersion",
+					"appliedUpgrades",
+					"config"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"ConfigImportResponseDTO": {
 				"properties": {
 					"fromVersion": {
@@ -43659,13 +44444,20 @@
 							"type": "string"
 						},
 						"type": "array"
+					},
+					"newPort": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "The web server port OIBus listens on once restarted, when the import changed it; null otherwise."
 					}
 				},
 				"required": [
 					"fromVersion",
 					"toVersion",
 					"appliedUpgrades",
-					"warnings"
+					"warnings",
+					"newPort"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -50107,6 +50899,50 @@
 				"parameters": []
 			}
 		},
+		"/api/config-transfer/preview": {
+			"post": {
+				"operationId": "PreviewConfiguration",
+				"responses": {
+					"200": {
+						"description": "Configuration import previewed successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ConfigImportPreviewDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Upgrades and validates a configuration export file exactly like the import does, and returns the\nresulting configuration (engine settings, scan modes, ip filters, certificates, transformers, south\nconnectors with their items and configuration workflows, north connectors, history queries and users) without\nwriting anything, so it can be reviewed before running the actual import. Rejects for the same\nreasons the import would.",
+				"summary": "Preview configuration import",
+				"tags": [
+					"Config Transfer"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"file": {
+										"type": "string",
+										"format": "binary",
+										"description": "The configuration export file (JSON) to preview"
+									}
+								},
+								"required": [
+									"file"
+								]
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/config-transfer/import": {
 			"post": {
 				"operationId": "ImportConfiguration",
@@ -50122,7 +50958,7 @@
 						}
 					}
 				},
-				"description": "Imports a configuration export file (from OIBus or OIAnalytics), transactionally wiping and\nrecreating every in-scope section of the local configuration (scan modes, ip filters, certificates,\ntransformers, south connectors and their configuration workflows, north connectors, history queries\nand users) from it, preserving each entity's original id. This is a full replace, not a merge, and\ncannot be undone. The engine's own settings and the OIAnalytics registration are never touched.\nA configuration from an older OIBus is brought to the current shape by the config upgrade chain\nbefore being applied; nothing is written if the file is malformed, comes from a newer OIBus (or one\nolder than 3.9.0), or fails validation after the upgrades.\n\nOn success, OIBus restarts itself so the running engine picks up the newly written configuration\n— the wipe+recreate only touches the database, and the in-memory south/north connectors and\nhistory queries the engine is already running would otherwise keep operating against rows that\nno longer exist.",
+				"description": "Imports a configuration export file (from OIBus or OIAnalytics), transactionally wiping and\nrecreating every in-scope section of the local configuration (scan modes, ip filters, certificates,\ntransformers, south connectors and their configuration workflows, north connectors, history queries\nand users) from it, preserving each entity's original id. This is a full replace, not a merge, and\ncannot be undone. The engine settings (name, web server, proxy\nserver, logging) are overwritten too; only the OIAnalytics registration is never touched. When the\nweb server port changes, the response's `newPort` gives the port OIBus listens on once restarted.\nA configuration from an older OIBus is brought to the current shape by the config upgrade chain\nbefore being applied; nothing is written if the file is malformed, comes from a newer OIBus (or one\nolder than 3.9.0), or fails validation after the upgrades.\n\nOn success, OIBus restarts itself so the running engine picks up the newly written configuration\n— the wipe+recreate only touches the database, and the in-memory south/north connectors and\nhistory queries the engine is already running would otherwise keep operating against rows that\nno longer exist.",
 				"summary": "Import configuration",
 				"tags": [
 					"Config Transfer"
