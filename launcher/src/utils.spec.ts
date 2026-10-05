@@ -1,4 +1,4 @@
-import { describe, it, afterEach } from 'node:test';
+import { describe, it, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -116,13 +116,24 @@ describe('removeLauncherOnlyArguments', () => {
 });
 
 describe('delay', () => {
-  it('resolves after the specified timeout', async () => {
-    const start = Date.now();
-    await delay(50);
-    const elapsed = Date.now() - start;
+  afterEach(() => {
+    mock.timers.reset();
+  });
 
-    assert.ok(elapsed >= 45);
-    assert.ok(elapsed < 100);
+  it('resolves after the specified timeout', async () => {
+    mock.timers.enable({ apis: ['setTimeout'] });
+    let resolved = false;
+    const promise = delay(50).then(() => {
+      resolved = true;
+    });
+
+    mock.timers.tick(49);
+    await Promise.resolve();
+    assert.strictEqual(resolved, false);
+
+    mock.timers.tick(1);
+    await promise;
+    assert.strictEqual(resolved, true);
   });
 });
 
