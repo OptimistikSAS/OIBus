@@ -32,6 +32,22 @@ export interface ConfigImportResponseDTO {
   toVersion: string;
   appliedUpgrades: Array<{ version: string; description: string }>;
   warnings: Array<string>;
+  /** The web server port OIBus listens on once restarted, when the import changed it; null otherwise. */
+  newPort: number | null;
+}
+
+/**
+ * What a config import would write, returned by the import preview endpoint without writing anything:
+ * the file's configuration once brought to the current shape by the config upgrade chain and
+ * validated, so the caller can review every entity before confirming the actual import.
+ */
+export interface ConfigImportPreviewDTO {
+  /** `oibusVersion` of the previewed file. */
+  fromVersion: string;
+  /** Version of the OIBus instance the configuration was upgraded to. */
+  toVersion: string;
+  appliedUpgrades: Array<{ version: string; description: string }>;
+  config: OIBusConfigurationDTO;
 }
 
 /**

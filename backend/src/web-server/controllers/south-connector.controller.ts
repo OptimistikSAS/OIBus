@@ -44,7 +44,7 @@ import SouthService, {
 } from '../../service/south.service';
 import { itemToFlattenedCSV } from '../../service/utils';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusRecord } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusRecord, SouthConnectorMetrics } from '../../../shared/model/engine.model';
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 import fs from 'node:fs/promises';
 
