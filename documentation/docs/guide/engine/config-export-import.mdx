@@ -26,8 +26,9 @@ The export file (`oibus-config-export.json`) has three top-level fields:
   - North connectors
   - History queries
   - Users
-  - The engine settings and the OIAnalytics registration settings, for information only: they are
-    never imported (see [Registration](#registration-is-not-imported) below)
+  - The engine settings: name, web server, proxy server and logging
+  - The OIAnalytics registration settings, for information only: they are never imported (see
+    [Registration](#registration-is-not-imported) below)
 
 Because `config` uses the same format as the configuration OIBus sends to OIAnalytics, a file
 produced by OIAnalytics from the configuration it holds for an OIBus can be imported the same way
@@ -49,11 +50,25 @@ Importing a configuration file **wipes every in-scope section of the target inst
 configuration and recreates it from the file**, preserving each entity's original internal ID.
 This is destructive and cannot be undone: every south connector, north connector, history query,
 configuration workflow, scan mode, IP filter, transformer, certificate and user currently on the
-instance is deleted before the imported ones are created. The UI requires an explicit confirmation, restating this, before an
-import is submitted.
+instance is deleted before the imported ones are created, and the engine settings of the instance
+(name, web server, proxy server and logging) are overwritten by the imported ones. The UI requires an
+explicit confirmation, restating this, before an import is submitted.
 
-The engine's own settings and the OIAnalytics registration are never wiped or overwritten by an
-import — see [Registration](#registration-is-not-imported).
+The OIAnalytics registration is never wiped or overwritten by an import — see
+[Registration](#registration-is-not-imported).
+
+If the import changes the web server port, OIBus listens on the new port once it has restarted: the UI
+redirects there when the import dialog is closed. The new port must be free on the target machine.
+
+### Previewing an import {#previewing-an-import}
+
+Selecting a file in the **Import configuration** dialog does not import it yet: OIBus first upgrades
+and validates it exactly as the import would, without writing anything, and displays everything it
+is about to import — south connectors (with their configuration, items, item groups and
+configuration workflows), north connectors (with their configuration, caching and transformers),
+history queries, scan modes, IP filters, certificates, transformers, users and engine settings.
+Each section can be expanded to review its content. A file that fails validation shows its errors
+right away, and the import can only be confirmed once the preview succeeded.
 
 If the uploaded file is malformed, or is rejected for any of the reasons below, **nothing is
 written**: the import is all-or-nothing.
@@ -92,6 +107,11 @@ Because secrets are never exported, an imported configuration is not immediately
   public key, certificate, certificate chain, expiry) is recreated under its original ID so anything
   referencing it keeps resolving, but the private key must be re-imported manually before the
   certificate can be used for TLS.
+- **Engine passwords are kept only if what they are used with is unchanged.** The Loki password is
+  kept if the imported logging settings target the same Loki address and username as the instance,
+  the proxy server password if the proxy server username is the same, and the forward proxy password
+  if the forward proxy URL and username are the same. Otherwise the password is cleared rather than
+  reused for another server or user, and a warning asks to re-enter it in the engine settings.
 - **Users are recreated with a random password**, since passwords are never exported. Every
   imported user must have their password reset before they can sign in again.
 - **Configuration workflows are imported disabled**, with the items they created still attached to
