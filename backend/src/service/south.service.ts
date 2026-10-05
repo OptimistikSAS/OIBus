@@ -28,7 +28,7 @@ import {
 
 import { southManifestList } from './south-manifests';
 export { southManifestList } from './south-manifests';
-import { OIBusConnectionTestResult, OIBusContent, OIBusRecord } from '../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent, OIBusRecord, SouthConnectorMetrics } from '../../shared/model/engine.model';
 import {
   SouthConnectorEntity,
   SouthConnectorEntityLight,

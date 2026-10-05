@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Request, Route, SuccessResponse, Tags, UploadedFile } from 'tsoa';
 import { CustomExpressRequest } from '../express';
 import fs from 'node:fs/promises';
-import { ConfigImportResponseDTO } from '../../../shared/model/config-transfer.model';
+import { ConfigImportPreviewDTO, ConfigImportResponseDTO } from '../../../shared/model/config-transfer.model';
 import { OIBusValidationError } from '../../model/types';
 
 @Route('/api/config-transfer')
@@ -32,11 +32,32 @@ export class ConfigTransferController extends Controller {
   }
 
   /**
+   * Upgrades and validates a configuration export file exactly like the import does, and returns the
+   * resulting configuration (engine settings, scan modes, ip filters, certificates, transformers, south
+   * connectors with their items and configuration workflows, north connectors, history queries and users) without
+   * writing anything, so it can be reviewed before running the actual import. Rejects for the same
+   * reasons the import would.
+   * @summary Preview configuration import
+   * @param file The configuration export file (JSON) to preview
+   */
+  @Post('/preview')
+  @SuccessResponse(200, 'Configuration import previewed successfully')
+  async previewConfiguration(
+    @UploadedFile('file') file: Express.Multer.File,
+    @Request() request: CustomExpressRequest
+  ): Promise<ConfigImportPreviewDTO> {
+    const parsed = await this.readUploadedJson(file);
+    return request.services.configImportService.previewConfiguration(parsed);
+  }
+
+  /**
    * Imports a configuration export file (from OIBus or OIAnalytics), transactionally wiping and
    * recreating every in-scope section of the local configuration (scan modes, ip filters, certificates,
    * transformers, south connectors and their configuration workflows, north connectors, history queries
    * and users) from it, preserving each entity's original id. This is a full replace, not a merge, and
-   * cannot be undone. The engine's own settings and the OIAnalytics registration are never touched.
+   * cannot be undone. The engine settings (name, web server, proxy
+   * server, logging) are overwritten too; only the OIAnalytics registration is never touched. When the
+   * web server port changes, the response's `newPort` gives the port OIBus listens on once restarted.
    * A configuration from an older OIBus is brought to the current shape by the config upgrade chain
    * before being applied; nothing is written if the file is malformed, comes from a newer OIBus (or one
    * older than 3.9.0), or fails validation after the upgrades.
@@ -54,21 +75,26 @@ export class ConfigTransferController extends Controller {
     @UploadedFile('file') file: Express.Multer.File,
     @Request() request: CustomExpressRequest
   ): Promise<ConfigImportResponseDTO> {
+    const parsed = await this.readUploadedJson(file);
+    const response = await request.services.configImportService.importConfiguration(parsed, request.user.id);
+    request.services.oIBusService.restart();
+    return response;
+  }
+
+  /**
+   * Reads and parses an uploaded JSON file, always removing the temp file multer wrote it to.
+   */
+  private async readUploadedJson(file: Express.Multer.File): Promise<unknown> {
     if (!file || !file.path) {
       throw new OIBusValidationError('Missing file "file"');
     }
-    const configImportService = request.services.configImportService;
     try {
       const content = await fs.readFile(file.path, 'utf-8');
-      let parsed: unknown;
       try {
-        parsed = JSON.parse(content);
+        return JSON.parse(content);
       } catch {
         throw new OIBusValidationError('Uploaded file is not valid JSON');
       }
-      const response = await configImportService.importConfiguration(parsed, request.user.id);
-      request.services.oIBusService.restart();
-      return response;
     } finally {
       try {
         await fs.unlink(file.path);
