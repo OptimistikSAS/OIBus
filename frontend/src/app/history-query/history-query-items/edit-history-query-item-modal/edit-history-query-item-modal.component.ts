@@ -182,10 +182,12 @@ export class EditHistoryQueryItemModalComponent {
           names = this.itemList.map(item => item.name);
           break;
         case 'edit':
+          // Saved items are identified by id; unsaved (in-memory) ones only by their position in itemList
           if (this.item!.id) {
-            names = this.itemList.filter(item => item.id && item.id !== this.item?.id).map(item => item.name);
+            names = this.itemList.filter(item => item.id !== this.item!.id).map(item => item.name);
+          } else {
+            names = this.itemList.filter((_, index) => index !== this.tableIndex).map(item => item.name);
           }
-          names = this.itemList.filter((_, index) => index !== this.tableIndex).map(item => item.name);
           break;
       }
 
