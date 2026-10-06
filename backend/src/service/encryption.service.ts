@@ -7,8 +7,8 @@ import { DateTime } from 'luxon';
 import * as forge from 'node-forge';
 
 import { CertificateOptions } from '../../shared/model/api/certificate.model';
-import { CryptoSettings } from '../../shared/model/api/engine.model';
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
+import { CryptoSettings } from '../../shared/model/domain/engine.model';
 
 import { createFolder, filesExists } from './utils';
 

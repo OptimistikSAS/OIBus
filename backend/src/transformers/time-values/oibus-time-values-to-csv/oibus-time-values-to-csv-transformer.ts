@@ -3,9 +3,9 @@ import { Readable } from 'node:stream';
 
 import csv from 'papaparse';
 
-import { CacheMetadata } from '../../../../shared/model/api/engine.model';
 import { OIBusTimeValue } from '../../../../shared/model/common/content.model';
 import { TransformerTimeValuesToCsvSettings } from '../../../../shared/model/connector/transformer-settings.model';
+import { CacheMetadata } from '../../../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource } from '../../../model/engine.model';
 import {

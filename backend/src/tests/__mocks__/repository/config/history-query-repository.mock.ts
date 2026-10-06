@@ -2,10 +2,10 @@ import { mock } from 'node:test';
 
 import type { Database } from 'better-sqlite3';
 
-import { HistoryQueryItemSearchParam, HistoryQueryStatus } from '../../../../../shared/model/api/history-query.model';
 import { Page } from '../../../../../shared/model/common/types';
 import { NorthSettings } from '../../../../../shared/model/connector/north-settings.model';
 import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/connector/south-settings.model';
+import { HistoryQueryItemSearchParam, HistoryQueryStatus } from '../../../../../shared/model/domain/history-query.model';
 
 import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../../../../model/histor-query.model';
 import { HistoryTransformerWithOptions } from '../../../../model/transformer.model';

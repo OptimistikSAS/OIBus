@@ -1,8 +1,8 @@
 import { ReadStream } from 'node:fs';
 
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
 import { OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/common/content.model';
 import { NorthConsoleSettings } from '../../../shared/model/connector/north-settings.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
 import type { ICacheService } from '../../model/cache.service.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';

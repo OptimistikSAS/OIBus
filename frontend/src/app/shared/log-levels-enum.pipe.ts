@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-import { LogLevel } from '@oibus/shared/api/logs.model';
+import { LogLevel } from '@oibus/shared/domain/logs.model';
 
 import { BaseEnumPipe } from './base-enum-pipe';
 

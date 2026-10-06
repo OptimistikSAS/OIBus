@@ -4,7 +4,8 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 
-import { AuthTokenDuration, EngineSettingsDTO } from '@oibus/shared/api/engine.model';
+import { EngineSettingsDTO } from '@oibus/shared/api/engine.model';
+import { AuthTokenDuration } from '@oibus/shared/domain/engine.model';
 
 import { EngineService } from '../../services/engine.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';

@@ -5,12 +5,10 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { CertificateDTO } from '@oibus/shared/api/certificate.model';
-import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 
-import testData from '../../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
+import testData from '../../../../../test/test-data';
 import { createMock, MockObject } from '../../../../../test/vitest-create-mock';
 import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal.component';
 
@@ -40,8 +38,8 @@ describe('OIBusEditArrayElementModalComponent', () => {
       wrapInBox: false
     }
   };
-  const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
-  const certificates = testData.certificates.list as unknown as Array<CertificateDTO>;
+  const scanModes = testData.scanMode.list;
+  const certificates = testData.certificates.list;
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);

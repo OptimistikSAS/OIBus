@@ -6,8 +6,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { AUTH_TOKEN_DURATIONS, REGISTRATION_STATUS } from '../../shared/model/api/engine.model';
 import { OIBUS_DATA_TYPES } from '../../shared/model/common/content.model';
+import { AUTH_TOKEN_DURATIONS, REGISTRATION_STATUS } from '../../shared/model/domain/engine.model';
 
 describe('shared engine model constants', () => {
   it('OIBUS_DATA_TYPES contains the expected data types', () => {

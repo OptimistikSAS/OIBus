@@ -15,13 +15,9 @@ import { TranslateDirective } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import {
-  SouthCachingStrategy,
-  SouthHistoryRecoveryStrategy,
-  SouthItemGroupCommandDTO,
-  SouthItemGroupDTO
-} from '@oibus/shared/api/south-connector.model';
+import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 import { IOT_FAMILY_SOUTH_TYPES, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+import { SouthCachingStrategy, SouthHistoryRecoveryStrategy } from '@oibus/shared/domain/south-connector.model';
 
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';

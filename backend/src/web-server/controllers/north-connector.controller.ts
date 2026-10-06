@@ -1,5 +1,9 @@
 import { Body, Controller, Delete, Get, Path, Post, Put, Query, Request, Route, SuccessResponse, Tags } from 'tsoa';
 
+import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorLightDTO } from '../../../shared/model/api/north-connector.model';
+import { TransformerDTOWithOptions } from '../../../shared/model/api/transformer.model';
+import { NorthConnectorManifest, OIBusNorthCategory, OIBusNorthType } from '../../../shared/model/connector/north-manifest.model';
+import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
 import {
   CacheContentUpdateCommand,
   CacheSearchResult,
@@ -7,11 +11,7 @@ import {
   FileCacheContent,
   NorthConnectorMetrics,
   OIBusConnectionTestResult
-} from '../../../shared/model/api/engine.model';
-import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorLightDTO } from '../../../shared/model/api/north-connector.model';
-import { TransformerDTOWithOptions } from '../../../shared/model/api/transformer.model';
-import { NorthConnectorManifest, OIBusNorthCategory, OIBusNorthType } from '../../../shared/model/connector/north-manifest.model';
-import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+} from '../../../shared/model/domain/engine.model';
 
 import { NorthTransformerWithOptions } from '../../model/transformer.model';
 import { OIBusTestingError } from '../../model/types';

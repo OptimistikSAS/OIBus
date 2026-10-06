@@ -5,11 +5,10 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { OIBusCertificateAttribute } from '@oibus/shared/connector/form.model';
 
-import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
 import { OibusCertificateFormControlComponent } from './oibus-certificate-form-control.component';
 
 @Component({
@@ -31,7 +30,7 @@ class TestComponent {
     translationKey: 'configuration.oibus.manifest.south.items.mssql.tracking-instant.field-name'
   } as OIBusCertificateAttribute;
 
-  allCertificates = testData.certificates.list as unknown as Array<CertificateDTO>;
+  allCertificates = testData.certificates.list;
   formGroup = new FormGroup({
     testGroup: new FormGroup({
       testKey: new FormControl('')

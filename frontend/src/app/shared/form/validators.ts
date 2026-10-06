@@ -2,8 +2,8 @@ import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 import { DateTime } from 'luxon';
 
-import { IntervalUnit } from '@oibus/shared/api/scan-mode.model';
 import { Instant } from '@oibus/shared/common/types';
+import { IntervalUnit } from '@oibus/shared/domain/scan-mode.model';
 
 /** Smallest scan mode interval accepted by the backend, in milliseconds. */
 export const MIN_INTERVAL_MS = 10;

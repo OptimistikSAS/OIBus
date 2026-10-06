@@ -6,7 +6,7 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import { CacheContentUpdateCommand, CacheMetadata } from '../../../shared/model/api/engine.model';
+import { CacheContentUpdateCommand, CacheMetadata } from '../../../shared/model/domain/engine.model';
 
 import { CacheSize, CONTENT_FOLDER, METADATA_FOLDER } from '../../model/engine.model';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
