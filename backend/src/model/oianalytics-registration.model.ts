@@ -1,4 +1,4 @@
-import { RegistrationStatus } from '../../shared/model/domain/engine.model';
+import { RegistrationCommandPermissions, RegistrationStatus } from '../../shared/model/domain/engine.model';
 
 import { BaseEntity, Instant } from './types';
 
@@ -24,50 +24,7 @@ export interface OIAnalyticsRegistration extends BaseEntity {
   commandRefreshInterval: number;
   commandRetryInterval: number;
   messageRetryInterval: number;
-  commandPermissions: {
-    updateVersion: boolean;
-    restartEngine: boolean;
-    regenerateCipherKeys: boolean;
-    updateEngineSettings: boolean;
-    updateRegistrationSettings: boolean;
-    createScanMode: boolean;
-    updateScanMode: boolean;
-    deleteScanMode: boolean;
-    createIpFilter: boolean;
-    updateIpFilter: boolean;
-    deleteIpFilter: boolean;
-    createCertificate: boolean;
-    updateCertificate: boolean;
-    deleteCertificate: boolean;
-    createHistoryQuery: boolean;
-    updateHistoryQuery: boolean;
-    deleteHistoryQuery: boolean;
-    createOrUpdateHistoryItemsFromCsv: boolean;
-    testHistoryNorthConnection: boolean;
-    testHistorySouthConnection: boolean;
-    testHistorySouthItem: boolean;
-    createSouth: boolean;
-    updateSouth: boolean;
-    deleteSouth: boolean;
-    createOrUpdateSouthItemsFromCsv: boolean;
-    testSouthConnection: boolean;
-    testSouthItem: boolean;
-    createNorth: boolean;
-    updateNorth: boolean;
-    deleteNorth: boolean;
-    testNorthConnection: boolean;
-    setpoint: boolean;
-    searchNorthCacheContent: boolean;
-    getNorthCacheFileContent: boolean;
-    updateNorthCacheContent: boolean;
-    searchHistoryCacheContent: boolean;
-    getHistoryCacheFileContent: boolean;
-    updateHistoryCacheContent: boolean;
-    createCustomTransformer: boolean;
-    updateCustomTransformer: boolean;
-    deleteCustomTransformer: boolean;
-    testCustomTransformer: boolean;
-  };
+  commandPermissions: RegistrationCommandPermissions;
 }
 
 export interface OIAnalyticsRegistrationEditCommand {
@@ -84,48 +41,5 @@ export interface OIAnalyticsRegistrationEditCommand {
   commandRefreshInterval: number;
   commandRetryInterval: number;
   messageRetryInterval: number;
-  commandPermissions: {
-    updateVersion: boolean;
-    restartEngine: boolean;
-    regenerateCipherKeys: boolean;
-    updateEngineSettings: boolean;
-    updateRegistrationSettings: boolean;
-    createScanMode: boolean;
-    updateScanMode: boolean;
-    deleteScanMode: boolean;
-    createIpFilter: boolean;
-    updateIpFilter: boolean;
-    deleteIpFilter: boolean;
-    createCertificate: boolean;
-    updateCertificate: boolean;
-    deleteCertificate: boolean;
-    createHistoryQuery: boolean;
-    updateHistoryQuery: boolean;
-    deleteHistoryQuery: boolean;
-    createOrUpdateHistoryItemsFromCsv: boolean;
-    testHistoryNorthConnection: boolean;
-    testHistorySouthConnection: boolean;
-    testHistorySouthItem: boolean;
-    createSouth: boolean;
-    updateSouth: boolean;
-    deleteSouth: boolean;
-    createOrUpdateSouthItemsFromCsv: boolean;
-    testSouthConnection: boolean;
-    testSouthItem: boolean;
-    createNorth: boolean;
-    updateNorth: boolean;
-    deleteNorth: boolean;
-    testNorthConnection: boolean;
-    setpoint: boolean;
-    searchNorthCacheContent: boolean;
-    getNorthCacheFileContent: boolean;
-    updateNorthCacheContent: boolean;
-    searchHistoryCacheContent: boolean;
-    getHistoryCacheFileContent: boolean;
-    updateHistoryCacheContent: boolean;
-    createCustomTransformer: boolean;
-    updateCustomTransformer: boolean;
-    deleteCustomTransformer: boolean;
-    testCustomTransformer: boolean;
-  };
+  commandPermissions: RegistrationCommandPermissions;
 }

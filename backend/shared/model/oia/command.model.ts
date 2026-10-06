@@ -7,7 +7,7 @@ import { ScanModeCommandDTO } from '../api/scan-mode.model';
 import { SouthConnectorCommandDTO } from '../api/south-connector.model';
 import { CustomTransformerCommandDTO } from '../api/transformer.model';
 import { Instant } from '../common/types';
-import { CacheContentUpdateCommand, CacheSearchParam, DataFolderType } from '../domain/engine.model';
+import { CacheContentUpdateCommand, CacheSearchParam, DataFolderType, RegistrationCommandPermissions } from '../domain/engine.model';
 import { HistoryQueryStatus } from '../domain/history-query.model';
 import { SouthConnectorItemTestingSettings } from '../domain/south-connector.model';
 
@@ -318,6 +318,11 @@ export interface OIBusUpdateRegistrationSettingsCommandDTO extends BaseOIBusComm
      * @example 10
      */
     messageRetryInterval: number;
+
+    /**
+     * Permissions for various commands.
+     */
+    commandPermissions: RegistrationCommandPermissions;
   };
 }
 

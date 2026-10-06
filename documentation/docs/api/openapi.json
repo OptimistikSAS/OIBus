@@ -24898,7 +24898,7 @@
 				],
 				"description": "Type representing a registration status."
 			},
-			"RegistrationCommandPermissionsDTO": {
+			"RegistrationCommandPermissions": {
 				"description": "Permissions granted to OIAnalytics for each remote command.",
 				"properties": {
 					"updateVersion": {
@@ -25274,7 +25274,7 @@
 						"example": 10
 					},
 					"commandPermissions": {
-						"$ref": "#/components/schemas/RegistrationCommandPermissionsDTO",
+						"$ref": "#/components/schemas/RegistrationCommandPermissions",
 						"description": "Permissions for various commands."
 					}
 				},
@@ -25381,7 +25381,7 @@
 						"example": 10
 					},
 					"commandPermissions": {
-						"$ref": "#/components/schemas/RegistrationCommandPermissionsDTO",
+						"$ref": "#/components/schemas/RegistrationCommandPermissions",
 						"description": "Permissions for various commands."
 					}
 				},
@@ -26371,6 +26371,10 @@
 					},
 					"commandContent": {
 						"properties": {
+							"commandPermissions": {
+								"$ref": "#/components/schemas/RegistrationCommandPermissions",
+								"description": "Permissions for various commands."
+							},
 							"messageRetryInterval": {
 								"type": "number",
 								"format": "double",
@@ -26391,6 +26395,7 @@
 							}
 						},
 						"required": [
+							"commandPermissions",
 							"messageRetryInterval",
 							"commandRetryInterval",
 							"commandRefreshInterval"
@@ -43625,111 +43630,7 @@
 					"settings": {
 						"properties": {
 							"commandPermissions": {
-								"properties": {
-									"deleteNorth": {
-										"type": "boolean"
-									},
-									"updateNorth": {
-										"type": "boolean"
-									},
-									"createNorth": {
-										"type": "boolean"
-									},
-									"createOrUpdateSouthItemsFromCsv": {
-										"type": "boolean"
-									},
-									"deleteSouth": {
-										"type": "boolean"
-									},
-									"updateSouth": {
-										"type": "boolean"
-									},
-									"createSouth": {
-										"type": "boolean"
-									},
-									"createOrUpdateHistoryItemsFromCsv": {
-										"type": "boolean"
-									},
-									"deleteHistoryQuery": {
-										"type": "boolean"
-									},
-									"updateHistoryQuery": {
-										"type": "boolean"
-									},
-									"createHistoryQuery": {
-										"type": "boolean"
-									},
-									"deleteCertificate": {
-										"type": "boolean"
-									},
-									"updateCertificate": {
-										"type": "boolean"
-									},
-									"createCertificate": {
-										"type": "boolean"
-									},
-									"deleteIpFilter": {
-										"type": "boolean"
-									},
-									"updateIpFilter": {
-										"type": "boolean"
-									},
-									"createIpFilter": {
-										"type": "boolean"
-									},
-									"deleteScanMode": {
-										"type": "boolean"
-									},
-									"updateScanMode": {
-										"type": "boolean"
-									},
-									"createScanMode": {
-										"type": "boolean"
-									},
-									"updateRegistrationSettings": {
-										"type": "boolean"
-									},
-									"updateEngineSettings": {
-										"type": "boolean"
-									},
-									"regenerateCipherKeys": {
-										"type": "boolean"
-									},
-									"restartEngine": {
-										"type": "boolean"
-									},
-									"updateVersion": {
-										"type": "boolean"
-									}
-								},
-								"required": [
-									"deleteNorth",
-									"updateNorth",
-									"createNorth",
-									"createOrUpdateSouthItemsFromCsv",
-									"deleteSouth",
-									"updateSouth",
-									"createSouth",
-									"createOrUpdateHistoryItemsFromCsv",
-									"deleteHistoryQuery",
-									"updateHistoryQuery",
-									"createHistoryQuery",
-									"deleteCertificate",
-									"updateCertificate",
-									"createCertificate",
-									"deleteIpFilter",
-									"updateIpFilter",
-									"createIpFilter",
-									"deleteScanMode",
-									"updateScanMode",
-									"createScanMode",
-									"updateRegistrationSettings",
-									"updateEngineSettings",
-									"regenerateCipherKeys",
-									"restartEngine",
-									"updateVersion"
-								],
-								"type": "object"
+								"$ref": "#/components/schemas/RegistrationCommandPermissions"
 							},
 							"messageRetryInterval": {
 								"type": "number",

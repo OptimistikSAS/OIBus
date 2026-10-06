@@ -8,6 +8,7 @@ import { SouthConnectorCommandDTO } from '../api/south-connector.model';
 import { CustomTransformerCommandDTO } from '../api/transformer.model';
 import { UserCommandDTO } from '../api/user.model';
 import { OIBusObjectAttribute } from '../connector/form.model';
+import { RegistrationCommandPermissions } from '../domain/engine.model';
 
 /*
  * Configuration DTOs OIBus sends to OIAnalytics in its `full-config` and `history-queries` messages.
@@ -58,33 +59,7 @@ export interface OIAnalyticsRegistrationCommandDTO extends BaseAuditFields {
     commandRefreshInterval: number;
     commandRetryInterval: number;
     messageRetryInterval: number;
-    commandPermissions: {
-      updateVersion: boolean;
-      restartEngine: boolean;
-      regenerateCipherKeys: boolean;
-      updateEngineSettings: boolean;
-      updateRegistrationSettings: boolean;
-      createScanMode: boolean;
-      updateScanMode: boolean;
-      deleteScanMode: boolean;
-      createIpFilter: boolean;
-      updateIpFilter: boolean;
-      deleteIpFilter: boolean;
-      createCertificate: boolean;
-      updateCertificate: boolean;
-      deleteCertificate: boolean;
-      createHistoryQuery: boolean;
-      updateHistoryQuery: boolean;
-      deleteHistoryQuery: boolean;
-      createOrUpdateHistoryItemsFromCsv: boolean;
-      createSouth: boolean;
-      updateSouth: boolean;
-      deleteSouth: boolean;
-      createOrUpdateSouthItemsFromCsv: boolean;
-      createNorth: boolean;
-      updateNorth: boolean;
-      deleteNorth: boolean;
-    };
+    commandPermissions: RegistrationCommandPermissions;
   };
 }
 
