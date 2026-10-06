@@ -58,17 +58,17 @@ South 的批数据由引擎本身写入每个 North 的文件缓存；每个 Nor
 
 ### 1. 将类型 id 添加到共享列表中 {#1-add-the-type-id-to-the-shared-list}
 
-对于 South 连接器，将您的 id 追加到 `backend/shared/model/south-connector.model.ts`
+对于 South 连接器，将您的 id 追加到 `backend/shared/model/connector/south-manifest.model.ts`
 中的 `OIBUS_SOUTH_TYPES`：
 
-```typescript title="backend/shared/model/south-connector.model.ts"
+```typescript title="backend/shared/model/connector/south-manifest.model.ts"
 export const OIBUS_SOUTH_TYPES = [
   // ...existing types...
   'my-new-source' // ← your new type id (kebab-case)
 ] as const;
 ```
 
-North 连接器则使用 `backend/shared/model/north-connector.model.ts` 中的
+North 连接器则使用 `backend/shared/model/connector/north-manifest.model.ts` 中的
 `OIBUS_NORTH_TYPES`。
 
 从现有列表（`OIBUS_SOUTH_CATEGORIES` 或 `OIBUS_NORTH_CATEGORIES`）中选择一个
@@ -115,7 +115,7 @@ npm run generate:settings-interface
 ```
 
 该脚本会读取每一个 `manifest.ts`，推导出对应的 TypeScript 接口，并写入
-`backend/shared/model/south-settings.model.ts`（以及 North 对应的文件）。生成器
+`backend/shared/model/connector/south-settings.model.ts`（以及 North 对应的文件）。生成器
 还会刷新 OpenAPI 定义。
 
 :::caution

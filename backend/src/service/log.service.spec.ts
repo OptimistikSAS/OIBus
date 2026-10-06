@@ -1,13 +1,16 @@
-import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import testData from '../tests/utils/test-data';
-import { createPageFromArray } from '../../shared/model/types';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
+import { DateTime } from 'luxon';
+
+import { LogSearchParam } from '../../shared/model/api/logs.model';
+import { createPageFromArray } from '../../shared/model/common/types';
+
 import LogRepository from '../repository/logs/log.repository';
 import LogRepositoryMock from '../tests/__mocks__/repository/log/log-repository.mock';
-import LogService, { toLogDTO } from './log.service';
+import testData from '../tests/utils/test-data';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import { DateTime } from 'luxon';
-import { LogSearchParam } from '../../shared/model/logs.model';
+import LogService, { toLogDTO } from './log.service';
 
 let validator: { validate: ReturnType<typeof mock.fn> };
 let logRepository: LogRepositoryMock;

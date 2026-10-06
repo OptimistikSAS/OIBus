@@ -1,33 +1,34 @@
-import { describe, it, beforeEach, afterEach, before, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import testData from '../tests/utils/test-data';
-import { mockModule, reloadModule } from '../tests/utils/test-utils';
-import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
-import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
-import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
-import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/north-metrics-repository.mock';
-import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import LogRepositoryMock from '../tests/__mocks__/repository/log/log-repository.mock';
-import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
-import OianalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
-import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import { NorthConnectorCommandDTO } from '../../shared/model/api/north-connector.model';
+import { TransformerDTO } from '../../shared/model/api/transformer.model';
+
+import { NorthTransformerWithOptions } from '../model/transformer.model';
+import { NotFoundError, OIBusValidationError } from '../model/types';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
-import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
+import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
+import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
+import OianalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
+import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
+import LogRepositoryMock from '../tests/__mocks__/repository/log/log-repository.mock';
+import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/north-metrics-repository.mock';
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
 import NorthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/north-connector-metrics-service.mock';
+import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
+import testData from '../tests/utils/test-data';
+import { mockModule, reloadModule } from '../tests/utils/test-utils';
 import type NorthServiceType from './north.service';
 import type {
   northManifestList as northManifestListType,
   toNorthConnectorDTO as toNorthConnectorDTOType,
   toNorthConnectorLightDTO as toNorthConnectorLightDTOType
 } from './north.service';
-import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.model';
-import { TransformerDTO } from '../../shared/model/transformer.model';
-import { NotFoundError, OIBusValidationError } from '../model/types';
-import { NorthTransformerWithOptions } from '../model/transformer.model';
 import { toScanModeDTO } from './scan-mode.service';
 import type { toTransformerDTO as toTransformerDTOType } from './transformer.service';
 

@@ -1,10 +1,13 @@
 import { mock } from 'node:test';
+
 import type { Database } from 'better-sqlite3';
-import { createAuditServiceMock } from '../../../utils/test-utils';
+
+import { NorthSettings } from '../../../../../shared/model/connector/north-settings.model';
+
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../../../../model/north-connector.model';
-import { NorthSettings } from '../../../../../shared/model/north-settings.model';
 import { NorthTransformerWithOptions } from '../../../../model/transformer.model';
 import NorthConnectorRepository from '../../../../repository/config/north-connector.repository';
+import { createAuditServiceMock } from '../../../utils/test-utils';
 
 /**
  * Create a mock object for North Connector repository

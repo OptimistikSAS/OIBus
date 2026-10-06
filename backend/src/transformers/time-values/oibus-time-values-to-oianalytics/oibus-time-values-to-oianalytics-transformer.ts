@@ -1,14 +1,18 @@
-import OIBusTransformer from '../../oibus-transformer';
-import { CacheMetadata, OIBusTimeValue } from '../../../../shared/model/engine.model';
-import { CacheMetadataSource } from '../../../model/engine.model';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
-import { generateRandomId, streamToString } from '../../../service/utils';
-import { Instant } from '../../../model/types';
+
 import { DateTime } from 'luxon';
-import { TransformerTimeValuesToOianalyticsSettings } from '../../../../shared/model/transformer-settings.model';
+
+import { CacheMetadata } from '../../../../shared/model/api/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/common/content.model';
+import { TransformerTimeValuesToOianalyticsSettings } from '../../../../shared/model/connector/transformer-settings.model';
+
+import { CacheMetadataSource } from '../../../model/engine.model';
+import { Instant } from '../../../model/types';
 import { toCompactTimeValues } from '../../../service/oia/compact-time-values';
+import { generateRandomId, streamToString } from '../../../service/utils';
 import { createStringFieldProcess } from '../../field-process';
+import OIBusTransformer from '../../oibus-transformer';
 
 export default class OIBusTimeValuesToOIAnalyticsTransformer extends OIBusTransformer {
   public static transformerName = 'time-values-to-oianalytics';

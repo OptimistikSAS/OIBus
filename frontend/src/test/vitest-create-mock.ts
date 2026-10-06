@@ -1,7 +1,8 @@
 import { Type } from '@angular/core';
-import { vi, MockedFunction } from 'vitest';
 import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
+
 import { of } from 'rxjs';
+import { MockedFunction, vi } from 'vitest';
 
 function collectMethodNames(proto: unknown): Array<string> {
   if (!proto || proto === Object.prototype) {

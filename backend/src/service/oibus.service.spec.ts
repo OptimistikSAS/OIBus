@@ -1,29 +1,30 @@
-import { describe, it, beforeEach, afterEach, before, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
 import v8 from 'node:v8';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import testData from '../tests/utils/test-data';
-import { mockModule, reloadModule } from '../tests/utils/test-utils';
-import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
-import type OIBusServiceType from './oibus.service';
-import type { toEngineSettingsDTO as toEngineSettingsDTOType } from './oibus.service';
+import { CacheContentUpdateCommand, EngineSettingsCommandDTO } from '../../shared/model/api/engine.model';
+
+import { EngineSettings } from '../model/engine.model';
+import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import EngineRepositoryMock from '../tests/__mocks__/repository/config/engine-repository.mock';
 import EngineMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/engine-metrics-repository.mock';
-import IpFilterServiceMock from '../tests/__mocks__/service/ip-filter-service.mock';
-import OIAnalyticsRegistrationServiceMock from '../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
-import LoggerServiceMock from '../tests/__mocks__/service/logger/logger-service.mock';
-import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
-import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
-import UserServiceMock from '../tests/__mocks__/service/user-service.mock';
-import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
+import IpFilterServiceMock from '../tests/__mocks__/service/ip-filter-service.mock';
 import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
-import { EngineSettings } from '../model/engine.model';
-import { CacheContentUpdateCommand, EngineSettingsCommandDTO } from '../../shared/model/engine.model';
+import LoggerServiceMock from '../tests/__mocks__/service/logger/logger-service.mock';
+import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
+import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import OIAnalyticsRegistrationServiceMock from '../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
+import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
+import UserServiceMock from '../tests/__mocks__/service/user-service.mock';
+import testData from '../tests/utils/test-data';
+import { mockModule, reloadModule } from '../tests/utils/test-utils';
+import type OIBusServiceType from './oibus.service';
+import type { toEngineSettingsDTO as toEngineSettingsDTOType } from './oibus.service';
 
 const nodeRequire = createRequire(import.meta.url);
 

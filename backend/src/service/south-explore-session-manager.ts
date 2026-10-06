@@ -1,6 +1,7 @@
+import { SouthConnectorExploreEntry } from '../../shared/model/api/south-connector.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+
 import type SouthConnector from '../south/south-connector';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import { SouthConnectorExploreEntry } from '../../shared/model/south-connector.model';
 import { generateRandomId } from './utils';
 
 // A stateful explore session keeps a connected South connector in memory so the user can

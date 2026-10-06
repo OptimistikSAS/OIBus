@@ -1,7 +1,9 @@
-import { describe, it, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { after, beforeEach, describe, it } from 'node:test';
+
 import knex, { Knex } from 'knex';
-import { up, down } from './v3.8.3_2-drop-current-sizes';
+
+import { down, up } from './v3.8.3_2-drop-current-sizes';
 
 /** north_metrics as it stands after v3.8.3 (still carrying the current_* gauge columns). */
 async function createNorthMetrics(db: Knex): Promise<void> {

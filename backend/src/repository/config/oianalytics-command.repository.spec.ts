@@ -1,13 +1,23 @@
-import { before, after, beforeEach, afterEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { mock } from 'node:test';
+import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
 import { Database } from 'better-sqlite3';
-import { emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
-import testData from '../../tests/utils/test-data';
-import OIAnalyticsCommandRepository from './oianalytics-command.repository';
-import { createPageFromArray } from '../../../shared/model/types';
+
+import { CacheSearchParam } from '../../../shared/model/api/engine.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/api/history-query.model';
+import { NorthConnectorCommandDTO } from '../../../shared/model/api/north-connector.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemTestingSettings
+} from '../../../shared/model/api/south-connector.model';
+import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../../shared/model/api/transformer.model';
+import { createPageFromArray } from '../../../shared/model/common/types';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+
 import {
   OIAnalyticsFetchCreateCertificateCommandDTO,
+  OIAnalyticsFetchCreateCustomTransformerCommandDTO,
   OIAnalyticsFetchCreateHistoryQueryCommandDTO,
   OIAnalyticsFetchCreateIPFilterCommandDTO,
   OIAnalyticsFetchCreateNorthConnectorCommandDTO,
@@ -15,6 +25,7 @@ import {
   OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO,
   OIAnalyticsFetchCreateSouthConnectorCommandDTO,
   OIAnalyticsFetchDeleteCertificateCommandDTO,
+  OIAnalyticsFetchDeleteCustomTransformerCommandDTO,
   OIAnalyticsFetchDeleteHistoryQueryCommandDTO,
   OIAnalyticsFetchDeleteIPFilterCommandDTO,
   OIAnalyticsFetchDeleteNorthConnectorCommandDTO,
@@ -26,17 +37,20 @@ import {
   OIAnalyticsFetchSearchHistoryCacheContentCommandDTO,
   OIAnalyticsFetchSearchNorthCacheContentCommandDTO,
   OIAnalyticsFetchSetpointCommandDTO,
+  OIAnalyticsFetchTestCustomTransformerCommandDTO,
   OIAnalyticsFetchTestHistoryQueryNorthConnectionCommandDTO,
   OIAnalyticsFetchTestHistoryQuerySouthConnectionCommandDTO,
   OIAnalyticsFetchTestHistoryQuerySouthItemConnectionCommandDTO,
   OIAnalyticsFetchTestNorthConnectionCommandDTO,
   OIAnalyticsFetchTestSouthConnectionCommandDTO,
   OIAnalyticsFetchTestSouthItemCommandDTO,
+  OIAnalyticsFetchTestTransformerCommandDTO,
   OIAnalyticsFetchUpdateCertificateCommandDTO,
+  OIAnalyticsFetchUpdateCustomTransformerCommandDTO,
   OIAnalyticsFetchUpdateEngineGeneralCommandDTO,
-  OIAnalyticsFetchUpdateEngineWebServerCommandDTO,
-  OIAnalyticsFetchUpdateEngineProxyCommandDTO,
   OIAnalyticsFetchUpdateEngineLoggerCommandDTO,
+  OIAnalyticsFetchUpdateEngineProxyCommandDTO,
+  OIAnalyticsFetchUpdateEngineWebServerCommandDTO,
   OIAnalyticsFetchUpdateHistoryCacheContentCommandDTO,
   OIAnalyticsFetchUpdateHistoryQueryCommandDTO,
   OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO,
@@ -46,23 +60,11 @@ import {
   OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO,
   OIAnalyticsFetchUpdateScanModeCommandDTO,
   OIAnalyticsFetchUpdateSouthConnectorCommandDTO,
-  OIAnalyticsFetchUpdateVersionCommandDTO,
-  OIAnalyticsFetchCreateCustomTransformerCommandDTO,
-  OIAnalyticsFetchUpdateCustomTransformerCommandDTO,
-  OIAnalyticsFetchDeleteCustomTransformerCommandDTO,
-  OIAnalyticsFetchTestCustomTransformerCommandDTO,
-  OIAnalyticsFetchTestTransformerCommandDTO
+  OIAnalyticsFetchUpdateVersionCommandDTO
 } from '../../service/oia/oianalytics.model';
-import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../../shared/model/transformer.model';
-import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
-import {
-  SouthConnectorCommandDTO,
-  SouthConnectorItemCommandDTO,
-  SouthConnectorItemTestingSettings
-} from '../../../shared/model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/history-query.model';
-import { CacheSearchParam } from '../../../shared/model/engine.model';
+import testData from '../../tests/utils/test-data';
+import { emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import OIAnalyticsCommandRepository from './oianalytics-command.repository';
 
 const TEST_DB_PATH = 'src/tests/test-config-command.db';
 

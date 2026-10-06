@@ -1,13 +1,16 @@
 import { mock } from 'node:test';
+
 import type { Database } from 'better-sqlite3';
-import { createAuditServiceMock } from '../../../utils/test-utils';
+
+import { HistoryQueryItemSearchParam, HistoryQueryStatus } from '../../../../../shared/model/api/history-query.model';
+import { Page } from '../../../../../shared/model/common/types';
+import { NorthSettings } from '../../../../../shared/model/connector/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/connector/south-settings.model';
+
 import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../../../../model/histor-query.model';
-import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../shared/model/north-settings.model';
-import { HistoryQueryItemSearchParam, HistoryQueryStatus } from '../../../../../shared/model/history-query.model';
-import { Page } from '../../../../../shared/model/types';
 import { HistoryTransformerWithOptions } from '../../../../model/transformer.model';
 import HistoryQueryRepository from '../../../../repository/config/history-query.repository';
+import { createAuditServiceMock } from '../../../utils/test-utils';
 
 /**
  * Create a mock object for History Query repository

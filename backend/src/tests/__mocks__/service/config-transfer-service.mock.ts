@@ -1,5 +1,6 @@
 import { mock } from 'node:test';
-import { ConfigExportDTO } from '../../../../shared/model/config-transfer.model';
+
+import { ConfigExportDTO } from '../../../../shared/model/oia/config-transfer.model';
 
 /**
  * Create a mock object for Config Transfer Service

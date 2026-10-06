@@ -1,4 +1,5 @@
-import { Component, contentChild, ElementRef, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, contentChild, ElementRef, viewChild } from '@angular/core';
+
 import { NgbInputDatepicker, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslatePipe } from '@ngx-translate/core';
 

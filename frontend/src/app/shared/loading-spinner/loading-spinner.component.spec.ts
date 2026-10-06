@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { page } from 'vitest/browser';
+
 import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
 import { LoadingSpinnerComponent } from './loading-spinner.component';
 
 class LoadingSpinnerComponentTester {

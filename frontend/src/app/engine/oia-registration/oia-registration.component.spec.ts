@@ -1,23 +1,25 @@
-import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { page } from 'vitest/browser';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 
-import { OIARegistrationComponent } from './oia-registration.component';
-import { EngineService } from '../../services/engine.service';
-import { OibusCommandService } from '../../services/oibus-command.service';
-import { ModalService } from '../../shared/modal.service';
-import { ConfirmationService } from '../../shared/confirmation.service';
-import { NotificationService } from '../../shared/notification.service';
+import { of } from 'rxjs';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { RegistrationSettingsDTO } from '@oibus/shared/api/engine.model';
+import { OIBusCommandDTO } from '@oibus/shared/oia/command.model';
+
+import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
-import { RegistrationSettingsDTO } from '@oibus/shared/engine.model';
-import { RegisterOibusModalComponent } from './register-oibus-modal/register-oibus-modal.component';
+import { EngineService } from '../../services/engine.service';
+import { OibusCommandService } from '../../services/oibus-command.service';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
 import { emptyPage } from '../../shared/test-utils';
-import { OIBusCommandDTO } from '@oibus/shared/command.model';
-import testData from '../../../../../backend/src/tests/utils/test-data';
+import { OIARegistrationComponent } from './oia-registration.component';
+import { RegisterOibusModalComponent } from './register-oibus-modal/register-oibus-modal.component';
 
 const registrationNotRegistered: RegistrationSettingsDTO = {
   id: 'id',

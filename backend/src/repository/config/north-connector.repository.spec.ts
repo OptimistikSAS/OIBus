@@ -1,16 +1,19 @@
-import { before, after, beforeEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { after, before, beforeEach, describe, it, mock } from 'node:test';
+
 import { Database } from 'better-sqlite3';
-import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+
+import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { SourceOriginSouth, Transformer } from '../../model/transformer.model';
+import { NotFoundError } from '../../model/types';
+import AuditService from '../../service/audit.service';
 import testData from '../../tests/utils/test-data';
+import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import NorthConnectorRepository from './north-connector.repository';
 import SouthItemGroupRepository from './south-item-group.repository';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { SourceOriginSouth, Transformer } from '../../model/transformer.model';
 import TransformerRepository from './transformer.repository';
-import AuditService from '../../service/audit.service';
-import { NotFoundError } from '../../model/types';
 
 const TEST_DB_PATH = 'src/tests/test-config-north.db';
 

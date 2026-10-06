@@ -1,6 +1,6 @@
-import { BaseEntity } from './types';
+import { OIBusRecord } from '../common/content.model';
+import { BaseEntity } from '../common/types';
 import { ScanModeDTO } from './scan-mode.model';
-import { OIBusRecord } from './engine.model';
 
 export const RECORD_FILTER_OPERATORS = ['equals', 'notEquals', 'contains', 'matches', 'exists', 'greaterThan', 'lessThan'] as const;
 /**

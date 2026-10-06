@@ -1,43 +1,48 @@
-import { Component, forwardRef, inject, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, inject } from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { TranslateDirective } from '@ngx-translate/core';
-import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
-import { NotificationService } from '../../shared/notification.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { combineLatest, of, switchMap, tap, Observable } from 'rxjs';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import { ScanModeService } from '../../services/scan-mode.service';
-import {
-  NorthConnectorCommandDTO,
-  NorthConnectorDTO,
-  NorthConnectorLightDTO,
-  NorthConnectorManifest,
-  OIBusNorthType
-} from '@oibus/shared/north-connector.model';
+import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
+
+import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { TransformerDTO, TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
+import { OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
+import { NorthConnectorManifest, OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
+
+import { CertificateService } from '../../services/certificate.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
+import { ScanModeService } from '../../services/scan-mode.service';
+import { TransformerService } from '../../services/transformer.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
-import { ModalService } from '../../shared/modal.service';
-import { CertificateDTO } from '@oibus/shared/certificate.model';
-import { CertificateService } from '../../services/certificate.service';
-import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { DocsUrlService } from '../../shared/docs-url.service';
-import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
-import { TransformerDTO, TransformerDTOWithOptions } from '@oibus/shared/transformer.model';
-import { TransformerService } from '../../services/transformer.service';
-import { NorthTransformersComponent } from '../north-transformers/north-transformers.component';
 import { addAttributeToForm, addEnablingConditions, extractFormValue } from '../../shared/form/dynamic-form.builder';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
+import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
-import { OIBusScanModeAttribute } from '@oibus/shared/form.model';
 import { OIBusScanModeFormControlComponent } from '../../shared/form/oibus-scan-mode-form-control/oibus-scan-mode-form-control.component';
+import { ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
+import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
+import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
-import { AbstractControl, ValidationErrors } from '@angular/forms';
-import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
 import { toSourceCommand } from '../../shared/utils/utils';
+import { NorthTransformersComponent } from '../north-transformers/north-transformers.component';
 
 @Component({
   selector: 'oib-edit-north',

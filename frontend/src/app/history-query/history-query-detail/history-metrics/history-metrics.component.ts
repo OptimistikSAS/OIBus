@@ -1,15 +1,18 @@
-import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
-import { TranslateDirective } from '@ngx-translate/core';
-import { HistoryQueryMetrics } from '@oibus/shared/engine.model';
 import { DecimalPipe, JsonPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+
+import { TranslateDirective } from '@ngx-translate/core';
+
+import { HistoryQueryMetrics } from '@oibus/shared/api/engine.model';
+import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
+import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
+import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+
+import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { DurationPipe } from '../../../shared/duration.pipe';
-import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
-import { HistoryQueryDTO } from '@oibus/shared/history-query.model';
-import { NorthConnectorManifest } from '@oibus/shared/north-connector.model';
-import { SouthConnectorManifest } from '@oibus/shared/south-connector.model';
-import { ProgressbarComponent } from './progressbar/progressbar.component';
 import { FileSizePipe } from '../../../shared/file-size.pipe';
+import { ProgressbarComponent } from './progressbar/progressbar.component';
 
 @Component({
   selector: 'oib-history-metrics',

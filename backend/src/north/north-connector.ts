@@ -1,7 +1,10 @@
 import { EventEmitter } from 'node:events';
-import DeferredPromise from '../service/deferred-promise';
-import TypedEventEmitter from '../service/typed-event-emitter';
-import { Instant } from '../../shared/model/types';
+import { createReadStream, ReadStream } from 'node:fs';
+import path from 'node:path';
+import { Readable } from 'node:stream';
+
+import { DateTime } from 'luxon';
+
 import {
   CacheContentUpdateCommand,
   CacheMetadata,
@@ -9,26 +12,25 @@ import {
   CacheSearchResult,
   DataFolderType,
   FileCacheContent,
-  OIBusConnectionTestResult,
-  OIBusContent,
-  OIBusTimeValue
-} from '../../shared/model/engine.model';
-import { DateTime } from 'luxon';
-import { createReadStream, ReadStream } from 'node:fs';
-import path from 'node:path';
-import { NorthSettings } from '../../shared/model/north-settings.model';
-import { createOIBusError, delay } from '../service/utils';
-import { NorthConnectorEntity } from '../model/north-connector.model';
-import { ScanMode } from '../model/scan-mode.model';
+  OIBusConnectionTestResult
+} from '../../shared/model/api/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../shared/model/common/content.model';
+import { Instant } from '../../shared/model/common/types';
+import { NorthSettings } from '../../shared/model/connector/north-settings.model';
+
 import type { ICacheService } from '../model/cache.service.model';
-import { Readable } from 'node:stream';
-import { createTransformer, runTransformerOnContent } from '../service/transformer.service';
-import IgnoreTransformer from '../transformers/ignore-transformer';
-import IsoTransformer from '../transformers/iso-transformer';
-import { NorthTransformerWithOptions } from '../model/transformer.model';
 import { CacheMetadataSource, CacheSize, CONTENT_FOLDER } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';
+import { NorthConnectorEntity } from '../model/north-connector.model';
+import { ScanMode } from '../model/scan-mode.model';
+import { NorthTransformerWithOptions } from '../model/transformer.model';
+import DeferredPromise from '../service/deferred-promise';
 import { loggerService } from '../service/logger/logger.service';
+import { createTransformer, runTransformerOnContent } from '../service/transformer.service';
+import TypedEventEmitter from '../service/typed-event-emitter';
+import { createOIBusError, delay } from '../service/utils';
+import IgnoreTransformer from '../transformers/ignore-transformer';
+import IsoTransformer from '../transformers/iso-transformer';
 
 /** Events published by a North connector's {@link NorthConnector.metricsEvent}. */
 export interface NorthMetricsEvents {

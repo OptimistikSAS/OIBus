@@ -1,16 +1,18 @@
 import net from 'node:net';
 
 import { client } from 'jsmodbus';
-
-import SouthConnector from '../south-connector';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
-import { SouthDirectQuery } from '../south-interface';
 import { DateTime } from 'luxon';
-import { SouthItemSettings, SouthModbusItemSettings, SouthModbusSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { SouthItemSettings, SouthModbusItemSettings, SouthModbusSettings } from '../../../shared/model/connector/south-settings.model';
+
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { Instant } from '../../model/types';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
 import {
   connectSocket,
   getNumberOfWords,
@@ -21,8 +23,8 @@ import {
   readHoldingRegister,
   readInputRegister
 } from '../../service/utils-modbus';
-import { Instant } from '../../model/types';
-import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
+import SouthConnector from '../south-connector';
+import { SouthDirectQuery } from '../south-interface';
 
 // Modbus Application Protocol limits (spec v1.1b3, §6.1 / §6.2 / §6.3 / §6.4)
 const MAX_COIL_READ_COUNT = 2000; // FC01 / FC02

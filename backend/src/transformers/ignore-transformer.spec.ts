@@ -1,9 +1,9 @@
-import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 import { Readable } from 'stream';
-import testData from '../tests/utils/test-data';
 
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import testData from '../tests/utils/test-data';
 import IgnoreTransformer from './ignore-transformer';
 import ignoreManifest from './ignore-transformer/manifest';
 

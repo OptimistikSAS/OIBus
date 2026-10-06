@@ -1,64 +1,67 @@
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import { transformerSchema } from '../web-server/controllers/validators/oibus-validation-schema';
-import TransformerRepository from '../repository/config/transformer.repository';
-import { CustomTransformer, NorthTransformerWithOptions, Transformer } from '../model/transformer.model';
+import { createReadStream } from 'node:fs';
+import path from 'node:path';
+import { Readable } from 'node:stream';
+
+import { DateTime } from 'luxon';
+
+import { CacheMetadata } from '../../shared/model/api/engine.model';
+import { SouthConnectorItemTestResult } from '../../shared/model/api/south-connector.model';
 import {
   CustomTransformerCommandDTO,
   InputTemplate,
-  InputType,
   TransformerDTO,
-  TransformerManifest,
   TransformerSearchParam,
   TransformerTestRequest,
   TransformerTestResponse
-} from '../../shared/model/transformer.model';
-import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
-import { GetUserInfo, Page } from '../../shared/model/types';
-import { NorthConnectorEntity } from '../model/north-connector.model';
-import { NorthSettings } from '../../shared/model/north-settings.model';
-import OibusTransformer from '../transformers/oibus-transformer';
-import OIBusTimeValuesToCsvTransformer from '../transformers/time-values/oibus-time-values-to-csv/oibus-time-values-to-csv-transformer';
-import OIBusTimeValuesToJSONTransformer from '../transformers/time-values/oibus-time-values-to-json/oibus-time-values-to-json-transformer';
-import OIBusTimeValuesToMQTTTransformer from '../transformers/time-values/oibus-time-values-to-mqtt/oibus-time-values-to-mqtt-transformer';
-import OIBusTimeValuesToOPCUATransformer from '../transformers/time-values/oibus-time-values-to-opcua/oibus-time-values-to-opcua-transformer';
-import OIBusTimeValuesToModbusTransformer from '../transformers/time-values/oibus-time-values-to-modbus/oibus-time-values-to-modbus-transformer';
-import { OIBusObjectAttribute } from '../../shared/model/form.model';
-import OIBusSetpointToModbusTransformer from '../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
-import OIBusSetpointToMQTTTransformer from '../transformers/setpoint/oibus-setpoint-to-mqtt/oibus-setpoint-to-mqtt-transformer';
-import OIBusSetpointToOPCUATransformer from '../transformers/setpoint/oibus-setpoint-to-opcua/oibus-setpoint-to-opcua-transformer';
-import OIBusTimeValuesToOIAnalyticsTransformer from '../transformers/time-values/oibus-time-values-to-oianalytics/oibus-time-values-to-oianalytics-transformer';
-import { NotFoundError, OIBusValidationError } from '../model/types';
-import OIBusCustomTransformer from '../transformers/oibus-custom-transformer';
-import { Readable } from 'node:stream';
-import { createReadStream } from 'node:fs';
-import path from 'node:path';
-import { DateTime } from 'luxon';
-import { CacheMetadata, OIBusContent, OIBusRecord, OIBusSetpoint, OIBusTimeValue } from '../../shared/model/engine.model';
+} from '../../shared/model/api/transformer.model';
+import { OIBusContent, OIBusRecord, OIBusSetpoint, OIBusTimeValue } from '../../shared/model/common/content.model';
+import { GetUserInfo, Page } from '../../shared/model/common/types';
+import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
+import { NorthSettings } from '../../shared/model/connector/north-settings.model';
+import { InputType, TransformerManifest } from '../../shared/model/connector/transformer-manifest.model';
+
 import { CacheMetadataSource } from '../model/engine.model';
-import { SouthConnectorItemTestResult } from '../../shared/model/south-connector.model';
-import { generateRandomId } from './utils';
-import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
-import RecordListToCsvTransformer from '../transformers/any/record-list-to-csv/record-list-to-csv-transformer';
-import JSONToOIAnalyticsTransformer from '../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
-import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
-import CSVToTimeValuesTransformer from '../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
-import isoManifest from '../transformers/iso-transformer/manifest';
-import ignoreManifest from '../transformers/ignore-transformer/manifest';
-import csvToMqttManifest from '../transformers/any/csv-to-mqtt/manifest';
-import csvToTimeValuesManifest from '../transformers/any/csv-to-time-values/manifest';
-import jsonToCsvManifest from '../transformers/any/json-to-csv/manifest';
-import recordListToCsvManifest from '../transformers/any/record-list-to-csv/manifest';
-import jsonToOianalyticsManifest from '../transformers/any/json-to-oianalytics/manifest';
-import timeValuesToCsvManifest from '../transformers/time-values/oibus-time-values-to-csv/manifest';
-import timeValuesToJsonManifest from '../transformers/time-values/oibus-time-values-to-json/manifest';
-import timeValuesToModbusManifest from '../transformers/time-values/oibus-time-values-to-modbus/manifest';
-import timeValuesToMqttManifest from '../transformers/time-values/oibus-time-values-to-mqtt/manifest';
-import timeValuesToOianalyticsManifest from '../transformers/time-values/oibus-time-values-to-oianalytics/manifest';
-import timeValuesToOpcuaManifest from '../transformers/time-values/oibus-time-values-to-opcua/manifest';
-import setpointToModbusManifest from '../transformers/setpoint/oibus-setpoint-to-modbus/manifest';
-import setpointToMqttManifest from '../transformers/setpoint/oibus-setpoint-to-mqtt/manifest';
-import setpointToOpcuaManifest from '../transformers/setpoint/oibus-setpoint-to-opcua/manifest';
 import type { ILogger } from '../model/logger.model';
+import { NorthConnectorEntity } from '../model/north-connector.model';
+import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
+import { CustomTransformer, NorthTransformerWithOptions, Transformer } from '../model/transformer.model';
+import { NotFoundError, OIBusValidationError } from '../model/types';
+import TransformerRepository from '../repository/config/transformer.repository';
+import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
+import csvToMqttManifest from '../transformers/any/csv-to-mqtt/manifest';
+import CSVToTimeValuesTransformer from '../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
+import csvToTimeValuesManifest from '../transformers/any/csv-to-time-values/manifest';
+import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
+import jsonToCsvManifest from '../transformers/any/json-to-csv/manifest';
+import JSONToOIAnalyticsTransformer from '../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
+import jsonToOianalyticsManifest from '../transformers/any/json-to-oianalytics/manifest';
+import recordListToCsvManifest from '../transformers/any/record-list-to-csv/manifest';
+import RecordListToCsvTransformer from '../transformers/any/record-list-to-csv/record-list-to-csv-transformer';
+import ignoreManifest from '../transformers/ignore-transformer/manifest';
+import isoManifest from '../transformers/iso-transformer/manifest';
+import OIBusCustomTransformer from '../transformers/oibus-custom-transformer';
+import OibusTransformer from '../transformers/oibus-transformer';
+import setpointToModbusManifest from '../transformers/setpoint/oibus-setpoint-to-modbus/manifest';
+import OIBusSetpointToModbusTransformer from '../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
+import setpointToMqttManifest from '../transformers/setpoint/oibus-setpoint-to-mqtt/manifest';
+import OIBusSetpointToMQTTTransformer from '../transformers/setpoint/oibus-setpoint-to-mqtt/oibus-setpoint-to-mqtt-transformer';
+import setpointToOpcuaManifest from '../transformers/setpoint/oibus-setpoint-to-opcua/manifest';
+import OIBusSetpointToOPCUATransformer from '../transformers/setpoint/oibus-setpoint-to-opcua/oibus-setpoint-to-opcua-transformer';
+import timeValuesToCsvManifest from '../transformers/time-values/oibus-time-values-to-csv/manifest';
+import OIBusTimeValuesToCsvTransformer from '../transformers/time-values/oibus-time-values-to-csv/oibus-time-values-to-csv-transformer';
+import timeValuesToJsonManifest from '../transformers/time-values/oibus-time-values-to-json/manifest';
+import OIBusTimeValuesToJSONTransformer from '../transformers/time-values/oibus-time-values-to-json/oibus-time-values-to-json-transformer';
+import timeValuesToModbusManifest from '../transformers/time-values/oibus-time-values-to-modbus/manifest';
+import OIBusTimeValuesToModbusTransformer from '../transformers/time-values/oibus-time-values-to-modbus/oibus-time-values-to-modbus-transformer';
+import timeValuesToMqttManifest from '../transformers/time-values/oibus-time-values-to-mqtt/manifest';
+import OIBusTimeValuesToMQTTTransformer from '../transformers/time-values/oibus-time-values-to-mqtt/oibus-time-values-to-mqtt-transformer';
+import timeValuesToOianalyticsManifest from '../transformers/time-values/oibus-time-values-to-oianalytics/manifest';
+import OIBusTimeValuesToOIAnalyticsTransformer from '../transformers/time-values/oibus-time-values-to-oianalytics/oibus-time-values-to-oianalytics-transformer';
+import timeValuesToOpcuaManifest from '../transformers/time-values/oibus-time-values-to-opcua/manifest';
+import OIBusTimeValuesToOPCUATransformer from '../transformers/time-values/oibus-time-values-to-opcua/oibus-time-values-to-opcua-transformer';
+import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import { transformerSchema } from '../web-server/controllers/validators/oibus-validation-schema';
+import { generateRandomId } from './utils';
 
 interface TransformerReloadEngine {
   reloadTransformer(transformerId: string): Promise<void>;

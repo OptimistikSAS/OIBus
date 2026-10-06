@@ -1,12 +1,14 @@
-import { beforeEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { userSchema } from '../web-server/controllers/validators/oibus-validation-schema';
-import testData from '../tests/utils/test-data';
-import UserService, { toUserDTO } from './user.service';
-import UserRepositoryMock from '../tests/__mocks__/repository/config/user-repository.mock';
+import { beforeEach, describe, it, mock } from 'node:test';
+
+import { createPageFromArray } from '../../shared/model/common/types';
+
 import UserRepository from '../repository/config/user.repository';
+import UserRepositoryMock from '../tests/__mocks__/repository/config/user-repository.mock';
+import testData from '../tests/utils/test-data';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import { createPageFromArray } from '../../shared/model/types';
+import { userSchema } from '../web-server/controllers/validators/oibus-validation-schema';
+import UserService, { toUserDTO } from './user.service';
 
 let validator: { validate: ReturnType<typeof mock.fn> };
 let userRepository: UserRepositoryMock;

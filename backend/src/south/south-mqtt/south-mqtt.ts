@@ -1,17 +1,19 @@
+import { DateTime } from 'luxon';
 import mqtt from 'mqtt';
 import { IConnackPacket, QoS } from 'mqtt-packet';
-import SouthConnector from '../south-connector';
 
-import { DateTime } from 'luxon';
-import { Instant } from '../../../shared/model/types';
-import { SouthSubscription } from '../south-interface';
-import { SouthItemSettings, SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
+import { OIBusContent } from '../../../shared/model/common/content.model';
+import { Instant } from '../../../shared/model/common/types';
+import { SouthItemSettings, SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/connector/south-settings.model';
+
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import { createConnectionOptions, getItem } from '../../service/utils-mqtt';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
+import { createConnectionOptions, getItem } from '../../service/utils-mqtt';
+import SouthConnector from '../south-connector';
+import { SouthSubscription } from '../south-interface';
 
 /**
  * Class SouthMQTT - Subscribe to a data topic from a MQTT broker

@@ -1,16 +1,19 @@
 import { ReadStream } from 'node:fs';
-import { HttpsProxyAgent } from 'https-proxy-agent';
+
+import type { ProxySettings } from '@azure/core-rest-pipeline/dist/browser';
 import { ClientCertificateCredential, ClientSecretCredential, DefaultAzureCredential, TokenCredential } from '@azure/identity';
 import { Client, KustoConnectionStringBuilder } from 'azure-kusto-data';
-import { DataFormat, IngestClient, IngestionProperties, dataFormatMappingKind } from 'azure-kusto-ingest';
-import NorthConnector from '../north-connector';
-import { encryptionService } from '../../service/encryption.service';
-import { NorthAzureDataExplorerSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
-import type { ProxySettings } from '@azure/core-rest-pipeline/dist/browser';
+import { DataFormat, dataFormatMappingKind, IngestClient, IngestionProperties } from 'azure-kusto-ingest';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { NorthAzureDataExplorerSettings } from '../../../shared/model/connector/north-settings.model';
+
 import type { ICacheService } from '../../model/cache.service.model';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CertificateRepository from '../../repository/config/certificate.repository';
+import { encryptionService } from '../../service/encryption.service';
+import NorthConnector from '../north-connector';
 
 // Excludes `'`, `[`, `]` and whitespace, which is what makes the bracket-quoted interpolation in
 // `testConnection` (`.show table ['<table>'] cslschema`) safe: none of those characters can appear

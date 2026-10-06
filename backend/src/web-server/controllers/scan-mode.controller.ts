@@ -1,5 +1,7 @@
 import { Body, Controller, Delete, Get, Path, Post, Put, Request, Route, SuccessResponse, Tags } from 'tsoa';
-import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
+
+import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../shared/model/api/scan-mode.model';
+
 import ScanModeService, { toScanModeDTO } from '../../service/scan-mode.service';
 import { CustomExpressRequest } from '../express';
 

@@ -16,6 +16,10 @@ import tseslint from 'typescript-eslint';
 // checked by a separate `prettier --check` step (see package.json's `lint` script) instead.
 import eslintConfigPrettier from 'eslint-config-prettier';
 
+// Sorts imports (statements and the names inside braces) in a fixed order, auto-fixed by `npm run lint:fix`.
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
+import { builtinModules } from 'node:module';
+
 // Export our config array, which is composed together thanks to the defineConfig utility function from eslint
 export default [
   { ignores: ['**/node_modules/', 'dist/'] },
@@ -80,6 +84,34 @@ export default [
       'require-await': 'error'
     }
   }),
+  {
+    // Import groups, separated by a blank line and sorted alphabetically within each group. Side-effect imports come
+    // first and keep their relative order (src/index.ts must load ./pkg-subpath-imports before anything else).
+    files: ['**/*.ts'],
+    plugins: { 'simple-import-sort': simpleImportSort },
+    rules: {
+      'simple-import-sort/imports': [
+        'error',
+        {
+          groups: [
+            // side-effect imports
+            ['^\\u0000'],
+            // Node.js built-ins
+            ['^node:', `^(${builtinModules.join('|')})(/|$)`],
+            // npm packages
+            ['^@?\\w'],
+            // shared model (from src/)
+            ['^(\\.\\./)+shared/'],
+            // relative imports
+            ['^\\.']
+          ]
+        }
+      ],
+      'simple-import-sort/exports': 'error',
+      // one import statement per module (plus an optional separate `import type`)
+      'no-duplicate-imports': ['error', { allowSeparateTypeImports: true }]
+    }
+  },
   eslintConfigPrettier,
   // set the parse options for typed rules
   {
@@ -102,24 +134,29 @@ export default [
       'require-yield': 'off'
     }
   },
-  {
-    // shared/ is compiled into the frontend too: it must stay self-contained, so it may only import
-    // its own sibling files — never backend code (src/), Node built-ins or npm packages.
-    files: ['shared/**/*.ts'],
+  // shared/model/ is compiled into the frontend too: it must stay self-contained (never backend code from src/,
+  // Node built-ins or npm packages), and its folders are layered: common <- connector <- api <- oia.
+  ...[
+    { folder: 'common', allowed: [] },
+    { folder: 'connector', allowed: ['common'] },
+    { folder: 'api', allowed: ['common', 'connector'] },
+    { folder: 'oia', allowed: ['common', 'connector', 'api'] }
+  ].map(({ folder, allowed }) => ({
+    files: [`shared/model/${folder}/**/*.ts`],
     rules: {
       'no-restricted-imports': [
         'error',
         {
           patterns: [
             {
-              regex: '^(?!\\./)',
-              message: 'shared/ is compiled into the frontend: only import sibling files from shared/ (./...).'
+              regex: allowed.length ? `^(?!\\./|\\.\\./(${allowed.join('|')})/)` : '^(?!\\./)',
+              message: `shared/model/${folder}/ may only import from ${['itself', ...allowed.map(a => `../${a}/`)].join(', ')} (layering: common <- connector <- api <- oia; nothing outside shared/model/).`
             }
           ]
         }
       ]
     }
-  },
+  })),
   {
     // Migration down() functions are intentional no-ops: OIBus migrations are
     // irreversible, so down() is kept only to satisfy knex's interface.

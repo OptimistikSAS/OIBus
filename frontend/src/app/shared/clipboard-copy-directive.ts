@@ -1,5 +1,5 @@
-import { Directive, HostListener, inject, input } from '@angular/core';
 import { Clipboard } from '@angular/cdk/clipboard';
+import { Directive, HostListener, inject, input } from '@angular/core';
 
 @Directive({
   selector: '[oibClipboardCopy]'

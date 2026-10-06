@@ -1,15 +1,18 @@
 import { TestBed } from '@angular/core/testing';
+
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of, throwError } from 'rxjs';
-import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { UserDTO } from '@oibus/shared/api/user.model';
+
+import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { ChangePasswordModalComponent } from './change-password-modal.component';
-import { createMock, MockObject } from '../../../test/vitest-create-mock';
-import { UserDTO } from '@oibus/shared/user.model';
-import testData from '../../../../../backend/src/tests/utils/test-data';
 
 class ChangePasswordModalComponentTester {
   readonly fixture = TestBed.createComponent(ChangePasswordModalComponent);

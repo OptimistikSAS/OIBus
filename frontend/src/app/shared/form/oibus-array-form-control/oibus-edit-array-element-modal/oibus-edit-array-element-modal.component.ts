@@ -1,13 +1,16 @@
-import { Component, forwardRef, inject, ChangeDetectionStrategy } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, Component, forwardRef, inject } from '@angular/core';
 import { AbstractControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { OIBusObjectFormControlComponent } from '../../oibus-object-form-control/oibus-object-form-control.component';
-import { OIBusObjectAttribute } from '@oibus/shared/form.model';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import { CertificateDTO } from '@oibus/shared/certificate.model';
+
+import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
+
 import { addAttributeToForm, extractFormValue } from '../../dynamic-form.builder';
 import { OIBUS_FORM_MODE } from '../../oibus-form-mode.token';
+import { OIBusObjectFormControlComponent } from '../../oibus-object-form-control/oibus-object-form-control.component';
 
 @Component({
   selector: 'oib-oibus-edit-array-element-modal',

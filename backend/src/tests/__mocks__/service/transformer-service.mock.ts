@@ -1,16 +1,18 @@
 import { mock } from 'node:test';
-import { CustomTransformer, Transformer } from '../../../model/transformer.model';
+
+import { SouthConnectorItemTestResult } from '../../../../shared/model/api/south-connector.model';
 import {
   CustomTransformerCommandDTO,
   TransformerSearchParam,
   TransformerTestRequest,
   TransformerTestResponse
-} from '../../../../shared/model/transformer.model';
-import { Page } from '../../../../shared/model/types';
-import type { TransformerManifest } from '../../../../shared/model/transformer.model';
-import { InputType } from '../../../../shared/model/transformer.model';
-import { OIBusContent } from '../../../../shared/model/engine.model';
-import { SouthConnectorItemTestResult } from '../../../../shared/model/south-connector.model';
+} from '../../../../shared/model/api/transformer.model';
+import { OIBusContent } from '../../../../shared/model/common/content.model';
+import { Page } from '../../../../shared/model/common/types';
+import type { TransformerManifest } from '../../../../shared/model/connector/transformer-manifest.model';
+import { InputType } from '../../../../shared/model/connector/transformer-manifest.model';
+
+import { CustomTransformer, Transformer } from '../../../model/transformer.model';
 
 /**
  * Create a mock object for Transformer service

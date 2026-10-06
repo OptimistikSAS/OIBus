@@ -1,6 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
-import { testIPOnFilter } from '../../service/utils';
+import { NextFunction, Request, Response } from 'express';
+
 import type { ILogger } from '../../model/logger.model';
+import { testIPOnFilter } from '../../service/utils';
 
 export default class IpFilterMiddleware {
   constructor(

@@ -1,16 +1,18 @@
 import { TestBed } from '@angular/core/testing';
+
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of, throwError } from 'rxjs';
-import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
 
-import { ImportConfigModalComponent } from './import-config-modal.component';
-import { ConfigImportFailure, ConfigTransferService } from '../../../services/config-transfer.service';
-import { ConfirmationService } from '../../../shared/confirmation.service';
-import { TransformerService } from '../../../services/transformer.service';
+import { ConfigImportPreviewDTO, ConfigImportResponseDTO } from '@oibus/shared/oia/config-transfer.model';
+
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { ConfigImportPreviewDTO, ConfigImportResponseDTO } from '@oibus/shared/config-transfer.model';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
+import { ConfigImportFailure, ConfigTransferService } from '../../../services/config-transfer.service';
+import { TransformerService } from '../../../services/transformer.service';
+import { ConfirmationService } from '../../../shared/confirmation.service';
+import { ImportConfigModalComponent } from './import-config-modal.component';
 
 class ImportConfigModalComponentTester {
   readonly fixture = TestBed.createComponent(ImportConfigModalComponent);

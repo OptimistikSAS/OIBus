@@ -1,5 +1,7 @@
-import { getOIBusInfo } from '../utils';
-import EncryptionService from '../encryption.service';
+import { ConfigurationWorkflowCommandDTO } from '../../../shared/model/api/configuration-workflow.model';
+import { HistoryQueryCommandDTO } from '../../../shared/model/api/history-query.model';
+import { Language } from '../../../shared/model/common/types';
+import { OIBusObjectAttribute } from '../../../shared/model/connector/form.model';
 import {
   OIAnalyticsCertificateCommandDTO,
   OIAnalyticsEngineCommandDTO,
@@ -12,26 +14,25 @@ import {
   OIAnalyticsUserCommandDTO,
   OIBusFullConfigurationCommandDTO,
   OIBusHistoryQueriesCommandDTO
-} from '../../../shared/model/oianalytics-configuration.model';
+} from '../../../shared/model/oia/oianalytics-configuration.model';
+
+import { ConfigurationWorkflowEntity } from '../../model/configuration-workflow.model';
+import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
+import CertificateRepository from '../../repository/config/certificate.repository';
+import ConfigurationWorkflowRepository from '../../repository/config/configuration-workflow.repository';
 import EngineRepository from '../../repository/config/engine.repository';
+import HistoryQueryRepository from '../../repository/config/history-query.repository';
+import IpFilterRepository from '../../repository/config/ip-filter.repository';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import { southManifestList } from '../south-manifests';
-import { northManifestList } from '../north-manifests';
-import IpFilterRepository from '../../repository/config/ip-filter.repository';
-import CertificateRepository from '../../repository/config/certificate.repository';
-import UserRepository from '../../repository/config/user.repository';
-import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
-import HistoryQueryRepository from '../../repository/config/history-query.repository';
 import TransformerRepository from '../../repository/config/transformer.repository';
-import ConfigurationWorkflowRepository from '../../repository/config/configuration-workflow.repository';
-import { ConfigurationWorkflowEntity } from '../../model/configuration-workflow.model';
-import { ConfigurationWorkflowCommandDTO } from '../../../shared/model/configuration-workflow.model';
+import UserRepository from '../../repository/config/user.repository';
+import EncryptionService from '../encryption.service';
+import { northManifestList } from '../north-manifests';
+import { southManifestList } from '../south-manifests';
 import { getStandardManifest } from '../transformer.service';
-import { OIBusObjectAttribute } from '../../../shared/model/form.model';
-import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
-import { Language } from '../../../shared/model/types';
+import { getOIBusInfo } from '../utils';
 
 /**
  * The shape `NorthConnectorEntity['caching']` and `HistoryQueryEntity['caching']` both share —

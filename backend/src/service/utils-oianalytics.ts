@@ -1,9 +1,11 @@
-import { SouthOIAnalyticsSettingsSpecificSettings } from '../../shared/model/south-settings.model';
-import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model';
-import { NorthOIAnalyticsSettingsSpecificSettings } from '../../shared/model/north-settings.model';
-import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from './http-request.utils';
 import { ClientCertificateCredential, ClientSecretCredential, type TokenCredential } from '@azure/identity';
+
+import { NorthOIAnalyticsSettingsSpecificSettings } from '../../shared/model/connector/north-settings.model';
+import { SouthOIAnalyticsSettingsSpecificSettings } from '../../shared/model/connector/south-settings.model';
+
+import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model';
 import { BoundedCache } from './bounded-cache';
+import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from './http-request.utils';
 
 // Bounded well above any realistic number of distinct AAD credential configs in use at once, so
 // eviction only ever kicks in for genuinely stale entries left behind by connector reconfiguration.
@@ -13,12 +15,14 @@ const credentialCache = new BoundedCache<string, TokenCredential>(MAX_CACHED_CRE
 export function clearOIAnalyticsCredentialCache(): void {
   credentialCache.clear();
 }
-import { encryptionService } from './encryption.service';
-import { getErrorMessage } from './utils';
-import { OIBusTimeValue } from '../../shared/model/engine.model';
 import { DateTime } from 'luxon';
+
+import { OIBusTimeValue } from '../../shared/model/common/content.model';
+
 import { Instant } from '../model/types';
 import CertificateRepository from '../repository/config/certificate.repository';
+import { encryptionService } from './encryption.service';
+import { getErrorMessage } from './utils';
 
 export interface OIATimeValues {
   type: string;

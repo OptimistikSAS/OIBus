@@ -1,22 +1,25 @@
 import path from 'node:path';
+
 import { Database } from 'better-sqlite3';
-import { createAuditServiceMock } from '../utils/test-utils';
-import EngineRepository from '../../repository/config/engine.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import IpFilterRepository from '../../repository/config/ip-filter.repository';
+
+import { ConfigExportDTO, OIBusConfigurationDTO } from '../../../shared/model/oia/config-transfer.model';
+
 import CertificateRepository from '../../repository/config/certificate.repository';
-import UserRepository from '../../repository/config/user.repository';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import HistoryQueryRepository from '../../repository/config/history-query.repository';
-import TransformerRepository from '../../repository/config/transformer.repository';
 import ConfigurationWorkflowRepository from '../../repository/config/configuration-workflow.repository';
+import EngineRepository from '../../repository/config/engine.repository';
+import HistoryQueryRepository from '../../repository/config/history-query.repository';
+import IpFilterRepository from '../../repository/config/ip-filter.repository';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
-import ConfigTransferBuilderService from '../../service/config-transfer/config-transfer-builder.service';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import TransformerRepository from '../../repository/config/transformer.repository';
+import UserRepository from '../../repository/config/user.repository';
 import ConfigTransferService from '../../service/config-transfer/config-transfer.service';
+import ConfigTransferBuilderService from '../../service/config-transfer/config-transfer-builder.service';
 import EncryptionService from '../../service/encryption.service';
 import OIAnalyticsRegistrationService from '../../service/oia/oianalytics-registration.service';
-import { ConfigExportDTO, OIBusConfigurationDTO } from '../../../shared/model/config-transfer.model';
+import { createAuditServiceMock } from '../utils/test-utils';
 
 /**
  * Frozen config-transfer fixtures, one folder per released OIBus version, each holding:

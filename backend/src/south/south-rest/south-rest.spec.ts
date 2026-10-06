@@ -1,19 +1,21 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, assertContains } from '../../tests/utils/test-utils';
+import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import type { SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
+import type { OIBusFileContent } from '../../../shared/model/common/content.model';
+import type { SouthRestItemSettings, SouthRestSettings } from '../../../shared/model/connector/south-settings.model';
+
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import type { ReqOptions } from '../../service/http-request.utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
-import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import type { SouthRestItemSettings, SouthRestSettings } from '../../../shared/model/south-settings.model';
-import type { ReqOptions } from '../../service/http-request.utils';
-import type { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import type { OIBusFileContent } from '../../../shared/model/engine.model';
+import testData from '../../tests/utils/test-data';
+import { assertContains, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthRestClass from './south-rest';
 
 const nodeRequire = createRequire(import.meta.url);

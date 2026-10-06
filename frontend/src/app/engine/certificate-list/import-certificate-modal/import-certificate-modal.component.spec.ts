@@ -1,16 +1,18 @@
 import { TestBed } from '@angular/core/testing';
+
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of, throwError } from 'rxjs';
-import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
 
-import { ImportCertificateModalComponent } from './import-certificate-modal.component';
-import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
-import { CertificateService } from '../../../services/certificate.service';
-import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { CertificateDTO } from '@oibus/shared/certificate.model';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
+import { CertificateService } from '../../../services/certificate.service';
+import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
+import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { ImportCertificateModalComponent } from './import-certificate-modal.component';
 
 class ImportCertificateModalComponentTester {
   readonly fixture = TestBed.createComponent(ImportCertificateModalComponent);

@@ -1,10 +1,12 @@
-import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { UserSettingsService } from './user-settings.service';
-import { ChangePasswordCommand, UserDTO } from '@oibus/shared/user.model';
+import { ChangePasswordCommand, UserDTO } from '@oibus/shared/api/user.model';
+
 import testData from '../../../../backend/src/tests/utils/test-data';
+import { UserSettingsService } from './user-settings.service';
 
 describe('UserSettingsService', () => {
   let http: HttpTestingController;

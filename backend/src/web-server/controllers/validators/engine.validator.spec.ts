@@ -1,5 +1,6 @@
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+
 import JoiValidator from './joi.validator';
 import { engineLoggerSchema, engineNameSchema, engineProxySchema, engineSchema, engineWebServerSchema } from './oibus-validation-schema';
 

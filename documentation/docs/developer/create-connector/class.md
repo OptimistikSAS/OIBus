@@ -20,8 +20,9 @@ This page is a quick reference; for the deep details read
 ```typescript title="backend/src/north/north-console/north-console.ts"
 import NorthConnector from '../north-connector';
 import pino from 'pino';
-import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusConnectionTestResult, OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { NorthConsoleSettings } from '../../../shared/model/connector/north-settings.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/common/content.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CacheService from '../../service/cache/cache.service';
 import { ReadStream } from 'node:fs';
@@ -88,7 +89,7 @@ For transient errors (network blip, server warming up) you can keep retrying for
 on the thrown error:
 
 ```typescript
-import { OIBusError } from '../../shared/model/engine.model';
+import { OIBusError } from '../../model/engine.model';
 
 throw { ...new Error('Connection reset'), forceRetry: true } as OIBusError;
 ```
@@ -104,10 +105,11 @@ import SouthConnector from '../south-connector';
 import { SouthDirectQuery, SouthHistoryQuery, SouthSubscription } from '../south-interface';
 import pino from 'pino';
 import { DateTime } from 'luxon';
-import { SouthMyTypeSettings, SouthMyTypeItemSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { SouthMyTypeSettings, SouthMyTypeItemSettings, SouthItemSettings } from '../../../shared/model/connector/south-settings.model';
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { Instant } from '../../model/types';
 

@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+
 import { firstValueFrom } from 'rxjs';
-import { page } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { noAnimation } from '../test-utils';
 import { ConfirmationService } from '../confirmation.service';
+import { noAnimation } from '../test-utils';
 
 @Component({ selector: 'oib-test-confirmation', template: '', changeDetection: ChangeDetectionStrategy.OnPush })
 class TestComponent {}

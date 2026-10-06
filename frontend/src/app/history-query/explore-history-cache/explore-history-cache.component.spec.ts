@@ -1,17 +1,19 @@
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
+
+import { of } from 'rxjs';
 import { describe, expect, test } from 'vitest';
 
-import { ExploreHistoryCacheComponent } from './explore-history-cache.component';
-import { HistoryQueryService } from '../../services/history-query.service';
-import { NotificationService } from '../../shared/notification.service';
-import { ModalService } from '../../shared/modal.service';
+import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
+
+import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock } from '../../../test/vitest-create-mock';
-import testData from '../../../../../backend/src/tests/utils/test-data';
-import { HistoryQueryDTO } from '@oibus/shared/history-query.model';
+import { HistoryQueryService } from '../../services/history-query.service';
+import { ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { ExploreHistoryCacheComponent } from './explore-history-cache.component';
 
 describe('ExploreHistoryCacheComponent', () => {
   test('should create without error', () => {

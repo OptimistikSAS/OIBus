@@ -1,14 +1,17 @@
-import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
-import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
-import { DataLakeServiceClient, StorageSharedKeyCredential as DataLakeStorageSharedKeyCredential } from '@azure/storage-file-datalake';
-import NorthConnector from '../north-connector';
-import { encryptionService } from '../../service/encryption.service';
-import { NorthAzureBlobSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
-import type { ProxySettings } from '@azure/core-rest-pipeline/dist/browser';
-import type { ICacheService } from '../../model/cache.service.model';
 import { ReadStream } from 'node:fs';
+
+import type { ProxySettings } from '@azure/core-rest-pipeline/dist/browser';
+import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
+import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
+import { DataLakeServiceClient, StorageSharedKeyCredential as DataLakeStorageSharedKeyCredential } from '@azure/storage-file-datalake';
+
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { NorthAzureBlobSettings } from '../../../shared/model/connector/north-settings.model';
+
+import type { ICacheService } from '../../model/cache.service.model';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { encryptionService } from '../../service/encryption.service';
+import NorthConnector from '../north-connector';
 
 const TEST_FILE = 'oibus-azure-test.txt';
 

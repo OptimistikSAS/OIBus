@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, EMPTY, Subscription, switchMap } from 'rxjs';
-import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ConfigurationWorkflowDTO } from '@oibus/shared/configuration-workflow.model';
-import { Instant, Page } from '@oibus/shared/types';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { catchError, EMPTY, Subscription, switchMap } from 'rxjs';
+
+import { ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
 import {
   WORKFLOW_RUN_STATUSES,
   WORKFLOW_RUN_TRIGGER_TYPES,
@@ -13,18 +15,19 @@ import {
   WorkflowRunSearchParam,
   WorkflowRunStatus,
   WorkflowRunTriggerType
-} from '@oibus/shared/workflow-run.model';
-import { PageLoader } from '../../../shared/page-loader.service';
-import { emptyPage } from '../../../shared/test-utils';
+} from '@oibus/shared/api/workflow-run.model';
+import { Instant, Page } from '@oibus/shared/common/types';
+
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
-import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
-import { ModalService } from '../../../shared/modal.service';
-import PreviewWorkflowModalComponent from '../preview-workflow-modal/preview-workflow-modal.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DatetimepickerComponent } from '../../../shared/datetimepicker/datetimepicker.component';
-import { ascendingDates } from '../../../shared/form/validators';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
+import { ascendingDates } from '../../../shared/form/validators';
+import { ModalService } from '../../../shared/modal.service';
+import { PageLoader } from '../../../shared/page-loader.service';
+import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+import { emptyPage } from '../../../shared/test-utils';
+import PreviewWorkflowModalComponent from '../preview-workflow-modal/preview-workflow-modal.component';
 
 /**
  * Standalone, server-paginated page listing a Configuration Workflow's run history, most recent first -

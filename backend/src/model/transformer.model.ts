@@ -1,7 +1,8 @@
-import { BaseEntity } from './types';
-import { OIBusObjectAttribute } from '../../shared/model/form.model';
-import { DataSourceType, TransformerLanguage } from '../../shared/model/transformer.model';
+import { DataSourceType, TransformerLanguage } from '../../shared/model/api/transformer.model';
+import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
+
 import { SouthConnectorEntityLight, SouthConnectorItemEntityLight, SouthItemGroupEntity } from './south-connector.model';
+import { BaseEntity } from './types';
 
 export interface BaseTransformer {
   id: string;

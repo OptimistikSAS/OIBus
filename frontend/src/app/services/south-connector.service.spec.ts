@@ -1,20 +1,17 @@
-import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { SouthConnectorService } from './south-connector.service';
-import {
-  SouthConnectorDTO,
-  SouthConnectorItemDTO,
-  SouthConnectorLightDTO,
-  SouthConnectorManifest,
-  SouthType
-} from '@oibus/shared/south-connector.model';
-import { Page } from '@oibus/shared/types';
+import { SouthConnectorDTO, SouthConnectorItemDTO, SouthConnectorLightDTO } from '@oibus/shared/api/south-connector.model';
+import { Page } from '@oibus/shared/common/types';
+import { SouthConnectorManifest, SouthType } from '@oibus/shared/connector/south-manifest.model';
+import { SouthFolderScannerItemSettings } from '@oibus/shared/connector/south-settings.model';
+
+import testData from '../../../../backend/src/tests/utils/test-data';
 import { toPage } from '../shared/test-utils';
 import { DownloadService } from './download.service';
-import { SouthFolderScannerItemSettings } from '@oibus/shared/south-settings.model';
-import testData from '../../../../backend/src/tests/utils/test-data';
+import { SouthConnectorService } from './south-connector.service';
 
 describe('SouthConnectorService', () => {
   let http: HttpTestingController;

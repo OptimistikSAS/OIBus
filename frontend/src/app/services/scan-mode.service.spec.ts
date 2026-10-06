@@ -1,10 +1,12 @@
-import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { ScanModeService } from './scan-mode.service';
-import { ScanModeDTO, ValidatedCronExpression } from '@oibus/shared/scan-mode.model';
+import { ScanModeDTO, ValidatedCronExpression } from '@oibus/shared/api/scan-mode.model';
+
 import testData from '../../../../backend/src/tests/utils/test-data';
+import { ScanModeService } from './scan-mode.service';
 
 describe('ScanModeService', () => {
   let http: HttpTestingController;

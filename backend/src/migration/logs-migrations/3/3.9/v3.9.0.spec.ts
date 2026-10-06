@@ -1,6 +1,8 @@
-import { describe, it, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { after, beforeEach, describe, it } from 'node:test';
+
 import knex, { Knex } from 'knex';
+
 import { down, up } from './v3.9.0';
 
 /**

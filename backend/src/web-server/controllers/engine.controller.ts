@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Put, Request, Route, SuccessResponse, Tags } from 'tsoa';
+
 import {
   EngineLoggerCommandDTO,
   EngineMemoryDumpDTO,
@@ -11,9 +12,10 @@ import {
   EngineWebServerCommandDTO,
   HomeMetrics,
   OIBusInfo
-} from '../../../shared/model/engine.model';
-import { CustomExpressRequest } from '../express';
+} from '../../../shared/model/api/engine.model';
+
 import { toEngineSettingsDTO } from '../../service/oibus.service';
+import { CustomExpressRequest } from '../express';
 
 @Route('/api')
 @Tags('Engine')

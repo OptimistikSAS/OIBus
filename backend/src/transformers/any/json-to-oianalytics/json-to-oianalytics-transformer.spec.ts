@@ -1,11 +1,12 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 import { Readable } from 'stream';
+
+import { injectIndices, streamToString } from '../../../service/utils';
+import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../../tests/utils/test-data';
 import { flushPromises, mockModule, reloadModule } from '../../../tests/utils/test-utils';
-import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
-import { injectIndices, streamToString } from '../../../service/utils';
 import type JSONToOIAnalyticsTransformerType from './json-to-oianalytics-transformer';
 import jsonToOianalyticsManifest from './manifest';
 

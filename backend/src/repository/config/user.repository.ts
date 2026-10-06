@@ -1,11 +1,12 @@
 import argon2 from 'argon2';
 import { Database } from 'better-sqlite3';
 
-import { generateRandomId } from '../../service/utils';
-import { Language, Page } from '../../../shared/model/types';
+import { UserCommandDTO, UserSearchParam } from '../../../shared/model/api/user.model';
+import { Language, Page } from '../../../shared/model/common/types';
+
 import { User } from '../../model/user.model';
-import { UserCommandDTO, UserSearchParam } from '../../../shared/model/user.model';
 import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
+import { generateRandomId } from '../../service/utils';
 
 const USERS_TABLE = 'users';
 const PAGE_SIZE = 50;

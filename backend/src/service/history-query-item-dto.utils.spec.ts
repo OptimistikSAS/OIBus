@@ -1,10 +1,12 @@
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { toHistoryQueryItemDTO } from './history-query-item-dto.utils';
-import testData from '../tests/utils/test-data';
-import { GetUserInfo } from '../../shared/model/types';
+import { describe, it } from 'node:test';
+
+import { GetUserInfo } from '../../shared/model/common/types';
+import { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
+
 import { HistoryQueryItemEntity } from '../model/histor-query.model';
-import { SouthItemSettings } from '../../shared/model/south-settings.model';
+import testData from '../tests/utils/test-data';
+import { toHistoryQueryItemDTO } from './history-query-item-dto.utils';
 
 const getUserInfo: GetUserInfo = (id: string) => ({ id, friendlyName: id });
 

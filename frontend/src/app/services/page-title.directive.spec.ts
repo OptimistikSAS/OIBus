@@ -1,8 +1,10 @@
-import { PageTitleDirective } from './page-title.directive';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { Title } from '@angular/platform-browser';
 import { TestBed } from '@angular/core/testing';
+import { Title } from '@angular/platform-browser';
+
 import { beforeEach, describe, expect, test } from 'vitest';
+
+import { PageTitleDirective } from './page-title.directive';
 
 @Component({
   selector: 'oib-test',

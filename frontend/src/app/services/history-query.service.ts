@@ -1,24 +1,8 @@
 import { HttpClient, HttpContext, HttpStatusCode } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
 import { inject, Service } from '@angular/core';
-import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
-import {
-  HistoryQueryCommandDTO,
-  HistoryQueryDTO,
-  HistoryQueryItemCommandDTO,
-  HistoryQueryItemDTO,
-  HistoryQueryItemSearchParam,
-  HistoryQueryLightDTO
-} from '@oibus/shared/history-query.model';
-import { Page } from '@oibus/shared/types';
-import {
-  OIBusSouthType,
-  SouthConnectorItemTestingSettings,
-  SouthConnectorItemTestResult,
-  SouthExploreBrowseResult,
-  SouthExploreStartResult
-} from '@oibus/shared/south-connector.model';
-import { DownloadService } from './download.service';
+
+import { map, Observable } from 'rxjs';
+
 import {
   CacheContentUpdateCommand,
   CacheSearchParam,
@@ -27,11 +11,30 @@ import {
   FileCacheContent,
   HistoryQueryMetrics,
   OIBusConnectionTestResult
-} from '@oibus/shared/engine.model';
-import { SouthItemSettings, SouthSettings } from '@oibus/shared/south-settings.model';
-import { NorthSettings } from '@oibus/shared/north-settings.model';
-import { OIBusNorthType } from '@oibus/shared/north-connector.model';
-import { HistoryTransformerDTOWithOptions } from '@oibus/shared/transformer.model';
+} from '@oibus/shared/api/engine.model';
+import {
+  HistoryQueryCommandDTO,
+  HistoryQueryDTO,
+  HistoryQueryItemCommandDTO,
+  HistoryQueryItemDTO,
+  HistoryQueryItemSearchParam,
+  HistoryQueryLightDTO
+} from '@oibus/shared/api/history-query.model';
+import {
+  SouthConnectorItemTestingSettings,
+  SouthConnectorItemTestResult,
+  SouthExploreBrowseResult,
+  SouthExploreStartResult
+} from '@oibus/shared/api/south-connector.model';
+import { HistoryTransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
+import { Page } from '@oibus/shared/common/types';
+import { OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
+import { NorthSettings } from '@oibus/shared/connector/north-settings.model';
+import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '@oibus/shared/connector/south-settings.model';
+
+import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
+import { DownloadService } from './download.service';
 
 /**
  * Service used to interact with the backend for CRUD operations on History queries

@@ -1,14 +1,16 @@
 import { FormControl } from '@angular/forms';
+
+import { describe, expect, test } from 'vitest';
+
+import { convertCsvDelimiter } from '../utils/csv.utils';
 import {
-  uniqueFieldNamesValidator,
-  singleTrueValidator,
-  validateCsvHeaders,
   doMqttTopicsOverlap,
   mqttTopicOverlapValidator,
+  singleTrueValidator,
+  uniqueFieldNamesValidator,
+  validateCsvHeaders,
   validateCsvMqttTopics
 } from './validators';
-import { describe, expect, test } from 'vitest';
-import { convertCsvDelimiter } from '../utils/csv.utils';
 
 describe('Custom Validators', () => {
   describe('uniqueFieldNamesValidator', () => {

@@ -1,15 +1,18 @@
 import { AdsDataType, AdsSymbol, Client } from 'ads-client';
-import SouthConnector from '../south-connector';
+import { AdsEnumInfoEntry } from 'ads-client/dist/types/ads-protocol-types';
 import { DateTime } from 'luxon';
-import { Instant } from '../../../shared/model/types';
-import { SouthADSItemSettings, SouthADSSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { Instant } from '../../../shared/model/common/types';
+import { SouthADSItemSettings, SouthADSSettings, SouthItemSettings } from '../../../shared/model/connector/south-settings.model';
+
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import { AdsEnumInfoEntry } from 'ads-client/dist/types/ads-protocol-types';
-import { SouthDirectQuery } from '../south-interface';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
+import SouthConnector from '../south-connector';
+import { SouthDirectQuery } from '../south-interface';
 
 interface ADSOptions {
   targetAmsNetId: string;

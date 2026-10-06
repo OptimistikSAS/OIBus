@@ -1,13 +1,16 @@
-import { CacheContentComponent } from './cache-content.component';
-import { TestBed } from '@angular/core/testing';
 import { ChangeDetectionStrategy, Component, signal, viewChild } from '@angular/core';
-import { CacheMetadata, CacheOperation, DataFolderType } from '@oibus/shared/engine.model';
-import { ObservableState } from '../../save-button/save-button.component';
+import { TestBed } from '@angular/core/testing';
+
 import { BehaviorSubject } from 'rxjs';
-import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { provideCurrentUser } from '../../current-user-testing-vitest';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
+
+import { CacheMetadata, CacheOperation, DataFolderType } from '@oibus/shared/api/engine.model';
+
+import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { provideCurrentUser } from '../../current-user-testing-vitest';
+import { ObservableState } from '../../save-button/save-button.component';
+import { CacheContentComponent } from './cache-content.component';
 
 @Component({
   selector: 'oib-test-cache-content-component',

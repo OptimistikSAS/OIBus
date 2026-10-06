@@ -1,7 +1,13 @@
 import { mock } from 'node:test';
-import { ConfigurationWorkflowSouthCommand } from '../../../../model/configuration-workflow.model';
+
 import type { Database } from 'better-sqlite3';
-import { createAuditServiceMock } from '../../../utils/test-utils';
+
+import { SouthConnectorItemSearchParam } from '../../../../../shared/model/api/south-connector.model';
+import { Page } from '../../../../../shared/model/common/types';
+import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/connector/south-settings.model';
+
+import { ConfigurationWorkflowSouthCommand } from '../../../../model/configuration-workflow.model';
+import { ScanMode } from '../../../../model/scan-mode.model';
 import {
   SouthConnectorEntity,
   SouthConnectorEntityLight,
@@ -9,11 +15,8 @@ import {
   SouthItemGroupEntity,
   SouthItemGroupEntityLight
 } from '../../../../model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
-import { SouthConnectorItemSearchParam } from '../../../../../shared/model/south-connector.model';
-import { Page } from '../../../../../shared/model/types';
-import { ScanMode } from '../../../../model/scan-mode.model';
 import SouthConnectorRepository from '../../../../repository/config/south-connector.repository';
+import { createAuditServiceMock } from '../../../utils/test-utils';
 
 /**
  * Create a mock object for South Connector repository

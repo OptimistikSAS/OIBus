@@ -1,6 +1,6 @@
+import fs from 'node:fs';
 import Module from 'node:module';
 import path from 'node:path';
-import fs from 'node:fs';
 
 /**
  * @yao-pkg/pkg does not support package.json subpath imports (`"imports": { "#foo": ... }`): Node's native resolver reads

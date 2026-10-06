@@ -1,10 +1,17 @@
-import zlib from 'node:zlib';
-import OIBusTransformer from '../../oibus-transformer';
-import csv from 'papaparse';
-import { CacheMetadata, OIBusRecord } from '../../../../shared/model/engine.model';
-import { CacheMetadataSource } from '../../../model/engine.model';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
+import zlib from 'node:zlib';
+
+import csv from 'papaparse';
+
+import { CacheMetadata } from '../../../../shared/model/api/engine.model';
+import { OIBusRecord } from '../../../../shared/model/common/content.model';
+import {
+  TransformerRecordListToCsvSettings,
+  TransformerRecordListToCsvSettingsFields
+} from '../../../../shared/model/connector/transformer-settings.model';
+
+import { CacheMetadataSource } from '../../../model/engine.model';
 import {
   applyFilenameVariables,
   convertDateTime,
@@ -16,11 +23,8 @@ import {
   streamToString,
   stringToBoolean
 } from '../../../service/utils';
-import {
-  TransformerRecordListToCsvSettings,
-  TransformerRecordListToCsvSettingsFields
-} from '../../../../shared/model/transformer-settings.model';
 import { applyFieldProcess } from '../../field-process';
+import OIBusTransformer from '../../oibus-transformer';
 
 export default class RecordListToCsvTransformer extends OIBusTransformer {
   public static transformerName = 'record-list-to-csv';

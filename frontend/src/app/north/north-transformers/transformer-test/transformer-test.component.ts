@@ -1,19 +1,23 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, effect, inject, input, viewChild } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+
 import { TranslateDirective, TranslateService } from '@ngx-translate/core';
-import { catchError, Observable, of, Subscription } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
 import { DateTime } from 'luxon';
+import { catchError, Observable, of, Subscription } from 'rxjs';
+
+import { SouthConnectorItemTestingSettings, SouthConnectorItemTestResult } from '@oibus/shared/api/south-connector.model';
+import { TransformerDTO } from '@oibus/shared/api/transformer.model';
+import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '@oibus/shared/connector/south-settings.model';
+
+import { HistoryQueryService } from '../../../services/history-query.service';
+import { SouthConnectorService } from '../../../services/south-connector.service';
+import { TransformerService } from '../../../services/transformer.service';
+import { DateRange, DateRangeSelectorComponent } from '../../../shared/date-range-selector/date-range-selector.component';
 import { getMessageFromHttpErrorResponse } from '../../../shared/error-interceptor.service';
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
 import { TransformerTestResultComponent } from '../../../shared/transformer-test-result/transformer-test-result.component';
-import { DateRange, DateRangeSelectorComponent } from '../../../shared/date-range-selector/date-range-selector.component';
-import { TransformerService } from '../../../services/transformer.service';
-import { SouthConnectorService } from '../../../services/south-connector.service';
-import { HistoryQueryService } from '../../../services/history-query.service';
-import { TransformerDTO } from '@oibus/shared/transformer.model';
-import { OIBusSouthType, SouthConnectorItemTestingSettings, SouthConnectorItemTestResult } from '@oibus/shared/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '@oibus/shared/south-settings.model';
 
 /** Where the "from a source item" input pulls values from (or `none` for paste-only sources). */
 export type TransformerTestItemSource =

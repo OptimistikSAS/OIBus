@@ -1,11 +1,14 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormControl, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { ObservableState, SaveButtonComponent } from '../../../save-button/save-button.component';
-import { OIBUS_ATTRIBUTE_TYPES, OIBusArrayAttribute, OIBusAttribute } from '@oibus/shared/form.model';
-import { ValErrorDelayDirective } from '../../val-error-delay.directive';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
+
+import { OIBUS_ATTRIBUTE_TYPES, OIBusArrayAttribute, OIBusAttribute } from '@oibus/shared/connector/form.model';
+
+import { ObservableState, SaveButtonComponent } from '../../../save-button/save-button.component';
+import { ValErrorDelayDirective } from '../../val-error-delay.directive';
 import { ManifestAttributesArrayComponent } from '../manifest-attributes-array/manifest-attributes-array.component';
 
 @Component({

@@ -1,6 +1,8 @@
 import { mock } from 'node:test';
+
+import { ConfigurationWorkflowCommandDTO } from '../../../../shared/model/api/configuration-workflow.model';
+
 import { ConfigurationWorkflowEntity } from '../../../model/configuration-workflow.model';
-import { ConfigurationWorkflowCommandDTO } from '../../../../shared/model/configuration-workflow.model';
 
 /**
  * Create a mock object for Configuration Workflow Service

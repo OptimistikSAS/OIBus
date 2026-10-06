@@ -1,14 +1,17 @@
 import { EventEmitter } from 'node:events';
-import DeferredPromise from '../deferred-promise';
+
 import { DateTime } from 'luxon';
+
+import { OIBusFullConfigurationCommandDTO, OIBusHistoryQueriesCommandDTO } from '../../../shared/model/oia/oianalytics-configuration.model';
+
 import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
-import { OIBusFullConfigurationCommandDTO, OIBusHistoryQueriesCommandDTO } from '../../../shared/model/oianalytics-configuration.model';
 import OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
+import ConfigTransferBuilderService from '../config-transfer/config-transfer-builder.service';
+import DeferredPromise from '../deferred-promise';
+import { loggerService } from '../logger/logger.service';
+import { getErrorMessage } from '../utils';
 import OIAnalyticsClient from './oianalytics-client.service';
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';
-import { getErrorMessage } from '../utils';
-import { loggerService } from '../logger/logger.service';
-import ConfigTransferBuilderService from '../config-transfer/config-transfer-builder.service';
 
 const STOP_TIMEOUT = 30_000;
 

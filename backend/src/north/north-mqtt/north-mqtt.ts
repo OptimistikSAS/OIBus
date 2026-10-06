@@ -1,15 +1,18 @@
-import NorthConnector from '../north-connector';
-import { NorthMQTTSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { ReadStream } from 'node:fs';
+
 import mqtt from 'mqtt';
 import { IConnackPacket, QoS } from 'mqtt-packet';
-import { OIBusMQTTValue } from '../../transformers/connector-types.model';
+
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { NorthMQTTSettings } from '../../../shared/model/connector/north-settings.model';
+
 import type { ICacheService } from '../../model/cache.service.model';
-import { createConnectionOptions } from '../../service/utils-mqtt';
 import { OIBusError } from '../../model/engine.model';
-import { ReadStream } from 'node:fs';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { streamToString } from '../../service/utils';
+import { createConnectionOptions } from '../../service/utils-mqtt';
+import { OIBusMQTTValue } from '../../transformers/connector-types.model';
+import NorthConnector from '../north-connector';
 
 /**
  * Class NorthOPCUA - Write values in a MQTT broker

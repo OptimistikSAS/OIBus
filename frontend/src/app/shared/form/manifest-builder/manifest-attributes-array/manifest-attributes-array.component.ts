@@ -1,14 +1,16 @@
-import { Component, computed, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ControlContainer, FormControl, FormGroupName, ReactiveFormsModule } from '@angular/forms';
+
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { startWith, switchMap } from 'rxjs';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+
 import { BoxComponent, BoxTitleDirective } from '../../../box/box.component';
-import { PaginationComponent } from '../../../pagination/pagination.component';
 import type { Modal } from '../../../modal.service';
 import { ModalService } from '../../../modal.service';
 import { ArrayPage } from '../../../pagination/array-page';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { PaginationComponent } from '../../../pagination/pagination.component';
 import type { ManifestAttributeEditorModalComponent } from '../manifest-attribute-editor-modal/manifest-attribute-editor-modal.component';
 
 @Component({

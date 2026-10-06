@@ -1,13 +1,15 @@
-import { SouthExploreModalComponent } from './south-explore-modal.component';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
-import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { SouthConnectorService } from '../../services/south-connector.service';
+
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
-import testData from '../../../../../backend/src/tests/utils/test-data';
 import { beforeEach, describe, expect, test } from 'vitest';
-import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { page } from 'vitest/browser';
+
+import testData from '../../../../../backend/src/tests/utils/test-data';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { SouthConnectorService } from '../../services/south-connector.service';
+import { SouthExploreModalComponent } from './south-explore-modal.component';
 
 class SouthExploreModalComponentTester {
   readonly fixture = TestBed.createComponent(SouthExploreModalComponent);

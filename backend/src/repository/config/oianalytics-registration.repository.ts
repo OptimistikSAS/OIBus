@@ -1,9 +1,11 @@
-import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
-import { Instant } from '../../../shared/model/types';
+
+import { RegistrationStatus } from '../../../shared/model/api/engine.model';
+import { Instant } from '../../../shared/model/common/types';
+
 import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
-import { RegistrationStatus } from '../../../shared/model/engine.model';
 import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
+import { generateRandomId } from '../../service/utils';
 
 const REGISTRATIONS_TABLE = 'registrations';
 

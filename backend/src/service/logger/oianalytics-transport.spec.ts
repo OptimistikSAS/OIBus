@@ -1,11 +1,13 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import type { CryptoSettings } from '../../../shared/model/api/engine.model';
+
 import type { PinoLog } from '../../model/logs.model';
-import { reloadModule } from '../../tests/utils/test-utils';
-import testData from '../../tests/utils/test-data';
 import type { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
-import type { CryptoSettings } from '../../../shared/model/engine.model';
+import testData from '../../tests/utils/test-data';
+import { reloadModule } from '../../tests/utils/test-utils';
 
 const nodeRequire = createRequire(import.meta.url);
 

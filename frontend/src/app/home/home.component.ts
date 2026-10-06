@@ -1,16 +1,18 @@
-import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
-import { TranslateDirective } from '@ngx-translate/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
-import { NorthConnectorLightDTO } from '@oibus/shared/north-connector.model';
-import { SouthConnectorLightDTO } from '@oibus/shared/south-connector.model';
-import { SouthConnectorService } from '../services/south-connector.service';
-import { NorthConnectorService } from '../services/north-connector.service';
+import { TranslateDirective } from '@ngx-translate/core';
+
+import { NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
+import { SouthConnectorLightDTO } from '@oibus/shared/api/south-connector.model';
+
 import { EngineMetricsComponent } from '../engine/engine-metrics/engine-metrics.component';
 import { NorthMetricsComponent } from '../north/north-metrics/north-metrics.component';
-import { SouthMetricsComponent } from '../south/south-detail/south-metrics/south-metrics.component';
 import { EngineService } from '../services/engine.service';
+import { NorthConnectorService } from '../services/north-connector.service';
+import { SouthConnectorService } from '../services/south-connector.service';
 import { pollMetrics } from '../shared/polling';
+import { SouthMetricsComponent } from '../south/south-detail/south-metrics/south-metrics.component';
 
 const NUMBER_OF_COLUMN = 3;
 

@@ -1,16 +1,11 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import path from 'node:path';
-import { mockModule, reloadModule } from '../tests/utils/test-utils';
-import type { SouthConnectorEntity } from '../model/south-connector.model';
-import type { OIBusContent } from '../../shared/model/engine.model';
-import type { Instant } from '../../shared/model/types';
-import type { SouthConnectorItemEntity } from '../model/south-connector.model';
-import type SouthCacheRepository from '../repository/cache/south-cache.repository';
-import type CertificateRepository from '../repository/config/certificate.repository';
-import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import type { OIBusContent } from '../../shared/model/common/content.model';
+import type { Instant } from '../../shared/model/common/types';
 import type {
   SouthADSItemSettings,
   SouthADSSettings,
@@ -25,12 +20,12 @@ import type {
   SouthItemSettings,
   SouthModbusItemSettings,
   SouthModbusSettings,
+  SouthMongoDBItemSettings,
+  SouthMongoDBSettings,
   SouthMQTTItemSettings,
   SouthMQTTSettings,
   SouthMSSQLItemSettings,
   SouthMSSQLSettings,
-  SouthMongoDBItemSettings,
-  SouthMongoDBSettings,
   SouthMySQLItemSettings,
   SouthMySQLSettings,
   SouthODBCItemSettings,
@@ -58,7 +53,13 @@ import type {
   SouthSFTPSettings,
   SouthSQLiteItemSettings,
   SouthSQLiteSettings
-} from '../../shared/model/south-settings.model';
+} from '../../shared/model/connector/south-settings.model';
+
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
+import type SouthCacheRepository from '../repository/cache/south-cache.repository';
+import type CertificateRepository from '../repository/config/certificate.repository';
+import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import { mockModule, reloadModule } from '../tests/utils/test-utils';
 import type {
   buildSouth as BuildSouthFn,
   deleteSouthCache as DeleteSouthCacheFn,

@@ -1,23 +1,25 @@
-import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import ConfigTransferService from './config-transfer.service';
-import ConfigTransferBuilderService from './config-transfer-builder.service';
-import testData from '../../tests/utils/test-data';
+import { beforeEach, describe, it } from 'node:test';
+
+import { OIBusObjectAttribute } from '../../../shared/model/connector/form.model';
+
+import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
+import ConfigurationWorkflowRepositoryMock from '../../tests/__mocks__/repository/config/configuration-workflow-repository.mock';
 import EngineRepositoryMock from '../../tests/__mocks__/repository/config/engine-repository.mock';
+import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
+import IpFilterRepositoryMock from '../../tests/__mocks__/repository/config/ip-filter-repository.mock';
+import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
 import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
-import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
-import IpFilterRepositoryMock from '../../tests/__mocks__/repository/config/ip-filter-repository.mock';
-import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
-import UserRepositoryMock from '../../tests/__mocks__/repository/config/user-repository.mock';
-import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
 import TransformerRepositoryMock from '../../tests/__mocks__/repository/config/transformer-repository.mock';
-import ConfigurationWorkflowRepositoryMock from '../../tests/__mocks__/repository/config/configuration-workflow-repository.mock';
+import UserRepositoryMock from '../../tests/__mocks__/repository/config/user-repository.mock';
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
+import testData from '../../tests/utils/test-data';
 import EncryptionService from '../encryption.service';
-import { southManifestList } from '../south-manifests';
 import { northManifestList } from '../north-manifests';
-import { OIBusObjectAttribute } from '../../../shared/model/form.model';
+import { southManifestList } from '../south-manifests';
+import ConfigTransferService from './config-transfer.service';
+import ConfigTransferBuilderService from './config-transfer-builder.service';
 
 describe('Config Transfer Service', () => {
   let engineRepository: EngineRepositoryMock;

@@ -1,18 +1,20 @@
 import { mock } from 'node:test';
-import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../../../model/histor-query.model';
-import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
+
+import { HistoryQueryMetrics, OIBusConnectionTestResult } from '../../../../shared/model/api/engine.model';
 import {
   HistoryQueryCommandDTO,
   HistoryQueryItemCommandDTO,
   HistoryQueryItemDTO,
   HistoryQueryItemSearchParam
-} from '../../../../shared/model/history-query.model';
+} from '../../../../shared/model/api/history-query.model';
+import { SouthConnectorItemTestResult, SouthExploreStartResult } from '../../../../shared/model/api/south-connector.model';
+import { OIBusAnyContent } from '../../../../shared/model/common/content.model';
+import { Page } from '../../../../shared/model/common/types';
+import { NorthSettings } from '../../../../shared/model/connector/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../shared/model/connector/south-settings.model';
+
+import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../../../model/histor-query.model';
 import { HistoryTransformerWithOptions } from '../../../model/transformer.model';
-import { SouthConnectorItemTestResult, SouthExploreStartResult } from '../../../../shared/model/south-connector.model';
-import { OIBusAnyContent, OIBusConnectionTestResult } from '../../../../shared/model/engine.model';
-import { HistoryQueryMetrics } from '../../../../shared/model/engine.model';
-import { Page } from '../../../../shared/model/types';
 
 /**
  * Create a mock object for History Query Service

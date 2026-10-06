@@ -1,7 +1,10 @@
 import { mock } from 'node:test';
+
 import type { Database } from 'better-sqlite3';
+
+import { Page } from '../../../../../shared/model/common/types';
+
 import { AuditAction, AuditEntityType, AuditLog, AuditSearchParam } from '../../../../model/audit.model';
-import { Page } from '../../../../../shared/model/types';
 import AuditRepository from '../../../../repository/config/audit.repository';
 
 const EMPTY_PAGE: Page<AuditLog> = { content: [], size: 50, number: 0, totalElements: 0, totalPages: 0 };

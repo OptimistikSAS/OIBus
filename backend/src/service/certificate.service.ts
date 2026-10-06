@@ -1,13 +1,18 @@
+import { CertificateCommandDTO, CertificateDTO, CertificateExportFormat } from '../../shared/model/api/certificate.model';
+import { GetUserInfo } from '../../shared/model/common/types';
+
+import { Certificate, CertificateImportCommand } from '../model/certificate.model';
+import type { ILogger } from '../model/logger.model';
+import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
+import { NotFoundError, OIBusValidationError } from '../model/types';
+import CertificateRepository from '../repository/config/certificate.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import {
-  certificateSchema,
   certificateImportSchema,
-  certificatePrivateKeyExportSchema
+  certificatePrivateKeyExportSchema,
+  certificateSchema
 } from '../web-server/controllers/validators/oibus-validation-schema';
-import CertificateRepository from '../repository/config/certificate.repository';
-import { Certificate, CertificateImportCommand } from '../model/certificate.model';
 import EncryptionService from './encryption.service';
-import { CertificateCommandDTO, CertificateDTO, CertificateExportFormat } from '../../shared/model/certificate.model';
 import { generateRandomId } from './utils';
 import {
   assertKeyMatchesCertificate,
@@ -18,10 +23,6 @@ import {
   readCertificate,
   splitPemChain
 } from './utils-certificate';
-import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
-import { NotFoundError, OIBusValidationError } from '../model/types';
-import { GetUserInfo } from '../../shared/model/types';
-import type { ILogger } from '../model/logger.model';
 
 export default class CertificateService {
   constructor(

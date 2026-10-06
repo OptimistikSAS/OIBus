@@ -1,16 +1,18 @@
 import { TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test, vi, MockedFunction } from 'vitest';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
-import ManageGroupsModalComponent from './manage-groups-modal.component';
-import { ModalService } from '../../../shared/modal.service';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Observable, of } from 'rxjs';
+import { beforeEach, describe, expect, MockedFunction, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
+
+import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/south-connector.model';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import testData from '../../../../../../backend/src/tests/utils/test-data';
+import { ModalService } from '../../../shared/modal.service';
+import ManageGroupsModalComponent from './manage-groups-modal.component';
 
 const manifest = testData.south.manifest;
 const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;

@@ -1,10 +1,11 @@
-import { beforeEach, afterEach, describe, it, mock, type Mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { afterEach, beforeEach, describe, it, type Mock, mock } from 'node:test';
+
+import { version } from '../../package.json';
+import { createMockResponse } from '../tests/__mocks__/undici.mock';
 import { encryptionService } from './encryption.service';
 import { clearProxyAgentCache, HTTPRequest, ReqOptions, retryableHttpStatusCodes } from './http-request.utils';
-import { createMockResponse } from '../tests/__mocks__/undici.mock';
-import { version } from '../../package.json';
 
 const nodeRequire = createRequire(import.meta.url);
 const undiciModule = nodeRequire('undici');

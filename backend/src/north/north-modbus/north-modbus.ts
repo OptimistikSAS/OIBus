@@ -1,16 +1,19 @@
-import NorthConnector from '../north-connector';
-import { NorthModbusSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
-import net from 'node:net';
-import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
-import { client } from 'jsmodbus';
-import { OIBusModbusValue } from '../../transformers/connector-types.model';
-import type { ICacheService } from '../../model/cache.service.model';
-import { connectSocket } from '../../service/utils-modbus';
-import { OIBusError } from '../../model/engine.model';
 import { ReadStream } from 'node:fs';
+import net from 'node:net';
+
+import { client } from 'jsmodbus';
+import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
+
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { NorthModbusSettings } from '../../../shared/model/connector/north-settings.model';
+
+import type { ICacheService } from '../../model/cache.service.model';
+import { OIBusError } from '../../model/engine.model';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { streamToString } from '../../service/utils';
+import { connectSocket } from '../../service/utils-modbus';
+import { OIBusModbusValue } from '../../transformers/connector-types.model';
+import NorthConnector from '../north-connector';
 
 /**
  * Class NorthModbus - Write values in a Modbus server

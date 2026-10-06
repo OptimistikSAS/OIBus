@@ -1,9 +1,12 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { ControlContainer, FormGroupName, ReactiveFormsModule } from '@angular/forms';
+
 import { TranslateDirective } from '@ngx-translate/core';
+
+import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+import { OIBusCertificateAttribute } from '@oibus/shared/connector/form.model';
+
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
-import { OIBusCertificateAttribute } from '@oibus/shared/form.model';
-import { CertificateDTO } from '@oibus/shared/certificate.model';
 
 @Component({
   selector: 'oib-oibus-certificate-form-control',

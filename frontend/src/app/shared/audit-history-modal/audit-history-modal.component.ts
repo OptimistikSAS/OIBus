@@ -1,14 +1,17 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+
 import { NgbActiveModal, NgbDropdownModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+
+import { AuditEntityType, AuditLogDTO } from '@oibus/shared/api/audit.model';
+
 import { AuditService } from '../../services/audit.service';
-import { AuditEntityType, AuditLogDTO } from '@oibus/shared/audit.model';
-import { DatetimePipe } from '../datetime.pipe';
-import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
 import { AuditDiffComponent } from '../audit-diff/audit-diff.component';
 import { AuditJsonDiffComponent } from '../audit-diff/audit-json-diff.component';
 import { AuditJsonSideBySideComponent } from '../audit-diff/audit-json-side-by-side.component';
 import { AuditUserPipe } from '../audit-user.pipe';
+import { DatetimePipe } from '../datetime.pipe';
+import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
 
 export type AuditDiffMode = 'table' | 'json-diff' | 'json-side-by-side';
 

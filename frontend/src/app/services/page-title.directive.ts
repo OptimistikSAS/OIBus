@@ -1,5 +1,5 @@
 /* eslint-disable @angular-eslint/directive-selector */
-import { Directive, OnChanges, inject, input } from '@angular/core';
+import { Directive, inject, input, OnChanges } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 
 /**

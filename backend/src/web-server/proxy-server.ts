@@ -1,12 +1,14 @@
 import http from 'node:http';
-import * as stream from 'node:stream';
 import net from 'node:net';
-import httpProxy from 'http-proxy';
+import * as stream from 'node:stream';
+
 import argon2 from 'argon2';
-import { testIPOnFilter } from '../service/utils';
-import { loggerService } from '../service/logger/logger.service';
+import httpProxy from 'http-proxy';
+
 import { EngineSettings } from '../model/engine.model';
 import { encryptionService } from '../service/encryption.service';
+import { loggerService } from '../service/logger/logger.service';
+import { testIPOnFilter } from '../service/utils';
 
 /**
  * Class Server - Provides the web client and establish socket connections.

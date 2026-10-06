@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+
 import { removeEmptyTimestampOrigin } from '../../../../service/config-transfer/config-upgrades/3.9/v3.9.2';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';

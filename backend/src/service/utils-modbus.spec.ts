@@ -1,5 +1,12 @@
-import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import net from 'node:net';
+import Stream from 'node:stream';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
+import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
+
+import { SouthModbusSettings } from '../../shared/model/connector/south-settings.model';
+
 import {
   connectSocket,
   getNumberOfWords,
@@ -11,10 +18,6 @@ import {
   readHoldingRegister,
   readInputRegister
 } from './utils-modbus';
-import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
-import { SouthModbusSettings } from '../../shared/model/south-settings.model';
-import net from 'node:net';
-import Stream from 'node:stream';
 
 describe('Modbus Utilities', () => {
   let mockClient: {

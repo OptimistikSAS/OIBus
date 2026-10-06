@@ -1,5 +1,6 @@
+import { ActivationWindow, ScanModeInterval, ScanModeType } from '../../shared/model/api/scan-mode.model';
+
 import { BaseEntity } from './types';
-import { ActivationWindow, ScanModeInterval, ScanModeType } from '../../shared/model/scan-mode.model';
 
 export interface ScanMode extends BaseEntity {
   name: string;

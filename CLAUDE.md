@@ -137,10 +137,20 @@ The Express 5 server (`backend/src/web-server/`) uses **tsoa** for contract-firs
 
 ### Shared model
 
-`backend/shared/model/` holds the types shared by backend and frontend: REST DTOs, connector manifests/form model,
-generated settings interfaces, and the OIAnalytics configuration DTOs. It is compiled into the frontend, so it must stay
-self-contained — files there may only import sibling files (enforced by the backend ESLint config). Backend-only types
-(entities, cache metadata, …) belong in `backend/src/model/`, and services/controllers map entities to DTOs.
+`backend/shared/model/` holds the types shared by backend and frontend, split by purpose:
+
+- `common/` — base types (`Instant`, `Page`, `BaseEntity`, …) and the data content flowing through the engine
+  (`OIBusContent`, `OIBusTimeValue`, `OIBusSetpoint`, …)
+- `connector/` — connector/transformer type catalogs and manifests (`OIBUS_SOUTH_TYPES`, `SouthConnectorManifest`, …),
+  the form model, and the `*-settings.model.ts` files generated from the manifests
+  (`npm run generate:settings-interface`, do not edit by hand)
+- `api/` — REST DTOs, commands and search params exposed by the tsoa controllers
+- `oia/` — the OIAnalytics contract: commands, messages, and the configuration DTOs (also the config export file format)
+
+Layering is `common` ← `connector` ← `api` ← `oia`: a folder only imports from itself and the folders to its left. It is
+compiled into the frontend, so it must stay self-contained — never backend code, Node built-ins or npm packages. Both
+rules are enforced by the backend ESLint config. Backend-only types (entities, cache metadata, …) belong in
+`backend/src/model/`, and services/controllers map entities to DTOs.
 
 The frontend imports it through the `@oibus/shared/*` alias (`frontend/tsconfig.json`), never via a relative path, and
 must not import anything else from the backend (enforced by the frontend ESLint config; specs may still use the backend
@@ -195,6 +205,11 @@ the DOM. Chromium must be installed before the first run: `npx playwright instal
 - **ESLint**: TypeScript ESLint recommended + stylistic; `@typescript-eslint/no-deprecated` enforced; `console.log` is
   banned (use `console.info/warn/error`); no `fdescribe`/`fit` in tests.
 - Unused variables must be prefixed with `_` to suppress the lint error.
+- **Imports** are sorted by `eslint-plugin-simple-import-sort` (fix with `npm run lint:fix`, don't order them by hand):
+  groups separated by a blank line — side-effect imports, Node built-ins (backend/launcher) or `@angular/*` (frontend),
+  npm packages, the shared model (`../shared/model/…` / `@oibus/shared/…`), then relative imports — alphabetical
+  within each group, names inside braces too. One import statement per module (`no-duplicate-imports`; a separate
+  `import type` is allowed).
 
 ---
 

@@ -1,4 +1,5 @@
-import type { Instant } from '../../../shared/model/types';
+import type { Instant } from '../../../shared/model/common/types';
+
 import type { NorthMetricsEvents } from '../../north/north-connector';
 
 /**

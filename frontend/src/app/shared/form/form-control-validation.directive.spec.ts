@@ -1,9 +1,11 @@
-import { FormControlValidationDirective } from './form-control-validation.directive';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
+
+import { FormControlValidationDirective } from './form-control-validation.directive';
 
 @Component({
   selector: 'oib-test-form-control-validation-component',

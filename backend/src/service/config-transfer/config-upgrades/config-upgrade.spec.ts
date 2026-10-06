@@ -1,5 +1,6 @@
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+
 import { forEachHistoryQuery, forEachHistoryQueryItem, forEachNorth, forEachSouth, forEachSouthItem, JsonObject } from './config-upgrade';
 
 const config = (): JsonObject => ({

@@ -1,14 +1,16 @@
 import { TestBed } from '@angular/core/testing';
+
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { SelectExistingTransformerComponent } from './select-existing-transformer.component';
-import { NorthConnectorService } from '../../../services/north-connector.service';
-import { HistoryQueryService } from '../../../services/history-query.service';
+import { HistoryQueryDTO, HistoryQueryLightDTO } from '@oibus/shared/api/history-query.model';
+import { NorthConnectorDTO, NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
+
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock } from '../../../../test/vitest-create-mock';
-import { NorthConnectorDTO, NorthConnectorLightDTO } from '@oibus/shared/north-connector.model';
-import { HistoryQueryDTO, HistoryQueryLightDTO } from '@oibus/shared/history-query.model';
+import { HistoryQueryService } from '../../../services/history-query.service';
+import { NorthConnectorService } from '../../../services/north-connector.service';
+import { SelectExistingTransformerComponent } from './select-existing-transformer.component';
 
 const norths = [
   { id: 'north-1', name: 'North One' },

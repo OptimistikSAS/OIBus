@@ -1,8 +1,10 @@
 import { mock } from 'node:test';
-import { CacheMetadata } from '../../../../shared/model/engine.model';
+
+import { CacheMetadata } from '../../../../shared/model/api/engine.model';
+
 import { CacheMetadataSource } from '../../../model/engine.model';
-import { CustomTransformer } from '../../../model/transformer.model';
 import type { ILogger } from '../../../model/logger.model';
+import { CustomTransformer } from '../../../model/transformer.model';
 
 /**
  * Create a mock object for Sandbox Service

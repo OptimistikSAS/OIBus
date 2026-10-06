@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { MergeView } from '@codemirror/merge';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+
 import { AuditJsonSideBySideComponent } from './audit-json-side-by-side.component';
 
 class AuditJsonSideBySideComponentTester {

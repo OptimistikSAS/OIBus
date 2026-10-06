@@ -1,16 +1,22 @@
 import { appendFileSync, openSync, readdirSync } from 'node:fs';
-import { ConnectorManifest } from '../shared/model/types';
-import { SouthConnectorManifest } from '../shared/model/south-connector.model';
-import { TransformerManifest } from '../shared/model/transformer.model';
 import path from 'node:path';
-import { OIBUS_PLATFORMS, OIBusAttribute, OIBusEnablingCondition, OIBusObjectAttribute } from '../shared/model/form.model';
 
-const SOUTH_SETTINGS_DESTINATION_PATH = 'shared/model/south-settings.model.ts';
-const NORTH_SETTINGS_DESTINATION_PATH = 'shared/model/north-settings.model.ts';
-const TRANSFORMER_SETTINGS_DESTINATION_PATH = 'shared/model/transformer-settings.model.ts';
+import {
+  ConnectorManifest,
+  OIBUS_PLATFORMS,
+  OIBusAttribute,
+  OIBusEnablingCondition,
+  OIBusObjectAttribute
+} from '../shared/model/connector/form.model';
+import { SouthConnectorManifest } from '../shared/model/connector/south-manifest.model';
+import { TransformerManifest } from '../shared/model/connector/transformer-manifest.model';
 
-const SCAN_MODE_IMPORT = 'import { ScanModeDTO } from "./scan-mode.model";';
-const TIMEZONE_IMPORT = "import { Timezone } from './types';\n";
+const SOUTH_SETTINGS_DESTINATION_PATH = 'shared/model/connector/south-settings.model.ts';
+const NORTH_SETTINGS_DESTINATION_PATH = 'shared/model/connector/north-settings.model.ts';
+const TRANSFORMER_SETTINGS_DESTINATION_PATH = 'shared/model/connector/transformer-settings.model.ts';
+
+const SCAN_MODE_IMPORT = 'import { ScanModeDTO } from "../api/scan-mode.model";';
+const TIMEZONE_IMPORT = "import { Timezone } from '../common/types';\n";
 
 type ConnectorType = 'South' | 'North';
 

@@ -1,19 +1,21 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test } from 'vitest';
 
-import { TransformerListComponent } from './transformer-list.component';
-import { EditTransformerModalComponent } from './edit-transformer-modal/edit-transformer-modal.component';
-import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { TransformerService } from '../../services/transformer.service';
-import { ConfirmationService } from '../../shared/confirmation.service';
-import { NotificationService } from '../../shared/notification.service';
-import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
+import { of } from 'rxjs';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { CustomTransformerDTO, TransformerDTO } from '@oibus/shared/api/transformer.model';
+
 import testData from '../../../../../backend/src/tests/utils/test-data';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
-import { CustomTransformerDTO, TransformerDTO } from '@oibus/shared/transformer.model';
+import { TransformerService } from '../../services/transformer.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
+import { NotificationService } from '../../shared/notification.service';
+import { EditTransformerModalComponent } from './edit-transformer-modal/edit-transformer-modal.component';
+import { TransformerListComponent } from './transformer-list.component';
 
 class TransformerListComponentTester {
   readonly fixture = TestBed.createComponent(TransformerListComponent);

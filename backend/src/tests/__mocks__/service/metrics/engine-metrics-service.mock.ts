@@ -1,6 +1,8 @@
 import { EventEmitter } from 'node:events';
 import { mock } from 'node:test';
-import { EngineMetrics } from '../../../../../shared/model/engine.model';
+
+import { EngineMetrics } from '../../../../../shared/model/api/engine.model';
+
 import type { ILogger } from '../../../../model/logger.model';
 
 /**

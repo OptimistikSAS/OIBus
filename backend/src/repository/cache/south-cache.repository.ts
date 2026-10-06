@@ -1,5 +1,6 @@
 import { Database, Statement } from 'better-sqlite3';
-import { SouthItemLastValue } from '../../../shared/model/south-connector.model';
+
+import { SouthItemLastValue } from '../../../shared/model/api/south-connector.model';
 
 /**
  * Internal cache-row shape. Distinct from the public {@link SouthItemLastValue} API type (whose

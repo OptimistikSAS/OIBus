@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { BehaviorSubject, defer, finalize, Observable, switchMap } from 'rxjs';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { TranslateDirective } from '@ngx-translate/core';
 import { AsyncPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+
+import { TranslateDirective } from '@ngx-translate/core';
+import { BehaviorSubject, defer, finalize, Observable, switchMap } from 'rxjs';
 
 /**
  * A class that holds the state of an observable,

@@ -1,8 +1,10 @@
 import { DateTime } from 'luxon';
-import ConfigTransferBuilderService from './config-transfer-builder.service';
+
+import { ConfigExportDTO } from '../../../shared/model/oia/config-transfer.model';
+
 import EngineRepository from '../../repository/config/engine.repository';
 import OIAnalyticsRegistrationService from '../oia/oianalytics-registration.service';
-import { ConfigExportDTO } from '../../../shared/model/config-transfer.model';
+import ConfigTransferBuilderService from './config-transfer-builder.service';
 
 /**
  * Wraps `ConfigTransferBuilderService` to produce the versioned, downloadable export used by the config

@@ -1,10 +1,12 @@
-import { Component, inject, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, viewChild } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { OibCodeBlockComponent } from '../../../form/oib-code-block/oib-code-block.component';
-import { FileCacheContent } from '@oibus/shared/engine.model';
+
+import { FileCacheContent } from '@oibus/shared/api/engine.model';
+
 import { FileSizePipe } from '../../../file-size.pipe';
+import { OibCodeBlockComponent } from '../../../form/oib-code-block/oib-code-block.component';
 
 @Component({
   selector: 'oib-file-content-modal',

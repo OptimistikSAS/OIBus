@@ -1,12 +1,16 @@
-import OIBusTransformer from '../../oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
-import { CacheMetadata, OIBusTimeValue } from '../../../../shared/model/engine.model';
-import { CacheMetadataSource } from '../../../model/engine.model';
 import { promisify } from 'node:util';
-import { convertDateTimeToInstant, convertDelimiter, generateRandomId } from '../../../service/utils';
+
 import Papa from 'papaparse';
-import { TransformerCsvToTimeValuesSettings } from '../../../../shared/model/transformer-settings.model';
+
+import { CacheMetadata } from '../../../../shared/model/api/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/common/content.model';
+import { TransformerCsvToTimeValuesSettings } from '../../../../shared/model/connector/transformer-settings.model';
+
+import { CacheMetadataSource } from '../../../model/engine.model';
+import { convertDateTimeToInstant, convertDelimiter, generateRandomId } from '../../../service/utils';
+import OIBusTransformer from '../../oibus-transformer';
 
 const pipelineAsync = promisify(pipeline);
 

@@ -1,12 +1,15 @@
 import { mock } from 'node:test';
+
 import type { Database } from 'better-sqlite3';
-import { EngineSettings } from '../../../../model/engine.model';
+
 import {
   EngineLoggerCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
   EngineWebServerCommandDTO
-} from '../../../../../shared/model/engine.model';
+} from '../../../../../shared/model/api/engine.model';
+
+import { EngineSettings } from '../../../../model/engine.model';
 import EngineRepository from '../../../../repository/config/engine.repository';
 import { createAuditServiceMock } from '../../../utils/test-utils';
 

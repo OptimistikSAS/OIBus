@@ -1,15 +1,17 @@
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { TestBed } from '@angular/core/testing';
 
-import { TransformerTestComponent } from './transformer-test.component';
-import { TransformerService } from '../../../services/transformer.service';
+import { of } from 'rxjs';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { CustomTransformerCommandDTO, InputTemplate } from '@oibus/shared/api/transformer.model';
+
+import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import testData from '../../../../../../backend/src/tests/utils/test-data';
-import { CustomTransformerCommandDTO, InputTemplate } from '@oibus/shared/transformer.model';
+import { TransformerService } from '../../../services/transformer.service';
+import { TransformerTestComponent } from './transformer-test.component';
 
 describe('TransformerTestComponent', () => {
   let transformerService: MockObject<TransformerService>;

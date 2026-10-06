@@ -1,26 +1,28 @@
 import { mock } from 'node:test';
+
+import { OIBusConnectionTestResult } from '../../../../shared/model/api/engine.model';
 import {
-  OIBusSouthType,
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
   SouthConnectorItemTestResult,
-  SouthConnectorManifest,
   SouthExploreBrowseResult,
   SouthExploreStartResult,
   SouthItemGroupCommandDTO,
   SouthItemLastValueResponse
-} from '../../../../shared/model/south-connector.model';
+} from '../../../../shared/model/api/south-connector.model';
+import { OIBusAnyContent, OIBusRecord } from '../../../../shared/model/common/content.model';
+import { Page } from '../../../../shared/model/common/types';
+import { OIBusSouthType, SouthConnectorManifest } from '../../../../shared/model/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '../../../../shared/model/connector/south-settings.model';
+
 import {
   SouthConnectorEntity,
   SouthConnectorEntityLight,
   SouthConnectorItemEntity,
   SouthItemGroupEntity
 } from '../../../model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusAnyContent, OIBusConnectionTestResult, OIBusRecord } from '../../../../shared/model/engine.model';
-import { Page } from '../../../../shared/model/types';
 
 /**
  * Create a mock object for South Service

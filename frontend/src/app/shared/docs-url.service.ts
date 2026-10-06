@@ -1,5 +1,7 @@
-import { Service, inject } from '@angular/core';
-import { Language } from '@oibus/shared/types';
+import { inject, Service } from '@angular/core';
+
+import { Language } from '@oibus/shared/common/types';
+
 import { WindowService } from './window.service';
 
 /**

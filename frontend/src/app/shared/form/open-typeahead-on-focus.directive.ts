@@ -1,9 +1,11 @@
 /* eslint-disable @angular-eslint/directive-selector */
 
 import { Directive, ElementRef, HostListener, inject } from '@angular/core';
-import { debounceTime, filter, Subject } from 'rxjs';
-import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { NgControl } from '@angular/forms';
+
+import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { debounceTime, filter, Subject } from 'rxjs';
+
 import { TYPEAHEAD_DEBOUNCE_TIME } from './typeahead';
 
 /**

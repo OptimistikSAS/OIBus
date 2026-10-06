@@ -1,8 +1,11 @@
-import { Controller, Get, Post, Request, Route, SuccessResponse, Tags, UploadedFile } from 'tsoa';
-import { CustomExpressRequest } from '../express';
 import fs from 'node:fs/promises';
-import { ConfigImportPreviewDTO, ConfigImportResponseDTO } from '../../../shared/model/config-transfer.model';
+
+import { Controller, Get, Post, Request, Route, SuccessResponse, Tags, UploadedFile } from 'tsoa';
+
+import { ConfigImportPreviewDTO, ConfigImportResponseDTO } from '../../../shared/model/oia/config-transfer.model';
+
 import { OIBusValidationError } from '../../model/types';
+import { CustomExpressRequest } from '../express';
 
 @Route('/api/config-transfer')
 @Tags('Config Transfer')

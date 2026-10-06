@@ -1,6 +1,8 @@
 import crypto from 'node:crypto';
+
 import { Database } from 'better-sqlite3';
-import { CryptoSettings } from '../../../shared/model/engine.model';
+
+import { CryptoSettings } from '../../../shared/model/api/engine.model';
 
 export const CRYPTO_TABLE = 'crypto';
 

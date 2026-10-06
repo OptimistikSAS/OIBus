@@ -1,5 +1,6 @@
 import {
   afterRenderEffect,
+  ChangeDetectionStrategy,
   Component,
   computed,
   DestroyRef,
@@ -8,20 +9,22 @@ import {
   input,
   output,
   signal,
-  viewChild,
-  ChangeDetectionStrategy
+  viewChild
 } from '@angular/core';
-import { OIBusContent, OIBusTimeValue } from '@oibus/shared/engine.model';
-import { createPageFromArray, Page } from '@oibus/shared/types';
+
+import { json } from '@codemirror/lang-json';
+import { Compartment, EditorState } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
+import { TranslatePipe } from '@ngx-translate/core';
+import { basicSetup } from 'codemirror';
+import Papa from 'papaparse';
+
+import { OIBusContent, OIBusTimeValue } from '@oibus/shared/common/content.model';
+import { createPageFromArray, Page } from '@oibus/shared/common/types';
+
+import { ProgressbarComponent } from '../../../../history-query/history-query-detail/history-metrics/progressbar/progressbar.component';
 import { LoadingSpinnerComponent } from '../../../../shared/loading-spinner/loading-spinner.component';
 import { PaginationComponent } from '../../../../shared/pagination/pagination.component';
-import { ProgressbarComponent } from '../../../../history-query/history-query-detail/history-metrics/progressbar/progressbar.component';
-import { TranslatePipe } from '@ngx-translate/core';
-import { EditorView } from '@codemirror/view';
-import { Compartment, EditorState } from '@codemirror/state';
-import { basicSetup } from 'codemirror';
-import { json } from '@codemirror/lang-json';
-import Papa from 'papaparse';
 
 export type ContentDisplayMode = 'table' | 'any' | 'json';
 

@@ -1,6 +1,7 @@
 import { Service } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+
 import { InterpolationParameters } from '@ngx-translate/core';
+import { Observable, Subject } from 'rxjs';
 
 /**
  * A notification, which can contain a plain message (typically for technical errors coming from the backend),

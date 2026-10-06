@@ -1,7 +1,10 @@
-import { DateTime } from 'luxon';
 import { isDeepStrictEqual } from 'node:util';
+
+import { DateTime } from 'luxon';
+
+import { SouthCachingStrategy, SouthCachingThresholdType } from '../../shared/model/api/south-connector.model';
+
 import { Instant } from '../model/types';
-import { SouthCachingStrategy, SouthCachingThresholdType } from '../../shared/model/south-connector.model';
 
 export interface CachingStrategyDecisionInput {
   cachingStrategy: SouthCachingStrategy;

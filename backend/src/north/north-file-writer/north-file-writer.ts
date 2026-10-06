@@ -1,20 +1,23 @@
+import { execFile as execFileCb } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { execFile as execFileCb } from 'node:child_process';
 import { promisify } from 'node:util';
 
-import NorthConnector from '../north-connector';
 import { encryptionService } from '../../service/encryption.service';
 import { sanitizeCommandError } from '../../service/utils';
+import NorthConnector from '../north-connector';
 
 const execFile = promisify(execFileCb);
-import { DateTime } from 'luxon';
-import { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
-import type { ICacheService } from '../../model/cache.service.model';
 import { createWriteStream, ReadStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
+
+import { DateTime } from 'luxon';
+
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { NorthFileWriterSettings } from '../../../shared/model/connector/north-settings.model';
+
+import type { ICacheService } from '../../model/cache.service.model';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
 
 /**
  * Class NorthFileWriter - Write files in an output folder

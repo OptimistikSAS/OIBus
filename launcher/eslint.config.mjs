@@ -16,6 +16,10 @@ import tseslint from 'typescript-eslint';
 // `lint` script) instead.
 import eslintConfigPrettier from 'eslint-config-prettier';
 
+// Sorts imports (statements and the names inside braces) in a fixed order, auto-fixed by `npm run lint:fix`.
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
+import { builtinModules } from 'node:module';
+
 // Export our config array, which is composed together thanks to the defineConfig utility function from eslint
 export default [
   { ignores: ['**/node_modules/', 'dist/'] },
@@ -80,6 +84,31 @@ export default [
       'require-await': 'error'
     }
   }),
+  {
+    // Import groups, separated by a blank line and sorted alphabetically within each group.
+    files: ['**/*.ts'],
+    plugins: { 'simple-import-sort': simpleImportSort },
+    rules: {
+      'simple-import-sort/imports': [
+        'error',
+        {
+          groups: [
+            // side-effect imports
+            ['^\\u0000'],
+            // Node.js built-ins
+            ['^node:', `^(${builtinModules.join('|')})(/|$)`],
+            // npm packages
+            ['^@?\\w'],
+            // relative imports
+            ['^\\.']
+          ]
+        }
+      ],
+      'simple-import-sort/exports': 'error',
+      // one import statement per module (plus an optional separate `import type`)
+      'no-duplicate-imports': ['error', { allowSeparateTypeImports: true }]
+    }
+  },
   eslintConfigPrettier,
   // set the parse options for typed rules
   {

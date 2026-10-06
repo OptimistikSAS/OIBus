@@ -1,7 +1,9 @@
-import * as forge from 'node-forge';
 import { DateTime } from 'luxon';
+import * as forge from 'node-forge';
+
+import { Instant } from '../../shared/model/common/types';
+
 import { OIBusValidationError } from '../model/types';
-import { Instant } from '../../shared/model/types';
 
 const PEM_CERT_HEADER = '-----BEGIN CERTIFICATE-----';
 

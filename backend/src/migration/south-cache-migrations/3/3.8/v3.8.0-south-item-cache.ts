@@ -1,7 +1,7 @@
 import path from 'node:path';
 
-import { Knex } from 'knex';
 import Database from 'better-sqlite3';
+import { Knex } from 'knex';
 
 const SOUTH_CACHE_TABLE = 'cache_history';
 const MIGRATION_HINTS_TABLE = '_migration_v380_file_connector_hints';

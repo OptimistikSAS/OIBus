@@ -1,19 +1,22 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import path from 'node:path';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import { DateTime } from 'luxon';
+import type { FileInfo } from 'ssh2-sftp-client';
+
+import type { SouthSFTPItemSettings, SouthSFTPSettings } from '../../../shared/model/connector/south-settings.model';
+
+import type { SouthConnectorEntity } from '../../model/south-connector.model';
+import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import type { SouthSFTPItemSettings, SouthSFTPSettings } from '../../../shared/model/south-settings.model';
-import type { SouthConnectorEntity } from '../../model/south-connector.model';
+import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthSftpClass from './south-sftp';
-import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import type { FileInfo } from 'ssh2-sftp-client';
-import { DateTime } from 'luxon';
 
 const nodeRequire = createRequire(import.meta.url);
 

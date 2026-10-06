@@ -1,22 +1,24 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
-import { firstValueFrom, switchMap, tap } from 'rxjs';
-import { Modal, ModalService } from '../../shared/modal.service';
-import { ConfirmationService } from '../../shared/confirmation.service';
-import { NotificationService } from '../../shared/notification.service';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
-import { DocsUrlService } from '../../shared/docs-url.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { firstValueFrom, switchMap, tap } from 'rxjs';
+
+import { CustomTransformerDTO } from '@oibus/shared/api/transformer.model';
+import { createPageFromArray, Page } from '@oibus/shared/common/types';
+
 import { TransformerService } from '../../services/transformer.service';
-import { CustomTransformerDTO } from '@oibus/shared/transformer.model';
-import { EditTransformerModalComponent } from './edit-transformer-modal/edit-transformer-modal.component';
-import { createPageFromArray, Page } from '@oibus/shared/types';
-import { emptyPage } from '../../shared/test-utils';
-import { PaginationComponent } from '../../shared/pagination/pagination.component';
-import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { DocsUrlService } from '../../shared/docs-url.service';
+import { Modal, ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { emptyPage } from '../../shared/test-utils';
+import { EditTransformerModalComponent } from './edit-transformer-modal/edit-transformer-modal.component';
 
 type TransformerSortField = 'name' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';

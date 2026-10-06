@@ -1,6 +1,7 @@
 import { Knex } from 'knex';
-import { generateRandomId } from '../../../../service/utils';
 import { DateTime } from 'luxon';
+
+import { generateRandomId } from '../../../../service/utils';
 
 type Timezone = string;
 

@@ -1,7 +1,9 @@
-import { TestBed } from '@angular/core/testing';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { ModalService } from './modal.service';
 
 @Component({ selector: 'oib-test-modal-component', template: 'Hello', changeDetection: ChangeDetectionStrategy.OnPush })

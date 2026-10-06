@@ -1,13 +1,15 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { of, switchMap } from 'rxjs';
+import { RouterLink } from '@angular/router';
+
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { CurrentUserService } from '../shared/current-user.service';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { of, switchMap } from 'rxjs';
+
 import { EngineService } from '../services/engine.service';
-import { DocsUrlService } from '../shared/docs-url.service';
 import { PageTitleDirective } from '../services/page-title.directive';
+import { CurrentUserService } from '../shared/current-user.service';
+import { DocsUrlService } from '../shared/docs-url.service';
 
 @Component({
   selector: 'oib-navbar',

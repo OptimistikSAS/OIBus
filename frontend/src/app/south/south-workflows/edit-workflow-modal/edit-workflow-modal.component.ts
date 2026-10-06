@@ -1,5 +1,4 @@
-import { Component, inject, AfterViewInit, ChangeDetectionStrategy, ViewChild } from '@angular/core';
-import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
+import { AfterViewInit, ChangeDetectionStrategy, Component, inject, ViewChild } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -11,37 +10,36 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
+
+import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { Observable, switchMap } from 'rxjs';
-import { OIBusRecordListContent } from '@oibus/shared/engine.model';
+
 import {
   ConfigurationWorkflowCommandDTO,
   RECORD_FILTER_OPERATORS,
   RecordFilterCondition,
   RecordFilterOperator
-} from '@oibus/shared/configuration-workflow.model';
-import {
-  SouthConnectorExploreEntry,
-  SouthConnectorManifest,
-  SouthItemGroupCommandDTO,
-  SouthItemGroupDTO,
-  SQL_FAMILY_SOUTH_TYPES
-} from '@oibus/shared/south-connector.model';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import { SouthSettings } from '@oibus/shared/south-settings.model';
-import { OIBusAttribute, OIBusAttributeType, OIBusEnablingCondition, OIBusObjectAttribute } from '@oibus/shared/form.model';
-import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
-import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
-import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { ModalService } from '../../../shared/modal.service';
-import { EditSouthItemGroupModalComponent } from '../../south-items/edit-south-item-group-modal/edit-south-item-group-modal.component';
-import { SouthExploreModalComponent } from '../../../shared/south-explore-modal/south-explore-modal.component';
-import { ExploreTreeComponent } from '../../../shared/explore-tree/explore-tree.component';
-import { SouthConnectorService } from '../../../services/south-connector.service';
+} from '@oibus/shared/api/configuration-workflow.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { SouthConnectorExploreEntry, SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
+import { OIBusRecordListContent } from '@oibus/shared/common/content.model';
+import { OIBusAttribute, OIBusAttributeType, OIBusEnablingCondition, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
+import { SouthConnectorManifest, SQL_FAMILY_SOUTH_TYPES } from '@oibus/shared/connector/south-manifest.model';
+import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
+
 import { EngineService } from '../../../services/engine.service';
+import { SouthConnectorService } from '../../../services/south-connector.service';
+import { ExploreTreeComponent } from '../../../shared/explore-tree/explore-tree.component';
 import { extractErrorMessage } from '../../../shared/extract-error-message';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
+import { ModalService } from '../../../shared/modal.service';
+import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
+import { SouthExploreModalComponent } from '../../../shared/south-explore-modal/south-explore-modal.component';
 import { TransformerTestResultComponent } from '../../../shared/transformer-test-result/transformer-test-result.component';
+import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { EditSouthItemGroupModalComponent } from '../../south-items/edit-south-item-group-modal/edit-south-item-group-modal.component';
 
 // 'group-select' is not part of the manifest's own attribute-type vocabulary - it tags the
 // historian groupId field, whose options come from this south connector's item groups rather

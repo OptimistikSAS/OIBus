@@ -1,10 +1,12 @@
-import { describe, it, before, after, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { after, before, beforeEach, describe, it, mock } from 'node:test';
+
 import knex, { Knex } from 'knex';
-import { config, down, up, MAX_DB_SIZE_TO_VACUUM } from './v3.8.0-add-logs-indexes';
+
+import { config, down, MAX_DB_SIZE_TO_VACUUM, up } from './v3.8.0-add-logs-indexes';
 
 /**
  * Create the logs table as it exists immediately before this migration runs

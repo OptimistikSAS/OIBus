@@ -1,16 +1,22 @@
-import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
-import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
-import path from 'node:path';
+import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import os from 'node:os';
+import path from 'node:path';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
-import EncryptionService, { CERT_FILE_NAME, CERT_PRIVATE_KEY_FILE_NAME, CERT_PUBLIC_KEY_FILE_NAME } from './encryption.service';
-import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../shared/model/south-connector.model';
-import { SouthOPCUASettings } from '../../shared/model/south-settings.model';
-import { OIBusArrayAttribute, OIBusObjectAttribute, OIBusSecretAttribute, OIBusStringAttribute } from '../../shared/model/form.model';
+import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../shared/model/api/south-connector.model';
+import {
+  OIBusArrayAttribute,
+  OIBusObjectAttribute,
+  OIBusSecretAttribute,
+  OIBusStringAttribute
+} from '../../shared/model/connector/form.model';
+import { SouthOPCUASettings } from '../../shared/model/connector/south-settings.model';
+
 import testData from '../tests/utils/test-data';
+import EncryptionService, { CERT_FILE_NAME, CERT_PRIVATE_KEY_FILE_NAME, CERT_PUBLIC_KEY_FILE_NAME } from './encryption.service';
 
 const nodeRequire = createRequire(import.meta.url);
 const forgeModule = nodeRequire('node-forge');

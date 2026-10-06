@@ -1,4 +1,6 @@
 import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidatorFn, Validators } from '@angular/forms';
+
+import { Instant } from '@oibus/shared/common/types';
 import {
   isEnabledOnPlatform,
   OIBusAttribute,
@@ -7,8 +9,8 @@ import {
   OIBusDisplayableAttribute,
   OIBusEnablingCondition,
   OIBusObjectAttribute
-} from '@oibus/shared/form.model';
-import { Instant } from '@oibus/shared/types';
+} from '@oibus/shared/connector/form.model';
+
 import { mqttTopicOverlapValidator, singleTrueValidator, uniqueFieldNamesValidator } from './validators';
 
 export function addAttributeToForm(fb: NonNullableFormBuilder, formGroup: FormGroup, attribute: OIBusAttribute): boolean {

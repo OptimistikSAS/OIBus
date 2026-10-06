@@ -1,9 +1,10 @@
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import { Page } from '../../shared/model/types';
+import { Group, Item, LogDTO, LogSearchParam, Scope } from '../../shared/model/api/logs.model';
+import { Page } from '../../shared/model/common/types';
+
 import { OIBusLog } from '../model/logs.model';
-import { Group, Item, LogDTO, LogSearchParam, Scope } from '../../shared/model/logs.model';
-import LogRepository from '../repository/logs/log.repository';
 import { NotFoundError } from '../model/types';
+import LogRepository from '../repository/logs/log.repository';
+import JoiValidator from '../web-server/controllers/validators/joi.validator';
 
 export default class LogService {
   constructor(

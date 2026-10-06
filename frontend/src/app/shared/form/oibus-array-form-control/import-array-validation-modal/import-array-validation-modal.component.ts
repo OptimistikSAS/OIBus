@@ -1,10 +1,13 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
+
+import { createPageFromArray, Page } from '@oibus/shared/common/types';
+import { OIBusArrayAttribute } from '@oibus/shared/connector/form.model';
+
 import { PaginationComponent } from '../../../pagination/pagination.component';
-import { createPageFromArray, Page } from '@oibus/shared/types';
 import { emptyPage } from '../../../test-utils';
-import { OIBusArrayAttribute } from '@oibus/shared/form.model';
 import { getElementName } from '../../../utils/csv.utils';
 const PAGE_SIZE = 20;
 

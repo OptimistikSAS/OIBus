@@ -61,16 +61,16 @@ compilateur TypeScript détecte les trois premières ; la quatrième est une vé
 ### 1. Ajouter l'id du type à la liste partagée {#1-add-the-type-id-to-the-shared-list}
 
 Pour un connecteur South, ajoutez votre id à `OIBUS_SOUTH_TYPES` dans
-`backend/shared/model/south-connector.model.ts` :
+`backend/shared/model/connector/south-manifest.model.ts` :
 
-```typescript title="backend/shared/model/south-connector.model.ts"
+```typescript title="backend/shared/model/connector/south-manifest.model.ts"
 export const OIBUS_SOUTH_TYPES = [
   // ...existing types...
   'my-new-source' // ← your new type id (kebab-case)
 ] as const;
 ```
 
-Les connecteurs North utilisent `OIBUS_NORTH_TYPES` dans `backend/shared/model/north-connector.model.ts`.
+Les connecteurs North utilisent `OIBUS_NORTH_TYPES` dans `backend/shared/model/connector/north-manifest.model.ts`.
 
 Choisissez une `category` parmi la liste existante (`OIBUS_SOUTH_CATEGORIES` ou `OIBUS_NORTH_CATEGORIES`).
 N'ajoutez pas de nouvelle catégorie sans raison valable — l'interface regroupe les connecteurs par catégorie, et
@@ -117,7 +117,7 @@ npm run generate:settings-interface
 ```
 
 Cela lit chaque `manifest.ts`, dérive l'interface TypeScript correspondante, et l'écrit dans
-`backend/shared/model/south-settings.model.ts` (et l'équivalent North). Le générateur actualise également les
+`backend/shared/model/connector/south-settings.model.ts` (et l'équivalent North). Le générateur actualise également les
 définitions OpenAPI.
 
 :::caution

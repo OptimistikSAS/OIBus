@@ -1,6 +1,7 @@
-import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { before, describe, it } from 'node:test';
+
 import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type * as OdbcLoaderType from './odbc-loader';
 

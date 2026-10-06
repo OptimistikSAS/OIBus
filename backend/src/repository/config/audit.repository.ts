@@ -1,7 +1,9 @@
-import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
+
+import { Page } from '../../../shared/model/common/types';
+
 import { AuditAction, AuditEntityType, AuditLog, AuditSearchParam } from '../../model/audit.model';
-import { Page } from '../../../shared/model/types';
+import { generateRandomId } from '../../service/utils';
 
 const AUDIT_LOGS_TABLE = 'audit_logs';
 

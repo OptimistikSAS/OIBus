@@ -1,24 +1,26 @@
-import { OIBusContent } from '../../shared/model/engine.model';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+import { OIBusContent } from '../../shared/model/common/content.model';
+import { OIBusNorthType } from '../../shared/model/connector/north-manifest.model';
+import { NorthSettings } from '../../shared/model/connector/north-settings.model';
+import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+
+import type { ICacheService } from '../model/cache.service.model';
+import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
+import { HistoryQueryEntity, HistoryQueryItemEntity } from '../model/histor-query.model';
+import { SouthConnectorItemEntity } from '../model/south-connector.model';
+import { Instant } from '../model/types';
+import { buildNorth } from '../north/north-connector-factory';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import { Instant } from '../model/types';
-import { NorthSettings } from '../../shared/model/north-settings.model';
-import { createFolder } from '../service/utils';
-import path from 'node:path';
-import HistoryQuery from './history-query';
-import { HistoryQueryEntity, HistoryQueryItemEntity } from '../model/histor-query.model';
-import { buildNorth } from '../north/north-connector-factory';
-import { buildSouth } from '../south/south-connector-factory';
 import CacheService from '../service/cache/cache.service';
-import type { ICacheService } from '../model/cache.service.model';
-import { OIBusSouthType } from '../../shared/model/south-connector.model';
-import { OIBusNorthType } from '../../shared/model/north-connector.model';
-import fs from 'node:fs/promises';
-import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
-import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import { loggerService } from '../service/logger/logger.service';
+import { createFolder } from '../service/utils';
+import { buildSouth } from '../south/south-connector-factory';
+import HistoryQuery from './history-query';
 
 export const buildHistoryQuery = (
   settings: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,

@@ -1,28 +1,31 @@
-import { AfterContentInit, Component, effect, inject, input, viewChild, ChangeDetectionStrategy } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AfterContentInit, ChangeDetectionStrategy, Component, effect, inject, input, viewChild } from '@angular/core';
+import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { DateTime } from 'luxon';
+import { catchError, of, Subscription } from 'rxjs';
+
+import { HistoryQueryItemCommandDTO } from '@oibus/shared/api/history-query.model';
+import { NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemTestingSettings,
-  SouthConnectorItemTestResult,
-  SouthConnectorManifest
-} from '@oibus/shared/south-connector.model';
-import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { ValErrorDelayDirective } from '../../../shared/form/val-error-delay.directive';
-import { SouthConnectorService } from '../../../services/south-connector.service';
-import { NorthConnectorService } from '../../../services/north-connector.service';
-import { catchError, of, Subscription } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
-import { getMessageFromHttpErrorResponse } from '../../../shared/error-interceptor.service';
-import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DateTime } from 'luxon';
+  SouthConnectorItemTestResult
+} from '@oibus/shared/api/south-connector.model';
+import { HistoryTransformerDTOWithOptions, TransformerDTO } from '@oibus/shared/api/transformer.model';
+import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+
 import { HistoryQueryService } from '../../../services/history-query.service';
-import { HistoryQueryItemCommandDTO } from '@oibus/shared/history-query.model';
-import { HistoryTransformerDTOWithOptions, TransformerDTO } from '@oibus/shared/transformer.model';
-import { NorthConnectorLightDTO } from '@oibus/shared/north-connector.model';
-import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
+import { NorthConnectorService } from '../../../services/north-connector.service';
+import { SouthConnectorService } from '../../../services/south-connector.service';
 import { DateRange, DateRangeSelectorComponent } from '../../../shared/date-range-selector/date-range-selector.component';
-import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
+import { getMessageFromHttpErrorResponse } from '../../../shared/error-interceptor.service';
 import { addAttributeToForm, addEnablingConditions } from '../../../shared/form/dynamic-form.builder';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
+import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
+import { ValErrorDelayDirective } from '../../../shared/form/val-error-delay.directive';
 import { TransformerTestResultComponent } from '../../../shared/transformer-test-result/transformer-test-result.component';
 
 /** A transformer available to run against the test item, with its configured (default) options. */

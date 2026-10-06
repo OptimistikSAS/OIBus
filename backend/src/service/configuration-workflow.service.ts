@@ -1,13 +1,14 @@
-import ConfigurationWorkflowRepository from '../repository/config/configuration-workflow.repository';
-import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import ScanModeRepository from '../repository/config/scan-mode.repository';
-import { ConfigurationWorkflowCommand, ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
-import { ConfigurationWorkflowCommandDTO } from '../../shared/model/configuration-workflow.model';
-import { NotFoundError, OIBusValidationError } from '../model/types';
-import { checkWorkflowMode, resolveIdentityKeyFields } from './configuration-workflow.utils';
-import { ScanMode } from '../model/scan-mode.model';
-import { checkScanMode } from './utils';
+import { ConfigurationWorkflowCommandDTO } from '../../shared/model/api/configuration-workflow.model';
+
 import type DataStreamEngine from '../engine/data-stream-engine';
+import { ConfigurationWorkflowCommand, ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
+import { ScanMode } from '../model/scan-mode.model';
+import { NotFoundError, OIBusValidationError } from '../model/types';
+import ConfigurationWorkflowRepository from '../repository/config/configuration-workflow.repository';
+import ScanModeRepository from '../repository/config/scan-mode.repository';
+import SouthConnectorRepository from '../repository/config/south-connector.repository';
+import { checkWorkflowMode, resolveIdentityKeyFields } from './configuration-workflow.utils';
+import { checkScanMode } from './utils';
 
 /** Minimal slice of OIAnalyticsRegistrationService this service actually calls - see the
  *  IConfigurationWorkflowSouthService/IDataStreamEngine precedent in configuration-workflow-run.service.ts. */

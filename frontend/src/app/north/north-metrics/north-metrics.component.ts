@@ -1,15 +1,19 @@
-import { Component, inject, input, linkedSignal, NgZone, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, linkedSignal, NgZone, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { NorthConnectorMetrics } from '@oibus/shared/engine.model';
+
+import { NorthConnectorMetrics } from '@oibus/shared/api/engine.model';
+import { NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
+import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
+
+import { NorthConnectorService } from '../../services/north-connector.service';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
-import { NorthConnectorLightDTO, NorthConnectorManifest } from '@oibus/shared/north-connector.model';
-import { NorthConnectorService } from '../../services/north-connector.service';
-import { NotificationService } from '../../shared/notification.service';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { FileSizePipe } from '../../shared/file-size.pipe';
-import { Router } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NotificationService } from '../../shared/notification.service';
 
 @Component({
   selector: 'oib-north-metrics',

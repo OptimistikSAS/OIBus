@@ -1,12 +1,14 @@
-import { describe, it, before, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { CustomExpressRequest } from '../express';
-import { createMockServices, fixTsoaModuleResolution, reloadModule } from '../../tests/utils/test-utils';
+import { before, beforeEach, describe, it, mock } from 'node:test';
+
+import { createPageFromArray } from '../../../shared/model/common/types';
+
+import { AuditLog, AuditSearchParam } from '../../model/audit.model';
 import AuditServiceMock from '../../tests/__mocks__/service/audit-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
-import { AuditLog, AuditSearchParam } from '../../model/audit.model';
-import { createPageFromArray } from '../../../shared/model/types';
+import { createMockServices, fixTsoaModuleResolution, reloadModule } from '../../tests/utils/test-utils';
+import { CustomExpressRequest } from '../express';
 import type { AuditController as AuditControllerShape } from './audit.controller';
 
 const nodeRequire = createRequire(import.meta.url);

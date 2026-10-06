@@ -1,7 +1,5 @@
-import NorthConnector from '../north-connector';
-import { NorthOPCUASettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { ReadStream } from 'node:fs';
+
 import {
   AttributeIds,
   ClientSession,
@@ -12,12 +10,17 @@ import {
   StatusCodes,
   UserTokenType
 } from 'node-opcua';
-import { OIBusOPCUAValue } from '../../transformers/connector-types.model';
+
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { NorthOPCUASettings } from '../../../shared/model/connector/north-settings.model';
+
 import type { ICacheService } from '../../model/cache.service.model';
-import { createOPCUASession, createSessionConfigs } from '../../service/utils-opcua';
 import { OIBusError } from '../../model/engine.model';
-import { ReadStream } from 'node:fs';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { streamToString } from '../../service/utils';
+import { createOPCUASession, createSessionConfigs } from '../../service/utils-opcua';
+import { OIBusOPCUAValue } from '../../transformers/connector-types.model';
+import NorthConnector from '../north-connector';
 
 /**
  * Class NorthOPCUA - Write values in an OPCUA server

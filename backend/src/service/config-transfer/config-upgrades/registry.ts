@@ -1,7 +1,7 @@
-import { compareVersions } from './version-compare';
-import { ConfigUpgrade } from './config-upgrade';
 import { upgrade as v3_9_2 } from './3.9/v3.9.2';
 import { upgrade as v3_10_0 } from './3.10/v3.10.0';
+import { ConfigUpgrade } from './config-upgrade';
+import { compareVersions } from './version-compare';
 
 /**
  * Every config upgrade step, in any order (`getUpgradesBetween` sorts them). The oldest configuration

@@ -1,17 +1,19 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
+  contentChild,
   Directive,
   ElementRef,
-  TemplateRef,
   inject,
-  viewChild,
-  contentChild,
   input,
-  computed
+  TemplateRef,
+  viewChild
 } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
+
 import { TranslateDirective } from '@ngx-translate/core';
+
 import { OibHelpComponent } from '../oib-help/oib-help.component';
 
 @Directive({

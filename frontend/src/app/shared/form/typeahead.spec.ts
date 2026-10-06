@@ -1,6 +1,7 @@
-import { inMemoryTypeahead } from './typeahead';
 import { Subject } from 'rxjs';
 import { afterEach, describe, expect, test, vi } from 'vitest';
+
+import { inMemoryTypeahead } from './typeahead';
 
 describe('typeahead', () => {
   interface Item {

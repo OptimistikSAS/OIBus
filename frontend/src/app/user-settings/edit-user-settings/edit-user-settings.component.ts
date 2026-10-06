@@ -1,22 +1,24 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { LANGUAGES, Language, Timezone } from '@oibus/shared/types';
-import { Observable, of, switchMap, tap, timer } from 'rxjs';
-import { CurrentUserService } from '../../shared/current-user.service';
-import { ChangePasswordModalComponent } from '../change-password-modal/change-password-modal.component';
-import { UserDTO, UserCommandDTO } from '@oibus/shared/user.model';
-import { ModalService } from '../../shared/modal.service';
-import { UserSettingsService } from '../../services/user-settings.service';
-import { NotificationService } from '../../shared/notification.service';
-import { TranslateDirective, TranslateService } from '@ngx-translate/core';
-import { WindowService } from '../../shared/window.service';
 
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { inMemoryTypeahead } from '../../shared/form/typeahead';
+import { TranslateDirective, TranslateService } from '@ngx-translate/core';
+import { Observable, of, switchMap, tap, timer } from 'rxjs';
+
+import { UserCommandDTO, UserDTO } from '@oibus/shared/api/user.model';
+import { Language, LANGUAGES, Timezone } from '@oibus/shared/common/types';
+
+import { UserSettingsService } from '../../services/user-settings.service';
+import { CurrentUserService } from '../../shared/current-user.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
+import { inMemoryTypeahead } from '../../shared/form/typeahead';
+import { ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
+import { WindowService } from '../../shared/window.service';
+import { ChangePasswordModalComponent } from '../change-password-modal/change-password-modal.component';
 
 // TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
 // eslint-disable-next-line @typescript-eslint/no-namespace

@@ -1,11 +1,14 @@
-import { TestBed } from '@angular/core/testing';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { OIBusNumberAttribute } from '@oibus/shared/form.model';
-import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { OIBusNumberFormControlComponent } from './oibus-number-form-control.component';
+
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
+
+import { OIBusNumberAttribute } from '@oibus/shared/connector/form.model';
+
+import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { OIBusNumberFormControlComponent } from './oibus-number-form-control.component';
 
 @Component({
   selector: 'oib-test-oibus-number-form-control-component',

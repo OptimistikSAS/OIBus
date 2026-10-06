@@ -1,6 +1,8 @@
 import { inject, Service } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivateChildFn, Router, RouterStateSnapshot } from '@angular/router';
+
 import { of } from 'rxjs';
+
 import { WindowService } from '../shared/window.service';
 
 @Service()

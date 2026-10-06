@@ -1,33 +1,36 @@
-import { Component, forwardRef, inject, ChangeDetectionStrategy } from '@angular/core';
-import { NgbActiveModal, NgbDropdown, NgbDropdownAnchor, NgbDropdownItem, NgbDropdownMenu } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, Component, forwardRef, inject } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable } from 'rxjs';
+
+import { NgbActiveModal, NgbDropdown, NgbDropdownAnchor, NgbDropdownItem, NgbDropdownMenu } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
+import { ValidationErrorsComponent } from 'ngx-valdemort';
+import { Observable } from 'rxjs';
+
+import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { ItemLightDTO, SouthConnectorLightDTO, SouthItemGroupLightDTO } from '@oibus/shared/api/south-connector.model';
 import {
   DataSourceType,
   SourceOriginSouthDTO,
   TransformerDTO,
   TransformerDTOWithOptions,
   TransformerSourceDTO
-} from '@oibus/shared/transformer.model';
-import { addAttributeToForm, addEnablingConditions } from '../../../shared/form/dynamic-form.builder';
-import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
-import { OIBusObjectAttribute } from '@oibus/shared/form.model';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import { CertificateDTO } from '@oibus/shared/certificate.model';
-import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
-import { ItemLightDTO, SouthConnectorLightDTO, SouthItemGroupLightDTO } from '@oibus/shared/south-connector.model';
-import { OIBusSouthTypeEnumPipe } from '../../../shared/oibus-south-type-enum.pipe';
-import { getAssociatedInputType } from '../../../shared/utils/utils';
+} from '@oibus/shared/api/transformer.model';
+import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
+
 import { SouthConnectorService } from '../../../services/south-connector.service';
+import { addAttributeToForm, addEnablingConditions } from '../../../shared/form/dynamic-form.builder';
 import { FormControlValidationDirective } from '../../../shared/form/form-control-validation.directive';
-import { PillComponent } from '../../../shared/pill/pill.component';
+import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
+import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { ValErrorDelayDirective } from '../../../shared/form/val-error-delay.directive';
-import { ValidationErrorsComponent } from 'ngx-valdemort';
-import { NorthTransformerTestComponent, TransformerTestItemSource } from '../transformer-test/transformer-test.component';
+import { OIBusSouthTypeEnumPipe } from '../../../shared/oibus-south-type-enum.pipe';
+import { PillComponent } from '../../../shared/pill/pill.component';
+import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { SelectExistingTransformerComponent } from '../../../shared/transformer/select-existing-transformer/select-existing-transformer.component';
+import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { getAssociatedInputType } from '../../../shared/utils/utils';
+import { NorthTransformerTestComponent, TransformerTestItemSource } from '../transformer-test/transformer-test.component';
 
 @Component({
   selector: 'oib-edit-north-transformer-modal',

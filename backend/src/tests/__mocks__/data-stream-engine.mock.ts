@@ -1,24 +1,26 @@
 import { mock } from 'node:test';
-import { mockBaseFolders } from '../utils/test-utils';
+
+import type {
+  CacheSearchResult,
+  FileCacheContent,
+  HistoryQueryMetrics,
+  NorthConnectorMetrics,
+  SouthConnectorMetrics
+} from '../../../shared/model/api/engine.model';
+import type { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+import type { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+
+import type HistoryQuery from '../../engine/history-query';
+import type { HistoryQueryEntity } from '../../model/histor-query.model';
+import type { ILogger } from '../../model/logger.model';
+import type { NorthConnectorEntity } from '../../model/north-connector.model';
+import type { SouthConnectorEntity } from '../../model/south-connector.model';
 import type NorthConnector from '../../north/north-connector';
-import type { NorthSettings } from '../../../shared/model/north-settings.model';
-import type { SouthSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
+import type HistoryQueryMetricsService from '../../service/metrics/history-query-metrics.service';
 import type NorthConnectorMetricsService from '../../service/metrics/north-connector-metrics.service';
 import type SouthConnectorMetricsService from '../../service/metrics/south-connector-metrics.service';
 import type SouthConnector from '../../south/south-connector';
-import type HistoryQuery from '../../engine/history-query';
-import type HistoryQueryMetricsService from '../../service/metrics/history-query-metrics.service';
-import type { NorthConnectorEntity } from '../../model/north-connector.model';
-import type { SouthConnectorEntity } from '../../model/south-connector.model';
-import type { HistoryQueryEntity } from '../../model/histor-query.model';
-import type {
-  NorthConnectorMetrics,
-  SouthConnectorMetrics,
-  HistoryQueryMetrics,
-  CacheSearchResult,
-  FileCacheContent
-} from '../../../shared/model/engine.model';
-import type { ILogger } from '../../model/logger.model';
+import { mockBaseFolders } from '../utils/test-utils';
 import LoggerMock from './service/logger/logger.mock';
 
 /**

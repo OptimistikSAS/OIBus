@@ -1,24 +1,27 @@
 import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { catchError, EMPTY, Subscription, switchMap } from 'rxjs';
 import { DateTime } from 'luxon';
-import { AuditAction, AuditEntityType, AuditLogDTO, AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from '@oibus/shared/audit.model';
-import { Instant, Page } from '@oibus/shared/types';
-import { PageLoader } from '../shared/page-loader.service';
-import { ascendingDates } from '../shared/form/validators';
-import { emptyPage } from '../shared/test-utils';
-import { AuditService, AuditSearchParam } from '../services/audit.service';
-import { PaginationComponent } from '../shared/pagination/pagination.component';
-import { DatetimepickerComponent } from '../shared/datetimepicker/datetimepicker.component';
-import { DatetimePipe } from '../shared/datetime.pipe';
+import { catchError, EMPTY, Subscription, switchMap } from 'rxjs';
+
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES, AuditAction, AuditEntityType, AuditLogDTO } from '@oibus/shared/api/audit.model';
+import { Instant, Page } from '@oibus/shared/common/types';
+
+import { AuditSearchParam, AuditService } from '../services/audit.service';
 import { AuditEntityTypesEnumPipe } from '../shared/audit-entity-types-enum.pipe';
-import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
-import { ModalService } from '../shared/modal.service';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
 import { AuditUserPipe } from '../shared/audit-user.pipe';
+import { DatetimePipe } from '../shared/datetime.pipe';
+import { DatetimepickerComponent } from '../shared/datetimepicker/datetimepicker.component';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
+import { ascendingDates } from '../shared/form/validators';
+import { ModalService } from '../shared/modal.service';
+import { PageLoader } from '../shared/page-loader.service';
+import { PaginationComponent } from '../shared/pagination/pagination.component';
+import { emptyPage } from '../shared/test-utils';
 
 /**
  * Router link to the page displaying an audited entity: its own page for connectors and history queries, the

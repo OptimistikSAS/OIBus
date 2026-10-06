@@ -1,8 +1,10 @@
-import { mock } from 'node:test';
-import { CacheMetadata } from '../../../../../shared/model/engine.model';
-import { CacheMetadataSource } from '../../../../model/engine.model';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
+import { mock } from 'node:test';
+
+import { CacheMetadata } from '../../../../../shared/model/api/engine.model';
+
+import { CacheMetadataSource } from '../../../../model/engine.model';
 
 /**
  * Create a mock object for OIBus Transformer

@@ -1,26 +1,28 @@
-import { Component, computed, inject, input, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 
-import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { of, startWith, switchMap } from 'rxjs';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { OIBusArrayAttribute, OIBusAttributeType } from '@oibus/shared/form.model';
-import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
-import { PaginationComponent } from '../../pagination/pagination.component';
-import { ModalService } from '../../modal.service';
-import { ArrayPage } from '../../pagination/array-page';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import { CertificateDTO } from '@oibus/shared/certificate.model';
-import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal/oibus-edit-array-element-modal.component';
-import { ValErrorDelayDirective } from '../val-error-delay.directive';
-import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ValidationErrorsComponent } from 'ngx-valdemort';
+import { of, startWith, switchMap } from 'rxjs';
+
+import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { OIBusArrayAttribute, OIBusAttributeType } from '@oibus/shared/connector/form.model';
+
+import { DownloadService } from '../../../services/download.service';
+import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
 import { ExportItemModalComponent } from '../../export-item-modal/export-item-modal.component';
 import { ImportItemModalComponent } from '../../import-item-modal/import-item-modal.component';
-import { ImportArrayValidationModalComponent } from './import-array-validation-modal/import-array-validation-modal.component';
+import { ModalService } from '../../modal.service';
+import { ArrayPage } from '../../pagination/array-page';
+import { PaginationComponent } from '../../pagination/pagination.component';
 import { exportArrayElements, validateArrayElementsImport } from '../../utils/csv.utils';
-import { DownloadService } from '../../../services/download.service';
 import { FormUtils } from '../form-utils';
+import { ValErrorDelayDirective } from '../val-error-delay.directive';
+import { ImportArrayValidationModalComponent } from './import-array-validation-modal/import-array-validation-modal.component';
+import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal/oibus-edit-array-element-modal.component';
 
 @Component({
   selector: 'oib-oibus-array-form-control',

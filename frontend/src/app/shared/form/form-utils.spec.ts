@@ -1,23 +1,26 @@
 import { TestBed } from '@angular/core/testing';
+
 import { TranslateService } from '@ngx-translate/core';
-import { FormUtils } from './form-utils';
-import {
-  OIBusObjectAttribute,
-  OIBusStringAttribute,
-  OIBusNumberAttribute,
-  OIBusBooleanAttribute,
-  OIBusScanModeAttribute,
-  OIBusCertificateAttribute,
-  OIBusTimezoneAttribute,
-  OIBusInstantAttribute,
-  OIBusSecretAttribute,
-  OIBusCodeAttribute,
-  OIBusStringSelectAttribute,
-  OIBusArrayAttribute
-} from '@oibus/shared/form.model';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import {
+  OIBusArrayAttribute,
+  OIBusBooleanAttribute,
+  OIBusCertificateAttribute,
+  OIBusCodeAttribute,
+  OIBusInstantAttribute,
+  OIBusNumberAttribute,
+  OIBusObjectAttribute,
+  OIBusScanModeAttribute,
+  OIBusSecretAttribute,
+  OIBusStringAttribute,
+  OIBusStringSelectAttribute,
+  OIBusTimezoneAttribute
+} from '@oibus/shared/connector/form.model';
+
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { FormUtils } from './form-utils';
 
 describe('FormUtils', () => {
   let translateService: TranslateService;

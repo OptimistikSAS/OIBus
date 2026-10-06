@@ -1,5 +1,6 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { Observable, of, Subject, Subscription, throwError } from 'rxjs';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { METRICS_REFRESH_INTERVAL_MS, pollMetrics, visibleTimer } from './polling';
 
 describe('polling', () => {

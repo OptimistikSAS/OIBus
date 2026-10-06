@@ -1,7 +1,9 @@
 import { mock } from 'node:test';
+
+import { Group, Item, LogSearchParam, Scope } from '../../../../shared/model/api/logs.model';
+import { Page } from '../../../../shared/model/common/types';
+
 import { OIBusLog } from '../../../model/logs.model';
-import { Group, Item, LogSearchParam, Scope } from '../../../../shared/model/logs.model';
-import { Page } from '../../../../shared/model/types';
 
 /**
  * Create a mock object for Log Service

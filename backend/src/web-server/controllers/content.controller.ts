@@ -1,8 +1,11 @@
-import { Body, Controller, Post, Query, Request, Route, SuccessResponse, Tags, UploadedFile } from 'tsoa';
-import { OIBusAnyContent } from '../../../shared/model/engine.model';
-import { CustomExpressRequest } from '../express';
 import fs from 'node:fs/promises';
+
+import { Body, Controller, Post, Query, Request, Route, SuccessResponse, Tags, UploadedFile } from 'tsoa';
+
+import { OIBusAnyContent } from '../../../shared/model/common/content.model';
+
 import { OIBusValidationError } from '../../model/types';
+import { CustomExpressRequest } from '../express';
 
 @Route('/api/content')
 @Tags('Content')

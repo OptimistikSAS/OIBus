@@ -1,11 +1,12 @@
-import basicAuth, { BasicAuthResult } from 'basic-auth';
-import jwt, { JwtPayload } from 'jsonwebtoken';
-import { Request, Response, NextFunction } from 'express';
 import argon2 from 'argon2';
-import UserService from '../../service/user.service';
+import basicAuth, { BasicAuthResult } from 'basic-auth';
+import { NextFunction, Request, Response } from 'express';
+import jwt, { JwtPayload } from 'jsonwebtoken';
+
 import EncryptionService from '../../service/encryption.service';
-import { CustomExpressRequest } from '../express';
 import type OIBusService from '../../service/oibus.service';
+import UserService from '../../service/user.service';
+import { CustomExpressRequest } from '../express';
 
 interface AuthConfig {
   userService: UserService;

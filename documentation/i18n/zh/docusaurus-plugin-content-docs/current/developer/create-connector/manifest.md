@@ -21,7 +21,7 @@ sidebar_position: 2
 ### South {#south}
 
 ```typescript title="backend/src/south/south-folder-scanner/manifest.ts (excerpt)"
-import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
+import { SouthConnectorManifest } from '../../../shared/model/connector/south-manifest.model';
 
 const manifest: SouthConnectorManifest = {
   id: 'folder-scanner', // must be in OIBUS_SOUTH_TYPES
@@ -47,7 +47,7 @@ export default manifest;
 ### North {#north}
 
 ```typescript title="backend/src/north/north-console/manifest.ts"
-import { NorthConnectorManifest } from '../../../shared/model/north-connector.model';
+import { NorthConnectorManifest } from '../../../shared/model/connector/north-manifest.model';
 
 const manifest: NorthConnectorManifest = {
   id: 'console', // must be in OIBUS_NORTH_TYPES
@@ -274,7 +274,7 @@ npm run generate:settings-interface
 ```
 
 该脚本会读取每一个 `manifest.ts`，推导出对应的 TypeScript 类型，并写入
-`backend/shared/model/south-settings.model.ts`（以及 North 对应的文件）。它还会
+`backend/shared/model/connector/south-settings.model.ts`（以及 North 对应的文件）。它还会
 刷新 OpenAPI 定义。
 
 :::caution Schema changes are breaking

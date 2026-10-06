@@ -1,6 +1,8 @@
 import { Controller, Get, Path, Query, Request, Route, Tags } from 'tsoa';
-import { Page, UserInfo } from '../../../shared/model/types';
-import { AuditLogDTO } from '../../../shared/model/audit.model';
+
+import { AuditLogDTO } from '../../../shared/model/api/audit.model';
+import { Page, UserInfo } from '../../../shared/model/common/types';
+
 import { AuditAction, AuditEntityInfo, AuditEntityType, AuditLog, AuditSearchParam } from '../../model/audit.model';
 import { CustomExpressRequest } from '../express';
 

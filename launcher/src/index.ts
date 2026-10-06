@@ -1,4 +1,5 @@
 import path from 'node:path';
+
 import minimist from 'minimist';
 
 import Launcher from './launcher';

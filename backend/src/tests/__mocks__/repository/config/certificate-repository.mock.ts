@@ -1,8 +1,10 @@
 import { mock } from 'node:test';
+
 import type { Database } from 'better-sqlite3';
-import { createAuditServiceMock } from '../../../utils/test-utils';
+
 import { Certificate } from '../../../../model/certificate.model';
 import CertificateRepository from '../../../../repository/config/certificate.repository';
+import { createAuditServiceMock } from '../../../utils/test-utils';
 
 /**
  * Create a mock object for Certificate repository

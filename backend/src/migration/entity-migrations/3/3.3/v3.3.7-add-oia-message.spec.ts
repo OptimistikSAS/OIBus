@@ -1,9 +1,11 @@
-import { describe, it, after, before, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { after, afterEach, before, beforeEach, describe, it } from 'node:test';
+
 import { Knex } from 'knex';
-import { createMigrationSchemaHarness, buildSchemaBefore } from '../../../../tests/utils/migration-test-utils';
-import { up, down } from './v3.3.7-add-oia-message';
+
+import { buildSchemaBefore, createMigrationSchemaHarness } from '../../../../tests/utils/migration-test-utils';
+import { down, up } from './v3.3.7-add-oia-message';
 
 const ENTITY_MIGRATIONS_ROOT = path.resolve(__dirname, '..', '..');
 

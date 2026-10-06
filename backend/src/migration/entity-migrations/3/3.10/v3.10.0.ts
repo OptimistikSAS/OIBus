@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { generateRandomId } from '../../../../service/utils';
+
 // The configuration changes are shared with the config upgrade of the same version (applied to imported configurations)
 import {
   buildRecordListToCsvOptions,
@@ -11,6 +11,7 @@ import {
   SQL_SOUTH_TYPES,
   toNewSqlItemSettings
 } from '../../../../service/config-transfer/config-upgrades/3.10/v3.10.0';
+import { generateRandomId } from '../../../../service/utils';
 
 const SCAN_MODES_TABLE = 'scan_modes';
 const CERTIFICATES_TABLE = 'certificates';

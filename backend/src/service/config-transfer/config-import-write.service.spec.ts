@@ -1,31 +1,34 @@
-import { before, after, beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
 import { Database } from 'better-sqlite3';
-import { createAuditServiceMock, emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
-import testData from '../../tests/utils/test-data';
-import ConfigImportService, { ConfigImportError } from './config-import.service';
-import ConfigTransferService from './config-transfer.service';
-import ConfigTransferBuilderService from './config-transfer-builder.service';
-import JoiValidator from '../../web-server/controllers/validators/joi.validator';
-import EncryptionService from '../encryption.service';
-import EngineRepository from '../../repository/config/engine.repository';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import IpFilterRepository from '../../repository/config/ip-filter.repository';
-import CertificateRepository from '../../repository/config/certificate.repository';
-import UserRepository from '../../repository/config/user.repository';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import HistoryQueryRepository from '../../repository/config/history-query.repository';
-import TransformerRepository from '../../repository/config/transformer.repository';
-import ConfigurationWorkflowRepository from '../../repository/config/configuration-workflow.repository';
-import { version as currentVersion } from '../../../package.json';
-import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
-import AuditService from '../../service/audit.service';
-import { ConfigExportDTO } from '../../../shared/model/config-transfer.model';
+
 import {
   SouthConnectorFolderScannerCommandDTO,
   SouthConnectorFolderScannerItemCommandDTO
-} from '../../../shared/model/south-connector.model';
+} from '../../../shared/model/api/south-connector.model';
+import { ConfigExportDTO } from '../../../shared/model/oia/config-transfer.model';
+
+import { version as currentVersion } from '../../../package.json';
+import CertificateRepository from '../../repository/config/certificate.repository';
+import ConfigurationWorkflowRepository from '../../repository/config/configuration-workflow.repository';
+import EngineRepository from '../../repository/config/engine.repository';
+import HistoryQueryRepository from '../../repository/config/history-query.repository';
+import IpFilterRepository from '../../repository/config/ip-filter.repository';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import TransformerRepository from '../../repository/config/transformer.repository';
+import UserRepository from '../../repository/config/user.repository';
+import AuditService from '../../service/audit.service';
+import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
+import testData from '../../tests/utils/test-data';
+import { createAuditServiceMock, emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
+import JoiValidator from '../../web-server/controllers/validators/joi.validator';
+import EncryptionService from '../encryption.service';
+import ConfigImportService, { ConfigImportError } from './config-import.service';
+import ConfigTransferService from './config-transfer.service';
+import ConfigTransferBuilderService from './config-transfer-builder.service';
 
 const TEST_DB_PATH = 'src/tests/test-config-import-write.db';
 

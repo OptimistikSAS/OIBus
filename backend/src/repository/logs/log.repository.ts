@@ -1,7 +1,9 @@
-import { Page } from '../../../shared/model/types';
-import { Group, Item, LogLevel, LogSearchParam, Scope, ScopeType } from '../../../shared/model/logs.model';
 import { Database } from 'better-sqlite3';
 import { DateTime } from 'luxon';
+
+import { Group, Item, LogLevel, LogSearchParam, Scope, ScopeType } from '../../../shared/model/api/logs.model';
+import { Page } from '../../../shared/model/common/types';
+
 import { OIBusLog, PinoLog } from '../../model/logs.model';
 
 export const LOG_TABLE = 'logs';

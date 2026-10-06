@@ -1,8 +1,10 @@
 import { mock } from 'node:test';
+
+import { ScopeType } from '../../../../../shared/model/api/logs.model';
+
 import { EngineSettings } from '../../../../model/engine.model';
-import { OIAnalyticsRegistration } from '../../../../model/oianalytics-registration.model';
-import { ScopeType } from '../../../../../shared/model/logs.model';
 import type { ILogger } from '../../../../model/logger.model';
+import { OIAnalyticsRegistration } from '../../../../model/oianalytics-registration.model';
 
 /**
  * Create a mock object for Logger Service

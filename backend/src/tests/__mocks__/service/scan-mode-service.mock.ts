@@ -1,6 +1,8 @@
 import { mock } from 'node:test';
+
+import { ScanModeCommandDTO, ValidatedCronExpression } from '../../../../shared/model/api/scan-mode.model';
+
 import { ScanMode } from '../../../model/scan-mode.model';
-import { ScanModeCommandDTO, ValidatedCronExpression } from '../../../../shared/model/scan-mode.model';
 
 /**
  * Create a mock object for Scan Mode Service

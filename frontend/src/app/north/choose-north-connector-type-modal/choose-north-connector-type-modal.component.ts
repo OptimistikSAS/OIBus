@@ -1,14 +1,16 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from '@ngx-translate/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import { NorthType } from '@oibus/shared/north-connector.model';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from '@ngx-translate/core';
+
+import { NorthType } from '@oibus/shared/connector/north-manifest.model';
+
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
-import { OIBusNorthTypeDescriptionEnumPipe } from '../../shared/oibus-north-type-description-enum.pipe';
 import { OIBusNorthCategoryEnumPipe } from '../../shared/oibus-north-category-enum.pipe';
-import { ReactiveFormsModule } from '@angular/forms';
+import { OIBusNorthTypeDescriptionEnumPipe } from '../../shared/oibus-north-type-description-enum.pipe';
+import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 
 @Component({
   selector: 'oib-choose-north-connector-type-modal',

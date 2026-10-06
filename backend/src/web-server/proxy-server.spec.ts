@@ -1,12 +1,14 @@
-import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import type http from 'node:http';
+import { createRequire } from 'node:module';
 import type net from 'node:net';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
 import type httpProxy from 'http-proxy';
-import { mockModule, reloadModule, flushPromises } from '../tests/utils/test-utils';
-import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+
 import type { EngineSettings } from '../model/engine.model';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import { flushPromises, mockModule, reloadModule } from '../tests/utils/test-utils';
 
 const nodeRequire = createRequire(import.meta.url);
 

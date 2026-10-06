@@ -1,9 +1,11 @@
-import { inject } from '@angular/core';
-import { from, Observable, switchMap, tap, throwError } from 'rxjs';
 import { HttpContext, HttpContextToken, HttpErrorResponse, HttpInterceptorFn, HttpStatusCode } from '@angular/common/http';
+import { inject } from '@angular/core';
+
+import { from, Observable, switchMap, tap, throwError } from 'rxjs';
+
+import { CurrentUserService } from './current-user.service';
 import { NotificationService } from './notification.service';
 import { WindowService } from './window.service';
-import { CurrentUserService } from './current-user.service';
 
 /**
  * Allows to define a predicate to indicate if the error should be ignored by the interceptor.

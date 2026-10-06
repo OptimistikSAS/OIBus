@@ -1,13 +1,15 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
-import { CertificateCommandDTO, CertificatePrivateKeyExportCommandDTO } from '../../../shared/model/certificate.model';
-import { CustomExpressRequest } from '../express';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
+import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import { CertificateCommandDTO, CertificatePrivateKeyExportCommandDTO } from '../../../shared/model/api/certificate.model';
+
 import CertificateServiceMock from '../../tests/__mocks__/service/certificate-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import testData from '../../tests/utils/test-data';
+import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { CustomExpressRequest } from '../express';
 import type { CertificateController as CertificateControllerShape } from './certificate.controller';
 
 const nodeRequire = createRequire(import.meta.url);

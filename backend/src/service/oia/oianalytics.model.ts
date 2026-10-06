@@ -1,6 +1,7 @@
 //
 // DTO to send to OIAnalytics
 //
+import { CertificateCommandDTO } from '../../../shared/model/api/certificate.model';
 import {
   CacheContentUpdateCommand,
   CacheSearchParam,
@@ -8,20 +9,20 @@ import {
   EngineLoggerCommandDTO,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
-  EngineWebServerCommandDTO,
-  OIBusRecord
-} from '../../../shared/model/engine.model';
-import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
+  EngineWebServerCommandDTO
+} from '../../../shared/model/api/engine.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../../shared/model/api/history-query.model';
+import { IPFilterCommandDTO } from '../../../shared/model/api/ip-filter.model';
+import { NorthConnectorCommandDTO } from '../../../shared/model/api/north-connector.model';
+import { ScanModeCommandDTO } from '../../../shared/model/api/scan-mode.model';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemTestingSettings
-} from '../../../shared/model/south-connector.model';
-import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
-import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
-import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
-import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../../shared/model/history-query.model';
-import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../../shared/model/transformer.model';
+} from '../../../shared/model/api/south-connector.model';
+import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../../shared/model/api/transformer.model';
+import { OIBusRecord } from '../../../shared/model/common/content.model';
+
 import { OIBusTestTransformerItemCommandContent } from '../../model/oianalytics-command.model';
 
 /**

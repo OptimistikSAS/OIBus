@@ -1,11 +1,13 @@
-import { before, after, beforeEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { after, before, beforeEach, describe, it, mock } from 'node:test';
+
 import { Database } from 'better-sqlite3';
-import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
-import testData from '../../tests/utils/test-data';
-import OianalyticsRegistrationRepository from './oianalytics-registration.repository';
+
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import AuditService from '../../service/audit.service';
+import testData from '../../tests/utils/test-data';
+import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import OianalyticsRegistrationRepository from './oianalytics-registration.repository';
 
 const TEST_DB_PATH = 'src/tests/test-config-registration.db';
 

@@ -1,12 +1,14 @@
-import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { CertificateService } from './certificate.service';
-import { CertificateDTO } from '@oibus/shared/certificate.model';
+import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+
 import testData from '../../../../backend/src/tests/utils/test-data';
-import { DownloadService } from './download.service';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
+import { CertificateService } from './certificate.service';
+import { DownloadService } from './download.service';
 
 describe('CertificateService', () => {
   let http: HttpTestingController;

@@ -1,9 +1,11 @@
 import { mock } from 'node:test';
+
+import { Page } from '../../../../../shared/model/common/types';
+import { CommandSearchParam } from '../../../../../shared/model/oia/command.model';
+
+import type { ILogger } from '../../../../model/logger.model';
 import { OIBusCommand } from '../../../../model/oianalytics-command.model';
 import { OIAnalyticsRegistration } from '../../../../model/oianalytics-registration.model';
-import { CommandSearchParam } from '../../../../../shared/model/command.model';
-import { Page } from '../../../../../shared/model/types';
-import type { ILogger } from '../../../../model/logger.model';
 
 /**
  * Create a mock object for OIAnalytics Command Service

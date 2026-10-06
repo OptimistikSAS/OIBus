@@ -1,5 +1,7 @@
 import Joi, { AnySchema } from 'joi';
+
 import {
+  isEnabledOnPlatform,
   OIBusArrayAttribute,
   OIBusAttribute,
   OIBusAttributeValidator,
@@ -13,9 +15,9 @@ import {
   OIBusSecretAttribute,
   OIBusStringAttribute,
   OIBusStringSelectAttribute,
-  OIBusTimezoneAttribute,
-  isEnabledOnPlatform
-} from '../../../../shared/model/form.model';
+  OIBusTimezoneAttribute
+} from '../../../../shared/model/connector/form.model';
+
 import { getCurrentPlatform } from '../../../service/utils';
 
 export default class JoiValidator {

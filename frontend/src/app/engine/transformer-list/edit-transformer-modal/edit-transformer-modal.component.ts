@@ -1,32 +1,31 @@
-import { Component, computed, inject, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, ViewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
-import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
-import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { Observable, startWith, switchMap } from 'rxjs';
+
 import {
   CUSTOM_TRANSFORMER_LANGUAGES,
   CustomTransformerCommandDTO,
   CustomTransformerDTO,
-  INPUT_TYPES,
-  InputType,
-  OUTPUT_TYPES,
-  OutputType,
   TransformerDTO,
   TransformerLanguage
-} from '@oibus/shared/transformer.model';
-import { Observable, startWith, switchMap } from 'rxjs';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+} from '@oibus/shared/api/transformer.model';
+import { OIBusAttribute } from '@oibus/shared/connector/form.model';
+import { INPUT_TYPES, InputType, OUTPUT_TYPES, OutputType } from '@oibus/shared/connector/transformer-manifest.model';
+
 import { TransformerService } from '../../../services/transformer.service';
 import { ConfirmationService } from '../../../shared/confirmation.service';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
+import { ManifestAttributesArrayComponent } from '../../../shared/form/manifest-builder/manifest-attributes-array/manifest-attributes-array.component';
+import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
 import { OibusInputDataTypeEnumPipe } from '../../../shared/oibus-input-data-type-enum.pipe';
 import { OibusOutputDataTypeEnumPipe } from '../../../shared/oibus-output-data-type-enum.pipe';
 import { OIBusTransformerLanguageEnumPipe } from '../../../shared/oibus-transformer-language-enum.pipe';
-import { OIBusAttribute } from '@oibus/shared/form.model';
-import { ManifestAttributesArrayComponent } from '../../../shared/form/manifest-builder/manifest-attributes-array/manifest-attributes-array.component';
+import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
+import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { TransformerTestComponent } from '../transformer-test/transformer-test.component';
 
 @Component({

@@ -1,23 +1,25 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
-import { firstValueFrom, switchMap, tap } from 'rxjs';
-import { Modal, ModalService } from '../../shared/modal.service';
-import { ConfirmationService } from '../../shared/confirmation.service';
-import { NotificationService } from '../../shared/notification.service';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import { ScanModeService } from '../../services/scan-mode.service';
-import { EditScanModeModalComponent } from './edit-scan-mode-modal/edit-scan-mode-modal.component';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
-import { DocsUrlService } from '../../shared/docs-url.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { createPageFromArray, Page } from '@oibus/shared/types';
-import { emptyPage } from '../../shared/test-utils';
-import { PaginationComponent } from '../../shared/pagination/pagination.component';
-import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
-import { isScanModeWindowExpired, ScanModeSchedulePipe } from '../../shared/scan-mode-schedule.pipe';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { firstValueFrom, switchMap, tap } from 'rxjs';
+
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { createPageFromArray, Page } from '@oibus/shared/common/types';
+
+import { ScanModeService } from '../../services/scan-mode.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { DocsUrlService } from '../../shared/docs-url.service';
+import { Modal, ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { isScanModeWindowExpired, ScanModeSchedulePipe } from '../../shared/scan-mode-schedule.pipe';
+import { emptyPage } from '../../shared/test-utils';
+import { EditScanModeModalComponent } from './edit-scan-mode-modal/edit-scan-mode-modal.component';
 
 type ScanModeSortField = 'name' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';

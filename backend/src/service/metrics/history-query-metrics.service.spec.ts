@@ -1,11 +1,12 @@
-import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import HistoryQueryMetricsService from './history-query-metrics.service';
-import testData from '../../tests/utils/test-data';
-import HistoryQueryMetricsRepository from '../../repository/metrics/history-query-metrics.repository';
-import HistoryQueryMetricsRepositoryMock from '../../tests/__mocks__/repository/metrics/history-query-metrics-repository.mock';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
 import HistoryQuery from '../../engine/history-query';
+import HistoryQueryMetricsRepository from '../../repository/metrics/history-query-metrics.repository';
 import HistoryQueryMock from '../../tests/__mocks__/history-query.mock';
+import HistoryQueryMetricsRepositoryMock from '../../tests/__mocks__/repository/metrics/history-query-metrics-repository.mock';
+import testData from '../../tests/utils/test-data';
+import HistoryQueryMetricsService from './history-query-metrics.service';
 
 let historyQueryMetricsRepository: HistoryQueryMetricsRepositoryMock;
 let historyQueryMock: HistoryQueryMock;

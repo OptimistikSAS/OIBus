@@ -1,5 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy, LOCALE_ID } from '@angular/core';
-import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, Component, inject, LOCALE_ID } from '@angular/core';
 import {
   AbstractControl,
   AsyncValidatorFn,
@@ -9,29 +8,33 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import { map, Observable, of, switchMap, take } from 'rxjs';
-import { DateTime, WeekdayNumbers } from 'luxon';
-import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
+
+import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { ScanModeService } from '../../../services/scan-mode.service';
+import { DateTime, WeekdayNumbers } from 'luxon';
+import { map, Observable, of, switchMap, take } from 'rxjs';
+
 import {
   ActivationWindow,
-  ActivationWindowRecurring,
   ActivationWindowDateRange,
+  ActivationWindowRecurring,
   INTERVAL_UNITS,
   IntervalUnit,
   ScanModeCommandDTO,
   ScanModeDTO,
   ScanModeType,
   ValidatedCronExpression
-} from '@oibus/shared/scan-mode.model';
-import { Instant, LocalTime, Timezone } from '@oibus/shared/types';
+} from '@oibus/shared/api/scan-mode.model';
+import { Instant, LocalTime, Timezone } from '@oibus/shared/common/types';
+
+import { ScanModeService } from '../../../services/scan-mode.service';
+import { CurrentUserService } from '../../../shared/current-user.service';
 import { DatetimePipe, formatDateTime } from '../../../shared/datetime.pipe';
 import { DatetimepickerComponent } from '../../../shared/datetimepicker/datetimepicker.component';
 import { DayOfWeekSelectorComponent } from '../../../shared/form/day-of-week-selector/day-of-week-selector.component';
-import { CurrentUserService } from '../../../shared/current-user.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { activationWindowValidator, INTERVAL_UNIT_TO_MS, minIntervalValidator } from '../../../shared/form/validators';
+import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 
 @Component({

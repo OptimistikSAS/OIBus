@@ -1,19 +1,21 @@
 import { EventEmitter } from 'node:events';
 import { mock } from 'node:test';
-import HistoryQuery from '../../engine/history-query';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { HistoryQueryEntity } from '../../model/histor-query.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
-import type NorthConnector from '../../north/north-connector';
-import type SouthConnector from '../../south/south-connector';
+
 import type {
+  CacheContentUpdateCommand,
   CacheSearchParam,
   CacheSearchResult,
   DataFolderType,
-  FileCacheContent,
-  CacheContentUpdateCommand
-} from '../../../shared/model/engine.model';
+  FileCacheContent
+} from '../../../shared/model/api/engine.model';
+import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+
+import HistoryQuery from '../../engine/history-query';
 import type { CacheSize } from '../../model/engine.model';
+import { HistoryQueryEntity } from '../../model/histor-query.model';
+import type NorthConnector from '../../north/north-connector';
+import type SouthConnector from '../../south/south-connector';
 
 /**
  * Create a mock object for History Query

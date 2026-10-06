@@ -1,13 +1,15 @@
-import { generateRandomId } from '../utils';
-import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
-import { OIBusCommand } from '../../model/oianalytics-command.model';
-import { OIAnalyticsFetchCommandDTO } from './oianalytics.model';
-import { OIBusInfo, RegistrationSettingsCommandDTO } from '../../../shared/model/engine.model';
-import { Instant } from '../../../shared/model/types';
 import { createWriteStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
+
+import { OIBusInfo, RegistrationSettingsCommandDTO } from '../../../shared/model/api/engine.model';
+import { Instant } from '../../../shared/model/common/types';
+
+import { OIBusCommand } from '../../model/oianalytics-command.model';
+import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { HTTPRequest, ReqOptions } from '../http-request.utils';
+import { generateRandomId } from '../utils';
 import { buildHttpOptions, getHeaders, getProxyOptions, getUrl } from '../utils-oianalytics';
+import { OIAnalyticsFetchCommandDTO } from './oianalytics.model';
 
 const OIANALYTICS_TIMEOUT = 30_000;
 const OIANALYTICS_DOWNLOAD_TIMEOUT = 900_000; // 15 minutes

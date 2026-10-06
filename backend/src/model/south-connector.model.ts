@@ -1,12 +1,13 @@
-import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import { BaseEntity } from './types';
 import {
-  OIBusSouthType,
   SouthCachingStrategy,
   SouthCachingThresholdType,
   SouthHistoryRecoveryStrategy
-} from '../../shared/model/south-connector.model';
+} from '../../shared/model/api/south-connector.model';
+import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+
 import { ScanMode } from './scan-mode.model';
+import { BaseEntity } from './types';
 
 export interface SouthConnectorEntityLight extends BaseEntity {
   name: string;

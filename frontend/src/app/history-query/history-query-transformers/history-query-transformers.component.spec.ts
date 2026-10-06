@@ -1,20 +1,22 @@
 import { TestBed } from '@angular/core/testing';
+
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { HistoryQueryTransformersComponent } from './history-query-transformers.component';
-import { HistoryQueryService } from '../../services/history-query.service';
-import { ConfirmationService } from '../../shared/confirmation.service';
-import { NotificationService } from '../../shared/notification.service';
-import { ModalService } from '../../shared/modal.service';
+import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
+import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
+import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
+
+import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { HistoryQueryService } from '../../services/history-query.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
-import { HistoryQueryDTO } from '@oibus/shared/history-query.model';
-import testData from '../../../../../backend/src/tests/utils/test-data';
-import { NorthConnectorManifest } from '@oibus/shared/north-connector.model';
-import { OIBusSouthType } from '@oibus/shared/south-connector.model';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { HistoryQueryTransformersComponent } from './history-query-transformers.component';
 
 describe('HistoryQueryTransformersComponent', () => {
   let modalService: MockObject<ModalService>;

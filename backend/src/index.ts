@@ -1,19 +1,9 @@
 import './pkg-subpath-imports';
-import path from 'node:path';
-import { rmSync } from 'node:fs';
-import WebServer from './web-server/web-server';
-import { loggerService } from './service/logger/logger.service';
-import { encryptionService } from './service/encryption.service';
 
-import { createFolder, getCommandLineArguments, getOIBusInfo, readInitConfig, INIT_CONFIG_FILENAME } from './service/utils';
-import RepositoryService from './service/repository.service';
-import NorthService from './service/north.service';
-import SouthService from './service/south.service';
-import ConfigurationWorkflowService from './service/configuration-workflow.service';
-import ConfigurationWorkflowRunService from './service/configuration-workflow-run.service';
+import { rmSync } from 'node:fs';
+import path from 'node:path';
+
 import DataStreamEngine from './engine/data-stream-engine';
-import HistoryQueryService from './service/history-query.service';
-import OIBusService from './service/oibus.service';
 import {
   migrateCrypto,
   migrateDataFolder,
@@ -22,22 +12,33 @@ import {
   migrateMetrics,
   migrateSouthCache
 } from './migration/migration-service';
-import OIAnalyticsCommandService from './service/oia/oianalytics-command.service';
-import OianalyticsRegistrationService from './service/oia/oianalytics-registration.service';
-import OIAnalyticsMessageService from './service/oia/oianalytics-message.service';
-import ConfigTransferBuilderService from './service/config-transfer/config-transfer-builder.service';
-import ConfigTransferService from './service/config-transfer/config-transfer.service';
-import ConfigImportService from './service/config-transfer/config-import.service';
-import JoiValidator from './web-server/controllers/validators/joi.validator';
-import ScanModeService from './service/scan-mode.service';
-import IPFilterService from './service/ip-filter.service';
-import OIAnalyticsClient from './service/oia/oianalytics-client.service';
-import CertificateService from './service/certificate.service';
-import UserService from './service/user.service';
-import LogService from './service/log.service';
-import CleanupService from './service/cache/cleanup.service';
 import AuditCleanupService from './service/audit-cleanup.service';
+import CleanupService from './service/cache/cleanup.service';
+import CertificateService from './service/certificate.service';
+import ConfigImportService from './service/config-transfer/config-import.service';
+import ConfigTransferService from './service/config-transfer/config-transfer.service';
+import ConfigTransferBuilderService from './service/config-transfer/config-transfer-builder.service';
+import ConfigurationWorkflowService from './service/configuration-workflow.service';
+import ConfigurationWorkflowRunService from './service/configuration-workflow-run.service';
+import { encryptionService } from './service/encryption.service';
+import HistoryQueryService from './service/history-query.service';
+import IPFilterService from './service/ip-filter.service';
+import LogService from './service/log.service';
+import { loggerService } from './service/logger/logger.service';
+import NorthService from './service/north.service';
+import OIAnalyticsClient from './service/oia/oianalytics-client.service';
+import OIAnalyticsCommandService from './service/oia/oianalytics-command.service';
+import OIAnalyticsMessageService from './service/oia/oianalytics-message.service';
+import OianalyticsRegistrationService from './service/oia/oianalytics-registration.service';
+import OIBusService from './service/oibus.service';
+import RepositoryService from './service/repository.service';
+import ScanModeService from './service/scan-mode.service';
+import SouthService from './service/south.service';
 import TransformerService from './service/transformer.service';
+import UserService from './service/user.service';
+import { createFolder, getCommandLineArguments, getOIBusInfo, INIT_CONFIG_FILENAME, readInitConfig } from './service/utils';
+import JoiValidator from './web-server/controllers/validators/joi.validator';
+import WebServer from './web-server/web-server';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';

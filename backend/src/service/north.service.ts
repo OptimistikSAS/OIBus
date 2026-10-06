@@ -1,40 +1,38 @@
+import { NorthConnectorCommandDTO, NorthConnectorLightDTO, NorthConnectorTypedDTO } from '../../shared/model/api/north-connector.model';
+import { NorthConnectorManifest, OIBusNorthType } from '../../shared/model/connector/north-manifest.model';
+
 import { encryptionService } from './encryption.service';
-import {
-  NorthConnectorCommandDTO,
-  NorthConnectorLightDTO,
-  NorthConnectorManifest,
-  NorthConnectorTypedDTO,
-  OIBusNorthType
-} from '../../shared/model/north-connector.model';
 import { northManifestList } from './north-manifests';
 export { northManifestList } from './north-manifests';
-import { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import NorthConnectorRepository from '../repository/config/north-connector.repository';
-import ScanModeRepository from '../repository/config/scan-mode.repository';
-import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
-import LogRepository from '../repository/logs/log.repository';
-import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
-import { checkScanMode } from './utils';
-import { GetUserInfo } from '../../shared/model/types';
-import { ScanMode } from '../model/scan-mode.model';
-import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import { NorthSettings } from '../../shared/model/north-settings.model';
-import CertificateRepository from '../repository/config/certificate.repository';
-import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import { NorthConnectorMetrics, OIBusConnectionTestResult } from '../../shared/model/api/engine.model';
+import { SouthItemGroupLightDTO } from '../../shared/model/api/south-connector.model';
+import { TransformerSourceCommandDTO, TransformerSourceDTO } from '../../shared/model/api/transformer.model';
+import { OIBusSetpointContent } from '../../shared/model/common/content.model';
+import { GetUserInfo } from '../../shared/model/common/types';
+import { NorthSettings } from '../../shared/model/connector/north-settings.model';
+
 import type DataStreamEngine from '../engine/data-stream-engine';
-import { NorthConnectorMetrics, OIBusConnectionTestResult, OIBusSetpointContent } from '../../shared/model/engine.model';
 import { CacheMetadataSource } from '../model/engine.model';
-import TransformerService, { toTransformerDTO } from './transformer.service';
-import { toScanModeDTO } from './scan-mode.service';
-import { buildNorth, createNorthOrchestrator } from '../north/north-connector-factory';
-import { NotFoundError, OIBusValidationError } from '../model/types';
-import { NorthTransformerWithOptions, TransformerSource } from '../model/transformer.model';
-import { toSouthConnectorLightDTO, toSouthItemLightDTO } from './south.service';
-import { TransformerSourceCommandDTO, TransformerSourceDTO } from '../../shared/model/transformer.model';
+import { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
+import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
+import { ScanMode } from '../model/scan-mode.model';
 import { SouthConnectorItemEntityLight, SouthItemGroupEntity, SouthItemGroupEntityLight } from '../model/south-connector.model';
+import { NorthTransformerWithOptions, TransformerSource } from '../model/transformer.model';
+import { NotFoundError, OIBusValidationError } from '../model/types';
+import { buildNorth, createNorthOrchestrator } from '../north/north-connector-factory';
+import CertificateRepository from '../repository/config/certificate.repository';
+import NorthConnectorRepository from '../repository/config/north-connector.repository';
+import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import ScanModeRepository from '../repository/config/scan-mode.repository';
+import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
-import { SouthItemGroupLightDTO } from '../../shared/model/south-connector.model';
+import LogRepository from '../repository/logs/log.repository';
+import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
+import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import { toScanModeDTO } from './scan-mode.service';
+import { toSouthConnectorLightDTO, toSouthItemLightDTO } from './south.service';
+import TransformerService, { toTransformerDTO } from './transformer.service';
+import { checkScanMode } from './utils';
 
 export default class NorthService {
   constructor(

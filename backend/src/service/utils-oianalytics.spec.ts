@@ -1,15 +1,17 @@
-import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { mockModule, reloadModule } from '../tests/utils/test-utils';
-import type { OIATimeValues } from './utils-oianalytics';
-import { encryptionService } from './encryption.service';
-import CertificateRepository from '../repository/config/certificate.repository';
-import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model';
-import { NorthOIAnalyticsSettingsSpecificSettings } from '../../shared/model/north-settings.model';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
+import { NorthOIAnalyticsSettingsSpecificSettings } from '../../shared/model/connector/north-settings.model';
+
 import { Certificate } from '../model/certificate.model';
+import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model';
+import CertificateRepository from '../repository/config/certificate.repository';
 import { createMockResponse } from '../tests/__mocks__/undici.mock';
 import testData from '../tests/utils/test-data';
+import { mockModule, reloadModule } from '../tests/utils/test-utils';
+import { encryptionService } from './encryption.service';
+import type { OIATimeValues } from './utils-oianalytics';
 
 const nodeRequire = createRequire(import.meta.url);
 const undiciModule = nodeRequire('undici');

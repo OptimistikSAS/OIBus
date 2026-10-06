@@ -1,4 +1,4 @@
-import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
+import { SouthConnectorManifest } from '../../../shared/model/connector/south-manifest.model';
 
 const manifest: SouthConnectorManifest = {
   id: 'mqtt',

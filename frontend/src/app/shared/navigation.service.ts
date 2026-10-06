@@ -1,6 +1,6 @@
-import { Service, inject } from '@angular/core';
 import { Location } from '@angular/common';
-import { Router, NavigationEnd } from '@angular/router';
+import { inject, Service } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
 
 @Service()
 export class NavigationService {

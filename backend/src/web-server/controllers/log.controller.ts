@@ -1,9 +1,11 @@
-import { Controller, Get, Path, Query, Request, Route, Tags } from 'tsoa';
-import { Instant, Page } from '../../../shared/model/types';
-import { Group, Item, LogDTO, LogLevel, LogSearchParam, Scope, ScopeType } from '../../../shared/model/logs.model';
 import { DateTime } from 'luxon';
-import { CustomExpressRequest } from '../express';
+import { Controller, Get, Path, Query, Request, Route, Tags } from 'tsoa';
+
+import { Group, Item, LogDTO, LogLevel, LogSearchParam, Scope, ScopeType } from '../../../shared/model/api/logs.model';
+import { Instant, Page } from '../../../shared/model/common/types';
+
 import { toLogDTO } from '../../service/log.service';
+import { CustomExpressRequest } from '../express';
 
 @Route('/api/logs')
 @Tags('Logs')

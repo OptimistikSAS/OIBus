@@ -1,16 +1,8 @@
 import { HttpClient, HttpContext, HttpStatusCode } from '@angular/common/http';
-import { Observable } from 'rxjs';
 import { inject, Service } from '@angular/core';
-import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
-import {
-  NorthConnectorCommandDTO,
-  NorthConnectorDTO,
-  NorthConnectorLightDTO,
-  NorthConnectorManifest,
-  NorthType,
-  OIBusNorthType
-} from '@oibus/shared/north-connector.model';
-import { NorthSettings } from '@oibus/shared/north-settings.model';
+
+import { Observable } from 'rxjs';
+
 import {
   CacheContentUpdateCommand,
   CacheSearchParam,
@@ -19,8 +11,13 @@ import {
   FileCacheContent,
   NorthConnectorMetrics,
   OIBusConnectionTestResult
-} from '@oibus/shared/engine.model';
-import { TransformerDTOWithOptions } from '@oibus/shared/transformer.model';
+} from '@oibus/shared/api/engine.model';
+import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
+import { TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
+import { NorthConnectorManifest, NorthType, OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
+import { NorthSettings } from '@oibus/shared/connector/north-settings.model';
+
+import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 
 /**
  * Service used to interact with the backend for CRUD operations on North connectors

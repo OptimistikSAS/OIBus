@@ -1,5 +1,7 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
   contentChild,
   ElementRef,
@@ -7,8 +9,7 @@ import {
   inject,
   input,
   OnInit,
-  TemplateRef,
-  ChangeDetectionStrategy
+  TemplateRef
 } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -18,14 +19,16 @@ import {
   ReactiveFormsModule,
   Validator
 } from '@angular/forms';
-import { combineLatest } from 'rxjs';
-import { DateTime } from 'luxon';
-import { Instant, LocalDate, LocalTime } from '@oibus/shared/types';
-import { NgTemplateOutlet } from '@angular/common';
+
 import { NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
-import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
-import { CurrentUserService } from '../current-user.service';
 import { TranslateDirective } from '@ngx-translate/core';
+import { DateTime } from 'luxon';
+import { combineLatest } from 'rxjs';
+
+import { Instant, LocalDate, LocalTime } from '@oibus/shared/common/types';
+
+import { CurrentUserService } from '../current-user.service';
+import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
 
 /**
  * Component combining a ng-bootstrap input date picker and a ng-bootstrap time picker, which can be used

@@ -1,11 +1,14 @@
-import { before, after, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { after, before, beforeEach, describe, it } from 'node:test';
+
 import { Database } from 'better-sqlite3';
+
+import { AUDIT_ENTITY_TYPES } from '../../../shared/model/api/audit.model';
+
+import { AuditLog } from '../../model/audit.model';
+import testData from '../../tests/utils/test-data';
 import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import AuditRepository from './audit.repository';
-import { AuditLog } from '../../model/audit.model';
-import { AUDIT_ENTITY_TYPES } from '../../../shared/model/audit.model';
-import testData from '../../tests/utils/test-data';
 
 const TEST_DB_PATH = 'src/tests/test-config-audit.db';
 

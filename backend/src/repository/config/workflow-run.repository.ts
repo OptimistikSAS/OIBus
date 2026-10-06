@@ -1,5 +1,7 @@
-import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
+
+import { Page } from '../../../shared/model/common/types';
+
 import {
   WorkflowRunCounts,
   WorkflowRunEntity,
@@ -8,7 +10,7 @@ import {
   WorkflowRunStatus,
   WorkflowRunTriggerType
 } from '../../model/workflow-run.model';
-import { Page } from '../../../shared/model/types';
+import { generateRandomId } from '../../service/utils';
 
 const WORKFLOW_RUNS_TABLE = 'workflow_runs';
 const PAGE_SIZE = 50;

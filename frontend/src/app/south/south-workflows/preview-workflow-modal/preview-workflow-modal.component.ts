@@ -1,25 +1,28 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import csv from 'papaparse';
 import { DateTime } from 'luxon';
+import csv from 'papaparse';
 import { Observable } from 'rxjs';
+
 import {
   ConfigurationWorkflowCommandDTO,
   WorkflowPreviewEntryDTO,
   WorkflowPreviewResultDTO
-} from '@oibus/shared/configuration-workflow.model';
-import { OIBusSouthType } from '@oibus/shared/south-connector.model';
-import { SouthSettings } from '@oibus/shared/south-settings.model';
-import { WorkflowRunDetailDTO } from '@oibus/shared/workflow-run.model';
+} from '@oibus/shared/api/configuration-workflow.model';
+import { WorkflowRunDetailDTO } from '@oibus/shared/api/workflow-run.model';
+import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
+import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
+
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
-import { NotificationService } from '../../../shared/notification.service';
+import { DownloadService } from '../../../services/download.service';
 import { extractErrorMessage } from '../../../shared/extract-error-message';
 import { LoadingSpinnerComponent } from '../../../shared/loading-spinner/loading-spinner.component';
-import { DownloadService } from '../../../services/download.service';
-import { flattenPlainObject } from '../../../shared/utils/csv.utils';
-import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+import { NotificationService } from '../../../shared/notification.service';
 import { ArrayPage } from '../../../shared/pagination/array-page';
+import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+import { flattenPlainObject } from '../../../shared/utils/csv.utils';
 
 /**
  * Doubles as both a live dry-run preview and a historical run's full discovered payload viewer - the

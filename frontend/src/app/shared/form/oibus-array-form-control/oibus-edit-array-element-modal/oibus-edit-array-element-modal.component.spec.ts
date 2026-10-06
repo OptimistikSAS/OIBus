@@ -1,15 +1,18 @@
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
-import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal.component';
 import { FormGroup } from '@angular/forms';
-import testData from '../../../../../../../backend/src/tests/utils/test-data';
-import { OIBusObjectAttribute } from '@oibus/shared/form.model';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import { CertificateDTO } from '@oibus/shared/certificate.model';
-import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
+
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
+
+import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
+
+import testData from '../../../../../../../backend/src/tests/utils/test-data';
+import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../../test/vitest-create-mock';
+import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal.component';
 
 class OIBusEditArrayElementModalComponentTester {
   readonly fixture = TestBed.createComponent(OIBusEditArrayElementModalComponent);
