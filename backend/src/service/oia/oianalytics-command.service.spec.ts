@@ -14,10 +14,12 @@ import { OIBusContent } from '../../../shared/model/common/content.model';
 import { createPageFromArray } from '../../../shared/model/common/types';
 import { CacheSearchResult, FileCacheContent } from '../../../shared/model/domain/engine.model';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
+import { OIBUS_COMMAND_TYPES } from '../../../shared/model/oia/command.model';
 
 import { version } from '../../../package.json';
 import { EngineSettings } from '../../model/engine.model';
 import {
+  OIBusCommand,
   OIBusCreateCertificateCommand,
   OIBusCreateCustomTransformerCommand,
   OIBusCreateHistoryQueryCommand,
@@ -3481,41 +3483,100 @@ describe('OIAnalytics Command service with no commands and without update', () =
     ]);
   });
 
-  it('should properly convert to DTO', () => {
-    const command = testData.oIAnalytics.commands.oIBusList[0];
-    assert.deepStrictEqual(toOIBusCommandDTO(command), command);
+  it('should properly convert to DTO without audit fields', () => {
+    for (const command of testData.oIAnalytics.commands.oIBusList) {
+      const { createdBy: _createdBy, updatedBy: _updatedBy, createdAt: _createdAt, updatedAt: _updatedAt, ...expected } = command;
+      assert.deepStrictEqual(toOIBusCommandDTO(command), expected);
+    }
   });
 
   it('should properly convert custom transformer commands to DTO', () => {
+    const baseCommand = {
+      status: 'COMPLETED' as const,
+      ack: true,
+      retrievedDate: testData.constants.dates.DATE_1,
+      completedDate: testData.constants.dates.DATE_2,
+      result: 'ok',
+      targetVersion: testData.engine.settings.version
+    };
+    const auditFields = {
+      createdBy: '',
+      updatedBy: '',
+      createdAt: testData.constants.dates.DATE_1,
+      updatedAt: testData.constants.dates.DATE_2
+    };
     const createCommand: OIBusCreateCustomTransformerCommand = {
+      ...auditFields,
+      ...baseCommand,
       id: 'createCustomTransformerId',
       type: 'create-custom-transformer',
-      targetVersion: testData.engine.settings.version,
       commandContent: testData.transformers.command
-    } as OIBusCreateCustomTransformerCommand;
+    };
     const updateCommand: OIBusUpdateCustomTransformerCommand = {
+      ...auditFields,
+      ...baseCommand,
       id: 'updateCustomTransformerId',
       type: 'update-custom-transformer',
-      targetVersion: testData.engine.settings.version,
       transformerId: 'transformerId1',
       commandContent: testData.transformers.command
-    } as OIBusUpdateCustomTransformerCommand;
+    };
     const deleteCommand: OIBusDeleteCustomTransformerCommand = {
+      ...auditFields,
+      ...baseCommand,
       id: 'deleteCustomTransformerId',
       type: 'delete-custom-transformer',
-      targetVersion: testData.engine.settings.version,
       transformerId: 'transformerId1'
-    } as OIBusDeleteCustomTransformerCommand;
+    };
     const testCommand: OIBusTestCustomTransformerCommand = {
+      ...auditFields,
+      ...baseCommand,
       id: 'testCustomTransformerId',
       type: 'test-custom-transformer',
-      targetVersion: testData.engine.settings.version,
       commandContent: { command: testData.transformers.command, testRequest: { inputData: 'raw', options: {} } }
-    } as OIBusTestCustomTransformerCommand;
+    };
 
-    assert.deepStrictEqual(toOIBusCommandDTO(createCommand), createCommand);
-    assert.deepStrictEqual(toOIBusCommandDTO(updateCommand), updateCommand);
-    assert.deepStrictEqual(toOIBusCommandDTO(deleteCommand), deleteCommand);
-    assert.deepStrictEqual(toOIBusCommandDTO(testCommand), testCommand);
+    assert.deepStrictEqual(toOIBusCommandDTO(createCommand), {
+      ...baseCommand,
+      id: 'createCustomTransformerId',
+      type: 'create-custom-transformer',
+      commandContent: testData.transformers.command
+    });
+    assert.deepStrictEqual(toOIBusCommandDTO(updateCommand), {
+      ...baseCommand,
+      id: 'updateCustomTransformerId',
+      type: 'update-custom-transformer',
+      transformerId: 'transformerId1',
+      commandContent: testData.transformers.command
+    });
+    assert.deepStrictEqual(toOIBusCommandDTO(deleteCommand), {
+      ...baseCommand,
+      id: 'deleteCustomTransformerId',
+      type: 'delete-custom-transformer',
+      transformerId: 'transformerId1'
+    });
+    assert.deepStrictEqual(toOIBusCommandDTO(testCommand), {
+      ...baseCommand,
+      id: 'testCustomTransformerId',
+      type: 'test-custom-transformer',
+      commandContent: { command: testData.transformers.command, testRequest: { inputData: 'raw', options: {} } }
+    });
+  });
+
+  it('should never expose audit fields, whatever the command type', () => {
+    for (const type of OIBUS_COMMAND_TYPES) {
+      const command = {
+        ...testData.oIAnalytics.commands.oIBusList[0],
+        type,
+        createdBy: 'createdBy',
+        updatedBy: 'updatedBy'
+      } as unknown as OIBusCommand;
+      const dto = toOIBusCommandDTO(command);
+      assert.strictEqual(dto.type, type);
+      assert.strictEqual(dto.id, command.id);
+      assert.strictEqual(dto.targetVersion, command.targetVersion);
+      for (const field of ['createdBy', 'updatedBy', 'createdAt', 'updatedAt']) {
+        assert.ok(!(field in dto), `${type} must not expose ${field}`);
+      }
+    }
   });
 });
