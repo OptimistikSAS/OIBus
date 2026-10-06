@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { SouthType } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthType } from '@oibus/shared/south-connector.model';
 import { OIBusSouthCategoryEnumPipe } from '../../shared/oibus-south-category-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { OIBusSouthTypeDescriptionEnumPipe } from '../../shared/oibus-south-type-description-enum.pipe';

@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { ScanModeService } from './scan-mode.service';
-import { ScanModeDTO, ValidatedCronExpression } from '../../../../backend/shared/model/scan-mode.model';
+import { ScanModeDTO, ValidatedCronExpression } from '@oibus/shared/scan-mode.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('ScanModeService', () => {

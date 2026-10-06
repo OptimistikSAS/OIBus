@@ -8,8 +8,8 @@ import { SouthConnectorService } from '../../../services/south-connector.service
 import { NotificationService } from '../../../shared/notification.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock } from '../../../../test/vitest-create-mock';
-import { SouthConnectorLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
-import { SouthConnectorMetrics } from '../../../../../../backend/shared/model/engine.model';
+import { SouthConnectorLightDTO } from '@oibus/shared/south-connector.model';
+import { SouthConnectorMetrics } from '@oibus/shared/engine.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 const southConnector = testData.south.list[0] as unknown as SouthConnectorLightDTO;

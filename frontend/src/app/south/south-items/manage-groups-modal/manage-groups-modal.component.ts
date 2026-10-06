@@ -7,8 +7,8 @@ import {
   SouthHistoryRecoveryStrategy,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO
-} from '../../../../../../backend/shared/model/south-connector.model';
-import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
+} from '@oibus/shared/south-connector.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 import { ModalService } from '../../../shared/modal.service';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
 import csv from 'papaparse';

@@ -1,6 +1,6 @@
 import { inject, Pipe, PipeTransform } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { UserInfo } from '../../../../backend/shared/model/types';
+import { UserInfo } from '@oibus/shared/types';
 
 // Non-real users recording changes, whose display name must be translated
 const TRANSLATED_USER_IDS = ['oianalytics', 'system'];

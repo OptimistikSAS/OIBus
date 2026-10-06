@@ -23,14 +23,14 @@ import {
   SouthHistoryRecoveryStrategy,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO
-} from '../../../../../../backend/shared/model/south-connector.model';
-import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
+} from '@oibus/shared/south-connector.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 import SouthItemTestComponent from '../south-item-test/south-item-test.component';
-import { OIBusObjectAttribute, OIBusScanModeAttribute } from '../../../../../../backend/shared/model/form.model';
+import { OIBusObjectAttribute, OIBusScanModeAttribute } from '@oibus/shared/form.model';
 import { addAttributeToForm, createMqttValidator, extractFormValue } from '../../../shared/form/dynamic-form.builder';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
-import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
+import { CertificateDTO } from '@oibus/shared/certificate.model';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { Observable, switchMap } from 'rxjs';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';

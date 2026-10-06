@@ -12,7 +12,7 @@ import { NotificationService } from '../../../shared/notification.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
-import { RegistrationSettingsDTO } from '../../../../../../backend/shared/model/engine.model';
+import { RegistrationSettingsDTO } from '@oibus/shared/engine.model';
 
 describe('RegisterOibusModalComponent', () => {
   let engineService: MockObject<EngineService>;

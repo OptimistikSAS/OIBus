@@ -7,8 +7,8 @@ import { NorthConnectorService } from '../../../services/north-connector.service
 import { HistoryQueryService } from '../../../services/history-query.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock } from '../../../../test/vitest-create-mock';
-import { NorthConnectorDTO, NorthConnectorLightDTO } from '../../../../../../backend/shared/model/north-connector.model';
-import { HistoryQueryDTO, HistoryQueryLightDTO } from '../../../../../../backend/shared/model/history-query.model';
+import { NorthConnectorDTO, NorthConnectorLightDTO } from '@oibus/shared/north-connector.model';
+import { HistoryQueryDTO, HistoryQueryLightDTO } from '@oibus/shared/history-query.model';
 
 const norths = [
   { id: 'north-1', name: 'North One' },

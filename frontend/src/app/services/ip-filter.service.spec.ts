@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { IpFilterService } from './ip-filter.service';
-import { IPFilterDTO } from '../../../../backend/shared/model/ip-filter.model';
+import { IPFilterDTO } from '@oibus/shared/ip-filter.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('IpFilterService', () => {

@@ -12,7 +12,7 @@ import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { MockModalService, provideModalTesting } from '../shared/mock-modal.service.testing';
 import { provideRouter } from '@angular/router';
 import testData from '../../../../backend/src/tests/utils/test-data';
-import { NorthConnectorLightDTO } from '../../../../backend/shared/model/north-connector.model';
+import { NorthConnectorLightDTO } from '@oibus/shared/north-connector.model';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
 
 describe('NorthListComponent', () => {

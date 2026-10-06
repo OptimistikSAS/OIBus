@@ -11,10 +11,10 @@ import { ModalService } from '../../shared/modal.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
-import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
+import { HistoryQueryDTO } from '@oibus/shared/history-query.model';
 import testData from '../../../../../backend/src/tests/utils/test-data';
-import { NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
-import { OIBusSouthType } from '../../../../../backend/shared/model/south-connector.model';
+import { NorthConnectorManifest } from '@oibus/shared/north-connector.model';
+import { OIBusSouthType } from '@oibus/shared/south-connector.model';
 
 describe('HistoryQueryTransformersComponent', () => {
   let modalService: MockObject<ModalService>;

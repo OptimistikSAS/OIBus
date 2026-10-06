@@ -9,22 +9,22 @@ import {
   SouthConnectorManifest,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO
-} from '../../../../../backend/shared/model/south-connector.model';
+} from '@oibus/shared/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, firstValueFrom, map, merge, Observable, of, Subscription, switchMap, tap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
-import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { SouthMetricsComponent } from './south-metrics/south-metrics.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { NotificationService } from '../../shared/notification.service';
-import { OIBusInfo, SouthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
+import { OIBusInfo, SouthConnectorMetrics } from '@oibus/shared/engine.model';
 import { pollMetrics } from '../../shared/polling';
 import { ModalService } from '../../shared/modal.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
-import { AuditEntityType } from '../../../../../backend/shared/model/audit.model';
+import { AuditEntityType } from '@oibus/shared/audit.model';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { EngineService } from '../../services/engine.service';
@@ -32,17 +32,17 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
 import { LogsComponent } from '../../logs/logs.component';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
-import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
+import { CertificateDTO } from '@oibus/shared/certificate.model';
 import { CertificateService } from '../../services/certificate.service';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
-import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
+import { createPageFromArray, Page } from '@oibus/shared/types';
 import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
-import { OIBusObjectAttribute } from '../../../../../backend/shared/model/form.model';
+import { OIBusObjectAttribute } from '@oibus/shared/form.model';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import { emptyPage } from '../../shared/test-utils';
 import { DatetimePipe } from '../../shared/datetime.pipe';

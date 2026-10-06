@@ -4,9 +4,9 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
-import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
-import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
-import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
+import { CertificateDTO } from '@oibus/shared/certificate.model';
+import { OIBusObjectAttribute } from '@oibus/shared/form.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { NotificationService } from '../../notification.service';
 import { ModalService } from '../../modal.service';

@@ -3,7 +3,7 @@ import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { SouthSettings } from '@oibus/shared/south-settings.model';
 import { DatetimePipe } from '../datetime.pipe';
 import { FileSizePipe } from '../file-size.pipe';
 import {
@@ -11,7 +11,7 @@ import {
   SouthConnectorExploreEntry,
   SouthExploreBrowseResult,
   SouthExploreStartResult
-} from '../../../../../backend/shared/model/south-connector.model';
+} from '@oibus/shared/south-connector.model';
 
 interface ExploreTreeNode {
   entry: SouthConnectorExploreEntry;

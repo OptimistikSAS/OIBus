@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { OIBusSecretAttribute } from '../../../../../../backend/shared/model/form.model';
+import { OIBusSecretAttribute } from '@oibus/shared/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { OIBusSecretFormControlComponent } from './oibus-secret-form-control.component';
 import { OIBUS_FORM_MODE } from '../oibus-form-mode.token';

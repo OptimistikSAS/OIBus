@@ -19,8 +19,8 @@ import {
   SouthHistoryRecoveryStrategy,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO
-} from '../../../../../../backend/shared/model/south-connector.model';
-import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
+} from '@oibus/shared/south-connector.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { Observable } from 'rxjs';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';

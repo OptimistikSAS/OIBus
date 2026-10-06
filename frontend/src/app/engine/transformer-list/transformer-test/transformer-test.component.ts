@@ -7,12 +7,12 @@ import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-c
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { TransformerService } from '../../../services/transformer.service';
-import { CustomTransformerCommandDTO, TransformerTestResponse } from '../../../../../../backend/shared/model/transformer.model';
-import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
+import { CustomTransformerCommandDTO, TransformerTestResponse } from '@oibus/shared/transformer.model';
+import { OIBusObjectAttribute } from '@oibus/shared/form.model';
 import { addAttributeToForm, addEnablingConditions } from '../../../shared/form/dynamic-form.builder';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { ContentDisplayMode } from '../../../south/south-items/south-item-test/item-test-result/item-test-result.component';
-import { createPageFromArray, Page } from '../../../../../../backend/shared/model/types';
+import { createPageFromArray, Page } from '@oibus/shared/types';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { FileSizePipe } from '../../../shared/file-size.pipe';
 import { DatetimePipe } from '../../../shared/datetime.pipe';

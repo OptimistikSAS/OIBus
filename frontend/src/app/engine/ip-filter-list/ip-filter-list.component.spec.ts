@@ -12,7 +12,7 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import testData from '../../../../../backend/src/tests/utils/test-data';
-import { IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model';
+import { IPFilterDTO } from '@oibus/shared/ip-filter.model';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 

@@ -1,7 +1,7 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { CsvCharacter, ALL_CSV_CHARACTERS } from '../../../../../backend/shared/model/types';
+import { CsvCharacter, ALL_CSV_CHARACTERS } from '@oibus/shared/types';
 import { NonNullableFormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CsvValidationError, MqttTopicValidationError, validateCsvHeaders, validateCsvMqttTopics } from '../form/validators';
 import { convertCsvDelimiter } from '../utils/csv.utils';

@@ -8,7 +8,7 @@ import {
   findArrayAttributeInAttributes
 } from './csv.utils';
 
-import { OIBusArrayAttribute } from '../../../../../backend/shared/model/form.model';
+import { OIBusArrayAttribute } from '@oibus/shared/form.model';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 describe('csv.utils', () => {

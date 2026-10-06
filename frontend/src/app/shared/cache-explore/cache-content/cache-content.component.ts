@@ -6,9 +6,9 @@ import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
 import { FileSizePipe } from '../../file-size.pipe';
 import { DatetimePipe } from '../../datetime.pipe';
 import { PaginationComponent } from '../../pagination/pagination.component';
-import { CacheMetadata, CacheOperation, DataFolderType } from '../../../../../../backend/shared/model/engine.model';
+import { CacheMetadata, CacheOperation, DataFolderType } from '@oibus/shared/engine.model';
 import { ObservableState } from '../../save-button/save-button.component';
-import { createPageFromArray } from '../../../../../../backend/shared/model/types';
+import { createPageFromArray } from '@oibus/shared/types';
 
 const PAGE_SIZE = 15;
 

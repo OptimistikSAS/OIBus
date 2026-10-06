@@ -9,7 +9,7 @@ import { EngineService } from '../../services/engine.service';
 import { NotificationService } from '../../shared/notification.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
-import { EngineMetrics } from '../../../../../backend/shared/model/engine.model';
+import { EngineMetrics } from '@oibus/shared/engine.model';
 
 const metrics: EngineMetrics = {
   processCpuUsageInstant: 1.5,

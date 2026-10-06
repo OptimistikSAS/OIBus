@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { UserSettingsService } from './user-settings.service';
-import { ChangePasswordCommand, UserDTO } from '../../../../backend/shared/model/user.model';
+import { ChangePasswordCommand, UserDTO } from '@oibus/shared/user.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('UserSettingsService', () => {

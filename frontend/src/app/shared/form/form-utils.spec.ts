@@ -14,8 +14,8 @@ import {
   OIBusCodeAttribute,
   OIBusStringSelectAttribute,
   OIBusArrayAttribute
-} from '../../../../../backend/shared/model/form.model';
-import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
+} from '@oibus/shared/form.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 

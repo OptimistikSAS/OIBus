@@ -2,10 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { Page } from '../../../../backend/shared/model/types';
+import { Page } from '@oibus/shared/types';
 import { toPage } from '../shared/test-utils';
 import { LogService } from './log.service';
-import { Group, Item, LogDTO, Scope } from '../../../../backend/shared/model/logs.model';
+import { Group, Item, LogDTO, Scope } from '@oibus/shared/logs.model';
 
 describe('LogService', () => {
   let http: HttpTestingController;

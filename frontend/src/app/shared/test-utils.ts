@@ -1,6 +1,6 @@
 import { Provider } from '@angular/core';
 import { NgbConfig } from '@ng-bootstrap/ng-bootstrap';
-import { Page } from '../../../../backend/shared/model/types';
+import { Page } from '@oibus/shared/types';
 
 const NO_ANIMATION_NGB_CONFIG: NgbConfig = { animation: false };
 

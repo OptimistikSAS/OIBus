@@ -1,5 +1,5 @@
-import { OIBusSouthType } from '../../../../../backend/shared/model/south-connector.model';
-import { InputType, TransformerSourceCommandDTO, TransformerSourceDTO } from '../../../../../backend/shared/model/transformer.model';
+import { OIBusSouthType } from '@oibus/shared/south-connector.model';
+import { InputType, TransformerSourceCommandDTO, TransformerSourceDTO } from '@oibus/shared/transformer.model';
 
 export const getAssociatedInputType = (southType: OIBusSouthType): InputType => {
   switch (southType) {

@@ -5,11 +5,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective } from '@ngx-translate/core';
-import {
-  ConfigImportEntityValidationError,
-  ConfigImportPreviewDTO,
-  ConfigImportResponseDTO
-} from '../../../../../../backend/shared/model/config-transfer.model';
+import { ConfigImportEntityValidationError, ConfigImportPreviewDTO, ConfigImportResponseDTO } from '@oibus/shared/config-transfer.model';
 import { ConfigImportFailure, ConfigTransferService } from '../../../services/config-transfer.service';
 import { ConfirmationService } from '../../../shared/confirmation.service';
 import { ConfigImportPreviewComponent } from '../config-import-preview/config-import-preview.component';

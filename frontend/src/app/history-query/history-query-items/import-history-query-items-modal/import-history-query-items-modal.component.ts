@@ -5,11 +5,11 @@ import { ObservableState } from '../../../shared/save-button/save-button.compone
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom, Observable } from 'rxjs';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
-import { ALL_CSV_CHARACTERS, createPageFromArray, CsvCharacter, Page } from '../../../../../../backend/shared/model/types';
+import { ALL_CSV_CHARACTERS, createPageFromArray, CsvCharacter, Page } from '@oibus/shared/types';
 import { emptyPage } from '../../../shared/test-utils';
-import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../../backend/shared/model/history-query.model';
-import { OIBusAttribute, OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
-import { SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
+import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '@oibus/shared/history-query.model';
+import { OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/form.model';
+import { SouthConnectorManifest } from '@oibus/shared/south-connector.model';
 import { isDisplayableAttribute } from '../../../shared/form/dynamic-form.builder';
 import { CsvValidationError, validateCsvHeaders } from '../../../shared/form/validators';
 import { convertCsvDelimiter } from '../../../shared/utils/csv.utils';

@@ -9,7 +9,7 @@ import { DefaultValidationErrorsComponent } from '../../../shared/default-valida
 import { CertificateService } from '../../../services/certificate.service';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
+import { CertificateDTO } from '@oibus/shared/certificate.model';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 
 class ExportCertificateModalComponentTester {

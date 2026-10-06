@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import { languageToUse, storeLanguage, storeTimezone, timezoneToUse } from '../../i18n/i18n';
-import { Language, Timezone } from '../../../../backend/shared/model/types';
+import { Language, Timezone } from '@oibus/shared/types';
 
 /**
  * Service wrapping the window object to ease testing

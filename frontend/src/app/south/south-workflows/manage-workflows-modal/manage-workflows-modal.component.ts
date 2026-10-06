@@ -4,18 +4,10 @@ import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { map, Observable, of, switchMap } from 'rxjs';
-import {
-  ConfigurationWorkflowCommandDTO,
-  ConfigurationWorkflowDTO
-} from '../../../../../../backend/shared/model/configuration-workflow.model';
-import {
-  OIBusSouthType,
-  SouthConnectorManifest,
-  SouthItemGroupCommandDTO,
-  SouthItemGroupDTO
-} from '../../../../../../backend/shared/model/south-connector.model';
-import { SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
-import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
+import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/configuration-workflow.model';
+import { OIBusSouthType, SouthConnectorManifest, SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/south-connector.model';
+import { SouthSettings } from '@oibus/shared/south-settings.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { ModalService } from '../../../shared/modal.service';
 import { ConfirmationService } from '../../../shared/confirmation.service';

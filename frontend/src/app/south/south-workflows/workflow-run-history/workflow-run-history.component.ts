@@ -4,8 +4,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, EMPTY, Subscription, switchMap } from 'rxjs';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ConfigurationWorkflowDTO } from '../../../../../../backend/shared/model/configuration-workflow.model';
-import { Instant, Page } from '../../../../../../backend/shared/model/types';
+import { ConfigurationWorkflowDTO } from '@oibus/shared/configuration-workflow.model';
+import { Instant, Page } from '@oibus/shared/types';
 import {
   WORKFLOW_RUN_STATUSES,
   WORKFLOW_RUN_TRIGGER_TYPES,
@@ -13,7 +13,7 @@ import {
   WorkflowRunSearchParam,
   WorkflowRunStatus,
   WorkflowRunTriggerType
-} from '../../../../../../backend/shared/model/workflow-run.model';
+} from '@oibus/shared/workflow-run.model';
 import { PageLoader } from '../../../shared/page-loader.service';
 import { emptyPage } from '../../../shared/test-utils';
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';

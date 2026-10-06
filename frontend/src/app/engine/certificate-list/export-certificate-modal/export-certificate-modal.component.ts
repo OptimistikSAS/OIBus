@@ -4,11 +4,7 @@ import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, Validatio
 import { concat, Observable } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective } from '@ngx-translate/core';
-import {
-  ALL_CERTIFICATE_EXPORT_FORMATS,
-  CertificateDTO,
-  CertificateExportFormat
-} from '../../../../../../backend/shared/model/certificate.model';
+import { ALL_CERTIFICATE_EXPORT_FORMATS, CertificateDTO, CertificateExportFormat } from '@oibus/shared/certificate.model';
 import { CertificateService } from '../../../services/certificate.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';

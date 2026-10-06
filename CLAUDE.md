@@ -135,6 +135,17 @@ The Express 5 server (`backend/src/web-server/`) uses **tsoa** for contract-firs
 `web-server/controllers/` are decorated with tsoa annotations; `npm run generate:openapi` regenerates `routes.ts` and
 `swagger.json`. Do not hand-edit `routes.ts`.
 
+### Shared model
+
+`backend/shared/model/` holds the types shared by backend and frontend: REST DTOs, connector manifests/form model,
+generated settings interfaces, and the OIAnalytics configuration DTOs. It is compiled into the frontend, so it must stay
+self-contained — files there may only import sibling files (enforced by the backend ESLint config). Backend-only types
+(entities, cache metadata, …) belong in `backend/src/model/`, and services/controllers map entities to DTOs.
+
+The frontend imports it through the `@oibus/shared/*` alias (`frontend/tsconfig.json`), never via a relative path, and
+must not import anything else from the backend (enforced by the frontend ESLint config; specs may still use the backend
+test fixtures). The backend keeps relative imports: tsc does not rewrite path aliases in its CommonJS output.
+
 ### Database & migrations
 
 Knex manages schema migrations. Entity migrations live under `backend/src/migration/entity-migrations/3/` grouped by

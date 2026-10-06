@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { BaseEnumPipe } from './base-enum-pipe';
-import { AuditEntityType } from '../../../../backend/shared/model/audit.model';
+import { AuditEntityType } from '@oibus/shared/audit.model';
 
 @Pipe({
   name: 'auditEntityTypesEnum',

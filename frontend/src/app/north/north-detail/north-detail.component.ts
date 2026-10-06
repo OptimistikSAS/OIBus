@@ -4,20 +4,20 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { combineLatest, of, Subscription, switchMap, tap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
-import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
+import { NorthConnectorDTO, NorthConnectorManifest } from '@oibus/shared/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { NorthMetricsComponent } from '../north-metrics/north-metrics.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { NotificationService } from '../../shared/notification.service';
 import { pollMetrics } from '../../shared/polling';
-import { NorthConnectorMetrics, OIBusInfo } from '../../../../../backend/shared/model/engine.model';
+import { NorthConnectorMetrics, OIBusInfo } from '@oibus/shared/engine.model';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { ModalService } from '../../shared/modal.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
-import { AuditEntityType } from '../../../../../backend/shared/model/audit.model';
+import { AuditEntityType } from '@oibus/shared/audit.model';
 import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
 import { EngineService } from '../../services/engine.service';
 import { LogsComponent } from '../../logs/logs.component';
@@ -25,10 +25,10 @@ import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe'
 import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NorthTransformersComponent } from '../north-transformers/north-transformers.component';
-import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
+import { TransformerDTO, TransformerDTOWithOptions } from '@oibus/shared/transformer.model';
 import { CertificateService } from '../../services/certificate.service';
 import { TransformerService } from '../../services/transformer.service';
-import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
+import { CertificateDTO } from '@oibus/shared/certificate.model';
 
 @Component({
   selector: 'oib-north-detail',

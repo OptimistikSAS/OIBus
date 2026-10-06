@@ -11,7 +11,7 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import testData from '../../../../../backend/src/tests/utils/test-data';
-import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 

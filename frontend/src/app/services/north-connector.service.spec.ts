@@ -3,15 +3,10 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { NorthConnectorService } from './north-connector.service';
-import {
-  NorthConnectorDTO,
-  NorthConnectorLightDTO,
-  NorthConnectorManifest,
-  NorthType
-} from '../../../../backend/shared/model/north-connector.model';
-import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '../../../../backend/shared/model/engine.model';
+import { NorthConnectorDTO, NorthConnectorLightDTO, NorthConnectorManifest, NorthType } from '@oibus/shared/north-connector.model';
+import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '@oibus/shared/engine.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
-import { TransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
+import { TransformerDTOWithOptions } from '@oibus/shared/transformer.model';
 
 describe('NorthConnectorService', () => {
   let http: HttpTestingController;
