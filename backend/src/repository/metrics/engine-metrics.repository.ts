@@ -1,6 +1,8 @@
 import { Database } from 'better-sqlite3';
-import { EngineMetrics } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
+
+import { EngineMetrics } from '../../../shared/model/api/engine.model';
+
 import { Instant } from '../../model/types';
 
 export const ENGINE_METRICS_TABLE = 'engine_metrics';

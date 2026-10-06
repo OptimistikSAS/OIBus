@@ -1,11 +1,14 @@
 import { ChangeDetectionStrategy, Component, effect, input, viewChild } from '@angular/core';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+
+import { OIBusContent } from '@oibus/shared/common/content.model';
+
 import {
   ContentDisplayMode,
   ItemTestResultComponent
 } from '../../south/south-items/south-item-test/item-test-result/item-test-result.component';
-import { OIBusContent } from '@oibus/shared/engine.model';
 
 /**
  * Displays a transformer test as raw result and transformer output side by side (single column when

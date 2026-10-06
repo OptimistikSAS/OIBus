@@ -1,12 +1,15 @@
 import { Component, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
+
+import { AuthTokenDuration, EngineSettingsDTO } from '@oibus/shared/api/engine.model';
+
 import { EngineService } from '../../services/engine.service';
-import { NotificationService } from '../../shared/notification.service';
-import { AuthTokenDuration, EngineSettingsDTO } from '@oibus/shared/engine.model';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 import { ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
 import { PortRedirectModalComponent } from '../../shared/port-redirect-modal/port-redirect-modal.component';
 
 @Component({

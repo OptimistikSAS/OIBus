@@ -1,32 +1,34 @@
+import { createReadStream, createWriteStream, existsSync, readFileSync } from 'node:fs';
 import fs from 'node:fs/promises';
-import { createReadStream, createWriteStream, readFileSync, existsSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import Stream from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import zlib from 'node:zlib';
-import path from 'node:path';
 
-import minimist from 'minimist';
+import cronparser from 'cron-parser';
+import cronstrue from 'cronstrue';
 import { DateTime } from 'luxon';
+import minimist from 'minimist';
+import csv from 'papaparse';
 import unzipper from 'unzipper';
 
-import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../shared/model/types';
-import { SouthHistoryRecoveryStrategy } from '../../shared/model/south-connector.model';
-import { OIBusInitConfig } from '../model/oibus-init-config.model';
-import csv from 'papaparse';
-import { EngineSettingsDTO, OIBusContent, OIBusInfo } from '../../shared/model/engine.model';
-import os from 'node:os';
-import cronstrue from 'cronstrue';
-import cronparser from 'cron-parser';
-import { ValidatedCronExpression } from '../../shared/model/scan-mode.model';
-import { OIBusSouthType, SOUTH_SINGLE_ITEMS, SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
-import { OIBusObjectAttribute } from '../../shared/model/form.model';
-import { ScanMode } from '../model/scan-mode.model';
-import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
-import { NotFoundError, OIBusValidationError } from '../model/types';
+import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/api/engine.model';
+import { HistoryQueryItemDTO } from '../../shared/model/api/history-query.model';
+import { ValidatedCronExpression } from '../../shared/model/api/scan-mode.model';
+import { SouthConnectorItemDTO, SouthHistoryRecoveryStrategy } from '../../shared/model/api/south-connector.model';
+import { OIBusContent } from '../../shared/model/common/content.model';
+import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../shared/model/common/types';
+import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
+import { OIBusSouthType, SOUTH_SINGLE_ITEMS } from '../../shared/model/connector/south-manifest.model';
+import { SouthFolderScannerItemSettings, SouthItemSettings } from '../../shared/model/connector/south-settings.model';
+
 import { CacheMetadataSource, OIBusError } from '../model/engine.model';
-import Stream from 'node:stream';
-import { SouthConnectorItemEntity, SouthItemGroupEntity, SouthItemGroupEntityLight } from '../model/south-connector.model';
-import { SouthFolderScannerItemSettings, SouthItemSettings } from '../../shared/model/south-settings.model';
 import type { ILogger } from '../model/logger.model';
+import { OIBusInitConfig } from '../model/oibus-init-config.model';
+import { ScanMode } from '../model/scan-mode.model';
+import { SouthConnectorItemEntity, SouthItemGroupEntity, SouthItemGroupEntityLight } from '../model/south-connector.model';
+import { NotFoundError, OIBusValidationError } from '../model/types';
 
 const COMPRESSION_LEVEL = 9;
 

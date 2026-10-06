@@ -1,12 +1,14 @@
-import { describe, it, before, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { ChangePasswordCommand, UserCommandDTO, UserSearchParam } from '../../../shared/model/user.model';
-import { CustomExpressRequest } from '../express';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
+import { before, beforeEach, describe, it, mock } from 'node:test';
+
+import { ChangePasswordCommand, UserCommandDTO, UserSearchParam } from '../../../shared/model/api/user.model';
+import { createPageFromArray } from '../../../shared/model/common/types';
+
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
-import { createPageFromArray } from '../../../shared/model/types';
+import testData from '../../tests/utils/test-data';
+import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { CustomExpressRequest } from '../express';
 import type { UserController as UserControllerShape } from './user.controller';
 
 const nodeRequire = createRequire(import.meta.url);

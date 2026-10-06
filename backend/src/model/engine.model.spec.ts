@@ -1,6 +1,7 @@
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { OIBusError, METADATA_FOLDER, CONTENT_FOLDER } from './engine.model';
+import { describe, it } from 'node:test';
+
+import { CONTENT_FOLDER, METADATA_FOLDER, OIBusError } from './engine.model';
 
 describe('OIBusError', () => {
   it('sets message and forceRetry to true', () => {

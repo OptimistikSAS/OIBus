@@ -3,9 +3,11 @@
  * That file lives outside `src/` (the `src/**\/*.spec.ts` test glob does not reach it),
  * so its runtime exports are exercised from a co-located spec here instead.
  */
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { OIBUS_DATA_TYPES, AUTH_TOKEN_DURATIONS, REGISTRATION_STATUS } from '../../shared/model/engine.model';
+import { describe, it } from 'node:test';
+
+import { AUTH_TOKEN_DURATIONS, REGISTRATION_STATUS } from '../../shared/model/api/engine.model';
+import { OIBUS_DATA_TYPES } from '../../shared/model/common/content.model';
 
 describe('shared engine model constants', () => {
   it('OIBUS_DATA_TYPES contains the expected data types', () => {

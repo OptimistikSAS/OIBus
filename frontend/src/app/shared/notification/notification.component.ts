@@ -1,10 +1,11 @@
+import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+
+import { NgbToastModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from '@ngx-translate/core';
 import { map, merge, Observable, scan, Subject } from 'rxjs';
 
 import { Notification, NotificationService } from '../notification.service';
-import { NgbToastModule } from '@ng-bootstrap/ng-bootstrap';
-import { AsyncPipe } from '@angular/common';
-import { TranslateDirective } from '@ngx-translate/core';
 
 interface Action {
   type: 'addition' | 'removal';

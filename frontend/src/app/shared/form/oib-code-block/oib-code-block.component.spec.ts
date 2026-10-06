@@ -1,9 +1,10 @@
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { OibCodeBlockComponent } from './oib-code-block.component';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 /** Minimal host that wires the component as a reactive form control. */
 @Component({

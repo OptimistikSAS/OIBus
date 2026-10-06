@@ -1,3 +1,4 @@
+import { CertificateCommandDTO } from '../api/certificate.model';
 import {
   CacheContentUpdateCommand,
   CacheSearchParam,
@@ -6,15 +7,14 @@ import {
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineWebServerCommandDTO
-} from './engine.model';
-import { Instant } from './types';
-import { ScanModeCommandDTO } from './scan-mode.model';
-import { SouthConnectorCommandDTO, SouthConnectorItemTestingSettings } from './south-connector.model';
-import { NorthConnectorCommandDTO } from './north-connector.model';
-import { IPFilterCommandDTO } from './ip-filter.model';
-import { CertificateCommandDTO } from './certificate.model';
-import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from './history-query.model';
-import { CustomTransformerCommandDTO } from './transformer.model';
+} from '../api/engine.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../api/history-query.model';
+import { IPFilterCommandDTO } from '../api/ip-filter.model';
+import { NorthConnectorCommandDTO } from '../api/north-connector.model';
+import { ScanModeCommandDTO } from '../api/scan-mode.model';
+import { SouthConnectorCommandDTO, SouthConnectorItemTestingSettings } from '../api/south-connector.model';
+import { CustomTransformerCommandDTO } from '../api/transformer.model';
+import { Instant } from '../common/types';
 
 /**
  * List of possible OIBus command types.

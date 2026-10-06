@@ -1,13 +1,15 @@
 import { FormControl } from '@angular/forms';
+
+import { describe, expect, test } from 'vitest';
+
 import {
-  uniqueFieldNamesValidator,
-  singleTrueValidator,
-  validateCsvHeaders,
   doMqttTopicsOverlap,
   mqttTopicOverlapValidator,
+  singleTrueValidator,
+  uniqueFieldNamesValidator,
+  validateCsvHeaders,
   validateCsvMqttTopics
 } from './validators';
-import { describe, expect, test } from 'vitest';
 
 describe('Custom Validators', () => {
   describe('uniqueFieldNamesValidator', () => {

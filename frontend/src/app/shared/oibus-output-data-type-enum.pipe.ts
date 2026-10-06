@@ -1,6 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
+
+import { OutputType } from '@oibus/shared/connector/transformer-manifest.model';
+
 import { BaseEnumPipe } from './base-enum-pipe';
-import { OutputType } from '@oibus/shared/transformer.model';
 
 @Pipe({
   name: 'oIBusOutputDataTypeEnum',

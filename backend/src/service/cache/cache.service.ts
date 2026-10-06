@@ -1,12 +1,11 @@
-import fs from 'node:fs/promises';
 import { createReadStream, createWriteStream, ReadStream } from 'node:fs';
-import { pipeline } from 'node:stream/promises';
-import { Readable, Transform } from 'node:stream';
+import fs from 'node:fs/promises';
 import path from 'node:path';
+import { Readable, Transform } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 
-import { determineContentTypeFromFilename, generateRandomId, processCacheFileContent } from '../utils';
-import TypedEventEmitter from '../typed-event-emitter';
-import type { CacheSizeEvents } from '../../model/cache.service.model';
+import { DateTime } from 'luxon';
+
 import {
   CacheContentUpdateCommand,
   CacheMetadata,
@@ -14,13 +13,16 @@ import {
   CacheSearchResult,
   DataFolderType,
   FileCacheContent
-} from '../../../shared/model/engine.model';
-import { DateTime } from 'luxon';
-import DeferredPromise from '../deferred-promise';
+} from '../../../shared/model/api/engine.model';
+import type { ScopeType } from '../../../shared/model/api/logs.model';
+
+import type { CacheSizeEvents } from '../../model/cache.service.model';
 import { CacheSize, CONTENT_FOLDER, METADATA_FOLDER } from '../../model/engine.model';
 import type { ILogger } from '../../model/logger.model';
-import type { ScopeType } from '../../../shared/model/logs.model';
+import DeferredPromise from '../deferred-promise';
 import { loggerService } from '../logger/logger.service';
+import TypedEventEmitter from '../typed-event-emitter';
+import { determineContentTypeFromFilename, generateRandomId, processCacheFileContent } from '../utils';
 
 const DEBOUNCED_LOG_S = 10_000;
 const DEBOUNCED_SIZE_WARNING_S = 60_000;

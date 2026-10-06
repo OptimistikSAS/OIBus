@@ -1,7 +1,20 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
-import { BaseEntity, Instant } from './types';
-import { OIBusNorthType } from './north-connector.model';
-import { OIBusSouthType } from './south-connector.model';
+import { BaseEntity, Instant } from '../common/types';
+import { OIBusNorthType } from '../connector/north-manifest.model';
+import {
+  NorthAmazonS3Settings,
+  NorthAzureBlobSettings,
+  NorthAzureDataExplorerSettings,
+  NorthConsoleSettings,
+  NorthFileWriterSettings,
+  NorthModbusSettings,
+  NorthMQTTSettings,
+  NorthOIAnalyticsSettings,
+  NorthOPCUASettings,
+  NorthRESTSettings,
+  NorthSFTPSettings
+} from '../connector/north-settings.model';
+import { OIBusSouthType } from '../connector/south-manifest.model';
 import {
   SouthADSItemSettings,
   SouthADSSettings,
@@ -47,20 +60,7 @@ import {
   SouthSFTPSettings,
   SouthSQLiteItemSettings,
   SouthSQLiteSettings
-} from './south-settings.model';
-import {
-  NorthAmazonS3Settings,
-  NorthAzureBlobSettings,
-  NorthAzureDataExplorerSettings,
-  NorthConsoleSettings,
-  NorthFileWriterSettings,
-  NorthModbusSettings,
-  NorthMQTTSettings,
-  NorthOIAnalyticsSettings,
-  NorthOPCUASettings,
-  NorthRESTSettings,
-  NorthSFTPSettings
-} from './north-settings.model';
+} from '../connector/south-settings.model';
 import { ScanModeDTO } from './scan-mode.model';
 import { HistoryTransformerCommandDTOWithOptions, HistoryTransformerDTOWithOptions } from './transformer.model';
 

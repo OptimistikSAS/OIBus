@@ -1,13 +1,20 @@
-import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, Subscription, switchMap } from 'rxjs';
-import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective } from '@ngx-translate/core';
-import { ConfigImportEntityValidationError, ConfigImportPreviewDTO, ConfigImportResponseDTO } from '@oibus/shared/config-transfer.model';
+import { Observable, Subscription, switchMap } from 'rxjs';
+
+import {
+  ConfigImportEntityValidationError,
+  ConfigImportPreviewDTO,
+  ConfigImportResponseDTO
+} from '@oibus/shared/oia/config-transfer.model';
+
 import { ConfigImportFailure, ConfigTransferService } from '../../../services/config-transfer.service';
 import { ConfirmationService } from '../../../shared/confirmation.service';
+import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { ConfigImportPreviewComponent } from '../config-import-preview/config-import-preview.component';
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB

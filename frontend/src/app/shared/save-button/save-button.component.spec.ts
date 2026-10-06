@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { SaveButtonComponent } from './save-button.component';
 import { TestBed } from '@angular/core/testing';
-import { delay, of } from 'rxjs';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { ObservableState } from './save-button.component';
-import { provideI18nTesting } from '../../../i18n/mock-i18n';
+
+import { delay, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
+
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { ObservableState, SaveButtonComponent } from './save-button.component';
 
 @Component({
   selector: 'oib-test-save-button-component',

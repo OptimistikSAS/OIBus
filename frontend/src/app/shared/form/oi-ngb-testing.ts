@@ -1,5 +1,7 @@
 import { Provider } from '@angular/core';
+
 import { NgbConfig } from '@ng-bootstrap/ng-bootstrap';
+
 import { provideNgbConfig } from './oi-ngb';
 
 const NO_ANIMATION_NGB_CONFIG: NgbConfig = { animation: false };

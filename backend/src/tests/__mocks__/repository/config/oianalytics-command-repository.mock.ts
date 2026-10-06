@@ -1,10 +1,13 @@
 import { mock } from 'node:test';
+
 import type { Database } from 'better-sqlite3';
+
+import { Instant, Page } from '../../../../../shared/model/common/types';
+import { CommandSearchParam } from '../../../../../shared/model/oia/command.model';
+
 import { OIBusCommand } from '../../../../model/oianalytics-command.model';
-import { OIAnalyticsFetchCommandDTO } from '../../../../service/oia/oianalytics.model';
-import { CommandSearchParam } from '../../../../../shared/model/command.model';
-import { Instant, Page } from '../../../../../shared/model/types';
 import OIAnalyticsCommandRepository from '../../../../repository/config/oianalytics-command.repository';
+import { OIAnalyticsFetchCommandDTO } from '../../../../service/oia/oianalytics.model';
 
 /**
  * Create a mock object for OIAnalytics Command repository

@@ -1,17 +1,8 @@
-import NorthConnector from '../north/north-connector';
-import SouthConnector from '../south/south-connector';
+import path from 'node:path';
+
 import { CronJob } from 'cron';
 import { DateTime } from 'luxon';
-import { validateCronExpression } from '../service/utils';
-import {
-  MAX_INTERVAL_MS,
-  MIN_INTERVAL_MS,
-  intervalToMs,
-  isActivationWindowExpired,
-  isWithinActivationWindow
-} from '../service/scan-mode.utils';
-import path from 'node:path';
-import { Instant, NotFoundError } from '../model/types';
+
 import {
   CacheContentUpdateCommand,
   CacheSearchParam,
@@ -20,38 +11,50 @@ import {
   FileCacheContent,
   HistoryQueryMetrics,
   NorthConnectorMetrics,
-  OIBusContent,
   SouthConnectorMetrics
-} from '../../shared/model/engine.model';
-import { ScanMode } from '../model/scan-mode.model';
-import { NorthSettings } from '../../shared/model/north-settings.model';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import { SouthConnectorEntity, SouthConnectorEntityLight, SouthConnectorItemEntity } from '../model/south-connector.model';
-import { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
-import SouthConnectorMetricsService from '../service/metrics/south-connector-metrics.service';
-import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
-import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
-import NorthConnectorMetricsService from '../service/metrics/north-connector-metrics.service';
-import NorthConnectorRepository from '../repository/config/north-connector.repository';
-import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import ScanModeRepository from '../repository/config/scan-mode.repository';
-import ConfigurationWorkflowRepository from '../repository/config/configuration-workflow.repository';
+} from '../../shared/model/api/engine.model';
+import { OIBusContent } from '../../shared/model/common/content.model';
+import { NorthSettings } from '../../shared/model/connector/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
-import { buildSouth, deleteSouthCache, initSouthCache } from '../south/south-connector-factory';
+import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../model/histor-query.model';
+import { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
+import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
+import { ScanMode } from '../model/scan-mode.model';
+import { SouthConnectorEntity, SouthConnectorEntityLight, SouthConnectorItemEntity } from '../model/south-connector.model';
+import { Instant, NotFoundError } from '../model/types';
+import NorthConnector from '../north/north-connector';
 import { buildNorth, createNorthOrchestrator, deleteNorthCache, initNorthCache } from '../north/north-connector-factory';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
-import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
-import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../model/histor-query.model';
-import HistoryQuery from './history-query';
+import ConfigurationWorkflowRepository from '../repository/config/configuration-workflow.repository';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
-import HistoryQueryMetricsService from '../service/metrics/history-query-metrics.service';
+import NorthConnectorRepository from '../repository/config/north-connector.repository';
+import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import ScanModeRepository from '../repository/config/scan-mode.repository';
+import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
-import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
-import { buildHistoryQuery, createHistoryQueryOrchestrator, deleteHistoryQueryCache, initHistoryQueryCache } from './history-query-factory';
+import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
+import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
 import { clearProxyAgentCache } from '../service/http-request.utils';
-import { clearOIAnalyticsCredentialCache } from '../service/utils-oianalytics';
 import { loggerService } from '../service/logger/logger.service';
+import HistoryQueryMetricsService from '../service/metrics/history-query-metrics.service';
+import NorthConnectorMetricsService from '../service/metrics/north-connector-metrics.service';
+import SouthConnectorMetricsService from '../service/metrics/south-connector-metrics.service';
+import {
+  intervalToMs,
+  isActivationWindowExpired,
+  isWithinActivationWindow,
+  MAX_INTERVAL_MS,
+  MIN_INTERVAL_MS
+} from '../service/scan-mode.utils';
+import { validateCronExpression } from '../service/utils';
+import { clearOIAnalyticsCredentialCache } from '../service/utils-oianalytics';
+import SouthConnector from '../south/south-connector';
+import { buildSouth, deleteSouthCache, initSouthCache } from '../south/south-connector-factory';
+import HistoryQuery from './history-query';
+import { buildHistoryQuery, createHistoryQueryOrchestrator, deleteHistoryQueryCache, initHistoryQueryCache } from './history-query-factory';
 
 export default class DataStreamEngine {
   private northConnectors = new Map<string, { north: NorthConnector<NorthSettings>; metrics: NorthConnectorMetricsService }>();

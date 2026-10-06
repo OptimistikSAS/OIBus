@@ -1,6 +1,7 @@
-import { describe, expect, test, beforeEach } from 'vitest';
-import { IsoTimeAdapterService } from './iso-time-adapter.service';
 import { NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
+import { beforeEach, describe, expect, test } from 'vitest';
+
+import { IsoTimeAdapterService } from './iso-time-adapter.service';
 
 describe('IsoTimeAdapterService', () => {
   let adapter: IsoTimeAdapterService;

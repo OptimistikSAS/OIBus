@@ -1,6 +1,7 @@
-import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
+
 import { ItemPointMetadataEntity, ItemPointMetadataWrite } from '../../model/item-point-metadata.model';
+import { generateRandomId } from '../../service/utils';
 
 const ITEM_POINT_METADATA_TABLE = 'item_point_metadata';
 

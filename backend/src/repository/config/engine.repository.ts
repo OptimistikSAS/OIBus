@@ -1,17 +1,19 @@
-import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
-import { EngineSettings } from '../../model/engine.model';
+
 import {
   AuthTokenDuration,
   EngineLoggerCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
   EngineWebServerCommandDTO
-} from '../../../shared/model/engine.model';
+} from '../../../shared/model/api/engine.model';
+import { LogLevel } from '../../../shared/model/api/logs.model';
+
 import { version } from '../../../package.json';
-import { LogLevel } from '../../../shared/model/logs.model';
-import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
 import { AuditEntityType } from '../../model/audit.model';
+import { EngineSettings } from '../../model/engine.model';
+import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
+import { generateRandomId } from '../../service/utils';
 
 const ENGINES_TABLE = 'engines';
 

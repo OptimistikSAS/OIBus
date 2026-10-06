@@ -1,12 +1,15 @@
-import { before, after, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { after, before, beforeEach, describe, it } from 'node:test';
+
 import { Database } from 'better-sqlite3';
-import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+
+import { createPageFromArray } from '../../../shared/model/common/types';
+
 import testData from '../../tests/utils/test-data';
-import OIAnalyticsMessageRepository from './oianalytics-message.repository';
+import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import ConfigurationWorkflowRepository from './configuration-workflow.repository';
+import OIAnalyticsMessageRepository from './oianalytics-message.repository';
 import WorkflowRunRepository from './workflow-run.repository';
-import { createPageFromArray } from '../../../shared/model/types';
 
 const TEST_DB_PATH = 'src/tests/test-config-message.db';
 

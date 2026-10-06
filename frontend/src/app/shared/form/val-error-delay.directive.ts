@@ -1,4 +1,4 @@
-import { Directive, ElementRef, NgZone, OnDestroy, inject } from '@angular/core';
+import { Directive, ElementRef, inject, NgZone, OnDestroy } from '@angular/core';
 
 /**
  * Directive which targets the val-errors elements, and which uses a mutation observer to detect the new errors appearing inside the

@@ -1,12 +1,14 @@
-import { describe, it, before, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { CommandSearchParam } from '../../../shared/model/command.model';
-import { CustomExpressRequest } from '../express';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
+import { before, beforeEach, describe, it, mock } from 'node:test';
+
+import { createPageFromArray } from '../../../shared/model/common/types';
+import { CommandSearchParam } from '../../../shared/model/oia/command.model';
+
 import OIAnalyticsCommandServiceMock from '../../tests/__mocks__/service/oia/oianalytics-command-service.mock';
-import { createPageFromArray } from '../../../shared/model/types';
+import testData from '../../tests/utils/test-data';
+import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { CustomExpressRequest } from '../express';
 import type { OIAnalyticsCommandController as OIAnalyticsCommandControllerShape } from './oianalytics-command.controller';
 
 const nodeRequire = createRequire(import.meta.url);

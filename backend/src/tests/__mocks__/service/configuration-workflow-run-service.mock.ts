@@ -1,7 +1,9 @@
 import { mock } from 'node:test';
+
+import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '../../../../shared/model/api/configuration-workflow.model';
+import { Page } from '../../../../shared/model/common/types';
+
 import { WorkflowRunEntity, WorkflowRunSearchParam } from '../../../model/workflow-run.model';
-import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '../../../../shared/model/configuration-workflow.model';
-import { Page } from '../../../../shared/model/types';
 
 /**
  * Create a mock object for Configuration Workflow Run Service

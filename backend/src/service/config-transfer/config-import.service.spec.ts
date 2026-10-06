@@ -1,27 +1,29 @@
-import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
+import { ConfigurationWorkflowCommandDTO } from '../../../shared/model/api/configuration-workflow.model';
+import { ConfigExportDTO, OIBusConfigurationDTO } from '../../../shared/model/oia/config-transfer.model';
+import { OIAnalyticsSouthCommandDTO } from '../../../shared/model/oia/oianalytics-configuration.model';
+
+import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
+import ConfigurationWorkflowRepositoryMock from '../../tests/__mocks__/repository/config/configuration-workflow-repository.mock';
+import EngineRepositoryMock from '../../tests/__mocks__/repository/config/engine-repository.mock';
+import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
+import IpFilterRepositoryMock from '../../tests/__mocks__/repository/config/ip-filter-repository.mock';
+import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
+import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
+import TransformerRepositoryMock from '../../tests/__mocks__/repository/config/transformer-repository.mock';
+import UserRepositoryMock from '../../tests/__mocks__/repository/config/user-repository.mock';
+import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
+import testData from '../../tests/utils/test-data';
+import JoiValidator from '../../web-server/controllers/validators/joi.validator';
+import EncryptionService from '../encryption.service';
 import ConfigImportService, { ConfigImportError } from './config-import.service';
 import ConfigTransferService from './config-transfer.service';
 import ConfigTransferBuilderService from './config-transfer-builder.service';
-import JoiValidator from '../../web-server/controllers/validators/joi.validator';
-import testData from '../../tests/utils/test-data';
-import EngineRepositoryMock from '../../tests/__mocks__/repository/config/engine-repository.mock';
-import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
-import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
-import IpFilterRepositoryMock from '../../tests/__mocks__/repository/config/ip-filter-repository.mock';
-import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
-import UserRepositoryMock from '../../tests/__mocks__/repository/config/user-repository.mock';
-import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
-import TransformerRepositoryMock from '../../tests/__mocks__/repository/config/transformer-repository.mock';
-import ConfigurationWorkflowRepositoryMock from '../../tests/__mocks__/repository/config/configuration-workflow-repository.mock';
-import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
-import EncryptionService from '../encryption.service';
-import { ConfigExportDTO, OIBusConfigurationDTO } from '../../../shared/model/config-transfer.model';
-import { OIAnalyticsSouthCommandDTO } from '../../../shared/model/oianalytics-configuration.model';
-import { ConfigurationWorkflowCommandDTO } from '../../../shared/model/configuration-workflow.model';
-import { CONFIG_UPGRADES } from './config-upgrades/registry';
 import { ConfigUpgrade, forEachSouth, JsonObject } from './config-upgrades/config-upgrade';
+import { CONFIG_UPGRADES } from './config-upgrades/registry';
 
 /** Version of the importing OIBus the tests pin, independently of `package.json`. */
 const CURRENT_VERSION = '3.11.0';

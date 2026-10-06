@@ -1,4 +1,4 @@
-import { UserInfo } from './types';
+import { UserInfo } from '../common/types';
 
 /**
  * List of possible audit actions.

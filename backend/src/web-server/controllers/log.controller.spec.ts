@@ -1,13 +1,16 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { Group, Item, LogSearchParam, Scope } from '../../../shared/model/logs.model';
-import { CustomExpressRequest } from '../express';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
-import LogServiceMock from '../../tests/__mocks__/service/log-service.mock';
-import { createPageFromArray } from '../../../shared/model/types';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
 import { DateTime } from 'luxon';
+
+import { Group, Item, LogSearchParam, Scope } from '../../../shared/model/api/logs.model';
+import { createPageFromArray } from '../../../shared/model/common/types';
+
+import LogServiceMock from '../../tests/__mocks__/service/log-service.mock';
+import testData from '../../tests/utils/test-data';
+import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { CustomExpressRequest } from '../express';
 import type { LogController as LogControllerShape } from './log.controller';
 
 const nodeRequire = createRequire(import.meta.url);

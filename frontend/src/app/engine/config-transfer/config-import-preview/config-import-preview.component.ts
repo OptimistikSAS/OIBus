@@ -1,19 +1,22 @@
+import { JsonPipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { catchError, map, of } from 'rxjs';
-import { JsonPipe, NgTemplateOutlet } from '@angular/common';
+
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { ConfigImportPreviewDTO, OIBusConfigurationDTO } from '@oibus/shared/config-transfer.model';
-import { createPageFromArray, Page } from '@oibus/shared/types';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import { TransformerSourceCommandDTO } from '@oibus/shared/transformer.model';
-import { LogLevel } from '@oibus/shared/logs.model';
-import { OIBusSouthTypeEnumPipe } from '../../../shared/oibus-south-type-enum.pipe';
-import { OIBusNorthTypeEnumPipe } from '../../../shared/oibus-north-type-enum.pipe';
-import { ScanModeSchedulePipe } from '../../../shared/scan-mode-schedule.pipe';
-import { LogLevelsEnumPipe } from '../../../shared/log-levels-enum.pipe';
-import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+import { catchError, map, of } from 'rxjs';
+
+import { LogLevel } from '@oibus/shared/api/logs.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { TransformerSourceCommandDTO } from '@oibus/shared/api/transformer.model';
+import { createPageFromArray, Page } from '@oibus/shared/common/types';
+import { ConfigImportPreviewDTO, OIBusConfigurationDTO } from '@oibus/shared/oia/config-transfer.model';
+
 import { TransformerService } from '../../../services/transformer.service';
+import { LogLevelsEnumPipe } from '../../../shared/log-levels-enum.pipe';
+import { OIBusNorthTypeEnumPipe } from '../../../shared/oibus-north-type-enum.pipe';
+import { OIBusSouthTypeEnumPipe } from '../../../shared/oibus-south-type-enum.pipe';
+import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+import { ScanModeSchedulePipe } from '../../../shared/scan-mode-schedule.pipe';
 
 type SouthEntry = OIBusConfigurationDTO['southConnectors'][number];
 type SouthItemEntry = SouthEntry['settings']['items'][number];

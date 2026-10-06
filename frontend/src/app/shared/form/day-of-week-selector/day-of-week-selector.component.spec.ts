@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test } from 'vitest';
 
-import { DayOfWeekSelectorComponent } from './day-of-week-selector.component';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { DayOfWeekSelectorComponent } from './day-of-week-selector.component';
 
 @Component({
   template: `<oib-day-of-week-selector [formControl]="control" />`,

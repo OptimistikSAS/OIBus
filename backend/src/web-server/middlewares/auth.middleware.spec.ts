@@ -1,16 +1,18 @@
-import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
 import argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
-import { authMiddleware } from './auth.middleware';
-import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
-import type UserService from '../../service/user.service';
+
+import type { EngineSettings } from '../../model/engine.model';
+import type { User } from '../../model/user.model';
 import type EncryptionService from '../../service/encryption.service';
 import type OIBusService from '../../service/oibus.service';
-import type { User } from '../../model/user.model';
-import type { EngineSettings } from '../../model/engine.model';
+import type UserService from '../../service/user.service';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
+import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import { authMiddleware } from './auth.middleware';
 
 const basicAuthHeader = (user: string, pass: string) => 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');
 const bearerHeader = (token: string) => `Bearer ${token}`;

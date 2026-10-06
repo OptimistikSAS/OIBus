@@ -1,16 +1,19 @@
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+
 import { DateTime } from 'luxon';
+
+import { ActivationWindow } from '../../shared/model/api/scan-mode.model';
+
+import { ScanMode } from '../model/scan-mode.model';
 import {
-  MAX_INTERVAL_MS,
-  MIN_INTERVAL_MS,
   hasScheduleChanged,
   intervalToMs,
   isActivationWindowExpired,
-  isWithinActivationWindow
+  isWithinActivationWindow,
+  MAX_INTERVAL_MS,
+  MIN_INTERVAL_MS
 } from './scan-mode.utils';
-import { ScanMode } from '../model/scan-mode.model';
-import { ActivationWindow } from '../../shared/model/scan-mode.model';
 
 const baseScanMode: ScanMode = {
   id: 'id',

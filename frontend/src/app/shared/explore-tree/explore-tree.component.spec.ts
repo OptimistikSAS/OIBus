@@ -1,13 +1,15 @@
-import { ExploreTreeComponent } from './explore-tree.component';
-import { TestBed } from '@angular/core/testing';
-import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { SouthConnectorService } from '../../services/south-connector.service';
-import { NEVER, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import testData from '../../../../../backend/src/tests/utils/test-data';
+import { TestBed } from '@angular/core/testing';
+
+import { NEVER, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { page } from 'vitest/browser';
+
+import testData from '../../../../../backend/src/tests/utils/test-data';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { SouthConnectorService } from '../../services/south-connector.service';
+import { ExploreTreeComponent } from './explore-tree.component';
 
 class ExploreTreeComponentTester {
   readonly fixture = TestBed.createComponent(ExploreTreeComponent);

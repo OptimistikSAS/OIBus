@@ -1,7 +1,8 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
 import {
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
@@ -10,18 +11,19 @@ import {
   SouthExploreBrowseResult,
   SouthExploreStartResult,
   SouthItemGroupCommandDTO
-} from '../../../shared/model/south-connector.model';
+} from '../../../shared/model/api/south-connector.model';
+import { OIBusContent } from '../../../shared/model/common/content.model';
+
 import type { SouthItemGroupEntity } from '../../model/south-connector.model';
-import { CustomExpressRequest } from '../express';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
-import SouthServiceMock from '../../tests/__mocks__/service/south-service.mock';
-import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
-import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
-import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
-import ConfigurationWorkflowRunServiceMock from '../../tests/__mocks__/service/configuration-workflow-run-service.mock';
-import { OIBusContent } from '../../../shared/model/engine.model';
 import { OIBusTestingError } from '../../model/types';
+import ConfigurationWorkflowRunServiceMock from '../../tests/__mocks__/service/configuration-workflow-run-service.mock';
+import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
+import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
+import SouthServiceMock from '../../tests/__mocks__/service/south-service.mock';
+import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import testData from '../../tests/utils/test-data';
+import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { CustomExpressRequest } from '../express';
 import type { SouthConnectorController as SouthConnectorControllerShape } from './south-connector.controller';
 
 const nodeRequire = createRequire(import.meta.url);

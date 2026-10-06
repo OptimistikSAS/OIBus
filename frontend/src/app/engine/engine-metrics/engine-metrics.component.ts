@@ -1,15 +1,18 @@
-import { Component, NgZone, inject, input, ChangeDetectionStrategy } from '@angular/core';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { EngineMetrics } from '@oibus/shared/engine.model';
 import { PercentPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, input, NgZone } from '@angular/core';
+import { Router } from '@angular/router';
+
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+
+import { EngineMetrics } from '@oibus/shared/api/engine.model';
+
+import { EngineService } from '../../services/engine.service';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
-import { NotificationService } from '../../shared/notification.service';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { EngineService } from '../../services/engine.service';
 import { FileSizePipe } from '../../shared/file-size.pipe';
-import { Router } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NotificationService } from '../../shared/notification.service';
 
 @Component({
   selector: 'oib-engine-metrics',

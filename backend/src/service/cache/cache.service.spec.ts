@@ -1,16 +1,17 @@
-import { describe, it, beforeEach, afterEach, before, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import fs from 'node:fs/promises';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import { mockBaseFolders } from '../../tests/utils/test-utils';
-import testData from '../../tests/utils/test-data';
-import type CacheServiceType from './cache.service';
-import { CacheContentUpdateCommand, CacheMetadata } from '../../../shared/model/engine.model';
-import DeferredPromise from '../deferred-promise';
+import { CacheContentUpdateCommand, CacheMetadata } from '../../../shared/model/api/engine.model';
+
 import { CacheSize, CONTENT_FOLDER, METADATA_FOLDER } from '../../model/engine.model';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import testData from '../../tests/utils/test-data';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
+import DeferredPromise from '../deferred-promise';
+import type CacheServiceType from './cache.service';
 
 const nodeRequire = createRequire(import.meta.url);
 let CacheService: typeof CacheServiceType;

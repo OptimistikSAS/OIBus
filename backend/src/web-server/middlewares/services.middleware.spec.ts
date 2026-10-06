@@ -1,8 +1,9 @@
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { createInjectServicesMiddleware } from './services.middleware';
+import { describe, it } from 'node:test';
+
 import { createMockServices } from '../../tests/utils/test-utils';
 import type { CustomExpressRequest } from '../express';
+import { createInjectServicesMiddleware } from './services.middleware';
 
 describe('createInjectServicesMiddleware', () => {
   it('should inject all 17 services into req.services and call next()', () => {

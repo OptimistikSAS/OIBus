@@ -1,8 +1,10 @@
 import { mock } from 'node:test';
+
 import type { Database } from 'better-sqlite3';
-import { createAuditServiceMock } from '../../../utils/test-utils';
+
 import { IPFilter } from '../../../../model/ip-filter.model';
 import IpFilterRepository from '../../../../repository/config/ip-filter.repository';
+import { createAuditServiceMock } from '../../../utils/test-utils';
 
 /**
  * Create a mock object for IP Filter repository

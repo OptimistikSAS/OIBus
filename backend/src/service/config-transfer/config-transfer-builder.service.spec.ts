@@ -1,22 +1,23 @@
-import { describe, it, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import ConfigTransferBuilderService from './config-transfer-builder.service';
-import testData from '../../tests/utils/test-data';
+import { beforeEach, describe, it } from 'node:test';
+
+import { ConfigurationWorkflowEntity } from '../../model/configuration-workflow.model';
+import { StandardTransformer } from '../../model/transformer.model';
+import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
+import ConfigurationWorkflowRepositoryMock from '../../tests/__mocks__/repository/config/configuration-workflow-repository.mock';
 import EngineRepositoryMock from '../../tests/__mocks__/repository/config/engine-repository.mock';
+import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
+import IpFilterRepositoryMock from '../../tests/__mocks__/repository/config/ip-filter-repository.mock';
+import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
 import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
-import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
-import IpFilterRepositoryMock from '../../tests/__mocks__/repository/config/ip-filter-repository.mock';
-import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
-import UserRepositoryMock from '../../tests/__mocks__/repository/config/user-repository.mock';
-import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
 import TransformerRepositoryMock from '../../tests/__mocks__/repository/config/transformer-repository.mock';
-import ConfigurationWorkflowRepositoryMock from '../../tests/__mocks__/repository/config/configuration-workflow-repository.mock';
-import { ConfigurationWorkflowEntity } from '../../model/configuration-workflow.model';
+import UserRepositoryMock from '../../tests/__mocks__/repository/config/user-repository.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import { StandardTransformer } from '../../model/transformer.model';
+import testData from '../../tests/utils/test-data';
 import IsoTransformer from '../../transformers/iso-transformer';
 import EncryptionService from '../encryption.service';
+import ConfigTransferBuilderService from './config-transfer-builder.service';
 
 const standardTransformer: StandardTransformer = {
   id: IsoTransformer.transformerName,

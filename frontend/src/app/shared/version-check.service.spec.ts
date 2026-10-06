@@ -1,10 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { VersionCheckService } from './version-check.service';
-import { EngineService } from '../services/engine.service';
+
 import { of } from 'rxjs';
-import { OIBusInfo } from '@oibus/shared/engine.model';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
+import { OIBusInfo } from '@oibus/shared/api/engine.model';
+
 import { createMock, MockObject } from '../../test/vitest-create-mock';
+import { EngineService } from '../services/engine.service';
+import { VersionCheckService } from './version-check.service';
 
 describe('VersionCheckService', () => {
   let service: VersionCheckService;

@@ -3,15 +3,16 @@
  * That file lives outside `src/` (the `src/**\/*.spec.ts` test glob does not reach it),
  * so its runtime exports are exercised from a co-located spec here instead.
  */
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+
 import {
+  isEnabledOnPlatform,
   OIBUS_ATTRIBUTE_TYPES,
   OIBUS_ATTRIBUTE_VALIDATOR_TYPES,
   OIBUS_PLATFORMS,
-  isEnabledOnPlatform,
   OIBusAttribute
-} from '../../shared/model/form.model';
+} from '../../shared/model/connector/form.model';
 
 const baseDisplayProperties = { row: 0, columns: 1, displayInViewMode: false };
 

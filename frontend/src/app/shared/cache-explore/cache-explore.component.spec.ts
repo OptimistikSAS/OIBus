@@ -1,14 +1,17 @@
-import { TestBed } from '@angular/core/testing';
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { CacheExploreComponent } from './cache-explore.component';
-import { BehaviorSubject } from 'rxjs';
+import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ObservableState } from '../save-button/save-button.component';
-import { CacheContentUpdateCommand, CacheOperation, CacheSearchResult } from '@oibus/shared/engine.model';
-import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { provideCurrentUser } from '../current-user-testing-vitest';
+
+import { BehaviorSubject } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
+
+import { CacheContentUpdateCommand, CacheOperation, CacheSearchResult } from '@oibus/shared/api/engine.model';
+
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { provideCurrentUser } from '../current-user-testing-vitest';
+import { ObservableState } from '../save-button/save-button.component';
+import { CacheExploreComponent } from './cache-explore.component';
 
 @Component({
   template: `<oib-cache-explore

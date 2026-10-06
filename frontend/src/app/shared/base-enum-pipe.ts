@@ -1,8 +1,9 @@
 /**
  * Base class for enum pipes
  */
-import { TranslateService } from '@ngx-translate/core';
 import { inject, PipeTransform } from '@angular/core';
+
+import { TranslateService } from '@ngx-translate/core';
 
 export class BaseEnumPipe<E> implements PipeTransform {
   private translateService = inject(TranslateService);

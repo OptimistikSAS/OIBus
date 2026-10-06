@@ -1,11 +1,12 @@
-import { describe, it, beforeEach, afterEach, before, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import fsSync from 'node:fs';
 import { createRequire } from 'node:module';
 import { PassThrough } from 'node:stream';
-import fsSync from 'node:fs';
-import testData from '../../tests/utils/test-data';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
-import { mockModule, reloadModule, assertContains } from '../../tests/utils/test-utils';
+import testData from '../../tests/utils/test-data';
+import { assertContains, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type OIAnalyticsClientType from './oianalytics-client.service';
 
 const nodeRequire = createRequire(import.meta.url);

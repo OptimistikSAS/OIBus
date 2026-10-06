@@ -1,8 +1,10 @@
-import OIBusTransformer from './oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
-import { CacheMetadata } from '../../shared/model/engine.model';
+
+import { CacheMetadata } from '../../shared/model/api/engine.model';
+
 import { CacheMetadataSource } from '../model/engine.model';
+import OIBusTransformer from './oibus-transformer';
 
 export default class IsoTransformer extends OIBusTransformer {
   public static transformerName = 'iso';

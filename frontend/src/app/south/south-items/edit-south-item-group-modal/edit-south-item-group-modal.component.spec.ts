@@ -1,16 +1,18 @@
 import { TestBed } from '@angular/core/testing';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test } from 'vitest';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
-import { EditSouthItemGroupModalComponent } from './edit-south-item-group-modal.component';
-import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
-import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
+
+import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import { SouthItemGroupDTO } from '@oibus/shared/south-connector.model';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import testData from '../../../../../../backend/src/tests/utils/test-data';
+import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
+import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { EditSouthItemGroupModalComponent } from './edit-south-item-group-modal.component';
 
 const manifest = testData.south.manifest;
 const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;

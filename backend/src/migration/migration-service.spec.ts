@@ -1,17 +1,19 @@
-import { describe, it, before, after, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
+import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { after, before, describe, it, mock } from 'node:test';
+
 import Database from 'better-sqlite3';
+
 import {
+  migrateCrypto,
+  migrateDataFolder,
   migrateEntities,
   migrateLogs,
   migrateMetrics,
-  migrateCrypto,
   migrateSouthCache,
-  migrateDataFolder,
   specFilteredMigrationSource
 } from './migration-service';
 

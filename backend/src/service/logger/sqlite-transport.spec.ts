@@ -1,6 +1,7 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
 import type { PinoLog } from '../../model/logs.model';
 import { reloadModule } from '../../tests/utils/test-utils';
 

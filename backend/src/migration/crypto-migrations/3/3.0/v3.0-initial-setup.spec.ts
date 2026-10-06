@@ -1,6 +1,8 @@
-import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { after, before, describe, it } from 'node:test';
+
 import knex, { Knex } from 'knex';
+
 import { down, up } from './v3.0-initial-setup';
 
 describe('Crypto migration v3.0 (initial-setup)', () => {

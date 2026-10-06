@@ -1,26 +1,28 @@
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
-import { page } from 'vitest/browser';
+import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { describe, expect, test, vi } from 'vitest';
 
-import { EditHistoryQueryComponent } from './edit-history-query.component';
-import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
-import { HistoryQueryService } from '../../services/history-query.service';
-import { NorthConnectorService } from '../../services/north-connector.service';
-import { SouthConnectorService } from '../../services/south-connector.service';
-import { ScanModeService } from '../../services/scan-mode.service';
-import { CertificateService } from '../../services/certificate.service';
-import { TransformerService } from '../../services/transformer.service';
-import { NotificationService } from '../../shared/notification.service';
-import { ModalService } from '../../shared/modal.service';
-import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
-import { ConfirmationService } from '../../shared/confirmation.service';
+import { of } from 'rxjs';
+import { describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
+
+import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
-import testData from '../../../../../backend/src/tests/utils/test-data';
-import { HistoryQueryDTO } from '@oibus/shared/history-query.model';
+import { CertificateService } from '../../services/certificate.service';
+import { HistoryQueryService } from '../../services/history-query.service';
+import { NorthConnectorService } from '../../services/north-connector.service';
+import { ScanModeService } from '../../services/scan-mode.service';
+import { SouthConnectorService } from '../../services/south-connector.service';
+import { TransformerService } from '../../services/transformer.service';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
+import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
+import { EditHistoryQueryComponent } from './edit-history-query.component';
 
 // Deep-cloned: `EditHistoryQueryComponent` deliberately mutates `historyQuery.caching.trigger.scanMode`
 // in place (to align its reference with an entry in the fetched scan mode list for form binding).

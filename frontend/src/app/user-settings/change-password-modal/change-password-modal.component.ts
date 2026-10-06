@@ -1,13 +1,15 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { NgbActiveModal, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { NotificationService } from '../../shared/notification.service';
-import { ChangePasswordCommand } from '@oibus/shared/user.model';
-import { UserSettingsService } from '../../services/user-settings.service';
 
+import { NgbActiveModal, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { switchMap } from 'rxjs';
+
+import { ChangePasswordCommand } from '@oibus/shared/api/user.model';
+
+import { UserSettingsService } from '../../services/user-settings.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
+import { NotificationService } from '../../shared/notification.service';
 
 interface NewPasswordFormValue {
   newPassword: string;

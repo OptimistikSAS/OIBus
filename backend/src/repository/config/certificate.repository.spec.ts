@@ -1,11 +1,12 @@
-import { before, after, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { mock } from 'node:test';
+import { after, before, beforeEach, describe, it, mock } from 'node:test';
+
 import { Database } from 'better-sqlite3';
-import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
-import testData from '../../tests/utils/test-data';
-import CertificateRepository from './certificate.repository';
+
 import AuditService from '../../service/audit.service';
+import testData from '../../tests/utils/test-data';
+import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import CertificateRepository from './certificate.repository';
 
 const TEST_DB_PATH = 'src/tests/test-config-certificate.db';
 

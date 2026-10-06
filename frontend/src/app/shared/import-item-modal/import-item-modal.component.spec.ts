@@ -1,10 +1,12 @@
-import { ImportItemModalComponent } from './import-item-modal.component';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
-import { provideI18nTesting } from '../../../i18n/mock-i18n';
+
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { page } from 'vitest/browser';
+
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { ImportItemModalComponent } from './import-item-modal.component';
 
 class ImportSouthItemModalComponentTester {
   readonly fixture = TestBed.createComponent(ImportItemModalComponent);

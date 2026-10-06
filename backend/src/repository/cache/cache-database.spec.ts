@@ -1,6 +1,8 @@
-import { before, after, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { after, before, beforeEach, describe, it } from 'node:test';
+
 import { Database } from 'better-sqlite3';
+
 import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import SouthCacheRepository from './south-cache.repository';
 

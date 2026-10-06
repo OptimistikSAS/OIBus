@@ -1,8 +1,10 @@
-import { ScanModeDTO } from '../../shared/model/scan-mode.model';
-import { ScanMode } from '../model/scan-mode.model';
-import { GetUserInfo } from '../../shared/model/types';
-import { isActivationWindowExpired } from './scan-mode.utils';
 import { DateTime } from 'luxon';
+
+import { ScanModeDTO } from '../../shared/model/api/scan-mode.model';
+import { GetUserInfo } from '../../shared/model/common/types';
+
+import { ScanMode } from '../model/scan-mode.model';
+import { isActivationWindowExpired } from './scan-mode.utils';
 
 export const toScanModeDTO = (scanMode: ScanMode, getUserInfo: GetUserInfo): ScanModeDTO => {
   return {

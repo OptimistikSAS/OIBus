@@ -1,13 +1,16 @@
-import { TestBed } from '@angular/core/testing';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { OIBusTimezoneFormControlComponent } from './oibus-timezone-form-control.component';
-import { OIBusTimezoneAttribute } from '@oibus/shared/form.model';
-import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
+
+import { OIBusTimezoneAttribute } from '@oibus/shared/connector/form.model';
+
+import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { TYPEAHEAD_DEBOUNCE_TIME } from '../typeahead';
+import { OIBusTimezoneFormControlComponent } from './oibus-timezone-form-control.component';
 
 @Component({
   selector: 'oib-test-oibus-timezone-form-control-component',

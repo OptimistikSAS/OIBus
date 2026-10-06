@@ -1,3 +1,5 @@
+import fs from 'node:fs/promises';
+
 import {
   Body,
   Controller,
@@ -14,17 +16,18 @@ import {
   Tags,
   UploadedFile
 } from 'tsoa';
+
 import {
   CertificateCommandDTO,
   CertificateDTO,
   CertificateExportFormat,
   CertificatePrivateKeyExportCommandDTO
-} from '../../../shared/model/certificate.model';
-import CertificateService, { toCertificateDTO } from '../../service/certificate.service';
-import { CustomExpressRequest } from '../express';
-import fs from 'node:fs/promises';
+} from '../../../shared/model/api/certificate.model';
+
 import { OIBusValidationError } from '../../model/types';
+import CertificateService, { toCertificateDTO } from '../../service/certificate.service';
 import { sanitizeFilename } from '../../service/utils';
+import { CustomExpressRequest } from '../express';
 
 @Route('/api/certificates')
 @Tags('Certificates')

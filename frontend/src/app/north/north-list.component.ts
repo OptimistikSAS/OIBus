@@ -1,24 +1,28 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { AsyncPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
-import { ConfirmationService } from '../shared/confirmation.service';
-import { NotificationService } from '../shared/notification.service';
-import { ModalService } from '../shared/modal.service';
-import { NorthConnectorLightDTO, OIBusNorthType } from '@oibus/shared/north-connector.model';
+
+import { NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
+import { createPageFromArray, Page } from '@oibus/shared/common/types';
+import { OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
+
 import { NorthConnectorService } from '../services/north-connector.service';
-import { ChooseNorthConnectorTypeModalComponent } from './choose-north-connector-type-modal/choose-north-connector-type-modal.component';
-import { RouterLink } from '@angular/router';
-import { AsyncPipe } from '@angular/common';
+import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
+import { AuditInfoComponent } from '../shared/audit-info/audit-info.component';
+import { ConfirmationService } from '../shared/confirmation.service';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
-import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { createPageFromArray, Page } from '@oibus/shared/types';
-import { emptyPage } from '../shared/test-utils';
+import { ModalService } from '../shared/modal.service';
+import { NotificationService } from '../shared/notification.service';
+import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';
-import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AuditInfoComponent } from '../shared/audit-info/audit-info.component';
-import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
+import { emptyPage } from '../shared/test-utils';
+import { ChooseNorthConnectorTypeModalComponent } from './choose-north-connector-type-modal/choose-north-connector-type-modal.component';
 
 type NorthSortField = 'name' | 'type' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';

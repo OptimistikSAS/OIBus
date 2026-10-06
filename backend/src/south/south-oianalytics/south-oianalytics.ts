@@ -1,17 +1,24 @@
-import SouthConnector from '../south-connector';
-import { formatQueryParams, persistResults, workUnitLogCtx } from '../../service/utils';
-import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { SouthHistoryQuery } from '../south-interface';
-import { SouthItemSettings, SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
+
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
+import { OIBusContent } from '../../../shared/model/common/content.model';
+import { Instant } from '../../../shared/model/common/types';
+import {
+  SouthItemSettings,
+  SouthOIAnalyticsItemSettings,
+  SouthOIAnalyticsSettings
+} from '../../../shared/model/connector/south-settings.model';
+
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import CertificateRepository from '../../repository/config/certificate.repository';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import { HTTPRequest } from '../../service/http-request.utils';
+import { formatQueryParams, persistResults, workUnitLogCtx } from '../../service/utils';
 import { buildHttpOptions, getHost, getUrl, OIATimeValues, parseData, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
+import SouthConnector from '../south-connector';
+import { SouthHistoryQuery } from '../south-interface';
 
 /**
  * Class SouthOIAnalytics - Retrieve data from OIAnalytics REST API

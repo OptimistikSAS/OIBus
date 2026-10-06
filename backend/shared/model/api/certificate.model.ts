@@ -1,4 +1,4 @@
-import { BaseEntity, Instant } from './types';
+import { BaseEntity, Instant } from '../common/types';
 
 /**
  * Data Transfer Object for a certificate.

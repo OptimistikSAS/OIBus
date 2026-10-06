@@ -1,11 +1,13 @@
-import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
 import { DateTime } from 'luxon';
-import testData from '../tests/utils/test-data';
-import AuditCleanupService from './audit-cleanup.service';
+
+import { EngineSettings } from '../model/engine.model';
 import AuditRepositoryMock from '../tests/__mocks__/repository/config/audit-repository.mock';
 import EngineRepositoryMock from '../tests/__mocks__/repository/config/engine-repository.mock';
-import { EngineSettings } from '../model/engine.model';
+import testData from '../tests/utils/test-data';
+import AuditCleanupService from './audit-cleanup.service';
 
 describe('AuditCleanupService', () => {
   let service: AuditCleanupService;

@@ -1,8 +1,9 @@
-import { Component, forwardRef, output, contentChildren, computed, signal, input, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, contentChildren, forwardRef, input, output, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { MultiSelectOptionDirective } from './multi-select-option.directive';
 
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+
+import { MultiSelectOptionDirective } from './multi-select-option.directive';
 
 /**
  * A form control component allowing to do multiple selections.

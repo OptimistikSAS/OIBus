@@ -1,9 +1,12 @@
-import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { ControlContainer, FormGroupName, ReactiveFormsModule } from '@angular/forms';
+
 import { TranslateDirective } from '@ngx-translate/core';
+
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
+
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
-import { OIBusScanModeAttribute } from '@oibus/shared/form.model';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 
 @Component({
   selector: 'oib-oibus-scan-mode-form-control',

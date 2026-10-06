@@ -1,13 +1,13 @@
-import { EngineSettingsCommandDTO } from './engine.model';
-import { NorthConnectorCommandDTO } from './north-connector.model';
-import { SouthConnectorCommandDTO } from './south-connector.model';
-import { CertificateDTO } from './certificate.model';
-import { UserCommandDTO } from './user.model';
-import { IPFilterCommandDTO } from './ip-filter.model';
-import { ScanModeCommandDTO } from './scan-mode.model';
-import { HistoryQueryCommandDTO } from './history-query.model';
-import { CustomTransformerCommandDTO } from './transformer.model';
-import { OIBusObjectAttribute } from './form.model';
+import { CertificateDTO } from '../api/certificate.model';
+import { EngineSettingsCommandDTO } from '../api/engine.model';
+import { HistoryQueryCommandDTO } from '../api/history-query.model';
+import { IPFilterCommandDTO } from '../api/ip-filter.model';
+import { NorthConnectorCommandDTO } from '../api/north-connector.model';
+import { ScanModeCommandDTO } from '../api/scan-mode.model';
+import { SouthConnectorCommandDTO } from '../api/south-connector.model';
+import { CustomTransformerCommandDTO } from '../api/transformer.model';
+import { UserCommandDTO } from '../api/user.model';
+import { OIBusObjectAttribute } from '../connector/form.model';
 
 /*
  * Configuration DTOs OIBus sends to OIAnalytics in its `full-config` and `history-queries` messages.

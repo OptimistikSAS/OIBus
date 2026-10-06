@@ -1,7 +1,9 @@
 import { EventEmitter } from 'node:events';
 import { mock } from 'node:test';
+
+import { RegistrationSettingsCommandDTO } from '../../../../../shared/model/api/engine.model';
+
 import { OIAnalyticsRegistration } from '../../../../model/oianalytics-registration.model';
-import { RegistrationSettingsCommandDTO } from '../../../../../shared/model/engine.model';
 import OIAnalyticsRegistrationService from '../../../../service/oia/oianalytics-registration.service';
 
 /**

@@ -1,5 +1,5 @@
-import { Service } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
+import { Service } from '@angular/core';
 
 /**
  * Service used to trigger the download of a blob contained in an HTTP response.

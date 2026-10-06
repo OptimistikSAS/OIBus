@@ -1,4 +1,4 @@
-import { BaseEntity, Language, Timezone } from './types';
+import { BaseEntity, Language, Timezone } from '../common/types';
 
 /**
  * Parameters for searching users.

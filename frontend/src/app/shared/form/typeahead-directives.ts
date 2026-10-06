@@ -1,6 +1,7 @@
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { OpenTypeaheadOnFocusDirective } from './open-typeahead-on-focus.directive';
+
 import { NonEditableTypeaheadDirective } from './non-editable-typeahead.directive';
+import { OpenTypeaheadOnFocusDirective } from './open-typeahead-on-focus.directive';
 
 /**
  * This array contains all the typeahead directives that are used in the application.

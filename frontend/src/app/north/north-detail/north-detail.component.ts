@@ -1,34 +1,38 @@
-import { ChangeDetectorRef, Component, DestroyRef, inject, ChangeDetectionStrategy } from '@angular/core';
-import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ClipboardModule } from '@angular/cdk/clipboard';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { combineLatest, of, Subscription, switchMap, tap } from 'rxjs';
-import { PageLoader } from '../../shared/page-loader.service';
-import { NorthConnectorDTO, NorthConnectorManifest } from '@oibus/shared/north-connector.model';
+
+import { AuditEntityType } from '@oibus/shared/api/audit.model';
+import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+import { NorthConnectorMetrics, OIBusInfo } from '@oibus/shared/api/engine.model';
+import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { TransformerDTO, TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
+import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
+
+import { LogsComponent } from '../../logs/logs.component';
+import { CertificateService } from '../../services/certificate.service';
+import { EngineService } from '../../services/engine.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { NorthMetricsComponent } from '../north-metrics/north-metrics.component';
+import { TransformerService } from '../../services/transformer.service';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
-import { NotificationService } from '../../shared/notification.service';
-import { pollMetrics } from '../../shared/polling';
-import { NorthConnectorMetrics, OIBusInfo } from '@oibus/shared/engine.model';
-import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
-import { ModalService } from '../../shared/modal.service';
-import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
-import { AuditEntityType } from '@oibus/shared/audit.model';
-import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
-import { EngineService } from '../../services/engine.service';
-import { LogsComponent } from '../../logs/logs.component';
-import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
+import { PageLoader } from '../../shared/page-loader.service';
+import { pollMetrics } from '../../shared/polling';
+import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
+import { NorthMetricsComponent } from '../north-metrics/north-metrics.component';
 import { NorthTransformersComponent } from '../north-transformers/north-transformers.component';
-import { TransformerDTO, TransformerDTOWithOptions } from '@oibus/shared/transformer.model';
-import { CertificateService } from '../../services/certificate.service';
-import { TransformerService } from '../../services/transformer.service';
-import { CertificateDTO } from '@oibus/shared/certificate.model';
 
 @Component({
   selector: 'oib-north-detail',

@@ -1,20 +1,22 @@
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { OIBusArrayFormControlComponent } from './oibus-array-form-control.component';
-import testData from '../../../../../../backend/src/tests/utils/test-data';
-import { OIBusArrayAttribute } from '@oibus/shared/form.model';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import { CertificateDTO } from '@oibus/shared/certificate.model';
-import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { MockModalService, provideModalTesting } from '../../mock-modal.service.testing';
-import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal/oibus-edit-array-element-modal.component';
-import { SouthConnectorService } from '../../../services/south-connector.service';
+
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
+
+import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { OIBusArrayAttribute } from '@oibus/shared/connector/form.model';
+
+import testData from '../../../../../../backend/src/tests/utils/test-data';
+import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock } from '../../../../test/vitest-create-mock';
+import { SouthConnectorService } from '../../../services/south-connector.service';
+import { MockModalService, provideModalTesting } from '../../mock-modal.service.testing';
+import { OIBusArrayFormControlComponent } from './oibus-array-form-control.component';
+import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal/oibus-edit-array-element-modal.component';
 
 @Component({
   selector: 'oib-test-oibus-array-form-control-component',

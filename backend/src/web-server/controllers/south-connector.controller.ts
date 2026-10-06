@@ -1,3 +1,5 @@
+import fs from 'node:fs/promises';
+
 import {
   Body,
   Controller,
@@ -14,8 +16,10 @@ import {
   Tags,
   UploadedFile
 } from 'tsoa';
+
+import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '../../../shared/model/api/configuration-workflow.model';
+import { OIBusConnectionTestResult, SouthConnectorMetrics } from '../../../shared/model/api/engine.model';
 import {
-  OIBusSouthType,
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
@@ -24,18 +28,19 @@ import {
   SouthConnectorItemTestingSettings,
   SouthConnectorItemTestResult,
   SouthConnectorLightDTO,
-  SouthConnectorManifest,
   SouthExploreBrowseCommand,
   SouthExploreBrowseResult,
   SouthExploreStartResult,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO,
-  SouthItemLastValueResponse,
-  SouthType
-} from '../../../shared/model/south-connector.model';
-import { Page } from '../../../shared/model/types';
-import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '../../../shared/model/configuration-workflow.model';
-import { CustomExpressRequest } from '../express';
+  SouthItemLastValueResponse
+} from '../../../shared/model/api/south-connector.model';
+import { OIBusRecord } from '../../../shared/model/common/content.model';
+import { Page } from '../../../shared/model/common/types';
+import { OIBusSouthType, SouthConnectorManifest, SouthType } from '../../../shared/model/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+
+import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 import SouthService, {
   toSouthConnectorDTO,
   toSouthConnectorItemDTO,
@@ -43,10 +48,7 @@ import SouthService, {
   toSouthItemGroupDTO
 } from '../../service/south.service';
 import { itemToFlattenedCSV } from '../../service/utils';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusRecord, SouthConnectorMetrics } from '../../../shared/model/engine.model';
-import { OIBusTestingError, OIBusValidationError } from '../../model/types';
-import fs from 'node:fs/promises';
+import { CustomExpressRequest } from '../express';
 
 /**
  * @interface SouthItemTestRequest

@@ -1,23 +1,26 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '../../../shared/model/api/engine.model';
 import {
   HistoryQueryCommandDTO,
   HistoryQueryItemCommandDTO,
   HistoryQueryItemDTO,
   HistoryQueryItemSearchParam
-} from '../../../shared/model/history-query.model';
-import { CustomExpressRequest } from '../express';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
+} from '../../../shared/model/api/history-query.model';
+import { HistoryTransformerDTOWithOptions, TransformerDTO } from '../../../shared/model/api/transformer.model';
+import { OIBusContent } from '../../../shared/model/common/content.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+
+import { OIBusTestingError } from '../../model/types';
 import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
-import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent, OIBusContent } from '../../../shared/model/engine.model';
-import { HistoryTransformerDTOWithOptions, TransformerDTO } from '../../../shared/model/transformer.model';
-import { OIBusTestingError } from '../../model/types';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import testData from '../../tests/utils/test-data';
+import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { CustomExpressRequest } from '../express';
 import type { HistoryQueryController as HistoryQueryControllerShape } from './history-query.controller';
 
 interface HistorySouthItemTestRequest {

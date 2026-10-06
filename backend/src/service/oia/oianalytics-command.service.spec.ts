@@ -1,33 +1,28 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
-import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
+import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import os from 'node:os';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, flushPromises, seq } from '../../tests/utils/test-utils';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import OIAnalyticsCommandRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-command-repository.mock';
-import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
-import OIAnalyticsMessageServiceMock from '../../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
-import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
-import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
-import IpFilterServiceMock from '../../tests/__mocks__/service/ip-filter-service.mock';
-import CertificateServiceMock from '../../tests/__mocks__/service/certificate-service.mock';
-import SouthServiceMock from '../../tests/__mocks__/service/south-service.mock';
-import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';
-import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
-import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import { CertificateCommandDTO } from '../../../shared/model/api/certificate.model';
+import { CacheSearchResult, FileCacheContent } from '../../../shared/model/api/engine.model';
+import { HistoryQueryItemDTO } from '../../../shared/model/api/history-query.model';
+import { IPFilterCommandDTO } from '../../../shared/model/api/ip-filter.model';
+import { ScanModeCommandDTO } from '../../../shared/model/api/scan-mode.model';
+import {
+  SouthConnectorItemDTO,
+  SouthConnectorItemTestingSettings,
+  SouthConnectorItemTestResult
+} from '../../../shared/model/api/south-connector.model';
+import { OIBusContent } from '../../../shared/model/common/content.model';
+import { createPageFromArray } from '../../../shared/model/common/types';
 
 import { version } from '../../../package.json';
-import { getErrorMessage } from '../utils';
-import { createPageFromArray } from '../../../shared/model/types';
-import { NotFoundError } from '../../model/types';
+import { EngineSettings } from '../../model/engine.model';
 import {
   OIBusCreateCertificateCommand,
+  OIBusCreateCustomTransformerCommand,
   OIBusCreateHistoryQueryCommand,
   OIBusCreateIPFilterCommand,
   OIBusCreateNorthConnectorCommand,
@@ -36,6 +31,7 @@ import {
   OIBusCreateScanModeCommand,
   OIBusCreateSouthConnectorCommand,
   OIBusDeleteCertificateCommand,
+  OIBusDeleteCustomTransformerCommand,
   OIBusDeleteHistoryQueryCommand,
   OIBusDeleteIPFilterCommand,
   OIBusDeleteNorthConnectorCommand,
@@ -43,10 +39,10 @@ import {
   OIBusDeleteSouthConnectorCommand,
   OIBusGetHistoryCacheFileContentCommand,
   OIBusGetNorthCacheFileContentCommand,
-  OIBusUpdateHistoryCacheContentCommand,
-  OIBusUpdateNorthCacheContentCommand,
   OIBusSearchHistoryCacheContentCommand,
   OIBusSearchNorthCacheContentCommand,
+  OIBusSetpointCommand,
+  OIBusTestCustomTransformerCommand,
   OIBusTestHistoryQueryNorthConnectionCommand,
   OIBusTestHistoryQuerySouthConnectionCommand,
   OIBusTestHistoryQuerySouthItemCommand,
@@ -55,41 +51,45 @@ import {
   OIBusTestSouthConnectorItemCommand,
   OIBusTestTransformerCommand,
   OIBusUpdateCertificateCommand,
+  OIBusUpdateCustomTransformerCommand,
   OIBusUpdateEngineGeneralCommand,
   OIBusUpdateEngineLoggerCommand,
   OIBusUpdateEngineProxyCommand,
   OIBusUpdateEngineWebServerCommand,
+  OIBusUpdateHistoryCacheContentCommand,
   OIBusUpdateHistoryQueryCommand,
   OIBusUpdateHistoryQueryStatusCommand,
   OIBusUpdateIPFilterCommand,
+  OIBusUpdateNorthCacheContentCommand,
   OIBusUpdateNorthConnectorCommand,
   OIBusUpdateRegistrationSettingsCommand,
   OIBusUpdateScanModeCommand,
   OIBusUpdateSouthConnectorCommand,
-  OIBusUpdateVersionCommand,
-  OIBusSetpointCommand,
-  OIBusCreateCustomTransformerCommand,
-  OIBusUpdateCustomTransformerCommand,
-  OIBusDeleteCustomTransformerCommand,
-  OIBusTestCustomTransformerCommand
+  OIBusUpdateVersionCommand
 } from '../../model/oianalytics-command.model';
-import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
-import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
-import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
-import {
-  SouthConnectorItemDTO,
-  SouthConnectorItemTestingSettings,
-  SouthConnectorItemTestResult
-} from '../../../shared/model/south-connector.model';
-import { HistoryQueryItemDTO } from '../../../shared/model/history-query.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
-import { CacheSearchResult, FileCacheContent, OIBusContent } from '../../../shared/model/engine.model';
-import { EngineSettings } from '../../model/engine.model';
-
+import { NotFoundError } from '../../model/types';
+import OIAnalyticsCommandRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-command-repository.mock';
+import CertificateServiceMock from '../../tests/__mocks__/service/certificate-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
+import IpFilterServiceMock from '../../tests/__mocks__/service/ip-filter-service.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';
+import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
+import OIAnalyticsMessageServiceMock from '../../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
+import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
+import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
+import SouthServiceMock from '../../tests/__mocks__/service/south-service.mock';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import testData from '../../tests/utils/test-data';
+import { flushPromises, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
+import { toHistoryQueryItemDTO } from '../history-query-item-dto.utils';
+import { toSouthConnectorItemDTO } from '../south-connector-dto.utils';
+import { getErrorMessage } from '../utils';
 import type OIAnalyticsCommandServiceType from './oianalytics-command.service';
 import type { toOIBusCommandDTO as toOIBusCommandDTOType } from './oianalytics-command.service';
-import { toSouthConnectorItemDTO } from '../south-connector-dto.utils';
-import { toHistoryQueryItemDTO } from '../history-query-item-dto.utils';
 
 const nodeRequire = createRequire(import.meta.url);
 

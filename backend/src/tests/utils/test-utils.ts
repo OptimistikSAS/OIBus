@@ -1,8 +1,53 @@
 import assert from 'node:assert/strict';
+import { readdirSync } from 'node:fs';
+import path from 'node:path';
+import { setImmediate } from 'node:timers';
+import { pathToFileURL } from 'node:url';
 import { mock } from 'node:test';
+
 import Database from 'better-sqlite3';
+import knex from 'knex';
+
+import {
+  CryptoSettings,
+  EngineMetrics,
+  HistoryQueryMetrics,
+  NorthConnectorMetrics,
+  SouthConnectorMetrics
+} from '../../../shared/model/api/engine.model';
+import { OIBusNorthType } from '../../../shared/model/connector/north-manifest.model';
+import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+import { OIBusSouthType } from '../../../shared/model/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+
+import { migrateCrypto, migrateEntities, migrateLogs, migrateMetrics, migrateSouthCache } from '../../migration/migration-service';
+import { Certificate } from '../../model/certificate.model';
+import { EngineSettings } from '../../model/engine.model';
+import { HistoryQueryEntity, HistoryQueryItemEntity } from '../../model/histor-query.model';
+import { IPFilter } from '../../model/ip-filter.model';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import {
+  OIBusCommand,
+  OIBusUpdateEngineGeneralCommand,
+  OIBusUpdateNorthConnectorCommand,
+  OIBusUpdateScanModeCommand,
+  OIBusUpdateSouthConnectorCommand
+} from '../../model/oianalytics-command.model';
+import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
+import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
+import { ScanMode } from '../../model/scan-mode.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { Transformer, TransformerSource } from '../../model/transformer.model';
+import { BaseFolders } from '../../model/types';
+import { User } from '../../model/user.model';
+import AuditService from '../../service/audit.service';
 import type { CustomExpressRequest } from '../../web-server/express';
+import AuditServiceMock from '../__mocks__/service/audit-service.mock';
 import CertificateServiceMock from '../__mocks__/service/certificate-service.mock';
+import ConfigImportServiceMock from '../__mocks__/service/config-import-service.mock';
+import ConfigTransferServiceMock from '../__mocks__/service/config-transfer-service.mock';
+import ConfigurationWorkflowRunServiceMock from '../__mocks__/service/configuration-workflow-run-service.mock';
+import ConfigurationWorkflowServiceMock from '../__mocks__/service/configuration-workflow-service.mock';
 import HistoryQueryServiceMock from '../__mocks__/service/history-query-service.mock';
 import IPFilterServiceMock from '../__mocks__/service/ip-filter-service.mock';
 import LogServiceMock from '../__mocks__/service/log-service.mock';
@@ -12,51 +57,9 @@ import OIAnalyticsRegistrationServiceMock from '../__mocks__/service/oia/oianaly
 import OIBusServiceMock from '../__mocks__/service/oibus-service.mock';
 import ScanModeServiceMock from '../__mocks__/service/scan-mode-service.mock';
 import SouthServiceMock from '../__mocks__/service/south-service.mock';
-import ConfigurationWorkflowServiceMock from '../__mocks__/service/configuration-workflow-service.mock';
-import ConfigurationWorkflowRunServiceMock from '../__mocks__/service/configuration-workflow-run-service.mock';
 import TransformerServiceMock from '../__mocks__/service/transformer-service.mock';
 import UserServiceMock from '../__mocks__/service/user-service.mock';
-import { setImmediate } from 'node:timers';
-import { migrateCrypto, migrateEntities, migrateLogs, migrateMetrics, migrateSouthCache } from '../../migration/migration-service';
-import path from 'node:path';
-import { readdirSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
-import knex from 'knex';
 import testData from './test-data';
-import { ScanMode } from '../../model/scan-mode.model';
-import { IPFilter } from '../../model/ip-filter.model';
-import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
-import { EngineSettings } from '../../model/engine.model';
-import {
-  OIBusCommand,
-  OIBusUpdateEngineGeneralCommand,
-  OIBusUpdateNorthConnectorCommand,
-  OIBusUpdateScanModeCommand,
-  OIBusUpdateSouthConnectorCommand
-} from '../../model/oianalytics-command.model';
-import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
-import { Certificate } from '../../model/certificate.model';
-import { User } from '../../model/user.model';
-import { HistoryQueryEntity, HistoryQueryItemEntity } from '../../model/histor-query.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
-import {
-  CryptoSettings,
-  EngineMetrics,
-  HistoryQueryMetrics,
-  NorthConnectorMetrics,
-  SouthConnectorMetrics
-} from '../../../shared/model/engine.model';
-import { BaseFolders } from '../../model/types';
-import { Transformer, TransformerSource } from '../../model/transformer.model';
-import { OIBusNorthType } from '../../../shared/model/north-connector.model';
-import { OIBusSouthType } from '../../../shared/model/south-connector.model';
-import AuditService from '../../service/audit.service';
-import AuditServiceMock from '../__mocks__/service/audit-service.mock';
-import ConfigTransferServiceMock from '../__mocks__/service/config-transfer-service.mock';
-import ConfigImportServiceMock from '../__mocks__/service/config-import-service.mock';
 
 const CONFIG_TEST_DATABASE = path.resolve('src', 'tests', 'test-config.db');
 const CRYPTO_TEST_DATABASE = path.resolve('src', 'tests', 'test-crypto.db');

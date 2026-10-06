@@ -1,15 +1,18 @@
 import { TestBed } from '@angular/core/testing';
+
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
-import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { EngineSettingsDTO } from '@oibus/shared/api/engine.model';
+
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
-import { EditEngineProxyModalComponent } from './edit-engine-proxy-modal.component';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { EngineService } from '../../services/engine.service';
+import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { NotificationService } from '../../shared/notification.service';
-import { EngineSettingsDTO } from '@oibus/shared/engine.model';
+import { EditEngineProxyModalComponent } from './edit-engine-proxy-modal.component';
 
 const engineSettings = {
   proxyServer: {

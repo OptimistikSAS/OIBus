@@ -1,8 +1,9 @@
-import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import AuditService, { redactAuditSnapshots } from './audit.service';
-import AuditRepository from '../repository/config/audit.repository';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
 import { AuditLog } from '../model/audit.model';
+import AuditRepository from '../repository/config/audit.repository';
+import AuditService, { redactAuditSnapshots } from './audit.service';
 
 let auditRepository: {
   record: ReturnType<typeof mock.fn>;

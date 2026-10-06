@@ -1,8 +1,11 @@
 import { mock } from 'node:test';
+
 import type { Database } from 'better-sqlite3';
+
+import { UserCommandDTO, UserSearchParam } from '../../../../../shared/model/api/user.model';
+import { Page } from '../../../../../shared/model/common/types';
+
 import { User } from '../../../../model/user.model';
-import { UserCommandDTO, UserSearchParam } from '../../../../../shared/model/user.model';
-import { Page } from '../../../../../shared/model/types';
 import UserRepository from '../../../../repository/config/user.repository';
 import { createAuditServiceMock } from '../../../utils/test-utils';
 

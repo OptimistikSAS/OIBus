@@ -1,7 +1,8 @@
-import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
+
 import { IPFilter } from '../../model/ip-filter.model';
 import AuditService from '../../service/audit.service';
+import { generateRandomId } from '../../service/utils';
 
 const IP_FILTERS_TABLE = 'ip_filters';
 

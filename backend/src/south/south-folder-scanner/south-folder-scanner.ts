@@ -1,27 +1,35 @@
+import { execFile as execFileCb } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { execFile as execFileCb } from 'node:child_process';
 import { promisify } from 'node:util';
 
-import SouthConnector from '../south-connector';
 import { encryptionService } from '../../service/encryption.service';
+import SouthConnector from '../south-connector';
 
 const execFile = promisify(execFileCb);
-import { checkAge, compress, getErrorMessage, sanitizeCommandError, workUnitLogCtx } from '../../service/utils';
-import { SouthDirectQuery, SouthExplore } from '../south-interface';
-import { SouthFolderScannerItemSettings, SouthFolderScannerSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { Stats } from 'node:fs';
+
 import { DateTime } from 'luxon';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { Instant, OIBusTestingError } from '../../model/types';
+
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
 import {
   SouthConnectorExploreEntry,
   SouthConnectorExploreFieldKind,
   SouthConnectorItemQueryResult,
   SouthConnectorItemTestingSettings
-} from '../../../shared/model/south-connector.model';
-import { Stats } from 'node:fs';
+} from '../../../shared/model/api/south-connector.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import {
+  SouthFolderScannerItemSettings,
+  SouthFolderScannerSettings,
+  SouthItemSettings
+} from '../../../shared/model/connector/south-settings.model';
+
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { Instant, OIBusTestingError } from '../../model/types';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import { checkAge, compress, getErrorMessage, sanitizeCommandError, workUnitLogCtx } from '../../service/utils';
+import { SouthDirectQuery, SouthExplore } from '../south-interface';
 
 /**
  * Class SouthFolderScanner - Retrieve files from a local or remote folder

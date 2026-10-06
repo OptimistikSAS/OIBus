@@ -1,7 +1,8 @@
 import { HttpClient, HttpStatusCode } from '@angular/common/http';
+import { inject, Service } from '@angular/core';
+
 import { Observable, shareReplay } from 'rxjs';
-import { Service, inject } from '@angular/core';
-import { ignoreErrorUnlessStatusIs } from '../shared/error-interceptor.service';
+
 import {
   EngineLoggerCommandDTO,
   EngineMemoryDumpDTO,
@@ -16,7 +17,9 @@ import {
   OIBusInfo,
   RegistrationSettingsCommandDTO,
   RegistrationSettingsDTO
-} from '@oibus/shared/engine.model';
+} from '@oibus/shared/api/engine.model';
+
+import { ignoreErrorUnlessStatusIs } from '../shared/error-interceptor.service';
 
 /**
  * Service used to interact with the backend for CRUD operations on the engine settings

@@ -1,9 +1,10 @@
-import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { CONFIG_UPGRADES, getUpgradesBetween } from './registry';
-import { ConfigUpgrade } from './config-upgrade';
-import { compareVersions } from './version-compare';
+import { afterEach, beforeEach, describe, it } from 'node:test';
+
 import { MINIMUM_SUPPORTED_VERSION } from '../config-import.service';
+import { ConfigUpgrade } from './config-upgrade';
+import { CONFIG_UPGRADES, getUpgradesBetween } from './registry';
+import { compareVersions } from './version-compare';
 
 describe('CONFIG_UPGRADES', () => {
   it('has unique versions', () => {

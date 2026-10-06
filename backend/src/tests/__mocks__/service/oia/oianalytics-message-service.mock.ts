@@ -1,4 +1,5 @@
 import { mock } from 'node:test';
+
 import type { ILogger } from '../../../../model/logger.model';
 
 /**

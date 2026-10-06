@@ -1,18 +1,22 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { Router } from '@angular/router';
-import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { map, Observable, of, switchMap } from 'rxjs';
-import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/configuration-workflow.model';
-import { OIBusSouthType, SouthConnectorManifest, SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/south-connector.model';
-import { SouthSettings } from '@oibus/shared/south-settings.model';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
+
+import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
+import { OIBusSouthType, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
+
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
-import { ModalService } from '../../../shared/modal.service';
 import { ConfirmationService } from '../../../shared/confirmation.service';
-import { NotificationService } from '../../../shared/notification.service';
 import { extractErrorMessage } from '../../../shared/extract-error-message';
+import { ModalService } from '../../../shared/modal.service';
+import { NotificationService } from '../../../shared/notification.service';
 import EditWorkflowModalComponent from '../edit-workflow-modal/edit-workflow-modal.component';
 import PreviewWorkflowModalComponent from '../preview-workflow-modal/preview-workflow-modal.component';
 

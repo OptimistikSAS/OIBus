@@ -1,12 +1,14 @@
-import { describe, it, before, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { ScanModeCommandDTO, ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
-import { CustomExpressRequest } from '../express';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
+import { before, beforeEach, describe, it, mock } from 'node:test';
+
+import { ScanModeCommandDTO, ValidatedCronExpression } from '../../../shared/model/api/scan-mode.model';
+
 import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import testData from '../../tests/utils/test-data';
+import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { CustomExpressRequest } from '../express';
 import type { ScanModeController as ScanModeControllerShape } from './scan-mode.controller';
 
 const nodeRequire = createRequire(import.meta.url);

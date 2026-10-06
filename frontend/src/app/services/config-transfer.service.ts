@@ -1,15 +1,22 @@
 import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
+import { inject, Service } from '@angular/core';
+
 import { map, Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { Service, inject } from '@angular/core';
-import { ConfigImportEntityValidationError, ConfigImportPreviewDTO, ConfigImportResponseDTO } from '@oibus/shared/config-transfer.model';
-import { DownloadService } from './download.service';
+
+import {
+  ConfigImportEntityValidationError,
+  ConfigImportPreviewDTO,
+  ConfigImportResponseDTO
+} from '@oibus/shared/oia/config-transfer.model';
+
 import {
   getMessageFromHttpErrorResponse,
   ignoreErrorIfStatusIs,
   messageFromBody,
   rethrowServerMessage
 } from '../shared/error-interceptor.service';
+import { DownloadService } from './download.service';
 
 const ENDPOINT = '/api/config-transfer';
 
