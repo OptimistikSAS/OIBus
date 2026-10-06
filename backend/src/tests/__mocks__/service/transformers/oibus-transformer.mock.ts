@@ -2,7 +2,7 @@ import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 import { mock } from 'node:test';
 
-import { CacheMetadata } from '../../../../../shared/model/api/engine.model';
+import { CacheMetadata } from '../../../../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource } from '../../../../model/engine.model';
 

@@ -3,10 +3,10 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 
 import { TranslateDirective } from '@ngx-translate/core';
 
-import { HistoryQueryMetrics } from '@oibus/shared/api/engine.model';
 import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
 import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+import { HistoryQueryMetrics } from '@oibus/shared/domain/engine.model';
 
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { DatetimePipe } from '../../../shared/datetime.pipe';

@@ -6,7 +6,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { INTERVAL_UNITS, SCAN_MODE_TYPES } from '../../shared/model/api/scan-mode.model';
+import { INTERVAL_UNITS, SCAN_MODE_TYPES } from '../../shared/model/domain/scan-mode.model';
 
 describe('shared scan-mode model constants', () => {
   it('SCAN_MODE_TYPES contains cron and interval', () => {

@@ -1,25 +1,17 @@
 import { CertificateCommandDTO } from '../../../shared/model/api/certificate.model';
 import {
   EngineLoggerCommandDTO,
-  EngineMetrics,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
   EngineWebServerCommandDTO,
-  HistoryQueryMetrics,
-  NorthConnectorMetrics,
-  OIBusInfo,
-  SouthConnectorMetrics
+  OIBusInfo
 } from '../../../shared/model/api/engine.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/api/history-query.model';
 import { IPFilterCommandDTO } from '../../../shared/model/api/ip-filter.model';
 import { NorthConnectorCommandDTO } from '../../../shared/model/api/north-connector.model';
 import { ScanModeCommandDTO } from '../../../shared/model/api/scan-mode.model';
-import {
-  SouthConnectorCommandDTO,
-  SouthConnectorItemCommandDTO,
-  SouthConnectorItemTestingSettings
-} from '../../../shared/model/api/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorItemCommandDTO } from '../../../shared/model/api/south-connector.model';
 import { CustomTransformerCommandDTO, CustomTransformerDTO } from '../../../shared/model/api/transformer.model';
 import { UserCommandDTO } from '../../../shared/model/api/user.model';
 import { OIBusContent } from '../../../shared/model/common/content.model';
@@ -27,6 +19,13 @@ import { NorthConnectorManifest } from '../../../shared/model/connector/north-ma
 import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
 import { SouthConnectorManifest } from '../../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthMSSQLItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+import {
+  EngineMetrics,
+  HistoryQueryMetrics,
+  NorthConnectorMetrics,
+  SouthConnectorMetrics
+} from '../../../shared/model/domain/engine.model';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import { Certificate } from '../../model/certificate.model';
 import { EngineSettings } from '../../model/engine.model';

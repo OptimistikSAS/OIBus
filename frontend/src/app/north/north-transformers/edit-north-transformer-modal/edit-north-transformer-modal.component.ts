@@ -9,14 +9,9 @@ import { Observable } from 'rxjs';
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { ItemLightDTO, SouthConnectorLightDTO, SouthItemGroupLightDTO } from '@oibus/shared/api/south-connector.model';
-import {
-  DataSourceType,
-  SourceOriginSouthDTO,
-  TransformerDTO,
-  TransformerDTOWithOptions,
-  TransformerSourceDTO
-} from '@oibus/shared/api/transformer.model';
+import { SourceOriginSouthDTO, TransformerDTO, TransformerDTOWithOptions, TransformerSourceDTO } from '@oibus/shared/api/transformer.model';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
+import { DataSourceType } from '@oibus/shared/domain/transformer.model';
 
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { addAttributeToForm, addEnablingConditions } from '../../../shared/form/dynamic-form.builder';

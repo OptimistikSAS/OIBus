@@ -5,14 +5,9 @@ import {
   ConfigurationWorkflowDTO,
   WorkflowPreviewResultDTO
 } from '../../../shared/model/api/configuration-workflow.model';
-import {
-  WorkflowRunDetailDTO,
-  WorkflowRunDTO,
-  WorkflowRunSearchParam,
-  WorkflowRunStatus,
-  WorkflowRunTriggerType
-} from '../../../shared/model/api/workflow-run.model';
+import { WorkflowRunDetailDTO, WorkflowRunDTO } from '../../../shared/model/api/workflow-run.model';
 import { GetUserInfo, Instant, Page } from '../../../shared/model/common/types';
+import { WorkflowRunSearchParam, WorkflowRunStatus, WorkflowRunTriggerType } from '../../../shared/model/domain/workflow-run.model';
 
 import { ConfigurationWorkflowEntity } from '../../model/configuration-workflow.model';
 import { WorkflowRunEntity } from '../../model/workflow-run.model';

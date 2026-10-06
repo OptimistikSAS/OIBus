@@ -8,15 +8,9 @@ import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTo
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { combineLatest, firstValueFrom, merge, of, Subscription, switchMap } from 'rxjs';
 
-import { AuditEntityType } from '@oibus/shared/api/audit.model';
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
-import { HistoryQueryMetrics, OIBusInfo } from '@oibus/shared/api/engine.model';
-import {
-  HistoryQueryDTO,
-  HistoryQueryItemCommandDTO,
-  HistoryQueryItemDTO,
-  HistoryQueryStatus
-} from '@oibus/shared/api/history-query.model';
+import { OIBusInfo } from '@oibus/shared/api/engine.model';
+import { HistoryQueryDTO, HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '@oibus/shared/api/history-query.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { SouthConnectorCommandDTO } from '@oibus/shared/api/south-connector.model';
 import { HistoryTransformerDTOWithOptions, TransformerDTO } from '@oibus/shared/api/transformer.model';
@@ -24,6 +18,9 @@ import { createPageFromArray, Page } from '@oibus/shared/common/types';
 import { OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+import { AuditEntityType } from '@oibus/shared/domain/audit.model';
+import { HistoryQueryMetrics } from '@oibus/shared/domain/engine.model';
+import { HistoryQueryStatus } from '@oibus/shared/domain/history-query.model';
 
 import { LogsComponent } from '../../logs/logs.component';
 import { CertificateService } from '../../services/certificate.service';

@@ -3,6 +3,9 @@ import path from 'node:path';
 import { CronJob } from 'cron';
 import { DateTime } from 'luxon';
 
+import { OIBusContent } from '../../shared/model/common/content.model';
+import { NorthSettings } from '../../shared/model/connector/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import {
   CacheContentUpdateCommand,
   CacheSearchParam,
@@ -12,10 +15,7 @@ import {
   HistoryQueryMetrics,
   NorthConnectorMetrics,
   SouthConnectorMetrics
-} from '../../shared/model/api/engine.model';
-import { OIBusContent } from '../../shared/model/common/content.model';
-import { NorthSettings } from '../../shared/model/connector/north-settings.model';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+} from '../../shared/model/domain/engine.model';
 
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../model/histor-query.model';

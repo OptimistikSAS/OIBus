@@ -4,10 +4,8 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { OIBusCommandDTO } from '@oibus/shared/oia/command.model';
-
-import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { OiaCommandDetailsModalComponent } from './oia-command-details-modal.component';
 
@@ -23,7 +21,7 @@ describe('OiaCommandDetailsModalComponent', () => {
   });
 
   test('should display command details after prepare', async () => {
-    const command = testData.oIAnalytics.commands.oIBusList[0] as unknown as OIBusCommandDTO;
+    const command = testData.oIAnalytics.commands.oIBusList[0];
     const fixture = TestBed.createComponent(OiaCommandDetailsModalComponent);
     fixture.componentInstance.prepare(command);
     fixture.detectChanges();
@@ -34,7 +32,7 @@ describe('OiaCommandDetailsModalComponent', () => {
   });
 
   test('should close modal', async () => {
-    const command = testData.oIAnalytics.commands.oIBusList[0] as unknown as OIBusCommandDTO;
+    const command = testData.oIAnalytics.commands.oIBusList[0];
     const fixture = TestBed.createComponent(OiaCommandDetailsModalComponent);
     fixture.componentInstance.prepare(command);
     fixture.detectChanges();

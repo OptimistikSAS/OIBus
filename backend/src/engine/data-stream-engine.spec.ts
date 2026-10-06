@@ -4,10 +4,10 @@ import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
 import { DateTime } from 'luxon';
 
-import type { CacheContentUpdateCommand, CacheSearchParam, CacheSearchResult } from '../../shared/model/api/engine.model';
 import type { OIBusContent } from '../../shared/model/common/content.model';
 import type { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import type { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+import type { CacheContentUpdateCommand, CacheSearchParam, CacheSearchResult } from '../../shared/model/domain/engine.model';
 
 import type { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import type { HistoryQueryEntity, HistoryQueryEntityLight } from '../model/histor-query.model';

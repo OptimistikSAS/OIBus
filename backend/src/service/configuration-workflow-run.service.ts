@@ -1,7 +1,6 @@
 import {
   ConfigurationWorkflowCommandDTO,
   WorkflowPreviewEntryDTO,
-  WorkflowPreviewEntryStatus,
   WorkflowPreviewResultDTO
 } from '../../shared/model/api/configuration-workflow.model';
 import { SouthConnectorItemCommandDTO } from '../../shared/model/api/south-connector.model';
@@ -9,6 +8,7 @@ import { OIBusRecord } from '../../shared/model/common/content.model';
 import { Page } from '../../shared/model/common/types';
 import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+import { WorkflowPreviewEntryStatus } from '../../shared/model/domain/configuration-workflow.model';
 
 import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
 import { ItemPointMetadataEntity } from '../model/item-point-metadata.model';

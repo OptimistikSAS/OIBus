@@ -4,13 +4,11 @@ import { Readable } from 'node:stream';
 
 import { DateTime } from 'luxon';
 
-import { CacheMetadata } from '../../shared/model/api/engine.model';
 import { SouthConnectorItemTestResult } from '../../shared/model/api/south-connector.model';
 import {
   CustomTransformerCommandDTO,
   InputTemplate,
   TransformerDTO,
-  TransformerSearchParam,
   TransformerTestRequest,
   TransformerTestResponse
 } from '../../shared/model/api/transformer.model';
@@ -19,6 +17,8 @@ import { GetUserInfo, Page } from '../../shared/model/common/types';
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import { InputType, TransformerManifest } from '../../shared/model/connector/transformer-manifest.model';
+import { CacheMetadata } from '../../shared/model/domain/engine.model';
+import { TransformerSearchParam } from '../../shared/model/domain/transformer.model';
 
 import { CacheMetadataSource } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';

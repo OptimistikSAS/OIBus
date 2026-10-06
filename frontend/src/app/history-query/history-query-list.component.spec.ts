@@ -6,10 +6,8 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { HistoryQueryLightDTO } from '@oibus/shared/api/history-query.model';
-
-import testData from '../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
+import testData from '../../test/test-data';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { HistoryQueryService } from '../services/history-query.service';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
@@ -27,7 +25,7 @@ describe('HistoryQueryListComponent', () => {
     historyQueryService = createMock(HistoryQueryService);
     modalService = createMock(ModalService);
 
-    historyQueryService.list.mockReturnValue(of(testData.historyQueries.listLight as unknown as Array<HistoryQueryLightDTO>));
+    historyQueryService.list.mockReturnValue(of(testData.historyQueries.listLight));
     historyQueryService.start.mockReturnValue(of(undefined));
     historyQueryService.pause.mockReturnValue(of(undefined));
 
@@ -54,9 +52,7 @@ describe('HistoryQueryListComponent', () => {
     await expect.element(rows).toHaveLength(testData.historyQueries.listLight.length);
 
     const firstRowCells = rows.nth(0).getByCss('td');
-    await expect
-      .element(firstRowCells.nth(1))
-      .toMatchTextContent((testData.historyQueries.listLight[0] as unknown as HistoryQueryLightDTO).name);
+    await expect.element(firstRowCells.nth(1)).toMatchTextContent(testData.historyQueries.listLight[0].name);
   });
 
   test('should create without error', () => {
@@ -137,7 +133,7 @@ describe('HistoryQueryListComponent', () => {
   });
 
   test('should display the item progress indicator when numberOfItems is set', async () => {
-    const queriesWithProgress = (testData.historyQueries.listLight as unknown as Array<HistoryQueryLightDTO>).map((query, index) =>
+    const queriesWithProgress = testData.historyQueries.listLight.map((query, index) =>
       index === 0 ? { ...query, currentItemNumber: 3, numberOfItems: 10 } : query
     );
     historyQueryService.list.mockReturnValue(of(queriesWithProgress));
@@ -182,7 +178,7 @@ describe('HistoryQueryListComponent', () => {
     const root = page.elementLocator(fixture.nativeElement);
     await root.getByCss('.show-audit-history-query').nth(0).click();
 
-    const query = testData.historyQueries.listLight[0] as unknown as HistoryQueryLightDTO;
+    const query = testData.historyQueries.listLight[0];
     expect(modalService.open).toHaveBeenCalledWith(AuditHistoryModalComponent, { size: 'xl' });
     expect(fakeModalComponent.prepare).toHaveBeenCalledWith('history_query', query.id);
   });

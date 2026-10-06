@@ -2,6 +2,7 @@ import { EventEmitter } from 'node:events';
 import type { ReadStream } from 'node:fs';
 import { mock } from 'node:test';
 
+import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
 import type {
   CacheContentUpdateCommand,
   CacheMetadata,
@@ -10,8 +11,7 @@ import type {
   DataFolderType,
   FileCacheContent,
   OIBusConnectionTestResult
-} from '../../../shared/model/api/engine.model';
-import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+} from '../../../shared/model/domain/engine.model';
 
 import type { ICacheService } from '../../model/cache.service.model';
 import type { CacheSize } from '../../model/engine.model';

@@ -1,9 +1,9 @@
 import { DateTime } from 'luxon';
 
-import { SouthConnectorMetrics } from '../../../shared/model/api/engine.model';
 import { OIBusTimeValue } from '../../../shared/model/common/content.model';
 import { Instant } from '../../../shared/model/common/types';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+import { SouthConnectorMetrics } from '../../../shared/model/domain/engine.model';
 
 import SouthConnectorMetricsRepository from '../../repository/metrics/south-connector-metrics.repository';
 import SouthConnector from '../../south/south-connector';

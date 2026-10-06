@@ -1,4 +1,4 @@
-import { AuditAction, AuditEntityType } from '../../shared/model/api/audit.model';
+import { AuditAction, AuditEntityType } from '../../shared/model/domain/audit.model';
 
 export type { AuditAction, AuditEntityType };
 

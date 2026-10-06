@@ -3,9 +3,9 @@ import { Readable } from 'node:stream';
 
 import { DateTime } from 'luxon';
 
-import { CacheMetadata } from '../../../../shared/model/api/engine.model';
 import { OIBusTimeValue } from '../../../../shared/model/common/content.model';
 import { TransformerTimeValuesToOianalyticsSettings } from '../../../../shared/model/connector/transformer-settings.model';
+import { CacheMetadata } from '../../../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource } from '../../../model/engine.model';
 import { Instant } from '../../../model/types';

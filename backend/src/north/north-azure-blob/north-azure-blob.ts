@@ -5,8 +5,8 @@ import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity'
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { DataLakeServiceClient, StorageSharedKeyCredential as DataLakeStorageSharedKeyCredential } from '@azure/storage-file-datalake';
 
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
 import { NorthAzureBlobSettings } from '../../../shared/model/connector/north-settings.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
 import type { ICacheService } from '../../model/cache.service.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';

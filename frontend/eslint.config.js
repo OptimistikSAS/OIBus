@@ -181,17 +181,9 @@ export default [
     }
   },
   {
-    // The shared model (backend/shared/model/) is imported through the @oibus/shared/* alias (see tsconfig.json).
+    // The only backend code the frontend (specs included) may depend on is the shared model (backend/shared/model/),
+    // imported through the @oibus/shared/* alias (see tsconfig.json). Test fixtures live in src/test/test-data.ts.
     files: ['**/*.ts'],
-    rules: {
-      'no-restricted-imports': ['error', { patterns: [SHARED_ALIAS_PATTERN] }]
-    }
-  },
-  {
-    // The only backend code the frontend may depend on is the shared model.
-    // Specs are exempt for now: they reuse the backend test fixtures (backend/src/tests/utils/test-data).
-    files: ['**/*.ts'],
-    ignores: ['**/*.spec.ts'],
     rules: {
       'no-restricted-imports': [
         'error',

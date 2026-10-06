@@ -3,8 +3,8 @@ import { ReadStream } from 'node:fs';
 import mqtt from 'mqtt';
 import { IConnackPacket, QoS } from 'mqtt-packet';
 
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
 import { NorthMQTTSettings } from '../../../shared/model/connector/north-settings.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
 import type { ICacheService } from '../../model/cache.service.model';
 import { OIBusError } from '../../model/engine.model';

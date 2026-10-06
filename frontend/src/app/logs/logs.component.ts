@@ -23,8 +23,9 @@ import {
   tap
 } from 'rxjs';
 
-import { Group, Item, LOG_LEVELS, LogDTO, LogLevel, LogSearchParam, Scope, SCOPE_TYPES, ScopeType } from '@oibus/shared/api/logs.model';
+import { LogDTO } from '@oibus/shared/api/logs.model';
 import { Instant, Page } from '@oibus/shared/common/types';
+import { Group, Item, LOG_LEVELS, LogLevel, LogSearchParam, Scope, SCOPE_TYPES, ScopeType } from '@oibus/shared/domain/logs.model';
 
 import { LogService } from '../services/log.service';
 import { DatetimePipe } from '../shared/datetime.pipe';

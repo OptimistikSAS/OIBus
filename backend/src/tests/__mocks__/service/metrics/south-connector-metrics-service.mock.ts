@@ -1,7 +1,7 @@
 import { mock } from 'node:test';
 
-import { SouthConnectorMetrics } from '../../../../../shared/model/api/engine.model';
 import type { SouthItemSettings, SouthSettings } from '../../../../../shared/model/connector/south-settings.model';
+import { SouthConnectorMetrics } from '../../../../../shared/model/domain/engine.model';
 
 import type { SouthConnectorEntity } from '../../../../model/south-connector.model';
 import type SouthConnectorMetricsRepository from '../../../../repository/metrics/south-connector-metrics.repository';

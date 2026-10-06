@@ -4,10 +4,8 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { CustomTransformerDTO, TransformerDTO } from '@oibus/shared/api/transformer.model';
-
-import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { TransformerService } from '../../services/transformer.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
@@ -57,7 +55,7 @@ describe('TransformerListComponent', () => {
 
   describe('with transformers', () => {
     beforeEach(() => {
-      transformerService.list.mockReturnValue(of(testData.transformers.customList as unknown as Array<TransformerDTO>));
+      transformerService.list.mockReturnValue(of(testData.transformers.customList));
       tester = new TransformerListComponentTester();
     });
 
@@ -66,11 +64,11 @@ describe('TransformerListComponent', () => {
     });
 
     test('should delete a transformer', async () => {
-      const transformer = testData.transformers.customList[0] as unknown as CustomTransformerDTO;
+      const transformer = testData.transformers.customList[0];
       transformerService.list.mockClear();
       confirmationService.confirm.mockReturnValue(of(undefined));
       transformerService.delete.mockReturnValue(of(undefined));
-      transformerService.list.mockReturnValue(of(testData.transformers.customList as unknown as Array<TransformerDTO>));
+      transformerService.list.mockReturnValue(of(testData.transformers.customList));
 
       await tester.deleteButtons.nth(0).click();
 
@@ -83,9 +81,9 @@ describe('TransformerListComponent', () => {
 
     test('should open add modal', async () => {
       const fakeEditComponent = createMock(EditTransformerModalComponent);
-      const newTransformer = testData.transformers.customList[0] as unknown as CustomTransformerDTO;
+      const newTransformer = testData.transformers.customList[0];
       modalService.mockClosedModal(fakeEditComponent, newTransformer);
-      transformerService.list.mockReturnValue(of(testData.transformers.customList as unknown as Array<TransformerDTO>));
+      transformerService.list.mockReturnValue(of(testData.transformers.customList));
 
       await tester.addTransformer.click();
 
@@ -96,7 +94,7 @@ describe('TransformerListComponent', () => {
     });
 
     test('should open the audit history modal with the transformer entity type and id', async () => {
-      const transformer = testData.transformers.customList[0] as unknown as CustomTransformerDTO;
+      const transformer = testData.transformers.customList[0];
       const fakeAuditComponent = createMock(AuditHistoryModalComponent);
       modalService.mockClosedModal(fakeAuditComponent);
 

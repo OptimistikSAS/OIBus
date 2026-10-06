@@ -8,8 +8,8 @@ import { page } from 'vitest/browser';
 import { TransformerDTO } from '@oibus/shared/api/transformer.model';
 import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
 
-import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { HistoryQueryService } from '../../../services/history-query.service';
 import { NorthConnectorService } from '../../../services/north-connector.service';
@@ -63,7 +63,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
 
   test('should not save in create mode when form is invalid', async () => {
     const fixture = TestBed.createComponent(EditHistoryQueryTransformerModalComponent);
-    const transformer = testData.transformers.customList[0] as unknown as TransformerDTO;
+    const transformer = testData.transformers.customList[0];
     fixture.componentInstance.prepareForCreation('opcua-ha' as OIBusSouthType, [], [], [transformer], ['any'], []);
     fixture.detectChanges();
 
@@ -75,7 +75,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
 
   test('should save in edit mode', async () => {
     const fixture = TestBed.createComponent(EditHistoryQueryTransformerModalComponent);
-    const transformer = testData.transformers.customList[0] as unknown as TransformerDTO;
+    const transformer = testData.transformers.customList[0];
     fixture.componentInstance.prepareForEdition('opcua-ha' as OIBusSouthType, [], [], [transformer], ['any'], [], {
       id: 'historyTransformerId1',
       transformer,
@@ -97,7 +97,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
 
   test('defaults to the new creation mode', () => {
     const fixture = TestBed.createComponent(EditHistoryQueryTransformerModalComponent);
-    const transformer = testData.transformers.customList[0] as unknown as TransformerDTO;
+    const transformer = testData.transformers.customList[0];
     fixture.componentInstance.prepareForCreation('opcua-ha' as OIBusSouthType, [], [], [transformer], ['any'], []);
     fixture.detectChanges();
 
@@ -107,7 +107,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
   test('copies the transformer and its options from an existing attachment', () => {
     const fixture = TestBed.createComponent(EditHistoryQueryTransformerModalComponent);
     const transformerWithOptions = {
-      ...(testData.transformers.customList[0] as unknown as TransformerDTO),
+      ...testData.transformers.customList[0],
       manifest: {
         type: 'object',
         key: 'transformers.options',
@@ -140,7 +140,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
 
   test('resets the copied transformer when switching back to the new creation mode', () => {
     const fixture = TestBed.createComponent(EditHistoryQueryTransformerModalComponent);
-    const transformer = testData.transformers.customList[0] as unknown as TransformerDTO;
+    const transformer = testData.transformers.customList[0];
     fixture.componentInstance.prepareForCreation('opcua-ha' as OIBusSouthType, [], [], [transformer], ['any'], []);
     fixture.detectChanges();
     fixture.componentInstance.setCreationMode('from-north');

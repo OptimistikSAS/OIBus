@@ -1,15 +1,15 @@
 import { Database } from 'better-sqlite3';
 
+import { Page } from '../../../shared/model/common/types';
+import { OIBusObjectAttribute } from '../../../shared/model/connector/form.model';
+import { OIBusSouthType } from '../../../shared/model/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
 import {
   SouthCachingStrategy,
   SouthCachingThresholdType,
   SouthConnectorItemSearchParam,
   SouthHistoryRecoveryStrategy
-} from '../../../shared/model/api/south-connector.model';
-import { Page } from '../../../shared/model/common/types';
-import { OIBusObjectAttribute } from '../../../shared/model/connector/form.model';
-import { OIBusSouthType } from '../../../shared/model/connector/south-manifest.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+} from '../../../shared/model/domain/south-connector.model';
 
 import { ConfigurationWorkflowSouthCommand } from '../../model/configuration-workflow.model';
 import { ScanMode } from '../../model/scan-mode.model';

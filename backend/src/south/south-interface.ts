@@ -1,7 +1,7 @@
-import { SouthConnectorExploreEntry } from '../../shared/model/api/south-connector.model';
 import { OIBusRecord } from '../../shared/model/common/content.model';
 import { Instant } from '../../shared/model/common/types';
 import { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
+import { SouthConnectorExploreEntry } from '../../shared/model/domain/south-connector.model';
 
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
 

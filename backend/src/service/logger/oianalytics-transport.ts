@@ -1,7 +1,7 @@
 import build from 'pino-abstract-transport';
 
-import { CryptoSettings } from '../../../shared/model/api/engine.model';
-import { ScopeType } from '../../../shared/model/api/logs.model';
+import { CryptoSettings } from '../../../shared/model/domain/engine.model';
+import { ScopeType } from '../../../shared/model/domain/logs.model';
 
 import { PinoLog } from '../../model/logs.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';

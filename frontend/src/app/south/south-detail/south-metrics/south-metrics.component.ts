@@ -5,9 +5,9 @@ import { Router } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
-import { SouthConnectorMetrics } from '@oibus/shared/api/engine.model';
 import { SouthConnectorLightDTO } from '@oibus/shared/api/south-connector.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+import { SouthConnectorMetrics } from '@oibus/shared/domain/engine.model';
 
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';

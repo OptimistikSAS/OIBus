@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 
-import { ActivationWindow, IntervalUnit, ScanModeInterval } from '../../shared/model/api/scan-mode.model';
+import { ActivationWindow, IntervalUnit, ScanModeInterval } from '../../shared/model/domain/scan-mode.model';
 
 import { ScanMode } from '../model/scan-mode.model';
 

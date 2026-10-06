@@ -6,10 +6,11 @@ import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
 import { catchError, Observable, of, Subscription } from 'rxjs';
 
-import { SouthConnectorItemTestingSettings, SouthConnectorItemTestResult } from '@oibus/shared/api/south-connector.model';
+import { SouthConnectorItemTestResult } from '@oibus/shared/api/south-connector.model';
 import { TransformerDTO } from '@oibus/shared/api/transformer.model';
 import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '@oibus/shared/connector/south-settings.model';
+import { SouthConnectorItemTestingSettings } from '@oibus/shared/domain/south-connector.model';
 
 import { HistoryQueryService } from '../../../services/history-query.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';

@@ -1,6 +1,6 @@
 import { Database } from 'better-sqlite3';
 
-import { SouthCachingStrategy, SouthHistoryRecoveryStrategy } from '../../../shared/model/api/south-connector.model';
+import { SouthCachingStrategy, SouthHistoryRecoveryStrategy } from '../../../shared/model/domain/south-connector.model';
 
 import { ScanMode } from '../../model/scan-mode.model';
 import { SouthItemGroupCommand, SouthItemGroupEntity } from '../../model/south-connector.model';

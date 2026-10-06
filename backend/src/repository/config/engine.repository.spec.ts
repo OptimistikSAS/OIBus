@@ -4,15 +4,28 @@ import { after, before, beforeEach, describe, it, mock } from 'node:test';
 import argon2 from 'argon2';
 import { Database } from 'better-sqlite3';
 
+import { EngineLoggerCommandDTO, EngineSettingsCommandDTO } from '../../../shared/model/api/engine.model';
+
 import { version } from '../../../package.json';
 import { EngineSettings } from '../../model/engine.model';
 import AuditService from '../../service/audit.service';
+import { toEngineLoggerCommand, toEngineSettingsCommand } from '../../service/engine-command.utils';
 import testData from '../../tests/utils/test-data';
 import { createAuditServiceMock, emptyDatabase, flushPromises, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import EngineRepository from './engine.repository';
 import UserRepository from './user.repository';
 
 type EngineSection = 'engine_general' | 'engine_web_server' | 'engine_proxy_server' | 'engine_logging';
+
+/** The repository stores the secrets it is given: these build its commands from the API fixtures, secrets as-is. */
+const toSettingsCommand = (command: EngineSettingsCommandDTO) =>
+  toEngineSettingsCommand(command, {
+    proxyPassword: command.proxyServer.password ?? null,
+    forwardProxyPassword: command.proxyServer.forward?.password ?? null,
+    lokiPassword: command.logger.loki.password ?? null
+  });
+const toLoggerCommand = (command: EngineLoggerCommandDTO) =>
+  toEngineLoggerCommand(command, { lokiPassword: command.loki.password ?? null });
 
 /**
  * Mirrors EngineRepository's audited sections: the audit trail must never carry proxyServer.password,
@@ -69,7 +82,7 @@ describe('EngineRepository with populated database', () => {
       const command = { ...testData.engine.command, general: { name: 'updated engine' } };
       const { auditRetentionDuration: _loggerAuditRetentionDuration, ...loggerOnly } = command.logger;
       const before = repository.get();
-      repository.update(command, testData.users.list[0].id);
+      repository.update(toSettingsCommand(command), testData.users.list[0].id);
       const after = repository.get();
       assert.deepStrictEqual(stripAuditFields(after), {
         id: testData.engine.settings.id,
@@ -132,12 +145,12 @@ describe('EngineRepository with populated database', () => {
 
     it('should round-trip auditRetentionDuration on update', () => {
       const command = { ...testData.engine.command, auditRetentionDuration: 45 };
-      repository.update(command, testData.users.list[0].id);
+      repository.update(toSettingsCommand(command), testData.users.list[0].id);
       const after = repository.get();
       assert.strictEqual(after!.auditRetentionDuration, 45);
 
       // Reset back to null so subsequent tests relying on the default fixture are unaffected
-      repository.update(testData.engine.command, testData.users.list[0].id);
+      repository.update(toSettingsCommand(testData.engine.command), testData.users.list[0].id);
       assert.strictEqual(repository.get()!.auditRetentionDuration, null);
     });
 
@@ -177,24 +190,13 @@ describe('EngineRepository with populated database', () => {
       ]);
     });
 
-    it('should update engine settings without a forward proxy (falls back to disabled defaults)', () => {
-      const { forward: _forward, ...proxyServerWithoutForward } = testData.engine.command.proxyServer;
-      const command = {
-        ...testData.engine.command,
-        proxyServer: proxyServerWithoutForward
-      };
-      repository.update(command, testData.users.list[0].id);
-      const result = repository.get()!;
-      assert.strictEqual(result.proxyServer.forward.enabled, false);
-      assert.strictEqual(result.proxyServer.forward.url, null);
-      assert.strictEqual(result.proxyServer.forward.username, null);
-      assert.strictEqual(result.proxyServer.forward.password, null);
-    });
-
     it('should update proxy settings with proxy disabled', () => {
       const disabledForward = { enabled: false, url: null, username: null, password: null };
       const before = repository.get();
-      repository.updateProxy({ enabled: false, port: null, forward: disabledForward }, testData.users.list[0].id);
+      repository.updateProxy(
+        { enabled: false, port: null, username: null, password: null, forward: disabledForward },
+        testData.users.list[0].id
+      );
       const result = repository.get()!;
       assert.strictEqual(result.proxyServer.enabled, false);
       assert.strictEqual(result.proxyServer.port, null);
@@ -213,26 +215,18 @@ describe('EngineRepository with populated database', () => {
 
     it('should update proxy settings with proxy enabled', () => {
       const disabledForward = { enabled: false, url: null, username: null, password: null };
-      repository.updateProxy({ enabled: true, port: 8080, forward: disabledForward }, testData.users.list[0].id);
+      repository.updateProxy(
+        { enabled: true, port: 8080, username: null, password: null, forward: disabledForward },
+        testData.users.list[0].id
+      );
       const result = repository.get()!;
       assert.strictEqual(result.proxyServer.enabled, true);
       assert.strictEqual(result.proxyServer.port, 8080);
     });
 
-    it('should update proxy settings without a forward proxy (falls back to disabled defaults)', () => {
-      repository.updateProxy({ enabled: true, port: 8081 }, testData.users.list[0].id);
-      const result = repository.get()!;
-      assert.strictEqual(result.proxyServer.enabled, true);
-      assert.strictEqual(result.proxyServer.port, 8081);
-      assert.strictEqual(result.proxyServer.forward.enabled, false);
-      assert.strictEqual(result.proxyServer.forward.url, null);
-      assert.strictEqual(result.proxyServer.forward.username, null);
-      assert.strictEqual(result.proxyServer.forward.password, null);
-    });
-
     it('should update logger settings only', () => {
       const before = repository.get();
-      repository.updateLogger(testData.engine.loggerCommand, testData.users.list[0].id);
+      repository.updateLogger(toLoggerCommand(testData.engine.loggerCommand), testData.users.list[0].id);
       const after = repository.get();
       const { auditRetentionDuration, ...loggerOnly } = testData.engine.loggerCommand;
       assert.deepStrictEqual(after!.logger, loggerOnly);
@@ -252,12 +246,12 @@ describe('EngineRepository with populated database', () => {
 
     it('should persist and return the audit retention duration set through updateLogger', () => {
       const loggerCommandWithRetention = { ...testData.engine.loggerCommand, auditRetentionDuration: 30 };
-      repository.updateLogger(loggerCommandWithRetention, testData.users.list[0].id);
+      repository.updateLogger(toLoggerCommand(loggerCommandWithRetention), testData.users.list[0].id);
       const after = repository.get();
       assert.strictEqual(after!.auditRetentionDuration, 30);
 
       // Reset back to the shared fixture so subsequent tests are unaffected
-      repository.updateLogger(testData.engine.loggerCommand, testData.users.list[0].id);
+      repository.updateLogger(toLoggerCommand(testData.engine.loggerCommand), testData.users.list[0].id);
     });
 
     it('should never persist a real loki password in the audit trail', () => {
@@ -265,7 +259,7 @@ describe('EngineRepository with populated database', () => {
         ...testData.engine.loggerCommand,
         loki: { ...testData.engine.loggerCommand.loki, password: 'super-secret-loki-password' }
       };
-      repository.updateLogger(loggerCommandWithRealPassword, testData.users.list[0].id);
+      repository.updateLogger(toLoggerCommand(loggerCommandWithRealPassword), testData.users.list[0].id);
       const after = repository.get();
       // The password is genuinely stored (readable back through get())...
       assert.strictEqual(after!.logger.loki.password, 'super-secret-loki-password');
@@ -278,7 +272,7 @@ describe('EngineRepository with populated database', () => {
       assert.deepStrictEqual((calls[0][4] as { loki: { password: string } }).loki.password, '<changed>');
 
       // Reset back to the shared fixture so subsequent tests are unaffected
-      repository.updateLogger(testData.engine.loggerCommand, testData.users.list[0].id);
+      repository.updateLogger(toLoggerCommand(testData.engine.loggerCommand), testData.users.list[0].id);
     });
 
     it('should not record anything when a section is saved without changes', () => {

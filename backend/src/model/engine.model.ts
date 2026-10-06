@@ -1,6 +1,6 @@
-import { AuthTokenDuration } from '../../shared/model/api/engine.model';
-import { LogLevel } from '../../shared/model/api/logs.model';
 import { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
+import { AuthTokenDuration } from '../../shared/model/domain/engine.model';
+import { LogLevel } from '../../shared/model/domain/logs.model';
 
 import { HistoryQueryItemEntity } from './histor-query.model';
 import { SouthConnectorItemEntity } from './south-connector.model';
@@ -60,6 +60,33 @@ export interface EngineSettings extends BaseEntity {
       protocol: 'udp4' | 'tcp';
     };
   };
+}
+
+/*
+ * What the engine repository persists for each settings section. Built by OIBusService from the API commands:
+ * secrets are already encrypted (hashed for the proxy password) or carried over from the current settings, and
+ * values the API lets callers omit are explicit nulls.
+ */
+export type EngineWebServerCommand = EngineSettings['webServer'];
+
+export type EngineProxyCommand = EngineSettings['proxyServer'];
+
+export interface EngineLoggerCommand {
+  auditRetentionDuration: number | null;
+  console: { level: LogLevel };
+  file: { level: LogLevel; maxFileSize: number; numberOfFiles: number };
+  database: { level: LogLevel; maxNumberOfLogs: number };
+  loki: { level: LogLevel; interval: number; address: string | null; username: string | null; password: string | null };
+  oia: { level: LogLevel; interval: number };
+  syslog: { level: LogLevel; host: string | null; port: number; protocol: 'udp4' | 'tcp' };
+}
+
+export interface EngineSettingsCommand {
+  auditRetentionDuration: number | null;
+  general: EngineSettings['general'];
+  webServer: EngineWebServerCommand;
+  proxyServer: EngineProxyCommand;
+  logger: Omit<EngineLoggerCommand, 'auditRetentionDuration'>;
 }
 
 export class OIBusError extends Error {

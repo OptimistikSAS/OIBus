@@ -3,13 +3,13 @@ import { TestBed } from '@angular/core/testing';
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '@oibus/shared/api/engine.model';
 import { HistoryQueryDTO, HistoryQueryItemDTO, HistoryQueryLightDTO } from '@oibus/shared/api/history-query.model';
 import { HistoryTransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
 import { Page } from '@oibus/shared/common/types';
 import { SouthFolderScannerItemSettings } from '@oibus/shared/connector/south-settings.model';
+import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '@oibus/shared/domain/engine.model';
 
-import testData from '../../../../backend/src/tests/utils/test-data';
+import testData from '../../test/test-data';
 import { toPage } from '../shared/test-utils';
 import { DownloadService } from './download.service';
 import { HistoryQueryService } from './history-query.service';

@@ -8,15 +8,15 @@ import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { catchError, EMPTY, Subscription, switchMap } from 'rxjs';
 
 import { ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
+import { WorkflowRunDTO } from '@oibus/shared/api/workflow-run.model';
+import { Instant, Page } from '@oibus/shared/common/types';
 import {
   WORKFLOW_RUN_STATUSES,
   WORKFLOW_RUN_TRIGGER_TYPES,
-  WorkflowRunDTO,
   WorkflowRunSearchParam,
   WorkflowRunStatus,
   WorkflowRunTriggerType
-} from '@oibus/shared/api/workflow-run.model';
-import { Instant, Page } from '@oibus/shared/common/types';
+} from '@oibus/shared/domain/workflow-run.model';
 
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { DatetimePipe } from '../../../shared/datetime.pipe';

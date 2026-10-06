@@ -1,4 +1,4 @@
-import { RegistrationStatus } from '../../shared/model/api/engine.model';
+import { RegistrationStatus } from '../../shared/model/domain/engine.model';
 
 import { BaseEntity, Instant } from './types';
 

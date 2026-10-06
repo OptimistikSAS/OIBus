@@ -8,8 +8,8 @@ import { page } from 'vitest/browser';
 
 import { EngineSettingsDTO } from '@oibus/shared/api/engine.model';
 
-import testData from '../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
+import testData from '../../test/test-data';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { CertificateService } from '../services/certificate.service';
 import { ConfigTransferService } from '../services/config-transfer.service';

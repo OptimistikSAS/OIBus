@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { describe, expect, test } from 'vitest';
 
-import { AUDIT_ENTITY_TYPES } from '@oibus/shared/api/audit.model';
+import { AUDIT_ENTITY_TYPES } from '@oibus/shared/domain/audit.model';
 
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { AuditEntityTypesEnumPipe } from './audit-entity-types-enum.pipe';

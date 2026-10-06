@@ -41,6 +41,7 @@ import SouthConnectorRepository from '../../repository/config/south-connector.re
 import TransformerRepository from '../../repository/config/transformer.repository';
 import UserRepository from '../../repository/config/user.repository';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
+import { toEngineSettingsCommand } from '../engine-command.utils';
 import { northManifestList } from '../north-manifests';
 import { southManifestList } from '../south-manifests';
 import { CONFIG_SCHEMA, EXPORT_FILE_SCHEMA, RESERVED_SCAN_MODE_ID } from './config-schema';
@@ -498,7 +499,7 @@ export default class ConfigImportService {
 
     const logger = imported.logger;
     const sameLoki = same(logger.loki.address, local.logger.loki.address) && same(logger.loki.username, local.logger.loki.username);
-    logger.loki.password = sameLoki ? local.logger.loki.password : '';
+    const lokiPassword = sameLoki ? local.logger.loki.password : '';
     if (!sameLoki && logger.loki.level !== 'silent' && logger.loki.username) {
       warnings.push(
         `The Loki logging password was not imported (secrets are never exported); re-enter it in the engine logging settings ` +
@@ -508,7 +509,7 @@ export default class ConfigImportService {
 
     const proxy = imported.proxyServer;
     const sameProxyUser = same(proxy.username, local.proxyServer.username);
-    proxy.password = sameProxyUser ? local.proxyServer.password : null;
+    const proxyPassword = sameProxyUser ? local.proxyServer.password : null;
     if (!sameProxyUser && proxy.enabled && proxy.username) {
       warnings.push(
         `The proxy server password of user "${proxy.username}" was not imported (secrets are never exported); re-enter it in the ` +
@@ -518,7 +519,7 @@ export default class ConfigImportService {
 
     const forward = proxy.forward ?? { enabled: false, url: null, username: null, password: null };
     const sameForward = same(forward.url, local.proxyServer.forward.url) && same(forward.username, local.proxyServer.forward.username);
-    forward.password = sameForward ? local.proxyServer.forward.password : null;
+    const forwardProxyPassword = sameForward ? local.proxyServer.forward.password : null;
     if (!sameForward && forward.enabled && forward.username) {
       warnings.push(
         `The forward proxy password was not imported (secrets are never exported); re-enter it in the engine proxy server settings ` +
@@ -527,7 +528,13 @@ export default class ConfigImportService {
     }
     proxy.forward = forward;
 
-    this.engineRepository!.update({ ...imported, auditRetentionDuration: logger.auditRetentionDuration }, importedBy);
+    this.engineRepository!.update(
+      toEngineSettingsCommand(
+        { ...imported, auditRetentionDuration: logger.auditRetentionDuration },
+        { proxyPassword, forwardProxyPassword, lokiPassword }
+      ),
+      importedBy
+    );
 
     if (imported.webServer.port === local.webServer.port) {
       return null;

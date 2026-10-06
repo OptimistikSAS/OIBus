@@ -5,7 +5,8 @@ import path from 'node:path';
 import v8 from 'node:v8';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import { CacheContentUpdateCommand, EngineSettingsCommandDTO } from '../../shared/model/api/engine.model';
+import { EngineSettingsCommandDTO } from '../../shared/model/api/engine.model';
+import { CacheContentUpdateCommand } from '../../shared/model/domain/engine.model';
 
 import { EngineSettings } from '../model/engine.model';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
@@ -365,8 +366,10 @@ describe('OIBus Service', () => {
     const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
     assert.strictEqual(encryptionMock.encryptText.mock.calls.length, 1);
     assert.deepStrictEqual(encryptionMock.encryptText.mock.calls[0].arguments, ['new forward password']);
-    assert.strictEqual(specificTestCommand.proxyServer.password, 'argon2hash:new proxy password');
     assert.strictEqual(engineRepository.update.mock.calls.length, 1);
+    assert.strictEqual(engineRepository.update.mock.calls[0].arguments[0].proxyServer.password, 'argon2hash:new proxy password');
+    // the API command itself is left untouched
+    assert.strictEqual(specificTestCommand.proxyServer.password, 'new proxy password');
   });
 
   it('should correctly update settings without reloading logger', async () => {
@@ -488,9 +491,11 @@ describe('OIBus Service', () => {
 
     await service.updateEngineProxy(command, testData.users.list[0].id);
 
-    assert.strictEqual(command.forward.password, testData.engine.settings.proxyServer.forward.password);
-    assert.strictEqual(command.password, testData.engine.settings.proxyServer.password);
     assert.strictEqual(engineRepository.updateProxy.mock.calls.length, 1);
+    const persisted = engineRepository.updateProxy.mock.calls[0].arguments[0];
+    assert.strictEqual(persisted.forward.password, testData.engine.settings.proxyServer.forward.password);
+    assert.strictEqual(persisted.password, testData.engine.settings.proxyServer.password);
+    assert.strictEqual(command.password, null);
   });
 
   it('should start proxy server when proxy is enabled', async () => {
@@ -533,8 +538,12 @@ describe('OIBus Service', () => {
 
     const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
     assert.strictEqual(encryptionMock.encryptText.mock.calls.length, 0);
-    assert.strictEqual(command.loki.password, testData.engine.settings.logger.loki.password);
     assert.strictEqual(engineRepository.updateLogger.mock.calls.length, 1);
+    assert.strictEqual(
+      engineRepository.updateLogger.mock.calls[0].arguments[0].loki.password,
+      testData.engine.settings.logger.loki.password
+    );
+    assert.strictEqual(command.loki.password, '');
   });
 
   it('should correctly restart OIBus', async () => {

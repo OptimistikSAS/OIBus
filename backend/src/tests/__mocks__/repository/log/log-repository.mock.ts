@@ -1,7 +1,7 @@
 import { mock } from 'node:test';
 
-import { Group, Item, LogSearchParam, Scope, ScopeType } from '../../../../../shared/model/api/logs.model';
 import { Page } from '../../../../../shared/model/common/types';
+import { Group, Item, LogSearchParam, Scope, ScopeType } from '../../../../../shared/model/domain/logs.model';
 
 import { OIBusLog, PinoLog } from '../../../../model/logs.model';
 import LogRepository from '../../../../repository/logs/log.repository';

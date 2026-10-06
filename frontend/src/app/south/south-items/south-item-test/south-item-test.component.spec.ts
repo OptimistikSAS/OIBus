@@ -6,8 +6,8 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { SouthConnectorItemDTO } from '@oibus/shared/api/south-connector.model';
 import { SouthFolderScannerItemSettings } from '@oibus/shared/connector/south-settings.model';
 
-import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
 import { createMock } from '../../../../test/vitest-create-mock';
 import { HistoryQueryService } from '../../../services/history-query.service';
 import { NorthConnectorService } from '../../../services/north-connector.service';

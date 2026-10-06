@@ -15,18 +15,15 @@ import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { Observable, switchMap } from 'rxjs';
 
-import {
-  ConfigurationWorkflowCommandDTO,
-  RECORD_FILTER_OPERATORS,
-  RecordFilterCondition,
-  RecordFilterOperator
-} from '@oibus/shared/api/configuration-workflow.model';
+import { ConfigurationWorkflowCommandDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { SouthConnectorExploreEntry, SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
+import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 import { OIBusRecordListContent } from '@oibus/shared/common/content.model';
 import { OIBusAttribute, OIBusAttributeType, OIBusEnablingCondition, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { SouthConnectorManifest, SQL_FAMILY_SOUTH_TYPES } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
+import { RECORD_FILTER_OPERATORS, RecordFilterCondition, RecordFilterOperator } from '@oibus/shared/domain/configuration-workflow.model';
+import { SouthConnectorExploreEntry } from '@oibus/shared/domain/south-connector.model';
 
 import { EngineService } from '../../../services/engine.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';

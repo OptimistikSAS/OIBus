@@ -6,10 +6,8 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
-
-import testData from '../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
+import testData from '../../test/test-data';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { NorthConnectorService } from '../services/north-connector.service';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
@@ -26,7 +24,7 @@ describe('NorthListComponent', () => {
     northConnectorService = createMock(NorthConnectorService);
     notificationService = createMock(NotificationService);
 
-    northConnectorService.list.mockReturnValue(of(testData.north.list as unknown as Array<NorthConnectorLightDTO>));
+    northConnectorService.list.mockReturnValue(of(testData.north.listLight));
     northConnectorService.start.mockReturnValue(of(undefined));
     northConnectorService.stop.mockReturnValue(of(undefined));
 
@@ -52,7 +50,7 @@ describe('NorthListComponent', () => {
     await expect.element(rows).toHaveLength(testData.north.list.length);
 
     const firstRowCells = rows.nth(0).getByCss('td');
-    await expect.element(firstRowCells.nth(1)).toMatchTextContent((testData.north.list[0] as unknown as NorthConnectorLightDTO).name);
+    await expect.element(firstRowCells.nth(1)).toMatchTextContent(testData.north.listLight[0].name);
   });
 
   test('should toggle north connector', async () => {
@@ -63,7 +61,7 @@ describe('NorthListComponent', () => {
     const firstRowButtons = root.getByCss('tbody tr').nth(0).getByCss('button');
     await firstRowButtons.nth(0).click();
 
-    const north = testData.north.list[0] as unknown as NorthConnectorLightDTO;
+    const north = testData.north.listLight[0];
     if (north.enabled) {
       expect(northConnectorService.stop).toHaveBeenCalledWith(north.id);
       expect(notificationService.success).toHaveBeenCalledWith('north.stopped', { name: north.name });
@@ -83,7 +81,7 @@ describe('NorthListComponent', () => {
     const root = page.elementLocator(fixture.nativeElement);
     await root.getByCss('.show-audit-north').nth(0).click();
 
-    const north = testData.north.list[0] as unknown as NorthConnectorLightDTO;
+    const north = testData.north.listLight[0];
     expect(fakeModalComponent.prepare).toHaveBeenCalledWith('north_connector', north.id);
   });
 });

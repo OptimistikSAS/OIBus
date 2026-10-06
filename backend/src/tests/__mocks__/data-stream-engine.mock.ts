@@ -1,14 +1,14 @@
 import { mock } from 'node:test';
 
+import type { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+import type { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
 import type {
   CacheSearchResult,
   FileCacheContent,
   HistoryQueryMetrics,
   NorthConnectorMetrics,
   SouthConnectorMetrics
-} from '../../../shared/model/api/engine.model';
-import type { NorthSettings } from '../../../shared/model/connector/north-settings.model';
-import type { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+} from '../../../shared/model/domain/engine.model';
 
 import type HistoryQuery from '../../engine/history-query';
 import type { HistoryQueryEntity } from '../../model/histor-query.model';

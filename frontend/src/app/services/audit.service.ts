@@ -3,8 +3,9 @@ import { inject, Service } from '@angular/core';
 
 import { Observable } from 'rxjs';
 
-import { AuditAction, AuditEntityType, AuditLogDTO } from '@oibus/shared/api/audit.model';
+import { AuditLogDTO } from '@oibus/shared/api/audit.model';
 import { Page } from '@oibus/shared/common/types';
+import { AuditAction, AuditEntityType } from '@oibus/shared/domain/audit.model';
 
 export interface AuditSearchParam {
   entityType?: AuditEntityType;
