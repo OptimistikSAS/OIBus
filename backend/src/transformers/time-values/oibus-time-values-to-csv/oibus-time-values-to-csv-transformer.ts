@@ -1,6 +1,7 @@
 import OIBusTransformer from '../../oibus-transformer';
 import csv from 'papaparse';
-import { CacheMetadata, CacheMetadataSource, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { CacheMetadata, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { CacheMetadataSource } from '../../../model/engine.model';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 import {

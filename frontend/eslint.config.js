@@ -144,5 +144,24 @@ export default [
         tsconfigRootDir: import.meta.dirname
       }
     }
+  },
+  {
+    // The only backend code the frontend may depend on is the shared model (backend/shared/).
+    // Specs are exempt for now: they reuse the backend test fixtures (backend/src/tests/utils/test-data).
+    files: ['**/*.ts'],
+    ignores: ['**/*.spec.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '/backend/(?!shared/)',
+              message: 'The frontend may only import backend code from backend/shared/.'
+            }
+          ]
+        }
+      ]
+    }
   }
 ];

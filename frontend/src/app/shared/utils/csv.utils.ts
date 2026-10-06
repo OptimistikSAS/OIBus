@@ -1,7 +1,8 @@
 import csv from 'papaparse';
 import { CsvCharacter } from '../../../../../backend/shared/model/types';
 import { OIBusArrayAttribute, OIBusAttribute, OIBusObjectAttribute } from '../../../../../backend/shared/model/form.model';
-import { OIBusValidationError } from '../../../../../backend/src/model/types';
+
+class CsvValidationError extends Error {}
 
 export const convertCsvDelimiter = (delimiter: CsvCharacter): string => {
   switch (delimiter) {
@@ -167,7 +168,7 @@ const unflattenObject = (
         if (value !== undefined && value !== '') {
           const parsedNumber = Number(value);
           if (Number.isNaN(parsedNumber)) {
-            throw new OIBusValidationError(`Invalid number value "${value}" for "${fullKey}"`);
+            throw new CsvValidationError(`Invalid number value "${value}" for "${fullKey}"`);
           }
           result[key] = parsedNumber;
         }
@@ -211,11 +212,11 @@ const parseArrayValue = (rawValue: unknown, key: string): Array<unknown> => {
       }
       return parsed;
     } catch {
-      throw new OIBusValidationError(`Invalid array value for "${key}": ${rawValue}`);
+      throw new CsvValidationError(`Invalid array value for "${key}": ${rawValue}`);
     }
   }
 
-  throw new OIBusValidationError(`Invalid array value for "${key}"`);
+  throw new CsvValidationError(`Invalid array value for "${key}"`);
 };
 
 export const validateArrayElementsImport = async (
@@ -232,7 +233,7 @@ export const validateArrayElementsImport = async (
   const csvData = csv.parse(csvContent, { header: true, delimiter, skipEmptyLines: true });
 
   if (csvData.meta.delimiter !== delimiter) {
-    throw new OIBusValidationError(
+    throw new CsvValidationError(
       `The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvData.meta.delimiter}"`
     );
   }
@@ -304,7 +305,7 @@ export const findArrayAttributeInAttributes = (arrayKey: string, attributes: Arr
 
     if (attribute.key === arrayKey) {
       if (attribute.type !== 'array') {
-        throw new OIBusValidationError(`Field "${arrayKey}" is not an array`);
+        throw new CsvValidationError(`Field "${arrayKey}" is not an array`);
       }
       return attribute as OIBusArrayAttribute;
     }

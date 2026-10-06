@@ -1,6 +1,9 @@
 import { mock } from 'node:test';
 import ConfigTransferBuilderService from '../../../../service/config-transfer/config-transfer-builder.service';
-import { OIBusFullConfigurationCommandDTO, OIBusHistoryQueriesCommandDTO } from '../../../../service/oia/oianalytics.model';
+import {
+  OIBusFullConfigurationCommandDTO,
+  OIBusHistoryQueriesCommandDTO
+} from '../../../../../shared/model/oianalytics-configuration.model';
 import { OIAnalyticsRegistration } from '../../../../model/oianalytics-registration.model';
 
 /**

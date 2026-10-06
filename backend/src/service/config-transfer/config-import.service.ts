@@ -42,7 +42,7 @@ import {
 import { ScanMode } from '../../model/scan-mode.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { OIAnalyticsNorthCommandDTO, OIAnalyticsSouthCommandDTO } from '../oia/oianalytics.model';
+import { OIAnalyticsNorthCommandDTO, OIAnalyticsSouthCommandDTO } from '../../../shared/model/oianalytics-configuration.model';
 import { TransformerSourceCommandDTO } from '../../../shared/model/transformer.model';
 
 /**
