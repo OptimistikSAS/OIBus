@@ -4,11 +4,11 @@ import { TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
-import { page } from 'vitest/browser';
+import { page, userEvent } from 'vitest/browser';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
+import { SouthConnectorItemCommandDTO, SouthConnectorItemDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import testData from '../../../../test/test-data';
@@ -316,5 +316,115 @@ describe('EditSouthItemModalComponent', () => {
     fixture.componentInstance.onSelectGroup(null);
 
     expect(fixture.componentInstance.form!.controls.syncWithGroup.value).toBe(false);
+  });
+  describe('name uniqueness', () => {
+    const [savedItem1, savedItem2] = testData.south.list[0].items;
+    const unsavedItem1: SouthConnectorItemCommandDTO = { ...testData.south.itemCommand, id: '', name: 'unsaved1' };
+    const unsavedItem2: SouthConnectorItemCommandDTO = { ...testData.south.itemCommand, id: '', name: 'unsaved2' };
+    const itemList: Array<SouthConnectorItemDTO | SouthConnectorItemCommandDTO> = [savedItem1, savedItem2, unsavedItem1, unsavedItem2];
+    const nameInput = page.getByLabelText('Name', { exact: true });
+    const mustBeUnique = page.getByText('Must be unique');
+
+    const typeName = async (name: string) => {
+      await nameInput.fill(name);
+      await userEvent.tab();
+    };
+
+    const openForEdition = (item: SouthConnectorItemDTO | SouthConnectorItemCommandDTO, tableIndex: number) => {
+      const fixture = TestBed.createComponent(EditSouthItemModalComponent);
+      fixture.componentInstance.prepareForEdition(
+        itemList,
+        scanModes,
+        [] as Array<CertificateDTO>,
+        groups,
+        manifest,
+        item,
+        southId,
+        southConnectorCommand as any,
+        tableIndex,
+        noop,
+        noop
+      );
+      fixture.autoDetectChanges();
+    };
+
+    test('create mode should reject the name of any existing item', async () => {
+      const fixture = TestBed.createComponent(EditSouthItemModalComponent);
+      fixture.componentInstance.prepareForCreation(
+        itemList,
+        scanModes,
+        [] as Array<CertificateDTO>,
+        groups,
+        manifest,
+        southId,
+        southConnectorCommand as any,
+        noop,
+        noop
+      );
+      fixture.autoDetectChanges();
+
+      await typeName('brand new');
+      await expect.element(mustBeUnique).not.toBeInTheDocument();
+
+      await typeName(savedItem2.name);
+      await expect.element(mustBeUnique).toBeInTheDocument();
+
+      await typeName(unsavedItem1.name);
+      await expect.element(mustBeUnique).toBeInTheDocument();
+    });
+
+    test('copy mode should reject the name of the copied item', async () => {
+      const fixture = TestBed.createComponent(EditSouthItemModalComponent);
+      fixture.componentInstance.prepareForCopy(
+        itemList,
+        scanModes,
+        [] as Array<CertificateDTO>,
+        groups,
+        manifest,
+        savedItem1,
+        southId,
+        southConnectorCommand as any,
+        noop,
+        noop
+      );
+      fixture.autoDetectChanges();
+
+      await typeName(`${savedItem1.name}-copy`);
+      await expect.element(mustBeUnique).not.toBeInTheDocument();
+
+      await typeName(savedItem1.name);
+      await expect.element(mustBeUnique).toBeInTheDocument();
+    });
+
+    test('edit mode should identify a saved item by its id rather than its table index', async () => {
+      // the table index points to another item: only the id must be used to exclude the edited item
+      openForEdition(savedItem2, 0);
+
+      await typeName(savedItem2.name);
+      await expect.element(mustBeUnique).not.toBeInTheDocument();
+
+      await typeName(savedItem1.name);
+      await expect.element(mustBeUnique).toBeInTheDocument();
+    });
+
+    test('edit mode should reject the name of an unsaved item when editing a saved item', async () => {
+      openForEdition(savedItem1, 0);
+
+      await typeName(unsavedItem1.name);
+      await expect.element(mustBeUnique).toBeInTheDocument();
+    });
+
+    test('edit mode should identify an unsaved item by its table index', async () => {
+      openForEdition(unsavedItem2, 3);
+
+      await typeName(unsavedItem2.name);
+      await expect.element(mustBeUnique).not.toBeInTheDocument();
+
+      await typeName(unsavedItem1.name);
+      await expect.element(mustBeUnique).toBeInTheDocument();
+
+      await typeName(savedItem1.name);
+      await expect.element(mustBeUnique).toBeInTheDocument();
+    });
   });
 });
