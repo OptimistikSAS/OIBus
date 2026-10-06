@@ -11,7 +11,7 @@ import { IpFilterService } from '../../../services/ip-filter.service';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import { IPFilterDTO } from '../../../../../../backend/shared/model/ip-filter.model';
+import { IPFilterDTO } from '@oibus/shared/ip-filter.model';
 
 class EditIpFilterModalComponentTester {
   readonly fixture = TestBed.createComponent(EditIpFilterModalComponent);

@@ -13,28 +13,23 @@ import {
 } from '@angular/forms';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { Observable, switchMap } from 'rxjs';
-import { OIBusRecordListContent } from '../../../../../../backend/shared/model/engine.model';
+import { OIBusRecordListContent } from '@oibus/shared/engine.model';
 import {
   ConfigurationWorkflowCommandDTO,
   RECORD_FILTER_OPERATORS,
   RecordFilterCondition,
   RecordFilterOperator
-} from '../../../../../../backend/shared/model/configuration-workflow.model';
+} from '@oibus/shared/configuration-workflow.model';
 import {
   SouthConnectorExploreEntry,
   SouthConnectorManifest,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO,
   SQL_FAMILY_SOUTH_TYPES
-} from '../../../../../../backend/shared/model/south-connector.model';
-import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
-import { SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
-import {
-  OIBusAttribute,
-  OIBusAttributeType,
-  OIBusEnablingCondition,
-  OIBusObjectAttribute
-} from '../../../../../../backend/shared/model/form.model';
+} from '@oibus/shared/south-connector.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
+import { SouthSettings } from '@oibus/shared/south-settings.model';
+import { OIBusAttribute, OIBusAttributeType, OIBusEnablingCondition, OIBusObjectAttribute } from '@oibus/shared/form.model';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';

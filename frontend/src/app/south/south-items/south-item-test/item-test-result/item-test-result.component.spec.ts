@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 
 import { ItemTestResultComponent } from './item-test-result.component';
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
-import { OIBusAnyContent, OIBusTimeValueContent } from '../../../../../../../backend/shared/model/engine.model';
+import { OIBusAnyContent, OIBusTimeValueContent } from '@oibus/shared/engine.model';
 
 describe('ItemTestResultComponent', () => {
   beforeEach(() => {

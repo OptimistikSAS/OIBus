@@ -2,11 +2,11 @@ import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from '@ngx-translate/core';
-import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '../../../../../../backend/shared/model/south-connector.model';
+import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/south-connector.model';
 import { ModalService } from '../../../shared/modal.service';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
-import { SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
-import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
+import { SouthConnectorManifest } from '@oibus/shared/south-connector.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 import { Observable, switchMap } from 'rxjs';
 
 @Component({

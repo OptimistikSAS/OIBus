@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 
 import { isScanModeWindowExpired, ScanModeSchedulePipe } from './scan-mode-schedule.pipe';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
-import { ScanModeDTO } from '../../../../backend/shared/model/scan-mode.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 
 const scanMode = (overrides: Partial<ScanModeDTO>): ScanModeDTO =>
   ({

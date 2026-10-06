@@ -1,5 +1,5 @@
 import { Service, inject } from '@angular/core';
-import { Language } from '../../../../backend/shared/model/types';
+import { Language } from '@oibus/shared/types';
 import { WindowService } from './window.service';
 
 /**

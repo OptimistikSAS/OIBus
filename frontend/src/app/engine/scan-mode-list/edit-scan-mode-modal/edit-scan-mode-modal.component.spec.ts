@@ -11,7 +11,7 @@ import { ScanModeService } from '../../../services/scan-mode.service';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import { ScanModeDTO, ValidatedCronExpression } from '../../../../../../backend/shared/model/scan-mode.model';
+import { ScanModeDTO, ValidatedCronExpression } from '@oibus/shared/scan-mode.model';
 
 class EditScanModeModalComponentTester {
   readonly fixture = TestBed.createComponent(EditScanModeModalComponent);

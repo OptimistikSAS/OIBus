@@ -13,10 +13,10 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
-import { RegistrationSettingsDTO } from '../../../../../backend/shared/model/engine.model';
+import { RegistrationSettingsDTO } from '@oibus/shared/engine.model';
 import { RegisterOibusModalComponent } from './register-oibus-modal/register-oibus-modal.component';
 import { emptyPage } from '../../shared/test-utils';
-import { OIBusCommandDTO } from '../../../../../backend/shared/model/command.model';
+import { OIBusCommandDTO } from '@oibus/shared/command.model';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 
 const registrationNotRegistered: RegistrationSettingsDTO = {

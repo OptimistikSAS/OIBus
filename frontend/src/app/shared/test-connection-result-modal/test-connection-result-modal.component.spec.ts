@@ -1,13 +1,13 @@
 import { TestConnectionResultModalComponent } from './test-connection-result-modal.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
-import { SouthConnectorCommandDTO } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorCommandDTO } from '@oibus/shared/south-connector.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NEVER, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
+import { NorthConnectorCommandDTO, NorthConnectorDTO } from '@oibus/shared/north-connector.model';
 import { HistoryQueryService } from '../../services/history-query.service';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { beforeEach, describe, expect, test } from 'vitest';

@@ -4,7 +4,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective } from '@ngx-translate/core';
-import { CertificateCommandDTO, CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
+import { CertificateCommandDTO, CertificateDTO } from '@oibus/shared/certificate.model';
 import { CertificateService } from '../../../services/certificate.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';

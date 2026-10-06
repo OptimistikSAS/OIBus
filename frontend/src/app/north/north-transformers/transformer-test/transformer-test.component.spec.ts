@@ -8,7 +8,7 @@ import { SouthConnectorService } from '../../../services/south-connector.service
 import { HistoryQueryService } from '../../../services/history-query.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock } from '../../../../test/vitest-create-mock';
-import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
+import { TransformerDTO } from '@oibus/shared/transformer.model';
 
 const transformer = {
   id: 'transformer-1',

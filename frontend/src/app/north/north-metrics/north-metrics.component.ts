@@ -1,9 +1,9 @@
 import { Component, inject, input, linkedSignal, NgZone, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { NorthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
+import { NorthConnectorMetrics } from '@oibus/shared/engine.model';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
-import { NorthConnectorLightDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
+import { NorthConnectorLightDTO, NorthConnectorManifest } from '@oibus/shared/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NotificationService } from '../../shared/notification.service';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';

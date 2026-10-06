@@ -4,7 +4,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators, FormGroup, For
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective } from '@ngx-translate/core';
 import { EngineService } from '../../../services/engine.service';
-import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../../../backend/shared/model/engine.model';
+import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '@oibus/shared/engine.model';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { OibusCommandTypeEnumPipe } from '../../../shared/oibus-command-type-enum.pipe';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';

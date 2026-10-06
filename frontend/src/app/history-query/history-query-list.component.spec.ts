@@ -14,7 +14,7 @@ import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { provideModalTesting } from '../shared/mock-modal.service.testing';
 import testData from '../../../../backend/src/tests/utils/test-data';
-import { HistoryQueryLightDTO } from '../../../../backend/shared/model/history-query.model';
+import { HistoryQueryLightDTO } from '@oibus/shared/history-query.model';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
 
 describe('HistoryQueryListComponent', () => {

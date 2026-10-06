@@ -4,13 +4,13 @@ import { ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsM
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { of, startWith, switchMap } from 'rxjs';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { OIBusArrayAttribute, OIBusAttributeType } from '../../../../../../backend/shared/model/form.model';
+import { OIBusArrayAttribute, OIBusAttributeType } from '@oibus/shared/form.model';
 import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
 import { PaginationComponent } from '../../pagination/pagination.component';
 import { ModalService } from '../../modal.service';
 import { ArrayPage } from '../../pagination/array-page';
-import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
-import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
+import { CertificateDTO } from '@oibus/shared/certificate.model';
 import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal/oibus-edit-array-element-modal.component';
 import { ValErrorDelayDirective } from '../val-error-delay.directive';
 import { ValidationErrorsComponent } from 'ngx-valdemort';

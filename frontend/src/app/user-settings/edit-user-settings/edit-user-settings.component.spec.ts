@@ -11,7 +11,7 @@ import { DefaultValidationErrorsComponent } from '../../shared/default-validatio
 import { EditUserSettingsComponent } from './edit-user-settings.component';
 import { ChangePasswordModalComponent } from '../change-password-modal/change-password-modal.component';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
-import { UserCommandDTO, UserDTO } from '../../../../../backend/shared/model/user.model';
+import { UserCommandDTO, UserDTO } from '@oibus/shared/user.model';
 
 class EditUserSettingsComponentTester {
   readonly fixture = TestBed.createComponent(EditUserSettingsComponent);

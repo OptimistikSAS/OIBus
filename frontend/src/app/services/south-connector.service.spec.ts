@@ -9,11 +9,11 @@ import {
   SouthConnectorLightDTO,
   SouthConnectorManifest,
   SouthType
-} from '../../../../backend/shared/model/south-connector.model';
-import { Page } from '../../../../backend/shared/model/types';
+} from '@oibus/shared/south-connector.model';
+import { Page } from '@oibus/shared/types';
 import { toPage } from '../shared/test-utils';
 import { DownloadService } from './download.service';
-import { SouthFolderScannerItemSettings } from '../../../../backend/shared/model/south-settings.model';
+import { SouthFolderScannerItemSettings } from '@oibus/shared/south-settings.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('SouthConnectorService', () => {

@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { BaseEnumPipe } from './base-enum-pipe';
-import { OIBusCommandStatus } from '../../../../backend/shared/model/command.model';
+import { OIBusCommandStatus } from '@oibus/shared/command.model';
 
 @Pipe({
   name: 'oibusCommandStatusEnum',

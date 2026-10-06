@@ -9,7 +9,7 @@ import { EditEngineLoggerModalComponent } from './edit-engine-logger-modal.compo
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { EngineService } from '../../services/engine.service';
 import { NotificationService } from '../../shared/notification.service';
-import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
+import { EngineSettingsDTO } from '@oibus/shared/engine.model';
 
 const engineSettings = {
   auditRetentionDuration: 90,

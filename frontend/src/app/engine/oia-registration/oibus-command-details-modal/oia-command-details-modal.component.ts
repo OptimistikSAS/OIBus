@@ -6,7 +6,7 @@ import { JsonPipe } from '@angular/common';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { OibusCommandTypeEnumPipe } from '../../../shared/oibus-command-type-enum.pipe';
 import { BooleanEnumPipe } from '../../../shared/boolean-enum.pipe';
-import { OIBusCommandDTO } from '../../../../../../backend/shared/model/command.model';
+import { OIBusCommandDTO } from '@oibus/shared/command.model';
 
 @Component({
   selector: 'oib-oia-command-details-modal',

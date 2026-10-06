@@ -13,8 +13,8 @@ import { HistoryQueryService } from '../../../services/history-query.service';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
-import { SouthConnectorLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
+import { TransformerDTO } from '@oibus/shared/transformer.model';
+import { SouthConnectorLightDTO } from '@oibus/shared/south-connector.model';
 
 const transformer: TransformerDTO = {
   id: 'time-values-to-mqtt',

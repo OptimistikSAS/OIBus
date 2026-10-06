@@ -2,7 +2,7 @@ import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { ControlContainer, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from '@ngx-translate/core';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
-import { OIBusCodeAttribute } from '../../../../../../backend/shared/model/form.model';
+import { OIBusCodeAttribute } from '@oibus/shared/form.model';
 import { OibCodeBlockComponent } from '../oib-code-block/oib-code-block.component';
 
 @Component({

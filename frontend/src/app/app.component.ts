@@ -6,7 +6,7 @@ import { DefaultValidationErrorsComponent } from './shared/default-validation-er
 import { BreadcrumbComponent } from './shared/breadcrumb/breadcrumb.component';
 import { WindowService } from './shared/window.service';
 import { CurrentUserService } from './shared/current-user.service';
-import { UserDTO } from '../../../backend/shared/model/user.model';
+import { UserDTO } from '@oibus/shared/user.model';
 import { NavigationService } from './shared/navigation.service';
 import { VersionCheckService } from './shared/version-check.service';
 import { ModalService } from './shared/modal.service';

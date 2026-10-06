@@ -13,7 +13,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 import testData from '../../../../../backend/src/tests/utils/test-data';
-import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
+import { NorthConnectorDTO, NorthConnectorManifest } from '@oibus/shared/north-connector.model';
 
 describe('NorthTransformersComponent', () => {
   let modalService: MockObject<ModalService>;

@@ -1,21 +1,21 @@
 import { Component, effect, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
+import { NorthConnectorManifest } from '@oibus/shared/north-connector.model';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { HistoryTransformerDTOWithOptions, TransformerDTO } from '../../../../../backend/shared/model/transformer.model';
+import { HistoryTransformerDTOWithOptions, TransformerDTO } from '@oibus/shared/transformer.model';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { EditHistoryQueryTransformerModalComponent } from './edit-history-query-transformer-modal/edit-history-query-transformer-modal.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { DocsUrlService } from '../../shared/docs-url.service';
-import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
-import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
+import { CertificateDTO } from '@oibus/shared/certificate.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { firstValueFrom, of, switchMap } from 'rxjs';
-import { HistoryQueryDTO, HistoryQueryItemCommandDTO } from '../../../../../backend/shared/model/history-query.model';
+import { HistoryQueryDTO, HistoryQueryItemCommandDTO } from '@oibus/shared/history-query.model';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { ItemLightDTO, OIBusSouthType } from '../../../../../backend/shared/model/south-connector.model';
+import { ItemLightDTO, OIBusSouthType } from '@oibus/shared/south-connector.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 

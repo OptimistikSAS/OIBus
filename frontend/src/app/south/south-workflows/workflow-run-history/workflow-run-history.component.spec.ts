@@ -10,8 +10,8 @@ import { ModalService } from '../../../shared/modal.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject, stubRoute } from '../../../../test/vitest-create-mock';
 import { toPage } from '../../../shared/test-utils';
-import { ConfigurationWorkflowDTO } from '../../../../../../backend/shared/model/configuration-workflow.model';
-import { WorkflowRunDTO } from '../../../../../../backend/shared/model/workflow-run.model';
+import { ConfigurationWorkflowDTO } from '@oibus/shared/configuration-workflow.model';
+import { WorkflowRunDTO } from '@oibus/shared/workflow-run.model';
 
 const workflow: ConfigurationWorkflowDTO = {
   id: 'workflowId1',

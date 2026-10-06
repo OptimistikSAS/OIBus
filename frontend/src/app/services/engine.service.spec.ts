@@ -11,7 +11,7 @@ import {
   EngineSettingsDTO,
   EngineWebServerCommandDTO,
   OIBusInfo
-} from '../../../../backend/shared/model/engine.model';
+} from '@oibus/shared/engine.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('EngineService', () => {

@@ -10,7 +10,7 @@ import { ChooseSouthConnectorTypeModalComponent } from './choose-south-connector
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
-import { SouthType } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthType } from '@oibus/shared/south-connector.model';
 
 @Component({ template: '', standalone: true, changeDetection: ChangeDetectionStrategy.OnPush })
 class DummyComponent {}

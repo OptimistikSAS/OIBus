@@ -10,9 +10,9 @@ import { EngineService } from '../services/engine.service';
 import { WindowService } from '../shared/window.service';
 import { HomeComponent } from './home.component';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
-import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
-import { NorthConnectorLightDTO } from '../../../../backend/shared/model/north-connector.model';
-import { HomeMetrics } from '../../../../backend/shared/model/engine.model';
+import { SouthConnectorLightDTO } from '@oibus/shared/south-connector.model';
+import { NorthConnectorLightDTO } from '@oibus/shared/north-connector.model';
+import { HomeMetrics } from '@oibus/shared/engine.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 
 class HomeComponentTester {

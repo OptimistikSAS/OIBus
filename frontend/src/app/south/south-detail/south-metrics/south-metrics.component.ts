@@ -1,7 +1,7 @@
 import { Component, NgZone, effect, inject, input, linkedSignal, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { SouthConnectorLightDTO, SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
-import { SouthConnectorMetrics } from '../../../../../../backend/shared/model/engine.model';
+import { SouthConnectorLightDTO, SouthConnectorManifest } from '@oibus/shared/south-connector.model';
+import { SouthConnectorMetrics } from '@oibus/shared/engine.model';
 import { JsonPipe } from '@angular/common';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { DurationPipe } from '../../../shared/duration.pipe';

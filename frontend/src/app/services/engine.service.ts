@@ -16,7 +16,7 @@ import {
   OIBusInfo,
   RegistrationSettingsCommandDTO,
   RegistrationSettingsDTO
-} from '../../../../backend/shared/model/engine.model';
+} from '@oibus/shared/engine.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on the engine settings

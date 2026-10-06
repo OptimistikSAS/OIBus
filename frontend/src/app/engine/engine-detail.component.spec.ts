@@ -21,7 +21,7 @@ import { Modal } from '../shared/modal.service';
 import { MockModalService, provideModalTesting } from '../shared/mock-modal.service.testing';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
-import { EngineSettingsDTO } from '../../../../backend/shared/model/engine.model';
+import { EngineSettingsDTO } from '@oibus/shared/engine.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
 

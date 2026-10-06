@@ -12,12 +12,9 @@ import { ConfirmationService } from '../../../shared/confirmation.service';
 import { NotificationService } from '../../../shared/notification.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import {
-  ConfigurationWorkflowCommandDTO,
-  ConfigurationWorkflowDTO
-} from '../../../../../../backend/shared/model/configuration-workflow.model';
-import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
-import { SouthConnectorManifest, SouthItemGroupDTO } from '../../../../../../backend/shared/model/south-connector.model';
+import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/configuration-workflow.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
+import { SouthConnectorManifest, SouthItemGroupDTO } from '@oibus/shared/south-connector.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;

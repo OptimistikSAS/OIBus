@@ -4,7 +4,7 @@ import { map } from 'rxjs';
 import { AbstractControl, ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 
 import { TranslateDirective } from '@ngx-translate/core';
-import { OIBusAttribute, OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
+import { OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/form.model';
 import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
 import { OIBusNumberFormControlComponent } from '../oibus-number-form-control/oibus-number-form-control.component';
 import { OIBusStringFormControlComponent } from '../oibus-string-form-control/oibus-string-form-control.component';
@@ -16,11 +16,11 @@ import { OIBusStringSelectFormControlComponent } from '../oibus-string-select-fo
 import { OIBusTimezoneFormControlComponent } from '../oibus-timezone-form-control/oibus-timezone-form-control.component';
 import { OibusCertificateFormControlComponent } from '../oibus-certificate-form-control/oibus-certificate-form-control.component';
 import { OIBusCodeFormControlComponent } from '../oibus-code-form-control/oibus-code-form-control.component';
-import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
-import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
+import { CertificateDTO } from '@oibus/shared/certificate.model';
 import { OIBusArrayFormControlComponent } from '../oibus-array-form-control/oibus-array-form-control.component';
 import { addEnablingConditions, applyPlatformConditions } from '../dynamic-form.builder';
-import { isEnabledOnPlatform } from '../../../../../../backend/shared/model/form.model';
+import { isEnabledOnPlatform } from '@oibus/shared/form.model';
 import { EngineService } from '../../../services/engine.service';
 
 interface FormRow {

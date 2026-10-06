@@ -10,12 +10,9 @@ import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { NotificationService } from '../../../shared/notification.service';
 import { DownloadService } from '../../../services/download.service';
-import {
-  ConfigurationWorkflowCommandDTO,
-  WorkflowPreviewResultDTO
-} from '../../../../../../backend/shared/model/configuration-workflow.model';
-import { SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
-import { WorkflowRunDetailDTO } from '../../../../../../backend/shared/model/workflow-run.model';
+import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '@oibus/shared/configuration-workflow.model';
+import { SouthSettings } from '@oibus/shared/south-settings.model';
+import { WorkflowRunDetailDTO } from '@oibus/shared/workflow-run.model';
 
 describe('PreviewWorkflowModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;

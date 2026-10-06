@@ -4,9 +4,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { ConfigurationWorkflowService } from './configuration-workflow.service';
-import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '../../../../backend/shared/model/configuration-workflow.model';
-import { WorkflowRunDTO } from '../../../../backend/shared/model/workflow-run.model';
-import { SouthSettings } from '../../../../backend/shared/model/south-settings.model';
+import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/configuration-workflow.model';
+import { WorkflowRunDTO } from '@oibus/shared/workflow-run.model';
+import { SouthSettings } from '@oibus/shared/south-settings.model';
 import { toPage } from '../shared/test-utils';
 import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 

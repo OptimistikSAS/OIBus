@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { TransformerService } from './transformer.service';
-import { TransformerDTO } from '../../../../backend/shared/model/transformer.model';
+import { TransformerDTO } from '@oibus/shared/transformer.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('TransformerService', () => {

@@ -1,7 +1,7 @@
 import { Service } from '@angular/core';
 import { NgbDateAdapter, NgbDateStruct } from '@ng-bootstrap/ng-bootstrap';
 import { DateTime } from 'luxon';
-import { LocalDate } from '../../../../backend/shared/model/types';
+import { LocalDate } from '@oibus/shared/types';
 
 /**
  * Takes an NgbDateStruct and transforms it to an ISO date string (yyyy-MM-dd). If the given date is falsy,

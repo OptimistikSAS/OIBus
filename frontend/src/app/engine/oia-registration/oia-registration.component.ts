@@ -2,7 +2,7 @@ import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EngineService } from '../../services/engine.service';
-import { RegistrationSettingsDTO } from '../../../../../backend/shared/model/engine.model';
+import { RegistrationSettingsDTO } from '@oibus/shared/engine.model';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { RegisterOibusModalComponent } from './register-oibus-modal/register-oibus-modal.component';
@@ -20,8 +20,8 @@ import {
   OIBusCommandDTO,
   OIBusCommandStatus,
   OIBusCommandType
-} from '../../../../../backend/shared/model/command.model';
-import { Page } from '../../../../../backend/shared/model/types';
+} from '@oibus/shared/command.model';
+import { Page } from '@oibus/shared/types';
 import { PageLoader } from '../../shared/page-loader.service';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { OibusCommandService } from '../../services/oibus-command.service';

@@ -4,11 +4,11 @@ import { TranslateDirective } from '@ngx-translate/core';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
-import { OIBusSouthType } from '../../../../../backend/shared/model/south-connector.model';
-import { OIBusNorthType } from '../../../../../backend/shared/model/north-connector.model';
-import { OIBusConnectionTestResult } from '../../../../../backend/shared/model/engine.model';
+import { SouthSettings } from '@oibus/shared/south-settings.model';
+import { NorthSettings } from '@oibus/shared/north-settings.model';
+import { OIBusSouthType } from '@oibus/shared/south-connector.model';
+import { OIBusNorthType } from '@oibus/shared/north-connector.model';
+import { OIBusConnectionTestResult } from '@oibus/shared/engine.model';
 
 @Component({
   selector: 'oib-test-connection-result-modal',

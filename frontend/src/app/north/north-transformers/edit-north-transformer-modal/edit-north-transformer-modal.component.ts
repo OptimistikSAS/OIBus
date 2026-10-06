@@ -10,15 +10,15 @@ import {
   TransformerDTO,
   TransformerDTOWithOptions,
   TransformerSourceDTO
-} from '../../../../../../backend/shared/model/transformer.model';
+} from '@oibus/shared/transformer.model';
 import { addAttributeToForm, addEnablingConditions } from '../../../shared/form/dynamic-form.builder';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
-import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
-import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
-import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
+import { OIBusObjectAttribute } from '@oibus/shared/form.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
+import { CertificateDTO } from '@oibus/shared/certificate.model';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
-import { ItemLightDTO, SouthConnectorLightDTO, SouthItemGroupLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
+import { ItemLightDTO, SouthConnectorLightDTO, SouthItemGroupLightDTO } from '@oibus/shared/south-connector.model';
 import { OIBusSouthTypeEnumPipe } from '../../../shared/oibus-south-type-enum.pipe';
 import { getAssociatedInputType } from '../../../shared/utils/utils';
 import { SouthConnectorService } from '../../../services/south-connector.service';

@@ -3,8 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { OibusCommandService } from './oibus-command.service';
-import { OIBusCommandDTO } from '../../../../backend/shared/model/command.model';
-import { Page } from '../../../../backend/shared/model/types';
+import { OIBusCommandDTO } from '@oibus/shared/command.model';
+import { Page } from '@oibus/shared/types';
 import { toPage } from '../shared/test-utils';
 
 describe('OibusCommandService', () => {

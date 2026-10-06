@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { OIBusBooleanAttribute } from '../../../../../../backend/shared/model/form.model';
+import { OIBusBooleanAttribute } from '@oibus/shared/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { OIBusBooleanFormControlComponent } from './oibus-boolean-form-control.component';
 import { beforeEach, describe, expect, test } from 'vitest';

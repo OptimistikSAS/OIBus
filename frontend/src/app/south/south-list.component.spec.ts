@@ -11,7 +11,7 @@ import { NotificationService } from '../shared/notification.service';
 import { Modal, ModalService } from '../shared/modal.service';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
-import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorLightDTO } from '@oibus/shared/south-connector.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
 

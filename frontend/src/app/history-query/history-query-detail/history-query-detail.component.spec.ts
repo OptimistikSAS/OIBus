@@ -22,10 +22,10 @@ import { WindowService } from '../../shared/window.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import testData from '../../../../../backend/src/tests/utils/test-data';
-import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
-import { NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
-import { SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
-import { OIBusInfo } from '../../../../../backend/shared/model/engine.model';
+import { HistoryQueryDTO } from '@oibus/shared/history-query.model';
+import { NorthConnectorManifest } from '@oibus/shared/north-connector.model';
+import { SouthConnectorManifest } from '@oibus/shared/south-connector.model';
+import { OIBusInfo } from '@oibus/shared/engine.model';
 
 // Deep-cloned: `testData` fixtures share object references across entities (e.g. multiple
 // connectors point at the same `scanModes[0]` instance), so holding a live reference here makes

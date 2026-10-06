@@ -12,16 +12,16 @@ import {
 } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective } from '@ngx-translate/core';
-import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorManifest } from '@oibus/shared/south-connector.model';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { addAttributeToForm, addEnablingConditions, extractFormValue } from '../../../shared/form/dynamic-form.builder';
 import { Observable } from 'rxjs';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import SouthItemTestComponent from '../../../south/south-items/south-item-test/south-item-test.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../../backend/shared/model/history-query.model';
-import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
-import { HistoryTransformerDTOWithOptions } from '../../../../../../backend/shared/model/transformer.model';
+import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '@oibus/shared/history-query.model';
+import { OIBusObjectAttribute } from '@oibus/shared/form.model';
+import { HistoryTransformerDTOWithOptions } from '@oibus/shared/transformer.model';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
 
 @Component({

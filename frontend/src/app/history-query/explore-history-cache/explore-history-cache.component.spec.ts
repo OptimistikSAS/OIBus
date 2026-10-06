@@ -11,7 +11,7 @@ import { ModalService } from '../../shared/modal.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock } from '../../../test/vitest-create-mock';
 import testData from '../../../../../backend/src/tests/utils/test-data';
-import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
+import { HistoryQueryDTO } from '@oibus/shared/history-query.model';
 
 describe('ExploreHistoryCacheComponent', () => {
   test('should create without error', () => {

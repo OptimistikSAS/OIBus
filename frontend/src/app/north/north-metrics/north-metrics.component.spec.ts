@@ -9,8 +9,8 @@ import { NotificationService } from '../../shared/notification.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock } from '../../../test/vitest-create-mock';
 import testData from '../../../../../backend/src/tests/utils/test-data';
-import { NorthConnectorLightDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
-import { NorthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
+import { NorthConnectorLightDTO, NorthConnectorManifest } from '@oibus/shared/north-connector.model';
+import { NorthConnectorMetrics } from '@oibus/shared/engine.model';
 
 describe('NorthMetricsComponent', () => {
   beforeEach(() => {

@@ -3,9 +3,9 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from '@ngx-translate/core';
 import { OIBusObjectFormControlComponent } from '../../oibus-object-form-control/oibus-object-form-control.component';
-import { OIBusObjectAttribute } from '../../../../../../../backend/shared/model/form.model';
-import { ScanModeDTO } from '../../../../../../../backend/shared/model/scan-mode.model';
-import { CertificateDTO } from '../../../../../../../backend/shared/model/certificate.model';
+import { OIBusObjectAttribute } from '@oibus/shared/form.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
+import { CertificateDTO } from '@oibus/shared/certificate.model';
 import { addAttributeToForm, extractFormValue } from '../../dynamic-form.builder';
 import { OIBUS_FORM_MODE } from '../../oibus-form-mode.token';
 

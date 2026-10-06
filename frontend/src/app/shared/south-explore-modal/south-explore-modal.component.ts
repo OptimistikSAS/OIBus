@@ -1,8 +1,8 @@
 import { Component, ChangeDetectionStrategy, inject, AfterViewInit, ViewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
-import { OIBusSouthType, SouthConnectorExploreEntry } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthSettings } from '@oibus/shared/south-settings.model';
+import { OIBusSouthType, SouthConnectorExploreEntry } from '@oibus/shared/south-connector.model';
 import { ExploreTreeComponent, SouthExploreApi } from '../explore-tree/explore-tree.component';
 
 export type { SouthExploreApi } from '../explore-tree/explore-tree.component';

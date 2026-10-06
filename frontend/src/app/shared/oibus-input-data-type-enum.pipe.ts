@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { BaseEnumPipe } from './base-enum-pipe';
-import { InputType } from '../../../../backend/shared/model/transformer.model';
+import { InputType } from '@oibus/shared/transformer.model';
 
 @Pipe({
   name: 'oIBusInputDataTypeEnum',

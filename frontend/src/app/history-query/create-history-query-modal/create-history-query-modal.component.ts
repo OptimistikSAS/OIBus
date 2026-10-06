@@ -2,9 +2,9 @@ import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 
-import { NorthConnectorLightDTO, NorthType } from '../../../../../backend/shared/model/north-connector.model';
+import { NorthConnectorLightDTO, NorthType } from '@oibus/shared/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { SouthConnectorLightDTO, SouthType } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorLightDTO, SouthType } from '@oibus/shared/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { combineLatest } from 'rxjs';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';

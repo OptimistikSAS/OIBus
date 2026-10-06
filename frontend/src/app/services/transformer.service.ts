@@ -8,8 +8,8 @@ import {
   TransformerDTO,
   TransformerTestRequest,
   TransformerTestResponse
-} from '../../../../backend/shared/model/transformer.model';
-import { SouthConnectorItemTestResult } from '../../../../backend/shared/model/south-connector.model';
+} from '@oibus/shared/transformer.model';
+import { SouthConnectorItemTestResult } from '@oibus/shared/south-connector.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on Transformers

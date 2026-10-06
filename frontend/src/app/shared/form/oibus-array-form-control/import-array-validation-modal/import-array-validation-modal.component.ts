@@ -2,9 +2,9 @@ import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { PaginationComponent } from '../../../pagination/pagination.component';
-import { createPageFromArray, Page } from '../../../../../../../backend/shared/model/types';
+import { createPageFromArray, Page } from '@oibus/shared/types';
 import { emptyPage } from '../../../test-utils';
-import { OIBusArrayAttribute } from '../../../../../../../backend/shared/model/form.model';
+import { OIBusArrayAttribute } from '@oibus/shared/form.model';
 import { getElementName } from '../../../utils/csv.utils';
 const PAGE_SIZE = 20;
 
