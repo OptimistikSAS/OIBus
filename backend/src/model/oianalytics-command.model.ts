@@ -11,8 +11,6 @@ import { NorthConnectorCommandDTO } from '../../shared/model/api/north-connector
 import { ScanModeCommandDTO } from '../../shared/model/api/scan-mode.model';
 import { SouthConnectorCommandDTO, SouthConnectorItemCommandDTO } from '../../shared/model/api/south-connector.model';
 import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../shared/model/api/transformer.model';
-import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import {
   CacheContentUpdateCommand,
   CacheSearchParam,
@@ -21,7 +19,7 @@ import {
 } from '../../shared/model/domain/engine.model';
 import { HistoryQueryStatus } from '../../shared/model/domain/history-query.model';
 import { SouthConnectorItemTestingSettings } from '../../shared/model/domain/south-connector.model';
-import { OIBusCommandStatus, OIBusCommandType } from '../../shared/model/oia/command.model';
+import { OIBusCommandStatus, OIBusCommandType, OIBusTestTransformerItemCommandContent } from '../../shared/model/oia/command.model';
 
 import { BaseEntity, Instant } from './types';
 
@@ -338,20 +336,6 @@ export interface OIBusTestCustomTransformerCommand extends BaseOIBusCommand {
   type: 'test-custom-transformer';
   targetVersion: string;
   commandContent: { command: CustomTransformerCommandDTO; testRequest: TransformerTestRequest };
-}
-
-/**
- * Test content for testing a transformer against an existing (or not-yet-saved) south item read,
- * mirroring the query params (southType, itemName) and body (southSettings, itemSettings,
- * testingSettings) used by the south item test REST endpoint.
- */
-export interface OIBusTestTransformerItemCommandContent {
-  southId: string;
-  southType: OIBusSouthType;
-  itemName: string;
-  southSettings: SouthSettings;
-  itemSettings: SouthItemSettings;
-  testingSettings: SouthConnectorItemTestingSettings;
 }
 
 export interface OIBusTestTransformerCommand extends BaseOIBusCommand {
