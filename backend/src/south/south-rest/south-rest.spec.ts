@@ -3,9 +3,9 @@ import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import type { SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
 import type { OIBusFileContent } from '../../../shared/model/common/content.model';
 import type { SouthRestItemSettings, SouthRestSettings } from '../../../shared/model/connector/south-settings.model';
+import type { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';

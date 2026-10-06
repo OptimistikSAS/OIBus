@@ -144,17 +144,23 @@ The Express 5 server (`backend/src/web-server/`) uses **tsoa** for contract-firs
 - `connector/` — connector/transformer type catalogs and manifests (`OIBUS_SOUTH_TYPES`, `SouthConnectorManifest`, …),
   the form model, and the `*-settings.model.ts` files generated from the manifests
   (`npm run generate:settings-interface`, do not edit by hand)
-- `api/` — REST DTOs, commands and search params exposed by the tsoa controllers
+- `domain/` — vocabulary and read models shared by the backend internals and the API: enum-like types (`LogLevel`,
+  `HistoryQueryStatus`, `SouthCachingStrategy`, …), metrics, cache types, connector results, search params
+- `api/` — REST request/response DTOs and commands exposed by the tsoa controllers
 - `oia/` — the OIAnalytics contract: commands, messages, and the configuration DTOs (also the config export file format)
 
-Layering is `common` ← `connector` ← `api` ← `oia`: a folder only imports from itself and the folders to its left. It is
-compiled into the frontend, so it must stay self-contained — never backend code, Node built-ins or npm packages. Both
-rules are enforced by the backend ESLint config. Backend-only types (entities, cache metadata, …) belong in
-`backend/src/model/`, and services/controllers map entities to DTOs.
+Layering is `common` ← `connector` ← `domain` ← `api` ← `oia`: a folder only imports from itself and the folders to its
+left. It is compiled into the frontend, so it must stay self-contained — never backend code, Node built-ins or npm
+packages. Both rules are enforced by the backend ESLint config.
+
+Backend internals (`src/model`, `src/repository`, `src/engine`, `src/south`, `src/north`, `src/transformers`,
+`src/migration`) never import `api/` (enforced by ESLint; specs and the OIA command entity excepted): they use `domain/`
+and `src/model/` types (entities, and repository commands such as `EngineSettingsCommand`). Services and controllers map
+between DTOs and entities/commands (`to*DTO` functions, `engine-command.utils.ts`) — never pass a DTO to a repository.
 
 The frontend imports it through the `@oibus/shared/*` alias (`frontend/tsconfig.json`), never via a relative path, and
-must not import anything else from the backend (enforced by the frontend ESLint config; specs may still use the backend
-test fixtures). The backend keeps relative imports: tsc does not rewrite path aliases in its CommonJS output.
+must not import anything else from the backend, specs included (enforced by the frontend ESLint config). The backend
+keeps relative imports: tsc does not rewrite path aliases in its CommonJS output.
 
 ### Database & migrations
 
@@ -196,6 +202,9 @@ the module under test is loaded — use `mockModule()` then `reloadModule()`.
 
 The frontend uses Vitest in browser mode (Chromium via Playwright). Tests import Angular components and test them via
 the DOM. Chromium must be installed before the first run: `npx playwright install chromium`.
+
+Test fixtures live in `frontend/src/test/test-data.ts`, typed with the DTOs the API returns — never cast a fixture
+(`as unknown as …`), and never import the backend test data.
 
 ---
 

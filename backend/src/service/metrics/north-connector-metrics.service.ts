@@ -1,8 +1,8 @@
 import { DateTime } from 'luxon';
 
-import { CacheMetadata, NorthConnectorMetrics } from '../../../shared/model/api/engine.model';
 import { Instant } from '../../../shared/model/common/types';
 import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+import { CacheMetadata, NorthConnectorMetrics } from '../../../shared/model/domain/engine.model';
 
 import NorthConnector from '../../north/north-connector';
 import NorthConnectorMetricsRepository, {

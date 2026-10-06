@@ -1,8 +1,6 @@
 import { S7Endpoint, S7ItemGroup } from '@st-one-io/nodes7';
 import { DateTime } from 'luxon';
 
-import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
 import {
   SouthItemSettings,
@@ -10,6 +8,8 @@ import {
   SouthS7Settings,
   SouthS7SettingsConnectionType
 } from '../../../shared/model/connector/south-settings.model';
+import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import { Instant } from '../../model/types';

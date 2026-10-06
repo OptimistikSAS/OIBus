@@ -6,15 +6,10 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { Observable, startWith, switchMap } from 'rxjs';
 
-import {
-  CUSTOM_TRANSFORMER_LANGUAGES,
-  CustomTransformerCommandDTO,
-  CustomTransformerDTO,
-  TransformerDTO,
-  TransformerLanguage
-} from '@oibus/shared/api/transformer.model';
+import { CustomTransformerCommandDTO, CustomTransformerDTO, TransformerDTO } from '@oibus/shared/api/transformer.model';
 import { OIBusAttribute } from '@oibus/shared/connector/form.model';
 import { INPUT_TYPES, InputType, OUTPUT_TYPES, OutputType } from '@oibus/shared/connector/transformer-manifest.model';
+import { CUSTOM_TRANSFORMER_LANGUAGES, TransformerLanguage } from '@oibus/shared/domain/transformer.model';
 
 import { TransformerService } from '../../../services/transformer.service';
 import { ConfirmationService } from '../../../shared/confirmation.service';

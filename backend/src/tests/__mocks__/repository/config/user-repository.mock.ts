@@ -2,8 +2,9 @@ import { mock } from 'node:test';
 
 import type { Database } from 'better-sqlite3';
 
-import { UserCommandDTO, UserSearchParam } from '../../../../../shared/model/api/user.model';
+import { UserCommandDTO } from '../../../../../shared/model/api/user.model';
 import { Page } from '../../../../../shared/model/common/types';
+import { UserSearchParam } from '../../../../../shared/model/domain/user.model';
 
 import { User } from '../../../../model/user.model';
 import UserRepository from '../../../../repository/config/user.repository';

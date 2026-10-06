@@ -1,5 +1,6 @@
-import { Group, Item, LogDTO, LogSearchParam, Scope } from '../../shared/model/api/logs.model';
+import { LogDTO } from '../../shared/model/api/logs.model';
 import { Page } from '../../shared/model/common/types';
+import { Group, Item, LogSearchParam, Scope } from '../../shared/model/domain/logs.model';
 
 import { OIBusLog } from '../model/logs.model';
 import { NotFoundError } from '../model/types';

@@ -6,8 +6,8 @@ import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
 import { DateTime } from 'luxon';
 
-import type { SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
 import type { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../shared/model/connector/south-settings.model';
+import type { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import type { SouthConnectorEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';

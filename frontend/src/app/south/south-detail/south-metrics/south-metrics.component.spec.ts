@@ -4,18 +4,15 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { beforeEach, describe, test } from 'vitest';
 
-import { SouthConnectorMetrics } from '@oibus/shared/api/engine.model';
-import { SouthConnectorLightDTO } from '@oibus/shared/api/south-connector.model';
-
-import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
 import { createMock } from '../../../../test/vitest-create-mock';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { NotificationService } from '../../../shared/notification.service';
 import { SouthMetricsComponent } from './south-metrics.component';
 
-const southConnector = testData.south.list[0] as unknown as SouthConnectorLightDTO;
-const metrics = testData.south.metrics as unknown as SouthConnectorMetrics;
+const southConnector = testData.south.listLight[0];
+const metrics = testData.south.metrics;
 const manifest = testData.south.manifest;
 
 describe('SouthMetricsComponent', () => {

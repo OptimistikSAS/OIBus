@@ -8,10 +8,11 @@ import {
   ConfigurationWorkflowDTO,
   WorkflowPreviewResultDTO
 } from '@oibus/shared/api/configuration-workflow.model';
-import { WorkflowRunDetailDTO, WorkflowRunDTO, WorkflowRunSearchParam } from '@oibus/shared/api/workflow-run.model';
+import { WorkflowRunDetailDTO, WorkflowRunDTO } from '@oibus/shared/api/workflow-run.model';
 import { Page } from '@oibus/shared/common/types';
 import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
+import { WorkflowRunSearchParam } from '@oibus/shared/domain/workflow-run.model';
 
 import { ignoreErrorIfStatusIs } from '../shared/error-interceptor.service';
 

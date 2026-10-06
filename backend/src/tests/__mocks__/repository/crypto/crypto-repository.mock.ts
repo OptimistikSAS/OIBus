@@ -1,6 +1,6 @@
 import { mock } from 'node:test';
 
-import { CryptoSettings } from '../../../../../shared/model/api/engine.model';
+import { CryptoSettings } from '../../../../../shared/model/domain/engine.model';
 
 /**
  * Create a mock object for Crypto repository

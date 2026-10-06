@@ -7,10 +7,11 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 
-import { HistoryQueryLightDTO, HistoryQueryStatus } from '@oibus/shared/api/history-query.model';
+import { HistoryQueryLightDTO } from '@oibus/shared/api/history-query.model';
 import { createPageFromArray, Page } from '@oibus/shared/common/types';
 import { OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
 import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
+import { HistoryQueryStatus } from '@oibus/shared/domain/history-query.model';
 
 import { HistoryQueryService } from '../services/history-query.service';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';

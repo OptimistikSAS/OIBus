@@ -18,14 +18,11 @@ import {
 } from 'tsoa';
 
 import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '../../../shared/model/api/configuration-workflow.model';
-import { OIBusConnectionTestResult, SouthConnectorMetrics } from '../../../shared/model/api/engine.model';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthConnectorItemSearchParam,
-  SouthConnectorItemTestingSettings,
   SouthConnectorItemTestResult,
   SouthConnectorLightDTO,
   SouthExploreBrowseCommand,
@@ -39,6 +36,8 @@ import { OIBusRecord } from '../../../shared/model/common/content.model';
 import { Page } from '../../../shared/model/common/types';
 import { OIBusSouthType, SouthConnectorManifest, SouthType } from '../../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+import { OIBusConnectionTestResult, SouthConnectorMetrics } from '../../../shared/model/domain/engine.model';
+import { SouthConnectorItemSearchParam, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 import SouthService, {

@@ -1,6 +1,6 @@
 import { mock } from 'node:test';
 
-import { ScopeType } from '../../../../../shared/model/api/logs.model';
+import { ScopeType } from '../../../../../shared/model/domain/logs.model';
 
 import { EngineSettings } from '../../../../model/engine.model';
 import type { ILogger } from '../../../../model/logger.model';

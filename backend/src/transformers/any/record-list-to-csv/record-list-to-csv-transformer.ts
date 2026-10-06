@@ -4,12 +4,12 @@ import zlib from 'node:zlib';
 
 import csv from 'papaparse';
 
-import { CacheMetadata } from '../../../../shared/model/api/engine.model';
 import { OIBusRecord } from '../../../../shared/model/common/content.model';
 import {
   TransformerRecordListToCsvSettings,
   TransformerRecordListToCsvSettingsFields
 } from '../../../../shared/model/connector/transformer-settings.model';
+import { CacheMetadata } from '../../../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource } from '../../../model/engine.model';
 import {

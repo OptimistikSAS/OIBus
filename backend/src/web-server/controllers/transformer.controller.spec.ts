@@ -5,13 +5,13 @@ import { before, beforeEach, describe, it, mock } from 'node:test';
 import {
   CustomTransformerCommandDTO,
   InputTemplate,
-  TransformerSearchParam,
   TransformerTestRequest,
   TransformerTestResponse
 } from '../../../shared/model/api/transformer.model';
 import { OIBusDataType } from '../../../shared/model/common/content.model';
 import { createPageFromArray } from '../../../shared/model/common/types';
 import { InputType, TransformerManifest } from '../../../shared/model/connector/transformer-manifest.model';
+import { TransformerSearchParam } from '../../../shared/model/domain/transformer.model';
 
 import type { CustomTransformer } from '../../model/transformer.model';
 import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';

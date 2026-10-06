@@ -17,17 +17,15 @@ import { Observable, switchMap } from 'rxjs';
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import {
-  SouthCachingStrategy,
-  SouthCachingThresholdType,
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthHistoryRecoveryStrategy,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO
 } from '@oibus/shared/api/south-connector.model';
 import { OIBusObjectAttribute, OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
 import { IOT_FAMILY_SOUTH_TYPES, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+import { SouthCachingStrategy, SouthCachingThresholdType, SouthHistoryRecoveryStrategy } from '@oibus/shared/domain/south-connector.model';
 
 import { addAttributeToForm, createMqttValidator, extractFormValue } from '../../../shared/form/dynamic-form.builder';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';

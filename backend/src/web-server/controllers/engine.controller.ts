@@ -3,7 +3,6 @@ import { Body, Controller, Get, Post, Put, Request, Route, SuccessResponse, Tags
 import {
   EngineLoggerCommandDTO,
   EngineMemoryDumpDTO,
-  EngineMetrics,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
@@ -13,6 +12,7 @@ import {
   HomeMetrics,
   OIBusInfo
 } from '../../../shared/model/api/engine.model';
+import { EngineMetrics } from '../../../shared/model/domain/engine.model';
 
 import { toEngineSettingsDTO } from '../../service/oibus.service';
 import { CustomExpressRequest } from '../express';

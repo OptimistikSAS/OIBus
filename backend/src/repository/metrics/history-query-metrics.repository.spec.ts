@@ -3,7 +3,7 @@ import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:t
 
 import { Database } from 'better-sqlite3';
 
-import { HistoryQueryMetrics } from '../../../shared/model/api/engine.model';
+import { HistoryQueryMetrics } from '../../../shared/model/domain/engine.model';
 
 import testData from '../../tests/utils/test-data';
 import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';

@@ -11,8 +11,8 @@ import {
   UserTokenType
 } from 'node-opcua';
 
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
 import { NorthOPCUASettings } from '../../../shared/model/connector/north-settings.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
 import type { ICacheService } from '../../model/cache.service.model';
 import { OIBusError } from '../../model/engine.model';

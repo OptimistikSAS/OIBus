@@ -6,17 +6,14 @@ import os from 'node:os';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
 import { CertificateCommandDTO } from '../../../shared/model/api/certificate.model';
-import { CacheSearchResult, FileCacheContent } from '../../../shared/model/api/engine.model';
 import { HistoryQueryItemDTO } from '../../../shared/model/api/history-query.model';
 import { IPFilterCommandDTO } from '../../../shared/model/api/ip-filter.model';
 import { ScanModeCommandDTO } from '../../../shared/model/api/scan-mode.model';
-import {
-  SouthConnectorItemDTO,
-  SouthConnectorItemTestingSettings,
-  SouthConnectorItemTestResult
-} from '../../../shared/model/api/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorItemTestResult } from '../../../shared/model/api/south-connector.model';
 import { OIBusContent } from '../../../shared/model/common/content.model';
 import { createPageFromArray } from '../../../shared/model/common/types';
+import { CacheSearchResult, FileCacheContent } from '../../../shared/model/domain/engine.model';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import { version } from '../../../package.json';
 import { EngineSettings } from '../../model/engine.model';

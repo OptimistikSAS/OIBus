@@ -4,6 +4,20 @@ import { inject, Service } from '@angular/core';
 import { map, Observable } from 'rxjs';
 
 import {
+  HistoryQueryCommandDTO,
+  HistoryQueryDTO,
+  HistoryQueryItemCommandDTO,
+  HistoryQueryItemDTO,
+  HistoryQueryLightDTO
+} from '@oibus/shared/api/history-query.model';
+import { SouthConnectorItemTestResult, SouthExploreBrowseResult, SouthExploreStartResult } from '@oibus/shared/api/south-connector.model';
+import { HistoryTransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
+import { Page } from '@oibus/shared/common/types';
+import { OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
+import { NorthSettings } from '@oibus/shared/connector/north-settings.model';
+import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '@oibus/shared/connector/south-settings.model';
+import {
   CacheContentUpdateCommand,
   CacheSearchParam,
   CacheSearchResult,
@@ -11,27 +25,9 @@ import {
   FileCacheContent,
   HistoryQueryMetrics,
   OIBusConnectionTestResult
-} from '@oibus/shared/api/engine.model';
-import {
-  HistoryQueryCommandDTO,
-  HistoryQueryDTO,
-  HistoryQueryItemCommandDTO,
-  HistoryQueryItemDTO,
-  HistoryQueryItemSearchParam,
-  HistoryQueryLightDTO
-} from '@oibus/shared/api/history-query.model';
-import {
-  SouthConnectorItemTestingSettings,
-  SouthConnectorItemTestResult,
-  SouthExploreBrowseResult,
-  SouthExploreStartResult
-} from '@oibus/shared/api/south-connector.model';
-import { HistoryTransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
-import { Page } from '@oibus/shared/common/types';
-import { OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
-import { NorthSettings } from '@oibus/shared/connector/north-settings.model';
-import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
-import { SouthItemSettings, SouthSettings } from '@oibus/shared/connector/south-settings.model';
+} from '@oibus/shared/domain/engine.model';
+import { HistoryQueryItemSearchParam } from '@oibus/shared/domain/history-query.model';
+import { SouthConnectorItemTestingSettings } from '@oibus/shared/domain/south-connector.model';
 
 import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 import { DownloadService } from './download.service';

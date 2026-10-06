@@ -5,11 +5,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
-import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
 import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
 
-import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
@@ -39,7 +38,7 @@ describe('HistoryQueryTransformersComponent', () => {
 
   function create(historyQuery: HistoryQueryDTO | null, saveChangesDirectly: boolean) {
     const fixture = TestBed.createComponent(HistoryQueryTransformersComponent);
-    fixture.componentRef.setInput('northManifest', testData.north.manifest as unknown as NorthConnectorManifest);
+    fixture.componentRef.setInput('northManifest', testData.north.manifest);
     fixture.componentRef.setInput('transformers', []);
     fixture.componentRef.setInput('certificates', []);
     fixture.componentRef.setInput('scanModes', []);
@@ -58,7 +57,7 @@ describe('HistoryQueryTransformersComponent', () => {
   test('should open the audit history of a saved transformer', async () => {
     const prepare = vi.fn();
     modalService.open.mockReturnValue({ componentInstance: { prepare } } as any);
-    const { root } = create(testData.historyQueries.list[0] as unknown as HistoryQueryDTO, true);
+    const { root } = create(testData.historyQueries.list[0], true);
 
     await root.getByCss('.show-audit-transformer').first().click();
 
@@ -67,7 +66,7 @@ describe('HistoryQueryTransformersComponent', () => {
   });
 
   test('should not display the audit history button when transformers are edited in memory', async () => {
-    const { root } = create(testData.historyQueries.list[0] as unknown as HistoryQueryDTO, false);
+    const { root } = create(testData.historyQueries.list[0], false);
 
     await expect.element(root.getByCss('.edit-transformer').first()).toBeInTheDocument();
     await expect.element(root.getByCss('.show-audit-transformer')).not.toBeInTheDocument();

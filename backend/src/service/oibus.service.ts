@@ -8,25 +8,27 @@ import argon2 from 'argon2';
 import { DateTime } from 'luxon';
 
 import {
-  CacheContentUpdateCommand,
-  CacheSearchParam,
-  CacheSearchResult,
-  DataFolderType,
   EngineLoggerCommandDTO,
   EngineMemoryDumpDTO,
-  EngineMetrics,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
   EngineSettingsDTO,
   EngineSettingsUpdateResultDTO,
   EngineWebServerCommandDTO,
-  FileCacheContent,
   HomeMetrics,
   OIBusInfo
 } from '../../shared/model/api/engine.model';
 import { OIBusContent } from '../../shared/model/common/content.model';
 import { GetUserInfo } from '../../shared/model/common/types';
+import {
+  CacheContentUpdateCommand,
+  CacheSearchParam,
+  CacheSearchResult,
+  DataFolderType,
+  EngineMetrics,
+  FileCacheContent
+} from '../../shared/model/domain/engine.model';
 
 import DataStreamEngine from '../engine/data-stream-engine';
 import { EngineSettings } from '../model/engine.model';
@@ -44,6 +46,7 @@ import {
 } from '../web-server/controllers/validators/oibus-validation-schema';
 import ProxyServer from '../web-server/proxy-server';
 import { encryptionService } from './encryption.service';
+import { toEngineLoggerCommand, toEngineProxyCommand, toEngineSettingsCommand, toEngineWebServerCommand } from './engine-command.utils';
 import HistoryQueryService from './history-query.service';
 import IPFilterService from './ip-filter.service';
 import LoggerService from './logger/logger.service';
@@ -163,24 +166,14 @@ export default class OIBusService {
 
     const oldEngineSettings = this.getEngineSettings();
 
-    if (!command.logger.loki.password) {
-      command.logger.loki.password = oldEngineSettings.logger.loki.password;
-    } else {
-      command.logger.loki.password = encryptionService.encryptText(command.logger.loki.password);
-    }
-    if (command.proxyServer.forward) {
-      if (!command.proxyServer.forward.password) {
-        command.proxyServer.forward.password = oldEngineSettings.proxyServer.forward.password;
-      } else {
-        command.proxyServer.forward.password = await encryptionService.encryptText(command.proxyServer.forward.password);
-      }
-    }
-    if (!command.proxyServer.password) {
-      command.proxyServer.password = oldEngineSettings.proxyServer.password;
-    } else {
-      command.proxyServer.password = await argon2.hash(command.proxyServer.password);
-    }
-    this.engineRepository.update(command, updatedBy);
+    this.engineRepository.update(
+      toEngineSettingsCommand(command, {
+        proxyPassword: await hashedOrCurrent(command.proxyServer.password, oldEngineSettings.proxyServer.password),
+        forwardProxyPassword: encryptedOrCurrent(command.proxyServer.forward?.password, oldEngineSettings.proxyServer.forward.password),
+        lokiPassword: encryptedOrCurrent(command.logger.loki.password, oldEngineSettings.logger.loki.password)
+      }),
+      updatedBy
+    );
     const settings = this.getEngineSettings();
 
     if (
@@ -221,7 +214,7 @@ export default class OIBusService {
     if (command.port === oldEngineSettings.proxyServer.port) {
       throw new Error('Web server port and proxy port can not be the same');
     }
-    this.engineRepository.updateWebServer(command, updatedBy);
+    this.engineRepository.updateWebServer(toEngineWebServerCommand(command), updatedBy);
     const settings = this.getEngineSettings();
     const portChanged = command.port !== oldEngineSettings.webServer.port;
     if (portChanged) {
@@ -242,19 +235,13 @@ export default class OIBusService {
     if (command.enabled && command.port === oldEngineSettings.webServer.port) {
       throw new Error('Web server port and proxy port can not be the same');
     }
-    if (command.forward) {
-      if (!command.forward.password) {
-        command.forward.password = oldEngineSettings.proxyServer.forward.password;
-      } else {
-        command.forward.password = encryptionService.encryptText(command.forward.password);
-      }
-    }
-    if (!command.password) {
-      command.password = oldEngineSettings.proxyServer.password;
-    } else {
-      command.password = await argon2.hash(command.password);
-    }
-    this.engineRepository.updateProxy(command, updatedBy);
+    this.engineRepository.updateProxy(
+      toEngineProxyCommand(command, {
+        proxyPassword: await hashedOrCurrent(command.password, oldEngineSettings.proxyServer.password),
+        forwardProxyPassword: encryptedOrCurrent(command.forward?.password, oldEngineSettings.proxyServer.forward.password)
+      }),
+      updatedBy
+    );
     const settings = this.getEngineSettings();
     this.proxyServer.stop();
     this.proxyServer.start(settings.proxyServer);
@@ -264,12 +251,10 @@ export default class OIBusService {
   async updateEngineLogger(command: EngineLoggerCommandDTO, updatedBy: string): Promise<void> {
     await this.validator.validate(engineLoggerSchema, command);
     const oldEngineSettings = this.getEngineSettings();
-    if (!command.loki.password) {
-      command.loki.password = oldEngineSettings.logger.loki.password;
-    } else {
-      command.loki.password = encryptionService.encryptText(command.loki.password);
-    }
-    this.engineRepository.updateLogger(command, updatedBy);
+    this.engineRepository.updateLogger(
+      toEngineLoggerCommand(command, { lokiPassword: encryptedOrCurrent(command.loki.password, oldEngineSettings.logger.loki.password) }),
+      updatedBy
+    );
     const settings = this.getEngineSettings();
     await this.resetLogger(settings);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
@@ -490,3 +475,11 @@ export const toEngineSettingsDTO = (engineSettings: EngineSettings, getUserInfo:
     }
   };
 };
+
+/** An empty secret in an API command keeps the current one; a new one is encrypted. */
+const encryptedOrCurrent = (secret: string | null | undefined, current: string | null): string | null =>
+  secret ? encryptionService.encryptText(secret) : current;
+
+/** Same for the proxy server password, which is hashed instead: it is only ever checked, never sent. */
+const hashedOrCurrent = async (secret: string | null | undefined, current: string | null): Promise<string | null> =>
+  secret ? await argon2.hash(secret) : current;
