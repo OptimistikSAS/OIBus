@@ -4,9 +4,11 @@ import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../api/histo
 import { IPFilterCommandDTO } from '../api/ip-filter.model';
 import { NorthConnectorCommandDTO } from '../api/north-connector.model';
 import { ScanModeCommandDTO } from '../api/scan-mode.model';
-import { SouthConnectorCommandDTO } from '../api/south-connector.model';
-import { CustomTransformerCommandDTO } from '../api/transformer.model';
+import { SouthConnectorCommandDTO, SouthConnectorItemCommandDTO } from '../api/south-connector.model';
+import { CustomTransformerCommandDTO, TransformerTestRequest } from '../api/transformer.model';
 import { Instant } from '../common/types';
+import { OIBusSouthType } from '../connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '../connector/south-settings.model';
 import { CacheContentUpdateCommand, CacheSearchParam, DataFolderType, RegistrationCommandPermissions } from '../domain/engine.model';
 import { HistoryQueryStatus } from '../domain/history-query.model';
 import { SouthConnectorItemTestingSettings } from '../domain/south-connector.model';
@@ -125,6 +127,12 @@ export interface BaseOIBusCommandDTO {
    * @example "Success"
    */
   result: string | null;
+
+  /**
+   * The OIBus version the command was issued for.
+   * @example "3.7.0"
+   */
+  targetVersion: string;
 }
 
 /**
@@ -174,12 +182,6 @@ export interface OIBusRestartEngineCommandDTO extends BaseOIBusCommandDTO {
    * The type of the command.
    */
   type: 'restart-engine';
-
-  /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
 }
 
 /**
@@ -190,12 +192,6 @@ export interface OIBusRegenerateCipherKeysCommandDTO extends BaseOIBusCommandDTO
    * The type of the command.
    */
   type: 'regenerate-cipher-keys';
-
-  /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
 }
 
 /**
@@ -206,12 +202,6 @@ export interface OIBusUpdateEngineGeneralCommandDTO extends BaseOIBusCommandDTO 
    * The type of the command.
    */
   type: 'update-engine-general';
-
-  /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
 
   /**
    * The content of the command, including the engine name.
@@ -229,12 +219,6 @@ export interface OIBusUpdateEngineWebServerCommandDTO extends BaseOIBusCommandDT
   type: 'update-engine-web-server';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The content of the command, including the web server settings.
    */
   commandContent: EngineWebServerCommandDTO;
@@ -248,12 +232,6 @@ export interface OIBusUpdateEngineProxyCommandDTO extends BaseOIBusCommandDTO {
    * The type of the command.
    */
   type: 'update-engine-proxy';
-
-  /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
 
   /**
    * The content of the command, including the proxy settings.
@@ -271,12 +249,6 @@ export interface OIBusUpdateEngineLoggerCommandDTO extends BaseOIBusCommandDTO {
   type: 'update-engine-logger';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The content of the command, including the logging parameters.
    */
   commandContent: EngineLoggerCommandDTO;
@@ -290,12 +262,6 @@ export interface OIBusUpdateRegistrationSettingsCommandDTO extends BaseOIBusComm
    * The type of the command.
    */
   type: 'update-registration-settings';
-
-  /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
 
   /**
    * The content of the command, including registration settings.
@@ -336,12 +302,6 @@ export interface OIBusCreateScanModeCommandDTO extends BaseOIBusCommandDTO {
   type: 'create-scan-mode';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The content of the command, including scan mode details.
    */
   commandContent: ScanModeCommandDTO;
@@ -355,12 +315,6 @@ export interface OIBusUpdateScanModeCommandDTO extends BaseOIBusCommandDTO {
    * The type of the command.
    */
   type: 'update-scan-mode';
-
-  /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
 
   /**
    * The ID of the scan mode to update.
@@ -384,12 +338,6 @@ export interface OIBusDeleteScanModeCommandDTO extends BaseOIBusCommandDTO {
   type: 'delete-scan-mode';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The ID of the scan mode to delete.
    * @example "scan123"
    */
@@ -406,12 +354,6 @@ export interface OIBusCreateIPFilterCommandDTO extends BaseOIBusCommandDTO {
   type: 'create-ip-filter';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The content of the command, including IP filter details.
    */
   commandContent: IPFilterCommandDTO;
@@ -425,12 +367,6 @@ export interface OIBusUpdateIPFilterCommandDTO extends BaseOIBusCommandDTO {
    * The type of the command.
    */
   type: 'update-ip-filter';
-
-  /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
 
   /**
    * The ID of the IP filter to update.
@@ -454,12 +390,6 @@ export interface OIBusDeleteIPFilterCommandDTO extends BaseOIBusCommandDTO {
   type: 'delete-ip-filter';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The ID of the IP filter to delete.
    * @example "filter123"
    */
@@ -476,12 +406,6 @@ export interface OIBusCreateCertificateCommandDTO extends BaseOIBusCommandDTO {
   type: 'create-certificate';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The content of the command, including certificate details.
    */
   commandContent: CertificateCommandDTO;
@@ -495,12 +419,6 @@ export interface OIBusUpdateCertificateCommandDTO extends BaseOIBusCommandDTO {
    * The type of the command.
    */
   type: 'update-certificate';
-
-  /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
 
   /**
    * The ID of the certificate to update.
@@ -524,12 +442,6 @@ export interface OIBusDeleteCertificateCommandDTO extends BaseOIBusCommandDTO {
   type: 'delete-certificate';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The ID of the certificate to delete.
    * @example "cert123"
    */
@@ -546,10 +458,10 @@ export interface OIBusCreateSouthConnectorCommandDTO extends BaseOIBusCommandDTO
   type: 'create-south';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
+   * The ID of the south connector this one is duplicated from, used to retrieve its secrets. `null` if it is not a duplicate.
+   * @example "south123"
    */
-  targetVersion: string;
+  southConnectorId: string | null;
 
   /**
    * The content of the command, including south connector details.
@@ -565,12 +477,6 @@ export interface OIBusUpdateSouthConnectorCommandDTO extends BaseOIBusCommandDTO
    * The type of the command.
    */
   type: 'update-south';
-
-  /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
 
   /**
    * The ID of the south connector to update.
@@ -594,12 +500,6 @@ export interface OIBusDeleteSouthConnectorCommandDTO extends BaseOIBusCommandDTO
   type: 'delete-south';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The ID of the south connector to delete.
    * @example "south123"
    */
@@ -616,16 +516,15 @@ export interface OIBusTestSouthConnectorCommandDTO extends BaseOIBusCommandDTO {
   type: 'test-south-connection';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The ID of the south connector to test.
    * @example "south123"
    */
   southConnectorId: string;
+
+  /**
+   * The content of the command, including the south connector details to test.
+   */
+  commandContent: SouthConnectorCommandDTO;
 }
 
 /**
@@ -638,12 +537,6 @@ export interface OIBusTestSouthConnectorItemCommandDTO extends BaseOIBusCommandD
   type: 'test-south-item';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The ID of the south connector.
    * @example "south123"
    */
@@ -654,6 +547,26 @@ export interface OIBusTestSouthConnectorItemCommandDTO extends BaseOIBusCommandD
    * @example "item456"
    */
   itemId: string;
+
+  /**
+   * The content of the command, including south connector, item, and testing settings.
+   */
+  commandContent: {
+    /**
+     * The south connector details.
+     */
+    southCommand: SouthConnectorCommandDTO;
+
+    /**
+     * The item details.
+     */
+    itemCommand: SouthConnectorItemCommandDTO;
+
+    /**
+     * The testing settings.
+     */
+    testingSettings: SouthConnectorItemTestingSettings;
+  };
 }
 
 /**
@@ -666,10 +579,10 @@ export interface OIBusCreateNorthConnectorCommandDTO extends BaseOIBusCommandDTO
   type: 'create-north';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
+   * The ID of the north connector this one is duplicated from, used to retrieve its secrets. `null` if it is not a duplicate.
+   * @example "north123"
    */
-  targetVersion: string;
+  northConnectorId: string | null;
 
   /**
    * The content of the command, including north connector details.
@@ -685,12 +598,6 @@ export interface OIBusUpdateNorthConnectorCommandDTO extends BaseOIBusCommandDTO
    * The type of the command.
    */
   type: 'update-north';
-
-  /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
 
   /**
    * The ID of the north connector to update.
@@ -714,12 +621,6 @@ export interface OIBusDeleteNorthConnectorCommandDTO extends BaseOIBusCommandDTO
   type: 'delete-north';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The ID of the north connector to delete.
    * @example "north123"
    */
@@ -736,16 +637,15 @@ export interface OIBusTestNorthConnectorCommandDTO extends BaseOIBusCommandDTO {
   type: 'test-north-connection';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The ID of the north connector to test.
    * @example "north123"
    */
   northConnectorId: string;
+
+  /**
+   * The content of the command, including the north connector details to test.
+   */
+  commandContent: NorthConnectorCommandDTO;
 }
 
 /**
@@ -756,12 +656,6 @@ export interface OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO extends
    * The type of the command.
    */
   type: 'create-or-update-south-items-from-csv';
-
-  /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
 
   /**
    * The ID of the south connector.
@@ -803,10 +697,22 @@ export interface OIBusCreateHistoryQueryCommandDTO extends BaseOIBusCommandDTO {
   type: 'create-history-query';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
+   * The ID of the north connector the history query is created from, used to retrieve its secrets.
+   * @example "north123"
    */
-  targetVersion: string;
+  northConnectorId: string | undefined;
+
+  /**
+   * The ID of the south connector the history query is created from, used to retrieve its secrets.
+   * @example "south123"
+   */
+  southConnectorId: string | undefined;
+
+  /**
+   * The ID of the history query this one is duplicated from, used to retrieve its secrets.
+   * @example "history123"
+   */
+  historyQueryId: string | undefined;
 
   /**
    * The content of the command, including history query details.
@@ -822,12 +728,6 @@ export interface OIBusUpdateHistoryQueryCommandDTO extends BaseOIBusCommandDTO {
    * The type of the command.
    */
   type: 'update-history-query';
-
-  /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
 
   /**
    * The ID of the history query to update.
@@ -862,12 +762,6 @@ export interface OIBusDeleteHistoryQueryCommandDTO extends BaseOIBusCommandDTO {
   type: 'delete-history-query';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The ID of the history query to delete.
    * @example "history123"
    */
@@ -882,12 +776,6 @@ export interface OIBusTestHistoryQueryNorthConnectionCommandDTO extends BaseOIBu
    * The type of the command.
    */
   type: 'test-history-query-north-connection';
-
-  /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
 
   /**
    * The ID of the history query.
@@ -917,12 +805,6 @@ export interface OIBusTestHistoryQuerySouthConnectionCommandDTO extends BaseOIBu
   type: 'test-history-query-south-connection';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The ID of the history query.
    * @example "history123"
    */
@@ -948,12 +830,6 @@ export interface OIBusTestHistoryQuerySouthItemCommandDTO extends BaseOIBusComma
    * The type of the command.
    */
   type: 'test-history-query-south-item';
-
-  /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
 
   /**
    * The ID of the history query.
@@ -1004,12 +880,6 @@ export interface OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO exte
   type: 'create-or-update-history-query-south-items-from-csv';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The ID of the history query.
    * @example "history123"
    */
@@ -1049,12 +919,6 @@ export interface OIBusUpdateHistoryQueryStatusCommandDTO extends BaseOIBusComman
   type: 'update-history-query-status';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The ID of the history query.
    * @example "history123"
    */
@@ -1080,12 +944,6 @@ export interface OIBusSetpointCommandDTO extends BaseOIBusCommandDTO {
    * The type of the command.
    */
   type: 'setpoint';
-
-  /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
 
   /**
    * The ID of the north connector.
@@ -1163,12 +1021,6 @@ export interface OIBusCreateCustomTransformerCommandDTO extends BaseOIBusCommand
   type: 'create-custom-transformer';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The content of the command, including custom transformer details.
    */
   commandContent: CustomTransformerCommandDTO;
@@ -1182,12 +1034,6 @@ export interface OIBusUpdateCustomTransformerCommandDTO extends BaseOIBusCommand
    * The type of the command.
    */
   type: 'update-custom-transformer';
-
-  /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
 
   /**
    * The ID of the custom transformer to update.
@@ -1211,12 +1057,6 @@ export interface OIBusDeleteCustomTransformerCommandDTO extends BaseOIBusCommand
   type: 'delete-custom-transformer';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The ID of the custom transformer to delete.
    * @example "transformer123"
    */
@@ -1233,10 +1073,59 @@ export interface OIBusTestCustomTransformerCommandDTO extends BaseOIBusCommandDT
   type: 'test-custom-transformer';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
+   * The content of the command, including the custom transformer and the test request.
    */
-  targetVersion: string;
+  commandContent: {
+    /**
+     * The custom transformer details.
+     */
+    command: CustomTransformerCommandDTO;
+
+    /**
+     * The test request to run against the transformer.
+     */
+    testRequest: TransformerTestRequest;
+  };
+}
+
+/**
+ * Test content for testing a transformer against an existing (or not-yet-saved) south item read,
+ * mirroring the query params (southType, itemName) and body (southSettings, itemSettings,
+ * testingSettings) used by the south item test REST endpoint.
+ */
+export interface OIBusTestTransformerItemCommandContent {
+  /**
+   * The ID of the south connector the item belongs to.
+   * @example "south123"
+   */
+  southId: string;
+
+  /**
+   * The type of the south connector.
+   * @example "folder-scanner"
+   */
+  southType: OIBusSouthType;
+
+  /**
+   * The name of the item to read.
+   * @example "item1"
+   */
+  itemName: string;
+
+  /**
+   * The south connector settings.
+   */
+  southSettings: SouthSettings;
+
+  /**
+   * The item settings.
+   */
+  itemSettings: SouthItemSettings;
+
+  /**
+   * The testing settings.
+   */
+  testingSettings: SouthConnectorItemTestingSettings;
 }
 
 /**
@@ -1249,16 +1138,15 @@ export interface OIBusTestTransformerCommandDTO extends BaseOIBusCommandDTO {
   type: 'test-transformer';
 
   /**
-   * The target version for the command.
-   * @example "3.7.0"
-   */
-  targetVersion: string;
-
-  /**
    * The ID of the transformer to test.
    * @example "transformer123"
    */
   transformerId: string;
+
+  /**
+   * The content of the command: either pasted input data, or an existing (or not-yet-saved) south item to read from.
+   */
+  commandContent: TransformerTestRequest | OIBusTestTransformerItemCommandContent;
 }
 
 /**
