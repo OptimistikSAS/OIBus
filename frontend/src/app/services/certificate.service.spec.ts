@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { CertificateService } from './certificate.service';
-import { CertificateDTO } from '../../../../backend/shared/model/certificate.model';
+import { CertificateDTO } from '@oibus/shared/certificate.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 import { DownloadService } from './download.service';
 import { createMock, MockObject } from '../../test/vitest-create-mock';

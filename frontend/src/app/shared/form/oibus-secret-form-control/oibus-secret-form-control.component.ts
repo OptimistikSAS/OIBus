@@ -1,7 +1,7 @@
 import { Component, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { ControlContainer, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { OIBusSecretAttribute } from '../../../../../../backend/shared/model/form.model';
+import { OIBusSecretAttribute } from '@oibus/shared/form.model';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
 import { OIBUS_FORM_MODE } from '../oibus-form-mode.token';
 

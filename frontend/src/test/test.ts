@@ -1,6 +1,6 @@
 import { afterEach, expect } from 'vitest';
 import { BrowserPage, Locator, locators, page } from 'vitest/browser';
-import { LocalDate } from '../../../backend/shared/model/types';
+import { LocalDate } from '@oibus/shared/types';
 
 // Browser-mode interactions use a real mouse pointer, which keeps its position between tests. If a test hovers or
 // clicks an element under a tooltip trigger, the tooltip can still be open when the next test runs, intercepting

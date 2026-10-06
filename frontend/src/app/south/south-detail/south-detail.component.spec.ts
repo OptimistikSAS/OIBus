@@ -21,8 +21,8 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { ModalService } from '../../shared/modal.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
-import { SouthConnectorDTO, SouthItemGroupDTO } from '../../../../../backend/shared/model/south-connector.model';
-import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
+import { SouthConnectorDTO, SouthItemGroupDTO } from '@oibus/shared/south-connector.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 
 const southConnector = testData.south.list[0] as unknown as SouthConnectorDTO;

@@ -9,7 +9,7 @@ import { TransformerService } from '../../../services/transformer.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
-import { CustomTransformerCommandDTO, InputTemplate } from '../../../../../../backend/shared/model/transformer.model';
+import { CustomTransformerCommandDTO, InputTemplate } from '@oibus/shared/transformer.model';
 
 describe('TransformerTestComponent', () => {
   let transformerService: MockObject<TransformerService>;

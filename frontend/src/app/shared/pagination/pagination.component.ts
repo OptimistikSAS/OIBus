@@ -1,6 +1,6 @@
 import { Component, inject, output, input, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Page } from '../../../../../backend/shared/model/types';
+import { Page } from '@oibus/shared/types';
 import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({

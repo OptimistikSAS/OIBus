@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { of } from 'rxjs';
 import { AuditHistoryModalComponent } from './audit-history-modal.component';
 import { AuditService } from '../../services/audit.service';
-import { AuditLogDTO } from '../../../../../backend/shared/model/audit.model';
+import { AuditLogDTO } from '@oibus/shared/audit.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 

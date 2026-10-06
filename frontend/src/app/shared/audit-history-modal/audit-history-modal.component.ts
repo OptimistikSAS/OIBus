@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { NgbActiveModal, NgbDropdownModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { AuditService } from '../../services/audit.service';
-import { AuditEntityType, AuditLogDTO } from '../../../../../backend/shared/model/audit.model';
+import { AuditEntityType, AuditLogDTO } from '@oibus/shared/audit.model';
 import { DatetimePipe } from '../datetime.pipe';
 import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
 import { AuditDiffComponent } from '../audit-diff/audit-diff.component';

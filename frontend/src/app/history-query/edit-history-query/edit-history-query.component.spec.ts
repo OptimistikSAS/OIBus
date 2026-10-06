@@ -20,7 +20,7 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import testData from '../../../../../backend/src/tests/utils/test-data';
-import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
+import { HistoryQueryDTO } from '@oibus/shared/history-query.model';
 
 // Deep-cloned: `EditHistoryQueryComponent` deliberately mutates `historyQuery.caching.trigger.scanMode`
 // in place (to align its reference with an entry in the fetched scan mode list for form binding).

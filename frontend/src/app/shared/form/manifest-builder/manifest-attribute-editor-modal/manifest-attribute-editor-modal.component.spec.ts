@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ManifestAttributeEditorModalComponent } from './manifest-attribute-editor-modal.component';
-import { OIBusAttribute } from '../../../../../../../backend/shared/model/form.model';
+import { OIBusAttribute } from '@oibus/shared/form.model';
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { beforeEach, describe, expect, test, vi } from 'vitest';

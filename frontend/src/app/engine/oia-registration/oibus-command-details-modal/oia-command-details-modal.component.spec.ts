@@ -7,7 +7,7 @@ import { OiaCommandDetailsModalComponent } from './oia-command-details-modal.com
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
-import { OIBusCommandDTO } from '../../../../../../backend/shared/model/command.model';
+import { OIBusCommandDTO } from '@oibus/shared/command.model';
 
 describe('OiaCommandDetailsModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;

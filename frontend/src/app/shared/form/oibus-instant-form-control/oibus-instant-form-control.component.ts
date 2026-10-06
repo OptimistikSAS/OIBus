@@ -3,7 +3,7 @@ import { ControlContainer, FormGroupName, ReactiveFormsModule } from '@angular/f
 import { TranslateDirective } from '@ngx-translate/core';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
 import { DatetimepickerComponent } from '../../datetimepicker/datetimepicker.component';
-import { OIBusInstantAttribute } from '../../../../../../backend/shared/model/form.model';
+import { OIBusInstantAttribute } from '@oibus/shared/form.model';
 
 @Component({
   selector: 'oib-oibus-instant-form-control',

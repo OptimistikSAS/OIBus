@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test } from 'vitest';
-import { Page } from '../../../../../backend/shared/model/types';
+import { Page } from '@oibus/shared/types';
 import { createMock, MockObject, stubRoute } from '../../../test/vitest-create-mock';
 import { emptyPage, toPage } from '../test-utils';
 import { PaginationComponent } from './pagination.component';

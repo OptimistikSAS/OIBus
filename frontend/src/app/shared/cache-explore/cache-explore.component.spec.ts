@@ -4,7 +4,7 @@ import { CacheExploreComponent } from './cache-explore.component';
 import { BehaviorSubject } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ObservableState } from '../save-button/save-button.component';
-import { CacheContentUpdateCommand, CacheOperation, CacheSearchResult } from '../../../../../backend/shared/model/engine.model';
+import { CacheContentUpdateCommand, CacheOperation, CacheSearchResult } from '@oibus/shared/engine.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { provideCurrentUser } from '../current-user-testing-vitest';
 import { beforeEach, describe, expect, test } from 'vitest';

@@ -2,8 +2,8 @@ import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/c
 import { TranslateDirective } from '@ngx-translate/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
-import { NorthConnectorLightDTO } from '../../../../backend/shared/model/north-connector.model';
-import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
+import { NorthConnectorLightDTO } from '@oibus/shared/north-connector.model';
+import { SouthConnectorLightDTO } from '@oibus/shared/south-connector.model';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { NorthConnectorService } from '../services/north-connector.service';
 import { EngineMetricsComponent } from '../engine/engine-metrics/engine-metrics.component';

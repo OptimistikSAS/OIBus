@@ -7,8 +7,8 @@ import {
   OIBusDisplayableAttribute,
   OIBusEnablingCondition,
   OIBusObjectAttribute
-} from '../../../../../backend/shared/model/form.model';
-import { Instant } from '../../../../../backend/shared/model/types';
+} from '@oibus/shared/form.model';
+import { Instant } from '@oibus/shared/types';
 import { mqttTopicOverlapValidator, singleTrueValidator, uniqueFieldNamesValidator } from './validators';
 
 export function addAttributeToForm(fb: NonNullableFormBuilder, formGroup: FormGroup, attribute: OIBusAttribute): boolean {

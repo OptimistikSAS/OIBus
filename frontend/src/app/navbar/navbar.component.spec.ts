@@ -8,8 +8,8 @@ import { CurrentUserService } from '../shared/current-user.service';
 import { EngineService } from '../services/engine.service';
 import { NavbarComponent } from './navbar.component';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
-import { UserDTO } from '../../../../backend/shared/model/user.model';
-import { OIBusInfo } from '../../../../backend/shared/model/engine.model';
+import { UserDTO } from '@oibus/shared/user.model';
+import { OIBusInfo } from '@oibus/shared/engine.model';
 
 const currentUser = { login: 'admin', language: 'en', timezone: 'Asia/Tokyo' } as UserDTO;
 

@@ -1,7 +1,7 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { ALL_CSV_CHARACTERS, CsvCharacter } from '../../../../../backend/shared/model/types';
+import { ALL_CSV_CHARACTERS, CsvCharacter } from '@oibus/shared/types';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { convertCsvDelimiter } from '../utils/csv.utils';
 import { DateTime } from 'luxon';

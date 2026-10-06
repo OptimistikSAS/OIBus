@@ -2,7 +2,7 @@ import { ImportArrayValidationModalComponent } from './import-array-validation-m
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
-import { OIBusArrayAttribute } from '../../../../../../../backend/shared/model/form.model';
+import { OIBusArrayAttribute } from '@oibus/shared/form.model';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import { createMock, MockObject } from '../../../../../test/vitest-create-mock';

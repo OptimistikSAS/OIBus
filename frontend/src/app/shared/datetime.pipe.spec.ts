@@ -2,7 +2,7 @@ import { describe, beforeEach, expect, test } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { LOCALE_ID } from '@angular/core';
 import { DateTime } from 'luxon';
-import { DEFAULT_TZ, Instant } from '../../../../backend/shared/model/types';
+import { DEFAULT_TZ, Instant } from '@oibus/shared/types';
 import { CurrentUserService } from './current-user.service';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { DatetimePipe } from './datetime.pipe';

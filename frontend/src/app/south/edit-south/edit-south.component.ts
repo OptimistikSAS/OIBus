@@ -10,14 +10,14 @@ import {
   SouthConnectorManifest,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO
-} from '../../../../../backend/shared/model/south-connector.model';
+} from '@oibus/shared/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, firstValueFrom, map, merge, Observable, of, switchMap, tap } from 'rxjs';
-import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
@@ -28,7 +28,7 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { formDirectives } from '../../shared/form/form-directives';
-import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
+import { CertificateDTO } from '@oibus/shared/certificate.model';
 import { CertificateService } from '../../services/certificate.service';
 import { addAttributeToForm, addEnablingConditions, asFormGroup, extractFormValue } from '../../shared/form/dynamic-form.builder';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
@@ -37,12 +37,12 @@ import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-
 import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
-import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
+import { createPageFromArray, Page } from '@oibus/shared/types';
 import { emptyPage } from '../../shared/test-utils';
 import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
-import { OIBusObjectAttribute } from '../../../../../backend/shared/model/form.model';
+import { OIBusObjectAttribute } from '@oibus/shared/form.model';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
 import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
@@ -50,10 +50,7 @@ import ManageWorkflowsModalComponent, {
   toConfigurationWorkflowCommand
 } from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
 import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
-import {
-  ConfigurationWorkflowCommandDTO,
-  ConfigurationWorkflowDTO
-} from '../../../../../backend/shared/model/configuration-workflow.model';
+import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/configuration-workflow.model';
 
 const PAGE_SIZE = 20;
 

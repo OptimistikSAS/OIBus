@@ -5,7 +5,7 @@ import {
   ContentDisplayMode,
   ItemTestResultComponent
 } from '../../south/south-items/south-item-test/item-test-result/item-test-result.component';
-import { OIBusContent } from '../../../../../backend/shared/model/engine.model';
+import { OIBusContent } from '@oibus/shared/engine.model';
 
 /**
  * Displays a transformer test as raw result and transformer output side by side (single column when
