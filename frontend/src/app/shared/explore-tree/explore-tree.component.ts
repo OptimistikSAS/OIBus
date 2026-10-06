@@ -1,17 +1,16 @@
-import { Component, EventEmitter, inject, ChangeDetectionStrategy, Input, OnDestroy, Output } from '@angular/core';
 import { KeyValuePipe, NgTemplateOutlet } from '@angular/common';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, OnDestroy, Output } from '@angular/core';
+
 import { TranslateDirective } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
+
+import { SouthConnectorExploreEntry, SouthExploreBrowseResult, SouthExploreStartResult } from '@oibus/shared/api/south-connector.model';
+import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
+import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
+
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { SouthSettings } from '@oibus/shared/south-settings.model';
 import { DatetimePipe } from '../datetime.pipe';
 import { FileSizePipe } from '../file-size.pipe';
-import {
-  OIBusSouthType,
-  SouthConnectorExploreEntry,
-  SouthExploreBrowseResult,
-  SouthExploreStartResult
-} from '@oibus/shared/south-connector.model';
 
 interface ExploreTreeNode {
   entry: SouthConnectorExploreEntry;

@@ -1,12 +1,14 @@
-import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { encryptionService } from './encryption.service';
-import * as utils from './utils-mqtt';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { SouthMQTTItemSettings } from '../../shared/model/south-settings.model';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
+import { SouthMQTTItemSettings } from '../../shared/model/connector/south-settings.model';
+
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import { encryptionService } from './encryption.service';
+import * as utils from './utils-mqtt';
 
 const scanMode = {
   id: 'subscription',

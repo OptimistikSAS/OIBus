@@ -1,15 +1,16 @@
 import Papa from 'papaparse';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
+import { OIBusArrayAttribute } from '@oibus/shared/connector/form.model';
+
 import {
   convertCsvDelimiter,
   exportArrayElements,
+  findArrayAttributeInAttributes,
   flattenPlainObject,
-  validateArrayElementsImport,
   getElementName,
-  findArrayAttributeInAttributes
+  validateArrayElementsImport
 } from './csv.utils';
-
-import { OIBusArrayAttribute } from '@oibus/shared/form.model';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 describe('csv.utils', () => {
   const mockArrayAttribute = {

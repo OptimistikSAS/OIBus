@@ -1,7 +1,8 @@
-import os from 'node:os';
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import os from 'node:os';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
 import { reloadModule } from '../../tests/utils/test-utils';
 import type { SyslogTransportOptions } from './syslog-transport';
 

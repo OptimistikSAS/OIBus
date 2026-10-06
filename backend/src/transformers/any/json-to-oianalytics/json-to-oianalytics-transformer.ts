@@ -1,16 +1,19 @@
-import OIBusTransformer from '../../oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
-import { CacheMetadata } from '../../../../shared/model/engine.model';
-import { CacheMetadataSource } from '../../../model/engine.model';
-import { convertDateTime, generateRandomId, injectIndices, streamToString } from '../../../service/utils';
+
 import { DateTime } from 'luxon';
+
+import { CacheMetadata } from '../../../../shared/model/api/engine.model';
+import { DateTimeType } from '../../../../shared/model/common/types';
+import { TransformerJsonToOianalyticsSettings } from '../../../../shared/model/connector/transformer-settings.model';
+
+import { CacheMetadataSource } from '../../../model/engine.model';
 import { Instant } from '../../../model/types';
-import { DateTimeType } from '../../../../shared/model/types';
-import { TransformerJsonToOianalyticsSettings } from '../../../../shared/model/transformer-settings.model';
-import { resolveJsonPath, resolveJsonPathRows } from '../../json-path';
 import { toCompactTimeValues } from '../../../service/oia/compact-time-values';
+import { convertDateTime, generateRandomId, injectIndices, streamToString } from '../../../service/utils';
 import { createStringFieldProcess } from '../../field-process';
+import { resolveJsonPath, resolveJsonPathRows } from '../../json-path';
+import OIBusTransformer from '../../oibus-transformer';
 
 export default class JSONToOIAnalyticsTransformer extends OIBusTransformer {
   public static transformerName = 'json-to-oianalytics';

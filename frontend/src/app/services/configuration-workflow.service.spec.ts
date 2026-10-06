@@ -1,14 +1,16 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpErrorResponse } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { ConfigurationWorkflowService } from './configuration-workflow.service';
-import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/configuration-workflow.model';
-import { WorkflowRunDTO } from '@oibus/shared/workflow-run.model';
-import { SouthSettings } from '@oibus/shared/south-settings.model';
-import { toPage } from '../shared/test-utils';
+import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
+import { WorkflowRunDTO } from '@oibus/shared/api/workflow-run.model';
+import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
+
 import { SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
+import { toPage } from '../shared/test-utils';
+import { ConfigurationWorkflowService } from './configuration-workflow.service';
 
 const SOUTH_ID = 'southId1';
 const WORKFLOW_ID = 'workflowId1';

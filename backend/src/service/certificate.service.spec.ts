@@ -1,24 +1,27 @@
-import { beforeEach, afterEach, describe, it, mock, before } from 'node:test';
 import assert from 'node:assert/strict';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
 import * as forge from 'node-forge';
-import testData from '../tests/utils/test-data';
-import {
-  certificateSchema,
-  certificateImportSchema,
-  certificatePrivateKeyExportSchema
-} from '../web-server/controllers/validators/oibus-validation-schema';
-import CertificateService, { toCertificateDTO } from './certificate.service';
+
+import { CertificateCommandDTO } from '../../shared/model/api/certificate.model';
+
+import { CertificateImportCommand } from '../model/certificate.model';
 import CertificateRepository from '../repository/config/certificate.repository';
 import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
-import EncryptionService from './encryption.service';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
-import { CertificateCommandDTO } from '../../shared/model/certificate.model';
-import OIAnalyticsMessageService from './oia/oianalytics-message.service';
-import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import { certificateContentToPem, certificatePemToDer, readCertificate, splitPemChain } from './utils-certificate';
-import { CertificateImportCommand } from '../model/certificate.model';
 import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
+import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import testData from '../tests/utils/test-data';
+import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import {
+  certificateImportSchema,
+  certificatePrivateKeyExportSchema,
+  certificateSchema
+} from '../web-server/controllers/validators/oibus-validation-schema';
+import CertificateService, { toCertificateDTO } from './certificate.service';
+import EncryptionService from './encryption.service';
+import OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import { certificateContentToPem, certificatePemToDer, readCertificate, splitPemChain } from './utils-certificate';
 
 let validator: { validate: ReturnType<typeof mock.fn> };
 let certificateRepository: CertificateRepositoryMock;

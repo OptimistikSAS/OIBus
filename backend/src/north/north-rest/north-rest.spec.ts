@@ -1,16 +1,18 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import { EventEmitter } from 'node:events';
 import { ReadStream } from 'node:fs';
+import { createRequire } from 'node:module';
 import { Readable } from 'node:stream';
-import { mockModule, reloadModule, buildNorthEntity, assertContains } from '../../tests/utils/test-utils';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import type { CacheMetadata } from '../../../shared/model/api/engine.model';
+import type { NorthRESTSettings } from '../../../shared/model/connector/north-settings.model';
+
+import type { ReqOptions } from '../../service/http-request.utils';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
-import type { NorthRESTSettings } from '../../../shared/model/north-settings.model';
-import type { CacheMetadata } from '../../../shared/model/engine.model';
-import type { ReqOptions } from '../../service/http-request.utils';
+import { assertContains, buildNorthEntity, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type NorthRESTClass from './north-rest';
 
 const nodeRequire = createRequire(import.meta.url);

@@ -1,7 +1,7 @@
-import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
 import LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
 import FileCleanupService from './file-cleanup.service';

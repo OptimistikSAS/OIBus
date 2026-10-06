@@ -1,16 +1,13 @@
-import SouthConnector from '../south-connector';
-import {
-  convertDateTimeToInstant,
-  formatInstant,
-  generateRandomId,
-  getErrorMessage,
-  sanitizeFilename,
-  workUnitLogCtx
-} from '../../service/utils';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
 import { JSONPath } from 'jsonpath-plus';
-import { DateTimeType, Instant } from '../../../shared/model/types';
 import { DateTime, DurationLikeObject } from 'luxon';
-import { SouthHistoryQuery } from '../south-interface';
+
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
+import { OIBusContent } from '../../../shared/model/common/content.model';
+import { DateTimeType, Instant } from '../../../shared/model/common/types';
 import {
   SouthItemSettings,
   SouthRestItemSettings,
@@ -19,15 +16,22 @@ import {
   SouthRestItemSettingsQueryParamsDateTimeInput,
   SouthRestItemSettingsTrackingInstantDateTimeInput,
   SouthRestSettings
-} from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
+} from '../../../shared/model/connector/south-settings.model';
+
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from '../../service/http-request.utils';
-import path from 'node:path';
-import fs from 'node:fs/promises';
 import { encryptionService } from '../../service/encryption.service';
+import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from '../../service/http-request.utils';
+import {
+  convertDateTimeToInstant,
+  formatInstant,
+  generateRandomId,
+  getErrorMessage,
+  sanitizeFilename,
+  workUnitLogCtx
+} from '../../service/utils';
+import SouthConnector from '../south-connector';
+import { SouthHistoryQuery } from '../south-interface';
 
 export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRestItemSettings> implements SouthHistoryQuery {
   constructor(

@@ -1,6 +1,8 @@
-import knex, { Knex } from 'knex';
-import path from 'node:path';
 import { readdirSync } from 'node:fs';
+import path from 'node:path';
+
+import knex, { Knex } from 'knex';
+
 import { compareVersions as compareVersionDirNames } from '../service/config-transfer/config-upgrades/version-compare';
 
 /**

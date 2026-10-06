@@ -1,6 +1,7 @@
-import { describe, it, before, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { before, beforeEach, describe, it, mock } from 'node:test';
+
 import {
   EngineLoggerCommandDTO,
   EngineNameCommandDTO,
@@ -8,12 +9,13 @@ import {
   EngineSettingsCommandDTO,
   EngineSettingsUpdateResultDTO,
   EngineWebServerCommandDTO
-} from '../../../shared/model/engine.model';
-import { CustomExpressRequest } from '../express';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
+} from '../../../shared/model/api/engine.model';
+
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import testData from '../../tests/utils/test-data';
+import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { CustomExpressRequest } from '../express';
 import type { EngineController as EngineControllerShape } from './engine.controller';
 
 const nodeRequire = createRequire(import.meta.url);

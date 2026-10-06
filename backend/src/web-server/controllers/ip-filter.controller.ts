@@ -1,7 +1,9 @@
 import { Body, Controller, Delete, Get, Path, Post, Put, Request, Route, SuccessResponse, Tags } from 'tsoa';
-import { IPFilterCommandDTO, IPFilterDTO } from '../../../shared/model/ip-filter.model';
-import { CustomExpressRequest } from '../express';
+
+import { IPFilterCommandDTO, IPFilterDTO } from '../../../shared/model/api/ip-filter.model';
+
 import { toIPFilterDTO } from '../../service/ip-filter.service';
+import { CustomExpressRequest } from '../express';
 
 @Route('/api/ip-filters')
 @Tags('IP Filters')

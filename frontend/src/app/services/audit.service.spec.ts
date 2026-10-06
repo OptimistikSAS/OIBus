@@ -1,11 +1,13 @@
-import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { Page } from '@oibus/shared/types';
+import { AuditLogDTO } from '@oibus/shared/api/audit.model';
+import { Page } from '@oibus/shared/common/types';
+
 import { toPage } from '../shared/test-utils';
 import { AuditService } from './audit.service';
-import { AuditLogDTO } from '@oibus/shared/audit.model';
 
 describe('AuditService', () => {
   let http: HttpTestingController;

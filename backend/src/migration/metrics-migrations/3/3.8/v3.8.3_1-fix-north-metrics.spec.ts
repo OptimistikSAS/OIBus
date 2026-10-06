@@ -1,7 +1,9 @@
-import { describe, it, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { after, beforeEach, describe, it } from 'node:test';
+
 import knex, { Knex } from 'knex';
-import { up, down } from './v3.8.3_1-fix-north-metrics';
+
+import { down, up } from './v3.8.3_1-fix-north-metrics';
 
 /**
  * Build the broken north_metrics schema that results from the v3.6.0 migration running

@@ -1,12 +1,15 @@
-import OIBusTransformer from '../../oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
-import { CacheMetadata, OIBusTimeValue } from '../../../../shared/model/engine.model';
-import { CacheMetadataSource } from '../../../model/engine.model';
 import { promisify } from 'node:util';
+
+import { CacheMetadata } from '../../../../shared/model/api/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/common/content.model';
+import { TransformerTimeValuesToMqttSettings } from '../../../../shared/model/connector/transformer-settings.model';
+
+import { CacheMetadataSource } from '../../../model/engine.model';
 import { generateRandomId } from '../../../service/utils';
 import { OIBusMQTTValue } from '../../connector-types.model';
-import { TransformerTimeValuesToMqttSettings } from '../../../../shared/model/transformer-settings.model';
+import OIBusTransformer from '../../oibus-transformer';
 
 const pipelineAsync = promisify(pipeline);
 

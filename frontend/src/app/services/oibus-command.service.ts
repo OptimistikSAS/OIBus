@@ -1,8 +1,10 @@
-import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { inject, Service } from '@angular/core';
+
 import { Observable } from 'rxjs';
-import { CommandSearchParam, OIBusCommandDTO } from '@oibus/shared/command.model';
-import { Page } from '@oibus/shared/types';
+
+import { Page } from '@oibus/shared/common/types';
+import { CommandSearchParam, OIBusCommandDTO } from '@oibus/shared/oia/command.model';
 
 @Service()
 export class OibusCommandService {

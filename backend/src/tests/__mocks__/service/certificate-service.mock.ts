@@ -1,6 +1,8 @@
 import { mock } from 'node:test';
+
+import { CertificateCommandDTO, CertificateExportFormat } from '../../../../shared/model/api/certificate.model';
+
 import { Certificate, CertificateImportCommand } from '../../../model/certificate.model';
-import { CertificateCommandDTO, CertificateExportFormat } from '../../../../shared/model/certificate.model';
 
 /**
  * Create a mock object for Certificate Service

@@ -1,53 +1,62 @@
-import { ChangeDetectorRef, Component, DestroyRef, inject, ChangeDetectionStrategy } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
-import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { combineLatest, firstValueFrom, merge, of, Subscription, switchMap } from 'rxjs';
-import { PageLoader } from '../../shared/page-loader.service';
-import { NorthConnectorManifest } from '@oibus/shared/north-connector.model';
-import { NorthConnectorService } from '../../services/north-connector.service';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
-import { ScanModeService } from '../../services/scan-mode.service';
-import { HistoryQueryDTO, HistoryQueryItemCommandDTO, HistoryQueryItemDTO, HistoryQueryStatus } from '@oibus/shared/history-query.model';
-import { SouthConnectorCommandDTO, SouthConnectorManifest } from '@oibus/shared/south-connector.model';
-import { HistoryQueryService } from '../../services/history-query.service';
-import { SouthConnectorService } from '../../services/south-connector.service';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { HistoryMetricsComponent } from './history-metrics/history-metrics.component';
-import { HistoryQueryMetrics, OIBusInfo } from '@oibus/shared/engine.model';
-import { pollMetrics } from '../../shared/polling';
-import { NotificationService } from '../../shared/notification.service';
-import { ObservableState } from '../../shared/save-button/save-button.component';
-import { EngineService } from '../../services/engine.service';
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { ModalService } from '../../shared/modal.service';
-import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
-import { AuditEntityType } from '@oibus/shared/audit.model';
-import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
-import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
+import { AsyncPipe } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject } from '@angular/core';
+import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+
+import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { combineLatest, firstValueFrom, merge, of, Subscription, switchMap } from 'rxjs';
+
+import { AuditEntityType } from '@oibus/shared/api/audit.model';
+import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+import { HistoryQueryMetrics, OIBusInfo } from '@oibus/shared/api/engine.model';
+import {
+  HistoryQueryDTO,
+  HistoryQueryItemCommandDTO,
+  HistoryQueryItemDTO,
+  HistoryQueryStatus
+} from '@oibus/shared/api/history-query.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { SouthConnectorCommandDTO } from '@oibus/shared/api/south-connector.model';
+import { HistoryTransformerDTOWithOptions, TransformerDTO } from '@oibus/shared/api/transformer.model';
+import { createPageFromArray, Page } from '@oibus/shared/common/types';
+import { OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
+import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
+import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+
 import { LogsComponent } from '../../logs/logs.component';
+import { CertificateService } from '../../services/certificate.service';
+import { EngineService } from '../../services/engine.service';
+import { HistoryQueryService } from '../../services/history-query.service';
+import { NorthConnectorService } from '../../services/north-connector.service';
+import { ScanModeService } from '../../services/scan-mode.service';
+import { SouthConnectorService } from '../../services/south-connector.service';
+import { TransformerService } from '../../services/transformer.service';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { DatetimePipe } from '../../shared/datetime.pipe';
+import { DocsUrlService } from '../../shared/docs-url.service';
+import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
+import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
+import { ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
-import { CertificateDTO } from '@oibus/shared/certificate.model';
-import { CertificateService } from '../../services/certificate.service';
-import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
-import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TransformerService } from '../../services/transformer.service';
-import { HistoryTransformerDTOWithOptions, TransformerDTO } from '@oibus/shared/transformer.model';
-import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
+import { PageLoader } from '../../shared/page-loader.service';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
-import { createPageFromArray, Page } from '@oibus/shared/types';
+import { pollMetrics } from '../../shared/polling';
+import { ObservableState } from '../../shared/save-button/save-button.component';
+import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
+import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
+import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { emptyPage } from '../../shared/test-utils';
-import { DatetimePipe } from '../../shared/datetime.pipe';
-import { ConfirmationService } from '../../shared/confirmation.service';
 import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-history-query-item-modal/edit-history-query-item-modal.component';
-import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/import-history-query-items-modal/import-history-query-items-modal.component';
-import { OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/form.model';
-import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
-import { DocsUrlService } from '../../shared/docs-url.service';
+import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
+import { HistoryMetricsComponent } from './history-metrics/history-metrics.component';
 
 const PAGE_SIZE = 20;
 

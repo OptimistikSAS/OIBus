@@ -1,13 +1,14 @@
-import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import cp from 'node:child_process';
-import type { ChildProcessWithoutNullStreams } from 'child_process';
 import { EventEmitter } from 'node:events';
-import { PassThrough } from 'node:stream';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { PassThrough } from 'node:stream';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
+import type { ChildProcessWithoutNullStreams } from 'child_process';
 
 import Launcher from './launcher';
 

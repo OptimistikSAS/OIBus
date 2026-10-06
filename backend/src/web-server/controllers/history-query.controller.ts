@@ -1,3 +1,5 @@
+import fs from 'node:fs/promises';
+
 import {
   Body,
   Controller,
@@ -14,6 +16,15 @@ import {
   Tags,
   UploadedFile
 } from 'tsoa';
+
+import {
+  CacheContentUpdateCommand,
+  CacheSearchResult,
+  DataFolderType,
+  FileCacheContent,
+  HistoryQueryMetrics,
+  OIBusConnectionTestResult
+} from '../../../shared/model/api/engine.model';
 import {
   HistoryQueryCommandBodyDTO,
   HistoryQueryCommandDTO,
@@ -22,36 +33,28 @@ import {
   HistoryQueryItemDTO,
   HistoryQueryItemSearchParam,
   HistoryQueryLightDTO
-} from '../../../shared/model/history-query.model';
-import { CustomExpressRequest } from '../express';
+} from '../../../shared/model/api/history-query.model';
 import {
-  OIBusSouthType,
   SouthConnectorItemTestingSettings,
   SouthConnectorItemTestResult,
   SouthExploreBrowseCommand,
   SouthExploreBrowseResult,
   SouthExploreStartResult
-} from '../../../shared/model/south-connector.model';
-import { Page } from '../../../shared/model/types';
-import { OIBusNorthType } from '../../../shared/model/north-connector.model';
+} from '../../../shared/model/api/south-connector.model';
+import { HistoryTransformerDTOWithOptions } from '../../../shared/model/api/transformer.model';
+import { Page } from '../../../shared/model/common/types';
+import { OIBusNorthType } from '../../../shared/model/connector/north-manifest.model';
+import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+import { OIBusSouthType } from '../../../shared/model/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+
+import { HistoryTransformerWithOptions } from '../../model/transformer.model';
+import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 import HistoryQueryService, { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistoryQueryLightDTO } from '../../service/history-query.service';
+import OIBusService from '../../service/oibus.service';
 import SouthService from '../../service/south.service';
 import { itemToFlattenedCSV } from '../../service/utils';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
-import {
-  CacheContentUpdateCommand,
-  CacheSearchResult,
-  DataFolderType,
-  FileCacheContent,
-  HistoryQueryMetrics,
-  OIBusConnectionTestResult
-} from '../../../shared/model/engine.model';
-import { HistoryTransformerDTOWithOptions } from '../../../shared/model/transformer.model';
-import { OIBusTestingError, OIBusValidationError } from '../../model/types';
-import { HistoryTransformerWithOptions } from '../../model/transformer.model';
-import fs from 'node:fs/promises';
-import OIBusService from '../../service/oibus.service';
+import { CustomExpressRequest } from '../express';
 
 /**
  * @interface HistorySouthItemTestRequest

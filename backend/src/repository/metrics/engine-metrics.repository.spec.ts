@@ -1,10 +1,13 @@
-import { before, after, beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
 import { Database } from 'better-sqlite3';
-import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
+
+import { EngineMetrics } from '../../../shared/model/api/engine.model';
+
 import testData from '../../tests/utils/test-data';
+import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import EngineMetricsRepository from './engine-metrics.repository';
-import { EngineMetrics } from '../../../shared/model/engine.model';
 
 const TEST_DB_PATH = 'src/tests/test-metrics-engine.db';
 

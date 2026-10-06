@@ -1,29 +1,31 @@
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { EMPTY, of, Subject, throwError } from 'rxjs';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
-import { EngineDetailComponent } from './engine-detail.component';
-import { EngineService } from '../services/engine.service';
-import { WindowService } from '../shared/window.service';
-import { ConfirmationService } from '../shared/confirmation.service';
-import { NotificationService } from '../shared/notification.service';
-import { ScanModeService } from '../services/scan-mode.service';
-import { IpFilterService } from '../services/ip-filter.service';
-import { CertificateService } from '../services/certificate.service';
-import { TransformerService } from '../services/transformer.service';
-import { ConfigTransferService } from '../services/config-transfer.service';
-import { ImportConfigModalComponent } from './config-transfer/import-config-modal/import-config-modal.component';
-import { PortRedirectModalComponent } from '../shared/port-redirect-modal/port-redirect-modal.component';
-import { Modal } from '../shared/modal.service';
-import { MockModalService, provideModalTesting } from '../shared/mock-modal.service.testing';
+import { EMPTY, of, Subject, throwError } from 'rxjs';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { EngineSettingsDTO } from '@oibus/shared/api/engine.model';
+
+import testData from '../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
-import { EngineSettingsDTO } from '@oibus/shared/engine.model';
-import testData from '../../../../backend/src/tests/utils/test-data';
+import { CertificateService } from '../services/certificate.service';
+import { ConfigTransferService } from '../services/config-transfer.service';
+import { EngineService } from '../services/engine.service';
+import { IpFilterService } from '../services/ip-filter.service';
+import { ScanModeService } from '../services/scan-mode.service';
+import { TransformerService } from '../services/transformer.service';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
+import { ConfirmationService } from '../shared/confirmation.service';
+import { MockModalService, provideModalTesting } from '../shared/mock-modal.service.testing';
+import { Modal } from '../shared/modal.service';
+import { NotificationService } from '../shared/notification.service';
+import { PortRedirectModalComponent } from '../shared/port-redirect-modal/port-redirect-modal.component';
+import { WindowService } from '../shared/window.service';
+import { ImportConfigModalComponent } from './config-transfer/import-config-modal/import-config-modal.component';
+import { EngineDetailComponent } from './engine-detail.component';
 
 class EngineDetailComponentTester {
   readonly fixture = TestBed.createComponent(EngineDetailComponent);

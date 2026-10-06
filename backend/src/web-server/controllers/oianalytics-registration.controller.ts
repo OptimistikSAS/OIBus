@@ -1,7 +1,9 @@
 import { Body, Controller, Get, Post, Put, Request, Route, SuccessResponse, Tags } from 'tsoa';
-import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
-import { CustomExpressRequest } from '../express';
+
+import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/api/engine.model';
+
 import { toOIAnalyticsRegistrationDTO } from '../../service/oia/oianalytics-registration.service';
+import { CustomExpressRequest } from '../express';
 
 @Route('/api/oianalytics')
 @Tags('OIAnalytics Registration')

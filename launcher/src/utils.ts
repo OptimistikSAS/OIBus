@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+
 import { version } from '../package.json';
 
 export const replaceConfigArgumentWithAbsolutePath = (argumentsList: Array<string>, absoluteConfigPath: string): Array<string> => {

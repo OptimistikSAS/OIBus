@@ -1,8 +1,9 @@
-import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import path from 'node:path';
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import path from 'node:path';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
 import {
   ClientSession,
   DataType,
@@ -13,8 +14,9 @@ import {
   UserTokenType,
   Variant
 } from 'node-opcua';
-import { encryptionService } from './encryption.service';
+
 import { mockModule, reloadModule } from '../tests/utils/test-utils';
+import { encryptionService } from './encryption.service';
 import {
   createOPCUASession,
   createSessionConfigs,
@@ -31,11 +33,13 @@ import {
 
 const nodeRequire = createRequire(import.meta.url);
 const nodeOpcuaCryptoModule = nodeRequire('node-opcua-crypto');
-import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../shared/model/south-settings.model';
-import { NorthOPCUASettings } from '../../shared/model/north-settings.model';
-import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import { DateTime } from 'luxon';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
+
+import { NorthOPCUASettings } from '../../shared/model/connector/north-settings.model';
+import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../shared/model/connector/south-settings.model';
+
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 
 describe('Service utils OPCUA', () => {
   describe('createOPCUASession', () => {

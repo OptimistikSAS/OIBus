@@ -1,4 +1,12 @@
-import DataStreamEngine from '../engine/data-stream-engine';
+import { EventEmitter } from 'node:events';
+import os from 'node:os';
+import path from 'node:path';
+import process from 'node:process';
+import v8 from 'node:v8';
+
+import argon2 from 'argon2';
+import { DateTime } from 'luxon';
+
 import {
   CacheContentUpdateCommand,
   CacheSearchParam,
@@ -15,13 +23,18 @@ import {
   EngineWebServerCommandDTO,
   FileCacheContent,
   HomeMetrics,
-  OIBusContent,
   OIBusInfo
-} from '../../shared/model/engine.model';
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import EngineRepository from '../repository/config/engine.repository';
+} from '../../shared/model/api/engine.model';
+import { OIBusContent } from '../../shared/model/common/content.model';
+import { GetUserInfo } from '../../shared/model/common/types';
+
+import DataStreamEngine from '../engine/data-stream-engine';
 import { EngineSettings } from '../model/engine.model';
-import { GetUserInfo } from '../../shared/model/types';
+import type { ILogger } from '../model/logger.model';
+import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
+import EngineRepository from '../repository/config/engine.repository';
+import EngineMetricsRepository from '../repository/metrics/engine-metrics.repository';
+import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import {
   engineLoggerSchema,
   engineNameSchema,
@@ -29,26 +42,16 @@ import {
   engineSchema,
   engineWebServerSchema
 } from '../web-server/controllers/validators/oibus-validation-schema';
-import { encryptionService } from './encryption.service';
-import argon2 from 'argon2';
-import LoggerService from './logger/logger.service';
-import type { ILogger } from '../model/logger.model';
-import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import ProxyServer from '../web-server/proxy-server';
-import { DateTime } from 'luxon';
-import process from 'node:process';
-import os from 'node:os';
-import path from 'node:path';
-import v8 from 'node:v8';
-import EngineMetricsRepository from '../repository/metrics/engine-metrics.repository';
-import { getOIBusInfo } from './utils';
-import SouthService from './south.service';
-import NorthService from './north.service';
+import { encryptionService } from './encryption.service';
 import HistoryQueryService from './history-query.service';
-import OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
-import { EventEmitter } from 'node:events';
 import IPFilterService from './ip-filter.service';
+import LoggerService from './logger/logger.service';
+import NorthService from './north.service';
+import OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
+import SouthService from './south.service';
 import UserService from './user.service';
+import { getOIBusInfo } from './utils';
 const HEALTH_SIGNAL_INTERVAL = 1_800_000; // 30 minutes
 const UPDATE_ENGINE_METRICS_INTERVAL = 1000; // every second
 

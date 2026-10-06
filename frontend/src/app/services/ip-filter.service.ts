@@ -1,7 +1,9 @@
 import { HttpClient } from '@angular/common/http';
+import { inject, Service } from '@angular/core';
+
 import { Observable } from 'rxjs';
-import { Service, inject } from '@angular/core';
-import { IPFilterCommandDTO, IPFilterDTO } from '@oibus/shared/ip-filter.model';
+
+import { IPFilterCommandDTO, IPFilterDTO } from '@oibus/shared/api/ip-filter.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on IP filters

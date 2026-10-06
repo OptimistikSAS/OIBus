@@ -1,11 +1,14 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+
 import { TranslateDirective, TranslateService } from '@ngx-translate/core';
-import { NorthConnectorService } from '../../../services/north-connector.service';
+
+import { HistoryQueryLightDTO } from '@oibus/shared/api/history-query.model';
+import { NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
+import { TransformerDTO } from '@oibus/shared/api/transformer.model';
+
 import { HistoryQueryService } from '../../../services/history-query.service';
-import { NorthConnectorLightDTO } from '@oibus/shared/north-connector.model';
-import { HistoryQueryLightDTO } from '@oibus/shared/history-query.model';
-import { TransformerDTO } from '@oibus/shared/transformer.model';
+import { NorthConnectorService } from '../../../services/north-connector.service';
 
 interface SelectableAttachment {
   id: string;

@@ -1,4 +1,5 @@
 import { Database } from 'better-sqlite3';
+
 import { Certificate } from '../../model/certificate.model';
 import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
 

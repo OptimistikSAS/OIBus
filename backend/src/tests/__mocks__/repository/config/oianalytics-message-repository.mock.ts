@@ -1,8 +1,11 @@
 import { mock } from 'node:test';
+
 import type { Database } from 'better-sqlite3';
+
+import { Instant, Page } from '../../../../../shared/model/common/types';
+import { OIAnalyticsMessageSearchParam } from '../../../../../shared/model/oia/oianalytics-message.model';
+
 import { OIAnalyticsMessage } from '../../../../model/oianalytics-message.model';
-import { OIAnalyticsMessageSearchParam } from '../../../../../shared/model/oianalytics-message.model';
-import { Instant, Page } from '../../../../../shared/model/types';
 import OIAnalyticsMessageRepository from '../../../../repository/config/oianalytics-message.repository';
 
 /**

@@ -1,14 +1,15 @@
-import { TestBed } from '@angular/core/testing';
-
 import { ChangeDetectionStrategy, Component, inject as inject_1 } from '@angular/core';
-import { debounceTime, distinctUntilChanged, Observable, of, switchMap } from 'rxjs';
+import { TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { provideNgbConfigTesting } from './oi-ngb-testing';
-import { OpenTypeaheadOnFocusDirective } from './open-typeahead-on-focus.directive';
+
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { NGB_ARIA_LIVE_DELAY, TYPEAHEAD_DEBOUNCE_TIME } from './typeahead';
+import { debounceTime, distinctUntilChanged, Observable, of, switchMap } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
+
+import { provideNgbConfigTesting } from './oi-ngb-testing';
+import { OpenTypeaheadOnFocusDirective } from './open-typeahead-on-focus.directive';
+import { NGB_ARIA_LIVE_DELAY, TYPEAHEAD_DEBOUNCE_TIME } from './typeahead';
 
 class UserService {
   suggestByText(_name: string): Observable<Array<unknown>> {

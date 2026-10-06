@@ -1,6 +1,18 @@
-import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
-import { NotFoundError } from '../../model/types';
+
+import {
+  SouthCachingStrategy,
+  SouthCachingThresholdType,
+  SouthConnectorItemSearchParam,
+  SouthHistoryRecoveryStrategy
+} from '../../../shared/model/api/south-connector.model';
+import { Page } from '../../../shared/model/common/types';
+import { OIBusObjectAttribute } from '../../../shared/model/connector/form.model';
+import { OIBusSouthType } from '../../../shared/model/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+
+import { ConfigurationWorkflowSouthCommand } from '../../model/configuration-workflow.model';
+import { ScanMode } from '../../model/scan-mode.model';
 import {
   SouthConnectorEntity,
   SouthConnectorEntityLight,
@@ -8,24 +20,14 @@ import {
   SouthItemGroupEntity,
   SouthItemGroupEntityLight
 } from '../../model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import {
-  OIBusSouthType,
-  SouthCachingStrategy,
-  SouthCachingThresholdType,
-  SouthConnectorItemSearchParam,
-  SouthHistoryRecoveryStrategy
-} from '../../../shared/model/south-connector.model';
-import { Page } from '../../../shared/model/types';
-import { OIBusObjectAttribute } from '../../../shared/model/form.model';
-import { ScanMode } from '../../model/scan-mode.model';
-import { scanModeAliasedColumns, scanModeColumns, toScanMode, toScanModeFromPrefixedRow } from './scan-mode.repository';
-import SouthItemGroupRepository from './south-item-group.repository';
-import ConfigurationWorkflowRepository from './configuration-workflow.repository';
-import { ConfigurationWorkflowSouthCommand } from '../../model/configuration-workflow.model';
+import { NotFoundError } from '../../model/types';
 import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
 import { encryptionService } from '../../service/encryption.service';
 import { southManifestList } from '../../service/south-manifests';
+import { generateRandomId } from '../../service/utils';
+import ConfigurationWorkflowRepository from './configuration-workflow.repository';
+import { scanModeAliasedColumns, scanModeColumns, toScanMode, toScanModeFromPrefixedRow } from './scan-mode.repository';
+import SouthItemGroupRepository from './south-item-group.repository';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';

@@ -1,35 +1,38 @@
-import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { EngineService } from '../../services/engine.service';
-import { RegistrationSettingsDTO } from '@oibus/shared/engine.model';
-import { DatetimePipe } from '../../shared/datetime.pipe';
-import { Modal, ModalService } from '../../shared/modal.service';
-import { RegisterOibusModalComponent } from './register-oibus-modal/register-oibus-modal.component';
-import { catchError, EMPTY, exhaustMap, map, Subscription, switchMap, tap } from 'rxjs';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NotificationService } from '../../shared/notification.service';
-import { ConfirmationService } from '../../shared/confirmation.service';
-import { MultiSelectComponent } from '../../shared/form/multi-select/multi-select.component';
-import { MultiSelectOptionDirective } from '../../shared/form/multi-select/multi-select-option.directive';
-import { PaginationComponent } from '../../shared/pagination/pagination.component';
-import { emptyPage } from '../../shared/test-utils';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { catchError, EMPTY, exhaustMap, map, Subscription, switchMap, tap } from 'rxjs';
+
+import { RegistrationSettingsDTO } from '@oibus/shared/api/engine.model';
+import { Page } from '@oibus/shared/common/types';
 import {
   OIBUS_COMMAND_STATUS,
   OIBUS_COMMAND_TYPES,
   OIBusCommandDTO,
   OIBusCommandStatus,
   OIBusCommandType
-} from '@oibus/shared/command.model';
-import { Page } from '@oibus/shared/types';
-import { PageLoader } from '../../shared/page-loader.service';
-import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+} from '@oibus/shared/oia/command.model';
+
+import { EngineService } from '../../services/engine.service';
 import { OibusCommandService } from '../../services/oibus-command.service';
-import { OibusCommandTypeEnumPipe } from '../../shared/oibus-command-type-enum.pipe';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { DatetimePipe } from '../../shared/datetime.pipe';
+import { MultiSelectComponent } from '../../shared/form/multi-select/multi-select.component';
+import { MultiSelectOptionDirective } from '../../shared/form/multi-select/multi-select-option.directive';
+import { Modal, ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
 import { OibusCommandStatusEnumPipe } from '../../shared/oibus-command-status-enum.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { OiaCommandDetailsModalComponent } from './oibus-command-details-modal/oia-command-details-modal.component';
+import { OibusCommandTypeEnumPipe } from '../../shared/oibus-command-type-enum.pipe';
+import { PageLoader } from '../../shared/page-loader.service';
+import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { visibleTimer } from '../../shared/polling';
+import { emptyPage } from '../../shared/test-utils';
+import { OiaCommandDetailsModalComponent } from './oibus-command-details-modal/oia-command-details-modal.component';
+import { RegisterOibusModalComponent } from './register-oibus-modal/register-oibus-modal.component';
 
 const REGISTRATION_CHECK_DURATION = 3000;
 

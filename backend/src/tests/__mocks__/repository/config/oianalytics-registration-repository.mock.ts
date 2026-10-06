@@ -1,9 +1,12 @@
 import { mock } from 'node:test';
+
 import type { Database } from 'better-sqlite3';
-import { createAuditServiceMock } from '../../../utils/test-utils';
+
+import { Instant } from '../../../../../shared/model/common/types';
+
 import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../../../model/oianalytics-registration.model';
-import { Instant } from '../../../../../shared/model/types';
 import OIAnalyticsRegistrationRepository from '../../../../repository/config/oianalytics-registration.repository';
+import { createAuditServiceMock } from '../../../utils/test-utils';
 
 /**
  * Create a mock object for OIAnalytics Registration repository

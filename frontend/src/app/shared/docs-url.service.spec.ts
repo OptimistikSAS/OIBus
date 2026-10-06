@@ -1,8 +1,11 @@
 import { TestBed } from '@angular/core/testing';
+
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
+import { Language } from '@oibus/shared/common/types';
+
 import { DocsUrlService } from './docs-url.service';
 import { WindowService } from './window.service';
-import { Language } from '@oibus/shared/types';
 
 describe('DocsUrlService', () => {
   let windowService: WindowService;

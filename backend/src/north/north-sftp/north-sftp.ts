@@ -1,16 +1,17 @@
+import { ReadStream } from 'node:fs';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import NorthConnector from '../north-connector';
-import { encryptionService } from '../../service/encryption.service';
 import { DateTime } from 'luxon';
-import { NorthSFTPSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
-
 import sftpClient, { ConnectOptions } from 'ssh2-sftp-client';
-import fs from 'node:fs/promises';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
+
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { NorthSFTPSettings } from '../../../shared/model/connector/north-settings.model';
+
 import type { ICacheService } from '../../model/cache.service.model';
-import { ReadStream } from 'node:fs';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { encryptionService } from '../../service/encryption.service';
+import NorthConnector from '../north-connector';
 
 /**
  * Class NorthSFTP - Write files in an output folder

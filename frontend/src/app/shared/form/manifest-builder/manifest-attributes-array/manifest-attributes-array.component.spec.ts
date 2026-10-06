@@ -1,13 +1,16 @@
-import { TestBed } from '@angular/core/testing';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { ManifestAttributesArrayComponent } from './manifest-attributes-array.component';
-import { OIBusArrayAttribute } from '@oibus/shared/form.model';
-import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
+import { TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ModalService } from '../../../modal.service';
+
 import { EMPTY, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
+
+import { OIBusArrayAttribute } from '@oibus/shared/connector/form.model';
+
+import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
+import { ModalService } from '../../../modal.service';
+import { ManifestAttributesArrayComponent } from './manifest-attributes-array.component';
 
 @Component({
   template: ` <oib-manifest-attributes-array [label]="arrayAttribute.translationKey" [control]="attributesControl" /> `,

@@ -1,22 +1,37 @@
-import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import express from 'express';
-import multer from 'multer';
 import * as http from 'node:http';
 import os from 'node:os';
+import { after, before, describe, it } from 'node:test';
+
+import express from 'express';
+import multer from 'multer';
 import { ValidateError } from 'tsoa';
 
-import { createInjectServicesMiddleware } from './middlewares/services.middleware';
-import { RegisterRoutes } from './routes';
 import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model/types';
-
+import type AuditService from '../service/audit.service';
+import type CertificateService from '../service/certificate.service';
+import type ConfigImportService from '../service/config-transfer/config-import.service';
+import type ConfigTransferService from '../service/config-transfer/config-transfer.service';
+import type ConfigurationWorkflowService from '../service/configuration-workflow.service';
+import type ConfigurationWorkflowRunService from '../service/configuration-workflow-run.service';
+import type HistoryQueryService from '../service/history-query.service';
+import type IPFilterService from '../service/ip-filter.service';
+import type LogService from '../service/log.service';
+import type NorthService from '../service/north.service';
+import type OIAnalyticsCommandService from '../service/oia/oianalytics-command.service';
+import type OIAnalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
+import type OIBusService from '../service/oibus.service';
+import type ScanModeService from '../service/scan-mode.service';
+import type SouthService from '../service/south.service';
+import type TransformerService from '../service/transformer.service';
+import type UserService from '../service/user.service';
 import AuditServiceMock from '../tests/__mocks__/service/audit-service.mock';
 import CertificateServiceMock from '../tests/__mocks__/service/certificate-service.mock';
 import ConfigImportServiceMock from '../tests/__mocks__/service/config-import-service.mock';
 import ConfigTransferServiceMock from '../tests/__mocks__/service/config-transfer-service.mock';
-import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
-import ConfigurationWorkflowServiceMock from '../tests/__mocks__/service/configuration-workflow-service.mock';
 import ConfigurationWorkflowRunServiceMock from '../tests/__mocks__/service/configuration-workflow-run-service.mock';
+import ConfigurationWorkflowServiceMock from '../tests/__mocks__/service/configuration-workflow-service.mock';
+import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
 import IpFilterServiceMock from '../tests/__mocks__/service/ip-filter-service.mock';
 import LogServiceMock from '../tests/__mocks__/service/log-service.mock';
 import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
@@ -28,24 +43,8 @@ import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
 import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 import UserServiceMock from '../tests/__mocks__/service/user-service.mock';
 import testData from '../tests/utils/test-data';
-
-import type AuditService from '../service/audit.service';
-import type CertificateService from '../service/certificate.service';
-import type ConfigImportService from '../service/config-transfer/config-import.service';
-import type ConfigTransferService from '../service/config-transfer/config-transfer.service';
-import type HistoryQueryService from '../service/history-query.service';
-import type ConfigurationWorkflowService from '../service/configuration-workflow.service';
-import type ConfigurationWorkflowRunService from '../service/configuration-workflow-run.service';
-import type IPFilterService from '../service/ip-filter.service';
-import type LogService from '../service/log.service';
-import type NorthService from '../service/north.service';
-import type OIAnalyticsCommandService from '../service/oia/oianalytics-command.service';
-import type OIAnalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
-import type OIBusService from '../service/oibus.service';
-import type ScanModeService from '../service/scan-mode.service';
-import type SouthService from '../service/south.service';
-import type TransformerService from '../service/transformer.service';
-import type UserService from '../service/user.service';
+import { createInjectServicesMiddleware } from './middlewares/services.middleware';
+import { RegisterRoutes } from './routes';
 
 const TEST_PORT = 19997;
 

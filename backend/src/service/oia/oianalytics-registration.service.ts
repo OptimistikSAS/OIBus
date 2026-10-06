@@ -1,19 +1,22 @@
-import { testOIAnalyticsConnection } from '../utils-oianalytics';
-import { getOIBusInfo, getErrorMessage } from '../utils';
-import { encryptionService } from '../encryption.service';
+import crypto from 'node:crypto';
+import { EventEmitter } from 'node:events';
+
 import { DateTime } from 'luxon';
-import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
-import EngineRepository from '../../repository/config/engine.repository';
+
+import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/api/engine.model';
+import { GetUserInfo } from '../../../shared/model/common/types';
+
+import type { ILogger } from '../../model/logger.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
-import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
+import { NotFoundError } from '../../model/types';
+import EngineRepository from '../../repository/config/engine.repository';
+import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
 import { registrationSchema } from '../../web-server/controllers/validators/oibus-validation-schema';
-import crypto from 'node:crypto';
+import { encryptionService } from '../encryption.service';
+import { getErrorMessage, getOIBusInfo } from '../utils';
+import { testOIAnalyticsConnection } from '../utils-oianalytics';
 import OIAnalyticsClient from './oianalytics-client.service';
-import { EventEmitter } from 'node:events';
-import { NotFoundError } from '../../model/types';
-import { GetUserInfo } from '../../../shared/model/types';
-import type { ILogger } from '../../model/logger.model';
 
 const CHECK_REGISTRATION_INTERVAL = 10_000;
 export default class OIAnalyticsRegistrationService {

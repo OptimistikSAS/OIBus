@@ -1,23 +1,27 @@
-import { Component, effect, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
-import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { NorthConnectorManifest } from '@oibus/shared/north-connector.model';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { HistoryTransformerDTOWithOptions, TransformerDTO } from '@oibus/shared/transformer.model';
+import { ChangeDetectionStrategy, Component, effect, inject, input, output } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
-import { Modal, ModalService } from '../../shared/modal.service';
-import { EditHistoryQueryTransformerModalComponent } from './edit-history-query-transformer-modal/edit-history-query-transformer-modal.component';
-import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
-import { DocsUrlService } from '../../shared/docs-url.service';
-import { CertificateDTO } from '@oibus/shared/certificate.model';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import { ConfirmationService } from '../../shared/confirmation.service';
-import { NotificationService } from '../../shared/notification.service';
-import { firstValueFrom, of, switchMap } from 'rxjs';
-import { HistoryQueryDTO, HistoryQueryItemCommandDTO } from '@oibus/shared/history-query.model';
-import { HistoryQueryService } from '../../services/history-query.service';
-import { ItemLightDTO, OIBusSouthType } from '@oibus/shared/south-connector.model';
+
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { firstValueFrom, of, switchMap } from 'rxjs';
+
+import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+import { HistoryQueryDTO, HistoryQueryItemCommandDTO } from '@oibus/shared/api/history-query.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { ItemLightDTO } from '@oibus/shared/api/south-connector.model';
+import { HistoryTransformerDTOWithOptions, TransformerDTO } from '@oibus/shared/api/transformer.model';
+import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
+import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
+
+import { HistoryQueryService } from '../../services/history-query.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { DocsUrlService } from '../../shared/docs-url.service';
+import { Modal, ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { EditHistoryQueryTransformerModalComponent } from './edit-history-query-transformer-modal/edit-history-query-transformer-modal.component';
 
 @Component({
   selector: 'oib-history-query-transformers',

@@ -3,9 +3,10 @@
  * That file lives outside `src/` (the `src/**\/*.spec.ts` test glob does not reach it),
  * so its runtime exports are exercised from a co-located spec here instead.
  */
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { SCAN_MODE_TYPES, INTERVAL_UNITS } from '../../shared/model/scan-mode.model';
+import { describe, it } from 'node:test';
+
+import { INTERVAL_UNITS, SCAN_MODE_TYPES } from '../../shared/model/api/scan-mode.model';
 
 describe('shared scan-mode model constants', () => {
   it('SCAN_MODE_TYPES contains cron and interval', () => {

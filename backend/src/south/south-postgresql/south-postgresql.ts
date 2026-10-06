@@ -1,7 +1,20 @@
+import { DateTime } from 'luxon';
 import * as pg from 'pg';
 import { ClientConfig } from 'pg';
 
-import SouthConnector from '../south-connector';
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
+import { OIBusContent, OIBusRecord } from '../../../shared/model/common/content.model';
+import { Instant } from '../../../shared/model/common/types';
+import {
+  SouthItemSettings,
+  SouthPostgreSQLItemSettings,
+  SouthPostgreSQLSettings
+} from '../../../shared/model/connector/south-settings.model';
+
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import { encryptionService } from '../../service/encryption.service';
 import {
   convertDateTimeToInstant,
   extractDiscoveryQuery,
@@ -11,15 +24,8 @@ import {
   logQuery,
   workUnitLogCtx
 } from '../../service/utils';
-import { encryptionService } from '../../service/encryption.service';
-import { Instant } from '../../../shared/model/types';
+import SouthConnector from '../south-connector';
 import { SouthConfigurationDiscovery, SouthHistoryQuery } from '../south-interface';
-import { DateTime } from 'luxon';
-import { SouthItemSettings, SouthPostgreSQLItemSettings, SouthPostgreSQLSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent, OIBusRecord } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthPostgreSQL - Retrieve data from PostgreSQL databases and send the resulting rows as

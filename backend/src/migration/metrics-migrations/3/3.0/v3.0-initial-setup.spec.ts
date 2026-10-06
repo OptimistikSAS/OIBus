@@ -1,7 +1,9 @@
-import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { afterEach, beforeEach, describe, it } from 'node:test';
+
 import knex, { Knex } from 'knex';
-import { up, down } from './v3.0-initial-setup';
+
+import { down, up } from './v3.0-initial-setup';
 
 /** Return the column names for a table via PRAGMA. */
 async function columnNames(db: Knex, table: string): Promise<Array<string>> {

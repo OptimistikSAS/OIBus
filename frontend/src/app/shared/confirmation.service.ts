@@ -1,7 +1,9 @@
-import { Service, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { ConfirmationModalComponent } from './confirmation-modal/confirmation-modal.component';
+import { inject, Service } from '@angular/core';
+
 import { TranslateService } from '@ngx-translate/core';
+import { Observable } from 'rxjs';
+
+import { ConfirmationModalComponent } from './confirmation-modal/confirmation-modal.component';
 import { ModalService } from './modal.service';
 
 /**

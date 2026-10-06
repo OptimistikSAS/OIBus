@@ -1,7 +1,9 @@
-import { describe, it, before, after, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { after, afterEach, before, beforeEach, describe, it } from 'node:test';
+
 import { Knex } from 'knex';
+
 import { buildSchemaBefore, createMigrationFileCloneHarness } from '../../../../tests/utils/migration-test-utils';
 import { down, up } from './v3.8.0_1';
 

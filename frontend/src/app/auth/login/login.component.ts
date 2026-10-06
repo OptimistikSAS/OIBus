@@ -1,12 +1,14 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RequestedUrlService } from '../authentication.guard';
+import { Router } from '@angular/router';
+
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
-import { CurrentUserService } from '../../shared/current-user.service';
 import { TranslateDirective } from '@ngx-translate/core';
-import { WindowService } from '../../shared/window.service';
+
+import { CurrentUserService } from '../../shared/current-user.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
+import { WindowService } from '../../shared/window.service';
+import { RequestedUrlService } from '../authentication.guard';
 
 /**
  * The login component, displaying the password-based auth form.

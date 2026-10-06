@@ -1,12 +1,13 @@
-import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
+
 import {
   ConfigurationWorkflowCommand,
   ConfigurationWorkflowEntity,
   ConfigurationWorkflowSouthCommand
 } from '../../model/configuration-workflow.model';
-import { scanModeAliasedColumns, toScanModeFromPrefixedRow } from './scan-mode.repository';
 import AuditService from '../../service/audit.service';
+import { generateRandomId } from '../../service/utils';
+import { scanModeAliasedColumns, toScanModeFromPrefixedRow } from './scan-mode.repository';
 
 const CONFIGURATION_WORKFLOWS_TABLE = 'configuration_workflows';
 const SCAN_MODE_TABLE = 'scan_modes';

@@ -1,15 +1,17 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test } from 'vitest';
 import { provideRouter } from '@angular/router';
 
-import { EngineMetricsComponent } from './engine-metrics.component';
-import { EngineService } from '../../services/engine.service';
-import { NotificationService } from '../../shared/notification.service';
+import { of } from 'rxjs';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { EngineMetrics } from '@oibus/shared/api/engine.model';
+
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
-import { EngineMetrics } from '@oibus/shared/engine.model';
+import { EngineService } from '../../services/engine.service';
+import { NotificationService } from '../../shared/notification.service';
+import { EngineMetricsComponent } from './engine-metrics.component';
 
 const metrics: EngineMetrics = {
   processCpuUsageInstant: 1.5,

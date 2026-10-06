@@ -1,23 +1,24 @@
-import { describe, it, before, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { before, beforeEach, describe, it, mock } from 'node:test';
+
 import {
   CustomTransformerCommandDTO,
   InputTemplate,
-  InputType,
-  TransformerManifest,
   TransformerSearchParam,
   TransformerTestRequest,
   TransformerTestResponse
-} from '../../../shared/model/transformer.model';
+} from '../../../shared/model/api/transformer.model';
+import { OIBusDataType } from '../../../shared/model/common/content.model';
+import { createPageFromArray } from '../../../shared/model/common/types';
+import { InputType, TransformerManifest } from '../../../shared/model/connector/transformer-manifest.model';
+
 import type { CustomTransformer } from '../../model/transformer.model';
-import { CustomExpressRequest } from '../express';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
 import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
-import { createPageFromArray } from '../../../shared/model/types';
-import { OIBusDataType } from '../../../shared/model/engine.model';
+import testData from '../../tests/utils/test-data';
+import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { CustomExpressRequest } from '../express';
 import type { TransformerController as TransformerControllerShape } from './transformer.controller';
 
 const nodeRequire = createRequire(import.meta.url);

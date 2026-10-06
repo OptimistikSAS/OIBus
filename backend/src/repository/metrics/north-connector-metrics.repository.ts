@@ -1,6 +1,8 @@
 import { Database } from 'better-sqlite3';
-import { NorthConnectorMetrics } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
+
+import { NorthConnectorMetrics } from '../../../shared/model/api/engine.model';
+
 import { Instant } from '../../model/types';
 
 export const NORTH_METRICS_TABLE = 'north_metrics';

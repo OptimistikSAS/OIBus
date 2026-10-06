@@ -1,17 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {
-  SouthOPCUAItemSettings,
-  SouthOPCUASettings,
-  SouthOPCUASettingsSecurityMode,
-  SouthOPCUASettingsSecurityPolicy
-} from '../../shared/model/south-settings.model';
-import {
-  NorthOPCUASettings,
-  NorthOPCUASettingsSecurityMode,
-  NorthOPCUASettingsSecurityPolicy
-} from '../../shared/model/north-settings.model';
-import { encryptionService } from './encryption.service';
+
+import { DateTime } from 'luxon';
 import {
   AggregateFunction,
   ClientSession,
@@ -29,10 +19,23 @@ import {
   Variant
 } from 'node-opcua';
 import { convertPEMtoDER, exploreCertificate } from 'node-opcua-crypto';
-import { Instant } from '../../shared/model/types';
-import { DateTime } from 'luxon';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
+
+import { Instant } from '../../shared/model/common/types';
+import {
+  NorthOPCUASettings,
+  NorthOPCUASettingsSecurityMode,
+  NorthOPCUASettingsSecurityPolicy
+} from '../../shared/model/connector/north-settings.model';
+import {
+  SouthOPCUAItemSettings,
+  SouthOPCUASettings,
+  SouthOPCUASettingsSecurityMode,
+  SouthOPCUASettingsSecurityPolicy
+} from '../../shared/model/connector/south-settings.model';
+
 import type { ILogger } from '../model/logger.model';
+import { encryptionService } from './encryption.service';
 
 const NUM_VALUES_PER_NODE = 1000;
 export const MAX_NUMBER_OF_NODE_TO_LOG = 10;

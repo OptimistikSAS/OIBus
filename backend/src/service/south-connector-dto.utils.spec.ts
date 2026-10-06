@@ -1,9 +1,11 @@
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { toSouthConnectorItemDTO, toSouthItemGroupDTO, toSouthItemLightDTO } from './south-connector-dto.utils';
-import testData from '../tests/utils/test-data';
+import { describe, it } from 'node:test';
+
+import { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
+
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
-import { SouthItemSettings } from '../../shared/model/south-settings.model';
+import testData from '../tests/utils/test-data';
+import { toSouthConnectorItemDTO, toSouthItemGroupDTO, toSouthItemLightDTO } from './south-connector-dto.utils';
 
 const getUserInfo = (id: string) => ({ id, friendlyName: id });
 

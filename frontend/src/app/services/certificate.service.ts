@@ -1,10 +1,13 @@
 import { HttpClient, HttpParams, HttpStatusCode } from '@angular/common/http';
+import { inject, Service } from '@angular/core';
+
 import { BehaviorSubject, map, Observable, shareReplay, switchMap } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
-import { Service, inject } from '@angular/core';
-import { CertificateCommandDTO, CertificateDTO, CertificateExportFormat } from '@oibus/shared/certificate.model';
-import { DownloadService } from './download.service';
+
+import { CertificateCommandDTO, CertificateDTO, CertificateExportFormat } from '@oibus/shared/api/certificate.model';
+
 import { ignoreErrorIfStatusIs, rethrowServerMessage } from '../shared/error-interceptor.service';
+import { DownloadService } from './download.service';
 
 const ENDPOINT = '/api/certificates';
 

@@ -1,11 +1,12 @@
-import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import { BaseEntity, Instant } from './types';
-import { HistoryQueryStatus } from '../../shared/model/history-query.model';
-import { NorthSettings } from '../../shared/model/north-settings.model';
-import { OIBusNorthType } from '../../shared/model/north-connector.model';
-import { OIBusSouthType } from '../../shared/model/south-connector.model';
-import { HistoryTransformerWithOptions } from './transformer.model';
+import { HistoryQueryStatus } from '../../shared/model/api/history-query.model';
+import { OIBusNorthType } from '../../shared/model/connector/north-manifest.model';
+import { NorthSettings } from '../../shared/model/connector/north-settings.model';
+import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+
 import { ScanMode } from './scan-mode.model';
+import { HistoryTransformerWithOptions } from './transformer.model';
+import { BaseEntity, Instant } from './types';
 
 export interface HistoryQueryEntityLight extends BaseEntity {
   name: string;

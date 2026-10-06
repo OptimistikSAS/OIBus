@@ -3,35 +3,37 @@
  * Pure functions are tested directly. I/O functions use real temp directories
  * because Node.js built-in modules (node:fs) cannot be mocked via the require cache.
  */
-import { describe, it, before, after, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import path from 'node:path';
-import os from 'node:os';
-import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { after, before, describe, it, mock } from 'node:test';
+
+import type { OIBusAttribute, OIBusEnablingCondition, OIBusObjectAttribute } from '../shared/model/connector/form.model';
+
 import {
-  capitalizeFirstLetter,
-  toSnakeCase,
+  type Attribute,
   buildNorthInterfaceName,
   buildSouthInterfaceName,
   buildTransformerInterfaceName,
+  buildTypescriptFile,
+  capitalizeFirstLetter,
   checkIfNullableOrUndefined,
   collectSubManifests,
   generateInterface,
-  writeAttribute,
-  buildTypescriptFile,
-  listFiles,
   generateSettingsInterfaces,
   generateSettingsInterfacesForConnectorType,
   generateSettingsInterfacesForTransformers,
   generateTypesForManifest,
   generateTypesForTransformerManifest,
-  runAsMain,
-  type TypeGenerationDescription,
   type Interface,
-  type Attribute
+  listFiles,
+  runAsMain,
+  toSnakeCase,
+  type TypeGenerationDescription,
+  writeAttribute
 } from './settings-interface.generator';
-import type { OIBusObjectAttribute, OIBusEnablingCondition, OIBusAttribute } from '../shared/model/form.model';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -73,7 +75,7 @@ describe('settings-interface.generator', () => {
     origCwd = process.cwd();
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-gen-spec-'));
     // Create directory structure the generator writes to (relative to CWD).
-    await fs.mkdir(path.join(tmpDir, 'shared', 'model'), { recursive: true });
+    await fs.mkdir(path.join(tmpDir, 'shared', 'model', 'connector'), { recursive: true });
     // Create empty src dirs (so listFiles works without real manifests).
     for (const d of ['src/south', 'src/north', 'src/transformers']) {
       await fs.mkdir(path.join(tmpDir, d), { recursive: true });
@@ -371,7 +373,7 @@ describe('settings-interface.generator', () => {
 
     function makeFullDesc(): TypeGenerationDescription {
       return {
-        imports: new Set(['import { Timezone } from "./types";\n']),
+        imports: new Set(['import { Timezone } from "../common/types";\n']),
         enums: [{ name: 'MyEnum', values: ['A', 'B'] }],
         settingsInterfaces: [
           { name: 'SouthFooSettings', attributes: [{ key: 'host', type: 'string', nullable: false, undefinable: false }] },
@@ -391,7 +393,7 @@ describe('settings-interface.generator', () => {
 
     it('generates South type file including item settings sections', () => {
       runInTmpDir(() => buildTypescriptFile(makeFullDesc(), 'South'));
-      const content = fsSync.readFileSync(path.join(tmpDir, 'shared/model/south-settings.model.ts'), 'utf8');
+      const content = fsSync.readFileSync(path.join(tmpDir, 'shared/model/connector/south-settings.model.ts'), 'utf8');
       assert.ok(content.includes('SouthItemSettings'));
       assert.ok(content.includes('ItemFooSettings'));
       assert.ok(content.includes('interface ItemFooSettingsAuth'));
@@ -400,21 +402,21 @@ describe('settings-interface.generator', () => {
 
     it('generates North type file (no item settings)', () => {
       runInTmpDir(() => buildTypescriptFile(makeFullDesc(), 'North'));
-      const content = fsSync.readFileSync(path.join(tmpDir, 'shared/model/north-settings.model.ts'), 'utf8');
+      const content = fsSync.readFileSync(path.join(tmpDir, 'shared/model/connector/north-settings.model.ts'), 'utf8');
       assert.ok(content.includes('NorthSettings'));
       assert.ok(!content.includes('NorthItemSettings'));
     });
 
     it('generates Transformer type file', () => {
       runInTmpDir(() => buildTypescriptFile(makeFullDesc(), 'Transformer'));
-      const content = fsSync.readFileSync(path.join(tmpDir, 'shared/model/transformer-settings.model.ts'), 'utf8');
+      const content = fsSync.readFileSync(path.join(tmpDir, 'shared/model/connector/transformer-settings.model.ts'), 'utf8');
       assert.ok(content.includes('TransformerSettings'));
     });
 
     it('writes type = object for interfaces with no attributes', () => {
       const desc: TypeGenerationDescription = { ...emptyDesc(), settingsInterfaces: [{ name: 'EmptySettings', attributes: [] }] };
       runInTmpDir(() => buildTypescriptFile(desc, 'North'));
-      const content = fsSync.readFileSync(path.join(tmpDir, 'shared/model/north-settings.model.ts'), 'utf8');
+      const content = fsSync.readFileSync(path.join(tmpDir, 'shared/model/connector/north-settings.model.ts'), 'utf8');
       assert.ok(content.includes('type EmptySettings = object'));
     });
   });
@@ -449,9 +451,9 @@ describe('settings-interface.generator', () => {
         process.chdir(origCwd);
       }
       // Output files should have been created.
-      assert.ok(fsSync.existsSync(path.join(tmpDir, 'shared/model/south-settings.model.ts')));
-      assert.ok(fsSync.existsSync(path.join(tmpDir, 'shared/model/north-settings.model.ts')));
-      assert.ok(fsSync.existsSync(path.join(tmpDir, 'shared/model/transformer-settings.model.ts')));
+      assert.ok(fsSync.existsSync(path.join(tmpDir, 'shared/model/connector/south-settings.model.ts')));
+      assert.ok(fsSync.existsSync(path.join(tmpDir, 'shared/model/connector/north-settings.model.ts')));
+      assert.ok(fsSync.existsSync(path.join(tmpDir, 'shared/model/connector/transformer-settings.model.ts')));
     });
   });
 
@@ -575,7 +577,7 @@ describe('settings-interface.generator', () => {
       createdTmpCwds.push(tmpCwd);
       await fs.mkdir(realFixtureDir, { recursive: true });
       await fs.writeFile(path.join(realFixtureDir, 'manifest.js'), manifestSource);
-      await fs.mkdir(path.join(tmpCwd, 'shared', 'model'), { recursive: true });
+      await fs.mkdir(path.join(tmpCwd, 'shared', 'model', 'connector'), { recursive: true });
       await fs.mkdir(path.join(tmpCwd, 'src', typeDir, FIXTURE_NAME), { recursive: true });
       // Only the filename matters for `listFiles`'s `.endsWith('manifest.ts')` filter.
       await fs.writeFile(path.join(tmpCwd, 'src', typeDir, FIXTURE_NAME, 'manifest.ts'), '// stub, discovered by name only');
@@ -636,7 +638,7 @@ describe('settings-interface.generator', () => {
         outputDir = process.cwd();
         await generateSettingsInterfacesForConnectorType('South');
       });
-      const content = fsSync.readFileSync(path.join(outputDir, 'shared/model/south-settings.model.ts'), 'utf8');
+      const content = fsSync.readFileSync(path.join(outputDir, 'shared/model/connector/south-settings.model.ts'), 'utf8');
       assert.ok(content.includes('SouthSQLiteSettings'));
       assert.ok(content.includes('SouthSQLiteItemSettings'));
       assert.ok(content.includes('databasePath'));
@@ -666,7 +668,7 @@ describe('settings-interface.generator', () => {
         outputDir = process.cwd();
         await generateSettingsInterfacesForConnectorType('North');
       });
-      const content = fsSync.readFileSync(path.join(outputDir, 'shared/model/north-settings.model.ts'), 'utf8');
+      const content = fsSync.readFileSync(path.join(outputDir, 'shared/model/connector/north-settings.model.ts'), 'utf8');
       assert.ok(content.includes('NorthConsoleSettings'));
       assert.ok(content.includes('verbose'));
     });
@@ -694,7 +696,7 @@ describe('settings-interface.generator', () => {
         outputDir = process.cwd();
         await generateSettingsInterfacesForTransformers();
       });
-      const content = fsSync.readFileSync(path.join(outputDir, 'shared/model/transformer-settings.model.ts'), 'utf8');
+      const content = fsSync.readFileSync(path.join(outputDir, 'shared/model/connector/transformer-settings.model.ts'), 'utf8');
       assert.ok(content.includes('TransformerCsvToMqttSettings'));
       assert.ok(content.includes('topic'));
     });

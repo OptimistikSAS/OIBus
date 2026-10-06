@@ -1,11 +1,13 @@
-import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { CacheMetadata, NorthConnectorMetrics } from '../../../shared/model/engine.model';
+
+import { CacheMetadata, NorthConnectorMetrics } from '../../../shared/model/api/engine.model';
+import { Instant } from '../../../shared/model/common/types';
+import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+
+import NorthConnector from '../../north/north-connector';
 import NorthConnectorMetricsRepository, {
   PersistedNorthConnectorMetrics
 } from '../../repository/metrics/north-connector-metrics.repository';
-import NorthConnector from '../../north/north-connector';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { applyNorthCacheContentSize, applyNorthConnect, applyNorthRunEnd, applyNorthRunStart } from './north-metrics-accumulator';
 
 const METRICS_FLUSH_INTERVAL_MS = 1000;

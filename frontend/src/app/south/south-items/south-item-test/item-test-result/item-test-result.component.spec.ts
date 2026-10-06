@@ -1,9 +1,11 @@
 import { TestBed } from '@angular/core/testing';
+
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { ItemTestResultComponent } from './item-test-result.component';
+import { OIBusAnyContent, OIBusTimeValueContent } from '@oibus/shared/common/content.model';
+
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
-import { OIBusAnyContent, OIBusTimeValueContent } from '@oibus/shared/engine.model';
+import { ItemTestResultComponent } from './item-test-result.component';
 
 describe('ItemTestResultComponent', () => {
   beforeEach(() => {

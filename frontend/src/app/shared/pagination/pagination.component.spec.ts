@@ -1,9 +1,12 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { page } from 'vitest/browser';
+
 import { beforeEach, describe, expect, test } from 'vitest';
-import { Page } from '@oibus/shared/types';
+import { page } from 'vitest/browser';
+
+import { Page } from '@oibus/shared/common/types';
+
 import { createMock, MockObject, stubRoute } from '../../../test/vitest-create-mock';
 import { emptyPage, toPage } from '../test-utils';
 import { PaginationComponent } from './pagination.component';

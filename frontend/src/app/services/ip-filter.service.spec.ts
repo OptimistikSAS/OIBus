@@ -1,10 +1,12 @@
-import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { IpFilterService } from './ip-filter.service';
-import { IPFilterDTO } from '@oibus/shared/ip-filter.model';
+import { IPFilterDTO } from '@oibus/shared/api/ip-filter.model';
+
 import testData from '../../../../backend/src/tests/utils/test-data';
+import { IpFilterService } from './ip-filter.service';
 
 describe('IpFilterService', () => {
   let http: HttpTestingController;

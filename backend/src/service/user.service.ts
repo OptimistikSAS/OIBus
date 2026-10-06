@@ -1,10 +1,11 @@
+import { UserCommandDTO, UserDTO, UserSearchParam } from '../../shared/model/api/user.model';
+import { GetUserInfo, Language, Page, UserInfo } from '../../shared/model/common/types';
+
+import { NotFoundError, OIBusValidationError } from '../model/types';
+import { User } from '../model/user.model';
+import UserRepository from '../repository/config/user.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { userSchema } from '../web-server/controllers/validators/oibus-validation-schema';
-import UserRepository from '../repository/config/user.repository';
-import { User } from '../model/user.model';
-import { GetUserInfo, Language, Page, UserInfo } from '../../shared/model/types';
-import { UserCommandDTO, UserDTO, UserSearchParam } from '../../shared/model/user.model';
-import { NotFoundError, OIBusValidationError } from '../model/types';
 
 export default class UserService {
   constructor(

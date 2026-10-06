@@ -2,10 +2,12 @@
  * Smoke test for routes.ts — calling RegisterRoutes provides coverage for the
  * TSOA-generated route registration code without testing individual controllers.
  */
-import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { before, describe, it } from 'node:test';
+
 import express from 'express';
+
 import { fixTsoaModuleResolution } from '../tests/utils/test-utils';
 
 const nodeRequire = createRequire(import.meta.url);

@@ -1,17 +1,20 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
-import { ReadStream } from 'node:fs';
 import EventEmitter from 'node:events';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, buildNorthEntity } from '../../tests/utils/test-utils';
+import { ReadStream } from 'node:fs';
+import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import type { MqttClient } from 'mqtt';
+
+import type { NorthMQTTSettings } from '../../../shared/model/connector/north-settings.model';
+
+import type { NorthConnectorEntity } from '../../model/north-connector.model';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
-import type { NorthMQTTSettings } from '../../../shared/model/north-settings.model';
-import type { NorthConnectorEntity } from '../../model/north-connector.model';
+import testData from '../../tests/utils/test-data';
+import { buildNorthEntity, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type { OIBusMQTTValue } from '../../transformers/connector-types.model';
-import type { MqttClient } from 'mqtt';
 import type NorthMQTTClass from './north-mqtt';
 
 const nodeRequire = createRequire(import.meta.url);

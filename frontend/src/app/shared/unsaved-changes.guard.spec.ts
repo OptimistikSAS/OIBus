@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
+
 import { Observable, of } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { UnsavedChangesGuard, CanComponentDeactivate } from './unsaved-changes.guard';
+
+import { CanComponentDeactivate, UnsavedChangesGuard } from './unsaved-changes.guard';
 
 describe('UnsavedChangesGuard', () => {
   let guard: UnsavedChangesGuard;

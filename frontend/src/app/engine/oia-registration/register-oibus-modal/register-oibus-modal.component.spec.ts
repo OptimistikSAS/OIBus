@@ -1,18 +1,20 @@
-import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { TestBed } from '@angular/core/testing';
 
-import { RegisterOibusModalComponent } from './register-oibus-modal.component';
-import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
-import { EngineService } from '../../../services/engine.service';
-import { NotificationService } from '../../../shared/notification.service';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { of } from 'rxjs';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { RegistrationSettingsDTO } from '@oibus/shared/api/engine.model';
+
+import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import testData from '../../../../../../backend/src/tests/utils/test-data';
-import { RegistrationSettingsDTO } from '@oibus/shared/engine.model';
+import { EngineService } from '../../../services/engine.service';
+import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
+import { NotificationService } from '../../../shared/notification.service';
+import { RegisterOibusModalComponent } from './register-oibus-modal.component';
 
 describe('RegisterOibusModalComponent', () => {
   let engineService: MockObject<EngineService>;

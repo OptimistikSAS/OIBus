@@ -1,5 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { mock } from 'node:test';
+
 import {
   CacheContentUpdateCommand,
   CacheSearchParam,
@@ -15,9 +16,10 @@ import {
   EngineWebServerCommandDTO,
   FileCacheContent,
   HomeMetrics,
-  OIBusContent,
   OIBusInfo
-} from '../../../../shared/model/engine.model';
+} from '../../../../shared/model/api/engine.model';
+import { OIBusContent } from '../../../../shared/model/common/content.model';
+
 import { EngineSettings } from '../../../model/engine.model';
 /**
  * Create a mock object for OIBus Service

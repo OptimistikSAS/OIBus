@@ -1,20 +1,23 @@
 import { TestBed } from '@angular/core/testing';
-import { Router, ActivatedRoute, RouterEvent } from '@angular/router';
-import { provideRouter } from '@angular/router';
-import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { BreadcrumbComponent } from './breadcrumb.component';
-import { NorthConnectorService } from '../../services/north-connector.service';
-import { SouthConnectorService } from '../../services/south-connector.service';
-import { HistoryQueryService } from '../../services/history-query.service';
-import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
-import { of, throwError, Subject } from 'rxjs';
-import { NorthConnectorDTO, NorthConnectorManifest } from '@oibus/shared/north-connector.model';
-import { SouthConnectorDTO } from '@oibus/shared/south-connector.model';
-import { HistoryQueryDTO } from '@oibus/shared/history-query.model';
-import { ConfigurationWorkflowDTO } from '@oibus/shared/configuration-workflow.model';
+import { ActivatedRoute, provideRouter, Router, RouterEvent } from '@angular/router';
+
+import { of, Subject, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
+
+import { ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
+import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
+import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
+import { SouthConnectorDTO } from '@oibus/shared/api/south-connector.model';
+import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
+
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject, stubRoute } from '../../../test/vitest-create-mock';
+import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
+import { HistoryQueryService } from '../../services/history-query.service';
+import { NorthConnectorService } from '../../services/north-connector.service';
+import { SouthConnectorService } from '../../services/south-connector.service';
+import { BreadcrumbComponent } from './breadcrumb.component';
 
 class BreadcrumbComponentTester {
   readonly fixture = TestBed.createComponent(BreadcrumbComponent);

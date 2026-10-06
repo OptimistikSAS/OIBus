@@ -1,4 +1,4 @@
-import { TransformerManifest } from '../../../../shared/model/transformer.model';
+import { TransformerManifest } from '../../../../shared/model/connector/transformer-manifest.model';
 
 const manifest: TransformerManifest = {
   id: 'time-values-to-modbus',

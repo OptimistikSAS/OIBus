@@ -1,15 +1,17 @@
 import { HttpClient } from '@angular/common/http';
+import { inject, Service } from '@angular/core';
+
 import { BehaviorSubject, Observable, shareReplay } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
-import { inject, Service } from '@angular/core';
+
+import { SouthConnectorItemTestResult } from '@oibus/shared/api/south-connector.model';
 import {
   CustomTransformerCommandDTO,
   InputTemplate,
   TransformerDTO,
   TransformerTestRequest,
   TransformerTestResponse
-} from '@oibus/shared/transformer.model';
-import { SouthConnectorItemTestResult } from '@oibus/shared/south-connector.model';
+} from '@oibus/shared/api/transformer.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on Transformers
