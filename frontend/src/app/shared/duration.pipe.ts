@@ -1,6 +1,7 @@
-import { LOCALE_ID, Pipe, PipeTransform, inject } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
 import { formatNumber } from '@angular/common';
+import { inject, LOCALE_ID, Pipe, PipeTransform } from '@angular/core';
+
+import { TranslateService } from '@ngx-translate/core';
 
 /**
  * Pipe which transforms a DurationInMillis (i.e. a number of milliseconds), supposed to be

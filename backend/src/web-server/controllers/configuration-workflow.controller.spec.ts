@@ -1,16 +1,18 @@
-import { describe, it, before, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { CustomExpressRequest } from '../express';
-import { createMockServices, fixTsoaModuleResolution, reloadModule } from '../../tests/utils/test-utils';
-import ConfigurationWorkflowServiceMock from '../../tests/__mocks__/service/configuration-workflow-service.mock';
-import ConfigurationWorkflowRunServiceMock from '../../tests/__mocks__/service/configuration-workflow-run-service.mock';
-import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
-import testData from '../../tests/utils/test-data';
+import { before, beforeEach, describe, it, mock } from 'node:test';
+
+import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '../../../shared/model/api/configuration-workflow.model';
+import { createPageFromArray } from '../../../shared/model/common/types';
+
 import { ConfigurationWorkflowEntity } from '../../model/configuration-workflow.model';
 import { WorkflowRunEntity } from '../../model/workflow-run.model';
-import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '../../../shared/model/configuration-workflow.model';
-import { createPageFromArray } from '../../../shared/model/types';
+import ConfigurationWorkflowRunServiceMock from '../../tests/__mocks__/service/configuration-workflow-run-service.mock';
+import ConfigurationWorkflowServiceMock from '../../tests/__mocks__/service/configuration-workflow-service.mock';
+import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import testData from '../../tests/utils/test-data';
+import { createMockServices, fixTsoaModuleResolution, reloadModule } from '../../tests/utils/test-utils';
+import { CustomExpressRequest } from '../express';
 import type { ConfigurationWorkflowController as ConfigurationWorkflowControllerShape } from './configuration-workflow.controller';
 
 const nodeRequire = createRequire(import.meta.url);

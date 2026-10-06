@@ -1,4 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
+
 import { BaseEnumPipe } from './base-enum-pipe';
 
 @Pipe({

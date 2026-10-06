@@ -1,12 +1,14 @@
-import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import NorthConnectorMetricsService from './north-connector-metrics.service';
-import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/metrics/north-metrics-repository.mock';
-import NorthConnectorMetricsRepository from '../../repository/metrics/north-connector-metrics.repository';
-import testData from '../../tests/utils/test-data';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
+import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+
 import NorthConnector from '../../north/north-connector';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import NorthConnectorMetricsRepository from '../../repository/metrics/north-connector-metrics.repository';
 import NorthConnectorMock from '../../tests/__mocks__/north-connector.mock';
+import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/metrics/north-metrics-repository.mock';
+import testData from '../../tests/utils/test-data';
+import NorthConnectorMetricsService from './north-connector-metrics.service';
 
 let northConnectorMetricsRepository: NorthMetricsRepositoryMock;
 let northMock: NorthConnectorMock;

@@ -1,23 +1,25 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, assertContains } from '../../tests/utils/test-utils';
-import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import { createMockResponse } from '../../tests/__mocks__/undici.mock';
-import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import type { OIBusContent } from '../../../shared/model/common/content.model';
 import type {
   SouthItemSettings,
   SouthOLEDBItemSettings,
   SouthOLEDBItemSettingsDateTimeFields,
   SouthOLEDBSettings
-} from '../../../shared/model/south-settings.model';
-import type { OIBusContent } from '../../../shared/model/engine.model';
-import type SouthOLEDBClass from './south-oledb';
+} from '../../../shared/model/connector/south-settings.model';
+
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import { createMockResponse } from '../../tests/__mocks__/undici.mock';
+import testData from '../../tests/utils/test-data';
+import { assertContains, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import type SouthOLEDBClass from './south-oledb';
 
 const nodeRequire = createRequire(import.meta.url);
 

@@ -1,28 +1,29 @@
 import { EventEmitter } from 'node:events';
-import { delay, generateIntervals, getErrorMessage, groupItemsByGroup, workUnitLogCtx } from '../service/utils';
+import path from 'node:path';
 
+import { DateTime } from 'luxon';
+
+import { OIBusConnectionTestResult } from '../../shared/model/api/engine.model';
 import {
-  IOT_FAMILY_SOUTH_TYPES,
-  SOUTH_SINGLE_ITEMS,
   SouthConnectorItemQueryResult,
   SouthConnectorItemTestingSettings,
   SouthHistoryRecoveryStrategy
-} from '../../shared/model/south-connector.model';
-import { Instant, Interval } from '../../shared/model/types';
-import { DateTime } from 'luxon';
-import { SouthConfigurationDiscovery, SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from './south-interface';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
+} from '../../shared/model/api/south-connector.model';
 import {
   OIBusAnyContent,
-  OIBusConnectionTestResult,
   OIBusContent,
   OIBusFileContent,
   OIBusRecordListContent,
   OIBusTimeValue,
   OIBusTimeValueContent
-} from '../../shared/model/engine.model';
-import path from 'node:path';
+} from '../../shared/model/common/content.model';
+import { Instant, Interval } from '../../shared/model/common/types';
+import { IOT_FAMILY_SOUTH_TYPES, SOUTH_SINGLE_ITEMS } from '../../shared/model/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+
 import TypedEventEmitter from '../service/typed-event-emitter';
+import { delay, generateIntervals, getErrorMessage, groupItemsByGroup, workUnitLogCtx } from '../service/utils';
+import { SouthConfigurationDiscovery, SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from './south-interface';
 
 /** Events published by a South connector's {@link SouthConnector.metricsEvent}. */
 export interface SouthMetricsEvents {
@@ -49,10 +50,10 @@ export interface SouthMetricsEvents {
   'add-values': { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue | null };
   'add-file': { lastFileRetrieved: string };
 }
+import type { ILogger } from '../model/logger.model';
+import { ScanMode } from '../model/scan-mode.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
 import SouthCacheRepository, { SouthCacheEntry } from '../repository/cache/south-cache.repository';
-import { ScanMode } from '../model/scan-mode.model';
-import type { ILogger } from '../model/logger.model';
 import { loggerService } from '../service/logger/logger.service';
 import { shouldCacheValue } from '../service/south-caching-strategy.service';
 

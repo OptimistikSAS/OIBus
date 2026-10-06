@@ -1,13 +1,16 @@
 import { ReadStream } from 'node:fs';
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import { NodeHttpHandler } from '@smithy/node-http-handler';
+
 import { HeadBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import NorthConnector from '../north-connector';
-import { encryptionService } from '../../service/encryption.service';
-import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { NodeHttpHandler } from '@smithy/node-http-handler';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { NorthAmazonS3Settings } from '../../../shared/model/connector/north-settings.model';
+
 import type { ICacheService } from '../../model/cache.service.model';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { encryptionService } from '../../service/encryption.service';
+import NorthConnector from '../north-connector';
 
 /**
  * Class NorthAmazonS3 - sends files to Amazon AWS S3

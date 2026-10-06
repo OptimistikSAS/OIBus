@@ -1,11 +1,13 @@
-import { describe, it, before, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { RegistrationSettingsCommandDTO } from '../../../shared/model/engine.model';
-import { CustomExpressRequest } from '../express';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
+import { before, beforeEach, describe, it, mock } from 'node:test';
+
+import { RegistrationSettingsCommandDTO } from '../../../shared/model/api/engine.model';
+
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
+import testData from '../../tests/utils/test-data';
+import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { CustomExpressRequest } from '../express';
 import type { OIAnalyticsRegistrationController as OIAnalyticsRegistrationControllerShape } from './oianalytics-registration.controller';
 
 const nodeRequire = createRequire(import.meta.url);

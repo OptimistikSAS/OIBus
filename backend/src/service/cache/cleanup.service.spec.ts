@@ -1,22 +1,24 @@
-import { describe, it, beforeEach, afterEach, mock, type Mock } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { afterEach, beforeEach, describe, it, type Mock, mock } from 'node:test';
+
 import { DateTime } from 'luxon';
 
+import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+
+import { HistoryQueryEntity } from '../../model/histor-query.model';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import DataStreamEngineMock from '../../tests/__mocks__/data-stream-engine.mock';
+import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
+import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
+import OianalyticsCommandRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-command-repository.mock';
+import OianalyticsMessageRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-message-repository.mock';
+import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
 import LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { HistoryQueryEntity } from '../../model/histor-query.model';
-import { SouthSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
 import CleanupService from './cleanup.service';
-import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
-import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
-import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
-import DataStreamEngineMock from '../../tests/__mocks__/data-stream-engine.mock';
-import OianalyticsMessageRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-message-repository.mock';
-import OianalyticsCommandRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-command-repository.mock';
 
 describe('CleanupService', () => {
   let service: CleanupService;

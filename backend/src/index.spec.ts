@@ -3,11 +3,12 @@
  * All external services and the filesystem are mocked so the test process
  * never starts real databases, HTTP servers, or connectivity.
  */
-import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { mockModule, reloadModule, flushPromises } from './tests/utils/test-utils';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
 import LoggerMock from './tests/__mocks__/service/logger/logger.mock';
+import { flushPromises, mockModule, reloadModule } from './tests/utils/test-utils';
 
 const nodeRequire = createRequire(import.meta.url);
 

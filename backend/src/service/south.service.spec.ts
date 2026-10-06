@@ -1,44 +1,49 @@
-import { describe, it, before, beforeEach, afterEach, mock, type Mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
 
-import testData from '../tests/utils/test-data';
-import { mockModule, reloadModule, seq } from '../tests/utils/test-utils';
-import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
+import { ConfigurationWorkflowCommandDTO } from '../../shared/model/api/configuration-workflow.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorItemCommandDTO,
+  SouthItemGroupCommandDTO
+} from '../../shared/model/api/south-connector.model';
+import { OIBusContent } from '../../shared/model/common/content.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+
+import {
+  SouthConnectorEntity,
+  SouthConnectorEntityLight,
+  SouthConnectorItemEntity,
+  SouthItemGroupEntity
+} from '../model/south-connector.model';
+import { NotFoundError, OIBusValidationError } from '../model/types';
+import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
+import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
+import OIAnalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
+import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
+import SouthItemGroupRepositoryMock from '../tests/__mocks__/repository/config/south-item-group-repository.mock';
 import LogRepositoryMock from '../tests/__mocks__/repository/log/log-repository.mock';
 import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/south-metrics-repository.mock';
-import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import OIAnalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
-import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
-import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
-import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
-import SouthItemGroupRepositoryMock from '../tests/__mocks__/repository/config/south-item-group-repository.mock';
-import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
+import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
+import testData from '../tests/utils/test-data';
+import { mockModule, reloadModule, seq } from '../tests/utils/test-utils';
+import { toScanModeDTO } from './scan-mode.service';
 import type SouthServiceType from './south.service';
 import type {
+  copySouthItemCommandToSouthItemEntity as copySouthItemCommandToSouthItemEntityType,
   southManifestList as southManifestListType,
   toSouthConnectorDTO as toSouthConnectorDTOType,
   toSouthConnectorItemDTO as toSouthConnectorItemDTOType,
   toSouthConnectorLightDTO as toSouthConnectorLightDTOType,
-  toSouthItemGroupDTO as toSouthItemGroupDTOType,
-  copySouthItemCommandToSouthItemEntity as copySouthItemCommandToSouthItemEntityType
+  toSouthItemGroupDTO as toSouthItemGroupDTOType
 } from './south.service';
-import {
-  SouthConnectorEntityLight,
-  SouthItemGroupEntity,
-  SouthConnectorItemEntity,
-  SouthConnectorEntity
-} from '../model/south-connector.model';
-import { SouthConnectorCommandDTO, SouthItemGroupCommandDTO, SouthConnectorItemCommandDTO } from '../../shared/model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import { NotFoundError, OIBusValidationError } from '../model/types';
-import { toScanModeDTO } from './scan-mode.service';
-import { OIBusContent } from '../../shared/model/engine.model';
-import { ConfigurationWorkflowCommandDTO } from '../../shared/model/configuration-workflow.model';
 
 const nodeRequire = createRequire(import.meta.url);
 

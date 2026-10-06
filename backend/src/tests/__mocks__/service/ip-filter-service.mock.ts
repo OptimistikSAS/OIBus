@@ -1,7 +1,9 @@
 import { EventEmitter } from 'node:events';
 import { mock } from 'node:test';
+
+import { IPFilterCommandDTO } from '../../../../shared/model/api/ip-filter.model';
+
 import { IPFilter } from '../../../model/ip-filter.model';
-import { IPFilterCommandDTO } from '../../../../shared/model/ip-filter.model';
 
 /**
  * Create a mock object for IP Filter Service

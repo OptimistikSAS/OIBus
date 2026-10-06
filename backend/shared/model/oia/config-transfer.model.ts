@@ -1,4 +1,4 @@
-import { Instant } from './types';
+import { Instant } from '../common/types';
 import { OIBusFullConfigurationCommandDTO, OIBusHistoryQueriesCommandDTO } from './oianalytics-configuration.model';
 
 /**

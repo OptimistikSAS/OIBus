@@ -1,15 +1,17 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import { ReadStream } from 'node:fs';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, buildNorthEntity } from '../../tests/utils/test-utils';
+import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import type { CacheMetadata } from '../../../shared/model/api/engine.model';
+import type { NorthAzureBlobSettings } from '../../../shared/model/connector/north-settings.model';
+
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import type { NorthAzureBlobSettings } from '../../../shared/model/north-settings.model';
-import type { CacheMetadata } from '../../../shared/model/engine.model';
+import testData from '../../tests/utils/test-data';
+import { buildNorthEntity, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type NorthAzureBlobClass from './north-azure-blob';
 
 const nodeRequire = createRequire(import.meta.url);

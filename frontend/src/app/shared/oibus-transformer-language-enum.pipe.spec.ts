@@ -1,5 +1,7 @@
-import { describe, expect, test } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+
+import { describe, expect, test } from 'vitest';
+
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { OIBusTransformerLanguageEnumPipe } from './oibus-transformer-language-enum.pipe';
 

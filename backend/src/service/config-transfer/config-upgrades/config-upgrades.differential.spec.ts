@@ -1,19 +1,22 @@
-import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { after, before, describe, it } from 'node:test';
+
 import Database from 'better-sqlite3';
+
+import { ConfigExportDTO, OIBusConfigurationDTO } from '../../../../shared/model/oia/config-transfer.model';
+
 import { migrateEntities } from '../../../migration/migration-service';
-import { loadSqliteDump } from '../../../tests/utils/sqlite-dump';
 import {
   CONFIG_TRANSFER_FIXTURES_DIR,
   exportConfigDatabase,
   importedPart
 } from '../../../tests/config-transfer-fixtures/config-transfer-fixture';
-import { getUpgradesBetween } from './registry';
-import { JsonObject } from './config-upgrade';
+import { loadSqliteDump } from '../../../tests/utils/sqlite-dump';
 import { CONFIG_SCHEMA } from '../config-schema';
-import { ConfigExportDTO, OIBusConfigurationDTO } from '../../../../shared/model/config-transfer.model';
+import { JsonObject } from './config-upgrade';
+import { getUpgradesBetween } from './registry';
 
 const fixtureVersions = fs
   .readdirSync(CONFIG_TRANSFER_FIXTURES_DIR, { withFileTypes: true })

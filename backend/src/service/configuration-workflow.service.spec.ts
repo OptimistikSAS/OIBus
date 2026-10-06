@@ -1,16 +1,17 @@
-import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
-import ConfigurationWorkflowService from './configuration-workflow.service';
-import ConfigurationWorkflowRepositoryMock from '../tests/__mocks__/repository/config/configuration-workflow-repository.mock';
-import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
-import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import { ConfigurationWorkflowCommandDTO } from '../../shared/model/api/configuration-workflow.model';
+
+import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
+import { NotFoundError, OIBusValidationError } from '../model/types';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
+import ConfigurationWorkflowRepositoryMock from '../tests/__mocks__/repository/config/configuration-workflow-repository.mock';
+import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
 import OIAnalyticsRegistrationServiceMock from '../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 import testData from '../tests/utils/test-data';
-import { ConfigurationWorkflowEntity } from '../model/configuration-workflow.model';
-import { ConfigurationWorkflowCommandDTO } from '../../shared/model/configuration-workflow.model';
-import { NotFoundError, OIBusValidationError } from '../model/types';
+import ConfigurationWorkflowService from './configuration-workflow.service';
 
 let configurationWorkflowRepository: ConfigurationWorkflowRepositoryMock;
 let southConnectorRepository: SouthConnectorRepositoryMock;

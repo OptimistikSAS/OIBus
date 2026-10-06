@@ -1,9 +1,10 @@
-import { BaseEntity, Instant } from './types';
-import { SouthItemSettings } from '../../shared/model/south-settings.model';
-import { SouthConnectorItemEntity } from './south-connector.model';
+import { AuthTokenDuration } from '../../shared/model/api/engine.model';
+import { LogLevel } from '../../shared/model/api/logs.model';
+import { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
+
 import { HistoryQueryItemEntity } from './histor-query.model';
-import { LogLevel } from '../../shared/model/logs.model';
-import { AuthTokenDuration } from '../../shared/model/engine.model';
+import { SouthConnectorItemEntity } from './south-connector.model';
+import { BaseEntity, Instant } from './types';
 
 export interface EngineSettings extends BaseEntity {
   version: string;

@@ -1,5 +1,3 @@
-import { OIBusObjectAttribute } from './form.model';
-
 /**
  * Represents an instant in time as an ISO 8601 string.
  * @example "2023-10-31T12:34:56.789Z"
@@ -318,37 +316,3 @@ export interface FileSerializationSettings extends BaseSerializationSettings {
  * Union type representing all possible serialization settings.
  */
 export type SerializationSettings = CSVSerializationSettings | FileSerializationSettings;
-
-/**
- * Manifest for a connector, describing its properties and configuration.
- */
-export interface ConnectorManifest {
-  /**
-   * The unique identifier of the connector.
-   * @example "console"
-   */
-  id: string;
-
-  /**
-   * The category of the connector.
-   * @example "debug"
-   */
-  category: string;
-
-  /**
-   * The name of the connector.
-   * @example "Debug Connector"
-   */
-  name: string;
-
-  /**
-   * A description of the connector.
-   * @example "Connector for debugging"
-   */
-  description: string;
-
-  /**
-   * The settings schema for the connector.
-   */
-  settings: OIBusObjectAttribute;
-}

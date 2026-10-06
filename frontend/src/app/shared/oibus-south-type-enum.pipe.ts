@@ -1,6 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
+
+import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
+
 import { BaseEnumPipe } from './base-enum-pipe';
-import { OIBusSouthType } from '@oibus/shared/south-connector.model';
 
 @Pipe({
   name: 'oIBusSouthTypeEnum',

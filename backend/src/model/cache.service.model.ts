@@ -1,5 +1,6 @@
 import type { ReadStream } from 'node:fs';
 import type { Readable } from 'node:stream';
+
 import type {
   CacheContentUpdateCommand,
   CacheMetadata,
@@ -7,10 +8,11 @@ import type {
   CacheSearchResult,
   DataFolderType,
   FileCacheContent
-} from '../../shared/model/engine.model';
-import type { CacheSize } from './engine.model';
+} from '../../shared/model/api/engine.model';
+import type { ScopeType } from '../../shared/model/api/logs.model';
+
 import type TypedEventEmitter from '../service/typed-event-emitter';
-import type { ScopeType } from '../../shared/model/logs.model';
+import type { CacheSize } from './engine.model';
 
 /** Events published by a cache service's {@link ICacheService.cacheSizeEventEmitter}. */
 export interface CacheSizeEvents {

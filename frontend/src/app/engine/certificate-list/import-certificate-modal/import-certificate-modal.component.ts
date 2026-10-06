@@ -1,12 +1,15 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { NgbActiveModal, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable } from 'rxjs';
-import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
+
+import { NgbActiveModal, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { CertificateDTO } from '@oibus/shared/certificate.model';
+import { Observable } from 'rxjs';
+
+import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+
 import { CertificateService } from '../../../services/certificate.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
+import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1 MB

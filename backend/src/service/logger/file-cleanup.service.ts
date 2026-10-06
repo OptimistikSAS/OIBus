@@ -1,8 +1,8 @@
-import path from 'node:path';
 import fs from 'node:fs/promises';
+import path from 'node:path';
 
-import { filesExists } from '../utils';
 import type { ILogger } from '../../model/logger.model';
+import { filesExists } from '../utils';
 
 const CLEAN_UP_INTERVAL = 24 * 3600 * 1000; // One day
 

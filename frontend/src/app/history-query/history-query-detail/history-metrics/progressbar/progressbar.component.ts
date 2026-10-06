@@ -1,5 +1,6 @@
 import { PercentPipe } from '@angular/common';
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+
 import { NgbProgressbarModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({

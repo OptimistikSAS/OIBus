@@ -1,19 +1,21 @@
 import { S7Endpoint, S7ItemGroup } from '@st-one-io/nodes7';
-
-import SouthConnector from '../south-connector';
-import { SouthDirectQuery } from '../south-interface';
 import { DateTime } from 'luxon';
+
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
 import {
   SouthItemSettings,
   SouthS7ItemSettings,
   SouthS7Settings,
   SouthS7SettingsConnectionType
-} from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+} from '../../../shared/model/connector/south-settings.model';
+
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { Instant } from '../../model/types';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import SouthConnector from '../south-connector';
+import { SouthDirectQuery } from '../south-interface';
 
 const CONNECTION_TYPE_SRC_TSAP: Record<SouthS7SettingsConnectionType, number> = {
   PG: 0x0100,

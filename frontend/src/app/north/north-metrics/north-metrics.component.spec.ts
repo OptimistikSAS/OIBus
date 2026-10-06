@@ -1,16 +1,19 @@
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { beforeEach, describe, test } from 'vitest';
+import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
-import { NorthMetricsComponent } from './north-metrics.component';
-import { NorthConnectorService } from '../../services/north-connector.service';
-import { NotificationService } from '../../shared/notification.service';
+import { beforeEach, describe, test } from 'vitest';
+
+import { NorthConnectorMetrics } from '@oibus/shared/api/engine.model';
+import { NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
+import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
+
+import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock } from '../../../test/vitest-create-mock';
-import testData from '../../../../../backend/src/tests/utils/test-data';
-import { NorthConnectorLightDTO, NorthConnectorManifest } from '@oibus/shared/north-connector.model';
-import { NorthConnectorMetrics } from '@oibus/shared/engine.model';
+import { NorthConnectorService } from '../../services/north-connector.service';
+import { NotificationService } from '../../shared/notification.service';
+import { NorthMetricsComponent } from './north-metrics.component';
 
 describe('NorthMetricsComponent', () => {
   beforeEach(() => {

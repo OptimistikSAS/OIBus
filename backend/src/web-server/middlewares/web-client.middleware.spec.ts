@@ -1,6 +1,7 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
 import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 
 const nodeRequire = createRequire(import.meta.url);

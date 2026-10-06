@@ -1,16 +1,19 @@
 import { TestBed } from '@angular/core/testing';
-import { AppComponent } from './app.component';
 import { provideRouter } from '@angular/router';
-import { provideI18nTesting } from '../i18n/mock-i18n';
-import { WindowService } from './shared/window.service';
-import { CurrentUserService } from './shared/current-user.service';
-import { UserDTO } from '@oibus/shared/user.model';
+
 import { of } from 'rxjs';
-import { EngineService } from './services/engine.service';
-import { OIBusInfo } from '@oibus/shared/engine.model';
 import { beforeEach, describe, expect, test } from 'vitest';
-import { createMock, MockObject } from '../test/vitest-create-mock';
 import { page } from 'vitest/browser';
+
+import { OIBusInfo } from '@oibus/shared/api/engine.model';
+import { UserDTO } from '@oibus/shared/api/user.model';
+
+import { provideI18nTesting } from '../i18n/mock-i18n';
+import { createMock, MockObject } from '../test/vitest-create-mock';
+import { AppComponent } from './app.component';
+import { EngineService } from './services/engine.service';
+import { CurrentUserService } from './shared/current-user.service';
+import { WindowService } from './shared/window.service';
 
 class AppComponentTester {
   readonly fixture = TestBed.createComponent(AppComponent);

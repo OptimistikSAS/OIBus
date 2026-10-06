@@ -1,11 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, CanActivateChildFn, provideRouter, RouterStateSnapshot, UrlTree } from '@angular/router';
+
 import { firstValueFrom, Observable } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { authenticationGuard, RequestedUrlService } from './authentication.guard';
-import { WindowService } from '../shared/window.service';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
+import { WindowService } from '../shared/window.service';
+import { authenticationGuard, RequestedUrlService } from './authentication.guard';
 
 describe('authenticationGuard', () => {
   let guard: CanActivateChildFn;

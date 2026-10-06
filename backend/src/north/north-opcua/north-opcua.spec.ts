@@ -1,18 +1,21 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import { ReadStream } from 'node:fs';
+import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import type { ClientSession } from 'node-opcua';
+import { AttributeIds, DataType, MessageSecurityMode, SecurityPolicy, StatusCodes, UserTokenType } from 'node-opcua';
+
+import type { NorthOPCUASettings } from '../../../shared/model/connector/north-settings.model';
+
+import type { NorthConnectorEntity } from '../../model/north-connector.model';
 import nodeOPCUAMock from '../../tests/__mocks__/node-opcua.mock';
-import { DataType, StatusCodes, SecurityPolicy, AttributeIds, MessageSecurityMode, UserTokenType } from 'node-opcua';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, buildNorthEntity, seq } from '../../tests/utils/test-utils';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
-import type { NorthOPCUASettings } from '../../../shared/model/north-settings.model';
-import type { NorthConnectorEntity } from '../../model/north-connector.model';
+import testData from '../../tests/utils/test-data';
+import { buildNorthEntity, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
 import type { OIBusOPCUAValue } from '../../transformers/connector-types.model';
-import type { ClientSession } from 'node-opcua';
 import type NorthOPCUAClass from './north-opcua';
 
 const nodeRequire = createRequire(import.meta.url);

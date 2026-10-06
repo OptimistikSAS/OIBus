@@ -1,28 +1,29 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import fs from 'node:fs/promises';
-import testData from '../tests/utils/test-data';
-import { mockModule, reloadModule, assertContains } from '../tests/utils/test-utils';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import type { OIBusContent } from '../../shared/model/common/content.model';
+import type { Instant } from '../../shared/model/common/types';
+import type { NorthFileWriterSettings, NorthSettings } from '../../shared/model/connector/north-settings.model';
+import type { SouthItemSettings, SouthModbusSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+
 import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
-import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import type { HistoryQueryEntity, HistoryQueryItemEntity } from '../model/histor-query.model';
+import type { Transformer } from '../model/transformer.model';
 import type SouthCacheRepository from '../repository/cache/south-cache.repository';
 import type CertificateRepository from '../repository/config/certificate.repository';
 import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import type CacheServiceType from '../service/cache/cache.service';
-import type { NorthFileWriterSettings, NorthSettings } from '../../shared/model/north-settings.model';
-import type { SouthItemSettings, SouthModbusSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import type { OIBusContent } from '../../shared/model/engine.model';
-import type { Instant } from '../../shared/model/types';
-import type { HistoryQueryItemEntity } from '../model/histor-query.model';
-import type { HistoryQueryEntity } from '../model/histor-query.model';
-import type { Transformer } from '../model/transformer.model';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import testData from '../tests/utils/test-data';
+import { assertContains, mockModule, reloadModule } from '../tests/utils/test-utils';
 import type {
   buildHistoryQuery as BuildHistoryQueryFn,
-  initHistoryQueryCache as InitHistoryQueryCacheFn,
   createHistoryQueryOrchestrator as CreateHistoryQueryOrchestratorFn,
-  deleteHistoryQueryCache as DeleteHistoryQueryCacheFn
+  deleteHistoryQueryCache as DeleteHistoryQueryCacheFn,
+  initHistoryQueryCache as InitHistoryQueryCacheFn
 } from './history-query-factory';
 
 const nodeRequire = createRequire(import.meta.url);

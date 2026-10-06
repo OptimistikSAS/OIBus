@@ -1,15 +1,19 @@
-import { Component, NgZone, effect, inject, input, linkedSignal, ChangeDetectionStrategy } from '@angular/core';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { SouthConnectorLightDTO, SouthConnectorManifest } from '@oibus/shared/south-connector.model';
-import { SouthConnectorMetrics } from '@oibus/shared/engine.model';
 import { JsonPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, effect, inject, input, linkedSignal, NgZone } from '@angular/core';
+import { Router } from '@angular/router';
+
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+
+import { SouthConnectorMetrics } from '@oibus/shared/api/engine.model';
+import { SouthConnectorLightDTO } from '@oibus/shared/api/south-connector.model';
+import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+
+import { SouthConnectorService } from '../../../services/south-connector.service';
+import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { DurationPipe } from '../../../shared/duration.pipe';
 import { NotificationService } from '../../../shared/notification.service';
-import { SouthConnectorService } from '../../../services/south-connector.service';
-import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
-import { Router } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'oib-south-metrics',

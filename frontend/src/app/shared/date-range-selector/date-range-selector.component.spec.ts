@@ -1,14 +1,14 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ReactiveFormsModule, FormControl, Validators, FormBuilder } from '@angular/forms';
-import { TranslatePipe, TranslateDirective, provideTranslateService } from '@ngx-translate/core';
-import { Component, Input, Directive, Pipe, PipeTransform, ChangeDetectionStrategy } from '@angular/core';
-import { By } from '@angular/platform-browser';
-import { DateTime } from 'luxon';
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-
-import { DateRangeSelectorComponent, DateRange } from './date-range-selector.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, Directive, Input, Pipe, PipeTransform } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { By } from '@angular/platform-browser';
+
+import { provideTranslateService, TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { DateTime } from 'luxon';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+
+import { DateRange, DateRangeSelectorComponent } from './date-range-selector.component';
 
 @Pipe({ name: 'translate', standalone: true })
 class MockTranslatePipe implements PipeTransform {

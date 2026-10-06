@@ -1,13 +1,17 @@
-import path from 'node:path';
 import { ReadStream } from 'node:fs';
+import path from 'node:path';
 import { Readable } from 'node:stream';
-
-import NorthConnector from '../north-connector';
-import { NorthRESTSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { URL } from 'node:url';
+
+import { UndiciHeaders } from 'undici/types/dispatcher';
+
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { NorthRESTSettings } from '../../../shared/model/connector/north-settings.model';
+
+import type { ICacheService } from '../../model/cache.service.model';
 import { OIBusError } from '../../model/engine.model';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { encryptionService } from '../../service/encryption.service';
 import {
   HTTPRequest,
   ReqAuthOptions,
@@ -16,9 +20,7 @@ import {
   ReqResponse,
   retryableHttpStatusCodes
 } from '../../service/http-request.utils';
-import type { ICacheService } from '../../model/cache.service.model';
-import { encryptionService } from '../../service/encryption.service';
-import { UndiciHeaders } from 'undici/types/dispatcher';
+import NorthConnector from '../north-connector';
 
 async function* multipartStream(boundary: string, filename: string, dataStream: AsyncIterable<Buffer>) {
   yield Buffer.from(

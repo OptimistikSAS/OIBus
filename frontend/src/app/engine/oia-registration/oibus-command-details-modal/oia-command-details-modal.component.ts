@@ -1,12 +1,14 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-
-import { TranslateDirective } from '@ngx-translate/core';
 import { JsonPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from '@ngx-translate/core';
+
+import { OIBusCommandDTO } from '@oibus/shared/oia/command.model';
+
+import { BooleanEnumPipe } from '../../../shared/boolean-enum.pipe';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { OibusCommandTypeEnumPipe } from '../../../shared/oibus-command-type-enum.pipe';
-import { BooleanEnumPipe } from '../../../shared/boolean-enum.pipe';
-import { OIBusCommandDTO } from '@oibus/shared/command.model';
 
 @Component({
   selector: 'oib-oia-command-details-modal',

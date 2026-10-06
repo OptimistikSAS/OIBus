@@ -3,18 +3,19 @@
  * That file lives outside `src/` (the `src/**\/*.spec.ts` test glob does not reach it),
  * so its runtime exports are exercised from a co-located spec here instead.
  */
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+
 import {
+  AGGREGATES,
+  ALL_CSV_CHARACTERS,
   createPageFromArray,
+  DATE_TIME_TYPES,
   DEFAULT_TZ,
   LANGUAGES,
-  DATE_TIME_TYPES,
-  AGGREGATES,
   RESAMPLING,
-  ALL_CSV_CHARACTERS,
   SERIALIZATION_TYPES
-} from '../../shared/model/types';
+} from '../../shared/model/common/types';
 
 describe('createPageFromArray', () => {
   it('returns the first page with correct metadata when there are multiple pages', () => {

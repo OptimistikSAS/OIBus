@@ -1,18 +1,21 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import path from 'node:path';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule } from '../../tests/utils/test-utils';
-import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import type { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../shared/model/south-settings.model';
-import type { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import { DateTime } from 'luxon';
+
+import type { SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
+import type { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../shared/model/connector/south-settings.model';
+
 import type { SouthConnectorEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthFolderScannerClass from './south-folder-scanner';
-import { DateTime } from 'luxon';
 
 const nodeRequire = createRequire(import.meta.url);
 

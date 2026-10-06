@@ -1,14 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+
 import { describe, expect, test } from 'vitest';
 
-import { HistoryMetricsComponent } from './history-metrics.component';
-import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { HistoryQueryMetrics } from '@oibus/shared/api/engine.model';
+import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
+import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
+import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+
 import testData from '../../../../../../backend/src/tests/utils/test-data';
-import { HistoryQueryDTO } from '@oibus/shared/history-query.model';
-import { HistoryQueryMetrics } from '@oibus/shared/engine.model';
-import { NorthConnectorManifest } from '@oibus/shared/north-connector.model';
-import { SouthConnectorManifest } from '@oibus/shared/south-connector.model';
+import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { HistoryMetricsComponent } from './history-metrics.component';
 
 describe('HistoryMetricsComponent', () => {
   test('should create without error', () => {

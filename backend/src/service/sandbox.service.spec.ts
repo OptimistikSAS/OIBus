@@ -1,11 +1,12 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import type { CacheMetadataSource } from '../model/engine.model';
+import type { CustomTransformer } from '../model/transformer.model';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import { mockModule, reloadModule } from '../tests/utils/test-utils';
-import type { CustomTransformer } from '../model/transformer.model';
-import type { CacheMetadataSource } from '../model/engine.model';
 import type SandboxServiceClass from './sandbox.service';
 // Real, unmocked singleton export - every other suite in this file only ever exercises `SandboxService`
 // (the class) via a reloaded module with `fs`/`./utils` mocked, so the real `sandboxService` singleton

@@ -1,19 +1,7 @@
-import CertificateRepository from '../repository/config/certificate.repository';
-import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
-import CacheService from '../service/cache/cache.service';
-import type { ICacheService } from '../model/cache.service.model';
-import NorthAmazonS3 from './north-amazon-s3/north-amazon-s3';
-import { NorthConnectorEntity } from '../model/north-connector.model';
-import NorthAzureBlob from './north-azure-blob/north-azure-blob';
-import NorthAzureDataExplorer from './north-azure-data-explorer/north-azure-data-explorer';
-import NorthConsole from './north-console/north-console';
-import NorthFileWriter from './north-file-writer/north-file-writer';
-import NorthModbus from './north-modbus/north-modbus';
-import NorthMQTT from './north-mqtt/north-mqtt';
-import NorthOIAnalytics from './north-oianalytics/north-oianalytics';
-import NorthREST from './north-rest/north-rest';
-import NorthOPCUA from './north-opcua/north-opcua';
-import NorthSFTP from './north-sftp/north-sftp';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+import { OIBusNorthType } from '../../shared/model/connector/north-manifest.model';
 import {
   NorthAmazonS3Settings,
   NorthAzureBlobSettings,
@@ -27,14 +15,28 @@ import {
   NorthRESTSettings,
   NorthSettings,
   NorthSFTPSettings
-} from '../../shared/model/north-settings.model';
-import NorthConnector from './north-connector';
-import { createFolder } from '../service/utils';
-import path from 'node:path';
-import fs from 'node:fs/promises';
-import { OIBusNorthType } from '../../shared/model/north-connector.model';
+} from '../../shared/model/connector/north-settings.model';
+
+import type { ICacheService } from '../model/cache.service.model';
 import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
+import { NorthConnectorEntity } from '../model/north-connector.model';
+import CertificateRepository from '../repository/config/certificate.repository';
+import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import CacheService from '../service/cache/cache.service';
 import { loggerService } from '../service/logger/logger.service';
+import { createFolder } from '../service/utils';
+import NorthAmazonS3 from './north-amazon-s3/north-amazon-s3';
+import NorthAzureBlob from './north-azure-blob/north-azure-blob';
+import NorthAzureDataExplorer from './north-azure-data-explorer/north-azure-data-explorer';
+import NorthConnector from './north-connector';
+import NorthConsole from './north-console/north-console';
+import NorthFileWriter from './north-file-writer/north-file-writer';
+import NorthModbus from './north-modbus/north-modbus';
+import NorthMQTT from './north-mqtt/north-mqtt';
+import NorthOIAnalytics from './north-oianalytics/north-oianalytics';
+import NorthOPCUA from './north-opcua/north-opcua';
+import NorthREST from './north-rest/north-rest';
+import NorthSFTP from './north-sftp/north-sftp';
 
 export const buildNorth = (
   settings: NorthConnectorEntity<NorthSettings>,

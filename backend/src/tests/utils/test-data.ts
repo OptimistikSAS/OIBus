@@ -1,15 +1,4 @@
-import { ScanMode } from '../../model/scan-mode.model';
-import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
-import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../shared/model/north-connector.model';
-import {
-  SouthConnectorCommandDTO,
-  SouthConnectorItemCommandDTO,
-  SouthConnectorItemTestingSettings,
-  SouthConnectorManifest
-} from '../../../shared/model/south-connector.model';
-import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
-import { IPFilter } from '../../model/ip-filter.model';
-import { EngineSettings } from '../../model/engine.model';
+import { CertificateCommandDTO } from '../../../shared/model/api/certificate.model';
 import {
   EngineLoggerCommandDTO,
   EngineMetrics,
@@ -19,27 +8,40 @@ import {
   EngineWebServerCommandDTO,
   HistoryQueryMetrics,
   NorthConnectorMetrics,
-  OIBusContent,
   OIBusInfo,
   SouthConnectorMetrics
-} from '../../../shared/model/engine.model';
-import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
-import { OIBusCommand } from '../../model/oianalytics-command.model';
-import { OIAnalyticsFetchCommandDTO } from '../../service/oia/oianalytics.model';
-import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
-import { SouthItemSettings, SouthMSSQLItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { HistoryQueryEntity, HistoryQueryEntityLight } from '../../model/histor-query.model';
-import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/history-query.model';
-import { User } from '../../model/user.model';
+} from '../../../shared/model/api/engine.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/api/history-query.model';
+import { IPFilterCommandDTO } from '../../../shared/model/api/ip-filter.model';
+import { NorthConnectorCommandDTO } from '../../../shared/model/api/north-connector.model';
+import { ScanModeCommandDTO } from '../../../shared/model/api/scan-mode.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemTestingSettings
+} from '../../../shared/model/api/south-connector.model';
+import { CustomTransformerCommandDTO, CustomTransformerDTO } from '../../../shared/model/api/transformer.model';
+import { UserCommandDTO } from '../../../shared/model/api/user.model';
+import { OIBusContent } from '../../../shared/model/common/content.model';
+import { NorthConnectorManifest } from '../../../shared/model/connector/north-manifest.model';
+import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+import { SouthConnectorManifest } from '../../../shared/model/connector/south-manifest.model';
+import { SouthItemSettings, SouthMSSQLItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+
 import { Certificate } from '../../model/certificate.model';
+import { EngineSettings } from '../../model/engine.model';
+import { HistoryQueryEntity, HistoryQueryEntityLight } from '../../model/histor-query.model';
+import { IPFilter } from '../../model/ip-filter.model';
 import { OIBusLog } from '../../model/logs.model';
-import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
-import { CustomTransformerCommandDTO, CustomTransformerDTO } from '../../../shared/model/transformer.model';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { OIBusCommand } from '../../model/oianalytics-command.model';
+import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
+import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
+import { ScanMode } from '../../model/scan-mode.model';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 import { Transformer } from '../../model/transformer.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { UserCommandDTO } from '../../../shared/model/user.model';
+import { User } from '../../model/user.model';
+import { OIAnalyticsFetchCommandDTO } from '../../service/oia/oianalytics.model';
 
 const constants = {
   dates: {

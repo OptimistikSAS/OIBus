@@ -1,16 +1,18 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import testData from '../tests/utils/test-data';
-import { mockModule, reloadModule, flushPromises } from '../tests/utils/test-utils';
-import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
-import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
-import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import type { CacheContentUpdateCommand } from '../../shared/model/api/engine.model';
+import type { NorthSettings } from '../../shared/model/connector/north-settings.model';
+import type { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+
 import type NorthConnector from '../north/north-connector';
-import type { NorthSettings } from '../../shared/model/north-settings.model';
 import type SouthConnector from '../south/south-connector';
-import type { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import type { CacheContentUpdateCommand } from '../../shared/model/engine.model';
+import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
+import testData from '../tests/utils/test-data';
+import { flushPromises, mockModule, reloadModule } from '../tests/utils/test-utils';
 import type HistoryQueryClass from './history-query';
 
 const nodeRequire = createRequire(import.meta.url);

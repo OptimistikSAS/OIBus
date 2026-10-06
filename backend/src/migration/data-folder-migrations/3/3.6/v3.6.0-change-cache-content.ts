@@ -1,8 +1,10 @@
-import { Knex } from 'knex';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { createFolder, generateRandomId, getCommandLineArguments } from '../../../../service/utils';
+
+import { Knex } from 'knex';
 import { DateTime } from 'luxon';
+
+import { createFolder, generateRandomId, getCommandLineArguments } from '../../../../service/utils';
 
 const { configFile } = getCommandLineArguments();
 

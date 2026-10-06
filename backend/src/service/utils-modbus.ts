@@ -1,11 +1,13 @@
+import net from 'node:net';
+
+import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
+
+import { NorthModbusSettings } from '../../shared/model/connector/north-settings.model';
 import {
   SouthModbusItemSettingsDataDataType,
   SouthModbusSettings,
   SouthModbusSettingsEndianness
-} from '../../shared/model/south-settings.model';
-import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
-import net from 'node:net';
-import { NorthModbusSettings } from '../../shared/model/north-settings.model';
+} from '../../shared/model/connector/south-settings.model';
 
 export const parseAddress = (address: string): number => (/^0x[0-9a-f]+$/i.test(address) ? parseInt(address, 16) : parseInt(address, 10));
 

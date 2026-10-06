@@ -1,16 +1,16 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import path from 'node:path';
 import { createRequire } from 'node:module';
+import path from 'node:path';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
+import type { EngineSettings } from '../../model/engine.model';
+import type { ILogger } from '../../model/logger.model';
+import type { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import type { EngineSettings } from '../../model/engine.model';
-import type { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
-import type { ILogger } from '../../model/logger.model';
-import type LoggerServiceType from './logger.service';
 import type FileCleanupServiceType from './file-cleanup.service';
+import type LoggerServiceType from './logger.service';
 
 const nodeRequire = createRequire(import.meta.url);
 

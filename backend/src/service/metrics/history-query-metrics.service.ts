@@ -1,8 +1,11 @@
-import { CacheMetadata, HistoryQueryItemStatus, HistoryQueryMetrics, OIBusTimeValue } from '../../../shared/model/engine.model';
-import HistoryQuery from '../../engine/history-query';
-import HistoryQueryMetricsRepository, { PersistedHistoryQueryMetrics } from '../../repository/metrics/history-query-metrics.repository';
 import { DateTime } from 'luxon';
+
+import { CacheMetadata, HistoryQueryItemStatus, HistoryQueryMetrics } from '../../../shared/model/api/engine.model';
+import { OIBusTimeValue } from '../../../shared/model/common/content.model';
+
+import HistoryQuery from '../../engine/history-query';
 import { Instant } from '../../model/types';
+import HistoryQueryMetricsRepository, { PersistedHistoryQueryMetrics } from '../../repository/metrics/history-query-metrics.repository';
 import { applyNorthCacheContentSize, applyNorthConnect, applyNorthRunEnd, applyNorthRunStart } from './north-metrics-accumulator';
 
 /**

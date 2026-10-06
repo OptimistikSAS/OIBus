@@ -1,11 +1,14 @@
+import * as fs from 'node:fs';
+
 import ivm from 'isolated-vm';
 import ts from 'typescript';
-import { CustomTransformer } from '../model/transformer.model';
-import { CacheMetadata } from '../../shared/model/engine.model';
+
+import { CacheMetadata } from '../../shared/model/api/engine.model';
+
 import { CacheMetadataSource } from '../model/engine.model';
-import * as fs from 'node:fs';
-import { resolveBypassingExports } from './utils';
 import type { ILogger } from '../model/logger.model';
+import { CustomTransformer } from '../model/transformer.model';
+import { resolveBypassingExports } from './utils';
 
 // Shape returned by the in-sandbox wrapper (see `wrappedCode`). The wrapper normalises whatever the
 // custom transform returns into exactly this shape BEFORE it is copied out of the isolate:

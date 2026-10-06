@@ -1,6 +1,7 @@
-import AuditRepository from '../repository/config/audit.repository';
+import { Page } from '../../shared/model/common/types';
+
 import { AuditAction, AuditEntityInfo, AuditEntityType, AuditLog, AuditSearchParam } from '../model/audit.model';
-import { Page } from '../../shared/model/types';
+import AuditRepository from '../repository/config/audit.repository';
 
 // Tracking fields, removed from every level of the snapshots (the entity itself and its sub entities: items, groups,
 // scan modes…) since the audit log records by itself who changed what and when

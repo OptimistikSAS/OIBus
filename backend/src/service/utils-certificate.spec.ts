@@ -1,16 +1,18 @@
-import { describe, it, before } from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import { before, describe, it } from 'node:test';
+
 import * as forge from 'node-forge';
+
 import { OIBusValidationError } from '../model/types';
 import {
-  certificateContentToPem,
-  splitPemChain,
-  certificatePemToDer,
-  readCertificate,
-  privateKeyContentToPem,
   assertKeyMatchesCertificate,
-  privateKeyToEncryptedPkcs8Pem
+  certificateContentToPem,
+  certificatePemToDer,
+  privateKeyContentToPem,
+  privateKeyToEncryptedPkcs8Pem,
+  readCertificate,
+  splitPemChain
 } from './utils-certificate';
 
 const buildSelfSignedCertificate = (keys: forge.pki.rsa.KeyPair, commonName: string): forge.pki.Certificate => {

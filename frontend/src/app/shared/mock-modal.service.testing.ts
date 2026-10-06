@@ -1,6 +1,8 @@
 import { Service, Type } from '@angular/core';
-import { Modal, ModalOptions, ModalService } from './modal.service';
+
 import { of, throwError } from 'rxjs';
+
+import { Modal, ModalOptions, ModalService } from './modal.service';
 
 /**
  * Mock service to emulate a closed or dismissed modal.

@@ -1,12 +1,12 @@
-import { Component, computed, HostListener, inject, input, OnDestroy, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { PageLoader } from '../shared/page-loader.service';
+import { NgOptimizedImage } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, HostListener, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { Group, Item, LOG_LEVELS, LogDTO, LogLevel, LogSearchParam, Scope, SCOPE_TYPES, ScopeType } from '@oibus/shared/logs.model';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { NgbAccordionModule, NgbTooltip, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
-import { Instant, Page } from '@oibus/shared/types';
-import { ascendingDates } from '../shared/form/validators';
 import {
   catchError,
   combineLatest,
@@ -22,19 +22,22 @@ import {
   switchMap,
   tap
 } from 'rxjs';
-import { emptyPage } from '../shared/test-utils';
+
+import { Group, Item, LOG_LEVELS, LogDTO, LogLevel, LogSearchParam, Scope, SCOPE_TYPES, ScopeType } from '@oibus/shared/api/logs.model';
+import { Instant, Page } from '@oibus/shared/common/types';
+
 import { LogService } from '../services/log.service';
-import { PaginationComponent } from '../shared/pagination/pagination.component';
-import { LogLevelsEnumPipe } from '../shared/log-levels-enum.pipe';
-import { DatetimepickerComponent } from '../shared/datetimepicker/datetimepicker.component';
 import { DatetimePipe } from '../shared/datetime.pipe';
-import { ScopeTypesEnumPipe } from '../shared/scope-types-enum.pipe';
-import { NgbAccordionModule, NgbTooltip, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
-import { NgOptimizedImage } from '@angular/common';
-import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/form/typeahead';
+import { DatetimepickerComponent } from '../shared/datetimepicker/datetimepicker.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/form/typeahead';
+import { ascendingDates } from '../shared/form/validators';
+import { LogLevelsEnumPipe } from '../shared/log-levels-enum.pipe';
+import { PageLoader } from '../shared/page-loader.service';
+import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { visibleTimer } from '../shared/polling';
+import { ScopeTypesEnumPipe } from '../shared/scope-types-enum.pipe';
+import { emptyPage } from '../shared/test-utils';
 
 @Component({
   selector: 'oib-logs',

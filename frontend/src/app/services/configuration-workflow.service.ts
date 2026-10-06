@@ -1,15 +1,18 @@
 import { HttpClient, HttpStatusCode } from '@angular/common/http';
-import { Observable } from 'rxjs';
 import { inject, Service } from '@angular/core';
+
+import { Observable } from 'rxjs';
+
 import {
   ConfigurationWorkflowCommandDTO,
   ConfigurationWorkflowDTO,
   WorkflowPreviewResultDTO
-} from '@oibus/shared/configuration-workflow.model';
-import { WorkflowRunDetailDTO, WorkflowRunDTO, WorkflowRunSearchParam } from '@oibus/shared/workflow-run.model';
-import { Page } from '@oibus/shared/types';
-import { OIBusSouthType } from '@oibus/shared/south-connector.model';
-import { SouthSettings } from '@oibus/shared/south-settings.model';
+} from '@oibus/shared/api/configuration-workflow.model';
+import { WorkflowRunDetailDTO, WorkflowRunDTO, WorkflowRunSearchParam } from '@oibus/shared/api/workflow-run.model';
+import { Page } from '@oibus/shared/common/types';
+import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
+import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
+
 import { ignoreErrorIfStatusIs } from '../shared/error-interceptor.service';
 
 /**

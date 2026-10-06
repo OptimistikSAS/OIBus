@@ -1,13 +1,11 @@
-import { afterEach, before, beforeEach, describe, it, mock, type Mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import testData from '../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule } from '../tests/utils/test-utils';
-import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
-import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import nodeOpcuaMock from '../tests/__mocks__/node-opcua.mock';
-import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
+
+import { DateTime } from 'luxon';
+
+import type { OIBusContent, OIBusRecord, OIBusTimeValue } from '../../shared/model/common/content.model';
+import type { Instant } from '../../shared/model/common/types';
 import type {
   SouthFolderScannerItemSettings,
   SouthFolderScannerSettings,
@@ -16,14 +14,19 @@ import type {
   SouthMSSQLSettings,
   SouthOPCUAItemSettings,
   SouthOPCUASettings
-} from '../../shared/model/south-settings.model';
-import type { OIBusContent, OIBusRecord, OIBusTimeValue } from '../../shared/model/engine.model';
-import type { Instant } from '../../shared/model/types';
+} from '../../shared/model/connector/south-settings.model';
+
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
+import type SouthCacheRepository from '../repository/cache/south-cache.repository';
+import nodeOpcuaMock from '../tests/__mocks__/node-opcua.mock';
+import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import testData from '../tests/utils/test-data';
+import { flushPromises, mockModule, reloadModule } from '../tests/utils/test-utils';
 import type SouthFolderScannerClass from './south-folder-scanner/south-folder-scanner';
 import type SouthMSSQLClass from './south-mssql/south-mssql';
 import type SouthOPCUAClass from './south-opcua/south-opcua';
-import type SouthCacheRepository from '../repository/cache/south-cache.repository';
-import { DateTime } from 'luxon';
 
 const nodeRequire = createRequire(import.meta.url);
 

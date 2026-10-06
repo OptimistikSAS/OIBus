@@ -1,17 +1,20 @@
-import { describe, it, before, beforeEach, afterEach, mock, type Mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import path from 'node:path';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
+
+import type { AccessOptions, FileInfo } from 'basic-ftp';
+import { DateTime } from 'luxon';
+
+import type { SouthFTPItemSettings, SouthFTPSettings } from '../../../shared/model/connector/south-settings.model';
+
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import type { SouthFTPItemSettings, SouthFTPSettings } from '../../../shared/model/south-settings.model';
-import { DateTime } from 'luxon';
-import type { AccessOptions, FileInfo } from 'basic-ftp';
+import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthFtpClass from './south-ftp';
 
 const nodeRequire = createRequire(import.meta.url);

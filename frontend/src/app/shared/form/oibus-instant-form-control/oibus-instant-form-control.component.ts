@@ -1,9 +1,12 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { ControlContainer, FormGroupName, ReactiveFormsModule } from '@angular/forms';
+
 import { TranslateDirective } from '@ngx-translate/core';
-import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
+
+import { OIBusInstantAttribute } from '@oibus/shared/connector/form.model';
+
 import { DatetimepickerComponent } from '../../datetimepicker/datetimepicker.component';
-import { OIBusInstantAttribute } from '@oibus/shared/form.model';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
 
 @Component({
   selector: 'oib-oibus-instant-form-control',

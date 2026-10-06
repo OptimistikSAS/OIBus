@@ -1,16 +1,19 @@
-import OIBusTransformer from '../../oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
-import { CacheMetadata } from '../../../../shared/model/engine.model';
-import { CacheMetadataSource } from '../../../model/engine.model';
 import { promisify } from 'node:util';
-import { convertDateTime, convertDelimiter, generateRandomId, stringToBoolean } from '../../../service/utils';
-import { OIBusMQTTValue } from '../../connector-types.model';
+
 import Papa from 'papaparse';
+
+import { CacheMetadata } from '../../../../shared/model/api/engine.model';
 import {
   TransformerCsvToMqttSettings,
   TransformerCsvToMqttSettingsDatetimeSettings
-} from '../../../../shared/model/transformer-settings.model';
+} from '../../../../shared/model/connector/transformer-settings.model';
+
+import { CacheMetadataSource } from '../../../model/engine.model';
+import { convertDateTime, convertDelimiter, generateRandomId, stringToBoolean } from '../../../service/utils';
+import { OIBusMQTTValue } from '../../connector-types.model';
+import OIBusTransformer from '../../oibus-transformer';
 
 const pipelineAsync = promisify(pipeline);
 

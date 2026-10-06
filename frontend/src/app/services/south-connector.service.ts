@@ -1,9 +1,10 @@
 import { HttpClient, HttpContext, HttpStatusCode } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
 import { inject, Service } from '@angular/core';
-import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
+
+import { map, Observable } from 'rxjs';
+
+import { OIBusConnectionTestResult, SouthConnectorMetrics } from '@oibus/shared/api/engine.model';
 import {
-  OIBusSouthType,
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
@@ -12,18 +13,19 @@ import {
   SouthConnectorItemTestingSettings,
   SouthConnectorItemTestResult,
   SouthConnectorLightDTO,
-  SouthConnectorManifest,
   SouthExploreBrowseResult,
   SouthExploreStartResult,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO,
-  SouthItemLastValueResponse,
-  SouthType
-} from '@oibus/shared/south-connector.model';
-import { Page } from '@oibus/shared/types';
+  SouthItemLastValueResponse
+} from '@oibus/shared/api/south-connector.model';
+import { OIBusRecord } from '@oibus/shared/common/content.model';
+import { Page } from '@oibus/shared/common/types';
+import { OIBusSouthType, SouthConnectorManifest, SouthType } from '@oibus/shared/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '@oibus/shared/connector/south-settings.model';
+
+import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 import { DownloadService } from './download.service';
-import { OIBusConnectionTestResult, OIBusRecord, SouthConnectorMetrics } from '@oibus/shared/engine.model';
-import { SouthItemSettings, SouthSettings } from '@oibus/shared/south-settings.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on South connectors

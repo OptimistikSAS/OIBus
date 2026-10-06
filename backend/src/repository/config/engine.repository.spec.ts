@@ -1,15 +1,16 @@
-import { before, after, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { mock } from 'node:test';
-import { Database } from 'better-sqlite3';
-import { createAuditServiceMock, emptyDatabase, flushPromises, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
-import testData from '../../tests/utils/test-data';
-import EngineRepository from './engine.repository';
-import { version } from '../../../package.json';
+import { after, before, beforeEach, describe, it, mock } from 'node:test';
+
 import argon2 from 'argon2';
-import UserRepository from './user.repository';
-import AuditService from '../../service/audit.service';
+import { Database } from 'better-sqlite3';
+
+import { version } from '../../../package.json';
 import { EngineSettings } from '../../model/engine.model';
+import AuditService from '../../service/audit.service';
+import testData from '../../tests/utils/test-data';
+import { createAuditServiceMock, emptyDatabase, flushPromises, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import EngineRepository from './engine.repository';
+import UserRepository from './user.repository';
 
 type EngineSection = 'engine_general' | 'engine_web_server' | 'engine_proxy_server' | 'engine_logging';
 

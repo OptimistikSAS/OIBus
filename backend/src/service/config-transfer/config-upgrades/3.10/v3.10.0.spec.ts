@@ -1,10 +1,11 @@
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { buildRecordListToCsvOptions, keepsResolvedTransformer, toNewSqlItemSettings, upgrade } from './v3.10.0';
-import { JsonObject } from '../config-upgrade';
+import { describe, it } from 'node:test';
+
 import { CONFIG_TRANSFER_FIXTURES_DIR } from '../../../../tests/config-transfer-fixtures/config-transfer-fixture';
+import { JsonObject } from '../config-upgrade';
+import { buildRecordListToCsvOptions, keepsResolvedTransformer, toNewSqlItemSettings, upgrade } from './v3.10.0';
 
 const fixtureConfig = (version: string): JsonObject =>
   JSON.parse(fs.readFileSync(path.join(CONFIG_TRANSFER_FIXTURES_DIR, version, 'export.json'), 'utf-8')).config;

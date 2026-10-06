@@ -1,5 +1,10 @@
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+
+import { ConfigurationWorkflowCommandDTO } from '../../shared/model/api/configuration-workflow.model';
+
+import { RecordFilterCondition } from '../model/configuration-workflow.model';
+import { OIBusValidationError } from '../model/types';
 import {
   checkWorkflowMode,
   computeIdentityKey,
@@ -7,9 +12,6 @@ import {
   resolveFieldMapping,
   resolveIdentityKeyFields
 } from './configuration-workflow.utils';
-import { ConfigurationWorkflowCommandDTO } from '../../shared/model/configuration-workflow.model';
-import { OIBusValidationError } from '../model/types';
-import { RecordFilterCondition } from '../model/configuration-workflow.model';
 
 describe('configuration-workflow.utils', () => {
   const localCommand: ConfigurationWorkflowCommandDTO = {

@@ -1,11 +1,14 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { SouthMQTTItemSettings, SouthMQTTSettings } from '../../shared/model/south-settings.model';
-import { encryptionService } from './encryption.service';
+
 import mqtt from 'mqtt';
-import { SouthConnectorItemEntity } from '../model/south-connector.model';
-import { NorthMQTTSettings } from '../../shared/model/north-settings.model';
+
+import { NorthMQTTSettings } from '../../shared/model/connector/north-settings.model';
+import { SouthMQTTItemSettings, SouthMQTTSettings } from '../../shared/model/connector/south-settings.model';
+
 import type { ILogger } from '../model/logger.model';
+import { SouthConnectorItemEntity } from '../model/south-connector.model';
+import { encryptionService } from './encryption.service';
 
 export const createConnectionOptions = async (
   connectorId: string,

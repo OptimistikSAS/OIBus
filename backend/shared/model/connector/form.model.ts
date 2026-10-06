@@ -500,3 +500,37 @@ export function isEnabledOnPlatform(attribute: OIBusAttribute, platform: string)
   const platformValidator = attribute.validators?.find(validator => validator.type === 'PLATFORM');
   return !platformValidator || platformValidator.arguments.includes(platform);
 }
+
+/**
+ * Manifest for a connector, describing its properties and configuration.
+ */
+export interface ConnectorManifest {
+  /**
+   * The unique identifier of the connector.
+   * @example "console"
+   */
+  id: string;
+
+  /**
+   * The category of the connector.
+   * @example "debug"
+   */
+  category: string;
+
+  /**
+   * The name of the connector.
+   * @example "Debug Connector"
+   */
+  name: string;
+
+  /**
+   * A description of the connector.
+   * @example "Connector for debugging"
+   */
+  description: string;
+
+  /**
+   * The settings schema for the connector.
+   */
+  settings: OIBusObjectAttribute;
+}

@@ -1,9 +1,11 @@
-import { describe, it, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { after, before, beforeEach, describe, it } from 'node:test';
+
 import knex, { Knex } from 'knex';
+
 import { config, down, up } from './v3.8.0-add-logs-indexes';
 
 /**

@@ -1,10 +1,13 @@
-import { Service, inject } from '@angular/core';
-import { catchError, Observable, of, shareReplay, switchMap } from 'rxjs';
 import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { Timezone } from '@oibus/shared/types';
-import { UserDTO } from '@oibus/shared/user.model';
-import { WindowService } from './window.service';
+import { inject, Service } from '@angular/core';
+
+import { catchError, Observable, of, shareReplay, switchMap } from 'rxjs';
+
+import { UserDTO } from '@oibus/shared/api/user.model';
+import { Timezone } from '@oibus/shared/common/types';
+
 import { ignoreErrorIfStatusIs } from './error-interceptor.service';
+import { WindowService } from './window.service';
 
 interface Token {
   access_token: string;

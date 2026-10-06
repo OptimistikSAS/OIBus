@@ -1,8 +1,8 @@
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
-import { OIBusContent } from '../../shared/model/engine.model';
-import SouthCacheRepository from '../repository/cache/south-cache.repository';
-import CertificateRepository from '../repository/config/certificate.repository';
-import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+import { OIBusContent } from '../../shared/model/common/content.model';
+import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
 import {
   SouthADSItemSettings,
   SouthADSSettings,
@@ -50,13 +50,21 @@ import {
   SouthSFTPSettings,
   SouthSQLiteItemSettings,
   SouthSQLiteSettings
-} from '../../shared/model/south-settings.model';
+} from '../../shared/model/connector/south-settings.model';
+
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
+import { Instant } from '../model/types';
+import SouthCacheRepository from '../repository/cache/south-cache.repository';
+import CertificateRepository from '../repository/config/certificate.repository';
+import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import { createFolder } from '../service/utils';
 import SouthADS from '../south/south-ads/south-ads';
 import SouthBACnet from '../south/south-bacnet/south-bacnet';
 import SouthFolderScanner from '../south/south-folder-scanner/south-folder-scanner';
+import SouthFTP from '../south/south-ftp/south-ftp';
+import SouthInfluxDB from '../south/south-influxdb/south-influxdb';
 import SouthModbus from '../south/south-modbus/south-modbus';
 import SouthMongoDB from '../south/south-mongodb/south-mongodb';
-import SouthS7 from '../south/south-s7/south-s7';
 import SouthMQTT from '../south/south-mqtt/south-mqtt';
 import SouthMSSQL from '../south/south-mssql/south-mssql';
 import SouthMySQL from '../south/south-mysql/south-mysql';
@@ -69,16 +77,10 @@ import SouthOracle from '../south/south-oracle/south-oracle';
 import SouthPI from '../south/south-pi/south-pi';
 import SouthPostgreSQL from '../south/south-postgresql/south-postgresql';
 import SouthRest from '../south/south-rest/south-rest';
+import SouthS7 from '../south/south-s7/south-s7';
 import SouthSFTP from '../south/south-sftp/south-sftp';
-import SouthFTP from '../south/south-ftp/south-ftp';
-import SouthInfluxDB from '../south/south-influxdb/south-influxdb';
 import SouthSQLite from '../south/south-sqlite/south-sqlite';
 import SouthConnector from './south-connector';
-import { Instant } from '../model/types';
-import { createFolder } from '../service/utils';
-import path from 'node:path';
-import fs from 'node:fs/promises';
-import { OIBusSouthType } from '../../shared/model/south-connector.model';
 export const buildSouth = (
   settings: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
   addContent: (

@@ -1,17 +1,19 @@
-import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { TestBed } from '@angular/core/testing';
 
-import { EditIpFilterModalComponent } from './edit-ip-filter-modal.component';
-import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
-import { IpFilterService } from '../../../services/ip-filter.service';
-import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { of } from 'rxjs';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { IPFilterDTO } from '@oibus/shared/api/ip-filter.model';
+
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import { IPFilterDTO } from '@oibus/shared/ip-filter.model';
+import { IpFilterService } from '../../../services/ip-filter.service';
+import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
+import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { EditIpFilterModalComponent } from './edit-ip-filter-modal.component';
 
 class EditIpFilterModalComponentTester {
   readonly fixture = TestBed.createComponent(EditIpFilterModalComponent);

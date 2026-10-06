@@ -10,15 +10,17 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { createAuditServiceMock, initDatabase } from '../utils/test-utils';
-import testData from '../utils/test-data';
-import { dumpSqliteDatabase } from '../utils/sqlite-dump';
-import { CONFIG_TRANSFER_FIXTURES_DIR, exportConfigDatabase } from './config-transfer-fixture';
+
+import { Database } from 'better-sqlite3';
+
+import { version as packageVersion } from '../../../package.json';
 import ConfigurationWorkflowRepository from '../../repository/config/configuration-workflow.repository';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthItemGroupRepository from '../../repository/config/south-item-group.repository';
-import { version as packageVersion } from '../../../package.json';
-import { Database } from 'better-sqlite3';
+import { dumpSqliteDatabase } from '../utils/sqlite-dump';
+import testData from '../utils/test-data';
+import { createAuditServiceMock, initDatabase } from '../utils/test-utils';
+import { CONFIG_TRANSFER_FIXTURES_DIR, exportConfigDatabase } from './config-transfer-fixture';
 
 function seedMissingEntities(database: Database): void {
   const auditService = createAuditServiceMock();

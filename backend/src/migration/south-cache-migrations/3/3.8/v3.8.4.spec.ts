@@ -1,6 +1,8 @@
-import { describe, it, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { after, before, beforeEach, describe, it } from 'node:test';
+
 import knex, { Knex } from 'knex';
+
 import { down, up } from './v3.8.4';
 
 const PREFIX = 'south_item_cache_';

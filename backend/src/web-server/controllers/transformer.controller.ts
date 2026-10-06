@@ -1,22 +1,22 @@
 import { Body, Controller, Delete, Get, Path, Post, Put, Query, Request, Route, SuccessResponse, Tags } from 'tsoa';
+
+import { SouthConnectorItemTestResult } from '../../../shared/model/api/south-connector.model';
 import {
   CustomTransformerCommandDTO,
   CustomTransformerDTO,
   InputTemplate,
-  InputType,
   TransformerDTO,
-  TransformerManifest,
   TransformerSearchParam,
   TransformerTestRequest,
   TransformerTestResponse
-} from '../../../shared/model/transformer.model';
-import { toTransformerDTO } from '../../service/transformer.service';
-import { Page } from '../../../shared/model/types';
-import { OIBusDataType } from '../../../shared/model/engine.model';
-import { SouthConnectorItemTestResult } from '../../../shared/model/south-connector.model';
-import { CustomExpressRequest } from '../express';
-import TransformerService from '../../service/transformer.service';
+} from '../../../shared/model/api/transformer.model';
+import { OIBusDataType } from '../../../shared/model/common/content.model';
+import { Page } from '../../../shared/model/common/types';
+import { InputType, TransformerManifest } from '../../../shared/model/connector/transformer-manifest.model';
+
 import { OIBusTestingError } from '../../model/types';
+import TransformerService, { toTransformerDTO } from '../../service/transformer.service';
+import { CustomExpressRequest } from '../express';
 
 @Route('/api/transformers')
 @Tags('Transformers')

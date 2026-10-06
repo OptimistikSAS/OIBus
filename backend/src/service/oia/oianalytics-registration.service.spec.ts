@@ -1,22 +1,24 @@
-import { describe, it, beforeEach, afterEach, before, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import crypto from 'node:crypto';
-import testData from '../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
-import type OIAnalyticsRegistrationServiceType from './oianalytics-registration.service';
-import type { toOIAnalyticsRegistrationDTO as toOIAnalyticsRegistrationDTOType } from './oianalytics-registration.service';
-import type LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
-import OianalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
-import EngineRepositoryMock from '../../tests/__mocks__/repository/config/engine-repository.mock';
-import type EngineRepository from '../../repository/config/engine.repository';
-import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import JoiValidator from '../../web-server/controllers/validators/joi.validator';
-import { RegistrationSettingsCommandDTO } from '../../../shared/model/engine.model';
+import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import { RegistrationSettingsCommandDTO } from '../../../shared/model/api/engine.model';
+
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { NotFoundError } from '../../model/types';
+import type EngineRepository from '../../repository/config/engine.repository';
+import EngineRepositoryMock from '../../tests/__mocks__/repository/config/engine-repository.mock';
+import OianalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import type LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
+import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
+import testData from '../../tests/utils/test-data';
+import { flushPromises, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
+import JoiValidator from '../../web-server/controllers/validators/joi.validator';
 import { getErrorMessage } from '../utils';
+import type OIAnalyticsRegistrationServiceType from './oianalytics-registration.service';
+import type { toOIAnalyticsRegistrationDTO as toOIAnalyticsRegistrationDTOType } from './oianalytics-registration.service';
 
 const nodeRequire = createRequire(import.meta.url);
 

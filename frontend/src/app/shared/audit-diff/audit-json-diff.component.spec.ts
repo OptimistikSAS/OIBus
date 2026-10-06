@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { EditorView } from '@codemirror/view';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+
 import { AuditJsonDiffComponent } from './audit-json-diff.component';
 
 class AuditJsonDiffComponentTester {

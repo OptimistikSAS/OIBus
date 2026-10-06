@@ -1,22 +1,25 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { TranslateDirective, TranslateService } from '@ngx-translate/core';
-import { of, switchMap, tap } from 'rxjs';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { HistoryQueryService } from '../../services/history-query.service';
-import { HistoryQueryDTO } from '@oibus/shared/history-query.model';
+
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective, TranslateService } from '@ngx-translate/core';
+import { DateTime } from 'luxon';
+import { of, switchMap, tap } from 'rxjs';
+
+import { CacheContentUpdateCommand, CacheSearchResult, DataFolderType } from '@oibus/shared/api/engine.model';
+import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
+import { Instant } from '@oibus/shared/common/types';
+
+import { HistoryQueryService } from '../../services/history-query.service';
+import { FileContentModalComponent } from '../../shared/cache-explore/cache-content/file-content-modal/file-content-modal.component';
+import { CacheExploreComponent } from '../../shared/cache-explore/cache-explore.component';
 import { DatetimepickerComponent } from '../../shared/datetimepicker/datetimepicker.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DateTime } from 'luxon';
-import { Instant } from '@oibus/shared/types';
 import { ascendingDates } from '../../shared/form/validators';
-import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { CacheContentUpdateCommand, CacheSearchResult, DataFolderType } from '@oibus/shared/engine.model';
-import { NotificationService } from '../../shared/notification.service';
-import { FileContentModalComponent } from '../../shared/cache-explore/cache-content/file-content-modal/file-content-modal.component';
 import { ModalService } from '../../shared/modal.service';
-import { CacheExploreComponent } from '../../shared/cache-explore/cache-explore.component';
+import { NotificationService } from '../../shared/notification.service';
+import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 
 @Component({
   selector: 'oib-explore-history-cache',

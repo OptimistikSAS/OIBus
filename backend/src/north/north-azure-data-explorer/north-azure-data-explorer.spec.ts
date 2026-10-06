@@ -1,15 +1,17 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import { ReadStream } from 'node:fs';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, buildNorthEntity } from '../../tests/utils/test-utils';
-import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import type { CacheMetadata } from '../../../shared/model/api/engine.model';
+import type { NorthAzureDataExplorerSettings } from '../../../shared/model/connector/north-settings.model';
+
 import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
-import type { NorthAzureDataExplorerSettings } from '../../../shared/model/north-settings.model';
-import type { CacheMetadata } from '../../../shared/model/engine.model';
+import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import testData from '../../tests/utils/test-data';
+import { buildNorthEntity, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type NorthAzureDataExplorerClass from './north-azure-data-explorer';
 
 const nodeRequire = createRequire(import.meta.url);

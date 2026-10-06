@@ -1,6 +1,8 @@
 import { mock } from 'node:test';
+
+import { Page } from '../../../../shared/model/common/types';
+
 import { AuditAction, AuditEntityInfo, AuditEntityType, AuditLog, AuditSearchParam } from '../../../model/audit.model';
-import { Page } from '../../../../shared/model/types';
 
 const EMPTY_PAGE: Page<AuditLog> = { content: [], size: 50, number: 0, totalElements: 0, totalPages: 0 };
 

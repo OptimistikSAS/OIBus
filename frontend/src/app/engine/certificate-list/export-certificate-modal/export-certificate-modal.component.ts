@@ -1,12 +1,15 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { NgbActiveModal, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { concat, Observable } from 'rxjs';
-import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
+
+import { NgbActiveModal, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { ALL_CERTIFICATE_EXPORT_FORMATS, CertificateDTO, CertificateExportFormat } from '@oibus/shared/certificate.model';
+import { concat, Observable } from 'rxjs';
+
+import { ALL_CERTIFICATE_EXPORT_FORMATS, CertificateDTO, CertificateExportFormat } from '@oibus/shared/api/certificate.model';
+
 import { CertificateService } from '../../../services/certificate.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
+import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 
 interface PassphraseFormValue {

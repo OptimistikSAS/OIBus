@@ -1,15 +1,18 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+
 import { of } from 'rxjs';
-import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { OIBusInfo } from '@oibus/shared/api/engine.model';
+import { UserDTO } from '@oibus/shared/api/user.model';
+
 import { provideI18nTesting } from '../../i18n/mock-i18n';
-import { CurrentUserService } from '../shared/current-user.service';
-import { EngineService } from '../services/engine.service';
-import { NavbarComponent } from './navbar.component';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
-import { UserDTO } from '@oibus/shared/user.model';
-import { OIBusInfo } from '@oibus/shared/engine.model';
+import { EngineService } from '../services/engine.service';
+import { CurrentUserService } from '../shared/current-user.service';
+import { NavbarComponent } from './navbar.component';
 
 const currentUser = { login: 'admin', language: 'en', timezone: 'Asia/Tokyo' } as UserDTO;
 

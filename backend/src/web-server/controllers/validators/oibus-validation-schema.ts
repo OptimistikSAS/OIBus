@@ -1,9 +1,11 @@
 import Joi from 'joi';
 import { DateTime } from 'luxon';
+
+import { AUTH_TOKEN_DURATIONS } from '../../../../shared/model/api/engine.model';
+import { INTERVAL_UNITS, SCAN_MODE_TYPES, ScanModeInterval } from '../../../../shared/model/api/scan-mode.model';
+
+import { intervalToMs, MAX_INTERVAL_MS, MIN_INTERVAL_MS } from '../../../service/scan-mode.utils';
 import { validateCronExpression } from '../../../service/utils';
-import { AUTH_TOKEN_DURATIONS } from '../../../../shared/model/engine.model';
-import { INTERVAL_UNITS, SCAN_MODE_TYPES, ScanModeInterval } from '../../../../shared/model/scan-mode.model';
-import { MAX_INTERVAL_MS, MIN_INTERVAL_MS, intervalToMs } from '../../../service/scan-mode.utils';
 
 const TIME_OF_DAY_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
 
@@ -257,17 +259,17 @@ function timezoneValidator(value: string, helper: Joi.CustomHelpers) {
 }
 
 export {
-  scanModeSchema,
-  certificateSchema,
   certificateImportSchema,
   certificatePrivateKeyExportSchema,
-  engineSchema,
-  engineNameSchema,
-  engineWebServerSchema,
-  engineProxySchema,
+  certificateSchema,
   engineLoggerSchema,
-  registrationSchema,
+  engineNameSchema,
+  engineProxySchema,
+  engineSchema,
+  engineWebServerSchema,
   ipFilterSchema,
-  userSchema,
-  transformerSchema
+  registrationSchema,
+  scanModeSchema,
+  transformerSchema,
+  userSchema
 };

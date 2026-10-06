@@ -1,7 +1,9 @@
-import { describe, it, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { after, beforeEach, describe, it } from 'node:test';
+
 import knex, { Knex } from 'knex';
-import { up, down } from './v3.6.0-update-cache-metrics';
+
+import { down, up } from './v3.6.0-update-cache-metrics';
 
 /**
  * Build the pre-v3.6.0 north_metrics schema (v3.0 + v3.5.0 additions).

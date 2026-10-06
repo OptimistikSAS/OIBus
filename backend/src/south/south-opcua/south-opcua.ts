@@ -1,16 +1,4 @@
-import { Aggregate, Instant, Resampling } from '../../../shared/model/types';
-import SouthConnector from '../south-connector';
 import { DateTime } from 'luxon';
-import { SouthConfigurationDiscovery, SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from '../south-interface';
-import { SouthItemSettings, SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent, OIBusRecord, OIBusTimeValue } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import {
-  SouthConnectorExploreEntry,
-  SouthConnectorItemQueryResult,
-  SouthConnectorItemTestingSettings
-} from '../../../shared/model/south-connector.model';
 import {
   AttributeIds,
   ClientMonitoredItem,
@@ -31,6 +19,21 @@ import {
   UserTokenType
 } from 'node-opcua';
 import { EUInformation, HistoryDataOptions, HistoryReadValueIdOptions, Range } from 'node-opcua-types/source/_generated_opcua_types';
+
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import {
+  SouthConnectorExploreEntry,
+  SouthConnectorItemQueryResult,
+  SouthConnectorItemTestingSettings
+} from '../../../shared/model/api/south-connector.model';
+import { OIBusContent, OIBusRecord, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { Aggregate, Instant, Resampling } from '../../../shared/model/common/types';
+import { SouthItemSettings, SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/connector/south-settings.model';
+
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import { shouldCacheValue } from '../../service/south-caching-strategy.service';
+import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
 import {
   createOPCUASession,
   createSessionConfigs,
@@ -39,8 +42,8 @@ import {
   logMessages,
   parseOPCUAValue
 } from '../../service/utils-opcua';
-import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
-import { shouldCacheValue } from '../../service/south-caching-strategy.service';
+import SouthConnector from '../south-connector';
+import { SouthConfigurationDiscovery, SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from '../south-interface';
 
 // OPC-UA status codes that indicate a device/PLC-level failure. The OPC-UA session
 // itself is still alive — only the device behind the server is unreachable. Do NOT

@@ -1,11 +1,13 @@
-import { describe, it, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import knex, { Knex } from 'knex';
+import { after, before, beforeEach, describe, it } from 'node:test';
+
 import Database from 'better-sqlite3';
-import { up, down } from './v3.8.0-south-item-cache';
+import knex, { Knex } from 'knex';
+
+import { down, up } from './v3.8.0-south-item-cache';
 
 const CACHE_HISTORY_TABLE = 'cache_history';
 const HINTS_TABLE = '_migration_v380_file_connector_hints';

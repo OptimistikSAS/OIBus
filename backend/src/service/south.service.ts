@@ -1,11 +1,6 @@
 import { isDeepStrictEqual } from 'node:util';
-import { encryptionService } from './encryption.service';
 
-// South imports
 import {
-  IOT_FAMILY_SOUTH_TYPES,
-  OIBusSouthType,
-  SOUTH_SINGLE_ITEMS,
   SouthCachingStrategy,
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
@@ -15,7 +10,6 @@ import {
   SouthConnectorItemTestingSettings,
   SouthConnectorItemTestResult,
   SouthConnectorLightDTO,
-  SouthConnectorManifest,
   SouthConnectorTypedDTO,
   SouthExploreBrowseResult,
   SouthExploreStartResult,
@@ -24,11 +18,30 @@ import {
   SouthItemGroupDTO,
   SouthItemLastValue,
   SouthItemLastValueResponse
-} from '../../shared/model/south-connector.model';
+} from '../../shared/model/api/south-connector.model';
+// South imports
+import {
+  IOT_FAMILY_SOUTH_TYPES,
+  OIBusSouthType,
+  SOUTH_SINGLE_ITEMS,
+  SouthConnectorManifest
+} from '../../shared/model/connector/south-manifest.model';
 
+import { encryptionService } from './encryption.service';
 import { southManifestList } from './south-manifests';
 export { southManifestList } from './south-manifests';
-import { OIBusConnectionTestResult, OIBusContent, OIBusRecord, SouthConnectorMetrics } from '../../shared/model/engine.model';
+import csv from 'papaparse';
+
+import { OIBusConnectionTestResult, SouthConnectorMetrics } from '../../shared/model/api/engine.model';
+import { OIBusContent, OIBusRecord } from '../../shared/model/common/content.model';
+import { GetUserInfo, Page } from '../../shared/model/common/types';
+import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+
+import type DataStreamEngine from '../engine/data-stream-engine';
+import { ConfigurationWorkflowSouthCommand } from '../model/configuration-workflow.model';
+import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
+import { ScanMode } from '../model/scan-mode.model';
 import {
   SouthConnectorEntity,
   SouthConnectorEntityLight,
@@ -37,32 +50,23 @@ import {
   SouthItemGroupEntity,
   SouthItemGroupEntityLight
 } from '../model/south-connector.model';
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import { Transformer } from '../model/transformer.model';
+import { NotFoundError, OIBusValidationError } from '../model/types';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
-import LogRepository from '../repository/logs/log.repository';
-import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
-import { GetUserInfo, Page } from '../../shared/model/types';
-import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
+import CertificateRepository from '../repository/config/certificate.repository';
+import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import ScanModeRepository from '../repository/config/scan-mode.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
-import { checkGroups, checkScanMode, stringToBoolean } from './utils';
+import LogRepository from '../repository/logs/log.repository';
+import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
+import { buildSouth } from '../south/south-connector-factory';
+import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { checkWorkflowMode, resolveIdentityKeyFields } from './configuration-workflow.utils';
-import { ConfigurationWorkflowSouthCommand } from '../model/configuration-workflow.model';
-import { ScanMode } from '../model/scan-mode.model';
-import ScanModeRepository from '../repository/config/scan-mode.repository';
-import csv from 'papaparse';
-
-import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
-import CertificateRepository from '../repository/config/certificate.repository';
-import type DataStreamEngine from '../engine/data-stream-engine';
-import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import { toScanModeDTO } from './scan-mode-dto.utils';
 import { toSouthConnectorItemDTO } from './south-connector-dto.utils';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import { buildSouth } from '../south/south-connector-factory';
-import { NotFoundError, OIBusValidationError } from '../model/types';
 import SouthExploreSessionManager from './south-explore-session-manager';
-import { Transformer } from '../model/transformer.model';
+import { checkGroups, checkScanMode, stringToBoolean } from './utils';
 
 interface ITransformerService {
   findById(transformerId: string): Transformer;

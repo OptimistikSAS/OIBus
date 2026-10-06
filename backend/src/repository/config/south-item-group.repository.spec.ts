@@ -1,13 +1,14 @@
-import { before, after, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { mock } from 'node:test';
+import { after, before, beforeEach, describe, it, mock } from 'node:test';
+
 import { Database } from 'better-sqlite3';
-import SouthItemGroupRepository, { toSouthItemGroup } from './south-item-group.repository';
-import SouthConnectorRepository from './south-connector.repository';
-import { createAuditServiceMock, emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
-import testData from '../../tests/utils/test-data';
+
 import { SouthItemGroupCommand } from '../../model/south-connector.model';
 import AuditService from '../../service/audit.service';
+import testData from '../../tests/utils/test-data';
+import { createAuditServiceMock, emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
+import SouthConnectorRepository from './south-connector.repository';
+import SouthItemGroupRepository, { toSouthItemGroup } from './south-item-group.repository';
 
 const TEST_DB_PATH = 'src/tests/test-config-south-item-group.db';
 

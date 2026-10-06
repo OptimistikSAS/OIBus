@@ -1,9 +1,11 @@
-import { describe, it, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import { after, beforeEach, describe, it } from 'node:test';
+
 import knex, { Knex } from 'knex';
+
 import { buildSchemaBefore } from '../../../../tests/utils/migration-test-utils';
-import { up, down } from './v3.8.3_1';
+import { down, up } from './v3.8.3_1';
 
 const ENTITY_MIGRATIONS_ROOT = path.resolve(__dirname, '..', '..');
 

@@ -1,7 +1,9 @@
-import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { afterEach, beforeEach, describe, it } from 'node:test';
+
 import knex, { Knex } from 'knex';
-import { up, down } from './v3.5.0-history-query-metrics';
+
+import { down, up } from './v3.5.0-history-query-metrics';
 
 /**
  * Create north_metrics in its v3.0 state (before v3.5.0 migration).

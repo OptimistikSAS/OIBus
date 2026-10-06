@@ -1,8 +1,5 @@
-import { delay, generateIntervals } from '../service/utils';
-import NorthConnector from '../north/north-connector';
-import SouthConnector from '../south/south-connector';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import { NorthSettings } from '../../shared/model/north-settings.model';
+import { EventEmitter } from 'node:events';
+
 import {
   CacheContentUpdateCommand,
   CacheMetadata,
@@ -10,19 +7,24 @@ import {
   CacheSearchResult,
   DataFolderType,
   FileCacheContent,
-  HistoryQueryItemStatus,
-  OIBusTimeValue
-} from '../../shared/model/engine.model';
-import { HistoryQueryEntity } from '../model/histor-query.model';
-import { SouthConnectorItemEntity } from '../model/south-connector.model';
-import { EventEmitter } from 'node:events';
-import { Instant } from '../model/types';
-import { ScanMode } from '../model/scan-mode.model';
+  HistoryQueryItemStatus
+} from '../../shared/model/api/engine.model';
+import { OIBusTimeValue } from '../../shared/model/common/content.model';
+import { Interval } from '../../shared/model/common/types';
+import { NorthSettings } from '../../shared/model/connector/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+
 import { CacheSize } from '../model/engine.model';
-import TypedEventEmitter from '../service/typed-event-emitter';
+import { HistoryQueryEntity } from '../model/histor-query.model';
 import type { ILogger } from '../model/logger.model';
+import { ScanMode } from '../model/scan-mode.model';
+import { SouthConnectorItemEntity } from '../model/south-connector.model';
+import { Instant } from '../model/types';
+import NorthConnector from '../north/north-connector';
 import { loggerService } from '../service/logger/logger.service';
-import { Interval } from '../../shared/model/types';
+import TypedEventEmitter from '../service/typed-event-emitter';
+import { delay, generateIntervals } from '../service/utils';
+import SouthConnector from '../south/south-connector';
 
 const FINISH_INTERVAL = 5000;
 

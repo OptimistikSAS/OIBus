@@ -1,6 +1,8 @@
-import { Component, inject, OnDestroy, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+
 import { NgbActiveModal, NgbProgressbarModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
+
 import { WindowService } from '../window.service';
 
 const REDIRECT_DELAY_SECONDS = 30;

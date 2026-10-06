@@ -1,10 +1,12 @@
-import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { TransformerService } from './transformer.service';
-import { TransformerDTO } from '@oibus/shared/transformer.model';
+import { TransformerDTO } from '@oibus/shared/api/transformer.model';
+
 import testData from '../../../../backend/src/tests/utils/test-data';
+import { TransformerService } from './transformer.service';
 
 describe('TransformerService', () => {
   let http: HttpTestingController;

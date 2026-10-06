@@ -1,30 +1,30 @@
 import Database, { Database as DatabaseType } from 'better-sqlite3';
 
 import { OIBusInitConfig } from '../model/oibus-init-config.model';
+import SouthCacheRepository from '../repository/cache/south-cache.repository';
+import AuditRepository from '../repository/config/audit.repository';
+import CertificateRepository from '../repository/config/certificate.repository';
+import ConfigurationWorkflowRepository from '../repository/config/configuration-workflow.repository';
 import EngineRepository from '../repository/config/engine.repository';
+import HistoryQueryRepository from '../repository/config/history-query.repository';
 import IpFilterRepository from '../repository/config/ip-filter.repository';
+import ItemPointMetadataRepository from '../repository/config/item-point-metadata.repository';
+import NorthConnectorRepository from '../repository/config/north-connector.repository';
+import OIAnalyticsCommandRepository from '../repository/config/oianalytics-command.repository';
+import OIAnalyticsMessageRepository from '../repository/config/oianalytics-message.repository';
+import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
-import ConfigurationWorkflowRepository from '../repository/config/configuration-workflow.repository';
-import WorkflowRunRepository from '../repository/config/workflow-run.repository';
-import ItemPointMetadataRepository from '../repository/config/item-point-metadata.repository';
-import NorthConnectorRepository from '../repository/config/north-connector.repository';
-import LogRepository from '../repository/logs/log.repository';
-import HistoryQueryRepository from '../repository/config/history-query.repository';
-import UserRepository from '../repository/config/user.repository';
-import CryptoRepository from '../repository/crypto/crypto.repository';
-import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
-import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
-import SouthCacheRepository from '../repository/cache/south-cache.repository';
-import EngineMetricsRepository from '../repository/metrics/engine-metrics.repository';
-import CertificateRepository from '../repository/config/certificate.repository';
-import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
-import OIAnalyticsCommandRepository from '../repository/config/oianalytics-command.repository';
-import OIAnalyticsMessageRepository from '../repository/config/oianalytics-message.repository';
-import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
 import TransformerRepository from '../repository/config/transformer.repository';
-import AuditRepository from '../repository/config/audit.repository';
+import UserRepository from '../repository/config/user.repository';
+import WorkflowRunRepository from '../repository/config/workflow-run.repository';
+import CryptoRepository from '../repository/crypto/crypto.repository';
+import LogRepository from '../repository/logs/log.repository';
+import EngineMetricsRepository from '../repository/metrics/engine-metrics.repository';
+import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
+import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
+import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
 import AuditService from './audit.service';
 
 export default class RepositoryService {

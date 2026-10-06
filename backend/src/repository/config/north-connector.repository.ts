@@ -1,19 +1,21 @@
-import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
-import { NotFoundError } from '../../model/types';
+
+import { OIBusNorthType } from '../../../shared/model/connector/north-manifest.model';
+import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+import { OIBusSouthType } from '../../../shared/model/connector/south-manifest.model';
+
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../../model/north-connector.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { SouthConnectorEntityLight, SouthConnectorItemEntityLight, SouthItemGroupEntity } from '../../model/south-connector.model';
-import { OIBusNorthType } from '../../../shared/model/north-connector.model';
-import { toTransformer } from './transformer.repository';
-import { NorthTransformerWithOptions, TransformerSource } from '../../model/transformer.model';
 import { ScanMode } from '../../model/scan-mode.model';
-import { scanModeAliasedColumns, scanModeColumns, toScanMode } from './scan-mode.repository';
-import { OIBusSouthType } from '../../../shared/model/south-connector.model';
-import { toSouthItemGroup } from './south-item-group.repository';
+import { SouthConnectorEntityLight, SouthConnectorItemEntityLight, SouthItemGroupEntity } from '../../model/south-connector.model';
+import { NorthTransformerWithOptions, TransformerSource } from '../../model/transformer.model';
+import { NotFoundError } from '../../model/types';
 import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
 import { encryptionService } from '../../service/encryption.service';
 import { northManifestList } from '../../service/north-manifests';
+import { generateRandomId } from '../../service/utils';
+import { scanModeAliasedColumns, scanModeColumns, toScanMode } from './scan-mode.repository';
+import { toSouthItemGroup } from './south-item-group.repository';
+import { toTransformer } from './transformer.repository';
 
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
