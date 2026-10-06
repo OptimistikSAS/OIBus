@@ -23,12 +23,8 @@ import { NorthSettings } from '../../shared/model/north-settings.model';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import type DataStreamEngine from '../engine/data-stream-engine';
-import {
-  CacheMetadataSource,
-  NorthConnectorMetrics,
-  OIBusConnectionTestResult,
-  OIBusSetpointContent
-} from '../../shared/model/engine.model';
+import { NorthConnectorMetrics, OIBusConnectionTestResult, OIBusSetpointContent } from '../../shared/model/engine.model';
+import { CacheMetadataSource } from '../model/engine.model';
 import TransformerService, { toTransformerDTO } from './transformer.service';
 import { toScanModeDTO } from './scan-mode.service';
 import { buildNorth, createNorthOrchestrator } from '../north/north-connector-factory';

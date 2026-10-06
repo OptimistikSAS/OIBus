@@ -12,7 +12,7 @@ import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, T
 import { SouthHistoryRecoveryStrategy } from '../../shared/model/south-connector.model';
 import { OIBusInitConfig } from '../model/oibus-init-config.model';
 import csv from 'papaparse';
-import { CacheMetadataSource, EngineSettingsDTO, OIBusContent, OIBusInfo } from '../../shared/model/engine.model';
+import { EngineSettingsDTO, OIBusContent, OIBusInfo } from '../../shared/model/engine.model';
 import os from 'node:os';
 import cronstrue from 'cronstrue';
 import cronparser from 'cron-parser';
@@ -22,7 +22,7 @@ import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-import { OIBusError } from '../model/engine.model';
+import { CacheMetadataSource, OIBusError } from '../model/engine.model';
 import Stream from 'node:stream';
 import { SouthConnectorItemEntity, SouthItemGroupEntity, SouthItemGroupEntityLight } from '../model/south-connector.model';
 import { SouthFolderScannerItemSettings, SouthItemSettings } from '../../shared/model/south-settings.model';

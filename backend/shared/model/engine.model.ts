@@ -1,8 +1,5 @@
 import { BaseEntity, Instant } from './types';
 import { LogLevel } from './logs.model';
-import { SouthConnectorItemEntity } from '../../src/model/south-connector.model';
-import { SouthItemSettings } from './south-settings.model';
-import { HistoryQueryItemEntity } from '../../src/model/histor-query.model';
 
 /**
  * List of possible OIBus data types.
@@ -2022,61 +2019,6 @@ export interface CacheMetadata {
    */
   contentType: string;
 }
-
-export interface CacheMetadataSourceOriginSouth {
-  source: 'south';
-
-  /**
-   * Datetime in iso format when the query has been triggered
-   * @example "2023-01-01T00:00:00Z"
-   */
-  queryTime: Instant;
-
-  /**
-   * Start of the history query interval this content was retrieved from, if any (null for
-   * subscription-based or direct-query content, which aren't bound to a time window).
-   * @example "2023-01-01T00:00:00Z"
-   */
-  queryStartTime?: Instant | null;
-
-  /**
-   * End of the history query interval this content was retrieved from, if any.
-   * @example "2023-01-01T01:00:00Z"
-   */
-  queryEndTime?: Instant | null;
-
-  /**
-   * ID of the south connector at the source of the data
-   */
-  southId: string;
-
-  /**
-   * Name of the south connector at the source of the data, substituted for `@ConnectorName` in
-   * transformer filename patterns.
-   */
-  southName: string;
-
-  /**
-   * The items at the source of the data
-   */
-  items: Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>;
-}
-
-export interface CacheMetadataSourceOriginOIAnalytics {
-  source: 'oianalytics-setpoints';
-}
-
-export interface CacheMetadataSourceOriginAPI {
-  source: 'oibus-api';
-  dataSourceId: string;
-}
-
-export interface CacheMetadataSourceOriginTest {
-  source: 'test';
-}
-
-export type CacheMetadataSource =
-  CacheMetadataSourceOriginSouth | CacheMetadataSourceOriginOIAnalytics | CacheMetadataSourceOriginAPI | CacheMetadataSourceOriginTest;
 
 /**
  * Parameters for searching the cache.

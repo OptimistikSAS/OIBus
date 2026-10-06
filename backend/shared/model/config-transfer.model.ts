@@ -1,5 +1,5 @@
 import { Instant } from './types';
-import { OIBusFullConfigurationCommandDTO, OIBusHistoryQueriesCommandDTO } from '../../src/service/oia/oianalytics.model';
+import { OIBusFullConfigurationCommandDTO, OIBusHistoryQueriesCommandDTO } from './oianalytics-configuration.model';
 
 /**
  * The configuration itself: every section of the `full-config` message OIBus sends to OIAnalytics,

@@ -18,7 +18,7 @@ import ConfigurationWorkflowRepositoryMock from '../../tests/__mocks__/repositor
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 import EncryptionService from '../encryption.service';
 import { ConfigExportDTO, OIBusConfigurationDTO } from '../../../shared/model/config-transfer.model';
-import { OIAnalyticsSouthCommandDTO } from '../oia/oianalytics.model';
+import { OIAnalyticsSouthCommandDTO } from '../../../shared/model/oianalytics-configuration.model';
 import { ConfigurationWorkflowCommandDTO } from '../../../shared/model/configuration-workflow.model';
 import { CONFIG_UPGRADES } from './config-upgrades/registry';
 import { ConfigUpgrade, forEachSouth, JsonObject } from './config-upgrades/config-upgrade';

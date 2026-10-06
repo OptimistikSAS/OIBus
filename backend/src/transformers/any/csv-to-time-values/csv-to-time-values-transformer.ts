@@ -1,7 +1,8 @@
 import OIBusTransformer from '../../oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
-import { CacheMetadata, CacheMetadataSource, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { CacheMetadata, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { CacheMetadataSource } from '../../../model/engine.model';
 import { promisify } from 'node:util';
 import { convertDateTimeToInstant, convertDelimiter, generateRandomId } from '../../../service/utils';
 import Papa from 'papaparse';

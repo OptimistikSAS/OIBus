@@ -1,7 +1,8 @@
 import zlib from 'node:zlib';
 import OIBusTransformer from '../../oibus-transformer';
 import csv from 'papaparse';
-import { CacheMetadata, CacheMetadataSource, OIBusRecord } from '../../../../shared/model/engine.model';
+import { CacheMetadata, OIBusRecord } from '../../../../shared/model/engine.model';
+import { CacheMetadataSource } from '../../../model/engine.model';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 import {

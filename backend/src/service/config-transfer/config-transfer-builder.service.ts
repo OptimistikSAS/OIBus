@@ -12,7 +12,7 @@ import {
   OIAnalyticsUserCommandDTO,
   OIBusFullConfigurationCommandDTO,
   OIBusHistoryQueriesCommandDTO
-} from '../oia/oianalytics.model';
+} from '../../../shared/model/oianalytics-configuration.model';
 import EngineRepository from '../../repository/config/engine.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';

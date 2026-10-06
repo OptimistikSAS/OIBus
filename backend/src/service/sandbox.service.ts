@@ -1,7 +1,8 @@
 import ivm from 'isolated-vm';
 import ts from 'typescript';
 import { CustomTransformer } from '../model/transformer.model';
-import { CacheMetadata, CacheMetadataSource } from '../../shared/model/engine.model';
+import { CacheMetadata } from '../../shared/model/engine.model';
+import { CacheMetadataSource } from '../model/engine.model';
 import * as fs from 'node:fs';
 import { resolveBypassingExports } from './utils';
 import type { ILogger } from '../model/logger.model';

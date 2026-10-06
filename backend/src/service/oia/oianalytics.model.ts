@@ -8,7 +8,6 @@ import {
   EngineLoggerCommandDTO,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
-  EngineSettingsCommandDTO,
   EngineWebServerCommandDTO,
   OIBusRecord
 } from '../../../shared/model/engine.model';
@@ -18,139 +17,12 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemTestingSettings
 } from '../../../shared/model/south-connector.model';
-import { CertificateCommandDTO, CertificateDTO } from '../../../shared/model/certificate.model';
-import { UserCommandDTO } from '../../../shared/model/user.model';
+import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../../shared/model/history-query.model';
 import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../../shared/model/transformer.model';
-import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { OIBusTestTransformerItemCommandContent } from '../../model/oianalytics-command.model';
-
-interface BaseAuditFields {
-  oIBusInternalId: string;
-  oIBusCreatedBy: string;
-  oIBusUpdatedBy: string;
-  oIBusCreatedAt: string;
-  oIBusUpdatedAt: string;
-}
-
-export interface OIAnalyticsScanModeCommandDTO extends BaseAuditFields {
-  settings: ScanModeCommandDTO;
-}
-
-export interface OIAnalyticsIPFilterCommandDTO extends BaseAuditFields {
-  settings: IPFilterCommandDTO;
-}
-
-export interface OIAnalyticsCertificateCommandDTO extends BaseAuditFields {
-  settings: Omit<CertificateDTO, 'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>;
-}
-
-export interface OIAnalyticsUserCommandDTO extends BaseAuditFields {
-  settings: UserCommandDTO;
-}
-
-interface StandardTransformerCommandDTO {
-  type: 'standard';
-  functionName: string;
-  inputType: string;
-  outputType: string;
-}
-
-export interface OIAnalyticsTransformerCommandDTO {
-  oIBusInternalId: string;
-  type: 'custom' | 'standard';
-  settings: Omit<CustomTransformerCommandDTO | StandardTransformerCommandDTO, 'type'>;
-  manifest: OIBusObjectAttribute;
-}
-
-export interface OIAnalyticsRegistrationCommandDTO extends BaseAuditFields {
-  publicKey: string;
-  settings: {
-    commandRefreshInterval: number;
-    commandRetryInterval: number;
-    messageRetryInterval: number;
-    commandPermissions: {
-      updateVersion: boolean;
-      restartEngine: boolean;
-      regenerateCipherKeys: boolean;
-      updateEngineSettings: boolean;
-      updateRegistrationSettings: boolean;
-      createScanMode: boolean;
-      updateScanMode: boolean;
-      deleteScanMode: boolean;
-      createIpFilter: boolean;
-      updateIpFilter: boolean;
-      deleteIpFilter: boolean;
-      createCertificate: boolean;
-      updateCertificate: boolean;
-      deleteCertificate: boolean;
-      createHistoryQuery: boolean;
-      updateHistoryQuery: boolean;
-      deleteHistoryQuery: boolean;
-      createOrUpdateHistoryItemsFromCsv: boolean;
-      createSouth: boolean;
-      updateSouth: boolean;
-      deleteSouth: boolean;
-      createOrUpdateSouthItemsFromCsv: boolean;
-      createNorth: boolean;
-      updateNorth: boolean;
-      deleteNorth: boolean;
-    };
-  };
-}
-
-export interface OIAnalyticsEngineCommandDTO extends BaseAuditFields {
-  name: string;
-  softwareVersion: string;
-  launcherVersion: string;
-  architecture: string;
-  operatingSystem: string;
-  dataFolder: string;
-  binaryFolder: string;
-  ignoreIpFilters: boolean;
-  ignoreRemoteUpdate: boolean;
-  settings: EngineSettingsCommandDTO;
-}
-
-/**
- * The connector's configuration workflows are part of `settings` (see `SouthConnectorCommandDTO`). Each
- * item additionally carries `createdByWorkflowId`/`disabledReason` (like its `oIBus*` audit fields), so
- * the workflow owning it survives a config export/import.
- */
-export interface OIAnalyticsSouthCommandDTO extends BaseAuditFields {
-  type: string;
-  settings: SouthConnectorCommandDTO;
-}
-
-export interface OIAnalyticsNorthCommandDTO extends BaseAuditFields {
-  type: string;
-  settings: NorthConnectorCommandDTO;
-}
-
-export interface OIBusFullConfigurationCommandDTO {
-  engine: OIAnalyticsEngineCommandDTO;
-  registration: OIAnalyticsRegistrationCommandDTO;
-  scanModes: Array<OIAnalyticsScanModeCommandDTO>;
-  ipFilters: Array<OIAnalyticsIPFilterCommandDTO>;
-  certificates: Array<OIAnalyticsCertificateCommandDTO>;
-  southConnectors: Array<OIAnalyticsSouthCommandDTO>;
-  northConnectors: Array<OIAnalyticsNorthCommandDTO>;
-  users: Array<OIAnalyticsUserCommandDTO>;
-  transformers: Array<OIAnalyticsTransformerCommandDTO>;
-}
-
-export interface OIBusHistoryQueriesCommandDTO {
-  historyQueries: Array<{
-    oIBusInternalId: string;
-    oIBusCreatedBy: string;
-    oIBusUpdatedBy: string;
-    oIBusCreatedAt: string;
-    oIBusUpdatedAt: string;
-    settings: HistoryQueryCommandDTO;
-  }>;
-}
 
 /**
  * A remote (push-to-OIAnalytics) Configuration Workflow run's result: the raw eligible records

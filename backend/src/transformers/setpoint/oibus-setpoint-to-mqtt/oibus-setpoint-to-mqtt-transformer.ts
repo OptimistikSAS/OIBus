@@ -1,7 +1,8 @@
 import OIBusTransformer from '../../oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
-import { CacheMetadata, CacheMetadataSource, OIBusSetpoint } from '../../../../shared/model/engine.model';
+import { CacheMetadata, OIBusSetpoint } from '../../../../shared/model/engine.model';
+import { CacheMetadataSource } from '../../../model/engine.model';
 import { generateRandomId, streamToString } from '../../../service/utils';
 import { OIBusMQTTValue } from '../../connector-types.model';
 import { TransformerSetpointToMqttSettings } from '../../../../shared/model/transformer-settings.model';
