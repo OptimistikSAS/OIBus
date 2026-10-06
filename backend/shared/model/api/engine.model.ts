@@ -252,6 +252,263 @@ export interface EngineSettingsDTO extends BaseEntity {
 }
 
 /**
+ * Permissions granted to OIAnalytics for each remote command.
+ */
+export interface RegistrationCommandPermissionsDTO {
+  /**
+   * Permission to update the engine version.
+   * @example true
+   */
+  updateVersion: boolean;
+
+  /**
+   * Permission to restart the engine.
+   * @example true
+   */
+  restartEngine: boolean;
+
+  /**
+   * Permission to regenerate cipher keys.
+   * @example true
+   */
+  regenerateCipherKeys: boolean;
+
+  /**
+   * Permission to update engine settings.
+   * @example true
+   */
+  updateEngineSettings: boolean;
+
+  /**
+   * Permission to update registration settings.
+   * @example true
+   */
+  updateRegistrationSettings: boolean;
+
+  /**
+   * Permission to create a scan mode.
+   * @example true
+   */
+  createScanMode: boolean;
+
+  /**
+   * Permission to update a scan mode.
+   * @example true
+   */
+  updateScanMode: boolean;
+
+  /**
+   * Permission to delete a scan mode.
+   * @example true
+   */
+  deleteScanMode: boolean;
+
+  /**
+   * Permission to create an IP filter.
+   * @example true
+   */
+  createIpFilter: boolean;
+
+  /**
+   * Permission to update an IP filter.
+   * @example true
+   */
+  updateIpFilter: boolean;
+
+  /**
+   * Permission to delete an IP filter.
+   * @example true
+   */
+  deleteIpFilter: boolean;
+
+  /**
+   * Permission to create a certificate.
+   * @example true
+   */
+  createCertificate: boolean;
+
+  /**
+   * Permission to update a certificate.
+   * @example true
+   */
+  updateCertificate: boolean;
+
+  /**
+   * Permission to delete a certificate.
+   * @example true
+   */
+  deleteCertificate: boolean;
+
+  /**
+   * Permission to create a history query.
+   * @example true
+   */
+  createHistoryQuery: boolean;
+
+  /**
+   * Permission to update a history query.
+   * @example true
+   */
+  updateHistoryQuery: boolean;
+
+  /**
+   * Permission to delete a history query.
+   * @example true
+   */
+  deleteHistoryQuery: boolean;
+
+  /**
+   * Permission to create or update history items from CSV.
+   * @example true
+   */
+  createOrUpdateHistoryItemsFromCsv: boolean;
+
+  /**
+   * Permission to test a history north connection.
+   * @example true
+   */
+  testHistoryNorthConnection: boolean;
+
+  /**
+   * Permission to test a history south connection.
+   * @example true
+   */
+  testHistorySouthConnection: boolean;
+
+  /**
+   * Permission to test a history south item.
+   * @example true
+   */
+  testHistorySouthItem: boolean;
+
+  /**
+   * Permission to create a south connector.
+   * @example true
+   */
+  createSouth: boolean;
+
+  /**
+   * Permission to update a south connector.
+   * @example true
+   */
+  updateSouth: boolean;
+
+  /**
+   * Permission to delete a south connector.
+   * @example true
+   */
+  deleteSouth: boolean;
+
+  /**
+   * Permission to create or update south items from CSV.
+   * @example true
+   */
+  createOrUpdateSouthItemsFromCsv: boolean;
+
+  /**
+   * Permission to test a south connection.
+   * @example true
+   */
+  testSouthConnection: boolean;
+
+  /**
+   * Permission to test a south item.
+   * @example true
+   */
+  testSouthItem: boolean;
+
+  /**
+   * Permission to create a north connector.
+   * @example true
+   */
+  createNorth: boolean;
+
+  /**
+   * Permission to update a north connector.
+   * @example true
+   */
+  updateNorth: boolean;
+
+  /**
+   * Permission to delete a north connector.
+   * @example true
+   */
+  deleteNorth: boolean;
+
+  /**
+   * Permission to test a north connection.
+   * @example true
+   */
+  testNorthConnection: boolean;
+
+  /**
+   * Permission to apply setpoints.
+   * @example true
+   */
+  setpoint: boolean;
+
+  /**
+   * Permission to search cache content.
+   * @example true
+   */
+  searchHistoryCacheContent: boolean;
+
+  /**
+   * Permission to get cache file content.
+   * @example true
+   */
+  getHistoryCacheFileContent: boolean;
+
+  /**
+   * Permission to remove cache content.
+   * @example true
+   */
+  updateHistoryCacheContent: boolean;
+
+  /**
+   * Permission to search cache content.
+   * @example true
+   */
+  searchNorthCacheContent: boolean;
+
+  /**
+   * Permission to get cache file content.
+   * @example true
+   */
+  getNorthCacheFileContent: boolean;
+
+  /**
+   * Permission to remove cache content.
+   * @example true
+   */
+  updateNorthCacheContent: boolean;
+
+  /**
+   * Permission to create a custom transformer.
+   * @example true
+   */
+  createCustomTransformer: boolean;
+
+  /**
+   * Permission to update a custom transformer.
+   * @example true
+   */
+  updateCustomTransformer: boolean;
+
+  /**
+   * Permission to delete a custom transformer.
+   * @example true
+   */
+  deleteCustomTransformer: boolean;
+
+  /**
+   * Permission to test a custom transformer.
+   * @example true
+   */
+  testCustomTransformer: boolean;
+}
+
+/**
  * Registration settings Data Transfer Object.
  * Represents the registration settings for the engine.
  */
@@ -355,199 +612,7 @@ export interface RegistrationSettingsDTO extends BaseEntity {
   /**
    * Permissions for various commands.
    */
-  commandPermissions: {
-    /**
-     * Permission to update the engine version.
-     * @example true
-     */
-    updateVersion: boolean;
-
-    /**
-     * Permission to restart the engine.
-     * @example true
-     */
-    restartEngine: boolean;
-
-    /**
-     * Permission to regenerate cipher keys.
-     * @example true
-     */
-    regenerateCipherKeys: boolean;
-
-    /**
-     * Permission to update engine settings.
-     * @example true
-     */
-    updateEngineSettings: boolean;
-
-    /**
-     * Permission to update registration settings.
-     * @example true
-     */
-    updateRegistrationSettings: boolean;
-
-    /**
-     * Permission to create a scan mode.
-     * @example true
-     */
-    createScanMode: boolean;
-
-    /**
-     * Permission to update a scan mode.
-     * @example true
-     */
-    updateScanMode: boolean;
-
-    /**
-     * Permission to delete a scan mode.
-     * @example true
-     */
-    deleteScanMode: boolean;
-
-    /**
-     * Permission to create an IP filter.
-     * @example true
-     */
-    createIpFilter: boolean;
-
-    /**
-     * Permission to update an IP filter.
-     * @example true
-     */
-    updateIpFilter: boolean;
-
-    /**
-     * Permission to delete an IP filter.
-     * @example true
-     */
-    deleteIpFilter: boolean;
-
-    /**
-     * Permission to create a certificate.
-     * @example true
-     */
-    createCertificate: boolean;
-
-    /**
-     * Permission to update a certificate.
-     * @example true
-     */
-    updateCertificate: boolean;
-
-    /**
-     * Permission to delete a certificate.
-     * @example true
-     */
-    deleteCertificate: boolean;
-
-    /**
-     * Permission to create a history query.
-     * @example true
-     */
-    createHistoryQuery: boolean;
-
-    /**
-     * Permission to update a history query.
-     * @example true
-     */
-    updateHistoryQuery: boolean;
-
-    /**
-     * Permission to delete a history query.
-     * @example true
-     */
-    deleteHistoryQuery: boolean;
-
-    /**
-     * Permission to create or update history items from CSV.
-     * @example true
-     */
-    createOrUpdateHistoryItemsFromCsv: boolean;
-
-    /**
-     * Permission to create a south connector.
-     * @example true
-     */
-    createSouth: boolean;
-
-    /**
-     * Permission to update a south connector.
-     * @example true
-     */
-    updateSouth: boolean;
-
-    /**
-     * Permission to delete a south connector.
-     * @example true
-     */
-    deleteSouth: boolean;
-
-    /**
-     * Permission to create or update south items from CSV.
-     * @example true
-     */
-    createOrUpdateSouthItemsFromCsv: boolean;
-
-    /**
-     * Permission to create a north connector.
-     * @example true
-     */
-    createNorth: boolean;
-
-    /**
-     * Permission to update a north connector.
-     * @example true
-     */
-    updateNorth: boolean;
-
-    /**
-     * Permission to delete a north connector.
-     * @example true
-     */
-    deleteNorth: boolean;
-
-    /**
-     * Permission to apply setpoints.
-     * @example true
-     */
-    setpoint: boolean;
-
-    /**
-     * Permission to search cache content.
-     * @example true
-     */
-    searchHistoryCacheContent: boolean;
-
-    /**
-     * Permission to get cache file content.
-     * @example true
-     */
-    getHistoryCacheFileContent: boolean;
-
-    /**
-     * Permission to move cache content.
-     * @example true
-     */
-    updateHistoryCacheContent: boolean;
-
-    /**
-     * Permission to search cache content.
-     * @example true
-     */
-    searchNorthCacheContent: boolean;
-
-    /**
-     * Permission to get cache file content.
-     * @example true
-     */
-    getNorthCacheFileContent: boolean;
-
-    /**
-     * Permission to remove cache content.
-     * @example true
-     */
-    updateNorthCacheContent: boolean;
-  };
+  commandPermissions: RegistrationCommandPermissionsDTO;
 }
 
 /**
@@ -636,259 +701,7 @@ export interface RegistrationSettingsCommandDTO {
   /**
    * Permissions for various commands.
    */
-  commandPermissions: {
-    /**
-     * Permission to update the engine version.
-     * @example true
-     */
-    updateVersion: boolean;
-
-    /**
-     * Permission to restart the engine.
-     * @example true
-     */
-    restartEngine: boolean;
-
-    /**
-     * Permission to regenerate cipher keys.
-     * @example true
-     */
-    regenerateCipherKeys: boolean;
-
-    /**
-     * Permission to update engine settings.
-     * @example true
-     */
-    updateEngineSettings: boolean;
-
-    /**
-     * Permission to update registration settings.
-     * @example true
-     */
-    updateRegistrationSettings: boolean;
-
-    /**
-     * Permission to create a scan mode.
-     * @example true
-     */
-    createScanMode: boolean;
-
-    /**
-     * Permission to update a scan mode.
-     * @example true
-     */
-    updateScanMode: boolean;
-
-    /**
-     * Permission to delete a scan mode.
-     * @example true
-     */
-    deleteScanMode: boolean;
-
-    /**
-     * Permission to create an IP filter.
-     * @example true
-     */
-    createIpFilter: boolean;
-
-    /**
-     * Permission to update an IP filter.
-     * @example true
-     */
-    updateIpFilter: boolean;
-
-    /**
-     * Permission to delete an IP filter.
-     * @example true
-     */
-    deleteIpFilter: boolean;
-
-    /**
-     * Permission to create a certificate.
-     * @example true
-     */
-    createCertificate: boolean;
-
-    /**
-     * Permission to update a certificate.
-     * @example true
-     */
-    updateCertificate: boolean;
-
-    /**
-     * Permission to delete a certificate.
-     * @example true
-     */
-    deleteCertificate: boolean;
-
-    /**
-     * Permission to create a history query.
-     * @example true
-     */
-    createHistoryQuery: boolean;
-
-    /**
-     * Permission to update a history query.
-     * @example true
-     */
-    updateHistoryQuery: boolean;
-
-    /**
-     * Permission to delete a history query.
-     * @example true
-     */
-    deleteHistoryQuery: boolean;
-
-    /**
-     * Permission to create or update history items from CSV.
-     * @example true
-     */
-    createOrUpdateHistoryItemsFromCsv: boolean;
-
-    /**
-     * Permission to test a history north connection.
-     * @example true
-     */
-    testHistoryNorthConnection: boolean;
-
-    /**
-     * Permission to test a history south connection.
-     * @example true
-     */
-    testHistorySouthConnection: boolean;
-
-    /**
-     * Permission to test a history south item.
-     * @example true
-     */
-    testHistorySouthItem: boolean;
-
-    /**
-     * Permission to create a south connector.
-     * @example true
-     */
-    createSouth: boolean;
-
-    /**
-     * Permission to update a south connector.
-     * @example true
-     */
-    updateSouth: boolean;
-
-    /**
-     * Permission to delete a south connector.
-     * @example true
-     */
-    deleteSouth: boolean;
-
-    /**
-     * Permission to create or update south items from CSV.
-     * @example true
-     */
-    createOrUpdateSouthItemsFromCsv: boolean;
-
-    /**
-     * Permission to test a south connection.
-     * @example true
-     */
-    testSouthConnection: boolean;
-
-    /**
-     * Permission to test a south item.
-     * @example true
-     */
-    testSouthItem: boolean;
-
-    /**
-     * Permission to create a north connector.
-     * @example true
-     */
-    createNorth: boolean;
-
-    /**
-     * Permission to update a north connector.
-     * @example true
-     */
-    updateNorth: boolean;
-
-    /**
-     * Permission to delete a north connector.
-     * @example true
-     */
-    deleteNorth: boolean;
-
-    /**
-     * Permission to test a north connection.
-     * @example true
-     */
-    testNorthConnection: boolean;
-
-    /**
-     * Permission to apply setpoints.
-     * @example true
-     */
-    setpoint: boolean;
-
-    /**
-     * Permission to search cache content.
-     * @example true
-     */
-    searchHistoryCacheContent: boolean;
-
-    /**
-     * Permission to get cache file content.
-     * @example true
-     */
-    getHistoryCacheFileContent: boolean;
-
-    /**
-     * Permission to remove cache content.
-     * @example true
-     */
-    updateHistoryCacheContent: boolean;
-
-    /**
-     * Permission to search cache content.
-     * @example true
-     */
-    searchNorthCacheContent: boolean;
-
-    /**
-     * Permission to get cache file content.
-     * @example true
-     */
-    getNorthCacheFileContent: boolean;
-
-    /**
-     * Permission to remove cache content.
-     * @example true
-     */
-    updateNorthCacheContent: boolean;
-
-    /**
-     * Permission to create a custom transformer.
-     * @example true
-     */
-    createCustomTransformer: boolean;
-
-    /**
-     * Permission to update a custom transformer.
-     * @example true
-     */
-    updateCustomTransformer: boolean;
-
-    /**
-     * Permission to delete a custom transformer.
-     * @example true
-     */
-    deleteCustomTransformer: boolean;
-
-    /**
-     * Permission to test a custom transformer.
-     * @example true
-     */
-    testCustomTransformer: boolean;
-  };
+  commandPermissions: RegistrationCommandPermissionsDTO;
 }
 
 /**
