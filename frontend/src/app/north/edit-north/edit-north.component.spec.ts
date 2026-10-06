@@ -5,10 +5,8 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { describe, expect, test } from 'vitest';
 
-import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
-
-import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { CertificateService } from '../../services/certificate.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -70,7 +68,7 @@ describe('EditNorthComponent', () => {
       snapshot: { queryParamMap: { get: () => null, getAll: () => [] } }
     });
 
-    northConnectorService.findById.mockReturnValue(of(testData.north.list[0] as unknown as NorthConnectorDTO));
+    northConnectorService.findById.mockReturnValue(of(testData.north.list[0]));
 
     const fixture = TestBed.createComponent(EditNorthComponent);
     fixture.detectChanges();

@@ -3,7 +3,6 @@ import { mock } from 'node:test';
 import { SouthConnectorItemTestResult } from '../../../../shared/model/api/south-connector.model';
 import {
   CustomTransformerCommandDTO,
-  TransformerSearchParam,
   TransformerTestRequest,
   TransformerTestResponse
 } from '../../../../shared/model/api/transformer.model';
@@ -11,6 +10,7 @@ import { OIBusContent } from '../../../../shared/model/common/content.model';
 import { Page } from '../../../../shared/model/common/types';
 import type { TransformerManifest } from '../../../../shared/model/connector/transformer-manifest.model';
 import { InputType } from '../../../../shared/model/connector/transformer-manifest.model';
+import { TransformerSearchParam } from '../../../../shared/model/domain/transformer.model';
 
 import { CustomTransformer, Transformer } from '../../../model/transformer.model';
 

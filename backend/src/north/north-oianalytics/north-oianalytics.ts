@@ -2,8 +2,8 @@ import { ReadStream } from 'node:fs';
 import { pipeline, Readable } from 'node:stream';
 import zlib from 'node:zlib';
 
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
 import { NorthOIAnalyticsSettings } from '../../../shared/model/connector/north-settings.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
 import type { ICacheService } from '../../model/cache.service.model';
 import { OIBusError } from '../../model/engine.model';

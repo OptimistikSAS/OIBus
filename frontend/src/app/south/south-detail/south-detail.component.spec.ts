@@ -7,10 +7,10 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { SouthConnectorDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
+import { SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 
-import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { CertificateService } from '../../services/certificate.service';
 import { EngineService } from '../../services/engine.service';
@@ -27,9 +27,9 @@ import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manag
 import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
 import { SouthDetailComponent } from './south-detail.component';
 
-const southConnector = testData.south.list[0] as unknown as SouthConnectorDTO;
+const southConnector = testData.south.list[0];
 const manifest = testData.south.manifest;
-const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
+const scanModes = testData.scanMode.list;
 const oibusInfo = testData.engine.oIBusInfo;
 
 const buildGroup = (id: string, name: string, scanMode: ScanModeDTO): SouthItemGroupDTO => ({

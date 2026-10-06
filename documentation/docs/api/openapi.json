@@ -26295,6 +26295,8 @@
 							}
 						},
 						"required": [
+							"numberOfFiles",
+							"maxFileSize",
 							"level"
 						],
 						"type": "object",
@@ -26315,6 +26317,7 @@
 							}
 						},
 						"required": [
+							"maxNumberOfLogs",
 							"level"
 						],
 						"type": "object",
@@ -26350,6 +26353,7 @@
 							}
 						},
 						"required": [
+							"interval",
 							"level"
 						],
 						"type": "object",
@@ -26370,6 +26374,7 @@
 							}
 						},
 						"required": [
+							"interval",
 							"level"
 						],
 						"type": "object",
@@ -26404,6 +26409,8 @@
 							}
 						},
 						"required": [
+							"protocol",
+							"port",
 							"level"
 						],
 						"type": "object",

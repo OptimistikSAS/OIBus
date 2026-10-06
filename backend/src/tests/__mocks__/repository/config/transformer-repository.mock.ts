@@ -2,8 +2,8 @@ import { mock } from 'node:test';
 
 import type { Database } from 'better-sqlite3';
 
-import { TransformerSearchParam } from '../../../../../shared/model/api/transformer.model';
 import { Page } from '../../../../../shared/model/common/types';
+import { TransformerSearchParam } from '../../../../../shared/model/domain/transformer.model';
 
 import { CustomTransformer, Transformer } from '../../../../model/transformer.model';
 import TransformerRepository from '../../../../repository/config/transformer.repository';

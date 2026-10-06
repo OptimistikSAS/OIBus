@@ -5,10 +5,8 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { CertificateDTO } from '@oibus/shared/api/certificate.model';
-
-import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { CertificateService } from '../../services/certificate.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
@@ -67,7 +65,7 @@ describe('CertificateListComponent', () => {
 
   describe('with certificate', () => {
     beforeEach(() => {
-      certificateService.list.mockReturnValue(of(testData.certificates.list as unknown as Array<CertificateDTO>));
+      certificateService.list.mockReturnValue(of(testData.certificates.list));
       tester = new CertificateListComponentTester();
     });
 

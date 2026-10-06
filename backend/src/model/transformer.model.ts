@@ -1,5 +1,5 @@
-import { DataSourceType, TransformerLanguage } from '../../shared/model/api/transformer.model';
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
+import { DataSourceType, TransformerLanguage } from '../../shared/model/domain/transformer.model';
 
 import { SouthConnectorEntityLight, SouthConnectorItemEntityLight, SouthItemGroupEntity } from './south-connector.model';
 import { BaseEntity } from './types';

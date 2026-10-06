@@ -4,8 +4,8 @@ import { promisify } from 'node:util';
 
 import csv from 'papaparse';
 
-import { CacheMetadata } from '../../../../shared/model/api/engine.model';
 import { TransformerJsonToCsvSettings } from '../../../../shared/model/connector/transformer-settings.model';
+import { CacheMetadata } from '../../../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource } from '../../../model/engine.model';
 import {

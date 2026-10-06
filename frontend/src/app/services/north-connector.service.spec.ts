@@ -3,12 +3,12 @@ import { TestBed } from '@angular/core/testing';
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '@oibus/shared/api/engine.model';
 import { NorthConnectorDTO, NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
 import { TransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
 import { NorthConnectorManifest, NorthType } from '@oibus/shared/connector/north-manifest.model';
+import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '@oibus/shared/domain/engine.model';
 
-import testData from '../../../../backend/src/tests/utils/test-data';
+import testData from '../../test/test-data';
 import { NorthConnectorService } from './north-connector.service';
 
 describe('NorthConnectorService', () => {

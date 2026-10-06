@@ -7,12 +7,12 @@ import {
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthConnectorItemSearchParam,
   SouthExploreBrowseResult,
   SouthExploreStartResult,
   SouthItemGroupCommandDTO
 } from '../../../shared/model/api/south-connector.model';
 import { OIBusContent } from '../../../shared/model/common/content.model';
+import { SouthConnectorItemSearchParam } from '../../../shared/model/domain/south-connector.model';
 
 import type { SouthItemGroupEntity } from '../../model/south-connector.model';
 import { OIBusTestingError } from '../../model/types';

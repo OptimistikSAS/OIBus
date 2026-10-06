@@ -1,10 +1,10 @@
+import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import {
   SouthCachingStrategy,
   SouthCachingThresholdType,
   SouthHistoryRecoveryStrategy
-} from '../../shared/model/api/south-connector.model';
-import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+} from '../../shared/model/domain/south-connector.model';
 
 import { ScanMode } from './scan-mode.model';
 import { BaseEntity } from './types';

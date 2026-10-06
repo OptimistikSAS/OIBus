@@ -7,9 +7,9 @@ import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
 import { of, switchMap, tap } from 'rxjs';
 
-import { CacheContentUpdateCommand, CacheSearchResult, DataFolderType } from '@oibus/shared/api/engine.model';
 import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
 import { Instant } from '@oibus/shared/common/types';
+import { CacheContentUpdateCommand, CacheSearchResult, DataFolderType } from '@oibus/shared/domain/engine.model';
 
 import { HistoryQueryService } from '../../services/history-query.service';
 import { FileContentModalComponent } from '../../shared/cache-explore/cache-content/file-content-modal/file-content-modal.component';

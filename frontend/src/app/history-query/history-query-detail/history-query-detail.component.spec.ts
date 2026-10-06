@@ -6,13 +6,12 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { OIBusInfo } from '@oibus/shared/api/engine.model';
 import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
 import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 
-import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { CertificateService } from '../../services/certificate.service';
 import { EngineService } from '../../services/engine.service';
@@ -57,7 +56,7 @@ describe('HistoryQueryDetailComponent', () => {
     // This prevents startMetricsPolling() from being called in tests
     northConnectorService.getNorthManifest.mockReturnValue(of(null as unknown as NorthConnectorManifest));
     southConnectorService.getSouthManifest.mockReturnValue(of(null as unknown as SouthConnectorManifest));
-    (engineService as any).info$ = of(testData.engine.oIBusInfo as unknown as OIBusInfo);
+    (engineService as any).info$ = of(testData.engine.oIBusInfo);
     scanModeService.list.mockReturnValue(of([]));
     certificateService.list.mockReturnValue(of([]));
     transformerService.list.mockReturnValue(of([]));

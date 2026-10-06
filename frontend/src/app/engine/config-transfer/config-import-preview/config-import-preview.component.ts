@@ -5,10 +5,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { catchError, map, of } from 'rxjs';
 
-import { LogLevel } from '@oibus/shared/api/logs.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { TransformerSourceCommandDTO } from '@oibus/shared/api/transformer.model';
 import { createPageFromArray, Page } from '@oibus/shared/common/types';
+import { LogLevel } from '@oibus/shared/domain/logs.model';
 import { ConfigImportPreviewDTO, OIBusConfigurationDTO } from '@oibus/shared/oia/config-transfer.model';
 
 import { TransformerService } from '../../../services/transformer.service';

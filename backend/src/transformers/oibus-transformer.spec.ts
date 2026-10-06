@@ -3,7 +3,7 @@ import type { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 import { describe, it } from 'node:test';
 
-import type { CacheMetadata } from '../../shared/model/api/engine.model';
+import type { CacheMetadata } from '../../shared/model/domain/engine.model';
 
 import type { CacheMetadataSource } from '../model/engine.model';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';

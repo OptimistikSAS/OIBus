@@ -1,7 +1,7 @@
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 
-import { CacheMetadata } from '../../shared/model/api/engine.model';
+import { CacheMetadata } from '../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';

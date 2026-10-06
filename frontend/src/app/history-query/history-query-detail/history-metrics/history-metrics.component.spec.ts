@@ -3,13 +3,8 @@ import { By } from '@angular/platform-browser';
 
 import { describe, expect, test } from 'vitest';
 
-import { HistoryQueryMetrics } from '@oibus/shared/api/engine.model';
-import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
-import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
-import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
-
-import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
 import { HistoryMetricsComponent } from './history-metrics.component';
 
 describe('HistoryMetricsComponent', () => {
@@ -19,10 +14,10 @@ describe('HistoryMetricsComponent', () => {
     });
 
     const fixture = TestBed.createComponent(HistoryMetricsComponent);
-    fixture.componentRef.setInput('historyQuery', testData.historyQueries.list[0] as unknown as HistoryQueryDTO);
-    fixture.componentRef.setInput('historyMetrics', testData.historyQueries.metrics as unknown as HistoryQueryMetrics);
-    fixture.componentRef.setInput('northManifest', testData.north.manifest as unknown as NorthConnectorManifest);
-    fixture.componentRef.setInput('southManifest', testData.south.manifest as unknown as SouthConnectorManifest);
+    fixture.componentRef.setInput('historyQuery', testData.historyQueries.list[0]);
+    fixture.componentRef.setInput('historyMetrics', testData.historyQueries.metrics);
+    fixture.componentRef.setInput('northManifest', testData.north.manifest);
+    fixture.componentRef.setInput('southManifest', testData.south.manifest);
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
   });
@@ -33,10 +28,10 @@ describe('HistoryMetricsComponent', () => {
     });
 
     const fixture = TestBed.createComponent(HistoryMetricsComponent);
-    fixture.componentRef.setInput('historyQuery', testData.historyQueries.list[0] as unknown as HistoryQueryDTO);
-    fixture.componentRef.setInput('historyMetrics', testData.historyQueries.metrics as unknown as HistoryQueryMetrics);
-    fixture.componentRef.setInput('northManifest', testData.north.manifest as unknown as NorthConnectorManifest);
-    fixture.componentRef.setInput('southManifest', testData.south.manifest as unknown as SouthConnectorManifest);
+    fixture.componentRef.setInput('historyQuery', testData.historyQueries.list[0]);
+    fixture.componentRef.setInput('historyMetrics', testData.historyQueries.metrics);
+    fixture.componentRef.setInput('northManifest', testData.north.manifest);
+    fixture.componentRef.setInput('southManifest', testData.south.manifest);
     fixture.detectChanges();
 
     const compiled: HTMLElement = fixture.nativeElement;

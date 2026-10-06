@@ -8,8 +8,8 @@ import { page } from 'vitest/browser';
 
 import { CustomTransformerDTO, InputTemplate } from '@oibus/shared/api/transformer.model';
 
-import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { TransformerService } from '../../../services/transformer.service';
 import { ConfirmationService } from '../../../shared/confirmation.service';
@@ -53,7 +53,7 @@ describe('EditTransformerModalComponent', () => {
   });
 
   test('should populate form in edit mode', async () => {
-    const transformer = testData.transformers.customList[0] as unknown as CustomTransformerDTO;
+    const transformer = testData.transformers.customList[0];
     const fixture = TestBed.createComponent(EditTransformerModalComponent);
     fixture.componentInstance.prepareForEdition(transformer);
     fixture.detectChanges();
@@ -64,7 +64,7 @@ describe('EditTransformerModalComponent', () => {
   });
 
   test('should create a transformer', () => {
-    const transformer = testData.transformers.customList[0] as unknown as CustomTransformerDTO;
+    const transformer = testData.transformers.customList[0];
     const createdTransformer = { ...transformer, id: 'new-id' } as CustomTransformerDTO;
     transformerService.create.mockReturnValue(of(createdTransformer));
 

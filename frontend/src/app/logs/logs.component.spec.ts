@@ -7,8 +7,9 @@ import { BehaviorSubject, of, Subscription } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { Group, Item, LogDTO, Scope } from '@oibus/shared/api/logs.model';
+import { LogDTO } from '@oibus/shared/api/logs.model';
 import { DEFAULT_TZ, Page } from '@oibus/shared/common/types';
+import { Group, Item, Scope } from '@oibus/shared/domain/logs.model';
 
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject, stubRoute } from '../../test/vitest-create-mock';

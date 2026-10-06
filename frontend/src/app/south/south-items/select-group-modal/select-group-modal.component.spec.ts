@@ -5,17 +5,16 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 
-import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { ModalService } from '../../../shared/modal.service';
 import { SelectGroupModalComponent } from './select-group-modal.component';
 
 const manifest = testData.south.manifest;
-const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
+const scanModes = testData.scanMode.list;
 const groups: Array<SouthItemGroupDTO> = [
   {
     id: 'group1',

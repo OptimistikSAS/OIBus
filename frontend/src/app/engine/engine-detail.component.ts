@@ -7,8 +7,8 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { BehaviorSubject, firstValueFrom, switchMap } from 'rxjs';
 
-import { AuditEntityType } from '@oibus/shared/api/audit.model';
-import { AuthTokenDuration } from '@oibus/shared/api/engine.model';
+import { AuditEntityType } from '@oibus/shared/domain/audit.model';
+import { AuthTokenDuration } from '@oibus/shared/domain/engine.model';
 import { ConfigImportResponseDTO } from '@oibus/shared/oia/config-transfer.model';
 
 import { ConfigTransferService } from '../services/config-transfer.service';

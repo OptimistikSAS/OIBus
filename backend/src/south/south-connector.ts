@@ -3,12 +3,6 @@ import path from 'node:path';
 
 import { DateTime } from 'luxon';
 
-import { OIBusConnectionTestResult } from '../../shared/model/api/engine.model';
-import {
-  SouthConnectorItemQueryResult,
-  SouthConnectorItemTestingSettings,
-  SouthHistoryRecoveryStrategy
-} from '../../shared/model/api/south-connector.model';
 import {
   OIBusAnyContent,
   OIBusContent,
@@ -20,6 +14,12 @@ import {
 import { Instant, Interval } from '../../shared/model/common/types';
 import { IOT_FAMILY_SOUTH_TYPES, SOUTH_SINGLE_ITEMS } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+import { OIBusConnectionTestResult } from '../../shared/model/domain/engine.model';
+import {
+  SouthConnectorItemQueryResult,
+  SouthConnectorItemTestingSettings,
+  SouthHistoryRecoveryStrategy
+} from '../../shared/model/domain/south-connector.model';
 
 import TypedEventEmitter from '../service/typed-event-emitter';
 import { delay, generateIntervals, getErrorMessage, groupItemsByGroup, workUnitLogCtx } from '../service/utils';

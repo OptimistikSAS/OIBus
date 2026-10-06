@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon';
 
-import { CacheMetadata, HistoryQueryItemStatus, HistoryQueryMetrics } from '../../../shared/model/api/engine.model';
 import { OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { CacheMetadata, HistoryQueryItemStatus, HistoryQueryMetrics } from '../../../shared/model/domain/engine.model';
 
 import HistoryQuery from '../../engine/history-query';
 import { Instant } from '../../model/types';
