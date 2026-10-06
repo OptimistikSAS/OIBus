@@ -3,7 +3,7 @@ import { ActivatedRoute, convertToParamMap, Params, Router } from '@angular/rout
 import { Subject } from 'rxjs';
 import { describe, expect, test } from 'vitest';
 import { PageLoader } from './page-loader.service';
-import { Page } from '../../../../backend/shared/model/types';
+import { Page } from '@oibus/shared/types';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 
 describe('PageLoader', () => {

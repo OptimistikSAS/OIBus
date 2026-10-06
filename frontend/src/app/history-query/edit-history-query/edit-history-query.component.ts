@@ -14,27 +14,17 @@ import {
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, firstValueFrom, merge, Observable, of, switchMap, tap } from 'rxjs';
-import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import {
-  NorthConnectorCommandDTO,
-  NorthConnectorDTO,
-  NorthConnectorManifest,
-  OIBusNorthType
-} from '../../../../../backend/shared/model/north-connector.model';
+import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorManifest, OIBusNorthType } from '@oibus/shared/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import {
   HistoryQueryCommandDTO,
   HistoryQueryDTO,
   HistoryQueryItemCommandDTO,
   HistoryQueryLightDTO
-} from '../../../../../backend/shared/model/history-query.model';
-import {
-  OIBusSouthType,
-  SouthConnectorCommandDTO,
-  SouthConnectorDTO,
-  SouthConnectorManifest
-} from '../../../../../backend/shared/model/south-connector.model';
+} from '@oibus/shared/history-query.model';
+import { OIBusSouthType, SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorManifest } from '@oibus/shared/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
@@ -48,18 +38,14 @@ import { DocsUrlService } from '../../shared/docs-url.service';
 import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-query-modal/reset-cache-history-query-modal.component';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
-import {
-  HistoryTransformerDTOWithOptions,
-  SourceOriginSouthDTO,
-  TransformerDTO
-} from '../../../../../backend/shared/model/transformer.model';
+import { HistoryTransformerDTOWithOptions, SourceOriginSouthDTO, TransformerDTO } from '@oibus/shared/transformer.model';
 import { TransformerService } from '../../services/transformer.service';
 import { CertificateService } from '../../services/certificate.service';
-import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
+import { CertificateDTO } from '@oibus/shared/certificate.model';
 import { addAttributeToForm, addEnablingConditions } from '../../shared/form/dynamic-form.builder';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 import { OIBusScanModeFormControlComponent } from '../../shared/form/oibus-scan-mode-form-control/oibus-scan-mode-form-control.component';
-import { OIBusObjectAttribute, OIBusScanModeAttribute } from '../../../../../backend/shared/model/form.model';
+import { OIBusObjectAttribute, OIBusScanModeAttribute } from '@oibus/shared/form.model';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
@@ -68,7 +54,7 @@ import { HistoryQueryTransformersComponent } from '../history-query-transformers
 import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
-import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
+import { createPageFromArray, Page } from '@oibus/shared/types';
 import { emptyPage } from '../../shared/test-utils';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-history-query-item-modal/edit-history-query-item-modal.component';

@@ -15,7 +15,7 @@ import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import testData from '../../../../../backend/src/tests/utils/test-data';
-import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
+import { NorthConnectorDTO } from '@oibus/shared/north-connector.model';
 
 function configure(activatedRouteValue: object): MockObject<NorthConnectorService> {
   const northConnectorService = createMock(NorthConnectorService);

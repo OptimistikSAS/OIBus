@@ -8,7 +8,7 @@ import { UserSettingsService } from '../../services/user-settings.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { ChangePasswordModalComponent } from './change-password-modal.component';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
-import { UserDTO } from '../../../../../backend/shared/model/user.model';
+import { UserDTO } from '@oibus/shared/user.model';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 
 class ChangePasswordModalComponentTester {

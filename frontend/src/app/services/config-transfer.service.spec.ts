@@ -3,11 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { ConfigImportFailure, ConfigTransferService } from './config-transfer.service';
-import {
-  ConfigImportEntityValidationError,
-  ConfigImportPreviewDTO,
-  ConfigImportResponseDTO
-} from '../../../../backend/shared/model/config-transfer.model';
+import { ConfigImportEntityValidationError, ConfigImportPreviewDTO, ConfigImportResponseDTO } from '@oibus/shared/config-transfer.model';
 import { DownloadService } from './download.service';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 

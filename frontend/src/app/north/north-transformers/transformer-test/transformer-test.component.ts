@@ -11,13 +11,9 @@ import { DateRange, DateRangeSelectorComponent } from '../../../shared/date-rang
 import { TransformerService } from '../../../services/transformer.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { HistoryQueryService } from '../../../services/history-query.service';
-import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
-import {
-  OIBusSouthType,
-  SouthConnectorItemTestingSettings,
-  SouthConnectorItemTestResult
-} from '../../../../../../backend/shared/model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
+import { TransformerDTO } from '@oibus/shared/transformer.model';
+import { OIBusSouthType, SouthConnectorItemTestingSettings, SouthConnectorItemTestResult } from '@oibus/shared/south-connector.model';
+import { SouthItemSettings, SouthSettings } from '@oibus/shared/south-settings.model';
 
 /** Where the "from a source item" input pulls values from (or `none` for paste-only sources). */
 export type TransformerTestItemSource =

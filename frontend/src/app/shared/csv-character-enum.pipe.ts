@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { CsvCharacter } from '../../../../backend/shared/model/types';
+import { CsvCharacter } from '@oibus/shared/types';
 import { BaseEnumPipe } from './base-enum-pipe';
 
 @Pipe({

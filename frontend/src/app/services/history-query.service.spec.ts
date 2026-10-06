@@ -3,14 +3,14 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { HistoryQueryService } from './history-query.service';
-import { HistoryQueryDTO, HistoryQueryItemDTO, HistoryQueryLightDTO } from '../../../../backend/shared/model/history-query.model';
+import { HistoryQueryDTO, HistoryQueryItemDTO, HistoryQueryLightDTO } from '@oibus/shared/history-query.model';
 import { toPage } from '../shared/test-utils';
-import { Page } from '../../../../backend/shared/model/types';
+import { Page } from '@oibus/shared/types';
 import { DownloadService } from './download.service';
-import { SouthFolderScannerItemSettings } from '../../../../backend/shared/model/south-settings.model';
-import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '../../../../backend/shared/model/engine.model';
+import { SouthFolderScannerItemSettings } from '@oibus/shared/south-settings.model';
+import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '@oibus/shared/engine.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
-import { HistoryTransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
+import { HistoryTransformerDTOWithOptions } from '@oibus/shared/transformer.model';
 
 describe('HistoryQueryService', () => {
   let http: HttpTestingController;

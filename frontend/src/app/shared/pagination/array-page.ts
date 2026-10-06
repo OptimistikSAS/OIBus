@@ -1,7 +1,7 @@
 /**
  * A Page implementation backed by an array.
  */
-import { Page } from '../../../../../backend/shared/model/types';
+import { Page } from '@oibus/shared/types';
 
 export class ArrayPage<T> implements Page<T> {
   private _content: Array<T> = [];

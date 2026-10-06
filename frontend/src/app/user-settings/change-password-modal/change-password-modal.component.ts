@@ -2,7 +2,7 @@ import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/cor
 import { NgbActiveModal, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
-import { ChangePasswordCommand } from '../../../../../backend/shared/model/user.model';
+import { ChangePasswordCommand } from '@oibus/shared/user.model';
 import { UserSettingsService } from '../../services/user-settings.service';
 
 import { TranslateDirective } from '@ngx-translate/core';

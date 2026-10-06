@@ -19,6 +19,11 @@ import angular from 'angular-eslint';
 // `lint` script) instead.
 import eslintConfigPrettier from 'eslint-config-prettier';
 
+const SHARED_ALIAS_PATTERN = {
+  regex: '/backend/shared/',
+  message: 'Import the shared model through the @oibus/shared/* alias.'
+};
+
 // Export our config array, which is composed together thanks to the defineConfig utility function from eslint
 export default [
   ...defineConfig(
@@ -146,7 +151,14 @@ export default [
     }
   },
   {
-    // The only backend code the frontend may depend on is the shared model (backend/shared/).
+    // The shared model (backend/shared/model/) is imported through the @oibus/shared/* alias (see tsconfig.json).
+    files: ['**/*.ts'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: [SHARED_ALIAS_PATTERN] }]
+    }
+  },
+  {
+    // The only backend code the frontend may depend on is the shared model.
     // Specs are exempt for now: they reuse the backend test fixtures (backend/src/tests/utils/test-data).
     files: ['**/*.ts'],
     ignores: ['**/*.spec.ts'],
@@ -155,9 +167,10 @@ export default [
         'error',
         {
           patterns: [
+            SHARED_ALIAS_PATTERN,
             {
               regex: '/backend/(?!shared/)',
-              message: 'The frontend may only import backend code from backend/shared/.'
+              message: 'The frontend may only import backend code from the shared model, through @oibus/shared/*.'
             }
           ]
         }

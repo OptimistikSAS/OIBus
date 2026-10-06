@@ -1,7 +1,7 @@
 import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ChangePasswordCommand, UserDTO, UserCommandDTO } from '../../../../backend/shared/model/user.model';
+import { ChangePasswordCommand, UserDTO, UserCommandDTO } from '@oibus/shared/user.model';
 
 @Service()
 export class UserSettingsService {

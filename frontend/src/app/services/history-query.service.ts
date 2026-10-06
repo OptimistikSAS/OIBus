@@ -9,15 +9,15 @@ import {
   HistoryQueryItemDTO,
   HistoryQueryItemSearchParam,
   HistoryQueryLightDTO
-} from '../../../../backend/shared/model/history-query.model';
-import { Page } from '../../../../backend/shared/model/types';
+} from '@oibus/shared/history-query.model';
+import { Page } from '@oibus/shared/types';
 import {
   OIBusSouthType,
   SouthConnectorItemTestingSettings,
   SouthConnectorItemTestResult,
   SouthExploreBrowseResult,
   SouthExploreStartResult
-} from '../../../../backend/shared/model/south-connector.model';
+} from '@oibus/shared/south-connector.model';
 import { DownloadService } from './download.service';
 import {
   CacheContentUpdateCommand,
@@ -27,11 +27,11 @@ import {
   FileCacheContent,
   HistoryQueryMetrics,
   OIBusConnectionTestResult
-} from '../../../../backend/shared/model/engine.model';
-import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
-import { OIBusNorthType } from '../../../../backend/shared/model/north-connector.model';
-import { HistoryTransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
+} from '@oibus/shared/engine.model';
+import { SouthItemSettings, SouthSettings } from '@oibus/shared/south-settings.model';
+import { NorthSettings } from '@oibus/shared/north-settings.model';
+import { OIBusNorthType } from '@oibus/shared/north-connector.model';
+import { HistoryTransformerDTOWithOptions } from '@oibus/shared/transformer.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on History queries
