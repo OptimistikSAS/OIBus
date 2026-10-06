@@ -1,7 +1,8 @@
 import OIBusTransformer from './oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
-import { CacheMetadata, CacheMetadataSource } from '../../shared/model/engine.model';
+import { CacheMetadata } from '../../shared/model/engine.model';
+import { CacheMetadataSource } from '../model/engine.model';
 import { CustomTransformer } from '../model/transformer.model';
 import { sandboxService } from '../service/sandbox.service';
 import { generateRandomId, streamToString } from '../service/utils';

@@ -10,7 +10,7 @@ import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 import ConfigTransferBuilderServiceMock from '../../tests/__mocks__/service/config-transfer/config-transfer-builder-service.mock';
 import { OIAnalyticsMessageConfigurationWorkflowResult, OIAnalyticsMessageHistoryQueries } from '../../model/oianalytics-message.model';
-import { OIBusFullConfigurationCommandDTO, OIBusHistoryQueriesCommandDTO } from './oianalytics.model';
+import { OIBusFullConfigurationCommandDTO, OIBusHistoryQueriesCommandDTO } from '../../../shared/model/oianalytics-configuration.model';
 import DeferredPromise from '../deferred-promise';
 import { DateTime } from 'luxon';
 
