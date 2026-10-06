@@ -2821,7 +2821,8 @@ const oIBusCommandList: Array<OIBusCommandDTO> = [
     commandContent: {
       commandRefreshInterval: 15,
       commandRetryInterval: 5,
-      messageRetryInterval: 5
+      messageRetryInterval: 5,
+      commandPermissions: registrationCompleted.commandPermissions
     }
   }
 ];
