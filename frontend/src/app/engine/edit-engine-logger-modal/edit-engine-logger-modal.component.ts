@@ -4,9 +4,9 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { TranslateDirective } from '@ngx-translate/core';
 import { EngineService } from '../../services/engine.service';
 import { NotificationService } from '../../shared/notification.service';
-import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
+import { EngineSettingsDTO } from '@oibus/shared/engine.model';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
-import { LOG_LEVELS, LogLevel } from '../../../../../backend/shared/model/logs.model';
+import { LOG_LEVELS, LogLevel } from '@oibus/shared/logs.model';
 
 @Component({
   selector: 'oib-edit-engine-logger-modal',

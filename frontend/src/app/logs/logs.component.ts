@@ -3,19 +3,9 @@ import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PageLoader } from '../shared/page-loader.service';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import {
-  Group,
-  Item,
-  LOG_LEVELS,
-  LogDTO,
-  LogLevel,
-  LogSearchParam,
-  Scope,
-  SCOPE_TYPES,
-  ScopeType
-} from '../../../../backend/shared/model/logs.model';
+import { Group, Item, LOG_LEVELS, LogDTO, LogLevel, LogSearchParam, Scope, SCOPE_TYPES, ScopeType } from '@oibus/shared/logs.model';
 import { DateTime } from 'luxon';
-import { Instant, Page } from '../../../../backend/shared/model/types';
+import { Instant, Page } from '@oibus/shared/types';
 import { ascendingDates } from '../shared/form/validators';
 import {
   catchError,

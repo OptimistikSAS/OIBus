@@ -1,8 +1,8 @@
 import { CurrentUserService } from './current-user.service';
 import { of } from 'rxjs';
 import { createMock } from '../../test/vitest-create-mock';
-import { UserDTO } from '../../../../backend/shared/model/user.model';
-import { DEFAULT_TZ } from '../../../../backend/shared/model/types';
+import { UserDTO } from '@oibus/shared/user.model';
+import { DEFAULT_TZ } from '@oibus/shared/types';
 
 const defaultCurrentUser = {
   timezone: DEFAULT_TZ

@@ -20,7 +20,7 @@ import {
 } from '@angular/forms';
 import { combineLatest } from 'rxjs';
 import { DateTime } from 'luxon';
-import { Instant, LocalDate, LocalTime } from '../../../../../backend/shared/model/types';
+import { Instant, LocalDate, LocalTime } from '@oibus/shared/types';
 import { NgTemplateOutlet } from '@angular/common';
 import { NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';

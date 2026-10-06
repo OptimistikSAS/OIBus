@@ -2,7 +2,7 @@ import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { ControlContainer, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from '@ngx-translate/core';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
-import { OIBusNumberAttribute } from '../../../../../../backend/shared/model/form.model';
+import { OIBusNumberAttribute } from '@oibus/shared/form.model';
 
 @Component({
   selector: 'oib-oibus-number-form-control',

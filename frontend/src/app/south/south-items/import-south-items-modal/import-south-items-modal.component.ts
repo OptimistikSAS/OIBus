@@ -4,12 +4,12 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { ObservableState } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom, Observable } from 'rxjs';
-import { SouthConnectorItemCommandDTO, SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorItemCommandDTO, SouthConnectorManifest } from '@oibus/shared/south-connector.model';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
-import { ALL_CSV_CHARACTERS, createPageFromArray, CsvCharacter, Page } from '../../../../../../backend/shared/model/types';
+import { ALL_CSV_CHARACTERS, createPageFromArray, CsvCharacter, Page } from '@oibus/shared/types';
 import { emptyPage } from '../../../shared/test-utils';
 import { isDisplayableAttribute } from '../../../shared/form/dynamic-form.builder';
-import { OIBusAttribute, OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
+import { OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/form.model';
 import { CsvValidationError, MqttTopicValidationError, validateCsvHeaders, validateCsvMqttTopics } from '../../../shared/form/validators';
 import { convertCsvDelimiter } from '../../../shared/utils/csv.utils';
 

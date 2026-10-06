@@ -3,9 +3,9 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 import { HistoryQueryService } from '../../../services/history-query.service';
-import { NorthConnectorLightDTO } from '../../../../../../backend/shared/model/north-connector.model';
-import { HistoryQueryLightDTO } from '../../../../../../backend/shared/model/history-query.model';
-import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
+import { NorthConnectorLightDTO } from '@oibus/shared/north-connector.model';
+import { HistoryQueryLightDTO } from '@oibus/shared/history-query.model';
+import { TransformerDTO } from '@oibus/shared/transformer.model';
 
 interface SelectableAttachment {
   id: string;

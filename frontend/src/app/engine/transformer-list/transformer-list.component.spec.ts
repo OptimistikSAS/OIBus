@@ -12,7 +12,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
-import { CustomTransformerDTO, TransformerDTO } from '../../../../../backend/shared/model/transformer.model';
+import { CustomTransformerDTO, TransformerDTO } from '@oibus/shared/transformer.model';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 
 class TransformerListComponentTester {

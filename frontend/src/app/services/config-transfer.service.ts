@@ -2,11 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/h
 import { map, Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Service, inject } from '@angular/core';
-import {
-  ConfigImportEntityValidationError,
-  ConfigImportPreviewDTO,
-  ConfigImportResponseDTO
-} from '../../../../backend/shared/model/config-transfer.model';
+import { ConfigImportEntityValidationError, ConfigImportPreviewDTO, ConfigImportResponseDTO } from '@oibus/shared/config-transfer.model';
 import { DownloadService } from './download.service';
 import {
   getMessageFromHttpErrorResponse,

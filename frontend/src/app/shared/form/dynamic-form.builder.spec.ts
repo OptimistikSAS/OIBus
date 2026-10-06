@@ -1,11 +1,6 @@
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { addEnablingConditions, applyPlatformConditions, createControl } from './dynamic-form.builder';
-import {
-  OIBusAttributeValidator,
-  OIBusEnablingCondition,
-  OIBusObjectAttribute,
-  OIBusStringAttribute
-} from '../../../../../backend/shared/model/form.model';
+import { OIBusAttributeValidator, OIBusEnablingCondition, OIBusObjectAttribute, OIBusStringAttribute } from '@oibus/shared/form.model';
 import { describe, expect, test } from 'vitest';
 
 describe('dynamic-form.builder', () => {

@@ -9,8 +9,8 @@ import {
   NorthConnectorManifest,
   NorthType,
   OIBusNorthType
-} from '../../../../backend/shared/model/north-connector.model';
-import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
+} from '@oibus/shared/north-connector.model';
+import { NorthSettings } from '@oibus/shared/north-settings.model';
 import {
   CacheContentUpdateCommand,
   CacheSearchParam,
@@ -19,8 +19,8 @@ import {
   FileCacheContent,
   NorthConnectorMetrics,
   OIBusConnectionTestResult
-} from '../../../../backend/shared/model/engine.model';
-import { TransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
+} from '@oibus/shared/engine.model';
+import { TransformerDTOWithOptions } from '@oibus/shared/transformer.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on North connectors

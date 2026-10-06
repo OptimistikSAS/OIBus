@@ -24,8 +24,8 @@ import {
   ScanModeDTO,
   ScanModeType,
   ValidatedCronExpression
-} from '../../../../../../backend/shared/model/scan-mode.model';
-import { Instant, LocalTime, Timezone } from '../../../../../../backend/shared/model/types';
+} from '@oibus/shared/scan-mode.model';
+import { Instant, LocalTime, Timezone } from '@oibus/shared/types';
 import { DatetimePipe, formatDateTime } from '../../../shared/datetime.pipe';
 import { DatetimepickerComponent } from '../../../shared/datetimepicker/datetimepicker.component';
 import { DayOfWeekSelectorComponent } from '../../../shared/form/day-of-week-selector/day-of-week-selector.component';

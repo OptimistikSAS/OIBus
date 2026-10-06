@@ -5,8 +5,8 @@ import { of, throwError } from 'rxjs';
 
 import { ConfigImportPreviewComponent } from './config-import-preview.component';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { ConfigImportPreviewDTO } from '../../../../../../backend/shared/model/config-transfer.model';
-import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
+import { ConfigImportPreviewDTO } from '@oibus/shared/config-transfer.model';
+import { TransformerDTO } from '@oibus/shared/transformer.model';
 import { TransformerService } from '../../../services/transformer.service';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 

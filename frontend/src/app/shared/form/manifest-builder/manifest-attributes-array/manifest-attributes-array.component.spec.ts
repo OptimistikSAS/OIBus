@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ManifestAttributesArrayComponent } from './manifest-attributes-array.component';
-import { OIBusArrayAttribute } from '../../../../../../../backend/shared/model/form.model';
+import { OIBusArrayAttribute } from '@oibus/shared/form.model';
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ModalService } from '../../../modal.service';

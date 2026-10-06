@@ -1,6 +1,6 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
+import { NorthConnectorDTO } from '@oibus/shared/north-connector.model';
 import { of, switchMap, tap } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateDirective, TranslateService } from '@ngx-translate/core';
@@ -11,10 +11,10 @@ import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } 
 import { ValErrorDelayDirective } from '../../shared/form/val-error-delay.directive';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { NotificationService } from '../../shared/notification.service';
-import { CacheContentUpdateCommand, CacheSearchResult, DataFolderType } from '../../../../../backend/shared/model/engine.model';
+import { CacheContentUpdateCommand, CacheSearchResult, DataFolderType } from '@oibus/shared/engine.model';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { DateTime } from 'luxon';
-import { Instant } from '../../../../../backend/shared/model/types';
+import { Instant } from '@oibus/shared/types';
 import { ascendingDates } from '../../shared/form/validators';
 import { ModalService } from '../../shared/modal.service';
 import { FileContentModalComponent } from '../../shared/cache-explore/cache-content/file-content-modal/file-content-modal.component';

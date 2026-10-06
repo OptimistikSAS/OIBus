@@ -4,7 +4,7 @@ import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-transl
 import { DatetimepickerComponent } from '../datetimepicker/datetimepicker.component';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { DateTime } from 'luxon';
-import { Instant } from '../../../../../backend/shared/model/types';
+import { Instant } from '@oibus/shared/types';
 import { Subject, takeUntil } from 'rxjs';
 import { dateTimeRangeValidatorBuilder } from '../form/validators';
 

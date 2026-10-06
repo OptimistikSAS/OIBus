@@ -5,7 +5,7 @@ import {
   SouthConnectorItemTestingSettings,
   SouthConnectorItemTestResult,
   SouthConnectorManifest
-} from '../../../../../../backend/shared/model/south-connector.model';
+} from '@oibus/shared/south-connector.model';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ValErrorDelayDirective } from '../../../shared/form/val-error-delay.directive';
 import { SouthConnectorService } from '../../../services/south-connector.service';
@@ -16,9 +16,9 @@ import { getMessageFromHttpErrorResponse } from '../../../shared/error-intercept
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DateTime } from 'luxon';
 import { HistoryQueryService } from '../../../services/history-query.service';
-import { HistoryQueryItemCommandDTO } from '../../../../../../backend/shared/model/history-query.model';
-import { HistoryTransformerDTOWithOptions, TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
-import { NorthConnectorLightDTO } from '../../../../../../backend/shared/model/north-connector.model';
+import { HistoryQueryItemCommandDTO } from '@oibus/shared/history-query.model';
+import { HistoryTransformerDTOWithOptions, TransformerDTO } from '@oibus/shared/transformer.model';
+import { NorthConnectorLightDTO } from '@oibus/shared/north-connector.model';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { DateRange, DateRangeSelectorComponent } from '../../../shared/date-range-selector/date-range-selector.component';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';

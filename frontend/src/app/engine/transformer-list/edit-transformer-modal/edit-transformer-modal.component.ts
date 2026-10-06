@@ -15,7 +15,7 @@ import {
   OutputType,
   TransformerDTO,
   TransformerLanguage
-} from '../../../../../../backend/shared/model/transformer.model';
+} from '@oibus/shared/transformer.model';
 import { Observable, startWith, switchMap } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -25,7 +25,7 @@ import { ConfirmationService } from '../../../shared/confirmation.service';
 import { OibusInputDataTypeEnumPipe } from '../../../shared/oibus-input-data-type-enum.pipe';
 import { OibusOutputDataTypeEnumPipe } from '../../../shared/oibus-output-data-type-enum.pipe';
 import { OIBusTransformerLanguageEnumPipe } from '../../../shared/oibus-transformer-language-enum.pipe';
-import { OIBusAttribute } from '../../../../../../backend/shared/model/form.model';
+import { OIBusAttribute } from '@oibus/shared/form.model';
 import { ManifestAttributesArrayComponent } from '../../../shared/form/manifest-builder/manifest-attributes-array/manifest-attributes-array.component';
 import { TransformerTestComponent } from '../transformer-test/transformer-test.component';
 

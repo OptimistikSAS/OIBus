@@ -18,8 +18,8 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
 import testData from '../../../../../backend/src/tests/utils/test-data';
-import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
-import { OIBusInfo } from '../../../../../backend/shared/model/engine.model';
+import { NorthConnectorDTO, NorthConnectorManifest } from '@oibus/shared/north-connector.model';
+import { OIBusInfo } from '@oibus/shared/engine.model';
 
 describe('NorthDetailComponent', () => {
   let northConnectorService: MockObject<NorthConnectorService>;

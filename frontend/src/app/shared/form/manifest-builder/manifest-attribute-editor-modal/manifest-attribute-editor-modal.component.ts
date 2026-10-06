@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../../save-button/save-button.component';
-import { OIBUS_ATTRIBUTE_TYPES, OIBusArrayAttribute, OIBusAttribute } from '../../../../../../../backend/shared/model/form.model';
+import { OIBUS_ATTRIBUTE_TYPES, OIBusArrayAttribute, OIBusAttribute } from '@oibus/shared/form.model';
 import { ValErrorDelayDirective } from '../../val-error-delay.directive';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { ManifestAttributesArrayComponent } from '../manifest-attributes-array/manifest-attributes-array.component';

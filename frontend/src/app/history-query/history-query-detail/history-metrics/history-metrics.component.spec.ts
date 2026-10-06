@@ -5,10 +5,10 @@ import { describe, expect, test } from 'vitest';
 import { HistoryMetricsComponent } from './history-metrics.component';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
-import { HistoryQueryDTO } from '../../../../../../backend/shared/model/history-query.model';
-import { HistoryQueryMetrics } from '../../../../../../backend/shared/model/engine.model';
-import { NorthConnectorManifest } from '../../../../../../backend/shared/model/north-connector.model';
-import { SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
+import { HistoryQueryDTO } from '@oibus/shared/history-query.model';
+import { HistoryQueryMetrics } from '@oibus/shared/engine.model';
+import { NorthConnectorManifest } from '@oibus/shared/north-connector.model';
+import { SouthConnectorManifest } from '@oibus/shared/south-connector.model';
 
 describe('HistoryMetricsComponent', () => {
   test('should create without error', () => {

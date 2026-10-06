@@ -1,8 +1,8 @@
 import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CommandSearchParam, OIBusCommandDTO } from '../../../../backend/shared/model/command.model';
-import { Page } from '../../../../backend/shared/model/types';
+import { CommandSearchParam, OIBusCommandDTO } from '@oibus/shared/command.model';
+import { Page } from '@oibus/shared/types';
 
 @Service()
 export class OibusCommandService {

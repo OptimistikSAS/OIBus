@@ -22,13 +22,13 @@ import { EditEngineNameModalComponent } from './edit-engine-name-modal/edit-engi
 import { EditEngineWebServerModalComponent } from './edit-engine-web-server-modal/edit-engine-web-server-modal.component';
 import { EditEngineProxyModalComponent } from './edit-engine-proxy-modal/edit-engine-proxy-modal.component';
 import { EditEngineLoggerModalComponent } from './edit-engine-logger-modal/edit-engine-logger-modal.component';
-import { AuthTokenDuration } from '../../../../backend/shared/model/engine.model';
+import { AuthTokenDuration } from '@oibus/shared/engine.model';
 import { ConfigTransferService } from '../services/config-transfer.service';
 import { ImportConfigModalComponent } from './config-transfer/import-config-modal/import-config-modal.component';
 import { PortRedirectModalComponent } from '../shared/port-redirect-modal/port-redirect-modal.component';
-import { ConfigImportResponseDTO } from '../../../../backend/shared/model/config-transfer.model';
+import { ConfigImportResponseDTO } from '@oibus/shared/config-transfer.model';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
-import { AuditEntityType } from '../../../../backend/shared/model/audit.model';
+import { AuditEntityType } from '@oibus/shared/audit.model';
 
 @Component({
   selector: 'oib-engine-detail',

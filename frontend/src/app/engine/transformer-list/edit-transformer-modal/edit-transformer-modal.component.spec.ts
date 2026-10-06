@@ -13,7 +13,7 @@ import { ConfirmationService } from '../../../shared/confirmation.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
-import { CustomTransformerDTO, InputTemplate } from '../../../../../../backend/shared/model/transformer.model';
+import { CustomTransformerDTO, InputTemplate } from '@oibus/shared/transformer.model';
 
 describe('EditTransformerModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
