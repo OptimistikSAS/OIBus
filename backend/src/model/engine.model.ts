@@ -1,4 +1,7 @@
-import { BaseEntity } from './types';
+import { BaseEntity, Instant } from './types';
+import { SouthItemSettings } from '../../shared/model/south-settings.model';
+import { SouthConnectorItemEntity } from './south-connector.model';
+import { HistoryQueryItemEntity } from './histor-query.model';
 import { LogLevel } from '../../shared/model/logs.model';
 import { AuthTokenDuration } from '../../shared/model/engine.model';
 
@@ -76,3 +79,58 @@ export interface CacheSize {
 
 export const METADATA_FOLDER = 'metadata';
 export const CONTENT_FOLDER = 'content';
+
+export interface CacheMetadataSourceOriginSouth {
+  source: 'south';
+
+  /**
+   * Datetime in iso format when the query has been triggered
+   * @example "2023-01-01T00:00:00Z"
+   */
+  queryTime: Instant;
+
+  /**
+   * Start of the history query interval this content was retrieved from, if any (null for
+   * subscription-based or direct-query content, which aren't bound to a time window).
+   * @example "2023-01-01T00:00:00Z"
+   */
+  queryStartTime?: Instant | null;
+
+  /**
+   * End of the history query interval this content was retrieved from, if any.
+   * @example "2023-01-01T01:00:00Z"
+   */
+  queryEndTime?: Instant | null;
+
+  /**
+   * ID of the south connector at the source of the data
+   */
+  southId: string;
+
+  /**
+   * Name of the south connector at the source of the data, substituted for `@ConnectorName` in
+   * transformer filename patterns.
+   */
+  southName: string;
+
+  /**
+   * The items at the source of the data
+   */
+  items: Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>;
+}
+
+export interface CacheMetadataSourceOriginOIAnalytics {
+  source: 'oianalytics-setpoints';
+}
+
+export interface CacheMetadataSourceOriginAPI {
+  source: 'oibus-api';
+  dataSourceId: string;
+}
+
+export interface CacheMetadataSourceOriginTest {
+  source: 'test';
+}
+
+export type CacheMetadataSource =
+  CacheMetadataSourceOriginSouth | CacheMetadataSourceOriginOIAnalytics | CacheMetadataSourceOriginAPI | CacheMetadataSourceOriginTest;

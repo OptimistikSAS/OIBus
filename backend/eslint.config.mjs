@@ -103,6 +103,24 @@ export default [
     }
   },
   {
+    // shared/ is compiled into the frontend too: it must stay self-contained, so it may only import
+    // its own sibling files — never backend code (src/), Node built-ins or npm packages.
+    files: ['shared/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^(?!\\./)',
+              message: 'shared/ is compiled into the frontend: only import sibling files from shared/ (./...).'
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
     // Migration down() functions are intentional no-ops: OIBus migrations are
     // irreversible, so down() is kept only to satisfy knex's interface.
     files: ['src/migration/**/*.ts'],

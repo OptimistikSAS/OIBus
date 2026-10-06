@@ -1,5 +1,6 @@
 import { mock } from 'node:test';
-import { CacheMetadata, CacheMetadataSource } from '../../../../../shared/model/engine.model';
+import { CacheMetadata } from '../../../../../shared/model/engine.model';
+import { CacheMetadataSource } from '../../../../model/engine.model';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 
