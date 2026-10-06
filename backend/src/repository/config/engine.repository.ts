@@ -1,23 +1,21 @@
 import { Database } from 'better-sqlite3';
 
-import {
-  AuthTokenDuration,
-  EngineLoggerCommandDTO,
-  EngineProxyCommandDTO,
-  EngineSettingsCommandDTO,
-  EngineWebServerCommandDTO
-} from '../../../shared/model/api/engine.model';
-import { LogLevel } from '../../../shared/model/api/logs.model';
+import { AuthTokenDuration } from '../../../shared/model/domain/engine.model';
+import { LogLevel } from '../../../shared/model/domain/logs.model';
 
 import { version } from '../../../package.json';
 import { AuditEntityType } from '../../model/audit.model';
-import { EngineSettings } from '../../model/engine.model';
+import {
+  EngineLoggerCommand,
+  EngineProxyCommand,
+  EngineSettings,
+  EngineSettingsCommand,
+  EngineWebServerCommand
+} from '../../model/engine.model';
 import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
 import { generateRandomId } from '../../service/utils';
 
 const ENGINES_TABLE = 'engines';
-
-const DISABLED_FORWARD = { enabled: false, url: null, username: null, password: null };
 
 type EngineAuditSection = Extract<AuditEntityType, 'engine_general' | 'engine_web_server' | 'engine_proxy_server' | 'engine_logging'>;
 const ALL_ENGINE_SECTIONS: Array<EngineAuditSection> = ['engine_general', 'engine_web_server', 'engine_proxy_server', 'engine_logging'];
@@ -150,7 +148,7 @@ export default class EngineRepository {
     }
   }
 
-  update(command: EngineSettingsCommandDTO, updatedBy: string): void {
+  update(command: EngineSettingsCommand, updatedBy: string): void {
     const before = this.get();
     const query =
       `UPDATE ${ENGINES_TABLE} SET name = ?, port = ?, auth_token_duration = ?, audit_retention_duration = ?, proxy_enabled = ?, proxy_port = ?, ` +
@@ -184,10 +182,10 @@ export default class EngineRepository {
         command.auditRetentionDuration,
         +command.proxyServer.enabled,
         command.proxyServer.port,
-        +(command.proxyServer.forward ?? DISABLED_FORWARD).enabled,
-        (command.proxyServer.forward ?? DISABLED_FORWARD).url,
-        (command.proxyServer.forward ?? DISABLED_FORWARD).username,
-        (command.proxyServer.forward ?? DISABLED_FORWARD).password,
+        +command.proxyServer.forward.enabled,
+        command.proxyServer.forward.url,
+        command.proxyServer.forward.username,
+        command.proxyServer.forward.password,
         command.proxyServer.username,
         command.proxyServer.password,
         command.logger.console.level,
@@ -221,7 +219,7 @@ export default class EngineRepository {
     this.recordSectionChanges(before, this.get(), updatedBy, ['engine_general']);
   }
 
-  updateWebServer(command: EngineWebServerCommandDTO, updatedBy: string): void {
+  updateWebServer(command: EngineWebServerCommand, updatedBy: string): void {
     const before = this.get();
     const query =
       `UPDATE ${ENGINES_TABLE} SET port = ?, auth_token_duration = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
@@ -230,7 +228,7 @@ export default class EngineRepository {
     this.recordSectionChanges(before, this.get(), updatedBy, ['engine_web_server']);
   }
 
-  updateProxy(command: EngineProxyCommandDTO, updatedBy: string): void {
+  updateProxy(command: EngineProxyCommand, updatedBy: string): void {
     const before = this.get();
     const query =
       `UPDATE ${ENGINES_TABLE} SET proxy_enabled = ?, proxy_port = ?, ` +
@@ -243,10 +241,10 @@ export default class EngineRepository {
       .run(
         +command.enabled,
         command.port,
-        +(command.forward ?? DISABLED_FORWARD).enabled,
-        (command.forward ?? DISABLED_FORWARD).url,
-        (command.forward ?? DISABLED_FORWARD).username,
-        (command.forward ?? DISABLED_FORWARD).password,
+        +command.forward.enabled,
+        command.forward.url,
+        command.forward.username,
+        command.forward.password,
         command.username,
         command.password,
         updatedBy
@@ -254,7 +252,7 @@ export default class EngineRepository {
     this.recordSectionChanges(before, this.get(), updatedBy, ['engine_proxy_server']);
   }
 
-  updateLogger(command: EngineLoggerCommandDTO, updatedBy: string): void {
+  updateLogger(command: EngineLoggerCommand, updatedBy: string): void {
     const before = this.get();
     const query =
       `UPDATE ${ENGINES_TABLE} SET ` +

@@ -3,8 +3,8 @@ import { ReadStream } from 'node:fs';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import type { CacheMetadata } from '../../../shared/model/api/engine.model';
 import type { NorthAzureBlobSettings } from '../../../shared/model/connector/north-settings.model';
+import type { CacheMetadata } from '../../../shared/model/domain/engine.model';
 
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';

@@ -13,8 +13,8 @@ import { pipeline } from 'node:stream/promises';
 
 import { DateTime } from 'luxon';
 
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
 import { NorthFileWriterSettings } from '../../../shared/model/connector/north-settings.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
 import type { ICacheService } from '../../model/cache.service.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';

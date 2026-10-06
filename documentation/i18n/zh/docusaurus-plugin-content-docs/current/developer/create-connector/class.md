@@ -21,7 +21,7 @@ sidebar_position: 3
 import NorthConnector from '../north-connector';
 import pino from 'pino';
 import { NorthConsoleSettings } from '../../../shared/model/connector/north-settings.model';
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 import { OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/common/content.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CacheService from '../../service/cache/cache.service';
@@ -106,10 +106,10 @@ import { SouthDirectQuery, SouthHistoryQuery, SouthSubscription } from '../south
 import pino from 'pino';
 import { DateTime } from 'luxon';
 import { SouthMyTypeSettings, SouthMyTypeItemSettings, SouthItemSettings } from '../../../shared/model/connector/south-settings.model';
-import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { Instant } from '../../model/types';
 

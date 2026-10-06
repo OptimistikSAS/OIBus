@@ -1,7 +1,7 @@
 import Joi from 'joi';
 
-import { RECORD_FILTER_OPERATORS } from '../../../shared/model/api/configuration-workflow.model';
-import { HISTORY_QUERY_STATUS } from '../../../shared/model/api/history-query.model';
+import { RECORD_FILTER_OPERATORS } from '../../../shared/model/domain/configuration-workflow.model';
+import { HISTORY_QUERY_STATUS } from '../../../shared/model/domain/history-query.model';
 
 import {
   engineLoggerSchema,

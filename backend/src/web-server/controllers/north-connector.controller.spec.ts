@@ -2,10 +2,10 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { before, beforeEach, describe, it, mock } from 'node:test';
 
-import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '../../../shared/model/api/engine.model';
 import { NorthConnectorCommandDTO } from '../../../shared/model/api/north-connector.model';
 import { StandardTransformerDTO, TransformerDTOWithOptions } from '../../../shared/model/api/transformer.model';
 import { OIBusNorthType } from '../../../shared/model/connector/north-manifest.model';
+import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '../../../shared/model/domain/engine.model';
 
 import { OIBusTestingError } from '../../model/types';
 import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';

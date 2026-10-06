@@ -8,10 +8,10 @@ import { page } from 'vitest/browser';
 
 import { ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { SouthConnectorDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
+import { SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 
-import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { CertificateService } from '../../services/certificate.service';
 import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
@@ -29,8 +29,8 @@ import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-m
 import { EditSouthComponent } from './edit-south.component';
 
 const manifest = testData.south.manifest;
-const southConnector = testData.south.list[0] as unknown as SouthConnectorDTO;
-const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
+const southConnector = testData.south.list[0];
+const scanModes = testData.scanMode.list;
 
 const buildGroup = (id: string, name: string, scanMode: ScanModeDTO): SouthItemGroupDTO => ({
   id,

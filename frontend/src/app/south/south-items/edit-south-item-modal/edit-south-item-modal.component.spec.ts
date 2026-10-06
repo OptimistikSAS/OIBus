@@ -8,10 +8,10 @@ import { page } from 'vitest/browser';
 
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { SouthConnectorItemDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
+import { SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 
-import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
@@ -21,9 +21,9 @@ import EditSouthItemModalComponent from './edit-south-item-modal.component';
 
 const manifest = testData.south.manifest;
 const southConnectorCommand = testData.south.command;
-const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
+const scanModes = testData.scanMode.list;
 const southId = testData.south.list[0].id;
-const existingItem = testData.south.list[0].items[0] as unknown as SouthConnectorItemDTO;
+const existingItem = testData.south.list[0].items[0];
 const groups: Array<SouthItemGroupDTO> = [];
 const noop = () => of({} as any);
 

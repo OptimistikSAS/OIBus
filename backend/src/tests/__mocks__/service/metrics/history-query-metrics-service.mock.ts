@@ -1,8 +1,8 @@
 import { mock } from 'node:test';
 
-import { HistoryQueryMetrics } from '../../../../../shared/model/api/engine.model';
 import type { NorthSettings } from '../../../../../shared/model/connector/north-settings.model';
 import type { SouthItemSettings, SouthSettings } from '../../../../../shared/model/connector/south-settings.model';
+import { HistoryQueryMetrics } from '../../../../../shared/model/domain/engine.model';
 
 import type { HistoryQueryEntity } from '../../../../model/histor-query.model';
 import type HistoryQueryMetricsRepository from '../../../../repository/metrics/history-query-metrics.repository';

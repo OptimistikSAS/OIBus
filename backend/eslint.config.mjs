@@ -135,12 +135,13 @@ export default [
     }
   },
   // shared/model/ is compiled into the frontend too: it must stay self-contained (never backend code from src/,
-  // Node built-ins or npm packages), and its folders are layered: common <- connector <- api <- oia.
+  // Node built-ins or npm packages), and its folders are layered: common <- connector <- domain <- api <- oia.
   ...[
     { folder: 'common', allowed: [] },
     { folder: 'connector', allowed: ['common'] },
-    { folder: 'api', allowed: ['common', 'connector'] },
-    { folder: 'oia', allowed: ['common', 'connector', 'api'] }
+    { folder: 'domain', allowed: ['common', 'connector'] },
+    { folder: 'api', allowed: ['common', 'connector', 'domain'] },
+    { folder: 'oia', allowed: ['common', 'connector', 'domain', 'api'] }
   ].map(({ folder, allowed }) => ({
     files: [`shared/model/${folder}/**/*.ts`],
     rules: {
@@ -150,13 +151,42 @@ export default [
           patterns: [
             {
               regex: allowed.length ? `^(?!\\./|\\.\\./(${allowed.join('|')})/)` : '^(?!\\./)',
-              message: `shared/model/${folder}/ may only import from ${['itself', ...allowed.map(a => `../${a}/`)].join(', ')} (layering: common <- connector <- api <- oia; nothing outside shared/model/).`
+              message: `shared/model/${folder}/ may only import from ${['itself', ...allowed.map(a => `../${a}/`)].join(', ')} (layering: common <- connector <- domain <- api <- oia; nothing outside shared/model/).`
             }
           ]
         }
       ]
     }
   })),
+  {
+    // The backend internals (entities, repositories, engine, connectors, transformers, migrations) never depend on the
+    // REST API contract: they use shared/model/domain/ and src/model/, and services/controllers map to/from the DTOs.
+    // Exception: OIAnalytics commands carry REST API commands as their payload, so their entity references them.
+    files: [
+      'src/model/**/*.ts',
+      'src/repository/**/*.ts',
+      'src/engine/**/*.ts',
+      'src/south/**/*.ts',
+      'src/north/**/*.ts',
+      'src/transformers/**/*.ts',
+      'src/migration/**/*.ts'
+    ],
+    ignores: ['**/*.spec.ts', 'src/model/oianalytics-command.model.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '/shared/model/api/',
+              message:
+                'Backend internals must not depend on the REST API DTOs (shared/model/api/): use shared/model/domain/ or src/model/ types, and map in the service.'
+            }
+          ]
+        }
+      ]
+    }
+  },
   {
     // Migration down() functions are intentional no-ops: OIBus migrations are
     // irreversible, so down() is kept only to satisfy knex's interface.

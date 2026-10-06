@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { TransformerDTO } from '@oibus/shared/api/transformer.model';
 
-import testData from '../../../../backend/src/tests/utils/test-data';
+import testData from '../../test/test-data';
 import { TransformerService } from './transformer.service';
 
 describe('TransformerService', () => {

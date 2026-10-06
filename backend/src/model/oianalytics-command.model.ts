@@ -1,25 +1,21 @@
 import { CertificateCommandDTO } from '../../shared/model/api/certificate.model';
 import {
-  CacheContentUpdateCommand,
-  CacheSearchParam,
-  DataFolderType,
   EngineLoggerCommandDTO,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineWebServerCommandDTO
 } from '../../shared/model/api/engine.model';
-import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../shared/model/api/history-query.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../shared/model/api/history-query.model';
 import { IPFilterCommandDTO } from '../../shared/model/api/ip-filter.model';
 import { NorthConnectorCommandDTO } from '../../shared/model/api/north-connector.model';
 import { ScanModeCommandDTO } from '../../shared/model/api/scan-mode.model';
-import {
-  SouthConnectorCommandDTO,
-  SouthConnectorItemCommandDTO,
-  SouthConnectorItemTestingSettings
-} from '../../shared/model/api/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorItemCommandDTO } from '../../shared/model/api/south-connector.model';
 import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../shared/model/api/transformer.model';
 import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+import { CacheContentUpdateCommand, CacheSearchParam, DataFolderType } from '../../shared/model/domain/engine.model';
+import { HistoryQueryStatus } from '../../shared/model/domain/history-query.model';
+import { SouthConnectorItemTestingSettings } from '../../shared/model/domain/south-connector.model';
 import { OIBusCommandStatus, OIBusCommandType } from '../../shared/model/oia/command.model';
 
 import { BaseEntity, Instant } from './types';

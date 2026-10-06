@@ -5,10 +5,8 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { describe, expect, test } from 'vitest';
 
-import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
-
-import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import testData from '../../../test/test-data';
 import { createMock } from '../../../test/vitest-create-mock';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { ModalService } from '../../shared/modal.service';
@@ -18,7 +16,7 @@ import { ExploreHistoryCacheComponent } from './explore-history-cache.component'
 describe('ExploreHistoryCacheComponent', () => {
   test('should create without error', () => {
     const historyQueryService = createMock(HistoryQueryService);
-    historyQueryService.findById.mockReturnValue(of(testData.historyQueries.list[0] as unknown as HistoryQueryDTO));
+    historyQueryService.findById.mockReturnValue(of(testData.historyQueries.list[0]));
 
     TestBed.configureTestingModule({
       providers: [

@@ -1,10 +1,10 @@
 import { mock } from 'node:test';
 
-import { NorthConnectorMetrics, OIBusConnectionTestResult } from '../../../../shared/model/api/engine.model';
 import { NorthConnectorCommandDTO } from '../../../../shared/model/api/north-connector.model';
 import { TransformerSourceCommandDTO } from '../../../../shared/model/api/transformer.model';
 import { NorthConnectorManifest, OIBusNorthType } from '../../../../shared/model/connector/north-manifest.model';
 import { NorthSettings } from '../../../../shared/model/connector/north-settings.model';
+import { NorthConnectorMetrics, OIBusConnectionTestResult } from '../../../../shared/model/domain/engine.model';
 
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../../../model/north-connector.model';
 import { NorthTransformerWithOptions, TransformerSource } from '../../../model/transformer.model';

@@ -11,19 +11,19 @@ import { Stats } from 'node:fs';
 
 import { DateTime } from 'luxon';
 
-import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
-import {
-  SouthConnectorExploreEntry,
-  SouthConnectorExploreFieldKind,
-  SouthConnectorItemQueryResult,
-  SouthConnectorItemTestingSettings
-} from '../../../shared/model/api/south-connector.model';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
 import {
   SouthFolderScannerItemSettings,
   SouthFolderScannerSettings,
   SouthItemSettings
 } from '../../../shared/model/connector/south-settings.model';
+import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
+import {
+  SouthConnectorExploreEntry,
+  SouthConnectorExploreFieldKind,
+  SouthConnectorItemQueryResult,
+  SouthConnectorItemTestingSettings
+} from '../../../shared/model/domain/south-connector.model';
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import { Instant, OIBusTestingError } from '../../model/types';

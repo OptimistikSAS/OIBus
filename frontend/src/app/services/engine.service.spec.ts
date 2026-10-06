@@ -13,7 +13,7 @@ import {
   OIBusInfo
 } from '@oibus/shared/api/engine.model';
 
-import testData from '../../../../backend/src/tests/utils/test-data';
+import testData from '../../test/test-data';
 import { EngineService } from './engine.service';
 
 describe('EngineService', () => {

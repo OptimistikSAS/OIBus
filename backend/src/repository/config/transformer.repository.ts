@@ -1,9 +1,9 @@
 import { Database } from 'better-sqlite3';
 
-import { TransformerLanguage, TransformerSearchParam } from '../../../shared/model/api/transformer.model';
 import { Page } from '../../../shared/model/common/types';
 import { OIBusObjectAttribute } from '../../../shared/model/connector/form.model';
 import { InputType, OutputType } from '../../../shared/model/connector/transformer-manifest.model';
+import { TransformerLanguage, TransformerSearchParam } from '../../../shared/model/domain/transformer.model';
 
 import { CustomTransformer, StandardTransformer, Transformer } from '../../model/transformer.model';
 import { NotFoundError } from '../../model/types';

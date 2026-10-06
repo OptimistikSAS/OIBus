@@ -16,12 +16,13 @@ import unzipper from 'unzipper';
 import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/api/engine.model';
 import { HistoryQueryItemDTO } from '../../shared/model/api/history-query.model';
 import { ValidatedCronExpression } from '../../shared/model/api/scan-mode.model';
-import { SouthConnectorItemDTO, SouthHistoryRecoveryStrategy } from '../../shared/model/api/south-connector.model';
+import { SouthConnectorItemDTO } from '../../shared/model/api/south-connector.model';
 import { OIBusContent } from '../../shared/model/common/content.model';
 import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../shared/model/common/types';
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { OIBusSouthType, SOUTH_SINGLE_ITEMS } from '../../shared/model/connector/south-manifest.model';
 import { SouthFolderScannerItemSettings, SouthItemSettings } from '../../shared/model/connector/south-settings.model';
+import { SouthHistoryRecoveryStrategy } from '../../shared/model/domain/south-connector.model';
 
 import { CacheMetadataSource, OIBusError } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';

@@ -4,8 +4,6 @@ import path from 'node:path';
 import { JSONPath } from 'jsonpath-plus';
 import { DateTime, DurationLikeObject } from 'luxon';
 
-import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
 import { OIBusContent } from '../../../shared/model/common/content.model';
 import { DateTimeType, Instant } from '../../../shared/model/common/types';
 import {
@@ -17,6 +15,8 @@ import {
   SouthRestItemSettingsTrackingInstantDateTimeInput,
   SouthRestSettings
 } from '../../../shared/model/connector/south-settings.model';
+import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';

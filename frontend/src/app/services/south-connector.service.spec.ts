@@ -8,7 +8,7 @@ import { Page } from '@oibus/shared/common/types';
 import { SouthConnectorManifest, SouthType } from '@oibus/shared/connector/south-manifest.model';
 import { SouthFolderScannerItemSettings } from '@oibus/shared/connector/south-settings.model';
 
-import testData from '../../../../backend/src/tests/utils/test-data';
+import testData from '../../test/test-data';
 import { toPage } from '../shared/test-utils';
 import { DownloadService } from './download.service';
 import { SouthConnectorService } from './south-connector.service';

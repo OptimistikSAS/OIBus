@@ -1,7 +1,7 @@
 import { mock } from 'node:test';
 
-import { NorthConnectorMetrics } from '../../../../../shared/model/api/engine.model';
 import type { NorthSettings } from '../../../../../shared/model/connector/north-settings.model';
+import { NorthConnectorMetrics } from '../../../../../shared/model/domain/engine.model';
 
 import type { NorthConnectorEntity } from '../../../../model/north-connector.model';
 import type NorthConnectorMetricsRepository from '../../../../repository/metrics/north-connector-metrics.repository';

@@ -7,8 +7,9 @@ import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
 import { catchError, EMPTY, Subscription, switchMap } from 'rxjs';
 
-import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES, AuditAction, AuditEntityType, AuditLogDTO } from '@oibus/shared/api/audit.model';
+import { AuditLogDTO } from '@oibus/shared/api/audit.model';
 import { Instant, Page } from '@oibus/shared/common/types';
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES, AuditAction, AuditEntityType } from '@oibus/shared/domain/audit.model';
 
 import { AuditSearchParam, AuditService } from '../services/audit.service';
 import { AuditEntityTypesEnumPipe } from '../shared/audit-entity-types-enum.pipe';

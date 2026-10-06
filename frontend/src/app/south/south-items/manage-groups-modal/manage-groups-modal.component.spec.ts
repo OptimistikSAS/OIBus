@@ -8,14 +8,14 @@ import { page } from 'vitest/browser';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 
-import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { ModalService } from '../../../shared/modal.service';
 import ManageGroupsModalComponent from './manage-groups-modal.component';
 
 const manifest = testData.south.manifest;
-const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
+const scanModes = testData.scanMode.list;
 
 const buildGroup = (id: string, name: string, scanMode: ScanModeDTO): SouthItemGroupDTO => ({
   id,

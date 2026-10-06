@@ -4,7 +4,7 @@ import util from 'node:util';
 import { LogLevel, setDebugLogger, setErrorLogger, setLogLevel, setTraceLogger, setWarningLogger } from 'node-opcua-debug';
 import pino from 'pino';
 
-import { ScopeType } from '../../../shared/model/api/logs.model';
+import { ScopeType } from '../../../shared/model/domain/logs.model';
 
 import { EngineSettings } from '../../model/engine.model';
 import type { ILogger } from '../../model/logger.model';

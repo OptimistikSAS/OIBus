@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import type { CryptoSettings } from '../../../shared/model/api/engine.model';
+import type { CryptoSettings } from '../../../shared/model/domain/engine.model';
 
 import type { PinoLog } from '../../model/logs.model';
 import type { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';

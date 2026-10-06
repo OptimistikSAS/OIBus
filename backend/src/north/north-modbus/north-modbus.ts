@@ -4,8 +4,8 @@ import net from 'node:net';
 import { client } from 'jsmodbus';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
 import { NorthModbusSettings } from '../../../shared/model/connector/north-settings.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
 import type { ICacheService } from '../../model/cache.service.model';
 import { OIBusError } from '../../model/engine.model';

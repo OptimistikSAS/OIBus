@@ -8,3 +8,6 @@ export interface User extends BaseEntity {
   language: string;
   timezone: string;
 }
+
+/** What the user repository persists when creating or updating a user (the password is handled separately). */
+export type UserCommand = Omit<User, keyof BaseEntity>;

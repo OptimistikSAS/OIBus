@@ -4,9 +4,9 @@ import { promisify } from 'node:util';
 
 import Papa from 'papaparse';
 
-import { CacheMetadata } from '../../../../shared/model/api/engine.model';
 import { OIBusTimeValue } from '../../../../shared/model/common/content.model';
 import { TransformerCsvToTimeValuesSettings } from '../../../../shared/model/connector/transformer-settings.model';
+import { CacheMetadata } from '../../../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource } from '../../../model/engine.model';
 import { convertDateTimeToInstant, convertDelimiter, generateRandomId } from '../../../service/utils';

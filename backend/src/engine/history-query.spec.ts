@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import type { CacheContentUpdateCommand } from '../../shared/model/api/engine.model';
 import type { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import type { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+import type { CacheContentUpdateCommand } from '../../shared/model/domain/engine.model';
 
 import type NorthConnector from '../north/north-connector';
 import type SouthConnector from '../south/south-connector';

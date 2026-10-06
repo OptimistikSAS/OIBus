@@ -1,6 +1,6 @@
 import { Database } from 'better-sqlite3';
 
-import { ActivationWindow, ScanModeInterval, ScanModeType } from '../../../shared/model/api/scan-mode.model';
+import { ActivationWindow, ScanModeInterval, ScanModeType } from '../../../shared/model/domain/scan-mode.model';
 
 import { ScanMode } from '../../model/scan-mode.model';
 import AuditService from '../../service/audit.service';

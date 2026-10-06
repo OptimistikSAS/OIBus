@@ -1,5 +1,9 @@
 import { EventEmitter } from 'node:events';
 
+import { OIBusTimeValue } from '../../shared/model/common/content.model';
+import { Interval } from '../../shared/model/common/types';
+import { NorthSettings } from '../../shared/model/connector/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
 import {
   CacheContentUpdateCommand,
   CacheMetadata,
@@ -8,11 +12,7 @@ import {
   DataFolderType,
   FileCacheContent,
   HistoryQueryItemStatus
-} from '../../shared/model/api/engine.model';
-import { OIBusTimeValue } from '../../shared/model/common/content.model';
-import { Interval } from '../../shared/model/common/types';
-import { NorthSettings } from '../../shared/model/connector/north-settings.model';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+} from '../../shared/model/domain/engine.model';
 
 import { CacheSize } from '../model/engine.model';
 import { HistoryQueryEntity } from '../model/histor-query.model';

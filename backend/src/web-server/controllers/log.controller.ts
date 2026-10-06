@@ -1,8 +1,9 @@
 import { DateTime } from 'luxon';
 import { Controller, Get, Path, Query, Request, Route, Tags } from 'tsoa';
 
-import { Group, Item, LogDTO, LogLevel, LogSearchParam, Scope, ScopeType } from '../../../shared/model/api/logs.model';
+import { LogDTO } from '../../../shared/model/api/logs.model';
 import { Instant, Page } from '../../../shared/model/common/types';
+import { Group, Item, LogLevel, LogSearchParam, Scope, ScopeType } from '../../../shared/model/domain/logs.model';
 
 import { toLogDTO } from '../../service/log.service';
 import { CustomExpressRequest } from '../express';

@@ -1,12 +1,12 @@
 import { Database } from 'better-sqlite3';
 
-import { HistoryQueryItemSearchParam, HistoryQueryStatus } from '../../../shared/model/api/history-query.model';
 import { Page } from '../../../shared/model/common/types';
 import { OIBusObjectAttribute } from '../../../shared/model/connector/form.model';
 import { OIBusNorthType } from '../../../shared/model/connector/north-manifest.model';
 import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
 import { OIBusSouthType } from '../../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+import { HistoryQueryItemSearchParam, HistoryQueryStatus } from '../../../shared/model/domain/history-query.model';
 
 import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../../model/histor-query.model';
 import { ScanMode } from '../../model/scan-mode.model';

@@ -7,12 +7,11 @@ import { page } from 'vitest/browser';
 
 import { ConfigurationWorkflowCommandDTO } from '@oibus/shared/api/configuration-workflow.model';
 import { RegistrationSettingsDTO } from '@oibus/shared/api/engine.model';
-import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
 
-import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { EngineService } from '../../../services/engine.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
@@ -22,13 +21,13 @@ import { SouthExploreModalComponent } from '../../../shared/south-explore-modal/
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import EditWorkflowModalComponent from './edit-workflow-modal.component';
 
-const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
+const scanModes = testData.scanMode.list;
 const groups = [{ id: 'group1', standardSettings: { name: 'Group 1' } }] as unknown as Array<SouthItemGroupDTO>;
 const southId = 'southId1';
 const southSettings = testData.south.list[0].settings;
 // Real manifest fixture: modes.history is true, items.rootAttribute.attributes = [name, enabled, scanMode, settings{...}] -
 // exercises both the manifest-driven fields and the historian fields added alongside them.
-const manifest = testData.south.manifest as unknown as SouthConnectorManifest;
+const manifest = testData.south.manifest;
 // A SQL-family connector with no explore() (e.g. MSSQL) - query-only discovery scope, no reference tree.
 const sqlManifest = { ...manifest, id: 'mssql', explore: false } as unknown as SouthConnectorManifest;
 // A SQL-family connector that also has explore() (SQLite, today the only one) - query editor plus the

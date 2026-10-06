@@ -3,7 +3,8 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { NgbActiveModal, NgbDropdownModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
-import { AuditEntityType, AuditLogDTO } from '@oibus/shared/api/audit.model';
+import { AuditLogDTO } from '@oibus/shared/api/audit.model';
+import { AuditEntityType } from '@oibus/shared/domain/audit.model';
 
 import { AuditService } from '../../services/audit.service';
 import { AuditDiffComponent } from '../audit-diff/audit-diff.component';

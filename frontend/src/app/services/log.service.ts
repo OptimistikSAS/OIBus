@@ -3,8 +3,9 @@ import { inject, Service } from '@angular/core';
 
 import { Observable } from 'rxjs';
 
-import { Group, Item, LogDTO, LogSearchParam, Scope } from '@oibus/shared/api/logs.model';
+import { LogDTO } from '@oibus/shared/api/logs.model';
 import { Page } from '@oibus/shared/common/types';
+import { Group, Item, LogSearchParam, Scope } from '@oibus/shared/domain/logs.model';
 
 /**
  * Service used to interact with the backend Log repository

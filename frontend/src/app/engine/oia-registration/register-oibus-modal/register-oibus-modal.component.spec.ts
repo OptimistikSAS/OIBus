@@ -6,10 +6,8 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { RegistrationSettingsDTO } from '@oibus/shared/api/engine.model';
-
-import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { EngineService } from '../../../services/engine.service';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
@@ -40,7 +38,7 @@ describe('RegisterOibusModalComponent', () => {
   });
 
   test('should render in register mode', async () => {
-    const registration = testData.oIAnalytics.registration.completed as unknown as RegistrationSettingsDTO;
+    const registration = testData.oIAnalytics.registration.completed;
     const fixture = TestBed.createComponent(RegisterOibusModalComponent);
     fixture.componentInstance.prepare(registration, 'register', false);
     fixture.detectChanges();
@@ -50,7 +48,7 @@ describe('RegisterOibusModalComponent', () => {
   });
 
   test('should populate form in edit mode with host disabled', async () => {
-    const registration = testData.oIAnalytics.registration.completed as unknown as RegistrationSettingsDTO;
+    const registration = testData.oIAnalytics.registration.completed;
     const fixture = TestBed.createComponent(RegisterOibusModalComponent);
     fixture.componentInstance.prepare(registration, 'edit', false);
     fixture.detectChanges();
@@ -62,7 +60,7 @@ describe('RegisterOibusModalComponent', () => {
   });
 
   test('should test connection and show success', () => {
-    const registration = testData.oIAnalytics.registration.completed as unknown as RegistrationSettingsDTO;
+    const registration = testData.oIAnalytics.registration.completed;
     engineService.testOIAnalyticsConnection.mockReturnValue(of(undefined));
 
     const fixture = TestBed.createComponent(RegisterOibusModalComponent);
@@ -79,7 +77,7 @@ describe('RegisterOibusModalComponent', () => {
   });
 
   test('should save in register mode', () => {
-    const registration = testData.oIAnalytics.registration.completed as unknown as RegistrationSettingsDTO;
+    const registration = testData.oIAnalytics.registration.completed;
     engineService.register.mockReturnValue(of(undefined));
 
     const fixture = TestBed.createComponent(RegisterOibusModalComponent);
@@ -94,7 +92,7 @@ describe('RegisterOibusModalComponent', () => {
   });
 
   test('should disable the update-version toggle when remote update is ignored', async () => {
-    const registration = testData.oIAnalytics.registration.completed as unknown as RegistrationSettingsDTO;
+    const registration = testData.oIAnalytics.registration.completed;
 
     const fixture = TestBed.createComponent(RegisterOibusModalComponent);
     fixture.componentInstance.prepare(registration, 'register', true);

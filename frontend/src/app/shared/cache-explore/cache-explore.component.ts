@@ -3,7 +3,8 @@ import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, outp
 
 import { TranslateDirective } from '@ngx-translate/core';
 
-import { CacheContentUpdateCommand, CacheOperation, CacheSearchResult, DataFolderType } from '@oibus/shared/api/engine.model';
+import { CacheOperation } from '@oibus/shared/api/engine.model';
+import { CacheContentUpdateCommand, CacheSearchResult, DataFolderType } from '@oibus/shared/domain/engine.model';
 
 import { DatetimePipe } from '../datetime.pipe';
 import { ObservableState } from '../save-button/save-button.component';

@@ -7,9 +7,8 @@ import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTo
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { combineLatest, firstValueFrom, map, merge, Observable, of, Subscription, switchMap, tap } from 'rxjs';
 
-import { AuditEntityType } from '@oibus/shared/api/audit.model';
 import { CertificateDTO } from '@oibus/shared/api/certificate.model';
-import { OIBusInfo, SouthConnectorMetrics } from '@oibus/shared/api/engine.model';
+import { OIBusInfo } from '@oibus/shared/api/engine.model';
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import {
   SouthConnectorCommandDTO,
@@ -22,6 +21,8 @@ import {
 import { createPageFromArray, Page } from '@oibus/shared/common/types';
 import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+import { AuditEntityType } from '@oibus/shared/domain/audit.model';
+import { SouthConnectorMetrics } from '@oibus/shared/domain/engine.model';
 
 import { LogsComponent } from '../../logs/logs.component';
 import { CertificateService } from '../../services/certificate.service';

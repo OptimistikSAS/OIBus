@@ -3,11 +3,11 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 
-import { OIBusConnectionTestResult } from '@oibus/shared/api/engine.model';
 import { OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
 import { NorthSettings } from '@oibus/shared/connector/north-settings.model';
 import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
+import { OIBusConnectionTestResult } from '@oibus/shared/domain/engine.model';
 
 import { HistoryQueryService } from '../../services/history-query.service';
 import { NorthConnectorService } from '../../services/north-connector.service';

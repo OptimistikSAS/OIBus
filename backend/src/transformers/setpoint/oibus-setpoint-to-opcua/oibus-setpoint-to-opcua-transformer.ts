@@ -1,9 +1,9 @@
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 
-import { CacheMetadata } from '../../../../shared/model/api/engine.model';
 import { OIBusSetpoint } from '../../../../shared/model/common/content.model';
 import { TransformerSetpointToOpcuaSettings } from '../../../../shared/model/connector/transformer-settings.model';
+import { CacheMetadata } from '../../../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource } from '../../../model/engine.model';
 import { generateRandomId, streamToString } from '../../../service/utils';

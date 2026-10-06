@@ -9,8 +9,8 @@ import {
   CacheSearchResult,
   DataFolderType,
   FileCacheContent
-} from '../../../../../shared/model/api/engine.model';
-import type { ScopeType } from '../../../../../shared/model/api/logs.model';
+} from '../../../../../shared/model/domain/engine.model';
+import type { ScopeType } from '../../../../../shared/model/domain/logs.model';
 
 import type { CacheSizeEvents, ICacheService } from '../../../../model/cache.service.model';
 import type { CacheSize } from '../../../../model/engine.model';

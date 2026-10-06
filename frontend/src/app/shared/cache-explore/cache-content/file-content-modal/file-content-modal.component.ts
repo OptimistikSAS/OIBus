@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, inject, viewChild } from '@angular/
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 
-import { FileCacheContent } from '@oibus/shared/api/engine.model';
+import { FileCacheContent } from '@oibus/shared/domain/engine.model';
 
 import { FileSizePipe } from '../../../file-size.pipe';
 import { OibCodeBlockComponent } from '../../../form/oib-code-block/oib-code-block.component';

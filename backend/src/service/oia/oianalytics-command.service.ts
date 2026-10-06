@@ -8,18 +8,12 @@ import { DateTime } from 'luxon';
 
 import type { CertificateCommandDTO } from '../../../shared/model/api/certificate.model';
 import type {
-  CacheContentUpdateCommand,
-  CacheSearchParam,
-  CacheSearchResult,
-  DataFolderType,
   EngineLoggerCommandDTO,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsUpdateResultDTO,
-  EngineWebServerCommandDTO,
-  FileCacheContent
+  EngineWebServerCommandDTO
 } from '../../../shared/model/api/engine.model';
-import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../shared/model/api/history-query.model';
 import type { IPFilterCommandDTO } from '../../../shared/model/api/ip-filter.model';
 import { NorthConnectorCommandDTO } from '../../../shared/model/api/north-connector.model';
@@ -28,7 +22,6 @@ import {
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthConnectorItemTestingSettings,
   SouthConnectorItemTestResult
 } from '../../../shared/model/api/south-connector.model';
 import { CustomTransformerCommandDTO, TransformerTestRequest, TransformerTestResponse } from '../../../shared/model/api/transformer.model';
@@ -39,6 +32,15 @@ import { NorthConnectorManifest, OIBusNorthType } from '../../../shared/model/co
 import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
 import { OIBusSouthType, SouthConnectorManifest } from '../../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+import type {
+  CacheContentUpdateCommand,
+  CacheSearchParam,
+  CacheSearchResult,
+  DataFolderType,
+  FileCacheContent
+} from '../../../shared/model/domain/engine.model';
+import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 import { CommandSearchParam, OIBusCommandDTO } from '../../../shared/model/oia/command.model';
 
 import { version } from '../../../package.json';

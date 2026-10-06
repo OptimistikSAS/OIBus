@@ -2,23 +2,25 @@ import { EventEmitter } from 'node:events';
 import { mock } from 'node:test';
 
 import {
-  CacheContentUpdateCommand,
-  CacheSearchParam,
-  CacheSearchResult,
-  DataFolderType,
   EngineLoggerCommandDTO,
   EngineMemoryDumpDTO,
-  EngineMetrics,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
   EngineSettingsUpdateResultDTO,
   EngineWebServerCommandDTO,
-  FileCacheContent,
   HomeMetrics,
   OIBusInfo
 } from '../../../../shared/model/api/engine.model';
 import { OIBusContent } from '../../../../shared/model/common/content.model';
+import {
+  CacheContentUpdateCommand,
+  CacheSearchParam,
+  CacheSearchResult,
+  DataFolderType,
+  EngineMetrics,
+  FileCacheContent
+} from '../../../../shared/model/domain/engine.model';
 
 import { EngineSettings } from '../../../model/engine.model';
 /**

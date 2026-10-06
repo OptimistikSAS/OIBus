@@ -1,8 +1,8 @@
 import { Database } from 'better-sqlite3';
 import { DateTime } from 'luxon';
 
-import { Group, Item, LogLevel, LogSearchParam, Scope, ScopeType } from '../../../shared/model/api/logs.model';
 import { Page } from '../../../shared/model/common/types';
+import { Group, Item, LogLevel, LogSearchParam, Scope, ScopeType } from '../../../shared/model/domain/logs.model';
 
 import { OIBusLog, PinoLog } from '../../model/logs.model';
 

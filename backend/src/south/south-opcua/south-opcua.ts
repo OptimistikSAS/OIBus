@@ -20,15 +20,15 @@ import {
 } from 'node-opcua';
 import { EUInformation, HistoryDataOptions, HistoryReadValueIdOptions, Range } from 'node-opcua-types/source/_generated_opcua_types';
 
-import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { OIBusContent, OIBusRecord, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { Aggregate, Instant, Resampling } from '../../../shared/model/common/types';
+import { SouthItemSettings, SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/connector/south-settings.model';
+import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 import {
   SouthConnectorExploreEntry,
   SouthConnectorItemQueryResult,
   SouthConnectorItemTestingSettings
-} from '../../../shared/model/api/south-connector.model';
-import { OIBusContent, OIBusRecord, OIBusTimeValue } from '../../../shared/model/common/content.model';
-import { Aggregate, Instant, Resampling } from '../../../shared/model/common/types';
-import { SouthItemSettings, SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/connector/south-settings.model';
+} from '../../../shared/model/domain/south-connector.model';
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';

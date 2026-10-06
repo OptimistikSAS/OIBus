@@ -5,12 +5,11 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { HomeMetrics } from '@oibus/shared/api/engine.model';
 import { NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
 import { SouthConnectorLightDTO } from '@oibus/shared/api/south-connector.model';
 
-import testData from '../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
+import testData from '../../test/test-data';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { EngineService } from '../services/engine.service';
 import { NorthConnectorService } from '../services/north-connector.service';
@@ -38,7 +37,7 @@ describe('HomeComponent', () => {
     northService = createMock(NorthConnectorService);
     windowService = createMock(WindowService);
     engineService = createMock(EngineService);
-    engineService.getHomeMetrics.mockReturnValue(of({ norths: {}, engine: testData.engine.metrics, souths: {} } as unknown as HomeMetrics));
+    engineService.getHomeMetrics.mockReturnValue(of({ norths: {}, engine: testData.engine.metrics, souths: {} }));
 
     southService.list.mockReturnValue(
       of([

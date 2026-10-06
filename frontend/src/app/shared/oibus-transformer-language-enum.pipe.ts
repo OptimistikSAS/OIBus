@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-import { TransformerLanguage } from '@oibus/shared/api/transformer.model';
+import { TransformerLanguage } from '@oibus/shared/domain/transformer.model';
 
 import { BaseEnumPipe } from './base-enum-pipe';
 

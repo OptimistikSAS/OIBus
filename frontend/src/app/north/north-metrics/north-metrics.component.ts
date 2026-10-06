@@ -4,9 +4,9 @@ import { Router } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
-import { NorthConnectorMetrics } from '@oibus/shared/api/engine.model';
 import { NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
 import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
+import { NorthConnectorMetrics } from '@oibus/shared/domain/engine.model';
 
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';

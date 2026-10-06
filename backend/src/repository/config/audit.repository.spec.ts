@@ -3,7 +3,7 @@ import { after, before, beforeEach, describe, it } from 'node:test';
 
 import { Database } from 'better-sqlite3';
 
-import { AUDIT_ENTITY_TYPES } from '../../../shared/model/api/audit.model';
+import { AUDIT_ENTITY_TYPES } from '../../../shared/model/domain/audit.model';
 
 import { AuditLog } from '../../model/audit.model';
 import testData from '../../tests/utils/test-data';

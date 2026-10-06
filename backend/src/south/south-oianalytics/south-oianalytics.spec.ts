@@ -3,8 +3,8 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import type { SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
 import type { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/connector/south-settings.model';
+import type { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';

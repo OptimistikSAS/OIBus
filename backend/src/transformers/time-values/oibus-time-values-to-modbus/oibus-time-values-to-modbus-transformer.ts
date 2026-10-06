@@ -2,9 +2,9 @@ import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
 import { promisify } from 'node:util';
 
-import { CacheMetadata } from '../../../../shared/model/api/engine.model';
 import { OIBusTimeValue } from '../../../../shared/model/common/content.model';
 import { TransformerTimeValuesToModbusSettings } from '../../../../shared/model/connector/transformer-settings.model';
+import { CacheMetadata } from '../../../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource } from '../../../model/engine.model';
 import { generateRandomId } from '../../../service/utils';

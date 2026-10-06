@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { IPFilterDTO } from '@oibus/shared/api/ip-filter.model';
 
-import testData from '../../../../backend/src/tests/utils/test-data';
+import testData from '../../test/test-data';
 import { IpFilterService } from './ip-filter.service';
 
 describe('IpFilterService', () => {

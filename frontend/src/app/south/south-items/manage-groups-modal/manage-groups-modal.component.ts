@@ -8,8 +8,9 @@ import csv from 'papaparse';
 import { concatMap, from, Observable, switchMap, toArray } from 'rxjs';
 
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
-import { SouthHistoryRecoveryStrategy, SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
+import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+import { SouthHistoryRecoveryStrategy } from '@oibus/shared/domain/south-connector.model';
 
 import { ModalService } from '../../../shared/modal.service';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';

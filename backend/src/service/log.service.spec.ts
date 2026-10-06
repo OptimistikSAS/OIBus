@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
 import { DateTime } from 'luxon';
 
-import { LogSearchParam } from '../../shared/model/api/logs.model';
 import { createPageFromArray } from '../../shared/model/common/types';
+import { LogSearchParam } from '../../shared/model/domain/logs.model';
 
 import LogRepository from '../repository/logs/log.repository';
 import LogRepositoryMock from '../tests/__mocks__/repository/log/log-repository.mock';

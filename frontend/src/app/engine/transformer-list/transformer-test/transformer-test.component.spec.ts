@@ -5,10 +5,10 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { CustomTransformerCommandDTO, InputTemplate } from '@oibus/shared/api/transformer.model';
+import { InputTemplate } from '@oibus/shared/api/transformer.model';
 
-import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { TransformerService } from '../../../services/transformer.service';
 import { TransformerTestComponent } from './transformer-test.component';
@@ -27,7 +27,7 @@ describe('TransformerTestComponent', () => {
 
   test('should render without error', async () => {
     const fixture = TestBed.createComponent(TransformerTestComponent);
-    fixture.componentRef.setInput('transformer', testData.transformers.command as unknown as CustomTransformerCommandDTO);
+    fixture.componentRef.setInput('transformer', testData.transformers.command);
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);

@@ -1,7 +1,7 @@
 import { Database } from 'better-sqlite3';
 
-import { RegistrationStatus } from '../../../shared/model/api/engine.model';
 import { Instant } from '../../../shared/model/common/types';
+import { RegistrationStatus } from '../../../shared/model/domain/engine.model';
 
 import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
 import AuditService, { redactAuditSnapshots } from '../../service/audit.service';

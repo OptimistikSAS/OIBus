@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { ChangePasswordCommand, UserDTO } from '@oibus/shared/api/user.model';
 
-import testData from '../../../../backend/src/tests/utils/test-data';
+import testData from '../../test/test-data';
 import { UserSettingsService } from './user-settings.service';
 
 describe('UserSettingsService', () => {

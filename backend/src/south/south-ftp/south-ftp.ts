@@ -4,10 +4,10 @@ import path from 'node:path';
 import { AccessOptions, Client as FTPClient, FileInfo } from 'basic-ftp';
 import { DateTime } from 'luxon';
 
-import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
 import { SouthFTPItemSettings, SouthFTPSettings, SouthItemSettings } from '../../../shared/model/connector/south-settings.model';
+import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import { Instant } from '../../model/types';

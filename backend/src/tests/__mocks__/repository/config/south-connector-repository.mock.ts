@@ -2,9 +2,9 @@ import { mock } from 'node:test';
 
 import type { Database } from 'better-sqlite3';
 
-import { SouthConnectorItemSearchParam } from '../../../../../shared/model/api/south-connector.model';
 import { Page } from '../../../../../shared/model/common/types';
 import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/connector/south-settings.model';
+import { SouthConnectorItemSearchParam } from '../../../../../shared/model/domain/south-connector.model';
 
 import { ConfigurationWorkflowSouthCommand } from '../../../../model/configuration-workflow.model';
 import { ScanMode } from '../../../../model/scan-mode.model';

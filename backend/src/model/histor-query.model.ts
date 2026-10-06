@@ -1,8 +1,8 @@
-import { HistoryQueryStatus } from '../../shared/model/api/history-query.model';
 import { OIBusNorthType } from '../../shared/model/connector/north-manifest.model';
 import { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+import { HistoryQueryStatus } from '../../shared/model/domain/history-query.model';
 
 import { ScanMode } from './scan-mode.model';
 import { HistoryTransformerWithOptions } from './transformer.model';

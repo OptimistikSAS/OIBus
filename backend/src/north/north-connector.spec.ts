@@ -5,10 +5,10 @@ import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
 import { DateTime } from 'luxon';
 
-import type { CacheContentUpdateCommand, CacheMetadata } from '../../shared/model/api/engine.model';
 import type { OIBusContent, OIBusFileContent } from '../../shared/model/common/content.model';
 import type { NorthFileWriterSettings, NorthSettings } from '../../shared/model/connector/north-settings.model';
 import type { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
+import type { CacheContentUpdateCommand, CacheMetadata } from '../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource, CacheMetadataSourceOriginSouth, OIBusError } from '../model/engine.model';
 import type { HistoryQueryItemEntity } from '../model/histor-query.model';

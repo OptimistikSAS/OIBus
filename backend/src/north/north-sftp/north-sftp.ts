@@ -5,8 +5,8 @@ import path from 'node:path';
 import { DateTime } from 'luxon';
 import sftpClient, { ConnectOptions } from 'ssh2-sftp-client';
 
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
 import { NorthSFTPSettings } from '../../../shared/model/connector/north-settings.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 
 import type { ICacheService } from '../../model/cache.service.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';

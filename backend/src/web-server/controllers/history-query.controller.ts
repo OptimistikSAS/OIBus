@@ -18,24 +18,14 @@ import {
 } from 'tsoa';
 
 import {
-  CacheContentUpdateCommand,
-  CacheSearchResult,
-  DataFolderType,
-  FileCacheContent,
-  HistoryQueryMetrics,
-  OIBusConnectionTestResult
-} from '../../../shared/model/api/engine.model';
-import {
   HistoryQueryCommandBodyDTO,
   HistoryQueryCommandDTO,
   HistoryQueryDTO,
   HistoryQueryItemCommandDTO,
   HistoryQueryItemDTO,
-  HistoryQueryItemSearchParam,
   HistoryQueryLightDTO
 } from '../../../shared/model/api/history-query.model';
 import {
-  SouthConnectorItemTestingSettings,
   SouthConnectorItemTestResult,
   SouthExploreBrowseCommand,
   SouthExploreBrowseResult,
@@ -47,6 +37,16 @@ import { OIBusNorthType } from '../../../shared/model/connector/north-manifest.m
 import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
 import { OIBusSouthType } from '../../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+import {
+  CacheContentUpdateCommand,
+  CacheSearchResult,
+  DataFolderType,
+  FileCacheContent,
+  HistoryQueryMetrics,
+  OIBusConnectionTestResult
+} from '../../../shared/model/domain/engine.model';
+import { HistoryQueryItemSearchParam } from '../../../shared/model/domain/history-query.model';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import { HistoryTransformerWithOptions } from '../../model/transformer.model';
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';

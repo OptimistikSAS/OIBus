@@ -3,8 +3,9 @@ import { TestBed } from '@angular/core/testing';
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { Group, Item, LogDTO, Scope } from '@oibus/shared/api/logs.model';
+import { LogDTO } from '@oibus/shared/api/logs.model';
 import { Page } from '@oibus/shared/common/types';
+import { Group, Item, Scope } from '@oibus/shared/domain/logs.model';
 
 import { toPage } from '../shared/test-utils';
 import { LogService } from './log.service';

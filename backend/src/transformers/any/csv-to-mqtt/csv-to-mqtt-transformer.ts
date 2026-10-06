@@ -4,11 +4,11 @@ import { promisify } from 'node:util';
 
 import Papa from 'papaparse';
 
-import { CacheMetadata } from '../../../../shared/model/api/engine.model';
 import {
   TransformerCsvToMqttSettings,
   TransformerCsvToMqttSettingsDatetimeSettings
 } from '../../../../shared/model/connector/transformer-settings.model';
+import { CacheMetadata } from '../../../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource } from '../../../model/engine.model';
 import { convertDateTime, convertDelimiter, generateRandomId, stringToBoolean } from '../../../service/utils';

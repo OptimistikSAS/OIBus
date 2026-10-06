@@ -1,6 +1,6 @@
 import { mock } from 'node:test';
 
-import { NorthConnectorMetrics } from '../../../../../shared/model/api/engine.model';
+import { NorthConnectorMetrics } from '../../../../../shared/model/domain/engine.model';
 
 /**
  * Create a mock object for North Connector Metrics Repository

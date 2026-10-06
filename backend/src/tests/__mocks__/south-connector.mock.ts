@@ -1,15 +1,15 @@
 import { EventEmitter } from 'node:events';
 import { mock } from 'node:test';
 
-import type { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import type { OIBusContent, OIBusRecord } from '../../../shared/model/common/content.model';
+import type { Instant } from '../../../shared/model/common/types';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+import type { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 import type {
   SouthConnectorExploreEntry,
   SouthConnectorItemQueryResult,
   SouthConnectorItemTestingSettings
-} from '../../../shared/model/api/south-connector.model';
-import type { OIBusContent, OIBusRecord } from '../../../shared/model/common/content.model';
-import type { Instant } from '../../../shared/model/common/types';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+} from '../../../shared/model/domain/south-connector.model';
 
 import type { ScanMode } from '../../model/scan-mode.model';
 import type { SouthConnectorItemEntity } from '../../model/south-connector.model';

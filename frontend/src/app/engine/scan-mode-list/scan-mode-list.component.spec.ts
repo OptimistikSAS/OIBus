@@ -6,8 +6,8 @@ import { page } from 'vitest/browser';
 
 import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 
-import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
@@ -58,7 +58,7 @@ describe('ScanModeListComponent', () => {
 
   describe('with scan modes', () => {
     beforeEach(() => {
-      scanModeService.list.mockReturnValue(of(testData.scanMode.list as unknown as Array<ScanModeDTO>));
+      scanModeService.list.mockReturnValue(of(testData.scanMode.list));
       tester = new ScanModeListComponentTester();
     });
 

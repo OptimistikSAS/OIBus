@@ -6,7 +6,6 @@ import { Observable, shareReplay } from 'rxjs';
 import {
   EngineLoggerCommandDTO,
   EngineMemoryDumpDTO,
-  EngineMetrics,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
@@ -18,6 +17,7 @@ import {
   RegistrationSettingsCommandDTO,
   RegistrationSettingsDTO
 } from '@oibus/shared/api/engine.model';
+import { EngineMetrics } from '@oibus/shared/domain/engine.model';
 
 import { ignoreErrorUnlessStatusIs } from '../shared/error-interceptor.service';
 

@@ -3,7 +3,7 @@ import { after, before, beforeEach, describe, it, mock } from 'node:test';
 
 import { Database } from 'better-sqlite3';
 
-import { ActivationWindow, ScanModeInterval } from '../../../shared/model/api/scan-mode.model';
+import { ActivationWindow, ScanModeInterval } from '../../../shared/model/domain/scan-mode.model';
 
 import AuditService from '../../service/audit.service';
 import testData from '../../tests/utils/test-data';

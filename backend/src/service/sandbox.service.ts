@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import ivm from 'isolated-vm';
 import ts from 'typescript';
 
-import { CacheMetadata } from '../../shared/model/api/engine.model';
+import { CacheMetadata } from '../../shared/model/domain/engine.model';
 
 import { CacheMetadataSource } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';

@@ -1,22 +1,16 @@
 import { isDeepStrictEqual } from 'node:util';
 
 import {
-  SouthCachingStrategy,
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthConnectorItemQueryResult,
-  SouthConnectorItemSearchParam,
-  SouthConnectorItemTestingSettings,
   SouthConnectorItemTestResult,
   SouthConnectorLightDTO,
   SouthConnectorTypedDTO,
   SouthExploreBrowseResult,
   SouthExploreStartResult,
-  SouthHistoryRecoveryStrategy,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO,
-  SouthItemLastValue,
   SouthItemLastValueResponse
 } from '../../shared/model/api/south-connector.model';
 // South imports
@@ -26,17 +20,25 @@ import {
   SOUTH_SINGLE_ITEMS,
   SouthConnectorManifest
 } from '../../shared/model/connector/south-manifest.model';
+import {
+  SouthCachingStrategy,
+  SouthConnectorItemQueryResult,
+  SouthConnectorItemSearchParam,
+  SouthConnectorItemTestingSettings,
+  SouthHistoryRecoveryStrategy,
+  SouthItemLastValue
+} from '../../shared/model/domain/south-connector.model';
 
 import { encryptionService } from './encryption.service';
 import { southManifestList } from './south-manifests';
 export { southManifestList } from './south-manifests';
 import csv from 'papaparse';
 
-import { OIBusConnectionTestResult, SouthConnectorMetrics } from '../../shared/model/api/engine.model';
 import { OIBusContent, OIBusRecord } from '../../shared/model/common/content.model';
 import { GetUserInfo, Page } from '../../shared/model/common/types';
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+import { OIBusConnectionTestResult, SouthConnectorMetrics } from '../../shared/model/domain/engine.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import { ConfigurationWorkflowSouthCommand } from '../model/configuration-workflow.model';

@@ -5,8 +5,8 @@ import { createRequire } from 'node:module';
 import { Readable } from 'node:stream';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import type { CacheMetadata } from '../../../shared/model/api/engine.model';
 import type { NorthRESTSettings } from '../../../shared/model/connector/north-settings.model';
+import type { CacheMetadata } from '../../../shared/model/domain/engine.model';
 
 import type { ReqOptions } from '../../service/http-request.utils';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';

@@ -1,11 +1,9 @@
 import { mock } from 'node:test';
 
-import { OIBusConnectionTestResult } from '../../../../shared/model/api/engine.model';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthConnectorItemSearchParam,
   SouthConnectorItemTestResult,
   SouthExploreBrowseResult,
   SouthExploreStartResult,
@@ -16,6 +14,8 @@ import { OIBusAnyContent, OIBusRecord } from '../../../../shared/model/common/co
 import { Page } from '../../../../shared/model/common/types';
 import { OIBusSouthType, SouthConnectorManifest } from '../../../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../../../shared/model/connector/south-settings.model';
+import { OIBusConnectionTestResult } from '../../../../shared/model/domain/engine.model';
+import { SouthConnectorItemSearchParam } from '../../../../shared/model/domain/south-connector.model';
 
 import {
   SouthConnectorEntity,

@@ -4,8 +4,8 @@ import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
 import { DateTime } from 'luxon';
 
-import { Group, Item, LogSearchParam, Scope } from '../../../shared/model/api/logs.model';
 import { createPageFromArray } from '../../../shared/model/common/types';
+import { Group, Item, LogSearchParam, Scope } from '../../../shared/model/domain/logs.model';
 
 import LogServiceMock from '../../tests/__mocks__/service/log-service.mock';
 import testData from '../../tests/utils/test-data';

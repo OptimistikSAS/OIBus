@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { DateTime } from 'luxon';
 
-import type { CacheContentUpdateCommand } from '../../../shared/model/api/engine.model';
+import type { CacheContentUpdateCommand } from '../../../shared/model/domain/engine.model';
 
 import type { ILogger } from '../../model/logger.model';
 import HistoryQueryRepository from '../../repository/config/history-query.repository';

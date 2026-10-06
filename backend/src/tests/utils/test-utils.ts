@@ -8,17 +8,17 @@ import { mock } from 'node:test';
 import Database from 'better-sqlite3';
 import knex from 'knex';
 
+import { OIBusNorthType } from '../../../shared/model/connector/north-manifest.model';
+import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+import { OIBusSouthType } from '../../../shared/model/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
 import {
   CryptoSettings,
   EngineMetrics,
   HistoryQueryMetrics,
   NorthConnectorMetrics,
   SouthConnectorMetrics
-} from '../../../shared/model/api/engine.model';
-import { OIBusNorthType } from '../../../shared/model/connector/north-manifest.model';
-import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
-import { OIBusSouthType } from '../../../shared/model/connector/south-manifest.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+} from '../../../shared/model/domain/engine.model';
 
 import { migrateCrypto, migrateEntities, migrateLogs, migrateMetrics, migrateSouthCache } from '../../migration/migration-service';
 import { Certificate } from '../../model/certificate.model';
