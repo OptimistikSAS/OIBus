@@ -25519,6 +25519,11 @@
 						"description": "The result of the command execution.",
 						"example": "Success"
 					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The OIBus version the command was issued for.",
+						"example": "3.7.0"
+					},
 					"commandContent": {
 						"properties": {
 							"backupFolders": {
@@ -25560,6 +25565,7 @@
 					"retrievedDate",
 					"completedDate",
 					"result",
+					"targetVersion",
 					"commandContent"
 				],
 				"type": "object",
@@ -25618,7 +25624,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					}
 				},
@@ -25688,7 +25694,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					}
 				},
@@ -25773,7 +25779,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"commandContent": {
@@ -25884,7 +25890,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"commandContent": {
@@ -26025,7 +26031,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"commandContent": {
@@ -26291,7 +26297,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"commandContent": {
@@ -26366,7 +26372,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"commandContent": {
@@ -26471,7 +26477,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"commandContent": {
@@ -26546,7 +26552,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"scanModeId": {
@@ -26627,7 +26633,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"scanModeId": {
@@ -26724,7 +26730,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"commandContent": {
@@ -26799,7 +26805,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"ipFilterId": {
@@ -26880,7 +26886,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"ipFilterId": {
@@ -27046,7 +27052,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"commandContent": {
@@ -27121,7 +27127,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"certificateId": {
@@ -27202,7 +27208,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"certificateId": {
@@ -27278,8 +27284,14 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
+					},
+					"southConnectorId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the south connector this one is duplicated from, used to retrieve its secrets. `null` if it is not a duplicate.",
+						"example": "south123"
 					},
 					"commandContent": {
 						"$ref": "#/components/schemas/SouthConnectorCommandDTO",
@@ -27295,6 +27307,7 @@
 					"completedDate",
 					"result",
 					"targetVersion",
+					"southConnectorId",
 					"commandContent"
 				],
 				"type": "object",
@@ -27353,7 +27366,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"southConnectorId": {
@@ -27434,7 +27447,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"southConnectorId": {
@@ -27510,13 +27523,17 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"southConnectorId": {
 						"type": "string",
 						"description": "The ID of the south connector to test.",
 						"example": "south123"
+					},
+					"commandContent": {
+						"$ref": "#/components/schemas/SouthConnectorCommandDTO",
+						"description": "The content of the command, including the south connector details to test."
 					}
 				},
 				"required": [
@@ -27528,7 +27545,8 @@
 					"completedDate",
 					"result",
 					"targetVersion",
-					"southConnectorId"
+					"southConnectorId",
+					"commandContent"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -27586,7 +27604,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"southConnectorId": {
@@ -27598,6 +27616,29 @@
 						"type": "string",
 						"description": "The ID of the item to test.",
 						"example": "item456"
+					},
+					"commandContent": {
+						"properties": {
+							"testingSettings": {
+								"$ref": "#/components/schemas/SouthConnectorItemTestingSettings",
+								"description": "The testing settings."
+							},
+							"itemCommand": {
+								"$ref": "#/components/schemas/SouthConnectorItemCommandDTO",
+								"description": "The item details."
+							},
+							"southCommand": {
+								"$ref": "#/components/schemas/SouthConnectorCommandDTO",
+								"description": "The south connector details."
+							}
+						},
+						"required": [
+							"testingSettings",
+							"itemCommand",
+							"southCommand"
+						],
+						"type": "object",
+						"description": "The content of the command, including south connector, item, and testing settings."
 					}
 				},
 				"required": [
@@ -27610,7 +27651,8 @@
 					"result",
 					"targetVersion",
 					"southConnectorId",
-					"itemId"
+					"itemId",
+					"commandContent"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -30656,8 +30698,14 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
+					},
+					"northConnectorId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the north connector this one is duplicated from, used to retrieve its secrets. `null` if it is not a duplicate.",
+						"example": "north123"
 					},
 					"commandContent": {
 						"$ref": "#/components/schemas/NorthConnectorCommandDTO",
@@ -30673,6 +30721,7 @@
 					"completedDate",
 					"result",
 					"targetVersion",
+					"northConnectorId",
 					"commandContent"
 				],
 				"type": "object",
@@ -30731,7 +30780,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"northConnectorId": {
@@ -30812,7 +30861,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"northConnectorId": {
@@ -30888,13 +30937,17 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"northConnectorId": {
 						"type": "string",
 						"description": "The ID of the north connector to test.",
 						"example": "north123"
+					},
+					"commandContent": {
+						"$ref": "#/components/schemas/NorthConnectorCommandDTO",
+						"description": "The content of the command, including the north connector details to test."
 					}
 				},
 				"required": [
@@ -30906,7 +30959,8 @@
 					"completedDate",
 					"result",
 					"targetVersion",
-					"northConnectorId"
+					"northConnectorId",
+					"commandContent"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -30964,7 +31018,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"southConnectorId": {
@@ -33355,8 +33409,23 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
+					},
+					"northConnectorId": {
+						"type": "string",
+						"description": "The ID of the north connector the history query is created from, used to retrieve its secrets.",
+						"example": "north123"
+					},
+					"southConnectorId": {
+						"type": "string",
+						"description": "The ID of the south connector the history query is created from, used to retrieve its secrets.",
+						"example": "south123"
+					},
+					"historyQueryId": {
+						"type": "string",
+						"description": "The ID of the history query this one is duplicated from, used to retrieve its secrets.",
+						"example": "history123"
 					},
 					"commandContent": {
 						"$ref": "#/components/schemas/HistoryQueryCommandDTO",
@@ -33430,7 +33499,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"historyQueryId": {
@@ -33526,7 +33595,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"historyQueryId": {
@@ -33602,7 +33671,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"historyQueryId": {
@@ -33688,7 +33757,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"historyQueryId": {
@@ -33845,7 +33914,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"historyQueryId": {
@@ -33956,7 +34025,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"historyQueryId": {
@@ -34070,7 +34139,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"historyQueryId": {
@@ -34161,7 +34230,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"northConnectorId": {
@@ -34288,6 +34357,11 @@
 						"description": "The result of the command execution.",
 						"example": "Success"
 					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The OIBus version the command was issued for.",
+						"example": "3.7.0"
+					},
 					"northConnectorId": {
 						"type": "string"
 					},
@@ -34303,6 +34377,7 @@
 					"retrievedDate",
 					"completedDate",
 					"result",
+					"targetVersion",
 					"northConnectorId",
 					"commandContent"
 				],
@@ -34359,6 +34434,11 @@
 						"description": "The result of the command execution.",
 						"example": "Success"
 					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The OIBus version the command was issued for.",
+						"example": "3.7.0"
+					},
 					"historyQueryId": {
 						"type": "string"
 					},
@@ -34374,6 +34454,7 @@
 					"retrievedDate",
 					"completedDate",
 					"result",
+					"targetVersion",
 					"historyQueryId",
 					"commandContent"
 				],
@@ -34438,6 +34519,11 @@
 						"description": "The result of the command execution.",
 						"example": "Success"
 					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The OIBus version the command was issued for.",
+						"example": "3.7.0"
+					},
 					"northConnectorId": {
 						"type": "string"
 					},
@@ -34465,6 +34551,7 @@
 					"retrievedDate",
 					"completedDate",
 					"result",
+					"targetVersion",
 					"northConnectorId",
 					"commandContent"
 				],
@@ -34521,6 +34608,11 @@
 						"description": "The result of the command execution.",
 						"example": "Success"
 					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The OIBus version the command was issued for.",
+						"example": "3.7.0"
+					},
 					"historyQueryId": {
 						"type": "string"
 					},
@@ -34548,6 +34640,7 @@
 					"retrievedDate",
 					"completedDate",
 					"result",
+					"targetVersion",
 					"historyQueryId",
 					"commandContent"
 				],
@@ -34714,6 +34807,11 @@
 						"description": "The result of the command execution.",
 						"example": "Success"
 					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The OIBus version the command was issued for.",
+						"example": "3.7.0"
+					},
 					"northConnectorId": {
 						"type": "string"
 					},
@@ -34729,6 +34827,7 @@
 					"retrievedDate",
 					"completedDate",
 					"result",
+					"targetVersion",
 					"northConnectorId",
 					"commandContent"
 				],
@@ -34785,6 +34884,11 @@
 						"description": "The result of the command execution.",
 						"example": "Success"
 					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The OIBus version the command was issued for.",
+						"example": "3.7.0"
+					},
 					"historyQueryId": {
 						"type": "string"
 					},
@@ -34800,6 +34904,7 @@
 					"retrievedDate",
 					"completedDate",
 					"result",
+					"targetVersion",
 					"historyQueryId",
 					"commandContent"
 				],
@@ -34859,7 +34964,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"commandContent": {
@@ -34934,7 +35039,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"transformerId": {
@@ -35015,7 +35120,7 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"transformerId": {
@@ -35091,8 +35196,26 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
+					},
+					"commandContent": {
+						"properties": {
+							"testRequest": {
+								"$ref": "#/components/schemas/TransformerTestRequest",
+								"description": "The test request to run against the transformer."
+							},
+							"command": {
+								"$ref": "#/components/schemas/CustomTransformerCommandDTO",
+								"description": "The custom transformer details."
+							}
+						},
+						"required": [
+							"testRequest",
+							"command"
+						],
+						"type": "object",
+						"description": "The content of the command, including the custom transformer and the test request."
 					}
 				},
 				"required": [
@@ -35103,7 +35226,50 @@
 					"retrievedDate",
 					"completedDate",
 					"result",
-					"targetVersion"
+					"targetVersion",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusTestTransformerItemCommandContent": {
+				"description": "Test content for testing a transformer against an existing (or not-yet-saved) south item read,\nmirroring the query params (southType, itemName) and body (southSettings, itemSettings,\ntestingSettings) used by the south item test REST endpoint.",
+				"properties": {
+					"southId": {
+						"type": "string",
+						"description": "The ID of the south connector the item belongs to.",
+						"example": "south123"
+					},
+					"southType": {
+						"$ref": "#/components/schemas/OIBusSouthType",
+						"description": "The type of the south connector.",
+						"example": "folder-scanner"
+					},
+					"itemName": {
+						"type": "string",
+						"description": "The name of the item to read.",
+						"example": "item1"
+					},
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthSettings",
+						"description": "The south connector settings."
+					},
+					"itemSettings": {
+						"$ref": "#/components/schemas/SouthItemSettings",
+						"description": "The item settings."
+					},
+					"testingSettings": {
+						"$ref": "#/components/schemas/SouthConnectorItemTestingSettings",
+						"description": "The testing settings."
+					}
+				},
+				"required": [
+					"southId",
+					"southType",
+					"itemName",
+					"southSettings",
+					"itemSettings",
+					"testingSettings"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -35161,13 +35327,24 @@
 					},
 					"targetVersion": {
 						"type": "string",
-						"description": "The target version for the command.",
+						"description": "The OIBus version the command was issued for.",
 						"example": "3.7.0"
 					},
 					"transformerId": {
 						"type": "string",
 						"description": "The ID of the transformer to test.",
 						"example": "transformer123"
+					},
+					"commandContent": {
+						"anyOf": [
+							{
+								"$ref": "#/components/schemas/TransformerTestRequest"
+							},
+							{
+								"$ref": "#/components/schemas/OIBusTestTransformerItemCommandContent"
+							}
+						],
+						"description": "The content of the command: either pasted input data, or an existing (or not-yet-saved) south item to read from."
 					}
 				},
 				"required": [
@@ -35179,7 +35356,8 @@
 					"completedDate",
 					"result",
 					"targetVersion",
-					"transformerId"
+					"transformerId",
+					"commandContent"
 				],
 				"type": "object",
 				"additionalProperties": false
