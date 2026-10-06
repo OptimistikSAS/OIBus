@@ -1,19 +1,21 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import SouthConnector from '../south-connector';
-import { checkAge, compress, getErrorMessage, workUnitLogCtx } from '../../service/utils';
-
-import { encryptionService } from '../../service/encryption.service';
-import { SouthDirectQuery } from '../south-interface';
-import { SouthFTPItemSettings, SouthFTPSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
-import { DateTime } from 'luxon';
 import { AccessOptions, Client as FTPClient, FileInfo } from 'basic-ftp';
+import { DateTime } from 'luxon';
+
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { SouthFTPItemSettings, SouthFTPSettings, SouthItemSettings } from '../../../shared/model/connector/south-settings.model';
+
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { Instant } from '../../model/types';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import { encryptionService } from '../../service/encryption.service';
+import { checkAge, compress, getErrorMessage, workUnitLogCtx } from '../../service/utils';
+import SouthConnector from '../south-connector';
+import { SouthDirectQuery } from '../south-interface';
 
 /**
  * Class SouthFTP - Retrieve files from a remote FTP instance

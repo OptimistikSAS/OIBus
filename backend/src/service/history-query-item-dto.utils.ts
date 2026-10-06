@@ -1,8 +1,9 @@
-import { HistoryQueryItemTypedDTO } from '../../shared/model/history-query.model';
-import { SouthItemSettings } from '../../shared/model/south-settings.model';
+import { HistoryQueryItemTypedDTO } from '../../shared/model/api/history-query.model';
+import { GetUserInfo } from '../../shared/model/common/types';
+import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
+import { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
+
 import { HistoryQueryItemEntity } from '../model/histor-query.model';
-import { OIBusObjectAttribute } from '../../shared/model/form.model';
-import { GetUserInfo } from '../../shared/model/types';
 import { encryptionService } from './encryption.service';
 import { southManifestList } from './south-manifests';
 

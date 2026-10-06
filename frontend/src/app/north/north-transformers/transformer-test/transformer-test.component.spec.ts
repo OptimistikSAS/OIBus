@@ -1,14 +1,16 @@
 import { TestBed } from '@angular/core/testing';
+
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { NorthTransformerTestComponent } from './transformer-test.component';
-import { TransformerService } from '../../../services/transformer.service';
-import { SouthConnectorService } from '../../../services/south-connector.service';
-import { HistoryQueryService } from '../../../services/history-query.service';
+import { TransformerDTO } from '@oibus/shared/api/transformer.model';
+
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock } from '../../../../test/vitest-create-mock';
-import { TransformerDTO } from '@oibus/shared/transformer.model';
+import { HistoryQueryService } from '../../../services/history-query.service';
+import { SouthConnectorService } from '../../../services/south-connector.service';
+import { TransformerService } from '../../../services/transformer.service';
+import { NorthTransformerTestComponent } from './transformer-test.component';
 
 const transformer = {
   id: 'transformer-1',

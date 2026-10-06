@@ -1,13 +1,16 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { Router } from '@angular/router';
+
+import { SouthType } from '@oibus/shared/connector/south-manifest.model';
+
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { SouthType } from '@oibus/shared/south-connector.model';
 import { OIBusSouthCategoryEnumPipe } from '../../shared/oibus-south-category-enum.pipe';
-import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 import { OIBusSouthTypeDescriptionEnumPipe } from '../../shared/oibus-south-type-description-enum.pipe';
-import { ReactiveFormsModule } from '@angular/forms';
+import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 
 @Component({
   selector: 'oib-choose-south-connector-type-modal',

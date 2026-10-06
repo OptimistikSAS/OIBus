@@ -1,36 +1,39 @@
-import { describe, it, before, beforeEach, afterEach, mock, type Mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
-import fs from 'node:fs/promises';
-import Stream from 'node:stream';
 import { EventEmitter } from 'node:events';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, flushPromises } from '../../tests/utils/test-utils';
-import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import nodeOPCUAMock from '../../tests/__mocks__/node-opcua.mock';
-import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import type { SouthOPCUAItemSettings, SouthOPCUASettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
-import type { OIBusContent } from '../../../shared/model/engine.model';
-import type SouthOPCUAClass from './south-opcua';
-import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import Stream from 'node:stream';
+import { afterEach, before, beforeEach, describe, it, type Mock, mock } from 'node:test';
+
+import { DateTime } from 'luxon';
 import {
-  DataType,
-  StatusCodes,
-  SecurityPolicy,
-  AttributeIds,
-  UserTokenType,
-  MessageSecurityMode,
-  TimestampsToReturn,
   AggregateFunction,
-  HistoryReadRequest,
+  AttributeIds,
+  ClientMonitoredItem,
   ClientSession,
   ClientSubscription,
-  ClientMonitoredItem,
+  DataType,
+  HistoryReadRequest,
+  MessageSecurityMode,
+  NodeClass,
   NodeId,
-  NodeClass
+  SecurityPolicy,
+  StatusCodes,
+  TimestampsToReturn,
+  UserTokenType
 } from 'node-opcua';
-import { DateTime } from 'luxon';
+
+import type { OIBusContent } from '../../../shared/model/common/content.model';
+import type { SouthItemSettings, SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/connector/south-settings.model';
+
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import nodeOPCUAMock from '../../tests/__mocks__/node-opcua.mock';
+import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import testData from '../../tests/utils/test-data';
+import { flushPromises, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import type SouthOPCUAClass from './south-opcua';
 
 const nodeRequire = createRequire(import.meta.url);
 

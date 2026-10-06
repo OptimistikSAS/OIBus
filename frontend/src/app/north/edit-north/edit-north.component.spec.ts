@@ -1,21 +1,23 @@
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
+
+import { of } from 'rxjs';
 import { describe, expect, test } from 'vitest';
 
-import { EditNorthComponent } from './edit-north.component';
-import { NorthConnectorService } from '../../services/north-connector.service';
-import { ScanModeService } from '../../services/scan-mode.service';
-import { CertificateService } from '../../services/certificate.service';
-import { TransformerService } from '../../services/transformer.service';
-import { NotificationService } from '../../shared/notification.service';
-import { ModalService } from '../../shared/modal.service';
-import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
+import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
+
+import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
-import testData from '../../../../../backend/src/tests/utils/test-data';
-import { NorthConnectorDTO } from '@oibus/shared/north-connector.model';
+import { CertificateService } from '../../services/certificate.service';
+import { NorthConnectorService } from '../../services/north-connector.service';
+import { ScanModeService } from '../../services/scan-mode.service';
+import { TransformerService } from '../../services/transformer.service';
+import { ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
+import { EditNorthComponent } from './edit-north.component';
 
 function configure(activatedRouteValue: object): MockObject<NorthConnectorService> {
   const northConnectorService = createMock(NorthConnectorService);

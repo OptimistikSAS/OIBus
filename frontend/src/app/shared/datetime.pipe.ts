@@ -1,6 +1,9 @@
-import { LOCALE_ID, Pipe, PipeTransform, inject } from '@angular/core';
+import { inject, LOCALE_ID, Pipe, PipeTransform } from '@angular/core';
+
 import { DateTime } from 'luxon';
-import { Timezone } from '@oibus/shared/types';
+
+import { Timezone } from '@oibus/shared/common/types';
+
 import { CurrentUserService } from './current-user.service';
 
 const FRIENDLY_FORMATS = {

@@ -1,12 +1,12 @@
+import crypto from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import fs from 'node:fs/promises';
-import { encryptionService } from '../encryption.service';
-import { DateTime } from 'luxon';
+import os from 'node:os';
 import path from 'node:path';
-import { version } from '../../../package.json';
-import type { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
-import type { ScanMode } from '../../model/scan-mode.model';
-import OIAnalyticsCommandRepository from '../../repository/config/oianalytics-command.repository';
-import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
+
+import { DateTime } from 'luxon';
+
+import type { CertificateCommandDTO } from '../../../shared/model/api/certificate.model';
 import type {
   CacheContentUpdateCommand,
   CacheSearchParam,
@@ -18,8 +18,34 @@ import type {
   EngineSettingsUpdateResultDTO,
   EngineWebServerCommandDTO,
   FileCacheContent
-} from '../../../shared/model/engine.model';
+} from '../../../shared/model/api/engine.model';
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../shared/model/api/history-query.model';
+import type { IPFilterCommandDTO } from '../../../shared/model/api/ip-filter.model';
+import { NorthConnectorCommandDTO } from '../../../shared/model/api/north-connector.model';
+import type { ScanModeCommandDTO } from '../../../shared/model/api/scan-mode.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorItemTestingSettings,
+  SouthConnectorItemTestResult
+} from '../../../shared/model/api/south-connector.model';
+import { CustomTransformerCommandDTO, TransformerTestRequest, TransformerTestResponse } from '../../../shared/model/api/transformer.model';
+import { OIBusContent } from '../../../shared/model/common/content.model';
+import { Page } from '../../../shared/model/common/types';
+import { OIBusObjectAttribute } from '../../../shared/model/connector/form.model';
+import { NorthConnectorManifest, OIBusNorthType } from '../../../shared/model/connector/north-manifest.model';
+import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+import { OIBusSouthType, SouthConnectorManifest } from '../../../shared/model/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+import { CommandSearchParam, OIBusCommandDTO } from '../../../shared/model/oia/command.model';
+
+import { version } from '../../../package.json';
 import type { EngineSettings } from '../../model/engine.model';
+import type { HistoryQueryEntity } from '../../model/histor-query.model';
+import type { IPFilter } from '../../model/ip-filter.model';
+import type { ILogger } from '../../model/logger.model';
 import {
   OIBusCommand,
   OIBusCreateCertificateCommand,
@@ -71,40 +97,18 @@ import {
   OIBusUpdateSouthConnectorCommand,
   OIBusUpdateVersionCommand
 } from '../../model/oianalytics-command.model';
-import { CommandSearchParam, OIBusCommandDTO } from '../../../shared/model/command.model';
-import { Page } from '../../../shared/model/types';
-import { toSouthConnectorItemDTO } from '../south-connector-dto.utils';
-import OIAnalyticsClient from './oianalytics-client.service';
-import os from 'node:os';
-import crypto from 'node:crypto';
 import type { IOIAnalyticsMessageService } from '../../model/oianalytics-message.model';
-import OIAnalyticsRegistrationService from './oianalytics-registration.service';
-import { EventEmitter } from 'node:events';
-import type { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
-import type { IPFilter } from '../../model/ip-filter.model';
-import type { CertificateCommandDTO } from '../../../shared/model/certificate.model';
-import { toHistoryQueryItemDTO } from '../history-query-item-dto.utils';
-import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../shared/model/history-query.model';
-import { OIBusObjectAttribute } from '../../../shared/model/form.model';
-import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
-import { NotFoundError } from '../../model/types';
-import {
-  OIBusSouthType,
-  SouthConnectorCommandDTO,
-  SouthConnectorItemCommandDTO,
-  SouthConnectorItemDTO,
-  SouthConnectorItemTestingSettings,
-  SouthConnectorItemTestResult,
-  SouthConnectorManifest
-} from '../../../shared/model/south-connector.model';
+import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
+import type { ScanMode } from '../../model/scan-mode.model';
 import type { SouthConnectorEntity } from '../../model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthConnectorCommandDTO, NorthConnectorManifest, OIBusNorthType } from '../../../shared/model/north-connector.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
-import type { HistoryQueryEntity } from '../../model/histor-query.model';
-import { CustomTransformerCommandDTO, TransformerTestRequest, TransformerTestResponse } from '../../../shared/model/transformer.model';
-import type { ILogger } from '../../model/logger.model';
-import { delay, getOIBusInfo, unzip, getErrorMessage } from '../utils';
+import { NotFoundError } from '../../model/types';
+import OIAnalyticsCommandRepository from '../../repository/config/oianalytics-command.repository';
+import { encryptionService } from '../encryption.service';
+import { toHistoryQueryItemDTO } from '../history-query-item-dto.utils';
+import { toSouthConnectorItemDTO } from '../south-connector-dto.utils';
+import { delay, getErrorMessage, getOIBusInfo, unzip } from '../utils';
+import OIAnalyticsClient from './oianalytics-client.service';
+import OIAnalyticsRegistrationService from './oianalytics-registration.service';
 
 interface ICertificateService {
   create(command: CertificateCommandDTO, createdBy: string): Promise<unknown>;

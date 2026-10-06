@@ -1,8 +1,9 @@
-import { BaseEntity } from './types';
-import { NorthSettings } from '../../shared/model/north-settings.model';
-import { OIBusNorthType } from '../../shared/model/north-connector.model';
-import { NorthTransformerWithOptions } from './transformer.model';
+import { OIBusNorthType } from '../../shared/model/connector/north-manifest.model';
+import { NorthSettings } from '../../shared/model/connector/north-settings.model';
+
 import { ScanMode } from './scan-mode.model';
+import { NorthTransformerWithOptions } from './transformer.model';
+import { BaseEntity } from './types';
 
 export interface NorthConnectorEntityLight extends BaseEntity {
   name: string;

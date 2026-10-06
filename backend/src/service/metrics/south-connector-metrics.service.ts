@@ -1,9 +1,12 @@
-import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
+
+import { SouthConnectorMetrics } from '../../../shared/model/api/engine.model';
+import { OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { Instant } from '../../../shared/model/common/types';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+
 import SouthConnectorMetricsRepository from '../../repository/metrics/south-connector-metrics.repository';
-import { OIBusTimeValue, SouthConnectorMetrics } from '../../../shared/model/engine.model';
 import SouthConnector from '../../south/south-connector';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 
 /**
  * Coalesce DB writes for metrics updates. With a high-rate South (MQTT msg

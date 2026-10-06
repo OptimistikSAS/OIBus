@@ -1,12 +1,13 @@
-import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import testData from '../tests/utils/test-data';
-import { ipFilterSchema } from '../web-server/controllers/validators/oibus-validation-schema';
-import IPFilterService, { toIPFilterDTO } from './ip-filter.service';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
+import IpFilterRepository from '../repository/config/ip-filter.repository';
 import IpFilterRepositoryMock from '../tests/__mocks__/repository/config/ip-filter-repository.mock';
 import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import testData from '../tests/utils/test-data';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import IpFilterRepository from '../repository/config/ip-filter.repository';
+import { ipFilterSchema } from '../web-server/controllers/validators/oibus-validation-schema';
+import IPFilterService, { toIPFilterDTO } from './ip-filter.service';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 
 let validator: { validate: ReturnType<typeof mock.fn> };

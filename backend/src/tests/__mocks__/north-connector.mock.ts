@@ -1,21 +1,23 @@
 import { EventEmitter } from 'node:events';
-import { mock } from 'node:test';
 import type { ReadStream } from 'node:fs';
-import NorthConnector from '../../north/north-connector';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
-import type { ICacheService } from '../../model/cache.service.model';
+import { mock } from 'node:test';
+
 import type {
-  OIBusConnectionTestResult,
+  CacheContentUpdateCommand,
   CacheMetadata,
   CacheSearchParam,
   CacheSearchResult,
   DataFolderType,
   FileCacheContent,
-  CacheContentUpdateCommand
-} from '../../../shared/model/engine.model';
+  OIBusConnectionTestResult
+} from '../../../shared/model/api/engine.model';
+import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+
+import type { ICacheService } from '../../model/cache.service.model';
 import type { CacheSize } from '../../model/engine.model';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
 import type { ScanMode } from '../../model/scan-mode.model';
+import NorthConnector from '../../north/north-connector';
 
 /**
  * Create a mock object for North Connector

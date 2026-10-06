@@ -1,5 +1,4 @@
-import { Component, forwardRef, inject, ChangeDetectionStrategy } from '@angular/core';
-import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, Component, forwardRef, inject } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -10,32 +9,35 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
+
+import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslateService } from '@ngx-translate/core';
+import { Observable, switchMap } from 'rxjs';
+
+import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import {
-  IOT_FAMILY_SOUTH_TYPES,
   SouthCachingStrategy,
   SouthCachingThresholdType,
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthConnectorManifest,
   SouthHistoryRecoveryStrategy,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO
-} from '@oibus/shared/south-connector.model';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import SouthItemTestComponent from '../south-item-test/south-item-test.component';
-import { OIBusObjectAttribute, OIBusScanModeAttribute } from '@oibus/shared/form.model';
+} from '@oibus/shared/api/south-connector.model';
+import { OIBusObjectAttribute, OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
+import { IOT_FAMILY_SOUTH_TYPES, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+
 import { addAttributeToForm, createMqttValidator, extractFormValue } from '../../../shared/form/dynamic-form.builder';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
-import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
-import { CertificateDTO } from '@oibus/shared/certificate.model';
-import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { Observable, switchMap } from 'rxjs';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
+import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { ModalService } from '../../../shared/modal.service';
+import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
+import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
+import SouthItemTestComponent from '../south-item-test/south-item-test.component';
 
 @Component({
   selector: 'oib-edit-south-item-modal',

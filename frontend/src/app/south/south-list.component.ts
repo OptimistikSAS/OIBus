@@ -1,25 +1,29 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { OIBusSouthType, SouthConnectorLightDTO } from '@oibus/shared/south-connector.model';
-import { SouthConnectorService } from '../services/south-connector.service';
-import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
-import { ConfirmationService } from '../shared/confirmation.service';
-import { NotificationService } from '../shared/notification.service';
 import { AsyncPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { ModalService } from '../shared/modal.service';
-import { ChooseSouthConnectorTypeModalComponent } from './choose-south-connector-type-modal/choose-south-connector-type-modal.component';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
+
+import { SouthConnectorLightDTO } from '@oibus/shared/api/south-connector.model';
+import { createPageFromArray, Page } from '@oibus/shared/common/types';
+import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
+
+import { SouthConnectorService } from '../services/south-connector.service';
+import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
+import { AuditInfoComponent } from '../shared/audit-info/audit-info.component';
+import { ConfirmationService } from '../shared/confirmation.service';
+import { FormControlValidationDirective } from '../shared/form/form-control-validation.directive';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
-import { createPageFromArray, Page } from '@oibus/shared/types';
-import { emptyPage } from '../shared/test-utils';
+import { ModalService } from '../shared/modal.service';
+import { NotificationService } from '../shared/notification.service';
+import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';
-import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
-import { FormControlValidationDirective } from '../shared/form/form-control-validation.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AuditInfoComponent } from '../shared/audit-info/audit-info.component';
-import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
+import { emptyPage } from '../shared/test-utils';
+import { ChooseSouthConnectorTypeModalComponent } from './choose-south-connector-type-modal/choose-south-connector-type-modal.component';
 
 type SouthSortField = 'name' | 'type' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';

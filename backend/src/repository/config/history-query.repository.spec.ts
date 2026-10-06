@@ -1,15 +1,18 @@
-import { before, after, beforeEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { after, before, beforeEach, describe, it, mock } from 'node:test';
+
 import { Database } from 'better-sqlite3';
-import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
-import testData from '../../tests/utils/test-data';
-import HistoryQueryRepository from './history-query.repository';
+
+import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+
 import { HistoryQueryEntity, HistoryQueryItemEntity } from '../../model/histor-query.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { Transformer } from '../../model/transformer.model';
-import AuditService from '../../service/audit.service';
 import { NotFoundError } from '../../model/types';
+import AuditService from '../../service/audit.service';
+import testData from '../../tests/utils/test-data';
+import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import HistoryQueryRepository from './history-query.repository';
 
 const TEST_DB_PATH = 'src/tests/test-config-history-query.db';
 

@@ -1,22 +1,23 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import { ReadStream } from 'node:fs';
-import { Readable } from 'node:stream';
+import { createRequire } from 'node:module';
+import { PassThrough, Readable } from 'node:stream';
 import zlib from 'node:zlib';
-import { PassThrough } from 'node:stream';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, buildNorthEntity, assertContains } from '../../tests/utils/test-utils';
-import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
-import OIAnalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
-import { createMockResponse } from '../../tests/__mocks__/undici.mock';
-import type { ReqOptions } from '../../service/http-request.utils';
-import type { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
-import type NorthOIAnalyticsClass from './north-oianalytics';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import type { NorthOIAnalyticsSettings } from '../../../shared/model/connector/north-settings.model';
+
 import type CertificateRepository from '../../repository/config/certificate.repository';
 import type OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
+import type { ReqOptions } from '../../service/http-request.utils';
+import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
+import OIAnalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
+import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import { createMockResponse } from '../../tests/__mocks__/undici.mock';
+import testData from '../../tests/utils/test-data';
+import { assertContains, buildNorthEntity, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import type NorthOIAnalyticsClass from './north-oianalytics';
 
 const nodeRequire = createRequire(import.meta.url);
 

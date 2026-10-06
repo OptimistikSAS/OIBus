@@ -1,11 +1,17 @@
-import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { ConfigImportFailure, ConfigTransferService } from './config-transfer.service';
-import { ConfigImportEntityValidationError, ConfigImportPreviewDTO, ConfigImportResponseDTO } from '@oibus/shared/config-transfer.model';
-import { DownloadService } from './download.service';
+import {
+  ConfigImportEntityValidationError,
+  ConfigImportPreviewDTO,
+  ConfigImportResponseDTO
+} from '@oibus/shared/oia/config-transfer.model';
+
 import { createMock, MockObject } from '../../test/vitest-create-mock';
+import { ConfigImportFailure, ConfigTransferService } from './config-transfer.service';
+import { DownloadService } from './download.service';
 
 describe('ConfigTransferService', () => {
   let http: HttpTestingController;

@@ -1,12 +1,15 @@
 import { Component, inject } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
+
+import { EngineSettingsDTO } from '@oibus/shared/api/engine.model';
+import { LOG_LEVELS, LogLevel } from '@oibus/shared/api/logs.model';
+
 import { EngineService } from '../../services/engine.service';
-import { NotificationService } from '../../shared/notification.service';
-import { EngineSettingsDTO } from '@oibus/shared/engine.model';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
-import { LOG_LEVELS, LogLevel } from '@oibus/shared/logs.model';
+import { NotificationService } from '../../shared/notification.service';
 
 @Component({
   selector: 'oib-edit-engine-logger-modal',

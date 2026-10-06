@@ -1,16 +1,18 @@
 import { TestBed } from '@angular/core/testing';
+
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import SouthItemTestComponent from './south-item-test.component';
-import { SouthConnectorService } from '../../../services/south-connector.service';
-import { NorthConnectorService } from '../../../services/north-connector.service';
-import { HistoryQueryService } from '../../../services/history-query.service';
+import { SouthConnectorItemDTO } from '@oibus/shared/api/south-connector.model';
+import { SouthFolderScannerItemSettings } from '@oibus/shared/connector/south-settings.model';
+
+import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock } from '../../../../test/vitest-create-mock';
-import { SouthConnectorItemDTO } from '@oibus/shared/south-connector.model';
-import { SouthFolderScannerItemSettings } from '@oibus/shared/south-settings.model';
-import testData from '../../../../../../backend/src/tests/utils/test-data';
+import { HistoryQueryService } from '../../../services/history-query.service';
+import { NorthConnectorService } from '../../../services/north-connector.service';
+import { SouthConnectorService } from '../../../services/south-connector.service';
+import SouthItemTestComponent from './south-item-test.component';
 
 const manifest = testData.south.manifest;
 const connectorCommand = testData.south.command;

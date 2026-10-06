@@ -1,6 +1,8 @@
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { CacheMetadata } from '../../../shared/model/engine.model';
+import { describe, it } from 'node:test';
+
+import { CacheMetadata } from '../../../shared/model/api/engine.model';
+
 import {
   applyNorthCacheContentSize,
   applyNorthConnect,

@@ -1,6 +1,8 @@
 import { Database } from 'better-sqlite3';
-import { HistoryQueryMetrics } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
+
+import { HistoryQueryMetrics } from '../../../shared/model/api/engine.model';
+
 import { Instant } from '../../model/types';
 
 const HISTORY_QUERY_METRICS_TABLE = 'history_query_metrics';

@@ -1,11 +1,13 @@
-import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
+
 import { TranslateDirective } from '@ngx-translate/core';
-import { filter, map, switchMap, catchError, of } from 'rxjs';
+import { catchError, filter, map, of, switchMap } from 'rxjs';
+
+import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
+import { HistoryQueryService } from '../../services/history-query.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { HistoryQueryService } from '../../services/history-query.service';
-import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
 
 interface BreadcrumbItem {
   label: string;

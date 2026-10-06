@@ -1,12 +1,15 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable, switchMap } from 'rxjs';
-import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
+
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { IPFilterCommandDTO, IPFilterDTO } from '@oibus/shared/ip-filter.model';
+import { Observable, switchMap } from 'rxjs';
+
+import { IPFilterCommandDTO, IPFilterDTO } from '@oibus/shared/api/ip-filter.model';
+
 import { IpFilterService } from '../../../services/ip-filter.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
+import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 
 @Component({

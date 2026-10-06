@@ -1,6 +1,20 @@
+import { DateTime } from 'luxon';
 import mssql, { config, ConnectionPool } from 'mssql';
 
-import SouthConnector from '../south-connector';
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import {
+  SouthConnectorExploreEntry,
+  SouthConnectorItemQueryResult,
+  SouthConnectorItemTestingSettings
+} from '../../../shared/model/api/south-connector.model';
+import { OIBusContent, OIBusRecord } from '../../../shared/model/common/content.model';
+import { Instant } from '../../../shared/model/common/types';
+import { SouthItemSettings, SouthMSSQLItemSettings, SouthMSSQLSettings } from '../../../shared/model/connector/south-settings.model';
+
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { OIBusTestingError } from '../../model/types';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import { encryptionService } from '../../service/encryption.service';
 import {
   convertDateTimeToInstant,
   extractDiscoveryQuery,
@@ -9,20 +23,8 @@ import {
   logQuery,
   workUnitLogCtx
 } from '../../service/utils';
-import { encryptionService } from '../../service/encryption.service';
-import { Instant } from '../../../shared/model/types';
+import SouthConnector from '../south-connector';
 import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
-import { DateTime } from 'luxon';
-import { SouthItemSettings, SouthMSSQLItemSettings, SouthMSSQLSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent, OIBusRecord } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import {
-  SouthConnectorExploreEntry,
-  SouthConnectorItemQueryResult,
-  SouthConnectorItemTestingSettings
-} from '../../../shared/model/south-connector.model';
-import { OIBusTestingError } from '../../model/types';
 
 /**
  * Class SouthMSSQL - Retrieve data from MSSQL databases and send the resulting rows as record-list

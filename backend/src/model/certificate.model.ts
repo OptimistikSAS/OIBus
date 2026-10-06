@@ -1,5 +1,6 @@
+import { Instant } from '../../shared/model/common/types';
+
 import { BaseEntity } from './types';
-import { Instant } from '../../shared/model/types';
 
 export interface Certificate extends BaseEntity {
   name: string;

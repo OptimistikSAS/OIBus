@@ -1,10 +1,13 @@
-import NorthConnector from '../north-connector';
-import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusConnectionTestResult, OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/engine.model';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
-import type { ICacheService } from '../../model/cache.service.model';
 import { ReadStream } from 'node:fs';
+
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { NorthConsoleSettings } from '../../../shared/model/connector/north-settings.model';
+
+import type { ICacheService } from '../../model/cache.service.model';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { streamToString } from '../../service/utils';
+import NorthConnector from '../north-connector';
 
 /**
  * Class Console - display values and file path into the console

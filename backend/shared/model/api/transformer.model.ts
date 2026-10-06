@@ -1,15 +1,10 @@
-import { OIBusObjectAttribute } from './form.model';
+import { Instant, UserInfo } from '../common/types';
+import { OIBusObjectAttribute } from '../connector/form.model';
+import { InputType, OutputType } from '../connector/transformer-manifest.model';
 import { ItemLightDTO, SouthConnectorLightDTO, SouthItemGroupLightDTO } from './south-connector.model';
-import { Instant, UserInfo } from './types';
-
-export const INPUT_TYPES = ['any', 'time-values', 'setpoint', 'record-list'];
-export type InputType = (typeof INPUT_TYPES)[number];
 
 export const DATA_SOURCE_TYPES = ['south', 'oibus-api', 'oianalytics-setpoint'];
 export type DataSourceType = (typeof DATA_SOURCE_TYPES)[number];
-
-export const OUTPUT_TYPES = ['any', 'time-values', 'opcua', 'mqtt', 'modbus', 'oianalytics'];
-export type OutputType = (typeof OUTPUT_TYPES)[number];
 
 export const CUSTOM_TRANSFORMER_LANGUAGES = ['javascript', 'typescript'];
 export type TransformerLanguage = (typeof CUSTOM_TRANSFORMER_LANGUAGES)[number];
@@ -18,35 +13,6 @@ export interface InputTemplate {
   type: InputType;
   data: string;
   description: string;
-}
-
-/**
- * Manifest for a transformer type.
- * Describes the configuration schema and capabilities of a transformer type.
- */
-export interface TransformerManifest {
-  /**
-   * The unique identifier of the transformer type.
-   * @example "csv-to-mqtt"
-   */
-  id: string;
-
-  /**
-   * The input data type that the transformer accepts.
-   * @example "any"
-   */
-  inputType: InputType;
-
-  /**
-   * The output data type that the transformer produces.
-   * @example "mqtt"
-   */
-  outputType: OutputType;
-
-  /**
-   * The configuration schema for the transformer settings.
-   */
-  settings: OIBusObjectAttribute;
 }
 
 /**

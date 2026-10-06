@@ -1,8 +1,9 @@
-import { Instant } from '../../shared/model/types';
-import { SouthItemSettings } from '../../shared/model/south-settings.model';
+import { SouthConnectorExploreEntry } from '../../shared/model/api/south-connector.model';
+import { OIBusRecord } from '../../shared/model/common/content.model';
+import { Instant } from '../../shared/model/common/types';
+import { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
+
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
-import { SouthConnectorExploreEntry } from '../../shared/model/south-connector.model';
-import { OIBusRecord } from '../../shared/model/engine.model';
 
 export interface SouthDirectQuery {
   directQuery(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<unknown | null>;

@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
+
 import { beforeEach, describe, expect, test } from 'vitest';
+
 import { WindowService } from './window.service';
 
 describe('WindowService', () => {

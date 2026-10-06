@@ -1,21 +1,24 @@
 import { TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Router } from '@angular/router';
 
-import ManageWorkflowsModalComponent, { toConfigurationWorkflowCommand } from './manage-workflows-modal.component';
-import { ModalService } from '../../../shared/modal.service';
-import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
-import { ConfirmationService } from '../../../shared/confirmation.service';
-import { NotificationService } from '../../../shared/notification.service';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { of, throwError } from 'rxjs';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
+import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+
+import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import { ConfigurationWorkflowCommandDTO, ConfigurationWorkflowDTO } from '@oibus/shared/configuration-workflow.model';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import { SouthConnectorManifest, SouthItemGroupDTO } from '@oibus/shared/south-connector.model';
-import testData from '../../../../../../backend/src/tests/utils/test-data';
+import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
+import { ConfirmationService } from '../../../shared/confirmation.service';
+import { ModalService } from '../../../shared/modal.service';
+import { NotificationService } from '../../../shared/notification.service';
+import ManageWorkflowsModalComponent, { toConfigurationWorkflowCommand } from './manage-workflows-modal.component';
 
 const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
 const manifest = testData.south.manifest as unknown as SouthConnectorManifest;

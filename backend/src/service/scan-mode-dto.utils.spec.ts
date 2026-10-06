@@ -1,9 +1,11 @@
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { toScanModeDTO } from './scan-mode-dto.utils';
+import { describe, it } from 'node:test';
+
+import { ActivationWindow } from '../../shared/model/api/scan-mode.model';
+import { GetUserInfo } from '../../shared/model/common/types';
+
 import { ScanMode } from '../model/scan-mode.model';
-import { ActivationWindow } from '../../shared/model/scan-mode.model';
-import { GetUserInfo } from '../../shared/model/types';
+import { toScanModeDTO } from './scan-mode-dto.utils';
 
 const getUserInfo: GetUserInfo = (id: string) => ({ id, friendlyName: id });
 

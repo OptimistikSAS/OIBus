@@ -1,25 +1,28 @@
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
+
+import { of } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { NorthDetailComponent } from './north-detail.component';
-import { NorthConnectorService } from '../../services/north-connector.service';
-import { ScanModeService } from '../../services/scan-mode.service';
-import { CertificateService } from '../../services/certificate.service';
-import { TransformerService } from '../../services/transformer.service';
-import { EngineService } from '../../services/engine.service';
-import { NotificationService } from '../../shared/notification.service';
-import { ModalService } from '../../shared/modal.service';
-import { WindowService } from '../../shared/window.service';
+import { OIBusInfo } from '@oibus/shared/api/engine.model';
+import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
+import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
+
+import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { CertificateService } from '../../services/certificate.service';
+import { EngineService } from '../../services/engine.service';
+import { NorthConnectorService } from '../../services/north-connector.service';
+import { ScanModeService } from '../../services/scan-mode.service';
+import { TransformerService } from '../../services/transformer.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
-import testData from '../../../../../backend/src/tests/utils/test-data';
-import { NorthConnectorDTO, NorthConnectorManifest } from '@oibus/shared/north-connector.model';
-import { OIBusInfo } from '@oibus/shared/engine.model';
+import { ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { WindowService } from '../../shared/window.service';
+import { NorthDetailComponent } from './north-detail.component';
 
 describe('NorthDetailComponent', () => {
   let northConnectorService: MockObject<NorthConnectorService>;

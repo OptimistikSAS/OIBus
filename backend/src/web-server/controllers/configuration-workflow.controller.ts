@@ -1,21 +1,23 @@
 import { Body, Controller, Delete, Get, Path, Post, Put, Query, Request, Route, SuccessResponse, Tags } from 'tsoa';
+
 import {
   ConfigurationWorkflowCommandDTO,
   ConfigurationWorkflowDTO,
   WorkflowPreviewResultDTO
-} from '../../../shared/model/configuration-workflow.model';
+} from '../../../shared/model/api/configuration-workflow.model';
 import {
   WorkflowRunDetailDTO,
   WorkflowRunDTO,
   WorkflowRunSearchParam,
   WorkflowRunStatus,
   WorkflowRunTriggerType
-} from '../../../shared/model/workflow-run.model';
-import { GetUserInfo, Instant, Page } from '../../../shared/model/types';
-import { CustomExpressRequest } from '../express';
+} from '../../../shared/model/api/workflow-run.model';
+import { GetUserInfo, Instant, Page } from '../../../shared/model/common/types';
+
 import { ConfigurationWorkflowEntity } from '../../model/configuration-workflow.model';
 import { WorkflowRunEntity } from '../../model/workflow-run.model';
 import { toScanModeDTO } from '../../service/scan-mode.service';
+import { CustomExpressRequest } from '../express';
 
 export function toConfigurationWorkflowDTO(entity: ConfigurationWorkflowEntity, getUserInfo: GetUserInfo): ConfigurationWorkflowDTO {
   return {

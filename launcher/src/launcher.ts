@@ -1,10 +1,11 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { ChildProcessWithoutNullStreams } from 'child_process';
+import fs from 'node:fs/promises';
 import os from 'node:os';
-import { createFolder, filesExists, replaceConfigArgumentWithAbsolutePath } from './utils';
+import path from 'node:path';
+import { ChildProcessWithoutNullStreams } from 'child_process';
+
 import { version } from '../package.json';
+import { createFolder, filesExists, replaceConfigArgumentWithAbsolutePath } from './utils';
 
 const STARTED_DELAY = 30000;
 const UPDATE_SETTINGS_FILE = 'update.json';

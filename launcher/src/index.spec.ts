@@ -1,7 +1,7 @@
-import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import path from 'node:path';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
 import { mockModule, reloadModule } from './tests/utils/test-utils';
 

@@ -1,22 +1,25 @@
-import { Component, computed, inject, input, OnChanges, signal, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, computed, inject, input, OnChanges, signal, SimpleChanges } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { getMessageFromHttpErrorResponse } from '../../../shared/error-interceptor.service';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
-import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
-import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
-import { TransformerService } from '../../../services/transformer.service';
-import { CustomTransformerCommandDTO, TransformerTestResponse } from '@oibus/shared/transformer.model';
-import { OIBusObjectAttribute } from '@oibus/shared/form.model';
-import { addAttributeToForm, addEnablingConditions } from '../../../shared/form/dynamic-form.builder';
+
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { ContentDisplayMode } from '../../../south/south-items/south-item-test/item-test-result/item-test-result.component';
-import { createPageFromArray, Page } from '@oibus/shared/types';
-import { PaginationComponent } from '../../../shared/pagination/pagination.component';
-import { FileSizePipe } from '../../../shared/file-size.pipe';
-import { DatetimePipe } from '../../../shared/datetime.pipe';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import Papa from 'papaparse';
+
+import { CustomTransformerCommandDTO, TransformerTestResponse } from '@oibus/shared/api/transformer.model';
+import { createPageFromArray, Page } from '@oibus/shared/common/types';
+import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
+
+import { TransformerService } from '../../../services/transformer.service';
+import { DatetimePipe } from '../../../shared/datetime.pipe';
+import { getMessageFromHttpErrorResponse } from '../../../shared/error-interceptor.service';
+import { FileSizePipe } from '../../../shared/file-size.pipe';
+import { addAttributeToForm, addEnablingConditions } from '../../../shared/form/dynamic-form.builder';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
+import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
+import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
+import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+import { ContentDisplayMode } from '../../../south/south-items/south-item-test/item-test-result/item-test-result.component';
 
 const PAGE_SIZE = 10;
 

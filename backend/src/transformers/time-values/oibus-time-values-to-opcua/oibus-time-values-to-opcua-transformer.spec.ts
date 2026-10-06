@@ -1,13 +1,15 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 import { Readable } from 'stream';
+
+import { OIBusTimeValue } from '../../../../shared/model/common/content.model';
+
+import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../../tests/utils/test-data';
 import { flushPromises, mockModule, reloadModule } from '../../../tests/utils/test-utils';
-import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
-import type OIBusTimeValuesToOPCUATransformerType from './oibus-time-values-to-opcua-transformer';
 import timeValuesToOpcuaManifest from './manifest';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import type OIBusTimeValuesToOPCUATransformerType from './oibus-time-values-to-opcua-transformer';
 
 const nodeRequire = createRequire(import.meta.url);
 

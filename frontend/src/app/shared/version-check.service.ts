@@ -1,5 +1,7 @@
-import { Service, inject } from '@angular/core';
-import { Subject, Subscription, switchMap, filter, catchError, EMPTY } from 'rxjs';
+import { inject, Service } from '@angular/core';
+
+import { catchError, EMPTY, filter, Subject, Subscription, switchMap } from 'rxjs';
+
 import { EngineService } from '../services/engine.service';
 import { visibleTimer } from './polling';
 

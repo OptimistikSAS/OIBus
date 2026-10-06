@@ -1,15 +1,16 @@
-import { NorthConnectorManifest } from '../../shared/model/north-connector.model';
+import { NorthConnectorManifest } from '../../shared/model/connector/north-manifest.model';
+
+import amazonManifest from '../north/north-amazon-s3/manifest';
 import azureManifest from '../north/north-azure-blob/manifest';
 import azureDataExplorerManifest from '../north/north-azure-data-explorer/manifest';
-import oianalyticsManifest from '../north/north-oianalytics/manifest';
-import fileWriterManifest from '../north/north-file-writer/manifest';
 import consoleManifest from '../north/north-console/manifest';
-import amazonManifest from '../north/north-amazon-s3/manifest';
-import sftpManifest from '../north/north-sftp/manifest';
-import restManifest from '../north/north-rest/manifest';
-import opcuaManifest from '../north/north-opcua/manifest';
-import mqttManifest from '../north/north-mqtt/manifest';
+import fileWriterManifest from '../north/north-file-writer/manifest';
 import modbusManifest from '../north/north-modbus/manifest';
+import mqttManifest from '../north/north-mqtt/manifest';
+import oianalyticsManifest from '../north/north-oianalytics/manifest';
+import opcuaManifest from '../north/north-opcua/manifest';
+import restManifest from '../north/north-rest/manifest';
+import sftpManifest from '../north/north-sftp/manifest';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,

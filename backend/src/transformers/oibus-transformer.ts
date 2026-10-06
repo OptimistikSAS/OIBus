@@ -1,9 +1,11 @@
-import { Transformer } from '../model/transformer.model';
-import { CacheMetadata } from '../../shared/model/engine.model';
-import { CacheMetadataSource } from '../model/engine.model';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
+
+import { CacheMetadata } from '../../shared/model/api/engine.model';
+
+import { CacheMetadataSource } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';
+import { Transformer } from '../model/transformer.model';
 
 export default abstract class OIBusTransformer {
   constructor(

@@ -1,8 +1,10 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { ReactiveFormsModule } from '@angular/forms';
-import { TranslateDirective } from '@ngx-translate/core';
-import { EngineService } from '../services/engine.service';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { ReactiveFormsModule } from '@angular/forms';
+
+import { TranslateDirective } from '@ngx-translate/core';
+
+import { EngineService } from '../services/engine.service';
 
 @Component({
   selector: 'oib-about',

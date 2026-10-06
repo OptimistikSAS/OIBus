@@ -1,21 +1,23 @@
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+
 import { BehaviorSubject, of } from 'rxjs';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { auditEntityLink, AuditListComponent } from './audit-list.component';
+import { AuditLogDTO } from '@oibus/shared/api/audit.model';
+import { Page } from '@oibus/shared/common/types';
+
 import { provideI18nTesting } from '../../i18n/mock-i18n';
-import { AuditService } from '../services/audit.service';
-import { ModalService, Modal } from '../shared/modal.service';
-import { PageLoader } from '../shared/page-loader.service';
-import { AuditLogDTO } from '@oibus/shared/audit.model';
-import { Page } from '@oibus/shared/types';
-import { emptyPage, toPage } from '../shared/test-utils';
 import { createMock, MockObject, stubRoute } from '../../test/vitest-create-mock';
-import { provideNgbConfigTesting } from '../shared/form/oi-ngb-testing';
+import { AuditService } from '../services/audit.service';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
+import { provideNgbConfigTesting } from '../shared/form/oi-ngb-testing';
+import { Modal, ModalService } from '../shared/modal.service';
+import { PageLoader } from '../shared/page-loader.service';
+import { emptyPage, toPage } from '../shared/test-utils';
+import { auditEntityLink, AuditListComponent } from './audit-list.component';
 
 class AuditListComponentTester {
   readonly fixture = TestBed.createComponent(AuditListComponent);

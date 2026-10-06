@@ -60,16 +60,16 @@ the first three; the fourth is a runtime check.
 ### 1. Add the type id to the shared list {#1-add-the-type-id-to-the-shared-list}
 
 For a South connector, append your id to `OIBUS_SOUTH_TYPES` in
-`backend/shared/model/south-connector.model.ts`:
+`backend/shared/model/connector/south-manifest.model.ts`:
 
-```typescript title="backend/shared/model/south-connector.model.ts"
+```typescript title="backend/shared/model/connector/south-manifest.model.ts"
 export const OIBUS_SOUTH_TYPES = [
   // ...existing types...
   'my-new-source' // ← your new type id (kebab-case)
 ] as const;
 ```
 
-North connectors use `OIBUS_NORTH_TYPES` in `backend/shared/model/north-connector.model.ts`.
+North connectors use `OIBUS_NORTH_TYPES` in `backend/shared/model/connector/north-manifest.model.ts`.
 
 Pick a `category` from the existing list (`OIBUS_SOUTH_CATEGORIES` or `OIBUS_NORTH_CATEGORIES`). Don't add a
 new category unless you have a strong reason — the UI groups connectors by category, and a one-off category
@@ -115,7 +115,7 @@ npm run generate:settings-interface
 ```
 
 This reads every `manifest.ts`, derives the corresponding TypeScript interface, and writes it into
-`backend/shared/model/south-settings.model.ts` (and the North equivalent). The generator also refreshes the
+`backend/shared/model/connector/south-settings.model.ts` (and the North equivalent). The generator also refreshes the
 OpenAPI definitions.
 
 :::caution

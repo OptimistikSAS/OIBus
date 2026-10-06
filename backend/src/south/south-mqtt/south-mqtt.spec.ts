@@ -1,18 +1,21 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import { EventEmitter } from 'node:events';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, flushPromises } from '../../tests/utils/test-utils';
+import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import type { MqttClient } from 'mqtt';
+
+import type { OIBusContent } from '../../../shared/model/common/content.model';
+import type { Instant } from '../../../shared/model/common/types';
+import type { SouthItemSettings, SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/connector/south-settings.model';
+
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import testData from '../../tests/utils/test-data';
+import { flushPromises, mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthMQTTClass from './south-mqtt';
-import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import type { SouthItemSettings, SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/south-settings.model';
-import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import type { OIBusContent } from '../../../shared/model/engine.model';
-import type { Instant } from '../../../shared/model/types';
-import type { MqttClient } from 'mqtt';
 
 const nodeRequire = createRequire(import.meta.url);
 

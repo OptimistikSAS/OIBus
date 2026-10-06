@@ -1,13 +1,14 @@
 import { TestBed } from '@angular/core/testing';
+
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
-import { of, throwError } from 'rxjs';
 
-import { ImportHistoryQueryItemsModalComponent } from './import-history-query-items-modal.component';
+import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import testData from '../../../../../../backend/src/tests/utils/test-data';
+import { ImportHistoryQueryItemsModalComponent } from './import-history-query-items-modal.component';
 
 const manifest = testData.south.manifest;
 

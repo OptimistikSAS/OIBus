@@ -1,17 +1,19 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { WorkflowRunHistoryComponent } from './workflow-run-history.component';
-import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
-import { ModalService } from '../../../shared/modal.service';
+import { of } from 'rxjs';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
+import { WorkflowRunDTO } from '@oibus/shared/api/workflow-run.model';
+
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject, stubRoute } from '../../../../test/vitest-create-mock';
+import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
+import { ModalService } from '../../../shared/modal.service';
 import { toPage } from '../../../shared/test-utils';
-import { ConfigurationWorkflowDTO } from '@oibus/shared/configuration-workflow.model';
-import { WorkflowRunDTO } from '@oibus/shared/workflow-run.model';
+import { WorkflowRunHistoryComponent } from './workflow-run-history.component';
 
 const workflow: ConfigurationWorkflowDTO = {
   id: 'workflowId1',

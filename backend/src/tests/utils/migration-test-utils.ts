@@ -1,8 +1,9 @@
-import path from 'node:path';
+import { readdirSync } from 'node:fs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
-import { readdirSync } from 'node:fs';
+import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+
 import knexFactory, { Knex } from 'knex';
 
 export interface MigrationFileRef {

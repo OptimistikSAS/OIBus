@@ -1,36 +1,27 @@
-import Joi from 'joi';
-import argon2 from 'argon2';
 import crypto from 'node:crypto';
+
+import argon2 from 'argon2';
 import { Database } from 'better-sqlite3';
-import JoiValidator from '../../web-server/controllers/validators/joi.validator';
-import { CONFIG_SCHEMA, EXPORT_FILE_SCHEMA, RESERVED_SCAN_MODE_ID } from './config-schema';
-import { getUpgradesBetween } from './config-upgrades/registry';
-import { ConfigUpgrade, JsonObject } from './config-upgrades/config-upgrade';
-import { compareVersions } from './config-upgrades/version-compare';
-import { version as currentOIBusVersion } from '../../../package.json';
+import Joi from 'joi';
+
+import { TransformerSourceCommandDTO } from '../../../shared/model/api/transformer.model';
+import { OIBusObjectAttribute } from '../../../shared/model/connector/form.model';
+import { NorthSettings } from '../../../shared/model/connector/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
 import {
   ConfigExportDTO,
   ConfigImportEntityValidationError,
   ConfigImportPreviewDTO,
   ConfigImportResponseDTO,
   OIBusConfigurationDTO
-} from '../../../shared/model/config-transfer.model';
-import { OIBusObjectAttribute } from '../../../shared/model/form.model';
-import { southManifestList } from '../south-manifests';
-import { northManifestList } from '../north-manifests';
-import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import IpFilterRepository from '../../repository/config/ip-filter.repository';
-import CertificateRepository from '../../repository/config/certificate.repository';
-import TransformerRepository from '../../repository/config/transformer.repository';
-import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import NorthConnectorRepository from '../../repository/config/north-connector.repository';
-import HistoryQueryRepository from '../../repository/config/history-query.repository';
-import UserRepository from '../../repository/config/user.repository';
-import ConfigurationWorkflowRepository from '../../repository/config/configuration-workflow.repository';
-import EngineRepository from '../../repository/config/engine.repository';
-import { SouthConnectorEntity, SouthConnectorItemEntity, SouthItemGroupEntityLight } from '../../model/south-connector.model';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
+} from '../../../shared/model/oia/config-transfer.model';
+import { OIAnalyticsNorthCommandDTO, OIAnalyticsSouthCommandDTO } from '../../../shared/model/oia/oianalytics-configuration.model';
+
+import { version as currentOIBusVersion } from '../../../package.json';
 import { HistoryQueryEntity, HistoryQueryItemEntity } from '../../model/histor-query.model';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { ScanMode } from '../../model/scan-mode.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthItemGroupEntityLight } from '../../model/south-connector.model';
 import {
   CustomTransformer,
   HistoryTransformerWithOptions,
@@ -39,11 +30,23 @@ import {
   Transformer,
   TransformerSource
 } from '../../model/transformer.model';
-import { ScanMode } from '../../model/scan-mode.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { OIAnalyticsNorthCommandDTO, OIAnalyticsSouthCommandDTO } from '../../../shared/model/oianalytics-configuration.model';
-import { TransformerSourceCommandDTO } from '../../../shared/model/transformer.model';
+import CertificateRepository from '../../repository/config/certificate.repository';
+import ConfigurationWorkflowRepository from '../../repository/config/configuration-workflow.repository';
+import EngineRepository from '../../repository/config/engine.repository';
+import HistoryQueryRepository from '../../repository/config/history-query.repository';
+import IpFilterRepository from '../../repository/config/ip-filter.repository';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import TransformerRepository from '../../repository/config/transformer.repository';
+import UserRepository from '../../repository/config/user.repository';
+import JoiValidator from '../../web-server/controllers/validators/joi.validator';
+import { northManifestList } from '../north-manifests';
+import { southManifestList } from '../south-manifests';
+import { CONFIG_SCHEMA, EXPORT_FILE_SCHEMA, RESERVED_SCAN_MODE_ID } from './config-schema';
+import { ConfigUpgrade, JsonObject } from './config-upgrades/config-upgrade';
+import { getUpgradesBetween } from './config-upgrades/registry';
+import { compareVersions } from './config-upgrades/version-compare';
 
 /**
  * Raised at any rejection point of the import pipeline (malformed file, export from a newer OIBus,

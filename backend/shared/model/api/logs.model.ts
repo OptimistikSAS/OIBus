@@ -1,4 +1,4 @@
-import { Instant } from './types';
+import { Instant } from '../common/types';
 
 /**
  * List of possible scope types.

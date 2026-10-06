@@ -1,16 +1,18 @@
-import { before, after, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { after, before, beforeEach, describe, it, mock } from 'node:test';
+
 import { Database } from 'better-sqlite3';
-import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthItemGroupEntityLight } from '../../model/south-connector.model';
+import { NotFoundError } from '../../model/types';
+import AuditService from '../../service/audit.service';
 import testData from '../../tests/utils/test-data';
+import { createAuditServiceMock, emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import ConfigurationWorkflowRepository from './configuration-workflow.repository';
 import SouthConnectorRepository, { toItemEntityFromJoinedRow, toSouthItemGroupLight } from './south-connector.repository';
 import SouthItemGroupRepository from './south-item-group.repository';
-import ConfigurationWorkflowRepository from './configuration-workflow.repository';
-import { SouthConnectorEntity, SouthConnectorItemEntity, SouthItemGroupEntityLight } from '../../model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { mock } from 'node:test';
-import AuditService from '../../service/audit.service';
-import { NotFoundError } from '../../model/types';
 
 const TEST_DB_PATH = 'src/tests/test-config-south.db';
 

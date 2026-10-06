@@ -1,16 +1,19 @@
-import { describe, it, before, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { NorthConnectorCommandDTO, OIBusNorthType } from '../../../shared/model/north-connector.model';
-import { CustomExpressRequest } from '../express';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
+import { before, beforeEach, describe, it, mock } from 'node:test';
+
+import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '../../../shared/model/api/engine.model';
+import { NorthConnectorCommandDTO } from '../../../shared/model/api/north-connector.model';
+import { StandardTransformerDTO, TransformerDTOWithOptions } from '../../../shared/model/api/transformer.model';
+import { OIBusNorthType } from '../../../shared/model/connector/north-manifest.model';
+
+import { OIBusTestingError } from '../../model/types';
 import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
-import { StandardTransformerDTO, TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
-import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '../../../shared/model/engine.model';
-import { OIBusTestingError } from '../../model/types';
+import testData from '../../tests/utils/test-data';
+import { createMockServices, fixTsoaModuleResolution, mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { CustomExpressRequest } from '../express';
 import type { NorthConnectorController as NorthConnectorControllerShape } from './north-connector.controller';
 
 const nodeRequire = createRequire(import.meta.url);

@@ -1,14 +1,17 @@
-import { Component, computed, input, linkedSignal, output, signal, ChangeDetectionStrategy } from '@angular/core';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { AsyncPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, output, signal } from '@angular/core';
+
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+
+import { CacheMetadata, CacheOperation, DataFolderType } from '@oibus/shared/api/engine.model';
+import { createPageFromArray } from '@oibus/shared/common/types';
+
 import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
-import { FileSizePipe } from '../../file-size.pipe';
 import { DatetimePipe } from '../../datetime.pipe';
+import { FileSizePipe } from '../../file-size.pipe';
 import { PaginationComponent } from '../../pagination/pagination.component';
-import { CacheMetadata, CacheOperation, DataFolderType } from '@oibus/shared/engine.model';
 import { ObservableState } from '../../save-button/save-button.component';
-import { createPageFromArray } from '@oibus/shared/types';
 
 const PAGE_SIZE = 15;
 

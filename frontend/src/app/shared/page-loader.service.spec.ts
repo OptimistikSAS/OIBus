@@ -1,10 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Params, Router } from '@angular/router';
+
 import { Subject } from 'rxjs';
 import { describe, expect, test } from 'vitest';
-import { PageLoader } from './page-loader.service';
-import { Page } from '@oibus/shared/types';
+
+import { Page } from '@oibus/shared/common/types';
+
 import { createMock, MockObject } from '../../test/vitest-create-mock';
+import { PageLoader } from './page-loader.service';
 
 describe('PageLoader', () => {
   test('should emit when the router navigates and when the current page is reloaded', () => {

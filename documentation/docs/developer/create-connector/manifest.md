@@ -21,7 +21,7 @@ interfaces (`South<Type>Settings`, `South<Type>ItemSettings`, `North<Type>Settin
 ### South {#south}
 
 ```typescript title="backend/src/south/south-folder-scanner/manifest.ts (excerpt)"
-import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
+import { SouthConnectorManifest } from '../../../shared/model/connector/south-manifest.model';
 
 const manifest: SouthConnectorManifest = {
   id: 'folder-scanner', // must be in OIBUS_SOUTH_TYPES
@@ -47,7 +47,7 @@ interfaces from `south-interface.ts` the class implements; see
 ### North {#north}
 
 ```typescript title="backend/src/north/north-console/manifest.ts"
-import { NorthConnectorManifest } from '../../../shared/model/north-connector.model';
+import { NorthConnectorManifest } from '../../../shared/model/connector/north-manifest.model';
 
 const manifest: NorthConnectorManifest = {
   id: 'console', // must be in OIBUS_NORTH_TYPES
@@ -275,7 +275,7 @@ npm run generate:settings-interface
 ```
 
 The script reads every `manifest.ts`, derives the corresponding TypeScript type, and writes it into
-`backend/shared/model/south-settings.model.ts` (and the North equivalent). It also refreshes the OpenAPI
+`backend/shared/model/connector/south-settings.model.ts` (and the North equivalent). It also refreshes the OpenAPI
 definitions.
 
 :::caution Schema changes are breaking

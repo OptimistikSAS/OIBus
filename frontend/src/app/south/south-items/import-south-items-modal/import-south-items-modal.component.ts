@@ -1,16 +1,20 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ObservableState } from '../../../shared/save-button/save-button.component';
+
+import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom, Observable } from 'rxjs';
-import { SouthConnectorItemCommandDTO, SouthConnectorManifest } from '@oibus/shared/south-connector.model';
-import { PaginationComponent } from '../../../shared/pagination/pagination.component';
-import { ALL_CSV_CHARACTERS, createPageFromArray, CsvCharacter, Page } from '@oibus/shared/types';
-import { emptyPage } from '../../../shared/test-utils';
+
+import { SouthConnectorItemCommandDTO } from '@oibus/shared/api/south-connector.model';
+import { ALL_CSV_CHARACTERS, createPageFromArray, CsvCharacter, Page } from '@oibus/shared/common/types';
+import { OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
+import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+
 import { isDisplayableAttribute } from '../../../shared/form/dynamic-form.builder';
-import { OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/form.model';
 import { CsvValidationError, MqttTopicValidationError, validateCsvHeaders, validateCsvMqttTopics } from '../../../shared/form/validators';
+import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+import { ObservableState } from '../../../shared/save-button/save-button.component';
+import { emptyPage } from '../../../shared/test-utils';
 import { convertCsvDelimiter } from '../../../shared/utils/csv.utils';
 
 const PAGE_SIZE = 20;

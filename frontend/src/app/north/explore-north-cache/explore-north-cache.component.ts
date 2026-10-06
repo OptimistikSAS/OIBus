@@ -1,24 +1,27 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { NorthConnectorService } from '../../services/north-connector.service';
-import { NorthConnectorDTO } from '@oibus/shared/north-connector.model';
-import { of, switchMap, tap } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
-import { TranslateDirective, TranslateService } from '@ngx-translate/core';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DatetimepickerComponent } from '../../shared/datetimepicker/datetimepicker.component';
-import { FormControlValidationDirective } from '../../shared/form/form-control-validation.directive';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ValErrorDelayDirective } from '../../shared/form/val-error-delay.directive';
-import { ValidationErrorsComponent } from 'ngx-valdemort';
-import { NotificationService } from '../../shared/notification.service';
-import { CacheContentUpdateCommand, CacheSearchResult, DataFolderType } from '@oibus/shared/engine.model';
-import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
+import { ActivatedRoute } from '@angular/router';
+
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
-import { Instant } from '@oibus/shared/types';
-import { ascendingDates } from '../../shared/form/validators';
-import { ModalService } from '../../shared/modal.service';
+import { ValidationErrorsComponent } from 'ngx-valdemort';
+import { of, switchMap, tap } from 'rxjs';
+
+import { CacheContentUpdateCommand, CacheSearchResult, DataFolderType } from '@oibus/shared/api/engine.model';
+import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
+import { Instant } from '@oibus/shared/common/types';
+
+import { NorthConnectorService } from '../../services/north-connector.service';
 import { FileContentModalComponent } from '../../shared/cache-explore/cache-content/file-content-modal/file-content-modal.component';
 import { CacheExploreComponent } from '../../shared/cache-explore/cache-explore.component';
+import { DatetimepickerComponent } from '../../shared/datetimepicker/datetimepicker.component';
+import { FormControlValidationDirective } from '../../shared/form/form-control-validation.directive';
+import { ValErrorDelayDirective } from '../../shared/form/val-error-delay.directive';
+import { ascendingDates } from '../../shared/form/validators';
+import { ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 
 @Component({
   selector: 'oib-explore-north-cache',

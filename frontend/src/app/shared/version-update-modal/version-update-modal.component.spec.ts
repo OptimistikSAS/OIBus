@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { VersionUpdateModalComponent } from './version-update-modal.component';
+
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { WindowService } from '../window.service';
-import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { WindowService } from '../window.service';
+import { VersionUpdateModalComponent } from './version-update-modal.component';
 
 describe('VersionUpdateModalComponent', () => {
   let component: VersionUpdateModalComponent;

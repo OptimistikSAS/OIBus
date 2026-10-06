@@ -1,4 +1,4 @@
-import { BaseEntity, Instant, LocalTime, Timezone } from './types';
+import { BaseEntity, Instant, LocalTime, Timezone } from '../common/types';
 
 export const SCAN_MODE_TYPES = ['cron', 'interval'] as const;
 /**

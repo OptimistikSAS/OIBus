@@ -1,12 +1,9 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import path from 'node:path';
-import { mockModule, reloadModule } from '../tests/utils/test-utils';
-import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import type CertificateRepository from '../repository/config/certificate.repository';
-import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
 import type {
   NorthAmazonS3Settings,
   NorthAzureBlobSettings,
@@ -20,9 +17,14 @@ import type {
   NorthRESTSettings,
   NorthSettings,
   NorthSFTPSettings
-} from '../../shared/model/north-settings.model';
-import type { NorthConnectorEntity } from '../model/north-connector.model';
+} from '../../shared/model/connector/north-settings.model';
+
 import type { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
+import type { NorthConnectorEntity } from '../model/north-connector.model';
+import type CertificateRepository from '../repository/config/certificate.repository';
+import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import { mockModule, reloadModule } from '../tests/utils/test-utils';
 import type {
   buildNorth as BuildNorthFn,
   createNorthOrchestrator as CreateNorthOrchestratorFn,

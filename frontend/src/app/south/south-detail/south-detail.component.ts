@@ -1,57 +1,59 @@
-import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ClipboardModule } from '@angular/cdk/clipboard';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
+import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { combineLatest, firstValueFrom, map, merge, Observable, of, Subscription, switchMap, tap } from 'rxjs';
+
+import { AuditEntityType } from '@oibus/shared/api/audit.model';
+import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+import { OIBusInfo, SouthConnectorMetrics } from '@oibus/shared/api/engine.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthConnectorManifest,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO
-} from '@oibus/shared/south-connector.model';
-import { SouthConnectorService } from '../../services/south-connector.service';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { combineLatest, firstValueFrom, map, merge, Observable, of, Subscription, switchMap, tap } from 'rxjs';
-import { PageLoader } from '../../shared/page-loader.service';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import { ScanModeService } from '../../services/scan-mode.service';
-import { SouthMetricsComponent } from './south-metrics/south-metrics.component';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
-import { NotificationService } from '../../shared/notification.service';
-import { OIBusInfo, SouthConnectorMetrics } from '@oibus/shared/engine.model';
-import { pollMetrics } from '../../shared/polling';
-import { ModalService } from '../../shared/modal.service';
-import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
-import { AuditEntityType } from '@oibus/shared/audit.model';
-import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
-import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
-import { EngineService } from '../../services/engine.service';
-import { ClipboardModule } from '@angular/cdk/clipboard';
+} from '@oibus/shared/api/south-connector.model';
+import { createPageFromArray, Page } from '@oibus/shared/common/types';
+import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
+import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+
 import { LogsComponent } from '../../logs/logs.component';
-import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
-import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
-import { CertificateDTO } from '@oibus/shared/certificate.model';
 import { CertificateService } from '../../services/certificate.service';
-import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
-import { DocsUrlService } from '../../shared/docs-url.service';
-import { PaginationComponent } from '../../shared/pagination/pagination.component';
-import { createPageFromArray, Page } from '@oibus/shared/types';
-import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
-import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
-import { OIBusObjectAttribute } from '@oibus/shared/form.model';
-import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
-import { emptyPage } from '../../shared/test-utils';
-import { DatetimePipe } from '../../shared/datetime.pipe';
+import { EngineService } from '../../services/engine.service';
+import { ScanModeService } from '../../services/scan-mode.service';
+import { SouthConnectorService } from '../../services/south-connector.service';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ConfirmationService } from '../../shared/confirmation.service';
-import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
-import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
-import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
-import { ViewItemValueModalComponent } from '../south-items/view-item-value-modal/view-item-value-modal.component';
+import { DatetimePipe } from '../../shared/datetime.pipe';
+import { DocsUrlService } from '../../shared/docs-url.service';
+import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
+import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
+import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
+import { ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
+import { PageLoader } from '../../shared/page-loader.service';
+import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { pollMetrics } from '../../shared/polling';
 import { isScanModeWindowExpired } from '../../shared/scan-mode-schedule.pipe';
+import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
+import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
+import { emptyPage } from '../../shared/test-utils';
+import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
+import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
+import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
+import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
+import { ViewItemValueModalComponent } from '../south-items/view-item-value-modal/view-item-value-modal.component';
+import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
+import { SouthMetricsComponent } from './south-metrics/south-metrics.component';
 
 const PAGE_SIZE = 20;
 

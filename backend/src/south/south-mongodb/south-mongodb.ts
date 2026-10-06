@@ -1,3 +1,5 @@
+import { JSONPath } from 'jsonpath-plus';
+import { DateTime } from 'luxon';
 import {
   Document,
   MongoClient,
@@ -8,19 +10,18 @@ import {
   ObjectId
 } from 'mongodb';
 
-import { JSONPath } from 'jsonpath-plus';
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
+import { OIBusContent, OIBusRecord } from '../../../shared/model/common/content.model';
+import { Instant } from '../../../shared/model/common/types';
+import { SouthItemSettings, SouthMongoDBItemSettings, SouthMongoDBSettings } from '../../../shared/model/connector/south-settings.model';
 
-import SouthConnector from '../south-connector';
-import { convertDateTimeToInstant, getErrorMessage, workUnitLogCtx } from '../../service/utils';
-import { encryptionService } from '../../service/encryption.service';
-import { Instant } from '../../../shared/model/types';
-import { SouthHistoryQuery } from '../south-interface';
-import { DateTime } from 'luxon';
-import { SouthItemSettings, SouthMongoDBItemSettings, SouthMongoDBSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent, OIBusRecord } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { encryptionService } from '../../service/encryption.service';
+import { convertDateTimeToInstant, getErrorMessage, workUnitLogCtx } from '../../service/utils';
+import SouthConnector from '../south-connector';
+import { SouthHistoryQuery } from '../south-interface';
 
 /**
  * Class SouthMongoDB - Retrieve documents from a MongoDB collection and send them as record-list

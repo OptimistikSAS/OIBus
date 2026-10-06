@@ -1,13 +1,14 @@
-import { TestBed } from '@angular/core/testing';
-
-import { DefaultValidationErrorsComponent } from './default-validation-errors.component';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ValdemortModule } from 'ngx-valdemort';
+
 import { TranslatePipe } from '@ngx-translate/core';
-import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { ValdemortModule } from 'ngx-valdemort';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
+
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { DefaultValidationErrorsComponent } from './default-validation-errors.component';
 
 @Component({
   selector: 'oib-test-default-validation-errors-component',

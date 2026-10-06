@@ -1,12 +1,13 @@
-import { TestBed } from '@angular/core/testing';
-
-import { MultiSelectComponent } from './multi-select.component';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { MultiSelectOptionDirective } from './multi-select-option.directive';
-import { byIdComparisonFn } from '../../test-utils';
+
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
+
+import { byIdComparisonFn } from '../../test-utils';
+import { MultiSelectComponent } from './multi-select.component';
+import { MultiSelectOptionDirective } from './multi-select-option.directive';
 
 interface User {
   id: number;

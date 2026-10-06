@@ -1,17 +1,20 @@
 import { TestBed } from '@angular/core/testing';
+
 import { of } from 'rxjs';
-import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { UserCommandDTO, UserDTO } from '@oibus/shared/api/user.model';
+
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { UserSettingsService } from '../../services/user-settings.service';
-import { WindowService } from '../../shared/window.service';
-import { CurrentUserService } from '../../shared/current-user.service';
-import { ModalService } from '../../shared/modal.service';
-import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
-import { EditUserSettingsComponent } from './edit-user-settings.component';
-import { ChangePasswordModalComponent } from '../change-password-modal/change-password-modal.component';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
-import { UserCommandDTO, UserDTO } from '@oibus/shared/user.model';
+import { UserSettingsService } from '../../services/user-settings.service';
+import { CurrentUserService } from '../../shared/current-user.service';
+import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
+import { ModalService } from '../../shared/modal.service';
+import { WindowService } from '../../shared/window.service';
+import { ChangePasswordModalComponent } from '../change-password-modal/change-password-modal.component';
+import { EditUserSettingsComponent } from './edit-user-settings.component';
 
 class EditUserSettingsComponentTester {
   readonly fixture = TestBed.createComponent(EditUserSettingsComponent);

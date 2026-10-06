@@ -1,14 +1,16 @@
 import { TestBed } from '@angular/core/testing';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test } from 'vitest';
-import { of, throwError } from 'rxjs';
 
-import { ConfigImportPreviewComponent } from './config-import-preview.component';
+import { of, throwError } from 'rxjs';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { TransformerDTO } from '@oibus/shared/api/transformer.model';
+import { ConfigImportPreviewDTO } from '@oibus/shared/oia/config-transfer.model';
+
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { ConfigImportPreviewDTO } from '@oibus/shared/config-transfer.model';
-import { TransformerDTO } from '@oibus/shared/transformer.model';
-import { TransformerService } from '../../../services/transformer.service';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
+import { TransformerService } from '../../../services/transformer.service';
+import { ConfigImportPreviewComponent } from './config-import-preview.component';
 
 const localStandardTransformer = (functionName: string) =>
   ({ id: `local-${functionName}`, type: 'standard', functionName, inputType: 'any', outputType: 'any' }) as TransformerDTO;

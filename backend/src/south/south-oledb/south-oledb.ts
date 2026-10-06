@@ -1,4 +1,15 @@
-import SouthConnector from '../south-connector';
+import { DateTime } from 'luxon';
+
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
+import { OIBusContent } from '../../../shared/model/common/content.model';
+import { Instant } from '../../../shared/model/common/types';
+import { SouthItemSettings, SouthOLEDBItemSettings, SouthOLEDBSettings } from '../../../shared/model/connector/south-settings.model';
+
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import { encryptionService } from '../../service/encryption.service';
+import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
 import {
   convertDelimiter,
   extractLastCsvRow,
@@ -9,16 +20,8 @@ import {
   persistResults,
   workUnitLogCtx
 } from '../../service/utils';
-import { Instant } from '../../../shared/model/types';
-import { DateTime } from 'luxon';
+import SouthConnector from '../south-connector';
 import { SouthHistoryQuery } from '../south-interface';
-import { SouthItemSettings, SouthOLEDBItemSettings, SouthOLEDBSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
-import { encryptionService } from '../../service/encryption.service';
 
 /**
  * Class SouthOLEDB - Retrieve data from SQL databases with OLEDB driver and send them to the cache as CSV files.

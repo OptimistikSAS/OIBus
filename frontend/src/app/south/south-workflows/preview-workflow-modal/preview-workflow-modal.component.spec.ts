@@ -1,18 +1,20 @@
 import { TestBed } from '@angular/core/testing';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test } from 'vitest';
+
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of, Subject, throwError } from 'rxjs';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
 
-import PreviewWorkflowModalComponent from './preview-workflow-modal.component';
+import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '@oibus/shared/api/configuration-workflow.model';
+import { WorkflowRunDetailDTO } from '@oibus/shared/api/workflow-run.model';
+import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
+
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
-import { NotificationService } from '../../../shared/notification.service';
 import { DownloadService } from '../../../services/download.service';
-import { ConfigurationWorkflowCommandDTO, WorkflowPreviewResultDTO } from '@oibus/shared/configuration-workflow.model';
-import { SouthSettings } from '@oibus/shared/south-settings.model';
-import { WorkflowRunDetailDTO } from '@oibus/shared/workflow-run.model';
+import { NotificationService } from '../../../shared/notification.service';
+import PreviewWorkflowModalComponent from './preview-workflow-modal.component';
 
 describe('PreviewWorkflowModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;

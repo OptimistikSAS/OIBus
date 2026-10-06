@@ -1,12 +1,15 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { ControlContainer, FormGroupName, ReactiveFormsModule } from '@angular/forms';
+
 import { TranslateDirective } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
+
+import { Timezone } from '@oibus/shared/common/types';
+import { OIBusTimezoneAttribute } from '@oibus/shared/connector/form.model';
+
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
-import { OI_TYPEAHEAD_DIRECTIVES } from '../typeahead-directives';
-import { OIBusTimezoneAttribute } from '@oibus/shared/form.model';
-import { Timezone } from '@oibus/shared/types';
 import { inMemoryTypeahead } from '../typeahead';
+import { OI_TYPEAHEAD_DIRECTIVES } from '../typeahead-directives';
 
 @Component({
   selector: 'oib-oibus-timezone-form-control',

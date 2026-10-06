@@ -1,5 +1,7 @@
-import { describe, beforeEach, expect, test } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+
+import { beforeEach, describe, expect, test } from 'vitest';
+
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { DurationPipe } from './duration.pipe';
 
