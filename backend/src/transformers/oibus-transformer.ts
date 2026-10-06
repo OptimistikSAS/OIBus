@@ -1,5 +1,6 @@
 import { Transformer } from '../model/transformer.model';
-import { CacheMetadata, CacheMetadataSource } from '../../shared/model/engine.model';
+import { CacheMetadata } from '../../shared/model/engine.model';
+import { CacheMetadataSource } from '../model/engine.model';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 import type { ILogger } from '../model/logger.model';

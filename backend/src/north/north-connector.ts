@@ -5,7 +5,6 @@ import { Instant } from '../../shared/model/types';
 import {
   CacheContentUpdateCommand,
   CacheMetadata,
-  CacheMetadataSource,
   CacheSearchParam,
   CacheSearchResult,
   DataFolderType,
@@ -27,7 +26,7 @@ import { createTransformer, runTransformerOnContent } from '../service/transform
 import IgnoreTransformer from '../transformers/ignore-transformer';
 import IsoTransformer from '../transformers/iso-transformer';
 import { NorthTransformerWithOptions } from '../model/transformer.model';
-import { CacheSize, CONTENT_FOLDER } from '../model/engine.model';
+import { CacheMetadataSource, CacheSize, CONTENT_FOLDER } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';
 import { loggerService } from '../service/logger/logger.service';
 
