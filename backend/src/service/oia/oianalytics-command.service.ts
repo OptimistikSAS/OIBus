@@ -41,7 +41,12 @@ import type {
 } from '../../../shared/model/domain/engine.model';
 import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
-import { CommandSearchParam, OIBusCommandDTO } from '../../../shared/model/oia/command.model';
+import {
+  BaseOIBusCommandDTO,
+  CommandSearchParam,
+  OIBusCommandDTO,
+  OIBusTestTransformerItemCommandContent
+} from '../../../shared/model/oia/command.model';
 
 import { version } from '../../../package.json';
 import type { EngineSettings } from '../../model/engine.model';
@@ -81,7 +86,6 @@ import {
   OIBusTestSouthConnectorCommand,
   OIBusTestSouthConnectorItemCommand,
   OIBusTestTransformerCommand,
-  OIBusTestTransformerItemCommandContent,
   OIBusUpdateCertificateCommand,
   OIBusUpdateCustomTransformerCommand,
   OIBusUpdateEngineGeneralCommand,
@@ -1748,55 +1752,325 @@ export default class OIAnalyticsCommandService {
   }
 }
 
+const toBaseOIBusCommandDTO = (command: OIBusCommand): Omit<BaseOIBusCommandDTO, 'type'> => ({
+  id: command.id,
+  status: command.status,
+  ack: command.ack,
+  retrievedDate: command.retrievedDate,
+  completedDate: command.completedDate,
+  result: command.result,
+  targetVersion: command.targetVersion
+});
+
 export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
   switch (command.type) {
     case 'update-version':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        commandContent: command.commandContent
+      };
     case 'restart-engine':
+      return { ...toBaseOIBusCommandDTO(command), type: command.type };
     case 'regenerate-cipher-keys':
+      return { ...toBaseOIBusCommandDTO(command), type: command.type };
     case 'update-engine-general':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        commandContent: command.commandContent
+      };
     case 'update-engine-web-server':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        commandContent: command.commandContent
+      };
     case 'update-engine-proxy':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        commandContent: command.commandContent
+      };
     case 'update-engine-logger':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        commandContent: command.commandContent
+      };
     case 'update-registration-settings':
-    case 'create-south':
-    case 'update-south':
-    case 'delete-south':
-    case 'test-south-connection':
-    case 'test-south-item':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        commandContent: command.commandContent
+      };
     case 'create-scan-mode':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        commandContent: command.commandContent
+      };
     case 'update-scan-mode':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        scanModeId: command.scanModeId,
+        commandContent: command.commandContent
+      };
     case 'delete-scan-mode':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        scanModeId: command.scanModeId
+      };
     case 'create-ip-filter':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        commandContent: command.commandContent
+      };
     case 'update-ip-filter':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        ipFilterId: command.ipFilterId,
+        commandContent: command.commandContent
+      };
     case 'delete-ip-filter':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        ipFilterId: command.ipFilterId
+      };
     case 'create-certificate':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        commandContent: command.commandContent
+      };
     case 'update-certificate':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        certificateId: command.certificateId,
+        commandContent: command.commandContent
+      };
     case 'delete-certificate':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        certificateId: command.certificateId
+      };
+    case 'create-south':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        southConnectorId: command.southConnectorId,
+        commandContent: command.commandContent
+      };
+    case 'update-south':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        southConnectorId: command.southConnectorId,
+        commandContent: command.commandContent
+      };
+    case 'delete-south':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        southConnectorId: command.southConnectorId
+      };
+    case 'test-south-connection':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        southConnectorId: command.southConnectorId,
+        commandContent: command.commandContent
+      };
+    case 'test-south-item':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        southConnectorId: command.southConnectorId,
+        itemId: command.itemId,
+        commandContent: command.commandContent
+      };
     case 'create-north':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        northConnectorId: command.northConnectorId,
+        commandContent: command.commandContent
+      };
     case 'update-north':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        northConnectorId: command.northConnectorId,
+        commandContent: command.commandContent
+      };
     case 'delete-north':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        northConnectorId: command.northConnectorId
+      };
     case 'test-north-connection':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        northConnectorId: command.northConnectorId,
+        commandContent: command.commandContent
+      };
     case 'create-or-update-south-items-from-csv':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        southConnectorId: command.southConnectorId,
+        commandContent: command.commandContent
+      };
     case 'create-history-query':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        northConnectorId: command.northConnectorId,
+        southConnectorId: command.southConnectorId,
+        historyQueryId: command.historyQueryId,
+        commandContent: command.commandContent
+      };
     case 'update-history-query':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        historyQueryId: command.historyQueryId,
+        commandContent: command.commandContent
+      };
     case 'delete-history-query':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        historyQueryId: command.historyQueryId
+      };
     case 'test-history-query-north-connection':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        historyQueryId: command.historyQueryId,
+        northConnectorId: command.northConnectorId,
+        commandContent: command.commandContent
+      };
     case 'test-history-query-south-connection':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        historyQueryId: command.historyQueryId,
+        southConnectorId: command.southConnectorId,
+        commandContent: command.commandContent
+      };
     case 'test-history-query-south-item':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        historyQueryId: command.historyQueryId,
+        southConnectorId: command.southConnectorId,
+        itemId: command.itemId,
+        commandContent: command.commandContent
+      };
     case 'create-or-update-history-query-south-items-from-csv':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        historyQueryId: command.historyQueryId,
+        commandContent: command.commandContent
+      };
     case 'update-history-query-status':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        historyQueryId: command.historyQueryId,
+        commandContent: command.commandContent
+      };
     case 'setpoint':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        northConnectorId: command.northConnectorId,
+        commandContent: command.commandContent
+      };
     case 'search-north-cache-content':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        northConnectorId: command.northConnectorId,
+        commandContent: command.commandContent
+      };
     case 'search-history-cache-content':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        historyQueryId: command.historyQueryId,
+        commandContent: command.commandContent
+      };
     case 'get-north-cache-file-content':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        northConnectorId: command.northConnectorId,
+        commandContent: command.commandContent
+      };
     case 'get-history-cache-file-content':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        historyQueryId: command.historyQueryId,
+        commandContent: command.commandContent
+      };
     case 'update-north-cache-content':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        northConnectorId: command.northConnectorId,
+        commandContent: command.commandContent
+      };
     case 'update-history-cache-content':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        historyQueryId: command.historyQueryId,
+        commandContent: command.commandContent
+      };
     case 'create-custom-transformer':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        commandContent: command.commandContent
+      };
     case 'update-custom-transformer':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        transformerId: command.transformerId,
+        commandContent: command.commandContent
+      };
     case 'delete-custom-transformer':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        transformerId: command.transformerId
+      };
     case 'test-custom-transformer':
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        commandContent: command.commandContent
+      };
     case 'test-transformer':
-      return command;
+      return {
+        ...toBaseOIBusCommandDTO(command),
+        type: command.type,
+        transformerId: command.transformerId,
+        commandContent: command.commandContent
+      };
   }
 };

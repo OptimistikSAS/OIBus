@@ -2411,6 +2411,7 @@ const oIBusCommandList: Array<OIBusCommandDTO> = [
     retrievedDate: '2020-03-15T00:00:00.000Z',
     completedDate: '',
     result: 'ok',
+    targetVersion: '3.4.9',
     commandContent: {
       version: 'v3.5.0-beta',
       assetId: 'assetId',
@@ -2652,6 +2653,7 @@ const oIBusCommandList: Array<OIBusCommandDTO> = [
     completedDate: '',
     result: 'ok',
     targetVersion: '3.4.9',
+    southConnectorId: null,
     commandContent: {
       name: 'South 1',
       type: 'folder-scanner',
@@ -2709,6 +2711,7 @@ const oIBusCommandList: Array<OIBusCommandDTO> = [
     completedDate: '',
     result: 'ok',
     targetVersion: '3.4.9',
+    northConnectorId: null,
     commandContent: {
       name: 'North 1',
       type: 'file-writer',
