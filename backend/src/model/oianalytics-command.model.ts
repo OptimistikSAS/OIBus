@@ -13,7 +13,12 @@ import { SouthConnectorCommandDTO, SouthConnectorItemCommandDTO } from '../../sh
 import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../shared/model/api/transformer.model';
 import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
-import { CacheContentUpdateCommand, CacheSearchParam, DataFolderType } from '../../shared/model/domain/engine.model';
+import {
+  CacheContentUpdateCommand,
+  CacheSearchParam,
+  DataFolderType,
+  RegistrationCommandPermissions
+} from '../../shared/model/domain/engine.model';
 import { HistoryQueryStatus } from '../../shared/model/domain/history-query.model';
 import { SouthConnectorItemTestingSettings } from '../../shared/model/domain/south-connector.model';
 import { OIBusCommandStatus, OIBusCommandType } from '../../shared/model/oia/command.model';
@@ -74,50 +79,7 @@ export interface OIBusUpdateRegistrationSettingsCommand extends BaseOIBusCommand
     commandRefreshInterval: number;
     commandRetryInterval: number;
     messageRetryInterval: number;
-    commandPermissions: {
-      updateVersion: boolean;
-      restartEngine: boolean;
-      regenerateCipherKeys: boolean;
-      updateEngineSettings: boolean;
-      updateRegistrationSettings: boolean;
-      createScanMode: boolean;
-      updateScanMode: boolean;
-      deleteScanMode: boolean;
-      createIpFilter: boolean;
-      updateIpFilter: boolean;
-      deleteIpFilter: boolean;
-      createCertificate: boolean;
-      updateCertificate: boolean;
-      deleteCertificate: boolean;
-      createHistoryQuery: boolean;
-      updateHistoryQuery: boolean;
-      deleteHistoryQuery: boolean;
-      createOrUpdateHistoryItemsFromCsv: boolean;
-      testHistoryNorthConnection: boolean;
-      testHistorySouthConnection: boolean;
-      testHistorySouthItem: boolean;
-      createSouth: boolean;
-      updateSouth: boolean;
-      deleteSouth: boolean;
-      createOrUpdateSouthItemsFromCsv: boolean;
-      testSouthConnection: boolean;
-      testSouthItem: boolean;
-      createNorth: boolean;
-      updateNorth: boolean;
-      deleteNorth: boolean;
-      testNorthConnection: boolean;
-      setpoint: boolean;
-      searchNorthCacheContent: boolean;
-      getNorthCacheFileContent: boolean;
-      updateNorthCacheContent: boolean;
-      searchHistoryCacheContent: boolean;
-      getHistoryCacheFileContent: boolean;
-      updateHistoryCacheContent: boolean;
-      createCustomTransformer: boolean;
-      updateCustomTransformer: boolean;
-      deleteCustomTransformer: boolean;
-      testCustomTransformer: boolean;
-    };
+    commandPermissions: RegistrationCommandPermissions;
   };
 }
 
