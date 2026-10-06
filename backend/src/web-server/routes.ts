@@ -5436,7 +5436,7 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["NOT_REGISTERED"]},{"dataType":"enum","enums":["PENDING"]},{"dataType":"enum","enums":["REGISTERED"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "RegistrationCommandPermissionsDTO": {
+    "RegistrationCommandPermissions": {
         "dataType": "refObject",
         "properties": {
             "updateVersion": {"dataType":"boolean","required":true},
@@ -5509,7 +5509,7 @@ const models: TsoaRoute.Models = {
             "commandRefreshInterval": {"dataType":"double","required":true},
             "commandRetryInterval": {"dataType":"double","required":true},
             "messageRetryInterval": {"dataType":"double","required":true},
-            "commandPermissions": {"ref":"RegistrationCommandPermissionsDTO","required":true},
+            "commandPermissions": {"ref":"RegistrationCommandPermissions","required":true},
         },
         "additionalProperties": false,
     },
@@ -5530,7 +5530,7 @@ const models: TsoaRoute.Models = {
             "commandRefreshInterval": {"dataType":"double","required":true},
             "commandRetryInterval": {"dataType":"double","required":true},
             "messageRetryInterval": {"dataType":"double","required":true},
-            "commandPermissions": {"ref":"RegistrationCommandPermissionsDTO","required":true},
+            "commandPermissions": {"ref":"RegistrationCommandPermissions","required":true},
         },
         "additionalProperties": false,
     },
@@ -5718,7 +5718,7 @@ const models: TsoaRoute.Models = {
             "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
             "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "targetVersion": {"dataType":"string","required":true},
-            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"messageRetryInterval":{"dataType":"double","required":true},"commandRetryInterval":{"dataType":"double","required":true},"commandRefreshInterval":{"dataType":"double","required":true}},"required":true},
+            "commandContent": {"dataType":"nestedObjectLiteral","nestedProperties":{"commandPermissions":{"ref":"RegistrationCommandPermissions","required":true},"messageRetryInterval":{"dataType":"double","required":true},"commandRetryInterval":{"dataType":"double","required":true},"commandRefreshInterval":{"dataType":"double","required":true}},"required":true},
         },
         "additionalProperties": false,
     },
@@ -9658,7 +9658,7 @@ const models: TsoaRoute.Models = {
             "oIBusCreatedAt": {"dataType":"string","required":true},
             "oIBusUpdatedAt": {"dataType":"string","required":true},
             "publicKey": {"dataType":"string","required":true},
-            "settings": {"dataType":"nestedObjectLiteral","nestedProperties":{"commandPermissions":{"dataType":"nestedObjectLiteral","nestedProperties":{"deleteNorth":{"dataType":"boolean","required":true},"updateNorth":{"dataType":"boolean","required":true},"createNorth":{"dataType":"boolean","required":true},"createOrUpdateSouthItemsFromCsv":{"dataType":"boolean","required":true},"deleteSouth":{"dataType":"boolean","required":true},"updateSouth":{"dataType":"boolean","required":true},"createSouth":{"dataType":"boolean","required":true},"createOrUpdateHistoryItemsFromCsv":{"dataType":"boolean","required":true},"deleteHistoryQuery":{"dataType":"boolean","required":true},"updateHistoryQuery":{"dataType":"boolean","required":true},"createHistoryQuery":{"dataType":"boolean","required":true},"deleteCertificate":{"dataType":"boolean","required":true},"updateCertificate":{"dataType":"boolean","required":true},"createCertificate":{"dataType":"boolean","required":true},"deleteIpFilter":{"dataType":"boolean","required":true},"updateIpFilter":{"dataType":"boolean","required":true},"createIpFilter":{"dataType":"boolean","required":true},"deleteScanMode":{"dataType":"boolean","required":true},"updateScanMode":{"dataType":"boolean","required":true},"createScanMode":{"dataType":"boolean","required":true},"updateRegistrationSettings":{"dataType":"boolean","required":true},"updateEngineSettings":{"dataType":"boolean","required":true},"regenerateCipherKeys":{"dataType":"boolean","required":true},"restartEngine":{"dataType":"boolean","required":true},"updateVersion":{"dataType":"boolean","required":true}},"required":true},"messageRetryInterval":{"dataType":"double","required":true},"commandRetryInterval":{"dataType":"double","required":true},"commandRefreshInterval":{"dataType":"double","required":true}},"required":true},
+            "settings": {"dataType":"nestedObjectLiteral","nestedProperties":{"commandPermissions":{"ref":"RegistrationCommandPermissions","required":true},"messageRetryInterval":{"dataType":"double","required":true},"commandRetryInterval":{"dataType":"double","required":true},"commandRefreshInterval":{"dataType":"double","required":true}},"required":true},
         },
         "additionalProperties": false,
     },
