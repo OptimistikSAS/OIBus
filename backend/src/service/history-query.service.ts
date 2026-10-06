@@ -1,27 +1,24 @@
 import csv from 'papaparse';
 
-import { HistoryQueryMetrics, OIBusConnectionTestResult } from '../../shared/model/api/engine.model';
 import {
   HistoryQueryCommandDTO,
   HistoryQueryCommonDTO,
   HistoryQueryItemCommandDTO,
   HistoryQueryItemDTO,
-  HistoryQueryItemSearchParam,
   HistoryQueryLightDTO,
   HistoryQueryNorthTypedDTO,
   HistoryQuerySouthTypedDTO
 } from '../../shared/model/api/history-query.model';
-import {
-  SouthConnectorItemTestingSettings,
-  SouthConnectorItemTestResult,
-  SouthExploreStartResult
-} from '../../shared/model/api/south-connector.model';
+import { SouthConnectorItemTestResult, SouthExploreStartResult } from '../../shared/model/api/south-connector.model';
 import { BaseEntity, GetUserInfo, Page } from '../../shared/model/common/types';
 import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
 import { NorthConnectorManifest, OIBusNorthType } from '../../shared/model/connector/north-manifest.model';
 import { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import { OIBusSouthType, SouthConnectorManifest } from '../../shared/model/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+import { HistoryQueryMetrics, OIBusConnectionTestResult } from '../../shared/model/domain/engine.model';
+import { HistoryQueryItemSearchParam } from '../../shared/model/domain/history-query.model';
+import { SouthConnectorItemTestingSettings } from '../../shared/model/domain/south-connector.model';
 
 import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../model/histor-query.model';
 import type { ILogger } from '../model/logger.model';

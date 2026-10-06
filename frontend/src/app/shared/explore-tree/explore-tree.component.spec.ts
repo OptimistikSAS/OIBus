@@ -5,8 +5,8 @@ import { NEVER, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ExploreTreeComponent } from './explore-tree.component';

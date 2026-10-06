@@ -1,17 +1,17 @@
 import argon2 from 'argon2';
 import { Database } from 'better-sqlite3';
 
-import { UserCommandDTO, UserSearchParam } from '../../../shared/model/api/user.model';
 import { Language, Page } from '../../../shared/model/common/types';
+import { UserSearchParam } from '../../../shared/model/domain/user.model';
 
-import { User } from '../../model/user.model';
+import { User, UserCommand } from '../../model/user.model';
 import AuditService, { redactAuditSnapshots } from '../../service/audit.service';
 import { generateRandomId } from '../../service/utils';
 
 const USERS_TABLE = 'users';
 const PAGE_SIZE = 50;
 
-const DEFAULT_USER: Omit<User, 'id' | 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt'> = {
+const DEFAULT_USER: UserCommand = {
   login: 'admin',
   firstName: null,
   lastName: null,
@@ -96,12 +96,7 @@ export default class UserRepository {
    * import, which recreates users under their originally exported id) instead of always minting a
    * fresh one.
    */
-  async create(
-    command: Omit<User, 'id' | 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt'>,
-    password: string,
-    createdBy: string,
-    id = generateRandomId(6)
-  ): Promise<User> {
+  async create(command: UserCommand, password: string, createdBy: string, id = generateRandomId(6)): Promise<User> {
     const hash = await argon2.hash(password);
     return this.createWithHashedPassword(command, hash, createdBy, id);
   }
@@ -112,12 +107,7 @@ export default class UserRepository {
    * because `better-sqlite3` transactions run their callback synchronously and cannot `await` the
    * asynchronous `argon2.hash` call in the middle of it.
    */
-  createWithHashedPassword(
-    command: Omit<User, 'id' | 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt'>,
-    hashedPassword: string,
-    createdBy: string,
-    id = generateRandomId(6)
-  ): User {
+  createWithHashedPassword(command: UserCommand, hashedPassword: string, createdBy: string, id = generateRandomId(6)): User {
     const insertQuery =
       `INSERT INTO ${USERS_TABLE} (id, login, password, first_name, last_name, email, language, timezone, created_by, updated_by, created_at, updated_at) ` +
       `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
@@ -165,7 +155,7 @@ export default class UserRepository {
     }
   }
 
-  update(id: string, command: UserCommandDTO, updatedBy: string): void {
+  update(id: string, command: UserCommand, updatedBy: string): void {
     const before = this.findById(id);
     const queryUpdate = `UPDATE ${USERS_TABLE} SET login = ?, first_name = ?, last_name = ?, email = ?, language = ?, timezone = ? WHERE id = ?;`;
     this.database

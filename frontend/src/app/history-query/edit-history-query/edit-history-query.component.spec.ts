@@ -8,8 +8,8 @@ import { page } from 'vitest/browser';
 
 import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
 
-import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { CertificateService } from '../../services/certificate.service';
 import { HistoryQueryService } from '../../services/history-query.service';

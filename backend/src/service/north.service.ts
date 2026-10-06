@@ -4,12 +4,12 @@ import { NorthConnectorManifest, OIBusNorthType } from '../../shared/model/conne
 import { encryptionService } from './encryption.service';
 import { northManifestList } from './north-manifests';
 export { northManifestList } from './north-manifests';
-import { NorthConnectorMetrics, OIBusConnectionTestResult } from '../../shared/model/api/engine.model';
 import { SouthItemGroupLightDTO } from '../../shared/model/api/south-connector.model';
 import { TransformerSourceCommandDTO, TransformerSourceDTO } from '../../shared/model/api/transformer.model';
 import { OIBusSetpointContent } from '../../shared/model/common/content.model';
 import { GetUserInfo } from '../../shared/model/common/types';
 import { NorthSettings } from '../../shared/model/connector/north-settings.model';
+import { NorthConnectorMetrics, OIBusConnectionTestResult } from '../../shared/model/domain/engine.model';
 
 import type DataStreamEngine from '../engine/data-stream-engine';
 import { CacheMetadataSource } from '../model/engine.model';

@@ -3,16 +3,12 @@ import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
 
-import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '../../../shared/model/api/engine.model';
-import {
-  HistoryQueryCommandDTO,
-  HistoryQueryItemCommandDTO,
-  HistoryQueryItemDTO,
-  HistoryQueryItemSearchParam
-} from '../../../shared/model/api/history-query.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../shared/model/api/history-query.model';
 import { HistoryTransformerDTOWithOptions, TransformerDTO } from '../../../shared/model/api/transformer.model';
 import { OIBusContent } from '../../../shared/model/common/content.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '../../../shared/model/domain/engine.model';
+import { HistoryQueryItemSearchParam } from '../../../shared/model/domain/history-query.model';
 
 import { OIBusTestingError } from '../../model/types';
 import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';

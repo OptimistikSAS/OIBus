@@ -26,6 +26,7 @@ import testData from '../../tests/utils/test-data';
 import { createAuditServiceMock, emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
 import EncryptionService from '../encryption.service';
+import { toEngineLoggerCommand } from '../engine-command.utils';
 import ConfigImportService, { ConfigImportError } from './config-import.service';
 import ConfigTransferService from './config-transfer.service';
 import ConfigTransferBuilderService from './config-transfer-builder.service';
@@ -423,7 +424,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
   it('keeps the local Loki password when the imported logging settings target the same Loki endpoint', async () => {
     const localLogger = { ...cloneEnvelope().config.engine.settings.logger };
     localLogger.loki = { level: 'info', interval: 60, address: 'http://loki:3100', username: 'oibus', password: 'encrypted-password' };
-    engineRepository.updateLogger(localLogger, importerId());
+    engineRepository.updateLogger(toEngineLoggerCommand(localLogger, { lokiPassword: localLogger.loki.password ?? null }), importerId());
     const envelope = cloneEnvelope();
     envelope.config.engine.settings.logger.loki = {
       level: 'info',
@@ -444,7 +445,7 @@ describe('ConfigImportService (transactional wipe+recreate)', () => {
   it('clears the Loki password and warns when the imported logging settings target another Loki endpoint', async () => {
     const localLogger = { ...cloneEnvelope().config.engine.settings.logger };
     localLogger.loki = { level: 'info', interval: 60, address: 'http://loki:3100', username: 'oibus', password: 'encrypted-password' };
-    engineRepository.updateLogger(localLogger, importerId());
+    engineRepository.updateLogger(toEngineLoggerCommand(localLogger, { lokiPassword: localLogger.loki.password ?? null }), importerId());
     const envelope = cloneEnvelope();
     envelope.config.engine.settings.logger.loki = {
       level: 'info',

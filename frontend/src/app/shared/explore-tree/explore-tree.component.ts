@@ -4,9 +4,10 @@ import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, OnDest
 import { TranslateDirective } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 
-import { SouthConnectorExploreEntry, SouthExploreBrowseResult, SouthExploreStartResult } from '@oibus/shared/api/south-connector.model';
+import { SouthExploreBrowseResult, SouthExploreStartResult } from '@oibus/shared/api/south-connector.model';
 import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
 import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
+import { SouthConnectorExploreEntry } from '@oibus/shared/domain/south-connector.model';
 
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { DatetimePipe } from '../datetime.pipe';

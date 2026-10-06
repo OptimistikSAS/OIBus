@@ -1,8 +1,8 @@
 import Joi from 'joi';
 import { DateTime } from 'luxon';
 
-import { AUTH_TOKEN_DURATIONS } from '../../../../shared/model/api/engine.model';
-import { INTERVAL_UNITS, SCAN_MODE_TYPES, ScanModeInterval } from '../../../../shared/model/api/scan-mode.model';
+import { AUTH_TOKEN_DURATIONS } from '../../../../shared/model/domain/engine.model';
+import { INTERVAL_UNITS, SCAN_MODE_TYPES, ScanModeInterval } from '../../../../shared/model/domain/scan-mode.model';
 
 import { intervalToMs, MAX_INTERVAL_MS, MIN_INTERVAL_MS } from '../../../service/scan-mode.utils';
 import { validateCronExpression } from '../../../service/utils';

@@ -5,7 +5,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 
 import { EngineSettingsDTO } from '@oibus/shared/api/engine.model';
-import { LOG_LEVELS, LogLevel } from '@oibus/shared/api/logs.model';
+import { LOG_LEVELS, LogLevel } from '@oibus/shared/domain/logs.model';
 
 import { EngineService } from '../../services/engine.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';

@@ -4,8 +4,9 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 
-import { SouthItemLastValue, SouthItemLastValueResponse } from '@oibus/shared/api/south-connector.model';
+import { SouthItemLastValueResponse } from '@oibus/shared/api/south-connector.model';
 import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
+import { SouthItemLastValue } from '@oibus/shared/domain/south-connector.model';
 
 @Component({
   selector: 'oib-view-item-value-modal',

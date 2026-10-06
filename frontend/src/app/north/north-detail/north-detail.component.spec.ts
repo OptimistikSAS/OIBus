@@ -6,12 +6,10 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { OIBusInfo } from '@oibus/shared/api/engine.model';
-import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
 import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
 
-import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { CertificateService } from '../../services/certificate.service';
 import { EngineService } from '../../services/engine.service';
@@ -36,11 +34,11 @@ describe('NorthDetailComponent', () => {
     const transformerService = createMock(TransformerService);
     const engineService = createMock(EngineService);
 
-    northConnectorService.findById.mockReturnValue(of(testData.north.list[0] as unknown as NorthConnectorDTO));
+    northConnectorService.findById.mockReturnValue(of(testData.north.list[0]));
     northConnectorService.getMetrics.mockReturnValue(of(testData.north.metrics));
     // Return null to skip startMetricsPolling() — the subscribe callback exits early when manifest is null
     northConnectorService.getNorthManifest.mockReturnValue(of(null as unknown as NorthConnectorManifest));
-    (engineService as any).info$ = of(testData.engine.oIBusInfo as unknown as OIBusInfo);
+    (engineService as any).info$ = of(testData.engine.oIBusInfo);
     scanModeService.list.mockReturnValue(of([]));
     certificateService.list.mockReturnValue(of([]));
     transformerService.list.mockReturnValue(of([]));

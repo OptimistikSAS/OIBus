@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
-import { EngineMetrics } from '@oibus/shared/api/engine.model';
+import { EngineMetrics } from '@oibus/shared/domain/engine.model';
 
 import { EngineService } from '../../services/engine.service';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';

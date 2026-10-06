@@ -5,6 +5,9 @@ import { Readable } from 'node:stream';
 
 import { DateTime } from 'luxon';
 
+import { OIBusContent, OIBusTimeValue } from '../../shared/model/common/content.model';
+import { Instant } from '../../shared/model/common/types';
+import { NorthSettings } from '../../shared/model/connector/north-settings.model';
 import {
   CacheContentUpdateCommand,
   CacheMetadata,
@@ -13,10 +16,7 @@ import {
   DataFolderType,
   FileCacheContent,
   OIBusConnectionTestResult
-} from '../../shared/model/api/engine.model';
-import { OIBusContent, OIBusTimeValue } from '../../shared/model/common/content.model';
-import { Instant } from '../../shared/model/common/types';
-import { NorthSettings } from '../../shared/model/connector/north-settings.model';
+} from '../../shared/model/domain/engine.model';
 
 import type { ICacheService } from '../model/cache.service.model';
 import { CacheMetadataSource, CacheSize, CONTENT_FOLDER } from '../model/engine.model';

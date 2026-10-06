@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { ActivationWindow } from '../../shared/model/api/scan-mode.model';
 import { GetUserInfo } from '../../shared/model/common/types';
+import { ActivationWindow } from '../../shared/model/domain/scan-mode.model';
 
 import { ScanMode } from '../model/scan-mode.model';
 import { toScanModeDTO } from './scan-mode-dto.utils';

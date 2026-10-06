@@ -1,7 +1,7 @@
 import { Database } from 'better-sqlite3';
 import { DateTime } from 'luxon';
 
-import { EngineMetrics } from '../../../shared/model/api/engine.model';
+import { EngineMetrics } from '../../../shared/model/domain/engine.model';
 
 import { Instant } from '../../model/types';
 

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { CacheMetadata } from '../../../shared/model/api/engine.model';
+import { CacheMetadata } from '../../../shared/model/domain/engine.model';
 
 import {
   applyNorthCacheContentSize,

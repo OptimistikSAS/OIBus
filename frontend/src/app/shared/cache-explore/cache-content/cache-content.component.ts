@@ -4,8 +4,9 @@ import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, outp
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 
-import { CacheMetadata, CacheOperation, DataFolderType } from '@oibus/shared/api/engine.model';
+import { CacheOperation } from '@oibus/shared/api/engine.model';
 import { createPageFromArray } from '@oibus/shared/common/types';
+import { CacheMetadata, DataFolderType } from '@oibus/shared/domain/engine.model';
 
 import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
 import { DatetimePipe } from '../../datetime.pipe';

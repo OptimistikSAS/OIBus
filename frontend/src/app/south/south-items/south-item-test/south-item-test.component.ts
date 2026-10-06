@@ -11,11 +11,11 @@ import { NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model'
 import {
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
-  SouthConnectorItemTestingSettings,
   SouthConnectorItemTestResult
 } from '@oibus/shared/api/south-connector.model';
 import { HistoryTransformerDTOWithOptions, TransformerDTO } from '@oibus/shared/api/transformer.model';
 import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+import { SouthConnectorItemTestingSettings } from '@oibus/shared/domain/south-connector.model';
 
 import { HistoryQueryService } from '../../../services/history-query.service';
 import { NorthConnectorService } from '../../../services/north-connector.service';

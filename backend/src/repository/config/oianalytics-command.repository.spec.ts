@@ -3,17 +3,14 @@ import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:t
 
 import { Database } from 'better-sqlite3';
 
-import { CacheSearchParam } from '../../../shared/model/api/engine.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/api/history-query.model';
 import { NorthConnectorCommandDTO } from '../../../shared/model/api/north-connector.model';
-import {
-  SouthConnectorCommandDTO,
-  SouthConnectorItemCommandDTO,
-  SouthConnectorItemTestingSettings
-} from '../../../shared/model/api/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorItemCommandDTO } from '../../../shared/model/api/south-connector.model';
 import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../../shared/model/api/transformer.model';
 import { createPageFromArray } from '../../../shared/model/common/types';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+import { CacheSearchParam } from '../../../shared/model/domain/engine.model';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import {
   OIAnalyticsFetchCreateCertificateCommandDTO,

@@ -1,5 +1,5 @@
-import { SouthConnectorExploreEntry } from '../../shared/model/api/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+import { SouthConnectorExploreEntry } from '../../shared/model/domain/south-connector.model';
 
 import type SouthConnector from '../south/south-connector';
 import { generateRandomId } from './utils';

@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { before, beforeEach, describe, it, mock } from 'node:test';
 
-import { ChangePasswordCommand, UserCommandDTO, UserSearchParam } from '../../../shared/model/api/user.model';
+import { ChangePasswordCommand, UserCommandDTO } from '../../../shared/model/api/user.model';
 import { createPageFromArray } from '../../../shared/model/common/types';
+import { UserSearchParam } from '../../../shared/model/domain/user.model';
 
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
 import testData from '../../tests/utils/test-data';

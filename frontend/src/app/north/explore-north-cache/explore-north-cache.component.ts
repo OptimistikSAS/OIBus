@@ -8,9 +8,9 @@ import { DateTime } from 'luxon';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { of, switchMap, tap } from 'rxjs';
 
-import { CacheContentUpdateCommand, CacheSearchResult, DataFolderType } from '@oibus/shared/api/engine.model';
 import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
 import { Instant } from '@oibus/shared/common/types';
+import { CacheContentUpdateCommand, CacheSearchResult, DataFolderType } from '@oibus/shared/domain/engine.model';
 
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { FileContentModalComponent } from '../../shared/cache-explore/cache-content/file-content-modal/file-content-modal.component';

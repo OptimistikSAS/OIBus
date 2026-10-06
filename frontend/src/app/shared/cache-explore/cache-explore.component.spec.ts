@@ -6,7 +6,8 @@ import { BehaviorSubject } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { CacheContentUpdateCommand, CacheOperation, CacheSearchResult } from '@oibus/shared/api/engine.model';
+import { CacheOperation } from '@oibus/shared/api/engine.model';
+import { CacheContentUpdateCommand, CacheSearchResult } from '@oibus/shared/domain/engine.model';
 
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { provideCurrentUser } from '../current-user-testing-vitest';

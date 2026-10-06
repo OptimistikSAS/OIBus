@@ -4,11 +4,8 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { NorthConnectorDTO } from '@oibus/shared/api/north-connector.model';
-import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
-
-import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
@@ -40,7 +37,7 @@ describe('NorthTransformersComponent', () => {
 
   test('should render with required inputs', () => {
     const fixture = TestBed.createComponent(NorthTransformersComponent);
-    fixture.componentRef.setInput('northManifest', testData.north.manifest as unknown as NorthConnectorManifest);
+    fixture.componentRef.setInput('northManifest', testData.north.manifest);
     fixture.componentRef.setInput('transformers', []);
     fixture.componentRef.setInput('certificates', []);
     fixture.componentRef.setInput('scanModes', []);
@@ -49,11 +46,11 @@ describe('NorthTransformersComponent', () => {
 
   function createWithTransformers(saveChangesDirectly: boolean) {
     const fixture = TestBed.createComponent(NorthTransformersComponent);
-    fixture.componentRef.setInput('northManifest', testData.north.manifest as unknown as NorthConnectorManifest);
+    fixture.componentRef.setInput('northManifest', testData.north.manifest);
     fixture.componentRef.setInput('transformers', []);
     fixture.componentRef.setInput('certificates', []);
     fixture.componentRef.setInput('scanModes', []);
-    fixture.componentRef.setInput('northConnector', testData.north.list[0] as unknown as NorthConnectorDTO);
+    fixture.componentRef.setInput('northConnector', testData.north.list[0]);
     fixture.componentRef.setInput('saveChangesDirectly', saveChangesDirectly);
     fixture.detectChanges();
     return { fixture, root: page.elementLocator(fixture.nativeElement) };

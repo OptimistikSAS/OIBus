@@ -5,11 +5,10 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import { OIBusScanModeAttribute } from '@oibus/shared/connector/form.model';
 
-import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import testData from '../../../../test/test-data';
 import { OIBusScanModeFormControlComponent } from './oibus-scan-mode-form-control.component';
 
 @Component({
@@ -32,7 +31,7 @@ class TestComponent {
     acceptableType: 'SUBSCRIPTION_AND_POLL'
   } as OIBusScanModeAttribute;
 
-  allScanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
+  allScanModes = testData.scanMode.list;
   formGroup = new FormGroup({
     testGroup: new FormGroup({
       testKey: new FormControl('')

@@ -1,5 +1,6 @@
-import { UserCommandDTO, UserDTO, UserSearchParam } from '../../shared/model/api/user.model';
+import { UserCommandDTO, UserDTO } from '../../shared/model/api/user.model';
 import { GetUserInfo, Language, Page, UserInfo } from '../../shared/model/common/types';
+import { UserSearchParam } from '../../shared/model/domain/user.model';
 
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { User } from '../model/user.model';

@@ -14,18 +14,16 @@ import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-transl
 import { DateTime, WeekdayNumbers } from 'luxon';
 import { map, Observable, of, switchMap, take } from 'rxjs';
 
+import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '@oibus/shared/api/scan-mode.model';
+import { Instant, LocalTime, Timezone } from '@oibus/shared/common/types';
 import {
   ActivationWindow,
   ActivationWindowDateRange,
   ActivationWindowRecurring,
   INTERVAL_UNITS,
   IntervalUnit,
-  ScanModeCommandDTO,
-  ScanModeDTO,
-  ScanModeType,
-  ValidatedCronExpression
-} from '@oibus/shared/api/scan-mode.model';
-import { Instant, LocalTime, Timezone } from '@oibus/shared/common/types';
+  ScanModeType
+} from '@oibus/shared/domain/scan-mode.model';
 
 import { ScanModeService } from '../../../services/scan-mode.service';
 import { CurrentUserService } from '../../../shared/current-user.service';

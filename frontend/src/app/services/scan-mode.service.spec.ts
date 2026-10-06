@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { ScanModeDTO, ValidatedCronExpression } from '@oibus/shared/api/scan-mode.model';
 
-import testData from '../../../../backend/src/tests/utils/test-data';
+import testData from '../../test/test-data';
 import { ScanModeService } from './scan-mode.service';
 
 describe('ScanModeService', () => {

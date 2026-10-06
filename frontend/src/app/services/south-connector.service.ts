@@ -3,14 +3,11 @@ import { inject, Service } from '@angular/core';
 
 import { map, Observable } from 'rxjs';
 
-import { OIBusConnectionTestResult, SouthConnectorMetrics } from '@oibus/shared/api/engine.model';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthConnectorItemSearchParam,
-  SouthConnectorItemTestingSettings,
   SouthConnectorItemTestResult,
   SouthConnectorLightDTO,
   SouthExploreBrowseResult,
@@ -23,6 +20,8 @@ import { OIBusRecord } from '@oibus/shared/common/content.model';
 import { Page } from '@oibus/shared/common/types';
 import { OIBusSouthType, SouthConnectorManifest, SouthType } from '@oibus/shared/connector/south-manifest.model';
 import { SouthItemSettings, SouthSettings } from '@oibus/shared/connector/south-settings.model';
+import { OIBusConnectionTestResult, SouthConnectorMetrics } from '@oibus/shared/domain/engine.model';
+import { SouthConnectorItemSearchParam, SouthConnectorItemTestingSettings } from '@oibus/shared/domain/south-connector.model';
 
 import { ignoreErrorUnlessStatusIs, SHOULD_IGNORE_ERROR_PREDICATE } from '../shared/error-interceptor.service';
 import { DownloadService } from './download.service';

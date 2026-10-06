@@ -8,8 +8,8 @@ import type {
   CacheSearchResult,
   DataFolderType,
   FileCacheContent
-} from '../../shared/model/api/engine.model';
-import type { ScopeType } from '../../shared/model/api/logs.model';
+} from '../../shared/model/domain/engine.model';
+import type { ScopeType } from '../../shared/model/domain/logs.model';
 
 import type TypedEventEmitter from '../service/typed-event-emitter';
 import type { CacheSize } from './engine.model';

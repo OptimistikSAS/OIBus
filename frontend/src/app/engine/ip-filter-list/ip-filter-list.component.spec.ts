@@ -4,10 +4,8 @@ import { of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import { IPFilterDTO } from '@oibus/shared/api/ip-filter.model';
-
-import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import testData from '../../../test/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { EngineService } from '../../services/engine.service';
 import { IpFilterService } from '../../services/ip-filter.service';
@@ -65,7 +63,7 @@ describe('IpFilterListComponent', () => {
 
   describe('with ip filters', () => {
     beforeEach(() => {
-      ipFilterService.list.mockReturnValue(of(testData.ipFilters.list as unknown as Array<IPFilterDTO>));
+      ipFilterService.list.mockReturnValue(of(testData.ipFilters.list));
       tester = new IpFilterListComponentTester();
     });
 
@@ -135,7 +133,7 @@ describe('IpFilterListComponent', () => {
   describe('when ip filters are ignored', () => {
     beforeEach(() => {
       engineService.getInfo.mockReturnValue(of({ ...testData.engine.oIBusInfo, ignoreIpFilters: true }));
-      ipFilterService.list.mockReturnValue(of(testData.ipFilters.list as unknown as Array<IPFilterDTO>));
+      ipFilterService.list.mockReturnValue(of(testData.ipFilters.list));
       tester = new IpFilterListComponentTester();
     });
 

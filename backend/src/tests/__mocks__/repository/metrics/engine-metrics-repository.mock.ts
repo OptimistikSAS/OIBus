@@ -1,6 +1,6 @@
 import { mock } from 'node:test';
 
-import { EngineMetrics } from '../../../../../shared/model/api/engine.model';
+import { EngineMetrics } from '../../../../../shared/model/domain/engine.model';
 
 /**
  * Create a mock object for Engine Metrics Repository

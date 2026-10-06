@@ -1,6 +1,6 @@
-import { WorkflowPreviewEntryDTO } from '../../shared/model/api/configuration-workflow.model';
-import { WorkflowRunCounts, WorkflowRunStatus, WorkflowRunTriggerType } from '../../shared/model/api/workflow-run.model';
 import { OIBusRecord } from '../../shared/model/common/content.model';
+import { WorkflowPreviewEntryStatus } from '../../shared/model/domain/configuration-workflow.model';
+import { WorkflowRunCounts, WorkflowRunStatus, WorkflowRunTriggerType } from '../../shared/model/domain/workflow-run.model';
 
 // Re-exported so existing backend-internal consumers don't need to know these live in the shared model -
 // see the equivalent note in configuration-workflow.model.ts.
@@ -11,7 +11,15 @@ export {
   WorkflowRunSearchParam,
   WorkflowRunStatus,
   WorkflowRunTriggerType
-} from '../../shared/model/api/workflow-run.model';
+} from '../../shared/model/domain/workflow-run.model';
+
+/** One discovered record of a local workflow run and how it was classified (same shape as `WorkflowPreviewEntryDTO`). */
+export interface WorkflowRunEntry {
+  key: string;
+  status: WorkflowPreviewEntryStatus;
+  record: OIBusRecord | null;
+  previousMetadata: Record<string, unknown> | null;
+}
 
 /**
  * The full discovered payload behind one run's summary counts - not just "how many", but "which ones,
@@ -20,7 +28,7 @@ export {
  * workflow populates `records` (empty for local). Written once, at `complete`/`fail` time.
  */
 export interface WorkflowRunPayload {
-  entries: Array<WorkflowPreviewEntryDTO>;
+  entries: Array<WorkflowRunEntry>;
   records: Array<OIBusRecord>;
 }
 

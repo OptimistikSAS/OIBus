@@ -1,15 +1,15 @@
 import { DateTime } from 'luxon';
 import mssql, { config, ConnectionPool } from 'mssql';
 
-import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { OIBusContent, OIBusRecord } from '../../../shared/model/common/content.model';
+import { Instant } from '../../../shared/model/common/types';
+import { SouthItemSettings, SouthMSSQLItemSettings, SouthMSSQLSettings } from '../../../shared/model/connector/south-settings.model';
+import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
 import {
   SouthConnectorExploreEntry,
   SouthConnectorItemQueryResult,
   SouthConnectorItemTestingSettings
-} from '../../../shared/model/api/south-connector.model';
-import { OIBusContent, OIBusRecord } from '../../../shared/model/common/content.model';
-import { Instant } from '../../../shared/model/common/types';
-import { SouthItemSettings, SouthMSSQLItemSettings, SouthMSSQLSettings } from '../../../shared/model/connector/south-settings.model';
+} from '../../../shared/model/domain/south-connector.model';
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import { OIBusTestingError } from '../../model/types';

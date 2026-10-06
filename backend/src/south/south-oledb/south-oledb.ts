@@ -1,10 +1,10 @@
 import { DateTime } from 'luxon';
 
-import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
 import { OIBusContent } from '../../../shared/model/common/content.model';
 import { Instant } from '../../../shared/model/common/types';
 import { SouthItemSettings, SouthOLEDBItemSettings, SouthOLEDBSettings } from '../../../shared/model/connector/south-settings.model';
+import { OIBusConnectionTestResult } from '../../../shared/model/domain/engine.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
 
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';

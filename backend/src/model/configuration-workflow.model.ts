@@ -1,4 +1,4 @@
-import { RecordFilterCondition } from '../../shared/model/api/configuration-workflow.model';
+import { RecordFilterCondition } from '../../shared/model/domain/configuration-workflow.model';
 
 import { ScanMode } from './scan-mode.model';
 import { BaseEntity } from './types';
@@ -6,7 +6,11 @@ import { BaseEntity } from './types';
 // Re-exported so existing backend-internal consumers don't need to know this type actually lives in
 // the shared model — it's a plain data shape with no reason to differ between the two layers, unlike
 // most entities here (which typically resolve shared DTO ids into full backend objects).
-export { RECORD_FILTER_OPERATORS, RecordFilterCondition, RecordFilterOperator } from '../../shared/model/api/configuration-workflow.model';
+export {
+  RECORD_FILTER_OPERATORS,
+  RecordFilterCondition,
+  RecordFilterOperator
+} from '../../shared/model/domain/configuration-workflow.model';
 
 /**
  * A Configuration Workflow discovers a data source, decides which of what it found actually warrants

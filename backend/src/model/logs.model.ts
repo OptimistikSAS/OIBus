@@ -1,4 +1,4 @@
-import { LogLevel, ScopeType } from '../../shared/model/api/logs.model';
+import { LogLevel, ScopeType } from '../../shared/model/domain/logs.model';
 
 import { Instant } from './types';
 

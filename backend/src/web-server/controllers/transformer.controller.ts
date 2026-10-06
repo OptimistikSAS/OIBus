@@ -6,13 +6,13 @@ import {
   CustomTransformerDTO,
   InputTemplate,
   TransformerDTO,
-  TransformerSearchParam,
   TransformerTestRequest,
   TransformerTestResponse
 } from '../../../shared/model/api/transformer.model';
 import { OIBusDataType } from '../../../shared/model/common/content.model';
 import { Page } from '../../../shared/model/common/types';
 import { InputType, TransformerManifest } from '../../../shared/model/connector/transformer-manifest.model';
+import { TransformerSearchParam } from '../../../shared/model/domain/transformer.model';
 
 import { OIBusTestingError } from '../../model/types';
 import TransformerService, { toTransformerDTO } from '../../service/transformer.service';
