@@ -18,8 +18,7 @@ import { OIBusRecord } from '../../../shared/model/common/content.model';
 import { CacheContentUpdateCommand, CacheSearchParam, DataFolderType } from '../../../shared/model/domain/engine.model';
 import { HistoryQueryStatus } from '../../../shared/model/domain/history-query.model';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/domain/south-connector.model';
-
-import { OIBusTestTransformerItemCommandContent } from '../../model/oianalytics-command.model';
+import { OIBusTestTransformerItemCommandContent } from '../../../shared/model/oia/command.model';
 
 /**
  * A remote (push-to-OIAnalytics) Configuration Workflow run's result: the raw eligible records
