@@ -8,14 +8,7 @@ import CacheServiceMock from '../tests/__mocks__/service/cache/cache-service.moc
 import OIBusTransformerMock from '../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import type { NorthFileWriterSettings, NorthSettings } from '../../shared/model/north-settings.model';
 import type { NorthConnectorEntity } from '../model/north-connector.model';
-import type {
-  CacheContentUpdateCommand,
-  CacheMetadata,
-  CacheMetadataSource,
-  CacheMetadataSourceOriginSouth,
-  OIBusContent,
-  OIBusFileContent
-} from '../../shared/model/engine.model';
+import type { CacheContentUpdateCommand, CacheMetadata, OIBusContent, OIBusFileContent } from '../../shared/model/engine.model';
 import type { NorthTransformerWithOptions, SourceOriginSouth } from '../model/transformer.model';
 import type {
   SouthConnectorEntityLight,
@@ -27,7 +20,7 @@ import type { SouthItemSettings } from '../../shared/model/south-settings.model'
 import type { HistoryQueryItemEntity } from '../model/histor-query.model';
 import type NorthConnectorClass from './north-connector';
 import type NorthFileWriterClass from './north-file-writer/north-file-writer';
-import { OIBusError } from '../model/engine.model';
+import { CacheMetadataSource, CacheMetadataSourceOriginSouth, OIBusError } from '../model/engine.model';
 import path from 'node:path';
 import { DateTime } from 'luxon';
 

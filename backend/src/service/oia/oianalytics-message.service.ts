@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 import DeferredPromise from '../deferred-promise';
 import { DateTime } from 'luxon';
 import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
-import { OIBusFullConfigurationCommandDTO, OIBusHistoryQueriesCommandDTO } from './oianalytics.model';
+import { OIBusFullConfigurationCommandDTO, OIBusHistoryQueriesCommandDTO } from '../../../shared/model/oianalytics-configuration.model';
 import OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
 import OIAnalyticsClient from './oianalytics-client.service';
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';

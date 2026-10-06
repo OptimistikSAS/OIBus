@@ -5,7 +5,8 @@ import type { ReadStream } from 'node:fs';
 import OIBusTransformer from './oibus-transformer';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
-import type { CacheMetadata, CacheMetadataSource } from '../../shared/model/engine.model';
+import type { CacheMetadata } from '../../shared/model/engine.model';
+import type { CacheMetadataSource } from '../model/engine.model';
 
 // Minimal concrete subclass to exercise the abstract base class
 class ConcreteTransformer extends OIBusTransformer {
