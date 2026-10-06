@@ -11,8 +11,8 @@ import {
   viewChild,
   ChangeDetectionStrategy
 } from '@angular/core';
-import { OIBusContent, OIBusTimeValue } from '../../../../../../../backend/shared/model/engine.model';
-import { createPageFromArray, Page } from '../../../../../../../backend/shared/model/types';
+import { OIBusContent, OIBusTimeValue } from '@oibus/shared/engine.model';
+import { createPageFromArray, Page } from '@oibus/shared/types';
 import { LoadingSpinnerComponent } from '../../../../shared/loading-spinner/loading-spinner.component';
 import { PaginationComponent } from '../../../../shared/pagination/pagination.component';
 import { ProgressbarComponent } from '../../../../history-query/history-query-detail/history-metrics/progressbar/progressbar.component';

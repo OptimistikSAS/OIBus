@@ -4,7 +4,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { TranslateDirective } from '@ngx-translate/core';
 import { EngineService } from '../../services/engine.service';
 import { NotificationService } from '../../shared/notification.service';
-import { AuthTokenDuration, EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
+import { AuthTokenDuration, EngineSettingsDTO } from '@oibus/shared/engine.model';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 import { ModalService } from '../../shared/modal.service';
 import { PortRedirectModalComponent } from '../../shared/port-redirect-modal/port-redirect-modal.component';

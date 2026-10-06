@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { BaseEnumPipe } from './base-enum-pipe';
-import { OIBusNorthCategory } from '../../../../backend/shared/model/north-connector.model';
+import { OIBusNorthCategory } from '@oibus/shared/north-connector.model';
 
 @Pipe({
   name: 'oIBusNorthCategoryEnum',

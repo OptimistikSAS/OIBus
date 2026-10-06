@@ -4,7 +4,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective } from '@ngx-translate/core';
-import { IPFilterCommandDTO, IPFilterDTO } from '../../../../../../backend/shared/model/ip-filter.model';
+import { IPFilterCommandDTO, IPFilterDTO } from '@oibus/shared/ip-filter.model';
 import { IpFilterService } from '../../../services/ip-filter.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';

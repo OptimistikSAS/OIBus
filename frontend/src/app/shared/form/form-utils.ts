@@ -1,7 +1,7 @@
-import { OIBusAttribute, OIBusAttributeType } from '../../../../../backend/shared/model/form.model';
+import { OIBusAttribute, OIBusAttributeType } from '@oibus/shared/form.model';
 import { isDisplayableAttribute } from './dynamic-form.builder';
 import { TranslateService } from '@ngx-translate/core';
-import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 
 export interface Column {
   path: Array<string>;

@@ -1,10 +1,10 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { LANGUAGES, Language, Timezone } from '../../../../../backend/shared/model/types';
+import { LANGUAGES, Language, Timezone } from '@oibus/shared/types';
 import { Observable, of, switchMap, tap, timer } from 'rxjs';
 import { CurrentUserService } from '../../shared/current-user.service';
 import { ChangePasswordModalComponent } from '../change-password-modal/change-password-modal.component';
-import { UserDTO, UserCommandDTO } from '../../../../../backend/shared/model/user.model';
+import { UserDTO, UserCommandDTO } from '@oibus/shared/user.model';
 import { ModalService } from '../../shared/modal.service';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { NotificationService } from '../../shared/notification.service';

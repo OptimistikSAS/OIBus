@@ -4,8 +4,8 @@ import { TranslateDirective } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
 import { OI_TYPEAHEAD_DIRECTIVES } from '../typeahead-directives';
-import { OIBusTimezoneAttribute } from '../../../../../../backend/shared/model/form.model';
-import { Timezone } from '../../../../../../backend/shared/model/types';
+import { OIBusTimezoneAttribute } from '@oibus/shared/form.model';
+import { Timezone } from '@oibus/shared/types';
 import { inMemoryTypeahead } from '../typeahead';
 
 @Component({

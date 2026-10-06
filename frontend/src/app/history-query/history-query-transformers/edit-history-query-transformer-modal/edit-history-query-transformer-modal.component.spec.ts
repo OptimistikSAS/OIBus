@@ -14,8 +14,8 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { of } from 'rxjs';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
-import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
-import { OIBusSouthType } from '../../../../../../backend/shared/model/south-connector.model';
+import { TransformerDTO } from '@oibus/shared/transformer.model';
+import { OIBusSouthType } from '@oibus/shared/south-connector.model';
 
 describe('EditHistoryQueryTransformerModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;

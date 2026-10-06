@@ -8,10 +8,10 @@ import {
   ConfigurationWorkflowCommandDTO,
   WorkflowPreviewEntryDTO,
   WorkflowPreviewResultDTO
-} from '../../../../../../backend/shared/model/configuration-workflow.model';
-import { OIBusSouthType } from '../../../../../../backend/shared/model/south-connector.model';
-import { SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
-import { WorkflowRunDetailDTO } from '../../../../../../backend/shared/model/workflow-run.model';
+} from '@oibus/shared/configuration-workflow.model';
+import { OIBusSouthType } from '@oibus/shared/south-connector.model';
+import { SouthSettings } from '@oibus/shared/south-settings.model';
+import { WorkflowRunDetailDTO } from '@oibus/shared/workflow-run.model';
 import { ConfigurationWorkflowService } from '../../../services/configuration-workflow.service';
 import { NotificationService } from '../../../shared/notification.service';
 import { extractErrorMessage } from '../../../shared/extract-error-message';

@@ -1,8 +1,8 @@
 import { Service, inject } from '@angular/core';
 import { catchError, Observable, of, shareReplay, switchMap } from 'rxjs';
 import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { Timezone } from '../../../../backend/shared/model/types';
-import { UserDTO } from '../../../../backend/shared/model/user.model';
+import { Timezone } from '@oibus/shared/types';
+import { UserDTO } from '@oibus/shared/user.model';
 import { WindowService } from './window.service';
 import { ignoreErrorIfStatusIs } from './error-interceptor.service';
 

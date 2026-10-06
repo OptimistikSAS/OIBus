@@ -5,11 +5,11 @@ import {
   ConfigurationWorkflowCommandDTO,
   ConfigurationWorkflowDTO,
   WorkflowPreviewResultDTO
-} from '../../../../backend/shared/model/configuration-workflow.model';
-import { WorkflowRunDetailDTO, WorkflowRunDTO, WorkflowRunSearchParam } from '../../../../backend/shared/model/workflow-run.model';
-import { Page } from '../../../../backend/shared/model/types';
-import { OIBusSouthType } from '../../../../backend/shared/model/south-connector.model';
-import { SouthSettings } from '../../../../backend/shared/model/south-settings.model';
+} from '@oibus/shared/configuration-workflow.model';
+import { WorkflowRunDetailDTO, WorkflowRunDTO, WorkflowRunSearchParam } from '@oibus/shared/workflow-run.model';
+import { Page } from '@oibus/shared/types';
+import { OIBusSouthType } from '@oibus/shared/south-connector.model';
+import { SouthSettings } from '@oibus/shared/south-settings.model';
 import { ignoreErrorIfStatusIs } from '../shared/error-interceptor.service';
 
 /**

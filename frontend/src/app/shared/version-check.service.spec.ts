@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { VersionCheckService } from './version-check.service';
 import { EngineService } from '../services/engine.service';
 import { of } from 'rxjs';
-import { OIBusInfo } from '../../../../backend/shared/model/engine.model';
+import { OIBusInfo } from '@oibus/shared/engine.model';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 
 describe('VersionCheckService', () => {

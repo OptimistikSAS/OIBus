@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { OIBusTimezoneFormControlComponent } from './oibus-timezone-form-control.component';
-import { OIBusTimezoneAttribute } from '../../../../../../backend/shared/model/form.model';
+import { OIBusTimezoneAttribute } from '@oibus/shared/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';

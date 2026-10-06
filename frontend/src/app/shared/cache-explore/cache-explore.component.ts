@@ -5,12 +5,7 @@ import { CacheContentComponent } from './cache-content/cache-content.component';
 import { AsyncPipe } from '@angular/common';
 import { DatetimePipe } from '../datetime.pipe';
 import { ObservableState } from '../save-button/save-button.component';
-import {
-  CacheContentUpdateCommand,
-  CacheOperation,
-  CacheSearchResult,
-  DataFolderType
-} from '../../../../../backend/shared/model/engine.model';
+import { CacheContentUpdateCommand, CacheOperation, CacheSearchResult, DataFolderType } from '@oibus/shared/engine.model';
 
 @Component({
   selector: 'oib-cache-explore',

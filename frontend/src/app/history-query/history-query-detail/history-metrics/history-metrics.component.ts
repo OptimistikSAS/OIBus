@@ -1,13 +1,13 @@
 import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
-import { HistoryQueryMetrics } from '../../../../../../backend/shared/model/engine.model';
+import { HistoryQueryMetrics } from '@oibus/shared/engine.model';
 import { DecimalPipe, JsonPipe } from '@angular/common';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { DurationPipe } from '../../../shared/duration.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
-import { HistoryQueryDTO } from '../../../../../../backend/shared/model/history-query.model';
-import { NorthConnectorManifest } from '../../../../../../backend/shared/model/north-connector.model';
-import { SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
+import { HistoryQueryDTO } from '@oibus/shared/history-query.model';
+import { NorthConnectorManifest } from '@oibus/shared/north-connector.model';
+import { SouthConnectorManifest } from '@oibus/shared/south-connector.model';
 import { ProgressbarComponent } from './progressbar/progressbar.component';
 import { FileSizePipe } from '../../../shared/file-size.pipe';
 

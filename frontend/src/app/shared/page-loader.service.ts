@@ -1,7 +1,7 @@
 import { ActivatedRoute, Router } from '@angular/router';
 import { map, merge, Observable, Subject } from 'rxjs';
 import { Service, inject } from '@angular/core';
-import { Page } from '../../../../backend/shared/model/types';
+import { Page } from '@oibus/shared/types';
 
 /**
  * Service used to load a page when the `page` query param changes, or when we need to reload the current

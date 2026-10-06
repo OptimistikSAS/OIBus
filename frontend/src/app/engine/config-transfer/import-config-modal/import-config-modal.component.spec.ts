@@ -9,7 +9,7 @@ import { ConfigImportFailure, ConfigTransferService } from '../../../services/co
 import { ConfirmationService } from '../../../shared/confirmation.service';
 import { TransformerService } from '../../../services/transformer.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { ConfigImportPreviewDTO, ConfigImportResponseDTO } from '../../../../../../backend/shared/model/config-transfer.model';
+import { ConfigImportPreviewDTO, ConfigImportResponseDTO } from '@oibus/shared/config-transfer.model';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 
 class ImportConfigModalComponentTester {

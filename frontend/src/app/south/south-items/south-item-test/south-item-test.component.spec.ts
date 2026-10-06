@@ -8,8 +8,8 @@ import { NorthConnectorService } from '../../../services/north-connector.service
 import { HistoryQueryService } from '../../../services/history-query.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock } from '../../../../test/vitest-create-mock';
-import { SouthConnectorItemDTO } from '../../../../../../backend/shared/model/south-connector.model';
-import { SouthFolderScannerItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
+import { SouthConnectorItemDTO } from '@oibus/shared/south-connector.model';
+import { SouthFolderScannerItemSettings } from '@oibus/shared/south-settings.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 const manifest = testData.south.manifest;

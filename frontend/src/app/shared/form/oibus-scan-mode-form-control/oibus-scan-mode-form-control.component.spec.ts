@@ -1,11 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { OIBusScanModeAttribute } from '../../../../../../backend/shared/model/form.model';
+import { OIBusScanModeAttribute } from '@oibus/shared/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { OIBusScanModeFormControlComponent } from './oibus-scan-mode-form-control.component';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
-import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
+import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
