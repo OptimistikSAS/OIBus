@@ -1,12 +1,14 @@
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
-import { ipFilterSchema } from '../web-server/controllers/validators/oibus-validation-schema';
-import IpFilterRepository from '../repository/config/ip-filter.repository';
-import { IPFilterCommandDTO, IPFilterDTO } from '../../shared/model/ip-filter.model';
-import { IPFilter } from '../model/ip-filter.model';
 import { EventEmitter } from 'node:events';
+
+import { IPFilterCommandDTO, IPFilterDTO } from '../../shared/model/api/ip-filter.model';
+import { GetUserInfo } from '../../shared/model/common/types';
+
+import { IPFilter } from '../model/ip-filter.model';
+import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import { NotFoundError } from '../model/types';
-import { GetUserInfo } from '../../shared/model/types';
+import IpFilterRepository from '../repository/config/ip-filter.repository';
+import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import { ipFilterSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 
 export default class IPFilterService {
   public whiteListEvent: EventEmitter = new EventEmitter(); // Used to trigger white list for Proxy server and Web server

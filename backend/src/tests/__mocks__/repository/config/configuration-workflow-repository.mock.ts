@@ -1,12 +1,14 @@
 import { mock } from 'node:test';
+
 import type { Database } from 'better-sqlite3';
-import { createAuditServiceMock } from '../../../utils/test-utils';
+
 import {
   ConfigurationWorkflowCommand,
   ConfigurationWorkflowEntity,
   ConfigurationWorkflowSouthCommand
 } from '../../../../model/configuration-workflow.model';
 import ConfigurationWorkflowRepository from '../../../../repository/config/configuration-workflow.repository';
+import { createAuditServiceMock } from '../../../utils/test-utils';
 
 /**
  * Create a mock object for Configuration Workflow repository

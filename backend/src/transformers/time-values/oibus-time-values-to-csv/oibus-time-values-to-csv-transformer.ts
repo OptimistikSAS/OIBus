@@ -1,9 +1,13 @@
-import OIBusTransformer from '../../oibus-transformer';
-import csv from 'papaparse';
-import { CacheMetadata, OIBusTimeValue } from '../../../../shared/model/engine.model';
-import { CacheMetadataSource } from '../../../model/engine.model';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
+
+import csv from 'papaparse';
+
+import { CacheMetadata } from '../../../../shared/model/api/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/common/content.model';
+import { TransformerTimeValuesToCsvSettings } from '../../../../shared/model/connector/transformer-settings.model';
+
+import { CacheMetadataSource } from '../../../model/engine.model';
 import {
   applyFilenameVariables,
   convertDelimiter,
@@ -14,8 +18,8 @@ import {
   sanitizeFilename,
   streamToString
 } from '../../../service/utils';
-import { TransformerTimeValuesToCsvSettings } from '../../../../shared/model/transformer-settings.model';
 import { applyFieldProcess } from '../../field-process';
+import OIBusTransformer from '../../oibus-transformer';
 
 export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
   public static transformerName = 'time-values-to-csv';

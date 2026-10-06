@@ -1,8 +1,10 @@
-import { TestBed } from '@angular/core/testing';
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { ValErrorDelayDirective } from './val-error-delay.directive';
+import { TestBed } from '@angular/core/testing';
+
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
+
+import { ValErrorDelayDirective } from './val-error-delay.directive';
 
 @Component({
   selector: 'oib-test-val-error-delay-component',

@@ -1,21 +1,23 @@
-import { TestBed } from '@angular/core/testing';
-
-import { LogsComponent } from './logs.component';
-import { provideI18nTesting } from '../../i18n/mock-i18n';
-import { ActivatedRoute, provideRouter, Router } from '@angular/router';
-import { LogService } from '../services/log.service';
-import { DEFAULT_TZ, Page } from '@oibus/shared/types';
-import { Group, Item, LogDTO, Scope } from '@oibus/shared/logs.model';
-import { BehaviorSubject, of, Subscription } from 'rxjs';
-import { emptyPage, toPage } from '../shared/test-utils';
-import { DateTime } from 'luxon';
-import { PageLoader } from '../shared/page-loader.service';
-import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/form/typeahead';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+
+import { DateTime } from 'luxon';
+import { BehaviorSubject, of, Subscription } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
+
+import { Group, Item, LogDTO, Scope } from '@oibus/shared/api/logs.model';
+import { DEFAULT_TZ, Page } from '@oibus/shared/common/types';
+
+import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject, stubRoute } from '../../test/vitest-create-mock';
+import { LogService } from '../services/log.service';
 import { provideNgbConfigTesting } from '../shared/form/oi-ngb-testing';
+import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/form/typeahead';
+import { PageLoader } from '../shared/page-loader.service';
+import { emptyPage, toPage } from '../shared/test-utils';
+import { LogsComponent } from './logs.component';
 
 class LogsComponentTester {
   readonly fixture = TestBed.createComponent(LogsComponent);

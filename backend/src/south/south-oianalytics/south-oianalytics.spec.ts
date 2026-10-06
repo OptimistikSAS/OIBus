@@ -1,22 +1,23 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import type { SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
+import type { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/connector/south-settings.model';
+
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import type CertificateRepository from '../../repository/config/certificate.repository';
+import type OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
 import OIAnalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
-import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import type CertificateRepository from '../../repository/config/certificate.repository';
-import type OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
+import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import type SouthOIAnalyticsClass from './south-oianalytics';
-import type { SouthConnectorEntity } from '../../model/south-connector.model';
-import type { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/south-settings.model';
-import type { SouthConnectorItemEntity } from '../../model/south-connector.model';
-import type { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 const nodeRequire = createRequire(import.meta.url);
 

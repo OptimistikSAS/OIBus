@@ -1,4 +1,8 @@
 import Joi from 'joi';
+
+import { RECORD_FILTER_OPERATORS } from '../../../shared/model/api/configuration-workflow.model';
+import { HISTORY_QUERY_STATUS } from '../../../shared/model/api/history-query.model';
+
 import {
   engineLoggerSchema,
   engineNameSchema,
@@ -8,8 +12,6 @@ import {
   scanModeSchema,
   userSchema
 } from '../../web-server/controllers/validators/oibus-validation-schema';
-import { RECORD_FILTER_OPERATORS } from '../../../shared/model/configuration-workflow.model';
-import { HISTORY_QUERY_STATUS } from '../../../shared/model/history-query.model';
 
 /**
  * Structural Joi schema of the configuration (`ConfigExportDTO['config']`) in the CURRENT shape, applied

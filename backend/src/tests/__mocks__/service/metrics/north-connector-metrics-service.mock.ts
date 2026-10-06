@@ -1,10 +1,12 @@
 import { mock } from 'node:test';
-import { NorthConnectorMetrics } from '../../../../../shared/model/engine.model';
+
+import { NorthConnectorMetrics } from '../../../../../shared/model/api/engine.model';
+import type { NorthSettings } from '../../../../../shared/model/connector/north-settings.model';
+
+import type { NorthConnectorEntity } from '../../../../model/north-connector.model';
+import type NorthConnectorMetricsRepository from '../../../../repository/metrics/north-connector-metrics.repository';
 import NorthConnectorMetricsService from '../../../../service/metrics/north-connector-metrics.service';
 import NorthConnectorMock from '../../north-connector.mock';
-import type NorthConnectorMetricsRepository from '../../../../repository/metrics/north-connector-metrics.repository';
-import type { NorthConnectorEntity } from '../../../../model/north-connector.model';
-import type { NorthSettings } from '../../../../../shared/model/north-settings.model';
 
 /**
  * Create a mock object for North Connector Metrics Service

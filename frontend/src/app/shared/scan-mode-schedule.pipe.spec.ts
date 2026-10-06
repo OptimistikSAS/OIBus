@@ -1,9 +1,11 @@
 import { TestBed } from '@angular/core/testing';
+
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { isScanModeWindowExpired, ScanModeSchedulePipe } from './scan-mode-schedule.pipe';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+
 import { provideI18nTesting } from '../../i18n/mock-i18n';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
+import { isScanModeWindowExpired, ScanModeSchedulePipe } from './scan-mode-schedule.pipe';
 
 const scanMode = (overrides: Partial<ScanModeDTO>): ScanModeDTO =>
   ({

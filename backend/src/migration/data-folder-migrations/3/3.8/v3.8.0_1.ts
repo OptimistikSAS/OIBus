@@ -1,6 +1,8 @@
-import { Knex } from 'knex';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+
+import { Knex } from 'knex';
+
 import { filesExists, getCommandLineArguments } from '../../../../service/utils';
 
 const { configFile } = getCommandLineArguments();

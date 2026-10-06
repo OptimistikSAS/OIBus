@@ -1,10 +1,12 @@
-import { before, after, beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import { after, afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
 import { Database } from 'better-sqlite3';
+
+import testData from '../../tests/utils/test-data';
 import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import CryptoRepository from './crypto.repository';
-import testData from '../../tests/utils/test-data';
 
 const TEST_DB_PATH = 'src/tests/test-crypto-db.db';
 

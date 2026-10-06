@@ -1,12 +1,14 @@
-import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import SouthConnectorMetricsService from './south-connector-metrics.service';
-import SouthMetricsRepositoryMock from '../../tests/__mocks__/repository/metrics/south-metrics-repository.mock';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+
 import SouthConnectorMetricsRepository from '../../repository/metrics/south-connector-metrics.repository';
-import testData from '../../tests/utils/test-data';
 import SouthConnector from '../../south/south-connector';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import SouthMetricsRepositoryMock from '../../tests/__mocks__/repository/metrics/south-metrics-repository.mock';
 import SouthConnectorMock from '../../tests/__mocks__/south-connector.mock';
+import testData from '../../tests/utils/test-data';
+import SouthConnectorMetricsService from './south-connector-metrics.service';
 
 let southConnectorMetricsRepository: SouthMetricsRepositoryMock;
 let southMock: SouthConnectorMock;

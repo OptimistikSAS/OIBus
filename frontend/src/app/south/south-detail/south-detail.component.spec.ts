@@ -1,29 +1,31 @@
-import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { page } from 'vitest/browser';
-import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 
-import { SouthDetailComponent } from './south-detail.component';
-import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
-import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
-import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
-import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
-import { SouthConnectorService } from '../../services/south-connector.service';
-import { ScanModeService } from '../../services/scan-mode.service';
-import { CertificateService } from '../../services/certificate.service';
-import { EngineService } from '../../services/engine.service';
-import { WindowService } from '../../shared/window.service';
-import { NotificationService } from '../../shared/notification.service';
-import { ConfirmationService } from '../../shared/confirmation.service';
-import { ModalService } from '../../shared/modal.service';
+import { of } from 'rxjs';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { SouthConnectorDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
+
+import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
-import { SouthConnectorDTO, SouthItemGroupDTO } from '@oibus/shared/south-connector.model';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import testData from '../../../../../backend/src/tests/utils/test-data';
+import { CertificateService } from '../../services/certificate.service';
+import { EngineService } from '../../services/engine.service';
+import { ScanModeService } from '../../services/scan-mode.service';
+import { SouthConnectorService } from '../../services/south-connector.service';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
+import { WindowService } from '../../shared/window.service';
+import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
+import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
+import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
+import { SouthDetailComponent } from './south-detail.component';
 
 const southConnector = testData.south.list[0] as unknown as SouthConnectorDTO;
 const manifest = testData.south.manifest;

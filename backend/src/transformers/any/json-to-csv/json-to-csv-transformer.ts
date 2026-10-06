@@ -1,9 +1,13 @@
-import OIBusTransformer from '../../oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
-import { CacheMetadata } from '../../../../shared/model/engine.model';
-import { CacheMetadataSource } from '../../../model/engine.model';
 import { promisify } from 'node:util';
+
+import csv from 'papaparse';
+
+import { CacheMetadata } from '../../../../shared/model/api/engine.model';
+import { TransformerJsonToCsvSettings } from '../../../../shared/model/connector/transformer-settings.model';
+
+import { CacheMetadataSource } from '../../../model/engine.model';
 import {
   applyFilenameVariables,
   convertDateTime,
@@ -15,10 +19,9 @@ import {
   sanitizeFilename,
   stringToBoolean
 } from '../../../service/utils';
-import csv from 'papaparse';
-import { TransformerJsonToCsvSettings } from '../../../../shared/model/transformer-settings.model';
 import { applyFieldProcess } from '../../field-process';
 import { resolveJsonPath, resolveJsonPathRows } from '../../json-path';
+import OIBusTransformer from '../../oibus-transformer';
 
 const pipelineAsync = promisify(pipeline);
 

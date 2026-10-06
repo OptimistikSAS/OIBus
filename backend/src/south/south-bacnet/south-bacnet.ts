@@ -1,4 +1,3 @@
-import { DateTime } from 'luxon';
 import BACnetClient, {
   ASN1_ARRAY_ALL,
   BACNetAddress,
@@ -9,25 +8,29 @@ import BACnetClient, {
   ObjectType,
   PropertyIdentifier
 } from '@bacnet-js/client';
-import SouthConnector from '../south-connector';
-import { SouthDirectQuery, SouthExplore, SouthSubscription } from '../south-interface';
+import { DateTime } from 'luxon';
+
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import {
+  SouthConnectorExploreEntry,
+  SouthConnectorItemQueryResult,
+  SouthConnectorItemTestingSettings
+} from '../../../shared/model/api/south-connector.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { Instant } from '../../../shared/model/common/types';
 import {
   SouthBACnetItemSettings,
   SouthBACnetItemSettingsObjectType,
   SouthBACnetItemSettingsPropertyIdentifier,
   SouthBACnetSettings,
   SouthItemSettings
-} from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+} from '../../../shared/model/connector/south-settings.model';
+
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import {
-  SouthConnectorExploreEntry,
-  SouthConnectorItemQueryResult,
-  SouthConnectorItemTestingSettings
-} from '../../../shared/model/south-connector.model';
-import { Instant } from '../../../shared/model/types';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
+import SouthConnector from '../south-connector';
+import { SouthDirectQuery, SouthExplore, SouthSubscription } from '../south-interface';
 
 const OBJECT_TYPE_BY_SETTING: Record<SouthBACnetItemSettingsObjectType, ObjectType> = {
   'analog-input': ObjectType.ANALOG_INPUT,

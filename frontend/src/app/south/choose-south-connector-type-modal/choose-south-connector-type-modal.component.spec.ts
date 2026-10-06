@@ -1,16 +1,18 @@
-import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test } from 'vitest';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { provideRouter, Routes } from '@angular/router';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter, Routes } from '@angular/router';
 
-import { ChooseSouthConnectorTypeModalComponent } from './choose-south-connector-type-modal.component';
-import { SouthConnectorService } from '../../services/south-connector.service';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { of } from 'rxjs';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { SouthType } from '@oibus/shared/connector/south-manifest.model';
+
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
-import { SouthType } from '@oibus/shared/south-connector.model';
+import { SouthConnectorService } from '../../services/south-connector.service';
+import { ChooseSouthConnectorTypeModalComponent } from './choose-south-connector-type-modal.component';
 
 @Component({ template: '', standalone: true, changeDetection: ChangeDetectionStrategy.OnPush })
 class DummyComponent {}

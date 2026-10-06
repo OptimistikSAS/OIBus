@@ -1,14 +1,16 @@
-import { describe, it, before, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
-import { CustomExpressRequest } from '../express';
-import { fixTsoaModuleResolution, reloadModule, createMockServices } from '../../tests/utils/test-utils';
-import ConfigTransferServiceMock from '../../tests/__mocks__/service/config-transfer-service.mock';
-import ConfigImportServiceMock from '../../tests/__mocks__/service/config-import-service.mock';
-import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
-import { ConfigExportDTO, ConfigImportPreviewDTO, ConfigImportResponseDTO } from '../../../shared/model/config-transfer.model';
+import { createRequire } from 'node:module';
+import { before, beforeEach, describe, it, mock } from 'node:test';
+
+import { ConfigExportDTO, ConfigImportPreviewDTO, ConfigImportResponseDTO } from '../../../shared/model/oia/config-transfer.model';
+
 import { ConfigImportError } from '../../service/config-transfer/config-import.service';
+import ConfigImportServiceMock from '../../tests/__mocks__/service/config-import-service.mock';
+import ConfigTransferServiceMock from '../../tests/__mocks__/service/config-transfer-service.mock';
+import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
+import { createMockServices, fixTsoaModuleResolution, reloadModule } from '../../tests/utils/test-utils';
+import { CustomExpressRequest } from '../express';
 import type { ConfigTransferController as ConfigTransferControllerShape } from './config-transfer.controller';
 
 const nodeRequire = createRequire(import.meta.url);

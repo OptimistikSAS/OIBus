@@ -1,8 +1,8 @@
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { EngineService } from './engine.service';
 import {
   EngineLoggerCommandDTO,
   EngineMemoryDumpDTO,
@@ -11,8 +11,10 @@ import {
   EngineSettingsDTO,
   EngineWebServerCommandDTO,
   OIBusInfo
-} from '@oibus/shared/engine.model';
+} from '@oibus/shared/api/engine.model';
+
 import testData from '../../../../backend/src/tests/utils/test-data';
+import { EngineService } from './engine.service';
 
 describe('EngineService', () => {
   let http: HttpTestingController;

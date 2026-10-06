@@ -1,14 +1,17 @@
-import SouthConnector from '../south-connector';
-import { Aggregate, Instant, Resampling } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { SouthHistoryQuery } from '../south-interface';
-import { SouthItemSettings, SouthOPCItemSettings, SouthOPCSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/common/content.model';
+import { Aggregate, Instant, Resampling } from '../../../shared/model/common/types';
+import { SouthItemSettings, SouthOPCItemSettings, SouthOPCSettings } from '../../../shared/model/connector/south-settings.model';
+
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
 import { getErrorMessage, workUnitLogCtx } from '../../service/utils';
+import SouthConnector from '../south-connector';
+import { SouthHistoryQuery } from '../south-interface';
 
 /**
  * Class SouthOPC - Run an OPC agent to connect to an OPC server.

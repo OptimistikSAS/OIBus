@@ -1,11 +1,12 @@
-import { SouthConnectorItemTypedDTO, SouthItemGroupDTO } from '../../shared/model/south-connector.model';
-import { SouthItemSettings } from '../../shared/model/south-settings.model';
+import { SouthConnectorItemTypedDTO, SouthItemGroupDTO } from '../../shared/model/api/south-connector.model';
+import { GetUserInfo } from '../../shared/model/common/types';
+import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
+import { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
+
 import { SouthConnectorItemEntity, SouthConnectorItemEntityLight, SouthItemGroupEntityLight } from '../model/south-connector.model';
-import { OIBusObjectAttribute } from '../../shared/model/form.model';
-import { GetUserInfo } from '../../shared/model/types';
 import { encryptionService } from './encryption.service';
-import { southManifestList } from './south-manifests';
 import { toScanModeDTO } from './scan-mode-dto.utils';
+import { southManifestList } from './south-manifests';
 
 export const toSouthItemGroupDTO = (entity: SouthItemGroupEntityLight, getUserInfo: GetUserInfo): SouthItemGroupDTO => {
   return {

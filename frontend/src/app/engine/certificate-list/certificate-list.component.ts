@@ -1,26 +1,29 @@
-import { Component, effect, inject, ChangeDetectionStrategy } from '@angular/core';
-import { firstValueFrom, startWith, Subject, switchMap } from 'rxjs';
-import { Modal, ModalService } from '../../shared/modal.service';
-import { ConfirmationService } from '../../shared/confirmation.service';
-import { NotificationService } from '../../shared/notification.service';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { CertificateService } from '../../services/certificate.service';
-import { CertificateDTO } from '@oibus/shared/certificate.model';
-import { EditCertificateModalComponent } from './edit-certificate-modal/edit-certificate-modal.component';
-import { ImportCertificateModalComponent } from './import-certificate-modal/import-certificate-modal.component';
-import { ExportCertificateModalComponent } from './export-certificate-modal/export-certificate-modal.component';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { DatetimePipe } from '../../shared/datetime.pipe';
-import { ClipboardCopyDirective } from '../../shared/clipboard-copy-directive';
-import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
-import { DocsUrlService } from '../../shared/docs-url.service';
+import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { createPageFromArray, Page } from '@oibus/shared/types';
-import { emptyPage } from '../../shared/test-utils';
-import { PaginationComponent } from '../../shared/pagination/pagination.component';
-import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { firstValueFrom, startWith, Subject, switchMap } from 'rxjs';
+
+import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+import { createPageFromArray, Page } from '@oibus/shared/common/types';
+
+import { CertificateService } from '../../services/certificate.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { ClipboardCopyDirective } from '../../shared/clipboard-copy-directive';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { DatetimePipe } from '../../shared/datetime.pipe';
+import { DocsUrlService } from '../../shared/docs-url.service';
+import { Modal, ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { emptyPage } from '../../shared/test-utils';
+import { EditCertificateModalComponent } from './edit-certificate-modal/edit-certificate-modal.component';
+import { ExportCertificateModalComponent } from './export-certificate-modal/export-certificate-modal.component';
+import { ImportCertificateModalComponent } from './import-certificate-modal/import-certificate-modal.component';
 
 type CertificateSortField = 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';

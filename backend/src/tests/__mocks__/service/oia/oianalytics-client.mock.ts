@@ -1,9 +1,11 @@
 import { mock } from 'node:test';
+
+import { OIBusInfo, RegistrationSettingsCommandDTO } from '../../../../../shared/model/api/engine.model';
+import { Instant } from '../../../../../shared/model/common/types';
+
+import { OIBusCommand } from '../../../../model/oianalytics-command.model';
 import { OIAnalyticsRegistration } from '../../../../model/oianalytics-registration.model';
 import { OIAnalyticsFetchCommandDTO } from '../../../../service/oia/oianalytics.model';
-import { OIBusInfo, RegistrationSettingsCommandDTO } from '../../../../../shared/model/engine.model';
-import { Instant } from '../../../../../shared/model/types';
-import { OIBusCommand } from '../../../../model/oianalytics-command.model';
 
 /**
  * Create a mock object for OIAnalytics Client

@@ -1,6 +1,7 @@
-import { OIBusRecord } from '../../shared/model/engine.model';
+import { ConfigurationWorkflowCommandDTO } from '../../shared/model/api/configuration-workflow.model';
+import { OIBusRecord } from '../../shared/model/common/content.model';
+
 import { RecordFilterCondition } from '../model/configuration-workflow.model';
-import { ConfigurationWorkflowCommandDTO } from '../../shared/model/configuration-workflow.model';
 import { OIBusValidationError } from '../model/types';
 
 /**

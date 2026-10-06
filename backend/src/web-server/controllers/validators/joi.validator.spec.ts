@@ -1,7 +1,8 @@
-import { describe, it, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { afterEach, describe, it, mock } from 'node:test';
+
 import Joi from 'joi';
-import JoiValidator from './joi.validator';
+
 import {
   OIBusArrayAttribute,
   OIBusAttributeValidator,
@@ -15,7 +16,9 @@ import {
   OIBusStringAttribute,
   OIBusStringSelectAttribute,
   OIBusTimezoneAttribute
-} from '../../../../shared/model/form.model';
+} from '../../../../shared/model/connector/form.model';
+
+import JoiValidator from './joi.validator';
 
 const validator = new JoiValidator();
 

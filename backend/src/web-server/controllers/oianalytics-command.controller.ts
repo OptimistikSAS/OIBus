@@ -1,8 +1,10 @@
 import { Controller, Delete, Get, Path, Query, Request, Route, SuccessResponse, Tags } from 'tsoa';
-import { Instant, Page } from '../../../shared/model/types';
-import { CommandSearchParam, OIBusCommandDTO, OIBusCommandStatus, OIBusCommandType } from '../../../shared/model/command.model';
-import { CustomExpressRequest } from '../express';
+
+import { Instant, Page } from '../../../shared/model/common/types';
+import { CommandSearchParam, OIBusCommandDTO, OIBusCommandStatus, OIBusCommandType } from '../../../shared/model/oia/command.model';
+
 import { toOIBusCommandDTO } from '../../service/oia/oianalytics-command.service';
+import { CustomExpressRequest } from '../express';
 
 @Route('/api/oianalytics/commands')
 @Tags('OIAnalytics Commands')

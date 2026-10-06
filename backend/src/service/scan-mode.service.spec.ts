@@ -1,22 +1,24 @@
-import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
+import { SouthItemSettings } from '../../shared/model/connector/south-settings.model';
+
 import DataStreamEngine from '../engine/data-stream-engine';
-import ScanModeService from './scan-mode.service';
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import ScanModeRepository from '../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
-import SouthCacheRepository from '../repository/cache/south-cache.repository';
-import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import OIAnalyticsMessageService from './oia/oianalytics-message.service';
-import testData from '../tests/utils/test-data';
-import { scanModeSchema } from '../web-server/controllers/validators/oibus-validation-schema';
-import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import { ScanMode } from '../model/scan-mode.model';
 import { SouthConnectorEntityLight, SouthConnectorItemEntity } from '../model/south-connector.model';
-import { SouthItemSettings } from '../../shared/model/south-settings.model';
+import SouthCacheRepository from '../repository/cache/south-cache.repository';
+import ScanModeRepository from '../repository/config/scan-mode.repository';
+import SouthConnectorRepository from '../repository/config/south-connector.repository';
+import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
+import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
+import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import testData from '../tests/utils/test-data';
+import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import { scanModeSchema } from '../web-server/controllers/validators/oibus-validation-schema';
+import OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import ScanModeService from './scan-mode.service';
 
 let validator: { validate: ReturnType<typeof mock.fn> };
 let scanModeRepository: ScanModeRepositoryMock;

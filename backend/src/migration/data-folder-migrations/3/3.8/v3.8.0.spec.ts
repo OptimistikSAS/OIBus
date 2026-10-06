@@ -1,11 +1,13 @@
-import { describe, it, before, after, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
+import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import os from 'node:os';
+import path from 'node:path';
+import { after, before, beforeEach, describe, it, mock } from 'node:test';
+
 import type { Knex } from 'knex';
+
 import { mockModule, reloadModule } from '../../../../tests/utils/test-utils';
 
 const nodeRequire = createRequire(import.meta.url);

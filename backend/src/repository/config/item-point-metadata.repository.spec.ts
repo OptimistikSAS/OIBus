@@ -1,11 +1,13 @@
-import { before, after, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { after, before, beforeEach, describe, it } from 'node:test';
+
 import { Database } from 'better-sqlite3';
-import ItemPointMetadataRepository from './item-point-metadata.repository';
-import ConfigurationWorkflowRepository from './configuration-workflow.repository';
-import { createAuditServiceMock, emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
-import testData from '../../tests/utils/test-data';
+
 import { ItemPointMetadataWrite } from '../../model/item-point-metadata.model';
+import testData from '../../tests/utils/test-data';
+import { createAuditServiceMock, emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
+import ConfigurationWorkflowRepository from './configuration-workflow.repository';
+import ItemPointMetadataRepository from './item-point-metadata.repository';
 
 const TEST_DB_PATH = 'src/tests/test-config-item-point-metadata.db';
 

@@ -1,11 +1,13 @@
 import { inject, LOCALE_ID, provideEnvironmentInitializer } from '@angular/core';
+
 import {
   MissingTranslationHandler,
   MissingTranslationHandlerParams,
-  provideTranslateService,
   provideMissingTranslationHandler,
+  provideTranslateService,
   TranslateService
 } from '@ngx-translate/core';
+
 import EN_TRANSLATIONS from './locales/en.json';
 
 /**

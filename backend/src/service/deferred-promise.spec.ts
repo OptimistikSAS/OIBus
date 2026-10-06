@@ -1,5 +1,6 @@
-import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+
 import DeferredPromise from './deferred-promise';
 
 describe('DeferredPromise', () => {

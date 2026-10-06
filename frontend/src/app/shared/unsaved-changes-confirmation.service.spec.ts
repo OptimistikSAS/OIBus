@@ -1,10 +1,12 @@
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, test } from 'vitest';
+
 import { of } from 'rxjs';
-import { UnsavedChangesConfirmationService } from './unsaved-changes-confirmation.service';
-import { ModalService } from './modal.service';
-import { UnsavedChangesConfirmationModalComponent } from './form/unsaved-changes-confirmation-modal.component';
+import { beforeEach, describe, expect, test } from 'vitest';
+
 import { createMock, MockObject } from '../../test/vitest-create-mock';
+import { UnsavedChangesConfirmationModalComponent } from './form/unsaved-changes-confirmation-modal.component';
+import { ModalService } from './modal.service';
+import { UnsavedChangesConfirmationService } from './unsaved-changes-confirmation.service';
 
 describe('UnsavedChangesConfirmationService', () => {
   let service: UnsavedChangesConfirmationService;

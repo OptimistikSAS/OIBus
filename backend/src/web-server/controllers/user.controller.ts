@@ -1,8 +1,10 @@
 import { Body, Controller, Delete, Get, Path, Post, Put, Query, Request, Route, SuccessResponse, Tags } from 'tsoa';
-import { ChangePasswordCommand, UserCommandDTO, UserDTO, UserSearchParam } from '../../../shared/model/user.model';
-import { Page } from '../../../shared/model/types';
-import { CustomExpressRequest } from '../express';
+
+import { ChangePasswordCommand, UserCommandDTO, UserDTO, UserSearchParam } from '../../../shared/model/api/user.model';
+import { Page } from '../../../shared/model/common/types';
+
 import { toUserDTO } from '../../service/user.service';
+import { CustomExpressRequest } from '../express';
 
 interface UserWithPassword {
   user: UserCommandDTO;

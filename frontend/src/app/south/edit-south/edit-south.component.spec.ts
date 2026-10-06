@@ -1,30 +1,32 @@
-import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 
-import { EditSouthComponent } from './edit-south.component';
-import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
-import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
-import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
-import { ConfigurationWorkflowDTO } from '@oibus/shared/configuration-workflow.model';
-import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
-import { SouthConnectorService } from '../../services/south-connector.service';
-import { ScanModeService } from '../../services/scan-mode.service';
-import { CertificateService } from '../../services/certificate.service';
-import { NotificationService } from '../../shared/notification.service';
-import { ConfirmationService } from '../../shared/confirmation.service';
-import { ModalService } from '../../shared/modal.service';
-import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
-import { TransformerService } from '../../services/transformer.service';
+import { of } from 'rxjs';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { ConfigurationWorkflowDTO } from '@oibus/shared/api/configuration-workflow.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { SouthConnectorDTO, SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
+
+import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { CertificateService } from '../../services/certificate.service';
+import { ConfigurationWorkflowService } from '../../services/configuration-workflow.service';
+import { ScanModeService } from '../../services/scan-mode.service';
+import { SouthConnectorService } from '../../services/south-connector.service';
+import { TransformerService } from '../../services/transformer.service';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
 import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
-import { SouthConnectorDTO, SouthItemGroupDTO } from '@oibus/shared/south-connector.model';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import testData from '../../../../../backend/src/tests/utils/test-data';
+import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
+import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
+import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
+import ManageWorkflowsModalComponent from '../south-workflows/manage-workflows-modal/manage-workflows-modal.component';
+import { EditSouthComponent } from './edit-south.component';
 
 const manifest = testData.south.manifest;
 const southConnector = testData.south.list[0] as unknown as SouthConnectorDTO;

@@ -1,13 +1,14 @@
 import { TestBed } from '@angular/core/testing';
-import { EMPTY, of } from 'rxjs';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test } from 'vitest';
 
-import { provideI18nTesting } from '../../i18n/mock-i18n';
+import { EMPTY, of } from 'rxjs';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
 import testData from '../../../../backend/src/tests/utils/test-data';
-import { AboutComponent } from './about.component';
+import { provideI18nTesting } from '../../i18n/mock-i18n';
+import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { EngineService } from '../services/engine.service';
-import { MockObject, createMock } from '../../test/vitest-create-mock';
+import { AboutComponent } from './about.component';
 
 class AboutComponentTester {
   readonly fixture = TestBed.createComponent(AboutComponent);

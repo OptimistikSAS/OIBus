@@ -1,7 +1,8 @@
-import { request, ProxyAgent, Agent } from 'undici';
-import { encryptionService } from './encryption.service';
+import { Agent, ProxyAgent, request } from 'undici';
+
 import { version } from '../../package.json';
 import { BoundedCache } from './bounded-cache';
+import { encryptionService } from './encryption.service';
 
 // Bounded well above any realistic number of distinct proxy configs in use at once, so eviction
 // only ever kicks in for genuinely stale entries left behind by connector reconfiguration.

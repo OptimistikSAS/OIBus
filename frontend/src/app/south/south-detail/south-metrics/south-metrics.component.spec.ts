@@ -1,16 +1,18 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { beforeEach, describe, test } from 'vitest';
 import { provideRouter } from '@angular/router';
 
-import { SouthMetricsComponent } from './south-metrics.component';
-import { SouthConnectorService } from '../../../services/south-connector.service';
-import { NotificationService } from '../../../shared/notification.service';
+import { of } from 'rxjs';
+import { beforeEach, describe, test } from 'vitest';
+
+import { SouthConnectorMetrics } from '@oibus/shared/api/engine.model';
+import { SouthConnectorLightDTO } from '@oibus/shared/api/south-connector.model';
+
+import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock } from '../../../../test/vitest-create-mock';
-import { SouthConnectorLightDTO } from '@oibus/shared/south-connector.model';
-import { SouthConnectorMetrics } from '@oibus/shared/engine.model';
-import testData from '../../../../../../backend/src/tests/utils/test-data';
+import { SouthConnectorService } from '../../../services/south-connector.service';
+import { NotificationService } from '../../../shared/notification.service';
+import { SouthMetricsComponent } from './south-metrics.component';
 
 const southConnector = testData.south.list[0] as unknown as SouthConnectorLightDTO;
 const metrics = testData.south.metrics as unknown as SouthConnectorMetrics;

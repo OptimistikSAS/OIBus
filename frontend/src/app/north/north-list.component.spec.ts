@@ -1,19 +1,21 @@
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
-import { NorthListComponent } from './north-list.component';
-import { NorthConnectorService } from '../services/north-connector.service';
-import { NotificationService } from '../shared/notification.service';
+import { of } from 'rxjs';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
+
+import testData from '../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
-import { MockModalService, provideModalTesting } from '../shared/mock-modal.service.testing';
-import { provideRouter } from '@angular/router';
-import testData from '../../../../backend/src/tests/utils/test-data';
-import { NorthConnectorLightDTO } from '@oibus/shared/north-connector.model';
+import { NorthConnectorService } from '../services/north-connector.service';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
+import { MockModalService, provideModalTesting } from '../shared/mock-modal.service.testing';
+import { NotificationService } from '../shared/notification.service';
+import { NorthListComponent } from './north-list.component';
 
 describe('NorthListComponent', () => {
   let northConnectorService: MockObject<NorthConnectorService>;

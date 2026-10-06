@@ -1,29 +1,32 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { AsyncPipe } from '@angular/common';
-import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
-import { ConfirmationService } from '../shared/confirmation.service';
-import { NotificationService } from '../shared/notification.service';
-import { ModalService } from '../shared/modal.service';
-import { Router, RouterLink } from '@angular/router';
-import { CreateHistoryQueryModalComponent } from './create-history-query-modal/create-history-query-modal.component';
-import { HistoryQueryLightDTO, HistoryQueryStatus } from '@oibus/shared/history-query.model';
-import { OIBusSouthType } from '@oibus/shared/south-connector.model';
-import { OIBusNorthType } from '@oibus/shared/north-connector.model';
-import { HistoryQueryService } from '../services/history-query.service';
-import { PaginationComponent } from '../shared/pagination/pagination.component';
-import { createPageFromArray, Page } from '@oibus/shared/types';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { emptyPage } from '../shared/test-utils';
-import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
-import { DatetimePipe } from '../shared/datetime.pipe';
-import { ObservableState } from '../shared/save-button/save-button.component';
-import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
+import { Router, RouterLink } from '@angular/router';
+
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AuditInfoComponent } from '../shared/audit-info/audit-info.component';
-import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
-import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
+
+import { HistoryQueryLightDTO, HistoryQueryStatus } from '@oibus/shared/api/history-query.model';
+import { createPageFromArray, Page } from '@oibus/shared/common/types';
+import { OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
+import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
+
+import { HistoryQueryService } from '../services/history-query.service';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
+import { AuditInfoComponent } from '../shared/audit-info/audit-info.component';
+import { ConfirmationService } from '../shared/confirmation.service';
+import { DatetimePipe } from '../shared/datetime.pipe';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
+import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
+import { ModalService } from '../shared/modal.service';
+import { NotificationService } from '../shared/notification.service';
+import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
+import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
+import { PaginationComponent } from '../shared/pagination/pagination.component';
+import { ObservableState } from '../shared/save-button/save-button.component';
+import { emptyPage } from '../shared/test-utils';
+import { CreateHistoryQueryModalComponent } from './create-history-query-modal/create-history-query-modal.component';
 
 type HistorySortField = 'name' | 'interval' | 'southType' | 'northType' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';

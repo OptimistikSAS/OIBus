@@ -1,10 +1,12 @@
-import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
-import { SouthItemGroupCommand, SouthItemGroupEntity } from '../../model/south-connector.model';
+
+import { SouthCachingStrategy, SouthHistoryRecoveryStrategy } from '../../../shared/model/api/south-connector.model';
+
 import { ScanMode } from '../../model/scan-mode.model';
-import { SouthCachingStrategy, SouthHistoryRecoveryStrategy } from '../../../shared/model/south-connector.model';
-import { scanModeAliasedColumns, toScanModeFromPrefixedRow } from './scan-mode.repository';
+import { SouthItemGroupCommand, SouthItemGroupEntity } from '../../model/south-connector.model';
 import AuditService from '../../service/audit.service';
+import { generateRandomId } from '../../service/utils';
+import { scanModeAliasedColumns, toScanModeFromPrefixedRow } from './scan-mode.repository';
 
 const SOUTH_ITEM_GROUPS_TABLE = 'south_item_groups';
 const SOUTH_ITEMS_TABLE = 'south_items';

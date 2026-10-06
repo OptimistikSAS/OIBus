@@ -1,5 +1,9 @@
 import { mock } from 'node:test';
+
 import type { Database } from 'better-sqlite3';
+
+import { Page } from '../../../../../shared/model/common/types';
+
 import {
   WorkflowRunCounts,
   WorkflowRunEntity,
@@ -7,7 +11,6 @@ import {
   WorkflowRunSearchParam,
   WorkflowRunTriggerType
 } from '../../../../model/workflow-run.model';
-import { Page } from '../../../../../shared/model/types';
 import WorkflowRunRepository from '../../../../repository/config/workflow-run.repository';
 
 /**

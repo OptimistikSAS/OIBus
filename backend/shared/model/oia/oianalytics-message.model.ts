@@ -1,4 +1,4 @@
-import { Instant } from './types';
+import { Instant } from '../common/types';
 
 export const OIANALYTICS_MESSAGE_STATUS = ['PENDING', 'COMPLETED', 'ERRORED'] as const;
 export type OIAnalyticsMessageStatus = (typeof OIANALYTICS_MESSAGE_STATUS)[number];

@@ -1,6 +1,7 @@
 import csv from 'papaparse';
-import { CsvCharacter } from '@oibus/shared/types';
-import { OIBusArrayAttribute, OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/form.model';
+
+import { CsvCharacter } from '@oibus/shared/common/types';
+import { OIBusArrayAttribute, OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 
 class CsvValidationError extends Error {}
 

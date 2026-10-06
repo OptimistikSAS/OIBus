@@ -1,19 +1,21 @@
-import NorthConnector from '../north-connector';
 import { ReadStream } from 'node:fs';
-import zlib from 'node:zlib';
 import { pipeline, Readable } from 'node:stream';
-import { HTTPRequest, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
-import { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
+import zlib from 'node:zlib';
+
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { NorthOIAnalyticsSettings } from '../../../shared/model/connector/north-settings.model';
+
+import type { ICacheService } from '../../model/cache.service.model';
+import { OIBusError } from '../../model/engine.model';
+import type { ILogger } from '../../model/logger.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CertificateRepository from '../../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
-import { OIBusError } from '../../model/engine.model';
-import type { ICacheService } from '../../model/cache.service.model';
-import { buildHttpOptions, getHost, getUrl, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
-import { getErrorMessage, streamToString } from '../../service/utils';
-import type { ILogger } from '../../model/logger.model';
+import { HTTPRequest, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
 import { TimeValueLike, toCompactTimeValues } from '../../service/oia/compact-time-values';
+import { getErrorMessage, streamToString } from '../../service/utils';
+import { buildHttpOptions, getHost, getUrl, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
+import NorthConnector from '../north-connector';
 
 /**
  * Pipe `source` into a freshly created gzip Transform and return it, wired through

@@ -1,11 +1,13 @@
-import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
-import { OibusCommandService } from './oibus-command.service';
-import { OIBusCommandDTO } from '@oibus/shared/command.model';
-import { Page } from '@oibus/shared/types';
+import { Page } from '@oibus/shared/common/types';
+import { OIBusCommandDTO } from '@oibus/shared/oia/command.model';
+
 import { toPage } from '../shared/test-utils';
+import { OibusCommandService } from './oibus-command.service';
 
 describe('OibusCommandService', () => {
   let http: HttpTestingController;

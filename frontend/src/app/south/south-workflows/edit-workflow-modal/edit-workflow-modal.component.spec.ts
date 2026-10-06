@@ -1,23 +1,26 @@
 import { TestBed } from '@angular/core/testing';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of, throwError } from 'rxjs';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
 
-import EditWorkflowModalComponent from './edit-workflow-modal.component';
-import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
-import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { ModalService } from '../../../shared/modal.service';
-import { SouthExploreModalComponent } from '../../../shared/south-explore-modal/south-explore-modal.component';
-import { SouthConnectorService } from '../../../services/south-connector.service';
-import { EngineService } from '../../../services/engine.service';
+import { ConfigurationWorkflowCommandDTO } from '@oibus/shared/api/configuration-workflow.model';
+import { RegistrationSettingsDTO } from '@oibus/shared/api/engine.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { SouthItemGroupDTO } from '@oibus/shared/api/south-connector.model';
+import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+
+import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import { ConfigurationWorkflowCommandDTO } from '@oibus/shared/configuration-workflow.model';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import { SouthConnectorManifest, SouthItemGroupDTO } from '@oibus/shared/south-connector.model';
-import { RegistrationSettingsDTO } from '@oibus/shared/engine.model';
-import testData from '../../../../../../backend/src/tests/utils/test-data';
+import { EngineService } from '../../../services/engine.service';
+import { SouthConnectorService } from '../../../services/south-connector.service';
+import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
+import { ModalService } from '../../../shared/modal.service';
+import { SouthExploreModalComponent } from '../../../shared/south-explore-modal/south-explore-modal.component';
+import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import EditWorkflowModalComponent from './edit-workflow-modal.component';
 
 const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
 const groups = [{ id: 'group1', standardSettings: { name: 'Group 1' } }] as unknown as Array<SouthItemGroupDTO>;

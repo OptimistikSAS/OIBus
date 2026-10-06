@@ -3,9 +3,10 @@
  * That file lives outside `src/` (the `src/**\/*.spec.ts` test glob does not reach it),
  * so its runtime exports are exercised from a co-located spec here instead.
  */
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { OIBUS_SOUTH_CATEGORIES, OIBUS_SOUTH_TYPES, SOUTH_SINGLE_ITEMS } from '../../shared/model/south-connector.model';
+import { describe, it } from 'node:test';
+
+import { OIBUS_SOUTH_CATEGORIES, OIBUS_SOUTH_TYPES, SOUTH_SINGLE_ITEMS } from '../../shared/model/connector/south-manifest.model';
 
 describe('shared south-connector model constants', () => {
   it('OIBUS_SOUTH_CATEGORIES contains the expected categories', () => {

@@ -22,7 +22,7 @@ interfaces TypeScript correspondantes (`South<Type>Settings`, `South<Type>ItemSe
 ### South {#south}
 
 ```typescript title="backend/src/south/south-folder-scanner/manifest.ts (excerpt)"
-import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
+import { SouthConnectorManifest } from '../../../shared/model/connector/south-manifest.model';
 
 const manifest: SouthConnectorManifest = {
   id: 'folder-scanner', // must be in OIBUS_SOUTH_TYPES
@@ -48,7 +48,7 @@ déterminée par les interfaces de `south-interface.ts` que la classe implément
 ### North {#north}
 
 ```typescript title="backend/src/north/north-console/manifest.ts"
-import { NorthConnectorManifest } from '../../../shared/model/north-connector.model';
+import { NorthConnectorManifest } from '../../../shared/model/connector/north-manifest.model';
 
 const manifest: NorthConnectorManifest = {
   id: 'console', // must be in OIBUS_NORTH_TYPES
@@ -277,7 +277,7 @@ npm run generate:settings-interface
 ```
 
 Le script lit chaque `manifest.ts`, dérive le type TypeScript correspondant, et l'écrit dans
-`backend/shared/model/south-settings.model.ts` (et l'équivalent North). Il actualise également les définitions
+`backend/shared/model/connector/south-settings.model.ts` (et l'équivalent North). Il actualise également les définitions
 OpenAPI.
 
 :::caution Les changements de schéma sont des changements incompatibles

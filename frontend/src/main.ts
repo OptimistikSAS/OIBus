@@ -1,13 +1,14 @@
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideBrowserGlobalErrorListeners, provideZoneChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+
 import { AppComponent } from './app/app.component';
 import { ROUTES } from './app/app.routes';
-import { provideI18n } from './i18n/i18n';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authenticationInterceptor } from './app/auth/authentication.interceptor';
 import { provideDatepicker } from './app/shared/datepicker.providers';
 import { errorInterceptor } from './app/shared/error-interceptor.service';
+import { provideI18n } from './i18n/i18n';
 
 bootstrapApplication(AppComponent, {
   providers: [

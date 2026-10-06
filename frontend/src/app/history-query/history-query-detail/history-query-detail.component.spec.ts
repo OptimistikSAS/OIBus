@@ -1,31 +1,33 @@
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
-import { page } from 'vitest/browser';
-import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { HistoryQueryDetailComponent } from './history-query-detail.component';
-import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
-import { HistoryQueryService } from '../../services/history-query.service';
-import { NorthConnectorService } from '../../services/north-connector.service';
-import { SouthConnectorService } from '../../services/south-connector.service';
-import { ScanModeService } from '../../services/scan-mode.service';
-import { CertificateService } from '../../services/certificate.service';
-import { TransformerService } from '../../services/transformer.service';
-import { EngineService } from '../../services/engine.service';
-import { NotificationService } from '../../shared/notification.service';
-import { ModalService } from '../../shared/modal.service';
-import { ConfirmationService } from '../../shared/confirmation.service';
-import { WindowService } from '../../shared/window.service';
+import { of } from 'rxjs';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { OIBusInfo } from '@oibus/shared/api/engine.model';
+import { HistoryQueryDTO } from '@oibus/shared/api/history-query.model';
+import { NorthConnectorManifest } from '@oibus/shared/connector/north-manifest.model';
+import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+
+import testData from '../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
-import testData from '../../../../../backend/src/tests/utils/test-data';
-import { HistoryQueryDTO } from '@oibus/shared/history-query.model';
-import { NorthConnectorManifest } from '@oibus/shared/north-connector.model';
-import { SouthConnectorManifest } from '@oibus/shared/south-connector.model';
-import { OIBusInfo } from '@oibus/shared/engine.model';
+import { CertificateService } from '../../services/certificate.service';
+import { EngineService } from '../../services/engine.service';
+import { HistoryQueryService } from '../../services/history-query.service';
+import { NorthConnectorService } from '../../services/north-connector.service';
+import { ScanModeService } from '../../services/scan-mode.service';
+import { SouthConnectorService } from '../../services/south-connector.service';
+import { TransformerService } from '../../services/transformer.service';
+import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
+import { WindowService } from '../../shared/window.service';
+import { HistoryQueryDetailComponent } from './history-query-detail.component';
 
 // Deep-cloned: `testData` fixtures share object references across entities (e.g. multiple
 // connectors point at the same `scanModes[0]` instance), so holding a live reference here makes

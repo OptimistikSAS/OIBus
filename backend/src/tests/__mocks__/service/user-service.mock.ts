@@ -1,7 +1,9 @@
 import { mock } from 'node:test';
+
+import { UserCommandDTO, UserSearchParam } from '../../../../shared/model/api/user.model';
+import { Page } from '../../../../shared/model/common/types';
+
 import { User } from '../../../model/user.model';
-import { UserCommandDTO, UserSearchParam } from '../../../../shared/model/user.model';
-import { Page } from '../../../../shared/model/types';
 
 /**
  * Create a mock object for User Service

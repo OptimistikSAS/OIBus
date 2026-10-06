@@ -1,7 +1,8 @@
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { removeEmptyTimestampOrigin, upgrade } from './v3.9.2';
+import { describe, it } from 'node:test';
+
 import { JsonObject } from '../config-upgrade';
+import { removeEmptyTimestampOrigin, upgrade } from './v3.9.2';
 
 describe('3.9.2 config upgrade', () => {
   it('removes an empty timestamp origin, and returns any other settings as is', () => {

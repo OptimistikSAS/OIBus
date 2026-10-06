@@ -1,9 +1,11 @@
 import { TestBed } from '@angular/core/testing';
+
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { NotificationService } from '../notification.service';
 import { NotificationComponent } from './notification.component';
-import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { page } from 'vitest/browser';
 
 class NotificationComponentTester {
   readonly fixture = TestBed.createComponent(NotificationComponent);

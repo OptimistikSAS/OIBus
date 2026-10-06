@@ -1,17 +1,17 @@
-import { WorkflowRunCounts, WorkflowRunStatus, WorkflowRunTriggerType } from '../../shared/model/workflow-run.model';
-import { WorkflowPreviewEntryDTO } from '../../shared/model/configuration-workflow.model';
-import { OIBusRecord } from '../../shared/model/engine.model';
+import { WorkflowPreviewEntryDTO } from '../../shared/model/api/configuration-workflow.model';
+import { WorkflowRunCounts, WorkflowRunStatus, WorkflowRunTriggerType } from '../../shared/model/api/workflow-run.model';
+import { OIBusRecord } from '../../shared/model/common/content.model';
 
 // Re-exported so existing backend-internal consumers don't need to know these live in the shared model -
 // see the equivalent note in configuration-workflow.model.ts.
 export {
   WORKFLOW_RUN_STATUSES,
-  WorkflowRunStatus,
   WORKFLOW_RUN_TRIGGER_TYPES,
-  WorkflowRunTriggerType,
   WorkflowRunCounts,
-  WorkflowRunSearchParam
-} from '../../shared/model/workflow-run.model';
+  WorkflowRunSearchParam,
+  WorkflowRunStatus,
+  WorkflowRunTriggerType
+} from '../../shared/model/api/workflow-run.model';
 
 /**
  * The full discovered payload behind one run's summary counts - not just "how many", but "which ones,

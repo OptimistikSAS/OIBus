@@ -1,15 +1,16 @@
 import path from 'node:path';
 import util from 'node:util';
 
+import { LogLevel, setDebugLogger, setErrorLogger, setLogLevel, setTraceLogger, setWarningLogger } from 'node-opcua-debug';
 import pino from 'pino';
-import { setDebugLogger, setErrorLogger, setTraceLogger, setWarningLogger, LogLevel, setLogLevel } from 'node-opcua-debug';
 
-import FileCleanupService from './file-cleanup.service';
-import { encryptionService } from '../encryption.service';
+import { ScopeType } from '../../../shared/model/api/logs.model';
+
 import { EngineSettings } from '../../model/engine.model';
-import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
-import { ScopeType } from '../../../shared/model/logs.model';
 import type { ILogger } from '../../model/logger.model';
+import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
+import { encryptionService } from '../encryption.service';
+import FileCleanupService from './file-cleanup.service';
 
 const LOG_DB_NAME = 'logs.db';
 const LOG_FILE_NAME = 'journal.log';

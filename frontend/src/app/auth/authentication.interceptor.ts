@@ -1,5 +1,6 @@
-import { inject } from '@angular/core';
 import { HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
+import { inject } from '@angular/core';
+
 import { WindowService } from '../shared/window.service';
 
 /**

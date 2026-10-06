@@ -1,8 +1,10 @@
-import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
+
+import { ActivationWindow, ScanModeInterval, ScanModeType } from '../../../shared/model/api/scan-mode.model';
+
 import { ScanMode } from '../../model/scan-mode.model';
-import { ActivationWindow, ScanModeInterval, ScanModeType } from '../../../shared/model/scan-mode.model';
 import AuditService from '../../service/audit.service';
+import { generateRandomId } from '../../service/utils';
 
 const SCAN_MODES_TABLE = 'scan_modes';
 

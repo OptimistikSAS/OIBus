@@ -1,8 +1,11 @@
-import { describe, expect, test } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+
+import { describe, expect, test } from 'vitest';
+
+import { AUDIT_ENTITY_TYPES } from '@oibus/shared/api/audit.model';
+
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { AuditEntityTypesEnumPipe } from './audit-entity-types-enum.pipe';
-import { AUDIT_ENTITY_TYPES } from '@oibus/shared/audit.model';
 
 describe('AuditEntityTypesEnumPipe', () => {
   test('should translate every audit entity type', () => {

@@ -1,7 +1,8 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { DisplayMode, ValdemortConfig, ValdemortModule } from 'ngx-valdemort';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { DecimalPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { DisplayMode, ValdemortConfig, ValdemortModule } from 'ngx-valdemort';
 
 @Component({
   selector: 'oib-default-validation-errors',

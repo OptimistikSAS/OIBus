@@ -1,17 +1,21 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-
-import { NorthConnectorLightDTO, NorthType } from '@oibus/shared/north-connector.model';
-import { NorthConnectorService } from '../../services/north-connector.service';
-import { SouthConnectorLightDTO, SouthType } from '@oibus/shared/south-connector.model';
-import { SouthConnectorService } from '../../services/south-connector.service';
 import { combineLatest } from 'rxjs';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
-import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
+
+import { NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
+import { SouthConnectorLightDTO } from '@oibus/shared/api/south-connector.model';
+import { NorthType } from '@oibus/shared/connector/north-manifest.model';
+import { SouthType } from '@oibus/shared/connector/south-manifest.model';
+
+import { NorthConnectorService } from '../../services/north-connector.service';
+import { SouthConnectorService } from '../../services/south-connector.service';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
+import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
+import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
+import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 
 @Component({
   selector: 'oib-create-history-query-modal',

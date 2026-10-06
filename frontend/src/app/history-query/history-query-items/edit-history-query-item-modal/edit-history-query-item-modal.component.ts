@@ -1,5 +1,4 @@
-import { Component, forwardRef, inject, ChangeDetectionStrategy } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, Component, forwardRef, inject } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -10,19 +9,24 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
+
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { SouthConnectorCommandDTO, SouthConnectorManifest } from '@oibus/shared/south-connector.model';
-import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
-import { addAttributeToForm, addEnablingConditions, extractFormValue } from '../../../shared/form/dynamic-form.builder';
 import { Observable } from 'rxjs';
-import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
-import SouthItemTestComponent from '../../../south/south-items/south-item-test/south-item-test.component';
-import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '@oibus/shared/history-query.model';
-import { OIBusObjectAttribute } from '@oibus/shared/form.model';
-import { HistoryTransformerDTOWithOptions } from '@oibus/shared/transformer.model';
+
+import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '@oibus/shared/api/history-query.model';
+import { SouthConnectorCommandDTO } from '@oibus/shared/api/south-connector.model';
+import { HistoryTransformerDTOWithOptions } from '@oibus/shared/api/transformer.model';
+import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
+import { SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+
+import { addAttributeToForm, addEnablingConditions, extractFormValue } from '../../../shared/form/dynamic-form.builder';
+import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
+import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
+import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
+import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import SouthItemTestComponent from '../../../south/south-items/south-item-test/south-item-test.component';
 
 @Component({
   selector: 'oib-edit-history-query-item-modal',

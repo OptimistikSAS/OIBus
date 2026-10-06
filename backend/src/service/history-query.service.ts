@@ -1,13 +1,6 @@
-import {
-  OIBusSouthType,
-  SouthConnectorItemTestingSettings,
-  SouthConnectorItemTestResult,
-  SouthConnectorManifest,
-  SouthExploreStartResult
-} from '../../shared/model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../model/histor-query.model';
-import { NorthSettings } from '../../shared/model/north-settings.model';
+import csv from 'papaparse';
+
+import { HistoryQueryMetrics, OIBusConnectionTestResult } from '../../shared/model/api/engine.model';
 import {
   HistoryQueryCommandDTO,
   HistoryQueryCommonDTO,
@@ -17,34 +10,42 @@ import {
   HistoryQueryLightDTO,
   HistoryQueryNorthTypedDTO,
   HistoryQuerySouthTypedDTO
-} from '../../shared/model/history-query.model';
-import { NorthConnectorManifest, OIBusNorthType } from '../../shared/model/north-connector.model';
-import { encryptionService } from './encryption.service';
-import HistoryQueryRepository from '../repository/config/history-query.repository';
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import ScanModeRepository from '../repository/config/scan-mode.repository';
-import { checkScanMode, stringToBoolean } from './utils';
-import { toScanModeDTO } from './scan-mode-dto.utils';
-import { toHistoryQueryItemDTO } from './history-query-item-dto.utils';
-import { southManifestList } from './south-manifests';
-import { northManifestList } from './north-manifests';
-import type { SouthConnectorEntity } from '../model/south-connector.model';
-import type { NorthConnectorEntity } from '../model/north-connector.model';
-import LogRepository from '../repository/logs/log.repository';
-import { BaseEntity, GetUserInfo, Page } from '../../shared/model/types';
-import { HistoryQueryMetrics, OIBusConnectionTestResult } from '../../shared/model/engine.model';
-import { ScanMode } from '../model/scan-mode.model';
-import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
-import csv from 'papaparse';
-import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
-import NorthConnectorRepository from '../repository/config/north-connector.repository';
-import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import { toTransformerDTO } from './transformer.service';
-import { OIBusObjectAttribute } from '../../shared/model/form.model';
-import { NotFoundError, OIBusValidationError } from '../model/types';
-import { HistoryTransformerWithOptions, Transformer } from '../model/transformer.model';
-import { SouthConnectorItemEntityLight } from '../model/south-connector.model';
+} from '../../shared/model/api/history-query.model';
+import {
+  SouthConnectorItemTestingSettings,
+  SouthConnectorItemTestResult,
+  SouthExploreStartResult
+} from '../../shared/model/api/south-connector.model';
+import { BaseEntity, GetUserInfo, Page } from '../../shared/model/common/types';
+import { OIBusObjectAttribute } from '../../shared/model/connector/form.model';
+import { NorthConnectorManifest, OIBusNorthType } from '../../shared/model/connector/north-manifest.model';
+import { NorthSettings } from '../../shared/model/connector/north-settings.model';
+import { OIBusSouthType, SouthConnectorManifest } from '../../shared/model/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+
+import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../model/histor-query.model';
 import type { ILogger } from '../model/logger.model';
+import type { NorthConnectorEntity } from '../model/north-connector.model';
+import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
+import { ScanMode } from '../model/scan-mode.model';
+import type { SouthConnectorEntity } from '../model/south-connector.model';
+import { SouthConnectorItemEntityLight } from '../model/south-connector.model';
+import { HistoryTransformerWithOptions, Transformer } from '../model/transformer.model';
+import { NotFoundError, OIBusValidationError } from '../model/types';
+import HistoryQueryRepository from '../repository/config/history-query.repository';
+import NorthConnectorRepository from '../repository/config/north-connector.repository';
+import ScanModeRepository from '../repository/config/scan-mode.repository';
+import SouthConnectorRepository from '../repository/config/south-connector.repository';
+import LogRepository from '../repository/logs/log.repository';
+import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
+import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import { encryptionService } from './encryption.service';
+import { toHistoryQueryItemDTO } from './history-query-item-dto.utils';
+import { northManifestList } from './north-manifests';
+import { toScanModeDTO } from './scan-mode-dto.utils';
+import { southManifestList } from './south-manifests';
+import { toTransformerDTO } from './transformer.service';
+import { checkScanMode, stringToBoolean } from './utils';
 
 interface ISouthService {
   getManifest(type: string): SouthConnectorManifest;

@@ -1,23 +1,25 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 
-import { combineLatest, firstValueFrom, switchMap } from 'rxjs';
-import { Modal, ModalService } from '../../shared/modal.service';
-import { ConfirmationService } from '../../shared/confirmation.service';
-import { NotificationService } from '../../shared/notification.service';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { IpFilterService } from '../../services/ip-filter.service';
-import { EngineService } from '../../services/engine.service';
-import { IPFilterDTO } from '@oibus/shared/ip-filter.model';
-import { EditIpFilterModalComponent } from './edit-ip-filter-modal/edit-ip-filter-modal.component';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
-import { DocsUrlService } from '../../shared/docs-url.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { createPageFromArray, Page } from '@oibus/shared/types';
-import { emptyPage } from '../../shared/test-utils';
-import { PaginationComponent } from '../../shared/pagination/pagination.component';
-import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { combineLatest, firstValueFrom, switchMap } from 'rxjs';
+
+import { IPFilterDTO } from '@oibus/shared/api/ip-filter.model';
+import { createPageFromArray, Page } from '@oibus/shared/common/types';
+
+import { EngineService } from '../../services/engine.service';
+import { IpFilterService } from '../../services/ip-filter.service';
 import { AuditHistoryModalComponent } from '../../shared/audit-history-modal/audit-history-modal.component';
+import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { DocsUrlService } from '../../shared/docs-url.service';
+import { Modal, ModalService } from '../../shared/modal.service';
+import { NotificationService } from '../../shared/notification.service';
+import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { emptyPage } from '../../shared/test-utils';
+import { EditIpFilterModalComponent } from './edit-ip-filter-modal/edit-ip-filter-modal.component';
 
 type IpFilterSortField = 'address' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';

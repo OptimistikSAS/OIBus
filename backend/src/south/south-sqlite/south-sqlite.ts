@@ -1,21 +1,24 @@
-import path from 'node:path';
 import fs from 'node:fs/promises';
-import db from 'better-sqlite3';
+import path from 'node:path';
 
-import SouthConnector from '../south-connector';
-import { convertDateTimeToInstant, extractDiscoveryQuery, formatInstant, logQuery, workUnitLogCtx } from '../../service/utils';
-import { Instant } from '../../../shared/model/types';
+import db from 'better-sqlite3';
 import { DateTime } from 'luxon';
-import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
-import { SouthItemSettings, SouthSQLiteItemSettings, SouthSQLiteSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent, OIBusRecord } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
 import {
   SouthConnectorExploreEntry,
   SouthConnectorItemQueryResult,
   SouthConnectorItemTestingSettings
-} from '../../../shared/model/south-connector.model';
+} from '../../../shared/model/api/south-connector.model';
+import { OIBusContent, OIBusRecord } from '../../../shared/model/common/content.model';
+import { Instant } from '../../../shared/model/common/types';
+import { SouthItemSettings, SouthSQLiteItemSettings, SouthSQLiteSettings } from '../../../shared/model/connector/south-settings.model';
+
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import { convertDateTimeToInstant, extractDiscoveryQuery, formatInstant, logQuery, workUnitLogCtx } from '../../service/utils';
+import SouthConnector from '../south-connector';
+import { SouthConfigurationDiscovery, SouthExplore, SouthHistoryQuery } from '../south-interface';
 
 /**
  * Wraps a SQL identifier (table/column name) in double quotes for safe interpolation into PRAGMA and

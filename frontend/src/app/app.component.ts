@@ -1,17 +1,20 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { NavbarComponent } from './navbar/navbar.component';
-import { NotificationComponent } from './shared/notification/notification.component';
-import { DefaultValidationErrorsComponent } from './shared/default-validation-errors/default-validation-errors.component';
-import { BreadcrumbComponent } from './shared/breadcrumb/breadcrumb.component';
-import { WindowService } from './shared/window.service';
-import { CurrentUserService } from './shared/current-user.service';
-import { UserDTO } from '@oibus/shared/user.model';
-import { NavigationService } from './shared/navigation.service';
-import { VersionCheckService } from './shared/version-check.service';
-import { ModalService } from './shared/modal.service';
-import { VersionUpdateModalComponent } from './shared/version-update-modal/version-update-modal.component';
+
 import { Subscription } from 'rxjs';
+
+import { UserDTO } from '@oibus/shared/api/user.model';
+
+import { NavbarComponent } from './navbar/navbar.component';
+import { BreadcrumbComponent } from './shared/breadcrumb/breadcrumb.component';
+import { CurrentUserService } from './shared/current-user.service';
+import { DefaultValidationErrorsComponent } from './shared/default-validation-errors/default-validation-errors.component';
+import { ModalService } from './shared/modal.service';
+import { NavigationService } from './shared/navigation.service';
+import { NotificationComponent } from './shared/notification/notification.component';
+import { VersionCheckService } from './shared/version-check.service';
+import { VersionUpdateModalComponent } from './shared/version-update-modal/version-update-modal.component';
+import { WindowService } from './shared/window.service';
 
 @Component({
   selector: 'oib-root',

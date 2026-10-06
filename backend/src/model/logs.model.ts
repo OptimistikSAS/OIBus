@@ -1,5 +1,6 @@
+import { LogLevel, ScopeType } from '../../shared/model/api/logs.model';
+
 import { Instant } from './types';
-import { LogLevel, ScopeType } from '../../shared/model/logs.model';
 
 export interface OIBusLog {
   timestamp: string;

@@ -2,9 +2,10 @@ import os from 'node:os';
 import type { Writable } from 'node:stream';
 
 import build from 'pino-abstract-transport';
-import { buildOptions } from 'pino-syslog/lib/utils';
-import { messageBuilderFactory } from 'pino-syslog/lib/rfc5424';
 import socketTransport from 'pino-socket';
+import { messageBuilderFactory } from 'pino-syslog/lib/rfc5424';
+import { buildOptions } from 'pino-syslog/lib/utils';
+
 import { PinoLog } from '../../model/logs.model';
 
 export interface SyslogTransportOptions {

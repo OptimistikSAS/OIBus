@@ -1,19 +1,22 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+
 import { of } from 'rxjs';
-import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { HomeMetrics } from '@oibus/shared/api/engine.model';
+import { NorthConnectorLightDTO } from '@oibus/shared/api/north-connector.model';
+import { SouthConnectorLightDTO } from '@oibus/shared/api/south-connector.model';
+
+import testData from '../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
-import { SouthConnectorService } from '../services/south-connector.service';
-import { NorthConnectorService } from '../services/north-connector.service';
+import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { EngineService } from '../services/engine.service';
+import { NorthConnectorService } from '../services/north-connector.service';
+import { SouthConnectorService } from '../services/south-connector.service';
 import { WindowService } from '../shared/window.service';
 import { HomeComponent } from './home.component';
-import { createMock, MockObject } from '../../test/vitest-create-mock';
-import { SouthConnectorLightDTO } from '@oibus/shared/south-connector.model';
-import { NorthConnectorLightDTO } from '@oibus/shared/north-connector.model';
-import { HomeMetrics } from '@oibus/shared/engine.model';
-import testData from '../../../../backend/src/tests/utils/test-data';
 
 class HomeComponentTester {
   readonly fixture = TestBed.createComponent(HomeComponent);

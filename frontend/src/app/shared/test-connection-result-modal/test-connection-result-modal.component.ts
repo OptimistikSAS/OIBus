@@ -1,14 +1,17 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { SouthConnectorService } from '../../services/south-connector.service';
-import { NorthConnectorService } from '../../services/north-connector.service';
+
+import { OIBusConnectionTestResult } from '@oibus/shared/api/engine.model';
+import { OIBusNorthType } from '@oibus/shared/connector/north-manifest.model';
+import { NorthSettings } from '@oibus/shared/connector/north-settings.model';
+import { OIBusSouthType } from '@oibus/shared/connector/south-manifest.model';
+import { SouthSettings } from '@oibus/shared/connector/south-settings.model';
+
 import { HistoryQueryService } from '../../services/history-query.service';
-import { SouthSettings } from '@oibus/shared/south-settings.model';
-import { NorthSettings } from '@oibus/shared/north-settings.model';
-import { OIBusSouthType } from '@oibus/shared/south-connector.model';
-import { OIBusNorthType } from '@oibus/shared/north-connector.model';
-import { OIBusConnectionTestResult } from '@oibus/shared/engine.model';
+import { NorthConnectorService } from '../../services/north-connector.service';
+import { SouthConnectorService } from '../../services/south-connector.service';
 
 @Component({
   selector: 'oib-test-connection-result-modal',

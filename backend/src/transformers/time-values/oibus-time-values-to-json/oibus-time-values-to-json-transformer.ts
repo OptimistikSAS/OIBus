@@ -1,9 +1,11 @@
-import OIBusTransformer from '../../oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
-import { CacheMetadata } from '../../../../shared/model/engine.model';
+
+import { CacheMetadata } from '../../../../shared/model/api/engine.model';
+
 import { CacheMetadataSource } from '../../../model/engine.model';
 import { generateRandomId, streamToString } from '../../../service/utils';
+import OIBusTransformer from '../../oibus-transformer';
 
 export default class OIBusTimeValuesToJSONTransformer extends OIBusTransformer {
   public static transformerName = 'time-values-to-json';

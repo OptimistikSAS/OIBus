@@ -1,18 +1,20 @@
+import { ReadStream } from 'node:fs';
+import { Readable } from 'node:stream';
 import { mock } from 'node:test';
+
 import {
+  CacheContentUpdateCommand,
   CacheMetadata,
   CacheSearchParam,
   CacheSearchResult,
-  CacheContentUpdateCommand,
   DataFolderType,
   FileCacheContent
-} from '../../../../../shared/model/engine.model';
+} from '../../../../../shared/model/api/engine.model';
+import type { ScopeType } from '../../../../../shared/model/api/logs.model';
+
 import type { CacheSizeEvents, ICacheService } from '../../../../model/cache.service.model';
-import type { ScopeType } from '../../../../../shared/model/logs.model';
 import type { CacheSize } from '../../../../model/engine.model';
 import TypedEventEmitter from '../../../../service/typed-event-emitter';
-import { ReadStream } from 'node:fs';
-import { Readable } from 'node:stream';
 
 export default class CacheServiceMock implements ICacheService {
   refreshLogger = mock.fn((_scopeType: ScopeType, _id: string, _name: string): void => undefined);

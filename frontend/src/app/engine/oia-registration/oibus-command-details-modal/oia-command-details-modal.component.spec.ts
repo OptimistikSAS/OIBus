@@ -1,13 +1,15 @@
 import { TestBed } from '@angular/core/testing';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test } from 'vitest';
 
-import { OiaCommandDetailsModalComponent } from './oia-command-details-modal.component';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { OIBusCommandDTO } from '@oibus/shared/oia/command.model';
+
+import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import testData from '../../../../../../backend/src/tests/utils/test-data';
-import { OIBusCommandDTO } from '@oibus/shared/command.model';
+import { OiaCommandDetailsModalComponent } from './oia-command-details-modal.component';
 
 describe('OiaCommandDetailsModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;

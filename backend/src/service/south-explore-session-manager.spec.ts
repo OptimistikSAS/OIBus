@@ -1,12 +1,14 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { mockModule, reloadModule, flushPromises } from '../tests/utils/test-utils';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
+import type { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+
+import type SouthConnector from '../south/south-connector';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
 import testData from '../tests/utils/test-data';
+import { flushPromises, mockModule, reloadModule } from '../tests/utils/test-utils';
 import type SouthExploreSessionManagerType from './south-explore-session-manager';
-import type SouthConnector from '../south/south-connector';
-import type { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 
 const nodeRequire = createRequire(import.meta.url);
 

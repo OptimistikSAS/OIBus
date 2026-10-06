@@ -19,6 +19,9 @@ import angular from 'angular-eslint';
 // `lint` script) instead.
 import eslintConfigPrettier from 'eslint-config-prettier';
 
+// Sorts imports (statements and the names inside braces) in a fixed order, auto-fixed by `npm run lint:fix`.
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
+
 const SHARED_ALIAS_PATTERN = {
   regex: '/backend/shared/',
   message: 'Import the shared model through the @oibus/shared/* alias.'
@@ -140,6 +143,33 @@ export default [
       }
     }
   ),
+  {
+    // Import groups, separated by a blank line and sorted alphabetically within each group.
+    files: ['**/*.ts'],
+    plugins: { 'simple-import-sort': simpleImportSort },
+    rules: {
+      'simple-import-sort/imports': [
+        'error',
+        {
+          groups: [
+            // side-effect imports
+            ['^\\u0000'],
+            // Angular
+            ['^@angular/'],
+            // npm packages
+            ['^@?\\w'],
+            // shared model
+            ['^@oibus/shared/'],
+            // relative imports
+            ['^\\.']
+          ]
+        }
+      ],
+      'simple-import-sort/exports': 'error',
+      // one import statement per module (plus an optional separate `import type`)
+      'no-duplicate-imports': ['error', { allowSeparateTypeImports: true }]
+    }
+  },
   eslintConfigPrettier,
   // set the parse options for typed rules
   {

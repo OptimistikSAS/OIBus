@@ -1,8 +1,10 @@
 import { mock } from 'node:test';
+
 import type { Database } from 'better-sqlite3';
-import { createAuditServiceMock } from '../../../utils/test-utils';
+
 import { ScanMode } from '../../../../model/scan-mode.model';
 import ScanModeRepository from '../../../../repository/config/scan-mode.repository';
+import { createAuditServiceMock } from '../../../utils/test-utils';
 
 /**
  * Create a mock object for Scan Mode repository

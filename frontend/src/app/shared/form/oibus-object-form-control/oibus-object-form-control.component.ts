@@ -1,27 +1,28 @@
-import { Component, computed, effect, inject, input, untracked, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
 import { AbstractControl, ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 
 import { TranslateDirective } from '@ngx-translate/core';
-import { OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/form.model';
+import { map } from 'rxjs';
+
+import { CertificateDTO } from '@oibus/shared/api/certificate.model';
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
+import { isEnabledOnPlatform, OIBusAttribute, OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
+
+import { EngineService } from '../../../services/engine.service';
 import { BoxComponent, BoxTitleDirective } from '../../box/box.component';
-import { OIBusNumberFormControlComponent } from '../oibus-number-form-control/oibus-number-form-control.component';
-import { OIBusStringFormControlComponent } from '../oibus-string-form-control/oibus-string-form-control.component';
-import { OIBusInstantFormControlComponent } from '../oibus-instant-form-control/oibus-instant-form-control.component';
+import { addEnablingConditions, applyPlatformConditions } from '../dynamic-form.builder';
+import { OIBusArrayFormControlComponent } from '../oibus-array-form-control/oibus-array-form-control.component';
 import { OIBusBooleanFormControlComponent } from '../oibus-boolean-form-control/oibus-boolean-form-control.component';
-import { OIBusScanModeFormControlComponent } from '../oibus-scan-mode-form-control/oibus-scan-mode-form-control.component';
-import { OIBusSecretFormControlComponent } from '../oibus-secret-form-control/oibus-secret-form-control.component';
-import { OIBusStringSelectFormControlComponent } from '../oibus-string-select-form-control/oibus-string-select-form-control.component';
-import { OIBusTimezoneFormControlComponent } from '../oibus-timezone-form-control/oibus-timezone-form-control.component';
 import { OibusCertificateFormControlComponent } from '../oibus-certificate-form-control/oibus-certificate-form-control.component';
 import { OIBusCodeFormControlComponent } from '../oibus-code-form-control/oibus-code-form-control.component';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import { CertificateDTO } from '@oibus/shared/certificate.model';
-import { OIBusArrayFormControlComponent } from '../oibus-array-form-control/oibus-array-form-control.component';
-import { addEnablingConditions, applyPlatformConditions } from '../dynamic-form.builder';
-import { isEnabledOnPlatform } from '@oibus/shared/form.model';
-import { EngineService } from '../../../services/engine.service';
+import { OIBusInstantFormControlComponent } from '../oibus-instant-form-control/oibus-instant-form-control.component';
+import { OIBusNumberFormControlComponent } from '../oibus-number-form-control/oibus-number-form-control.component';
+import { OIBusScanModeFormControlComponent } from '../oibus-scan-mode-form-control/oibus-scan-mode-form-control.component';
+import { OIBusSecretFormControlComponent } from '../oibus-secret-form-control/oibus-secret-form-control.component';
+import { OIBusStringFormControlComponent } from '../oibus-string-form-control/oibus-string-form-control.component';
+import { OIBusStringSelectFormControlComponent } from '../oibus-string-select-form-control/oibus-string-select-form-control.component';
+import { OIBusTimezoneFormControlComponent } from '../oibus-timezone-form-control/oibus-timezone-form-control.component';
 
 interface FormRow {
   columns: Array<FormColumn>;

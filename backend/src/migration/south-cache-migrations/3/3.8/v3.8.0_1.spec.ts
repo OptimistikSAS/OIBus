@@ -1,7 +1,9 @@
-import { describe, it, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { after, before, beforeEach, describe, it } from 'node:test';
+
 import knex, { Knex } from 'knex';
-import { up, down } from './v3.8.0_1';
+
+import { down, up } from './v3.8.0_1';
 
 describe('South cache migration v3.8.0_1 (repair south_item_cache key)', () => {
   let db: Knex;

@@ -1,6 +1,7 @@
-import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { NotFoundError, OIBusValidationError, OIBusTestingError } from './types';
+import { describe, it } from 'node:test';
+
+import { NotFoundError, OIBusTestingError, OIBusValidationError } from './types';
 
 describe('NotFoundError', () => {
   it('constructs without a message', () => {

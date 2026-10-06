@@ -1,11 +1,13 @@
 import { mock } from 'node:test';
-import { NorthConnectorCommandDTO, NorthConnectorManifest, OIBusNorthType } from '../../../../shared/model/north-connector.model';
+
+import { NorthConnectorMetrics, OIBusConnectionTestResult } from '../../../../shared/model/api/engine.model';
+import { NorthConnectorCommandDTO } from '../../../../shared/model/api/north-connector.model';
+import { TransformerSourceCommandDTO } from '../../../../shared/model/api/transformer.model';
+import { NorthConnectorManifest, OIBusNorthType } from '../../../../shared/model/connector/north-manifest.model';
+import { NorthSettings } from '../../../../shared/model/connector/north-settings.model';
+
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../../../model/north-connector.model';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
 import { NorthTransformerWithOptions, TransformerSource } from '../../../model/transformer.model';
-import { TransformerSourceCommandDTO } from '../../../../shared/model/transformer.model';
-import { OIBusConnectionTestResult } from '../../../../shared/model/engine.model';
-import { NorthConnectorMetrics } from '../../../../shared/model/engine.model';
 
 /**
  * Create a mock object for North Service

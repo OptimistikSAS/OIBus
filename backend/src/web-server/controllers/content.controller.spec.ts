@@ -1,10 +1,11 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
-import { CustomExpressRequest } from '../express';
-import { reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
+import { createRequire } from 'node:module';
+import { afterEach, before, beforeEach, describe, it, mock } from 'node:test';
+
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
+import { createMockServices, fixTsoaModuleResolution, reloadModule } from '../../tests/utils/test-utils';
+import { CustomExpressRequest } from '../express';
 import type { ContentController as ContentControllerShape } from './content.controller';
 
 const nodeRequire = createRequire(import.meta.url);

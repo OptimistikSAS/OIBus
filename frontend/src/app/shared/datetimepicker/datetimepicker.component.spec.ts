@@ -1,16 +1,17 @@
-import { TestBed } from '@angular/core/testing';
-
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
-import { DatetimepickerComponent } from './datetimepicker.component';
+import { By } from '@angular/platform-browser';
+
 import { NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
-import { provideNgbConfigTesting } from '../form/oi-ngb-testing';
-import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { provideCurrentUser } from '../current-user-testing-vitest';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
-import { By } from '@angular/platform-browser';
+
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { provideCurrentUser } from '../current-user-testing-vitest';
+import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
+import { provideNgbConfigTesting } from '../form/oi-ngb-testing';
+import { DatetimepickerComponent } from './datetimepicker.component';
 
 @Component({
   selector: 'oib-test-datetimepicker-component',

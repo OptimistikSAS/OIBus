@@ -1,14 +1,17 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators, FormGroup, FormControl } from '@angular/forms';
-import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective } from '@ngx-translate/core';
+
+import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '@oibus/shared/api/engine.model';
+
 import { EngineService } from '../../../services/engine.service';
-import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '@oibus/shared/engine.model';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
-import { OibusCommandTypeEnumPipe } from '../../../shared/oibus-command-type-enum.pipe';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { NotificationService } from '../../../shared/notification.service';
+import { OibusCommandTypeEnumPipe } from '../../../shared/oibus-command-type-enum.pipe';
+import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 
 @Component({
   selector: 'oib-register-oibus-modal',

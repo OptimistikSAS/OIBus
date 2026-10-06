@@ -1,11 +1,14 @@
-import { AfterViewInit, Component, forwardRef, inject, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, forwardRef, inject, Input, OnDestroy, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { DatetimepickerComponent } from '../datetimepicker/datetimepicker.component';
-import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { DateTime } from 'luxon';
-import { Instant } from '@oibus/shared/types';
+import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { Subject, takeUntil } from 'rxjs';
+
+import { Instant } from '@oibus/shared/common/types';
+
+import { DatetimepickerComponent } from '../datetimepicker/datetimepicker.component';
 import { dateTimeRangeValidatorBuilder } from '../form/validators';
 
 export interface DateRange {

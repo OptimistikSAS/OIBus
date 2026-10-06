@@ -1,13 +1,14 @@
 import build from 'pino-abstract-transport';
 
-import { ScopeType } from '../../../shared/model/logs.model';
-import { CryptoSettings } from '../../../shared/model/engine.model';
-import { HTTPRequest } from '../http-request.utils';
-import { encryptionService } from '../encryption.service';
+import { CryptoSettings } from '../../../shared/model/api/engine.model';
+import { ScopeType } from '../../../shared/model/api/logs.model';
+
 import { PinoLog } from '../../model/logs.model';
-import { Instant } from '../../model/types';
-import { buildHttpOptions, getUrl } from '../utils-oianalytics';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
+import { Instant } from '../../model/types';
+import { encryptionService } from '../encryption.service';
+import { HTTPRequest } from '../http-request.utils';
+import { buildHttpOptions, getUrl } from '../utils-oianalytics';
 
 interface OIAnalyticsLog {
   message: string;

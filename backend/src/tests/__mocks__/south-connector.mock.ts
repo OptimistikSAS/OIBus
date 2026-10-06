@@ -1,19 +1,21 @@
 import { EventEmitter } from 'node:events';
 import { mock } from 'node:test';
-import SouthConnector from '../../south/south-connector';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import type { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
-import type { ScanMode } from '../../model/scan-mode.model';
-import type { Instant } from '../../../shared/model/types';
-import type { SouthConnectorItemEntity } from '../../model/south-connector.model';
+
+import type { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
 import type {
   SouthConnectorExploreEntry,
   SouthConnectorItemQueryResult,
   SouthConnectorItemTestingSettings
-} from '../../../shared/model/south-connector.model';
-import type { OIBusRecord } from '../../../shared/model/engine.model';
+} from '../../../shared/model/api/south-connector.model';
+import type { OIBusContent, OIBusRecord } from '../../../shared/model/common/content.model';
+import type { Instant } from '../../../shared/model/common/types';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/connector/south-settings.model';
+
+import type { ScanMode } from '../../model/scan-mode.model';
+import type { SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
+import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import SouthConnector from '../../south/south-connector';
 
 /**
  * Create a mock object for South Connector

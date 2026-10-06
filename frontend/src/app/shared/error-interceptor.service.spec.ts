@@ -1,7 +1,11 @@
-import { TestBed } from '@angular/core/testing';
 import { HttpClient, HttpContext, HttpStatusCode, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+
+import { createMock, MockObject } from '../../test/vitest-create-mock';
+import { CurrentUserService } from './current-user.service';
 import {
   errorInterceptor,
   ignoreErrorIfStatusIs,
@@ -10,8 +14,6 @@ import {
 } from './error-interceptor.service';
 import { NotificationService } from './notification.service';
 import { WindowService } from './window.service';
-import { CurrentUserService } from './current-user.service';
-import { createMock, MockObject } from '../../test/vitest-create-mock';
 
 describe('ErrorInterceptorService', () => {
   let http: HttpTestingController;

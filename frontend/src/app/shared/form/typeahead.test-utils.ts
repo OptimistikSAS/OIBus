@@ -1,6 +1,7 @@
-import { TYPEAHEAD_DEBOUNCE_TIME } from './typeahead';
 import { vi } from 'vitest';
 import { Locator, page } from 'vitest/browser';
+
+import { TYPEAHEAD_DEBOUNCE_TIME } from './typeahead';
 
 /**
  * A custom locator helper used to test a typeahead.

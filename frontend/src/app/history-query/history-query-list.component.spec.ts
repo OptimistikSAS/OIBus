@@ -1,21 +1,23 @@
-import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
-import { page } from 'vitest/browser';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
-import { HistoryQueryListComponent } from './history-query-list.component';
-import { HistoryQueryService } from '../services/history-query.service';
-import { NotificationService } from '../shared/notification.service';
-import { ConfirmationService } from '../shared/confirmation.service';
-import { Modal, ModalService } from '../shared/modal.service';
+import { of } from 'rxjs';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
+
+import { HistoryQueryLightDTO } from '@oibus/shared/api/history-query.model';
+
+import testData from '../../../../backend/src/tests/utils/test-data';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
-import { provideModalTesting } from '../shared/mock-modal.service.testing';
-import testData from '../../../../backend/src/tests/utils/test-data';
-import { HistoryQueryLightDTO } from '@oibus/shared/history-query.model';
+import { HistoryQueryService } from '../services/history-query.service';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
+import { ConfirmationService } from '../shared/confirmation.service';
+import { provideModalTesting } from '../shared/mock-modal.service.testing';
+import { Modal, ModalService } from '../shared/modal.service';
+import { NotificationService } from '../shared/notification.service';
+import { HistoryQueryListComponent } from './history-query-list.component';
 
 describe('HistoryQueryListComponent', () => {
   let historyQueryService: MockObject<HistoryQueryService>;

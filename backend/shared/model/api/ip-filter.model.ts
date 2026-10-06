@@ -1,4 +1,4 @@
-import { BaseEntity } from './types';
+import { BaseEntity } from '../common/types';
 
 /**
  * Data Transfer Object for an IP filter.

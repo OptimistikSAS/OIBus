@@ -1,8 +1,10 @@
 import { HttpClient } from '@angular/common/http';
+import { inject, Service } from '@angular/core';
+
 import { BehaviorSubject, Observable, shareReplay, switchMap } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { Service, inject } from '@angular/core';
-import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '@oibus/shared/scan-mode.model';
+
+import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '@oibus/shared/api/scan-mode.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on Scan Modes

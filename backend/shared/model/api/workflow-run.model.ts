@@ -1,6 +1,6 @@
+import { OIBusRecord } from '../common/content.model';
+import { Instant, UserInfo } from '../common/types';
 import { WorkflowPreviewEntryDTO } from './configuration-workflow.model';
-import { OIBusRecord } from './engine.model';
-import { Instant, UserInfo } from './types';
 
 export const WORKFLOW_RUN_STATUSES = ['RUNNING', 'COMPLETED', 'ERRORED'] as const;
 /**

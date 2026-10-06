@@ -1,11 +1,14 @@
-import OIBusTransformer from '../../oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
-import { CacheMetadata, OIBusSetpoint } from '../../../../shared/model/engine.model';
+
+import { CacheMetadata } from '../../../../shared/model/api/engine.model';
+import { OIBusSetpoint } from '../../../../shared/model/common/content.model';
+import { TransformerSetpointToMqttSettings } from '../../../../shared/model/connector/transformer-settings.model';
+
 import { CacheMetadataSource } from '../../../model/engine.model';
 import { generateRandomId, streamToString } from '../../../service/utils';
 import { OIBusMQTTValue } from '../../connector-types.model';
-import { TransformerSetpointToMqttSettings } from '../../../../shared/model/transformer-settings.model';
+import OIBusTransformer from '../../oibus-transformer';
 
 export default class OIBusSetpointToMQTTTransformer extends OIBusTransformer {
   public static transformerName = 'setpoint-to-mqtt';

@@ -1,5 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -10,20 +9,23 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
+
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
+import { Observable } from 'rxjs';
+
+import { ScanModeDTO } from '@oibus/shared/api/scan-mode.model';
 import {
-  IOT_FAMILY_SOUTH_TYPES,
   SouthCachingStrategy,
-  SouthConnectorManifest,
   SouthHistoryRecoveryStrategy,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO
-} from '@oibus/shared/south-connector.model';
-import { ScanModeDTO } from '@oibus/shared/scan-mode.model';
-import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { Observable } from 'rxjs';
+} from '@oibus/shared/api/south-connector.model';
+import { IOT_FAMILY_SOUTH_TYPES, SouthConnectorManifest } from '@oibus/shared/connector/south-manifest.model';
+
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
+import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
+import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 
 @Component({
   selector: 'oib-edit-south-item-group-modal',

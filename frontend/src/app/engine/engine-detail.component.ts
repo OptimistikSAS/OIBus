@@ -1,34 +1,37 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { EngineService } from '../services/engine.service';
 import { AsyncPipe } from '@angular/common';
-import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component';
-import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
-import { NotificationService } from '../shared/notification.service';
-import { ConfirmationService } from '../shared/confirmation.service';
-import { BehaviorSubject, firstValueFrom, switchMap } from 'rxjs';
-import { ObservableState } from '../shared/save-button/save-button.component';
-import { BoxComponent, BoxTitleDirective } from '../shared/box/box.component';
-import { EngineMetricsComponent } from './engine-metrics/engine-metrics.component';
-import { pollMetrics } from '../shared/polling';
-import { WindowService } from '../shared/window.service';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { CertificateListComponent } from './certificate-list/certificate-list.component';
+
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TransformerListComponent } from './transformer-list/transformer-list.component';
-import { ModalService } from '../shared/modal.service';
-import { EditEngineNameModalComponent } from './edit-engine-name-modal/edit-engine-name-modal.component';
-import { EditEngineWebServerModalComponent } from './edit-engine-web-server-modal/edit-engine-web-server-modal.component';
-import { EditEngineProxyModalComponent } from './edit-engine-proxy-modal/edit-engine-proxy-modal.component';
-import { EditEngineLoggerModalComponent } from './edit-engine-logger-modal/edit-engine-logger-modal.component';
-import { AuthTokenDuration } from '@oibus/shared/engine.model';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { BehaviorSubject, firstValueFrom, switchMap } from 'rxjs';
+
+import { AuditEntityType } from '@oibus/shared/api/audit.model';
+import { AuthTokenDuration } from '@oibus/shared/api/engine.model';
+import { ConfigImportResponseDTO } from '@oibus/shared/oia/config-transfer.model';
+
 import { ConfigTransferService } from '../services/config-transfer.service';
-import { ImportConfigModalComponent } from './config-transfer/import-config-modal/import-config-modal.component';
-import { PortRedirectModalComponent } from '../shared/port-redirect-modal/port-redirect-modal.component';
-import { ConfigImportResponseDTO } from '@oibus/shared/config-transfer.model';
+import { EngineService } from '../services/engine.service';
 import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-history-modal.component';
-import { AuditEntityType } from '@oibus/shared/audit.model';
+import { BoxComponent, BoxTitleDirective } from '../shared/box/box.component';
+import { ConfirmationService } from '../shared/confirmation.service';
+import { ModalService } from '../shared/modal.service';
+import { NotificationService } from '../shared/notification.service';
+import { pollMetrics } from '../shared/polling';
+import { PortRedirectModalComponent } from '../shared/port-redirect-modal/port-redirect-modal.component';
+import { ObservableState } from '../shared/save-button/save-button.component';
+import { WindowService } from '../shared/window.service';
+import { CertificateListComponent } from './certificate-list/certificate-list.component';
+import { ImportConfigModalComponent } from './config-transfer/import-config-modal/import-config-modal.component';
+import { EditEngineLoggerModalComponent } from './edit-engine-logger-modal/edit-engine-logger-modal.component';
+import { EditEngineNameModalComponent } from './edit-engine-name-modal/edit-engine-name-modal.component';
+import { EditEngineProxyModalComponent } from './edit-engine-proxy-modal/edit-engine-proxy-modal.component';
+import { EditEngineWebServerModalComponent } from './edit-engine-web-server-modal/edit-engine-web-server-modal.component';
+import { EngineMetricsComponent } from './engine-metrics/engine-metrics.component';
+import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
+import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component';
+import { TransformerListComponent } from './transformer-list/transformer-list.component';
 
 @Component({
   selector: 'oib-engine-detail',

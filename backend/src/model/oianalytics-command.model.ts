@@ -1,27 +1,28 @@
-import { BaseEntity, Instant } from './types';
-import { OIBusCommandStatus, OIBusCommandType } from '../../shared/model/command.model';
+import { CertificateCommandDTO } from '../../shared/model/api/certificate.model';
 import {
   CacheContentUpdateCommand,
+  CacheSearchParam,
   DataFolderType,
   EngineLoggerCommandDTO,
   EngineNameCommandDTO,
   EngineProxyCommandDTO,
   EngineWebServerCommandDTO
-} from '../../shared/model/engine.model';
-import { ScanModeCommandDTO } from '../../shared/model/scan-mode.model';
+} from '../../shared/model/api/engine.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../shared/model/api/history-query.model';
+import { IPFilterCommandDTO } from '../../shared/model/api/ip-filter.model';
+import { NorthConnectorCommandDTO } from '../../shared/model/api/north-connector.model';
+import { ScanModeCommandDTO } from '../../shared/model/api/scan-mode.model';
 import {
-  OIBusSouthType,
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemTestingSettings
-} from '../../shared/model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.model';
-import { IPFilterCommandDTO } from '../../shared/model/ip-filter.model';
-import { CertificateCommandDTO } from '../../shared/model/certificate.model';
-import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../shared/model/history-query.model';
-import { CacheSearchParam } from '../../shared/model/engine.model';
-import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../shared/model/transformer.model';
+} from '../../shared/model/api/south-connector.model';
+import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../shared/model/api/transformer.model';
+import { OIBusSouthType } from '../../shared/model/connector/south-manifest.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/connector/south-settings.model';
+import { OIBusCommandStatus, OIBusCommandType } from '../../shared/model/oia/command.model';
+
+import { BaseEntity, Instant } from './types';
 
 export interface BaseOIBusCommand extends BaseEntity {
   type: OIBusCommandType;

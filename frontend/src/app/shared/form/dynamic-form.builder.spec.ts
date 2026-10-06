@@ -1,7 +1,15 @@
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
-import { addEnablingConditions, applyPlatformConditions, createControl } from './dynamic-form.builder';
-import { OIBusAttributeValidator, OIBusEnablingCondition, OIBusObjectAttribute, OIBusStringAttribute } from '@oibus/shared/form.model';
+
 import { describe, expect, test } from 'vitest';
+
+import {
+  OIBusAttributeValidator,
+  OIBusEnablingCondition,
+  OIBusObjectAttribute,
+  OIBusStringAttribute
+} from '@oibus/shared/connector/form.model';
+
+import { addEnablingConditions, applyPlatformConditions, createControl } from './dynamic-form.builder';
 
 describe('dynamic-form.builder', () => {
   const buildObjectAttribute = (platformValidators: Array<OIBusAttributeValidator> = []): OIBusObjectAttribute => ({

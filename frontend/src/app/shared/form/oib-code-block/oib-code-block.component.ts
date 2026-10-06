@@ -1,21 +1,22 @@
 import {
   afterRenderEffect,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   forwardRef,
   input,
   OnDestroy,
   signal,
-  viewChild,
-  ChangeDetectionStrategy
+  viewChild
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { EditorView } from '@codemirror/view';
-import { Compartment, EditorState } from '@codemirror/state';
-import { basicSetup } from 'codemirror';
-import { json } from '@codemirror/lang-json';
+
 import { javascript } from '@codemirror/lang-javascript';
+import { json } from '@codemirror/lang-json';
 import { sql } from '@codemirror/lang-sql';
+import { Compartment, EditorState } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
+import { basicSetup } from 'codemirror';
 
 @Component({
   selector: 'oib-code-block',

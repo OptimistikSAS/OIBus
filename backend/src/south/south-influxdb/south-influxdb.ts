@@ -1,17 +1,20 @@
 import { InfluxDB } from '@influxdata/influxdb-client';
 import { InfluxDBClient } from '@influxdata/influxdb3-client';
 import { InfluxDB as InfluxDBv1 } from 'influx';
-import SouthConnector from '../south-connector';
-import { getErrorMessage, logQuery, workUnitLogCtx } from '../../service/utils';
-import { encryptionService } from '../../service/encryption.service';
-import { Instant } from '../../../shared/model/types';
-import { SouthHistoryQuery } from '../south-interface';
 import { DateTime } from 'luxon';
-import { SouthInfluxDBItemSettings, SouthInfluxDBSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
+
+import { OIBusConnectionTestResult } from '../../../shared/model/api/engine.model';
+import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/api/south-connector.model';
+import { OIBusContent } from '../../../shared/model/common/content.model';
+import { Instant } from '../../../shared/model/common/types';
+import { SouthInfluxDBItemSettings, SouthInfluxDBSettings, SouthItemSettings } from '../../../shared/model/connector/south-settings.model';
+
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemQueryResult, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { encryptionService } from '../../service/encryption.service';
+import { getErrorMessage, logQuery, workUnitLogCtx } from '../../service/utils';
+import SouthConnector from '../south-connector';
+import { SouthHistoryQuery } from '../south-interface';
 
 export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings, SouthInfluxDBItemSettings> implements SouthHistoryQuery {
   constructor(
