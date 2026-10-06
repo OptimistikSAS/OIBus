@@ -2315,20 +2315,30 @@ const registrationCompleted: RegistrationSettingsDTO = {
     updateHistoryQuery: true,
     deleteHistoryQuery: true,
     createOrUpdateHistoryItemsFromCsv: true,
+    testHistoryNorthConnection: true,
+    testHistorySouthConnection: true,
+    testHistorySouthItem: true,
     createSouth: true,
     updateSouth: true,
     deleteSouth: true,
     createOrUpdateSouthItemsFromCsv: true,
+    testSouthConnection: true,
+    testSouthItem: true,
     createNorth: true,
     updateNorth: true,
     deleteNorth: true,
+    testNorthConnection: true,
     setpoint: true,
     searchHistoryCacheContent: true,
     getHistoryCacheFileContent: true,
     updateHistoryCacheContent: true,
     searchNorthCacheContent: true,
     getNorthCacheFileContent: true,
-    updateNorthCacheContent: true
+    updateNorthCacheContent: true,
+    createCustomTransformer: true,
+    updateCustomTransformer: true,
+    deleteCustomTransformer: true,
+    testCustomTransformer: true
   }
 };
 

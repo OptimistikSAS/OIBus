@@ -24898,6 +24898,267 @@
 				],
 				"description": "Type representing a registration status."
 			},
+			"RegistrationCommandPermissionsDTO": {
+				"description": "Permissions granted to OIAnalytics for each remote command.",
+				"properties": {
+					"updateVersion": {
+						"type": "boolean",
+						"description": "Permission to update the engine version.",
+						"example": true
+					},
+					"restartEngine": {
+						"type": "boolean",
+						"description": "Permission to restart the engine.",
+						"example": true
+					},
+					"regenerateCipherKeys": {
+						"type": "boolean",
+						"description": "Permission to regenerate cipher keys.",
+						"example": true
+					},
+					"updateEngineSettings": {
+						"type": "boolean",
+						"description": "Permission to update engine settings.",
+						"example": true
+					},
+					"updateRegistrationSettings": {
+						"type": "boolean",
+						"description": "Permission to update registration settings.",
+						"example": true
+					},
+					"createScanMode": {
+						"type": "boolean",
+						"description": "Permission to create a scan mode.",
+						"example": true
+					},
+					"updateScanMode": {
+						"type": "boolean",
+						"description": "Permission to update a scan mode.",
+						"example": true
+					},
+					"deleteScanMode": {
+						"type": "boolean",
+						"description": "Permission to delete a scan mode.",
+						"example": true
+					},
+					"createIpFilter": {
+						"type": "boolean",
+						"description": "Permission to create an IP filter.",
+						"example": true
+					},
+					"updateIpFilter": {
+						"type": "boolean",
+						"description": "Permission to update an IP filter.",
+						"example": true
+					},
+					"deleteIpFilter": {
+						"type": "boolean",
+						"description": "Permission to delete an IP filter.",
+						"example": true
+					},
+					"createCertificate": {
+						"type": "boolean",
+						"description": "Permission to create a certificate.",
+						"example": true
+					},
+					"updateCertificate": {
+						"type": "boolean",
+						"description": "Permission to update a certificate.",
+						"example": true
+					},
+					"deleteCertificate": {
+						"type": "boolean",
+						"description": "Permission to delete a certificate.",
+						"example": true
+					},
+					"createHistoryQuery": {
+						"type": "boolean",
+						"description": "Permission to create a history query.",
+						"example": true
+					},
+					"updateHistoryQuery": {
+						"type": "boolean",
+						"description": "Permission to update a history query.",
+						"example": true
+					},
+					"deleteHistoryQuery": {
+						"type": "boolean",
+						"description": "Permission to delete a history query.",
+						"example": true
+					},
+					"createOrUpdateHistoryItemsFromCsv": {
+						"type": "boolean",
+						"description": "Permission to create or update history items from CSV.",
+						"example": true
+					},
+					"testHistoryNorthConnection": {
+						"type": "boolean",
+						"description": "Permission to test a history north connection.",
+						"example": true
+					},
+					"testHistorySouthConnection": {
+						"type": "boolean",
+						"description": "Permission to test a history south connection.",
+						"example": true
+					},
+					"testHistorySouthItem": {
+						"type": "boolean",
+						"description": "Permission to test a history south item.",
+						"example": true
+					},
+					"createSouth": {
+						"type": "boolean",
+						"description": "Permission to create a south connector.",
+						"example": true
+					},
+					"updateSouth": {
+						"type": "boolean",
+						"description": "Permission to update a south connector.",
+						"example": true
+					},
+					"deleteSouth": {
+						"type": "boolean",
+						"description": "Permission to delete a south connector.",
+						"example": true
+					},
+					"createOrUpdateSouthItemsFromCsv": {
+						"type": "boolean",
+						"description": "Permission to create or update south items from CSV.",
+						"example": true
+					},
+					"testSouthConnection": {
+						"type": "boolean",
+						"description": "Permission to test a south connection.",
+						"example": true
+					},
+					"testSouthItem": {
+						"type": "boolean",
+						"description": "Permission to test a south item.",
+						"example": true
+					},
+					"createNorth": {
+						"type": "boolean",
+						"description": "Permission to create a north connector.",
+						"example": true
+					},
+					"updateNorth": {
+						"type": "boolean",
+						"description": "Permission to update a north connector.",
+						"example": true
+					},
+					"deleteNorth": {
+						"type": "boolean",
+						"description": "Permission to delete a north connector.",
+						"example": true
+					},
+					"testNorthConnection": {
+						"type": "boolean",
+						"description": "Permission to test a north connection.",
+						"example": true
+					},
+					"setpoint": {
+						"type": "boolean",
+						"description": "Permission to apply setpoints.",
+						"example": true
+					},
+					"searchHistoryCacheContent": {
+						"type": "boolean",
+						"description": "Permission to search cache content.",
+						"example": true
+					},
+					"getHistoryCacheFileContent": {
+						"type": "boolean",
+						"description": "Permission to get cache file content.",
+						"example": true
+					},
+					"updateHistoryCacheContent": {
+						"type": "boolean",
+						"description": "Permission to remove cache content.",
+						"example": true
+					},
+					"searchNorthCacheContent": {
+						"type": "boolean",
+						"description": "Permission to search cache content.",
+						"example": true
+					},
+					"getNorthCacheFileContent": {
+						"type": "boolean",
+						"description": "Permission to get cache file content.",
+						"example": true
+					},
+					"updateNorthCacheContent": {
+						"type": "boolean",
+						"description": "Permission to remove cache content.",
+						"example": true
+					},
+					"createCustomTransformer": {
+						"type": "boolean",
+						"description": "Permission to create a custom transformer.",
+						"example": true
+					},
+					"updateCustomTransformer": {
+						"type": "boolean",
+						"description": "Permission to update a custom transformer.",
+						"example": true
+					},
+					"deleteCustomTransformer": {
+						"type": "boolean",
+						"description": "Permission to delete a custom transformer.",
+						"example": true
+					},
+					"testCustomTransformer": {
+						"type": "boolean",
+						"description": "Permission to test a custom transformer.",
+						"example": true
+					}
+				},
+				"required": [
+					"updateVersion",
+					"restartEngine",
+					"regenerateCipherKeys",
+					"updateEngineSettings",
+					"updateRegistrationSettings",
+					"createScanMode",
+					"updateScanMode",
+					"deleteScanMode",
+					"createIpFilter",
+					"updateIpFilter",
+					"deleteIpFilter",
+					"createCertificate",
+					"updateCertificate",
+					"deleteCertificate",
+					"createHistoryQuery",
+					"updateHistoryQuery",
+					"deleteHistoryQuery",
+					"createOrUpdateHistoryItemsFromCsv",
+					"testHistoryNorthConnection",
+					"testHistorySouthConnection",
+					"testHistorySouthItem",
+					"createSouth",
+					"updateSouth",
+					"deleteSouth",
+					"createOrUpdateSouthItemsFromCsv",
+					"testSouthConnection",
+					"testSouthItem",
+					"createNorth",
+					"updateNorth",
+					"deleteNorth",
+					"testNorthConnection",
+					"setpoint",
+					"searchHistoryCacheContent",
+					"getHistoryCacheFileContent",
+					"updateHistoryCacheContent",
+					"searchNorthCacheContent",
+					"getNorthCacheFileContent",
+					"updateNorthCacheContent",
+					"createCustomTransformer",
+					"updateCustomTransformer",
+					"deleteCustomTransformer",
+					"testCustomTransformer"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"RegistrationSettingsDTO": {
 				"description": "Registration settings Data Transfer Object.\nRepresents the registration settings for the engine.",
 				"properties": {
@@ -25013,203 +25274,7 @@
 						"example": 10
 					},
 					"commandPermissions": {
-						"properties": {
-							"updateNorthCacheContent": {
-								"type": "boolean",
-								"description": "Permission to remove cache content.",
-								"example": true
-							},
-							"getNorthCacheFileContent": {
-								"type": "boolean",
-								"description": "Permission to get cache file content.",
-								"example": true
-							},
-							"searchNorthCacheContent": {
-								"type": "boolean",
-								"description": "Permission to search cache content.",
-								"example": true
-							},
-							"updateHistoryCacheContent": {
-								"type": "boolean",
-								"description": "Permission to move cache content.",
-								"example": true
-							},
-							"getHistoryCacheFileContent": {
-								"type": "boolean",
-								"description": "Permission to get cache file content.",
-								"example": true
-							},
-							"searchHistoryCacheContent": {
-								"type": "boolean",
-								"description": "Permission to search cache content.",
-								"example": true
-							},
-							"setpoint": {
-								"type": "boolean",
-								"description": "Permission to apply setpoints.",
-								"example": true
-							},
-							"deleteNorth": {
-								"type": "boolean",
-								"description": "Permission to delete a north connector.",
-								"example": true
-							},
-							"updateNorth": {
-								"type": "boolean",
-								"description": "Permission to update a north connector.",
-								"example": true
-							},
-							"createNorth": {
-								"type": "boolean",
-								"description": "Permission to create a north connector.",
-								"example": true
-							},
-							"createOrUpdateSouthItemsFromCsv": {
-								"type": "boolean",
-								"description": "Permission to create or update south items from CSV.",
-								"example": true
-							},
-							"deleteSouth": {
-								"type": "boolean",
-								"description": "Permission to delete a south connector.",
-								"example": true
-							},
-							"updateSouth": {
-								"type": "boolean",
-								"description": "Permission to update a south connector.",
-								"example": true
-							},
-							"createSouth": {
-								"type": "boolean",
-								"description": "Permission to create a south connector.",
-								"example": true
-							},
-							"createOrUpdateHistoryItemsFromCsv": {
-								"type": "boolean",
-								"description": "Permission to create or update history items from CSV.",
-								"example": true
-							},
-							"deleteHistoryQuery": {
-								"type": "boolean",
-								"description": "Permission to delete a history query.",
-								"example": true
-							},
-							"updateHistoryQuery": {
-								"type": "boolean",
-								"description": "Permission to update a history query.",
-								"example": true
-							},
-							"createHistoryQuery": {
-								"type": "boolean",
-								"description": "Permission to create a history query.",
-								"example": true
-							},
-							"deleteCertificate": {
-								"type": "boolean",
-								"description": "Permission to delete a certificate.",
-								"example": true
-							},
-							"updateCertificate": {
-								"type": "boolean",
-								"description": "Permission to update a certificate.",
-								"example": true
-							},
-							"createCertificate": {
-								"type": "boolean",
-								"description": "Permission to create a certificate.",
-								"example": true
-							},
-							"deleteIpFilter": {
-								"type": "boolean",
-								"description": "Permission to delete an IP filter.",
-								"example": true
-							},
-							"updateIpFilter": {
-								"type": "boolean",
-								"description": "Permission to update an IP filter.",
-								"example": true
-							},
-							"createIpFilter": {
-								"type": "boolean",
-								"description": "Permission to create an IP filter.",
-								"example": true
-							},
-							"deleteScanMode": {
-								"type": "boolean",
-								"description": "Permission to delete a scan mode.",
-								"example": true
-							},
-							"updateScanMode": {
-								"type": "boolean",
-								"description": "Permission to update a scan mode.",
-								"example": true
-							},
-							"createScanMode": {
-								"type": "boolean",
-								"description": "Permission to create a scan mode.",
-								"example": true
-							},
-							"updateRegistrationSettings": {
-								"type": "boolean",
-								"description": "Permission to update registration settings.",
-								"example": true
-							},
-							"updateEngineSettings": {
-								"type": "boolean",
-								"description": "Permission to update engine settings.",
-								"example": true
-							},
-							"regenerateCipherKeys": {
-								"type": "boolean",
-								"description": "Permission to regenerate cipher keys.",
-								"example": true
-							},
-							"restartEngine": {
-								"type": "boolean",
-								"description": "Permission to restart the engine.",
-								"example": true
-							},
-							"updateVersion": {
-								"type": "boolean",
-								"description": "Permission to update the engine version.",
-								"example": true
-							}
-						},
-						"required": [
-							"updateNorthCacheContent",
-							"getNorthCacheFileContent",
-							"searchNorthCacheContent",
-							"updateHistoryCacheContent",
-							"getHistoryCacheFileContent",
-							"searchHistoryCacheContent",
-							"setpoint",
-							"deleteNorth",
-							"updateNorth",
-							"createNorth",
-							"createOrUpdateSouthItemsFromCsv",
-							"deleteSouth",
-							"updateSouth",
-							"createSouth",
-							"createOrUpdateHistoryItemsFromCsv",
-							"deleteHistoryQuery",
-							"updateHistoryQuery",
-							"createHistoryQuery",
-							"deleteCertificate",
-							"updateCertificate",
-							"createCertificate",
-							"deleteIpFilter",
-							"updateIpFilter",
-							"createIpFilter",
-							"deleteScanMode",
-							"updateScanMode",
-							"createScanMode",
-							"updateRegistrationSettings",
-							"updateEngineSettings",
-							"regenerateCipherKeys",
-							"restartEngine",
-							"updateVersion"
-						],
-						"type": "object",
+						"$ref": "#/components/schemas/RegistrationCommandPermissionsDTO",
 						"description": "Permissions for various commands."
 					}
 				},
@@ -25316,263 +25381,7 @@
 						"example": 10
 					},
 					"commandPermissions": {
-						"properties": {
-							"testCustomTransformer": {
-								"type": "boolean",
-								"description": "Permission to test a custom transformer.",
-								"example": true
-							},
-							"deleteCustomTransformer": {
-								"type": "boolean",
-								"description": "Permission to delete a custom transformer.",
-								"example": true
-							},
-							"updateCustomTransformer": {
-								"type": "boolean",
-								"description": "Permission to update a custom transformer.",
-								"example": true
-							},
-							"createCustomTransformer": {
-								"type": "boolean",
-								"description": "Permission to create a custom transformer.",
-								"example": true
-							},
-							"updateNorthCacheContent": {
-								"type": "boolean",
-								"description": "Permission to remove cache content.",
-								"example": true
-							},
-							"getNorthCacheFileContent": {
-								"type": "boolean",
-								"description": "Permission to get cache file content.",
-								"example": true
-							},
-							"searchNorthCacheContent": {
-								"type": "boolean",
-								"description": "Permission to search cache content.",
-								"example": true
-							},
-							"updateHistoryCacheContent": {
-								"type": "boolean",
-								"description": "Permission to remove cache content.",
-								"example": true
-							},
-							"getHistoryCacheFileContent": {
-								"type": "boolean",
-								"description": "Permission to get cache file content.",
-								"example": true
-							},
-							"searchHistoryCacheContent": {
-								"type": "boolean",
-								"description": "Permission to search cache content.",
-								"example": true
-							},
-							"setpoint": {
-								"type": "boolean",
-								"description": "Permission to apply setpoints.",
-								"example": true
-							},
-							"testNorthConnection": {
-								"type": "boolean",
-								"description": "Permission to test a north connection.",
-								"example": true
-							},
-							"deleteNorth": {
-								"type": "boolean",
-								"description": "Permission to delete a north connector.",
-								"example": true
-							},
-							"updateNorth": {
-								"type": "boolean",
-								"description": "Permission to update a north connector.",
-								"example": true
-							},
-							"createNorth": {
-								"type": "boolean",
-								"description": "Permission to create a north connector.",
-								"example": true
-							},
-							"testSouthItem": {
-								"type": "boolean",
-								"description": "Permission to test a south item.",
-								"example": true
-							},
-							"testSouthConnection": {
-								"type": "boolean",
-								"description": "Permission to test a south connection.",
-								"example": true
-							},
-							"createOrUpdateSouthItemsFromCsv": {
-								"type": "boolean",
-								"description": "Permission to create or update south items from CSV.",
-								"example": true
-							},
-							"deleteSouth": {
-								"type": "boolean",
-								"description": "Permission to delete a south connector.",
-								"example": true
-							},
-							"updateSouth": {
-								"type": "boolean",
-								"description": "Permission to update a south connector.",
-								"example": true
-							},
-							"createSouth": {
-								"type": "boolean",
-								"description": "Permission to create a south connector.",
-								"example": true
-							},
-							"testHistorySouthItem": {
-								"type": "boolean",
-								"description": "Permission to test a history south item.",
-								"example": true
-							},
-							"testHistorySouthConnection": {
-								"type": "boolean",
-								"description": "Permission to test a history south connection.",
-								"example": true
-							},
-							"testHistoryNorthConnection": {
-								"type": "boolean",
-								"description": "Permission to test a history north connection.",
-								"example": true
-							},
-							"createOrUpdateHistoryItemsFromCsv": {
-								"type": "boolean",
-								"description": "Permission to create or update history items from CSV.",
-								"example": true
-							},
-							"deleteHistoryQuery": {
-								"type": "boolean",
-								"description": "Permission to delete a history query.",
-								"example": true
-							},
-							"updateHistoryQuery": {
-								"type": "boolean",
-								"description": "Permission to update a history query.",
-								"example": true
-							},
-							"createHistoryQuery": {
-								"type": "boolean",
-								"description": "Permission to create a history query.",
-								"example": true
-							},
-							"deleteCertificate": {
-								"type": "boolean",
-								"description": "Permission to delete a certificate.",
-								"example": true
-							},
-							"updateCertificate": {
-								"type": "boolean",
-								"description": "Permission to update a certificate.",
-								"example": true
-							},
-							"createCertificate": {
-								"type": "boolean",
-								"description": "Permission to create a certificate.",
-								"example": true
-							},
-							"deleteIpFilter": {
-								"type": "boolean",
-								"description": "Permission to delete an IP filter.",
-								"example": true
-							},
-							"updateIpFilter": {
-								"type": "boolean",
-								"description": "Permission to update an IP filter.",
-								"example": true
-							},
-							"createIpFilter": {
-								"type": "boolean",
-								"description": "Permission to create an IP filter.",
-								"example": true
-							},
-							"deleteScanMode": {
-								"type": "boolean",
-								"description": "Permission to delete a scan mode.",
-								"example": true
-							},
-							"updateScanMode": {
-								"type": "boolean",
-								"description": "Permission to update a scan mode.",
-								"example": true
-							},
-							"createScanMode": {
-								"type": "boolean",
-								"description": "Permission to create a scan mode.",
-								"example": true
-							},
-							"updateRegistrationSettings": {
-								"type": "boolean",
-								"description": "Permission to update registration settings.",
-								"example": true
-							},
-							"updateEngineSettings": {
-								"type": "boolean",
-								"description": "Permission to update engine settings.",
-								"example": true
-							},
-							"regenerateCipherKeys": {
-								"type": "boolean",
-								"description": "Permission to regenerate cipher keys.",
-								"example": true
-							},
-							"restartEngine": {
-								"type": "boolean",
-								"description": "Permission to restart the engine.",
-								"example": true
-							},
-							"updateVersion": {
-								"type": "boolean",
-								"description": "Permission to update the engine version.",
-								"example": true
-							}
-						},
-						"required": [
-							"testCustomTransformer",
-							"deleteCustomTransformer",
-							"updateCustomTransformer",
-							"createCustomTransformer",
-							"updateNorthCacheContent",
-							"getNorthCacheFileContent",
-							"searchNorthCacheContent",
-							"updateHistoryCacheContent",
-							"getHistoryCacheFileContent",
-							"searchHistoryCacheContent",
-							"setpoint",
-							"testNorthConnection",
-							"deleteNorth",
-							"updateNorth",
-							"createNorth",
-							"testSouthItem",
-							"testSouthConnection",
-							"createOrUpdateSouthItemsFromCsv",
-							"deleteSouth",
-							"updateSouth",
-							"createSouth",
-							"testHistorySouthItem",
-							"testHistorySouthConnection",
-							"testHistoryNorthConnection",
-							"createOrUpdateHistoryItemsFromCsv",
-							"deleteHistoryQuery",
-							"updateHistoryQuery",
-							"createHistoryQuery",
-							"deleteCertificate",
-							"updateCertificate",
-							"createCertificate",
-							"deleteIpFilter",
-							"updateIpFilter",
-							"createIpFilter",
-							"deleteScanMode",
-							"updateScanMode",
-							"createScanMode",
-							"updateRegistrationSettings",
-							"updateEngineSettings",
-							"regenerateCipherKeys",
-							"restartEngine",
-							"updateVersion"
-						],
-						"type": "object",
+						"$ref": "#/components/schemas/RegistrationCommandPermissionsDTO",
 						"description": "Permissions for various commands."
 					}
 				},
