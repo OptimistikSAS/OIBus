@@ -325,6 +325,37 @@ describe('EditSouthComponent', () => {
     expect(modalService.open).toHaveBeenCalledWith(SouthExploreModalComponent, expect.anything());
     expect(fakeModal.componentInstance.prepare).toHaveBeenCalled();
   });
+
+  test('editItem should target the clicked row when several unsaved items share an empty id', async () => {
+    southConnectorService.findById.mockReturnValue(of(southConnector as any));
+    TestBed.overrideProvider(ActivatedRoute, { useValue: editRouteStub });
+    const fixture = TestBed.createComponent(EditSouthComponent);
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance;
+    const savedItems = [...component.inMemoryItems];
+    const firstUnsaved = { ...savedItems[0], id: '', name: 'unsaved-1' };
+    const secondUnsaved = { ...savedItems[0], id: '', name: 'unsaved-2' };
+    component.inMemoryItems.push(firstUnsaved, secondUnsaved);
+    component.filteredItems = component.filter();
+    component.changePage(0);
+    fixture.detectChanges();
+
+    const editedCommand = { ...secondUnsaved, name: 'unsaved-2-edited' };
+    const prepareForEdition = vi.fn();
+    modalService.open.mockReturnValue({ componentInstance: { prepareForEdition }, result: of(editedCommand) } as any);
+
+    const root = page.elementLocator(fixture.nativeElement);
+    await root
+      .getByCss('.edit-south-item')
+      .nth(savedItems.length + 1)
+      .click();
+
+    expect(prepareForEdition.mock.calls[0][5]).toBe(secondUnsaved);
+    expect(prepareForEdition.mock.calls[0][8]).toBe(savedItems.length + 1);
+    expect(component.inMemoryItems.map(item => item.name)).toEqual([...savedItems.map(item => item.name), 'unsaved-1', 'unsaved-2-edited']);
+  });
+
   describe('configuration workflows', () => {
     test('should start with no workflows in plain create mode, without loading any', async () => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: createRouteStub });
