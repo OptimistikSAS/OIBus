@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { FormGroup } from '@angular/forms';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { of } from 'rxjs';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
@@ -10,6 +11,7 @@ import { OIBusObjectAttribute } from '@oibus/shared/connector/form.model';
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import testData from '../../../../../test/test-data';
 import { createMock, MockObject } from '../../../../../test/vitest-create-mock';
+import { EngineService } from '../../../../services/engine.service';
 import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal.component';
 
 class OIBusEditArrayElementModalComponentTester {
@@ -19,7 +21,7 @@ class OIBusEditArrayElementModalComponentTester {
   readonly title = this.root.getByRole('heading', { level: 3 });
   readonly save = this.root.getByCss('#save-button');
   readonly cancel = this.root.getByCss('#cancel-button');
-  readonly settings = this.root.getByCss('oib-oibus-object-form-control');
+  readonly name = this.root.getByLabelText('Name');
 }
 
 describe('OIBusEditArrayElementModalComponent', () => {
@@ -31,7 +33,16 @@ describe('OIBusEditArrayElementModalComponent', () => {
     key: 'item',
     translationKey: 'configuration.oibus.manifest.transformers.title',
     validators: [],
-    attributes: [],
+    attributes: [
+      {
+        type: 'string',
+        key: 'name',
+        translationKey: 'south.items.name',
+        defaultValue: null,
+        validators: [],
+        displayProperties: { row: 0, columns: 12, displayInViewMode: true }
+      }
+    ],
     enablingConditions: [],
     displayProperties: {
       visible: true,
@@ -43,13 +54,18 @@ describe('OIBusEditArrayElementModalComponent', () => {
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
+    const engineService = createMock(EngineService);
+    engineService.getInfo.mockReturnValue(of(testData.engine.oIBusInfo));
 
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
+      providers: [
+        provideI18nTesting(),
+        { provide: NgbActiveModal, useValue: fakeActiveModal },
+        { provide: EngineService, useValue: engineService }
+      ]
     });
 
     tester = new OIBusEditArrayElementModalComponentTester();
-    tester.fixture.detectChanges();
   });
 
   test('should cancel', async () => {
@@ -59,28 +75,32 @@ describe('OIBusEditArrayElementModalComponent', () => {
 
   test('should create an element', async () => {
     tester.component.prepareForCreation(scanModes, certificates, form, objectAttribute);
-    tester.fixture.detectChanges();
-    await expect.element(tester.title).toMatchTextContent('Create an element');
-    await expect.element(tester.settings).toBeInTheDocument();
+
+    await expect.element(tester.title).toHaveTextContent('Create an element');
+    await tester.name.fill('new element');
     await tester.save.click();
-    expect(fakeActiveModal.close).toHaveBeenCalledWith(undefined);
+
+    expect(fakeActiveModal.close).toHaveBeenCalledWith({ name: 'new element' });
   });
 
   test('should edit an element', async () => {
-    tester.component.prepareForEdition(scanModes, certificates, form, {}, objectAttribute);
-    tester.fixture.detectChanges();
-    await expect.element(tester.title).toMatchTextContent('Edit an element');
-    await expect.element(tester.settings).toBeInTheDocument();
+    tester.component.prepareForEdition(scanModes, certificates, form, { name: 'existing' }, objectAttribute);
+
+    await expect.element(tester.title).toHaveTextContent('Edit an element');
+    await expect.element(tester.name).toHaveValue('existing');
+    await tester.name.fill('renamed');
     await tester.save.click();
-    expect(fakeActiveModal.close).toHaveBeenCalledWith(undefined);
+
+    expect(fakeActiveModal.close).toHaveBeenCalledWith({ name: 'renamed' });
   });
 
   test('should copy an element', async () => {
-    tester.component.prepareForCopy(scanModes, certificates, form, {}, objectAttribute);
-    tester.fixture.detectChanges();
-    await expect.element(tester.title).toMatchTextContent('Create an element');
-    await expect.element(tester.settings).toBeInTheDocument();
+    tester.component.prepareForCopy(scanModes, certificates, form, { name: 'existing' }, objectAttribute);
+
+    await expect.element(tester.title).toHaveTextContent('Create an element');
+    await expect.element(tester.name).toHaveValue('existing');
     await tester.save.click();
-    expect(fakeActiveModal.close).toHaveBeenCalledWith(undefined);
+
+    expect(fakeActiveModal.close).toHaveBeenCalledWith({ name: 'existing' });
   });
 });

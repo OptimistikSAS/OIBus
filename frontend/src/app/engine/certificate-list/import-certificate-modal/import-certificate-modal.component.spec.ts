@@ -17,17 +17,20 @@ import { ImportCertificateModalComponent } from './import-certificate-modal.comp
 class ImportCertificateModalComponentTester {
   readonly fixture = TestBed.createComponent(ImportCertificateModalComponent);
   readonly componentInstance = this.fixture.componentInstance;
-  readonly name = page.getByCss('#name');
-  readonly description = page.getByCss('#description');
-  readonly privateKeyPassphrase = page.getByCss('#private-key-passphrase');
+  readonly name = page.getByLabelText('Name');
+  readonly description = page.getByLabelText('Description');
+  readonly privateKeyPassphrase = page.getByLabelText('Private key passphrase');
+  readonly certificateFile = page.getByCss('#certificate-file');
+  readonly certificateFileButton = page.getByCss('#certificate-file-button');
+  readonly privateKeyFile = page.getByCss('#private-key-file');
+  readonly certificateChainFile = page.getByCss('#certificate-chain-file');
   readonly save = page.getByCss('#save-button');
-  readonly cancel = page.getByCss('#cancel-button');
+  readonly cancel = page.getByRole('button', { name: 'Cancel' });
   readonly error = page.getByCss('.alert-danger');
-
-  constructor() {
-    this.fixture.detectChanges();
-  }
 }
+
+const certificateFile = new File(['cert'], 'cert.pem');
+const privateKeyFile = new File(['key'], 'key.pem');
 
 describe('ImportCertificateModalComponent', () => {
   let tester: ImportCertificateModalComponentTester;
@@ -55,85 +58,75 @@ describe('ImportCertificateModalComponent', () => {
 
   test('should not save when files are missing', async () => {
     await tester.name.fill('my cert');
-    tester.fixture.detectChanges();
 
     // the save button is force-disabled until both required files are chosen, so it cannot be clicked at all
     await expect.element(tester.save).toBeDisabled();
-    expect(certificateService.importCertificate).not.toHaveBeenCalled();
-    expect(activeModal.close).not.toHaveBeenCalled();
+
+    await tester.certificateFile.upload(certificateFile);
+    await expect.element(tester.save).toBeDisabled();
+
+    await tester.privateKeyFile.upload(privateKeyFile);
+    await expect.element(tester.save).toBeEnabled();
   });
 
   test('should save with the right command and files', async () => {
     const importedCertificate = { id: 'id1', name: 'my cert' } as CertificateDTO;
     certificateService.importCertificate.mockReturnValue(of(importedCertificate));
 
-    const certificateFile = new File(['cert'], 'cert.pem');
-    const privateKeyFile = new File(['key'], 'key.pem');
-
     await tester.name.fill('my cert');
     await tester.description.fill('my desc');
-    tester.componentInstance.onFileSelected('certificateFile', certificateFile);
-    tester.componentInstance.onFileSelected('privateKeyFile', privateKeyFile);
-    tester.fixture.detectChanges();
-
+    await tester.certificateFile.upload(certificateFile);
+    await tester.privateKeyFile.upload(privateKeyFile);
     await tester.save.click();
 
     expect(certificateService.importCertificate).toHaveBeenCalledWith(
       { name: 'my cert', description: 'my desc', privateKeyPassphrase: null },
-      { certificate: certificateFile, privateKey: privateKeyFile, certificateChain: null }
+      {
+        certificate: expect.objectContaining({ name: 'cert.pem' }),
+        privateKey: expect.objectContaining({ name: 'key.pem' }),
+        certificateChain: null
+      }
     );
     expect(activeModal.close).toHaveBeenCalledWith(importedCertificate);
   });
 
   test('should include the certificate chain and passphrase when provided', async () => {
-    const importedCertificate = { id: 'id1', name: 'my cert' } as CertificateDTO;
-    certificateService.importCertificate.mockReturnValue(of(importedCertificate));
-
-    const certificateFile = new File(['cert'], 'cert.pem');
-    const privateKeyFile = new File(['key'], 'key.pem');
-    const certificateChainFile = new File(['chain'], 'chain.pem');
+    certificateService.importCertificate.mockReturnValue(of({ id: 'id1', name: 'my cert' } as CertificateDTO));
 
     await tester.name.fill('my cert');
-    tester.componentInstance.onFileSelected('certificateFile', certificateFile);
-    tester.componentInstance.onFileSelected('privateKeyFile', privateKeyFile);
-    tester.componentInstance.onFileSelected('certificateChainFile', certificateChainFile);
+    await tester.certificateFile.upload(certificateFile);
+    await tester.privateKeyFile.upload(privateKeyFile);
+    await tester.certificateChainFile.upload(new File(['chain'], 'chain.pem'));
     await tester.privateKeyPassphrase.fill('secret');
-    tester.fixture.detectChanges();
-
     await tester.save.click();
 
     expect(certificateService.importCertificate).toHaveBeenCalledWith(
       { name: 'my cert', description: '', privateKeyPassphrase: 'secret' },
-      { certificate: certificateFile, privateKey: privateKeyFile, certificateChain: certificateChainFile }
+      {
+        certificate: expect.objectContaining({ name: 'cert.pem' }),
+        privateKey: expect.objectContaining({ name: 'key.pem' }),
+        certificateChain: expect.objectContaining({ name: 'chain.pem' })
+      }
     );
   });
 
   test('should show the backend error message when the import fails', async () => {
     certificateService.importCertificate.mockReturnValue(throwError(() => 'boom'));
 
-    const certificateFile = new File(['cert'], 'cert.pem');
-    const privateKeyFile = new File(['key'], 'key.pem');
-
     await tester.name.fill('my cert');
-    tester.componentInstance.onFileSelected('certificateFile', certificateFile);
-    tester.componentInstance.onFileSelected('privateKeyFile', privateKeyFile);
-    tester.fixture.detectChanges();
-
+    await tester.certificateFile.upload(certificateFile);
+    await tester.privateKeyFile.upload(privateKeyFile);
     await tester.save.click();
-    tester.fixture.detectChanges();
 
-    expect(tester.componentInstance.error()).toBe('boom');
     await expect.element(tester.error).toMatchTextContent('boom');
     expect(activeModal.close).not.toHaveBeenCalled();
   });
 
-  test('should reject a file that is too large', () => {
-    const bigFile = new File([new Uint8Array(1024 * 1024 + 1)], 'big.pem');
+  test('should reject a file that is too large', async () => {
+    await tester.certificateFile.upload(new File([new Uint8Array(1024 * 1024 + 1)], 'big.pem'));
 
-    tester.componentInstance.onFileSelected('certificateFile', bigFile);
-
-    expect(tester.componentInstance.fileError()).toBe('file-too-large');
-    expect(tester.componentInstance.certificateFile).not.toBe(bigFile);
+    await expect.element(page.getByRole('alert')).toHaveTextContent('The selected file is too large. Maximum size is 1 MB');
+    await expect.element(tester.certificateFileButton).toHaveTextContent('Choose a file');
   });
 
   test('should cancel', async () => {
@@ -146,9 +139,9 @@ describe('ImportCertificateModalComponent', () => {
       expect(tester.componentInstance.canDismiss()).toBe(true);
     });
 
-    test('should confirm unsaved changes when a file was selected', () => {
+    test('should confirm unsaved changes when a file was selected', async () => {
       unsavedChangesConfirmationService.confirmUnsavedChanges.mockReturnValue(of(true));
-      tester.componentInstance.onFileSelected('certificateFile', new File(['cert'], 'cert.pem'));
+      await tester.certificateFile.upload(certificateFile);
 
       const result = tester.componentInstance.canDismiss();
 

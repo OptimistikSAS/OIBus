@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, forwardRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, inject, signal } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -141,7 +141,11 @@ export class EditSouthComponent implements CanComponentDeactivate {
 
   inMemoryItems: Array<SouthConnectorItemCommandDTO> = [];
   filteredItems: Array<SouthConnectorItemCommandDTO> = [];
-  displayedItems: Page<SouthConnectorItemCommandDTO> = emptyPage();
+  /**
+   * The displayed page of items. Every asynchronous update of the page state (data loading, modal results, confirmations)
+   * ends with `changePage()`, so this signal is also what notifies change detection about it.
+   */
+  readonly displayedItems = signal<Page<SouthConnectorItemCommandDTO>>(emptyPage());
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
   groupFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
   scanModeFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
@@ -375,7 +379,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
     modalRef.result.subscribe((command: SouthConnectorItemCommandDTO) => {
       this.inMemoryItems.push(command);
       this.filteredItems = this.filter();
-      this.changePage(this.displayedItems.number);
+      this.changePage(this.displayedItems().number);
     });
   }
 
@@ -398,7 +402,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
     modalRef.result.subscribe((command: SouthConnectorItemCommandDTO) => {
       this.inMemoryItems.push(command);
       this.filteredItems = this.filter();
-      this.changePage(this.displayedItems.number);
+      this.changePage(this.displayedItems().number);
     });
   }
 
@@ -431,7 +435,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
     modalRef.result.subscribe((command: SouthConnectorItemCommandDTO) => {
       this.inMemoryItems[tableIndex] = command;
       this.filteredItems = this.filter();
-      this.changePage(this.displayedItems.number);
+      this.changePage(this.displayedItems().number);
     });
   }
 
@@ -443,7 +447,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
       .subscribe(() => {
         this.inMemoryItems = this.inMemoryItems.filter(element => element.name !== item.name);
         this.filteredItems = this.filter();
-        this.changePage(this.displayedItems.number);
+        this.changePage(this.displayedItems().number);
       });
   }
 
@@ -747,7 +751,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
 
   changePage(pageNumber: number) {
     this.sortTable();
-    this.displayedItems = createPageFromArray(this.filteredItems, PAGE_SIZE, pageNumber);
+    this.displayedItems.set(createPageFromArray(this.filteredItems, PAGE_SIZE, pageNumber));
   }
 
   filter(): Array<SouthConnectorItemCommandDTO> {
@@ -871,7 +875,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
     this.selectedItems.clear();
     this.updateSelectionState();
     this.filteredItems = this.filter();
-    this.changePage(this.displayedItems.number);
+    this.changePage(this.displayedItems().number);
   }
 
   disableSelectedItems() {
@@ -884,7 +888,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
     this.selectedItems.clear();
     this.updateSelectionState();
     this.filteredItems = this.filter();
-    this.changePage(this.displayedItems.number);
+    this.changePage(this.displayedItems().number);
   }
 
   deleteSelectedItems() {
@@ -898,7 +902,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
         this.selectedItems.clear();
         this.updateSelectionState();
         this.filteredItems = this.filter();
-        this.changePage(this.displayedItems.number);
+        this.changePage(this.displayedItems().number);
       });
   }
 
@@ -922,7 +926,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
       this.selectedItems.clear();
       this.updateSelectionState();
       this.filteredItems = this.filter();
-      this.changePage(this.displayedItems.number);
+      this.changePage(this.displayedItems().number);
     });
   }
 

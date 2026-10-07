@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, forwardRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, inject, signal } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -195,7 +195,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     southSettings: FormGroup;
   }> | null = null;
 
-  inMemoryTransformersWithOptions: Array<HistoryTransformerDTOWithOptions> = [];
+  readonly inMemoryTransformersWithOptions = signal<Array<HistoryTransformerDTOWithOptions>>([]);
   scanModeAttribute: OIBusScanModeAttribute = {
     type: 'scan-mode',
     key: 'scanMode',
@@ -211,7 +211,11 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
 
   inMemoryItems: Array<HistoryQueryItemCommandDTO> = [];
   filteredItems: Array<HistoryQueryItemCommandDTO> = [];
-  displayedItems: Page<HistoryQueryItemCommandDTO> = emptyPage();
+  /**
+   * The displayed page of items. Every asynchronous update of the page state (data loading, modal results, confirmations)
+   * ends with `changePage()`, so this signal is also what notifies change detection about it.
+   */
+  readonly displayedItems = signal<Page<HistoryQueryItemCommandDTO>>(emptyPage());
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
   statusFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
 
@@ -296,15 +300,17 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
                   settings: item.settings
                 }) as HistoryQueryItemCommandDTO
             );
-            this.inMemoryTransformersWithOptions = historyQuery.northTransformers.map(element => ({
-              id: this.duplicateId ? `temp_${element.id}` : element.id, // temp id is used to create new transformers and manage through the id transformer from list
-              items: element.items.map(item => ({
-                ...item,
-                id: this.duplicateId ? `temp_${item.id}` : item.id // use temp id that should match item id with temp from previous map loop
-              })),
-              transformer: element.transformer,
-              options: element.options
-            }));
+            this.inMemoryTransformersWithOptions.set(
+              historyQuery.northTransformers.map(element => ({
+                id: this.duplicateId ? `temp_${element.id}` : element.id, // temp id is used to create new transformers and manage through the id transformer from list
+                items: element.items.map(item => ({
+                  ...item,
+                  id: this.duplicateId ? `temp_${item.id}` : item.id // use temp id that should match item id with temp from previous map loop
+                })),
+                transformer: element.transformer,
+                options: element.options
+              }))
+            );
           }
           // creating new from an existing south and north connector
           else {
@@ -324,18 +330,20 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
             if (northConnector) {
               this.northType = northConnector.type;
               this.fromNorthId = northConnector.id;
-              this.inMemoryTransformersWithOptions = northConnector.transformers
-                // only keep transformers attached to the south used to create the history query. Otherwise, the transformers are not useful for this history
-                .filter(element => element.source.type === 'south' && element.source.south.id === this.fromSouthId)
-                .map(element => ({
-                  id: `temp_${element.id}`,
-                  transformer: element.transformer,
-                  options: element.options,
-                  items: (element.source as SourceOriginSouthDTO).items.map(item => ({
-                    ...item,
-                    id: `temp_${item.id}` // use temp id that should match item id with temp from previous map loop
+              this.inMemoryTransformersWithOptions.set(
+                northConnector.transformers
+                  // only keep transformers attached to the south used to create the history query. Otherwise, the transformers are not useful for this history
+                  .filter(element => element.source.type === 'south' && element.source.south.id === this.fromSouthId)
+                  .map(element => ({
+                    id: `temp_${element.id}`,
+                    transformer: element.transformer,
+                    options: element.options,
+                    items: (element.source as SourceOriginSouthDTO).items.map(item => ({
+                      ...item,
+                      id: `temp_${item.id}` // use temp id that should match item id with temp from previous map loop
+                    }))
                   }))
-                }));
+              );
             }
           }
           return combineLatest([
@@ -543,7 +551,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
         }
       },
       items: this.inMemoryItems,
-      northTransformers: this.inMemoryTransformersWithOptions.map(element => ({
+      northTransformers: this.inMemoryTransformersWithOptions().map(element => ({
         id: element.id,
         transformerId: element.transformer.id,
         options: element.options,
@@ -567,12 +575,12 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
 
   updateInMemoryTransformers(transformersWithOptions: Array<HistoryTransformerDTOWithOptions> | null) {
     if (transformersWithOptions) {
-      this.inMemoryTransformersWithOptions = transformersWithOptions;
+      this.inMemoryTransformersWithOptions.set(transformersWithOptions);
     } else {
       // When child signals backend update, refresh current connector view and in-memory cache
       this.historyQueryService.findById(this.historyQuery!.id).subscribe(historyQuery => {
         this.historyQuery = JSON.parse(JSON.stringify(historyQuery));
-        this.inMemoryTransformersWithOptions = [...historyQuery.northTransformers];
+        this.inMemoryTransformersWithOptions.set([...historyQuery.northTransformers]);
       });
     }
   }
@@ -652,12 +660,12 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
     component.directSave = false;
-    component.inMemoryTransformers = this.inMemoryTransformersWithOptions;
+    component.inMemoryTransformers = this.inMemoryTransformersWithOptions();
     component.prepareForCreation(this.inMemoryItems, this.historyId, this.fromSouthId, this.southConnectorCommand, this.southManifest!);
     modalRef.result.subscribe((command: HistoryQueryItemCommandDTO) => {
       this.inMemoryItems = [...this.inMemoryItems, command];
       this.filteredItems = this.filter();
-      this.changePage(this.displayedItems.number);
+      this.changePage(this.displayedItems().number);
     });
   }
 
@@ -665,12 +673,12 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
     component.directSave = false;
-    component.inMemoryTransformers = this.inMemoryTransformersWithOptions;
+    component.inMemoryTransformers = this.inMemoryTransformersWithOptions();
     component.prepareForCopy(this.inMemoryItems, item, this.historyId, this.fromSouthId, this.southConnectorCommand, this.southManifest!);
     modalRef.result.subscribe((command: HistoryQueryItemCommandDTO) => {
       this.inMemoryItems = [...this.inMemoryItems, command];
       this.filteredItems = this.filter();
-      this.changePage(this.displayedItems.number);
+      this.changePage(this.displayedItems().number);
     });
   }
 
@@ -685,7 +693,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
     component.directSave = false;
-    component.inMemoryTransformers = this.inMemoryTransformersWithOptions;
+    component.inMemoryTransformers = this.inMemoryTransformersWithOptions();
     const tableIndex = findItemIndex(this.inMemoryItems, item);
     component.prepareForEdition(
       this.inMemoryItems,
@@ -700,7 +708,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
       this.inMemoryItems[tableIndex] = command;
       this.inMemoryItems = [...this.inMemoryItems];
       this.filteredItems = this.filter();
-      this.changePage(this.displayedItems.number);
+      this.changePage(this.displayedItems().number);
     });
   }
 
@@ -708,7 +716,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     this.confirmationService.confirm({ messageKey: 'history-query.items.confirm-deletion' }).subscribe(() => {
       this.inMemoryItems = [...this.inMemoryItems.filter(i => i.name !== item.name)];
       this.filteredItems = this.filter();
-      this.changePage(this.displayedItems.number);
+      this.changePage(this.displayedItems().number);
     });
   }
 
@@ -778,7 +786,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
 
   changePage(pageNumber: number) {
     this.sortTable();
-    this.displayedItems = createPageFromArray(this.filteredItems, PAGE_SIZE, pageNumber);
+    this.displayedItems.set(createPageFromArray(this.filteredItems, PAGE_SIZE, pageNumber));
   }
 
   filter(): Array<HistoryQueryItemCommandDTO> {
@@ -858,7 +866,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     this.selectedItems.clear();
     this.updateSelectionState();
     this.filteredItems = this.filter();
-    this.changePage(this.displayedItems.number);
+    this.changePage(this.displayedItems().number);
   }
 
   disableSelectedItems() {
@@ -867,7 +875,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
     this.updateSelectionState();
     this.filteredItems = this.filter();
     this.filteredItems = this.filter();
-    this.changePage(this.displayedItems.number);
+    this.changePage(this.displayedItems().number);
   }
 
   deleteSelectedItems() {
@@ -881,7 +889,7 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
         this.selectedItems.clear();
         this.updateSelectionState();
         this.filteredItems = this.filter();
-        this.changePage(this.displayedItems.number);
+        this.changePage(this.displayedItems().number);
       });
   }
 }

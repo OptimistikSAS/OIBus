@@ -8,7 +8,7 @@
         @if (row.wrapInRow) {
           <div class="row">
             @for (column of row.columns; track column) {
-              @if (group().get(column.attribute.key)!.enabled) {
+              @if (group().get(column.attribute.key)?.enabled) {
                 <div [class]="'col-md-' + column.size">
                   @switch (column.attribute.type) {
                     @case ('number') {
@@ -54,7 +54,7 @@
             }
           </div>
         } @else {
-          @if (group().get(row.columns[0].attribute.key)!.enabled) {
+          @if (group().get(row.columns[0].attribute.key)?.enabled) {
             @switch (row.columns[0].attribute.type) {
               @case ('object') {
                 <ng-container [formGroupName]="row.columns[0].attribute.key">
@@ -117,7 +117,7 @@
       @if (row.wrapInRow) {
         <div class="row">
           @for (column of row.columns; track column) {
-            @if (group().get(column.attribute.key)!.enabled) {
+            @if (group().get(column.attribute.key)?.enabled) {
               <div [class]="'col-md-' + column.size">
                 @switch (column.attribute.type) {
                   @case ('number') {
@@ -163,7 +163,7 @@
           }
         </div>
       } @else {
-        @if (group().get(row.columns[0].attribute.key)!.enabled) {
+        @if (group().get(row.columns[0].attribute.key)?.enabled) {
           @switch (row.columns[0].attribute.type) {
             @case ('object') {
               <ng-container [formGroupName]="row.columns[0].attribute.key">

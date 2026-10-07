@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -28,7 +28,7 @@ export interface SouthItemsCheckResult {
   selector: 'oib-import-south-items-modal',
   templateUrl: './import-south-items-modal.component.html',
   styleUrl: './import-south-items-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, PaginationComponent, TranslatePipe, NgbTooltip, ReactiveFormsModule]
 })
 export class ImportSouthItemsModalComponent {
@@ -40,11 +40,11 @@ export class ImportSouthItemsModalComponent {
 
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
   initializeFile = new File([''], 'Choose a file');
-  selectedFile: File = this.initializeFile;
-  validationError: CsvValidationError | null = null;
-  mqttValidationError: MqttTopicValidationError | null = null;
-  checking = false;
-  checkError: string | null = null;
+  readonly selectedFile = signal<File>(this.initializeFile);
+  readonly validationError = signal<CsvValidationError | null>(null);
+  readonly mqttValidationError = signal<MqttTopicValidationError | null>(null);
+  readonly checking = signal(false);
+  readonly checkError = signal<string | null>(null);
 
   form = this.fb.group({
     delimiter: ['COMMA' as CsvCharacter, Validators.required],
@@ -55,14 +55,14 @@ export class ImportSouthItemsModalComponent {
   optionalHeaders: Array<string> = [];
   existingMqttTopics: Array<string> = [];
   isMqttConnector = false;
-  showEraseOption = false;
+  readonly showEraseOption = signal(false);
   private checkFn!: (file: File, delimiter: string, deleteItemsNotPresent: boolean) => Observable<SouthItemsCheckResult>;
 
   displaySettings: Array<OIBusAttribute> = [];
-  newItemList: Array<SouthConnectorItemCommandDTO> = [];
-  errorList: Array<{ item: Record<string, string>; error: string }> = [];
-  displayedItemsNew: Page<SouthConnectorItemCommandDTO> = emptyPage();
-  displayedItemsError: Page<{ item: Record<string, string>; error: string }> = emptyPage();
+  readonly newItemList = signal<Array<SouthConnectorItemCommandDTO>>([]);
+  readonly errorList = signal<Array<{ item: Record<string, string>; error: string }>>([]);
+  readonly displayedItemsNew = signal<Page<SouthConnectorItemCommandDTO>>(emptyPage());
+  readonly displayedItemsError = signal<Page<{ item: Record<string, string>; error: string }>>(emptyPage());
 
   prepare(
     manifest: SouthConnectorManifest,
@@ -77,7 +77,7 @@ export class ImportSouthItemsModalComponent {
     this.optionalHeaders = optionalHeaders;
     this.existingMqttTopics = existingMqttTopics;
     this.isMqttConnector = isMqttConnector;
-    this.showEraseOption = showEraseOption;
+    this.showEraseOption.set(showEraseOption);
     this.checkFn = checkFn;
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
@@ -87,16 +87,16 @@ export class ImportSouthItemsModalComponent {
 
   get canImport(): boolean {
     return (
-      this.selectedFile !== this.initializeFile &&
-      !this.validationError &&
-      !this.mqttValidationError &&
-      !this.checking &&
-      this.newItemList.length > 0
+      this.selectedFile() !== this.initializeFile &&
+      !this.validationError() &&
+      !this.mqttValidationError() &&
+      !this.checking() &&
+      this.newItemList().length > 0
     );
   }
 
   async onFileSelected(file: File): Promise<void> {
-    this.selectedFile = file;
+    this.selectedFile.set(file);
     await this.revalidateAndCheck();
   }
 
@@ -114,7 +114,7 @@ export class ImportSouthItemsModalComponent {
 
   submit() {
     this.modal.close({
-      items: this.newItemList,
+      items: this.newItemList(),
       eraseExisting: this.form.controls.eraseExisting.value
     });
   }
@@ -132,11 +132,11 @@ export class ImportSouthItemsModalComponent {
   }
 
   changePageNew(pageNumber: number) {
-    this.displayedItemsNew = createPageFromArray(this.newItemList, PAGE_SIZE, pageNumber);
+    this.displayedItemsNew.set(createPageFromArray(this.newItemList(), PAGE_SIZE, pageNumber));
   }
 
   changePageError(pageNumber: number) {
-    this.displayedItemsError = createPageFromArray(this.errorList, PAGE_SIZE, pageNumber);
+    this.displayedItemsError.set(createPageFromArray(this.errorList(), PAGE_SIZE, pageNumber));
   }
 
   onImportDragOver(e: Event) {
@@ -161,54 +161,56 @@ export class ImportSouthItemsModalComponent {
   }
 
   private async revalidateAndCheck(): Promise<void> {
-    this.validationError = null;
-    this.mqttValidationError = null;
-    this.checkError = null;
+    this.validationError.set(null);
+    this.mqttValidationError.set(null);
+    this.checkError.set(null);
     this.resetResults();
 
-    if (this.selectedFile === this.initializeFile) {
+    const selectedFile = this.selectedFile();
+    if (selectedFile === this.initializeFile) {
       return;
     }
 
     const delimiter = convertCsvDelimiter(this.form.controls.delimiter.value);
-    this.validationError = await validateCsvHeaders(this.selectedFile, delimiter, this.expectedHeaders, this.optionalHeaders);
+    this.validationError.set(await validateCsvHeaders(selectedFile, delimiter, this.expectedHeaders, this.optionalHeaders));
 
-    if (!this.validationError && this.isMqttConnector) {
-      this.mqttValidationError = await validateCsvMqttTopics(this.selectedFile, delimiter, this.existingMqttTopics);
+    if (!this.validationError() && this.isMqttConnector) {
+      this.mqttValidationError.set(await validateCsvMqttTopics(selectedFile, delimiter, this.existingMqttTopics));
     }
 
-    if (!this.validationError && !this.mqttValidationError) {
+    if (!this.validationError() && !this.mqttValidationError()) {
       await this.runCheck();
     }
   }
 
   private async runCheck(): Promise<void> {
-    if (this.selectedFile === this.initializeFile || this.validationError || this.mqttValidationError) {
+    const selectedFile = this.selectedFile();
+    if (selectedFile === this.initializeFile || this.validationError() || this.mqttValidationError()) {
       return;
     }
 
     const delimiter = convertCsvDelimiter(this.form.controls.delimiter.value);
     const eraseExisting = this.form.controls.eraseExisting.value;
-    this.checking = true;
-    this.checkError = null;
+    this.checking.set(true);
+    this.checkError.set(null);
     try {
-      const result = await firstValueFrom(this.checkFn(this.selectedFile, delimiter, eraseExisting));
-      this.newItemList = result.items;
-      this.errorList = result.errors;
+      const result = await firstValueFrom(this.checkFn(selectedFile, delimiter, eraseExisting));
+      this.newItemList.set(result.items);
+      this.errorList.set(result.errors);
       this.changePageNew(0);
       this.changePageError(0);
     } catch (error: unknown) {
-      this.checkError = (error as { error?: { message?: string }; message?: string }).error?.message || 'Unknown error';
+      this.checkError.set((error as { error?: { message?: string }; message?: string }).error?.message || 'Unknown error');
       this.resetResults();
     } finally {
-      this.checking = false;
+      this.checking.set(false);
     }
   }
 
   private resetResults(): void {
-    this.newItemList = [];
-    this.errorList = [];
-    this.displayedItemsNew = emptyPage();
-    this.displayedItemsError = emptyPage();
+    this.newItemList.set([]);
+    this.errorList.set([]);
+    this.displayedItemsNew.set(emptyPage());
+    this.displayedItemsError.set(emptyPage());
   }
 }

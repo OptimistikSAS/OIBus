@@ -35,7 +35,7 @@
           <div class="form-text" translate="south.workflows.discovery-scope-node-hint"></div>
           <div class="d-flex align-items-center gap-2">
             <span class="form-control form-control-sm text-truncate" id="discovery-root-node-id">
-              {{ discoveryRootNodeId || ('south.workflows.discovery-scope-node-none' | translate) }}
+              {{ discoveryRootNodeId() || ('south.workflows.discovery-scope-node-none' | translate) }}
             </span>
             <button
               type="button"
@@ -44,7 +44,7 @@
               (click)="openNodePicker()"
               translate="south.explore.button"
             ></button>
-            @if (discoveryRootNodeId) {
+            @if (discoveryRootNodeId()) {
               <button
                 type="button"
                 class="btn btn-link btn-sm text-nowrap"
@@ -73,18 +73,18 @@
               type="button"
               class="btn btn-secondary btn-sm"
               id="test-discovery-query"
-              [disabled]="!discoveryQuery.trim() || queryTestRunning"
+              [disabled]="!discoveryQuery.trim() || queryTestRunning()"
               (click)="testDiscoveryQuery()"
             >
-              @if (queryTestRunning) {
+              @if (queryTestRunning()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
               <span translate="south.workflows.discovery-scope-query-test"></span>
             </button>
           </div>
-          @if (queryTestError) {
+          @if (queryTestError(); as queryTestError) {
             <div class="alert alert-danger mt-2 mb-0" id="discovery-query-test-error">{{ queryTestError }}</div>
-          } @else if (queryTestResult) {
+          } @else if (queryTestResult(); as queryTestResult) {
             <oib-transformer-test-result class="d-block mt-2" id="discovery-query-test-result" [raw]="queryTestResult" />
           }
         } @else {
@@ -118,7 +118,7 @@
             <label class="form-check-label" for="mode-remote" translate="south.workflows.mode-remote"></label>
           </div>
         }
-        @if (form.controls.pushToOIAnalytics.value && !isRegistered) {
+        @if (form.controls.pushToOIAnalytics.value && !isRegistered()) {
           <div
             class="alert alert-warning py-1 px-2 mt-1"
             id="mode-remote-not-registered"

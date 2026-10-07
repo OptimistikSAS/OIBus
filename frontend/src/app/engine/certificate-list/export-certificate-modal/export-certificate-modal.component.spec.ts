@@ -26,10 +26,6 @@ class ExportCertificateModalComponentTester {
   readonly save = page.getByCss('#save-button');
   readonly cancel = page.getByCss('#cancel-button');
   readonly error = page.getByCss('.alert-danger');
-
-  constructor() {
-    this.fixture.detectChanges();
-  }
 }
 
 describe('ExportCertificateModalComponent', () => {
@@ -69,7 +65,6 @@ describe('ExportCertificateModalComponent', () => {
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
     tester = new ExportCertificateModalComponentTester();
     tester.componentInstance.prepare(certificate);
-    tester.fixture.detectChanges();
   });
 
   test('should export the certificate in PEM format without the private key by default', async () => {
@@ -103,11 +98,9 @@ describe('ExportCertificateModalComponent', () => {
 
   test('should show a validation error and not export when passphrases do not match', async () => {
     await tester.includePrivateKey.click();
-    tester.fixture.detectChanges();
     await tester.passphrase.fill('password1');
     await tester.passphraseConfirmation.fill('password2');
     await tester.save.click();
-    tester.fixture.detectChanges();
 
     await expect.element(tester.validationErrors).toBeInTheDocument();
     expect(certificateService.exportCertificate).not.toHaveBeenCalled();
@@ -119,7 +112,6 @@ describe('ExportCertificateModalComponent', () => {
     certificateService.exportPrivateKey.mockReturnValue(of(undefined));
 
     await tester.includePrivateKey.click();
-    tester.fixture.detectChanges();
     await tester.passphrase.fill('password1');
     await tester.passphraseConfirmation.fill('password1');
     await tester.save.click();
@@ -133,9 +125,7 @@ describe('ExportCertificateModalComponent', () => {
     certificateService.exportCertificate.mockReturnValue(throwError(() => 'boom'));
 
     await tester.save.click();
-    tester.fixture.detectChanges();
 
-    expect(tester.componentInstance.error()).toBe('boom');
     await expect.element(tester.error).toMatchTextContent('boom');
     expect(activeModal.close).not.toHaveBeenCalled();
   });

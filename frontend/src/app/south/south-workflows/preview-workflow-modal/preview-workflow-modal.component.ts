@@ -64,9 +64,9 @@ export default class PreviewWorkflowModalComponent {
   private notificationService = inject(NotificationService);
   private downloadService = inject(DownloadService);
 
-  workflowName = '';
-  result: WorkflowPreviewResultDTO | WorkflowRunDetailDTO | null = null;
-  context: PreviewModalContext = 'preview';
+  readonly workflowName = signal('');
+  readonly result = signal<WorkflowPreviewResultDTO | WorkflowRunDetailDTO | null>(null);
+  readonly context = signal<PreviewModalContext>('preview');
   // Opened up front, before the request that fills `result` resolves - see this modal's own callers
   // (onPreview/onViewPayload), which open it immediately rather than waiting on the HTTP call first.
   readonly loading = signal(true);
@@ -75,12 +75,12 @@ export default class PreviewWorkflowModalComponent {
   // than on result.entries/records directly) is what picks which table (or the empty state) to show.
   // Built once, when `result` is set - never rebuilt afterward, since `result` itself never changes
   // again for the lifetime of one modal open (see prepareForPreview/prepareForRunPayload).
-  paginatedEntries: ArrayPage<PreviewEntryRow> | null = null;
-  paginatedRecords: ArrayPage<Record<string, string>> | null = null;
+  readonly paginatedEntries = signal<ArrayPage<PreviewEntryRow> | null>(null);
+  readonly paginatedRecords = signal<ArrayPage<Record<string, string>> | null>(null);
   /** Union of every row's flattened keys, in first-seen order - rows can have different shapes (e.g.
    *  different node types carry different metadata fields), so every row lines up under one header.
    *  Shared by the table and the CSV export, so both always show the same columns. */
-  columns: Array<string> = [];
+  readonly columns = signal<Array<string>>([]);
   private entryRows: Array<PreviewEntryRow> = [];
   private recordRows: Array<Record<string, string>> = [];
 
@@ -111,8 +111,8 @@ export default class PreviewWorkflowModalComponent {
   }
 
   private subscribeToPreview(preview: Observable<WorkflowPreviewResultDTO>, workflowName: string): void {
-    this.workflowName = workflowName;
-    this.context = 'preview';
+    this.workflowName.set(workflowName);
+    this.context.set('preview');
     preview.subscribe({
       next: result => {
         this.applyResult(result);
@@ -126,8 +126,8 @@ export default class PreviewWorkflowModalComponent {
 
   /** A historical run's own full discovered payload, fetched on demand. */
   prepareForRunPayload(southId: string, workflowId: string, runId: string, workflowName: string): void {
-    this.workflowName = workflowName;
-    this.context = 'run-payload';
+    this.workflowName.set(workflowName);
+    this.context.set('run-payload');
     this.configurationWorkflowService.getRun(southId, workflowId, runId).subscribe({
       next: detail => {
         this.applyResult(detail);
@@ -140,16 +140,16 @@ export default class PreviewWorkflowModalComponent {
   }
 
   private applyResult(result: WorkflowPreviewResultDTO | WorkflowRunDetailDTO): void {
-    this.result = result;
+    this.result.set(result);
     this.entryRows = result.entries.map(entry => ({
       entry,
       values: flattenPlainObject(entry.record ?? entry.previousMetadata ?? {}),
       previousValues: entry.status === 'changed' && entry.previousMetadata ? flattenPlainObject(entry.previousMetadata) : null
     }));
     this.recordRows = result.records.map(record => flattenPlainObject(record));
-    this.columns = collectColumns(this.entryRows.length > 0 ? this.entryRows.map(row => row.values) : this.recordRows);
-    this.paginatedEntries = this.entryRows.length > 0 ? new ArrayPage(this.entryRows, PAGE_SIZE) : null;
-    this.paginatedRecords = this.recordRows.length > 0 ? new ArrayPage(this.recordRows, PAGE_SIZE) : null;
+    this.columns.set(collectColumns(this.entryRows.length > 0 ? this.entryRows.map(row => row.values) : this.recordRows));
+    this.paginatedEntries.set(this.entryRows.length > 0 ? new ArrayPage(this.entryRows, PAGE_SIZE) : null);
+    this.paginatedRecords.set(this.recordRows.length > 0 ? new ArrayPage(this.recordRows, PAGE_SIZE) : null);
     this.loading.set(false);
   }
 
@@ -167,13 +167,14 @@ export default class PreviewWorkflowModalComponent {
   /** The full created/updated/disabled/pushed breakdown behind a run's summary - only available (and
    *  only ever shown) for a historical run's payload, never for a live preview. */
   get runCounts(): WorkflowRunDetailDTO | null {
-    return this.context === 'run-payload' ? (this.result as WorkflowRunDetailDTO) : null;
+    return this.context() === 'run-payload' ? (this.result() as WorkflowRunDetailDTO) : null;
   }
 
   /** True once there is at least one entry or raw record worth exporting - disables the export
    *  button rather than let it produce an empty file. */
   get hasExportableRows(): boolean {
-    return !!this.result && (this.result.entries.length > 0 || this.result.records.length > 0);
+    const result = this.result();
+    return !!result && (result.entries.length > 0 || result.records.length > 0);
   }
 
   /**
@@ -184,19 +185,21 @@ export default class PreviewWorkflowModalComponent {
    * flatten against the way south item CSV export does (see that function's own doc comment).
    */
   exportCsv(): void {
-    if (!this.result) {
+    if (!this.result()) {
       return;
     }
     const isEntries = this.entryRows.length > 0;
     const rows: Array<Record<string, string>> = isEntries
       ? this.entryRows.map(row => ({ key: row.entry.key, status: row.entry.status, ...row.values }))
       : this.recordRows;
-    const columns = isEntries ? ['key', 'status', ...this.columns.filter(column => column !== 'key' && column !== 'status')] : this.columns;
+    const columns = isEntries
+      ? ['key', 'status', ...this.columns().filter(column => column !== 'key' && column !== 'status')]
+      : this.columns();
 
     const content = csv.unparse(rows, { columns, delimiter: ',' });
     const blob = new Blob([content], { type: 'text/csv' });
-    const namePrefix = this.context === 'run-payload' ? 'run-payload' : 'preview';
-    const workflowSlug = this.workflowName.replace(/[^a-zA-Z0-9-_]+/g, '_');
+    const namePrefix = this.context() === 'run-payload' ? 'run-payload' : 'preview';
+    const workflowSlug = this.workflowName().replace(/[^a-zA-Z0-9-_]+/g, '_');
     const filename = `${namePrefix}_${workflowSlug}_${DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS')}.csv`;
     this.downloadService.downloadFile({ blob, name: filename });
   }

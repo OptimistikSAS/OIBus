@@ -92,6 +92,7 @@ describe('LogsComponent', () => {
 
   beforeEach(() => {
     logService = createMock(LogService);
+    logService.search.mockReturnValue(of(emptyLogPage));
     pageLoader = createMock(PageLoader);
     pageLoads$ = new BehaviorSubject<number>(0);
 

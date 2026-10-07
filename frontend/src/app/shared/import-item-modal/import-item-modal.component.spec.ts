@@ -8,43 +8,41 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { ImportItemModalComponent } from './import-item-modal.component';
 
-class ImportSouthItemModalComponentTester {
+class ImportItemModalComponentTester {
   readonly fixture = TestBed.createComponent(ImportItemModalComponent);
-  readonly component = this.fixture.componentInstance;
-  readonly saveButton = page.getByCss('#save-button');
-  readonly cancelButton = page.getByCss('#cancel-button');
+  readonly componentInstance = this.fixture.componentInstance;
+  readonly saveButton = page.getByRole('button', { name: 'Save' });
+  readonly cancelButton = page.getByRole('button', { name: 'Cancel' });
   readonly importButton = page.getByCss('#import-button');
   readonly fileInput = page.getByCss('#file');
-  readonly errorAlert = page.getByCss('.alert-danger');
+  readonly delimiter = page.getByLabelText('Delimiter');
+  readonly eraseExisting = page.getByLabelText('Erase existing elements');
+  readonly formatError = page.getByRole('alert').filter({ hasText: 'CSV Format Error' });
+  readonly mqttError = page.getByRole('alert').filter({ hasText: 'MQTT Topic Overlap Error' });
+
+  constructor(
+    expectedHeaders: Array<string> = [],
+    options: {
+      optionalHeaders?: Array<string>;
+      existingMqttTopics?: Array<string>;
+      isMqttConnector?: boolean;
+      showEraseOption?: boolean;
+    } = {}
+  ) {
+    this.componentInstance.prepare(
+      expectedHeaders,
+      options.optionalHeaders ?? [],
+      options.existingMqttTopics ?? [],
+      options.isMqttConnector ?? false,
+      options.showEraseOption ?? false
+    );
+  }
 }
 
-describe('ImportSouthItemModalComponent', () => {
-  let tester: ImportSouthItemModalComponentTester;
+const csvFile = (content: string, filename = 'test.csv'): File => new File([content], filename, { type: 'text/csv' });
+
+describe('ImportItemModalComponent', () => {
   let fakeActiveModal: MockObject<NgbActiveModal>;
-
-  // Creates a real File blob (native Blob.text() - for component state tests only)
-  const createMockFile = (content: string, filename = 'test.csv'): File => {
-    const blob = new Blob([content], { type: 'text/csv' });
-    return new File([blob], filename, { type: 'text/csv' });
-  };
-
-  // Creates a File with mocked text() so the Promise is zone-tracked (for DOM update tests)
-  const createZonedFile = (content: string, filename = 'test.csv'): File => {
-    const blob = new Blob([content], { type: 'text/csv' });
-    const file = new File([blob], filename, { type: 'text/csv' });
-    vi.spyOn(file, 'text').mockResolvedValue(content);
-    return file;
-  };
-
-  const selectFile = async (comp: ImportItemModalComponent, file: File) => {
-    await comp.onFileSelected(file);
-    tester.fixture.detectChanges();
-  };
-
-  const changeDelimiter = async (comp: ImportItemModalComponent) => {
-    await comp.onDelimiterChange();
-    tester.fixture.detectChanges();
-  };
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
@@ -52,289 +50,202 @@ describe('ImportSouthItemModalComponent', () => {
     TestBed.configureTestingModule({
       providers: [provideI18nTesting(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
     });
-    tester = new ImportSouthItemModalComponentTester();
   });
 
-  test('should send a delimiter and file when save is clicked', async () => {
-    tester.fixture.detectChanges();
-    const file = createMockFile('name,enabled\ntest,true');
-    const comp = tester.component;
+  test('should send the delimiter and the selected file on save', async () => {
+    const tester = new ImportItemModalComponentTester(['name', 'enabled']);
 
-    comp.selectedFile = file;
-    tester.fixture.detectChanges();
-
+    await tester.fileInput.upload(csvFile('name,enabled\ntest,true'));
+    await expect.element(tester.importButton).toHaveTextContent('test.csv');
     await tester.saveButton.click();
 
     expect(fakeActiveModal.close).toHaveBeenCalledWith({
       delimiter: ',',
-      file,
+      file: tester.componentInstance.selectedFile(),
       eraseExisting: false
     });
+    expect(tester.componentInstance.selectedFile().name).toBe('test.csv');
+  });
+
+  test('should send the erase flag when the option is shown and checked', async () => {
+    const tester = new ImportItemModalComponentTester(['name'], { showEraseOption: true });
+
+    await tester.fileInput.upload(csvFile('name\ntest'));
+    await tester.eraseExisting.click();
+    await tester.saveButton.click();
+
+    expect(fakeActiveModal.close).toHaveBeenCalledWith(expect.objectContaining({ eraseExisting: true }));
+  });
+
+  test('should hide the erase option by default', async () => {
+    const tester = new ImportItemModalComponentTester();
+
+    await expect.element(tester.delimiter).toBeInTheDocument();
+    await expect.element(tester.eraseExisting).not.toBeInTheDocument();
   });
 
   test('should cancel', async () => {
-    tester.fixture.detectChanges();
+    const tester = new ImportItemModalComponentTester();
 
     await tester.cancelButton.click();
-    expect(fakeActiveModal.close).toHaveBeenCalled();
+
+    expect(fakeActiveModal.close).toHaveBeenCalledWith();
   });
 
-  test('should select a file', async () => {
-    tester.fixture.detectChanges();
+  test('should open the file chooser from the import button', async () => {
+    const tester = new ImportItemModalComponentTester();
     const fileInput = tester.fileInput.element() as HTMLInputElement;
-    vi.spyOn(fileInput, 'click').mockImplementation(() => {});
+    vi.spyOn(fileInput, 'click').mockImplementation(() => undefined);
+
     await tester.importButton.click();
+
     expect(fileInput.click).toHaveBeenCalled();
   });
 
-  test('should disable save button when no file is selected', async () => {
-    tester.fixture.detectChanges();
+  test('should disable save until a file is selected', async () => {
+    const tester = new ImportItemModalComponentTester(['name', 'enabled']);
+    await expect.element(tester.saveButton).toBeDisabled();
+
+    await tester.fileInput.upload(csvFile('name,enabled\ntest,true'));
+
+    await expect.element(tester.saveButton).toBeEnabled();
+  });
+
+  test('should show the missing columns of an invalid file', async () => {
+    const tester = new ImportItemModalComponentTester(['name', 'enabled', 'settings_query']);
+
+    await tester.fileInput.upload(csvFile('name,enabled\ntest,true'));
+
+    await expect.element(tester.formatError).toMatchTextContent(/Missing columns:\s*settings_query/);
     await expect.element(tester.saveButton).toBeDisabled();
   });
 
-  test('should enable save button when valid file is selected', async () => {
-    tester.fixture.detectChanges();
-    const comp = tester.component;
-    const file = createZonedFile('name,enabled\ntest,true');
+  test('should show the extra columns of an invalid file', async () => {
+    const tester = new ImportItemModalComponentTester(['name', 'enabled']);
 
-    await selectFile(comp, file);
+    await tester.fileInput.upload(csvFile('name,enabled,extra\ntest,true,value'));
 
-    await expect.element(tester.saveButton).not.toBeDisabled();
-  });
-
-  test('should show validation error for CSV with missing headers', async () => {
-    tester.fixture.detectChanges();
-    const comp = tester.component;
-    comp.expectedHeaders = ['name', 'enabled', 'settings_query'];
-
-    const file = createZonedFile('name,enabled\ntest,true');
-    await selectFile(comp, file);
-
-    expect(comp.validationError).toBeTruthy();
-    expect(comp.validationError?.missingHeaders).toContain('settings_query');
-    await expect.element(tester.errorAlert).toBeInTheDocument();
+    await expect.element(tester.formatError).toMatchTextContent(/Extra columns:\s*extra/);
     await expect.element(tester.saveButton).toBeDisabled();
   });
 
-  test('should show validation error for CSV with extra headers', async () => {
-    tester.fixture.detectChanges();
-    const comp = tester.component;
-    comp.expectedHeaders = ['name', 'enabled'];
+  test('should accept optional columns', async () => {
+    const tester = new ImportItemModalComponentTester(['name'], { optionalHeaders: ['description'] });
 
-    const file = createZonedFile('name,enabled,extra\ntest,true,value');
-    await selectFile(comp, file);
+    await tester.fileInput.upload(csvFile('name,description\ntest,desc'));
 
-    expect(comp.validationError).toBeTruthy();
-    expect(comp.validationError?.extraHeaders).toContain('extra');
-    await expect.element(tester.errorAlert).toBeInTheDocument();
-    await expect.element(tester.saveButton).toBeDisabled();
+    await expect.element(tester.saveButton).toBeEnabled();
+    await expect.element(tester.formatError).not.toBeInTheDocument();
   });
 
-  test('should not show validation error for valid CSV', async () => {
-    tester.fixture.detectChanges();
-    const comp = tester.component;
-    comp.expectedHeaders = ['name', 'enabled'];
+  test('should revalidate the selected file when the delimiter changes', async () => {
+    const tester = new ImportItemModalComponentTester(['name', 'enabled']);
 
-    const file = createZonedFile('name,enabled\ntest,true');
-    await selectFile(comp, file);
+    await tester.fileInput.upload(csvFile('name;enabled\ntest;true'));
+    await expect.element(tester.formatError).toBeInTheDocument();
 
-    expect(comp.validationError).toBeNull();
-    await expect.element(tester.errorAlert).not.toBeInTheDocument();
-    await expect.element(tester.saveButton).not.toBeDisabled();
+    await tester.delimiter.selectOptions('Semi colon ;');
+
+    await expect.element(tester.formatError).not.toBeInTheDocument();
+    await expect.element(tester.saveButton).toBeEnabled();
   });
 
-  test('should revalidate when delimiter changes', async () => {
-    tester.fixture.detectChanges();
-    const comp = tester.component;
-    comp.expectedHeaders = ['name', 'enabled'];
+  test('should select a dropped file', async () => {
+    const tester = new ImportItemModalComponentTester(['name', 'enabled']);
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(csvFile('name,enabled\ntest,true', 'dropped.csv'));
 
-    const file = createZonedFile('name;enabled\ntest;true');
-    await selectFile(comp, file);
+    tester.importButton.element().dispatchEvent(new DragEvent('drop', { dataTransfer, bubbles: true, cancelable: true }));
 
-    expect(comp.validationError).toBeTruthy();
-
-    comp.form.get('delimiter')?.setValue('SEMI_COLON');
-    await changeDelimiter(comp);
-
-    expect(comp.validationError).toBeNull();
+    await expect.element(tester.importButton).toHaveTextContent('dropped.csv');
+    await expect.element(tester.saveButton).toBeEnabled();
   });
 
-  test('should handle file drop', async () => {
-    tester.fixture.detectChanges();
-    const comp = tester.component;
-    const file = createMockFile('name,enabled\ntest,true');
-    const event = {
-      preventDefault: vi.fn(),
-      dataTransfer: { files: [file] }
-    } as unknown as DragEvent;
+  describe('header validation', () => {
+    test.each([
+      { label: 'an empty file', content: '', missingHeaders: ['name', 'enabled'] },
+      { label: 'a header-only file', content: 'name,enabled', missingHeaders: null },
+      { label: 'headers surrounded by spaces', content: ' name , enabled \ntest,true', missingHeaders: null }
+    ])('should validate $label', async ({ content, missingHeaders }) => {
+      const tester = new ImportItemModalComponentTester(['name', 'enabled']);
 
-    const spy = vi.spyOn(comp, 'onFileSelected');
+      await tester.componentInstance.onFileSelected(csvFile(content));
 
-    await comp.onImportDrop(event);
-
-    expect(event.preventDefault).toHaveBeenCalled();
-    expect(spy).toHaveBeenCalledWith(file);
-    expect(comp.selectedFile).toBe(file);
-  });
-
-  test('should handle file input change', async () => {
-    tester.fixture.detectChanges();
-    const comp = tester.component;
-    const file = createMockFile('name,enabled\ntest,true');
-    const input = document.createElement('input');
-    Object.defineProperty(input, 'files', {
-      value: [file],
-      writable: false
+      expect(tester.componentInstance.validationError()?.missingHeaders ?? null).toEqual(missingHeaders);
     });
 
-    const spy = vi.spyOn(comp, 'onFileSelected');
+    test('should not validate when no header is expected', async () => {
+      const tester = new ImportItemModalComponentTester([]);
 
-    await comp.onImportClick({ target: input } as any);
+      await tester.componentInstance.onFileSelected(csvFile('anything,here\ndata,value'));
 
-    expect(spy).toHaveBeenCalledWith(file);
-    expect(comp.selectedFile).toBe(file);
-  });
-
-  test('should handle empty file', async () => {
-    tester.fixture.detectChanges();
-    const comp = tester.component;
-    comp.expectedHeaders = ['name', 'enabled'];
-
-    const file = createMockFile('');
-    await comp.onFileSelected(file);
-
-    expect(comp.validationError).toBeTruthy();
-    expect(comp.validationError?.missingHeaders).toEqual(['name', 'enabled']);
-  });
-
-  test('should handle file with only header line', async () => {
-    tester.fixture.detectChanges();
-    const comp = tester.component;
-    comp.expectedHeaders = ['name', 'enabled'];
-
-    const file = createMockFile('name,enabled');
-    await comp.onFileSelected(file);
-
-    expect(comp.validationError).toBeNull();
-  });
-
-  test('should not validate when no expected headers are set', async () => {
-    tester.fixture.detectChanges();
-    const comp = tester.component;
-    comp.expectedHeaders = [];
-
-    const file = createMockFile('anything,here\ndata,value');
-    await comp.onFileSelected(file);
-
-    expect(comp.validationError).toBeNull();
-  });
-
-  test('should handle file with whitespace in headers', async () => {
-    tester.fixture.detectChanges();
-    const comp = tester.component;
-    comp.expectedHeaders = ['name', 'enabled'];
-
-    const file = createMockFile(' name , enabled \ntest,true');
-    await comp.onFileSelected(file);
-
-    expect(comp.validationError).toBeNull();
-  });
-
-  test('should handle file reading error', async () => {
-    tester.fixture.detectChanges();
-    const comp = tester.component;
-    comp.expectedHeaders = ['name', 'enabled'];
-
-    const errorFile = new File([new Blob(['content'])], 'error.csv', { type: 'text/csv' });
-    vi.spyOn(errorFile, 'text').mockRejectedValue(new Error('File read error'));
-
-    await comp.onFileSelected(errorFile);
-
-    expect(comp.validationError).toBeTruthy();
-    expect(comp.validationError?.missingHeaders).toEqual(['name', 'enabled']);
-  });
-
-  describe('MQTT Topic Validation', () => {
-    beforeEach(() => {
-      tester.fixture.detectChanges();
+      expect(tester.componentInstance.validationError()).toBeNull();
     });
 
-    test('should not show MQTT validation error when not an MQTT connector', async () => {
-      const comp = tester.component;
-      comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
-      comp.isMqttConnector = false;
-      comp.existingMqttTopics = ['/oibus/counter'];
+    test('should report all the expected headers as missing when the file cannot be read', async () => {
+      const tester = new ImportItemModalComponentTester(['name', 'enabled']);
+      const unreadableFile = csvFile('content', 'error.csv');
+      vi.spyOn(unreadableFile, 'text').mockRejectedValue(new Error('File read error'));
 
-      const file = createZonedFile('name,enabled,settings_topic\ntest,true,/oibus/counter');
-      await selectFile(comp, file);
+      await tester.componentInstance.onFileSelected(unreadableFile);
 
-      expect(comp.mqttValidationError).toBeNull();
+      expect(tester.componentInstance.validationError()?.missingHeaders).toEqual(['name', 'enabled']);
+    });
+  });
+
+  describe('MQTT topic validation', () => {
+    const header = 'name,enabled,settings_topic';
+    const expectedHeaders = ['name', 'enabled', 'settings_topic'];
+
+    test('should not check topics when the connector is not MQTT', async () => {
+      const tester = new ImportItemModalComponentTester(expectedHeaders, {
+        isMqttConnector: false,
+        existingMqttTopics: ['/oibus/counter']
+      });
+
+      await tester.fileInput.upload(csvFile(`${header}\ntest,true,/oibus/counter`));
+
+      await expect.element(tester.saveButton).toBeEnabled();
+      await expect.element(tester.mqttError).not.toBeInTheDocument();
     });
 
-    test('should show MQTT validation error for overlapping topics', async () => {
-      const comp = tester.component;
-      comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
-      comp.isMqttConnector = true;
-      comp.existingMqttTopics = ['/oibus/#'];
+    test('should reject a topic overlapping an existing one', async () => {
+      const tester = new ImportItemModalComponentTester(expectedHeaders, { isMqttConnector: true, existingMqttTopics: ['/oibus/#'] });
 
-      const file = createZonedFile('name,enabled,settings_topic\ntest,true,/oibus/counter');
-      await selectFile(comp, file);
+      await tester.fileInput.upload(csvFile(`${header}\ntest,true,/oibus/counter`));
 
-      expect(comp.mqttValidationError).toBeTruthy();
-      expect(comp.mqttValidationError?.topicErrors[0].conflictingTopics).toContain('/oibus/counter');
-    });
-
-    test('should not show MQTT validation error when no overlapping topics', async () => {
-      const comp = tester.component;
-      comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
-      comp.isMqttConnector = true;
-      comp.existingMqttTopics = ['/other/topic'];
-
-      const file = createZonedFile('name,enabled,settings_topic\ntest,true,/oibus/counter');
-      await selectFile(comp, file);
-
-      expect(comp.mqttValidationError).toBeNull();
-    });
-
-    test('should detect overlapping topics within CSV file', async () => {
-      const comp = tester.component;
-      comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
-      comp.isMqttConnector = true;
-      comp.existingMqttTopics = [];
-
-      const file = createZonedFile('name,enabled,settings_topic\ntest1,true,/oibus/#\ntest2,true,/oibus/counter');
-      await selectFile(comp, file);
-
-      expect(comp.mqttValidationError).toBeTruthy();
-      expect(comp.mqttValidationError?.topicErrors[0].conflictingTopics).toContain('/oibus/#');
-      expect(comp.mqttValidationError?.topicErrors[0].conflictingTopics).toContain('/oibus/counter');
-    });
-
-    test('should disable save button when MQTT validation error exists', async () => {
-      const comp = tester.component;
-      comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
-      comp.isMqttConnector = true;
-      comp.existingMqttTopics = ['/oibus/#'];
-
-      const file = createZonedFile('name,enabled,settings_topic\ntest,true,/oibus/counter');
-      await selectFile(comp, file);
-
+      await expect.element(tester.mqttError).toMatchTextContent('/oibus/counter');
       await expect.element(tester.saveButton).toBeDisabled();
     });
 
-    test('should clear MQTT validation error when file changes', async () => {
-      const comp = tester.component;
-      comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
-      comp.isMqttConnector = true;
-      comp.existingMqttTopics = ['/oibus/#'];
+    test('should accept topics that do not overlap', async () => {
+      const tester = new ImportItemModalComponentTester(expectedHeaders, { isMqttConnector: true, existingMqttTopics: ['/other/topic'] });
 
-      const errorFile = createZonedFile('name,enabled,settings_topic\ntest,true,/oibus/counter');
-      await selectFile(comp, errorFile);
-      expect(comp.mqttValidationError).toBeTruthy();
+      await tester.fileInput.upload(csvFile(`${header}\ntest,true,/oibus/counter`));
 
-      const validFile = createZonedFile('name,enabled,settings_topic\ntest,true,/different/topic');
-      await selectFile(comp, validFile);
-      expect(comp.mqttValidationError).toBeNull();
+      await expect.element(tester.saveButton).toBeEnabled();
+      await expect.element(tester.mqttError).not.toBeInTheDocument();
+    });
+
+    test('should reject overlapping topics within the file', async () => {
+      const tester = new ImportItemModalComponentTester(expectedHeaders, { isMqttConnector: true });
+
+      await tester.fileInput.upload(csvFile(`${header}\ntest1,true,/oibus/#\ntest2,true,/oibus/counter`));
+
+      await expect.element(tester.mqttError).toMatchTextContent('/oibus/#');
+      await expect.element(tester.mqttError).toMatchTextContent('/oibus/counter');
+    });
+
+    test('should clear the error when another file is selected', async () => {
+      const tester = new ImportItemModalComponentTester(expectedHeaders, { isMqttConnector: true, existingMqttTopics: ['/oibus/#'] });
+
+      await tester.fileInput.upload(csvFile(`${header}\ntest,true,/oibus/counter`));
+      await expect.element(tester.mqttError).toBeInTheDocument();
+
+      await tester.fileInput.upload(csvFile(`${header}\ntest,true,/different/topic`));
+
+      await expect.element(tester.mqttError).not.toBeInTheDocument();
+      await expect.element(tester.saveButton).toBeEnabled();
     });
   });
 });

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
@@ -15,24 +15,28 @@ const PAGE_SIZE = 20;
   selector: 'oib-import-array-validation-modal',
   templateUrl: './import-array-validation-modal.component.html',
   styleUrl: './import-array-validation-modal.component.scss',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective, PaginationComponent, NgbTooltip]
 })
 export class ImportArrayValidationModalComponent {
   private modal = inject(NgbActiveModal);
 
-  newElementList: Array<Record<string, unknown>> = [];
-  errorList: Array<{
-    element: Record<string, string>;
-    error: string;
-  }> = [];
+  readonly newElementList = signal<Array<Record<string, unknown>>>([]);
+  readonly errorList = signal<
+    Array<{
+      element: Record<string, string>;
+      error: string;
+    }>
+  >([]);
   arrayAttribute!: OIBusArrayAttribute;
-  columns: Array<string> = [];
-  displayedElementsNew: Page<Record<string, unknown>> = emptyPage();
-  displayedElementsError: Page<{
-    element: Record<string, string>;
-    error: string;
-  }> = emptyPage();
+  readonly columns = signal<Array<string>>([]);
+  readonly displayedElementsNew = signal<Page<Record<string, unknown>>>(emptyPage());
+  readonly displayedElementsError = signal<
+    Page<{
+      element: Record<string, string>;
+      error: string;
+    }>
+  >(emptyPage());
 
   prepare(
     arrayAttribute: OIBusArrayAttribute,
@@ -43,9 +47,9 @@ export class ImportArrayValidationModalComponent {
     }>
   ) {
     this.arrayAttribute = arrayAttribute;
-    this.newElementList = newElementList;
-    this.errorList = errorList;
-    this.columns = this.extractColumns(newElementList);
+    this.newElementList.set(newElementList);
+    this.errorList.set(errorList);
+    this.columns.set(this.extractColumns(newElementList));
     this.changePageNew(0);
     this.changePageError(0);
   }
@@ -55,15 +59,15 @@ export class ImportArrayValidationModalComponent {
   }
 
   submit() {
-    this.modal.close(this.newElementList);
+    this.modal.close(this.newElementList());
   }
 
   changePageNew(pageNumber: number) {
-    this.displayedElementsNew = this.createPageNew(pageNumber);
+    this.displayedElementsNew.set(this.createPageNew(pageNumber));
   }
 
   changePageError(pageNumber: number) {
-    this.displayedElementsError = this.createPageError(pageNumber);
+    this.displayedElementsError.set(this.createPageError(pageNumber));
   }
 
   getFieldValue(element: Record<string, unknown>, column: string): string {
@@ -96,14 +100,14 @@ export class ImportArrayValidationModalComponent {
   }
 
   private createPageNew(pageNumber: number): Page<Record<string, unknown>> {
-    return createPageFromArray(this.newElementList, PAGE_SIZE, pageNumber);
+    return createPageFromArray(this.newElementList(), PAGE_SIZE, pageNumber);
   }
 
   private createPageError(pageNumber: number): Page<{
     element: Record<string, string>;
     error: string;
   }> {
-    return createPageFromArray(this.errorList, PAGE_SIZE, pageNumber);
+    return createPageFromArray(this.errorList(), PAGE_SIZE, pageNumber);
   }
 
   protected readonly getElementName = getElementName;

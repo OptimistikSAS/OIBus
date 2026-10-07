@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, LOCALE_ID } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, LOCALE_ID, signal } from '@angular/core';
 import {
   AbstractControl,
   AsyncValidatorFn,
@@ -61,9 +61,9 @@ export class EditScanModeModalComponent {
   private locale = inject(LOCALE_ID);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
-  mode: 'create' | 'edit' = 'create';
+  readonly mode = signal<'create' | 'edit'>('create');
   state = new ObservableState();
-  scanMode: ScanModeDTO | null = null;
+  readonly scanMode = signal<ScanModeDTO | null>(null);
   private existingScanModes: Array<ScanModeDTO> = [];
   private scanModesLoaded = false;
 
@@ -71,7 +71,7 @@ export class EditScanModeModalComponent {
   /** The timezone the recurring rule will be stamped with when saving. */
   readonly timezone: Timezone = this.currentUserService.getTimezone();
   /** Timezone the window was last saved with, when it differs from the current one. */
-  persistedTimezone: Timezone | null = null;
+  readonly persistedTimezone = signal<Timezone | null>(null);
 
   constructor() {
     // Load scan modes list for uniqueness validation asynchronously
@@ -105,10 +105,10 @@ export class EditScanModeModalComponent {
       return this.scanModeService.verifyCron(control.value).pipe(
         map(validatedCronExpression => {
           if (validatedCronExpression.isValid) {
-            this.cronValidationResponse = validatedCronExpression;
+            this.cronValidationResponse.set(validatedCronExpression);
             return null;
           } else {
-            this.cronValidationResponse = null;
+            this.cronValidationResponse.set(null);
             return { cronErrorMessage: validatedCronExpression.errorMessage };
           }
         })
@@ -124,7 +124,7 @@ export class EditScanModeModalComponent {
       }
 
       const isDuplicate = this.existingScanModes.some(scanMode => {
-        if (this.scanMode && scanMode.id === this.scanMode.id) {
+        if (scanMode.id === this.scanMode()?.id) {
           return false;
         }
         return scanMode.name.trim().toLowerCase() === value;
@@ -166,7 +166,7 @@ export class EditScanModeModalComponent {
       { validators: [activationWindowValidator] }
     )
   });
-  cronValidationResponse: ValidatedCronExpression | null = null;
+  readonly cronValidationResponse = signal<ValidatedCronExpression | null>(null);
 
   /**
    * Enable only the controls the current type and window toggle actually use. Disabled controls are
@@ -214,9 +214,9 @@ export class EditScanModeModalComponent {
    * Prepares the component for creation.
    */
   prepareForCreation() {
-    this.mode = 'create';
-    this.scanMode = null;
-    this.persistedTimezone = null;
+    this.mode.set('create');
+    this.scanMode.set(null);
+    this.persistedTimezone.set(null);
     this.form.reset({
       name: '',
       description: '',
@@ -226,7 +226,7 @@ export class EditScanModeModalComponent {
       activationWindowEnabled: false,
       activationWindow: { start: null, end: null, daysOfWeek: [], timeStart: null, timeEnd: null }
     });
-    this.cronValidationResponse = null;
+    this.cronValidationResponse.set(null);
     this.updateEnablement();
     this.form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
   }
@@ -235,12 +235,12 @@ export class EditScanModeModalComponent {
    * Prepares the component for edition.
    */
   prepareForEdition(scanMode: ScanModeDTO) {
-    this.mode = 'edit';
-    this.scanMode = scanMode;
+    this.mode.set('edit');
+    this.scanMode.set(scanMode);
 
     const activationWindow = scanMode.activationWindow;
     const recurring = activationWindow?.recurring ?? null;
-    this.persistedTimezone = recurring?.timezone ?? null;
+    this.persistedTimezone.set(recurring?.timezone ?? null);
 
     // Enable everything before patching so the result does not depend on the previous state of a
     // reused modal instance; updateEnablement() re-applies the correct state right after.
@@ -266,7 +266,7 @@ export class EditScanModeModalComponent {
       }
     });
 
-    this.cronValidationResponse = null;
+    this.cronValidationResponse.set(null);
     this.updateEnablement();
     this.form.markAsPristine();
     this.form.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
@@ -303,10 +303,11 @@ export class EditScanModeModalComponent {
     };
 
     let obs: Observable<ScanModeDTO>;
-    if (this.mode === 'create') {
+    if (this.mode() === 'create') {
       obs = this.scanModeService.create(command);
     } else {
-      obs = this.scanModeService.update(this.scanMode!.id, command).pipe(switchMap(() => this.scanModeService.findById(this.scanMode!.id)));
+      const scanModeId = this.scanMode()!.id;
+      obs = this.scanModeService.update(scanModeId, command).pipe(switchMap(() => this.scanModeService.findById(scanModeId)));
     }
     obs.pipe(this.state.pendingUntilFinalization()).subscribe(scanMode => {
       this.modal.close(scanMode);
@@ -436,13 +437,13 @@ export class EditScanModeModalComponent {
    * Returns the human-readable version of the cron expression.
    */
   get humanReadableCron() {
-    return this.cronValidationResponse?.humanReadableForm ?? '';
+    return this.cronValidationResponse()?.humanReadableForm ?? '';
   }
 
   /**
    * Returns the next 3 cron executions.
    */
   get nextCronExecutions() {
-    return this.cronValidationResponse?.nextExecutions ?? [];
+    return this.cronValidationResponse()?.nextExecutions ?? [];
   }
 }

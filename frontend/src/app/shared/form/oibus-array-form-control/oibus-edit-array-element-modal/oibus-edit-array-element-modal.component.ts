@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, forwardRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, inject, signal } from '@angular/core';
 import { AbstractControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -22,7 +22,7 @@ import { OIBusObjectFormControlComponent } from '../../oibus-object-form-control
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,
-      useFactory: (component: OIBusEditArrayElementModalComponent) => () => component.mode,
+      useFactory: (component: OIBusEditArrayElementModalComponent) => () => component.mode(),
       deps: [forwardRef(() => OIBusEditArrayElementModalComponent)]
     }
   ]
@@ -30,12 +30,12 @@ import { OIBusObjectFormControlComponent } from '../../oibus-object-form-control
 export class OIBusEditArrayElementModalComponent {
   private activeModal = inject(NgbActiveModal);
 
-  mode: 'create' | 'edit' = 'create';
-  scanModes: Array<ScanModeDTO> = [];
-  certificates: Array<CertificateDTO> = [];
+  readonly mode = signal<'create' | 'edit'>('create');
+  readonly scanModes = signal<Array<ScanModeDTO>>([]);
+  readonly certificates = signal<Array<CertificateDTO>>([]);
   parentGroup: FormGroup<any> | null = null;
 
-  elementManifest: OIBusObjectAttribute | null = null;
+  readonly elementManifest = signal<OIBusObjectAttribute | null>(null);
 
   private readonly fb = inject(NonNullableFormBuilder);
 
@@ -47,9 +47,9 @@ export class OIBusEditArrayElementModalComponent {
     parentGroup: FormGroup,
     elementManifest: OIBusObjectAttribute
   ) {
-    this.elementManifest = elementManifest;
-    this.scanModes = scanModes;
-    this.certificates = certificates;
+    this.elementManifest.set(elementManifest);
+    this.scanModes.set(scanModes);
+    this.certificates.set(certificates);
     this.parentGroup = parentGroup;
     this.buildForm();
   }
@@ -61,15 +61,15 @@ export class OIBusEditArrayElementModalComponent {
     value: any,
     elementManifest: OIBusObjectAttribute
   ) {
-    this.mode = 'create';
-    this.elementManifest = elementManifest;
-    this.scanModes = scanModes;
-    this.certificates = certificates;
+    this.mode.set('create');
+    this.elementManifest.set(elementManifest);
+    this.scanModes.set(scanModes);
+    this.certificates.set(certificates);
     this.parentGroup = parentGroup;
     this.buildForm();
     // we have to wrap the value into the root attribute
     const formValue: any = {};
-    formValue[this.elementManifest.key] = value;
+    formValue[elementManifest.key] = value;
     this.form.patchValue(formValue);
   }
 
@@ -80,20 +80,20 @@ export class OIBusEditArrayElementModalComponent {
     value: any,
     elementManifest: OIBusObjectAttribute
   ) {
-    this.mode = 'edit';
-    this.elementManifest = elementManifest;
-    this.scanModes = scanModes;
-    this.certificates = certificates;
+    this.mode.set('edit');
+    this.elementManifest.set(elementManifest);
+    this.scanModes.set(scanModes);
+    this.certificates.set(certificates);
     this.parentGroup = parentGroup;
     this.buildForm();
     // we have to wrap the value into the root attribute
     const formValue: any = {};
-    formValue[this.elementManifest.key] = value;
+    formValue[elementManifest.key] = value;
     this.form.patchValue(formValue);
   }
 
   buildForm() {
-    addAttributeToForm(this.fb, this.form, this.elementManifest!);
+    addAttributeToForm(this.fb, this.form, this.elementManifest()!);
   }
 
   asFormGroup(abstractControl: AbstractControl): FormGroup {
@@ -106,7 +106,7 @@ export class OIBusEditArrayElementModalComponent {
 
   submit() {
     if (this.form.valid) {
-      this.activeModal.close(extractFormValue(this.form.value[this.elementManifest!.key]));
+      this.activeModal.close(extractFormValue(this.form.value[this.elementManifest()!.key]));
     }
   }
 }
