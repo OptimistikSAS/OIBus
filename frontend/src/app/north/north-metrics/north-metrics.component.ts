@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, linkedSignal, NgZone, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, linkedSignal, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -23,7 +23,6 @@ import { NotificationService } from '../../shared/notification.service';
   imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, FileSizePipe, NgbTooltip, TranslatePipe]
 })
 export class NorthMetricsComponent implements OnInit {
-  private zone = inject(NgZone);
   private router = inject(Router);
   private northConnectorService = inject(NorthConnectorService);
   private notificationService = inject(NotificationService);
@@ -43,16 +42,12 @@ export class NorthMetricsComponent implements OnInit {
   }
 
   resetMetrics() {
-    this.zone.run(() => {
-      this.northConnectorService.resetMetrics(this.northConnector().id).subscribe(() => {
-        this.notificationService.success('north.monitoring.metrics-reset');
-      });
+    this.northConnectorService.resetMetrics(this.northConnector().id).subscribe(() => {
+      this.notificationService.success('north.monitoring.metrics-reset');
     });
   }
 
   navigateToDisplay() {
-    this.zone.run(() => {
-      this.router.navigate(['/north', this.northConnector().id]);
-    });
+    this.router.navigate(['/north', this.northConnector().id]);
   }
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 
 import { TranslateDirective } from '@ngx-translate/core';
@@ -30,7 +30,7 @@ export class BreadcrumbComponent implements OnInit {
   private historyQueryService = inject(HistoryQueryService);
   private configurationWorkflowService = inject(ConfigurationWorkflowService);
 
-  breadcrumbs: Array<BreadcrumbItem> = [];
+  readonly breadcrumbs = signal<Array<BreadcrumbItem>>([]);
 
   ngOnInit() {
     // Update breadcrumbs on navigation
@@ -44,7 +44,7 @@ export class BreadcrumbComponent implements OnInit {
         })
       )
       .subscribe(breadcrumbs => {
-        this.breadcrumbs = breadcrumbs;
+        this.breadcrumbs.set(breadcrumbs);
       });
 
     // Initial breadcrumb load
@@ -55,7 +55,7 @@ export class BreadcrumbComponent implements OnInit {
         })
       )
       .subscribe(breadcrumbs => {
-        this.breadcrumbs = breadcrumbs;
+        this.breadcrumbs.set(breadcrumbs);
       });
   }
 

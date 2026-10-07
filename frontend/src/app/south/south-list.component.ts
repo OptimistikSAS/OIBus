@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
@@ -55,16 +55,16 @@ export class SouthListComponent {
   private modalService = inject(ModalService);
   private southConnectorService = inject(SouthConnectorService);
 
-  allSouths: Array<SouthConnectorLightDTO> | null = null;
+  readonly allSouths = signal<Array<SouthConnectorLightDTO> | null>(null);
   filteredSouths: Array<SouthConnectorLightDTO> = [];
-  displayedSouths: Page<SouthConnectorLightDTO> = emptyPage();
+  readonly displayedSouths = signal<Page<SouthConnectorLightDTO>>(emptyPage());
   states = new Map<string, ObservableState>();
-  sortField: SouthSortField = 'name';
-  sortDirection: SortDirection = 'asc';
+  readonly sortField = signal<SouthSortField>('name');
+  readonly sortDirection = signal<SortDirection>('asc');
 
   // Active filters for the clickable status/type legends. Empty array means "no filter" (show all).
-  activeEnabledStates: Array<boolean> = [];
-  activeTypes: Array<OIBusSouthType> = [];
+  readonly activeEnabledStates = signal<Array<boolean>>([]);
+  readonly activeTypes = signal<Array<OIBusSouthType>>([]);
 
   searchForm = inject(NonNullableFormBuilder).group({
     name: [null as string | null]
@@ -80,26 +80,26 @@ export class SouthListComponent {
 
   constructor() {
     this.southConnectorService.list().subscribe(souths => {
-      this.allSouths = souths;
       this.states.clear();
-      this.allSouths.forEach(south => {
+      souths.forEach(south => {
         this.states.set(south.id, new ObservableState());
       });
+      this.allSouths.set(souths);
       this.updateList(0);
     });
 
     this.searchForm.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => {
-      if (this.allSouths) {
+      if (this.allSouths()) {
         this.updateList(0);
       }
     });
   }
 
   /** Distinct South connector types among the currently loaded connectors, used to build the filter chips. */
-  get types(): Array<OIBusSouthType> {
-    const types = new Set((this.allSouths ?? []).map(south => south.type));
+  readonly types = computed(() => {
+    const types = new Set((this.allSouths() ?? []).map(south => south.type));
     return Array.from(types).sort((a, b) => a.localeCompare(b));
-  }
+  });
 
   /**
    * Delete a South connector by its ID
@@ -118,13 +118,13 @@ export class SouthListComponent {
       .subscribe(() => {
         this.southConnectorService
           .list()
-          .pipe(tap(() => (this.allSouths = null)))
+          .pipe(tap(() => this.allSouths.set(null)))
           .subscribe(southList => {
-            this.allSouths = southList;
             this.states.clear();
-            this.allSouths.forEach(south => {
+            southList.forEach(south => {
               this.states.set(south.id, new ObservableState());
             });
+            this.allSouths.set(southList);
             this.updateList(0);
           });
         this.notificationService.success('south.deleted', {
@@ -152,25 +152,25 @@ export class SouthListComponent {
   toggleSort(field: SouthSortField) {
     if (!field) return;
 
-    if (this.sortField === field) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    if (this.sortField() === field) {
+      this.sortDirection.update(direction => (direction === 'asc' ? 'desc' : 'asc'));
     } else {
-      this.sortField = field;
-      this.sortDirection = 'asc';
+      this.sortField.set(field);
+      this.sortDirection.set('asc');
     }
 
     this.updateList(0);
   }
 
   getSortIcon(field: SouthSortField): string {
-    if (this.sortField !== field) {
+    if (this.sortField() !== field) {
       return 'fa-sort';
     }
-    return this.sortDirection === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+    return this.sortDirection() === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
   }
 
   changePage(pageNumber: number) {
-    this.displayedSouths = this.createPage(pageNumber);
+    this.displayedSouths.set(this.createPage(pageNumber));
   }
 
   private createPage(pageNumber: number): Page<SouthConnectorLightDTO> {
@@ -178,7 +178,7 @@ export class SouthListComponent {
   }
 
   private updateList(pageNumber: number) {
-    this.filteredSouths = this.filter(this.allSouths ?? []);
+    this.filteredSouths = this.filter(this.allSouths() ?? []);
     this.sortSouths();
     this.changePage(pageNumber);
   }
@@ -190,11 +190,13 @@ export class SouthListComponent {
     if (formValue.name) {
       filteredItems = filteredItems.filter(item => item.name.toLowerCase().includes(formValue.name!.toLowerCase()));
     }
-    if (this.activeEnabledStates.length > 0) {
-      filteredItems = filteredItems.filter(item => this.activeEnabledStates.includes(item.enabled));
+    const activeEnabledStates = this.activeEnabledStates();
+    if (activeEnabledStates.length > 0) {
+      filteredItems = filteredItems.filter(item => activeEnabledStates.includes(item.enabled));
     }
-    if (this.activeTypes.length > 0) {
-      filteredItems = filteredItems.filter(item => this.activeTypes.includes(item.type));
+    const activeTypes = this.activeTypes();
+    if (activeTypes.length > 0) {
+      filteredItems = filteredItems.filter(item => activeTypes.includes(item.type));
     }
 
     return filteredItems;
@@ -202,33 +204,31 @@ export class SouthListComponent {
 
   /** Toggles an enabled/disabled state in/out of the active status filter and re-applies filtering. */
   toggleEnabledState(enabled: boolean) {
-    this.activeEnabledStates = this.activeEnabledStates.includes(enabled)
-      ? this.activeEnabledStates.filter(e => e !== enabled)
-      : [...this.activeEnabledStates, enabled];
+    this.activeEnabledStates.update(states => (states.includes(enabled) ? states.filter(e => e !== enabled) : [...states, enabled]));
     this.updateList(0);
   }
 
   clearEnabledStates() {
-    this.activeEnabledStates = [];
+    this.activeEnabledStates.set([]);
     this.updateList(0);
   }
 
   /** Toggles a South type in/out of the active filter and re-applies filtering. */
   toggleType(type: OIBusSouthType) {
-    this.activeTypes = this.activeTypes.includes(type) ? this.activeTypes.filter(t => t !== type) : [...this.activeTypes, type];
+    this.activeTypes.update(types => (types.includes(type) ? types.filter(t => t !== type) : [...types, type]));
     this.updateList(0);
   }
 
   clearTypes() {
-    this.activeTypes = [];
+    this.activeTypes.set([]);
     this.updateList(0);
   }
 
   private sortSouths() {
-    if (!this.sortField) return;
+    const field = this.sortField();
+    if (!field) return;
 
-    const direction = this.sortDirection === 'asc' ? 1 : -1;
-    const field = this.sortField;
+    const direction = this.sortDirection() === 'asc' ? 1 : -1;
     this.filteredSouths = [...this.filteredSouths].sort((a, b) => {
       if (field === 'createdAt') {
         return (a.createdAt ?? '').localeCompare(b.createdAt ?? '') * direction;
@@ -256,8 +256,8 @@ export class SouthListComponent {
           })
         )
         .subscribe(souths => {
-          this.allSouths = souths;
-          this.updateList(this.displayedSouths.number);
+          this.allSouths.set(souths);
+          this.updateList(this.displayedSouths().number);
         });
     } else {
       this.southConnectorService
@@ -272,8 +272,8 @@ export class SouthListComponent {
           })
         )
         .subscribe(souths => {
-          this.allSouths = souths;
-          this.updateList(this.displayedSouths.number);
+          this.allSouths.set(souths);
+          this.updateList(this.displayedSouths().number);
         });
     }
   }

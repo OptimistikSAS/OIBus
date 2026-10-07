@@ -24,21 +24,19 @@
     </div>
   </div>
 
-  @if (importing) {
+  @if (importing()) {
     <div class="text-muted mb-2" translate="south.groups.import.in-progress"></div>
   }
-  @if (importSuccessCount !== null) {
-    <div
-      class="alert alert-success py-1 px-2"
-      translate="south.groups.import.success"
-      [translateParams]="{ count: importSuccessCount }"
-    ></div>
+  @let successCount = importSuccessCount();
+  @if (successCount !== null) {
+    <div class="alert alert-success py-1 px-2" translate="south.groups.import.success" [translateParams]="{ count: successCount }"></div>
   }
-  @if (importErrors.length > 0) {
+  @let errors = importErrors();
+  @if (errors.length > 0) {
     <div class="alert alert-danger py-1 px-2">
-      <div translate="south.groups.import.errors-title" [translateParams]="{ count: importErrors.length }"></div>
+      <div translate="south.groups.import.errors-title" [translateParams]="{ count: errors.length }"></div>
       <ul class="mb-0">
-        @for (error of importErrors; track $index) {
+        @for (error of errors; track $index) {
           <li>{{ 'south.groups.import.row' | translate: { row: error.row } }}: {{ error.message }}</li>
         }
       </ul>
@@ -63,7 +61,8 @@
       </select>
     </div>
 
-    @if (displayedGroups.length === 0) {
+    @let displayed = displayedGroups();
+    @if (displayed.length === 0) {
       <div class="oib-grey-container" translate="south.groups.none-match"></div>
     } @else {
       <table class="table table-sm table-hover oib-table">
@@ -98,7 +97,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (group of displayedGroups; track group.id) {
+          @for (group of displayed; track group.id) {
             <tr>
               <td>{{ group.standardSettings.name }}</td>
               <td>{{ getScanModeName(group) }}</td>

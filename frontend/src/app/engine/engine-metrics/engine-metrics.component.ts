@@ -1,5 +1,5 @@
 import { PercentPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, input, NgZone } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -32,7 +32,6 @@ import { NotificationService } from '../../shared/notification.service';
   styleUrl: './engine-metrics.component.scss'
 })
 export class EngineMetricsComponent {
-  private zone = inject(NgZone);
   private engineService = inject(EngineService);
   private notificationService = inject(NotificationService);
   private router = inject(Router);
@@ -41,16 +40,12 @@ export class EngineMetricsComponent {
   readonly metrics = input.required<EngineMetrics>();
 
   resetMetrics() {
-    this.zone.run(() => {
-      this.engineService.resetEngineMetrics().subscribe(() => {
-        this.notificationService.success('engine.monitoring.metrics-reset');
-      });
+    this.engineService.resetEngineMetrics().subscribe(() => {
+      this.notificationService.success('engine.monitoring.metrics-reset');
     });
   }
 
   navigateToDisplay() {
-    this.zone.run(() => {
-      this.router.navigate(['/engine']);
-    });
+    this.router.navigate(['/engine']);
   }
 }

@@ -1,21 +1,22 @@
 <div class="modal-header">
-  <h4 class="modal-title" [translate]="type + '.test-connection.title'"></h4>
+  <h4 class="modal-title" [translate]="type() + '.test-connection.title'"></h4>
 </div>
 <div class="modal-body">
-  @if (!loading) {
-    @if (error) {
+  @if (!loading()) {
+    @if (error()) {
       <div class="alert alert-danger" id="connection-error">
-        <div [translate]="type + '.test-connection.error'"></div>
+        <div [translate]="type() + '.test-connection.error'"></div>
         <hr />
-        <div style="overflow-wrap: break-word">{{ error }}</div>
+        <div style="overflow-wrap: break-word">{{ error() }}</div>
       </div>
     } @else {
-      @if (success) {
-        <div class="alert alert-info" id="success" [translate]="type + '.test-connection.success'"></div>
-        @if (testResult && testResult.items.length > 0) {
+      @if (success()) {
+        <div class="alert alert-info" id="success" [translate]="type() + '.test-connection.success'"></div>
+        @let result = testResult();
+        @if (result && result.items.length > 0) {
           <table class="table table-sm mt-2">
             <tbody>
-              @for (item of testResult.items; track item.key) {
+              @for (item of result.items; track item.key) {
                 <tr>
                   <th scope="row" class="w-25">{{ item.key }}</th>
                   <td>{{ item.value }}</td>

@@ -76,7 +76,7 @@ describe('TestConnectionResultModalComponent', () => {
       await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
       await expect.element(tester.spinner).not.toBeInTheDocument();
       await expect.element(tester.error).not.toBeInTheDocument();
-      expect(tester.component.testResult).toEqual({ items: [] });
+      expect(tester.component.testResult()).toEqual({ items: [] });
       await expect.element(tester.table).not.toBeInTheDocument();
     });
 
@@ -86,7 +86,7 @@ describe('TestConnectionResultModalComponent', () => {
       tester.fixture.detectChanges();
 
       await expect.element(tester.success).toMatchTextContent('Connection successfully tested');
-      expect(tester.component.testResult).toEqual({ items: [{ key: 'Version', value: '1.2.3' }] });
+      expect(tester.component.testResult()).toEqual({ items: [{ key: 'Version', value: '1.2.3' }] });
       await expect.element(tester.table).toBeInTheDocument();
     });
 

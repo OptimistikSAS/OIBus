@@ -206,6 +206,9 @@ the DOM. Chromium must be installed before the first run: `npx playwright instal
 Test fixtures live in `frontend/src/test/test-data.ts`, typed with the DTOs the API returns — never cast a fixture
 (`as unknown as …`), and never import the backend test data.
 
+The frontend is zoneless (`provideZonelessChangeDetection()`, no zone.js): template state changed asynchronously
+(HTTP responses, modal results, timers, `await`) must live in signals, or call `ChangeDetectorRef.markForCheck()`.
+
 Conventions (tester classes, locators, change detection, mocking helpers) are documented in `frontend/vitest.md`.
 Coverage thresholds are enforced by `ng test` (`coverageThresholds` in `frontend/angular.json`): raise them when
 coverage improves.

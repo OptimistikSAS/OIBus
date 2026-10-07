@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
@@ -23,6 +23,7 @@ export class SelectGroupModalComponent {
   private modal = inject(NgbActiveModal);
   private fb = inject(NonNullableFormBuilder);
   private modalService = inject(ModalService);
+  private cdr = inject(ChangeDetectorRef);
 
   groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
   scanModes: Array<ScanModeDTO> = [];
@@ -86,6 +87,8 @@ export class SelectGroupModalComponent {
             this.groups.push(group);
           }
           this.form.controls.groupId.setValue(group.id);
+          // groups is shared by reference with the opener, so it is mutated in place
+          this.cdr.markForCheck();
         },
         error: () => {}
       });

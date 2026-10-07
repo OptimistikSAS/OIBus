@@ -68,9 +68,10 @@
       <div class="row justify-content-center mt-3">
         <div class="col">
           <h2 class="oib-title" translate="oia-module.commands.title"></h2>
-          @if (commands.totalElements !== 0) {
+          @let commandPage = commands();
+          @if (commandPage.totalElements !== 0) {
             <div>
-              <oib-pagination class="d-flex justify-content-end" [page]="commands" [navigate]="true" />
+              <oib-pagination class="d-flex justify-content-end" [page]="commandPage" [navigate]="true" />
             </div>
           }
           <form class="px-3 mb-4 d-none d-lg-block oib-search-form" id="search-form" [formGroup]="searchForm" (ngSubmit)="searchCommands()">
@@ -98,7 +99,7 @@
             </div>
           </form>
           <ng-container>
-            @if (commands.totalElements !== 0) {
+            @if (commandPage.totalElements !== 0) {
               <div class="table-container">
                 <table class="table table-sm table-hover oib-table">
                   <thead>
@@ -112,7 +113,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @for (command of commands.content; track command.id) {
+                    @for (command of commandPage.content; track command.id) {
                       <tr>
                         <td></td>
                         <td>{{ command.retrievedDate! | datetime: 'mediumWithSeconds' }}</td>

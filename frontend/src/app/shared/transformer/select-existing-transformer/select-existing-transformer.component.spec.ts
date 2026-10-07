@@ -98,24 +98,24 @@ describe('SelectExistingTransformerComponent', () => {
     const component = create('north', ['any-content']).componentInstance;
 
     expect(northConnectorService.list).toHaveBeenCalled();
-    expect(component.norths).toEqual(norths);
+    expect(component.norths()).toEqual(norths);
   });
 
   test('loads the history query list', () => {
     const component = create('history-query', ['any-content']).componentInstance;
 
     expect(historyQueryService.list).toHaveBeenCalled();
-    expect(component.historyQueries).toEqual(historyQueries);
+    expect(component.historyQueries()).toEqual(historyQueries);
   });
 
   test('loads and filters the north connector transformers by supported output type when a source is selected', () => {
     const component = create('north', ['any-content']).componentInstance;
 
-    component.selectedSourceId = 'north-1';
+    component.selectedSourceId.set('north-1');
     component.onSourceChange();
 
     expect(northConnectorService.findById).toHaveBeenCalledWith('north-1');
-    expect(component.attachments).toEqual([
+    expect(component.attachments()).toEqual([
       {
         id: 'north-transformer-1',
         label: 'Ignore (My South)',
@@ -128,11 +128,11 @@ describe('SelectExistingTransformerComponent', () => {
   test('loads and filters the history query transformers by supported output type when a source is selected', () => {
     const component = create('history-query', ['any-content']).componentInstance;
 
-    component.selectedSourceId = 'history-1';
+    component.selectedSourceId.set('history-1');
     component.onSourceChange();
 
     expect(historyQueryService.findById).toHaveBeenCalledWith('history-1');
-    expect(component.attachments).toEqual([
+    expect(component.attachments()).toEqual([
       {
         id: 'history-transformer-1',
         label: 'Ignore',
@@ -145,15 +145,15 @@ describe('SelectExistingTransformerComponent', () => {
   test('clears the attachments and selection when no source is selected', () => {
     const component = create('north', ['any-content']).componentInstance;
 
-    component.selectedSourceId = 'north-1';
+    component.selectedSourceId.set('north-1');
     component.onSourceChange();
-    component.selectedAttachmentId = 'north-transformer-1';
+    component.selectedAttachmentId.set('north-transformer-1');
 
-    component.selectedSourceId = null;
+    component.selectedSourceId.set(null);
     component.onSourceChange();
 
-    expect(component.attachments).toEqual([]);
-    expect(component.selectedAttachmentId).toEqual(null);
+    expect(component.attachments()).toEqual([]);
+    expect(component.selectedAttachmentId()).toEqual(null);
   });
 
   test('emits the picked transformer and its options', () => {
@@ -161,9 +161,9 @@ describe('SelectExistingTransformerComponent', () => {
     const emitted: Array<unknown> = [];
     component.transformerPicked.subscribe((value: unknown) => emitted.push(value));
 
-    component.selectedSourceId = 'north-1';
+    component.selectedSourceId.set('north-1');
     component.onSourceChange();
-    component.selectedAttachmentId = 'north-transformer-1';
+    component.selectedAttachmentId.set('north-transformer-1');
     component.onAttachmentChange();
 
     expect(emitted).toEqual([{ transformer: compatibleTransformer, options: { key: 'value' } }]);
@@ -174,7 +174,7 @@ describe('SelectExistingTransformerComponent', () => {
     const emitted: Array<unknown> = [];
     component.transformerPicked.subscribe((value: unknown) => emitted.push(value));
 
-    component.selectedAttachmentId = 'unknown-id';
+    component.selectedAttachmentId.set('unknown-id');
     component.onAttachmentChange();
 
     expect(emitted).toEqual([]);
@@ -183,15 +183,15 @@ describe('SelectExistingTransformerComponent', () => {
   test('resets the selection when switching between north connectors and history queries', () => {
     const fixture = create('north', ['any-content']);
     const component = fixture.componentInstance;
-    component.selectedSourceId = 'north-1';
+    component.selectedSourceId.set('north-1');
     component.onSourceChange();
-    component.selectedAttachmentId = 'north-transformer-1';
+    component.selectedAttachmentId.set('north-transformer-1');
 
     fixture.componentRef.setInput('sourceKind', 'history-query');
     fixture.detectChanges();
 
-    expect(component.selectedSourceId).toEqual(null);
-    expect(component.selectedAttachmentId).toEqual(null);
-    expect(component.attachments).toEqual([]);
+    expect(component.selectedSourceId()).toEqual(null);
+    expect(component.selectedAttachmentId()).toEqual(null);
+    expect(component.attachments()).toEqual([]);
   });
 });

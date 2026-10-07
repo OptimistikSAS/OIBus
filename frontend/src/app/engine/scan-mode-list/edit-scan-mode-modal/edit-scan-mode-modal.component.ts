@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, LOCALE_ID, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, LOCALE_ID, signal } from '@angular/core';
 import {
   AbstractControl,
   AsyncValidatorFn,
@@ -60,6 +60,7 @@ export class EditScanModeModalComponent {
   private translateService = inject(TranslateService);
   private locale = inject(LOCALE_ID);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private changeDetectorRef = inject(ChangeDetectorRef);
 
   readonly mode = signal<'create' | 'edit'>('create');
   state = new ObservableState();
@@ -85,6 +86,8 @@ export class EditScanModeModalComponent {
           this.scanModesLoaded = true;
           // Update validation once loaded - form should be available by now
           this.form?.controls.name.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+          // No event is emitted: refresh the view so that a uniqueness error is displayed
+          this.changeDetectorRef.markForCheck();
         },
         error: () => {
           // If list fails, just mark as loaded with empty array to avoid blocking validation

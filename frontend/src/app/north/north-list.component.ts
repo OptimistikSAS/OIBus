@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
@@ -53,16 +53,16 @@ export class NorthListComponent {
   private modalService = inject(ModalService);
   private northConnectorService = inject(NorthConnectorService);
 
-  allNorths: Array<NorthConnectorLightDTO> | null = null;
+  readonly allNorths = signal<Array<NorthConnectorLightDTO> | null>(null);
   filteredNorths: Array<NorthConnectorLightDTO> = [];
-  displayedNorths: Page<NorthConnectorLightDTO> = emptyPage();
+  readonly displayedNorths = signal<Page<NorthConnectorLightDTO>>(emptyPage());
   states = new Map<string, ObservableState>();
-  sortField: NorthSortField = 'name';
-  sortDirection: SortDirection = 'asc';
+  readonly sortField = signal<NorthSortField>('name');
+  readonly sortDirection = signal<SortDirection>('asc');
 
   // Active filters for the clickable status/type legends. Empty array means "no filter" (show all).
-  activeEnabledStates: Array<boolean> = [];
-  activeTypes: Array<OIBusNorthType> = [];
+  readonly activeEnabledStates = signal<Array<boolean>>([]);
+  readonly activeTypes = signal<Array<OIBusNorthType>>([]);
 
   searchForm = inject(NonNullableFormBuilder).group({
     name: [null as string | null]
@@ -78,26 +78,26 @@ export class NorthListComponent {
 
   constructor() {
     this.northConnectorService.list().subscribe(norths => {
-      this.allNorths = norths;
       this.states.clear();
-      this.allNorths.forEach(north => {
+      norths.forEach(north => {
         this.states.set(north.id, new ObservableState());
       });
+      this.allNorths.set(norths);
       this.updateList(0);
     });
 
     this.searchForm.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => {
-      if (this.allNorths) {
+      if (this.allNorths()) {
         this.updateList(0);
       }
     });
   }
 
   /** Distinct North connector types among the currently loaded connectors, used to build the filter chips. */
-  get types(): Array<OIBusNorthType> {
-    const types = new Set((this.allNorths ?? []).map(north => north.type));
+  readonly types = computed(() => {
+    const types = new Set((this.allNorths() ?? []).map(north => north.type));
     return Array.from(types).sort((a, b) => a.localeCompare(b));
-  }
+  });
 
   /**
    * Delete a North connector by its ID
@@ -116,13 +116,13 @@ export class NorthListComponent {
       .subscribe(() => {
         this.northConnectorService
           .list()
-          .pipe(tap(() => (this.allNorths = null)))
+          .pipe(tap(() => this.allNorths.set(null)))
           .subscribe(norths => {
-            this.allNorths = norths;
             this.states.clear();
-            this.allNorths.forEach(north => {
+            norths.forEach(north => {
               this.states.set(north.id, new ObservableState());
             });
+            this.allNorths.set(norths);
             this.updateList(0);
           });
         this.notificationService.success('north.deleted', {
@@ -150,25 +150,25 @@ export class NorthListComponent {
   toggleSort(field: NorthSortField) {
     if (!field) return;
 
-    if (this.sortField === field) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    if (this.sortField() === field) {
+      this.sortDirection.update(direction => (direction === 'asc' ? 'desc' : 'asc'));
     } else {
-      this.sortField = field;
-      this.sortDirection = 'asc';
+      this.sortField.set(field);
+      this.sortDirection.set('asc');
     }
 
     this.updateList(0);
   }
 
   getSortIcon(field: NorthSortField): string {
-    if (this.sortField !== field) {
+    if (this.sortField() !== field) {
       return 'fa-sort';
     }
-    return this.sortDirection === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+    return this.sortDirection() === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
   }
 
   changePage(pageNumber: number) {
-    this.displayedNorths = this.createPage(pageNumber);
+    this.displayedNorths.set(this.createPage(pageNumber));
   }
 
   private createPage(pageNumber: number): Page<NorthConnectorLightDTO> {
@@ -176,7 +176,7 @@ export class NorthListComponent {
   }
 
   private updateList(pageNumber: number) {
-    this.filteredNorths = this.filter(this.allNorths ?? []);
+    this.filteredNorths = this.filter(this.allNorths() ?? []);
     this.sortNorths();
     this.changePage(pageNumber);
   }
@@ -188,11 +188,13 @@ export class NorthListComponent {
     if (formValue.name) {
       filteredItems = filteredItems.filter(item => item.name.toLowerCase().includes(formValue.name!.toLowerCase()));
     }
-    if (this.activeEnabledStates.length > 0) {
-      filteredItems = filteredItems.filter(item => this.activeEnabledStates.includes(item.enabled));
+    const activeEnabledStates = this.activeEnabledStates();
+    if (activeEnabledStates.length > 0) {
+      filteredItems = filteredItems.filter(item => activeEnabledStates.includes(item.enabled));
     }
-    if (this.activeTypes.length > 0) {
-      filteredItems = filteredItems.filter(item => this.activeTypes.includes(item.type));
+    const activeTypes = this.activeTypes();
+    if (activeTypes.length > 0) {
+      filteredItems = filteredItems.filter(item => activeTypes.includes(item.type));
     }
 
     return filteredItems;
@@ -200,33 +202,33 @@ export class NorthListComponent {
 
   /** Toggles an enabled/disabled state in/out of the active status filter and re-applies filtering. */
   toggleEnabledState(enabled: boolean) {
-    this.activeEnabledStates = this.activeEnabledStates.includes(enabled)
-      ? this.activeEnabledStates.filter(e => e !== enabled)
-      : [...this.activeEnabledStates, enabled];
+    this.activeEnabledStates.update(activeEnabledStates =>
+      activeEnabledStates.includes(enabled) ? activeEnabledStates.filter(e => e !== enabled) : [...activeEnabledStates, enabled]
+    );
     this.updateList(0);
   }
 
   clearEnabledStates() {
-    this.activeEnabledStates = [];
+    this.activeEnabledStates.set([]);
     this.updateList(0);
   }
 
   /** Toggles a North type in/out of the active filter and re-applies filtering. */
   toggleType(type: OIBusNorthType) {
-    this.activeTypes = this.activeTypes.includes(type) ? this.activeTypes.filter(t => t !== type) : [...this.activeTypes, type];
+    this.activeTypes.update(activeTypes => (activeTypes.includes(type) ? activeTypes.filter(t => t !== type) : [...activeTypes, type]));
     this.updateList(0);
   }
 
   clearTypes() {
-    this.activeTypes = [];
+    this.activeTypes.set([]);
     this.updateList(0);
   }
 
   private sortNorths() {
-    if (!this.sortField) return;
+    const field = this.sortField();
+    if (!field) return;
 
-    const direction = this.sortDirection === 'asc' ? 1 : -1;
-    const field = this.sortField;
+    const direction = this.sortDirection() === 'asc' ? 1 : -1;
     this.filteredNorths = [...this.filteredNorths].sort((a, b) => {
       if (field === 'createdAt') {
         return (a.createdAt ?? '').localeCompare(b.createdAt ?? '') * direction;
@@ -254,8 +256,8 @@ export class NorthListComponent {
           })
         )
         .subscribe(norths => {
-          this.allNorths = norths;
-          this.updateList(this.displayedNorths.number);
+          this.allNorths.set(norths);
+          this.updateList(this.displayedNorths().number);
         });
     } else {
       this.northConnectorService
@@ -270,8 +272,8 @@ export class NorthListComponent {
           })
         )
         .subscribe(norths => {
-          this.allNorths = norths;
-          this.updateList(this.displayedNorths.number);
+          this.allNorths.set(norths);
+          this.updateList(this.displayedNorths().number);
         });
     }
   }

@@ -157,7 +157,7 @@ describe('EditSouthComponent', () => {
     const fixture = TestBed.createComponent(EditSouthComponent);
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.mode).toBe('create');
+    expect(fixture.componentInstance.mode()).toBe('create');
     const inMemoryGroup = fixture.componentInstance.inMemoryGroups[0];
     expect(inMemoryGroup.id).not.toBe('group1');
     expect(inMemoryGroup.id?.startsWith('temp_')).toBe(true);
@@ -188,7 +188,7 @@ describe('EditSouthComponent', () => {
     expect(unassignedItem.groupId).toBeNull();
     expect(unassignedItem.groupName).toBeNull();
     expect(unassignedItem.syncWithGroup).toBe(false);
-    expect(fixture.componentInstance.filteredItems.find(item => item.id === itemWithGroup.id)?.groupId).toBeNull();
+    expect(fixture.componentInstance.filteredItems().find(item => item.id === itemWithGroup.id)?.groupId).toBeNull();
   });
 
   test('deleteGroup should fill empty scan mode and history fields on items that were inheriting from the group', () => {

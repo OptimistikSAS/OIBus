@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
@@ -50,15 +50,15 @@ export class TransformerListComponent {
 
   readonly helpUrl = this.docsUrlService.resolve('guide/engine/transformers');
 
-  allTransformers: Array<CustomTransformerDTO> = [];
+  readonly allTransformers = signal<Array<CustomTransformerDTO>>([]);
   private filteredTransformers: Array<CustomTransformerDTO> = [];
-  displayedTransformers: Page<CustomTransformerDTO> = emptyPage();
-  sortField: TransformerSortField = null;
-  sortDirection: SortDirection = 'asc';
+  readonly displayedTransformers = signal<Page<CustomTransformerDTO>>(emptyPage());
+  readonly sortField = signal<TransformerSortField>(null);
+  readonly sortDirection = signal<SortDirection>('asc');
 
   constructor() {
     this.transformerService.list().subscribe(transformers => {
-      this.allTransformers = transformers.filter(element => element.type === 'custom') as Array<CustomTransformerDTO>;
+      this.allTransformers.set(transformers.filter(element => element.type === 'custom') as Array<CustomTransformerDTO>);
       this.updateList(0);
     });
   }
@@ -102,7 +102,7 @@ export class TransformerListComponent {
         switchMap(() => this.transformerService.list())
       )
       .subscribe(transformers => {
-        this.allTransformers = transformers.filter(element => element.type === 'custom') as Array<CustomTransformerDTO>;
+        this.allTransformers.set(transformers.filter(element => element.type === 'custom') as Array<CustomTransformerDTO>);
         this.updateList(0);
       });
   }
@@ -128,7 +128,7 @@ export class TransformerListComponent {
       )
       .subscribe(() => {
         this.transformerService.list().subscribe(transformers => {
-          this.allTransformers = transformers.filter(element => element.type === 'custom') as Array<CustomTransformerDTO>;
+          this.allTransformers.set(transformers.filter(element => element.type === 'custom') as Array<CustomTransformerDTO>);
           this.updateList(0);
         });
         this.notificationService.success('configuration.oibus.manifest.transformers.deleted', {
@@ -139,39 +139,40 @@ export class TransformerListComponent {
 
   toggleSort(field: TransformerSortField) {
     if (!field) return;
-    if (this.sortField === field) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    if (this.sortField() === field) {
+      this.sortDirection.update(direction => (direction === 'asc' ? 'desc' : 'asc'));
     } else {
-      this.sortField = field;
-      this.sortDirection = 'asc';
+      this.sortField.set(field);
+      this.sortDirection.set('asc');
     }
     this.updateList(0);
   }
 
   getSortIcon(field: TransformerSortField): string {
-    if (this.sortField !== field) return 'fa-sort';
-    return this.sortDirection === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+    if (this.sortField() !== field) return 'fa-sort';
+    return this.sortDirection() === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
   }
 
   changePage(pageNumber: number) {
-    this.displayedTransformers = createPageFromArray(this.filteredTransformers, PAGE_SIZE, pageNumber);
+    this.displayedTransformers.set(createPageFromArray(this.filteredTransformers, PAGE_SIZE, pageNumber));
   }
 
   private updateList(pageNumber: number) {
-    this.filteredTransformers = [...this.allTransformers];
+    this.filteredTransformers = [...this.allTransformers()];
     this.sortList();
     this.changePage(pageNumber);
   }
 
   private sortList() {
-    if (!this.sortField) return;
-    const direction = this.sortDirection === 'asc' ? 1 : -1;
+    const sortField = this.sortField();
+    if (!sortField) return;
+    const direction = this.sortDirection() === 'asc' ? 1 : -1;
     this.filteredTransformers = [...this.filteredTransformers].sort((a, b) => {
-      if (this.sortField === 'name') {
+      if (sortField === 'name') {
         return a.name.localeCompare(b.name) * direction;
       }
-      const aVal = this.sortField === 'createdAt' ? (a.createdAt ?? '') : (a.updatedAt ?? '');
-      const bVal = this.sortField === 'createdAt' ? (b.createdAt ?? '') : (b.updatedAt ?? '');
+      const aVal = sortField === 'createdAt' ? (a.createdAt ?? '') : (a.updatedAt ?? '');
+      const bVal = sortField === 'createdAt' ? (b.createdAt ?? '') : (b.updatedAt ?? '');
       return aVal.localeCompare(bVal) * direction;
     });
   }

@@ -88,7 +88,7 @@ describe('NorthTransformerTestComponent', () => {
     const component = create({ kind: 'south', id: 'south-1', southType: 'opcua' }).componentInstance;
 
     // items were loaded from the source south
-    expect(component.availableItems).toEqual([{ id: 'item-1', name: 'item one', settings: { nodeId: 'n' } }]);
+    expect(component.availableItems()).toEqual([{ id: 'item-1', name: 'item one', settings: { nodeId: 'n' } }]);
 
     component.form.controls.inputSource.setValue('item');
     component.form.controls.itemId.setValue('item-1');
@@ -114,7 +114,7 @@ describe('NorthTransformerTestComponent', () => {
 
     const component = create({ kind: 'history', id: 'hq-1', southType: 'mssql' }).componentInstance;
 
-    expect(component.availableItems).toEqual([{ id: 'hi-1', name: 'hist item', settings: { nodeId: 'x' } }]);
+    expect(component.availableItems()).toEqual([{ id: 'hi-1', name: 'hist item', settings: { nodeId: 'x' } }]);
     expect(southConnectorService.searchItems).not.toHaveBeenCalled();
   });
 });

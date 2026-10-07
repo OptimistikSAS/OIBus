@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -51,7 +51,8 @@ export class NorthTransformersComponent {
   readonly scanModes = input.required<Array<ScanModeDTO>>();
   readonly transformers = input.required<Array<TransformerDTO>>();
 
-  transformersWithOptions: Array<TransformerDTOWithOptions> = []; // Array used to store subscription on north connector creation
+  // Array used to store subscription on north connector creation
+  readonly transformersWithOptions = signal<Array<TransformerDTOWithOptions>>([]);
   southConnectors: Array<SouthConnectorLightDTO> = [];
 
   constructor() {
@@ -59,7 +60,7 @@ export class NorthTransformersComponent {
     effect(() => {
       const connector = this.northConnector();
       if (connector) {
-        this.transformersWithOptions = [...connector.transformers];
+        this.transformersWithOptions.set([...connector.transformers]);
       }
     });
     this.southConnectorService.list().subscribe(southConnectors => {
@@ -99,7 +100,7 @@ export class NorthTransformersComponent {
             transformer.id = ''; // remove temp_ id when creating directly
             return this.northConnectorService.addOrEditTransformer(northConnector.id, transformer).pipe(switchMap(() => of(transformer)));
           }
-          this.transformersWithOptions = [...this.transformersWithOptions, transformer];
+          this.transformersWithOptions.update(transformersWithOptions => [...transformersWithOptions, transformer]);
           return of(transformer);
         })
       )
@@ -107,7 +108,7 @@ export class NorthTransformersComponent {
         if (this.saveChangesDirectly()) {
           this.notificationService.success('north.transformers.added');
         }
-        this.inMemoryTransformersWithOptions.emit(this.transformersWithOptions);
+        this.inMemoryTransformersWithOptions.emit(this.transformersWithOptions());
       });
   }
 
@@ -142,8 +143,10 @@ export class NorthTransformersComponent {
           if (northConnector && this.saveChangesDirectly()) {
             return this.northConnectorService.addOrEditTransformer(northConnector.id, transformer).pipe(switchMap(() => of(transformer)));
           }
-          this.transformersWithOptions = this.transformersWithOptions.filter(element => element.id !== oldTransformer.id);
-          this.transformersWithOptions.push(transformer);
+          this.transformersWithOptions.update(transformersWithOptions => [
+            ...transformersWithOptions.filter(element => element.id !== oldTransformer.id),
+            transformer
+          ]);
           return of(transformer);
         })
       )
@@ -151,7 +154,7 @@ export class NorthTransformersComponent {
         if (this.saveChangesDirectly()) {
           this.notificationService.success('north.transformers.edited');
         }
-        this.inMemoryTransformersWithOptions.emit(this.transformersWithOptions);
+        this.inMemoryTransformersWithOptions.emit(this.transformersWithOptions());
       });
   }
 
@@ -163,12 +166,16 @@ export class NorthTransformersComponent {
       .pipe(
         switchMap(() => {
           if (this.saveChangesDirectly()) {
-            this.transformersWithOptions = this.transformersWithOptions.filter(element => element.id !== transformer.id);
+            this.transformersWithOptions.update(transformersWithOptions =>
+              transformersWithOptions.filter(element => element.id !== transformer.id)
+            );
             return this.northConnectorService.removeTransformer(this.northConnector()!.id, transformer.id);
           } else {
-            this.transformersWithOptions = this.transformersWithOptions.filter(element => {
-              return element.id !== transformer.id;
-            });
+            this.transformersWithOptions.update(transformersWithOptions =>
+              transformersWithOptions.filter(element => {
+                return element.id !== transformer.id;
+              })
+            );
           }
           return of(null);
         })
@@ -177,7 +184,7 @@ export class NorthTransformersComponent {
         if (this.saveChangesDirectly()) {
           this.notificationService.success('north.transformers.removed');
         }
-        this.inMemoryTransformersWithOptions.emit(this.transformersWithOptions);
+        this.inMemoryTransformersWithOptions.emit(this.transformersWithOptions());
       });
   }
 

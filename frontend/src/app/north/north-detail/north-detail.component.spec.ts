@@ -100,6 +100,6 @@ describe('NorthDetailComponent', () => {
     fixture.componentInstance.startMetricsPolling('id1');
 
     await vi.waitFor(() => expect(northConnectorService.getMetrics).toHaveBeenCalledWith('id1'));
-    expect(fixture.componentInstance.connectorMetrics).toEqual(testData.north.metrics);
+    expect(fixture.componentInstance.connectorMetrics()).toEqual(testData.north.metrics);
   });
 });

@@ -175,7 +175,7 @@ describe('EditNorthTransformerModalComponent', () => {
     fixture.componentInstance.prepareForCreation([], [], [], [transformer], ['mqtt']);
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.creationMode).toBe('new');
+    expect(fixture.componentInstance.creationMode()).toBe('new');
   });
 
   test('copies the transformer and its options from an existing attachment', () => {

@@ -132,7 +132,7 @@ describe('ManageWorkflowsModalComponent', () => {
 
     fixture.componentInstance.searchControl.setValue('alp');
 
-    expect(fixture.componentInstance.displayedWorkflows.map(w => w.name)).toEqual(['Alpha']);
+    expect(fixture.componentInstance.displayedWorkflows().map(w => w.name)).toEqual(['Alpha']);
   });
 
   test('should open the edit modal to add a workflow and create it on confirm', () => {
@@ -222,7 +222,7 @@ describe('ManageWorkflowsModalComponent', () => {
 
     expect(configurationWorkflowService.runNow).toHaveBeenCalledWith('southId1', 'workflow1');
     expect(notificationService.success).toHaveBeenCalledWith('south.workflows.run-now-success');
-    expect(fixture.componentInstance.runningWorkflowId).toBeNull();
+    expect(fixture.componentInstance.runningWorkflowId()).toBeNull();
   });
 
   test('should show a run-now error notification on failure', () => {
@@ -328,7 +328,7 @@ describe('ManageWorkflowsModalComponent', () => {
       const fixture = createInMemoryComponent();
 
       expect(configurationWorkflowService.list).not.toHaveBeenCalled();
-      expect(fixture.componentInstance.loading).toBe(false);
+      expect(fixture.componentInstance.loading()).toBe(false);
       expect(fixture.componentInstance.getScanModeName(commands[1])).toBe(scanModes[0].name);
       expect(fixture.componentInstance.getScanModeName(commands[0])).toBeNull();
       const root = page.elementLocator(fixture.nativeElement);
@@ -370,7 +370,7 @@ describe('ManageWorkflowsModalComponent', () => {
       expect(commands.length).toBe(3);
       expect(commands[2].name).toBe('Gamma');
       expect(commands[2].id).toMatch(/^temp_/);
-      expect(fixture.componentInstance.displayedWorkflows.map(w => w.name)).toContain('Gamma');
+      expect(fixture.componentInstance.displayedWorkflows().map(w => w.name)).toContain('Gamma');
       expect(notificationService.success).not.toHaveBeenCalled();
     });
 
@@ -412,7 +412,7 @@ describe('ManageWorkflowsModalComponent', () => {
       expect(confirmationService.confirm).toHaveBeenCalled();
       expect(configurationWorkflowService.delete).not.toHaveBeenCalled();
       expect(commands.map(w => w.id)).toEqual(['workflow2']);
-      expect(fixture.componentInstance.displayedWorkflows.map(w => w.id)).toEqual(['workflow2']);
+      expect(fixture.componentInstance.displayedWorkflows().map(w => w.id)).toEqual(['workflow2']);
     });
 
     test('should preview a persisted workflow as currently edited, against its previous run', () => {

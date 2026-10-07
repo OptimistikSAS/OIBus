@@ -27,7 +27,7 @@
       </div>
     </div>
 
-    @if (allNorths && allNorths.length > 0) {
+    @if (allNorths()?.length) {
       <!-- Status filter chips — clickable legend, doubling as the enabled/disabled filter -->
       <div class="d-flex align-items-center gap-1 flex-wrap py-2">
         <span class="filter-label text-muted" translate="north.status"></span>
@@ -35,15 +35,15 @@
           <button
             type="button"
             class="filter-chip d-flex align-items-center gap-1 px-2 py-1"
-            [class.active]="activeEnabledStates.includes(entry.enabled)"
-            [class.inactive]="activeEnabledStates.length > 0 && !activeEnabledStates.includes(entry.enabled)"
+            [class.active]="activeEnabledStates().includes(entry.enabled)"
+            [class.inactive]="activeEnabledStates().length > 0 && !activeEnabledStates().includes(entry.enabled)"
             (click)="toggleEnabledState(entry.enabled)"
           >
             <span [class]="entry.class"></span>
             <span class="filter-chip-label" [translate]="entry.label"></span>
           </button>
         }
-        @if (activeEnabledStates.length > 0) {
+        @if (activeEnabledStates().length > 0) {
           <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-enabled-states-button" (click)="clearEnabledStates()">
             <span class="fa fa-times me-1"></span>
             <span translate="common.clear"></span>
@@ -53,18 +53,18 @@
         <div class="vr mx-2"></div>
 
         <span class="filter-label text-muted" translate="north.type"></span>
-        @for (type of types; track type) {
+        @for (type of types(); track type) {
           <button
             type="button"
             class="filter-chip d-flex align-items-center px-2 py-1"
-            [class.active]="activeTypes.includes(type)"
-            [class.inactive]="activeTypes.length > 0 && !activeTypes.includes(type)"
+            [class.active]="activeTypes().includes(type)"
+            [class.inactive]="activeTypes().length > 0 && !activeTypes().includes(type)"
             (click)="toggleType(type)"
           >
             <span class="filter-chip-label">{{ type | oIBusNorthTypeEnum }}</span>
           </button>
         }
-        @if (activeTypes.length > 0) {
+        @if (activeTypes().length > 0) {
           <button type="button" class="btn btn-sm btn-link text-secondary" id="clear-types-button" (click)="clearTypes()">
             <span class="fa fa-times me-1"></span>
             <span translate="common.clear"></span>
@@ -76,17 +76,17 @@
 
   <div class="justify-content-end d-flex">
     <!-- only display it if there is more than 1 page -->
-    @if (displayedNorths.totalPages > 1) {
-      <oib-pagination class="d-flex justify-content-end" [page]="displayedNorths" (pageChanged)="changePage($event)" />
+    @if (displayedNorths().totalPages > 1) {
+      <oib-pagination class="d-flex justify-content-end" [page]="displayedNorths()" (pageChanged)="changePage($event)" />
     }
   </div>
 
   <!-- the loading spinner when north are not yet loaded -->
-  @if (!allNorths) {
+  @if (!allNorths()) {
     <oib-loading-spinner />
   } @else {
     <!-- the list of north or a caption if empty -->
-    @if (displayedNorths.content.length !== 0) {
+    @if (displayedNorths().content.length !== 0) {
       <div>
         <table class="mt-2 table table-sm table-hover oib-table">
           <thead>
@@ -127,7 +127,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (north of displayedNorths.content; track north.id) {
+            @for (north of displayedNorths().content; track north.id) {
               <tr>
                 @if (!north.enabled) {
                   <td>
