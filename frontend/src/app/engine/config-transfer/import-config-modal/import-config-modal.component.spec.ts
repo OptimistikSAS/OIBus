@@ -251,7 +251,7 @@ describe('ImportConfigModalComponent', () => {
     tester.componentInstance.onFileSelected(bigFile);
 
     expect(tester.componentInstance.fileError()).toBe('file-too-large');
-    expect(tester.componentInstance.file).not.toBe(bigFile);
+    expect(tester.componentInstance.file()).not.toBe(bigFile);
   });
 
   test('should cancel', async () => {

@@ -5,7 +5,7 @@
   @if (form) {
     <form [formGroup]="form" (ngSubmit)="save()" id="choose-transformer-form">
       <div class="row">
-        @if (mode === 'create') {
+        @if (mode() === 'create') {
           <div [class]="form.controls.source.value.dataSourceType === 'oibus-api' ? 'col-4' : 'col-6'">
             <div class="form-group">
               <label class="form-label" for="source" translate="north.transformers.source"></label>
@@ -83,7 +83,7 @@
           </div>
         }
       </div>
-      @if (mode === 'create') {
+      @if (mode() === 'create') {
         <div class="d-flex gap-3 mb-3">
           <div class="form-check">
             <input
@@ -91,7 +91,7 @@
               type="radio"
               id="creationModeNew"
               name="creationMode"
-              [checked]="creationMode === 'new'"
+              [checked]="creationMode() === 'new'"
               (change)="setCreationMode('new')"
             />
             <label
@@ -106,7 +106,7 @@
               type="radio"
               id="creationModeFromNorth"
               name="creationMode"
-              [checked]="creationMode === 'from-north'"
+              [checked]="creationMode() === 'from-north'"
               (change)="setCreationMode('from-north')"
             />
             <label
@@ -121,7 +121,7 @@
               type="radio"
               id="creationModeFromHistory"
               name="creationMode"
-              [checked]="creationMode === 'from-history'"
+              [checked]="creationMode() === 'from-history'"
               (change)="setCreationMode('from-history')"
             />
             <label
@@ -132,14 +132,14 @@
           </div>
         </div>
       }
-      @if (creationMode === 'new') {
+      @if (creationMode() === 'new') {
         <div class="row">
           <div class="col-6">
             <div class="form-group">
               <label class="form-label" for="output" translate="configuration.oibus.manifest.transformers.output"></label>
               <select class="form-select" id="output" formControlName="transformer" [compareWith]="compareTransformers">
                 <option [ngValue]="null"></option>
-                @for (transformer of selectableOutputs; track transformer.id) {
+                @for (transformer of selectableOutputs(); track transformer.id) {
                   @if (transformer.type === 'standard') {
                     <option [ngValue]="transformer">
                       {{ 'configuration.oibus.manifest.transformers.standard.' + transformer.functionName | translate }}
@@ -156,7 +156,7 @@
         <div class="row mb-2">
           <div class="col-12">
             <oib-select-existing-transformer
-              [sourceKind]="creationMode === 'from-north' ? 'north' : 'history-query'"
+              [sourceKind]="creationMode() === 'from-north' ? 'north' : 'history-query'"
               [supportedOutputTypes]="supportedOutputTypes"
               (transformerPicked)="applyExistingTransformer($event)"
             />
@@ -173,18 +173,18 @@
                   class="form-check-input"
                   type="radio"
                   id="selectionAll"
-                  [checked]="selectionType === 'all'"
+                  [checked]="selectionType() === 'all'"
                   (change)="setSelectionType('all')"
                 />
                 <label class="form-check-label" for="selectionAll" translate="configuration.oibus.manifest.transformers.all-items"></label>
               </div>
-              @if (availableGroups.length > 0) {
+              @if (availableGroups().length > 0) {
                 <div class="form-check">
                   <input
                     class="form-check-input"
                     type="radio"
                     id="selectionGroup"
-                    [checked]="selectionType === 'group'"
+                    [checked]="selectionType() === 'group'"
                     (change)="setSelectionType('group')"
                   />
                   <label
@@ -199,7 +199,7 @@
                   class="form-check-input"
                   type="radio"
                   id="selectionItems"
-                  [checked]="selectionType === 'items'"
+                  [checked]="selectionType() === 'items'"
                   (change)="setSelectionType('items')"
                 />
                 <label
@@ -209,7 +209,7 @@
                 ></label>
               </div>
             </div>
-            @if (selectionType === 'group') {
+            @if (selectionType() === 'group') {
               <select
                 class="form-select mb-2"
                 id="group"
@@ -218,21 +218,21 @@
                 [compareWith]="compareGroups"
               >
                 <option [ngValue]="null" translate="configuration.oibus.manifest.transformers.select-group"></option>
-                @for (group of availableGroups; track group.id) {
+                @for (group of availableGroups(); track group.id) {
                   <option [ngValue]="group">{{ group.name }}</option>
                 }
               </select>
             }
-            @if (selectionType === 'items') {
-              @if (searchInteracted && (totalSearchResults > 0 || selectedItems.length > 0)) {
+            @if (selectionType() === 'items') {
+              @if (searchInteracted() && (totalSearchResults() > 0 || selectedItems().length > 0)) {
                 <div class="mb-2 d-flex align-items-center gap-2">
-                  @if (totalSearchResults > 0) {
+                  @if (totalSearchResults() > 0) {
                     <small class="text-muted">
                       <span
                         translate="configuration.oibus.manifest.transformers.search-results-count"
-                        [translateParams]="{ count: totalSearchResults }"
+                        [translateParams]="{ count: totalSearchResults() }"
                       ></span>
-                      @if (totalSearchResults > 10) {
+                      @if (totalSearchResults() > 10) {
                         <span
                           translate="configuration.oibus.manifest.transformers.showing-first-n"
                           [translateParams]="{ limit: 10 }"
@@ -240,12 +240,12 @@
                       }
                     </small>
                   }
-                  @if (searchResults.length > 0) {
+                  @if (searchResults().length > 0) {
                     <button type="button" class="btn btn-link btn-sm p-0 select-all-results" (click)="selectAllResults()">
                       <span translate="configuration.oibus.manifest.transformers.select-all-results"></span>
                     </button>
                   }
-                  @if (selectedItems.length > 0) {
+                  @if (selectedItems().length > 0) {
                     <button type="button" class="btn btn-link btn-sm p-0 select-all-results" (click)="removeAllItems()">
                       <span translate="configuration.oibus.manifest.transformers.remove-all"></span>
                     </button>
@@ -266,11 +266,11 @@
                   [(ngModel)]="itemSearchText"
                   [ngModelOptions]="{ standalone: true }"
                   (ngModelChange)="filterItems()"
-                  (focus)="searchInteracted = true; itemDropdown.open()"
+                  (focus)="searchInteracted.set(true); itemDropdown.open()"
                   ngbDropdownAnchor
                 />
                 <div ngbDropdownMenu class="item-dropdown-menu">
-                  @for (item of filteredItems; track item.id) {
+                  @for (item of filteredItems(); track item.id) {
                     <button type="button" ngbDropdownItem (click)="toggleItem(item)" [class.selected]="isItemSelected(item)">
                       <div class="d-flex align-items-center">
                         <div [class]="item.enabled ? 'green-dot me-2' : 'grey-dot me-2'"></div>
@@ -283,14 +283,14 @@
                       </div>
                     </button>
                   }
-                  @if (filteredItems.length === 0 && itemSearchText) {
+                  @if (filteredItems().length === 0 && itemSearchText()) {
                     <div class="dropdown-item text-muted" translate="configuration.oibus.manifest.transformers.no-items-found"></div>
                   }
                 </div>
               </div>
-              @if (selectedItems.length > 0) {
-                <div [style.margin-top.rem]="selectedItems.length ? 0.5 : 0">
-                  @for (item of selectedItems; track item.id) {
+              @if (selectedItems().length > 0) {
+                <div [style.margin-top.rem]="selectedItems().length ? 0.5 : 0">
+                  @for (item of selectedItems(); track item.id) {
                     <oib-pill type="secondary" [removable]="true" (removed)="removeItem(item)">
                       <div class="d-inline-flex align-items-center">
                         <div [class]="item.enabled ? 'green-dot me-1' : 'grey-dot me-1'"></div>
@@ -304,7 +304,7 @@
           </div>
         </div>
       }
-      @if (manifest) {
+      @if (manifest(); as manifest) {
         <div class="row mt-2" formGroupName="options">
           <oib-oibus-object-form-control
             [scanModes]="scanModes"
@@ -320,7 +320,7 @@
       <oib-north-transformer-test
         [transformer]="form.controls.transformer.value"
         [options]="form.controls.options.value"
-        [itemSource]="transformerTestSource"
+        [itemSource]="transformerTestSource()"
       />
     }
   }

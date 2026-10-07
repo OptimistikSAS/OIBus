@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, input, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, input, signal, viewChild } from '@angular/core';
 
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
@@ -30,10 +30,10 @@ export class TransformerTestResultComponent {
   readonly rawView = viewChild<ItemTestResultComponent>('rawView');
   readonly outputView = viewChild<ItemTestResultComponent>('outputView');
 
-  rawModes: Array<ContentDisplayMode> = [];
-  rawMode: ContentDisplayMode | null = null;
-  outputModes: Array<ContentDisplayMode> = [];
-  outputMode: ContentDisplayMode | null = null;
+  readonly rawModes = signal<Array<ContentDisplayMode>>([]);
+  readonly rawMode = signal<ContentDisplayMode | null>(null);
+  readonly outputModes = signal<Array<ContentDisplayMode>>([]);
+  readonly outputMode = signal<ContentDisplayMode | null>(null);
 
   constructor() {
     effect(() => {

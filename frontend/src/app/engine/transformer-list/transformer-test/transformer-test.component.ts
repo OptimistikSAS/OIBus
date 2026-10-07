@@ -91,8 +91,8 @@ export class TransformerTestComponent implements OnChanges {
 
   readonly csvDelimiter = signal<string>(',');
 
-  tableHeaders: Array<string> = [];
-  tablePage: Page<Array<string>> = { content: [], totalElements: 0, totalPages: 0, size: PAGE_SIZE, number: 0 };
+  readonly tableHeaders = signal<Array<string>>([]);
+  readonly tablePage = signal<Page<Array<string>>>({ content: [], totalElements: 0, totalPages: 0, size: PAGE_SIZE, number: 0 });
 
   form = this.fb.group({
     inputData: ['', Validators.required],
@@ -153,32 +153,35 @@ export class TransformerTestComponent implements OnChanges {
 
   private buildCsvTablePage(output: string, pageNumber: number) {
     const rows = Papa.parse<Array<string>>(output, { delimiter: this.csvDelimiter() }).data;
-    this.tableHeaders = rows.shift() ?? [];
-    this.tablePage = createPageFromArray(rows, PAGE_SIZE, pageNumber);
+    this.tableHeaders.set(rows.shift() ?? []);
+    this.tablePage.set(createPageFromArray(rows, PAGE_SIZE, pageNumber));
   }
 
   private buildJsonTablePage(output: string, pageNumber: number) {
     try {
       const arr = JSON.parse(output) as Array<unknown>;
       if (arr.length > 0 && typeof arr[0] === 'object' && arr[0] !== null) {
-        this.tableHeaders = Object.keys(arr[0] as object);
+        const tableHeaders = Object.keys(arr[0] as object);
+        this.tableHeaders.set(tableHeaders);
         const rows = (arr as Array<Record<string, unknown>>).map(item =>
-          this.tableHeaders.map(h => {
+          tableHeaders.map(h => {
             const val = item[h];
             return typeof val === 'object' ? JSON.stringify(val) : String(val ?? '');
           })
         );
-        this.tablePage = createPageFromArray(rows, PAGE_SIZE, pageNumber);
+        this.tablePage.set(createPageFromArray(rows, PAGE_SIZE, pageNumber));
       } else {
-        this.tableHeaders = ['value'];
-        this.tablePage = createPageFromArray(
-          arr.map(item => [String(item)]),
-          PAGE_SIZE,
-          pageNumber
+        this.tableHeaders.set(['value']);
+        this.tablePage.set(
+          createPageFromArray(
+            arr.map(item => [String(item)]),
+            PAGE_SIZE,
+            pageNumber
+          )
         );
       }
     } catch {
-      this.tablePage = { content: [], totalElements: 0, totalPages: 0, size: PAGE_SIZE, number: 0 };
+      this.tablePage.set({ content: [], totalElements: 0, totalPages: 0, size: PAGE_SIZE, number: 0 });
     }
   }
 

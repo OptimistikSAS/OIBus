@@ -6,14 +6,14 @@
     <div class="pipeline-stage">
       <div class="d-flex justify-content-between align-items-center oib-box-title">
         <span translate="south.test-item.pipeline.raw"></span>
-        @if (rawMode) {
+        @if (rawMode(); as rawMode) {
           <div ngbDropdown class="d-inline-block">
             <button type="button" class="btn btn-link oib-box-btn m-0" ngbDropdownToggle>
               <span class="fa {{ rawView.currentDisplayModeIcon }}"></span>
               <span class="ms-1">{{ 'south.test-item.view.' + rawMode | translate }}</span>
             </button>
             <div ngbDropdownMenu>
-              @for (mode of rawModes; track $index) {
+              @for (mode of rawModes(); track $index) {
                 <button ngbDropdownItem [class.active]="rawMode === mode" (click)="changeRawMode(mode)">
                   <span class="fa {{ rawView.displayModeIcons[mode] }}"></span>
                   <span class="ms-1">{{ 'south.test-item.view.' + mode | translate }}</span>
@@ -23,7 +23,12 @@
           </div>
         }
       </div>
-      <oib-item-test-result #rawView [compact]="true" (availableDisplayModes)="rawModes = $event" (currentDisplayMode)="rawMode = $event" />
+      <oib-item-test-result
+        #rawView
+        [compact]="true"
+        (availableDisplayModes)="rawModes.set($event)"
+        (currentDisplayMode)="rawMode.set($event)"
+      />
     </div>
 
     @if (hasTransformer()) {
@@ -31,14 +36,14 @@
       <div class="pipeline-stage pipeline-stage-output">
         <div class="d-flex justify-content-between align-items-center oib-box-title">
           <span translate="south.test-item.pipeline.output"></span>
-          @if (outputMode) {
+          @if (outputMode(); as outputMode) {
             <div ngbDropdown class="d-inline-block">
               <button type="button" class="btn btn-link oib-box-btn m-0" ngbDropdownToggle>
                 <span class="fa {{ outputView.currentDisplayModeIcon }}"></span>
                 <span class="ms-1">{{ 'south.test-item.view.' + outputMode | translate }}</span>
               </button>
               <div ngbDropdownMenu>
-                @for (mode of outputModes; track $index) {
+                @for (mode of outputModes(); track $index) {
                   <button ngbDropdownItem [class.active]="outputMode === mode" (click)="changeOutputMode(mode)">
                     <span class="fa {{ outputView.displayModeIcons[mode] }}"></span>
                     <span class="ms-1">{{ 'south.test-item.view.' + mode | translate }}</span>
@@ -51,8 +56,8 @@
         <oib-item-test-result
           #outputView
           [compact]="true"
-          (availableDisplayModes)="outputModes = $event"
-          (currentDisplayMode)="outputMode = $event"
+          (availableDisplayModes)="outputModes.set($event)"
+          (currentDisplayMode)="outputMode.set($event)"
         />
       </div>
     }

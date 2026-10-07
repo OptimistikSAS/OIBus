@@ -137,26 +137,27 @@
 
             <!-- Output content -->
             @if (currentDisplayMode === 'table') {
-              <div class="grid-table" [style]="'grid-template-columns: repeat(' + tableHeaders.length + ', minmax(0, 1fr))'">
+              @let page = tablePage();
+              <div class="grid-table" [style]="'grid-template-columns: repeat(' + tableHeaders().length + ', minmax(0, 1fr))'">
                 <div class="grid-table-header fw-bold">
-                  @for (header of tableHeaders; track $index) {
+                  @for (header of tableHeaders(); track $index) {
                     <div class="p-2">{{ header }}</div>
                   }
                 </div>
-                @for (row of tablePage.content; track $index) {
+                @for (row of page.content; track $index) {
                   <div class="grid-table-row">
                     @for (cell of row; track $index) {
                       <div class="align-items-center d-flex h-100 p-2" style="overflow-wrap: anywhere">{{ cell }}</div>
                     }
                   </div>
                 }
-                @if (tablePage.totalElements === 0) {
+                @if (page.totalElements === 0) {
                   <div class="p-2" style="grid-column: 1/-1">{{ 'south.test-item.table.no-values' | translate }}</div>
                 }
               </div>
-              @if (tablePage.totalPages > 1) {
+              @if (page.totalPages > 1) {
                 <div class="d-flex flex-row-reverse">
-                  <oib-pagination [page]="tablePage" (pageChanged)="buildTablePage($event)" />
+                  <oib-pagination [page]="page" (pageChanged)="buildTablePage($event)" />
                 </div>
               }
             } @else {

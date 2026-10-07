@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -25,7 +25,7 @@ export class ChooseSouthConnectorTypeModalComponent {
   private router = inject(Router);
 
   southTypes: Array<SouthType> = [];
-  groupedSouthTypes: Array<{ category: string; types: Array<SouthType> }> = [];
+  readonly groupedSouthTypes = signal<Array<{ category: string; types: Array<SouthType> }>>([]);
 
   constructor() {
     this.southConnectorService.getSouthTypes().subscribe(types => {
@@ -45,10 +45,12 @@ export class ChooseSouthConnectorTypeModalComponent {
       }
     }
 
-    this.groupedSouthTypes = Object.keys(groupedTypes).map(category => ({
-      category,
-      types: groupedTypes[category]
-    }));
+    this.groupedSouthTypes.set(
+      Object.keys(groupedTypes).map(category => ({
+        category,
+        types: groupedTypes[category]
+      }))
+    );
   }
 
   selectType(type: string) {

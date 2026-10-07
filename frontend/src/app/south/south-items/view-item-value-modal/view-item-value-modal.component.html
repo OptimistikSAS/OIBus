@@ -4,33 +4,33 @@
 </div>
 
 <div class="modal-body">
-  @if (loading) {
+  @if (loading()) {
     <div class="text-center py-4">
       <div class="spinner-border" role="status"></div>
     </div>
-  } @else if (error) {
+  } @else if (error(); as errorMessage) {
     <div class="alert alert-danger" role="alert">
       <strong translate="south.items.last-value-modal.error-title"></strong>
       <hr />
-      <div style="overflow-wrap: break-word">{{ error }}</div>
+      <div style="overflow-wrap: break-word">{{ errorMessage }}</div>
     </div>
   } @else {
     <div class="container-fluid">
       <div class="row mb-3">
         <div class="col-md-4 fw-bold" translate="south.items.last-value-modal.item-name"></div>
-        <div class="col-md-8">{{ itemName }}</div>
+        <div class="col-md-8">{{ itemName() }}</div>
       </div>
 
       <div class="row mb-3">
         <div class="col-md-4 fw-bold" translate="south.items.group"></div>
-        <div class="col-md-8">{{ groupName }}</div>
+        <div class="col-md-8">{{ groupName() }}</div>
       </div>
 
       <div class="row mb-3">
         <div class="col-md-4 fw-bold" translate="south.items.last-value-modal.query-time"></div>
         <div class="col-md-8">
-          @if (itemLastValue?.queryTime) {
-            <span>{{ itemLastValue!.queryTime | date: 'medium' }}</span>
+          @if (itemLastValue()?.queryTime) {
+            <span>{{ itemLastValue()!.queryTime | date: 'medium' }}</span>
           } @else {
             <span class="text-muted" translate="south.items.last-value-modal.no-value"></span>
           }
@@ -40,8 +40,8 @@
       <div class="row mb-3">
         <div class="col-md-4 fw-bold" translate="south.items.last-value-modal.tracked-instant"></div>
         <div class="col-md-8">
-          @if (itemLastValue?.trackedInstant) {
-            <span>{{ itemLastValue!.trackedInstant | date: 'medium' }}</span>
+          @if (itemLastValue()?.trackedInstant) {
+            <span>{{ itemLastValue()!.trackedInstant | date: 'medium' }}</span>
           } @else {
             <span class="text-muted">-</span>
           }
@@ -51,12 +51,12 @@
       <div class="row">
         <div class="col-md-4 fw-bold" translate="south.items.last-value-modal.value"></div>
         <div class="col-md-8">
-          @if (!hasValue) {
+          @if (!hasValue()) {
             <div class="text-muted" translate="south.items.last-value-modal.no-value"></div>
           }
 
           <!-- File array display -->
-          @if (isFileArray) {
+          @if (isFileArray()) {
             <div class="table-responsive">
               <table class="table table-sm table-bordered">
                 <thead>
@@ -66,7 +66,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (file of fileArray; track file) {
+                  @for (file of fileArray(); track file) {
                     <tr>
                       <td>{{ file.filename }}</td>
                       <td>{{ file.modifiedTime | date: 'medium' }}</td>
@@ -74,18 +74,18 @@
                   }
                 </tbody>
               </table>
-              <div class="text-muted small">{{ fileArray.length }} file(s) tracked</div>
+              <div class="text-muted small">{{ fileArray().length }} file(s) tracked</div>
             </div>
           }
 
           <!-- Generic JSON display -->
-          @if (hasValue && !isFileArray) {
-            <pre class="bg-light p-2 rounded">{{ itemLastValue!.value | json }}</pre>
+          @if (hasValue() && !isFileArray()) {
+            <pre class="bg-light p-2 rounded">{{ itemLastValue()!.value | json }}</pre>
           }
         </div>
       </div>
 
-      @if (groupLastValue) {
+      @if (groupLastValue(); as groupLastValue) {
         <hr />
         <h6 translate="south.items.last-value-modal.group-section-title"></h6>
 
@@ -103,7 +103,7 @@
         <div class="row">
           <div class="col-md-4 fw-bold" translate="south.items.last-value-modal.value"></div>
           <div class="col-md-8">
-            @if (!groupHasValue) {
+            @if (!groupHasValue()) {
               <div class="text-muted" translate="south.items.last-value-modal.no-value"></div>
             } @else {
               <pre class="bg-light p-2 rounded">{{ groupLastValue.value | json }}</pre>

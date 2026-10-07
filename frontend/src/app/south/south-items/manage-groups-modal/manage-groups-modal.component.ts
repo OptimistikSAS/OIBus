@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -42,8 +42,10 @@ export default class ManageGroupsModalComponent {
   private fb = inject(NonNullableFormBuilder);
 
   directSave = true;
+  // shared by reference with the opener and mutated in place: displayedGroups is always set to a new array afterwards,
+  // which re-renders the template (including groups.length)
   groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
-  displayedGroups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
+  readonly displayedGroups = signal<Array<SouthItemGroupDTO | SouthItemGroupCommandDTO>>([]);
   scanModes: Array<ScanModeDTO> = [];
   manifest!: SouthConnectorManifest;
   getItemCount!: (groupId: string) => number;
@@ -53,9 +55,9 @@ export default class ManageGroupsModalComponent {
   }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
   deleteGroup!: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => Observable<void>;
 
-  importing = false;
-  importErrors: Array<GroupImportError> = [];
-  importSuccessCount: number | null = null;
+  readonly importing = signal(false);
+  readonly importErrors = signal<Array<GroupImportError>>([]);
+  readonly importSuccessCount = signal<number | null>(null);
 
   searchControl = this.fb.control(null as string | null);
   scheduleFilterControl = this.fb.control(null as string | null);
@@ -161,7 +163,7 @@ export default class ManageGroupsModalComponent {
       });
     }
 
-    this.displayedGroups = result;
+    this.displayedGroups.set(result);
   }
 
   onAddGroup() {
@@ -228,8 +230,8 @@ export default class ManageGroupsModalComponent {
     if (!file) {
       return;
     }
-    this.importErrors = [];
-    this.importSuccessCount = null;
+    this.importErrors.set([]);
+    this.importSuccessCount.set(null);
 
     const content = await file.text();
     const parsed = csv.parse(content, { header: true, skipEmptyLines: true });
@@ -277,13 +279,13 @@ export default class ManageGroupsModalComponent {
       } as SouthItemGroupCommandDTO);
     });
 
-    this.importErrors = errors;
+    this.importErrors.set(errors);
 
     if (commands.length === 0) {
       return;
     }
 
-    this.importing = true;
+    this.importing.set(true);
     from(commands)
       .pipe(
         concatMap(command => this.addOrEditGroup({ mode: 'create', group: command })),
@@ -291,8 +293,8 @@ export default class ManageGroupsModalComponent {
       )
       .subscribe(results => {
         results.forEach(result => this.groups.push(result));
-        this.importing = false;
-        this.importSuccessCount = results.length;
+        this.importing.set(false);
+        this.importSuccessCount.set(results.length);
         this.refreshDisplayedGroups();
       });
   }

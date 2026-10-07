@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -36,10 +36,10 @@ export class CreateHistoryQueryModalComponent {
   private northConnectorService = inject(NorthConnectorService);
   private southConnectorService = inject(SouthConnectorService);
 
-  northTypes: Array<NorthType> = [];
-  northList: Array<NorthConnectorLightDTO> = [];
-  southTypes: Array<SouthType> = [];
-  southList: Array<SouthConnectorLightDTO> = [];
+  readonly northTypes = signal<Array<NorthType>>([]);
+  readonly northList = signal<Array<NorthConnectorLightDTO>>([]);
+  readonly southTypes = signal<Array<SouthType>>([]);
+  readonly southList = signal<Array<SouthConnectorLightDTO>>([]);
   state = new ObservableState();
 
   createForm = inject(NonNullableFormBuilder).group({
@@ -80,22 +80,26 @@ export class CreateHistoryQueryModalComponent {
       this.southConnectorService.getSouthTypes(),
       this.southConnectorService.list()
     ]).subscribe(([northTypes, northList, southTypes, southList]) => {
-      this.northTypes = northTypes;
-      this.northList = northList;
-      this.southTypes = southTypes.filter(southManifest => {
-        // Keep only South with history mode supported
-        return southManifest.modes.history;
-      });
-      this.southList = southList.filter(south => {
-        // Keep only South with history mode supported
-        const southType = southTypes.find(manifest => manifest.id === south.type);
-        return southType && southType.modes.history;
-      });
-      if (this.southList.length === 0) {
+      this.northTypes.set(northTypes);
+      this.northList.set(northList);
+      this.southTypes.set(
+        southTypes.filter(southManifest => {
+          // Keep only South with history mode supported
+          return southManifest.modes.history;
+        })
+      );
+      this.southList.set(
+        southList.filter(south => {
+          // Keep only South with history mode supported
+          const southType = southTypes.find(manifest => manifest.id === south.type);
+          return southType && southType.modes.history;
+        })
+      );
+      if (this.southList().length === 0) {
         this.createForm.controls.fromExistingSouth.setValue(false);
         this.createForm.controls.fromExistingSouth.disable();
       }
-      if (this.northList.length === 0) {
+      if (this.northList().length === 0) {
         this.createForm.controls.fromExistingNorth.setValue(false);
         this.createForm.controls.fromExistingNorth.disable();
       }

@@ -78,7 +78,7 @@ describe('SouthItemTestComponent', () => {
   test('should render with all required inputs and load norths in a south context', () => {
     northConnectorService.list.mockReturnValue(of([{ id: 'northId1', name: 'North 1' }]) as never);
     const component = createComponent().componentInstance;
-    expect(component.norths.map(n => n.id)).toEqual(['northId1']);
+    expect(component.norths().map(n => n.id)).toEqual(['northId1']);
   });
 
   test('selecting a north loads its transformers, selecting one builds the options form', () => {
@@ -92,11 +92,11 @@ describe('SouthItemTestComponent', () => {
     );
 
     const component = createComponent().componentInstance;
-    component.form!.controls.northId.setValue('northId1');
-    expect(component.transformerChoices.map(t => t.transformerId)).toEqual(['t1']);
+    component.form()!.controls.northId.setValue('northId1');
+    expect(component.transformerChoices().map(t => t.transformerId)).toEqual(['t1']);
 
-    component.form!.controls.transformerId.setValue('t1');
-    expect(component.selectedTransformer?.id).toBe('t1');
+    component.form()!.controls.transformerId.setValue('t1');
+    expect(component.selectedTransformer()?.id).toBe('t1');
   });
 
   test('runs the item and stores the raw + transformed result', () => {
@@ -112,7 +112,7 @@ describe('SouthItemTestComponent', () => {
     const component = createComponent().componentInstance;
     component.testItem();
 
-    expect(component.testResult?.transformed).toEqual({ type: 'any-content', content: 'out' });
+    expect(component.testResult()?.transformed).toEqual({ type: 'any-content', content: 'out' });
     expect(southConnectorService.testItem).toHaveBeenCalled();
   });
 
@@ -120,7 +120,7 @@ describe('SouthItemTestComponent', () => {
     historyQueryService.findById.mockReturnValue(of({ northTransformers: [{ transformer: standardTransformer, options: {} }] }) as never);
 
     const component = createComponent('history-south', 'hq1').componentInstance;
-    expect(component.transformerChoices.map(t => t.transformerId)).toEqual(['t1']);
+    expect(component.transformerChoices().map(t => t.transformerId)).toEqual(['t1']);
   });
 
   test('history context in create/edit mode uses the in-memory transformer list instead of fetching', () => {
@@ -129,6 +129,6 @@ describe('SouthItemTestComponent', () => {
     const component = createComponent('history-south', 'create', [inMemoryTransformer]).componentInstance;
 
     expect(historyQueryService.findById).not.toHaveBeenCalled();
-    expect(component.transformerChoices).toEqual([{ transformerId: 't1', transformer: standardTransformer, options: { foo: 'bar' } }]);
+    expect(component.transformerChoices()).toEqual([{ transformerId: 't1', transformer: standardTransformer, options: { foo: 'bar' } }]);
   });
 });

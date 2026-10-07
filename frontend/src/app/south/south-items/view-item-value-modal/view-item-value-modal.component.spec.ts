@@ -27,7 +27,7 @@ describe('ViewItemValueModalComponent', () => {
     const root = page.elementLocator(fixture.nativeElement);
     await expect.element(root.getByCss('.modal-body')).toBeInTheDocument();
     // loading state is visible before data arrives
-    expect(fixture.componentInstance.loading).toBe(true);
+    expect(fixture.componentInstance.loading()).toBe(true);
   });
 
   test('should display value after setData', async () => {
@@ -49,7 +49,7 @@ describe('ViewItemValueModalComponent', () => {
 
     const root = page.elementLocator(fixture.nativeElement);
     await expect.element(root.getByCss('.modal-body')).toBeInTheDocument();
-    expect(fixture.componentInstance.loading).toBe(false);
+    expect(fixture.componentInstance.loading()).toBe(false);
   });
 
   test('should display the group section when the item belongs to a group', async () => {
@@ -79,7 +79,7 @@ describe('ViewItemValueModalComponent', () => {
 
     const root = page.elementLocator(fixture.nativeElement);
     await expect.element(root.getByCss('.modal-body')).toBeInTheDocument();
-    expect(fixture.componentInstance.groupLastValue).not.toBeNull();
+    expect(fixture.componentInstance.groupLastValue()).not.toBeNull();
   });
 
   test('should dismiss on close', () => {
