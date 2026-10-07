@@ -8,7 +8,7 @@ import { page } from 'vitest/browser';
 import { OIBusInstantAttribute } from '@oibus/shared/connector/form.model';
 
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { provideCurrentUser } from '../../current-user-testing-vitest';
+import { provideCurrentUser } from '../../current-user-testing';
 import { OIBusInstantFormControlComponent } from './oibus-instant-form-control.component';
 
 @Component({

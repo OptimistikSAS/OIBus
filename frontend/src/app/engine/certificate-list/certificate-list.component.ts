@@ -20,7 +20,7 @@ import { Modal, ModalService } from '../../shared/modal.service';
 import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
-import { emptyPage } from '../../shared/test-utils';
+import { emptyPage } from '../../shared/utils/page.utils';
 import { EditCertificateModalComponent } from './edit-certificate-modal/edit-certificate-modal.component';
 import { ExportCertificateModalComponent } from './export-certificate-modal/export-certificate-modal.component';
 import { ImportCertificateModalComponent } from './import-certificate-modal/import-certificate-modal.component';

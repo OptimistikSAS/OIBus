@@ -7,8 +7,8 @@ import { createPageFromArray, Page } from '@oibus/shared/common/types';
 import { OIBusArrayAttribute } from '@oibus/shared/connector/form.model';
 
 import { PaginationComponent } from '../../../pagination/pagination.component';
-import { emptyPage } from '../../../test-utils';
 import { getElementName } from '../../../utils/csv.utils';
+import { emptyPage } from '../../../utils/page.utils';
 const PAGE_SIZE = 20;
 
 @Component({
