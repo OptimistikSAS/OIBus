@@ -35,7 +35,7 @@ export class ManifestAttributesArrayComponent {
   contextPath = input<Array<string>>([]);
 
   // Emit when nested data changes (for parent modals to react)
-  nestedChange = output<void>();
+  readonly nestedChange = output<void>();
 
   private readonly controlValue = toSignal(toObservable(this.control).pipe(switchMap(c => c.valueChanges.pipe(startWith(c.value)))));
   readonly paginatedValues = computed(() => {

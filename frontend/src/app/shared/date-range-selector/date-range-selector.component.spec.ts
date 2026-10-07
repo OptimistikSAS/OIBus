@@ -77,9 +77,9 @@ describe('DateRangeSelectorComponent', () => {
     });
 
     test('should initialize with default values', () => {
-      expect(component.startLabel).toBe('history-query.start');
-      expect(component.endLabel).toBe('history-query.end');
-      expect(component.defaultRange).toBe('last-day');
+      expect(component.startLabel()).toBe('history-query.start');
+      expect(component.endLabel()).toBe('history-query.end');
+      expect(component.defaultRange()).toBe('last-day');
     });
 
     test('should initialize predefined ranges', () => {
@@ -114,17 +114,17 @@ describe('DateRangeSelectorComponent', () => {
 
   describe('Input Properties', () => {
     test('should accept custom start and end labels', () => {
-      component.startLabel = 'custom.start.label';
-      component.endLabel = 'custom.end.label';
+      fixture.componentRef.setInput('startLabel', 'custom.start.label');
+      fixture.componentRef.setInput('endLabel', 'custom.end.label');
 
-      expect(component.startLabel).toBe('custom.start.label');
-      expect(component.endLabel).toBe('custom.end.label');
+      expect(component.startLabel()).toBe('custom.start.label');
+      expect(component.endLabel()).toBe('custom.end.label');
     });
 
     test('should accept custom default range', () => {
-      component.defaultRange = 'last-hour';
+      fixture.componentRef.setInput('defaultRange', 'last-hour');
 
-      expect(component.defaultRange).toBe('last-hour');
+      expect(component.defaultRange()).toBe('last-hour');
     });
   });
 
@@ -378,9 +378,9 @@ describe('DateRangeSelectorComponent', () => {
     test('should respect input properties from host', () => {
       const dateRangeSelector = hostFixture.debugElement.query(By.directive(DateRangeSelectorComponent)).componentInstance;
 
-      expect(dateRangeSelector.startLabel).toBe('custom.start');
-      expect(dateRangeSelector.endLabel).toBe('custom.end');
-      expect(dateRangeSelector.defaultRange).toBe('last-hour');
+      expect(dateRangeSelector.startLabel()).toBe('custom.start');
+      expect(dateRangeSelector.endLabel()).toBe('custom.end');
+      expect(dateRangeSelector.defaultRange()).toBe('last-hour');
     });
 
     test('should update parent form when value changes', () => {
