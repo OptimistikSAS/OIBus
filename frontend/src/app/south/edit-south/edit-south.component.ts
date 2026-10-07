@@ -30,6 +30,7 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { DocsUrlService } from '../../shared/docs-url.service';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
+import { findItemIndex } from '../../shared/find-item-index';
 import { addAttributeToForm, addEnablingConditions, asFormGroup, extractFormValue } from '../../shared/form/dynamic-form.builder';
 import { formDirectives } from '../../shared/form/form-directives';
 import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
@@ -413,7 +414,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
     component.directSave = false;
 
-    const tableIndex = this.inMemoryItems.findIndex(i => i.id === southItem.id || i.name === southItem.name);
+    const tableIndex = findItemIndex(this.inMemoryItems, southItem);
     component.prepareForEdition(
       this.inMemoryItems,
       this.scanModes,
