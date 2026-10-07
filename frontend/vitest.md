@@ -1,900 +1,216 @@
-# Vitest Migration Guide
+# Frontend testing guide
 
-This document describes the Vitest infrastructure setup for migrating from Jasmine/Karma to Vitest for unit testing.
-The new tests should use Vitest Browser mode and its locator system.
+The frontend is tested with [Vitest](https://vitest.dev) in **browser mode**: every spec runs in a real Chromium (driven by
+Playwright) and interacts with the DOM through Vitest's [locators](https://vitest.dev/guide/browser/locators).
+Specs are run by the Angular `@angular/build:unit-test` builder (`ng test`), configured in `angular.json` and
+`vitest-base.config.ts`.
 
-Note that, in order to be testable with vitest, all the components used in the tests must be zoneless-compatible.
-And zoneless components should use the OnPush detection strategy.
+## Running the tests
 
-Also note that `fakeAsync()` does not work with vitest and zoneless, so if fake asynchrony is really needed in a test,
-Vitest fake timers should be used instead.
+```bash
+# Once: install the browser
+npx playwright install chromium
+
+# All the specs, with coverage (watch mode outside of CI)
+npm test
+
+# A single run, no watch
+npx ng test --watch=false
+
+# Only some specs
+npx ng test --watch=false --include src/app/engine/engine-detail.component.spec.ts
+```
+
+The coverage report is written to `coverage/frontend` (open `index.html`). Test helpers (`test-utils.ts`, `*-testing.ts`,
+`*.testing.ts`) are excluded from it.
+
+Configuration worth knowing (`vitest-base.config.ts`):
+
+- `restoreMocks: true`: spies created with `vi.spyOn` are restored after each test, no need to call `mockRestore()`.
+- `testTimeout` / `hookTimeout` are 5 s.
+- `resolve.tsconfigPaths`: lets Vite resolve the `@oibus/shared/*` alias (used when collecting coverage).
 
 ## Test helpers
 
-### `src/test/test.ts`
+| Helper                                                      | Location                                                                | Purpose                                                         |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `getByCss(selector)`                                        | `src/test/test.ts`                                                      | Locator extension to query by CSS selector                      |
+| `fillWithDate(date, h, m, s)` / `toHaveDisplayedDate(text)` | `src/test/test.ts`                                                      | Fill / assert an `oib-datetimepicker`                           |
+| `createMock(Type)` / `MockObject<T>`                        | `src/test/vitest-create-mock.ts`                                        | Mock where every method of the class is a `vi.fn()`             |
+| `stubRoute({ params, queryParams })`                        | `src/test/vitest-create-mock.ts`                                        | Stub `ActivatedRoute` (observables and snapshot)                |
+| `testData`                                                  | `src/test/test-data.ts`                                                 | Fixtures typed with the API DTOs                                |
+| `provideI18nTesting()`                                      | `src/i18n/mock-i18n.ts`                                                 | Real English translations; a missing key throws                 |
+| `provideCurrentUser(user?)`                                 | `src/app/shared/current-user-testing.ts`                                | Mocked `CurrentUserService` (default timezone if no user given) |
+| `provideModalTesting()` / `MockModalService`                | `src/app/shared/mock-modal.service.testing.ts`                          | Replace `ModalService` and simulate a closed / dismissed modal  |
+| `provideNgbConfigTesting()` / `noAnimation`                 | `src/app/shared/form/oi-ngb-testing.ts`, `src/app/shared/test-utils.ts` | ng-bootstrap config without animations                          |
+| `byIdComparisonFn`                                          | `src/app/shared/test-utils.ts`                                          | `compareWith` function for selects of `{ id }` objects          |
 
-Extends Vitest's locator system with a custom `getByCss` selector:
+`toPage()` / `emptyPage()` are production helpers (`src/app/shared/utils/page.utils.ts`) and are handy to build `Page`
+responses in tests too.
 
-```typescript
-locators.extend({
-  getByCss(selector: string) {
-    return selector;
-  }
-});
-```
+## Writing a component test
 
-This allows using CSS selectors for element queries, providing a transition path from ngx-speculoos syntax.
+### Tester class
 
-### `src/test/vitest-create-mock.ts`
-
-Provides a `createMock<T>()` function for creating mock objects of Angular services,
-corresponding to the one from ngx-speculoos but adapted for Vitest's mocking system.
-
-### `src/app/current-user-testing-vitest.ts`
-
-Vitest compatible version of the current user testing utilities in `current-user-testing.ts`
-
-# Jasmine to Vitest Migration Guide with Locator Pattern
-
-This guide documents the migration from Jasmine/Karma to Vitest for Angular projects,
-using the locator pattern for component testing.
-
-## Table of Contents
-
-1. [Locator Pattern](#locator-pattern)
-2. [Assertions](#assertions)
-3. [Mocking](#mocking)
-4. [Time Mocking](#time-mocking)
-5. [Stub Measurement Typeahead](#stub-measurement-typeahead)
-6. [ngb-typeahead Interactions](#ngb-typeahead-interactions)
-7. [Period Duration Selection](#period-duration-selection)
-8. [Datetime Picker](#datetime-picker)
-9. [Common Patterns](#common-patterns)
-
-## Locator Pattern
-
-### Component Tester Classes
-
-**Before (ngx-speculoos):**
+Each spec declares a small tester class holding the fixture and the locators. Use `readonly` fields for static
+locators, and methods only for dynamic ones (e.g. a row by index).
 
 ```typescript
-class MyComponentTester extends ComponentTester<MyComponent> {
-  constructor() {
-    super(MyComponent);
-  }
+class EngineDetailComponentTester {
+  readonly fixture = TestBed.createComponent(EngineDetailComponent);
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly title = this.root.getByRole('heading', { level: 1 });
+  readonly restartButton = this.root.getByRole('button', { name: 'Restart' });
+  readonly scanModes = this.root.getByCss('tbody tr');
 
-  get title() {
-    return this.element('h1')!;
-  }
-
-  get saveButton() {
-    return this.button('#save-button')!;
-  }
-
-  get items() {
-    return this.elements('.item');
+  scanMode(index: number) {
+    return this.scanModes.nth(index);
   }
 }
 ```
 
-**After (Locator pattern):**
+Scope locators to the component (`this.root`) so that they cannot match leftovers of another component. Modals and
+other ng-bootstrap overlays are attached to `<body>`, so locate them from `page`.
+
+### Locators
+
+Prefer, in this order:
+
+1. Semantic locators: `getByRole('button', { name: 'Save' })`, `getByLabelText('Name')`, `getByText('…')`.
+   Translations are real (`provideI18nTesting()`), so use the English labels.
+2. `getByTestId('…')` with a `data-testid` attribute in the template, when there is no accessible name.
+3. `getByCss('…')` as a last resort.
+
+Icon-only buttons have no accessible name: rather than adding an id, give them a translated `aria-label`, which fixes
+both the test and the accessibility.
+
+### Interact through the DOM
+
+Test what the user sees and does: click buttons, fill inputs, select options, then assert on the DOM and on the
+mocked services. Calling component methods (`componentInstance.save()`) or setting form controls directly skips the
+template, so bindings, `disabled` states and validation messages stay untested.
 
 ```typescript
-class MyComponentTester {
-  readonly fixture = TestBed.createComponent(MyComponent);
-  readonly title = page.getByRole('heading', { level: 1 });
-  readonly saveButton = page.getByRole('button', { name: 'Save' });
-  readonly items = page.getByCss('.item');
-}
+await tester.name.fill('My connector');
+await tester.saveButton.click();
+
+expect(southConnectorService.create).toHaveBeenCalledWith(expect.objectContaining({ name: 'My connector' }));
+await expect.element(tester.root.getByText('Name is required')).not.toBeInTheDocument();
 ```
 
-Always prefer semantic locators (`getByRole`, `getByLabelText`, `getByText`) over CSS selectors where possible.
-Do not use getters for simple locators. Prefer `readonly` locator fields, and keep methods only for dynamic locators or Angular component/directive instance access.
+| Action         | Code                                   |
+| -------------- | -------------------------------------- |
+| Click / toggle | `await locator.click()`                |
+| Type           | `await locator.fill('value')`          |
+| Select         | `await locator.selectOptions('Label')` |
+| Upload a file  | `await locator.upload(file)`           |
+| Hover          | `await locator.hover()`                |
 
-### Routing Components
+Accessing `componentInstance` is fine for a modal's public API called by its opener (`prepareForCreation(…)`,
+`initialize(…)`) or to read an `output()`.
 
-**Before:**
+### Assertions
+
+DOM assertions go through `expect.element()` and **must be awaited**: they retry until the expectation passes or times
+out, which absorbs change detection and asynchronous rendering.
 
 ```typescript
-class MyComponentTester extends RoutingTester {
-  constructor() {
-    super();
-  }
-
-  // ... locators
-}
-
-// In test:
-tester = new MyComponentTester();
-await tester.stable();
-```
-
-**After:**
-
-```typescript
-class MyComponentTester {
-  readonly root: Locator;
-
-  // ... locators
-
-  constructor(readonly harness: RouterTestingHarness) {
-    this.root = page.elementLocator(harness.fixture.nativeElement);
-  }
-}
-
-// In test:
-const tester = new MyComponentTester(
-  await RouterTestingHarness.create('/path')
-);
-```
-
-### Locator Methods
-
-| ngx-speculoos                  | Vitest Locator                                      |
-|--------------------------------|-----------------------------------------------------|
-| `this.element('selector')`     | `page.getByCss('selector')`                         |
-| `this.button('.my-button')`    | `page.getByRole('button', { name: 'Button Text' })` |
-| `this.input('#my-input')`      | `page.getByLabelText('Input Label')`                |
-| `this.select('#my-select')`    | `page.getByLabelText('Select Label')`               |
-| `this.elements('.items')`      | `page.getByCss('.items')`                           |
-| `this.component(MyComponent)`  | `page.getByCss('my-component-selector')`            |
-| `this.components(MyComponent)` | `page.getByCss('my-component-selector')`            |
-
-**Prefer semantic locators** (getByRole, getByLabelText, getByText) over CSS selectors where possible.
-
-All locator methods (`getByCss`, `getByRole`, `getByLabelText`, etc.) can also be called on any child `Locator`,
-not just on `page`. This is useful to scope queries to a specific subtree.
-
-**Before:**
-
-```typescript
-const firstRow = tester.data[0];
-const cells = firstRow.elements('td');
-expect(cells[0]).toContainText('d1');
-const deleteButton = tester.tagValues[1].button('button');
-```
-
-**After:**
-
-```typescript
-const firstRow = tester.data.nth(0);
-const cells = firstRow.getByCss('td');
-await expect.element(cells.nth(0)).toHaveTextContent('d1');
-const deleteButton = tester.tagValues.nth(1).getByRole('button');
-```
-
-### Accessing Angular Component Instances
-
-For Angular components/directives that don't have a matching DOM element (used as injected services or
-accessed via the component tree), use `By.directive()` from `@angular/platform-browser` instead of a locator.
-
-**Before (ngx-speculoos):**
-
-```typescript
-class MyComponentTester extends ComponentTester<MyComponent> {
-  get auditLinks() {
-    return this.components(AuditLinkComponent);
-  }
-
-  get tagValueSearch() {
-    return this.component(TagValueSearchStubComponent);
-  }
-}
-```
-
-**After:**
-
-```typescript
-import { By } from '@angular/platform-browser';
-
-class MyComponentTester {
-  readonly fixture = TestBed.createComponent(MyComponent);
-
-  get auditLinks(): Array<AuditLinkComponent> {
-    return this.fixture.debugElement
-      .queryAll(By.directive(AuditLinkComponent))
-      .map(de => de.componentInstance);
-  }
-
-  get tagValueSearch(): TagValueSearchStubComponent {
-    return this.fixture.debugElement
-      .query(By.directive(TagValueSearchStubComponent))
-      .componentInstance;
-  }
-}
-```
-
-Use locators (`page.getByCss('my-selector')`) when you only need to interact with or assert on the DOM.
-Use `By.directive()` only when you need to access the **component instance** itself (e.g. to call methods on it).
-
-### Accessing Nth Element
-
-**Before:**
-
-```typescript
-const firstItem = tester.items[0];
-const secondItem = tester.items[1];
-```
-
-**After:**
-
-```typescript
-const firstItem = tester.items.nth(0);
-const secondItem = tester.items.nth(1);
-```
-
-### Getting All Elements
-
-**Before:**
-
-```typescript
-const itemCount = tester.items.length;
-for (const item of tester.items) {
-  // do something
-}
-```
-
-**After:**
-
-```typescript
-await expect.element(tester.items).toHaveLength(expectedCount);
-
-for (const item of tester.items.elements()) {
-  // do something with HTMLElement
-}
-```
-
-### IDs and classes used for testing purposes
-
-If you want to access to a specific element or to several specific elements, and if there is no way to use
-semantic locators, instead of adding an ID or a CSS class to the element(s) like we used to do, prefer adding a  `data-testid` attribute, and then use `page.getByTestId()` or `locator.getByTestId()` to access it/them.
-
-This avoids having duplicate IDs on the page (which is invalid), and avoids wondering why a CSS class
-is set without any associated CSS rules.
-
-**Before:**
-
-```html
-
-<div id="highlighted-section">...</div>
-@for (report of reports; track report.id) {
-<div class="report">...</div>
-}
-```
-
-```typescript
-class MyComponentTester extends ComponentTester<MyComponent> {
-  constructor() {
-    super(MyComponent);
-  }
-
-  get highlightedSection() {
-    return this.element('#highlighted-section')!;
-  }
-
-  get reports() {
-    return this.elements('.report');
-  }
-}
-```
-
-**After:**
-
-```html
-
-<div data-testid="highlighted-section">...</div>
-@for (report of reports; track report.id) {
-<div data-testid="report">...</div>
-}
-```
-
-```typescript
-class MyComponentTester {
-  readonly fixture = TestBed.createComponent(MyComponent);
-  readonly highlightedSection = page.getByTestId('highlighted-section');
-  readonly reports = page.getByTestid('report');
-}
-```
-
-### Icon buttons and links without text
-
-Buttons and links which don't have any text and are only identifiable using their icon are not accessible.
-The application has many other accessibility issues, but if we want to improve, it would be better to
-fix them and add an internationalized text to these links and buttons using `aria-label`.
-
-**Before:**
-
-```html
-
-<button id="save-button"><span class="fa-solid fa-save"></span></button>
-```
-
-```typescript
-class MyComponentTester extends ComponentTester<MyComponent> {
-  constructor() {
-    super(MyComponent);
-  }
-
-  get saveButton() {
-    return this.button('#save-button');
-  }
-}
-```
-
-**After:**
-
-```html
-
-<button [ariaLabel]="'common.save' | translate"><span class="fa-solid fa-save"></span></button>
-```
-
-```typescript
-class MyComponentTester {
-  readonly fixture = TestBed.createComponent(MyComponent);
-  readonly saveButton = page.getByRole('button', { name: 'Save' });
-}
-```
-
-## Assertions
-
-All DOM-related assertions must be `await`ed in Vitest.
-
-### Text Content
-
-**Before:**
-
-```typescript
-expect(tester.title).toHaveText('Hello');
-expect(tester.title).toHaveTrimmedText('Hello');
-expect(tester.element).toContainText('Hello\u00a0world');
-```
-
-**After:**
-
-```typescript
-await expect.element(tester.title).toHaveTextContent('Hello');
-await expect.element(tester.element).toHaveTextContent('Hello world'); // handles non-breaking spaces
-```
-
-### Visibility
-
-**Before:**
-
-```typescript
-expect(tester.element).not.toBeNull();
-expect(tester.element).toBeNull();
-```
-
-**After:**
-
-```typescript
-await expect.element(tester.element).toBeVisible();
-await expect.element(tester.element).toBeInTheDocument();
-await expect.element(tester.element).not.toBeInTheDocument();
-```
-
-### Attributes
-
-**Before:**
-
-```typescript
-expect(tester.link.attr('href')).toBe('https://example.com');
-expect(tester.input).toHaveValue('test');
-```
-
-**After:**
-
-```typescript
-await expect.element(tester.link).toHaveAttribute('href', 'https://example.com');
-await expect.element(tester.input).toHaveValue('test');
-await expect.element(tester.input).toHaveDisplayValue('test');
-```
-
-### Classes
-
-**Before:**
-
-```typescript
-expect(tester.element).toHaveClass('active');
-expect(tester.element).not.toHaveClass('disabled');
-expect(tester.element.classes).toEqual(['foo', 'bar']);
-```
-
-**After:**
-
-```typescript
-await expect.element(tester.element).toHaveClass('active');
-await expect.element(tester.element).not.toHaveClass('disabled');
-await expect.element(tester.element).toHaveClass('foo', 'bar', { exact: true });
-```
-
-### Checked State
-
-**Before:**
-
-```typescript
-expect(tester.checkbox).toBeChecked();
-expect(tester.checkbox).not.toBeChecked();
-```
-
-**After:**
-
-```typescript
-await expect.element(tester.checkbox).toBeChecked();
-await expect.element(tester.checkbox).not.toBeChecked();
-```
-
-### Disabled State
-
-**Before:**
-
-```typescript
-expect(tester.input.disabled).toBe(true);
-expect(tester.button.disabled).toBe(false);
-```
-
-**After:**
-
-```typescript
-await expect.element(tester.input).toBeDisabled();
-await expect.element(tester.button).not.toBeDisabled();
-```
-
-### Select Elements
-
-**Before:**
-
-```typescript
-expect(tester.select).toHaveSelectedLabel('Option 1');
-expect(tester.select.optionLabels.length).toBe(3);
-expect(tester.select.optionLabels[0]).toBe('Option 1');
-```
-
-**After:**
-
-```typescript
+await expect.element(tester.title).toHaveTextContent('Engine');
+await expect.element(tester.scanModes).toHaveLength(3);
+await expect.element(tester.saveButton).toBeDisabled();
+await expect.element(tester.error).not.toBeInTheDocument();
 await expect.element(tester.select).toHaveDisplayValue('Option 1');
-const options = tester.select.getByRole('option');
-await expect.element(options).toHaveLength(3);
-await expect.element(options.nth(0)).toHaveTextContent('Option 1');
 ```
 
-### Custom Matchers
+Avoid synchronous DOM reads (`locator.element().textContent`, `querySelector`, `By.css`): they do not retry, and
+`toBeTruthy()` on an element proves very little.
 
-**Before:**
+### Change detection
+
+Like the application, the tests load zone.js (see the `vitest` build configuration in `angular.json`), and fixtures
+do **not** detect changes automatically: until `fixture.detectChanges()` is called, the component is not rendered,
+and state changes (even signal changes, even after `await expect.element()`) are not reflected in the DOM.
+
+So either:
+
+- call `fixture.detectChanges()` after creating the component and after each change of its state, or
+- call `fixture.autoDetectChanges()` once after creating the component: change detection then runs after every event
+  and every signal change, like in the application, and the manual calls become unnecessary.
+
+### Routed components
+
+Use `RouterTestingHarness` when the component reads the router state, and `stubRoute()` when it only needs an
+`ActivatedRoute`:
 
 ```typescript
-expect(value).withContext('Error message').toEqual(expected);
-```
-
-**After:**
-
-```typescript
-expect(value, 'Error message').toEqual(expected);
+{ provide: ActivatedRoute, useValue: stubRoute({ params: { southId: 'southId1' } }) }
 ```
 
 ## Mocking
 
-### Creating Mocks
-
-**Before:**
-
 ```typescript
-import { createMock } from 'ngx-speculoos';
-
-let service: jasmine.SpyObj<MyService>;
+let southConnectorService: MockObject<SouthConnectorService>;
 
 beforeEach(() => {
-  service = createMock(MyService);
+  southConnectorService = createMock(SouthConnectorService);
+  southConnectorService.findById.mockReturnValue(of(testData.south.list[0]));
+
+  TestBed.configureTestingModule({
+    providers: [provideI18nTesting(), { provide: SouthConnectorService, useValue: southConnectorService }]
+  });
 });
 ```
 
-**After:**
+- `createMock` only mocks methods. Fields (e.g. an `info$` observable) must be set on the mock.
+- Read call arguments with `mock.lastCall` / `mock.calls[n]`, and prefer `toHaveBeenCalledWith(…)` over a bare
+  `toHaveBeenCalled()`.
+- Modals: use `provideModalTesting()` and `MockModalService` rather than mocking `ModalService.open` with a cast:
 
-```typescript
-import { createMock, MockObject } from '../test/vitest-create-mock';
+  ```typescript
+  const modalService = TestBed.inject(MockModalService);
+  const fakeModal = createMock(EditScanModeModalComponent);
+  modalService.mockClosedModal(fakeModal, scanMode);
+  ```
 
-let service: MockObject<MyService>;
+## Fixtures
 
-beforeEach(() => {
-  service = createMock(MyService);
-});
-```
+- Use `testData` from `src/test/test-data.ts`. It is typed with the DTOs returned by the API: never cast a fixture
+  (`as unknown as …`, `as any`), add or fix the fixture instead. Never import the backend test data.
+- `testData` is shared by all the tests of a file: `structuredClone()` it before handing it to a component that may
+  mutate it.
 
-### Mock Return Values
+## Services
 
-Vitest doesn't have `withArgs`, but we can have the equivalent by using [vitest-when](https://github.com/mcous/vitest-when#readme).
-
-**Before:**
-
-```typescript
-service.getData.and.returnValue(of(data));
-service.getData.withArgs(123).and.returnValue(of(specificData));
-```
-
-**After:**
-
-```typescript
-service.getData.mockReturnValue(of(data));
-when(service.getData).calledWith(123).thenReturn(of(specificData));
-```
-
-### Mock Implementations
-
-**Before:**
-
-```typescript
-service.getData.and.callFake(id => of(dataMap[id]));
-```
-
-**After:**
-
-```typescript
-service.getData.mockImplementation(id => of(dataMap[id]));
-```
-
-### Spying on Methods
-
-**Before:**
-
-```typescript
-spyOn(router, 'navigate');
-expect(router.navigate).toHaveBeenCalledWith(['/path']);
-```
-
-**After:**
-
-```typescript
-vi.spyOn(router, 'navigate');
-expect(router.navigate).toHaveBeenCalledWith(['/path']);
-```
-
-### Resetting Mocks
-
-**Before:**
-
-```typescript
-service.getData.calls.reset();
-```
-
-**After:**
-
-```typescript
-service.getData.mockReset();
-```
-
-### Checking Calls
-
-**Before:**
-
-```typescript
-expect(service.getData).toHaveBeenCalled();
-expect(service.getData).toHaveBeenCalledWith(123);
-expect(service.getData).not.toHaveBeenCalled();
-const args = service.getData.calls.mostRecent().args;
-const firstArg = service.getData.calls.mostRecent().args[0];
-```
-
-**After:**
-
-```typescript
-expect(service.getData).toHaveBeenCalled();
-expect(service.getData).toHaveBeenCalledWith(123);
-expect(service.getData).not.toHaveBeenCalled();
-const args = service.getData.mock.lastCall;
-const firstArg = service.getData.mock.lastCall?.[0];
-```
-
-## Time Mocking
-
-**Before (Jasmine):**
+HTTP services are tested with `HttpTestingController`, and `verify()` is called after each test:
 
 ```typescript
 beforeEach(() => {
-  jasmine.clock().mockDate(new Date('2025-01-10'));
+  TestBed.configureTestingModule({ providers: [provideHttpClientTesting()] });
+  http = TestBed.inject(HttpTestingController);
+  service = TestBed.inject(IpFilterService);
 });
 
-afterEach(() => {
-  jasmine.clock().uninstall();
-});
-```
+afterEach(() => http.verify());
 
-**After (Vitest):**
+test('should update an IP filter', async () => {
+  const result = firstValueFrom(service.update('id1', command));
 
-```typescript
-import { vi } from 'vitest';
-import { parseISO } from 'date-fns';
+  const request = http.expectOne({ method: 'PUT', url: '/api/ip-filters/id1' });
+  expect(request.request.body).toEqual(command);
+  request.flush(null);
 
-beforeEach(() => {
-  vi.setSystemTime(parseISO('2025-01-10'));
-});
-
-afterEach(() => {
-  vi.useRealTimers();
+  await expect(result).resolves.toBeNull();
 });
 ```
 
-## Stub Measurement Typeahead
-
-To test components that use `MeasurementTypeaheadDirective`, replace it with `StubMeasurementTypeaheadDirective`
-and interact with it via the `selectMeasurement()` locator extension and `toHaveDisplayedMeasurement()` custom matcher,
-both defined in `src/test/test.ts`. The locator in the tester is a plain `page.getByCss()`.
-
-Note that `StubMeasurementTypeaheadDirective` must be passed explicitly to `selectMeasurement()` as a second argument
-(a current limitation of the implementation).
-
-**Before:**
-
-```typescript
-import { TestStubMeasurementTypeahead } from '../shared/typeahead/measurement/measurement-typeahead.stub';
-
-class MyComponentTester extends ComponentTester<TestComponent> {
-  get measurement() {
-    return this.custom('#formula-test-measurement', TestStubMeasurementTypeahead);
-  }
-}
-
-// In tests:
-tester.measurement.selectValue(someMeasurement);
-expect(tester.measurement.selectedValue).toEqual(someMeasurement);
-```
-
-**After:**
-
-```typescript
-import { StubMeasurementTypeaheadDirective } from '../shared/typeahead/measurement/measurement-typeahead.stub';
-
-// In the tester class:
-class MyComponentTester {
-  readonly fixture = TestBed.createComponent(TestComponent);
-  readonly measurement = page.getByCss('#formula-test-measurement');
-}
-
-// In tests:
-await tester.measurement.selectMeasurement(someMeasurement, StubMeasurementTypeaheadDirective);
-await expect.element(tester.measurement).toHaveDisplayedMeasurement(someMeasurement);
-await expect.element(tester.measurement).toHaveDisplayedMeasurement('Temperature'); // or by name
-await expect.element(tester.measurement).toHaveDisplayedMeasurement(null); // empty
-```
-
-## ngb-typeahead Interactions
-
-For regular `ngbTypeahead` inputs (not the stub measurement typeahead), two helpers are available in `src/test/test.ts`:
-
-- `selectLabel(label)` — locator extension to pick a suggestion from the open typeahead dropdown by its visible text.
-- `toHaveSuggestionLabels(labels)` — custom matcher to assert which suggestions are currently visible.
-
-Note that `provideNgbConfigTesting()` sets a very short debounce time (5 ms) for typeahead inputs, so you don't
-need to fake timers to advance past the normal debounce delay.
-
-**Before:**
-
-```typescript
-tester.tagValueTypeahead.fillWith('1');
-expect(tester.tagValueTypeahead.suggestionLabels).toEqual(['Site1']);
-tester.tagValueTypeahead.selectLabel('Site1');
-```
-
-**After:**
-
-```typescript
-await tester.tagValueTypeahead.fill('1');
-await expect.element(tester.tagValueTypeahead).toHaveSuggestionLabels(['Site1']);
-await tester.tagValueTypeahead.selectLabel('Site1');
-```
-
-## Period Duration Selection
-
-To test components using `PeriodDurationSelectionComponent`, use the `selectPeriod()` locator extension
-and the `toHaveSelectedPeriod()` custom matcher, both defined in `src/test/test.ts`.
-The locator in the tester is just a regular `page.getByCss()` pointing at the `oi-period-duration-selection` element.
-
-**Before:**
-
-```typescript
-import { TestPeriodDurationSelection } from '../shared/period-duration-selection/period-duration-selection.test-utils';
-
-class MyComponentTester extends ComponentTester<TestComponent> {
-  get computationResolution() {
-    return this.custom('#formula-test-computation-resolution', TestPeriodDurationSelection);
-  }
-}
-
-// In tests:
-tester.computationResolution.selectPeriod('1d');
-expect(tester.computationResolution.selectedPeriod).toBe('1d');
-expect(tester.computationResolution).not.toBeNull();
-```
-
-**After:**
-
-```typescript
-class MyComponentTester {
-  readonly fixture = TestBed.createComponent(TestComponent);
-  readonly computationResolution = page.getByCss('#formula-test-computation-resolution');
-}
-
-// In tests:
-await tester.computationResolution.selectPeriod('1d');      // predefined period
-await tester.computationResolution.selectPeriod('2h30m');   // custom free-form period
-await tester.computationResolution.selectPeriod(null);      // no period selected
-await expect.element(tester.computationResolution).toHaveSelectedPeriod('1d');
-await expect.element(tester.computationResolution).not.toBeInTheDocument(); // check absence
-```
-
-## Datetime Picker
-
-To test components using `DatetimepickerComponent`, use the `fillWithDate()` locator extension
-and the `toHaveDisplayedDate()` custom matcher, both defined in `src/test/test.ts`.
-The locator in the tester is just a regular `page.getByCss()` pointing at the datetimepicker element.
-
-**Before:**
-
-```typescript
-class MyComponentTester extends ComponentTester<TestComponent> {
-  get start() {
-    return this.element('#formula-test-start')!;
-  }
-}
-
-// In tests:
-tester.start.fillWith('24/09/2019');
-expect(tester.start.value).toBe('24/09/2019');
-```
-
-**After:**
-
-```typescript
-class MyComponentTester {
-  readonly fixture = TestBed.createComponent(TestComponent);
-  readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly start = this.root.getByCss('#formula-test-start');
-}
-
-// In tests:
-await tester.start.fillWithDate('24/09/2019', '12', '30');
-await expect.element(tester.start).toHaveDisplayedDate('24/09/2019 12:30:00');
-```
-
-## Common Patterns
-
-### User Interactions
-
-**Before:**
-
-```typescript
-await tester.button.click();
-await tester.input.fillWith('value');
-await tester.checkbox.check();
-await tester.checkbox.uncheck();
-await tester.select.selectLabel('Option 1');
-```
-
-**After:**
-
-```typescript
-await tester.button.click();
-await tester.input.fill('value');
-await tester.checkbox.click(); // to check
-await tester.checkbox.click(); // to uncheck (toggle)
-await tester.select.selectOptions('Option 1');
-```
-
-### Waiting for Stability
-
-**Before:**
-
-```typescript
-tester = new MyComponentTester();
-await tester.stable();
-```
-
-**After:**
-
-```typescript
-// Usually not needed with locators, but if required (AND ONLY IF REQUIRED):
-await tester.fixture.whenStable();
-```
-
-### Router URL Checks
-
-**Before:**
-
-```typescript
-expect(tester.url).toBe('/path');
-```
-
-**After:**
-
-```typescript
-const router = TestBed.inject(Router);
-expect(router.url).toBe('/path');
-```
-
-### Accessing Component Instance
-
-**Before:**
-
-```typescript
-tester.componentInstance.someProperty.set('value');
-```
-
-**After:**
-
-```typescript
-class TestComponentTester {
-  readonly fixture = TestBed.createComponent(TestComponent);
-  readonly componentInstance = this.fixture.componentInstance;
-}
-
-tester.componentInstance.someProperty.set('value');
-```
-
-### Test Component with Inputs
-
-**Before:**
-
-```typescript
-
-@Component({
-  template: '<my-component [input]="value" />',
-  imports: [MyComponent]
-})
-class TestComponent {
-  value = signal('initial');
-}
-
-class TestComponentTester extends ComponentTester<TestComponent> {
-  constructor() {
-    super(TestComponent);
-  }
-}
-```
-
-**After:**
-
-```typescript
-
-@Component({
-  template: '<my-component [input]="value" />',
-  imports: [MyComponent]
-})
-class TestComponent {
-  readonly value = signal('initial');
-}
-
-class TestComponentTester {
-  readonly fixture = TestBed.createComponent(TestComponent);
-  // ... locators
-}
-```
-
-## Migration Checklist
-
-- [ ] Update all test files:
-  - [ ] Change imports (add vitest imports, remove ngx-speculoos)
-  - [ ] Change `it()` to `test()`
-  - [ ] Make test functions `async`
-  - [ ] Replace `ComponentTester` subclasses with plain classes using `page` locators
-  - [ ] Replace `this.component()` / `this.components()` with `By.directive()` when component instance access is needed
-  - [ ] Replace child element access (`tester.items[0].elements('td')`) with child locators (`tester.items.nth(0).getByCss('td')`)
-  - [ ] Update all DOM assertions to use `await expect.element()`
-  - [ ] Replace `toBeNull()` / `not.toBeNull()` with `not.toBeInTheDocument()` / `toBeInTheDocument()`
-  - [ ] Replace `.disabled` property checks with `toBeDisabled()` / `not.toBeDisabled()`
-  - [ ] Replace `jasmine.SpyObj<T>` with `MockObject<T>` from `vitest-create-mock`
-  - [ ] Replace `.and.returnValue()` with `.mockReturnValue()`
-  - [ ] Replace `.and.callFake()` with `.mockImplementation()`
-  - [ ] Replace `spyOn()` with `vi.spyOn()`
-  - [ ] Update time mocking (`jasmine.clock()` → `vi.setSystemTime()` / `vi.useRealTimers()`)
-  - [ ] Replace `tester.input.fillWith()` with `await tester.input.fill()`
-  - [ ] Replace `tester.select.selectLabel()` with `await tester.select.selectOptions()`
-  - [ ] Replace `tester.checkbox.check()` / `uncheck()` with `await tester.checkbox.click()`
-  - [ ] Replace typeahead interactions (`fillWith`, `suggestionLabels`, `selectLabel`) with new locator extensions
-  - [ ] Remove unnecessary stability waits; use `await tester.fixture.whenStable()` only when needed
-  - [ ] Replace `provideCurrentUser` with `provideCurrentUser` from `current-user-testing-vitest`
-  - [ ] Run tests and fix any remaining issues
-
-## Notes
-
-- **Prefer semantic locators**: Use `getByRole`, `getByLabelText`, `getByText` over CSS selectors when possible. This makes tests more resilient and accessible.
-- **Async/await is required**: All DOM interactions and assertions must be awaited.
+Check the request body and parameters, not only the URL. Await observables with `firstValueFrom` / `lastValueFrom`
+rather than asserting inside `subscribe()`, which silently passes if nothing is emitted.
+
+## Time
+
+- Use Vitest fake timers (`vi.useFakeTimers()`, `vi.advanceTimersByTimeAsync()`, `vi.setSystemTime()`), and restore them
+  in an `afterEach(() => vi.useRealTimers())` so that a failing test does not leak them. `fakeAsync()`/`tick()` are
+  not supported.
+- Never wait with a real `setTimeout`: it makes the test slow and flaky.
+- Components that poll (metrics, registration status) keep polling with real timers: fake the timers or stop the
+  fixture (`fixture.destroy()`) when the test is done with it.

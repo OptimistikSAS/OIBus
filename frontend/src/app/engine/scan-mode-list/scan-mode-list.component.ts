@@ -18,7 +18,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { isScanModeWindowExpired, ScanModeSchedulePipe } from '../../shared/scan-mode-schedule.pipe';
-import { emptyPage } from '../../shared/test-utils';
+import { emptyPage } from '../../shared/utils/page.utils';
 import { EditScanModeModalComponent } from './edit-scan-mode-modal/edit-scan-mode-modal.component';
 
 type ScanModeSortField = 'name' | 'createdAt' | 'updatedAt' | null;

@@ -16,7 +16,7 @@ import { AuditHistoryModalComponent } from '../shared/audit-history-modal/audit-
 import { provideNgbConfigTesting } from '../shared/form/oi-ngb-testing';
 import { Modal, ModalService } from '../shared/modal.service';
 import { PageLoader } from '../shared/page-loader.service';
-import { emptyPage, toPage } from '../shared/test-utils';
+import { emptyPage, toPage } from '../shared/utils/page.utils';
 import { auditEntityLink, AuditListComponent } from './audit-list.component';
 
 class AuditListComponentTester {

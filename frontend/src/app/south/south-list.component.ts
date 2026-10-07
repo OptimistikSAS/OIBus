@@ -22,7 +22,7 @@ import { NotificationService } from '../shared/notification.service';
 import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';
-import { emptyPage } from '../shared/test-utils';
+import { emptyPage } from '../shared/utils/page.utils';
 import { ChooseSouthConnectorTypeModalComponent } from './choose-south-connector-type-modal/choose-south-connector-type-modal.component';
 
 type SouthSortField = 'name' | 'type' | 'createdAt' | 'updatedAt' | null;

@@ -14,8 +14,8 @@ import { isDisplayableAttribute } from '../../../shared/form/dynamic-form.builde
 import { CsvValidationError, MqttTopicValidationError, validateCsvHeaders, validateCsvMqttTopics } from '../../../shared/form/validators';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { ObservableState } from '../../../shared/save-button/save-button.component';
-import { emptyPage } from '../../../shared/test-utils';
 import { convertCsvDelimiter } from '../../../shared/utils/csv.utils';
+import { emptyPage } from '../../../shared/utils/page.utils';
 
 const PAGE_SIZE = 20;
 
